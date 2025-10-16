@@ -1,5 +1,6 @@
 import math
 import time
+from datetime import datetime
 from PyQt5.QtCore import QPointF, QRectF, QTimer, Qt, QTime, QEventLoop
 from PyQt5.QtGui import QCursor, QPen, QColor, QPainterPathStroker, QTransform, QBrush, QPolygonF, QPainterPath, QPixmap, QImage
 from PyQt5.QtWidgets import QApplication, QWidget
@@ -27,6 +28,22 @@ class PerformanceLogger:
 
 # Global performance logger instance
 perf_logger = PerformanceLogger()
+
+def _write_selection_debug(canvas, message: str) -> None:
+    """
+    Append move-mode debug details to the shared selection log when enabled.
+    """
+    enabled = getattr(canvas, 'selection_debug_logging_enabled', False) if canvas else False
+    if not enabled:
+        return
+    log_path = getattr(canvas, 'selection_debug_log_path', None)
+    if not log_path:
+        log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'selection_debug.log')
+    try:
+        with open(log_path, 'a', encoding='utf-8') as log_file:
+            log_file.write(f"{datetime.now().isoformat()} - MOVE_MODE - {message}\n")
+    except Exception:
+        pass
 
 class MoveMode:
     def __init__(self, canvas):
@@ -1479,6 +1496,19 @@ class MoveMode:
         """Resets all state related to an active move operation."""
         from PyQt5.QtCore import QPointF
 
+        affected_name = getattr(self.affected_strand, 'layer_name', None) if self.affected_strand else None
+        prev_cp = self.is_moving_control_point
+        prev_sp = self.is_moving_strand_point
+        _write_selection_debug(
+            self.canvas,
+            (
+                f"reset_movement_state begin affected={affected_name or 'None'} "
+                f"is_moving={self.is_moving} "
+                f"is_moving_control_point={prev_cp} "
+                f"is_moving_strand_point={prev_sp}"
+            )
+        )
+
         # --- 1. Stop Timers ---
         if hasattr(self, 'hold_timer'):
             self.hold_timer.stop()
@@ -1526,6 +1556,10 @@ class MoveMode:
         self.is_moving_strand_point = False
         self.user_deselected_all = False
         self.last_update_time = 0
+        _write_selection_debug(
+            self.canvas,
+            "reset_movement_state end flags cleared"
+        )
 
         # --- 3. Clean up Canvas Temp Attributes & Restore Paint Event ---
         if hasattr(self.canvas, 'original_paintEvent'):
@@ -2211,6 +2245,16 @@ class MoveMode:
         self.is_moving_control_point = side in ['control_point1', 'control_point2', 'control_point_center', 'bias_control', 'bias_triangle', 'bias_circle']
         # Set the flag if we're moving a strand endpoint
         self.is_moving_strand_point = side in [0, 1]
+        strand_name = getattr(strand, 'layer_name', None) or getattr(strand, 'set_number', None) or getattr(strand, 'layer', None)
+        _write_selection_debug(
+            self.canvas,
+            (
+                f"start_movement strand={strand_name or 'unknown'} id={hex(id(strand))} side={side} "
+                f"is_moving_control_point={self.is_moving_control_point} "
+                f"is_moving_strand_point={self.is_moving_strand_point} "
+                f"draw_only_affected={getattr(self, 'draw_only_affected_strand', False)}"
+            )
+        )
         
         # AUTO-ADJUST CONTROL POINTS: Only when initially moving control_point1,
         # check if control points are at their initial position (both at start, forming a triangle).
@@ -2265,6 +2309,7 @@ class MoveMode:
                         s.update_side_line()
                     
                     # Also update any attached strands' side lines recursively
+                if not self.is_moving_control_point:
                     if hasattr(s, 'attached_strands'):
                         for attached in s.attached_strands:
                             if attached and not getattr(attached, 'deleted', False):
@@ -2354,6 +2399,9 @@ class MoveMode:
 
         # Control point movement specific handling
         if self.is_moving_control_point:
+            # Ensure control point moves are limited strictly to the affected strand
+            self.canvas.truly_moving_strands = [self.affected_strand] if self.affected_strand else [strand]
+            self.canvas.affected_strands_for_drawing = [self.affected_strand] if self.affected_strand else [strand]
             # Before clearing selections, ensure we have saved the originally_selected_strand
             # This is crucial for restoring selection after control point movement
             if not self.originally_selected_strand:
@@ -3727,4 +3775,3 @@ class MoveMode:
         # Mouse movement provides continuous updates - no need for additional timers
         # Only force a single immediate update
         self.canvas.update()
-

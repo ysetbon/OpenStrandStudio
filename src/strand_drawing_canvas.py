@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import QCheckBox, QLineEdit, QPushButton
 import traceback
 import os
 import sys
+from datetime import datetime
 from PyQt5.QtCore import QStandardPaths
 
 
@@ -29,6 +30,15 @@ if TYPE_CHECKING:
     from main_window import MainWindow  # This prevents circular imports
 
 from save_load_manager import save_strands
+
+def _write_selection_debug(log_path, enabled, message):
+    if not enabled or not log_path:
+        return
+    try:
+        with open(log_path, 'a', encoding='utf-8') as log_file:
+            log_file.write(f"{datetime.now().isoformat()} - {message}\n")
+    except Exception:
+        pass
 
 class StrandDrawingCanvas(QWidget):
     # Define signals
@@ -54,6 +64,15 @@ class StrandDrawingCanvas(QWidget):
         self.use_supersampling = True  # Disable supersampling
         self.supersampling_factor = 2  # 16x more pixels for ultra-crisp rendering
         self.render_buffer = None  # Will be created when needed
+        # Temporary logging to trace selection rectangles while debugging move mode
+        self.selection_debug_logging_enabled = True
+        self.selection_debug_log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'selection_debug.log')
+        if self.selection_debug_logging_enabled:
+            try:
+                with open(self.selection_debug_log_path, 'w', encoding='utf-8') as log_file:
+                    log_file.write(f"{datetime.now().isoformat()} - Selection rectangle debug logging started\n")
+            except Exception:
+                pass
         
         # Load shadow color from user settings if available
         shadow_color = self.load_shadow_color_from_settings()
@@ -2081,9 +2100,35 @@ class StrandDrawingCanvas(QWidget):
                             # Check if a control point or strand point is being moved
                             is_moving_control_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_control_point', False)
                             is_moving_strand_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_strand_point', False)
+                            affected_strand = getattr(self.current_mode, 'affected_strand', None) if isinstance(self.current_mode, MoveMode) else None
+                            strand_name = getattr(strand, 'layer_name', None) or getattr(strand, 'set_number', None) or getattr(strand, 'layer', None)
+                            should_log_selection = (is_moving_control_point or is_moving_strand_point)
+                            if should_log_selection:
+                                _write_selection_debug(
+                                    self.selection_debug_log_path,
+                                    self.selection_debug_logging_enabled,
+                                    (
+                                        f"Loop strand={strand_name or 'unknown'} id={hex(id(strand))} "
+                                        f"affected={getattr(affected_strand, 'layer_name', None) or 'None'} "
+                                        f"affected_id={(hex(id(affected_strand)) if affected_strand else 'None')} "
+                                        f"is_moving_control_point={is_moving_control_point} "
+                                        f"is_moving_strand_point={is_moving_strand_point} "
+                                        f"moving_side={getattr(self.current_mode, 'moving_side', None)} "
+                                        f"selected_side={selected_side}"
+                                    )
+                                )
                             
                             # If a control point or strand point is being moved, only draw for the affected strand
-                            if (is_moving_control_point or is_moving_strand_point) and strand != self.current_mode.affected_strand:
+                            if (is_moving_control_point or is_moving_strand_point) and strand != affected_strand:
+                                if should_log_selection:
+                                    _write_selection_debug(
+                                        self.selection_debug_log_path,
+                                        self.selection_debug_logging_enabled,
+                                        (
+                                            f"Skipping strand={strand_name or 'unknown'} because it is not the affected strand "
+                                            f"(affected={getattr(affected_strand, 'layer_name', None) or 'None'})"
+                                        )
+                                    )
                                 continue
                                 
                             # Increased square size for better visibility
@@ -2129,18 +2174,31 @@ class StrandDrawingCanvas(QWidget):
                                     if self.points_are_close(strand.end, pos):
                                         end_already_drawn = True
                             
+                            draw_start = not skip_start and not start_overlaps_yellow and not start_already_drawn
+                            draw_end = not skip_end and not end_overlaps_yellow and not end_already_drawn
+                            if should_log_selection:
+                                _write_selection_debug(
+                                    self.selection_debug_log_path,
+                                    self.selection_debug_logging_enabled,
+                                    (
+                                        f"Decision strand={strand_name or 'unknown'} "
+                                        f"draw_start={draw_start} (skip={skip_start}, overlap={start_overlaps_yellow}, already={start_already_drawn}) "
+                                        f"draw_end={draw_end} (skip={skip_end}, overlap={end_overlaps_yellow}, already={end_already_drawn})"
+                                    )
+                                )
+                            
                             # Draw with red color for non-selected rectangles
                             square_color = QColor(255, 0, 0, 100)  # Red with 50% transparency
                             painter.setBrush(QBrush(square_color))
                             painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
                             
                             # Draw square around start point if not selected, not overlapping with yellow, and not already drawn
-                            if not skip_start and not start_overlaps_yellow and not start_already_drawn:
+                            if draw_start:
                                 painter.drawRect(start_rect)
                                 drawn_rectangle_positions.append(QPointF(strand.start))
 
                             # Draw square around end point if not selected, not overlapping with yellow, and not already drawn
-                            if not skip_end and not end_overlaps_yellow and not end_already_drawn:
+                            if draw_end:
                                 painter.drawRect(end_rect)
                                 drawn_rectangle_positions.append(QPointF(strand.end))
 
@@ -2154,7 +2212,17 @@ class StrandDrawingCanvas(QWidget):
                                 is_moving_control_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_control_point', False)
                                 
                                 # If moving a control point, only draw it for the current strand
-                                if is_moving_control_point and strand != self.current_mode.affected_strand:
+                                if is_moving_control_point and strand != affected_strand:
+                                    if should_log_selection:
+                                        _write_selection_debug(
+                                            self.selection_debug_log_path,
+                                            self.selection_debug_logging_enabled,
+                                            (
+                                                f"Skipping control points for strand={strand_name or 'unknown'} "
+                                                f"because it is not the affected strand "
+                                                f"(affected={getattr(affected_strand, 'layer_name', None) or 'None'})"
+                                            )
+                                        )
                                     continue
                                     
                                 # Create control point rectangles for overlap checking
@@ -2185,6 +2253,11 @@ class StrandDrawingCanvas(QWidget):
                                     )
                                 else:
                                     cp3_rect = None
+                                cp1_drawn = False
+                                cp2_drawn = False
+                                cp3_drawn = False
+                                bias_triangle_drawn = False
+                                bias_circle_drawn = False
                                 # Check if control points overlap with yellow rectangle
                                 cp1_overlaps_yellow = yellow_rectangle and cp1_rect and self.rectangles_overlap(cp1_rect, yellow_rectangle)
                                 cp2_overlaps_yellow = yellow_rectangle and cp2_rect and self.rectangles_overlap(cp2_rect, yellow_rectangle)
@@ -2198,10 +2271,13 @@ class StrandDrawingCanvas(QWidget):
                                 if is_moving_control_point:
                                     if selected_side == 'control_point1' and cp1_rect and not skip_cp1 and not cp1_overlaps_yellow:
                                         painter.drawRect(cp1_rect)
+                                        cp1_drawn = True
                                     elif selected_side == 'control_point2' and cp2_rect and not skip_cp2 and not cp2_overlaps_yellow:
                                         painter.drawRect(cp2_rect)
+                                        cp2_drawn = True
                                     elif selected_side == 'control_point_center' and cp3_rect and not skip_cp3 and not cp3_overlaps_yellow and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point:
                                         painter.drawRect(cp3_rect)
+                                        cp3_drawn = True
                                     # Bias controls when moving them
                                     elif selected_side == 'bias_triangle' and hasattr(strand, 'bias_control') and strand.bias_control and hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control:
                                         tp, cp = strand.bias_control.get_bias_control_positions(strand)
@@ -2210,6 +2286,7 @@ class StrandDrawingCanvas(QWidget):
                                             bias_half_size = bias_square_size / 2
                                             bt_rect = QRectF(tp.x() - bias_half_size, tp.y() - bias_half_size, bias_square_size, bias_square_size)
                                             painter.drawRect(bt_rect)
+                                            bias_triangle_drawn = True
                                     elif selected_side == 'bias_circle' and hasattr(strand, 'bias_control') and strand.bias_control and hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control:
                                         tp, cp = strand.bias_control.get_bias_control_positions(strand)
                                         if cp:
@@ -2217,15 +2294,19 @@ class StrandDrawingCanvas(QWidget):
                                             bias_half_size = bias_square_size / 2
                                             bc_rect = QRectF(cp.x() - bias_half_size, cp.y() - bias_half_size, bias_square_size, bias_square_size)
                                             painter.drawRect(bc_rect)
+                                            bias_circle_drawn = True
                                 else:
                                     # Normal drawing when not moving a control point
                                     if cp1_rect and not skip_cp1 and not cp1_overlaps_yellow:
                                         painter.drawRect(cp1_rect)
+                                        cp1_drawn = True
                                     
                                     if cp2_rect and not skip_cp2 and not cp2_overlaps_yellow:
                                         painter.drawRect(cp2_rect)
+                                        cp2_drawn = True
                                     if cp3_rect and not skip_cp3 and not cp3_overlaps_yellow and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point:
                                         painter.drawRect(cp3_rect)
+                                        cp3_drawn = True
                                     # Also draw bias control rectangles (transparent green baseline)
                                     if hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control and hasattr(strand, 'bias_control') and strand.bias_control:
                                         tp, cp = strand.bias_control.get_bias_control_positions(strand)
@@ -2234,11 +2315,24 @@ class StrandDrawingCanvas(QWidget):
                                             bias_half_size = bias_square_size / 2
                                             bt_rect = QRectF(tp.x() - bias_half_size, tp.y() - bias_half_size, bias_square_size, bias_square_size)
                                             painter.drawRect(bt_rect)
+                                            bias_triangle_drawn = True
                                         if cp:
                                             bias_square_size = 50  # Same size as regular control points
                                             bias_half_size = bias_square_size / 2
                                             bc_rect = QRectF(cp.x() - bias_half_size, cp.y() - bias_half_size, bias_square_size, bias_square_size)
                                             painter.drawRect(bc_rect)
+                                            bias_circle_drawn = True
+                                
+                                if should_log_selection:
+                                    _write_selection_debug(
+                                        self.selection_debug_log_path,
+                                        self.selection_debug_logging_enabled,
+                                        (
+                                            f"Control point rectangles for strand={strand_name or 'unknown'} "
+                                            f"cp1_drawn={cp1_drawn} cp2_drawn={cp2_drawn} cp3_drawn={cp3_drawn} "
+                                            f"bias_triangle_drawn={bias_triangle_drawn} bias_circle_drawn={bias_circle_drawn}"
+                                        )
+                                    )
             # Draw the selected rectangle with yellow color (if highlights are enabled)
             if self.current_mode.selected_rectangle and (not hasattr(self, 'show_move_highlights') or self.show_move_highlights):
                 # Set up semi-transparent yellow color
@@ -5171,17 +5265,44 @@ class StrandDrawingCanvas(QWidget):
 
             # --- Determine if we should skip drawing CPs for this strand ---
             should_skip = False
-            if draw_only_setting_on and (moving_control_point or moving_strand_point):
-                # When "drag only affected strand" is enabled AND actively moving, ONLY show control points for truly moving strands
-                if strand not in truly_moving_strands:
-                    should_skip = True
+            if moving_control_point or moving_strand_point:
+                is_affected = strand == affected_strand
+                allowed_by_draw_only = draw_only_setting_on and strand in truly_moving_strands
+                should_skip = not (is_affected or allowed_by_draw_only)
+            strand_name = getattr(strand, 'layer_name', None) or getattr(strand, 'set_number', None) or getattr(strand, 'layer', None)
+            if moving_control_point or moving_strand_point:
+                _write_selection_debug(
+                    self.selection_debug_log_path,
+                    self.selection_debug_logging_enabled,
+                    (
+                        f"draw_control_points loop strand={strand_name or 'unknown'} "
+                        f"moving_control_point={moving_control_point} moving_strand_point={moving_strand_point} "
+                        f"draw_only_setting_on={draw_only_setting_on} should_skip={should_skip} "
+                        f"is_affected={strand == affected_strand} moving_side={moving_side}"
+                    )
+                )
 
             if should_skip:
+                if moving_control_point or moving_strand_point:
+                    _write_selection_debug(
+                        self.selection_debug_log_path,
+                        self.selection_debug_logging_enabled,
+                        f"Skipping control point draw for strand={strand_name or 'unknown'} because should_skip=True"
+                    )
                 continue
             # --- End skip logic ---
 
             # Draw All Points for Affected Strand (when moving CP with Draw Only ON)
             if draw_only_setting_on and moving_control_point and strand == affected_strand:
+                if moving_control_point:
+                    _write_selection_debug(
+                        self.selection_debug_log_path,
+                        self.selection_debug_logging_enabled,
+                        (
+                            f"Drawing full control point set for affected strand={strand_name or 'unknown'} "
+                            f"with draw_only_setting_on=True"
+                        )
+                    )
                 # --- Start Replacement: Draw ALL control points/lines for the affected strand ---
                 # Check if small control points should be visible
                 center_is_locked = getattr(strand, 'control_point_center_locked', False)
@@ -5354,6 +5475,15 @@ class StrandDrawingCanvas(QWidget):
             # 1. "Draw only" is OFF, regardless of movement.
             # 2. "Draw only" is ON, but we are NOT moving.
             # 3. "Draw only" is ON, we ARE moving a strand point, and this IS the affected strand OR a connected strand.
+            if moving_control_point or moving_strand_point:
+                _write_selection_debug(
+                    self.selection_debug_log_path,
+                    self.selection_debug_logging_enabled,
+                    (
+                        f"Drawing normal control points for strand={strand_name or 'unknown'} "
+                        f"(draw_only_setting_on={draw_only_setting_on})"
+                    )
+                )
             # Check if small control points should be visible
             center_is_locked = getattr(strand, 'control_point_center_locked', False)
             third_cp_enabled = getattr(self, 'enable_third_control_point', False)

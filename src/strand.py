@@ -94,6 +94,10 @@ class Strand:
 
         self.layer_name = layer_name
         self.set_number = set_number
+
+        # Track when the start circle transparency is being explicitly controlled
+        self.is_setting_staring_circle = False
+
         self._circle_stroke_color = None  # Keep for backward compatibility
         self._start_circle_stroke_color = None
         self._end_circle_stroke_color = None

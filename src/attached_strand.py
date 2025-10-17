@@ -520,6 +520,8 @@ class AttachedStrand(Strand):
         painter.save() # Top Level Save
         if not skip_painter_setup:
             RenderUtils.setup_painter(painter, enable_high_quality=True)
+
+        is_setting_staring_circle = getattr(self, 'is_setting_staring_circle', False)
         
         # Log drawing info
         zoom_factor = getattr(self.canvas, 'zoom_factor', 1.0) if hasattr(self, 'canvas') else 1.0
@@ -1209,7 +1211,7 @@ class AttachedStrand(Strand):
                 tr_inner_side.rotate(math.degrees(angle_end))
                 just_inner_side = tr_inner_side.map(just_inner_side)
                 combined_fill_path.addPath(just_inner_side)
-        if self.start_circle_stroke_color.alpha() == 0 and not self.has_circles[0]:        
+        if self.start_circle_stroke_color.alpha() == 0 and is_setting_staring_circle and self.has_circles[0]:        
                     
             
             # Add start side cover rectangle into combined fill before painting
@@ -1249,7 +1251,7 @@ class AttachedStrand(Strand):
             corner3 = QPointF(self.start.x() + dx_start + dx_tangent, self.start.y() + dy_start + dy_tangent)  # right-front
             corner4 = QPointF(self.start.x() - dx_start + dx_tangent, self.start.y() - dy_start + dy_tangent)  # left-front
 
-
+            print(f"[draw {strand_label}] START SIDE COVER RECTANGLE: corners={corner1}, {corner2}, {corner3}, {corner4}")
 
             start_side_line_path = QPainterPath()
             start_side_line_path.moveTo(corner1)
@@ -1312,7 +1314,6 @@ class AttachedStrand(Strand):
 
         painter.setPen(Qt.NoPen)  # Explicitly set pen to NoPen again before fill
         painter.setBrush(self.color)
-        print(f"[draw {strand_label}] DRAWING FILL with color: {self.color.name()}, alpha: {self.color.alpha()}")
         painter.drawPath(combined_fill_path)
        
         # Draw the end line conditionally
@@ -2410,6 +2411,8 @@ class AttachedStrand(Strand):
 
         # Ensure high-quality rendering for direct drawing
         RenderUtils.setup_painter(painter, enable_high_quality=True)
+
+        is_setting_staring_circle = getattr(self, 'is_setting_staring_circle', False)
         
         # --- Handle hidden state comprehensively ---
         if self.is_hidden:
@@ -3076,14 +3079,14 @@ class AttachedStrand(Strand):
                 just_inner_side = tr_inner_side.map(just_inner_side)
                 combined_fill_path.addPath(just_inner_side)
         
-        if self.start_circle_stroke_color.alpha() == 0 and not self.has_circles[0]:        
+        if self.start_circle_stroke_color.alpha() == 0 and is_setting_staring_circle and self.has_circles[0]:        
                     
             
             # Add start side cover rectangle into combined fill before painting
             # Sample the curve at a small offset to get better tangent for curved paths
             # This handles cases where control points create sharp curves
             t_sample = 0.001  # Small offset for more accurate direction
-
+            print(f"[_draw_direct {strand_label_direct}] ADDING START SIDE COVER RECTANGLE")
             # Get a point slightly along the curve to calculate direction
             point_at_start = self.start
             point_at_sample = self.point_at(t_sample)
@@ -3138,7 +3141,6 @@ class AttachedStrand(Strand):
 
         painter.setPen(Qt.NoPen)  # Explicitly set pen to NoPen again before fill
         painter.setBrush(self.color)
-        print(f"[_draw_direct {strand_label_direct}] DRAWING FILL with color: {self.color.name()}, alpha: {self.color.alpha()}")
         painter.drawPath(combined_fill_path)
 
         # Draw the end line conditionally

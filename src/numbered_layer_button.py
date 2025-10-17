@@ -1298,14 +1298,20 @@ class NumberedLayerButton(QPushButton):
         if not isinstance(color, QColor):
             color = QColor(color)
 
+        def apply_start_circle_color(strand_obj):
+            """Apply the requested start circle color and update transparency flag."""
+            strand_obj.start_circle_stroke_color = color
+            if hasattr(strand_obj, 'is_setting_staring_circle'):
+                strand_obj.is_setting_staring_circle = strand_obj.start_circle_stroke_color.alpha() == 0
+            if hasattr(strand_obj, 'update'):
+                strand_obj.update(None, False)
+
         found = False
 
         if self.layer_context and hasattr(self.layer_context, "all_strands"):
             for strand in self.layer_context.all_strands:
                 if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
-                    strand.start_circle_stroke_color = color
-                    if hasattr(strand, 'update'):
-                        strand.update(None, False)
+                    apply_start_circle_color(strand)
                     found = True
         else:
             parent = self.parent()
@@ -1313,17 +1319,13 @@ class NumberedLayerButton(QPushButton):
                 if hasattr(parent, 'layer_context') and hasattr(parent.layer_context, 'all_strands'):
                     for strand in parent.layer_context.all_strands:
                         if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
-                            strand.start_circle_stroke_color = color
-                            if hasattr(strand, 'update'):
-                                strand.update(None, False)
+                            apply_start_circle_color(strand)
                     found = True
                     break
                 elif hasattr(parent, 'all_strands'):
                     for strand in parent.all_strands:
                         if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
-                            strand.start_circle_stroke_color = color
-                            if hasattr(strand, 'update'):
-                                strand.update(None, False)
+                            apply_start_circle_color(strand)
                     found = True
                     break
                 parent = parent.parent()
@@ -1341,9 +1343,7 @@ class NumberedLayerButton(QPushButton):
                 if layer_panel:
                     for strand in layer_panel.canvas.strands:
                         if hasattr(strand, 'layer_name') and strand.layer_name == button_text:
-                            strand.start_circle_stroke_color = color
-                            if hasattr(strand, 'update'):
-                                strand.update(None, False)
+                            apply_start_circle_color(strand)
                     found = True
 
                 if not found:

@@ -791,11 +791,14 @@ class MaskedStrand(Strand):
         """Draw the masked strand directly to the painter without temporary image optimization.
         This method is used when zoomed to avoid clipping issues with bounds calculations."""
         
+        painter.save()  # Balance top-level painter state for direct drawing
+
         # Ensure high-quality rendering for direct drawing
         RenderUtils.setup_painter(painter, enable_high_quality=True)
         
         # Check if hidden
         if self.is_hidden:
+            painter.restore()
             return
         
         # Skip visual rendering in shadow-only mode but still draw shadows
@@ -891,6 +894,7 @@ class MaskedStrand(Strand):
 
         # Return early if we're in shadow-only mode (after drawing shadows)
         if skip_visual:
+            painter.restore()
             return
 
         # Draw the masked area directly using the same approach as the regular draw method
@@ -935,6 +939,8 @@ class MaskedStrand(Strand):
                     painter.drawPath(mask_path)
             except Exception as e:
                 pass
+
+        painter.restore()  # Restore top-level painter state for direct drawing
 
 
     def update(self, new_position):

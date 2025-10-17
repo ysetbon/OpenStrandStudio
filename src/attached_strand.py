@@ -2406,6 +2406,8 @@ class AttachedStrand(Strand):
         """Draw the attached strand directly to the painter without temporary image optimization.
         This method is used when zoomed to avoid clipping issues with bounds calculations."""
         
+        painter.save()  # Balance top-level painter state for direct drawing
+
         # Ensure high-quality rendering for direct drawing
         RenderUtils.setup_painter(painter, enable_high_quality=True)
         
@@ -2649,9 +2651,10 @@ class AttachedStrand(Strand):
                         painter.setPen(border_pen_hidden_indiv)
                         painter.setBrush(Qt.NoBrush)
                         painter.drawPolygon(arrow_poly_e)
-                
+
                 painter.restore()
 
+            painter.restore()  # Restore top-level painter state before returning
             return # Skip drawing strand body etc.
         # --- END Handle hidden state ---
 
@@ -2806,6 +2809,7 @@ class AttachedStrand(Strand):
         # --- START: Skip visual rendering in shadow-only mode ---
         if getattr(self, 'shadow_only', False):
             # In shadow-only mode, skip all visual drawing but preserve shadows and highlights
+            painter.restore()
             return
         # --- END: Skip visual rendering in shadow-only mode ---
 
@@ -3339,3 +3343,5 @@ class AttachedStrand(Strand):
                     tr_inner_end.rotate(math.degrees(angle_end))
                     just_inner_end = tr_inner_end.map(just_inner_end)
                     painter.drawPath(just_inner_end)
+
+        painter.restore()  # Restore top-level painter state for direct drawing

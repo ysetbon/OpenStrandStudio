@@ -2675,7 +2675,9 @@ class Strand:
         This method is used when zoomed to avoid clipping issues with bounds calculations."""
         from attached_strand import AttachedStrand
         from masked_strand import MaskedStrand          
-        
+
+        painter.save()  # Balance top-level painter state for direct drawing
+
         # Ensure high-quality rendering for direct drawing
         RenderUtils.setup_painter(painter, enable_high_quality=True)
         
@@ -3769,6 +3771,8 @@ class Strand:
                     painter.setBrush(Qt.NoBrush)
                     painter.drawPolygon(arrow_head_poly)
             painter.restore() # Specific restore for full arrow
+
+        painter.restore()  # Restore top-level painter state for direct drawing
 
     def remove_attached_strands(self):
         """Recursively remove all attached strands."""

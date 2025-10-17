@@ -3025,16 +3025,17 @@ class StrandDrawingCanvas(QWidget):
                     # Create a ring path by subtracting the inner circle from the outer circle
                     ring_path = outer_circle.subtracted(inner_circle)
                     
-                    # Calculate angle based on tangent or start/end points
+                    # Calculate angle based on curve tangent
+                    # For ending point, use t=0.99 to get the curve's actual direction near the end
                     angle = 0.0 # Default angle
-                    if i == 0 and strand.control_point1 == strand.start and strand.control_point2 == strand.start:
+                    tangent = strand.calculate_cubic_tangent(0.0 if i == 0 else 0.99)
+                    if tangent.manhattanLength() > 1e-6:
+                        angle = math.atan2(tangent.y(), tangent.x())
+                    else:
+                        # Fallback: use direction from start to end if tangent is zero
                         direction_vector = strand.end - strand.start
                         if direction_vector.manhattanLength() > 1e-6:
                             angle = math.atan2(direction_vector.y(), direction_vector.x())
-                    else:
-                        tangent = strand.calculate_cubic_tangent(0.0 if i == 0 else 1.0)
-                        if tangent.manhattanLength() > 1e-6:
-                            angle = math.atan2(tangent.y(), tangent.x())
 
                     # Create a masking rectangle to create a C-shape
                     # Create a masking rectangle to create a C-shape

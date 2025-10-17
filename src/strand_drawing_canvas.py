@@ -2637,8 +2637,17 @@ class StrandDrawingCanvas(QWidget):
         """Toggle shadow rendering on or off."""
         self.shadow_enabled = not self.shadow_enabled
         pass
+
+        # Sync per-strand shadow flags so drawing logic matches the global toggle.
+        for strand in getattr(self, 'strands', []):
+            try:
+                strand.should_draw_shadow = self.shadow_enabled
+            except Exception:
+                # Keep going even if a particular strand is missing the attribute.
+                pass
+
         self.update()  # Force a redraw of the canvas to apply the change
-        
+
         # Update the button state to match the canvas state
         if hasattr(self, 'main_window') and self.main_window:
             if hasattr(self.main_window, 'toggle_shadow_button'):

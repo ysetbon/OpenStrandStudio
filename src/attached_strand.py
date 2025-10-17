@@ -1209,7 +1209,7 @@ class AttachedStrand(Strand):
                 tr_inner_side.rotate(math.degrees(angle_end))
                 just_inner_side = tr_inner_side.map(just_inner_side)
                 combined_fill_path.addPath(just_inner_side)
-        if self.start_circle_stroke_color.alpha() == 0:        
+        if self.start_circle_stroke_color.alpha() == 0 and not self.has_circles[0]:        
                     
             
             # Add start side cover rectangle into combined fill before painting
@@ -3072,7 +3072,7 @@ class AttachedStrand(Strand):
                 just_inner_side = tr_inner_side.map(just_inner_side)
                 combined_fill_path.addPath(just_inner_side)
         
-        if self.start_circle_stroke_color.alpha() == 0:        
+        if self.start_circle_stroke_color.alpha() == 0 and not self.has_circles[0]:        
                     
             
             # Add start side cover rectangle into combined fill before painting

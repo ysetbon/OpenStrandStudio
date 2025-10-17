@@ -452,6 +452,15 @@ class StrandDrawingCanvas(QWidget):
         except Exception as e:
             pass
         
+        # Apply snap_to_grid_attach_enabled setting from user settings if available
+        try:
+            snap_to_grid_attach_setting = self.load_snap_to_grid_attach_setting()
+            if snap_to_grid_attach_setting is not None:
+                self.snap_to_grid_attach_enabled = snap_to_grid_attach_setting
+                pass
+        except Exception as e:
+            pass
+        
         # Apply show_move_highlights setting from user settings if available
         # Initialize with default first, then override if setting exists
         self.show_move_highlights = True  # Default value
@@ -1285,8 +1294,9 @@ class StrandDrawingCanvas(QWidget):
 
         # Initialize the flag for the third control point
         self.enable_third_control_point = True
-        # Initialize snap to grid setting
-        self.snap_to_grid_enabled = True  # Default to enabled
+        # Initialize snap to grid settings
+        self.snap_to_grid_enabled = True  # Default to enabled for move mode
+        self.snap_to_grid_attach_enabled = True  # Default to enabled for attach/create mode
         # Default extension line settings
         self.extension_length = 100.0
         self.extension_dash_count = 10
@@ -1392,6 +1402,42 @@ class StrandDrawingCanvas(QWidget):
                             snap_to_grid_setting = (value == 'true')
                             pass
                             return snap_to_grid_setting
+            else:
+                pass
+                
+            return None
+        except Exception as e:
+            pass
+            return None
+
+    def load_snap_to_grid_attach_setting(self):
+        """Load snap_to_grid_attach_enabled setting from user_settings.txt if available."""
+        try:
+            import os
+            import sys
+            from PyQt5.QtCore import QStandardPaths
+            
+            # Use the appropriate directory for each OS
+            app_name = "OpenStrand Studio"
+            if sys.platform == 'darwin':  # macOS
+                program_data_dir = os.path.expanduser('~/Library/Application Support')
+                settings_dir = os.path.join(program_data_dir, app_name)
+            else:
+                program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+                settings_dir = program_data_dir  # AppDataLocation already includes the app name
+
+            file_path = os.path.join(settings_dir, 'user_settings.txt')
+            pass
+            
+            if os.path.exists(file_path):
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    for line in file:
+                        line = line.strip()
+                        if line.startswith('EnableSnapToGridAttach:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            snap_attach_setting = (value == 'true')
+                            pass
+                            return snap_attach_setting
             else:
                 pass
                 
@@ -3717,7 +3763,7 @@ class StrandDrawingCanvas(QWidget):
             self.move_start_pos = canvas_pos
             self.setCursor(Qt.ClosedHandCursor)
         elif self.is_drawing_new_strand:
-            self.new_strand_start_point = canvas_pos
+            self.new_strand_start_point = self.snap_to_grid_for_attach(canvas_pos)
 
         if self.current_mode == "select":
             # Get the position from the event
@@ -3735,7 +3781,8 @@ class StrandDrawingCanvas(QWidget):
         elif self.current_mode == self.attach_mode:
             # Create new strand
             if event.button() == Qt.LeftButton:
-                self.current_strand = Strand(canvas_pos, canvas_pos, self.strand_width,
+                snapped_pos = self.snap_to_grid_for_attach(canvas_pos)
+                self.current_strand = Strand(snapped_pos, snapped_pos, self.strand_width,
                                            self.default_strand_color, self.default_stroke_color, self.stroke_width)
                 self.current_strand.canvas = self  # Set canvas reference immediately
                 # Apply curve parameters from canvas settings
@@ -3916,7 +3963,7 @@ class StrandDrawingCanvas(QWidget):
             total_dy = canvas_pos.y() - self.group_move_start_pos.y()
             self.move_group(self.move_group_name, total_dx, total_dy)
         elif self.is_drawing_new_strand and self.new_strand_start_point:
-            self.new_strand_end_point = canvas_pos
+            self.new_strand_end_point = self.snap_to_grid_for_attach(canvas_pos)
             self.update()
         elif self.current_mode == "rotate":
             # Create a new event with converted coordinates
@@ -4014,7 +4061,7 @@ class StrandDrawingCanvas(QWidget):
             self.original_positions_initialized = False  # Reset for next movement
             self.setCursor(Qt.ArrowCursor)
         elif self.is_drawing_new_strand and self.new_strand_start_point:
-            self.new_strand_end_point = canvas_pos
+            self.new_strand_end_point = self.snap_to_grid_for_attach(canvas_pos)
             self.finalize_new_strand()
         elif self.current_mode and not isinstance(self.current_mode, str):
             # Create a new event with converted coordinates
@@ -4278,8 +4325,8 @@ class StrandDrawingCanvas(QWidget):
     def finalize_new_strand(self):
         if self.new_strand_start_point and self.new_strand_end_point:
             # Ensure coordinates are properly normalized regardless of zoom level
-            start_point = self._normalize_coordinate_for_zoom(self.new_strand_start_point)
-            end_point = self._normalize_coordinate_for_zoom(self.new_strand_end_point)
+            start_point = self.snap_to_grid_for_attach(self._normalize_coordinate_for_zoom(self.new_strand_start_point))
+            end_point = self.snap_to_grid_for_attach(self._normalize_coordinate_for_zoom(self.new_strand_end_point))
             
             new_strand = Strand(start_point, end_point, self.strand_width, 
                                self.default_strand_color, self.default_stroke_color, self.stroke_width)
@@ -4644,14 +4691,26 @@ class StrandDrawingCanvas(QWidget):
         self.selected_strand_index = None
         self.update()
 
-    def snap_to_grid(self, point):
-        """Snap a point to the nearest grid intersection."""
-        if not self.snap_to_grid_enabled:
+    def _snap_point_to_grid(self, point):
+        """Return the point snapped to the nearest grid intersection."""
+        if point is None:
             return point
         return QPointF(
             round(point.x() / self.grid_size) * self.grid_size,
             round(point.y() / self.grid_size) * self.grid_size
         )
+
+    def snap_to_grid(self, point):
+        """Snap a point to the nearest grid intersection during move operations."""
+        if not self.snap_to_grid_enabled:
+            return point
+        return self._snap_point_to_grid(point)
+
+    def snap_to_grid_for_attach(self, point):
+        """Snap a point to the nearest grid intersection during attach/create operations."""
+        if not self.snap_to_grid_attach_enabled:
+            return point
+        return self._snap_point_to_grid(point)
 
     def toggle_grid(self):
         """Toggle the visibility of the grid."""

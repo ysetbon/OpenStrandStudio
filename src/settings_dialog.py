@@ -54,7 +54,8 @@ class SettingsDialog(QDialog):
         self.draw_only_affected_strand = False  # Default to drawing all strands
         self.enable_third_control_point = False  # Default to two control points
         self.enable_curvature_bias_control = False  # Default to no curvature bias controls
-        self.snap_to_grid_enabled = True  # Default to snap to grid enabled
+        self.snap_to_grid_enabled = True  # Default to snap to grid enabled (move mode)
+        self.snap_to_grid_attach_enabled = True  # Default to snap to grid enabled for attach/create mode
         self.show_move_highlights = True  # Default to showing highlights in move modes
         # NEW: Use extended mask option (controls extra expansion of masked areas)
         # self.use_extended_mask = False  # Default to using exact mask (small +3 offset)
@@ -244,6 +245,8 @@ class SettingsDialog(QDialog):
                     self.third_control_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 if hasattr(self, 'snap_to_grid_label'):
                     self.snap_to_grid_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if hasattr(self, 'snap_to_grid_attach_label'):
+                    self.snap_to_grid_attach_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 if hasattr(self, 'default_arrow_color_label'):
                     self.default_arrow_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 if hasattr(self, 'extended_mask_label'):
@@ -276,6 +279,8 @@ class SettingsDialog(QDialog):
                     self.third_control_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 if hasattr(self, 'snap_to_grid_label'):
                     self.snap_to_grid_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                if hasattr(self, 'snap_to_grid_attach_label'):
+                    self.snap_to_grid_attach_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 if hasattr(self, 'default_arrow_color_label'):
                     self.default_arrow_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 if hasattr(self, 'extended_mask_label'):
@@ -298,7 +303,7 @@ class SettingsDialog(QDialog):
             # Also update direction for QHBoxLayouts within General Settings
             general_setting_layouts = [
                 'theme_layout', 'shadow_layout', 'performance_layout', 
-                'third_control_layout', 'snap_to_grid_layout', 'show_highlights_layout', # 'extended_mask_layout', 
+                'third_control_layout', 'snap_to_grid_layout', 'snap_to_grid_attach_layout', 'show_highlights_layout', # 'extended_mask_layout', 
                 'num_steps_layout', 'blur_radius_layout',
                 'curvature_bias_layout', 'base_fraction_layout',
                 'distance_mult_layout', 'curve_response_layout',
@@ -366,6 +371,8 @@ class SettingsDialog(QDialog):
              self.third_control_layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
         if hasattr(self, 'snap_to_grid_layout'):
              self.snap_to_grid_layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
+        if hasattr(self, 'snap_to_grid_attach_layout'):
+             self.snap_to_grid_attach_layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
         if hasattr(self, 'icon_layout'):
              self.icon_layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
         if hasattr(self, 'third_cp_icon_layout'):
@@ -636,6 +643,20 @@ class SettingsDialog(QDialog):
             # Force immediate update
             self.snap_to_grid_layout.invalidate()
             self.snap_to_grid_layout.activate()
+
+        # Snap to grid attach layout reorganization
+        if hasattr(self, 'snap_to_grid_attach_layout') and hasattr(self, 'snap_to_grid_attach_label') and hasattr(self, 'snap_to_grid_attach_checkbox'):
+            self.clear_layout(self.snap_to_grid_attach_layout)
+            if is_rtl:
+                self.snap_to_grid_attach_layout.addStretch()
+                self.snap_to_grid_attach_layout.addWidget(self.snap_to_grid_attach_checkbox)
+                self.snap_to_grid_attach_layout.addWidget(self.snap_to_grid_attach_label)
+            else:
+                self.snap_to_grid_attach_layout.addWidget(self.snap_to_grid_attach_label)
+                self.snap_to_grid_attach_layout.addWidget(self.snap_to_grid_attach_checkbox)
+                self.snap_to_grid_attach_layout.addStretch()
+            self.snap_to_grid_attach_layout.invalidate()
+            self.snap_to_grid_attach_layout.activate()
         
         # Show highlights layout reorganization (for move/attach mode indicator)
         if hasattr(self, 'show_highlights_layout') and hasattr(self, 'show_highlights_label') and hasattr(self, 'show_highlights_checkbox'):
@@ -1221,6 +1242,9 @@ class SettingsDialog(QDialog):
                         elif line.startswith('EnableSnapToGrid:'):
                             value = line.split(':', 1)[1].strip().lower()
                             self.snap_to_grid_enabled = (value == 'true')
+                        elif line.startswith('EnableSnapToGridAttach:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            self.snap_to_grid_attach_enabled = (value == 'true')
                         
                         elif line.startswith('ShowMoveHighlights:'):
                             value = line.split(':', 1)[1].strip().lower()
@@ -1575,6 +1599,22 @@ class SettingsDialog(QDialog):
             self.snap_to_grid_layout.addWidget(self.snap_to_grid_checkbox)
             self.snap_to_grid_layout.addStretch()
 
+        # Snap to Grid Option for attach/create mode
+        if not hasattr(self, 'snap_to_grid_attach_layout'):
+            self.snap_to_grid_attach_layout = QHBoxLayout()
+        self.snap_to_grid_attach_label = QLabel(_['enable_snap_to_grid_attach'] if 'enable_snap_to_grid_attach' in _ else "Enable snap to grid for attach/create mode")
+        self.snap_to_grid_attach_checkbox = QCheckBox()
+        self.snap_to_grid_attach_checkbox.setChecked(self.snap_to_grid_attach_enabled)
+        
+        if self.is_rtl_language(self.current_language):
+            self.snap_to_grid_attach_layout.addStretch()
+            self.snap_to_grid_attach_layout.addWidget(self.snap_to_grid_attach_checkbox)
+            self.snap_to_grid_attach_layout.addWidget(self.snap_to_grid_attach_label)
+        else:
+            self.snap_to_grid_attach_layout.addWidget(self.snap_to_grid_attach_label)
+            self.snap_to_grid_attach_layout.addWidget(self.snap_to_grid_attach_checkbox)
+            self.snap_to_grid_attach_layout.addStretch()
+
         # NEW: Use Extended Mask Option
         # self.extended_mask_layout = QHBoxLayout() # STORE AS INSTANCE ATTRIBUTE
         # self.extended_mask_label = QLabel(_['use_extended_mask'] if 'use_extended_mask' in _ else "Use extended mask (wider overlap)")
@@ -1608,6 +1648,7 @@ class SettingsDialog(QDialog):
         general_layout.addLayout(self.third_control_layout)
         general_layout.addLayout(self.curvature_bias_layout)
         general_layout.addLayout(self.snap_to_grid_layout)
+        general_layout.addLayout(self.snap_to_grid_attach_layout)
         
         # Show Move Highlights Option
         if not hasattr(self, 'show_highlights_layout'):
@@ -2463,6 +2504,8 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['enable_third_cp_desc'].split(' - ')[0]}</span> - {_['enable_third_cp_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['enable_curvature_bias_desc'].split(' - ')[0]}</span> - {_['enable_curvature_bias_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['enable_snap_desc'].split(' - ')[0]}</span> - {_['enable_snap_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['snap_to_grid_attach_desc'].split(' - ')[0]}</span> - {_['snap_to_grid_attach_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['snap_to_grid_attach_desc'].split(' - ')[0]}</span> - {_['snap_to_grid_attach_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['show_move_highlights_desc'].split(' - ')[0]}</span> - {_['show_move_highlights_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['shadow_blur_steps_desc'].split(' - ')[0]}</span> - {_['shadow_blur_steps_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['shadow_blur_radius_desc'].split(' - ')[0]}</span> - {_['shadow_blur_radius_desc'].split(' - ')[1]}</li>
@@ -3320,10 +3363,12 @@ class SettingsDialog(QDialog):
         
         # Apply Snap to Grid Setting
         self.snap_to_grid_enabled = self.snap_to_grid_checkbox.isChecked()
+        self.snap_to_grid_attach_enabled = self.snap_to_grid_attach_checkbox.isChecked()
         
         if self.canvas:
             # Set the new value in canvas
             self.canvas.snap_to_grid_enabled = self.snap_to_grid_enabled
+            self.canvas.snap_to_grid_attach_enabled = self.snap_to_grid_attach_enabled
         
         # Apply Show Move Highlights Setting
         self.show_move_highlights = self.show_highlights_checkbox.isChecked()
@@ -3544,6 +3589,8 @@ class SettingsDialog(QDialog):
         self.third_control_label.setText(_['enable_third_control_point'] if 'enable_third_control_point' in _ else "Enable third control point at center")
         self.curvature_bias_label.setText(_['enable_curvature_bias_control'] if 'enable_curvature_bias_control' in _ else "Enable curvature bias controls")
         self.snap_to_grid_label.setText(_['enable_snap_to_grid'] if 'enable_snap_to_grid' in _ else "Enable snap to grid")
+        if hasattr(self, 'snap_to_grid_attach_label'):
+            self.snap_to_grid_attach_label.setText(_['enable_snap_to_grid_attach'] if 'enable_snap_to_grid_attach' in _ else "Enable snap to grid for attach/create mode")
         self.show_highlights_label.setText(_['show_move_highlights'] if 'show_move_highlights' in _ else "Show highlights in move modes")
         # self.extended_mask_label.setText(_['use_extended_mask'] if 'use_extended_mask' in _ else "Use extended mask (wider overlap)")
         self.num_steps_label.setText(_['shadow_blur_steps'] if 'shadow_blur_steps' in _ else "Shadow Blur Steps:")
@@ -3753,6 +3800,7 @@ class SettingsDialog(QDialog):
                 <li><span class="button-name">{_['enable_third_cp_desc'].split(' - ')[0]}</span> - {_['enable_third_cp_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['enable_curvature_bias_desc'].split(' - ')[0]}</span> - {_['enable_curvature_bias_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['enable_snap_desc'].split(' - ')[0]}</span> - {_['enable_snap_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['snap_to_grid_attach_desc'].split(' - ')[0]}</span> - {_['snap_to_grid_attach_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['show_move_highlights_desc'].split(' - ')[0]}</span> - {_['show_move_highlights_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['shadow_blur_steps_desc'].split(' - ')[0]}</span> - {_['shadow_blur_steps_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['shadow_blur_radius_desc'].split(' - ')[0]}</span> - {_['shadow_blur_radius_desc'].split(' - ')[1]}</li>
@@ -3978,6 +4026,7 @@ class SettingsDialog(QDialog):
                 file.write(f"EnableCurvatureBiasControl: {str(self.enable_curvature_bias_control).lower()}\n")
                 # Save enable snap to grid setting
                 file.write(f"EnableSnapToGrid: {str(self.snap_to_grid_enabled).lower()}\n")
+                file.write(f"EnableSnapToGridAttach: {str(self.snap_to_grid_attach_enabled).lower()}\n")
                 # Save show move highlights setting
                 file.write(f"ShowMoveHighlights: {str(self.show_move_highlights).lower()}\n")
                 # Save shadow blur settings
@@ -4018,6 +4067,7 @@ class SettingsDialog(QDialog):
                     local_file.write(f"DrawOnlyAffectedStrand: {str(self.draw_only_affected_strand).lower()}\n")
                     local_file.write(f"EnableThirdControlPoint: {str(self.enable_third_control_point).lower()}\n")
                     local_file.write(f"EnableSnapToGrid: {str(self.snap_to_grid_enabled).lower()}\n")
+                    local_file.write(f"EnableSnapToGridAttach: {str(self.snap_to_grid_attach_enabled).lower()}\n")
                     local_file.write(f"ShowMoveHighlights: {str(self.show_move_highlights).lower()}\n")
                     local_file.write(f"NumSteps: {self.num_steps}\n")
                     local_file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place

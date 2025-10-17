@@ -394,9 +394,11 @@ class AttachMode(QObject):
             # Just constrain and snap
             constrained_pos = self.constrain_coordinates_to_visible_viewport(canvas_pos)
             
-            final_snapped_pos = self.canvas.snap_to_grid(constrained_pos)
+            final_snapped_pos = self.canvas.snap_to_grid_for_attach(constrained_pos)
             self.canvas.current_strand.end = final_snapped_pos
             self.canvas.current_strand.update_shape()
+            self.target_pos = final_snapped_pos
+            self.last_snapped_pos = final_snapped_pos
             
             # Restore original paint event
             if hasattr(self.canvas, 'original_paintEvent'):
@@ -498,7 +500,7 @@ class AttachMode(QObject):
             canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()
             # No need for coordinate conversion - canvas_pos is already in canvas coordinates
             constrained_pos = self.constrain_coordinates_to_visible_viewport(canvas_pos)
-            self.start_pos = self.canvas.snap_to_grid(constrained_pos)
+            self.start_pos = self.canvas.snap_to_grid_for_attach(constrained_pos)
             
             # Determine the current set based on existing strands (handles loaded JSON)
             current_set = 1
@@ -580,9 +582,12 @@ class AttachMode(QObject):
             # No need for coordinate conversion - canvas_pos is already in canvas coordinates
             # Just constrain coordinates to stay within visible viewport when zoomed out
             constrained_pos = self.constrain_coordinates_to_visible_viewport(canvas_pos)
-            
-            self.canvas.current_strand.end = constrained_pos
+
+            snapped_pos = self.canvas.snap_to_grid_for_attach(constrained_pos)
+            self.canvas.current_strand.end = snapped_pos
             self.canvas.current_strand.update_shape()
+            self.target_pos = snapped_pos
+            self.last_snapped_pos = snapped_pos
 
             if not self.move_timer.isActive():
                 self.move_timer.start(16)
@@ -608,7 +613,7 @@ class AttachMode(QObject):
         new_x = self.last_snapped_pos.x() + step_x
         new_y = self.last_snapped_pos.y() + step_y
 
-        new_pos = self.canvas.snap_to_grid(QPointF(new_x, new_y))
+        new_pos = self.canvas.snap_to_grid_for_attach(QPointF(new_x, new_y))
 
         if new_pos != self.last_snapped_pos:
             # Update the strand position and cursor
@@ -652,7 +657,7 @@ class AttachMode(QObject):
         # Calculate the new end position
         new_x = self.start_pos.x() + new_length * math.cos(math.radians(rounded_angle))
         new_y = self.start_pos.y() + new_length * math.sin(math.radians(rounded_angle))
-        new_end = self.canvas.snap_to_grid(QPointF(new_x, new_y))
+        new_end = self.canvas.snap_to_grid_for_attach(QPointF(new_x, new_y))
 
         # Update the strand
         self.canvas.current_strand.end = new_end
@@ -905,7 +910,7 @@ class AttachMode(QObject):
         # Setup canvas and position
         self.canvas.current_strand = new_strand
         self.is_attaching = True
-        self.last_snapped_pos = self.canvas.snap_to_grid(attach_point)
+        self.last_snapped_pos = self.canvas.snap_to_grid_for_attach(attach_point)
         self.target_pos = self.last_snapped_pos
         # Reset the update rect for the new attachment
         self.last_update_rect = None

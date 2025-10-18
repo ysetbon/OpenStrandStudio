@@ -38,6 +38,25 @@ def _apply_deletion_rects(path: QPainterPath, deletion_rects: List) -> QPainterP
     return result_path
 
 
+def _union_paths(*paths: QPainterPath) -> QPainterPath:
+    """
+    Build a new QPainterPath that covers the union of the supplied paths.
+
+    Using a fresh container avoids relying on implicit sharing, which can
+    otherwise leave cached references pointing at stale geometry when callers
+    expect an in-place update.
+    """
+    combined = QPainterPath()
+    for path in paths:
+        if not isinstance(path, QPainterPath) or path.isEmpty():
+            continue
+        combined.addPath(path)
+    if combined.isEmpty():
+        return QPainterPath()
+    combined.setFillRule(Qt.WindingFill)
+    return combined.simplified()
+
+
 def draw_mask_strand_shadow(
     painter,
     first_path: QPainterPath,
@@ -578,7 +597,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                     oc_center = other_strand.start if oc_idx == 0 else other_strand.end
                                     oc_path_tmp = QPainterPath()
                                     oc_path_tmp.addEllipse(oc_center, (base_circle_radius_o / 2) , (base_circle_radius_o / 2) )
-                                    other_stroke_path = other_stroke_path.united(oc_path_tmp)
+                                    other_stroke_path = _union_paths(other_stroke_path, oc_path_tmp)
                             except Exception as oc_e:
                                 # logging.error(f"Error adding circle geometry from {other_layer} to stroke path for circle-shadow calculation: {oc_e}")
                                 pass
@@ -588,7 +607,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                         # Only add circle shadows if not using arrow shadow
                         if not (getattr(strand, 'full_arrow_visible', False) and getattr(strand, 'arrow_casts_shadow', False)):
                             circle_shadow_path = build_shadow_circle_geometry(strand, max_blur_radius+2)
-                            intersection = intersection.united(circle_shadow_path)
+                            intersection = _union_paths(intersection, circle_shadow_path)
                         intersection = intersection.intersected(other_stroke_path)
                         # logging.info(f"Intersection path for {this_layer} onto {other_layer}: bounds={intersection.boundingRect()}, elements={intersection.elementCount()}")
                         
@@ -666,7 +685,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                                     
                                                     # Unite the original mask with its extended border to create
                                                     # the complete shadow blocking area
-                                                    subtraction_path = base_mask_path.united(extended_mask)
+                                                    subtraction_path = _union_paths(base_mask_path, extended_mask)
                                                     
                                                     pass
                                                 else:
@@ -706,7 +725,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                                     stroker.setJoinStyle(Qt.MiterJoin)
                                                     stroker.setCapStyle(Qt.FlatCap)
                                                     extended_intersection = stroker.createStroke(base_intersection)
-                                                    subtraction_path = base_intersection.united(extended_intersection)
+                                                    subtraction_path = _union_paths(base_intersection, extended_intersection)
                                                     
                                                 pass
 
@@ -764,9 +783,9 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                             # shadow effect only renders where an underlying strand exists.
                             # Include the underlying strand area in the clip path so the shadow can't draw where there is no strand
                             if clip_path.isEmpty():
-                                clip_path = other_stroke_path
+                                clip_path = QPainterPath(other_stroke_path)
                             else:
-                                clip_path = clip_path.united(other_stroke_path)
+                                clip_path = _union_paths(clip_path, other_stroke_path)
                             
                             # Add this intersection to the list of individual shadows
                             # This preserves each shadow intersection separately to avoid issues with united()
@@ -824,7 +843,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
             
             # Initialize shadow_paths and add shadow_path to all_shadow_paths
             all_shadow_paths = [shadow_path]
-            clip_path = shadow_path  # In fallback, clip to the simple shadow path
+            clip_path = QPainterPath(shadow_path)  # In fallback, clip to the simple shadow path
     # ------------------------------------------------------------------
     # Legacy circle-shadow branch disabled – visible circles are now part
     # of the main `shadow_path` via `build_rendered_geometry`, so a
@@ -917,7 +936,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                             oc_center = other_strand.start if oc_idx == 0 else other_strand.end
                             oc_path_tmp = QPainterPath()
                             oc_path_tmp.addEllipse(oc_center, (base_circle_radius_o / 2) - 1, (base_circle_radius_o / 2) - 1)
-                            other_stroke_path = other_stroke_path.united(oc_path_tmp)
+                            other_stroke_path = _union_paths(other_stroke_path, oc_path_tmp)
                     except Exception as oc_e:
                         pass
             except Exception as e:
@@ -1047,9 +1066,9 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                     individual_shadow_paths.append(intersection)
                     # Expand clip path as well
                     if clip_path.isEmpty():
-                        clip_path = other_stroke_path
+                        clip_path = QPainterPath(other_stroke_path)
                     else:
-                        clip_path = clip_path.united(other_stroke_path)
+                        clip_path = _union_paths(clip_path, other_stroke_path)
                     pass
 
     elif circle_shadow_paths:
@@ -1064,9 +1083,9 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
             # Add to individual shadow paths for consistent handling
             individual_shadow_paths.append(final_circle_path)
             if clip_path.isEmpty():
-                clip_path = final_circle_path
+                clip_path = QPainterPath(final_circle_path)
             else:
-                clip_path = clip_path.united(final_circle_path)
+                clip_path = _union_paths(clip_path, final_circle_path)
             pass
 
     # ----------------------------------------------------------
@@ -1094,17 +1113,14 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         # Combine all paths into one for the fading effect
         # (all_shadow_paths should contain only one path now, either combined intersections or fallback)
         if len(all_shadow_paths) == 1:
-            total_shadow_path = all_shadow_paths[0]
+            total_shadow_path = QPainterPath(all_shadow_paths[0])
         elif len(all_shadow_paths) > 1:
              # This case might happen if the layer manager logic failed but fallback succeeded partially
              # Let's unite them just in case, though ideally it should be one path.
              # logging.warning(f"Expected one shadow path but found {len(all_shadow_paths)}, uniting them.")
              total_shadow_path = QPainterPath()
              for p in all_shadow_paths:
-                 if total_shadow_path.isEmpty():
-                     total_shadow_path = p
-                 else:
-                     total_shadow_path = total_shadow_path.united(p)
+                 total_shadow_path = _union_paths(total_shadow_path, p)
         else:
              # This means all_shadow_paths was empty, log and return
              # logging.warning(f"No shadow paths in all_shadow_paths for strand {strand.layer_name}, skipping draw.")
@@ -1113,7 +1129,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         # Only add circle shadows if not using arrow shadow
         if not (getattr(strand, 'full_arrow_visible', False) and getattr(strand, 'arrow_casts_shadow', False)):
             circle_shadow_path = build_shadow_circle_geometry(strand, max_blur_radius)
-            total_shadow_path = total_shadow_path.united(circle_shadow_path)
+            total_shadow_path = _union_paths(total_shadow_path, circle_shadow_path)
 
         # Reduced high-frequency logging for performance during moves
         # logging.info(f"Drawing faded shadow for strand {strand.layer_name}")
@@ -1437,18 +1453,18 @@ def build_rendered_geometry(strand):
                             
                             # Get half circle by subtracting mask from full circle
                             half_circle = full_circle.subtracted(mask_rect)
-                            result_path = result_path.united(half_circle)
+                            result_path = _union_paths(result_path, half_circle)
                         else:
                             # Regular full circle for non-AttachedStrand
                             circle_path = QPainterPath()
                             circle_path.addEllipse(centre, radius, radius)
-                            result_path = result_path.united(circle_path)
+                            result_path = _union_paths(result_path, circle_path)
 
         # Unite arrow path with result if we have one (for visible strands)
         if getattr(strand, 'full_arrow_visible', False) and not getattr(strand, 'is_hidden', False):
             arrow_path = strand.get_arrow_path(for_receiving_shadows=True) if hasattr(strand, 'get_arrow_path') else QPainterPath()
             if not arrow_path.isEmpty():
-                result_path = result_path.united(arrow_path)
+                result_path = _union_paths(result_path, arrow_path)
 
         return result_path
     except Exception as e:
@@ -1546,7 +1562,7 @@ def build_shadow_circle_geometry(strand, fixed_shadow_extension=30.0):
                 # Regular full circle for other cases
                 single_circle = QPainterPath()
                 single_circle.addEllipse(centre, radius, radius)
-                circle_path = circle_path.united(single_circle)
+                circle_path = _union_paths(circle_path, single_circle)
             
         return circle_path
     except Exception as e:
@@ -1605,7 +1621,7 @@ def build_shadow_geometry(strand, fixed_shadow_extension=30.0, include_circles=T
                     centre = strand.start if idx == 0 else strand.end
                     circle_path = QPainterPath()
                     circle_path.addEllipse(centre, radius, radius)
-                    result_path = result_path.united(circle_path)
+                    result_path = _union_paths(result_path, circle_path)
 
         return result_path
     except Exception as e:
@@ -1655,12 +1671,10 @@ def get_shadow_blocker_path(mask_strand, blur_px):
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
         extended = stroker.createStroke(base_path)
-        blocker = base_path.united(extended)
+        blocker = _union_paths(base_path, extended)
 
         cache[key] = blocker
         return blocker
     except Exception:
         # On any error just return an empty path so we never block painting.
         return QPainterPath()
-
-

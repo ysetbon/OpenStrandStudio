@@ -226,8 +226,8 @@ def draw_mask_strand_shadow(
         pen_color = QColor(base_color.red(), base_color.green(), base_color.blue(), max(0, min(255, int(current_alpha))))
         pen = QPen(pen_color)
         pen.setWidthF(current_width)
-        pen.setCapStyle(Qt.FlatCap)  # Use FlatCap/MiterJoin for sharper edges
-        pen.setJoinStyle(Qt.MiterJoin)
+        pen.setCapStyle(Qt.FlatCap)  # Keep ends squared off
+        pen.setJoinStyle(Qt.RoundJoin)
 
         painter.setPen(pen)
         painter.strokePath(shading_path, pen)
@@ -246,7 +246,7 @@ def draw_mask_strand_shadow(
         # Create a stroker with half the width of the first strand.
         stroker = QPainterPathStroker()
         stroker.setWidth(first_strand_width + first_strand_stroke_width * 2)
-        stroker.setJoinStyle(Qt.MiterJoin)
+        stroker.setJoinStyle(Qt.RoundJoin)
         stroker.setCapStyle(Qt.FlatCap)
         
         # Create the thinner stroke from the original center-line path.
@@ -860,7 +860,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     try:
         body_stroker = QPainterPathStroker()
         body_stroker.setWidth(strand.width + strand.stroke_width * 2)
-        body_stroker.setJoinStyle(Qt.MiterJoin)
+        body_stroker.setJoinStyle(Qt.RoundJoin)
         body_stroker.setCapStyle(Qt.FlatCap)
         strand_body_path = body_stroker.createStroke(path)
     except Exception as e:
@@ -1183,8 +1183,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                     pen_color = QColor(base_color.red(), base_color.green(), base_color.blue(), max(0, min(255, int(current_alpha))))
                     pen = QPen(pen_color)
                     pen.setWidthF(current_width)
-                    pen.setCapStyle(Qt.FlatCap) # Use FlatCap/MiterJoin for sharper edges
-                    pen.setJoinStyle(Qt.MiterJoin)
+                    pen.setCapStyle(Qt.FlatCap)  # Keep ends squared off
+                    pen.setJoinStyle(Qt.RoundJoin)
 
                     painter.setPen(pen)
                     painter.strokePath(total_shadow_path, pen)  # <-- actual drawing: main shadow strokes for normal strands

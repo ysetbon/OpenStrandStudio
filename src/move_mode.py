@@ -2271,21 +2271,12 @@ class MoveMode:
                 
                 # If both control points are at start (initial triangle state), auto-adjust them
                 if cp1_at_start and cp2_at_start:
-                    # Position control_point2 at 0.1 units before the end point along the tangent direction
-                    # Calculate the tangent direction from start to end
-                    dx = s.end.x() - s.start.x()
-                    dy = s.end.y() - s.start.y()
-                    length = math.hypot(dx, dy)
+                    # Position control_point2 exactly at the end point
+                    # This makes it sync with the endpoint (passive mode)
+                    s.control_point2 = QPointF(s.end.x(), s.end.y())
 
-                    if length > 1e-6:
-                        # Normalize the direction vector
-                        dir_x = dx / length
-                        dir_y = dy / length
-                        # Move 0.1 units backward from end along the tangent
-                        s.control_point2 = QPointF(s.end.x() - dir_x * 0.01, s.end.y() - dir_y * 0.1)
-                    else:
-                        # Fallback: if start and end are too close, just use end point
-                        s.control_point2 = QPointF(s.end.x(), s.end.y())
+                    # Mark control_point2 as not activated (passive mode - will sync with endpoint)
+                    s.control_point2_activated = False
                     
                     # If third control point (rectangle) is enabled and active, move it to center
                     if (hasattr(self.canvas, 'enable_third_control_point') and 
@@ -2617,7 +2608,18 @@ class MoveMode:
             # Move the second control point
             self.affected_strand.control_point2 = new_pos
 
-            
+            # Check if control_point2 is being moved away from or back to the endpoint
+            if hasattr(self.affected_strand, 'control_point2_activated'):
+                cp2_at_end = (abs(new_pos.x() - self.affected_strand.end.x()) < 1.0 and
+                             abs(new_pos.y() - self.affected_strand.end.y()) < 1.0)
+
+                if cp2_at_end:
+                    # If control_point2 is moved back to endpoint, deactivate it (return to passive mode)
+                    self.affected_strand.control_point2_activated = False
+                else:
+                    # If control_point2 is moved away from endpoint, activate it (make it independent)
+                    self.affected_strand.control_point2_activated = True
+
             # Don't recalculate the center control point, just update shape
             self.affected_strand.update_shape()
             self.affected_strand.update_side_line()  # Call again to ensure it's updated
@@ -2717,6 +2719,13 @@ class MoveMode:
                 else:  # self.moving_side == 1
                     self.affected_strand.end = new_pos
 
+                    # If moving the endpoint and control_point2 is not activated (passive mode),
+                    # update control_point2 to follow the endpoint
+                    if hasattr(self.affected_strand, 'control_point2_activated'):
+                        if not self.affected_strand.control_point2_activated:
+                            # Auto-sync control_point2 to the new endpoint position
+                            self.affected_strand.control_point2 = QPointF(new_pos.x(), new_pos.y())
+
                 # Update the strand shape to reflect the change
                 self.affected_strand.update_shape()
                 self.affected_strand.update_side_line()
@@ -2744,7 +2753,14 @@ class MoveMode:
                             moving_strand.start = new_pos
                         if move_end:
                             moving_strand.end = new_pos
-                        
+
+                            # If moving the endpoint and control_point2 is not activated (passive mode),
+                            # update control_point2 to follow the endpoint
+                            if hasattr(moving_strand, 'control_point2_activated'):
+                                if not moving_strand.control_point2_activated:
+                                    # Auto-sync control_point2 to the new endpoint position
+                                    moving_strand.control_point2 = QPointF(new_pos.x(), new_pos.y())
+
                         moving_strand.update_shape()
                         moving_strand.update_side_line()
                 # --- End fixed movement logic ---

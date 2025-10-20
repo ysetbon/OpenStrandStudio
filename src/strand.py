@@ -65,6 +65,11 @@ class Strand:
         # Flag to track if the triangle control point has been moved
         self.triangle_has_moved = False
 
+        # Flag to track if control_point2 (end control point) has been manually activated
+        # When False, control_point2 auto-syncs with the endpoint
+        # When True, control_point2 is independent and doesn't sync
+        self.control_point2_activated = False
+
         # Add canvas reference
         self._canvas = None
         
@@ -1664,9 +1669,9 @@ class Strand:
             tangent_start = self.control_point1 - self.start
             if tangent_start.manhattanLength() < 0.001:
                 # Control point coincides with start - need to look ahead on the curve
-                # Use the actual curve tangent at a small t value to get proper direction
+                # Use the actual curve tangent at t=0.0001 to get proper direction
                 # This gives us the true curve direction even when control points are at defaults
-                t_lookahead = 0.01  # Look slightly ahead on the curve
+                t_lookahead = 0.0001  # Look very close to the start for accurate tangent
                 point_ahead = self.point_at(t_lookahead)
                 tangent_start = point_ahead - self.start
 
@@ -1681,8 +1686,9 @@ class Strand:
             tangent_end = self.end - self.control_point2
             if tangent_end.manhattanLength() < 0.001:
                 # Control point coincides with end - need to look back on the curve
-                # Use the actual curve tangent at a small t value from the end
-                t_lookback = 0.99  # Look slightly back from the end
+                # Use the actual curve tangent at t=0.9999 to get proper direction
+                # This is especially important when control_point2 is exactly at endpoint
+                t_lookback = 0.9999  # Look very close to the end for accurate tangent
                 point_before = self.point_at(t_lookback)
                 tangent_end = self.end - point_before
 
@@ -1893,7 +1899,7 @@ class Strand:
                 painter.save()
                 painter.setPen(dash_pen_hidden_ext)
                 if getattr(self, 'start_extension_visible', False) and not shadow_only_mode:
-                    tangent_hidden_start_ext = self.calculate_cubic_tangent(0.0)
+                    tangent_hidden_start_ext = self.calculate_cubic_tangent(0.0001)
                     length_hidden_start_ext = math.hypot(tangent_hidden_start_ext.x(), tangent_hidden_start_ext.y())
                     if length_hidden_start_ext:
                         unit_hidden_start_ext = QPointF(tangent_hidden_start_ext.x()/length_hidden_start_ext, tangent_hidden_start_ext.y()/length_hidden_start_ext)
@@ -1902,7 +1908,7 @@ class Strand:
                         end_pt_hidden_start_ext = QPointF(raw_end_hidden_start_ext.x() + unit_hidden_start_ext.x()*dash_gap_hidden, raw_end_hidden_start_ext.y() + unit_hidden_start_ext.y()*dash_gap_hidden)
                         painter.drawLine(start_pt_hidden_start_ext, end_pt_hidden_start_ext)
                 if getattr(self, 'end_extension_visible', False) and not shadow_only_mode:
-                    tangent_hidden_end_ext = self.calculate_cubic_tangent(1.0)
+                    tangent_hidden_end_ext = self.calculate_cubic_tangent(0.9999)
                     length_hidden_end_ext = math.hypot(tangent_hidden_end_ext.x(), tangent_hidden_end_ext.y())
                     if length_hidden_end_ext:
                         unit_hidden_end_ext = QPointF(tangent_hidden_end_ext.x()/length_hidden_end_ext, tangent_hidden_end_ext.y()/length_hidden_end_ext)
@@ -1929,7 +1935,7 @@ class Strand:
             if getattr(self, 'start_arrow_visible', False) or getattr(self, 'end_arrow_visible', False):
                 painter.save()
                 if getattr(self, 'start_arrow_visible', False):
-                    tangent_s_hidden_indiv = self.calculate_cubic_tangent(0.0)
+                    tangent_s_hidden_indiv = self.calculate_cubic_tangent(0.0001)
                     len_s_hidden_indiv = math.hypot(tangent_s_hidden_indiv.x(), tangent_s_hidden_indiv.y())
                     if len_s_hidden_indiv:
                         unit_s_hidden_indiv = QPointF(tangent_s_hidden_indiv.x() / len_s_hidden_indiv, tangent_s_hidden_indiv.y() / len_s_hidden_indiv)
@@ -1954,7 +1960,7 @@ class Strand:
                         painter.setBrush(Qt.NoBrush)
                         painter.drawPolygon(arrow_poly_s_hidden_indiv)
                 if getattr(self, 'end_arrow_visible', False):
-                    tangent_e_hidden_indiv = self.calculate_cubic_tangent(1.0)
+                    tangent_e_hidden_indiv = self.calculate_cubic_tangent(0.9999)
                     len_e_hidden_indiv = math.hypot(tangent_e_hidden_indiv.x(), tangent_e_hidden_indiv.y())
                     if len_e_hidden_indiv:
                         unit_e_hidden_indiv = QPointF(tangent_e_hidden_indiv.x() / len_e_hidden_indiv, tangent_e_hidden_indiv.y() / len_e_hidden_indiv)
@@ -2143,8 +2149,8 @@ class Strand:
                 highlight_half_width = black_half_width + (highlight_pen_thickness / 2)
                 
                 # Calculate angles of tangents
-                tangent_start = self.calculate_cubic_tangent(0.0)
-                tangent_end = self.calculate_cubic_tangent(1.0)
+                tangent_start = self.calculate_cubic_tangent(0.0001)
+                tangent_end = self.calculate_cubic_tangent(0.9999)
                 
                 # Handle zero-length tangent vectors
                 if tangent_start.manhattanLength() == 0:
@@ -2261,7 +2267,7 @@ class Strand:
             painter.setPen(dash_pen)
         # Start extension with gap offset at both ends
         if getattr(self, 'start_extension_visible', False) and not shadow_only_mode:
-            tangent = self.calculate_cubic_tangent(0.0)
+            tangent = self.calculate_cubic_tangent(0.0001)
             length = math.hypot(tangent.x(), tangent.y())
             if length:
                 unit = QPointF(tangent.x()/length, tangent.y()/length)
@@ -2271,7 +2277,7 @@ class Strand:
                 painter.drawLine(start_pt, end_pt)
         # End extension with gap offset at both ends
         if getattr(self, 'end_extension_visible', False) and not shadow_only_mode:
-            tangent_end = self.calculate_cubic_tangent(1.0)
+            tangent_end = self.calculate_cubic_tangent(0.9999)
             length_end = math.hypot(tangent_end.x(), tangent_end.y())
             if length_end:
                 unit = QPointF(tangent_end.x()/length_end, tangent_end.y()/length_end)
@@ -2299,7 +2305,7 @@ class Strand:
 
         # Draw start arrow if visible (gap → shaft → head) - skip in shadow-only mode
         if getattr(self, 'start_arrow_visible', False) and not shadow_only_mode:
-            tangent_start = self.calculate_cubic_tangent(0.0)
+            tangent_start = self.calculate_cubic_tangent(0.0001)
             len_start = math.hypot(tangent_start.x(), tangent_start.y())
             if len_start:
                 unit = QPointF(tangent_start.x() / len_start, tangent_start.y() / len_start)
@@ -2343,7 +2349,7 @@ class Strand:
 
         # Draw end arrow if visible (gap → shaft → head) - skip in shadow-only mode
         if getattr(self, 'end_arrow_visible', False) and not shadow_only_mode:
-            tangent_end = self.calculate_cubic_tangent(1.0)
+            tangent_end = self.calculate_cubic_tangent(0.9999)
             len_end = math.hypot(tangent_end.x(), tangent_end.y())
             if len_end:
                 unit = QPointF(tangent_end.x() / len_end, tangent_end.y() / len_end)
@@ -2418,7 +2424,7 @@ class Strand:
         if (self.has_circles[0]
             and self.start_circle_stroke_color.alpha() > 0
             and any(isinstance(child, AttachedStrand) and child.start == self.start and not getattr(child, 'shadow_only', False) for child in self.attached_strands)):
-            tangent = self.calculate_cubic_tangent(0.0)
+            tangent = self.calculate_cubic_tangent(0.0001)
             angle = math.atan2(tangent.y(), tangent.x())
             total_d = self.width + self.stroke_width * 2
             radius = total_d / 2
@@ -2461,7 +2467,7 @@ class Strand:
         if (self.has_circles[1]
             and self.end_circle_stroke_color.alpha() > 0
             and any(isinstance(child, AttachedStrand) and child.start == self.end and not getattr(child, 'shadow_only', False) for child in self.attached_strands)):
-            tangent = self.calculate_cubic_tangent(1.0)
+            tangent = self.calculate_cubic_tangent(0.9999)
             angle = math.atan2(tangent.y(), tangent.x())
             total_d = self.width + self.stroke_width * 2
             radius = total_d / 2
@@ -2504,7 +2510,7 @@ class Strand:
         # Draw semi-circle on top when start connection is closed (only if visible)
         if (hasattr(self, 'closed_connections') and self.closed_connections[0]
             and self.start_circle_stroke_color.alpha() > 0 and not shadow_only_mode):
-            tangent = self.calculate_cubic_tangent(0.0)
+            tangent = self.calculate_cubic_tangent(0.0001)
             angle = math.atan2(tangent.y(), tangent.x())
             total_d = self.width + self.stroke_width * 2
             radius = total_d / 2
@@ -2551,7 +2557,7 @@ class Strand:
         # Draw semi-circle on top when end connection is closed (only if visible)
         if (hasattr(self, 'closed_connections') and self.closed_connections[1]
             and self.end_circle_stroke_color.alpha() > 0 and not shadow_only_mode):
-            tangent = self.calculate_cubic_tangent(1.0)
+            tangent = self.calculate_cubic_tangent(0.9999)
             angle = math.atan2(tangent.y(), tangent.x())
             total_d = self.width + self.stroke_width * 2
             radius = total_d / 2
@@ -2801,10 +2807,10 @@ class Strand:
                 painter.save()
                 painter.setPen(dash_pen_hidden_ext)
                 if getattr(self, 'start_extension_visible', False):
-                    tangent_hidden_start_ext = self.calculate_cubic_tangent(0.0); length_hidden_start_ext = math.hypot(tangent_hidden_start_ext.x(), tangent_hidden_start_ext.y())
+                    tangent_hidden_start_ext = self.calculate_cubic_tangent(0.0001); length_hidden_start_ext = math.hypot(tangent_hidden_start_ext.x(), tangent_hidden_start_ext.y())
                     if length_hidden_start_ext: unit_hidden_start_ext = QPointF(tangent_hidden_start_ext.x()/length_hidden_start_ext, tangent_hidden_start_ext.y()/length_hidden_start_ext); raw_end_hidden_start_ext = QPointF(self.start.x() - unit_hidden_start_ext.x()*ext_len_hidden, self.start.y() - unit_hidden_start_ext.y()*ext_len_hidden); start_pt_hidden_start_ext = QPointF(self.start.x() + unit_hidden_start_ext.x()*dash_gap_hidden, self.start.y() + unit_hidden_start_ext.y()*dash_gap_hidden); end_pt_hidden_start_ext = QPointF(raw_end_hidden_start_ext.x() + unit_hidden_start_ext.x()*dash_gap_hidden, raw_end_hidden_start_ext.y() + unit_hidden_start_ext.y()*dash_gap_hidden); painter.drawLine(start_pt_hidden_start_ext, end_pt_hidden_start_ext)
                 if getattr(self, 'end_extension_visible', False):
-                    tangent_hidden_end_ext = self.calculate_cubic_tangent(1.0); length_hidden_end_ext = math.hypot(tangent_hidden_end_ext.x(), tangent_hidden_end_ext.y())
+                    tangent_hidden_end_ext = self.calculate_cubic_tangent(0.9999); length_hidden_end_ext = math.hypot(tangent_hidden_end_ext.x(), tangent_hidden_end_ext.y())
                     if length_hidden_end_ext: unit_end_hidden_ext = QPointF(tangent_hidden_end_ext.x()/length_hidden_end_ext, tangent_hidden_end_ext.y()/length_hidden_end_ext); raw_end_hidden_end_ext = QPointF(self.end.x() + unit_end_hidden_ext.x()*ext_len_hidden, self.end.y() + unit_end_hidden_ext.y()*ext_len_hidden); start_pt_hidden_end_ext = QPointF(self.end.x() - unit_end_hidden_ext.x()*dash_gap_hidden, self.end.y() - unit_end_hidden_ext.y()*dash_gap_hidden); end_pt_hidden_end_ext = QPointF(raw_end_hidden_end_ext.x() - unit_end_hidden_ext.x()*dash_gap_hidden, raw_end_hidden_end_ext.y() - unit_end_hidden_ext.y()*dash_gap_hidden); painter.drawLine(start_pt_hidden_end_ext, end_pt_hidden_end_ext)
                 painter.restore()
 
@@ -2828,7 +2834,7 @@ class Strand:
                 # Draw start arrow if visible
                 if getattr(self, 'start_arrow_visible', False):
                     # Calculate tangent and unit vector
-                    tangent_s = self.calculate_cubic_tangent(0.0)
+                    tangent_s = self.calculate_cubic_tangent(0.0001)
                     len_s = math.hypot(tangent_s.x(), tangent_s.y())
                     if len_s:
                         unit_s = QPointF(tangent_s.x() / len_s, tangent_s.y() / len_s)
@@ -2879,7 +2885,7 @@ class Strand:
                 # Draw end arrow if visible
                 if getattr(self, 'end_arrow_visible', False):
                     # Calculate tangent and unit vector
-                    tangent_e = self.calculate_cubic_tangent(1.0)
+                    tangent_e = self.calculate_cubic_tangent(0.9999)
                     len_e = math.hypot(tangent_e.x(), tangent_e.y())
                     if len_e:
                         unit_e = QPointF(tangent_e.x() / len_e, tangent_e.y() / len_e)
@@ -3040,8 +3046,8 @@ class Strand:
             highlight_half_width = black_half_width + (highlight_pen_thickness / 2)
 
             # Calculate angles of tangents
-            tangent_start = self.calculate_cubic_tangent(0.0)
-            tangent_end = self.calculate_cubic_tangent(1.0)
+            tangent_start = self.calculate_cubic_tangent(0.0001)
+            tangent_end = self.calculate_cubic_tangent(0.9999)
             
             # Handle zero-length tangent vectors
             if tangent_start.manhattanLength() == 0:
@@ -3107,7 +3113,7 @@ class Strand:
         painter.setPen(dash_pen)
         # Draw start extension with gap offsets
         if getattr(self, 'start_extension_visible', False):
-            tangent = self.calculate_cubic_tangent(0.0)
+            tangent = self.calculate_cubic_tangent(0.0001)
             length = math.hypot(tangent.x(), tangent.y())
             if length:
                 unit = QPointF(tangent.x()/length, tangent.y()/length)
@@ -3117,7 +3123,7 @@ class Strand:
                 painter.drawLine(start_pt, end_pt)
         # Draw end extension with gap offsets
         if getattr(self, 'end_extension_visible', False):
-            tangent_end = self.calculate_cubic_tangent(1.0)
+            tangent_end = self.calculate_cubic_tangent(0.9999)
             length_end = math.hypot(tangent_end.x(), tangent_end.y())
             if length_end:
                 unit_end = QPointF(tangent_end.x()/length_end, tangent_end.y()/length_end)
@@ -3144,7 +3150,7 @@ class Strand:
 
         # Draw start arrow if visible (gap → shaft → head)
         if getattr(self, 'start_arrow_visible', False):
-            tangent_start = self.calculate_cubic_tangent(0.0)
+            tangent_start = self.calculate_cubic_tangent(0.0001)
             len_start = math.hypot(tangent_start.x(), tangent_start.y())
             if len_start:
                 unit = QPointF(tangent_start.x() / len_start, tangent_start.y() / len_start)
@@ -3182,7 +3188,7 @@ class Strand:
 
         # Draw end arrow if visible (gap → shaft → head)
         if getattr(self, 'end_arrow_visible', False):
-            tangent_end = self.calculate_cubic_tangent(1.0)
+            tangent_end = self.calculate_cubic_tangent(0.9999)
             len_end = math.hypot(tangent_end.x(), tangent_end.y())
             if len_end:
                 unit = QPointF(tangent_end.x() / len_end, tangent_end.y() / len_end)
@@ -3344,7 +3350,7 @@ class Strand:
 
             # Draw End Circle (if not skipped)
             if not skip_end_circle:
-                tangent_end = self.calculate_cubic_tangent(1.0)
+                tangent_end = self.calculate_cubic_tangent(0.9999)
                 angle_end = math.atan2(tangent_end.y(), tangent_end.x())
 
                 # Check if this is a closed connection (should draw full circle)
@@ -3469,7 +3475,7 @@ class Strand:
 
             # Draw End Circle (if not skipped)
             if not skip_end_circle:
-                tangent_end = self.calculate_cubic_tangent(1.0)
+                tangent_end = self.calculate_cubic_tangent(0.9999)
                 angle_end = math.atan2(tangent_end.y(), tangent_end.x())
 
                 # Check if this is a closed connection (should draw full circle)
@@ -3532,7 +3538,7 @@ class Strand:
         # --- NEW: Draw semi-circles on top for closed connections (direct drawing) ---
         # Draw semi-circle on top when start connection is closed
         if hasattr(self, 'closed_connections') and self.closed_connections[0]:
-            tangent = self.calculate_cubic_tangent(0.0)
+            tangent = self.calculate_cubic_tangent(0.0001)
             angle = math.atan2(tangent.y(), tangent.x())
             total_d = self.width + self.stroke_width * 2
             radius = total_d / 2
@@ -3575,7 +3581,7 @@ class Strand:
 
         # Draw semi-circle on top when end connection is closed
         if hasattr(self, 'closed_connections') and self.closed_connections[1]:
-            tangent = self.calculate_cubic_tangent(1.0)
+            tangent = self.calculate_cubic_tangent(0.9999)
             angle = math.atan2(tangent.y(), tangent.x())
             total_d = self.width + self.stroke_width * 2
             radius = total_d / 2
@@ -3621,7 +3627,7 @@ class Strand:
         # (This would use the same logic as in the original draw method, but directly to painter)
         # Start endpoint half-circle
         if self.has_circles[0] and any(isinstance(child, AttachedStrand) and child.start == self.start for child in self.attached_strands):
-            tangent = self.calculate_cubic_tangent(0.0)
+            tangent = self.calculate_cubic_tangent(0.0001)
             angle = math.atan2(tangent.y(), tangent.x())
             total_d = self.width + self.stroke_width * 2
             radius = total_d / 2
@@ -3662,7 +3668,7 @@ class Strand:
 
         # End endpoint half-circle (only if circle is enabled and child is not in shadow-only mode)
         if self.has_circles[1] and any(isinstance(child, AttachedStrand) and child.start == self.end and not getattr(child, 'shadow_only', False) for child in self.attached_strands):
-            tangent = self.calculate_cubic_tangent(1.0)
+            tangent = self.calculate_cubic_tangent(0.9999)
             angle = math.atan2(tangent.y(), tangent.x())
             total_d = self.width + self.stroke_width * 2
             radius = total_d / 2

@@ -1619,8 +1619,22 @@ class Strand:
             )
 
             # Handle zero-length tangent vector
-            if tangent.manhattanLength() == 0:
-                tangent = p3 - p0
+            if tangent.manhattanLength() < 0.0001:
+                # Try to get tangent from actual curve points
+                if t < 0.5:
+                    # For start tangent, use t=0 and t=0.01
+                    point_a = self.point_at(0.0)
+                    point_b = self.point_at(0.01)
+                    tangent = point_b - point_a
+                else:
+                    # For end tangent, use t=0.99 and t=1.0
+                    point_a = self.point_at(0.99)
+                    point_b = self.point_at(1.0)
+                    tangent = point_b - point_a
+
+                # If still zero, fallback to end - start
+                if tangent.manhattanLength() < 0.0001:
+                    tangent = p3 - p0
 
         return tangent
 

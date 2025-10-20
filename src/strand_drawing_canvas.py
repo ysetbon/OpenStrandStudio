@@ -2234,7 +2234,7 @@ class StrandDrawingCanvas(QWidget):
                                 )
                             
                             # Draw with red color for non-selected rectangles
-                            square_color = QColor(255, 0, 0, 100)  # Red with 50% transparency
+                            square_color = QColor(255, 0, 0, 38)  # Red with 85% transparency
                             painter.setBrush(QBrush(square_color))
                             painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
                             
@@ -2309,7 +2309,7 @@ class StrandDrawingCanvas(QWidget):
                                 cp2_overlaps_yellow = yellow_rectangle and cp2_rect and self.rectangles_overlap(cp2_rect, yellow_rectangle)
                                 cp3_overlaps_yellow = yellow_rectangle and cp3_rect and self.rectangles_overlap(cp3_rect, yellow_rectangle)
                                 # Draw with green color for non-selected control points
-                                square_color = QColor(0, 100, 0, 100)  # Green with 50% transparency
+                                square_color = QColor(0, 100, 0, 38)  # Green with 85% transparency
                                 painter.setBrush(QBrush(square_color))
                                 painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
                                 

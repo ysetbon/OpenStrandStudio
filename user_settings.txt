@@ -1,13 +1,13 @@
 Theme: dark
 Language: en
-ShadowColor: 0,0,0,50
+ShadowColor: 0,0,0,150
 DrawOnlyAffectedStrand: false
 EnableThirdControlPoint: false
 EnableSnapToGrid: true
 EnableSnapToGridAttach: true
-ShowMoveHighlights: false
+ShowMoveHighlights: true
 NumSteps: 2
-MaxBlurRadius: 60.0
+MaxBlurRadius: 50.0
 ControlPointBaseFraction: 1.00
 DistanceMultiplier: 2.0
 CurveResponseExponent: 2.0

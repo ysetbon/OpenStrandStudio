@@ -3725,33 +3725,45 @@ class MoveMode:
         # Check if Ctrl key is pressed for forced grid snapping
         from PyQt5.QtWidgets import QApplication
         force_grid_snap = QApplication.keyboardModifiers() & Qt.ControlModifier
-        
+
         # Extra logging for zoom-out debugging
         if hasattr(self.canvas, 'zoom_factor') and self.canvas.zoom_factor < 0.8:
             pass
-        
-        if self.canvas.zoom_factor >= 0.8 or force_grid_snap:
-            # Near normal zoom OR Ctrl held - use full grid snapping
-            snapped_pos = self.canvas.snap_to_grid(adjusted_pos)
-        elif self.canvas.zoom_factor >= 0.5:
-            # Moderately zoomed out - use very gentle snapping
+
+        # Check if user has enabled snap to grid (bias controls should never snap)
+        user_snap_enabled = (hasattr(self.canvas, 'snap_to_grid_enabled') and
+                            self.canvas.snap_to_grid_enabled and
+                            self.moving_side not in ['bias_triangle', 'bias_circle'])
+
+        # At very high zoom out (300% = zoom_factor ~0.33), disable snapping unless Ctrl is pressed
+        if self.canvas.zoom_factor < 0.35 and not force_grid_snap:
+            # Very zoomed out - NO grid snapping
             snapped_pos = adjusted_pos
-            
+        elif (self.canvas.zoom_factor >= 0.8 or force_grid_snap) and user_snap_enabled:
+            # Near normal zoom OR Ctrl held - use full grid snapping if enabled
+            snapped_pos = self.canvas.snap_to_grid(adjusted_pos)
+        elif self.canvas.zoom_factor >= 0.5 and user_snap_enabled:
+            # Moderately zoomed out - use very gentle snapping if enabled
+            snapped_pos = adjusted_pos
+
             # Only snap when EXTREMELY close to grid lines
             grid_size = self.canvas.grid_size
             # Scale threshold with zoom - smaller threshold when zoomed out
             snap_threshold = (grid_size / 8) * self.canvas.zoom_factor
-            
+
             # Check if close to grid lines
             grid_x = round(adjusted_pos.x() / grid_size) * grid_size
             grid_y = round(adjusted_pos.y() / grid_size) * grid_size
-            
+
             # Snap only if very close to grid intersection
-            if (abs(adjusted_pos.x() - grid_x) < snap_threshold and 
+            if (abs(adjusted_pos.x() - grid_x) < snap_threshold and
                 abs(adjusted_pos.y() - grid_y) < snap_threshold):
                 snapped_pos = QPointF(grid_x, grid_y)
+        elif force_grid_snap:
+            # Ctrl held but snap disabled in settings - still allow Ctrl override
+            snapped_pos = self.canvas.snap_to_grid(adjusted_pos)
         else:
-            # Very zoomed out (< 0.5) - NO grid snapping at all
+            # Snap disabled by user or zoom level between 0.35-0.8 without snap enabled
             snapped_pos = adjusted_pos
         
         # Extra logging for zoom-out debugging

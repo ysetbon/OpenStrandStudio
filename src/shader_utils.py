@@ -96,6 +96,7 @@ def draw_mask_strand_shadow(
 
     else:
         # logging.warning("draw_mask_strand_shadow: both paths empty - nothing to draw")
+        painter.restore()  # Restore before returning
         return
 
     # Apply deletion rectangles to intersection_path if provided
@@ -1124,6 +1125,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         else:
              # This means all_shadow_paths was empty, log and return
              # logging.warning(f"No shadow paths in all_shadow_paths for strand {strand.layer_name}, skipping draw.")
+             # NOTE: No painter.restore() needed here because painter.save() happens AFTER this check at line 1145
              return # Nothing to draw
 
         # Only add circle shadows if not using arrow shadow

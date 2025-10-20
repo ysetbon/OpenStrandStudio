@@ -1200,7 +1200,6 @@ class AttachedStrand(Strand):
             # Add the inner circle (fill) to combined fill path
             inner = QPainterPath()
             inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
-            print(f"[draw {strand_label}] END inner circle ADDED: inner elements={inner.elementCount()}")
             combined_fill_path.addPath(inner)
 
             # Add side line to combined fill path (only when stroke is visible)
@@ -1250,8 +1249,6 @@ class AttachedStrand(Strand):
             corner2 = QPointF(self.start.x() + dx_start - dx_tangent, self.start.y() + dy_start - dy_tangent)  # right-back
             corner3 = QPointF(self.start.x() + dx_start + dx_tangent, self.start.y() + dy_start + dy_tangent)  # right-front
             corner4 = QPointF(self.start.x() - dx_start + dx_tangent, self.start.y() - dy_start + dy_tangent)  # left-front
-
-            print(f"[draw {strand_label}] START SIDE COVER RECTANGLE: corners={corner1}, {corner2}, {corner3}, {corner4}")
 
             start_side_line_path = QPainterPath()
             start_side_line_path.moveTo(corner1)
@@ -3086,7 +3083,6 @@ class AttachedStrand(Strand):
             # Sample the curve at a small offset to get better tangent for curved paths
             # This handles cases where control points create sharp curves
             t_sample = 0.001  # Small offset for more accurate direction
-            print(f"[_draw_direct {strand_label_direct}] ADDING START SIDE COVER RECTANGLE")
             # Get a point slightly along the curve to calculate direction
             point_at_start = self.start
             point_at_sample = self.point_at(t_sample)

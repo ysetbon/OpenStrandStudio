@@ -3448,13 +3448,13 @@ class MoveMode:
         # Check if strand is hidden - don't draw C-shape for hidden strands
         if hasattr(strand, 'is_hidden') and strand.is_hidden:
             return
-            
-        # Extra check to prevent drawing when moving control points
-        if self.is_moving_control_point or (self.is_moving and (self.moving_side == 'control_point1' or self.moving_side == 'control_point2')):
-            return
-            
-        painter.save()
-        
+
+        # NOTE: We want to draw C-shapes during control point movement
+        # so the check preventing drawing during control point movement has been removed
+        # (previously had: if self.is_moving_control_point or ... : return)
+
+        painter.save()  # Outer save for C-shape drawing
+
         # Draw the circles at connection points
         for i, has_circle in enumerate(strand.has_circles):
             # --- REPLACE WITH THIS SIMPLE CHECK ---
@@ -3570,10 +3570,10 @@ class MoveMode:
                 # Fallback: don't draw the color segment if color is unavailable
                 pass
             
-            # Restore painter state
+            # Restore painter state (inner restore)
             painter.restore()
-        
-        painter.restore()
+
+        painter.restore()  # Outer restore for C-shape drawing
 
     def build_connection_cache(self):
         """Build a cache of connection relationships for performance optimization."""

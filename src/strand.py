@@ -1736,23 +1736,19 @@ class Strand:
         Calculate the tangent angle at the start point of the Bézier curve.
         Returns the angle in radians.
         """
-        # Get tangent vector at t=0 for cubic bezier
-        # For a cubic Bézier curve, the tangent at t=0 is proportional to P1 - P0
-        tangent = (self.control_point1 - self.start) * 3
-        
-        # If control point coincides with start, use alternative direction
+        # Use calculate_cubic_tangent to handle both 2 and 3 control point cases
+        # This properly samples the curve at t=0.0001 to get accurate tangent
+        # even when control_point1 is exactly at the start
+        tangent = self.calculate_cubic_tangent(0.0001)
+
+        # If tangent is zero (degenerate case), use fallback
         if tangent.manhattanLength() == 0:
-            # Try using the second control point
-            tangent = (self.control_point2 - self.start) * 3
-            
-            # If second control point also coincides, fall back to end point direction
+            tangent = self.end - self.start
+
+            # If still zero (start and end coincide), use default angle
             if tangent.manhattanLength() == 0:
-                tangent = self.end - self.start
-                
-                # If end point also coincides (degenerate case), use default angle
-                if tangent.manhattanLength() == 0:
-                    return 0.0
-        
+                return 0.0
+
         return math.atan2(tangent.y(), tangent.x())
     
     def draw(self, painter, skip_painter_setup=False):

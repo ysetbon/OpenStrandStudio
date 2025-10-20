@@ -3493,7 +3493,9 @@ class MoveMode:
             ring_path = outer_circle.subtracted(inner_circle)
             
             # Get the tangent angle at the connection point
-            tangent = strand.calculate_cubic_tangent(0.0 if i == 0 else 1.0)
+            # Use t=0.0001 for start and t=0.9999 for end to get proper tangents
+            # even when control points coincide with endpoints
+            tangent = strand.calculate_cubic_tangent(0.0001 if i == 0 else 0.9999)
             angle = math.atan2(tangent.y(), tangent.x())
             
             # Create a masking rectangle to create a C-shape

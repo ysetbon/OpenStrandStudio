@@ -1271,7 +1271,8 @@ class AttachedStrand(Strand):
             combined_fill_path.setFillRule(Qt.WindingFill)  # Ensure fill rule persists after adding path
 
         if self.has_circles[1]:
-            t_end = 1.0
+            # Use t=0.9999 to get proper tangent even when control_point2 is at endpoint
+            t_end = 0.9999
             tangent_end = self.calculate_cubic_tangent(t_end)
             if tangent_end.manhattanLength() == 0:
                 tangent_end = self.end - self.start

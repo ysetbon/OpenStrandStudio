@@ -508,15 +508,22 @@ class AttachedStrand(Strand):
         """
         # Use calculate_cubic_tangent to handle both 2 and 3 control point cases
         tangent = self.calculate_cubic_tangent(0.0001)
-        
-        # If tangent is zero (degenerate case), use fallback
+
+        # If tangent is zero (degenerate case), calculate tangent from curve points
         if tangent.manhattanLength() == 0:
-            tangent = self.end - self.start
-            
-            # If still zero (start and end coincide), use default angle
+            # Get two points on the curve: at t=0 (start) and t=0.001
+            point_at_0 = self.point_at(0.0)
+            point_at_0001 = self.point_at(0.0001)
+            tangent = point_at_0001 - point_at_0
+            print(f"Tangent: {tangent.manhattanLength()}")
+            # If still zero, use start to end as last resort
             if tangent.manhattanLength() == 0:
-                return 0.0
-        
+                tangent = self.end - self.start
+
+                # If still zero (start and end coincide), use default angle
+                if tangent.manhattanLength() == 0:
+                    return 0.0
+
         return math.atan2(tangent.y(), tangent.x())
     
 
@@ -1784,8 +1791,22 @@ class AttachedStrand(Strand):
             )
 
             # Handle zero-length tangent vector
-            if tangent.manhattanLength() == 0:
-                tangent = p3 - p0
+            if tangent.manhattanLength() < 0.0001:
+                # Try to get tangent from actual curve points
+                if t < 0.5:
+                    # For start tangent, use t=0 and t=0.01
+                    point_a = self.point_at(0.0)
+                    point_b = self.point_at(0.01)
+                    tangent = point_b - point_a
+                else:
+                    # For end tangent, use t=0.99 and t=1.0
+                    point_a = self.point_at(0.99)
+                    point_b = self.point_at(1.0)
+                    tangent = point_b - point_a
+
+                # If still zero, fallback to end - start
+                if tangent.manhattanLength() < 0.0001:
+                    tangent = p3 - p0
 
         return tangent
 

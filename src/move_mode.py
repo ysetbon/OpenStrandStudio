@@ -1990,16 +1990,21 @@ class MoveMode:
                 self.highlighted_strand = None
                 return True
             elif control_point2_rect.contains(pos):
-                self.start_movement(strand, 'control_point2', control_point2_rect, pos)
-                self.is_moving_control_point = True
-                # Do NOT lock the center when moving end control points
-                # Let it update automatically to stay at the midpoint
-                if hasattr(self.canvas, 'truly_moving_strands'):
-                    self.canvas.truly_moving_strands = [strand]
-                else:
-                    self.canvas.truly_moving_strands = [strand]
-                self.highlighted_strand = None
-                return True
+                # Only allow moving control_point2 if it's shown
+                # control_point2_shown becomes True when control_point1 is moved
+                if hasattr(strand, 'control_point2_shown') and strand.control_point2_shown:
+                    self.start_movement(strand, 'control_point2', control_point2_rect, pos)
+                    self.is_moving_control_point = True
+                    # Do NOT lock the center when moving end control points
+                    # Let it update automatically to stay at the midpoint
+                    if hasattr(self.canvas, 'truly_moving_strands'):
+                        self.canvas.truly_moving_strands = [strand]
+                    else:
+                        self.canvas.truly_moving_strands = [strand]
+                    self.highlighted_strand = None
+                    return True
+                # If control_point2 is not shown, don't allow direct movement
+                # Fall through to check other control points or endpoints
         
         # Check center control point - it can be selected whether locked or not
         # When not locked: selecting it locks it for manual control
@@ -2593,6 +2598,13 @@ class MoveMode:
         if self.moving_side == 'control_point1':
             # Move the first control point
             self.affected_strand.control_point1 = new_pos
+
+            # When control_point1 is moved, show control_point2 to make it available for adjustment
+            # This makes control_point2 visible and clickable, but NOT activated yet
+            # It will only become activated (independent from endpoint) when directly moved
+            if hasattr(self.affected_strand, 'control_point2_shown'):
+                self.affected_strand.control_point2_shown = True
+
             # Don't recalculate the center control point, just update shape
             self.affected_strand.update_shape()
             self.affected_strand.update_side_line()

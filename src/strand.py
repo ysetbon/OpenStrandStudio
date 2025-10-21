@@ -65,6 +65,11 @@ class Strand:
         # Flag to track if the triangle control point has been moved
         self.triangle_has_moved = False
 
+        # Flag to track if control_point2 (end control point) should be shown
+        # When False, control_point2 moving area is hidden
+        # When True, control_point2 moving area is visible and can be clicked
+        self.control_point2_shown = False
+
         # Flag to track if control_point2 (end control point) has been manually activated
         # When False, control_point2 auto-syncs with the endpoint
         # When True, control_point2 is independent and doesn't sync

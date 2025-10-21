@@ -2346,10 +2346,14 @@ class StrandDrawingCanvas(QWidget):
                                     if cp1_rect and not skip_cp1 and not cp1_overlaps_yellow:
                                         painter.drawRect(cp1_rect)
                                         cp1_drawn = True
-                                    
+
+                                    # Only draw control_point2 moving area if it's shown
+                                    # control_point2_shown becomes True when control_point1 is moved
+                                    # This makes control_point2 visible and clickable
                                     if cp2_rect and not skip_cp2 and not cp2_overlaps_yellow:
-                                        painter.drawRect(cp2_rect)
-                                        cp2_drawn = True
+                                        if hasattr(strand, 'control_point2_shown') and strand.control_point2_shown:
+                                            painter.drawRect(cp2_rect)
+                                            cp2_drawn = True
                                     if cp3_rect and not skip_cp3 and not cp3_overlaps_yellow and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point:
                                         painter.drawRect(cp3_rect)
                                         cp3_drawn = True

@@ -785,7 +785,7 @@ class AttachMode(QObject):
         constrained_pos = self.constrain_coordinates_to_visible_viewport(pos)
 
         for strand in self.canvas.strands:
-            if not isinstance(strand, MaskedStrand) and strand in self.canvas.strands:
+            if not isinstance(strand, MaskedStrand) and not getattr(strand, 'is_hidden', False) and strand in self.canvas.strands:
                 # Check if the strand has any free sides
                 if self.has_free_side(strand):
                     # Try to attach to the strand
@@ -1016,7 +1016,7 @@ class AttachMode(QObject):
     def try_attach_to_attached_strands(self, attached_strands, pos, circle_radius):
         """Recursively try to attach to any of the attached strands."""
         for attached_strand in attached_strands:
-            if attached_strand in self.canvas.strands and self.has_free_side(attached_strand):
+            if not getattr(attached_strand, 'is_hidden', False) and attached_strand in self.canvas.strands and self.has_free_side(attached_strand):
                 if self.try_attach_to_strand(attached_strand, pos, None):
                     return True
                 if self.try_attach_to_attached_strands(attached_strand.attached_strands, pos, None):

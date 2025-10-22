@@ -1215,7 +1215,7 @@ class MoveMode:
         # First try to handle control point movement
         control_point_moved = False
         for strand in self.canvas.strands:
-            if not getattr(strand, 'deleted', False):
+            if not getattr(strand, 'deleted', False) and not getattr(strand, 'is_hidden', False):
                 if self.try_move_control_points(strand, pos, event):
                     control_point_moved = True
                     
@@ -1763,9 +1763,9 @@ class MoveMode:
         self.is_moving = False  # Reset this flag at the start
         
 
-        # First pass: Check all control points for all strands (excluding masked strands)
+        # First pass: Check all control points for all strands (excluding masked strands and hidden strands)
         for strand in self.canvas.strands:
-            if not getattr(strand, 'deleted', False) and not isinstance(strand, MaskedStrand):
+            if not getattr(strand, 'deleted', False) and not isinstance(strand, MaskedStrand) and not getattr(strand, 'is_hidden', False):
                 if self.try_move_control_points(strand, pos, event):
                     return
                 if self.try_move_attached_strands_control_points(strand.attached_strands, pos):
@@ -1777,7 +1777,7 @@ class MoveMode:
         
         # Check all strands to see if the click position matches any connection points
         for i, strand in enumerate(self.canvas.strands):
-            if not getattr(strand, 'deleted', False) and not isinstance(strand, MaskedStrand) and (not self.lock_mode_active or i not in self.locked_layers):
+            if not getattr(strand, 'deleted', False) and not isinstance(strand, MaskedStrand) and not getattr(strand, 'is_hidden', False) and (not self.lock_mode_active or i not in self.locked_layers):
                 start_area = self.get_start_area(strand)
                 end_area = self.get_end_area(strand)
                 
@@ -1830,9 +1830,9 @@ class MoveMode:
             self.start_movement(first_strand, first_side, first_area, pos)
             return
         
-        # Otherwise, iterate in reverse to check topmost strands first (excluding masked strands)
+        # Otherwise, iterate in reverse to check topmost strands first (excluding masked strands and hidden strands)
         for i, strand in reversed(list(enumerate(self.canvas.strands))):
-            if not getattr(strand, 'deleted', False) and not isinstance(strand, MaskedStrand) and (not self.lock_mode_active or i not in self.locked_layers):
+            if not getattr(strand, 'deleted', False) and not isinstance(strand, MaskedStrand) and not getattr(strand, 'is_hidden', False) and (not self.lock_mode_active or i not in self.locked_layers):
                 # Debug: Check if this strand has knot connections
                 if hasattr(strand, 'knot_connections') and strand.knot_connections:
                     pass
@@ -1854,7 +1854,7 @@ class MoveMode:
             bool: True if a control point of an attached strand was moved, False otherwise.
         """
         for attached_strand in attached_strands:
-            if not getattr(attached_strand, 'deleted', False):
+            if not getattr(attached_strand, 'deleted', False) and not getattr(attached_strand, 'is_hidden', False):
                 if self.try_move_control_points(attached_strand, pos):
                     return True
                 if self.try_move_attached_strands_control_points(attached_strand.attached_strands, pos):
@@ -1873,7 +1873,7 @@ class MoveMode:
             bool: True if a start or end point of an attached strand was moved, False otherwise.
         """
         for attached_strand in attached_strands:
-            if not getattr(attached_strand, 'deleted', False):
+            if not getattr(attached_strand, 'deleted', False) and not getattr(attached_strand, 'is_hidden', False):
                 if self.try_move_strand(attached_strand, pos, -1):  # Pass -1 if not in main strands list
                     return True
                 if self.try_move_attached_strands_start_end(attached_strand.attached_strands, pos):
@@ -1897,7 +1897,11 @@ class MoveMode:
         # Skip control point checks for MaskedStrands
         if isinstance(strand, MaskedStrand):
             return False
-            
+
+        # Skip hidden strands - they should not be interactive
+        if getattr(strand, 'is_hidden', False):
+            return False
+
         # Check if the strand is locked
         if self.lock_mode_active and strand in self.canvas.strands:
             strand_index = self.canvas.strands.index(strand)

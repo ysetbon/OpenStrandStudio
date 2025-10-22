@@ -2142,6 +2142,9 @@ class StrandDrawingCanvas(QWidget):
             else:
                 for strand in self.strands:
                     if not isinstance(strand, MaskedStrand):
+                        # Skip hidden strands - they should not show moving areas
+                        if getattr(strand, 'is_hidden', False):
+                            continue
                         if hasattr(strand, 'start') and hasattr(strand, 'end'):
                             # Check if a control point or strand point is being moved
                             is_moving_control_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_control_point', False)
@@ -2539,6 +2542,10 @@ class StrandDrawingCanvas(QWidget):
             painter.save()
             for strand in self.strands:
                 if isinstance(strand, MaskedStrand):
+                    continue
+
+                # Skip hidden strands - they should not show attachment areas
+                if getattr(strand, 'is_hidden', False):
                     continue
 
                 # Draw circles regardless of proximity to other points
@@ -5334,6 +5341,10 @@ class StrandDrawingCanvas(QWidget):
             if isinstance(strand, MaskedStrand) or not hasattr(strand, 'control_point1') or not hasattr(strand, 'control_point2'):
                 continue
             if strand.control_point1 is None or strand.control_point2 is None:
+                continue
+
+            # Skip hidden strands - they should not show control points
+            if getattr(strand, 'is_hidden', False):
                 continue
 
             # --- Determine if we should skip drawing CPs for this strand ---

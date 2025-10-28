@@ -909,13 +909,13 @@ class AttachedStrand(Strand):
                     # Create stroker for the shortened highlight path
                     highlight_stroker = QPainterPathStroker()
                     highlight_stroker.setWidth(self.width + self.stroke_width * 2)
-                    highlight_stroker.setJoinStyle(Qt.MiterJoin)
+                    highlight_stroker.setJoinStyle(Qt.RoundJoin)
                     highlight_stroker.setCapStyle(Qt.FlatCap)
                     shortened_stroke_path = highlight_stroker.createStroke(highlight_path)
                     
                     # Draw the shortened highlight
                     highlight_pen = QPen(QColor('red'), 10)
-                    highlight_pen.setJoinStyle(Qt.MiterJoin)
+                    highlight_pen.setJoinStyle(Qt.RoundJoin)
                     highlight_pen.setCapStyle(Qt.FlatCap)
                     painter.setPen(highlight_pen)
                     painter.setBrush(Qt.NoBrush)
@@ -923,7 +923,7 @@ class AttachedStrand(Strand):
             else:
                 # If path is too short, draw normal highlight
                 highlight_pen = QPen(QColor('red'), 10)
-                highlight_pen.setJoinStyle(Qt.MiterJoin)
+                highlight_pen.setJoinStyle(Qt.RoundJoin)
                 highlight_pen.setCapStyle(Qt.FlatCap)
                 
                 painter.setPen(highlight_pen)
@@ -963,7 +963,7 @@ class AttachedStrand(Strand):
             # Create a pen for the red sideline highlight
             highlight_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width + 10, Qt.SolidLine)
             highlight_pen.setCapStyle(Qt.FlatCap)
-            highlight_pen.setJoinStyle(Qt.MiterJoin)
+            highlight_pen.setJoinStyle(Qt.RoundJoin)
             
             painter.setPen(highlight_pen)
             painter.setBrush(Qt.NoBrush)
@@ -1628,11 +1628,23 @@ class AttachedStrand(Strand):
             if exponent != 1.0:
                 fraction = pow(fraction, 1.0 / exponent)
             
-            # Calculate intermediate control points
-            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
-            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
-            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
-            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * fraction) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
+            # Apply bias control weights (match get_path calculations)
+            bias_triangle = 0.5
+            bias_circle = 0.5
+            if (hasattr(self, 'bias_control') and self.bias_control and
+                hasattr(self.canvas, 'enable_curvature_bias_control') and
+                self.canvas.enable_curvature_bias_control):
+                bias_triangle = self.bias_control.triangle_bias
+                bias_circle = self.bias_control.circle_bias
+
+            frac_triangle = fraction * (0.5 + bias_triangle)
+            frac_circle = fraction * (0.5 + bias_circle)
+
+            # Calculate intermediate control points with bias influence
+            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * frac_triangle) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * frac_triangle) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * frac_circle) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
+            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * frac_circle) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
             
             if t <= 0.5:
                 # First segment: start to center
@@ -1747,11 +1759,23 @@ class AttachedStrand(Strand):
             if exponent != 1.0:
                 fraction = pow(fraction, 1.0 / exponent)
             
+            # Apply bias control weights to match get_path curve shaping
+            bias_triangle = 0.5
+            bias_circle = 0.5
+            if (hasattr(self, 'bias_control') and self.bias_control and
+                hasattr(self.canvas, 'enable_curvature_bias_control') and
+                self.canvas.enable_curvature_bias_control):
+                bias_triangle = self.bias_control.triangle_bias
+                bias_circle = self.bias_control.circle_bias
+
+            frac_triangle = fraction * (0.5 + bias_triangle)
+            frac_circle = fraction * (0.5 + bias_circle)
+
             # Calculate intermediate control points
-            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * fraction) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
-            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
-            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * fraction) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
-            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * fraction) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
+            cp1 = p0 + start_tangent_normalized * (dist_p0_p1 * frac_triangle) if start_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp2 = p2 - center_tangent_normalized * (dist_p1_p2 * frac_triangle) if center_tangent_normalized.manhattanLength() > 1e-6 else p1
+            cp3 = p2 + center_tangent_normalized * (dist_p2_p3 * frac_circle) if center_tangent_normalized.manhattanLength() > 1e-6 else p3
+            cp4 = p4 - end_tangent_normalized * (dist_p3_p4 * frac_circle) if end_tangent_normalized.manhattanLength() > 1e-6 else p3
             
             if t <= 0.5:
                 # First segment: start to center
@@ -2769,13 +2793,13 @@ class AttachedStrand(Strand):
                     # Create stroker for the shortened highlight path
                     highlight_stroker = QPainterPathStroker()
                     highlight_stroker.setWidth(self.width + self.stroke_width * 2)
-                    highlight_stroker.setJoinStyle(Qt.MiterJoin)
+                    highlight_stroker.setJoinStyle(Qt.RoundJoin)
                     highlight_stroker.setCapStyle(Qt.FlatCap)
                     shortened_stroke_path = highlight_stroker.createStroke(highlight_path)
                     
                     # Draw the shortened highlight
                     highlight_pen = QPen(QColor('red'), 10)
-                    highlight_pen.setJoinStyle(Qt.MiterJoin)
+                    highlight_pen.setJoinStyle(Qt.RoundJoin)
                     highlight_pen.setCapStyle(Qt.FlatCap)
                     painter.setPen(highlight_pen)
                     painter.setBrush(Qt.NoBrush)
@@ -2783,7 +2807,7 @@ class AttachedStrand(Strand):
             else:
                 # If path is too short, draw normal highlight
                 highlight_pen = QPen(QColor('red'), 10)
-                highlight_pen.setJoinStyle(Qt.MiterJoin)
+                highlight_pen.setJoinStyle(Qt.RoundJoin)
                 highlight_pen.setCapStyle(Qt.FlatCap)
                 
                 painter.setPen(highlight_pen)
@@ -2823,7 +2847,7 @@ class AttachedStrand(Strand):
             # Create a pen for the red sideline highlight
             highlight_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width + 10, Qt.SolidLine)
             highlight_pen.setCapStyle(Qt.FlatCap)
-            highlight_pen.setJoinStyle(Qt.MiterJoin)
+            highlight_pen.setJoinStyle(Qt.RoundJoin)
             
             painter.setPen(highlight_pen)
             painter.setBrush(Qt.NoBrush)

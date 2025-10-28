@@ -16,12 +16,12 @@ ExtensionDashCount: 10
 ExtensionDashWidth: 2.0
 ExtensionDashGapLength: 5.0
 ExtensionLineWidth: 2.0
-ArrowHeadLength: 70.0
-ArrowHeadWidth: 70.0
+ArrowHeadLength: 52.0
+ArrowHeadWidth: 58.0
 ArrowHeadStrokeWidth: 4
 ArrowGapLength: 10.0
-ArrowLineLength: 20.0
-ArrowLineWidth: 40.0
+ArrowLineLength: 15.0
+ArrowLineWidth: 20.0
 UseDefaultArrowColor: false
 DefaultArrowColor: 0,0,0,255
 DefaultStrandColor: 200,170,230,255

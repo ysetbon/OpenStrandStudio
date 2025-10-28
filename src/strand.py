@@ -1266,21 +1266,33 @@ class Strand:
             frac1 = pow(frac1, 1.0 / exponent)
             frac2 = pow(frac2, 1.0 / exponent)
 
+        bias_triangle = 0.5
+        bias_circle = 0.5
+
+        if (hasattr(self, 'bias_control') and self.bias_control and
+            hasattr(self.canvas, 'enable_curvature_bias_control') and
+            self.canvas.enable_curvature_bias_control):
+            bias_triangle = self.bias_control.triangle_bias
+            bias_circle = self.bias_control.circle_bias
+
+        frac1_biased = frac1 * (0.5 + bias_triangle)
+        frac2_biased = frac2 * (0.5 + bias_circle)
+
         cp1 = QPointF(
-            p0.x() + (p1.x() - p0.x()) * frac1,
-            p0.y() + (p1.y() - p0.y()) * frac1
+            p0.x() + (p1.x() - p0.x()) * frac1_biased,
+            p0.y() + (p1.y() - p0.y()) * frac1_biased
         )
         cp2 = QPointF(
-            p2.x() - center_tangent.x() * dist2 * frac2,
-            p2.y() - center_tangent.y() * dist2 * frac2
+            p2.x() - center_tangent.x() * dist2 * frac2 * (0.5 + bias_triangle),
+            p2.y() - center_tangent.y() * dist2 * frac2 * (0.5 + bias_triangle)
         )
         cp3 = QPointF(
-            p2.x() + center_tangent.x() * dist3 * frac2,
-            p2.y() + center_tangent.y() * dist3 * frac2
+            p2.x() + center_tangent.x() * dist3 * frac2 * (0.5 + bias_circle),
+            p2.y() + center_tangent.y() * dist3 * frac2 * (0.5 + bias_circle)
         )
         cp4 = QPointF(
-            p4.x() + (p3.x() - p4.x()) * frac2,
-            p4.y() + (p3.y() - p4.y()) * frac2
+            p4.x() + (p3.x() - p4.x()) * frac2_biased,
+            p4.y() + (p3.y() - p4.y()) * frac2_biased
         )
 
         profile['mode'] = 'multi'

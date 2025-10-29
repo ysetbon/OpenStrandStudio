@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
                              QListWidgetItem, QLabel, QPushButton, QCheckBox,
                              QDialogButtonBox, QWidget, QGroupBox, QComboBox)
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtGui import QColor, QPalette
 from masked_strand import MaskedStrand
 
@@ -12,16 +12,22 @@ class ShadowListItem(QWidget):
     visibility_changed = pyqtSignal(str, bool)  # Signal when visibility is changed (layer_name, visible)
     show_shadow_requested = pyqtSignal(str, bool)  # Signal when show shadow is toggled (layer_name, enabled)
     allow_full_shadow_changed = pyqtSignal(str, bool)  # Signal when allow full shadow is toggled (layer_name, enabled)
-    subtracted_layer_changed = pyqtSignal(str, str)  # Signal when subtracted layer is changed (receiving_layer, subtracted_layer or "" for none)
+    subtracted_layers_changed = pyqtSignal(str, list)  # Signal when subtracted layers are changed (receiving_layer, list of subtracted_layers)
+    size_changed = pyqtSignal()  # Signal when widget size needs to be updated
 
-    def __init__(self, receiving_layer_name, receiving_layer_color, is_visible=True, allow_full_shadow=False, available_layers=None, subtracted_layer=None, parent=None):
+    def __init__(self, receiving_layer_name, receiving_layer_color, is_visible=True, allow_full_shadow=False, available_layers=None, subtracted_layers=None, parent=None):
         super().__init__(parent)
         self.receiving_layer_name = receiving_layer_name
         self.is_shadow_visible = False
+        self.subtract_checkboxes = {}  # Dictionary to track checkboxes by layer name
 
         # Create layout
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(5, 2, 5, 2)
+        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setSpacing(5)
+
+        # Set minimum height for the row
+        self.setMinimumHeight(40)
 
         # Layer name label with color indicator
         self.color_indicator = QLabel("  ")
@@ -30,42 +36,95 @@ class ShadowListItem(QWidget):
         layout.addWidget(self.color_indicator)
 
         self.name_label = QLabel(receiving_layer_name)
-        self.name_label.setMinimumWidth(100)
+        self.name_label.setMinimumWidth(50)
+        self.name_label.setMaximumWidth(80)
         layout.addWidget(self.name_label)
 
-        layout.addStretch()
+        # Add some spacing
+        layout.addSpacing(10)
 
         # Visibility checkbox
         self.visibility_checkbox = QCheckBox("Visible")
         self.visibility_checkbox.setChecked(is_visible)
+        self.visibility_checkbox.setMinimumWidth(70)
         self.visibility_checkbox.stateChanged.connect(self._on_visibility_changed)
         layout.addWidget(self.visibility_checkbox)
+
+        # Add some spacing
+        layout.addSpacing(10)
 
         # Allow full shadow checkbox
         self.allow_full_shadow_checkbox = QCheckBox("Allow Complete Shadow")
         self.allow_full_shadow_checkbox.setChecked(allow_full_shadow)
+        self.allow_full_shadow_checkbox.setMinimumWidth(170)
         self.allow_full_shadow_checkbox.stateChanged.connect(self._on_allow_full_shadow_changed)
         layout.addWidget(self.allow_full_shadow_checkbox)
 
-        # Subtract layer dropdown
-        layout.addWidget(QLabel("Subtract:"))
-        self.subtract_layer_combo = QComboBox()
-        self.subtract_layer_combo.setMinimumWidth(80)
-        self.subtract_layer_combo.addItem("(None)", "")
-        if available_layers:
+        # Add some spacing
+        layout.addSpacing(10)
+
+        # Subtract layers collapsible section
+        subtract_container = QWidget()
+        subtract_container_layout = QVBoxLayout(subtract_container)
+        subtract_container_layout.setContentsMargins(0, 0, 0, 0)
+        subtract_container_layout.setSpacing(0)
+
+        # Toggle button with arrow
+        self.subtract_toggle_button = QPushButton("▶ Subtract Layers")
+        self.subtract_toggle_button.setCheckable(True)
+        self.subtract_toggle_button.setFlat(True)
+        self.subtract_toggle_button.setStyleSheet("""
+            QPushButton {
+                text-align: left;
+                padding: 3px;
+                border: none;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: rgba(128, 128, 128, 0.2);
+            }
+        """)
+        self.subtract_toggle_button.clicked.connect(self._toggle_subtract_section)
+        subtract_container_layout.addWidget(self.subtract_toggle_button)
+
+        # Collapsible content
+        self.subtract_content = QWidget()
+        self.subtract_content.setVisible(False)
+        subtract_layout = QVBoxLayout(self.subtract_content)
+        subtract_layout.setContentsMargins(15, 2, 5, 2)
+        subtract_layout.setSpacing(2)
+
+        if available_layers and len(available_layers) > 0:
             for layer in available_layers:
-                self.subtract_layer_combo.addItem(layer, layer)
-        # Set initial selection
-        if subtracted_layer:
-            index = self.subtract_layer_combo.findData(subtracted_layer)
-            if index >= 0:
-                self.subtract_layer_combo.setCurrentIndex(index)
-        self.subtract_layer_combo.currentIndexChanged.connect(self._on_subtracted_layer_changed)
-        layout.addWidget(self.subtract_layer_combo)
+                checkbox = QCheckBox(layer)
+                # Check if this layer is in the subtracted layers list
+                if subtracted_layers and layer in subtracted_layers:
+                    checkbox.setChecked(True)
+                checkbox.stateChanged.connect(self._on_subtracted_layers_changed)
+                self.subtract_checkboxes[layer] = checkbox
+                subtract_layout.addWidget(checkbox)
+        else:
+            no_layers_label = QLabel("(No layers available)")
+            no_layers_label.setStyleSheet("color: gray; font-style: italic;")
+            subtract_layout.addWidget(no_layers_label)
+
+        subtract_container_layout.addWidget(self.subtract_content)
+        subtract_container.setMinimumWidth(150)
+        layout.addWidget(subtract_container)
+
+        # Auto-expand if there are any subtracted layers
+        if subtracted_layers and len(subtracted_layers) > 0:
+            self.subtract_toggle_button.setChecked(True)
+            self.subtract_content.setVisible(True)
+            self.subtract_toggle_button.setText("▼ Subtract Layers")
+
+        # Add some spacing
+        layout.addSpacing(10)
 
         # Show Current Shadow button
         self.show_shadow_button = QPushButton("Show Current Shadow")
         self.show_shadow_button.setCheckable(True)
+        self.show_shadow_button.setMinimumWidth(150)
         self.show_shadow_button.clicked.connect(self._on_show_shadow_clicked)
         layout.addWidget(self.show_shadow_button)
 
@@ -79,12 +138,31 @@ class ShadowListItem(QWidget):
         allow_full = (state == Qt.Checked)
         self.allow_full_shadow_changed.emit(self.receiving_layer_name, allow_full)
 
-    def _on_subtracted_layer_changed(self, index):
-        """Handle subtracted layer dropdown change."""
-        subtracted_layer = self.subtract_layer_combo.currentData()
-        if subtracted_layer is None:
-            subtracted_layer = ""
-        self.subtracted_layer_changed.emit(self.receiving_layer_name, subtracted_layer)
+    def _toggle_subtract_section(self, checked):
+        """Toggle the visibility of the subtract layers section."""
+        self.subtract_content.setVisible(checked)
+        if checked:
+            self.subtract_toggle_button.setText("▼ Subtract Layers")
+            # Remove maximum height constraint when expanding
+            self.setMaximumHeight(16777215)  # Qt's QWIDGETSIZE_MAX
+        else:
+            self.subtract_toggle_button.setText("▶ Subtract Layers")
+            # Set maximum height to minimum when collapsing
+            self.setMaximumHeight(self.minimumHeight())
+
+        # Update geometry and emit signal to resize list item
+        self.subtract_content.adjustSize()
+        self.adjustSize()
+        self.updateGeometry()
+
+        # Use QTimer to ensure signal is emitted after geometry is updated
+        QTimer.singleShot(0, self.size_changed.emit)
+
+    def _on_subtracted_layers_changed(self, state):
+        """Handle subtracted layers checkbox changes."""
+        # Collect all checked layers
+        subtracted_layers = [layer for layer, checkbox in self.subtract_checkboxes.items() if checkbox.isChecked()]
+        self.subtracted_layers_changed.emit(self.receiving_layer_name, subtracted_layers)
 
     def _on_show_shadow_clicked(self, checked):
         """Handle show shadow button toggle."""
@@ -128,6 +206,16 @@ class ShadowListItem(QWidget):
                     background-color: #4A6FA5;
                     border: 1px solid #6A9FD5;
                 }
+                QPushButton[flat="true"] {
+                    background-color: transparent;
+                    border: none;
+                    text-align: left;
+                    font-weight: bold;
+                    padding: 3px;
+                }
+                QPushButton[flat="true"]:hover {
+                    background-color: rgba(128, 128, 128, 0.3);
+                }
             """)
         elif theme == 'light':
             self.setStyleSheet("""
@@ -161,6 +249,16 @@ class ShadowListItem(QWidget):
                     background-color: #A0C0E0;
                     border: 1px solid #7090C0;
                 }
+                QPushButton[flat="true"] {
+                    background-color: transparent;
+                    border: none;
+                    text-align: left;
+                    font-weight: bold;
+                    padding: 3px;
+                }
+                QPushButton[flat="true"]:hover {
+                    background-color: rgba(0, 0, 0, 0.1);
+                }
             """)
 
 
@@ -173,10 +271,11 @@ class ShadowEditorDialog(QDialog):
         self.strand = strand
         self.casting_layer = strand.layer_name
         self.shadow_visible_layer = None  # Track which layer's shadow is being visualized
+        self.widget_to_item = {}  # Map widgets to their list items
 
         self.setWindowTitle(f"Shadow Editor - {self.casting_layer}")
         self.setModal(False)  # Allow interaction with canvas
-        self.setMinimumSize(700, 400)
+        self.setMinimumSize(750, 400)
         self.resize(800, 500)
 
         # Find the main window to inherit its theme
@@ -192,6 +291,7 @@ class ShadowEditorDialog(QDialog):
 
         # Create layout
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(10, 10, 10, 10)  # Equal margins on all sides
 
         # Info label
         info_label = QLabel(f"Shadows cast by <b>{self.casting_layer}</b> onto layers below:")
@@ -199,7 +299,9 @@ class ShadowEditorDialog(QDialog):
 
         # Shadows list
         self.shadows_list_widget = QListWidget()
-        self.shadows_list_widget.setSpacing(2)
+        self.shadows_list_widget.setSpacing(5)
+        self.shadows_list_widget.setUniformItemSizes(False)
+        self.shadows_list_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.shadows_list_widget.currentItemChanged.connect(self._on_selection_changed)
         layout.addWidget(self.shadows_list_widget)
 
@@ -321,27 +423,49 @@ class ShadowEditorDialog(QDialog):
             is_visible = override.get('visibility', True) if override else True
             allow_full_shadow = override.get('allow_full_shadow', False) if override else False
 
-            # Get subtracted layers (currently supporting only first one in dropdown)
+            # Get subtracted layers
             subtracted_layers = self.canvas.layer_state_manager.get_subtracted_layers(self.casting_layer, layer_name)
-            subtracted_layer = subtracted_layers[0] if subtracted_layers else None
 
             # Create custom widget - exclude the receiving layer from available layers
             available_for_this_shadow = [l for l in available_layers if l != layer_name]
             item_widget = ShadowListItem(layer_name, strand.color.name(), is_visible, allow_full_shadow,
-                                        available_for_this_shadow, subtracted_layer)
+                                        available_for_this_shadow, subtracted_layers)
             item_widget.set_theme(self.theme)
 
             # Connect signals
             item_widget.visibility_changed.connect(self._on_visibility_changed)
             item_widget.allow_full_shadow_changed.connect(self._on_allow_full_shadow_changed)
             item_widget.show_shadow_requested.connect(self._on_show_shadow_requested)
-            item_widget.subtracted_layer_changed.connect(self._on_subtracted_layer_changed)
+            item_widget.subtracted_layers_changed.connect(self._on_subtracted_layers_changed)
+            item_widget.size_changed.connect(lambda w=item_widget: self._on_item_size_changed(w))
 
             # Add to list
             list_item = QListWidgetItem(self.shadows_list_widget)
-            list_item.setSizeHint(item_widget.sizeHint())
+            # Ensure proper size for the item
+            size_hint = item_widget.sizeHint()
+            if size_hint.height() < 40:
+                size_hint.setHeight(40)
+            list_item.setSizeHint(size_hint)
             self.shadows_list_widget.addItem(list_item)
             self.shadows_list_widget.setItemWidget(list_item, item_widget)
+
+            # Store widget to item mapping
+            self.widget_to_item[item_widget] = list_item
+
+    def _on_item_size_changed(self, widget):
+        """Handle when an item widget's size changes (e.g., expand/collapse)."""
+        if widget in self.widget_to_item:
+            list_item = self.widget_to_item[widget]
+            # Force widget to recalculate size
+            widget.updateGeometry()
+            # Update the list item's size hint to match the widget's new size
+            new_size_hint = widget.sizeHint()
+            if new_size_hint.height() < 40:
+                new_size_hint.setHeight(40)
+            list_item.setSizeHint(new_size_hint)
+            # Force the list widget to update its layout immediately
+            self.shadows_list_widget.scheduleDelayedItemsLayout()
+            self.shadows_list_widget.updateGeometry()
 
     def _find_strand_by_name(self, layer_name):
         """Find a strand by its layer name."""
@@ -388,19 +512,12 @@ class ShadowEditorDialog(QDialog):
         # Refresh canvas
         self.canvas.update()
 
-    def _on_subtracted_layer_changed(self, receiving_layer, subtracted_layer):
-        """Handle subtracted layer change."""
+    def _on_subtracted_layers_changed(self, receiving_layer, subtracted_layers):
+        """Handle subtracted layers change."""
         # Update subtracted layers in layer_state_manager
-        if subtracted_layer:
-            # Currently supporting single layer subtraction
-            self.canvas.layer_state_manager.set_subtracted_layers(
-                self.casting_layer, receiving_layer, [subtracted_layer]
-            )
-        else:
-            # Clear subtracted layers
-            self.canvas.layer_state_manager.set_subtracted_layers(
-                self.casting_layer, receiving_layer, []
-            )
+        self.canvas.layer_state_manager.set_subtracted_layers(
+            self.casting_layer, receiving_layer, subtracted_layers
+        )
 
         # Refresh canvas to show updated shadow
         self.canvas.update()

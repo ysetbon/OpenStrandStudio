@@ -498,16 +498,12 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                         if this_layer in components and other_layer in components:
                             # Found the mask they belong to. Check if it's hidden.
                             masked_strand_obj = masked_info['masked_strand']
-                            # Ensure is_hidden attribute exists and check its value
-                            if hasattr(masked_strand_obj, 'is_hidden') and not masked_strand_obj.is_hidden:
-                                # Mask exists and is VISIBLE, set flag and break
+                            # Check if mask is visible (no is_hidden attribute means visible for backward compatibility)
+                            is_mask_hidden = getattr(masked_strand_obj, 'is_hidden', False)
+                            if not is_mask_hidden:
+                                # Mask exists and is VISIBLE, set flag and skip shadow
                                 part_of_same_visible_mask = True
-                                pass
-
-                            else:
-                                # Mask exists but is HIDDEN, do not skip shadow based on this mask
-                                pass
-                                # Continue checking other potential masks, although unlikely
+                                break  # Found a visible mask containing both components, no need to check others
 
                     if part_of_same_visible_mask:
                         continue # Skip shadow calculation for this pair
@@ -632,11 +628,22 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                 mask_strand_sub = mask_info_sub['masked_strand']
                                 mask_layer_sub = mask_name_sub # Assuming mask_name is the layer name
 
-                                # Ensure mask is visible and its layer name is in the order
-                                if (hasattr(mask_strand_sub, 'is_hidden') and not mask_strand_sub.is_hidden and
-                                        mask_layer_sub in layer_order):
+                                # Check if mask is visible and in layer order
+                                # Use getattr for backward compatibility with masks that don't have is_hidden
+                                is_mask_hidden = getattr(mask_strand_sub, 'is_hidden', False)
+                                if (not is_mask_hidden and mask_layer_sub in layer_order):
 
                                     mask_index_sub = layer_order.index(mask_layer_sub)
+
+                                    # Skip if we're casting onto this mask itself (avoid self-blocking)
+                                    if mask_layer_sub == other_layer:
+                                        continue
+
+                                    # CRITICAL: Only apply mask blocking if mask is ABOVE the casting strand
+                                    # A mask can only block shadows from strands below it in the layer order
+                                    if mask_index_sub <= self_index:
+                                        # Mask is at or below the casting strand - cannot visually block
+                                        continue
 
                                     # --------------------------------------------------
                                     # Fast-path: use (and cache) the mask's pre-computed
@@ -756,6 +763,42 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                         pass
                         # --- END MASK SUBTRACTION FOR THIS INTERSECTION ---
 
+                        # --- SUBTRACT INTERMEDIATE STRANDS ---
+                        # Any strands between the casting and receiving strands should block the shadow
+                        if not current_intersection_shadow.isEmpty():
+                            # Determine the range of indices between casting and receiving
+                            min_index = min(self_index, other_index)
+                            max_index = max(self_index, other_index)
+
+                            # Loop through all strands to find intermediate ones
+                            for intermediate_strand in canvas.strands:
+                                if not hasattr(intermediate_strand, 'layer_name') or not intermediate_strand.layer_name:
+                                    continue
+
+                                intermediate_layer = intermediate_strand.layer_name
+                                if intermediate_layer not in layer_order:
+                                    continue
+
+                                intermediate_index = layer_order.index(intermediate_layer)
+
+                                # Check if this strand is between casting and receiving
+                                if min_index < intermediate_index < max_index:
+                                    # Skip if this is a hidden strand
+                                    if hasattr(intermediate_strand, 'is_hidden') and intermediate_strand.is_hidden:
+                                        continue
+
+                                    try:
+                                        # Get the rendered geometry of the intermediate strand
+                                        intermediate_path = build_rendered_geometry(intermediate_strand)
+                                        if hasattr(intermediate_strand, 'get_mask_path'):
+                                            intermediate_path = get_proper_masked_strand_path(intermediate_strand)
+
+                                        # Subtract the intermediate strand from the shadow
+                                        if not intermediate_path.isEmpty():
+                                            current_intersection_shadow = current_intersection_shadow.subtracted(intermediate_path)
+                                    except Exception as inter_err:
+                                        pass
+                        # --- END INTERMEDIATE STRAND SUBTRACTION ---
 
                         # Apply side line exclusion for both casting and receiving strands
                         if not current_intersection_shadow.isEmpty():
@@ -999,68 +1042,114 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                         mask_strand_sub_c = mask_info_sub_c['masked_strand']
                         mask_layer_sub_c = mask_name_sub_c
 
-                        if (hasattr(mask_strand_sub_c, 'is_hidden') and not mask_strand_sub_c.is_hidden and
-                                mask_layer_sub_c in layer_order):
+                        # Check if mask is visible and in layer order (backward compatible)
+                        is_mask_hidden = getattr(mask_strand_sub_c, 'is_hidden', False)
+                        if (not is_mask_hidden and mask_layer_sub_c in layer_order):
 
                             mask_index_sub_c = layer_order.index(mask_layer_sub_c)
 
-                            # Check if mask is above the *casting strand* (this_layer)
-                            if mask_index_sub_c > self_index:
-                                try:
-                                    # Early check: First verify if the mask even intersects with the underlying layer
-                                    if hasattr(mask_strand_sub_c, 'get_mask_path'):
-                                        mask_actual_path_c = mask_strand_sub_c.get_mask_path()
-                                        if mask_actual_path_c.isEmpty() or not mask_actual_path_c.intersects(other_stroke_path):
-                                            pass
-                                            continue
-                                    
-                                    # Calculate the mask's subtraction path (blurred)
-                                    subtraction_path_c = QPainterPath()
-                                    if hasattr(mask_strand_sub_c, 'first_selected_strand') and mask_strand_sub_c.first_selected_strand and \
-                                       hasattr(mask_strand_sub_c, 'second_selected_strand') and mask_strand_sub_c.second_selected_strand:
+                            # Skip if we're casting onto this mask itself
+                            if mask_layer_sub_c == other_layer:
+                                continue
 
-                                        s1_c = mask_strand_sub_c.first_selected_strand
-                                        s2_c = mask_strand_sub_c.second_selected_strand
+                            # Only apply mask blocking if mask is ABOVE the casting strand
+                            # A mask can only block shadows from strands below it in the layer order
+                            if mask_index_sub_c <= self_index:
+                                # Mask is at or below the casting strand - cannot visually block
+                                continue
 
-                                        stroker1_c = QPainterPathStroker()
-                                        # Use user-edited width: + max_blur_radius*2
-                                        stroker1_c.setWidth(s1_c.width + s1_c.stroke_width * 2 + max_blur_radius/2)
-                                        stroker1_c.setJoinStyle(Qt.MiterJoin)
-                                        stroker1_c.setCapStyle(Qt.FlatCap)
-                                        path1_c = stroker1_c.createStroke(s1_c.get_path())
+                            # Mask is above casting strand, apply blocking
+                            try:
+                                # Early check: First verify if the mask even intersects with the underlying layer
+                                if hasattr(mask_strand_sub_c, 'get_mask_path'):
+                                    mask_actual_path_c = mask_strand_sub_c.get_mask_path()
+                                    if mask_actual_path_c.isEmpty() or not mask_actual_path_c.intersects(other_stroke_path):
+                                        pass
+                                        continue
 
-                                        stroker2_c = QPainterPathStroker()
-                                        # Use user-edited width: + max_blur_radius*2
-                                        stroker2_c.setWidth(s2_c.width + s2_c.stroke_width * 2 + max_blur_radius/2)
-                                        stroker2_c.setJoinStyle(Qt.MiterJoin)
-                                        stroker2_c.setCapStyle(Qt.FlatCap)
-                                        path2_c = stroker2_c.createStroke(s2_c.get_path())
+                                # Calculate the mask's subtraction path (blurred)
+                                subtraction_path_c = QPainterPath()
+                                if hasattr(mask_strand_sub_c, 'first_selected_strand') and mask_strand_sub_c.first_selected_strand and \
+                                   hasattr(mask_strand_sub_c, 'second_selected_strand') and mask_strand_sub_c.second_selected_strand:
 
-                                        subtraction_path_c = path1_c.intersected(path2_c)
+                                    s1_c = mask_strand_sub_c.first_selected_strand
+                                    s2_c = mask_strand_sub_c.second_selected_strand
 
-                                        # --------------------------------------------------
-                                        # NEW: Respect deletion rectangles on the mask so
-                                        #      that shadows can appear in regions where the
-                                        #      mask has been manually deleted.
-                                        # --------------------------------------------------
+                                    stroker1_c = QPainterPathStroker()
+                                    # Use user-edited width: + max_blur_radius*2
+                                    stroker1_c.setWidth(s1_c.width + s1_c.stroke_width * 2 + max_blur_radius/2)
+                                    stroker1_c.setJoinStyle(Qt.MiterJoin)
+                                    stroker1_c.setCapStyle(Qt.FlatCap)
+                                    path1_c = stroker1_c.createStroke(s1_c.get_path())
+
+                                    stroker2_c = QPainterPathStroker()
+                                    # Use user-edited width: + max_blur_radius*2
+                                    stroker2_c.setWidth(s2_c.width + s2_c.stroke_width * 2 + max_blur_radius/2)
+                                    stroker2_c.setJoinStyle(Qt.MiterJoin)
+                                    stroker2_c.setCapStyle(Qt.FlatCap)
+                                    path2_c = stroker2_c.createStroke(s2_c.get_path())
+
+                                    subtraction_path_c = path1_c.intersected(path2_c)
+
+                                    # --------------------------------------------------
+                                    # NEW: Respect deletion rectangles on the mask so
+                                    #      that shadows can appear in regions where the
+                                    #      mask has been manually deleted.
+                                    # --------------------------------------------------
 
 
-                                    if not subtraction_path_c.isEmpty():
-                                        # Check if the mask actually intersects with the underlying layer
-                                        mask_intersects_underlying_c = subtraction_path_c.intersects(other_stroke_path)
-                                        
-                                        if mask_intersects_underlying_c:
-                                            intersection = intersection.subtracted(subtraction_path_c)
-                                            # Basic logging for circle shadow subtraction
-                                            if intersection.isEmpty(): # Check if subtraction removed everything
-                                                 pass
-                                        else:
-                                            pass
+                                if not subtraction_path_c.isEmpty():
+                                    # Check if the mask actually intersects with the underlying layer
+                                    mask_intersects_underlying_c = subtraction_path_c.intersects(other_stroke_path)
 
-                                except Exception as e_c:
-                                    # logging.error(f"Error subtracting mask '{mask_layer_sub_c}' from circle shadow intersection: {e_c}")
-                                    pass
+                                    if mask_intersects_underlying_c:
+                                        intersection = intersection.subtracted(subtraction_path_c)
+                                        # Basic logging for circle shadow subtraction
+                                        if intersection.isEmpty(): # Check if subtraction removed everything
+                                             pass
+                                    else:
+                                        pass
+
+                            except Exception as e_c:
+                                # logging.error(f"Error subtracting mask '{mask_layer_sub_c}' from circle shadow intersection: {e_c}")
+                                pass
                 # --- End Mask Subtraction ---
+
+                # --- Subtract Intermediate Strands for Circle Shadows ---
+                if not intersection.isEmpty():
+                    # Determine the range of indices between casting and receiving
+                    min_index = min(self_index, other_index)
+                    max_index = max(self_index, other_index)
+
+                    # Loop through all strands to find intermediate ones
+                    for intermediate_strand in canvas.strands:
+                        if not hasattr(intermediate_strand, 'layer_name') or not intermediate_strand.layer_name:
+                            continue
+
+                        intermediate_layer = intermediate_strand.layer_name
+                        if intermediate_layer not in layer_order:
+                            continue
+
+                        intermediate_index = layer_order.index(intermediate_layer)
+
+                        # Check if this strand is between casting and receiving
+                        if min_index < intermediate_index < max_index:
+                            # Skip if this is a hidden strand
+                            if hasattr(intermediate_strand, 'is_hidden') and intermediate_strand.is_hidden:
+                                continue
+
+                            try:
+                                # Get the rendered geometry of the intermediate strand
+                                intermediate_path = build_rendered_geometry(intermediate_strand)
+                                if hasattr(intermediate_strand, 'get_mask_path'):
+                                    intermediate_path = get_proper_masked_strand_path(intermediate_strand)
+
+                                # Subtract the intermediate strand from the circle shadow
+                                if not intermediate_path.isEmpty():
+                                    intersection = intersection.subtracted(intermediate_path)
+                            except Exception:
+                                pass
+                # --- End Intermediate Strand Subtraction ---
 
                 if not intersection.isEmpty():
                     # Add circle shadows to the same list as body shadows for consistent handling

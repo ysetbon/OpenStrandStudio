@@ -1482,35 +1482,35 @@ class MainWindow(QMainWindow):
 
         # --- Fallback: load as simple snapshot (previous behaviour) ---
         try:
-            strands, groups, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points = load_strands(filename, self.canvas)
+            strands, groups, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points, shadow_overrides = load_strands(filename, self.canvas)
 
             # Clear existing canvas state
             self.canvas.strands = []
             self.canvas.groups = {}
-            
+
             # Set canvas shadow state BEFORE applying loaded strands
             self.canvas.shadow_enabled = current_shadow_state
-            
+
             # Clear the group panel's visual elements and internal state for a clean reload
             if hasattr(self.canvas, 'group_layer_manager') and hasattr(self.canvas.group_layer_manager, 'group_panel'):
                 group_panel = self.canvas.group_layer_manager.group_panel
-                
+
                 # Clear visual elements
                 if hasattr(group_panel, 'scroll_layout'):
                     while group_panel.scroll_layout.count():
                         child = group_panel.scroll_layout.takeAt(0)
                         if child.widget():
                             child.widget().deleteLater()
-                
+
                 # Clear internal groups dictionary
                 group_panel.groups = {}
-                
+
                 # Reset the JSON loading flag
                 group_panel.groups_loaded_from_json = False
                 pass
 
             # Apply the loaded strands and groups (will now use the correct shadow_enabled state)
-            apply_loaded_strands(self.canvas, strands, groups)
+            apply_loaded_strands(self.canvas, strands, groups, shadow_overrides)
 
             # Preserve the current button states instead of using loaded data
             self.toggle_control_points_button.setChecked(current_control_points_state)

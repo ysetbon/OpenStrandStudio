@@ -5459,7 +5459,7 @@ class SettingsDialog(QDialog):
                     return
 
                 # Fallback: simple snapshot
-                strands, groups, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points = load_strands(file_path, parent.canvas)
+                strands, groups, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points, shadow_overrides = load_strands(file_path, parent.canvas)
 
                 # Clear existing canvas state
                 parent.canvas.strands = []
@@ -5477,7 +5477,7 @@ class SettingsDialog(QDialog):
                     group_panel.groups_loaded_from_json = False
 
                 # Apply loaded data
-                apply_loaded_strands(parent.canvas, strands, groups)
+                apply_loaded_strands(parent.canvas, strands, groups, shadow_overrides)
 
                 # Restore UI button states
                 if hasattr(parent, 'toggle_control_points_button'):

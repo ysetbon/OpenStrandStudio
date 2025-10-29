@@ -923,8 +923,18 @@ class UndoRedoManager(QObject):
                 
                 current_show_control_points = getattr(self.canvas, 'show_control_points', False)
                 prev_show_control_points = prev_data.get('show_control_points', False)
-                
+
                 if current_show_control_points != prev_show_control_points:
+                    return False
+
+                # Compare shadow overrides
+                current_shadow_overrides = {}
+                if hasattr(self.canvas, 'layer_state_manager') and hasattr(self.canvas.layer_state_manager, 'layer_state'):
+                    current_shadow_overrides = self.canvas.layer_state_manager.layer_state.get('shadow_overrides', {})
+
+                prev_shadow_overrides = prev_data.get('shadow_overrides', {})
+
+                if current_shadow_overrides != prev_shadow_overrides:
                     return False
 
                 # If we made it here, states are identical based on checked properties
@@ -1015,7 +1025,15 @@ class UndoRedoManager(QObject):
                         elif hasattr(strand, 'layer_name'):
                             strand_names.add(strand.layer_name)
                     original_group_contents[group_name] = strand_names
-            
+            original_shadow_overrides = {}
+            if hasattr(self.canvas, 'layer_state_manager') and hasattr(self.canvas.layer_state_manager, 'layer_state'):
+                try:
+                    original_shadow_overrides = json.loads(json.dumps(
+                        self.canvas.layer_state_manager.layer_state.get('shadow_overrides', {})
+                    ))
+                except Exception:
+                    original_shadow_overrides = self.canvas.layer_state_manager.layer_state.get('shadow_overrides', {})
+
             self.current_step -= 1
             
             # Suppress window activation events during entire undo operation
@@ -1084,7 +1102,16 @@ class UndoRedoManager(QObject):
                 new_groups = {}
                 if hasattr(self.canvas, 'groups'):
                     new_groups = self.canvas.groups.copy()
-                
+
+                new_shadow_overrides = {}
+                if hasattr(self.canvas, 'layer_state_manager') and hasattr(self.canvas.layer_state_manager, 'layer_state'):
+                    try:
+                        new_shadow_overrides = json.loads(json.dumps(
+                            self.canvas.layer_state_manager.layer_state.get('shadow_overrides', {})
+                        ))
+                    except Exception:
+                        new_shadow_overrides = self.canvas.layer_state_manager.layer_state.get('shadow_overrides', {})
+
                 # Get new group names and contents for detailed comparison
                 new_group_names = set(new_groups.keys())
                 new_group_contents = {}
@@ -1123,7 +1150,8 @@ class UndoRedoManager(QObject):
                     else:
                         # --- Original checks (now nested) --- 
                         # Check for meaningful visual differences between states
-                        has_visual_difference = False
+                        shadow_overrides_changed = (original_shadow_overrides != new_shadow_overrides)
+                        has_visual_difference = shadow_overrides_changed
                         
                         # Check lock state differences
                         # Compare the original lock state with the current (post-undo) lock state
@@ -1496,6 +1524,15 @@ class UndoRedoManager(QObject):
                         elif hasattr(strand, 'layer_name'):
                             strand_names.add(strand.layer_name)
                     original_group_contents[group_name] = strand_names
+
+            original_shadow_overrides = {}
+            if hasattr(self.canvas, 'layer_state_manager') and hasattr(self.canvas.layer_state_manager, 'layer_state'):
+                try:
+                    original_shadow_overrides = json.loads(json.dumps(
+                        self.canvas.layer_state_manager.layer_state.get('shadow_overrides', {})
+                    ))
+                except Exception:
+                    original_shadow_overrides = self.canvas.layer_state_manager.layer_state.get('shadow_overrides', {})
             
             # Special case: If redoing from step 0 (empty state)
             if self.current_step == 0:
@@ -1541,6 +1578,15 @@ class UndoRedoManager(QObject):
                 new_groups = {}
                 if hasattr(self.canvas, 'groups'):
                     new_groups = self.canvas.groups.copy()
+
+                new_shadow_overrides = {}
+                if hasattr(self.canvas, 'layer_state_manager') and hasattr(self.canvas.layer_state_manager, 'layer_state'):
+                    try:
+                        new_shadow_overrides = json.loads(json.dumps(
+                            self.canvas.layer_state_manager.layer_state.get('shadow_overrides', {})
+                        ))
+                    except Exception:
+                        new_shadow_overrides = self.canvas.layer_state_manager.layer_state.get('shadow_overrides', {})
                 
                 # Get new group names and contents for detailed comparison
                 new_group_names = set(new_groups.keys())
@@ -1580,7 +1626,8 @@ class UndoRedoManager(QObject):
                     else:
                         # --- Original checks (now nested) --- 
                         # Check for meaningful visual differences between states
-                        has_visual_difference = False
+                        shadow_overrides_changed = (original_shadow_overrides != new_shadow_overrides)
+                        has_visual_difference = shadow_overrides_changed
                         
                         # Check lock state differences
                         # Compare the original lock state with the current (post-undo) lock state
@@ -2259,8 +2306,8 @@ class UndoRedoManager(QObject):
                 group_names = list(raw_data.get('groups', {}).keys())
             
             # Load the data using the normal method
-            # --- MODIFIED: Receive selected_strand_name and button states --- 
-            loaded_strands, loaded_groups_data, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points = load_strands(filename, self.canvas)
+            # --- MODIFIED: Receive selected_strand_name, button states, and shadow_overrides ---
+            loaded_strands, loaded_groups_data, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points, shadow_overrides = load_strands(filename, self.canvas)
             # --- END MODIFIED ---
             state_has_groups = bool(loaded_groups_data)
             
@@ -2376,6 +2423,11 @@ class UndoRedoManager(QObject):
                         # Fallback - set directly if set_locked_layers doesn't exist
                         move_mode.locked_layers = locked_layers.copy()
                         move_mode.lock_mode_active = lock_mode
+
+            # Restore shadow overrides
+            if hasattr(self.canvas, 'layer_state_manager') and shadow_overrides is not None:
+                if hasattr(self.canvas.layer_state_manager, 'layer_state'):
+                    self.canvas.layer_state_manager.layer_state['shadow_overrides'] = shadow_overrides
 
             # --- Step 4: Refresh UI Panels AFTER lock state restoration (unless suppressed) --- 
             # Check if we're in an undo/redo operation and skip refreshes to prevent window flash
@@ -2627,7 +2679,7 @@ class UndoRedoManager(QObject):
                     pass
                 
                 # Load strands and groups from the specified file
-                strands, groups, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points = load_strands(filepath, self.canvas)
+                strands, groups, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points, shadow_overrides = load_strands(filepath, self.canvas)
                 
                 # First inspect the raw JSON directly to ensure we didn't miss anything
                 with open(filepath, 'r') as f:
@@ -2683,7 +2735,12 @@ class UndoRedoManager(QObject):
                                 self.layer_panel.notification_label.setText("")
                             if hasattr(self.layer_panel, 'deselect_all_button'):
                                 self.layer_panel.deselect_all_button.setText(_['deselect_all'])
-                
+
+                # Restore shadow overrides
+                if hasattr(self.canvas, 'layer_state_manager') and shadow_overrides is not None:
+                    if hasattr(self.canvas.layer_state_manager, 'layer_state'):
+                        self.canvas.layer_state_manager.layer_state['shadow_overrides'] = shadow_overrides
+
                 # Now handle the group panel update
                 state_has_groups = bool(self.canvas.groups)
                 

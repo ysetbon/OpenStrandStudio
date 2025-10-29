@@ -2084,6 +2084,11 @@ class NumberedLayerButton(QPushButton):
             # Import here to avoid circular dependency
             from shadow_editor_dialog import ShadowEditorDialog
 
+            # Save state before opening dialog for undo/redo
+            if hasattr(layer_panel.canvas, 'undo_redo_manager') and layer_panel.canvas.undo_redo_manager:
+                layer_panel.canvas.undo_redo_manager._last_save_time = 0
+                layer_panel.canvas.undo_redo_manager.save_state()
+
             # Create and show the shadow editor dialog
             dialog = ShadowEditorDialog(layer_panel.canvas, strand, parent=layer_panel)
             dialog.show()

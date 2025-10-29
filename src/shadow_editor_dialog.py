@@ -378,4 +378,10 @@ class ShadowEditorDialog(QDialog):
             self.canvas.set_highlighted_shadow(None, None)
 
         self.canvas.update()
+
+        # Save state for undo/redo when dialog closes
+        if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
+            self.canvas.undo_redo_manager._last_save_time = 0
+            self.canvas.undo_redo_manager.save_state()
+
         super().closeEvent(event)

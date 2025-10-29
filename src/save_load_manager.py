@@ -312,6 +312,7 @@ def save_strands(strands, groups, filename, canvas):
         "lock_mode": lock_mode,  # Add lock mode state
         "shadow_enabled": getattr(canvas, 'shadow_enabled', True),  # Add shadow button state
         "show_control_points": getattr(canvas, 'show_control_points', False),  # Add control points button state
+        "shadow_overrides": getattr(canvas.layer_state_manager, 'layer_state', {}).get('shadow_overrides', {}),  # Add shadow override settings
     }
     
     try:
@@ -1026,10 +1027,11 @@ def load_strands(filename, canvas):
     lock_mode = data.get("lock_mode", False)  # Get lock mode from saved data
     shadow_enabled = data.get("shadow_enabled", True)  # Get shadow button state from saved data
     show_control_points = data.get("show_control_points", False)  # Get control points button state from saved data
-    return strands, data.get("groups", {}), selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points # Return selected strand name, locked layers, lock mode, and button states
+    shadow_overrides = data.get("shadow_overrides", {})  # Get shadow override settings from saved data
+    return strands, data.get("groups", {}), selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points, shadow_overrides # Return selected strand name, locked layers, lock mode, button states, and shadow overrides
 
 
-def apply_loaded_strands(canvas, strands, groups):
+def apply_loaded_strands(canvas, strands, groups, shadow_overrides=None):
 
     # Log the contents of strand_dict
     strand_dict = {strand.layer_name: strand for strand in strands}
@@ -1154,7 +1156,7 @@ def apply_loaded_strands(canvas, strands, groups):
         canvas.group_layer_manager.group_panel.refresh_group_alignment()
 
     # Shadow state is handled by the caller (main_window.py) to respect loaded preferences
-    
+
     # Make sure layer ordering is properly set for shadow calculations
     if hasattr(canvas, 'layer_state_manager'):
         # Get all layer names
@@ -1162,7 +1164,10 @@ def apply_loaded_strands(canvas, strands, groups):
         # Update layer state order directly
         if hasattr(canvas.layer_state_manager, 'layer_state'):
             canvas.layer_state_manager.layer_state['order'] = layer_names
-        
+            # Restore shadow overrides if provided
+            if shadow_overrides is not None:
+                canvas.layer_state_manager.layer_state['shadow_overrides'] = shadow_overrides
+
     if hasattr(canvas, 'update'):
         canvas.update()
         # Also force a repaint which guarantees immediate visual update (unless suppressed for undo/redo)

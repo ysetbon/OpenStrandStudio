@@ -59,8 +59,8 @@ def process_optimal_solution_image(json_path, output_path):
     canvas.hide()
 
     try:
-        strands, groups = load_strands(json_path, canvas)
-        apply_loaded_strands(canvas, strands, groups)
+        strands, groups, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points, shadow_overrides = load_strands(json_path, canvas)
+        apply_loaded_strands(canvas, strands, groups, shadow_overrides)
 
         canvas.show_grid = False
         canvas.show_control_points = False

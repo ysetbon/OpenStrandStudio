@@ -241,8 +241,8 @@ def process_json_file(json_path, output_path):
                     temp_path = tmp.name
                 
                 # Load from temp file
-                strands, groups, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points = load_strands(temp_path, canvas)
-                
+                strands, groups, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points, shadow_overrides = load_strands(temp_path, canvas)
+
                 # Clean up temp file
                 os.unlink(temp_path)
             else:
@@ -250,10 +250,10 @@ def process_json_file(json_path, output_path):
                 return False
         else:
             # Regular JSON file
-            strands, groups, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points = load_strands(json_path, canvas)
-        
+            strands, groups, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points, shadow_overrides = load_strands(json_path, canvas)
+
         # Apply loaded strands to canvas
-        apply_loaded_strands(canvas, strands, groups)
+        apply_loaded_strands(canvas, strands, groups, shadow_overrides)
         
         # Check if any strand has a control_point_center and enable third control point if so
         has_third_control_point = False

@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
                              QListWidgetItem, QLabel, QPushButton, QCheckBox,
-                             QDialogButtonBox, QWidget, QGroupBox)
+                             QDialogButtonBox, QWidget, QGroupBox, QComboBox)
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QPalette
 from masked_strand import MaskedStrand
@@ -12,8 +12,9 @@ class ShadowListItem(QWidget):
     visibility_changed = pyqtSignal(str, bool)  # Signal when visibility is changed (layer_name, visible)
     show_shadow_requested = pyqtSignal(str, bool)  # Signal when show shadow is toggled (layer_name, enabled)
     allow_full_shadow_changed = pyqtSignal(str, bool)  # Signal when allow full shadow is toggled (layer_name, enabled)
+    subtracted_layer_changed = pyqtSignal(str, str)  # Signal when subtracted layer is changed (receiving_layer, subtracted_layer or "" for none)
 
-    def __init__(self, receiving_layer_name, receiving_layer_color, is_visible=True, allow_full_shadow=False, parent=None):
+    def __init__(self, receiving_layer_name, receiving_layer_color, is_visible=True, allow_full_shadow=False, available_layers=None, subtracted_layer=None, parent=None):
         super().__init__(parent)
         self.receiving_layer_name = receiving_layer_name
         self.is_shadow_visible = False
@@ -46,6 +47,22 @@ class ShadowListItem(QWidget):
         self.allow_full_shadow_checkbox.stateChanged.connect(self._on_allow_full_shadow_changed)
         layout.addWidget(self.allow_full_shadow_checkbox)
 
+        # Subtract layer dropdown
+        layout.addWidget(QLabel("Subtract:"))
+        self.subtract_layer_combo = QComboBox()
+        self.subtract_layer_combo.setMinimumWidth(80)
+        self.subtract_layer_combo.addItem("(None)", "")
+        if available_layers:
+            for layer in available_layers:
+                self.subtract_layer_combo.addItem(layer, layer)
+        # Set initial selection
+        if subtracted_layer:
+            index = self.subtract_layer_combo.findData(subtracted_layer)
+            if index >= 0:
+                self.subtract_layer_combo.setCurrentIndex(index)
+        self.subtract_layer_combo.currentIndexChanged.connect(self._on_subtracted_layer_changed)
+        layout.addWidget(self.subtract_layer_combo)
+
         # Show Current Shadow button
         self.show_shadow_button = QPushButton("Show Current Shadow")
         self.show_shadow_button.setCheckable(True)
@@ -61,6 +78,13 @@ class ShadowListItem(QWidget):
         """Handle allow full shadow checkbox change."""
         allow_full = (state == Qt.Checked)
         self.allow_full_shadow_changed.emit(self.receiving_layer_name, allow_full)
+
+    def _on_subtracted_layer_changed(self, index):
+        """Handle subtracted layer dropdown change."""
+        subtracted_layer = self.subtract_layer_combo.currentData()
+        if subtracted_layer is None:
+            subtracted_layer = ""
+        self.subtracted_layer_changed.emit(self.receiving_layer_name, subtracted_layer)
 
     def _on_show_shadow_clicked(self, checked):
         """Handle show shadow button toggle."""
@@ -282,6 +306,14 @@ class ShadowEditorDialog(QDialog):
             if strand and not isinstance(strand, MaskedStrand) and not getattr(strand, 'is_hidden', False):
                 receiving_layers.append((layer_name, strand))
 
+        # Get all available layers for subtraction (all layers except casting layer and masked strands)
+        available_layers = []
+        for layer_name in layer_order:
+            if layer_name != self.casting_layer:
+                strand = self._find_strand_by_name(layer_name)
+                if strand and not isinstance(strand, MaskedStrand) and not getattr(strand, 'is_hidden', False):
+                    available_layers.append(layer_name)
+
         # Create list items for each receiving layer
         for layer_name, strand in receiving_layers:
             # Get shadow override if exists
@@ -289,14 +321,21 @@ class ShadowEditorDialog(QDialog):
             is_visible = override.get('visibility', True) if override else True
             allow_full_shadow = override.get('allow_full_shadow', False) if override else False
 
-            # Create custom widget
-            item_widget = ShadowListItem(layer_name, strand.color.name(), is_visible, allow_full_shadow)
+            # Get subtracted layers (currently supporting only first one in dropdown)
+            subtracted_layers = self.canvas.layer_state_manager.get_subtracted_layers(self.casting_layer, layer_name)
+            subtracted_layer = subtracted_layers[0] if subtracted_layers else None
+
+            # Create custom widget - exclude the receiving layer from available layers
+            available_for_this_shadow = [l for l in available_layers if l != layer_name]
+            item_widget = ShadowListItem(layer_name, strand.color.name(), is_visible, allow_full_shadow,
+                                        available_for_this_shadow, subtracted_layer)
             item_widget.set_theme(self.theme)
 
             # Connect signals
             item_widget.visibility_changed.connect(self._on_visibility_changed)
             item_widget.allow_full_shadow_changed.connect(self._on_allow_full_shadow_changed)
             item_widget.show_shadow_requested.connect(self._on_show_shadow_requested)
+            item_widget.subtracted_layer_changed.connect(self._on_subtracted_layer_changed)
 
             # Add to list
             list_item = QListWidgetItem(self.shadows_list_widget)
@@ -347,6 +386,23 @@ class ShadowEditorDialog(QDialog):
         self.canvas.layer_state_manager.set_shadow_override(self.casting_layer, receiving_layer, override)
 
         # Refresh canvas
+        self.canvas.update()
+
+    def _on_subtracted_layer_changed(self, receiving_layer, subtracted_layer):
+        """Handle subtracted layer change."""
+        # Update subtracted layers in layer_state_manager
+        if subtracted_layer:
+            # Currently supporting single layer subtraction
+            self.canvas.layer_state_manager.set_subtracted_layers(
+                self.casting_layer, receiving_layer, [subtracted_layer]
+            )
+        else:
+            # Clear subtracted layers
+            self.canvas.layer_state_manager.set_subtracted_layers(
+                self.casting_layer, receiving_layer, []
+            )
+
+        # Refresh canvas to show updated shadow
         self.canvas.update()
 
     def _on_show_shadow_requested(self, receiving_layer, enabled):

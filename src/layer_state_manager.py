@@ -690,6 +690,42 @@ class LayerStateManager(QObject):
 
                     self.save_current_state()
 
+    def get_subtracted_layers(self, casting_layer, receiving_layer):
+        """
+        Get the list of layers whose paths should be subtracted from a shadow.
+
+        Args:
+            casting_layer (str): Name of the layer casting the shadow
+            receiving_layer (str): Name of the layer receiving the shadow
+
+        Returns:
+            list: List of layer names to subtract from the shadow, or empty list if none
+        """
+        override_data = self.get_shadow_override(casting_layer, receiving_layer)
+        if override_data and 'subtracted_layers' in override_data:
+            return override_data['subtracted_layers']
+        return []
+
+    def set_subtracted_layers(self, casting_layer, receiving_layer, layers):
+        """
+        Set the list of layers whose paths should be subtracted from a shadow.
+
+        Args:
+            casting_layer (str): Name of the layer casting the shadow
+            receiving_layer (str): Name of the layer receiving the shadow
+            layers (list): List of layer names to subtract from the shadow
+        """
+        # Get existing override data or create new
+        override_data = self.get_shadow_override(casting_layer, receiving_layer)
+        if override_data is None:
+            override_data = {'visibility': True, 'allow_full_shadow': False}
+
+        # Update subtracted layers
+        override_data['subtracted_layers'] = layers if layers else []
+
+        # Save the updated override
+        self.set_shadow_override(casting_layer, receiving_layer, override_data)
+
     # Additional methods (undo, redo, layer info, etc.) can be implemented as needed
 
 # End of LayerStateManager class

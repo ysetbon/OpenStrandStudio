@@ -57,6 +57,27 @@ def _union_paths(*paths: QPainterPath) -> QPainterPath:
     return combined.simplified()
 
 
+def _expand_path_for_shadow_blocker(base_path: QPainterPath, extra_radius: float) -> QPainterPath:
+    """
+    Enlarge *base_path* by ``extra_radius`` on all sides so soft-edge strokes
+    (blur) remain clipped when rendering.
+
+    The routine unions the original geometry with a stroked outline whose
+    width equals twice the requested radius.  This mirrors the logic used for
+    mask blocker paths and keeps subtraction effects intact even after the
+    gradient-stroke pass.
+    """
+    if not isinstance(base_path, QPainterPath) or base_path.isEmpty() or extra_radius <= 0:
+        return QPainterPath(base_path)
+
+    stroker = QPainterPathStroker()
+    stroker.setWidth(extra_radius * 2.0)
+    stroker.setJoinStyle(Qt.RoundJoin)
+    stroker.setCapStyle(Qt.RoundCap)
+    expanded_outline = stroker.createStroke(base_path)
+    return _union_paths(base_path, expanded_outline)
+
+
 def draw_mask_strand_shadow(
     painter,
     first_path: QPainterPath,
@@ -626,6 +647,62 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                         # Check if we should allow complete shadow (skip mask blocking)
                         allow_full_shadow = shadow_override and shadow_override.get('allow_full_shadow', False)
 
+                        # --- LAYER PATH SUBTRACTION ---
+                        # Check if there are any layers whose paths should be subtracted from this shadow
+                        clip_blocker_path = QPainterPath()
+                        if hasattr(strand.canvas, 'layer_state_manager'):
+                            subtracted_layers = strand.canvas.layer_state_manager.get_subtracted_layers(this_layer, other_layer)
+                            for subtracted_layer_name in subtracted_layers:
+                                # Find the strand for the subtracted layer
+                                subtracted_strand = None
+                                for s in canvas.strands:
+                                    if hasattr(s, 'layer_name') and s.layer_name == subtracted_layer_name:
+                                        subtracted_strand = s
+                                        break
+
+                                if subtracted_strand:
+                                    try:
+                                        # Build the complete visual path of the subtracted strand
+                                        # using the same logic as for other_stroke_path
+                                        subtracted_path = build_rendered_geometry(subtracted_strand)
+
+                                        # Add circle geometry if the subtracted strand has visible circles
+                                        # This matches the logic used for building other_stroke_path (lines 584-600)
+                                        if hasattr(subtracted_strand, 'has_circles') and any(subtracted_strand.has_circles):
+                                            try:
+                                                base_circle_radius = subtracted_strand.width + subtracted_strand.stroke_width * 2
+                                                for circle_idx, circle_flag in enumerate(subtracted_strand.has_circles):
+                                                    if not circle_flag:
+                                                        continue
+                                                    # Check for transparent circles
+                                                    if hasattr(subtracted_strand, 'circle_stroke_color'):
+                                                        circle_color = subtracted_strand.circle_stroke_color
+                                                        if circle_color and circle_color.alpha() == 0:
+                                                            continue  # Transparent circle, skip
+                                                    circle_center = subtracted_strand.start if circle_idx == 0 else subtracted_strand.end
+                                                    circle_path = QPainterPath()
+                                                    circle_path.addEllipse(circle_center, (base_circle_radius / 2), (base_circle_radius / 2))
+                                                    subtracted_path = _union_paths(subtracted_path, circle_path)
+                                            except Exception:
+                                                pass
+
+                                        # Subtract this layer's complete path from the shadow intersection
+                                        # Use only the actual visual strand path, not extended by blur radius
+                                        if not subtracted_path.isEmpty():
+                                            intersection = intersection.subtracted(subtracted_path)
+                                            # Add the same path to clip blocker (no expansion)
+                                            # This ensures the shadow hole matches exactly the strand's visual area
+                                            if clip_blocker_path.isEmpty():
+                                                clip_blocker_path = QPainterPath(subtracted_path)
+                                            else:
+                                                clip_blocker_path = _union_paths(clip_blocker_path, subtracted_path)
+                                            # If intersection is now empty, no need to process further
+                                            if intersection.isEmpty():
+                                                break
+                                    except Exception as e:
+                                        # Log error but continue with other subtractions
+                                        pass
+
                         width_masked_strand = max_blur_radius
                         # --- NEW MASK SUBTRACTION LOGIC ---
                         # Check if any VISIBLE mask is layered ABOVE this_layer.
@@ -855,6 +932,12 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                 clip_path = QPainterPath(other_stroke_path)
                             else:
                                 clip_path = _union_paths(clip_path, other_stroke_path)
+                            
+                            if not clip_blocker_path.isEmpty():
+                                try:
+                                    clip_path = clip_path.subtracted(clip_blocker_path)
+                                except Exception:
+                                    pass
                             
                             # Add this intersection to the list of individual shadows
                             # This preserves each shadow intersection separately to avoid issues with united()

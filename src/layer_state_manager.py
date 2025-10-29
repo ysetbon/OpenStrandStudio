@@ -83,7 +83,8 @@ class LayerStateManager(QObject):
             'positions': {},
             'selected_strand': None,
             'newest_strand': None,
-            'newest_layer': None
+            'newest_layer': None,
+            'shadow_overrides': {}  # {casting_layer: {receiving_layer: {visibility, allow_full_shadow}}}
         }
         self.initial_state = {}
         self.undo_stack = []
@@ -174,16 +175,20 @@ class LayerStateManager(QObject):
             return
 
         try:
+            # Preserve shadow_overrides from previous state
+            prev_shadow_overrides = self.layer_state.get('shadow_overrides', {})
+
             self.layer_state = {
                 'order': list(dict.fromkeys(strand.layer_name for strand in self.canvas.strands)),
                 'connections': self.get_layer_connections(self.canvas.strands),
                 'masked_layers': list(set(strand.layer_name for strand in self.canvas.strands if isinstance(strand, MaskedStrand))),
                 'colors': {strand.layer_name: strand.color.name() for strand in self.canvas.strands},
-                'positions': {strand.layer_name: (strand.start.x(), strand.start.y(), strand.end.x(), strand.end.y()) 
+                'positions': {strand.layer_name: (strand.start.x(), strand.start.y(), strand.end.x(), strand.end.y())
                             for strand in self.canvas.strands},
                 'selected_strand': self.canvas.selected_strand.layer_name if self.canvas.selected_strand else None,
                 'newest_strand': self.canvas.newest_strand.layer_name if self.canvas.newest_strand else None,
-                'newest_layer': self.canvas.strands[-1].layer_name if self.canvas.strands else None
+                'newest_layer': self.canvas.strands[-1].layer_name if self.canvas.strands else None,
+                'shadow_overrides': prev_shadow_overrides
             }
             
             # print("LayerStateManager: Current state saved")
@@ -638,6 +643,52 @@ class LayerStateManager(QObject):
         
         # Save the updated state
         self.save_current_state()
+
+    def get_shadow_overrides(self):
+        """Get the shadow overrides dictionary."""
+        return self.layer_state.get('shadow_overrides', {})
+
+    def set_shadow_override(self, casting_layer, receiving_layer, override_data):
+        """
+        Set shadow override data for a specific shadow relationship.
+
+        Args:
+            casting_layer (str): Name of the layer casting the shadow
+            receiving_layer (str): Name of the layer receiving the shadow
+            override_data (dict): Dictionary containing:
+                - visibility (bool): Whether the shadow is visible
+                - allow_full_shadow (bool): Whether to skip mask blocking for complete shadow
+        """
+        if 'shadow_overrides' not in self.layer_state:
+            self.layer_state['shadow_overrides'] = {}
+
+        if casting_layer not in self.layer_state['shadow_overrides']:
+            self.layer_state['shadow_overrides'][casting_layer] = {}
+
+        self.layer_state['shadow_overrides'][casting_layer][receiving_layer] = override_data
+        self.save_current_state()
+
+    def get_shadow_override(self, casting_layer, receiving_layer):
+        """
+        Get shadow override data for a specific shadow relationship.
+
+        Returns:
+            dict or None: Override data if it exists, None otherwise
+        """
+        return self.layer_state.get('shadow_overrides', {}).get(casting_layer, {}).get(receiving_layer, None)
+
+    def remove_shadow_override(self, casting_layer, receiving_layer):
+        """Remove shadow override for a specific shadow relationship."""
+        if 'shadow_overrides' in self.layer_state:
+            if casting_layer in self.layer_state['shadow_overrides']:
+                if receiving_layer in self.layer_state['shadow_overrides'][casting_layer]:
+                    del self.layer_state['shadow_overrides'][casting_layer][receiving_layer]
+
+                    # Clean up empty entries
+                    if not self.layer_state['shadow_overrides'][casting_layer]:
+                        del self.layer_state['shadow_overrides'][casting_layer]
+
+                    self.save_current_state()
 
     # Additional methods (undo, redo, layer info, etc.) can be implemented as needed
 

@@ -612,7 +612,20 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                         if intersection.isEmpty():
                             pass
                             continue
-                            
+
+                        # --- CHECK SHADOW OVERRIDE ---
+                        # Check if there's a shadow override for this specific shadow relationship
+                        shadow_override = None
+                        if hasattr(strand.canvas, 'layer_state_manager'):
+                            shadow_override = strand.canvas.layer_state_manager.get_shadow_override(this_layer, other_layer)
+
+                        # Skip shadow if visibility is disabled
+                        if shadow_override and not shadow_override.get('visibility', True):
+                            continue
+
+                        # Check if we should allow complete shadow (skip mask blocking)
+                        allow_full_shadow = shadow_override and shadow_override.get('allow_full_shadow', False)
+
                         width_masked_strand = max_blur_radius
                         # --- NEW MASK SUBTRACTION LOGIC ---
                         # Check if any VISIBLE mask is layered ABOVE this_layer.
@@ -623,7 +636,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                         # Create a temporary path for the current intersection to modify
                         current_intersection_shadow = QPainterPath(intersection)
 
-                        if not current_intersection_shadow.isEmpty(): # Check if there's any shadow intersection to modify
+                        # Skip mask blocking if allow_full_shadow is enabled
+                        if not current_intersection_shadow.isEmpty() and not allow_full_shadow: # Check if there's any shadow intersection to modify
                             for mask_name_sub, mask_info_sub in masked_strands_map.items():
                                 mask_strand_sub = mask_info_sub['masked_strand']
                                 mask_layer_sub = mask_name_sub # Assuming mask_name is the layer name
@@ -652,7 +666,18 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                     # QPainterPath maths below.
                                     # --------------------------------------------------
                                     fast_blocker = get_shadow_blocker_path(mask_strand_sub, max_blur_radius)
+
+                                    # Save the original shadow intersection before any blocking
+                                    original_intersection_shadow = QPainterPath(current_intersection_shadow)
+
+                                    # Apply shadow deletion rectangles if they exist
+                                    # Subtract the blocker from the shadow
                                     if not fast_blocker.isEmpty():
+                                        current_intersection_shadow = current_intersection_shadow.subtracted(fast_blocker)
+                                        # Skip the legacy path calculation below
+                                        continue
+
+                                    if False:  # Old code disabled
                                         current_intersection_shadow = current_intersection_shadow.subtracted(fast_blocker)
                                         # Nothing left to do for this mask in the current
                                         # intersection – jump to the next mask.
@@ -1769,3 +1794,96 @@ def get_shadow_blocker_path(mask_strand, blur_px):
     except Exception:
         # On any error just return an empty path so we never block painting.
         return QPainterPath()
+
+
+def calculate_shadow_for_layer_pair(canvas, casting_strand, receiving_strand, casting_layer, receiving_layer):
+    """
+    Calculate the shadow path for a specific casting->receiving layer pair.
+    This is used for visualization in the shadow editor.
+
+    Returns the final rendered shadow path after all mask blocking and overrides.
+    """
+    from masked_strand import MaskedStrand
+
+    # Get layer order
+    if not hasattr(canvas, 'layer_state_manager'):
+        return QPainterPath()
+
+    layer_order = canvas.layer_state_manager.getOrder()
+    if casting_layer not in layer_order or receiving_layer not in layer_order:
+        return QPainterPath()
+
+    casting_index = layer_order.index(casting_layer)
+    receiving_index = layer_order.index(receiving_layer)
+
+    # Shadow only casts downward (onto layers with lower index)
+    if receiving_index >= casting_index:
+        return QPainterPath()
+
+    # Build shadow path from casting strand
+    max_blur_radius = 30.0
+    shadow_path = build_shadow_geometry(casting_strand, max_blur_radius, include_circles=False)
+
+    # Build receiving strand stroke path
+    receiving_stroke_path = build_rendered_geometry(receiving_strand)
+
+    # Special handling for masked strands
+    if hasattr(receiving_strand, 'get_mask_path'):
+        try:
+            receiving_stroke_path = get_proper_masked_strand_path(receiving_strand)
+        except Exception:
+            pass
+
+    # Calculate intersection
+    intersection = QPainterPath(shadow_path)
+    if not (getattr(casting_strand, 'full_arrow_visible', False) and getattr(casting_strand, 'arrow_casts_shadow', False)):
+        circle_shadow_path = build_shadow_circle_geometry(casting_strand, max_blur_radius+2)
+        intersection = _union_paths(intersection, circle_shadow_path)
+    intersection = intersection.intersected(receiving_stroke_path)
+
+    if intersection.isEmpty():
+        return QPainterPath()
+
+    # Check shadow override visibility
+    shadow_override = canvas.layer_state_manager.get_shadow_override(casting_layer, receiving_layer)
+    if shadow_override and not shadow_override.get('visibility', True):
+        return QPainterPath()
+
+    # Check if we should allow complete shadow (skip mask blocking)
+    allow_full_shadow = shadow_override and shadow_override.get('allow_full_shadow', False)
+
+    # Apply mask blocking (unless allow_full_shadow is enabled)
+    current_shadow = QPainterPath(intersection)
+
+    if not allow_full_shadow:
+        # Get all masked strands
+        masked_strands_map = {}
+        for s in canvas.strands:
+            if isinstance(s, MaskedStrand):
+                masked_strands_map[s.layer_name] = {
+                    'masked_strand': s,
+                    'components': [s.first_selected_strand.layer_name, s.second_selected_strand.layer_name]
+                }
+
+        # Apply blocking from each mask above the casting strand
+        for mask_name, mask_info in masked_strands_map.items():
+            mask_strand = mask_info['masked_strand']
+            is_mask_hidden = getattr(mask_strand, 'is_hidden', False)
+
+            if not is_mask_hidden and mask_name in layer_order:
+                mask_index = layer_order.index(mask_name)
+
+                # Only masks above the casting strand can block
+                if mask_index <= casting_index:
+                    continue
+
+                # Don't block if casting onto the mask itself
+                if mask_name == receiving_layer:
+                    continue
+
+                # Get blocker path
+                blocker_path = get_shadow_blocker_path(mask_strand, max_blur_radius)
+                if not blocker_path.isEmpty():
+                    current_shadow = current_shadow.subtracted(blocker_path)
+
+    return current_shadow

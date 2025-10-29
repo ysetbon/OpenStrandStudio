@@ -295,6 +295,19 @@ class NumberedLayerButton(QPushButton):
             shadow_only_label.setText(shadow_only_text)
         context_menu.addAction(shadow_only_action)
 
+        # Add Edit Shadows option (for non-masked layers)
+        if not is_masked_layer:
+            edit_shadows_text = "Edit Shadows"  # TODO: Add translation support
+            edit_shadows_label = HoverLabel(edit_shadows_text, self, theme)
+            edit_shadows_label.setMinimumHeight(35)
+            if is_hebrew:
+                edit_shadows_label.setLayoutDirection(Qt.RightToLeft)
+                edit_shadows_label.setAlignment(Qt.AlignLeft)
+            edit_shadows_action = QWidgetAction(self)
+            edit_shadows_action.setDefaultWidget(edit_shadows_label)
+            edit_shadows_action.triggered.connect(lambda: self.open_shadow_editor(layer_panel, index))
+            context_menu.addAction(edit_shadows_action)
+
         if is_masked_layer:
             context_menu.addSeparator()
 
@@ -2059,6 +2072,24 @@ class NumberedLayerButton(QPushButton):
                 # Extract the set number from the button's text
                 set_number = int(self.text().split('_')[0])
                 self.color_changed.emit(set_number, color)
+
+    def open_shadow_editor(self, layer_panel, index):
+        """Open the shadow editor dialog for this strand."""
+        try:
+            if index < 0 or index >= len(layer_panel.canvas.strands):
+                return
+
+            strand = layer_panel.canvas.strands[index]
+
+            # Import here to avoid circular dependency
+            from shadow_editor_dialog import ShadowEditorDialog
+
+            # Create and show the shadow editor dialog
+            dialog = ShadowEditorDialog(layer_panel.canvas, strand, parent=layer_panel)
+            dialog.show()
+
+        except Exception as e:
+            print(f"Error opening shadow editor: {e}")
 
     def set_masked_mode(self, masked):
         """

@@ -1277,7 +1277,13 @@ class StrandDrawingCanvas(QWidget):
         self.editing_masked_strand = None  # The masked strand currently being edited
         self.mask_edit_path = None  # The QPainterPath for the mask being edited
         self.erase_start_pos = None  # Start position for erase operations
-        
+
+        # Shadow mask edit mode attributes
+        self.highlighted_shadow_casting = None  # For highlighting specific shadow in dialog
+        self.highlighted_shadow_receiving = None
+        self.visible_shadow_casting = None  # Casting layer for visible shadow
+        self.visible_shadow_receiving = None  # Receiving layer for visible shadow
+
         # Shadow rendering
         self.shadow_enabled = False  # Flag to enable/disable shadow rendering
         self.current_erase_rect = None  # Current erase rectangle
@@ -2467,8 +2473,39 @@ class StrandDrawingCanvas(QWidget):
                 painter.setBrush(QColor(255, 255, 255, 128))  # Semi-transparent white
                 painter.setPen(QPen(Qt.white, 1, Qt.DashLine))
                 painter.drawRect(self.current_erase_rect)
-            
-            # Draw the eraser cursor
+
+        # Draw visible shadow path if requested
+        if self.visible_shadow_casting and self.visible_shadow_receiving:
+            # Calculate and show the current rendered shadow for this casting->receiving pair
+            from shader_utils import calculate_shadow_for_layer_pair
+
+            # Find the casting and receiving strands
+            casting_strand = None
+            receiving_strand = None
+            for s in self.strands:
+                if s.layer_name == self.visible_shadow_casting:
+                    casting_strand = s
+                if s.layer_name == self.visible_shadow_receiving:
+                    receiving_strand = s
+
+            if casting_strand and receiving_strand:
+                # Get the rendered shadow path (after all mask blocking and overrides)
+                shadow_path = calculate_shadow_for_layer_pair(
+                    self,
+                    casting_strand,
+                    receiving_strand,
+                    self.visible_shadow_casting,
+                    self.visible_shadow_receiving
+                )
+
+                if shadow_path and not shadow_path.isEmpty():
+                    # Draw the current shadow in semi-transparent blue
+                    painter.setBrush(QColor(0, 120, 255, 100))  # Semi-transparent blue
+                    painter.setPen(QPen(QColor(0, 120, 255, 200), 2, Qt.SolidLine))
+                    painter.drawPath(shadow_path)
+
+        # Draw the eraser cursor for mask editing
+        if self.mask_edit_mode:
             if hasattr(self, 'last_pos'):
                 eraser_rect = QRectF(
                     self.last_pos.x() - self.eraser_size/2,
@@ -3775,7 +3812,8 @@ class StrandDrawingCanvas(QWidget):
             self.update()
             event.accept()
             return
-        elif self.current_mode == "rotate":
+
+        if self.current_mode == "rotate":
             # Create a new event with converted coordinates
             new_event = type(event)(event.type(), canvas_pos, event.button(), event.buttons(), event.modifiers())
             self.rotate_mode.mousePressEvent(new_event)
@@ -3977,7 +4015,8 @@ class StrandDrawingCanvas(QWidget):
             self.update()  # Force a redraw to show the rectangle
             event.accept()
             return
-        elif self.moving_group and self.group_move_start_pos:
+
+        if self.moving_group and self.group_move_start_pos:
             # Calculate total dx and dy from the initial movement start position
             total_dx = canvas_pos.x() - self.group_move_start_pos.x()
             total_dy = canvas_pos.y() - self.group_move_start_pos.y()
@@ -4068,7 +4107,8 @@ class StrandDrawingCanvas(QWidget):
             self.update()
             event.accept()
             return
-        elif self.current_mode == "rotate":
+
+        if self.current_mode == "rotate":
             # Create a new event with converted coordinates
             new_event = type(event)(event.type(), canvas_pos, event.button(), event.buttons(), event.modifiers())
             self.rotate_mode.mouseReleaseEvent(new_event)
@@ -6510,6 +6550,18 @@ class StrandDrawingCanvas(QWidget):
             self.mask_edit_exited.emit()
             
             self.update()
+
+    def set_highlighted_shadow(self, casting_layer, receiving_layer):
+        """Set which shadow should be highlighted for preview."""
+        self.highlighted_shadow_casting = casting_layer
+        self.highlighted_shadow_receiving = receiving_layer
+        self.update()
+
+    def set_visible_shadow_path(self, casting_layer, receiving_layer):
+        """Set which shadow path should be visualized."""
+        self.visible_shadow_casting = casting_layer
+        self.visible_shadow_receiving = receiving_layer
+        self.update()
 
     def reset_mask(self, strand_index):
         """Reset the custom mask (and deletion rectangles) of the masked strand at the given index.

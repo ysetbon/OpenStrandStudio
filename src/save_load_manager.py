@@ -230,6 +230,12 @@ def serialize_strand(strand, canvas, index=None):
         if hasattr(strand, 'triangle_has_moved'):
             data["triangle_has_moved"] = strand.triangle_has_moved
 
+        # Save end control point visibility flags
+        if hasattr(strand, 'control_point2_shown'):
+            data["control_point2_shown"] = strand.control_point2_shown
+        if hasattr(strand, 'control_point2_activated'):
+            data["control_point2_activated"] = strand.control_point2_activated
+
     if isinstance(strand, MaskedStrand):
         # Save deletion rectangles with movement offset applied
         deletion_rects = getattr(strand, 'deletion_rectangles', [])
@@ -477,11 +483,22 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
             # If not saved, determine based on whether control_point1 is different from start
             if hasattr(strand, 'control_point1') and strand.control_point1 and hasattr(strand, 'start'):
                 # Check if control_point1 (triangle) has moved from start position
-                distance = ((strand.control_point1.x() - strand.start.x()) ** 2 + 
+                distance = ((strand.control_point1.x() - strand.start.x()) ** 2 +
                            (strand.control_point1.y() - strand.start.y()) ** 2) ** 0.5
                 strand.triangle_has_moved = distance > 1.0  # More than 1 pixel away
             else:
                 strand.triangle_has_moved = False
+
+        # Restore end control point visibility flags
+        if "control_point2_shown" in data:
+            strand.control_point2_shown = data["control_point2_shown"]
+        else:
+            strand.control_point2_shown = False
+
+        if "control_point2_activated" in data:
+            strand.control_point2_activated = data["control_point2_activated"]
+        else:
+            strand.control_point2_activated = False
         
         # Handle bias control (small control points)
         # Import here to avoid circular dependency
@@ -727,11 +744,22 @@ def load_strands(filename, canvas):
                 # If not saved, determine based on whether control_point1 is different from start
                 if hasattr(strand, 'control_point1') and strand.control_point1 and hasattr(strand, 'start'):
                     # Check if control_point1 (triangle) has moved from start position
-                    distance = ((strand.control_point1.x() - strand.start.x()) ** 2 + 
+                    distance = ((strand.control_point1.x() - strand.start.x()) ** 2 +
                                (strand.control_point1.y() - strand.start.y()) ** 2) ** 0.5
                     strand.triangle_has_moved = distance > 1.0  # More than 1 pixel away
                 else:
                     strand.triangle_has_moved = False
+
+            # Restore end control point visibility flags for AttachedStrand
+            if "control_point2_shown" in strand_data:
+                strand.control_point2_shown = strand_data["control_point2_shown"]
+            else:
+                strand.control_point2_shown = False
+
+            if "control_point2_activated" in strand_data:
+                strand.control_point2_activated = strand_data["control_point2_activated"]
+            else:
+                strand.control_point2_activated = False
             
             # Handle bias control for AttachedStrand
             from curvature_bias_control import CurvatureBiasControl

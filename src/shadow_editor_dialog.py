@@ -24,7 +24,7 @@ class ShadowListItem(QWidget):
         # Create layout
         layout = QHBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
-        layout.setSpacing(5)
+        layout.setSpacing(2)
 
         # Set minimum height for the row
         self.setMinimumHeight(40)
@@ -36,32 +36,22 @@ class ShadowListItem(QWidget):
         layout.addWidget(self.color_indicator)
 
         self.name_label = QLabel(receiving_layer_name)
-        self.name_label.setMinimumWidth(50)
-        self.name_label.setMaximumWidth(80)
+        self.name_label.setFixedWidth(30)
         layout.addWidget(self.name_label)
-
-        # Add some spacing
-        layout.addSpacing(10)
 
         # Visibility checkbox
         self.visibility_checkbox = QCheckBox("Visible")
         self.visibility_checkbox.setChecked(is_visible)
-        self.visibility_checkbox.setMinimumWidth(70)
+        self.visibility_checkbox.setFixedWidth(60)
         self.visibility_checkbox.stateChanged.connect(self._on_visibility_changed)
         layout.addWidget(self.visibility_checkbox)
-
-        # Add some spacing
-        layout.addSpacing(10)
 
         # Allow full shadow checkbox
         self.allow_full_shadow_checkbox = QCheckBox("Allow Complete Shadow")
         self.allow_full_shadow_checkbox.setChecked(allow_full_shadow)
-        self.allow_full_shadow_checkbox.setMinimumWidth(170)
+        self.allow_full_shadow_checkbox.setFixedWidth(155)
         self.allow_full_shadow_checkbox.stateChanged.connect(self._on_allow_full_shadow_changed)
         layout.addWidget(self.allow_full_shadow_checkbox)
-
-        # Add some spacing
-        layout.addSpacing(10)
 
         # Subtract layers collapsible section
         subtract_container = QWidget()
@@ -91,7 +81,7 @@ class ShadowListItem(QWidget):
         self.subtract_content = QWidget()
         self.subtract_content.setVisible(False)
         subtract_layout = QVBoxLayout(self.subtract_content)
-        subtract_layout.setContentsMargins(15, 2, 5, 2)
+        subtract_layout.setContentsMargins(15, 2, 0, 2)
         subtract_layout.setSpacing(2)
 
         if available_layers and len(available_layers) > 0:
@@ -109,7 +99,7 @@ class ShadowListItem(QWidget):
             subtract_layout.addWidget(no_layers_label)
 
         subtract_container_layout.addWidget(self.subtract_content)
-        subtract_container.setMinimumWidth(150)
+        subtract_container.setFixedWidth(150)
         layout.addWidget(subtract_container)
 
         # Auto-expand if there are any subtracted layers
@@ -118,13 +108,10 @@ class ShadowListItem(QWidget):
             self.subtract_content.setVisible(True)
             self.subtract_toggle_button.setText("▼ Subtract Layers")
 
-        # Add some spacing
-        layout.addSpacing(10)
-
         # Show Current Shadow button
-        self.show_shadow_button = QPushButton("Show Current Shadow")
+        self.show_shadow_button = QPushButton("Shadow Path")
         self.show_shadow_button.setCheckable(True)
-        self.show_shadow_button.setMinimumWidth(150)
+        self.show_shadow_button.setFixedWidth(150)
         self.show_shadow_button.clicked.connect(self._on_show_shadow_clicked)
         layout.addWidget(self.show_shadow_button)
 
@@ -168,9 +155,9 @@ class ShadowListItem(QWidget):
         """Handle show shadow button toggle."""
         self.is_shadow_visible = checked
         if checked:
-            self.show_shadow_button.setText("Hide Current Shadow")
+            self.show_shadow_button.setText("Hide Shadow Path")
         else:
-            self.show_shadow_button.setText("Show Current Shadow")
+            self.show_shadow_button.setText("Shadow Path")
         self.show_shadow_requested.emit(self.receiving_layer_name, checked)
 
     def set_theme(self, theme):

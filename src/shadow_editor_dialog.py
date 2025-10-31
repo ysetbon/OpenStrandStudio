@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtGui import QColor, QPalette
 from masked_strand import MaskedStrand
+from translations import translations
 
 
 class ShadowListItem(QWidget):
@@ -15,11 +16,15 @@ class ShadowListItem(QWidget):
     subtracted_layers_changed = pyqtSignal(str, list)  # Signal when subtracted layers are changed (receiving_layer, list of subtracted_layers)
     size_changed = pyqtSignal()  # Signal when widget size needs to be updated
 
-    def __init__(self, receiving_layer_name, receiving_layer_color, is_visible=True, allow_full_shadow=False, available_layers=None, subtracted_layers=None, parent=None):
+    def __init__(self, receiving_layer_name, receiving_layer_color, is_visible=True, allow_full_shadow=False, available_layers=None, subtracted_layers=None, language_code='en', parent=None):
         super().__init__(parent)
         self.receiving_layer_name = receiving_layer_name
         self.is_shadow_visible = False
         self.subtract_checkboxes = {}  # Dictionary to track checkboxes by layer name
+        self.language_code = language_code
+        self.available_layers = available_layers
+        self.subtracted_layers = subtracted_layers
+        self.no_layers_label = None  # Reference to no layers label for translation updates
 
         # Create layout
         layout = QHBoxLayout(self)
@@ -43,7 +48,8 @@ class ShadowListItem(QWidget):
         layout.addWidget(self.name_label)
 
         # Visibility checkbox
-        self.visibility_checkbox = QCheckBox("Visible")
+        _ = translations[self.language_code]
+        self.visibility_checkbox = QCheckBox(_['shadow_visible'])
         self.visibility_checkbox.setChecked(is_visible)
         self.visibility_checkbox.setMinimumWidth(70)
         self.visibility_checkbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -51,7 +57,7 @@ class ShadowListItem(QWidget):
         layout.addWidget(self.visibility_checkbox)
 
         # Allow full shadow checkbox
-        self.allow_full_shadow_checkbox = QCheckBox("Full Shadow")
+        self.allow_full_shadow_checkbox = QCheckBox(_['shadow_full'])
         self.allow_full_shadow_checkbox.setChecked(allow_full_shadow)
         self.allow_full_shadow_checkbox.setMinimumWidth(90)
         self.allow_full_shadow_checkbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -65,7 +71,7 @@ class ShadowListItem(QWidget):
         subtract_container_layout.setSpacing(0)
 
         # Toggle button with arrow
-        self.subtract_toggle_button = QPushButton("▶ Subtract Layers")
+        self.subtract_toggle_button = QPushButton(f"▶ {_['shadow_subtract_layers']}")
         self.subtract_toggle_button.setCheckable(True)
         self.subtract_toggle_button.setFlat(True)
         self.subtract_toggle_button.setStyleSheet("""
@@ -99,9 +105,9 @@ class ShadowListItem(QWidget):
                 self.subtract_checkboxes[layer] = checkbox
                 subtract_layout.addWidget(checkbox)
         else:
-            no_layers_label = QLabel("(No layers available)")
-            no_layers_label.setStyleSheet("color: gray; font-style: italic;")
-            subtract_layout.addWidget(no_layers_label)
+            self.no_layers_label = QLabel(_['shadow_no_layers'])
+            self.no_layers_label.setStyleSheet("color: gray; font-style: italic;")
+            subtract_layout.addWidget(self.no_layers_label)
 
         subtract_container_layout.addWidget(self.subtract_content)
         subtract_container.setMinimumWidth(120)
@@ -112,10 +118,10 @@ class ShadowListItem(QWidget):
         if subtracted_layers and len(subtracted_layers) > 0:
             self.subtract_toggle_button.setChecked(True)
             self.subtract_content.setVisible(True)
-            self.subtract_toggle_button.setText("▼ Subtract Layers")
+            self.subtract_toggle_button.setText(f"▼ {_['shadow_subtract_layers']}")
 
         # Show Current Shadow button
-        self.show_shadow_button = QPushButton("Shadow Path")
+        self.show_shadow_button = QPushButton(_['shadow_path_button'])
         self.show_shadow_button.setCheckable(True)
         self.show_shadow_button.setMinimumWidth(80)
         self.show_shadow_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -134,13 +140,14 @@ class ShadowListItem(QWidget):
 
     def _toggle_subtract_section(self, checked):
         """Toggle the visibility of the subtract layers section."""
+        _ = translations[self.language_code]
         self.subtract_content.setVisible(checked)
         if checked:
-            self.subtract_toggle_button.setText("▼ Subtract Layers")
+            self.subtract_toggle_button.setText(f"▼ {_['shadow_subtract_layers']}")
             # Remove maximum height constraint when expanding
             self.setMaximumHeight(16777215)  # Qt's QWIDGETSIZE_MAX
         else:
-            self.subtract_toggle_button.setText("▶ Subtract Layers")
+            self.subtract_toggle_button.setText(f"▶ {_['shadow_subtract_layers']}")
             # Set maximum height to minimum when collapsing
             self.setMaximumHeight(self.minimumHeight())
 
@@ -160,11 +167,12 @@ class ShadowListItem(QWidget):
 
     def _on_show_shadow_clicked(self, checked):
         """Handle show shadow button toggle."""
+        _ = translations[self.language_code]
         self.is_shadow_visible = checked
         if checked:
-            self.show_shadow_button.setText("Hide Shadow Path")
+            self.show_shadow_button.setText(_['shadow_path_hide'])
         else:
-            self.show_shadow_button.setText("Shadow Path")
+            self.show_shadow_button.setText(_['shadow_path_button'])
         self.show_shadow_requested.emit(self.receiving_layer_name, checked)
 
     def set_theme(self, theme):
@@ -255,6 +263,30 @@ class ShadowListItem(QWidget):
                 }
             """)
 
+    def update_translations(self, language_code):
+        """Update all text elements with new language."""
+        self.language_code = language_code
+        _ = translations[language_code]
+
+        # Update checkbox labels
+        self.visibility_checkbox.setText(_['shadow_visible'])
+        self.allow_full_shadow_checkbox.setText(_['shadow_full'])
+
+        # Update toggle button (preserve expanded/collapsed state)
+        is_expanded = self.subtract_toggle_button.isChecked()
+        arrow = "▼" if is_expanded else "▶"
+        self.subtract_toggle_button.setText(f"{arrow} {_['shadow_subtract_layers']}")
+
+        # Update no layers label if it exists
+        if self.no_layers_label:
+            self.no_layers_label.setText(_['shadow_no_layers'])
+
+        # Update shadow path button (preserve checked state)
+        if self.show_shadow_button.isChecked():
+            self.show_shadow_button.setText(_['shadow_path_hide'])
+        else:
+            self.show_shadow_button.setText(_['shadow_path_button'])
+
 
 class ShadowEditorDialog(QDialog):
     """Dialog for editing shadow casting from a specific strand."""
@@ -267,7 +299,11 @@ class ShadowEditorDialog(QDialog):
         self.shadow_visible_layer = None  # Track which layer's shadow is being visualized
         self.widget_to_item = {}  # Map widgets to their list items
 
-        self.setWindowTitle(f"Shadow Editor - {self.casting_layer}")
+        # Get language code from canvas
+        self.language_code = canvas.language_code if hasattr(canvas, 'language_code') else 'en'
+        _ = translations[self.language_code]
+
+        self.setWindowTitle(f"{_['shadow_editor_title']} - {self.casting_layer}")
         self.setModal(False)  # Allow interaction with canvas
         self.setMinimumSize(700, 400)
         self.resize(750, 500)
@@ -288,8 +324,8 @@ class ShadowEditorDialog(QDialog):
         layout.setContentsMargins(8, 8, 8, 8)  # Compact margins on all sides
 
         # Info label
-        info_label = QLabel(f"Shadows cast by <b>{self.casting_layer}</b> onto layers below:")
-        layout.addWidget(info_label)
+        self.info_label = QLabel(_['shadow_editor_info'].format(self.casting_layer))
+        layout.addWidget(self.info_label)
 
         # Shadows list
         self.shadows_list_widget = QListWidget()
@@ -310,6 +346,10 @@ class ShadowEditorDialog(QDialog):
         # Connect canvas update signal to refresh when canvas changes
         if hasattr(canvas, 'canvas_updated'):
             canvas.canvas_updated.connect(self._on_canvas_updated)
+
+        # Connect to language change signal
+        if hasattr(canvas, 'language_changed'):
+            canvas.language_changed.connect(self.update_translations)
 
     def _apply_theme(self):
         """Apply theme styling to the dialog."""
@@ -423,7 +463,7 @@ class ShadowEditorDialog(QDialog):
             # Create custom widget - exclude the receiving layer from available layers
             available_for_this_shadow = [l for l in available_layers if l != layer_name]
             item_widget = ShadowListItem(layer_name, strand.color.name(), is_visible, allow_full_shadow,
-                                        available_for_this_shadow, subtracted_layers)
+                                        available_for_this_shadow, subtracted_layers, self.language_code)
             item_widget.set_theme(self.theme)
 
             # Connect signals
@@ -532,6 +572,25 @@ class ShadowEditorDialog(QDialog):
         """Handle canvas updates."""
         # Refresh the shadow list if needed
         pass
+
+    def update_translations(self):
+        """Update all text elements when language changes."""
+        # Get new language code from canvas
+        self.language_code = self.canvas.language_code if hasattr(self.canvas, 'language_code') else 'en'
+        _ = translations[self.language_code]
+
+        # Update window title
+        self.setWindowTitle(f"{_['shadow_editor_title']} - {self.casting_layer}")
+
+        # Update info label
+        self.info_label.setText(_['shadow_editor_info'].format(self.casting_layer))
+
+        # Update all list items
+        for i in range(self.shadows_list_widget.count()):
+            item = self.shadows_list_widget.item(i)
+            widget = self.shadows_list_widget.itemWidget(item)
+            if widget and isinstance(widget, ShadowListItem):
+                widget.update_translations(self.language_code)
 
     def closeEvent(self, event):
         """Handle dialog close - clean up visualizations."""

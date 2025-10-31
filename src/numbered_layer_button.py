@@ -297,7 +297,7 @@ class NumberedLayerButton(QPushButton):
 
         # Add Edit Shadows option (for non-masked layers)
         if not is_masked_layer:
-            edit_shadows_text = "Edit Shadows"  # TODO: Add translation support
+            edit_shadows_text = _['edit_shadows']
             edit_shadows_label = HoverLabel(edit_shadows_text, self, theme)
             edit_shadows_label.setMinimumHeight(35)
             if is_hebrew:

@@ -31,8 +31,14 @@ class ShadowListItem(QWidget):
         layout.setContentsMargins(3, 3, 3, 3)
         layout.setSpacing(1)
 
+        # Set RTL layout direction for Hebrew
+        if self.language_code == 'he':
+            self.setLayoutDirection(Qt.RightToLeft)
+        else:
+            self.setLayoutDirection(Qt.LeftToRight)
+
         # Set minimum dimensions for the row
-        self.setMinimumHeight(40)
+        self.setMinimumHeight(65)
         self.setMinimumWidth(650)  # Ensure enough space for all widgets
 
         # Layer name label with color indicator
@@ -71,19 +77,27 @@ class ShadowListItem(QWidget):
         subtract_container_layout.setSpacing(0)
 
         # Toggle button with arrow
-        self.subtract_toggle_button = QPushButton(f"▶ {_['shadow_subtract_layers']}")
+        # For RTL (Hebrew), put arrow after text; for LTR, put arrow before text
+        if self.language_code == 'he':
+            button_text = f"{_['shadow_subtract_layers']} ◀"
+            text_align = "right"
+        else:
+            button_text = f"▶ {_['shadow_subtract_layers']}"
+            text_align = "left"
+
+        self.subtract_toggle_button = QPushButton(button_text)
         self.subtract_toggle_button.setCheckable(True)
         self.subtract_toggle_button.setFlat(True)
-        self.subtract_toggle_button.setStyleSheet("""
-            QPushButton {
-                text-align: left;
+        self.subtract_toggle_button.setStyleSheet(f"""
+            QPushButton {{
+                text-align: {text_align};
                 padding: 3px;
                 border: none;
                 font-weight: bold;
-            }
-            QPushButton:hover {
+            }}
+            QPushButton:hover {{
                 background-color: rgba(128, 128, 128, 0.2);
-            }
+            }}
         """)
         self.subtract_toggle_button.clicked.connect(self._toggle_subtract_section)
         subtract_container_layout.addWidget(self.subtract_toggle_button)
@@ -118,12 +132,16 @@ class ShadowListItem(QWidget):
         if subtracted_layers and len(subtracted_layers) > 0:
             self.subtract_toggle_button.setChecked(True)
             self.subtract_content.setVisible(True)
-            self.subtract_toggle_button.setText(f"▼ {_['shadow_subtract_layers']}")
+            if self.language_code == 'he':
+                self.subtract_toggle_button.setText(f"{_['shadow_subtract_layers']} ▼")
+            else:
+                self.subtract_toggle_button.setText(f"▼ {_['shadow_subtract_layers']}")
 
         # Show Current Shadow button
         self.show_shadow_button = QPushButton(_['shadow_path_button'])
         self.show_shadow_button.setCheckable(True)
         self.show_shadow_button.setMinimumWidth(80)
+        self.show_shadow_button.setMinimumHeight(50)
         self.show_shadow_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.show_shadow_button.clicked.connect(self._on_show_shadow_clicked)
         layout.addWidget(self.show_shadow_button, stretch=0)
@@ -142,12 +160,25 @@ class ShadowListItem(QWidget):
         """Toggle the visibility of the subtract layers section."""
         _ = translations[self.language_code]
         self.subtract_content.setVisible(checked)
+
+        # Handle arrow direction and position based on language direction
+        if self.language_code == 'he':
+            # RTL: arrow after text
+            if checked:
+                self.subtract_toggle_button.setText(f"{_['shadow_subtract_layers']} ▼")
+            else:
+                self.subtract_toggle_button.setText(f"{_['shadow_subtract_layers']} ◀")
+        else:
+            # LTR: arrow before text
+            if checked:
+                self.subtract_toggle_button.setText(f"▼ {_['shadow_subtract_layers']}")
+            else:
+                self.subtract_toggle_button.setText(f"▶ {_['shadow_subtract_layers']}")
+
         if checked:
-            self.subtract_toggle_button.setText(f"▼ {_['shadow_subtract_layers']}")
             # Remove maximum height constraint when expanding
             self.setMaximumHeight(16777215)  # Qt's QWIDGETSIZE_MAX
         else:
-            self.subtract_toggle_button.setText(f"▶ {_['shadow_subtract_layers']}")
             # Set maximum height to minimum when collapsing
             self.setMaximumHeight(self.minimumHeight())
 
@@ -268,14 +299,45 @@ class ShadowListItem(QWidget):
         self.language_code = language_code
         _ = translations[language_code]
 
+        # Update layout direction for RTL/LTR
+        if language_code == 'he':
+            self.setLayoutDirection(Qt.RightToLeft)
+            text_align = "right"
+        else:
+            self.setLayoutDirection(Qt.LeftToRight)
+            text_align = "left"
+
         # Update checkbox labels
         self.visibility_checkbox.setText(_['shadow_visible'])
         self.allow_full_shadow_checkbox.setText(_['shadow_full'])
 
-        # Update toggle button (preserve expanded/collapsed state)
+        # Update toggle button (preserve expanded/collapsed state and handle RTL arrow positioning)
         is_expanded = self.subtract_toggle_button.isChecked()
-        arrow = "▼" if is_expanded else "▶"
-        self.subtract_toggle_button.setText(f"{arrow} {_['shadow_subtract_layers']}")
+        if language_code == 'he':
+            # RTL: arrow after text
+            if is_expanded:
+                self.subtract_toggle_button.setText(f"{_['shadow_subtract_layers']} ▼")
+            else:
+                self.subtract_toggle_button.setText(f"{_['shadow_subtract_layers']} ◀")
+        else:
+            # LTR: arrow before text
+            if is_expanded:
+                self.subtract_toggle_button.setText(f"▼ {_['shadow_subtract_layers']}")
+            else:
+                self.subtract_toggle_button.setText(f"▶ {_['shadow_subtract_layers']}")
+
+        # Update button stylesheet for text alignment
+        self.subtract_toggle_button.setStyleSheet(f"""
+            QPushButton {{
+                text-align: {text_align};
+                padding: 3px;
+                border: none;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background-color: rgba(128, 128, 128, 0.2);
+            }}
+        """)
 
         # Update no layers label if it exists
         if self.no_layers_label:
@@ -318,6 +380,12 @@ class ShadowEditorDialog(QDialog):
 
         # Apply theme styling
         self._apply_theme()
+
+        # Set RTL layout direction for Hebrew
+        if self.language_code == 'he':
+            self.setLayoutDirection(Qt.RightToLeft)
+        else:
+            self.setLayoutDirection(Qt.LeftToRight)
 
         # Create layout
         layout = QVBoxLayout(self)
@@ -477,8 +545,8 @@ class ShadowEditorDialog(QDialog):
             list_item = QListWidgetItem(self.shadows_list_widget)
             # Ensure proper size for the item
             size_hint = item_widget.sizeHint()
-            if size_hint.height() < 40:
-                size_hint.setHeight(40)
+            if size_hint.height() < 65:
+                size_hint.setHeight(65)
             list_item.setSizeHint(size_hint)
             self.shadows_list_widget.addItem(list_item)
             self.shadows_list_widget.setItemWidget(list_item, item_widget)
@@ -494,8 +562,8 @@ class ShadowEditorDialog(QDialog):
             widget.updateGeometry()
             # Update the list item's size hint to match the widget's new size
             new_size_hint = widget.sizeHint()
-            if new_size_hint.height() < 40:
-                new_size_hint.setHeight(40)
+            if new_size_hint.height() < 65:
+                new_size_hint.setHeight(65)
             list_item.setSizeHint(new_size_hint)
             # Force the list widget to update its layout immediately
             self.shadows_list_widget.scheduleDelayedItemsLayout()
@@ -578,6 +646,12 @@ class ShadowEditorDialog(QDialog):
         # Get new language code from canvas
         self.language_code = self.canvas.language_code if hasattr(self.canvas, 'language_code') else 'en'
         _ = translations[self.language_code]
+
+        # Update layout direction for RTL/LTR
+        if self.language_code == 'he':
+            self.setLayoutDirection(Qt.RightToLeft)
+        else:
+            self.setLayoutDirection(Qt.LeftToRight)
 
         # Update window title
         self.setWindowTitle(f"{_['shadow_editor_title']} - {self.casting_layer}")

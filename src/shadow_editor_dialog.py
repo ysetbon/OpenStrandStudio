@@ -161,7 +161,7 @@ class ShadowListItem(QWidget):
         self.show_shadow_button = QPushButton(_['shadow_path_button'])
         self.show_shadow_button.setCheckable(True)
         self.show_shadow_button.setMinimumWidth(80)
-        self.show_shadow_button.setMinimumHeight(50)
+        self.show_shadow_button.setMinimumHeight(36)
         self.show_shadow_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.show_shadow_button.clicked.connect(self._on_show_shadow_clicked)
         layout.addWidget(self.show_shadow_button, stretch=0)
@@ -270,7 +270,8 @@ class ShadowListItem(QWidget):
             self.setMaximumHeight(16777215)  # Qt's QWIDGETSIZE_MAX
         else:
             # Set maximum height to minimum when collapsing
-            self.setMaximumHeight(self.minimumHeight())
+            collapsed_height = max(self.sizeHint().height(), self.minimumHeight())
+            self.setMaximumHeight(collapsed_height)
 
         # Update geometry and emit signal to resize list item
         self.subtract_content.adjustSize()

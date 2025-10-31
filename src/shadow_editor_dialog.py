@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
                              QListWidgetItem, QLabel, QPushButton, QCheckBox,
-                             QDialogButtonBox, QWidget, QGroupBox, QComboBox)
+                             QDialogButtonBox, QWidget, QGroupBox, QComboBox, QSizePolicy)
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtGui import QColor, QPalette
 from masked_strand import MaskedStrand
@@ -23,11 +23,12 @@ class ShadowListItem(QWidget):
 
         # Create layout
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(5, 5, 5, 5)
-        layout.setSpacing(2)
+        layout.setContentsMargins(3, 3, 3, 3)
+        layout.setSpacing(1)
 
-        # Set minimum height for the row
+        # Set minimum dimensions for the row
         self.setMinimumHeight(40)
+        self.setMinimumWidth(650)  # Ensure enough space for all widgets
 
         # Layer name label with color indicator
         self.color_indicator = QLabel("  ")
@@ -36,20 +37,24 @@ class ShadowListItem(QWidget):
         layout.addWidget(self.color_indicator)
 
         self.name_label = QLabel(receiving_layer_name)
-        self.name_label.setFixedWidth(30)
+        self.name_label.setMinimumWidth(10)
+        self.name_label.setWordWrap(False)
+        self.name_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         layout.addWidget(self.name_label)
 
         # Visibility checkbox
         self.visibility_checkbox = QCheckBox("Visible")
         self.visibility_checkbox.setChecked(is_visible)
-        self.visibility_checkbox.setFixedWidth(60)
+        self.visibility_checkbox.setMinimumWidth(70)
+        self.visibility_checkbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.visibility_checkbox.stateChanged.connect(self._on_visibility_changed)
         layout.addWidget(self.visibility_checkbox)
 
         # Allow full shadow checkbox
-        self.allow_full_shadow_checkbox = QCheckBox("Allow Complete Shadow")
+        self.allow_full_shadow_checkbox = QCheckBox("Full Shadow")
         self.allow_full_shadow_checkbox.setChecked(allow_full_shadow)
-        self.allow_full_shadow_checkbox.setFixedWidth(155)
+        self.allow_full_shadow_checkbox.setMinimumWidth(90)
+        self.allow_full_shadow_checkbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.allow_full_shadow_checkbox.stateChanged.connect(self._on_allow_full_shadow_changed)
         layout.addWidget(self.allow_full_shadow_checkbox)
 
@@ -99,8 +104,9 @@ class ShadowListItem(QWidget):
             subtract_layout.addWidget(no_layers_label)
 
         subtract_container_layout.addWidget(self.subtract_content)
-        subtract_container.setFixedWidth(150)
-        layout.addWidget(subtract_container)
+        subtract_container.setMinimumWidth(120)
+        subtract_container.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        layout.addWidget(subtract_container, stretch=0)
 
         # Auto-expand if there are any subtracted layers
         if subtracted_layers and len(subtracted_layers) > 0:
@@ -111,9 +117,10 @@ class ShadowListItem(QWidget):
         # Show Current Shadow button
         self.show_shadow_button = QPushButton("Shadow Path")
         self.show_shadow_button.setCheckable(True)
-        self.show_shadow_button.setFixedWidth(150)
+        self.show_shadow_button.setMinimumWidth(80)
+        self.show_shadow_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.show_shadow_button.clicked.connect(self._on_show_shadow_clicked)
-        layout.addWidget(self.show_shadow_button)
+        layout.addWidget(self.show_shadow_button, stretch=0)
 
     def _on_visibility_changed(self, state):
         """Handle visibility checkbox change."""
@@ -181,7 +188,7 @@ class ShadowListItem(QWidget):
                     border: 1px solid #555;
                     padding: 5px 10px;
                     border-radius: 3px;
-                    min-width: 80px;
+                    min-width: 100px;
                 }
                 QPushButton:hover {
                     background-color: #505050;
@@ -224,7 +231,7 @@ class ShadowListItem(QWidget):
                     border: 1px solid #BBB;
                     padding: 5px 10px;
                     border-radius: 3px;
-                    min-width: 80px;
+                    min-width: 100px;
                 }
                 QPushButton:hover {
                     background-color: #E0E0E0;
@@ -262,8 +269,8 @@ class ShadowEditorDialog(QDialog):
 
         self.setWindowTitle(f"Shadow Editor - {self.casting_layer}")
         self.setModal(False)  # Allow interaction with canvas
-        self.setMinimumSize(750, 400)
-        self.resize(800, 500)
+        self.setMinimumSize(700, 400)
+        self.resize(750, 500)
 
         # Find the main window to inherit its theme
         main_window = parent
@@ -278,7 +285,7 @@ class ShadowEditorDialog(QDialog):
 
         # Create layout
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)  # Equal margins on all sides
+        layout.setContentsMargins(8, 8, 8, 8)  # Compact margins on all sides
 
         # Info label
         info_label = QLabel(f"Shadows cast by <b>{self.casting_layer}</b> onto layers below:")

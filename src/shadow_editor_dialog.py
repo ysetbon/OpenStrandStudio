@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
                              QListWidgetItem, QLabel, QPushButton, QCheckBox,
-                             QDialogButtonBox, QWidget, QGroupBox, QComboBox, QSizePolicy)
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtGui import QColor, QPalette
+                             QDialogButtonBox, QWidget, QGroupBox, QComboBox, QSizePolicy, QStyleOptionButton)
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QRect
+from PyQt5.QtGui import QColor, QPalette, QPainter, QPen
 from masked_strand import MaskedStrand
 from translations import translations
 
@@ -38,7 +38,7 @@ class ShadowListItem(QWidget):
             self.setLayoutDirection(Qt.LeftToRight)
 
         # Set minimum dimensions for the row
-        self.setMinimumHeight(65)
+        self.setMinimumHeight(80)
         self.setMinimumWidth(650)  # Ensure enough space for all widgets
 
         # Layer name label with color indicator
@@ -60,6 +60,7 @@ class ShadowListItem(QWidget):
         self.visibility_checkbox.setMinimumWidth(70)
         self.visibility_checkbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.visibility_checkbox.stateChanged.connect(self._on_visibility_changed)
+        self._setup_custom_checkmark(self.visibility_checkbox)
         layout.addWidget(self.visibility_checkbox)
 
         # Allow full shadow checkbox
@@ -68,6 +69,7 @@ class ShadowListItem(QWidget):
         self.allow_full_shadow_checkbox.setMinimumWidth(90)
         self.allow_full_shadow_checkbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.allow_full_shadow_checkbox.stateChanged.connect(self._on_allow_full_shadow_changed)
+        self._setup_custom_checkmark(self.allow_full_shadow_checkbox)
         layout.addWidget(self.allow_full_shadow_checkbox)
 
         # Subtract layers collapsible section
@@ -116,6 +118,7 @@ class ShadowListItem(QWidget):
                 if subtracted_layers and layer in subtracted_layers:
                     checkbox.setChecked(True)
                 checkbox.stateChanged.connect(self._on_subtracted_layers_changed)
+                self._setup_custom_checkmark(checkbox)
                 self.subtract_checkboxes[layer] = checkbox
                 subtract_layout.addWidget(checkbox)
         else:
@@ -145,6 +148,67 @@ class ShadowListItem(QWidget):
         self.show_shadow_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.show_shadow_button.clicked.connect(self._on_show_shadow_clicked)
         layout.addWidget(self.show_shadow_button, stretch=0)
+
+    def _setup_custom_checkmark(self, checkbox):
+        """Setup custom checkmark for the checkbox using Qt's native indicator"""
+        # Create a custom paintEvent for the checkbox to draw checkmark
+        original_paintEvent = checkbox.paintEvent
+
+        def custom_paintEvent(event):
+            # Call the original paint event first
+            original_paintEvent(event)
+
+            # If checked, draw a custom checkmark
+            if checkbox.isChecked():
+                painter = QPainter(checkbox)
+                painter.setRenderHint(QPainter.Antialiasing)
+
+                # Use Qt's style system to get the ACTUAL indicator position
+                style_option = QStyleOptionButton()
+                checkbox.initStyleOption(style_option)
+
+                # Get the actual indicator rectangle from Qt's style system
+                style = checkbox.style()
+                indicator_rect_from_style = style.subElementRect(
+                    style.SE_CheckBoxIndicator, style_option, checkbox
+                )
+
+                # Use the actual indicator position and size from Qt's calculations
+                indicator_x = indicator_rect_from_style.x()
+                indicator_y = indicator_rect_from_style.y()
+                indicator_width = indicator_rect_from_style.width()
+                indicator_height = indicator_rect_from_style.height()
+
+                # Use the actual indicator rectangle from Qt
+                indicator_rect = QRect(indicator_x, indicator_y, indicator_width, indicator_height)
+
+                # Set pen for white checkmark with proper thickness
+                pen = QPen(QColor(255, 255, 255), 2.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+                painter.setPen(pen)
+
+                # Calculate perfectly centered checkmark coordinates using actual indicator size
+                center_x = indicator_rect.x() + indicator_rect.width() // 2
+                center_y = indicator_rect.y() + indicator_rect.height() // 2
+
+                # Make checkmark proportional to actual indicator size
+                checkmark_size = min(indicator_rect.width(), indicator_rect.height()) * 0.24
+                checkmark_size = int(checkmark_size)
+
+                # Left stroke of the checkmark (shorter diagonal line)
+                x1, y1 = center_x - checkmark_size + 1, center_y - 1
+                x2, y2 = center_x - 1, center_y + checkmark_size - 1
+
+                # Right stroke of the checkmark (longer diagonal line)
+                x3, y3 = center_x + checkmark_size, center_y - checkmark_size + 1
+
+                # Draw the checkmark lines with precise positioning
+                painter.drawLine(x1, y1, x2, y2)
+                painter.drawLine(x2, y2, x3, y3)
+
+                painter.end()
+
+        # Replace the paintEvent method
+        checkbox.paintEvent = custom_paintEvent
 
     def _on_visibility_changed(self, state):
         """Handle visibility checkbox change."""
@@ -220,6 +284,29 @@ class ShadowListItem(QWidget):
                 }
                 QCheckBox {
                     color: white;
+                    spacing: 10px;
+                    font-size: 11pt;
+                }
+                QCheckBox::indicator {
+                    width: 64px;
+                    height: 64px;
+                    min-width: 64px;
+                    min-height: 64px;
+                    border: 3px solid #666;
+                    border-radius: 4px;
+                    background-color: #2A2A2A;
+                }
+                QCheckBox::indicator:hover {
+                    border: 3px solid #888;
+                    background-color: #454545;
+                }
+                QCheckBox::indicator:checked {
+                    background-color: #4A6FA5;
+                    border: 3px solid #6A9FD5;
+                }
+                QCheckBox::indicator:checked:hover {
+                    background-color: #5A7FB5;
+                    border: 3px solid #7AAFF5;
                 }
                 QPushButton {
                     background-color: #252525;
@@ -263,6 +350,29 @@ class ShadowListItem(QWidget):
                 }
                 QCheckBox {
                     color: black;
+                    spacing: 10px;
+                    font-size: 11pt;
+                }
+                QCheckBox::indicator {
+                    width: 64px;
+                    height: 64px;
+                    min-width: 64px;
+                    min-height: 64px;
+                    border: 3px solid #AAA;
+                    border-radius: 4px;
+                    background-color: white;
+                }
+                QCheckBox::indicator:hover {
+                    border: 3px solid #888;
+                    background-color: #F8F8F8;
+                }
+                QCheckBox::indicator:checked {
+                    background-color: #A0C0E0;
+                    border: 3px solid #7090C0;
+                }
+                QCheckBox::indicator:checked:hover {
+                    background-color: #B0D0F0;
+                    border: 3px solid #8AA0D0;
                 }
                 QPushButton {
                     background-color: #F0F0F0;

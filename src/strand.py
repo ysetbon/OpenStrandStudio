@@ -1595,39 +1595,29 @@ class Strand:
             tangent_start = self.end - self.start
             tangent_end = tangent_start
         else:
-            # For start side line: Check if control point is at default/coincident position
-            tangent_start = self.control_point1 - self.start
+            # Sample the true curve tangent near the ends to match AttachedStrand behaviour
+            t_start = 0.0001
+            t_end = 0.9999
+            tangent_start = self.calculate_cubic_tangent(t_start)
+            tangent_end = self.calculate_cubic_tangent(t_end)
+
             if tangent_start.manhattanLength() < 0.001:
-                # Control point coincides with start - need to look ahead on the curve
-                # Use the actual curve tangent at t=0.0001 to get proper direction
-                # This gives us the true curve direction even when control points are at defaults
-                t_lookahead = 0.0001  # Look very close to the start for accurate tangent
-                point_ahead = self.point_at(t_lookahead)
-                tangent_start = point_ahead - self.start
+                # Still no direction - use direction to control points or end
+                if (self.control_point1 - self.start).manhattanLength() > 0.001:
+                    tangent_start = self.control_point1 - self.start
+                elif (self.control_point2 - self.start).manhattanLength() > 0.001:
+                    tangent_start = self.control_point2 - self.start
+                else:
+                    tangent_start = self.end - self.start
 
-                if tangent_start.manhattanLength() < 0.001:
-                    # Still no direction - use direction to second control point or end
-                    if (self.control_point2 - self.start).manhattanLength() > 0.001:
-                        tangent_start = self.control_point2 - self.start
-                    else:
-                        tangent_start = self.end - self.start
-
-            # For end side line: Check if control point is at default/coincident position
-            tangent_end = self.end - self.control_point2
             if tangent_end.manhattanLength() < 0.001:
-                # Control point coincides with end - need to look back on the curve
-                # Use the actual curve tangent at t=0.9999 to get proper direction
-                # This is especially important when control_point2 is exactly at endpoint
-                t_lookback = 0.9999  # Look very close to the end for accurate tangent
-                point_before = self.point_at(t_lookback)
-                tangent_end = self.end - point_before
-
-                if tangent_end.manhattanLength() < 0.001:
-                    # Still no direction - use direction from first control point or start
-                    if (self.end - self.control_point1).manhattanLength() > 0.001:
-                        tangent_end = self.end - self.control_point1
-                    else:
-                        tangent_end = self.end - self.start
+                # Still no direction - use direction from control points or start
+                if (self.end - self.control_point2).manhattanLength() > 0.001:
+                    tangent_end = self.end - self.control_point2
+                elif (self.end - self.control_point1).manhattanLength() > 0.001:
+                    tangent_end = self.end - self.control_point1
+                else:
+                    tangent_end = self.end - self.start
 
         # Additional safety check for zero tangents
         if tangent_start.manhattanLength() < 0.001:

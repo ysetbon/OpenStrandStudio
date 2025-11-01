@@ -3090,7 +3090,7 @@ translations = {
         'history_cleared_text': 'כל הפעלות ההיסטוריה הקודמות נוקו.',
         'no_history_found': 'לא נמצאו הפעלות היסטוריה קודמות.',
         'history_explanation': ' בחר הפעלה קודמת ולחץ "טען נבחר" כדי לשחזר את המצב הסופי שלה.\n' +
-            'אזהרה: טעינת היסטוריה תנקה את שלבי הביטול/שחזור הנוכחיים שלך.',
+            ' אזהרה: טעינת היסטוריה תנקה את שלבי הביטול/שחזור הנוכחיים שלך.',
         'history_list_tooltip': 'בחר הפעלה לטעינת המצב הסופי שלה',
         'history_state_label': 'מצב',  # For history list display
         # About translations

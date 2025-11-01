@@ -361,7 +361,7 @@ class SettingsDialog(QDialog):
             # Set proper text alignment for history explanation label
             if hasattr(self, 'history_explanation_label'):
                 if is_rtl:
-                    self.history_explanation_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                    self.history_explanation_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 else:
                     self.history_explanation_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             

@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (
     QWidget, QLabel, QStackedWidget, QComboBox, QPushButton,
     QSpacerItem, QSizePolicy, QMessageBox, QTextBrowser, QSlider,
     QColorDialog, QCheckBox, QBoxLayout, QDialogButtonBox,
-    QSpinBox, QDoubleSpinBox, QStyleOptionButton # Add these
+    QSpinBox, QDoubleSpinBox, QStyleOptionButton, QFileDialog # Add these
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QUrl, QRectF, QRect, QTimer, QBuffer, QByteArray, QPointF, QLocale
 from PyQt5.QtSvg import QSvgRenderer
@@ -16,6 +16,7 @@ from save_load_manager import load_strands, apply_loaded_strands
 import os
 import sys
 import subprocess
+import json
 from PyQt5.QtCore import QStandardPaths, QDateTime
 # Import StrokeTextButton for displaying icons
 try:
@@ -1409,6 +1410,7 @@ class SettingsDialog(QDialog):
             _['general_settings'],
             _['layer_panel_title'],  # Add Layer Panel Settings category
             _['change_language'],
+            _['save_load_settings_title'],  # Add Save/Load Settings category
             _['tutorial'],
             _['button_explanations'],  # Add Button Guide category
             _['history'],
@@ -2233,7 +2235,7 @@ class SettingsDialog(QDialog):
         layer_panel_layout.addWidget(self.layer_panel_ok_button)
         self.stacked_widget.addWidget(self.layer_panel_settings_widget)
 
-        # Change Language Page (index 1)
+        # Change Language Page (index 2)
         self.change_language_widget = QWidget()
         language_layout = QVBoxLayout(self.change_language_widget)
 
@@ -2305,7 +2307,50 @@ class SettingsDialog(QDialog):
 
         self.stacked_widget.addWidget(self.change_language_widget)
 
-        # Tutorial Page (index 2)
+        # Save/Load Settings Page (index 3)
+        self.save_load_settings_widget = QWidget()
+        save_load_layout = QVBoxLayout(self.save_load_settings_widget)
+        save_load_layout.setContentsMargins(20, 20, 20, 20)
+        save_load_layout.setSpacing(15)
+
+        # Add vertical spacer to center buttons vertically
+        save_load_layout.addStretch()
+
+        # Create horizontal layout for buttons
+        buttons_layout = QHBoxLayout()
+        buttons_layout.addStretch()  # Left spacer for centering
+
+        # Save Settings button
+        self.save_settings_button = QPushButton(_['save_settings_button'])
+        self.save_settings_button.setMinimumWidth(150)
+        self.save_settings_button.clicked.connect(self.export_settings_to_json)
+        buttons_layout.addWidget(self.save_settings_button)
+
+        # Load Settings button
+        self.load_settings_button = QPushButton(_['load_settings_button'])
+        self.load_settings_button.setMinimumWidth(150)
+        self.load_settings_button.clicked.connect(self.import_settings_from_json)
+        buttons_layout.addWidget(self.load_settings_button)
+
+        buttons_layout.addStretch()  # Right spacer for centering
+
+        save_load_layout.addLayout(buttons_layout)
+
+        # OK button
+        self.save_load_ok_button = QPushButton(_['ok'])
+        self.save_load_ok_button.clicked.connect(self.apply_all_settings)
+        save_load_layout.addStretch()
+
+        # Center the OK button
+        ok_button_layout = QHBoxLayout()
+        ok_button_layout.addStretch()
+        ok_button_layout.addWidget(self.save_load_ok_button)
+        ok_button_layout.addStretch()
+        save_load_layout.addLayout(ok_button_layout)
+
+        self.stacked_widget.addWidget(self.save_load_settings_widget)
+
+        # Tutorial Page (index 4)
         self.tutorial_widget = QWidget()
         tutorial_layout = QVBoxLayout(self.tutorial_widget)
 
@@ -2697,6 +2742,9 @@ class SettingsDialog(QDialog):
             self.apply_button,
             self.language_ok_button,
             self.layer_panel_ok_button,  # Add the missing layer panel OK button
+            self.save_load_ok_button,  # Add the save/load settings OK button
+            self.save_settings_button,  # Add save settings button
+            self.load_settings_button,  # Add load settings button
             *self.video_buttons,  # Unpack video buttons list
             self.load_history_button, # Style history buttons
             self.clear_history_button,
@@ -3576,12 +3624,13 @@ class SettingsDialog(QDialog):
         self.categories_list.item(0).setText(_['general_settings'])
         self.categories_list.item(1).setText(_['layer_panel_title'])
         self.categories_list.item(2).setText(_['change_language'])
-        self.categories_list.item(3).setText(_['tutorial'])
-        self.categories_list.item(4).setText(_['button_explanations']) # Update button guide category name
-        self.categories_list.item(5).setText(_['history']) # Update history category name
-        self.categories_list.item(6).setText(_['whats_new']) # Update what's new category name
-        self.categories_list.item(7).setText(_['samples'] if 'samples' in _ else 'Samples')
-        self.categories_list.item(8).setText(_['about']) # About remains last
+        self.categories_list.item(3).setText(_['save_load_settings_title'])  # Save/load settings category
+        self.categories_list.item(4).setText(_['tutorial'])
+        self.categories_list.item(5).setText(_['button_explanations']) # Update button guide category name
+        self.categories_list.item(6).setText(_['history']) # Update history category name
+        self.categories_list.item(7).setText(_['whats_new']) # Update what's new category name
+        self.categories_list.item(8).setText(_['samples'] if 'samples' in _ else 'Samples')
+        self.categories_list.item(9).setText(_['about']) # About remains last
         # Update labels and buttons
         self.theme_label.setText(_['select_theme'])
         self.shadow_color_label.setText(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
@@ -3604,6 +3653,9 @@ class SettingsDialog(QDialog):
         self.apply_button.setText(_['ok'])
         self.language_ok_button.setText(_['ok'])
         self.layer_panel_ok_button.setText(_['ok'])
+        self.save_load_ok_button.setText(_['ok'])
+        self.save_settings_button.setText(_['save_settings_button'])
+        self.load_settings_button.setText(_['load_settings_button'])
         self.language_label.setText(_['select_language'])
         # Update Layer Panel Settings labels for extension and arrow parameters
         self.extension_length_label.setText(_['extension_length'] if 'extension_length' in _ else "Extension Length")
@@ -4104,6 +4156,264 @@ class SettingsDialog(QDialog):
                 self,
                 "Settings Error",
                 f"Could not save settings: {str(e)}"
+            )
+
+    def export_settings_to_json(self):
+        """Export all current settings to a JSON file chosen by the user."""
+        from translations import translations
+        _ = translations.get(self.current_language, translations['en'])
+
+        # Open file dialog to choose save location
+        file_path, selected_filter = QFileDialog.getSaveFileName(
+            self,
+            _['save_settings_button'],
+            os.path.expanduser("~"),
+            "JSON Files (*.json);;All Files (*)"
+        )
+
+        if not file_path:
+            return  # User cancelled
+
+        # Ensure file has .json extension
+        if not file_path.endswith('.json'):
+            file_path += '.json'
+
+        try:
+            # Collect all settings
+            settings = {
+                'theme': self.current_theme,
+                'language': self.current_language,
+                'shadow_color': {
+                    'r': self.shadow_color.red(),
+                    'g': self.shadow_color.green(),
+                    'b': self.shadow_color.blue(),
+                    'a': self.shadow_color.alpha()
+                },
+                'draw_only_affected_strand': self.draw_only_affected_strand,
+                'enable_third_control_point': self.enable_third_control_point,
+                'enable_curvature_bias_control': self.enable_curvature_bias_control,
+                'snap_to_grid_enabled': self.snap_to_grid_enabled,
+                'snap_to_grid_attach_enabled': self.snap_to_grid_attach_enabled,
+                'show_move_highlights': self.show_move_highlights,
+                'num_steps': self.num_steps,
+                'max_blur_radius': self.max_blur_radius,
+                'control_point_base_fraction': self.base_fraction_spinbox.value(),
+                'distance_multiplier': self.distance_mult_spinbox.value(),
+                'curve_response_exponent': self.curve_response_spinbox.value(),
+                'extension_length': self.extension_length,
+                'extension_dash_count': self.extension_dash_count,
+                'extension_dash_width': self.extension_dash_width,
+                'extension_dash_gap_length': self.extension_dash_gap_length,
+                'arrow_head_length': self.arrow_head_length,
+                'arrow_head_width': self.arrow_head_width,
+                'arrow_head_stroke_width': self.arrow_head_stroke_width,
+                'arrow_gap_length': self.arrow_gap_length,
+                'arrow_line_length': self.arrow_line_length,
+                'arrow_line_width': self.arrow_line_width,
+                'use_default_arrow_color': self.use_default_arrow_color,
+                'default_arrow_fill_color': {
+                    'r': self.default_arrow_fill_color.red(),
+                    'g': self.default_arrow_fill_color.green(),
+                    'b': self.default_arrow_fill_color.blue(),
+                    'a': self.default_arrow_fill_color.alpha()
+                },
+                'default_strand_color': {
+                    'r': self.default_strand_color.red(),
+                    'g': self.default_strand_color.green(),
+                    'b': self.default_strand_color.blue(),
+                    'a': self.default_strand_color.alpha()
+                },
+                'default_stroke_color': {
+                    'r': self.default_stroke_color.red(),
+                    'g': self.default_stroke_color.green(),
+                    'b': self.default_stroke_color.blue(),
+                    'a': self.default_stroke_color.alpha()
+                },
+                'default_strand_width': self.default_strand_width,
+                'default_stroke_width': self.default_stroke_width,
+                'default_width_grid_units': self.default_width_grid_units
+            }
+
+            # Write to JSON file
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(settings, f, indent=4)
+
+            # Show success message
+            QMessageBox.information(
+                self,
+                _['save_settings_button'],
+                _['save_settings_success']
+            )
+
+        except Exception as e:
+            QMessageBox.warning(
+                self,
+                _['save_settings_button'],
+                f"{_['load_settings_error']}: {str(e)}"
+            )
+
+    def import_settings_from_json(self):
+        """Import settings from a JSON file chosen by the user."""
+        from translations import translations
+        _ = translations.get(self.current_language, translations['en'])
+
+        # Open file dialog to choose file to load
+        file_path, selected_filter = QFileDialog.getOpenFileName(
+            self,
+            _['load_settings_button'],
+            os.path.expanduser("~"),
+            "JSON Files (*.json);;All Files (*)"
+        )
+
+        if not file_path:
+            return  # User cancelled
+
+        try:
+            # Read JSON file
+            with open(file_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+
+            # Apply settings to dialog controls
+            if 'theme' in settings:
+                self.current_theme = settings['theme']
+                index = self.theme_combobox.findText(settings['theme'].capitalize())
+                if index >= 0:
+                    self.theme_combobox.setCurrentIndex(index)
+
+            if 'language' in settings:
+                self.current_language = settings['language']
+                # Update language combobox
+                lang_map = {'en': 0, 'fr': 1, 'de': 2, 'it': 3, 'es': 4, 'pt': 5, 'he': 6}
+                if settings['language'] in lang_map:
+                    self.language_combobox.setCurrentIndex(lang_map[settings['language']])
+
+            if 'shadow_color' in settings:
+                sc = settings['shadow_color']
+                self.shadow_color = QColor(sc['r'], sc['g'], sc['b'], sc['a'])
+                self.update_shadow_color_button()
+
+            if 'draw_only_affected_strand' in settings:
+                self.draw_only_affected_strand = settings['draw_only_affected_strand']
+                self.affected_strand_checkbox.setChecked(self.draw_only_affected_strand)
+
+            if 'enable_third_control_point' in settings:
+                self.enable_third_control_point = settings['enable_third_control_point']
+                self.third_control_checkbox.setChecked(self.enable_third_control_point)
+
+            if 'enable_curvature_bias_control' in settings:
+                self.enable_curvature_bias_control = settings['enable_curvature_bias_control']
+                self.curvature_bias_checkbox.setChecked(self.enable_curvature_bias_control)
+
+            if 'snap_to_grid_enabled' in settings:
+                self.snap_to_grid_enabled = settings['snap_to_grid_enabled']
+                self.snap_to_grid_checkbox.setChecked(self.snap_to_grid_enabled)
+
+            if 'snap_to_grid_attach_enabled' in settings:
+                self.snap_to_grid_attach_enabled = settings['snap_to_grid_attach_enabled']
+                self.snap_to_grid_attach_checkbox.setChecked(self.snap_to_grid_attach_enabled)
+
+            if 'show_move_highlights' in settings:
+                self.show_move_highlights = settings['show_move_highlights']
+                self.show_highlights_checkbox.setChecked(self.show_move_highlights)
+
+            if 'num_steps' in settings:
+                self.num_steps = settings['num_steps']
+                self.num_steps_spinbox.setValue(self.num_steps)
+
+            if 'max_blur_radius' in settings:
+                self.max_blur_radius = settings['max_blur_radius']
+                self.blur_radius_spinbox.setValue(self.max_blur_radius)
+
+            if 'control_point_base_fraction' in settings:
+                self.base_fraction_spinbox.setValue(settings['control_point_base_fraction'])
+
+            if 'distance_multiplier' in settings:
+                self.distance_mult_spinbox.setValue(settings['distance_multiplier'])
+
+            if 'curve_response_exponent' in settings:
+                self.curve_response_spinbox.setValue(settings['curve_response_exponent'])
+
+            # Layer panel settings
+            if 'extension_length' in settings:
+                self.extension_length = settings['extension_length']
+                self.extension_length_spinbox.setValue(self.extension_length)
+
+            if 'extension_dash_count' in settings:
+                self.extension_dash_count = settings['extension_dash_count']
+                self.extension_dash_count_spinbox.setValue(self.extension_dash_count)
+
+            if 'extension_dash_width' in settings:
+                self.extension_dash_width = settings['extension_dash_width']
+                self.extension_dash_width_spinbox.setValue(self.extension_dash_width)
+
+            if 'extension_dash_gap_length' in settings:
+                self.extension_dash_gap_length = settings['extension_dash_gap_length']
+                self.extension_dash_gap_length_spinbox.setValue(self.extension_dash_gap_length)
+
+            if 'arrow_head_length' in settings:
+                self.arrow_head_length = settings['arrow_head_length']
+                self.arrow_head_length_spinbox.setValue(self.arrow_head_length)
+
+            if 'arrow_head_width' in settings:
+                self.arrow_head_width = settings['arrow_head_width']
+                self.arrow_head_width_spinbox.setValue(self.arrow_head_width)
+
+            if 'arrow_head_stroke_width' in settings:
+                self.arrow_head_stroke_width = settings['arrow_head_stroke_width']
+                self.arrow_head_stroke_width_spinbox.setValue(self.arrow_head_stroke_width)
+
+            if 'arrow_gap_length' in settings:
+                self.arrow_gap_length = settings['arrow_gap_length']
+                self.arrow_gap_length_spinbox.setValue(self.arrow_gap_length)
+
+            if 'arrow_line_length' in settings:
+                self.arrow_line_length = settings['arrow_line_length']
+                self.arrow_line_length_spinbox.setValue(self.arrow_line_length)
+
+            if 'arrow_line_width' in settings:
+                self.arrow_line_width = settings['arrow_line_width']
+                self.arrow_line_width_spinbox.setValue(self.arrow_line_width)
+
+            if 'use_default_arrow_color' in settings:
+                self.use_default_arrow_color = settings['use_default_arrow_color']
+                self.default_arrow_color_checkbox.setChecked(self.use_default_arrow_color)
+
+            if 'default_arrow_fill_color' in settings:
+                ac = settings['default_arrow_fill_color']
+                self.default_arrow_fill_color = QColor(ac['r'], ac['g'], ac['b'], ac['a'])
+                self.update_default_arrow_color_button()
+
+            if 'default_strand_color' in settings:
+                sc = settings['default_strand_color']
+                self.default_strand_color = QColor(sc['r'], sc['g'], sc['b'], sc['a'])
+                self.update_default_strand_color_button()
+
+            if 'default_stroke_color' in settings:
+                sc = settings['default_stroke_color']
+                self.default_stroke_color = QColor(sc['r'], sc['g'], sc['b'], sc['a'])
+                self.update_default_stroke_color_button()
+
+            if 'default_strand_width' in settings:
+                self.default_strand_width = settings['default_strand_width']
+
+            if 'default_stroke_width' in settings:
+                self.default_stroke_width = settings['default_stroke_width']
+
+            if 'default_width_grid_units' in settings:
+                self.default_width_grid_units = settings['default_width_grid_units']
+
+            # Show success message
+            QMessageBox.information(
+                self,
+                _['load_settings_button'],
+                _['load_settings_success']
+            )
+
+        except Exception as e:
+            QMessageBox.warning(
+                self,
+                _['load_settings_button'],
+                f"{_['load_settings_error']}: {str(e)}"
             )
 
     def load_video_paths(self):

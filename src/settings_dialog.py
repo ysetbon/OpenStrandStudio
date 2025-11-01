@@ -2579,6 +2579,8 @@ class SettingsDialog(QDialog):
             history_layout.addWidget(self.history_explanation_label) # Default alignment, will be updated later
 
         self.history_list = QListWidget()
+        if self.is_rtl_language(self.current_language):
+            self.history_list.setLayoutDirection(Qt.LeftToRight)
         self.history_list.setToolTip(_['history_list_tooltip'] if 'history_list_tooltip' in _ else "Select a session to load its final state")
         history_layout.addWidget(self.history_list)
         

@@ -71,21 +71,21 @@ class ShadowListItem(QWidget):
         _ = translations[self.language_code]
         self.visibility_checkbox = QCheckBox(_['shadow_visible'])
         self.visibility_checkbox.setChecked(is_visible)
-        self.visibility_checkbox.setMinimumWidth(70)
-        self.visibility_checkbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        self.visibility_checkbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         self.visibility_checkbox.stateChanged.connect(self._on_visibility_changed)
         self._apply_large_indicator(self.visibility_checkbox)
         self._setup_custom_checkmark(self.visibility_checkbox)
+        self._set_checkbox_min_width(self.visibility_checkbox)
         layout.addWidget(self.visibility_checkbox)
 
         # Allow full shadow checkbox
         self.allow_full_shadow_checkbox = QCheckBox(_['shadow_full'])
         self.allow_full_shadow_checkbox.setChecked(allow_full_shadow)
-        self.allow_full_shadow_checkbox.setMinimumWidth(90)
-        self.allow_full_shadow_checkbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        self.allow_full_shadow_checkbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         self.allow_full_shadow_checkbox.stateChanged.connect(self._on_allow_full_shadow_changed)
         self._apply_large_indicator(self.allow_full_shadow_checkbox)
         self._setup_custom_checkmark(self.allow_full_shadow_checkbox)
+        self._set_checkbox_min_width(self.allow_full_shadow_checkbox)
         layout.addWidget(self.allow_full_shadow_checkbox)
 
         # Subtract layers collapsible section
@@ -144,7 +144,6 @@ class ShadowListItem(QWidget):
             subtract_layout.addWidget(self.no_layers_label)
 
         subtract_container_layout.addWidget(self.subtract_content)
-        subtract_container.setMinimumWidth(120)
         subtract_container.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         layout.addWidget(subtract_container, stretch=0)
 
@@ -235,6 +234,11 @@ class ShadowListItem(QWidget):
 
         # Replace the paintEvent method
         checkbox.paintEvent = custom_paintEvent
+
+    def _set_checkbox_min_width(self, checkbox):
+        """Ensure checkbox text is fully visible while preventing it from stretching."""
+        checkbox.setMinimumWidth(checkbox.sizeHint().width())
+        checkbox.updateGeometry()
 
     def _on_visibility_changed(self, state):
         """Handle visibility checkbox change."""
@@ -447,6 +451,8 @@ class ShadowListItem(QWidget):
         # Update checkbox labels
         self.visibility_checkbox.setText(_['shadow_visible'])
         self.allow_full_shadow_checkbox.setText(_['shadow_full'])
+        self._set_checkbox_min_width(self.visibility_checkbox)
+        self._set_checkbox_min_width(self.allow_full_shadow_checkbox)
 
         # Update toggle button (preserve expanded/collapsed state and handle RTL arrow positioning)
         is_expanded = self.subtract_toggle_button.isChecked()
@@ -544,9 +550,15 @@ class ShadowEditorDialog(QDialog):
         self._populate_shadow_list()
 
         # Button box
-        button_box = QDialogButtonBox(QDialogButtonBox.Close)
-        button_box.rejected.connect(self.close)
-        layout.addWidget(button_box)
+        self.button_box = QDialogButtonBox(QDialogButtonBox.Close)
+        self.button_box.rejected.connect(self.close)
+
+        # Set translated text for Close button
+        close_button = self.button_box.button(QDialogButtonBox.Close)
+        if close_button:
+            close_button.setText(_['close'])
+
+        layout.addWidget(self.button_box)
 
         # Connect canvas update signal to refresh when canvas changes
         if hasattr(canvas, 'canvas_updated'):
@@ -795,6 +807,11 @@ class ShadowEditorDialog(QDialog):
 
         # Update info label
         self.info_label.setText(_['shadow_editor_info'].format(self.casting_layer))
+
+        # Update Close button text
+        close_button = self.button_box.button(QDialogButtonBox.Close)
+        if close_button:
+            close_button.setText(_['close'])
 
         # Update all list items
         for i in range(self.shadows_list_widget.count()):

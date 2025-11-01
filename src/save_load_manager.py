@@ -538,10 +538,12 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
             
             # Check if bias control points have been moved from their default positions
             if strand.bias_control.triangle_position:
-                # If triangle position exists and is not None, it has been moved
+                # Consider the bias triangle as "moved" only if its bias value deviates from neutral
                 if hasattr(strand, 'bias_control') and canvas and getattr(canvas, 'enable_curvature_bias_control', False):
-                    # Mark triangle as moved if bias triangle has been positioned
-                    strand.triangle_has_moved = True
+                    triangle_bias_delta = abs(strand.bias_control.triangle_bias - 0.5)
+                    circle_bias_delta = abs(strand.bias_control.circle_bias - 0.5)
+                    if triangle_bias_delta > 0.001 or circle_bias_delta > 0.001:
+                        strand.triangle_has_moved = True
             
             # Update the strand's shape to reflect the bias changes
             if hasattr(strand, 'update_shape'):
@@ -795,10 +797,12 @@ def load_strands(filename, canvas):
                 
                 # Check if bias control points have been moved from their default positions
                 if strand.bias_control.triangle_position:
-                    # If triangle position exists and is not None, it has been moved
+                    # Consider the bias triangle as "moved" only if its bias value deviates from neutral
                     if hasattr(strand, 'bias_control') and canvas and getattr(canvas, 'enable_curvature_bias_control', False):
-                        # Mark triangle as moved if bias triangle has been positioned
-                        strand.triangle_has_moved = True
+                        triangle_bias_delta = abs(strand.bias_control.triangle_bias - 0.5)
+                        circle_bias_delta = abs(strand.bias_control.circle_bias - 0.5)
+                        if triangle_bias_delta > 0.001 or circle_bias_delta > 0.001:
+                            strand.triangle_has_moved = True
                 
                 # Update the strand's shape to reflect the bias changes
                 if hasattr(strand, 'update_shape'):
@@ -1323,7 +1327,6 @@ def update_attached_strand_position(parent_strand, attached_strand):
     if hasattr(attached_strand, 'attached_strands'):
         for child_strand in attached_strand.attached_strands:
             update_attached_strand_position(attached_strand, child_strand)
-
 
 
 

@@ -481,7 +481,7 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
 
 ------
 
-## Version 1.104 (Sortie : TBD)
+## Version 1.104 (Sortie : 02/11/2025)
 
 ### Nouvelles Fonctionnalités et Améliorations :
 

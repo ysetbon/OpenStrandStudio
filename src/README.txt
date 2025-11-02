@@ -481,7 +481,7 @@ These updates focus on performance improvements and visual enhancements to provi
 
 ------
 
-## Version 1.104 (Released: TBD)
+## Version 1.104 (Released: 02/11/2025)
 
 ### New Features and Improvements:
 

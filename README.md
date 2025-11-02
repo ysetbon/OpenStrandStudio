@@ -1,10 +1,10 @@
-# OpenStrand Studio - Version 1.100
+# OpenStrand Studio - Version 1.104
 
 An advanced diagramming tool for creating tutorials involving strand manipulation (knots, hitches, etc.)
-with dynamic masking that automatically adjusts the over-under effects between strands, 
+with dynamic masking that automatically adjusts the over-under effects between strands,
 making complex patterns clear and easy to understand.
 
-## What's New in Version 1.100
+## What's New in Version 1.104
 
 ### ✨ New Features
 
@@ -25,7 +25,7 @@ making complex patterns clear and easy to understand.
 - Group transformation tools
 - Precise angle/length controls
 - Grid snapping
-- Multilingual (EN/FR/IT/ES/PT/HE)
+- Multilingual (EN/FR/IT/ES/PT/HE/DE)
 
 ## Screenshots
 
@@ -72,4 +72,4 @@ Created by Yonatan Setbon
 
 ---
 
-© 2025 OpenStrand Studio - Version 1.100
+© 2025 OpenStrand Studio - Version 1.104

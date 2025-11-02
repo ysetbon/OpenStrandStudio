@@ -927,11 +927,11 @@ EOF
 # Build component package
 echo "Building component package..."
 pkgbuild \
-    --root "/Users/yonatan/Documents/GitHub/OpenStrandStudio/src/dist" \
+    --root "/Users/yonatan/Documents/GitHub/OpenStrandStudio/src/dist/OpenStrandStudio.app" \
+    --install-location "/Applications/OpenStrandStudio.app" \
+    --scripts "$SCRIPTS_DIR" \
     --identifier "$IDENTIFIER" \
     --version "$VERSION" \
-    --scripts "$SCRIPTS_DIR" \
-    --install-location "/Applications" \
     "$WORKING_DIR/OpenStrandStudio.pkg"
 
 if [ ! -f "$WORKING_DIR/OpenStrandStudio.pkg" ]; then

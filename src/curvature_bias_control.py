@@ -220,7 +220,13 @@ class CurvatureBiasControl:
         # Check if the center control point is locked (required for bias controls to work)
         if not hasattr(strand, 'control_point_center_locked') or not strand.control_point_center_locked:
             return False
-        
+
+        # IMPORTANT: Only show bias controls after triangle has been moved
+        # This ensures consistency with when center control is visible
+        triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
+        if not triangle_has_moved:
+            return False
+
         # Always show if control points are visible OR if we're in test mode
         # This is the simplest and most consistent approach
         if hasattr(self.canvas, 'show_control_points') and self.canvas.show_control_points:

@@ -2013,9 +2013,11 @@ class MoveMode:
         # Check center control point - it can be selected whether locked or not
         # When not locked: selecting it locks it for manual control
         # When locked: allows re-moving it
-        if third_cp_enabled:
+        # IMPORTANT: Only allow selecting center control if triangle has been moved
+        triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
+        if third_cp_enabled and triangle_has_moved:
             control_point_center_rect = self.get_control_point_rectangle(strand, 3)
-            
+
             if control_point_center_rect is not None and control_point_center_rect.contains(pos):
                 self.start_movement(strand, 'control_point_center', control_point_center_rect, pos)
                 # Mark that we're moving a control point

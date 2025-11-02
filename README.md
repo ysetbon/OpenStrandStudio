@@ -8,15 +8,27 @@ making complex patterns clear and easy to understand.
 
 ### ✨ New Features
 
-- **Strand Width Control**: Dynamically adjust the width of individual strands, giving you more flexibility in creating varied knot designs.
+- **Enhanced Shadow Editor Dialog**: Take precise control of shadow rendering at the layer level
+  - **Layer-by-Layer Control**: Customize how shadows from each strand appear on layers below
+  - **Visibility & Intensity**: Toggle shadow visibility and enable full shadow coverage per layer
 
-- **Zoom In/Out**: Zoom in and out of your design to see small details or the entire diagram.
+- **Duplicate Strand Feature**: Quickly copy existing strands for faster diagram creation
+  - **Smart Duplication**: Duplicates strand shape, width, color, and all properties
+  - **Efficient Workflow**: Speed up repetitive pattern creation
 
-- **Pan Screen**: Move the canvas by clicking the hand button, which helps when working on larger diagrams.
+- **Copy Properties Between Strands**: Copy visual properties from one strand to another
+  - **One-Click Styling**: Select a source strand, then apply its properties to target strands
+  - **Consistent Design**: Maintain uniform appearance across multiple strands
 
-- **Initial Setup**: When first starting the application, you'll need to click "New Strand" to begin creating your first strand.
+- **New Tutorial & Sample Projects**: Interactive guides and example files to help you learn
+  - **Step-by-Step Tutorials**: Learn key features through guided walkthroughs
+  - **Ready-to-Use Samples**: Explore various knot patterns and techniques
 
-- **General Fixes**: Fixed several bugs and issues from previous versions, such as undo/redo buttons creating temporary windows and not providing a smooth user experience.
+### 🐛 Bug Fixes & Improvements
+
+- **Attach Points**: Enhanced reliability when attaching control points to other strands
+- **Move Tool**: Fixed positioning issues when moving strand sides and attached strands
+- **User Experience**: Various interface refinements for smoother workflow
 
 ## Features
 

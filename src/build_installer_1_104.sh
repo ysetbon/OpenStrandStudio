@@ -134,22 +134,24 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <h2 dir="ltr">Welcome to OpenStrandStudio 1.104</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 1.104:</p>
-    <!-- TODO: Replace the features below with version 1.104 features -->
-    <p></p>
     <ul>
-        <li><b>Full Arrow System:</b> Comprehensive arrow feature with multiple customizable properties including arrow color (independent from strand), transparency (0-100%), head texture (None, Stripes, Dots, Crosshatch), shaft style (Solid, Stripes, Dots, Tiles), shadow support, head visibility toggle, and dimension controls.</li>
-        <li><b>Smart Mask Group Selection:</b> When creating groups with masked strands, selecting one component automatically includes its mask partner, maintaining mask integrity in grouped operations.</li>
-        <li><b>Enhanced Painting System:</b> Fixed rendering issues for strand paths and attached strands during draw operations, ensuring consistent visual representation.</li>
+        <li><b>Enhanced Control Point System:</b> Improved UX for control point movement and activation behavior. Better visual feedback and smoother interaction when working with control points.</li>
+        <li><b>Endpoint Properties Management:</b> Save samples and duplicate endpoint properties functionality. Streamlined workflow for managing endpoint configurations.</li>
+        <li><b>Advanced Shadow Editor:</b> Fixed dialog layout with multi-language support, subtraction operations, and improved history table for better shadow management.</li>
+        <li><b>User Settings Persistence:</b> Save and load functionality for user settings, ensuring your preferences are maintained across sessions.</li>
+        <li><b>Rendering Improvements:</b> Fixed side line rendering issues and enhanced undo/redo functionality for more reliable visual output.</li>
     </ul>
     <hr>
     <!-- German -->
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.104</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
-    <p>Was ist neu in dieser Version - [TODO: Aktualisieren]</p>
+    <p>Was ist neu in dieser Version:</p>
     <ul>
-        <li><b>Vollständiges Pfeilsystem:</b> Umfassende Pfeilfunktion mit mehreren anpassbaren Eigenschaften wie Pfeilfarbe (unabhängig vom Strang), Transparenz (0-100%), Kopftextur (Keine, Streifen, Punkte, Schraffur), Schaftstil (Solide, Streifen, Punkte, Kacheln), Schattenunterstützung, Kopfsichtbarkeit und Dimensionskontrollen.</li>
-        <li><b>Intelligente Maskengruppenauswahl:</b> Beim Erstellen von Gruppen mit maskierten Strängen wird beim Auswählen einer Komponente automatisch der Maskenpartner eingeschlossen, wodurch die Maskenintegrität in gruppierten Operationen erhalten bleibt.</li>
-        <li><b>Verbessertes Malsystem:</b> Behobene Renderprobleme für Strangpfade und angehängte Stränge während Zeichenoperationen.</li>
+        <li><b>Verbessertes Kontrollpunktsystem:</b> Verbesserte Benutzerführung für Kontrollpunktbewegung und Aktivierungsverhalten. Besseres visuelles Feedback und flüssigere Interaktion bei der Arbeit mit Kontrollpunkten.</li>
+        <li><b>Endpunkt-Eigenschaften-Verwaltung:</b> Speichern von Mustern und Duplizieren von Endpunkt-Eigenschaften. Optimierter Arbeitsablauf für die Verwaltung von Endpunkt-Konfigurationen.</li>
+        <li><b>Erweiterter Schatten-Editor:</b> Korrigiertes Dialog-Layout mit Mehrsprachenunterstützung, Subtraktionsoperationen und verbesserter Verlaufstabelle für besseres Schatten-Management.</li>
+        <li><b>Benutzereinstellungen-Persistenz:</b> Speicher- und Ladefunktion für Benutzereinstellungen, damit Ihre Präferenzen sitzungsübergreifend erhalten bleiben.</li>
+        <li><b>Rendering-Verbesserungen:</b> Behobene Seitenlinien-Rendering-Probleme und verbesserte Rückgängig/Wiederherstellen-Funktionalität für zuverlässigere visuelle Ausgabe.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -157,39 +159,47 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li><b>Système de flèches complet :</b> Fonction de flèche complète avec plusieurs propriétés personnalisables incluant la couleur de flèche (indépendante du brin), transparence (0-100%), texture de tête (Aucune, Rayures, Points, Hachures croisées), style de tige (Solide, Rayures, Points, Carreaux), support d'ombre, visibilité de tête, et contrôles de dimension.</li>
-        <li><b>Sélection intelligente de groupe masqué :</b> Lors de la création de groupes avec des brins masqués, la sélection d'un composant inclut automatiquement son partenaire de masque, maintenant l'intégrité du masque dans les opérations groupées.</li>
-        <li><b>Système de peinture amélioré :</b> Correction des problèmes de rendu pour les chemins de brin et les brins attachés pendant les opérations de dessin.</li>
+        <li><b>Système de points de contrôle amélioré :</b> Interface utilisateur améliorée pour le mouvement des points de contrôle et le comportement d'activation. Meilleur retour visuel et interaction plus fluide lors du travail avec les points de contrôle.</li>
+        <li><b>Gestion des propriétés des extrémités :</b> Fonctionnalité de sauvegarde d'échantillons et de duplication des propriétés des extrémités. Flux de travail optimisé pour la gestion des configurations d'extrémités.</li>
+        <li><b>Éditeur d'ombres avancé :</b> Disposition de dialogue corrigée avec prise en charge multilingue, opérations de soustraction et table d'historique améliorée pour une meilleure gestion des ombres.</li>
+        <li><b>Persistance des paramètres utilisateur :</b> Fonctionnalité de sauvegarde et de chargement des paramètres utilisateur, garantissant que vos préférences sont maintenues d'une session à l'autre.</li>
+        <li><b>Améliorations du rendu :</b> Correction des problèmes de rendu des lignes latérales et amélioration de la fonctionnalité annuler/rétablir pour une sortie visuelle plus fiable.</li>
     </ul>
     <hr>
     <!-- Italian -->
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.104</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
-    <p>Novità in questa versione - [TODO: Aggiornare]</p>
+    <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Sistema di frecce completo:</b> Funzione freccia completa con molteplici proprietà personalizzabili tra cui colore freccia (indipendente dal filamento), trasparenza (0-100%), texture della punta (Nessuna, Strisce, Punti, Tratteggio incrociato), stile dell'asta (Solido, Strisce, Punti, Piastrelle), supporto ombra, visibilità della punta e controlli dimensionali.</li>
-        <li><b>Selezione intelligente gruppo maschera:</b> Quando si creano gruppi con filamenti mascherati, selezionando un componente si include automaticamente il suo partner maschera, mantenendo l'integrità della maschera nelle operazioni di gruppo.</li>
-        <li><b>Sistema di pittura migliorato:</b> Risolti problemi di rendering per percorsi di filamento e filamenti attaccati durante le operazioni di disegno.</li>
+        <li><b>Sistema di punti di controllo migliorato:</b> Migliorata l'esperienza utente per il movimento dei punti di controllo e il comportamento di attivazione. Miglior feedback visivo e interazione più fluida quando si lavora con i punti di controllo.</li>
+        <li><b>Gestione delle proprietà degli endpoint:</b> Funzionalità di salvataggio campioni e duplicazione delle proprietà degli endpoint. Flusso di lavoro ottimizzato per la gestione delle configurazioni degli endpoint.</li>
+        <li><b>Editor di ombre avanzato:</b> Layout della finestra di dialogo corretto con supporto multilingue, operazioni di sottrazione e tabella cronologia migliorata per una migliore gestione delle ombre.</li>
+        <li><b>Persistenza delle impostazioni utente:</b> Funzionalità di salvataggio e caricamento delle impostazioni utente, garantendo che le preferenze vengano mantenute tra le sessioni.</li>
+        <li><b>Miglioramenti del rendering:</b> Risolti i problemi di rendering delle linee laterali e migliorata la funzionalità annulla/ripristina per un output visivo più affidabile.</li>
     </ul>
     <hr>
     <!-- Spanish -->
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.104</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
-    <p>Novedades en esta versión - [TODO: Actualizar]</p>
+    <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Sistema de flechas completo:</b> Función de flecha completa con múltiples propiedades personalizables incluyendo color de flecha (independiente del hilo), transparencia (0-100%), textura de punta (Ninguna, Rayas, Puntos, Trama cruzada), estilo del eje (Sólido, Rayas, Puntos, Azulejos), soporte de sombra, visibilidad de punta y controles de dimensión.</li>
-        <li><b>Selección inteligente de grupo de máscara:</b> Al crear grupos con hilos enmascarados, seleccionar un componente incluye automáticamente su compañero de máscara, manteniendo la integridad de la máscara en operaciones agrupadas.</li>
-        <li><b>Sistema de pintura mejorado:</b> Corregidos problemas de renderizado para rutas de hilos e hilos adjuntos durante operaciones de dibujo.</li>
+        <li><b>Sistema de puntos de control mejorado:</b> Mejor experiencia de usuario para el movimiento de puntos de control y comportamiento de activación. Mejor retroalimentación visual e interacción más fluida al trabajar con puntos de control.</li>
+        <li><b>Gestión de propiedades de puntos finales:</b> Funcionalidad de guardar muestras y duplicar propiedades de puntos finales. Flujo de trabajo optimizado para gestionar configuraciones de puntos finales.</li>
+        <li><b>Editor de sombras avanzado:</b> Diseño de diálogo corregido con soporte multiidioma, operaciones de sustracción y tabla de historial mejorada para una mejor gestión de sombras.</li>
+        <li><b>Persistencia de configuración de usuario:</b> Funcionalidad de guardar y cargar configuración de usuario, asegurando que sus preferencias se mantengan entre sesiones.</li>
+        <li><b>Mejoras de renderizado:</b> Solucionados problemas de renderizado de líneas laterales y mejorada la funcionalidad deshacer/rehacer para una salida visual más confiable.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.104</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
-    <p>Novidades nesta versão - [TODO: Atualizar]</p>
+    <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Sistema de setas completo:</b> Recurso de seta abrangente com várias propriedades personalizáveis incluindo cor da seta (independente do fio), transparência (0-100%), textura da ponta (Nenhuma, Listras, Pontos, Hachura cruzada), estilo do eixo (Sólido, Listras, Pontos, Azulejos), suporte de sombra, visibilidade da ponta e controles dimensionais.</li>
-        <li><b>Seleção inteligente de grupo de máscara:</b> Ao criar grupos com fios mascarados, selecionar um componente inclui automaticamente seu parceiro de máscara, mantendo a integridade da máscara em operações agrupadas.</li>
-        <li><b>Sistema de pintura aprimorado:</b> Corrigidos problemas de renderização para caminhos de fios e fios anexados durante operações de desenho.</li>
+        <li><b>Sistema de pontos de controle aprimorado:</b> Melhor experiência do usuário para movimento de pontos de controle e comportamento de ativação. Melhor feedback visual e interação mais suave ao trabalhar com pontos de controle.</li>
+        <li><b>Gerenciamento de propriedades de pontos finais:</b> Funcionalidade de salvar amostras e duplicar propriedades de pontos finais. Fluxo de trabalho otimizado para gerenciar configurações de pontos finais.</li>
+        <li><b>Editor de sombras avançado:</b> Layout de diálogo corrigido com suporte multilíngue, operações de subtração e tabela de histórico aprimorada para melhor gerenciamento de sombras.</li>
+        <li><b>Persistência de configurações do usuário:</b> Funcionalidade de salvar e carregar configurações do usuário, garantindo que suas preferências sejam mantidas entre as sessões.</li>
+        <li><b>Melhorias de renderização:</b> Corrigidos problemas de renderização de linhas laterais e melhorada a funcionalidade desfazer/refazer para saída visual mais confiável.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -198,9 +208,11 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li><b>&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05D7;&#x05D9;&#x05E6;&#x05D9;&#x05DD; &#x05DE;&#x05DC;&#x05D0;&#x05D4;:</b> &#x05EA;&#x05DB;&#x05D5;&#x05E0;&#x05EA; &#x05D7;&#x05D9;&#x05E6;&#x05D9;&#x05DD; &#x05DE;&#x05E7;&#x05D9;&#x05E4;&#x05D4; &#x05E2;&#x05DD; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05DE;&#x05D0;&#x05E4;&#x05D9;&#x05D9;&#x05E0;&#x05D9;&#x05DD; &#x05D4;&#x05E0;&#x05D9;&#x05EA;&#x05E0;&#x05D9;&#x05DD; &#x05DC;&#x05D4;&#x05EA;&#x05D0;&#x05DE;&#x05D4; &#x05D0;&#x05D9;&#x05E9;&#x05D9;&#x05EA; &#x05DB;&#x05D5;&#x05DC;&#x05DC; &#x05E6;&#x05D1;&#x05E2; &#x05D7;&#x05E5; (&#x05D1;&#x05DC;&#x05EA;&#x05D9; &#x05EA;&#x05DC;&#x05D5;&#x05D9; &#x05D1;&#x05D2;&#x05D3;&#x05D9;&#x05DC;), &#x05E9;&#x05E7;&#x05D9;&#x05E4;&#x05D5;&#x05EA; (0-100%), &#x05DE;&#x05E8;&#x05E7;&#x05DD; &#x05E8;&#x05D0;&#x05E9; (&#x05DC;&#x05DC;&#x05D0;, &#x05E4;&#x05E1;&#x05D9;&#x05DD;, &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA;, &#x05D1;&#x05E7;&#x05D9;&#x05E2;&#x05D4; &#x05E6;&#x05D5;&#x05DC;&#x05D1;&#x05EA;), &#x05E1;&#x05D2;&#x05E0;&#x05D5;&#x05DF; &#x05E6;&#x05D9;&#x05E8; (&#x05DE;&#x05D5;&#x05E6;&#x05E7;, &#x05E4;&#x05E1;&#x05D9;&#x05DD;, &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA;, &#x05D0;&#x05E8;&#x05D9;&#x05D7;&#x05D9;&#x05DD;), &#x05EA;&#x05DE;&#x05D9;&#x05DB;&#x05D4; &#x05D1;&#x05E6;&#x05DC;, &#x05E0;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E8;&#x05D0;&#x05E9; &#x05D5;&#x05D1;&#x05E7;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05D9;&#x05DE;&#x05D3;.</li>
-        <li><b>&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05EA; &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05DB;&#x05DE;&#x05D4;:</b> &#x05D1;&#x05E2;&#x05EA; &#x05D9;&#x05E6;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05E2;&#x05DD; &#x05D2;&#x05D3;&#x05D9;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05DE;&#x05D5;&#x05E1;&#x05DB;&#x05D9;&#x05DD;, &#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E8;&#x05DB;&#x05D9;&#x05D1; &#x05D0;&#x05D7;&#x05D3; &#x05DB;&#x05D5;&#x05DC;&#x05DC;&#x05EA; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05D0;&#x05EA; &#x05E9;&#x05D5;&#x05EA;&#x05E3; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05E9;&#x05DC;&#x05D5;, &#x05EA;&#x05D5;&#x05DA; &#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05D4; &#x05E2;&#x05DC; &#x05E9;&#x05DC;&#x05DE;&#x05D5;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05DE;&#x05E7;&#x05D5;&#x05D1;&#x05E6;&#x05D5;&#x05EA;.</li>
-        <li><b>&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05E6;&#x05D1;&#x05D9;&#x05E2;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3; &#x05E2;&#x05D1;&#x05D5;&#x05E8; &#x05E0;&#x05EA;&#x05D9;&#x05D1;&#x05D9; &#x05D2;&#x05D3;&#x05D9;&#x05DC;&#x05D9;&#x05DD; &#x05D5;&#x05D2;&#x05D3;&#x05D9;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05D7;&#x05D5;&#x05D1;&#x05E8;&#x05D9;&#x05DD; &#x05D1;&#x05DE;&#x05D4;&#x05DC;&#x05DA; &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05E6;&#x05D9;&#x05D5;&#x05E8;.</li>
+        <li><b>&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA;:</b> &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA; &#x05DC;&#x05EA;&#x05E0;&#x05D5;&#x05E2;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D5;&#x05D4;&#x05EA;&#x05E0;&#x05D4;&#x05D2;&#x05D5;&#x05EA; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D4;. &#x05DE;&#x05E9;&#x05D5;&#x05D1; &#x05D7;&#x05D6;&#x05D5;&#x05EA;&#x05D9; &#x05D8;&#x05D5;&#x05D1; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D5;&#x05D0;&#x05D9;&#x05E0;&#x05D8;&#x05E8;&#x05D0;&#x05E7;&#x05E6;&#x05D9;&#x05D4; &#x05E2;&#x05D3;&#x05D9;&#x05E0;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DD; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4;.</li>
+        <li><b>&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05DE;&#x05D0;&#x05E4;&#x05D9;&#x05D9;&#x05E0;&#x05D9; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05E7;&#x05E6;&#x05D4;:</b> &#x05E4;&#x05D5;&#x05E0;&#x05E7;&#x05E6;&#x05D9;&#x05D5;&#x05E0;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05EA; &#x05D3;&#x05D2;&#x05D9;&#x05DE;&#x05D5;&#x05EA; &#x05D5;&#x05E9;&#x05DB;&#x05E4;&#x05D5;&#x05DC; &#x05DE;&#x05D0;&#x05E4;&#x05D9;&#x05D9;&#x05E0;&#x05D9; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05E7;&#x05E6;&#x05D4;. &#x05EA;&#x05D4;&#x05DC;&#x05D9;&#x05DA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05DE;&#x05D9;&#x05D5;&#x05E2;&#x05DC; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05EA;&#x05E6;&#x05D5;&#x05E8;&#x05D5;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05E7;&#x05E6;&#x05D4;.</li>
+        <li><b>&#x05E2;&#x05D5;&#x05E8;&#x05DA; &#x05E6;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05EA;&#x05E7;&#x05D3;&#x05DD;:</b> &#x05E4;&#x05E8;&#x05D9;&#x05E1;&#x05EA; &#x05D3;&#x05D5;-&#x05E9;&#x05D9;&#x05D7; &#x05DE;&#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05EA; &#x05E2;&#x05DD; &#x05EA;&#x05DE;&#x05D9;&#x05DB;&#x05D4; &#x05E8;&#x05D1;-&#x05E9;&#x05E4;&#x05EA;&#x05D9;&#x05EA;, &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D7;&#x05D9;&#x05E1;&#x05D5;&#x05E8; &#x05D5;&#x05D8;&#x05D1;&#x05DC;&#x05EA; &#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05E6;&#x05DC;&#x05D9;&#x05DD; &#x05D8;&#x05D5;&#x05D1; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
+        <li><b>&#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05EA; &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9;:</b> &#x05E4;&#x05D5;&#x05E0;&#x05E7;&#x05E6;&#x05D9;&#x05D5;&#x05E0;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05D8;&#x05E2;&#x05D9;&#x05E0;&#x05D4; &#x05E9;&#x05DC; &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9;, &#x05D4;&#x05DE;&#x05D1;&#x05D8;&#x05D9;&#x05D7;&#x05D4; &#x05E9;&#x05D4;&#x05D4;&#x05E2;&#x05D3;&#x05E4;&#x05D5;&#x05EA; &#x05E9;&#x05DC;&#x05DA; &#x05E9;&#x05DE;&#x05D5;&#x05E8;&#x05D5;&#x05EA; &#x05D1;&#x05D9;&#x05DF; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D5;&#x05EA;.</li>
+        <li><b>&#x05E9;&#x05D9;&#x05E4;&#x05D5;&#x05E8;&#x05D9; &#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3; &#x05E9;&#x05DC; &#x05E7;&#x05D5;&#x05D5;&#x05D9; &#x05E6;&#x05D3; &#x05D5;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05D4; &#x05E4;&#x05D5;&#x05E0;&#x05E7;&#x05E6;&#x05D9;&#x05D5;&#x05E0;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05E9;&#x05D7;&#x05D6;&#x05D5;&#x05E8; &#x05DC;&#x05E4;&#x05DC;&#x05D8; &#x05D7;&#x05D6;&#x05D5;&#x05EA;&#x05D9; &#x05D0;&#x05DE;&#x05D9;&#x05DF; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
     </ul>
     </div>
 </body>
@@ -343,63 +355,73 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <!-- French -->
     <h2 dir="ltr">Bienvenue dans OpenStrandStudio 1.104</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires pour installer ce logiciel.</p>
-    <p>Nouveautés de la version 1.104 - [TODO: Mettre à jour]:</p>
+    <p>Nouveautés de la version 1.104&nbsp;:</p>
     <ul>
-        <li><b>Système de flèches complet :</b> Fonction de flèche complète avec plusieurs propriétés personnalisables incluant la couleur de flèche (indépendante du brin), transparence (0-100%), texture de tête (Aucune, Rayures, Points, Hachures croisées), style de tige (Solide, Rayures, Points, Carreaux), support d'ombre, visibilité de tête, et contrôles de dimension.</li>
-        <li><b>Sélection intelligente de groupe masqué :</b> Lors de la création de groupes avec des brins masqués, la sélection d'un composant inclut automatiquement son partenaire de masque, maintenant l'intégrité du masque dans les opérations groupées.</li>
-        <li><b>Système de peinture amélioré :</b> Correction des problèmes de rendu pour les chemins de brin et les brins attachés pendant les opérations de dessin.</li>
+        <li><b>Système de points de contrôle amélioré :</b> Interface utilisateur améliorée pour le mouvement des points de contrôle et le comportement d'activation. Meilleur retour visuel et interaction plus fluide lors du travail avec les points de contrôle.</li>
+        <li><b>Gestion des propriétés des extrémités :</b> Fonctionnalité de sauvegarde d'échantillons et de duplication des propriétés des extrémités. Flux de travail optimisé pour la gestion des configurations d'extrémités.</li>
+        <li><b>Éditeur d'ombres avancé :</b> Disposition de dialogue corrigée avec prise en charge multilingue, opérations de soustraction et table d'historique améliorée pour une meilleure gestion des ombres.</li>
+        <li><b>Persistance des paramètres utilisateur :</b> Fonctionnalité de sauvegarde et de chargement des paramètres utilisateur, garantissant que vos préférences sont maintenues d'une session à l'autre.</li>
+        <li><b>Améliorations du rendu :</b> Correction des problèmes de rendu des lignes latérales et amélioration de la fonctionnalité annuler/rétablir pour une sortie visuelle plus fiable.</li>
     </ul>
     <hr>
     <!-- English -->
     <h2 dir="ltr">Welcome to OpenStrandStudio 1.104</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 1.104:</p>
-    <!-- TODO: Replace the features below with version 1.104 features -->
-    <p></p>
     <ul>
-        <li><b>Full Arrow System:</b> Comprehensive arrow feature with multiple customizable properties including arrow color (independent from strand), transparency (0-100%), head texture (None, Stripes, Dots, Crosshatch), shaft style (Solid, Stripes, Dots, Tiles), shadow support, head visibility toggle, and dimension controls.</li>
-        <li><b>Smart Mask Group Selection:</b> When creating groups with masked strands, selecting one component automatically includes its mask partner, maintaining mask integrity in grouped operations.</li>
-        <li><b>Enhanced Painting System:</b> Fixed rendering issues for strand paths and attached strands during draw operations, ensuring consistent visual representation.</li>
+        <li><b>Enhanced Control Point System:</b> Improved UX for control point movement and activation behavior. Better visual feedback and smoother interaction when working with control points.</li>
+        <li><b>Endpoint Properties Management:</b> Save samples and duplicate endpoint properties functionality. Streamlined workflow for managing endpoint configurations.</li>
+        <li><b>Advanced Shadow Editor:</b> Fixed dialog layout with multi-language support, subtraction operations, and improved history table for better shadow management.</li>
+        <li><b>User Settings Persistence:</b> Save and load functionality for user settings, ensuring your preferences are maintained across sessions.</li>
+        <li><b>Rendering Improvements:</b> Fixed side line rendering issues and enhanced undo/redo functionality for more reliable visual output.</li>
     </ul>
     <hr>
     <!-- German -->
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.104</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
-    <p>Was ist neu in dieser Version - [TODO: Aktualisieren]</p>
+    <p>Was ist neu in dieser Version:</p>
     <ul>
-        <li><b>Vollständiges Pfeilsystem:</b> Umfassende Pfeilfunktion mit mehreren anpassbaren Eigenschaften wie Pfeilfarbe (unabhängig vom Strang), Transparenz (0-100%), Kopftextur (Keine, Streifen, Punkte, Schraffur), Schaftstil (Solide, Streifen, Punkte, Kacheln), Schattenunterstützung, Kopfsichtbarkeit und Dimensionskontrollen.</li>
-        <li><b>Intelligente Maskengruppenauswahl:</b> Beim Erstellen von Gruppen mit maskierten Strängen wird beim Auswählen einer Komponente automatisch der Maskenpartner eingeschlossen, wodurch die Maskenintegrität in gruppierten Operationen erhalten bleibt.</li>
-        <li><b>Verbessertes Malsystem:</b> Behobene Renderprobleme für Strangpfade und angehängte Stränge während Zeichenoperationen.</li>
+        <li><b>Verbessertes Kontrollpunktsystem:</b> Verbesserte Benutzerführung für Kontrollpunktbewegung und Aktivierungsverhalten. Besseres visuelles Feedback und flüssigere Interaktion bei der Arbeit mit Kontrollpunkten.</li>
+        <li><b>Endpunkt-Eigenschaften-Verwaltung:</b> Speichern von Mustern und Duplizieren von Endpunkt-Eigenschaften. Optimierter Arbeitsablauf für die Verwaltung von Endpunkt-Konfigurationen.</li>
+        <li><b>Erweiterter Schatten-Editor:</b> Korrigiertes Dialog-Layout mit Mehrsprachenunterstützung, Subtraktionsoperationen und verbesserter Verlaufstabelle für besseres Schatten-Management.</li>
+        <li><b>Benutzereinstellungen-Persistenz:</b> Speicher- und Ladefunktion für Benutzereinstellungen, damit Ihre Präferenzen sitzungsübergreifend erhalten bleiben.</li>
+        <li><b>Rendering-Verbesserungen:</b> Behobene Seitenlinien-Rendering-Probleme und verbesserte Rückgängig/Wiederherstellen-Funktionalität für zuverlässigere visuelle Ausgabe.</li>
     </ul>
     <hr>
     <!-- Italian -->
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.104</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
-    <p>Novità in questa versione - [TODO: Aggiornare]</p>
+    <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Sistema di frecce completo:</b> Funzione freccia completa con molteplici proprietà personalizzabili tra cui colore freccia (indipendente dal filamento), trasparenza (0-100%), texture della punta (Nessuna, Strisce, Punti, Tratteggio incrociato), stile dell'asta (Solido, Strisce, Punti, Piastrelle), supporto ombra, visibilità della punta e controlli dimensionali.</li>
-        <li><b>Selezione intelligente gruppo maschera:</b> Quando si creano gruppi con filamenti mascherati, selezionando un componente si include automaticamente il suo partner maschera, mantenendo l'integrità della maschera nelle operazioni di gruppo.</li>
-        <li><b>Sistema di pittura migliorato:</b> Risolti problemi di rendering per percorsi di filamento e filamenti attaccati durante le operazioni di disegno.</li>
+        <li><b>Sistema di punti di controllo migliorato:</b> Migliorata l'esperienza utente per il movimento dei punti di controllo e il comportamento di attivazione. Miglior feedback visivo e interazione più fluida quando si lavora con i punti di controllo.</li>
+        <li><b>Gestione delle proprietà degli endpoint:</b> Funzionalità di salvataggio campioni e duplicazione delle proprietà degli endpoint. Flusso di lavoro ottimizzato per la gestione delle configurazioni degli endpoint.</li>
+        <li><b>Editor di ombre avanzato:</b> Layout della finestra di dialogo corretto con supporto multilingue, operazioni di sottrazione e tabella cronologia migliorata per una migliore gestione delle ombre.</li>
+        <li><b>Persistenza delle impostazioni utente:</b> Funzionalità di salvataggio e caricamento delle impostazioni utente, garantendo che le preferenze vengano mantenute tra le sessioni.</li>
+        <li><b>Miglioramenti del rendering:</b> Risolti i problemi di rendering delle linee laterali e migliorata la funzionalità annulla/ripristina per un output visivo più affidabile.</li>
     </ul>
     <hr>
     <!-- Spanish -->
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.104</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
-    <p>Novedades en esta versión - [TODO: Actualizar]</p>
+    <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Sistema de flechas completo:</b> Función de flecha completa con múltiples propiedades personalizables incluyendo color de flecha (independiente del hilo), transparencia (0-100%), textura de punta (Ninguna, Rayas, Puntos, Trama cruzada), estilo del eje (Sólido, Rayas, Puntos, Azulejos), soporte de sombra, visibilidad de punta y controles de dimensión.</li>
-        <li><b>Selección inteligente de grupo de máscara:</b> Al crear grupos con hilos enmascarados, seleccionar un componente incluye automáticamente su compañero de máscara, manteniendo la integridad de la máscara en operaciones agrupadas.</li>
-        <li><b>Sistema de pintura mejorado:</b> Corregidos problemas de renderizado para rutas de hilos e hilos adjuntos durante operaciones de dibujo.</li>
+        <li><b>Sistema de puntos de control mejorado:</b> Mejor experiencia de usuario para el movimiento de puntos de control y comportamiento de activación. Mejor retroalimentación visual e interacción más fluida al trabajar con puntos de control.</li>
+        <li><b>Gestión de propiedades de puntos finales:</b> Funcionalidad de guardar muestras y duplicar propiedades de puntos finales. Flujo de trabajo optimizado para gestionar configuraciones de puntos finales.</li>
+        <li><b>Editor de sombras avanzado:</b> Diseño de diálogo corregido con soporte multiidioma, operaciones de sustracción y tabla de historial mejorada para una mejor gestión de sombras.</li>
+        <li><b>Persistencia de configuración de usuario:</b> Funcionalidad de guardar y cargar configuración de usuario, asegurando que sus preferencias se mantengan entre sesiones.</li>
+        <li><b>Mejoras de renderizado:</b> Solucionados problemas de renderizado de líneas laterales y mejorada la funcionalidad deshacer/rehacer para una salida visual más confiable.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.104</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
-    <p>Novidades nesta versão - [TODO: Atualizar]</p>
+    <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Sistema de setas completo:</b> Recurso de seta abrangente com várias propriedades personalizáveis incluindo cor da seta (independente do fio), transparência (0-100%), textura da ponta (Nenhuma, Listras, Pontos, Hachura cruzada), estilo do eixo (Sólido, Listras, Pontos, Azulejos), suporte de sombra, visibilidade da ponta e controles dimensionais.</li>
-        <li><b>Seleção inteligente de grupo de máscara:</b> Ao criar grupos com fios mascarados, selecionar um componente inclui automaticamente seu parceiro de máscara, mantendo a integridade da máscara em operações agrupadas.</li>
-        <li><b>Sistema de pintura aprimorado:</b> Corrigidos problemas de renderização para caminhos de fios e fios anexados durante operações de desenho.</li>
+        <li><b>Sistema de pontos de controle aprimorado:</b> Melhor experiência do usuário para movimento de pontos de controle e comportamento de ativação. Melhor feedback visual e interação mais suave ao trabalhar com pontos de controle.</li>
+        <li><b>Gerenciamento de propriedades de pontos finais:</b> Funcionalidade de salvar amostras e duplicar propriedades de pontos finais. Fluxo de trabalho otimizado para gerenciar configurações de pontos finais.</li>
+        <li><b>Editor de sombras avançado:</b> Layout de diálogo corrigido com suporte multilíngue, operações de subtração e tabela de histórico aprimorada para melhor gerenciamento de sombras.</li>
+        <li><b>Persistência de configurações do usuário:</b> Funcionalidade de salvar e carregar configurações do usuário, garantindo que suas preferências sejam mantidas entre as sessões.</li>
+        <li><b>Melhorias de renderização:</b> Corrigidos problemas de renderização de linhas laterais e melhorada a funcionalidade desfazer/refazer para saída visual mais confiável.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -428,23 +450,25 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <!-- German -->
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.104</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
-    <p>Was ist neu in dieser Version - [TODO: Aktualisieren]</p>
+    <p>Was ist neu in dieser Version:</p>
     <ul>
-        <li><b>Vollständiges Pfeilsystem:</b> Umfassende Pfeilfunktion mit mehreren anpassbaren Eigenschaften wie Pfeilfarbe (unabhängig vom Strang), Transparenz (0-100%), Kopftextur (Keine, Streifen, Punkte, Schraffur), Schaftstil (Solide, Streifen, Punkte, Kacheln), Schattenunterstützung, Kopfsichtbarkeit und Dimensionskontrollen.</li>
-        <li><b>Intelligente Maskengruppenauswahl:</b> Beim Erstellen von Gruppen mit maskierten Strängen wird beim Auswählen einer Komponente automatisch der Maskenpartner eingeschlossen, wodurch die Maskenintegrität in gruppierten Operationen erhalten bleibt.</li>
-        <li><b>Verbessertes Malsystem:</b> Behobene Renderprobleme für Strangpfade und angehängte Stränge während Zeichenoperationen.</li>
+        <li><b>Verbessertes Kontrollpunktsystem:</b> Verbesserte Benutzerführung für Kontrollpunktbewegung und Aktivierungsverhalten. Besseres visuelles Feedback und flüssigere Interaktion bei der Arbeit mit Kontrollpunkten.</li>
+        <li><b>Endpunkt-Eigenschaften-Verwaltung:</b> Speichern von Mustern und Duplizieren von Endpunkt-Eigenschaften. Optimierter Arbeitsablauf für die Verwaltung von Endpunkt-Konfigurationen.</li>
+        <li><b>Erweiterter Schatten-Editor:</b> Korrigiertes Dialog-Layout mit Mehrsprachenunterstützung, Subtraktionsoperationen und verbesserter Verlaufstabelle für besseres Schatten-Management.</li>
+        <li><b>Benutzereinstellungen-Persistenz:</b> Speicher- und Ladefunktion für Benutzereinstellungen, damit Ihre Präferenzen sitzungsübergreifend erhalten bleiben.</li>
+        <li><b>Rendering-Verbesserungen:</b> Behobene Seitenlinien-Rendering-Probleme und verbesserte Rückgängig/Wiederherstellen-Funktionalität für zuverlässigere visuelle Ausgabe.</li>
     </ul>
     <hr>
     <!-- English -->
     <h2 dir="ltr">Welcome to OpenStrandStudio 1.104</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 1.104:</p>
-    <!-- TODO: Replace the features below with version 1.104 features -->
-    <p></p>
     <ul>
-        <li><b>Full Arrow System:</b> Comprehensive arrow feature with multiple customizable properties including arrow color (independent from strand), transparency (0-100%), head texture (None, Stripes, Dots, Crosshatch), shaft style (Solid, Stripes, Dots, Tiles), shadow support, head visibility toggle, and dimension controls.</li>
-        <li><b>Smart Mask Group Selection:</b> When creating groups with masked strands, selecting one component automatically includes its mask partner, maintaining mask integrity in grouped operations.</li>
-        <li><b>Enhanced Painting System:</b> Fixed rendering issues for strand paths and attached strands during draw operations, ensuring consistent visual representation.</li>
+        <li><b>Enhanced Control Point System:</b> Improved UX for control point movement and activation behavior. Better visual feedback and smoother interaction when working with control points.</li>
+        <li><b>Endpoint Properties Management:</b> Save samples and duplicate endpoint properties functionality. Streamlined workflow for managing endpoint configurations.</li>
+        <li><b>Advanced Shadow Editor:</b> Fixed dialog layout with multi-language support, subtraction operations, and improved history table for better shadow management.</li>
+        <li><b>User Settings Persistence:</b> Save and load functionality for user settings, ensuring your preferences are maintained across sessions.</li>
+        <li><b>Rendering Improvements:</b> Fixed side line rendering issues and enhanced undo/redo functionality for more reliable visual output.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -452,39 +476,47 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li><b>Système de flèches complet :</b> Fonction de flèche complète avec plusieurs propriétés personnalisables incluant la couleur de flèche (indépendante du brin), transparence (0-100%), texture de tête (Aucune, Rayures, Points, Hachures croisées), style de tige (Solide, Rayures, Points, Carreaux), support d'ombre, visibilité de tête, et contrôles de dimension.</li>
-        <li><b>Sélection intelligente de groupe masqué :</b> Lors de la création de groupes avec des brins masqués, la sélection d'un composant inclut automatiquement son partenaire de masque, maintenant l'intégrité du masque dans les opérations groupées.</li>
-        <li><b>Système de peinture amélioré :</b> Correction des problèmes de rendu pour les chemins de brin et les brins attachés pendant les opérations de dessin.</li>
+        <li><b>Système de points de contrôle amélioré :</b> Interface utilisateur améliorée pour le mouvement des points de contrôle et le comportement d'activation. Meilleur retour visuel et interaction plus fluide lors du travail avec les points de contrôle.</li>
+        <li><b>Gestion des propriétés des extrémités :</b> Fonctionnalité de sauvegarde d'échantillons et de duplication des propriétés des extrémités. Flux de travail optimisé pour la gestion des configurations d'extrémités.</li>
+        <li><b>Éditeur d'ombres avancé :</b> Disposition de dialogue corrigée avec prise en charge multilingue, opérations de soustraction et table d'historique améliorée pour une meilleure gestion des ombres.</li>
+        <li><b>Persistance des paramètres utilisateur :</b> Fonctionnalité de sauvegarde et de chargement des paramètres utilisateur, garantissant que vos préférences sont maintenues d'une session à l'autre.</li>
+        <li><b>Améliorations du rendu :</b> Correction des problèmes de rendu des lignes latérales et amélioration de la fonctionnalité annuler/rétablir pour une sortie visuelle plus fiable.</li>
     </ul>
     <hr>
     <!-- Italian -->
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.104</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
-    <p>Novità in questa versione - [TODO: Aggiornare]</p>
+    <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Sistema di frecce completo:</b> Funzione freccia completa con molteplici proprietà personalizzabili tra cui colore freccia (indipendente dal filamento), trasparenza (0-100%), texture della punta (Nessuna, Strisce, Punti, Tratteggio incrociato), stile dell'asta (Solido, Strisce, Punti, Piastrelle), supporto ombra, visibilità della punta e controlli dimensionali.</li>
-        <li><b>Selezione intelligente gruppo maschera:</b> Quando si creano gruppi con filamenti mascherati, selezionando un componente si include automaticamente il suo partner maschera, mantenendo l'integrità della maschera nelle operazioni di gruppo.</li>
-        <li><b>Sistema di pittura migliorato:</b> Risolti problemi di rendering per percorsi di filamento e filamenti attaccati durante le operazioni di disegno.</li>
+        <li><b>Sistema di punti di controllo migliorato:</b> Migliorata l'esperienza utente per il movimento dei punti di controllo e il comportamento di attivazione. Miglior feedback visivo e interazione più fluida quando si lavora con i punti di controllo.</li>
+        <li><b>Gestione delle proprietà degli endpoint:</b> Funzionalità di salvataggio campioni e duplicazione delle proprietà degli endpoint. Flusso di lavoro ottimizzato per la gestione delle configurazioni degli endpoint.</li>
+        <li><b>Editor di ombre avanzato:</b> Layout della finestra di dialogo corretto con supporto multilingue, operazioni di sottrazione e tabella cronologia migliorata per una migliore gestione delle ombre.</li>
+        <li><b>Persistenza delle impostazioni utente:</b> Funzionalità di salvataggio e caricamento delle impostazioni utente, garantendo che le preferenze vengano mantenute tra le sessioni.</li>
+        <li><b>Miglioramenti del rendering:</b> Risolti i problemi di rendering delle linee laterali e migliorata la funzionalità annulla/ripristina per un output visivo più affidabile.</li>
     </ul>
     <hr>
     <!-- Spanish -->
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.104</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
-    <p>Novedades en esta versión - [TODO: Actualizar]</p>
+    <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Sistema de flechas completo:</b> Función de flecha completa con múltiples propiedades personalizables incluyendo color de flecha (independiente del hilo), transparencia (0-100%), textura de punta (Ninguna, Rayas, Puntos, Trama cruzada), estilo del eje (Sólido, Rayas, Puntos, Azulejos), soporte de sombra, visibilidad de punta y controles de dimensión.</li>
-        <li><b>Selección inteligente de grupo de máscara:</b> Al crear grupos con hilos enmascarados, seleccionar un componente incluye automáticamente su compañero de máscara, manteniendo la integridad de la máscara en operaciones agrupadas.</li>
-        <li><b>Sistema de pintura mejorado:</b> Corregidos problemas de renderizado para rutas de hilos e hilos adjuntos durante operaciones de dibujo.</li>
+        <li><b>Sistema de puntos de control mejorado:</b> Mejor experiencia de usuario para el movimiento de puntos de control y comportamiento de activación. Mejor retroalimentación visual e interacción más fluida al trabajar con puntos de control.</li>
+        <li><b>Gestión de propiedades de puntos finales:</b> Funcionalidad de guardar muestras y duplicar propiedades de puntos finales. Flujo de trabajo optimizado para gestionar configuraciones de puntos finales.</li>
+        <li><b>Editor de sombras avanzado:</b> Diseño de diálogo corregido con soporte multiidioma, operaciones de sustracción y tabla de historial mejorada para una mejor gestión de sombras.</li>
+        <li><b>Persistencia de configuración de usuario:</b> Funcionalidad de guardar y cargar configuración de usuario, asegurando que sus preferencias se mantengan entre sesiones.</li>
+        <li><b>Mejoras de renderizado:</b> Solucionados problemas de renderizado de líneas laterales y mejorada la funcionalidad deshacer/rehacer para una salida visual más confiable.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.104</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
-    <p>Novidades nesta versão - [TODO: Atualizar]</p>
+    <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Sistema de setas completo:</b> Recurso de seta abrangente com várias propriedades personalizáveis incluindo cor da seta (independente do fio), transparência (0-100%), textura da ponta (Nenhuma, Listras, Pontos, Hachura cruzada), estilo do eixo (Sólido, Listras, Pontos, Azulejos), suporte de sombra, visibilidade da ponta e controles dimensionais.</li>
-        <li><b>Seleção inteligente de grupo de máscara:</b> Ao criar grupos com fios mascarados, selecionar um componente inclui automaticamente seu parceiro de máscara, mantendo a integridade da máscara em operações agrupadas.</li>
-        <li><b>Sistema de pintura aprimorado:</b> Corrigidos problemas de renderização para caminhos de fios e fios anexados durante operações de desenho.</li>
+        <li><b>Sistema de pontos de controle aprimorado:</b> Melhor experiência do usuário para movimento de pontos de controle e comportamento de ativação. Melhor feedback visual e interação mais suave ao trabalhar com pontos de controle.</li>
+        <li><b>Gerenciamento de propriedades de pontos finais:</b> Funcionalidade de salvar amostras e duplicar propriedades de pontos finais. Fluxo de trabalho otimizado para gerenciar configurações de pontos finais.</li>
+        <li><b>Editor de sombras avançado:</b> Layout de diálogo corrigido com suporte multilíngue, operações de subtração e tabela de histórico aprimorada para melhor gerenciamento de sombras.</li>
+        <li><b>Persistência de configurações do usuário:</b> Funcionalidade de salvar e carregar configurações do usuário, garantindo que suas preferências sejam mantidas entre as sessões.</li>
+        <li><b>Melhorias de renderização:</b> Corrigidos problemas de renderização de linhas laterais e melhorada a funcionalidade desfazer/refazer para saída visual mais confiável.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -493,9 +525,11 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li><b>&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05D7;&#x05D9;&#x05E6;&#x05D9;&#x05DD; &#x05DE;&#x05DC;&#x05D0;&#x05D4;:</b> &#x05EA;&#x05DB;&#x05D5;&#x05E0;&#x05EA; &#x05D7;&#x05D9;&#x05E6;&#x05D9;&#x05DD; &#x05DE;&#x05E7;&#x05D9;&#x05E4;&#x05D4; &#x05E2;&#x05DD; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05DE;&#x05D0;&#x05E4;&#x05D9;&#x05D9;&#x05E0;&#x05D9;&#x05DD; &#x05D4;&#x05E0;&#x05D9;&#x05EA;&#x05E0;&#x05D9;&#x05DD; &#x05DC;&#x05D4;&#x05EA;&#x05D0;&#x05DE;&#x05D4; &#x05D0;&#x05D9;&#x05E9;&#x05D9;&#x05EA; &#x05DB;&#x05D5;&#x05DC;&#x05DC; &#x05E6;&#x05D1;&#x05E2; &#x05D7;&#x05E5; (&#x05D1;&#x05DC;&#x05EA;&#x05D9; &#x05EA;&#x05DC;&#x05D5;&#x05D9; &#x05D1;&#x05D2;&#x05D3;&#x05D9;&#x05DC;), &#x05E9;&#x05E7;&#x05D9;&#x05E4;&#x05D5;&#x05EA; (0-100%), &#x05DE;&#x05E8;&#x05E7;&#x05DD; &#x05E8;&#x05D0;&#x05E9; (&#x05DC;&#x05DC;&#x05D0;, &#x05E4;&#x05E1;&#x05D9;&#x05DD;, &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA;, &#x05D1;&#x05E7;&#x05D9;&#x05E2;&#x05D4; &#x05E6;&#x05D5;&#x05DC;&#x05D1;&#x05EA;), &#x05E1;&#x05D2;&#x05E0;&#x05D5;&#x05DF; &#x05E6;&#x05D9;&#x05E8; (&#x05DE;&#x05D5;&#x05E6;&#x05E7;, &#x05E4;&#x05E1;&#x05D9;&#x05DD;, &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA;, &#x05D0;&#x05E8;&#x05D9;&#x05D7;&#x05D9;&#x05DD;), &#x05EA;&#x05DE;&#x05D9;&#x05DB;&#x05D4; &#x05D1;&#x05E6;&#x05DC;, &#x05E0;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E8;&#x05D0;&#x05E9; &#x05D5;&#x05D1;&#x05E7;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05D9;&#x05DE;&#x05D3;.</li>
-        <li><b>&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05EA; &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05DB;&#x05DE;&#x05D4;:</b> &#x05D1;&#x05E2;&#x05EA; &#x05D9;&#x05E6;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05E2;&#x05DD; &#x05D2;&#x05D3;&#x05D9;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05DE;&#x05D5;&#x05E1;&#x05DB;&#x05D9;&#x05DD;, &#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E8;&#x05DB;&#x05D9;&#x05D1; &#x05D0;&#x05D7;&#x05D3; &#x05DB;&#x05D5;&#x05DC;&#x05DC;&#x05EA; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05D0;&#x05EA; &#x05E9;&#x05D5;&#x05EA;&#x05E3; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05E9;&#x05DC;&#x05D5;, &#x05EA;&#x05D5;&#x05DA; &#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05D4; &#x05E2;&#x05DC; &#x05E9;&#x05DC;&#x05DE;&#x05D5;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05DE;&#x05E7;&#x05D5;&#x05D1;&#x05E6;&#x05D5;&#x05EA;.</li>
-        <li><b>&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05E6;&#x05D1;&#x05D9;&#x05E2;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3; &#x05E2;&#x05D1;&#x05D5;&#x05E8; &#x05E0;&#x05EA;&#x05D9;&#x05D1;&#x05D9; &#x05D2;&#x05D3;&#x05D9;&#x05DC;&#x05D9;&#x05DD; &#x05D5;&#x05D2;&#x05D3;&#x05D9;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05D7;&#x05D5;&#x05D1;&#x05E8;&#x05D9;&#x05DD; &#x05D1;&#x05DE;&#x05D4;&#x05DC;&#x05DA; &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05E6;&#x05D9;&#x05D5;&#x05E8;.</li>
+        <li><b>&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA;:</b> &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA; &#x05DC;&#x05EA;&#x05E0;&#x05D5;&#x05E2;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D5;&#x05D4;&#x05EA;&#x05E0;&#x05D4;&#x05D2;&#x05D5;&#x05EA; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D4;. &#x05DE;&#x05E9;&#x05D5;&#x05D1; &#x05D7;&#x05D6;&#x05D5;&#x05EA;&#x05D9; &#x05D8;&#x05D5;&#x05D1; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D5;&#x05D0;&#x05D9;&#x05E0;&#x05D8;&#x05E8;&#x05D0;&#x05E7;&#x05E6;&#x05D9;&#x05D4; &#x05E2;&#x05D3;&#x05D9;&#x05E0;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DD; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4;.</li>
+        <li><b>&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05DE;&#x05D0;&#x05E4;&#x05D9;&#x05D9;&#x05E0;&#x05D9; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05E7;&#x05E6;&#x05D4;:</b> &#x05E4;&#x05D5;&#x05E0;&#x05E7;&#x05E6;&#x05D9;&#x05D5;&#x05E0;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05EA; &#x05D3;&#x05D2;&#x05D9;&#x05DE;&#x05D5;&#x05EA; &#x05D5;&#x05E9;&#x05DB;&#x05E4;&#x05D5;&#x05DC; &#x05DE;&#x05D0;&#x05E4;&#x05D9;&#x05D9;&#x05E0;&#x05D9; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05E7;&#x05E6;&#x05D4;. &#x05EA;&#x05D4;&#x05DC;&#x05D9;&#x05DA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05DE;&#x05D9;&#x05D5;&#x05E2;&#x05DC; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05EA;&#x05E6;&#x05D5;&#x05E8;&#x05D5;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05E7;&#x05E6;&#x05D4;.</li>
+        <li><b>&#x05E2;&#x05D5;&#x05E8;&#x05DA; &#x05E6;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05EA;&#x05E7;&#x05D3;&#x05DD;:</b> &#x05E4;&#x05E8;&#x05D9;&#x05E1;&#x05EA; &#x05D3;&#x05D5;-&#x05E9;&#x05D9;&#x05D7; &#x05DE;&#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05EA; &#x05E2;&#x05DD; &#x05EA;&#x05DE;&#x05D9;&#x05DB;&#x05D4; &#x05E8;&#x05D1;-&#x05E9;&#x05E4;&#x05EA;&#x05D9;&#x05EA;, &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D7;&#x05D9;&#x05E1;&#x05D5;&#x05E8; &#x05D5;&#x05D8;&#x05D1;&#x05DC;&#x05EA; &#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05E6;&#x05DC;&#x05D9;&#x05DD; &#x05D8;&#x05D5;&#x05D1; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
+        <li><b>&#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05EA; &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9;:</b> &#x05E4;&#x05D5;&#x05E0;&#x05E7;&#x05E6;&#x05D9;&#x05D5;&#x05E0;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05D8;&#x05E2;&#x05D9;&#x05E0;&#x05D4; &#x05E9;&#x05DC; &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9;, &#x05D4;&#x05DE;&#x05D1;&#x05D8;&#x05D9;&#x05D7;&#x05D4; &#x05E9;&#x05D4;&#x05D4;&#x05E2;&#x05D3;&#x05E4;&#x05D5;&#x05EA; &#x05E9;&#x05DC;&#x05DA; &#x05E9;&#x05DE;&#x05D5;&#x05E8;&#x05D5;&#x05EA; &#x05D1;&#x05D9;&#x05DF; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D5;&#x05EA;.</li>
+        <li><b>&#x05E9;&#x05D9;&#x05E4;&#x05D5;&#x05E8;&#x05D9; &#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3; &#x05E9;&#x05DC; &#x05E7;&#x05D5;&#x05D5;&#x05D9; &#x05E6;&#x05D3; &#x05D5;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05D4; &#x05E4;&#x05D5;&#x05E0;&#x05E7;&#x05E6;&#x05D9;&#x05D5;&#x05E0;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05E9;&#x05D7;&#x05D6;&#x05D5;&#x05E8; &#x05DC;&#x05E4;&#x05DC;&#x05D8; &#x05D7;&#x05D6;&#x05D5;&#x05EA;&#x05D9; &#x05D0;&#x05DE;&#x05D9;&#x05DF; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
     </ul>
     </div>
 </body>
@@ -513,33 +547,37 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <!-- Italian -->
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.104</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
-    <p>Novità in questa versione - [TODO: Aggiornare]</p>
+    <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Sistema di frecce completo:</b> Funzione freccia completa con molteplici proprietà personalizzabili tra cui colore freccia (indipendente dal filamento), trasparenza (0-100%), texture della punta (Nessuna, Strisce, Punti, Tratteggio incrociato), stile dell'asta (Solido, Strisce, Punti, Piastrelle), supporto ombra, visibilità della punta e controlli dimensionali.</li>
-        <li><b>Selezione intelligente gruppo maschera:</b> Quando si creano gruppi con filamenti mascherati, selezionando un componente si include automaticamente il suo partner maschera, mantenendo l'integrità della maschera nelle operazioni di gruppo.</li>
-        <li><b>Sistema di pittura migliorato:</b> Risolti problemi di rendering per percorsi di filamento e filamenti attaccati durante le operazioni di disegno.</li>
+        <li><b>Sistema di punti di controllo migliorato:</b> Migliorata l'esperienza utente per il movimento dei punti di controllo e il comportamento di attivazione. Miglior feedback visivo e interazione più fluida quando si lavora con i punti di controllo.</li>
+        <li><b>Gestione delle proprietà degli endpoint:</b> Funzionalità di salvataggio campioni e duplicazione delle proprietà degli endpoint. Flusso di lavoro ottimizzato per la gestione delle configurazioni degli endpoint.</li>
+        <li><b>Editor di ombre avanzato:</b> Layout della finestra di dialogo corretto con supporto multilingue, operazioni di sottrazione e tabella cronologia migliorata per una migliore gestione delle ombre.</li>
+        <li><b>Persistenza delle impostazioni utente:</b> Funzionalità di salvataggio e caricamento delle impostazioni utente, garantendo che le preferenze vengano mantenute tra le sessioni.</li>
+        <li><b>Miglioramenti del rendering:</b> Risolti i problemi di rendering delle linee laterali e migliorata la funzionalità annulla/ripristina per un output visivo più affidabile.</li>
     </ul>
     <hr>
     <!-- English -->
     <h2 dir="ltr">Welcome to OpenStrandStudio 1.104</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 1.104:</p>
-    <!-- TODO: Replace the features below with version 1.104 features -->
-    <p></p>
     <ul>
-        <li><b>Full Arrow System:</b> Comprehensive arrow feature with multiple customizable properties including arrow color (independent from strand), transparency (0-100%), head texture (None, Stripes, Dots, Crosshatch), shaft style (Solid, Stripes, Dots, Tiles), shadow support, head visibility toggle, and dimension controls.</li>
-        <li><b>Smart Mask Group Selection:</b> When creating groups with masked strands, selecting one component automatically includes its mask partner, maintaining mask integrity in grouped operations.</li>
-        <li><b>Enhanced Painting System:</b> Fixed rendering issues for strand paths and attached strands during draw operations, ensuring consistent visual representation.</li>
+        <li><b>Enhanced Control Point System:</b> Improved UX for control point movement and activation behavior. Better visual feedback and smoother interaction when working with control points.</li>
+        <li><b>Endpoint Properties Management:</b> Save samples and duplicate endpoint properties functionality. Streamlined workflow for managing endpoint configurations.</li>
+        <li><b>Advanced Shadow Editor:</b> Fixed dialog layout with multi-language support, subtraction operations, and improved history table for better shadow management.</li>
+        <li><b>User Settings Persistence:</b> Save and load functionality for user settings, ensuring your preferences are maintained across sessions.</li>
+        <li><b>Rendering Improvements:</b> Fixed side line rendering issues and enhanced undo/redo functionality for more reliable visual output.</li>
     </ul>
     <hr>
     <!-- German -->
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.104</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
-    <p>Was ist neu in dieser Version - [TODO: Aktualisieren]</p>
+    <p>Was ist neu in dieser Version:</p>
     <ul>
-        <li><b>Vollständiges Pfeilsystem:</b> Umfassende Pfeilfunktion mit mehreren anpassbaren Eigenschaften wie Pfeilfarbe (unabhängig vom Strang), Transparenz (0-100%), Kopftextur (Keine, Streifen, Punkte, Schraffur), Schaftstil (Solide, Streifen, Punkte, Kacheln), Schattenunterstützung, Kopfsichtbarkeit und Dimensionskontrollen.</li>
-        <li><b>Intelligente Maskengruppenauswahl:</b> Beim Erstellen von Gruppen mit maskierten Strängen wird beim Auswählen einer Komponente automatisch der Maskenpartner eingeschlossen, wodurch die Maskenintegrität in gruppierten Operationen erhalten bleibt.</li>
-        <li><b>Verbessertes Malsystem:</b> Behobene Renderprobleme für Strangpfade und angehängte Stränge während Zeichenoperationen.</li>
+        <li><b>Verbessertes Kontrollpunktsystem:</b> Verbesserte Benutzerführung für Kontrollpunktbewegung und Aktivierungsverhalten. Besseres visuelles Feedback und flüssigere Interaktion bei der Arbeit mit Kontrollpunkten.</li>
+        <li><b>Endpunkt-Eigenschaften-Verwaltung:</b> Speichern von Mustern und Duplizieren von Endpunkt-Eigenschaften. Optimierter Arbeitsablauf für die Verwaltung von Endpunkt-Konfigurationen.</li>
+        <li><b>Erweiterter Schatten-Editor:</b> Korrigiertes Dialog-Layout mit Mehrsprachenunterstützung, Subtraktionsoperationen und verbesserter Verlaufstabelle für besseres Schatten-Management.</li>
+        <li><b>Benutzereinstellungen-Persistenz:</b> Speicher- und Ladefunktion für Benutzereinstellungen, damit Ihre Präferenzen sitzungsübergreifend erhalten bleiben.</li>
+        <li><b>Rendering-Verbesserungen:</b> Behobene Seitenlinien-Rendering-Probleme und verbesserte Rückgängig/Wiederherstellen-Funktionalität für zuverlässigere visuelle Ausgabe.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -547,29 +585,35 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li><b>Système de flèches complet :</b> Fonction de flèche complète avec plusieurs propriétés personnalisables incluant la couleur de flèche (indépendante du brin), transparence (0-100%), texture de tête (Aucune, Rayures, Points, Hachures croisées), style de tige (Solide, Rayures, Points, Carreaux), support d'ombre, visibilité de tête, et contrôles de dimension.</li>
-        <li><b>Sélection intelligente de groupe masqué :</b> Lors de la création de groupes avec des brins masqués, la sélection d'un composant inclut automatiquement son partenaire de masque, maintenant l'intégrité du masque dans les opérations groupées.</li>
-        <li><b>Système de peinture amélioré :</b> Correction des problèmes de rendu pour les chemins de brin et les brins attachés pendant les opérations de dessin.</li>
+        <li><b>Système de points de contrôle amélioré :</b> Interface utilisateur améliorée pour le mouvement des points de contrôle et le comportement d'activation. Meilleur retour visuel et interaction plus fluide lors du travail avec les points de contrôle.</li>
+        <li><b>Gestion des propriétés des extrémités :</b> Fonctionnalité de sauvegarde d'échantillons et de duplication des propriétés des extrémités. Flux de travail optimisé pour la gestion des configurations d'extrémités.</li>
+        <li><b>Éditeur d'ombres avancé :</b> Disposition de dialogue corrigée avec prise en charge multilingue, opérations de soustraction et table d'historique améliorée pour une meilleure gestion des ombres.</li>
+        <li><b>Persistance des paramètres utilisateur :</b> Fonctionnalité de sauvegarde et de chargement des paramètres utilisateur, garantissant que vos préférences sont maintenues d'une session à l'autre.</li>
+        <li><b>Améliorations du rendu :</b> Correction des problèmes de rendu des lignes latérales et amélioration de la fonctionnalité annuler/rétablir pour une sortie visuelle plus fiable.</li>
     </ul>
     <hr>
     <!-- Spanish -->
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.104</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
-    <p>Novedades en esta versión - [TODO: Actualizar]</p>
+    <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Sistema de flechas completo:</b> Función de flecha completa con múltiples propiedades personalizables incluyendo color de flecha (independiente del hilo), transparencia (0-100%), textura de punta (Ninguna, Rayas, Puntos, Trama cruzada), estilo del eje (Sólido, Rayas, Puntos, Azulejos), soporte de sombra, visibilidad de punta y controles de dimensión.</li>
-        <li><b>Selección inteligente de grupo de máscara:</b> Al crear grupos con hilos enmascarados, seleccionar un componente incluye automáticamente su compañero de máscara, manteniendo la integridad de la máscara en operaciones agrupadas.</li>
-        <li><b>Sistema de pintura mejorado:</b> Corregidos problemas de renderizado para rutas de hilos e hilos adjuntos durante operaciones de dibujo.</li>
+        <li><b>Sistema de puntos de control mejorado:</b> Mejor experiencia de usuario para el movimiento de puntos de control y comportamiento de activación. Mejor retroalimentación visual e interacción más fluida al trabajar con puntos de control.</li>
+        <li><b>Gestión de propiedades de puntos finales:</b> Funcionalidad de guardar muestras y duplicar propiedades de puntos finales. Flujo de trabajo optimizado para gestionar configuraciones de puntos finales.</li>
+        <li><b>Editor de sombras avanzado:</b> Diseño de diálogo corregido con soporte multiidioma, operaciones de sustracción y tabla de historial mejorada para una mejor gestión de sombras.</li>
+        <li><b>Persistencia de configuración de usuario:</b> Funcionalidad de guardar y cargar configuración de usuario, asegurando que sus preferencias se mantengan entre sesiones.</li>
+        <li><b>Mejoras de renderizado:</b> Solucionados problemas de renderizado de líneas laterales y mejorada la funcionalidad deshacer/rehacer para una salida visual más confiable.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.104</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
-    <p>Novidades nesta versão - [TODO: Atualizar]</p>
+    <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Sistema de setas completo:</b> Recurso de seta abrangente com várias propriedades personalizáveis incluindo cor da seta (independente do fio), transparência (0-100%), textura da ponta (Nenhuma, Listras, Pontos, Hachura cruzada), estilo do eixo (Sólido, Listras, Pontos, Azulejos), suporte de sombra, visibilidade da ponta e controles dimensionais.</li>
-        <li><b>Seleção inteligente de grupo de máscara:</b> Ao criar grupos com fios mascarados, selecionar um componente inclui automaticamente seu parceiro de máscara, mantendo a integridade da máscara em operações agrupadas.</li>
-        <li><b>Sistema de pintura aprimorado:</b> Corrigidos problemas de renderização para caminhos de fios e fios anexados durante operações de desenho.</li>
+        <li><b>Sistema de pontos de controle aprimorado:</b> Melhor experiência do usuário para movimento de pontos de controle e comportamento de ativação. Melhor feedback visual e interação mais suave ao trabalhar com pontos de controle.</li>
+        <li><b>Gerenciamento de propriedades de pontos finais:</b> Funcionalidade de salvar amostras e duplicar propriedades de pontos finais. Fluxo de trabalho otimizado para gerenciar configurações de pontos finais.</li>
+        <li><b>Editor de sombras avançado:</b> Layout de diálogo corrigido com suporte multilíngue, operações de subtração e tabela de histórico aprimorada para melhor gerenciamento de sombras.</li>
+        <li><b>Persistência de configurações do usuário:</b> Funcionalidade de salvar e carregar configurações do usuário, garantindo que suas preferências sejam mantidas entre as sessões.</li>
+        <li><b>Melhorias de renderização:</b> Corrigidos problemas de renderização de linhas laterais e melhorada a funcionalidade desfazer/refazer para saída visual mais confiável.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -578,9 +622,11 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li><b>&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05D7;&#x05D9;&#x05E6;&#x05D9;&#x05DD; &#x05DE;&#x05DC;&#x05D0;&#x05D4;:</b> &#x05EA;&#x05DB;&#x05D5;&#x05E0;&#x05EA; &#x05D7;&#x05D9;&#x05E6;&#x05D9;&#x05DD; &#x05DE;&#x05E7;&#x05D9;&#x05E4;&#x05D4; &#x05E2;&#x05DD; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05DE;&#x05D0;&#x05E4;&#x05D9;&#x05D9;&#x05E0;&#x05D9;&#x05DD; &#x05D4;&#x05E0;&#x05D9;&#x05EA;&#x05E0;&#x05D9;&#x05DD; &#x05DC;&#x05D4;&#x05EA;&#x05D0;&#x05DE;&#x05D4; &#x05D0;&#x05D9;&#x05E9;&#x05D9;&#x05EA; &#x05DB;&#x05D5;&#x05DC;&#x05DC; &#x05E6;&#x05D1;&#x05E2; &#x05D7;&#x05E5; (&#x05D1;&#x05DC;&#x05EA;&#x05D9; &#x05EA;&#x05DC;&#x05D5;&#x05D9; &#x05D1;&#x05D2;&#x05D3;&#x05D9;&#x05DC;), &#x05E9;&#x05E7;&#x05D9;&#x05E4;&#x05D5;&#x05EA; (0-100%), &#x05DE;&#x05E8;&#x05E7;&#x05DD; &#x05E8;&#x05D0;&#x05E9; (&#x05DC;&#x05DC;&#x05D0;, &#x05E4;&#x05E1;&#x05D9;&#x05DD;, &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA;, &#x05D1;&#x05E7;&#x05D9;&#x05E2;&#x05D4; &#x05E6;&#x05D5;&#x05DC;&#x05D1;&#x05EA;), &#x05E1;&#x05D2;&#x05E0;&#x05D5;&#x05DF; &#x05E6;&#x05D9;&#x05E8; (&#x05DE;&#x05D5;&#x05E6;&#x05E7;, &#x05E4;&#x05E1;&#x05D9;&#x05DD;, &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA;, &#x05D0;&#x05E8;&#x05D9;&#x05D7;&#x05D9;&#x05DD;), &#x05EA;&#x05DE;&#x05D9;&#x05DB;&#x05D4; &#x05D1;&#x05E6;&#x05DC;, &#x05E0;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E8;&#x05D0;&#x05E9; &#x05D5;&#x05D1;&#x05E7;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05D9;&#x05DE;&#x05D3;.</li>
-        <li><b>&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05EA; &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05DB;&#x05DE;&#x05D4;:</b> &#x05D1;&#x05E2;&#x05EA; &#x05D9;&#x05E6;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05E2;&#x05DD; &#x05D2;&#x05D3;&#x05D9;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05DE;&#x05D5;&#x05E1;&#x05DB;&#x05D9;&#x05DD;, &#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E8;&#x05DB;&#x05D9;&#x05D1; &#x05D0;&#x05D7;&#x05D3; &#x05DB;&#x05D5;&#x05DC;&#x05DC;&#x05EA; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05D0;&#x05EA; &#x05E9;&#x05D5;&#x05EA;&#x05E3; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05E9;&#x05DC;&#x05D5;, &#x05EA;&#x05D5;&#x05DA; &#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05D4; &#x05E2;&#x05DC; &#x05E9;&#x05DC;&#x05DE;&#x05D5;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05DE;&#x05E7;&#x05D5;&#x05D1;&#x05E6;&#x05D5;&#x05EA;.</li>
-        <li><b>&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05E6;&#x05D1;&#x05D9;&#x05E2;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3; &#x05E2;&#x05D1;&#x05D5;&#x05E8; &#x05E0;&#x05EA;&#x05D9;&#x05D1;&#x05D9; &#x05D2;&#x05D3;&#x05D9;&#x05DC;&#x05D9;&#x05DD; &#x05D5;&#x05D2;&#x05D3;&#x05D9;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05D7;&#x05D5;&#x05D1;&#x05E8;&#x05D9;&#x05DD; &#x05D1;&#x05DE;&#x05D4;&#x05DC;&#x05DA; &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05E6;&#x05D9;&#x05D5;&#x05E8;.</li>
+        <li><b>&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA;:</b> &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA; &#x05DC;&#x05EA;&#x05E0;&#x05D5;&#x05E2;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D5;&#x05D4;&#x05EA;&#x05E0;&#x05D4;&#x05D2;&#x05D5;&#x05EA; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D4;. &#x05DE;&#x05E9;&#x05D5;&#x05D1; &#x05D7;&#x05D6;&#x05D5;&#x05EA;&#x05D9; &#x05D8;&#x05D5;&#x05D1; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D5;&#x05D0;&#x05D9;&#x05E0;&#x05D8;&#x05E8;&#x05D0;&#x05E7;&#x05E6;&#x05D9;&#x05D4; &#x05E2;&#x05D3;&#x05D9;&#x05E0;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DD; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4;.</li>
+        <li><b>&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05DE;&#x05D0;&#x05E4;&#x05D9;&#x05D9;&#x05E0;&#x05D9; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05E7;&#x05E6;&#x05D4;:</b> &#x05E4;&#x05D5;&#x05E0;&#x05E7;&#x05E6;&#x05D9;&#x05D5;&#x05E0;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05EA; &#x05D3;&#x05D2;&#x05D9;&#x05DE;&#x05D5;&#x05EA; &#x05D5;&#x05E9;&#x05DB;&#x05E4;&#x05D5;&#x05DC; &#x05DE;&#x05D0;&#x05E4;&#x05D9;&#x05D9;&#x05E0;&#x05D9; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05E7;&#x05E6;&#x05D4;. &#x05EA;&#x05D4;&#x05DC;&#x05D9;&#x05DA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05DE;&#x05D9;&#x05D5;&#x05E2;&#x05DC; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05EA;&#x05E6;&#x05D5;&#x05E8;&#x05D5;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05E7;&#x05E6;&#x05D4;.</li>
+        <li><b>&#x05E2;&#x05D5;&#x05E8;&#x05DA; &#x05E6;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05EA;&#x05E7;&#x05D3;&#x05DD;:</b> &#x05E4;&#x05E8;&#x05D9;&#x05E1;&#x05EA; &#x05D3;&#x05D5;-&#x05E9;&#x05D9;&#x05D7; &#x05DE;&#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05EA; &#x05E2;&#x05DD; &#x05EA;&#x05DE;&#x05D9;&#x05DB;&#x05D4; &#x05E8;&#x05D1;-&#x05E9;&#x05E4;&#x05EA;&#x05D9;&#x05EA;, &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D7;&#x05D9;&#x05E1;&#x05D5;&#x05E8; &#x05D5;&#x05D8;&#x05D1;&#x05DC;&#x05EA; &#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05E6;&#x05DC;&#x05D9;&#x05DD; &#x05D8;&#x05D5;&#x05D1; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
+        <li><b>&#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05EA; &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9;:</b> &#x05E4;&#x05D5;&#x05E0;&#x05E7;&#x05E6;&#x05D9;&#x05D5;&#x05E0;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05D8;&#x05E2;&#x05D9;&#x05E0;&#x05D4; &#x05E9;&#x05DC; &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9;, &#x05D4;&#x05DE;&#x05D1;&#x05D8;&#x05D9;&#x05D7;&#x05D4; &#x05E9;&#x05D4;&#x05D4;&#x05E2;&#x05D3;&#x05E4;&#x05D5;&#x05EA; &#x05E9;&#x05DC;&#x05DA; &#x05E9;&#x05DE;&#x05D5;&#x05E8;&#x05D5;&#x05EA; &#x05D1;&#x05D9;&#x05DF; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D5;&#x05EA;.</li>
+        <li><b>&#x05E9;&#x05D9;&#x05E4;&#x05D5;&#x05E8;&#x05D9; &#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3; &#x05E9;&#x05DC; &#x05E7;&#x05D5;&#x05D5;&#x05D9; &#x05E6;&#x05D3; &#x05D5;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05D4; &#x05E4;&#x05D5;&#x05E0;&#x05E7;&#x05E6;&#x05D9;&#x05D5;&#x05E0;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05E9;&#x05D7;&#x05D6;&#x05D5;&#x05E8; &#x05DC;&#x05E4;&#x05DC;&#x05D8; &#x05D7;&#x05D6;&#x05D5;&#x05EA;&#x05D9; &#x05D0;&#x05DE;&#x05D9;&#x05DF; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
     </ul>
     </div>
 </body>
@@ -598,23 +644,25 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <!-- Spanish -->
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.104</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
-    <p>Novedades en esta versión - [TODO: Actualizar]</p>
+    <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Sistema de flechas completo:</b> Función de flecha completa con múltiples propiedades personalizables incluyendo color de flecha (independiente del hilo), transparencia (0-100%), textura de punta (Ninguna, Rayas, Puntos, Trama cruzada), estilo del eje (Sólido, Rayas, Puntos, Azulejos), soporte de sombra, visibilidad de punta y controles de dimensión.</li>
-        <li><b>Selección inteligente de grupo de máscara:</b> Al crear grupos con hilos enmascarados, seleccionar un componente incluye automáticamente su compañero de máscara, manteniendo la integridad de la máscara en operaciones agrupadas.</li>
-        <li><b>Sistema de pintura mejorado:</b> Corregidos problemas de renderización para rutas de hilos e hilos adjuntos durante operaciones de dibujo.</li>
+        <li><b>Sistema de puntos de control mejorado:</b> Mejor experiencia de usuario para el movimiento de puntos de control y comportamiento de activación. Mejor retroalimentación visual e interacción más fluida al trabajar con puntos de control.</li>
+        <li><b>Gestión de propiedades de puntos finales:</b> Funcionalidad de guardar muestras y duplicar propiedades de puntos finales. Flujo de trabajo optimizado para gestionar configuraciones de puntos finales.</li>
+        <li><b>Editor de sombras avanzado:</b> Diseño de diálogo corregido con soporte multiidioma, operaciones de sustracción y tabla de historial mejorada para una mejor gestión de sombras.</li>
+        <li><b>Persistencia de configuración de usuario:</b> Funcionalidad de guardar y cargar configuración de usuario, asegurando que sus preferencias se mantengan entre sesiones.</li>
+        <li><b>Mejoras de renderizado:</b> Solucionados problemas de renderizado de líneas laterales y mejorada la funcionalidad deshacer/rehacer para una salida visual más confiable.</li>
     </ul>
     <hr>
     <!-- English -->
     <h2 dir="ltr">Welcome to OpenStrandStudio 1.104</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 1.104:</p>
-    <!-- TODO: Replace the features below with version 1.104 features -->
-    <p></p>
     <ul>
-        <li><b>Full Arrow System:</b> Comprehensive arrow feature with multiple customizable properties including arrow color (independent from strand), transparency (0-100%), head texture (None, Stripes, Dots, Crosshatch), shaft style (Solid, Stripes, Dots, Tiles), shadow support, head visibility toggle, and dimension controls.</li>
-        <li><b>Smart Mask Group Selection:</b> When creating groups with masked strands, selecting one component automatically includes its mask partner, maintaining mask integrity in grouped operations.</li>
-        <li><b>Enhanced Painting System:</b> Fixed rendering issues for strand paths and attached strands during draw operations, ensuring consistent visual representation.</li>
+        <li><b>Enhanced Control Point System:</b> Improved UX for control point movement and activation behavior. Better visual feedback and smoother interaction when working with control points.</li>
+        <li><b>Endpoint Properties Management:</b> Save samples and duplicate endpoint properties functionality. Streamlined workflow for managing endpoint configurations.</li>
+        <li><b>Advanced Shadow Editor:</b> Fixed dialog layout with multi-language support, subtraction operations, and improved history table for better shadow management.</li>
+        <li><b>User Settings Persistence:</b> Save and load functionality for user settings, ensuring your preferences are maintained across sessions.</li>
+        <li><b>Rendering Improvements:</b> Fixed side line rendering issues and enhanced undo/redo functionality for more reliable visual output.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -622,39 +670,47 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li><b>Système de flèches complet :</b> Fonction de flèche complète avec plusieurs propriétés personnalisables incluant la couleur de flèche (indépendante du brin), transparence (0-100%), texture de tête (Aucune, Rayures, Points, Hachures croisées), style de tige (Solide, Rayures, Points, Carreaux), support d'ombre, visibilité de tête, et contrôles de dimension.</li>
-        <li><b>Sélection intelligente de groupe masqué :</b> Lors de la création de groupes avec des brins masqués, la sélection d'un composant inclut automatiquement son partenaire de masque, maintenant l'intégrité du masque dans les opérations groupées.</li>
-        <li><b>Système de peinture amélioré :</b> Correction des problèmes de rendu pour les chemins de brin et les brins attachés pendant les opérations de dessin.</li>
+        <li><b>Système de points de contrôle amélioré :</b> Interface utilisateur améliorée pour le mouvement des points de contrôle et le comportement d'activation. Meilleur retour visuel et interaction plus fluide lors du travail avec les points de contrôle.</li>
+        <li><b>Gestion des propriétés des extrémités :</b> Fonctionnalité de sauvegarde d'échantillons et de duplication des propriétés des extrémités. Flux de travail optimisé pour la gestion des configurations d'extrémités.</li>
+        <li><b>Éditeur d'ombres avancé :</b> Disposition de dialogue corrigée avec prise en charge multilingue, opérations de soustraction et table d'historique améliorée pour une meilleure gestion des ombres.</li>
+        <li><b>Persistance des paramètres utilisateur :</b> Fonctionnalité de sauvegarde et de chargement des paramètres utilisateur, garantissant que vos préférences sont maintenues d'une session à l'autre.</li>
+        <li><b>Améliorations du rendu :</b> Correction des problèmes de rendu des lignes latérales et amélioration de la fonctionnalité annuler/rétablir pour une sortie visuelle plus fiable.</li>
     </ul>
     <hr>
     <!-- German -->
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.104</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
-    <p>Was ist neu in dieser Version - [TODO: Aktualisieren]</p>
+    <p>Was ist neu in dieser Version:</p>
     <ul>
-        <li><b>Vollständiges Pfeilsystem:</b> Umfassende Pfeilfunktion mit mehreren anpassbaren Eigenschaften wie Pfeilfarbe (unabhängig vom Strang), Transparenz (0-100%), Kopftextur (Keine, Streifen, Punkte, Schraffur), Schaftstil (Solide, Streifen, Punkte, Kacheln), Schattenunterstützung, Kopfsichtbarkeit und Dimensionskontrollen.</li>
-        <li><b>Intelligente Maskengruppenauswahl:</b> Beim Erstellen von Gruppen mit maskierten Strängen wird beim Auswählen einer Komponente automatisch der Maskenpartner eingeschlossen, wodurch die Maskenintegrität in gruppierten Operationen erhalten bleibt.</li>
-        <li><b>Verbessertes Malsystem:</b> Behobene Renderprobleme für Strangpfade und angehängte Stränge während Zeichenoperationen.</li>
+        <li><b>Verbessertes Kontrollpunktsystem:</b> Verbesserte Benutzerführung für Kontrollpunktbewegung und Aktivierungsverhalten. Besseres visuelles Feedback und flüssigere Interaktion bei der Arbeit mit Kontrollpunkten.</li>
+        <li><b>Endpunkt-Eigenschaften-Verwaltung:</b> Speichern von Mustern und Duplizieren von Endpunkt-Eigenschaften. Optimierter Arbeitsablauf für die Verwaltung von Endpunkt-Konfigurationen.</li>
+        <li><b>Erweiterter Schatten-Editor:</b> Korrigiertes Dialog-Layout mit Mehrsprachenunterstützung, Subtraktionsoperationen und verbesserter Verlaufstabelle für besseres Schatten-Management.</li>
+        <li><b>Benutzereinstellungen-Persistenz:</b> Speicher- und Ladefunktion für Benutzereinstellungen, damit Ihre Präferenzen sitzungsübergreifend erhalten bleiben.</li>
+        <li><b>Rendering-Verbesserungen:</b> Behobene Seitenlinien-Rendering-Probleme und verbesserte Rückgängig/Wiederherstellen-Funktionalität für zuverlässigere visuelle Ausgabe.</li>
     </ul>
     <hr>
     <!-- Italian -->
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.104</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
-    <p>Novità in questa versione - [TODO: Aggiornare]</p>
+    <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Sistema di frecce completo:</b> Funzione freccia completa con molteplici proprietà personalizzabili tra cui colore freccia (indipendente dal filamento), trasparenza (0-100%), texture della punta (Nessuna, Strisce, Punti, Tratteggio incrociato), stile dell'asta (Solido, Strisce, Punti, Piastrelle), supporto ombra, visibilità della punta e controlli dimensionali.</li>
-        <li><b>Selezione intelligente gruppo maschera:</b> Quando si creano gruppi con filamenti mascherati, selezionando un componente si include automaticamente il suo partner maschera, mantenendo l'integrità della maschera nelle operazioni di gruppo.</li>
-        <li><b>Sistema di pittura migliorato:</b> Risolti problemi di rendering per percorsi di filamento e filamenti attaccati durante le operazioni di disegno.</li>
+        <li><b>Sistema di punti di controllo migliorato:</b> Migliorata l'esperienza utente per il movimento dei punti di controllo e il comportamento di attivazione. Miglior feedback visivo e interazione più fluida quando si lavora con i punti di controllo.</li>
+        <li><b>Gestione delle proprietà degli endpoint:</b> Funzionalità di salvataggio campioni e duplicazione delle proprietà degli endpoint. Flusso di lavoro ottimizzato per la gestione delle configurazioni degli endpoint.</li>
+        <li><b>Editor di ombre avanzato:</b> Layout della finestra di dialogo corretto con supporto multilingue, operazioni di sottrazione e tabella cronologia migliorata per una migliore gestione delle ombre.</li>
+        <li><b>Persistenza delle impostazioni utente:</b> Funzionalità di salvataggio e caricamento delle impostazioni utente, garantendo che le preferenze vengano mantenute tra le sessioni.</li>
+        <li><b>Miglioramenti del rendering:</b> Risolti i problemi di rendering delle linee laterali e migliorata la funzionalità annulla/ripristina per un output visivo più affidabile.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.104</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
-    <p>Novidades nesta versão - [TODO: Atualizar]</p>
+    <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Sistema de setas completo:</b> Recurso de seta abrangente com várias propriedades personalizáveis incluindo cor da seta (independente do fio), transparência (0-100%), textura da ponta (Nenhuma, Listras, Pontos, Hachura cruzada), estilo do eixo (Sólido, Listras, Pontos, Azulejos), suporte de sombra, visibilidade da ponta e controles dimensionais.</li>
-        <li><b>Seleção inteligente de grupo de máscara:</b> Ao criar grupos com fios mascarados, selecionar um componente inclui automaticamente seu parceiro de máscara, mantendo a integridade da máscara em operações agrupadas.</li>
-        <li><b>Sistema de pintura aprimorado:</b> Corrigidos problemas de renderização para caminhos de fios e fios anexados durante operações de desenho.</li>
+        <li><b>Sistema de pontos de controle aprimorado:</b> Melhor experiência do usuário para movimento de pontos de controle e comportamento de ativação. Melhor feedback visual e interação mais suave ao trabalhar com pontos de controle.</li>
+        <li><b>Gerenciamento de propriedades de pontos finais:</b> Funcionalidade de salvar amostras e duplicar propriedades de pontos finais. Fluxo de trabalho otimizado para gerenciar configurações de pontos finais.</li>
+        <li><b>Editor de sombras avançado:</b> Layout de diálogo corrigido com suporte multilíngue, operações de subtração e tabela de histórico aprimorada para melhor gerenciamento de sombras.</li>
+        <li><b>Persistência de configurações do usuário:</b> Funcionalidade de salvar e carregar configurações do usuário, garantindo que suas preferências sejam mantidas entre as sessões.</li>
+        <li><b>Melhorias de renderização:</b> Corrigidos problemas de renderização de linhas laterais e melhorada a funcionalidade desfazer/refazer para saída visual mais confiável.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -663,9 +719,11 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li><b>&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05D7;&#x05D9;&#x05E6;&#x05D9;&#x05DD; &#x05DE;&#x05DC;&#x05D0;&#x05D4;:</b> &#x05EA;&#x05DB;&#x05D5;&#x05E0;&#x05EA; &#x05D7;&#x05D9;&#x05E6;&#x05D9;&#x05DD; &#x05DE;&#x05E7;&#x05D9;&#x05E4;&#x05D4; &#x05E2;&#x05DD; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05DE;&#x05D0;&#x05E4;&#x05D9;&#x05D9;&#x05E0;&#x05D9;&#x05DD; &#x05D4;&#x05E0;&#x05D9;&#x05EA;&#x05E0;&#x05D9;&#x05DD; &#x05DC;&#x05D4;&#x05EA;&#x05D0;&#x05DE;&#x05D4; &#x05D0;&#x05D9;&#x05E9;&#x05D9;&#x05EA; &#x05DB;&#x05D5;&#x05DC;&#x05DC; &#x05E6;&#x05D1;&#x05E2; &#x05D7;&#x05E5; (&#x05D1;&#x05DC;&#x05EA;&#x05D9; &#x05EA;&#x05DC;&#x05D5;&#x05D9; &#x05D1;&#x05D2;&#x05D3;&#x05D9;&#x05DC;), &#x05E9;&#x05E7;&#x05D9;&#x05E4;&#x05D5;&#x05EA; (0-100%), &#x05DE;&#x05E8;&#x05E7;&#x05DD; &#x05E8;&#x05D0;&#x05E9; (&#x05DC;&#x05DC;&#x05D0;, &#x05E4;&#x05E1;&#x05D9;&#x05DD;, &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA;, &#x05D1;&#x05E7;&#x05D9;&#x05E2;&#x05D4; &#x05E6;&#x05D5;&#x05DC;&#x05D1;&#x05EA;), &#x05E1;&#x05D2;&#x05E0;&#x05D5;&#x05DF; &#x05E6;&#x05D9;&#x05E8; (&#x05DE;&#x05D5;&#x05E6;&#x05E7;, &#x05E4;&#x05E1;&#x05D9;&#x05DD;, &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA;, &#x05D0;&#x05E8;&#x05D9;&#x05D7;&#x05D9;&#x05DD;), &#x05EA;&#x05DE;&#x05D9;&#x05DB;&#x05D4; &#x05D1;&#x05E6;&#x05DC;, &#x05E0;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E8;&#x05D0;&#x05E9; &#x05D5;&#x05D1;&#x05E7;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05D9;&#x05DE;&#x05D3;.</li>
-        <li><b>&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05EA; &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05DB;&#x05DE;&#x05D4;:</b> &#x05D1;&#x05E2;&#x05EA; &#x05D9;&#x05E6;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05E2;&#x05DD; &#x05D2;&#x05D3;&#x05D9;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05DE;&#x05D5;&#x05E1;&#x05DB;&#x05D9;&#x05DD;, &#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E8;&#x05DB;&#x05D9;&#x05D1; &#x05D0;&#x05D7;&#x05D3; &#x05DB;&#x05D5;&#x05DC;&#x05DC;&#x05EA; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05D0;&#x05EA; &#x05E9;&#x05D5;&#x05EA;&#x05E3; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05E9;&#x05DC;&#x05D5;, &#x05EA;&#x05D5;&#x05DA; &#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05D4; &#x05E2;&#x05DC; &#x05E9;&#x05DC;&#x05DE;&#x05D5;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05DE;&#x05E7;&#x05D5;&#x05D1;&#x05E6;&#x05D5;&#x05EA;.</li>
-        <li><b>&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05E6;&#x05D1;&#x05D9;&#x05E2;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3; &#x05E2;&#x05D1;&#x05D5;&#x05E8; &#x05E0;&#x05EA;&#x05D9;&#x05D1;&#x05D9; &#x05D2;&#x05D3;&#x05D9;&#x05DC;&#x05D9;&#x05DD; &#x05D5;&#x05D2;&#x05D3;&#x05D9;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05D7;&#x05D5;&#x05D1;&#x05E8;&#x05D9;&#x05DD; &#x05D1;&#x05DE;&#x05D4;&#x05DC;&#x05DA; &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05E6;&#x05D9;&#x05D5;&#x05E8;.</li>
+        <li><b>&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA;:</b> &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA; &#x05DC;&#x05EA;&#x05E0;&#x05D5;&#x05E2;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D5;&#x05D4;&#x05EA;&#x05E0;&#x05D4;&#x05D2;&#x05D5;&#x05EA; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D4;. &#x05DE;&#x05E9;&#x05D5;&#x05D1; &#x05D7;&#x05D6;&#x05D5;&#x05EA;&#x05D9; &#x05D8;&#x05D5;&#x05D1; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D5;&#x05D0;&#x05D9;&#x05E0;&#x05D8;&#x05E8;&#x05D0;&#x05E7;&#x05E6;&#x05D9;&#x05D4; &#x05E2;&#x05D3;&#x05D9;&#x05E0;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DD; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4;.</li>
+        <li><b>&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05DE;&#x05D0;&#x05E4;&#x05D9;&#x05D9;&#x05E0;&#x05D9; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05E7;&#x05E6;&#x05D4;:</b> &#x05E4;&#x05D5;&#x05E0;&#x05E7;&#x05E6;&#x05D9;&#x05D5;&#x05E0;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05EA; &#x05D3;&#x05D2;&#x05D9;&#x05DE;&#x05D5;&#x05EA; &#x05D5;&#x05E9;&#x05DB;&#x05E4;&#x05D5;&#x05DC; &#x05DE;&#x05D0;&#x05E4;&#x05D9;&#x05D9;&#x05E0;&#x05D9; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05E7;&#x05E6;&#x05D4;. &#x05EA;&#x05D4;&#x05DC;&#x05D9;&#x05DA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05DE;&#x05D9;&#x05D5;&#x05E2;&#x05DC; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05EA;&#x05E6;&#x05D5;&#x05E8;&#x05D5;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05E7;&#x05E6;&#x05D4;.</li>
+        <li><b>&#x05E2;&#x05D5;&#x05E8;&#x05DA; &#x05E6;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05EA;&#x05E7;&#x05D3;&#x05DD;:</b> &#x05E4;&#x05E8;&#x05D9;&#x05E1;&#x05EA; &#x05D3;&#x05D5;-&#x05E9;&#x05D9;&#x05D7; &#x05DE;&#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05EA; &#x05E2;&#x05DD; &#x05EA;&#x05DE;&#x05D9;&#x05DB;&#x05D4; &#x05E8;&#x05D1;-&#x05E9;&#x05E4;&#x05EA;&#x05D9;&#x05EA;, &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D7;&#x05D9;&#x05E1;&#x05D5;&#x05E8; &#x05D5;&#x05D8;&#x05D1;&#x05DC;&#x05EA; &#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05E6;&#x05DC;&#x05D9;&#x05DD; &#x05D8;&#x05D5;&#x05D1; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
+        <li><b>&#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05EA; &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9;:</b> &#x05E4;&#x05D5;&#x05E0;&#x05E7;&#x05E6;&#x05D9;&#x05D5;&#x05E0;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05D8;&#x05E2;&#x05D9;&#x05E0;&#x05D4; &#x05E9;&#x05DC; &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9;, &#x05D4;&#x05DE;&#x05D1;&#x05D8;&#x05D9;&#x05D7;&#x05D4; &#x05E9;&#x05D4;&#x05D4;&#x05E2;&#x05D3;&#x05E4;&#x05D5;&#x05EA; &#x05E9;&#x05DC;&#x05DA; &#x05E9;&#x05DE;&#x05D5;&#x05E8;&#x05D5;&#x05EA; &#x05D1;&#x05D9;&#x05DF; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D5;&#x05EA;.</li>
+        <li><b>&#x05E9;&#x05D9;&#x05E4;&#x05D5;&#x05E8;&#x05D9; &#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3; &#x05E9;&#x05DC; &#x05E7;&#x05D5;&#x05D5;&#x05D9; &#x05E6;&#x05D3; &#x05D5;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05D4; &#x05E4;&#x05D5;&#x05E0;&#x05E7;&#x05E6;&#x05D9;&#x05D5;&#x05E0;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05E9;&#x05D7;&#x05D6;&#x05D5;&#x05E8; &#x05DC;&#x05E4;&#x05DC;&#x05D8; &#x05D7;&#x05D6;&#x05D5;&#x05EA;&#x05D9; &#x05D0;&#x05DE;&#x05D9;&#x05DF; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
     </ul>
     </div>
 </body>
@@ -683,23 +741,25 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <!-- Portuguese -->
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.104</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
-    <p>Novidades nesta versão - [TODO: Atualizar]</p>
+    <p>Novidades nesta versão:</p>
     <ul>
-        <li><b>Sistema de setas completo:</b> Recurso de seta abrangente com várias propriedades personalizáveis incluindo cor da seta (independente do fio), transparência (0-100%), textura da ponta (Nenhuma, Listras, Pontos, Hachura cruzada), estilo do eixo (Sólido, Listras, Pontos, Azulejos), suporte de sombra, visibilidade da ponta e controles dimensionais.</li>
-        <li><b>Seleção inteligente de grupo de máscara:</b> Ao criar grupos com fios mascarados, selecionar um componente inclui automaticamente seu parceiro de máscara, mantendo a integridade da máscara em operações agrupadas.</li>
-        <li><b>Sistema de pintura aprimorado:</b> Corrigidos problemas de renderização para caminhos de fios e fios anexados durante operações de desenho.</li>
+        <li><b>Sistema de pontos de controle aprimorado:</b> Melhor experiência do usuário para movimento de pontos de controle e comportamento de ativação. Melhor feedback visual e interação mais suave ao trabalhar com pontos de controle.</li>
+        <li><b>Gerenciamento de propriedades de pontos finais:</b> Funcionalidade de salvar amostras e duplicar propriedades de pontos finais. Fluxo de trabalho otimizado para gerenciar configurações de pontos finais.</li>
+        <li><b>Editor de sombras avançado:</b> Layout de diálogo corrigido com suporte multilíngue, operações de subtração e tabela de histórico aprimorada para melhor gerenciamento de sombras.</li>
+        <li><b>Persistência de configurações do usuário:</b> Funcionalidade de salvar e carregar configurações do usuário, garantindo que suas preferências sejam mantidas entre as sessões.</li>
+        <li><b>Melhorias de renderização:</b> Corrigidos problemas de renderização de linhas laterais e melhorada a funcionalidade desfazer/refazer para saída visual mais confiável.</li>
     </ul>
     <hr>
     <!-- English -->
     <h2 dir="ltr">Welcome to OpenStrandStudio 1.104</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 1.104:</p>
-    <!-- TODO: Replace the features below with version 1.104 features -->
-    <p></p>
     <ul>
-        <li><b>Full Arrow System:</b> Comprehensive arrow feature with multiple customizable properties including arrow color (independent from strand), transparency (0-100%), head texture (None, Stripes, Dots, Crosshatch), shaft style (Solid, Stripes, Dots, Tiles), shadow support, head visibility toggle, and dimension controls.</li>
-        <li><b>Smart Mask Group Selection:</b> When creating groups with masked strands, selecting one component automatically includes its mask partner, maintaining mask integrity in grouped operations.</li>
-        <li><b>Enhanced Painting System:</b> Fixed rendering issues for strand paths and attached strands during draw operations, ensuring consistent visual representation.</li>
+        <li><b>Enhanced Control Point System:</b> Improved UX for control point movement and activation behavior. Better visual feedback and smoother interaction when working with control points.</li>
+        <li><b>Endpoint Properties Management:</b> Save samples and duplicate endpoint properties functionality. Streamlined workflow for managing endpoint configurations.</li>
+        <li><b>Advanced Shadow Editor:</b> Fixed dialog layout with multi-language support, subtraction operations, and improved history table for better shadow management.</li>
+        <li><b>User Settings Persistence:</b> Save and load functionality for user settings, ensuring your preferences are maintained across sessions.</li>
+        <li><b>Rendering Improvements:</b> Fixed side line rendering issues and enhanced undo/redo functionality for more reliable visual output.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -707,39 +767,47 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés dans cette version&nbsp;:</p>
     <ul>
-        <li><b>Système de flèches complet :</b> Fonction de flèche complète avec plusieurs propriétés personnalisables incluant la couleur de flèche (indépendante du brin), transparence (0-100%), texture de tête (Aucune, Rayures, Points, Hachures croisées), style de tige (Solide, Rayures, Points, Carreaux), support d'ombre, visibilité de tête, et contrôles de dimension.</li>
-        <li><b>Sélection intelligente de groupe masqué :</b> Lors de la création de groupes avec des brins masqués, la sélection d'un composant inclut automatiquement son partenaire de masque, maintenant l'intégrité du masque dans les opérations groupées.</li>
-        <li><b>Système de peinture amélioré :</b> Correction des problèmes de rendu pour les chemins de brin et les brins attachés pendant les opérations de dessin.</li>
+        <li><b>Système de points de contrôle amélioré :</b> Interface utilisateur améliorée pour le mouvement des points de contrôle et le comportement d'activation. Meilleur retour visuel et interaction plus fluide lors du travail avec les points de contrôle.</li>
+        <li><b>Gestion des propriétés des extrémités :</b> Fonctionnalité de sauvegarde d'échantillons et de duplication des propriétés des extrémités. Flux de travail optimisé pour la gestion des configurations d'extrémités.</li>
+        <li><b>Éditeur d'ombres avancé :</b> Disposition de dialogue corrigée avec prise en charge multilingue, opérations de soustraction et table d'historique améliorée pour une meilleure gestion des ombres.</li>
+        <li><b>Persistance des paramètres utilisateur :</b> Fonctionnalité de sauvegarde et de chargement des paramètres utilisateur, garantissant que vos préférences sont maintenues d'une session à l'autre.</li>
+        <li><b>Améliorations du rendu :</b> Correction des problèmes de rendu des lignes latérales et amélioration de la fonctionnalité annuler/rétablir pour une sortie visuelle plus fiable.</li>
     </ul>
     <hr>
     <!-- German -->
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.104</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
-    <p>Was ist neu in dieser Version - [TODO: Aktualisieren]</p>
+    <p>Was ist neu in dieser Version:</p>
     <ul>
-        <li><b>Vollständiges Pfeilsystem:</b> Umfassende Pfeilfunktion mit mehreren anpassbaren Eigenschaften wie Pfeilfarbe (unabhängig vom Strang), Transparenz (0-100%), Kopftextur (Keine, Streifen, Punkte, Schraffur), Schaftstil (Solide, Streifen, Punkte, Kacheln), Schattenunterstützung, Kopfsichtbarkeit und Dimensionskontrollen.</li>
-        <li><b>Intelligente Maskengruppenauswahl:</b> Beim Erstellen von Gruppen mit maskierten Strängen wird beim Auswählen einer Komponente automatisch der Maskenpartner eingeschlossen, wodurch die Maskenintegrität in gruppierten Operationen erhalten bleibt.</li>
-        <li><b>Verbessertes Malsystem:</b> Behobene Renderprobleme für Strangpfade und angehängte Stränge während Zeichenoperationen.</li>
+        <li><b>Verbessertes Kontrollpunktsystem:</b> Verbesserte Benutzerführung für Kontrollpunktbewegung und Aktivierungsverhalten. Besseres visuelles Feedback und flüssigere Interaktion bei der Arbeit mit Kontrollpunkten.</li>
+        <li><b>Endpunkt-Eigenschaften-Verwaltung:</b> Speichern von Mustern und Duplizieren von Endpunkt-Eigenschaften. Optimierter Arbeitsablauf für die Verwaltung von Endpunkt-Konfigurationen.</li>
+        <li><b>Erweiterter Schatten-Editor:</b> Korrigiertes Dialog-Layout mit Mehrsprachenunterstützung, Subtraktionsoperationen und verbesserter Verlaufstabelle für besseres Schatten-Management.</li>
+        <li><b>Benutzereinstellungen-Persistenz:</b> Speicher- und Ladefunktion für Benutzereinstellungen, damit Ihre Präferenzen sitzungsübergreifend erhalten bleiben.</li>
+        <li><b>Rendering-Verbesserungen:</b> Behobene Seitenlinien-Rendering-Probleme und verbesserte Rückgängig/Wiederherstellen-Funktionalität für zuverlässigere visuelle Ausgabe.</li>
     </ul>
     <hr>
     <!-- Italian -->
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.104</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
-    <p>Novità in questa versione - [TODO: Aggiornare]</p>
+    <p>Novità in questa versione:</p>
     <ul>
-        <li><b>Sistema di frecce completo:</b> Funzione freccia completa con molteplici proprietà personalizzabili tra cui colore freccia (indipendente dal filamento), trasparenza (0-100%), texture della punta (Nessuna, Strisce, Punti, Tratteggio incrociato), stile dell'asta (Solido, Strisce, Punti, Piastrelle), supporto ombra, visibilità della punta e controlli dimensionali.</li>
-        <li><b>Selezione intelligente gruppo maschera:</b> Quando si creano gruppi con filamenti mascherati, selezionando un componente si include automaticamente il suo partner maschera, mantenendo l'integrità della maschera nelle operazioni di gruppo.</li>
-        <li><b>Sistema di pittura migliorato:</b> Risolti problemi di rendering per percorsi di filamento e filamenti attaccati durante le operazioni di disegno.</li>
+        <li><b>Sistema di punti di controllo migliorato:</b> Migliorata l'esperienza utente per il movimento dei punti di controllo e il comportamento di attivazione. Miglior feedback visivo e interazione più fluida quando si lavora con i punti di controllo.</li>
+        <li><b>Gestione delle proprietà degli endpoint:</b> Funzionalità di salvataggio campioni e duplicazione delle proprietà degli endpoint. Flusso di lavoro ottimizzato per la gestione delle configurazioni degli endpoint.</li>
+        <li><b>Editor di ombre avanzato:</b> Layout della finestra di dialogo corretto con supporto multilingue, operazioni di sottrazione e tabella cronologia migliorata per una migliore gestione delle ombre.</li>
+        <li><b>Persistenza delle impostazioni utente:</b> Funzionalità di salvataggio e caricamento delle impostazioni utente, garantendo che le preferenze vengano mantenute tra le sessioni.</li>
+        <li><b>Miglioramenti del rendering:</b> Risolti i problemi di rendering delle linee laterali e migliorata la funzionalità annulla/ripristina per un output visivo più affidabile.</li>
     </ul>
     <hr>
     <!-- Spanish -->
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.104</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
-    <p>Novedades en esta versión - [TODO: Actualizar]</p>
+    <p>Novedades en esta versión:</p>
     <ul>
-        <li><b>Sistema de flechas completo:</b> Función de flecha completa con múltiples propiedades personalizables incluyendo color de flecha (independiente del hilo), transparencia (0-100%), textura de punta (Ninguna, Rayas, Puntos, Trama cruzada), estilo del eje (Sólido, Rayas, Puntos, Azulejos), soporte de sombra, visibilidad de punta y controles de dimensión.</li>
-        <li><b>Selección inteligente de grupo de máscara:</b> Al crear grupos con hilos enmascarados, seleccionar un componente incluye automáticamente su compañero de máscara, manteniendo la integridad de la máscara en operaciones agrupadas.</li>
-        <li><b>Sistema de pintura mejorado:</b> Corregidos problemas de renderización para rutas de hilos e hilos adjuntos durante operaciones de dibujo.</li>
+        <li><b>Sistema de puntos de control mejorado:</b> Mejor experiencia de usuario para el movimiento de puntos de control y comportamiento de activación. Mejor retroalimentación visual e interacción más fluida al trabajar con puntos de control.</li>
+        <li><b>Gestión de propiedades de puntos finales:</b> Funcionalidad de guardar muestras y duplicar propiedades de puntos finales. Flujo de trabajo optimizado para gestionar configuraciones de puntos finales.</li>
+        <li><b>Editor de sombras avanzado:</b> Diseño de diálogo corregido con soporte multiidioma, operaciones de sustracción y tabla de historial mejorada para una mejor gestión de sombras.</li>
+        <li><b>Persistencia de configuración de usuario:</b> Funcionalidad de guardar y cargar configuración de usuario, asegurando que sus preferencias se mantengan entre sesiones.</li>
+        <li><b>Mejoras de renderizado:</b> Solucionados problemas de renderizado de líneas laterales y mejorada la funcionalidad deshacer/rehacer para una salida visual más confiable.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -748,9 +816,11 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li><b>&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05D7;&#x05D9;&#x05E6;&#x05D9;&#x05DD; &#x05DE;&#x05DC;&#x05D0;&#x05D4;:</b> &#x05EA;&#x05DB;&#x05D5;&#x05E0;&#x05EA; &#x05D7;&#x05D9;&#x05E6;&#x05D9;&#x05DD; &#x05DE;&#x05E7;&#x05D9;&#x05E4;&#x05D4; &#x05E2;&#x05DD; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05DE;&#x05D0;&#x05E4;&#x05D9;&#x05D9;&#x05E0;&#x05D9;&#x05DD; &#x05D4;&#x05E0;&#x05D9;&#x05EA;&#x05E0;&#x05D9;&#x05DD; &#x05DC;&#x05D4;&#x05EA;&#x05D0;&#x05DE;&#x05D4; &#x05D0;&#x05D9;&#x05E9;&#x05D9;&#x05EA; &#x05DB;&#x05D5;&#x05DC;&#x05DC; &#x05E6;&#x05D1;&#x05E2; &#x05D7;&#x05E5; (&#x05D1;&#x05DC;&#x05EA;&#x05D9; &#x05EA;&#x05DC;&#x05D5;&#x05D9; &#x05D1;&#x05D2;&#x05D3;&#x05D9;&#x05DC;), &#x05E9;&#x05E7;&#x05D9;&#x05E4;&#x05D5;&#x05EA; (0-100%), &#x05DE;&#x05E8;&#x05E7;&#x05DD; &#x05E8;&#x05D0;&#x05E9; (&#x05DC;&#x05DC;&#x05D0;, &#x05E4;&#x05E1;&#x05D9;&#x05DD;, &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA;, &#x05D1;&#x05E7;&#x05D9;&#x05E2;&#x05D4; &#x05E6;&#x05D5;&#x05DC;&#x05D1;&#x05EA;), &#x05E1;&#x05D2;&#x05E0;&#x05D5;&#x05DF; &#x05E6;&#x05D9;&#x05E8; (&#x05DE;&#x05D5;&#x05E6;&#x05E7;, &#x05E4;&#x05E1;&#x05D9;&#x05DD;, &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA;, &#x05D0;&#x05E8;&#x05D9;&#x05D7;&#x05D9;&#x05DD;), &#x05EA;&#x05DE;&#x05D9;&#x05DB;&#x05D4; &#x05D1;&#x05E6;&#x05DC;, &#x05E0;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E8;&#x05D0;&#x05E9; &#x05D5;&#x05D1;&#x05E7;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05D9;&#x05DE;&#x05D3;.</li>
-        <li><b>&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05EA; &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05DB;&#x05DE;&#x05D4;:</b> &#x05D1;&#x05E2;&#x05EA; &#x05D9;&#x05E6;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05E2;&#x05DD; &#x05D2;&#x05D3;&#x05D9;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05DE;&#x05D5;&#x05E1;&#x05DB;&#x05D9;&#x05DD;, &#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E8;&#x05DB;&#x05D9;&#x05D1; &#x05D0;&#x05D7;&#x05D3; &#x05DB;&#x05D5;&#x05DC;&#x05DC;&#x05EA; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05D0;&#x05EA; &#x05E9;&#x05D5;&#x05EA;&#x05E3; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05E9;&#x05DC;&#x05D5;, &#x05EA;&#x05D5;&#x05DA; &#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05D4; &#x05E2;&#x05DC; &#x05E9;&#x05DC;&#x05DE;&#x05D5;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05DE;&#x05E7;&#x05D5;&#x05D1;&#x05E6;&#x05D5;&#x05EA;.</li>
-        <li><b>&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05E6;&#x05D1;&#x05D9;&#x05E2;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3; &#x05E2;&#x05D1;&#x05D5;&#x05E8; &#x05E0;&#x05EA;&#x05D9;&#x05D1;&#x05D9; &#x05D2;&#x05D3;&#x05D9;&#x05DC;&#x05D9;&#x05DD; &#x05D5;&#x05D2;&#x05D3;&#x05D9;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05D7;&#x05D5;&#x05D1;&#x05E8;&#x05D9;&#x05DD; &#x05D1;&#x05DE;&#x05D4;&#x05DC;&#x05DA; &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05E6;&#x05D9;&#x05D5;&#x05E8;.</li>
+        <li><b>&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA;:</b> &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA; &#x05DC;&#x05EA;&#x05E0;&#x05D5;&#x05E2;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D5;&#x05D4;&#x05EA;&#x05E0;&#x05D4;&#x05D2;&#x05D5;&#x05EA; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D4;. &#x05DE;&#x05E9;&#x05D5;&#x05D1; &#x05D7;&#x05D6;&#x05D5;&#x05EA;&#x05D9; &#x05D8;&#x05D5;&#x05D1; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D5;&#x05D0;&#x05D9;&#x05E0;&#x05D8;&#x05E8;&#x05D0;&#x05E7;&#x05E6;&#x05D9;&#x05D4; &#x05E2;&#x05D3;&#x05D9;&#x05E0;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DD; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4;.</li>
+        <li><b>&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05DE;&#x05D0;&#x05E4;&#x05D9;&#x05D9;&#x05E0;&#x05D9; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05E7;&#x05E6;&#x05D4;:</b> &#x05E4;&#x05D5;&#x05E0;&#x05E7;&#x05E6;&#x05D9;&#x05D5;&#x05E0;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05EA; &#x05D3;&#x05D2;&#x05D9;&#x05DE;&#x05D5;&#x05EA; &#x05D5;&#x05E9;&#x05DB;&#x05E4;&#x05D5;&#x05DC; &#x05DE;&#x05D0;&#x05E4;&#x05D9;&#x05D9;&#x05E0;&#x05D9; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05E7;&#x05E6;&#x05D4;. &#x05EA;&#x05D4;&#x05DC;&#x05D9;&#x05DA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05DE;&#x05D9;&#x05D5;&#x05E2;&#x05DC; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05EA;&#x05E6;&#x05D5;&#x05E8;&#x05D5;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05E7;&#x05E6;&#x05D4;.</li>
+        <li><b>&#x05E2;&#x05D5;&#x05E8;&#x05DA; &#x05E6;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05EA;&#x05E7;&#x05D3;&#x05DD;:</b> &#x05E4;&#x05E8;&#x05D9;&#x05E1;&#x05EA; &#x05D3;&#x05D5;-&#x05E9;&#x05D9;&#x05D7; &#x05DE;&#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05EA; &#x05E2;&#x05DD; &#x05EA;&#x05DE;&#x05D9;&#x05DB;&#x05D4; &#x05E8;&#x05D1;-&#x05E9;&#x05E4;&#x05EA;&#x05D9;&#x05EA;, &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D7;&#x05D9;&#x05E1;&#x05D5;&#x05E8; &#x05D5;&#x05D8;&#x05D1;&#x05DC;&#x05EA; &#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05E6;&#x05DC;&#x05D9;&#x05DD; &#x05D8;&#x05D5;&#x05D1; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
+        <li><b>&#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05EA; &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9;:</b> &#x05E4;&#x05D5;&#x05E0;&#x05E7;&#x05E6;&#x05D9;&#x05D5;&#x05E0;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05D8;&#x05E2;&#x05D9;&#x05E0;&#x05D4; &#x05E9;&#x05DC; &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9;, &#x05D4;&#x05DE;&#x05D1;&#x05D8;&#x05D9;&#x05D7;&#x05D4; &#x05E9;&#x05D4;&#x05D4;&#x05E2;&#x05D3;&#x05E4;&#x05D5;&#x05EA; &#x05E9;&#x05DC;&#x05DA; &#x05E9;&#x05DE;&#x05D5;&#x05E8;&#x05D5;&#x05EA; &#x05D1;&#x05D9;&#x05DF; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D5;&#x05EA;.</li>
+        <li><b>&#x05E9;&#x05D9;&#x05E4;&#x05D5;&#x05E8;&#x05D9; &#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3; &#x05E9;&#x05DC; &#x05E7;&#x05D5;&#x05D5;&#x05D9; &#x05E6;&#x05D3; &#x05D5;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05D4; &#x05E4;&#x05D5;&#x05E0;&#x05E7;&#x05E6;&#x05D9;&#x05D5;&#x05E0;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05E9;&#x05D7;&#x05D6;&#x05D5;&#x05E8; &#x05DC;&#x05E4;&#x05DC;&#x05D8; &#x05D7;&#x05D6;&#x05D5;&#x05EA;&#x05D9; &#x05D0;&#x05DE;&#x05D9;&#x05DF; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
     </ul>
     </div>
 </body>
@@ -771,20 +841,24 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; &#x05D6;&#x05D5;:</p>
     <ul>
-        <li><b>&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05D7;&#x05D9;&#x05E6;&#x05D9;&#x05DD; &#x05DE;&#x05DC;&#x05D0;&#x05D4;:</b> &#x05EA;&#x05DB;&#x05D5;&#x05E0;&#x05EA; &#x05D7;&#x05D9;&#x05E6;&#x05D9;&#x05DD; &#x05DE;&#x05E7;&#x05D9;&#x05E4;&#x05D4; &#x05E2;&#x05DD; &#x05DE;&#x05E1;&#x05E4;&#x05E8; &#x05DE;&#x05D0;&#x05E4;&#x05D9;&#x05D9;&#x05E0;&#x05D9;&#x05DD; &#x05D4;&#x05E0;&#x05D9;&#x05EA;&#x05E0;&#x05D9;&#x05DD; &#x05DC;&#x05D4;&#x05EA;&#x05D0;&#x05DE;&#x05D4; &#x05D0;&#x05D9;&#x05E9;&#x05D9;&#x05EA; &#x05DB;&#x05D5;&#x05DC;&#x05DC; &#x05E6;&#x05D1;&#x05E2; &#x05D7;&#x05E5; (&#x05D1;&#x05DC;&#x05EA;&#x05D9; &#x05EA;&#x05DC;&#x05D5;&#x05D9; &#x05D1;&#x05D2;&#x05D3;&#x05D9;&#x05DC;), &#x05E9;&#x05E7;&#x05D9;&#x05E4;&#x05D5;&#x05EA; (0-100%), &#x05DE;&#x05E8;&#x05E7;&#x05DD; &#x05E8;&#x05D0;&#x05E9; (&#x05DC;&#x05DC;&#x05D0;, &#x05E4;&#x05E1;&#x05D9;&#x05DD;, &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA;, &#x05D1;&#x05E7;&#x05D9;&#x05E2;&#x05D4; &#x05E6;&#x05D5;&#x05DC;&#x05D1;&#x05EA;), &#x05E1;&#x05D2;&#x05E0;&#x05D5;&#x05DF; &#x05E6;&#x05D9;&#x05E8; (&#x05DE;&#x05D5;&#x05E6;&#x05E7;, &#x05E4;&#x05E1;&#x05D9;&#x05DD;, &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA;, &#x05D0;&#x05E8;&#x05D9;&#x05D7;&#x05D9;&#x05DD;), &#x05EA;&#x05DE;&#x05D9;&#x05DB;&#x05D4; &#x05D1;&#x05E6;&#x05DC;, &#x05E0;&#x05E8;&#x05D0;&#x05D5;&#x05EA; &#x05E8;&#x05D0;&#x05E9; &#x05D5;&#x05D1;&#x05E7;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05D9;&#x05DE;&#x05D3;.</li>
-        <li><b>&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05EA; &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05DB;&#x05DE;&#x05D4;:</b> &#x05D1;&#x05E2;&#x05EA; &#x05D9;&#x05E6;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05E2;&#x05DD; &#x05D2;&#x05D3;&#x05D9;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05DE;&#x05D5;&#x05E1;&#x05DB;&#x05D9;&#x05DD;, &#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E8;&#x05DB;&#x05D9;&#x05D1; &#x05D0;&#x05D7;&#x05D3; &#x05DB;&#x05D5;&#x05DC;&#x05DC;&#x05EA; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05D0;&#x05EA; &#x05E9;&#x05D5;&#x05EA;&#x05E3; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05E9;&#x05DC;&#x05D5;, &#x05EA;&#x05D5;&#x05DA; &#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05D4; &#x05E2;&#x05DC; &#x05E9;&#x05DC;&#x05DE;&#x05D5;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D1;&#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05DE;&#x05E7;&#x05D5;&#x05D1;&#x05E6;&#x05D5;&#x05EA;.</li>
-        <li><b>&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05E6;&#x05D1;&#x05D9;&#x05E2;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3; &#x05E2;&#x05D1;&#x05D5;&#x05E8; &#x05E0;&#x05EA;&#x05D9;&#x05D1;&#x05D9; &#x05D2;&#x05D3;&#x05D9;&#x05DC;&#x05D9;&#x05DD; &#x05D5;&#x05D2;&#x05D3;&#x05D9;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05D7;&#x05D5;&#x05D1;&#x05E8;&#x05D9;&#x05DD; &#x05D1;&#x05DE;&#x05D4;&#x05DC;&#x05DA; &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05E6;&#x05D9;&#x05D5;&#x05E8;.</li>
+        <li><b>&#x05DE;&#x05E2;&#x05E8;&#x05DB;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA;:</b> &#x05D7;&#x05D5;&#x05D5;&#x05D9;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA; &#x05DC;&#x05EA;&#x05E0;&#x05D5;&#x05E2;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D5;&#x05D4;&#x05EA;&#x05E0;&#x05D4;&#x05D2;&#x05D5;&#x05EA; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D4;. &#x05DE;&#x05E9;&#x05D5;&#x05D1; &#x05D7;&#x05D6;&#x05D5;&#x05EA;&#x05D9; &#x05D8;&#x05D5;&#x05D1; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D5;&#x05D0;&#x05D9;&#x05E0;&#x05D8;&#x05E8;&#x05D0;&#x05E7;&#x05E6;&#x05D9;&#x05D4; &#x05E2;&#x05D3;&#x05D9;&#x05E0;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D1;&#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05E2;&#x05DD; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D1;&#x05E7;&#x05E8;&#x05D4;.</li>
+        <li><b>&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05DE;&#x05D0;&#x05E4;&#x05D9;&#x05D9;&#x05E0;&#x05D9; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05E7;&#x05E6;&#x05D4;:</b> &#x05E4;&#x05D5;&#x05E0;&#x05E7;&#x05E6;&#x05D9;&#x05D5;&#x05E0;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05EA; &#x05D3;&#x05D2;&#x05D9;&#x05DE;&#x05D5;&#x05EA; &#x05D5;&#x05E9;&#x05DB;&#x05E4;&#x05D5;&#x05DC; &#x05DE;&#x05D0;&#x05E4;&#x05D9;&#x05D9;&#x05E0;&#x05D9; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05E7;&#x05E6;&#x05D4;. &#x05EA;&#x05D4;&#x05DC;&#x05D9;&#x05DA; &#x05E2;&#x05D1;&#x05D5;&#x05D3;&#x05D4; &#x05DE;&#x05D9;&#x05D5;&#x05E2;&#x05DC; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05EA;&#x05E6;&#x05D5;&#x05E8;&#x05D5;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05E7;&#x05E6;&#x05D4;.</li>
+        <li><b>&#x05E2;&#x05D5;&#x05E8;&#x05DA; &#x05E6;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05EA;&#x05E7;&#x05D3;&#x05DD;:</b> &#x05E4;&#x05E8;&#x05D9;&#x05E1;&#x05EA; &#x05D3;&#x05D5;-&#x05E9;&#x05D9;&#x05D7; &#x05DE;&#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05EA; &#x05E2;&#x05DD; &#x05EA;&#x05DE;&#x05D9;&#x05DB;&#x05D4; &#x05E8;&#x05D1;-&#x05E9;&#x05E4;&#x05EA;&#x05D9;&#x05EA;, &#x05E4;&#x05E2;&#x05D5;&#x05DC;&#x05D5;&#x05EA; &#x05D7;&#x05D9;&#x05E1;&#x05D5;&#x05E8; &#x05D5;&#x05D8;&#x05D1;&#x05DC;&#x05EA; &#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D4; &#x05DE;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05EA; &#x05DC;&#x05E0;&#x05D9;&#x05D4;&#x05D5;&#x05DC; &#x05E6;&#x05DC;&#x05D9;&#x05DD; &#x05D8;&#x05D5;&#x05D1; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
+        <li><b>&#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05EA; &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9;:</b> &#x05E4;&#x05D5;&#x05E0;&#x05E7;&#x05E6;&#x05D9;&#x05D5;&#x05E0;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05E9;&#x05DE;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05D8;&#x05E2;&#x05D9;&#x05E0;&#x05D4; &#x05E9;&#x05DC; &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05DE;&#x05E9;&#x05EA;&#x05DE;&#x05E9;, &#x05D4;&#x05DE;&#x05D1;&#x05D8;&#x05D9;&#x05D7;&#x05D4; &#x05E9;&#x05D4;&#x05D4;&#x05E2;&#x05D3;&#x05E4;&#x05D5;&#x05EA; &#x05E9;&#x05DC;&#x05DA; &#x05E9;&#x05DE;&#x05D5;&#x05E8;&#x05D5;&#x05EA; &#x05D1;&#x05D9;&#x05DF; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D5;&#x05EA;.</li>
+        <li><b>&#x05E9;&#x05D9;&#x05E4;&#x05D5;&#x05E8;&#x05D9; &#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E2;&#x05D9;&#x05D1;&#x05D5;&#x05D3; &#x05E9;&#x05DC; &#x05E7;&#x05D5;&#x05D5;&#x05D9; &#x05E6;&#x05D3; &#x05D5;&#x05E9;&#x05D5;&#x05E4;&#x05E8;&#x05D4; &#x05E4;&#x05D5;&#x05E0;&#x05E7;&#x05E6;&#x05D9;&#x05D5;&#x05E0;&#x05DC;&#x05D9;&#x05D5;&#x05EA; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05E9;&#x05D7;&#x05D6;&#x05D5;&#x05E8; &#x05DC;&#x05E4;&#x05DC;&#x05D8; &#x05D7;&#x05D6;&#x05D5;&#x05EA;&#x05D9; &#x05D0;&#x05DE;&#x05D9;&#x05DF; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
     </ul>
     </div>
     <hr>
     <!-- English -->
     <h2 dir="ltr">Welcome to OpenStrandStudio 1.104</h2>
     <p dir="ltr">This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
-    <p dir="ltr">What's New in Version 1.104 - [TODO: Update features]:</p>
+    <p dir="ltr">What's New in Version 1.104:</p>
     <ul dir="ltr">
-        <li><b>Full Arrow System:</b> Comprehensive arrow feature with multiple customizable properties including arrow color (independent from strand), transparency (0-100%), head texture (None, Stripes, Dots, Crosshatch), shaft style (Solid, Stripes, Dots, Tiles), shadow support, head visibility toggle, and dimension controls.</li>
-        <li><b>Smart Mask Group Selection:</b> When creating groups with masked strands, selecting one component automatically includes its mask partner, maintaining mask integrity in grouped operations.</li>
-        <li><b>Enhanced Painting System:</b> Fixed rendering issues for strand paths and attached strands during draw operations, ensuring consistent visual representation.</li>
+        <li><b>Enhanced Control Point System:</b> Improved UX for control point movement and activation behavior. Better visual feedback and smoother interaction when working with control points.</li>
+        <li><b>Endpoint Properties Management:</b> Save samples and duplicate endpoint properties functionality. Streamlined workflow for managing endpoint configurations.</li>
+        <li><b>Advanced Shadow Editor:</b> Fixed dialog layout with multi-language support, subtraction operations, and improved history table for better shadow management.</li>
+        <li><b>User Settings Persistence:</b> Save and load functionality for user settings, ensuring your preferences are maintained across sessions.</li>
+        <li><b>Rendering Improvements:</b> Fixed side line rendering issues and enhanced undo/redo functionality for more reliable visual output.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -792,49 +866,59 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p dir="ltr">Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p dir="ltr">Nouveautés dans cette version&nbsp;:</p>
     <ul dir="ltr">
-        <li><b>Système de flèches complet :</b> Fonction de flèche complète avec plusieurs propriétés personnalisables incluant la couleur de flèche (indépendante du brin), transparence (0-100%), texture de tête (Aucune, Rayures, Points, Hachures croisées), style de tige (Solide, Rayures, Points, Carreaux), support d'ombre, visibilité de tête, et contrôles de dimension.</li>
-        <li><b>Sélection intelligente de groupe masqué :</b> Lors de la création de groupes avec des brins masqués, la sélection d'un composant inclut automatiquement son partenaire de masque, maintenant l'intégrité du masque dans les opérations groupées.</li>
-        <li><b>Système de peinture amélioré :</b> Correction des problèmes de rendu pour les chemins de brin et les brins attachés pendant les opérations de dessin.</li>
+        <li><b>Système de points de contrôle amélioré :</b> Interface utilisateur améliorée pour le mouvement des points de contrôle et le comportement d'activation. Meilleur retour visuel et interaction plus fluide lors du travail avec les points de contrôle.</li>
+        <li><b>Gestion des propriétés des extrémités :</b> Fonctionnalité de sauvegarde d'échantillons et de duplication des propriétés des extrémités. Flux de travail optimisé pour la gestion des configurations d'extrémités.</li>
+        <li><b>Éditeur d'ombres avancé :</b> Disposition de dialogue corrigée avec prise en charge multilingue, opérations de soustraction et table d'historique améliorée pour une meilleure gestion des ombres.</li>
+        <li><b>Persistance des paramètres utilisateur :</b> Fonctionnalité de sauvegarde et de chargement des paramètres utilisateur, garantissant que vos préférences sont maintenues d'une session à l'autre.</li>
+        <li><b>Améliorations du rendu :</b> Correction des problèmes de rendu des lignes latérales et amélioration de la fonctionnalité annuler/rétablir pour une sortie visuelle plus fiable.</li>
     </ul>
     <hr>
     <!-- German -->
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 1.104</h2>
     <p dir="ltr">Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
-    <p dir="ltr">Was ist neu in dieser Version - [TODO: Aktualisieren]</p>
+    <p dir="ltr">Was ist neu in dieser Version:</p>
     <ul dir="ltr">
-        <li><b>Vollständiges Pfeilsystem:</b> Umfassende Pfeilfunktion mit mehreren anpassbaren Eigenschaften wie Pfeilfarbe (unabhängig vom Strang), Transparenz (0-100%), Kopftextur (Keine, Streifen, Punkte, Schraffur), Schaftstil (Solide, Streifen, Punkte, Kacheln), Schattenunterstützung, Kopfsichtbarkeit und Dimensionskontrollen.</li>
-        <li><b>Intelligente Maskengruppenauswahl:</b> Beim Erstellen von Gruppen mit maskierten Strängen wird beim Auswählen einer Komponente automatisch der Maskenpartner eingeschlossen, wodurch die Maskenintegrität in gruppierten Operationen erhalten bleibt.</li>
-        <li><b>Verbessertes Malsystem:</b> Behobene Renderprobleme für Strangpfade und angehängte Stränge während Zeichenoperationen.</li>
+        <li><b>Verbessertes Kontrollpunktsystem:</b> Verbesserte Benutzerführung für Kontrollpunktbewegung und Aktivierungsverhalten. Besseres visuelles Feedback und flüssigere Interaktion bei der Arbeit mit Kontrollpunkten.</li>
+        <li><b>Endpunkt-Eigenschaften-Verwaltung:</b> Speichern von Mustern und Duplizieren von Endpunkt-Eigenschaften. Optimierter Arbeitsablauf für die Verwaltung von Endpunkt-Konfigurationen.</li>
+        <li><b>Erweiterter Schatten-Editor:</b> Korrigiertes Dialog-Layout mit Mehrsprachenunterstützung, Subtraktionsoperationen und verbesserter Verlaufstabelle für besseres Schatten-Management.</li>
+        <li><b>Benutzereinstellungen-Persistenz:</b> Speicher- und Ladefunktion für Benutzereinstellungen, damit Ihre Präferenzen sitzungsübergreifend erhalten bleiben.</li>
+        <li><b>Rendering-Verbesserungen:</b> Behobene Seitenlinien-Rendering-Probleme und verbesserte Rückgängig/Wiederherstellen-Funktionalität für zuverlässigere visuelle Ausgabe.</li>
     </ul>
     <hr>
     <!-- Italian -->
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 1.104</h2>
     <p dir="ltr">Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
-    <p dir="ltr">Novità in questa versione - [TODO: Aggiornare]</p>
+    <p dir="ltr">Novità in questa versione:</p>
     <ul dir="ltr">
-        <li><b>Sistema di frecce completo:</b> Funzione freccia completa con molteplici proprietà personalizzabili tra cui colore freccia (indipendente dal filamento), trasparenza (0-100%), texture della punta (Nessuna, Strisce, Punti, Tratteggio incrociato), stile dell'asta (Solido, Strisce, Punti, Piastrelle), supporto ombra, visibilità della punta e controlli dimensionali.</li>
-        <li><b>Selezione intelligente gruppo maschera:</b> Quando si creano gruppi con filamenti mascherati, selezionando un componente si include automaticamente il suo partner maschera, mantenendo l'integrità della maschera nelle operazioni di gruppo.</li>
-        <li><b>Sistema di pittura migliorato:</b> Risolti problemi di rendering per percorsi di filamento e filamenti attaccati durante le operazioni di disegno.</li>
+        <li><b>Sistema di punti di controllo migliorato:</b> Migliorata l'esperienza utente per il movimento dei punti di controllo e il comportamento di attivazione. Miglior feedback visivo e interazione più fluida quando si lavora con i punti di controllo.</li>
+        <li><b>Gestione delle proprietà degli endpoint:</b> Funzionalità di salvataggio campioni e duplicazione delle proprietà degli endpoint. Flusso di lavoro ottimizzato per la gestione delle configurazioni degli endpoint.</li>
+        <li><b>Editor di ombre avanzato:</b> Layout della finestra di dialogo corretto con supporto multilingue, operazioni di sottrazione e tabella cronologia migliorata per una migliore gestione delle ombre.</li>
+        <li><b>Persistenza delle impostazioni utente:</b> Funzionalità di salvataggio e caricamento delle impostazioni utente, garantendo che le preferenze vengano mantenute tra le sessioni.</li>
+        <li><b>Miglioramenti del rendering:</b> Risolti i problemi di rendering delle linee laterali e migliorata la funzionalità annulla/ripristina per un output visivo più affidabile.</li>
     </ul>
     <hr>
     <!-- Spanish -->
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 1.104</h2>
     <p dir="ltr">Este asistente instalará OpenStrandStudio en su equipo.</p>
-    <p dir="ltr">Novedades en esta versión - [TODO: Actualizar]</p>
+    <p dir="ltr">Novedades en esta versión:</p>
     <ul dir="ltr">
-        <li><b>Sistema de flechas completo:</b> Función de flecha completa con múltiples propiedades personalizables incluyendo color de flecha (independiente del hilo), transparencia (0-100%), textura de punta (Ninguna, Rayas, Puntos, Trama cruzada), estilo del eje (Sólido, Rayas, Puntos, Azulejos), soporte de sombra, visibilidad de punta y controles de dimensión.</li>
-        <li><b>Selección inteligente de grupo de máscara:</b> Al crear grupos con hilos enmascarados, seleccionar un componente incluye automáticamente su compañero de máscara, manteniendo la integridad de la máscara en operaciones agrupadas.</li>
-        <li><b>Sistema de pintura mejorado:</b> Corregidos problemas de renderización para rutas de hilos e hilos adjuntos durante operaciones de dibujo.</li>
+        <li><b>Sistema de puntos de control mejorado:</b> Mejor experiencia de usuario para el movimiento de puntos de control y comportamiento de activación. Mejor retroalimentación visual e interacción más fluida al trabajar con puntos de control.</li>
+        <li><b>Gestión de propiedades de puntos finales:</b> Funcionalidad de guardar muestras y duplicar propiedades de puntos finales. Flujo de trabajo optimizado para gestionar configuraciones de puntos finales.</li>
+        <li><b>Editor de sombras avanzado:</b> Diseño de diálogo corregido con soporte multiidioma, operaciones de sustracción y tabla de historial mejorada para una mejor gestión de sombras.</li>
+        <li><b>Persistencia de configuración de usuario:</b> Funcionalidad de guardar y cargar configuración de usuario, asegurando que sus preferencias se mantengan entre sesiones.</li>
+        <li><b>Mejoras de renderizado:</b> Solucionados problemas de renderizado de líneas laterales y mejorada la funcionalidad deshacer/rehacer para una salida visual más confiable.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 1.104</h2>
     <p dir="ltr">Este assistente instalará o OpenStrandStudio no seu computador.</p>
-    <p dir="ltr">Novidades nesta versão - [TODO: Atualizar]</p>
+    <p dir="ltr">Novidades nesta versão:</p>
     <ul dir="ltr">
-        <li><b>Sistema de setas completo:</b> Recurso de seta abrangente com várias propriedades personalizáveis incluindo cor da seta (independente do fio), transparência (0-100%), textura da ponta (Nenhuma, Listras, Pontos, Hachura cruzada), estilo do eixo (Sólido, Listras, Pontos, Azulejos), suporte de sombra, visibilidade da ponta e controles dimensionais.</li>
-        <li><b>Seleção inteligente de grupo de máscara:</b> Ao criar grupos com fios mascarados, selecionar um componente inclui automaticamente seu parceiro de máscara, mantendo a integridade da máscara em operações agrupadas.</li>
-        <li><b>Sistema de pintura aprimorado:</b> Corrigidos problemas de renderização para caminhos de fios e fios anexados durante operações de desenho.</li>
+        <li><b>Sistema de pontos de controle aprimorado:</b> Melhor experiência do usuário para movimento de pontos de controle e comportamento de ativação. Melhor feedback visual e interação mais suave ao trabalhar com pontos de controle.</li>
+        <li><b>Gerenciamento de propriedades de pontos finais:</b> Funcionalidade de salvar amostras e duplicar propriedades de pontos finais. Fluxo de trabalho otimizado para gerenciar configurações de pontos finais.</li>
+        <li><b>Editor de sombras avançado:</b> Layout de diálogo corrigido com suporte multilíngue, operações de subtração e tabela de histórico aprimorada para melhor gerenciamento de sombras.</li>
+        <li><b>Persistência de configurações do usuário:</b> Funcionalidade de salvar e carregar configurações do usuário, garantindo que suas preferências sejam mantidas entre as sessões.</li>
+        <li><b>Melhorias de renderização:</b> Corrigidos problemas de renderização de linhas laterais e melhorada a funcionalidade desfazer/refazer para saída visual mais confiável.</li>
     </ul>
 </body>
 </html>

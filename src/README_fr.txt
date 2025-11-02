@@ -481,3 +481,42 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
 
 ------
 
+## Version 1.104 (Sortie : TBD)
+
+### Nouvelles Fonctionnalités et Améliorations :
+
+1. **Système de points de contrôle amélioré :**
+   - Interface utilisateur améliorée pour le mouvement des points de contrôle et le comportement d'activation
+   - Meilleur retour visuel lors du travail avec les points de contrôle
+   - Interaction plus fluide lors de la manipulation des points de contrôle
+   - Correction de la zone de déplacement des points de contrôle et du comportement du point de contrôle de départ
+
+2. **Gestion des propriétés des extrémités :**
+   - Fonctionnalité de sauvegarde d'échantillons et de duplication des propriétés des extrémités
+   - Flux de travail optimisé pour la gestion des configurations d'extrémités
+   - Possibilité de copier les paramètres d'extrémité entre différents brins
+
+3. **Éditeur d'ombres avancé :**
+   - Disposition de dialogue corrigée avec prise en charge multilingue appropriée
+   - Ajout d'opérations de soustraction pour les effets d'ombre
+   - Table d'historique améliorée pour une meilleure gestion des ombres
+   - Amélioration de la disposition des colonnes de la fenêtre de dialogue d'ombre
+
+4. **Persistance des paramètres utilisateur :**
+   - Fonctionnalité de sauvegarde et de chargement des paramètres utilisateur
+   - Les préférences sont maintenant maintenues d'une session à l'autre
+   - Restauration automatique de la configuration de l'espace de travail
+
+5. **Améliorations du rendu :**
+   - Correction des problèmes de rendu des lignes latérales des brins
+   - Fonctionnalité annuler/rétablir améliorée pour des opérations plus fiables
+   - Amélioration de la cohérence de la sortie visuelle
+   - Correction du rendu pour les brins attachés
+
+6. **Contraintes des points de contrôle :**
+   - Les contrôles de centre et de biais ne peuvent pas bouger lorsque le point de contrôle de départ n'est pas activé
+   - Flux logique amélioré pour la manipulation des points de contrôle
+   - Meilleure prévention des états de points de contrôle invalides
+
+------
+

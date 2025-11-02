@@ -480,3 +480,42 @@ These updates focus on performance improvements and visual enhancements to provi
    - Fixed duplicate strand additions to canvas during group operations
 
 ------
+
+## Version 1.104 (Released: TBD)
+
+### New Features and Improvements:
+
+1. **Enhanced Control Point System:**
+   - Improved UX for control point movement and activation behavior
+   - Better visual feedback when working with control points
+   - Smoother interaction during control point manipulation
+   - Fixed control point movement area and starting control point behavior
+
+2. **Endpoint Properties Management:**
+   - Save samples and duplicate endpoint properties functionality
+   - Streamlined workflow for managing endpoint configurations
+   - Ability to copy endpoint settings between different strands
+
+3. **Advanced Shadow Editor:**
+   - Fixed dialog layout with proper multi-language support
+   - Added subtraction operations for shadow effects
+   - Improved history table for better shadow management
+   - Enhanced shadow dialog window columns layout
+
+4. **User Settings Persistence:**
+   - Save and load functionality for user settings
+   - Preferences are now maintained across sessions
+   - Automatic restoration of workspace configuration
+
+5. **Rendering Improvements:**
+   - Fixed side line of strand rendering issues
+   - Enhanced undo/redo functionality for more reliable operations
+   - Improved visual output consistency
+   - Fixed rendering for attached strands
+
+6. **Control Point Constraints:**
+   - Center and bias controls cannot move when starting control point is not activated
+   - Improved logical flow for control point manipulation
+   - Better prevention of invalid control point states
+
+------

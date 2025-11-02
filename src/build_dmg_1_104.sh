@@ -37,37 +37,65 @@ By $PUBLISHER
 Contact: ysetbon@gmail.com
 
 New in Version 1.104 (English):
-• [TODO: Update with version 1.104 features - e.g., Enhanced attached strand functionality]
+• Enhanced Control Point System: Improved UX for control point movement and activation behavior
+• Endpoint Properties Management: Save samples and duplicate endpoint properties functionality
+• Advanced Shadow Editor: Fixed dialog layout with multi-language support, subtraction operations, and improved history table
+• User Settings Persistence: Save and load functionality for user settings
+• Rendering Improvements: Fixed side line rendering issues and enhanced undo/redo functionality
 • Additional UI improvements and bug fixes
 • Performance optimizations
 
 Nouveautés dans la version 1.104 (Français):
-• [TODO: Mettre à jour avec les fonctionnalités de la version 1.104 - par exemple, Fonctionnalité de brin attaché améliorée]
+• Système de points de contrôle amélioré : Interface utilisateur améliorée pour le mouvement des points de contrôle et le comportement d'activation
+• Gestion des propriétés des extrémités : Fonctionnalité de sauvegarde d'échantillons et de duplication des propriétés des extrémités
+• Éditeur d'ombres avancé : Disposition de dialogue corrigée avec prise en charge multilingue, opérations de soustraction et table d'historique améliorée
+• Persistance des paramètres utilisateur : Fonctionnalité de sauvegarde et de chargement des paramètres utilisateur
+• Améliorations du rendu : Correction des problèmes de rendu des lignes latérales et amélioration de la fonctionnalité annuler/rétablir
 • Améliorations de l'interface utilisateur et corrections de bugs supplémentaires
 • Optimisations des performances
 
 Novità nella versione 1.104 (Italiano):
-• [TODO: Aggiornare con le funzionalità della versione 1.104 - ad esempio, Funzionalità del filamento attaccato migliorata]
+• Sistema di punti di controllo migliorato: Migliorata l'esperienza utente per il movimento dei punti di controllo e il comportamento di attivazione
+• Gestione delle proprietà degli endpoint: Funzionalità di salvataggio campioni e duplicazione delle proprietà degli endpoint
+• Editor di ombre avanzato: Layout della finestra di dialogo corretto con supporto multilingue, operazioni di sottrazione e tabella cronologia migliorata
+• Persistenza delle impostazioni utente: Funzionalità di salvataggio e caricamento delle impostazioni utente
+• Miglioramenti del rendering: Risolti i problemi di rendering delle linee laterali e migliorata la funzionalità annulla/ripristina
 • Ulteriori miglioramenti dell'interfaccia utente e correzioni di bug
 • Ottimizzazioni delle prestazioni
 
 Novedades en la versión 1.104 (Español):
-• [TODO: Actualizar con las características de la versión 1.104 - por ejemplo, Funcionalidad de hilo adjunto mejorada]
+• Sistema de puntos de control mejorado: Mejor experiencia de usuario para el movimiento de puntos de control y comportamiento de activación
+• Gestión de propiedades de puntos finales: Funcionalidad de guardar muestras y duplicar propiedades de puntos finales
+• Editor de sombras avanzado: Diseño de diálogo corregido con soporte multiidioma, operaciones de sustracción y tabla de historial mejorada
+• Persistencia de configuración de usuario: Funcionalidad de guardar y cargar configuración de usuario
+• Mejoras de renderizado: Solucionados problemas de renderizado de líneas laterales y mejorada la funcionalidad deshacer/rehacer
 • Mejoras adicionales de la interfaz de usuario y correcciones de errores
 • Optimizaciones de rendimiento
 
 Novidades na versão 1.104 (Português):
-• [TODO: Atualizar com os recursos da versão 1.104 - por exemplo, Funcionalidade de fio anexado aprimorada]
+• Sistema de pontos de controle aprimorado: Melhor experiência do usuário para movimento de pontos de controle e comportamento de ativação
+• Gerenciamento de propriedades de pontos finais: Funcionalidade de salvar amostras e duplicar propriedades de pontos finais
+• Editor de sombras avançado: Layout de diálogo corrigido com suporte multilíngue, operações de subtração e tabela de histórico aprimorada
+• Persistência de configurações do usuário: Funcionalidade de salvar e carregar configurações do usuário
+• Melhorias de renderização: Corrigidos problemas de renderização de linhas laterais e melhorada a funcionalidade desfazer/refazer
 • Melhorias adicionais da interface do usuário e correções de bugs
 • Otimizações de desempenho
 
 Neu in Version 1.104 (Deutsch):
-• [TODO: Mit den Funktionen von Version 1.104 aktualisieren - z.B., Verbesserte angehängte Strang-Funktionalität]
+• Verbessertes Kontrollpunktsystem: Verbesserte Benutzerführung für Kontrollpunktbewegung und Aktivierungsverhalten
+• Endpunkt-Eigenschaften-Verwaltung: Speichern von Mustern und Duplizieren von Endpunkt-Eigenschaften
+• Erweiterter Schatten-Editor: Korrigiertes Dialog-Layout mit Mehrsprachenunterstützung, Subtraktionsoperationen und verbesserter Verlaufstabelle
+• Benutzereinstellungen-Persistenz: Speicher- und Ladefunktion für Benutzereinstellungen
+• Rendering-Verbesserungen: Behobene Seitenlinien-Rendering-Probleme und verbesserte Rückgängig/Wiederherstellen-Funktionalität
 • Zusätzliche UI-Verbesserungen und Fehlerbehebungen
 • Leistungsoptimierungen
 
 מה חדש בגרסה 1.104 (עברית):
-• [TODO: עדכן עם תכונות גרסה 1.104 - לדוגמה, פונקציונליות גדיל מחובר משופרת]
+• מערכת נקודות בקרה משופרת: חווית משתמש משופרת לתנועת נקודות בקרה והתנהגות הפעלה
+• ניהול מאפייני נקודות קצה: פונקציונליות שמירת דגימות ושכפול מאפייני נקודות קצה
+• עורך צלים מתקדם: פריסת דו-שיח מתוקנת עם תמיכה רב-שפתית, פעולות חיסור וטבלת היסטוריה משופרת
+• שמירת הגדרות משתמש: פונקציונליות שמירה וטעינה של הגדרות משתמש
+• שיפורי עיבוד: תוקנו בעיות עיבוד של קווי צד ושופרה פונקציונליות ביטול/שחזור
 • שיפורי ממשק משתמש ותיקוני באגים נוספים
 • אופטימיזציות ביצועים
 

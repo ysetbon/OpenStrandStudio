@@ -1599,7 +1599,28 @@ class MoveMode:
         # Capture selection state *before* reset
         selection_at_release_start = self.canvas.selected_strand or self.canvas.selected_attached_strand
         original_selection_ref = self.originally_selected_strand # Keep reference used during move
-        
+
+        # Check if control points have been moved back to starting position
+        # Only reset triangle_has_moved when BOTH end control point AND center control point are back at start
+        if self.affected_strand and hasattr(self.affected_strand, 'triangle_has_moved'):
+            if hasattr(self.affected_strand, 'control_point2') and hasattr(self.affected_strand, 'start'):
+                # Calculate distance between control_point2 (end control) and start
+                cp2_distance = ((self.affected_strand.control_point2.x() - self.affected_strand.start.x()) ** 2 +
+                               (self.affected_strand.control_point2.y() - self.affected_strand.start.y()) ** 2) ** 0.5
+
+                # Check if center control point is also at start (or not locked/moved)
+                center_at_start = True
+                if hasattr(self.affected_strand, 'control_point_center') and hasattr(self.affected_strand, 'control_point_center_locked'):
+                    if self.affected_strand.control_point_center_locked:
+                        # Center was moved, check if it's back at start
+                        center_distance = ((self.affected_strand.control_point_center.x() - self.affected_strand.start.x()) ** 2 +
+                                         (self.affected_strand.control_point_center.y() - self.affected_strand.start.y()) ** 2) ** 0.5
+                        center_at_start = center_distance <= 1.0
+
+                # If both end control point and center control point are at start, reset triangle_has_moved
+                if cp2_distance <= 1.0 and center_at_start:
+                    self.affected_strand.triangle_has_moved = False
+
         self.reset_movement_state()
         
         # --- 4. Restore Selection State --- 

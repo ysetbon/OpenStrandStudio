@@ -2060,6 +2060,7 @@ class StrandDrawingCanvas(QWidget):
             if self.current_mode.selected_rectangle and self.current_mode.affected_strand and self.current_mode.moving_side is not None:
                 selected_strand = self.current_mode.affected_strand
                 selected_side = self.current_mode.moving_side
+                triangle_has_moved = getattr(selected_strand, 'triangle_has_moved', False)
                 
                 # Create the yellow rectangle with the consistent size for overlap checking
                 yellow_square_size = 120  # Size for the yellow selection square
@@ -2097,7 +2098,9 @@ class StrandDrawingCanvas(QWidget):
                         square_control_size,
                         square_control_size
                     )
-                elif selected_side == 'control_point_center' and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point and hasattr(selected_strand, 'control_point_center'):
+                elif (selected_side == 'control_point_center' and triangle_has_moved
+                      and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point
+                      and hasattr(selected_strand, 'control_point_center')):
                     # Use control point size for control points
                     yellow_rectangle = QRectF(
                         selected_strand.control_point_center.x() - half_control_size,
@@ -2107,7 +2110,8 @@ class StrandDrawingCanvas(QWidget):
                     )
                     
                 # Bias control yellow highlight when moving them
-                elif selected_side == 'bias_triangle' and hasattr(selected_strand, 'bias_control') and selected_strand.bias_control:
+                elif (selected_side == 'bias_triangle' and triangle_has_moved
+                      and hasattr(selected_strand, 'bias_control') and selected_strand.bias_control):
                     bias_square_size = 50  # Same size as regular control points
                     bias_half_size = bias_square_size / 2
                     tp, cp = selected_strand.bias_control.get_bias_control_positions(selected_strand)
@@ -2118,7 +2122,8 @@ class StrandDrawingCanvas(QWidget):
                             bias_square_size,
                             bias_square_size
                         )
-                elif selected_side == 'bias_circle' and hasattr(selected_strand, 'bias_control') and selected_strand.bias_control:
+                elif (selected_side == 'bias_circle' and triangle_has_moved
+                      and hasattr(selected_strand, 'bias_control') and selected_strand.bias_control):
                     bias_square_size = 50  # Same size as regular control points
                     bias_half_size = bias_square_size / 2
                     tp, cp = selected_strand.bias_control.get_bias_control_positions(selected_strand)
@@ -2308,6 +2313,7 @@ class StrandDrawingCanvas(QWidget):
                                     )
                                 else:
                                     cp3_rect = None
+                                triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
                                 cp1_drawn = False
                                 cp2_drawn = False
                                 cp3_drawn = False
@@ -2330,11 +2336,15 @@ class StrandDrawingCanvas(QWidget):
                                     elif selected_side == 'control_point2' and cp2_rect and not skip_cp2 and not cp2_overlaps_yellow:
                                         painter.drawRect(cp2_rect)
                                         cp2_drawn = True
-                                    elif selected_side == 'control_point_center' and cp3_rect and not skip_cp3 and not cp3_overlaps_yellow and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point:
+                                    elif (selected_side == 'control_point_center' and triangle_has_moved and cp3_rect
+                                          and not skip_cp3 and not cp3_overlaps_yellow
+                                          and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point):
                                         painter.drawRect(cp3_rect)
                                         cp3_drawn = True
                                     # Bias controls when moving them
-                                    elif selected_side == 'bias_triangle' and hasattr(strand, 'bias_control') and strand.bias_control and hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control:
+                                    elif (selected_side == 'bias_triangle' and triangle_has_moved
+                                          and hasattr(strand, 'bias_control') and strand.bias_control
+                                          and hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control):
                                         tp, cp = strand.bias_control.get_bias_control_positions(strand)
                                         if tp:
                                             bias_square_size = 50  # Same size as regular control points
@@ -2342,7 +2352,9 @@ class StrandDrawingCanvas(QWidget):
                                             bt_rect = QRectF(tp.x() - bias_half_size, tp.y() - bias_half_size, bias_square_size, bias_square_size)
                                             painter.drawRect(bt_rect)
                                             bias_triangle_drawn = True
-                                    elif selected_side == 'bias_circle' and hasattr(strand, 'bias_control') and strand.bias_control and hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control:
+                                    elif (selected_side == 'bias_circle' and triangle_has_moved
+                                          and hasattr(strand, 'bias_control') and strand.bias_control
+                                          and hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control):
                                         tp, cp = strand.bias_control.get_bias_control_positions(strand)
                                         if cp:
                                             bias_square_size = 50  # Same size as regular control points
@@ -2363,11 +2375,14 @@ class StrandDrawingCanvas(QWidget):
                                         if hasattr(strand, 'control_point2_shown') and strand.control_point2_shown:
                                             painter.drawRect(cp2_rect)
                                             cp2_drawn = True
-                                    if cp3_rect and not skip_cp3 and not cp3_overlaps_yellow and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point:
+                                    if (triangle_has_moved and cp3_rect and not skip_cp3 and not cp3_overlaps_yellow
+                                            and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point):
                                         painter.drawRect(cp3_rect)
                                         cp3_drawn = True
                                     # Also draw bias control rectangles (transparent green baseline)
-                                    if hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control and hasattr(strand, 'bias_control') and strand.bias_control:
+                                    if (triangle_has_moved and hasattr(self, 'enable_curvature_bias_control')
+                                            and self.enable_curvature_bias_control
+                                            and hasattr(strand, 'bias_control') and strand.bias_control):
                                         tp, cp = strand.bias_control.get_bias_control_positions(strand)
                                         if tp:
                                             bias_square_size = 50  # Same size as regular control points

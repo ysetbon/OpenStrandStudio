@@ -29,7 +29,8 @@ making complex patterns clear and easy to understand.
 
 ## Screenshots
 
-![image](https://github.com/user-attachments/assets/ee0749e1-2ad0-4ea2-b9d9-5e2892b1dcd7)
+<img width="1917" height="1028" alt="image" src="https://github.com/user-attachments/assets/339bdcc0-ca8f-494b-9081-c0d97387fe97" />
+
 
 
 ## Usage

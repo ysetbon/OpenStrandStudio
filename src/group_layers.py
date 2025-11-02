@@ -2254,6 +2254,14 @@ class GroupPanel(QWidget):
         if hasattr(original, 'triangle_has_moved'):
             new_strand.triangle_has_moved = original.triangle_has_moved
 
+        # Copy control point activation state - CRITICAL for attached strands
+        if hasattr(original, 'control_point2_activated'):
+            new_strand.control_point2_activated = original.control_point2_activated
+
+        # Copy control point visibility state
+        if hasattr(original, 'control_point2_shown'):
+            new_strand.control_point2_shown = original.control_point2_shown
+
         # Copy attachment status
         if hasattr(original, 'start_attached'):
             new_strand.start_attached = original.start_attached

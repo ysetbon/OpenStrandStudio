@@ -61,7 +61,12 @@ class MaskGridDialog(QDialog):
             self.canvas.theme_changed.connect(self._apply_theme)
 
     def _get_group_strands(self):
-        """Get all strands (including attached strands) for the group."""
+        """
+        Get all regular strands for the group, excluding MaskedStrand objects.
+
+        Only regular strands should appear in the mask grid - MaskedStrand objects
+        should be filtered out since they represent masks, not base layers.
+        """
         if not hasattr(self.canvas, 'groups') or self.group_name not in self.canvas.groups:
             return []
 
@@ -71,7 +76,8 @@ class MaskGridDialog(QDialog):
         strands = []
         for layer_name in layer_names:
             strand = self.canvas.find_strand_by_name(layer_name)
-            if strand:
+            # Only include regular strands, exclude MaskedStrand objects
+            if strand and not isinstance(strand, MaskedStrand):
                 strands.append(strand)
 
         # Sort by layer name for consistent ordering

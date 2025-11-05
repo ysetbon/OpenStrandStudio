@@ -284,8 +284,9 @@ class CollapsibleGroupWidget(QWidget):
         # Get all menu items
         menu_items = [
             _['move_group_strands'],
-            _['rotate_group_strands'], 
+            _['rotate_group_strands'],
             _['edit_strand_angles'],
+            _['create_mask_grid'],
             _['duplicate_group'],
             _['rename_group'],
             _['delete_group']
@@ -372,9 +373,19 @@ class CollapsibleGroupWidget(QWidget):
         edit_action.setDefaultWidget(edit_label)
         edit_action.triggered.connect(lambda: self.group_panel.edit_strand_angles(self.group_name))
         context_menu.addAction(edit_action)
-        
+
+        # Create mask grid action
+        mask_grid_label = HoverLabel(menu_items[3], self, theme)
+        if is_rtl:
+            mask_grid_label.setLayoutDirection(Qt.RightToLeft)
+            mask_grid_label.setAlignment(Qt.AlignLeft)
+        mask_grid_action = QWidgetAction(self)
+        mask_grid_action.setDefaultWidget(mask_grid_label)
+        mask_grid_action.triggered.connect(lambda: self.group_panel.create_mask_grid(self.group_name))
+        context_menu.addAction(mask_grid_action)
+
         # Duplicate group action
-        duplicate_label = HoverLabel(menu_items[3], self, theme)
+        duplicate_label = HoverLabel(menu_items[4], self, theme)
         if is_rtl:
             duplicate_label.setLayoutDirection(Qt.RightToLeft)
             duplicate_label.setAlignment(Qt.AlignLeft)
@@ -382,9 +393,9 @@ class CollapsibleGroupWidget(QWidget):
         duplicate_action.setDefaultWidget(duplicate_label)
         duplicate_action.triggered.connect(lambda: self.group_panel.duplicate_group(self.group_name))
         context_menu.addAction(duplicate_action)
-        
+
         # Rename group action
-        rename_label = HoverLabel(menu_items[4], self, theme)
+        rename_label = HoverLabel(menu_items[5], self, theme)
         if is_rtl:
             rename_label.setLayoutDirection(Qt.RightToLeft)
             rename_label.setAlignment(Qt.AlignLeft)
@@ -392,11 +403,11 @@ class CollapsibleGroupWidget(QWidget):
         rename_action.setDefaultWidget(rename_label)
         rename_action.triggered.connect(lambda: self.group_panel.rename_group(self.group_name))
         context_menu.addAction(rename_action)
-        
+
         context_menu.addSeparator()
-        
+
         # Delete group action
-        delete_label = HoverLabel(menu_items[5], self, theme)
+        delete_label = HoverLabel(menu_items[6], self, theme)
         if is_rtl:
             delete_label.setLayoutDirection(Qt.RightToLeft)
             delete_label.setAlignment(Qt.AlignLeft)
@@ -2518,6 +2529,16 @@ class GroupPanel(QWidget):
             dialog.exec_()
         else:
             pass
+
+    def create_mask_grid(self, group_name):
+        """Open the mask grid dialog for creating mask layers."""
+        from mask_grid_dialog import MaskGridDialog
+
+        # Create and show the dialog
+        dialog = MaskGridDialog(self.canvas, group_name, parent=self.layer_panel)
+        if dialog.strands:  # Only show if there are strands in the group
+            dialog.exec_()
+
     def finish_group_rotation_duplicate_remove_me(self, group_name):
         """DUPLICATE METHOD - SHOULD BE REMOVED - Finish the rotation of a group and ensure data is preserved."""
         pass
@@ -4484,6 +4505,7 @@ class GroupLayerManager:
             dialog.exec_()
         else:
             pass
+
     def get_group_strands(self, group_name):
         group_layers = self.groups[group_name]['layers']
         strands = []

@@ -1906,10 +1906,10 @@ class MainWindow(QMainWindow):
         button.color_changed.connect(self.handle_color_change)
         
         pass
-        
+
         # Update the groups with the new masked strand
         pass
-        self.layer_panel.group_layer_manager.update_groups_with_new_mask(masked_strand)
+        self.layer_panel.group_layer_manager.update_groups_with_new_strand(masked_strand)
         
         self.canvas.update()
         self.update_mode(self.current_mode)

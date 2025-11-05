@@ -163,16 +163,10 @@ class AttachedStrand(Strand):
         """Get the selection path for the starting point, excluding the inner area for control point selection."""
         path = QPainterPath()
 
-        # Base size for selection area, but adjust for zoom to maintain consistent click targets
+        # Base size for selection area - no zoom adjustment needed since we test in canvas coordinates
         base_size = 120  # Base size of the selection square for the start edge
-        
-        # Adjust size based on zoom level to maintain consistent screen-space click targets
-        if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'zoom_factor'):
-            zoom_factor = self.canvas.zoom_factor
-            outer_size = base_size / zoom_factor
-        else:
-            outer_size = base_size
-            
+        outer_size = base_size
+
         half_outer_size = outer_size / 2
         outer_rect = QRectF(
             self.start.x() - half_outer_size,
@@ -190,17 +184,11 @@ class AttachedStrand(Strand):
         """Get a selection path for the exact end point of the strand."""
         # Create a small circle at the end point that matches the strand's end
         end_path = QPainterPath()
-        
-        # Base radius using strand width, but adjust for zoom to maintain consistent click targets
+
+        # Base radius using strand width - no zoom adjustment needed since we test in canvas coordinates
         base_radius = max(self.width / 2, 15)  # Minimum radius for clickability
-        
-        # Adjust radius based on zoom level to maintain consistent screen-space click targets
-        if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'zoom_factor'):
-            zoom_factor = self.canvas.zoom_factor
-            radius = base_radius / zoom_factor
-        else:
-            radius = base_radius
-            
+        radius = base_radius
+
         end_path.addEllipse(self.end, radius, radius)
         return end_path
  

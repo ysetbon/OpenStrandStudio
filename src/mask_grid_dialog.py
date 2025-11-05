@@ -187,12 +187,14 @@ class MaskGridDialog(QDialog):
 
         # Set fixed row/column sizes for compact display
         for i in range(len(self.strands) + 1):
-            self.table.setRowHeight(i, 32)
+            if i == 0:
+                self.table.setRowHeight(i, 70)  # Header row height for vertical layout
+            else:
+                self.table.setRowHeight(i, 50)  # Data row height - taller for vertical layout in row headers
             self.table.setColumnWidth(i, 50)  # Compact column width
 
-        # First column and row should be slightly wider for labels
-        self.table.setColumnWidth(0, 75)  # Header column width - compact
-        self.table.setRowHeight(0, 70)  # Header row height for vertical layout (color, name, checkbox)
+        # First column should be wider for labels
+        self.table.setColumnWidth(0, 90)  # Header column width - enough space for color, name, and checkbox
 
         # Populate table
         self._populate_table()
@@ -257,37 +259,72 @@ class MaskGridDialog(QDialog):
         widget = QWidget()
 
         if is_row:
-            # Row headers (left column) - horizontal layout in one line
-            layout = QHBoxLayout(widget)
-            layout.setContentsMargins(2, 2, 2, 2)
-            layout.setSpacing(1)  # Minimal spacing
+            # Row headers (left column) - vertical layout with checkbox on new line
+            layout = QVBoxLayout(widget)
+            layout.setContentsMargins(0, 0, 0, 0)
+            layout.setSpacing(2)
+            layout.setAlignment(Qt.AlignHCenter)
+
+            # Horizontal container for color and name
+            top_container = QWidget()
+            top_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+            top_layout = QHBoxLayout(top_container)
+            top_layout.setContentsMargins(0, 3, 0, 0)
+            top_layout.setSpacing(6)
+            top_layout.setAlignment(Qt.AlignCenter)
+
+            top_layout.addStretch()
 
             # Color indicator
             color_hex = strand.color.name()
             color_label = QLabel("  ")
             color_label.setFixedSize(16, 16)
             color_label.setStyleSheet(f"background-color: {color_hex}; border: 1px solid #888; border-radius: 2px;")
-            layout.addWidget(color_label)
+            color_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            top_layout.addWidget(color_label, 0, Qt.AlignVCenter)
 
             # Layer name
             name_label = QLabel(strand.layer_name)
             name_label.setWordWrap(False)
-            name_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+            name_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
             name_label.setStyleSheet("font-size: 9pt;")
-            layout.addWidget(name_label)
+            name_label.setAlignment(Qt.AlignCenter)
+            top_layout.addWidget(name_label, 0, Qt.AlignVCenter)
+            top_layout.addStretch()
 
-            # Select all checkbox (no text label)
+            layout.addWidget(top_container)
+
+            # Container for centered checkbox
+            checkbox_container = QWidget()
+            checkbox_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+            checkbox_layout = QHBoxLayout(checkbox_container)
+            checkbox_layout.setContentsMargins(0, 0, 0, 3)
+            checkbox_layout.setSpacing(0)
+            checkbox_layout.setAlignment(Qt.AlignCenter)
+
+            # Select all checkbox (centered)
             select_all_checkbox = QCheckBox()
             select_all_checkbox.setChecked(False)
+            select_all_checkbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            # Ensure the indicator itself is centered by removing label spacing
+            # and constraining the widget width to the indicator width
+            select_all_checkbox.setText("")
+            select_all_checkbox.setStyleSheet("QCheckBox { spacing: 0px; }")
 
             # Apply custom styling from shadow editor
             self._apply_large_indicator(select_all_checkbox, indicator_size=16)
             self._setup_custom_checkmark(select_all_checkbox)
+            select_all_checkbox.setFixedWidth(16)
 
             select_all_checkbox.stateChanged.connect(
                 lambda state, idx=index, row=is_row: self._on_header_checkbox_changed(idx, row, state)
             )
-            layout.addWidget(select_all_checkbox)
+
+            checkbox_layout.addStretch()
+            checkbox_layout.addWidget(select_all_checkbox)
+            checkbox_layout.addStretch()
+
+            layout.addWidget(checkbox_container)
         else:
             # Column headers (top row) - vertical layout stacked
             layout = QVBoxLayout(widget)
@@ -314,10 +351,14 @@ class MaskGridDialog(QDialog):
             # Select all checkbox (bottom, no text label)
             select_all_checkbox = QCheckBox()
             select_all_checkbox.setChecked(False)
+            select_all_checkbox.setText("")
+            select_all_checkbox.setStyleSheet("QCheckBox { spacing: 0px; }")
+            select_all_checkbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
             # Apply custom styling from shadow editor
             self._apply_large_indicator(select_all_checkbox, indicator_size=16)
             self._setup_custom_checkmark(select_all_checkbox)
+            select_all_checkbox.setFixedWidth(16)
 
             select_all_checkbox.stateChanged.connect(
                 lambda state, idx=index, row=is_row: self._on_header_checkbox_changed(idx, row, state)
@@ -346,6 +387,11 @@ class MaskGridDialog(QDialog):
         # Apply custom styling from shadow editor
         self._apply_large_indicator(checkbox, indicator_size=18)
         self._setup_custom_checkmark(checkbox)
+        # Remove internal spacing and fix size so indicator is truly centered
+        checkbox.setText("")
+        checkbox.setStyleSheet("QCheckBox { spacing: 0px; }")
+        checkbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        checkbox.setFixedSize(18, 18)
 
         if is_disabled:
             # Gray out existing masks

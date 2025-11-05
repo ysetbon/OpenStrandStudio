@@ -642,7 +642,7 @@ class LayerPanel(QWidget):
         self.set_button_tooltip(self.center_strands_button, _['center_tooltip'])
 
         # Create the multi-select button
-        self.multi_select_button = TooltipButton("🙉")
+        self.multi_select_button = TooltipButton("📄")
         self.multi_select_button.setFixedSize(40, 40)
         self.multi_select_button.setCheckable(True)  # Make it toggleable
         self.multi_select_button.setStyleSheet("""
@@ -1600,14 +1600,14 @@ class LayerPanel(QWidget):
         self.multi_select_mode = not self.multi_select_mode
         
         if self.multi_select_mode:
-            # Change to hide mode emoji when active
-            self.multi_select_button.setText("🙈")
+            # Change to multi-layer emoji when active
+            self.multi_select_button.setText("📚")
             # Clear any existing selections when entering multi-select mode
             self.multi_selected_layers.clear()
             self.update_layer_button_multi_select_display()
         else:
-            # Change back to hear-no-evil emoji when inactive
-            self.multi_select_button.setText("🙉")
+            # Change back to single-layer emoji when inactive
+            self.multi_select_button.setText("📄")
             # Clear selections and reset display when exiting multi-select mode
             self.multi_selected_layers.clear()
             self.update_layer_button_multi_select_display()
@@ -1631,7 +1631,7 @@ class LayerPanel(QWidget):
                 if getattr(strand, 'is_selected', False):
                     selected_index = i
                     break
-        
+
         for i, button in enumerate(self.layer_buttons):
             if i in self.multi_selected_layers:
                 # Add visual indicator for multi-selected layers
@@ -1656,12 +1656,15 @@ class LayerPanel(QWidget):
                 # Let the button handle its own styling by calling update_style()
                 if hasattr(button, 'update_style'):
                     button.update_style()
-            
+
             # Maintain selected strand appearance even in hide mode
             if i == selected_index:
                 button.setChecked(True)
             else:
                 button.setChecked(False)
+
+        # Update delete button state when multi-select display changes
+        self.update_delete_button_state()
 
 
     def show_multi_select_context_menu(self, index, position):
@@ -1913,7 +1916,7 @@ class LayerPanel(QWidget):
         """Disable shadow-only mode for selected layers (show full layers)"""
         if not self.multi_selected_layers:
             return
-            
+
         for layer_index in self.multi_selected_layers:
             if layer_index < len(self.canvas.strands):
                 strand = self.canvas.strands[layer_index]
@@ -1923,10 +1926,10 @@ class LayerPanel(QWidget):
                 if layer_index < len(self.layer_buttons):
                     button = self.layer_buttons[layer_index]
                     button.set_shadow_only(False)
-        
+
         # Update canvas
         self.canvas.update()
-        
+
         # Save undo/redo state after disabling shadow-only mode
         if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
             # Force save by resetting last save time to ensure this is captured as a new state
@@ -1934,7 +1937,54 @@ class LayerPanel(QWidget):
             self.canvas.undo_redo_manager.save_state()
         else:
             pass
-        
+
+        # Clear selections after operation
+        self.multi_selected_layers.clear()
+        self.update_layer_button_multi_select_display()
+
+    def delete_selected_layers(self):
+        """Delete all selected layers in multi-select mode (only if all are deletable)"""
+        if not self.multi_selected_layers:
+            return
+
+        # Double-check that all selected layers are deletable
+        for layer_index in self.multi_selected_layers:
+            if layer_index < len(self.canvas.strands):
+                strand = self.canvas.strands[layer_index]
+                if not self.is_strand_deletable(strand):
+                    # If any layer is not deletable, abort the operation
+                    return
+
+        # Save state BEFORE deletion for proper undo/redo
+        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            self.undo_redo_manager.save_state()
+
+        # Sort indices in descending order to delete from highest to lowest
+        # This prevents index shifting issues during deletion
+        sorted_indices = sorted(self.multi_selected_layers, reverse=True)
+
+        for layer_index in sorted_indices:
+            if layer_index < len(self.canvas.strands):
+                strand = self.canvas.strands[layer_index]
+
+                if isinstance(strand, MaskedStrand):
+                    # Delete masked layer
+                    if self.canvas.delete_masked_layer(strand):
+                        if layer_index < len(self.layer_buttons):
+                            self.remove_layer_button(layer_index)
+                else:
+                    # Delete regular strand
+                    self.strand_deleted.emit(layer_index)
+
+        # Force a complete refresh after all deletions
+        self.refresh()
+        self.refresh_layers_no_zoom()
+        self.update_layer_button_states()
+
+        # Save state AFTER deletion to capture the "deleted" state
+        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            self.undo_redo_manager.save_state(allow_empty=True)
+
         # Clear selections after operation
         self.multi_selected_layers.clear()
         self.update_layer_button_multi_select_display()
@@ -2390,16 +2440,35 @@ class LayerPanel(QWidget):
 
     def update_delete_button_state(self):
         """Update the delete button state based on the currently selected strand's deletability."""
-            
+
+        # Check if we're in multi-select mode with selected layers
+        if self.multi_select_mode and self.multi_selected_layers:
+            # Check if ALL selected layers are deletable
+            all_deletable = True
+            for layer_index in self.multi_selected_layers:
+                if layer_index < len(self.canvas.strands):
+                    strand = self.canvas.strands[layer_index]
+                    if not self.is_strand_deletable(strand):
+                        all_deletable = False
+                        break
+
+            # Enable delete button only if all selected layers are deletable and not in lock mode
+            if self.lock_mode:
+                self.delete_strand_button.setEnabled(False)
+            else:
+                self.delete_strand_button.setEnabled(all_deletable)
+            self.delete_strand_button.update()
+            return
+
         selected_index = self.get_selected_layer()
-        if (selected_index is not None and 
-            selected_index < len(self.layer_buttons) and 
+        if (selected_index is not None and
+            selected_index < len(self.layer_buttons) and
             selected_index < len(self.canvas.strands)):
-            
+
             selected_strand = self.canvas.strands[selected_index]
             # Use the improved deletability check that considers knot connections
             is_deletable = self.is_strand_deletable(selected_strand)
-            
+
             # Keep delete button disabled if in lock mode
             if self.lock_mode:
                 self.delete_strand_button.setEnabled(False)
@@ -2433,28 +2502,33 @@ class LayerPanel(QWidget):
         self.canvas.start_new_strand_mode(self.current_set)
 
     def request_delete_strand(self):
-        """Request the deletion of the selected strand."""
+        """Request the deletion of the selected strand(s)."""
+        # Check if we're in multi-select mode with selected layers
+        if self.multi_select_mode and self.multi_selected_layers:
+            self.delete_selected_layers()
+            return
+
         selected_button = next((button for button in self.layer_buttons if button.isChecked()), None)
         if selected_button:
             strand_name = selected_button.text()
-            
+
             # Find the corresponding strand in the canvas
             strand_index = next((i for i, s in enumerate(self.canvas.strands) if s.layer_name == strand_name), None)
-            
+
             if strand_index is not None:
                 strand = self.canvas.strands[strand_index]
                 if isinstance(strand, MaskedStrand):
                     # Save state BEFORE deletion for proper undo/redo
                     if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
                         self.undo_redo_manager.save_state()
-                    
+
                     # Delete only this specific masked layer
                     if self.canvas.delete_masked_layer(strand):
                         self.remove_layer_button(strand_index)
                         # Update the layer panel without affecting other masked layers
                         self.refresh()
                         self.refresh_layers_no_zoom()  # Preserve zoom/pan after masked strand deletion
-                        
+
                         # Save state AFTER deletion to capture the "deleted" state
                         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
                             self.undo_redo_manager.save_state(allow_empty=True)
@@ -2463,14 +2537,14 @@ class LayerPanel(QWidget):
                     # Save state BEFORE deletion for proper undo/redo
                     if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
                         self.undo_redo_manager.save_state()
-                    
+
                     # Handle regular strand deletion
                     self.strand_deleted.emit(strand_index)
                     # Force a complete refresh after deletion
                     self.refresh()
                     self.refresh_layers_no_zoom()
                     self.update_layer_button_states()
-                    
+
                     # Save state AFTER deletion to capture the "deleted" state
                     if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
                         self.undo_redo_manager.save_state(allow_empty=True)
@@ -2676,11 +2750,11 @@ class LayerPanel(QWidget):
         for i, btn in enumerate(self.layer_buttons):
             pass
 
-        # Reset monkey button to non-hide mode when creating new layer
+        # Reset multi-select button to inactive mode when creating new layer
         if hasattr(self, 'multi_select_button') and self.multi_select_mode:
             self.multi_select_mode = False
             self.multi_select_button.setChecked(False)
-            self.multi_select_button.setText("🙉")
+            self.multi_select_button.setText("📄")
             self.multi_selected_layers.clear()
             self.update_layer_button_multi_select_display()
 

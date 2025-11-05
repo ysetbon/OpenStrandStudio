@@ -1,4 +1,4 @@
-# OpenStrand Studio
+# OpenStrand Studio - FR Readme
 
 OpenStrand Studio est un outil interactif pour créer et manipuler des designs basés sur des brins. Il offre un canevas où les utilisateurs peuvent dessiner, connecter et modifier des brins pour créer des motifs ou des structures complexes. Le logiciel propose divers modes pour attacher, déplacer et personnaliser les brins, le rendant polyvalent pour différents besoins de conception.
 

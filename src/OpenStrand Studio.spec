@@ -16,7 +16,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=['numpy', 'numpy.*'],
     noarchive=False,
     optimize=0,
 )

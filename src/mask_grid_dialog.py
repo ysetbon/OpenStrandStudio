@@ -60,6 +60,34 @@ class MaskGridDialog(QDialog):
         if hasattr(self.canvas, 'theme_changed'):
             self.canvas.theme_changed.connect(self._apply_theme)
 
+        # Connect to canvas signals to auto-update when masks are added/deleted
+        if hasattr(self.canvas, 'masked_layer_created'):
+            self.canvas.masked_layer_created.connect(self._on_mask_layer_changed)
+        if hasattr(self.canvas, 'strand_deleted'):
+            self.canvas.strand_deleted.connect(self._on_mask_layer_changed)
+
+        # Connect to undo/redo signals to catch all layer changes
+        self._connect_undo_redo_signals()
+
+    def _connect_undo_redo_signals(self):
+        """Connect to undo/redo manager signals to catch all state changes."""
+        # Try to get undo_redo_manager from parent (layer_panel)
+        undo_redo_manager = None
+        if hasattr(self.parent(), 'undo_redo_manager'):
+            undo_redo_manager = self.parent().undo_redo_manager
+        # Also check if canvas has it
+        elif hasattr(self.canvas, 'undo_redo_manager'):
+            undo_redo_manager = self.canvas.undo_redo_manager
+
+        # Store reference for cleanup
+        self.undo_redo_manager = undo_redo_manager
+
+        if undo_redo_manager:
+            if hasattr(undo_redo_manager, 'undo_performed'):
+                undo_redo_manager.undo_performed.connect(self._on_mask_layer_changed)
+            if hasattr(undo_redo_manager, 'redo_performed'):
+                undo_redo_manager.redo_performed.connect(self._on_mask_layer_changed)
+
     def _get_group_strands(self):
         """
         Get all regular strands for the group, excluding MaskedStrand objects.
@@ -160,7 +188,7 @@ class MaskGridDialog(QDialog):
 
         # Window setup
         self.setWindowTitle(f"{_['create_mask_grid']} - {self.group_name}")
-        self.setModal(True)
+        self.setModal(False)
         self.setMinimumSize(600, 400)
         self.resize(800, 600)
 
@@ -414,9 +442,18 @@ class MaskGridDialog(QDialog):
         return widget
 
     def _check_mask_exists(self, strand1_name, strand2_name):
-        """Check if a mask layer already exists between two strands."""
+        """
+        Check if a mask layer already exists between two strands.
+        Uses LayerStateManager as the source of truth for mask state.
+        """
         mask_name = f"{strand1_name}_{strand2_name}"
 
+        # Use LayerStateManager's getMaskedLayers() as the source of truth
+        if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+            masked_layers = self.canvas.layer_state_manager.getMaskedLayers()
+            return mask_name in masked_layers
+
+        # Fallback to direct canvas.strands check if layer_state_manager not available
         for strand in self.canvas.strands:
             if isinstance(strand, MaskedStrand) and strand.layer_name == mask_name:
                 return True
@@ -524,19 +561,67 @@ class MaskGridDialog(QDialog):
                 self.canvas.create_masked_layer(strand1, strand2)
 
     def _refresh_table(self):
-        """Refresh the table to reflect newly created masks."""
+        """Refresh the table to reflect current mask state (both created and deleted masks)."""
         for (row_idx, col_idx), checkbox in self.checkboxes.items():
-            if checkbox.isEnabled():
-                row_strand = self.strands[row_idx]
-                col_strand = self.strands[col_idx]
+            row_strand = self.strands[row_idx]
+            col_strand = self.strands[col_idx]
 
-                if self._check_mask_exists(row_strand.layer_name, col_strand.layer_name):
-                    checkbox.setChecked(True)
-                    checkbox.setEnabled(False)
-                    checkbox.setStyleSheet("QCheckBox { color: #808080; }")
+            mask_exists = self._check_mask_exists(row_strand.layer_name, col_strand.layer_name)
+
+            if mask_exists:
+                # Mask exists - disable and check the checkbox
+                checkbox.setChecked(True)
+                checkbox.setEnabled(False)
+                checkbox.setStyleSheet("QCheckBox { color: #808080; }")
+            else:
+                # Mask doesn't exist - enable and uncheck if it was previously disabled
+                if not checkbox.isEnabled():
+                    checkbox.setEnabled(True)
+                    checkbox.setChecked(False)
+                    checkbox.setStyleSheet("")
 
         # Update header checkboxes
         self._update_header_checkboxes()
+
+    def _on_mask_layer_changed(self, *args):
+        """
+        Called when a mask layer is created or deleted outside the dialog.
+        Refreshes the table to reflect the current state of masks.
+        """
+        self._refresh_table()
+
+    def closeEvent(self, event):
+        """Clean up signal connections when dialog is closed."""
+        # Disconnect signals to prevent memory leaks
+        if hasattr(self.canvas, 'theme_changed'):
+            try:
+                self.canvas.theme_changed.disconnect(self._apply_theme)
+            except:
+                pass
+        if hasattr(self.canvas, 'masked_layer_created'):
+            try:
+                self.canvas.masked_layer_created.disconnect(self._on_mask_layer_changed)
+            except:
+                pass
+        if hasattr(self.canvas, 'strand_deleted'):
+            try:
+                self.canvas.strand_deleted.disconnect(self._on_mask_layer_changed)
+            except:
+                pass
+
+        # Disconnect undo/redo signals
+        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            try:
+                self.undo_redo_manager.undo_performed.disconnect(self._on_mask_layer_changed)
+            except:
+                pass
+            try:
+                self.undo_redo_manager.redo_performed.disconnect(self._on_mask_layer_changed)
+            except:
+                pass
+
+        # Call parent closeEvent
+        super().closeEvent(event)
 
     def _apply_theme(self):
         """Apply theme-based styling to the dialog."""

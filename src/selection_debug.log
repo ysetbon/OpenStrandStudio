@@ -1,1 +1,1279 @@
-2025-11-05T17:11:39.175188 - Selection rectangle debug logging started
+2025-11-06T11:55:13.298762 - Selection rectangle debug logging started
+2025-11-06T12:00:06.190638 - MOVE_MODE - start_movement strand=1_3 id=0x20722ac07d0 side=1 is_moving_control_point=False is_moving_strand_point=True draw_only_affected=False
+2025-11-06T12:00:06.220540 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.221536 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.221536 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.222814 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.222814 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.222814 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.257799 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.258884 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.258884 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.258884 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.260373 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.260373 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.295637 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.295637 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.296634 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.296634 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.297631 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.297631 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.333206 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.333206 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.334214 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.334214 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.334214 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.334214 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.369044 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.370049 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.370049 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.370049 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.370049 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.370049 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.403689 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.403689 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.404722 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.404722 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.404722 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.404722 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.438189 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.438189 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.438189 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.438189 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.438189 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.438189 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.473788 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.474834 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.474834 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.474834 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.474834 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.476304 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.508451 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.509457 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.509457 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.509457 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.509457 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.509457 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.543086 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.544104 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.544104 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.544104 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.544104 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.545462 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.578186 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.578186 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.579191 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.579191 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.579191 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.579191 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.613396 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.614536 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.614536 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.614536 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.615882 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.615882 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.651153 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.651153 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.652435 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.652435 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.652435 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.652435 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.689838 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.689838 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.690857 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.690857 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.690857 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.690857 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.723488 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.723488 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.724744 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.724744 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.724744 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.724744 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.758323 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.759795 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.759795 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.759795 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.759795 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.759795 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.796172 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.796172 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.796172 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.797179 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.797179 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.797179 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.832423 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.832423 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.832423 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.832423 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.832423 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.832423 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.865995 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.867210 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.867210 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.867210 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.867210 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.868667 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.905047 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.906062 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.906062 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.906062 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.906062 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.907396 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.942350 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.942350 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.942350 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.943356 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.943356 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.943356 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:06.975444 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.975444 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:06.975444 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:06.976514 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:06.976514 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:06.976514 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:07.008097 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.009231 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:07.009231 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.009231 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:07.009231 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:07.009231 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:07.041727 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.042737 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:07.042737 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.042737 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:07.042737 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:07.044128 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:07.076505 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.077508 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:07.077508 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.077508 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:07.077508 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:07.077508 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:07.110477 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.110477 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:07.111474 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.111474 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:07.111474 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:07.111474 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:07.145360 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.145360 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:07.145360 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.145360 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:07.146395 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:07.146395 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:07.179247 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.179247 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:07.180244 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.180244 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:07.180244 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:07.181241 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:07.214931 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.214931 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:07.214931 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.215940 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:07.215940 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:07.215940 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:07.246423 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.246423 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:07.246423 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.247558 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:07.247558 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:07.247558 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:07.279881 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.279881 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:07.279881 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.280888 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:07.280888 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:07.280888 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:07.313836 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.313836 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:07.314832 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.314832 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:07.314832 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:07.314832 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:07.351001 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.352005 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:07.352005 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.352005 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:07.352005 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:07.353007 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:07.393232 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.393232 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:07.393232 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:07.394237 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:07.394237 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:07.394237 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:07.395610 - MOVE_MODE - reset_movement_state begin affected=1_3 is_moving=True is_moving_control_point=False is_moving_strand_point=True
+2025-11-06T12:00:07.396545 - MOVE_MODE - reset_movement_state end flags cleared
+2025-11-06T12:00:07.990374 - MOVE_MODE - start_movement strand=1_1 id=0x20722ac0590 side=control_point1 is_moving_control_point=True is_moving_strand_point=False draw_only_affected=False
+2025-11-06T12:00:08.032238 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.032238 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.033706 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.033706 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.033706 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.033706 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.066416 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.067428 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.067428 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.067428 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.068968 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.068968 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.102464 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.103461 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.103461 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.104482 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.104482 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.104482 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.140207 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.140207 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.140207 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.141204 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.141204 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.142538 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.184924 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.184924 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.186040 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.186040 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.187060 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.187060 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.230592 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.230592 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.231607 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.231607 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.231607 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.233050 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.276883 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.276883 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.276883 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.277953 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.277953 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.277953 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.314911 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.316201 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.316201 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.317355 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.317355 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.317355 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.374872 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.374872 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.375886 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.375886 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.375886 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.377395 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.442454 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.442454 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.443499 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.443499 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.444920 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.444920 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.506287 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.507371 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.507371 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.507371 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.508379 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.508379 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.554766 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.555763 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.555763 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.556760 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.557174 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.557174 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.600481 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.600481 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.601775 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.601775 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.602887 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.602887 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.645033 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.645033 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.645033 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.646363 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.646363 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.646363 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.690128 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.691175 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.691175 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.692437 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.692437 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.692437 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.737097 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.737097 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.738138 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.738138 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.738138 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.739556 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.782491 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.783534 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.783534 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.783534 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.785058 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.786135 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.827249 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.828266 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.828584 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.829496 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.829496 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.829496 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.870606 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.870606 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.871618 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.871618 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.872992 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.872992 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.912727 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.912727 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.913771 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.913771 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.913771 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.913771 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.954881 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.954881 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.954881 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.955930 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.955930 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.955930 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:08.996039 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:08.996039 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:08.997097 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.997097 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:08.998295 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:08.998295 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:09.038172 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:09.038172 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:09.039270 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:09.039270 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:09.040146 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:09.040146 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:09.043183 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=True is_moving_strand_point=False
+2025-11-06T12:00:09.043736 - MOVE_MODE - reset_movement_state end flags cleared
+2025-11-06T12:00:09.456274 - MOVE_MODE - start_movement strand=1_3 id=0x20722ac07d0 side=1 is_moving_control_point=False is_moving_strand_point=True draw_only_affected=False
+2025-11-06T12:00:09.495488 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:09.495488 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:09.496493 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:09.497079 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:09.497480 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:09.498163 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:09.538158 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:09.538158 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:09.539156 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:09.539156 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:09.539156 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:09.540171 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:09.581458 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:09.581458 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:09.582536 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:09.582536 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:09.582536 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:09.583874 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:09.621888 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:09.621888 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:09.621888 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:09.622892 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:09.622892 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:09.622892 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:09.625985 - MOVE_MODE - reset_movement_state begin affected=1_3 is_moving=True is_moving_control_point=False is_moving_strand_point=True
+2025-11-06T12:00:09.626720 - MOVE_MODE - reset_movement_state end flags cleared
+2025-11-06T12:00:11.228789 - MOVE_MODE - start_movement strand=1_1 id=0x20722ac0590 side=control_point_center is_moving_control_point=True is_moving_strand_point=False draw_only_affected=False
+2025-11-06T12:00:11.287937 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:11.287937 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:11.288944 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.288944 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:11.290459 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.290459 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:11.365313 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:11.366251 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:11.367329 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.367329 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:11.367329 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.367329 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:11.438170 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:11.438170 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:11.439177 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.439177 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:11.440198 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.440198 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:11.514469 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:11.514469 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:11.515807 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.515807 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:11.515807 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.515807 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:11.579247 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:11.579247 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:11.580254 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.580254 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:11.580254 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.581761 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:11.650996 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:11.650996 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:11.652001 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.652001 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:11.652001 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.652001 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:11.718793 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:11.718793 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:11.719799 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.719799 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:11.721126 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.721126 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:11.790036 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:11.791072 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:11.791072 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.791072 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:11.792721 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.792721 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:11.863829 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:11.864332 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:11.864332 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.864332 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:11.864332 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.865707 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:11.937580 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:11.937580 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:11.938586 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.938586 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:11.938586 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:11.939809 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:12.006942 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:12.007949 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:12.007949 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.007949 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:12.007949 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.009109 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:12.076358 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:12.076358 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:12.077363 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.077363 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:12.078443 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.078443 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:12.153475 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:12.153475 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:12.153475 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.153475 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:12.154952 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.155116 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:12.227940 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:12.229009 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:12.229009 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.229009 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:12.229009 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.230431 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:12.295051 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:12.296071 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:12.297086 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.297086 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:12.297086 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.297086 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:12.370784 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:12.370784 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:12.371819 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.371819 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:12.371819 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.373307 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:12.445560 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:12.445560 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:12.446583 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.447686 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:12.447686 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.448844 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:12.526009 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:12.526009 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:12.526776 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.526776 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:12.526776 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.528256 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:12.598078 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:12.599396 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:12.599396 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.599396 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:12.600865 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.600865 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:12.674855 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:12.675852 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:12.675852 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.677069 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:12.677594 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.677594 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:12.759695 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:12.759695 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:12.760700 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.761709 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:12.761952 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.761952 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:12.842764 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:12.842764 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:12.844014 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.844014 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:12.845104 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.845104 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:12.927252 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:12.927252 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:12.928258 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.928258 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:12.928258 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:12.928258 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:13.001244 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:13.001244 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:13.002385 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.002385 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:13.003434 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.003434 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:13.075573 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:13.075573 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:13.076642 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.076642 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:13.076642 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.077744 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:13.146999 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:13.148318 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:13.148318 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.148318 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:13.149689 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.149689 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:13.222040 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:13.223108 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:13.223108 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.224592 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:13.224592 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.224592 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:13.315430 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:13.315430 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:13.315430 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.316767 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:13.317233 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.317233 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:13.417352 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:13.418411 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:13.418411 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.418411 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:13.419754 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.419754 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:13.521477 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:13.522532 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:13.522532 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.522532 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:13.523978 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.523978 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:13.633448 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:13.634445 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:13.634445 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.635442 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:13.635442 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.636438 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:13.737540 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:13.737540 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:13.738549 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.738549 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:13.738549 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.738549 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:13.823858 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:13.823858 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:13.824851 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.825847 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:13.825847 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.825847 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:13.915837 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:13.915837 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:13.915837 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.915837 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:13.917304 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:13.917304 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:14.009426 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:14.009426 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:14.010477 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:14.010477 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:14.010477 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:14.011594 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:14.140417 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:14.141424 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:14.141424 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:14.141424 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:14.142782 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:14.142782 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:14.254812 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:14.255858 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:14.256367 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:14.256367 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:14.256367 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:14.258097 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:14.379566 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:14.380104 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:14.380625 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:14.381140 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:14.381140 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:14.381682 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:14.492667 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:14.493693 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:14.493693 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:14.493693 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:14.494835 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:14.494835 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:14.603940 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:14.603940 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:14.604937 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:14.604937 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:14.604937 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:14.605934 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:14.714712 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:14.715768 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:14.715768 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:14.715768 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:14.717102 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:14.717102 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:14.723548 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=True is_moving_strand_point=False
+2025-11-06T12:00:14.723895 - MOVE_MODE - reset_movement_state end flags cleared
+2025-11-06T12:00:15.391357 - MOVE_MODE - start_movement strand=1_1 id=0x20722ac0590 side=control_point1 is_moving_control_point=True is_moving_strand_point=False draw_only_affected=False
+2025-11-06T12:00:15.511613 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:15.512669 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:15.512669 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:15.512669 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:15.514123 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:15.514123 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:15.631510 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:15.631510 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:15.632559 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:15.632559 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:15.633926 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:15.633926 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:15.748934 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:15.748934 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:15.750044 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:15.750702 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:15.751502 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:15.751502 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:15.903325 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:15.903325 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:15.903325 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:15.904333 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:15.904818 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:15.905616 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:16.060057 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:16.060057 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:16.061062 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:16.061062 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:16.061062 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:16.062581 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:16.202531 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:16.202531 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:16.203538 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:16.204543 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:16.204543 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:16.204543 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:16.346655 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:16.346655 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:16.347706 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:16.347706 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:16.347706 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:16.349256 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:16.490467 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:16.491476 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:16.491476 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:16.491476 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:16.492740 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:16.492740 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:16.639183 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:16.639183 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:16.640368 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:16.640368 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:16.640368 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:16.640368 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:16.776885 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:16.776885 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:16.779139 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:16.780047 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:16.780047 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:16.781044 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:16.899200 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:16.900202 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:16.900202 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:16.901206 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:16.901206 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:16.902371 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:17.018533 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:17.019549 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:17.019549 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:17.019549 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:17.020929 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:17.020929 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:17.138849 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:17.138849 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:17.139856 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:17.139856 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:17.141081 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:17.141081 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:17.263146 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:17.263146 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:17.263146 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:17.263146 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:17.264821 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:17.264821 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:17.382017 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:17.383061 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:17.383061 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:17.383061 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:17.384469 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:17.384469 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:17.502854 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:17.502854 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2025-11-06T12:00:17.502854 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:17.502854 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:17.504354 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:17.505359 - Skipping control point draw for strand=1_3 because should_skip=True
+2025-11-06T12:00:17.506396 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=True is_moving_strand_point=False
+2025-11-06T12:00:17.507601 - MOVE_MODE - reset_movement_state end flags cleared
+2025-11-06T12:00:17.884483 - MOVE_MODE - start_movement strand=1_3 id=0x20722ac07d0 side=1 is_moving_control_point=False is_moving_strand_point=True draw_only_affected=False
+2025-11-06T12:00:17.994208 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:17.994208 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:17.995626 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:17.995626 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:17.995626 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:17.995626 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:18.111622 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:18.111622 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:18.111622 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:18.112627 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:18.112627 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:18.112627 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:18.226997 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:18.228000 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:18.228000 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:18.228000 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:18.229004 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:18.229004 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:18.342479 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:18.343458 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:18.343458 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:18.343458 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:18.343458 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:18.344838 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:18.460069 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:18.460069 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:18.460069 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:18.461731 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:18.461731 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:18.461731 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:18.575218 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:18.576439 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:18.576760 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:18.576760 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:18.577546 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:18.577546 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:18.692514 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:18.692514 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:18.693824 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:18.693824 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:18.693824 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:18.693824 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:18.837886 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:18.837886 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:18.837886 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:18.838891 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:18.838891 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:18.838891 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:18.954626 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:18.954626 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:18.955647 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:18.955647 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:18.955647 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:18.957068 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:19.072746 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:19.072746 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:19.072746 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:19.074053 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:19.074053 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:19.074053 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:19.186118 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:19.186118 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:19.187776 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:19.187776 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:19.187776 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:19.188800 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:19.302616 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:19.302616 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:19.303630 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:19.303630 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:19.303630 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:19.305053 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:19.418510 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:19.418510 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:19.419515 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:19.419515 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:19.419515 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:19.420656 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:19.533039 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:19.534049 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:19.534049 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:19.534049 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:19.535009 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:19.535009 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:19.644788 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:19.644788 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:19.644788 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:19.645795 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:19.645795 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:19.645795 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:19.759905 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:19.759905 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:19.760911 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:19.760911 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:19.760911 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:19.762035 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:19.874405 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:19.875464 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:19.875464 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:19.875464 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:19.875464 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:19.876856 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:20.001087 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:20.001087 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:20.002095 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:20.002095 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:20.002095 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:20.003149 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:20.119801 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:20.120940 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:20.121338 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:20.121338 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:20.121338 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:20.122372 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:20.261843 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:20.262840 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:20.262840 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:20.262840 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:20.262840 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:20.262840 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:20.378377 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:20.378377 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:20.378377 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:20.378377 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:20.378377 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:20.379865 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:20.493599 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:20.494647 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:20.494647 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:20.494647 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:20.496061 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:20.496061 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:20.611564 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:20.611564 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:20.611564 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:20.612569 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:20.612569 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:20.613727 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:20.729587 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:20.729587 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:20.729587 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:20.730657 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:20.730657 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:20.730657 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:20.846591 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:20.846591 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:20.847927 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:20.847927 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:20.847927 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:20.849368 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:20.976675 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:20.976675 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:20.977681 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:20.977681 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:20.977681 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:20.977681 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:21.097253 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:21.097253 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:21.097253 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:21.098503 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:21.098503 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:21.098503 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:21.216603 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:21.216603 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:21.216603 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:21.217609 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:21.217609 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:21.217609 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:21.331212 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:21.332283 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:21.332283 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:21.332283 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:21.332283 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:21.333696 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:21.452536 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:21.453603 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:21.453603 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:21.453603 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:21.453603 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:21.455077 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:21.456560 - MOVE_MODE - reset_movement_state begin affected=1_3 is_moving=True is_moving_control_point=False is_moving_strand_point=True
+2025-11-06T12:00:21.456560 - MOVE_MODE - reset_movement_state end flags cleared
+2025-11-06T12:00:22.164963 - MOVE_MODE - start_movement strand=1_3 id=0x20722ac07d0 side=control_point1 is_moving_control_point=True is_moving_strand_point=False draw_only_affected=False
+2025-11-06T12:00:22.295746 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:22.296739 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:22.296739 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:22.296739 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:22.298220 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:22.298220 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:22.411187 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:22.411187 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:22.412193 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:22.412193 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:22.412193 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:22.413666 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:22.526956 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:22.526956 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:22.526956 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:22.527949 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:22.527949 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:22.529242 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:22.643180 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:22.644189 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:22.644189 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:22.644189 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:22.645462 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:22.645462 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:22.760676 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:22.761694 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:22.761694 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:22.761694 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:22.761694 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:22.763564 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:22.876592 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:22.877609 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:22.877609 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:22.877609 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:22.878750 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:22.878750 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:22.994769 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:22.995765 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:22.995765 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:22.995765 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:22.995765 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:22.997480 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:23.111836 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:23.111836 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:23.111836 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:23.112842 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:23.112842 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:23.112842 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:23.245848 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:23.245848 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:23.246856 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:23.246856 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:23.246856 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:23.246856 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:23.365281 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:23.365281 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:23.365281 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:23.366773 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:23.366773 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:23.366773 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:23.486762 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:23.486762 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:23.487804 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:23.487804 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:23.487804 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:23.488883 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:23.609673 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:23.609673 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:23.610913 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:23.610913 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:23.610913 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:23.610913 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:23.729204 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:23.730370 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:23.730370 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:23.730370 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:23.730370 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:23.731859 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:23.848024 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:23.848024 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:23.848024 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point1
+2025-11-06T12:00:23.849257 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:23.849257 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2025-11-06T12:00:23.849257 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:23.852953 - MOVE_MODE - reset_movement_state begin affected=1_3 is_moving=True is_moving_control_point=True is_moving_strand_point=False
+2025-11-06T12:00:23.853638 - MOVE_MODE - reset_movement_state end flags cleared
+2025-11-06T12:00:24.400470 - MOVE_MODE - start_movement strand=1_3 id=0x20722ac07d0 side=control_point_center is_moving_control_point=True is_moving_strand_point=False draw_only_affected=False
+2025-11-06T12:00:24.519671 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:24.519671 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:24.520686 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:24.520686 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:24.520686 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:24.522118 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:24.634504 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:24.635513 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:24.635513 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:24.635513 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:24.636976 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:24.636976 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:24.754285 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:24.754285 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:24.755281 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:24.755281 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:24.756351 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:24.756351 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:24.873568 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:24.873568 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:24.873568 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:24.874640 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:24.874640 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:24.875578 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:24.991955 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:24.992978 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:24.992978 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:24.992978 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:24.992978 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:24.994327 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:25.111904 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:25.112998 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:25.112998 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:25.112998 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:25.112998 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:25.114417 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:25.232219 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:25.233269 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:25.233269 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:25.234127 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:25.234127 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:25.234127 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:25.354681 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:25.354681 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:25.355708 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:25.355708 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:25.355708 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:25.355708 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:25.485720 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:25.486337 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:25.486337 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:25.486337 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:25.486337 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:25.486337 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:25.607090 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:25.608120 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:25.608120 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:25.608120 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:25.609350 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:25.609350 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:25.730816 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:25.730816 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:25.730816 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:25.731859 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:25.731859 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:25.731859 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:25.852535 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:25.852535 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:25.853545 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:25.853545 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:25.853545 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:25.853545 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:25.972957 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:25.973963 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:25.973963 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:25.974747 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:25.974747 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:25.975302 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:26.092071 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:26.093069 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:26.093069 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:26.093069 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:26.093069 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:26.093069 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:26.211266 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:26.211266 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:26.211266 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point_center
+2025-11-06T12:00:26.211266 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:26.212641 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2025-11-06T12:00:26.212641 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:26.216676 - MOVE_MODE - reset_movement_state begin affected=1_3 is_moving=True is_moving_control_point=True is_moving_strand_point=False
+2025-11-06T12:00:26.216676 - MOVE_MODE - reset_movement_state end flags cleared
+2025-11-06T12:00:26.675273 - MOVE_MODE - start_movement strand=1_3 id=0x20722ac07d0 side=control_point2 is_moving_control_point=True is_moving_strand_point=False draw_only_affected=False
+2025-11-06T12:00:26.788454 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point2
+2025-11-06T12:00:26.788454 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:26.788454 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point2
+2025-11-06T12:00:26.789459 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:26.789459 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2025-11-06T12:00:26.789459 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:26.908406 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point2
+2025-11-06T12:00:26.909475 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:26.909475 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point2
+2025-11-06T12:00:26.910499 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:26.910499 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2025-11-06T12:00:26.911062 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:27.028177 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point2
+2025-11-06T12:00:27.029183 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:27.029183 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point2
+2025-11-06T12:00:27.030179 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:27.030258 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2025-11-06T12:00:27.030258 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:27.145871 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point2
+2025-11-06T12:00:27.145871 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:27.145871 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point2
+2025-11-06T12:00:27.146875 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:27.146875 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2025-11-06T12:00:27.146875 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:27.264182 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point2
+2025-11-06T12:00:27.264182 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:27.264182 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point2
+2025-11-06T12:00:27.265197 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:27.265197 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2025-11-06T12:00:27.265197 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:27.386396 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point2
+2025-11-06T12:00:27.386396 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:27.386396 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point2
+2025-11-06T12:00:27.387465 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:27.387465 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2025-11-06T12:00:27.387465 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:27.506550 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point2
+2025-11-06T12:00:27.506550 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:27.507894 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point2
+2025-11-06T12:00:27.507894 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:27.508850 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2025-11-06T12:00:27.508850 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:27.661323 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point2
+2025-11-06T12:00:27.661323 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:27.662338 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point2
+2025-11-06T12:00:27.662338 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:27.662338 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2025-11-06T12:00:27.662338 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:27.780346 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point2
+2025-11-06T12:00:27.780346 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:27.781452 - draw_control_points loop strand=1_2 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=True is_affected=False moving_side=control_point2
+2025-11-06T12:00:27.781452 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:27.781452 - draw_control_points loop strand=1_3 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2025-11-06T12:00:27.781452 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:27.786958 - MOVE_MODE - reset_movement_state begin affected=1_3 is_moving=True is_moving_control_point=True is_moving_strand_point=False
+2025-11-06T12:00:27.787366 - MOVE_MODE - reset_movement_state end flags cleared
+2025-11-06T12:00:28.216948 - MOVE_MODE - start_movement strand=1_3 id=0x20722ac07d0 side=1 is_moving_control_point=False is_moving_strand_point=True draw_only_affected=False
+2025-11-06T12:00:28.352647 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:28.353706 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:28.353706 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:28.354715 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:28.354715 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:28.354715 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:28.479237 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:28.480246 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:28.480610 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:28.480610 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:28.480610 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:28.481657 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:28.599544 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:28.599544 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:28.599544 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:28.600639 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:28.600639 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:28.600639 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:28.724297 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:28.724297 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:28.724297 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:28.725378 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:28.725378 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:28.725378 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:28.849879 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:28.849879 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:28.849879 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:28.849879 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:28.849879 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:28.851368 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:28.972702 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:28.972702 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:28.972702 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:28.973904 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:28.973904 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:28.973904 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:29.093966 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:29.093966 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:29.094968 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:29.094968 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:29.094968 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:29.094968 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:29.215434 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:29.215434 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:29.216436 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:29.216436 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:29.216436 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:29.216436 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:29.338218 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:29.338218 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:29.338218 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:29.339362 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:29.339362 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:29.340361 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:29.464274 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:29.464274 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:29.465328 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:29.465328 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:29.465328 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:29.465328 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:29.586740 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:29.586740 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:29.586740 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:29.587965 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:29.587965 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:29.587965 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:29.710255 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:29.710255 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:29.711265 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:29.711265 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:29.711265 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:29.712315 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:29.838314 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:29.838856 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:29.838856 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:29.839377 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:29.839377 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:29.839900 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:29.962061 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:29.963066 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:29.963066 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:29.963066 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:29.963066 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:29.964318 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:30.087501 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:30.088498 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:30.088498 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:30.088498 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:30.089494 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:30.089494 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:30.212525 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:30.213543 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:30.213543 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:30.214235 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:30.214733 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:30.214733 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:30.329215 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:30.330215 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:30.330215 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:30.330215 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:30.330215 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:30.331548 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:30.451709 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:30.451709 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:30.453222 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:30.453222 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:30.453222 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:30.454543 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:30.582789 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:30.583807 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:30.583807 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:30.583807 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:30.583807 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:30.584904 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:30.716939 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:30.716939 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:30.716939 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:30.718351 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:30.718351 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:30.718351 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:30.847032 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:30.847032 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:30.848036 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:30.848036 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:30.848036 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:30.848036 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:30.969055 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:30.970052 - Skipping control point draw for strand=1_1 because should_skip=True
+2025-11-06T12:00:30.970052 - draw_control_points loop strand=1_2 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=True is_affected=False moving_side=1
+2025-11-06T12:00:30.970052 - Skipping control point draw for strand=1_2 because should_skip=True
+2025-11-06T12:00:30.970052 - draw_control_points loop strand=1_3 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2025-11-06T12:00:30.971440 - Drawing normal control points for strand=1_3 (draw_only_setting_on=False)
+2025-11-06T12:00:30.974531 - MOVE_MODE - reset_movement_state begin affected=1_3 is_moving=True is_moving_control_point=False is_moving_strand_point=True
+2025-11-06T12:00:30.974531 - MOVE_MODE - reset_movement_state end flags cleared

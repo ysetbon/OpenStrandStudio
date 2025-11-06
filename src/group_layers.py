@@ -2534,10 +2534,12 @@ class GroupPanel(QWidget):
         """Open the mask grid dialog for creating mask layers."""
         from mask_grid_dialog import MaskGridDialog
 
-        # Create and show the dialog
+        # Create and show the dialog (non-modal)
         dialog = MaskGridDialog(self.canvas, group_name, parent=self.layer_panel)
         if dialog.strands:  # Only show if there are strands in the group
-            dialog.exec_()
+            # Store reference to prevent garbage collection
+            self._mask_grid_dialog = dialog
+            dialog.show()
 
     def finish_group_rotation_duplicate_remove_me(self, group_name):
         """DUPLICATE METHOD - SHOULD BE REMOVED - Finish the rotation of a group and ensure data is preserved."""

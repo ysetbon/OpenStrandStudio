@@ -3,48 +3,10 @@
     "allow": [
       "Bash(python:*)",
       "Bash(grep:*)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
       "Bash(sed:*)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(/C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\src/**)",
-      "Read(//c//**)"
+      "Read(C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\**)"
     ],
     "deny": [],
-    "ask": [],
-    "additionalDirectories": [
-      "C:\\mnt\\c\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio"
-    ]
+    "ask": []
   }
 }

@@ -2725,6 +2725,8 @@ class GroupMoveDialog(QDialog):
 
     def __init__(self, canvas, group_name):
         super().__init__()
+        # Remove Windows context-help button
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.canvas = canvas  # Canvas instance
         self.group_name = group_name  # Group name string
         self.total_dx = 0
@@ -3181,6 +3183,7 @@ class GroupMoveDialog(QDialog):
 class LayerSelectionDialog(QDialog):
     def __init__(self, layers, parent=None):
         super().__init__(parent)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         
         # Get language code from parent if available
         language_code = 'en'
@@ -4529,6 +4532,7 @@ class GroupRotateDialog(QDialog):
 
     def __init__(self, group_name, parent=None):
         super().__init__(parent)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.group_name = group_name
         self.canvas = parent.canvas if parent and hasattr(parent, 'canvas') else None
         # Connect our rotation_updated signal to a local slot so we can rotate immediately.
@@ -4807,6 +4811,7 @@ class StrandAngleEditDialog(QDialog):
 
     def __init__(self, group_name, group_data, canvas, parent=None):
         super().__init__(parent)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setAutoFillBackground(True)
         self.group_name = group_name
         self.canvas = canvas

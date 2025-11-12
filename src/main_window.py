@@ -2016,7 +2016,7 @@ class MainWindow(QMainWindow):
 
 
     def keyPressEvent(self, event):
-        """Handle key press events, specifically Escape to exit mask edit mode."""
+        """Handle key press events, specifically Escape to exit mask edit mode and Space to toggle pan mode."""
         if event.key() == Qt.Key_Escape:
             # Check if we are in mask edit mode using the layer panel's flag
             if hasattr(self, 'layer_panel') and self.layer_panel.mask_editing:
@@ -2026,6 +2026,13 @@ class MainWindow(QMainWindow):
                 self.canvas.exit_mask_edit_mode()
                 event.accept() # Indicate the event was handled
                 return # Stop further processing
+
+        # Space bar to toggle pan mode
+        elif event.key() == Qt.Key_Space:
+            if hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'toggle_pan_mode'):
+                self.layer_panel.toggle_pan_mode()
+                event.accept()  # Indicate the event was handled
+                return  # Stop further processing
 
         # Debug key combination: Ctrl+Shift+D to clear canvas suppression flags
         elif event.key() == Qt.Key_D and event.modifiers() == (Qt.ControlModifier | Qt.ShiftModifier):

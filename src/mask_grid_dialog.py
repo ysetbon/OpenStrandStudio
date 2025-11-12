@@ -34,6 +34,8 @@ class MaskGridDialog(QDialog):
         self.canvas = canvas
         self.group_name = group_name
         self.language_code = canvas.language_code if hasattr(canvas, 'language_code') else 'en'
+        # Strip the Windows context-help button so only the close button remains
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
 
         # Get theme
         main_window = parent
@@ -543,22 +545,43 @@ class MaskGridDialog(QDialog):
 
     def _create_masks(self, mask_pairs):
         """Create mask layers for the given pairs."""
-        for strand1_name, strand2_name in mask_pairs:
-            # Find strand objects
-            strand1 = self.canvas.find_strand_by_name(strand1_name)
-            strand2 = self.canvas.find_strand_by_name(strand2_name)
+        # Get undo_redo_manager to set batch operation flags
+        undo_redo_manager = None
+        if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
+            undo_redo_manager = self.canvas.layer_panel.undo_redo_manager
+        elif hasattr(self.canvas, 'undo_redo_manager'):
+            undo_redo_manager = self.canvas.undo_redo_manager
 
-            if not strand1 or not strand2:
-                continue
+        # Set flags to prevent intermediate state saves during batch operation
+        if undo_redo_manager:
+            setattr(undo_redo_manager, '_skip_save', True)
+            setattr(undo_redo_manager, '_mask_save_in_progress', True)
 
-            # Check if mask already exists (safety check)
-            if self._check_mask_exists(strand1_name, strand2_name):
-                continue
+        try:
+            # Create all masks in the batch
+            for strand1_name, strand2_name in mask_pairs:
+                # Find strand objects
+                strand1 = self.canvas.find_strand_by_name(strand1_name)
+                strand2 = self.canvas.find_strand_by_name(strand2_name)
 
-            # Create mask directly using canvas's create_masked_layer method
-            # This handles everything: creates MaskedStrand, adds button, updates UI
-            if hasattr(self.canvas, 'create_masked_layer'):
-                self.canvas.create_masked_layer(strand1, strand2)
+                if not strand1 or not strand2:
+                    continue
+
+                # Check if mask already exists (safety check)
+                if self._check_mask_exists(strand1_name, strand2_name):
+                    continue
+
+                # Create mask directly using canvas's create_masked_layer method
+                # This handles everything: creates MaskedStrand, adds button, updates UI
+                if hasattr(self.canvas, 'create_masked_layer'):
+                    self.canvas.create_masked_layer(strand1, strand2)
+        finally:
+            # Clear flags and save state once for the entire batch operation
+            if undo_redo_manager:
+                setattr(undo_redo_manager, '_skip_save', False)
+                setattr(undo_redo_manager, '_mask_save_in_progress', False)
+                # Save state once for all masks created
+                undo_redo_manager.save_state()
 
     def _refresh_table(self):
         """Refresh the table to reflect current mask state (both created and deleted masks)."""

@@ -713,7 +713,7 @@ class LayerPanel(QWidget):
         # Create bottom panel for control buttons
         bottom_panel = QWidget()
         bottom_layout = QVBoxLayout(bottom_panel)
-        bottom_layout.setContentsMargins(5, 5, 5, 5)
+        bottom_layout.setContentsMargins(0, 5, 0, 5)
         # Ensure consistent gap between control buttons across platforms
         bottom_layout.setSpacing(2)
         
@@ -727,7 +727,7 @@ class LayerPanel(QWidget):
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
-                padding: 5px 15px; /* Added padding */
+                padding: 5px 10px; /* Added padding */
             }
             QPushButton:hover {
                 background-color: #e694e2; /* lighter on hover */
@@ -747,7 +747,7 @@ class LayerPanel(QWidget):
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
-                padding: 5px 15px; /* Added padding */
+                padding: 5px 10px; /* Added padding */
             }
             QPushButton:hover {
                 background-color: #FFB84D; /* lighter on hover */
@@ -768,7 +768,7 @@ class LayerPanel(QWidget):
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
-                padding: 5px 15px; /* Added padding */
+                padding: 5px 10px; /* Added padding */
             }
             QPushButton:hover {
                 background-color: #BFFFBF; /* even lighter on hover */
@@ -792,7 +792,7 @@ class LayerPanel(QWidget):
                 color: black;
                 background-color: #FF6B6B;
                 border: 1px solid #888;
-                padding: 5px 15px;
+                padding: 5px 10px;
                 border-radius: 4px;
             }
             QPushButton:hover {
@@ -845,7 +845,7 @@ class LayerPanel(QWidget):
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
-                padding: 5px 15px; /* Added padding */
+                padding: 5px 10px; /* Added padding */
             }
             QPushButton:hover {
                 background-color: #9bc2e6; /* lighter on hover */

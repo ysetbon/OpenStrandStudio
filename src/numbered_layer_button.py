@@ -57,7 +57,7 @@ class NumberedLayerButton(QPushButton):
         self._text = text  # Store the text privately
         self.layer_name = text  # Store layer name for access by paintEvent
         self.count = count
-        self.setFixedSize(130, 30)  # Set fixed size for the button - increased width from 100 to 130
+        self.setFixedSize(146, 40)  # Slightly taller to match the 13pt font height
         self.setCheckable(True)  # Make the button checkable (can be toggled)
         self.setContextMenuPolicy(Qt.CustomContextMenu)  # Enable context menu
         self.color = color
@@ -1179,7 +1179,7 @@ class NumberedLayerButton(QPushButton):
         if self.border_color and not self.is_hidden and not self.shadow_only: # Don't show border when hidden or shadow-only (has its own border)
             style += f"""
                 QPushButton {{
-                    border: 4px solid {self.border_color.name()};
+                    border: 5px solid {self.border_color.name()};
                 }}
             """
         if self.selectable and not self.is_hidden and not self.shadow_only: # Don't show selection border when hidden or shadow-only
@@ -1204,8 +1204,7 @@ class NumberedLayerButton(QPushButton):
         # Set up the font
         font = QFont(painter.font())
         font.setBold(True)
-        # Use slightly larger font on macOS to match visual size on Windows
-        font.setPointSize(16 if sys.platform == 'darwin' else 11)
+        font.setPointSize(12)
         painter.setFont(font)
 
         # Get the button's rectangle

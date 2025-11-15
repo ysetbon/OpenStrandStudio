@@ -727,7 +727,7 @@ class LayerPanel(QWidget):
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
-                padding: 5px 10px; /* Added padding */
+                padding: 5px 15px; /* Added padding */
             }
             QPushButton:hover {
                 background-color: #e694e2; /* lighter on hover */
@@ -747,7 +747,7 @@ class LayerPanel(QWidget):
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
-                padding: 5px 10px; /* Added padding */
+                padding: 5px 15px; /* Added padding */
             }
             QPushButton:hover {
                 background-color: #FFB84D; /* lighter on hover */
@@ -768,7 +768,7 @@ class LayerPanel(QWidget):
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
-                padding: 5px 10px; /* Added padding */
+                padding: 5px 15px; /* Added padding */
             }
             QPushButton:hover {
                 background-color: #BFFFBF; /* even lighter on hover */
@@ -792,7 +792,7 @@ class LayerPanel(QWidget):
                 color: black;
                 background-color: #FF6B6B;
                 border: 1px solid #888;
-                padding: 5px 10px;
+                padding: 5px 15px;
                 border-radius: 4px;
             }
             QPushButton:hover {
@@ -845,7 +845,7 @@ class LayerPanel(QWidget):
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
-                padding: 5px 10px; /* Added padding */
+                padding: 5px 15px; /* Added padding */
             }
             QPushButton:hover {
                 background-color: #9bc2e6; /* lighter on hover */
@@ -889,7 +889,7 @@ class LayerPanel(QWidget):
         # self.left_panel.setFixedWidth(200)
         
         # Set a fixed width for the right panel
-        self.right_panel.setFixedWidth(250)  # Set actual fixed width in pixels
+        self.right_panel.setFixedWidth(270)  # Set actual fixed width in pixels
         # Configure the right panel (group panel)
         self.right_panel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         

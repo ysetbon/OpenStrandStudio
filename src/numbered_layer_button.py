@@ -1175,10 +1175,11 @@ class NumberedLayerButton(QPushButton):
                     background-color: {checked_rgba};
                 }}
             """
+        # Border style for the mask layer button
         if self.border_color and not self.is_hidden and not self.shadow_only: # Don't show border when hidden or shadow-only (has its own border)
             style += f"""
                 QPushButton {{
-                    border: 2px solid {self.border_color.name()};
+                    border: 4px solid {self.border_color.name()};
                 }}
             """
         if self.selectable and not self.is_hidden and not self.shadow_only: # Don't show selection border when hidden or shadow-only
@@ -1212,12 +1213,17 @@ class NumberedLayerButton(QPushButton):
 
         # Calculate text position
         fm = painter.fontMetrics()
-        text_width = fm.horizontalAdvance(self._text)
-        text_height = fm.height()
-        x = (rect.width() - text_width) / 2
-        y = (rect.height() + text_height) / 2 - fm.descent()
 
-        # Create text path
+        # Create text path at baseline to get accurate bounding rect
+        temp_path = QPainterPath()
+        temp_path.addText(0, 0, font, self._text)
+        text_bounds = temp_path.boundingRect()
+
+        # Center based on actual visual bounds
+        x = (rect.width() - text_bounds.width()) / 2 - text_bounds.x()
+        y = (rect.height() - text_bounds.height()) / 2 - text_bounds.y() + 1
+
+        # Create final text path at centered position
         path = QPainterPath()
         path.addText(x, y, font, self._text)
 

@@ -407,7 +407,7 @@ class LayerPanel(QWidget):
         self.top_panel = QWidget()
         top_layout = QHBoxLayout(self.top_panel)
         top_layout.setContentsMargins(5, 5, 5, 5)
-        top_layout.setAlignment(Qt.AlignLeft)
+        top_layout.setAlignment(Qt.AlignHCenter)
 
         # Create the home/reset button (moved from 3rd row)
         self.reset_states_button = TooltipButton("🏠")
@@ -455,7 +455,7 @@ class LayerPanel(QWidget):
         self.zoom_panel = QWidget()
         zoom_layout = QHBoxLayout(self.zoom_panel)
         zoom_layout.setContentsMargins(5, 0, 5, 5)  # No top margin since it's below the first row
-        zoom_layout.setAlignment(Qt.AlignLeft)
+        zoom_layout.setAlignment(Qt.AlignHCenter)
         
         # Create zoom in button
         self.zoom_in_button = TooltipButton("🔍")
@@ -573,7 +573,7 @@ class LayerPanel(QWidget):
         self.refresh_panel = QWidget()
         refresh_layout = QHBoxLayout(self.refresh_panel)
         refresh_layout.setContentsMargins(5, 0, 5, 5)  # No top margin since it's below the second row
-        refresh_layout.setAlignment(Qt.AlignLeft)
+        refresh_layout.setAlignment(Qt.AlignHCenter)
         
         # Create the refresh button (moved from 1st row)
         self.refresh_button = TooltipButton("🔄")
@@ -716,6 +716,7 @@ class LayerPanel(QWidget):
         bottom_layout.setContentsMargins(0, 5, 0, 5)
         # Ensure consistent gap between control buttons across platforms
         bottom_layout.setSpacing(2)
+        bottom_layout.setAlignment(Qt.AlignHCenter)
         
         # Draw Names button
         _ = translations[self.language_code]
@@ -855,6 +856,16 @@ class LayerPanel(QWidget):
             }
         """)
         self.deselect_all_button.clicked.connect(self.deselect_all)
+
+        # Ensure control buttons expand evenly and stay centered
+        for button in (
+            self.draw_names_button,
+            self.lock_layers_button,
+            self.add_new_strand_button,
+            self.delete_strand_button,
+            self.deselect_all_button,
+        ):
+            button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         # Add buttons to bottom panel in the desired order
         bottom_layout.addWidget(self.draw_names_button)

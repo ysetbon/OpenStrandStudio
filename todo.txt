@@ -1,0 +1,4 @@
+1. investigate why space key has other affects other than panning and un-panning.
+2. angle adjust , check if length is correct (for only 2 control points setting, 3 control points setting, and bias settings ) , because sometimes its not adjusting correctly.
+3. add similar v toggle for edit strand angle similar to mask dialog and shadow dialog.
+4. invistigae why attaching has less area when i lock strands. 

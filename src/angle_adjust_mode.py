@@ -30,6 +30,8 @@ class AngleAdjustMode:
         # Add these lines to store initial control point vectors
         self.initial_cp1_vector = None
         self.initial_cp2_vector = None
+        # Track the scaling applied relative to the original length
+        self.length_scale = 1.0
         
         # Add draw_only_affected_strand property
         self.draw_only_affected_strand = False
@@ -56,6 +58,7 @@ class AngleAdjustMode:
         # Store initial control point positions relative to start
         self.initial_cp1_vector = strand.control_point1 - strand.start
         self.initial_cp2_vector = strand.control_point2 - strand.start
+        self.length_scale = 1.0
         
         # Store initial control_point_center if it exists
         if hasattr(strand, 'control_point_center'):
@@ -362,22 +365,27 @@ class AngleAdjustMode:
         angle_difference = new_angle - self.initial_angle
 
         # Rotate each control point based on the angle difference
-        self.active_strand.control_point1 = self.rotate_point_around_pivot(
-            start + self.initial_cp1_vector, start, angle_difference
-        )
-        self.active_strand.control_point2 = self.rotate_point_around_pivot(
-            start + self.initial_cp2_vector, start, angle_difference
-        )
+        scaled_cp1 = self.initial_cp1_vector * self.length_scale if self.initial_cp1_vector is not None else None
+        scaled_cp2 = self.initial_cp2_vector * self.length_scale if self.initial_cp2_vector is not None else None
+        if scaled_cp1 is not None:
+            self.active_strand.control_point1 = self.rotate_point_around_pivot(
+                start + scaled_cp1, start, angle_difference
+            )
+        if scaled_cp2 is not None:
+            self.active_strand.control_point2 = self.rotate_point_around_pivot(
+                start + scaled_cp2, start, angle_difference
+            )
         
         # Also rotate control_point_center if it exists
         if hasattr(self.active_strand, 'control_point_center'):
             # Store the initial vector on first rotation if not already stored
             if not hasattr(self, 'initial_cp_center_vector'):
                 self.initial_cp_center_vector = self.active_strand.control_point_center - start
-            
-            self.active_strand.control_point_center = self.rotate_point_around_pivot(
-                start + self.initial_cp_center_vector, start, angle_difference
-            )
+            scaled_center = self.initial_cp_center_vector * self.length_scale if hasattr(self, 'initial_cp_center_vector') else None
+            if scaled_center is not None:
+                self.active_strand.control_point_center = self.rotate_point_around_pivot(
+                    start + scaled_center, start, angle_difference
+                )
 
     def rotate_control_points(self, strand, angle_diff, pivot):
         """Rotate the control points of a strand around a pivot by angle_diff degrees."""
@@ -513,13 +521,9 @@ class AngleAdjustMode:
 
         # Recalculate control points based on the scale factor from the original length
         if self.initial_length > 0:
-            scale_factor = new_length / self.initial_length
-            self.active_strand.control_point1 = start + (self.initial_cp1_vector * scale_factor)
-            self.active_strand.control_point2 = start + (self.initial_cp2_vector * scale_factor)
-            
-            # Also adjust control_point_center if it exists
-            if hasattr(self.active_strand, 'control_point_center') and hasattr(self, 'initial_cp_center_vector'):
-                self.active_strand.control_point_center = start + (self.initial_cp_center_vector * scale_factor)
+            self.length_scale = new_length / self.initial_length
+            self.rotate_control_points_to_new_angle(current_angle)
+            self.current_length = new_length
 
         # Update the strand's shape
         self.active_strand.update_shape()
@@ -539,27 +543,9 @@ class AngleAdjustMode:
         if not self.active_strand or not self.initial_length:
             return
 
-        # Calculate the scaling factor based on the original length
-        length_ratio = new_length / self.initial_length
-
-        start = self.active_strand.start
-
-        # Scale the initial control point vectors
-        cp1_new_vector = self.initial_cp1_vector * length_ratio
-        cp2_new_vector = self.initial_cp2_vector * length_ratio
-
-        # Update control points relative to start point
-        self.active_strand.control_point1 = start + cp1_new_vector
-        self.active_strand.control_point2 = start + cp2_new_vector
-        
-        # Also scale control_point_center if it exists
-        if hasattr(self.active_strand, 'control_point_center'):
-            # Store the initial vector on first scaling if not already stored
-            if not hasattr(self, 'initial_cp_center_vector'):
-                self.initial_cp_center_vector = self.active_strand.control_point_center - start
-                
-            cp_center_new_vector = self.initial_cp_center_vector * length_ratio
-            self.active_strand.control_point_center = start + cp_center_new_vector
+        self.length_scale = new_length / self.initial_length
+        current_angle = self.calculate_angle(self.active_strand.start, self.active_strand.end)
+        self.rotate_control_points_to_new_angle(current_angle)
 
     def update_attached_strands_length(self, old_pos, new_pos):
         """Update the position of attached strands when the length changes."""
@@ -704,7 +690,6 @@ class AngleAdjustMode:
 
         # Update control points accordingly
         strand.update_control_points_from_geometry()
-
 
 
 

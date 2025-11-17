@@ -823,34 +823,19 @@ class AttachMode(QObject):
         return not strand.has_circles[1]
 
     def get_attachment_area(self, strand, side):
-        """Get the attachment area for a strand endpoint, accounting for zoom level."""
-        # Use same base size as move mode for consistency, but adjust for zoom
+        """Return the circular attachment area, independent of strand width."""
         base_area_size = 120
-        
-        # Adjust attachment area size based on zoom level to maintain consistent click targets
-        if hasattr(self.canvas, 'zoom_factor'):
-            # When zoomed out, make area larger in canvas coordinates to maintain consistent screen size
-            # When zoomed in, make area smaller in canvas coordinates to maintain consistent screen size
-            area_size = base_area_size / self.canvas.zoom_factor
-        else:
-            area_size = base_area_size
-            
-        half_size = area_size / 2
-        
+
+        area_size = base_area_size
+        circle_radius = max(area_size / 2, 1.0)
+
         if side == 0:  # start point
             point = strand.start
         else:  # end point
             point = strand.end
-            
-        area_rect = QRectF(
-            point.x() - half_size,
-            point.y() - half_size,
-            area_size,
-            area_size
-        )
-        
+
         path = QPainterPath()
-        path.addRect(area_rect)
+        path.addEllipse(point, circle_radius, circle_radius)
         return path
 
     def try_attach_to_strand(self, strand, pos, circle_radius):

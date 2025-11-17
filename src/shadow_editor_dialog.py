@@ -76,6 +76,7 @@ class ShadowListItem(QWidget):
         self._apply_large_indicator(self.visibility_checkbox)
         self._setup_custom_checkmark(self.visibility_checkbox)
         self._set_checkbox_min_width(self.visibility_checkbox)
+        self._style_shadow_checkbox(self.visibility_checkbox, is_dark_mode=False)
         layout.addWidget(self.visibility_checkbox)
 
         # Allow full shadow checkbox
@@ -86,6 +87,7 @@ class ShadowListItem(QWidget):
         self._apply_large_indicator(self.allow_full_shadow_checkbox)
         self._setup_custom_checkmark(self.allow_full_shadow_checkbox)
         self._set_checkbox_min_width(self.allow_full_shadow_checkbox)
+        self._style_shadow_checkbox(self.allow_full_shadow_checkbox, is_dark_mode=False)
         layout.addWidget(self.allow_full_shadow_checkbox)
 
         # Subtract layers collapsible section
@@ -136,6 +138,7 @@ class ShadowListItem(QWidget):
                 checkbox.stateChanged.connect(self._on_subtracted_layers_changed)
                 self._apply_large_indicator(checkbox)
                 self._setup_custom_checkmark(checkbox)
+                self._style_shadow_checkbox(checkbox, is_dark_mode=False)
                 self.subtract_checkboxes[layer] = checkbox
                 subtract_layout.addWidget(checkbox)
         else:
@@ -240,6 +243,77 @@ class ShadowListItem(QWidget):
         checkbox.setMinimumWidth(checkbox.sizeHint().width())
         checkbox.updateGeometry()
 
+    def _style_shadow_checkbox(self, checkbox, is_dark_mode, is_enabled=None):
+        """Apply the shared large-indicator styling for this dialog's checkboxes."""
+        if is_enabled is None:
+            is_enabled = checkbox.isEnabled()
+
+        if is_dark_mode:
+            text_color = "#FFFFFF" if is_enabled else "#808080"
+            indicator_border = "#666666"
+            indicator_background = "#2A2A2A"
+            hover_border = "#888888"
+            hover_background = "#454545"
+            checked_background = "#4A6FA5"
+            checked_border = "#6A9FD5"
+            checked_hover_background = "#5A7FB5"
+            checked_hover_border = "#7AAFF5"
+            disabled_indicator = "#1F1F1F"
+            disabled_border = "#444444"
+        else:
+            text_color = "#000000" if is_enabled else "#AAAAAA"
+            indicator_border = "#AAAAAA"
+            indicator_background = "#FFFFFF"
+            hover_border = "#888888"
+            hover_background = "#F8F8F8"
+            checked_background = "#A0C0E0"
+            checked_border = "#7090C0"
+            checked_hover_background = "#B0D0F0"
+            checked_hover_border = "#8AA0D0"
+            disabled_indicator = "#F0F0F0"
+            disabled_border = "#BBBBBB"
+
+        checkbox.setStyleSheet(f"""
+            QCheckBox {{
+                color: {text_color};
+                spacing: 8px;
+                font-size: 11pt;
+                background-color: transparent;
+            }}
+            QCheckBox::indicator {{
+                width: 20px;
+                height: 20px;
+                min-width: 20px;
+                min-height: 20px;
+                border: 2px solid {indicator_border};
+                border-radius: 4px;
+                background-color: {indicator_background};
+            }}
+            QCheckBox::indicator:hover {{
+                border: 2px solid {hover_border};
+                background-color: {hover_background};
+            }}
+            QCheckBox::indicator:checked {{
+                background-color: {checked_background};
+                border: 2px solid {checked_border};
+            }}
+            QCheckBox::indicator:checked:hover {{
+                background-color: {checked_hover_background};
+                border: 2px solid {checked_hover_border};
+            }}
+            QCheckBox::indicator:disabled {{
+                background-color: {disabled_indicator};
+                border: 2px solid {disabled_border};
+            }}
+        """)
+
+    def _restyle_all_checkboxes(self, is_dark_mode):
+        """Update every checkbox to the correct theme colors."""
+        self._style_shadow_checkbox(self.visibility_checkbox, is_dark_mode, self.visibility_checkbox.isEnabled())
+        self._style_shadow_checkbox(self.allow_full_shadow_checkbox, is_dark_mode, self.allow_full_shadow_checkbox.isEnabled())
+        for checkbox in self.subtract_checkboxes.values():
+            self._style_shadow_checkbox(checkbox, is_dark_mode, checkbox.isEnabled())
+
     def _on_visibility_changed(self, state):
         """Handle visibility checkbox change."""
         is_visible = (state == Qt.Checked)
@@ -303,6 +377,7 @@ class ShadowListItem(QWidget):
 
     def set_theme(self, theme):
         """Apply theme styling to the item."""
+        self.current_theme = theme
         if theme == 'dark':
             self.setStyleSheet("""
                 QWidget {
@@ -434,6 +509,7 @@ class ShadowListItem(QWidget):
                     background-color: rgba(0, 0, 0, 0.1);
                 }
             """)
+        self._restyle_all_checkboxes(theme == 'dark')
 
     def update_translations(self, language_code):
         """Update all text elements with new language."""

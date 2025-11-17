@@ -1,8 +1,9 @@
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel, 
                              QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,  QScrollArea, QMenu, QTableWidget, 
                              QTableWidgetItem, QHeaderView, QSizePolicy,  QMessageBox, QAbstractButton)
+from PyQt5.QtWidgets import QStyleOptionButton, QProxyStyle, QStyle
 from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QPoint
-from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon, QIntValidator, QGuiApplication
+from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon, QIntValidator, QGuiApplication, QPainter, QPen, QPainterPath
 from math import atan2, degrees, isqrt
 from translations import translations
 from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
@@ -3754,6 +3755,105 @@ class GroupLayerManager:
                             if checkbox_dict[related_strand].isChecked():
                                 checkbox_dict[related_strand].setChecked(False)
 
+        def style_main_checkbox(checkbox):
+            base_style = checkbox.style()
+            if isinstance(base_style, LargeIndicatorStyle):
+                base_style = base_style.baseStyle()
+            checkbox.setStyle(LargeIndicatorStyle(base_style, 20))
+            checkbox.setMinimumHeight(max(checkbox.minimumHeight(), 26))
+
+            if is_dark_mode:
+                text_color = "#FFFFFF"
+                indicator_border = "#666666"
+                indicator_background = "#2A2A2A"
+                hover_border = "#888888"
+                hover_background = "#454545"
+                checked_background = "#4A6FA5"
+                checked_border = "#6A9FD5"
+                checked_hover_background = "#5A7FB5"
+                checked_hover_border = "#7AAFF5"
+            else:
+                text_color = "#000000"
+                indicator_border = "#AAAAAA"
+                indicator_background = "#FFFFFF"
+                hover_border = "#888888"
+                hover_background = "#F8F8F8"
+                checked_background = "#A0C0E0"
+                checked_border = "#7090C0"
+                checked_hover_background = "#B0D0F0"
+                checked_hover_border = "#8AA0D0"
+
+            checkbox.setStyleSheet(f"""
+                QCheckBox {{
+                    color: {text_color};
+                    spacing: 8px;
+                    font-size: 13px;
+                    background-color: transparent;
+                }}
+                QCheckBox::indicator {{
+                    width: 20px;
+                    height: 20px;
+                    min-width: 20px;
+                    min-height: 20px;
+                    border: 2px solid {indicator_border};
+                    border-radius: 4px;
+                    background-color: {indicator_background};
+                }}
+                QCheckBox::indicator:hover {{
+                    border: 2px solid {hover_border};
+                    background-color: {hover_background};
+                }}
+                QCheckBox::indicator:checked {{
+                    background-color: {checked_background};
+                    border: 2px solid {checked_border};
+                }}
+                QCheckBox::indicator:checked:hover {{
+                    background-color: {checked_hover_background};
+                    border: 2px solid {checked_hover_border};
+                }}
+            """)
+
+            original_paint_event = checkbox.paintEvent
+
+            def custom_paint_event(event, *, _checkbox=checkbox, _original=original_paint_event):
+                _original(event)
+                if _checkbox.isChecked():
+                    painter = QPainter(_checkbox)
+                    painter.setRenderHint(QPainter.Antialiasing)
+
+                    style_option = QStyleOptionButton()
+                    _checkbox.initStyleOption(style_option)
+                    style = _checkbox.style()
+                    indicator_rect = style.subElementRect(
+                        style.SE_CheckBoxIndicator, style_option, _checkbox
+                    )
+
+                    pen_width = max(1.6, indicator_rect.height() * 0.16)
+                    pen = QPen(QColor(255, 255, 255), pen_width, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+                    painter.setPen(pen)
+
+                    left = indicator_rect.left()
+                    top = indicator_rect.top()
+                    width = indicator_rect.width()
+                    height = indicator_rect.height()
+
+                    start_x = left + width * 0.25
+                    start_y = top + height * 0.55
+                    mid_x = left + width * 0.42
+                    mid_y = top + height * 0.72
+                    end_x = left + width * 0.78
+                    end_y = top + height * 0.28
+
+                    check_path = QPainterPath()
+                    check_path.moveTo(start_x, start_y)
+                    check_path.lineTo(mid_x, mid_y)
+                    check_path.lineTo(end_x, end_y)
+
+                    painter.drawPath(check_path)
+                    painter.end()
+
+            checkbox.paintEvent = custom_paint_event
+
         for main_strand in main_strands:
             checkbox = QCheckBox(str(main_strand))
             # Set proper alignment for Hebrew RTL
@@ -3762,6 +3862,9 @@ class GroupLayerManager:
 
             # Connect the state change handler
             checkbox.stateChanged.connect(lambda state, ms=main_strand: on_checkbox_changed(ms))
+
+            # Apply the shared checkbox styling
+            style_main_checkbox(checkbox)
 
             layout.addWidget(checkbox)
             checkboxes.append((main_strand, checkbox))
@@ -4806,6 +4909,18 @@ class FloatDelegate(QStyledItemDelegate):
         value = editor.text()
         model.setData(index, float(value), Qt.EditRole)
 
+class LargeIndicatorStyle(QProxyStyle):
+    """Proxy style that enforces a specific checkbox indicator size."""
+
+    def __init__(self, base_style, indicator_size=20):
+        super().__init__(base_style)
+        self._indicator_size = indicator_size
+
+    def pixelMetric(self, metric, option=None, widget=None):
+        if metric in (QStyle.PM_IndicatorWidth, QStyle.PM_IndicatorHeight):
+            return self._indicator_size
+        return super().pixelMetric(metric, option, widget)
+
 class StrandAngleEditDialog(QDialog):
     angle_changed = pyqtSignal(str, float)
 
@@ -5003,6 +5118,126 @@ class StrandAngleEditDialog(QDialog):
             if corner_button:
                 corner_button.setStyleSheet("background-color: #F0F0F0; border: 1px solid #CCCCCC;")
 
+    def _apply_large_indicator(self, checkbox, indicator_size=20):
+        """Apply a proxy style so the checkbox indicator uses a crisp fixed size."""
+        base_style = checkbox.style()
+        if isinstance(base_style, LargeIndicatorStyle):
+            base_style = base_style.baseStyle()
+        checkbox.setStyle(LargeIndicatorStyle(base_style, indicator_size))
+        checkbox.setMinimumHeight(max(checkbox.minimumHeight(), indicator_size + 6))
+
+    def _setup_custom_checkmark(self, checkbox):
+        """Draw a crisp custom checkmark that scales with the indicator size."""
+        original_paint_event = checkbox.paintEvent
+
+        def custom_paint_event(event):
+            original_paint_event(event)
+
+            if checkbox.isChecked():
+                painter = QPainter(checkbox)
+                painter.setRenderHint(QPainter.Antialiasing)
+
+                style_option = QStyleOptionButton()
+                checkbox.initStyleOption(style_option)
+                style = checkbox.style()
+                indicator_rect = style.subElementRect(
+                    style.SE_CheckBoxIndicator, style_option, checkbox
+                )
+
+                pen_width = max(1.6, indicator_rect.height() * 0.16)
+                pen = QPen(QColor(255, 255, 255), pen_width, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+                painter.setPen(pen)
+
+                left = indicator_rect.left()
+                top = indicator_rect.top()
+                width = indicator_rect.width()
+                height = indicator_rect.height()
+
+                start_x = left + width * 0.25
+                start_y = top + height * 0.55
+                mid_x = left + width * 0.42
+                mid_y = top + height * 0.72
+                end_x = left + width * 0.78
+                end_y = top + height * 0.28
+
+                check_path = QPainterPath()
+                check_path.moveTo(start_x, start_y)
+                check_path.lineTo(mid_x, mid_y)
+                check_path.lineTo(end_x, end_y)
+
+                painter.drawPath(check_path)
+                painter.end()
+
+        checkbox.paintEvent = custom_paint_event
+
+    def _set_checkbox_min_width(self, checkbox):
+        """Ensure checkbox text stays readable without stretching the layout."""
+        checkbox.setMinimumWidth(checkbox.sizeHint().width())
+        checkbox.updateGeometry()
+
+    def _style_angle_checkbox(self, checkbox, is_dark_mode, is_enabled=None):
+        """Apply themed styles so the indicator matches the editor dialogs."""
+        if is_enabled is None:
+            is_enabled = checkbox.isEnabled()
+
+        if is_dark_mode:
+            text_color = "#FFFFFF" if is_enabled else "#808080"
+            indicator_border = "#666666"
+            indicator_background = "#2A2A2A"
+            hover_border = "#888888"
+            hover_background = "#454545"
+            checked_background = "#4A6FA5"
+            checked_border = "#6A9FD5"
+            checked_hover_background = "#5A7FB5"
+            checked_hover_border = "#7AAFF5"
+            disabled_indicator = "#1F1F1F"
+            disabled_border = "#444444"
+        else:
+            text_color = "#000000" if is_enabled else "#AAAAAA"
+            indicator_border = "#AAAAAA"
+            indicator_background = "#FFFFFF"
+            hover_border = "#888888"
+            hover_background = "#F8F8F8"
+            checked_background = "#A0C0E0"
+            checked_border = "#7090C0"
+            checked_hover_background = "#B0D0F0"
+            checked_hover_border = "#8AA0D0"
+            disabled_indicator = "#E0E0E0"
+            disabled_border = "#BBBBBB"
+
+        checkbox.setStyleSheet(f"""
+            QCheckBox {{
+                color: {text_color};
+                spacing: 8px;
+                background-color: transparent;
+            }}
+            QCheckBox::indicator {{
+                width: 20px;
+                height: 20px;
+                min-width: 20px;
+                min-height: 20px;
+                border: 2px solid {indicator_border};
+                border-radius: 4px;
+                background-color: {indicator_background};
+            }}
+            QCheckBox::indicator:hover {{
+                border: 2px solid {hover_border};
+                background-color: {hover_background};
+            }}
+            QCheckBox::indicator:checked {{
+                background-color: {checked_background};
+                border: 2px solid {checked_border};
+            }}
+            QCheckBox::indicator:checked:hover {{
+                background-color: {checked_hover_background};
+                border: 2px solid {checked_hover_border};
+            }}
+            QCheckBox::indicator:disabled {{
+                background-color: {disabled_indicator};
+                border: 2px solid {disabled_border};
+            }}
+        """)
+
     def populate_table(self):
         self.table.setRowCount(len(self.group_data['strands']))
         self.initializing = True
@@ -5054,9 +5289,13 @@ class StrandAngleEditDialog(QDialog):
             x_checkbox = QCheckBox("x")
             x_plus_180_checkbox = QCheckBox("180+x")
 
-            # Use sizePolicy instead of fixed size for better adaptability
-            x_checkbox.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-            x_plus_180_checkbox.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+            # Apply shared styling helpers for better visuals
+            for checkbox in (x_checkbox, x_plus_180_checkbox):
+                checkbox.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+                self._apply_large_indicator(checkbox, indicator_size=20)
+                self._setup_custom_checkmark(checkbox)
+                self._set_checkbox_min_width(checkbox)
+                self._style_angle_checkbox(checkbox, is_dark_mode, checkbox.isEnabled())
 
             # Create container widgets for checkboxes with zero margins
             x_widget = QWidget()
@@ -5066,7 +5305,6 @@ class StrandAngleEditDialog(QDialog):
             x_layout.addWidget(x_checkbox)
             if is_dark_mode:
                 x_widget.setStyleSheet("background-color: #2B2B2B;")
-                x_checkbox.setStyleSheet("color: #FFFFFF; background-color: transparent;")
 
             x_plus_180_widget = QWidget()
             x_plus_180_layout = QHBoxLayout(x_plus_180_widget)
@@ -5075,7 +5313,6 @@ class StrandAngleEditDialog(QDialog):
             x_plus_180_layout.addWidget(x_plus_180_checkbox)
             if is_dark_mode:
                 x_plus_180_widget.setStyleSheet("background-color: #2B2B2B;")
-                x_plus_180_checkbox.setStyleSheet("color: #FFFFFF; background-color: transparent;")
 
             self.table.setCellWidget(row, 6, x_widget)
             self.table.setCellWidget(row, 7, x_plus_180_widget)
@@ -5106,12 +5343,14 @@ class StrandAngleEditDialog(QDialog):
                     widget = self.table.cellWidget(row, col)
                     if widget:
                         widget.setEnabled(False)
-                        if is_dark_mode and col in [6, 7]:
-                            # Special styling for disabled checkbox containers in dark mode
-                            widget.setStyleSheet("background-color: #252525;")
+                        if col in [6, 7]:
                             checkbox = widget.findChild(QCheckBox)
                             if checkbox:
-                                checkbox.setStyleSheet("color: #808080; background-color: transparent;")
+                                self._style_angle_checkbox(checkbox, is_dark_mode, False)
+                            if is_dark_mode:
+                                widget.setStyleSheet("background-color: #252525;")
+                            else:
+                                widget.setStyleSheet("background-color: #F5F5F5;")
 
         self.initializing = False
 
@@ -5450,22 +5689,27 @@ class StrandAngleEditDialog(QDialog):
                 color: #808080;
             }
             QCheckBox::indicator {
-                border: 1px solid #777777;
-                width: 16px;
-                height: 16px;
-                border-radius: 3px;
-                background: #2B2B2B;
+                border: 2px solid #666666;
+                width: 20px;
+                height: 20px;
+                border-radius: 4px;
+                background-color: #2A2A2A;
             }
             QCheckBox::indicator:checked {
-                background-color: #555555;
-                image: url(check.png);
+                background-color: #4A6FA5;
+                border: 2px solid #6A9FD5;
             }
             QCheckBox::indicator:hover {
-                border: 1px solid #AAAAAA;
+                border: 2px solid #888888;
+                background-color: #454545;
+            }
+            QCheckBox::indicator:checked:hover {
+                background-color: #5A7FB5;
+                border: 2px solid #7AAFF5;
             }
             QCheckBox::indicator:disabled {
-                border: 1px solid #555555;
-                background-color: #252525;
+                border: 2px solid #444444;
+                background-color: #1F1F1F;
             }
             QScrollBar:vertical, QScrollBar:horizontal {
                 background-color: #1C1C1C;
@@ -5564,21 +5808,26 @@ class StrandAngleEditDialog(QDialog):
                 color: #AAAAAA;
             }
             QCheckBox::indicator {
-                border: 1px solid #CCCCCC;
-                width: 16px;
-                height: 16px;
-                border-radius: 3px;
+                border: 2px solid #AAAAAA;
+                width: 20px;
+                height: 20px;
+                border-radius: 4px;
                 background-color: #FFFFFF;
             }
             QCheckBox::indicator:checked {
-                background-color: #BBBBBB;
-                image: url(check.png);
+                background-color: #A0C0E0;
+                border: 2px solid #7090C0;
+            }
+            QCheckBox::indicator:checked:hover {
+                background-color: #B0D0F0;
+                border: 2px solid #8AA0D0;
             }
             QCheckBox::indicator:hover {
-                border: 1px solid #999999;
+                border: 2px solid #888888;
+                background-color: #F8F8F8;
             }
             QCheckBox::indicator:disabled {
-                border: 1px solid #E0E0E0;
+                border: 2px solid #BBBBBB;
                 background-color: #F0F0F0;
             }
             QScrollBar:vertical, QScrollBar:horizontal {
@@ -5614,31 +5863,19 @@ class StrandAngleEditDialog(QDialog):
                 if widget:
                     is_enabled = widget.isEnabled()
                     if is_dark_mode:
-                        if is_enabled:
-                            widget.setStyleSheet("background-color: #2B2B2B;")
-                            if col in [6, 7]:  # Checkbox columns
-                                checkbox = widget.findChild(QCheckBox)
-                                if checkbox:
-                                    checkbox.setStyleSheet("color: #FFFFFF; background-color: transparent;")
-                        else:
-                            widget.setStyleSheet("background-color: #252525;")
-                            if col in [6, 7]:  # Checkbox columns
-                                checkbox = widget.findChild(QCheckBox)
-                                if checkbox:
-                                    checkbox.setStyleSheet("color: #808080; background-color: transparent;")
+                        enabled_bg = "#2B2B2B"
+                        disabled_bg = "#252525"
                     else:
-                        if is_enabled:
-                            widget.setStyleSheet("background-color: #FFFFFF;")
-                            if col in [6, 7]:  # Checkbox columns
-                                checkbox = widget.findChild(QCheckBox)
-                                if checkbox:
-                                    checkbox.setStyleSheet("color: #000000; background-color: transparent;")
-                        else:
-                            widget.setStyleSheet("background-color: #F5F5F5;")
-                            if col in [6, 7]:  # Checkbox columns
-                                checkbox = widget.findChild(QCheckBox)
-                                if checkbox:
-                                    checkbox.setStyleSheet("color: #AAAAAA; background-color: transparent;")
+                        enabled_bg = "#FFFFFF"
+                        disabled_bg = "#F5F5F5"
+
+                    widget_bg = enabled_bg if is_enabled else disabled_bg
+                    widget.setStyleSheet(f"background-color: {widget_bg};")
+
+                    if col in [6, 7]:
+                        checkbox = widget.findChild(QCheckBox)
+                        if checkbox:
+                            self._style_angle_checkbox(checkbox, is_dark_mode, checkbox.isEnabled())
 
     def on_theme_changed(self, theme_name):
         """Handle theme changes."""

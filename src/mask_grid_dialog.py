@@ -184,6 +184,82 @@ class MaskGridDialog(QDialog):
         # Replace the paintEvent method
         checkbox.paintEvent = custom_paintEvent
 
+    def _style_mask_checkbox(self, checkbox, is_dark_mode, is_enabled=None, spacing=0):
+        """Apply the shared large blue indicator styling per checkbox."""
+        if is_enabled is None:
+            is_enabled = checkbox.isEnabled()
+
+        if is_dark_mode:
+            text_color = "#FFFFFF" if is_enabled else "#808080"
+            indicator_border = "#666666"
+            indicator_background = "#2A2A2A"
+            hover_border = "#888888"
+            hover_background = "#454545"
+            checked_background = "#4A6FA5"
+            checked_border = "#6A9FD5"
+            checked_hover_background = "#5A7FB5"
+            checked_hover_border = "#7AAFF5"
+            disabled_indicator = "#1F1F1F"
+            disabled_border = "#444444"
+        else:
+            text_color = "#000000" if is_enabled else "#AAAAAA"
+            indicator_border = "#AAAAAA"
+            indicator_background = "#FFFFFF"
+            hover_border = "#888888"
+            hover_background = "#F8F8F8"
+            checked_background = "#A0C0E0"
+            checked_border = "#7090C0"
+            checked_hover_background = "#B0D0F0"
+            checked_hover_border = "#8AA0D0"
+            disabled_indicator = "#F0F0F0"
+            disabled_border = "#BBBBBB"
+
+        checkbox.setStyleSheet(f"""
+            QCheckBox {{
+                color: {text_color};
+                spacing: {spacing}px;
+                background-color: transparent;
+            }}
+            QCheckBox::indicator {{
+                width: 20px;
+                height: 20px;
+                min-width: 20px;
+                min-height: 20px;
+                border: 2px solid {indicator_border};
+                border-radius: 4px;
+                background-color: {indicator_background};
+            }}
+            QCheckBox::indicator:hover {{
+                border: 2px solid {hover_border};
+                background-color: {hover_background};
+            }}
+            QCheckBox::indicator:checked {{
+                background-color: {checked_background};
+                border: 2px solid {checked_border};
+            }}
+            QCheckBox::indicator:checked:hover {{
+                background-color: {checked_hover_background};
+                border: 2px solid {checked_hover_border};
+            }}
+            QCheckBox::indicator:disabled {{
+                background-color: {disabled_indicator};
+                border: 2px solid {disabled_border};
+            }}
+        """)
+
+    def _restyle_all_checkboxes(self):
+        """Reapply themed checkbox styling when the theme or enabled state changes."""
+        is_dark_mode = (self.theme == 'dark')
+
+        for checkbox in self.checkboxes.values():
+            self._style_mask_checkbox(checkbox, is_dark_mode, checkbox.isEnabled())
+
+        for checkbox in self.header_row_checkboxes.values():
+            self._style_mask_checkbox(checkbox, is_dark_mode, checkbox.isEnabled())
+
+        for checkbox in self.header_col_checkboxes.values():
+            self._style_mask_checkbox(checkbox, is_dark_mode, checkbox.isEnabled())
+
     def setup_ui(self):
         """Setup the user interface."""
         _ = translations[self.language_code]
@@ -224,9 +300,9 @@ class MaskGridDialog(QDialog):
         # Set fixed row/column sizes for compact display
         for i in range(len(self.strands) + 1):
             if i == 0:
-                self.table.setRowHeight(i, 70)  # Header row height for vertical layout
+                self.table.setRowHeight(i, 80)  # Header row height for vertical layout
             else:
-                self.table.setRowHeight(i, 50)  # Data row height - taller for vertical layout in row headers
+                self.table.setRowHeight(i, 60)  # Data row height - allow room for large toggles
             self.table.setColumnWidth(i, 50)  # Compact column width
 
         # First column should be wider for labels
@@ -293,6 +369,8 @@ class MaskGridDialog(QDialog):
         _ = translations[self.language_code]
 
         widget = QWidget()
+        indicator_size = 20
+        is_dark_mode = (self.theme == 'dark')
 
         if is_row:
             # Row headers (left column) - vertical layout with checkbox on new line
@@ -345,12 +423,11 @@ class MaskGridDialog(QDialog):
             # Ensure the indicator itself is centered by removing label spacing
             # and constraining the widget width to the indicator width
             select_all_checkbox.setText("")
-            select_all_checkbox.setStyleSheet("QCheckBox { spacing: 0px; }")
 
             # Apply custom styling from shadow editor
-            self._apply_large_indicator(select_all_checkbox, indicator_size=16)
+            self._apply_large_indicator(select_all_checkbox, indicator_size=indicator_size)
             self._setup_custom_checkmark(select_all_checkbox)
-            select_all_checkbox.setFixedWidth(16)
+            select_all_checkbox.setFixedSize(indicator_size + 6, indicator_size + 6)
 
             select_all_checkbox.stateChanged.connect(
                 lambda state, idx=index, row=is_row: self._on_header_checkbox_changed(idx, row, state)
@@ -388,13 +465,12 @@ class MaskGridDialog(QDialog):
             select_all_checkbox = QCheckBox()
             select_all_checkbox.setChecked(False)
             select_all_checkbox.setText("")
-            select_all_checkbox.setStyleSheet("QCheckBox { spacing: 0px; }")
             select_all_checkbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
             # Apply custom styling from shadow editor
-            self._apply_large_indicator(select_all_checkbox, indicator_size=16)
+            self._apply_large_indicator(select_all_checkbox, indicator_size=indicator_size)
             self._setup_custom_checkmark(select_all_checkbox)
-            select_all_checkbox.setFixedWidth(16)
+            select_all_checkbox.setFixedSize(indicator_size + 6, indicator_size + 6)
 
             select_all_checkbox.stateChanged.connect(
                 lambda state, idx=index, row=is_row: self._on_header_checkbox_changed(idx, row, state)
@@ -406,6 +482,8 @@ class MaskGridDialog(QDialog):
             self.header_row_checkboxes[index] = select_all_checkbox
         else:
             self.header_col_checkboxes[index] = select_all_checkbox
+
+        self._style_mask_checkbox(select_all_checkbox, is_dark_mode, select_all_checkbox.isEnabled())
 
         return widget
 
@@ -420,18 +498,15 @@ class MaskGridDialog(QDialog):
         checkbox.setChecked(is_disabled)
         checkbox.setEnabled(not is_disabled)
 
+        indicator_size = 20
+
         # Apply custom styling from shadow editor
-        self._apply_large_indicator(checkbox, indicator_size=18)
+        self._apply_large_indicator(checkbox, indicator_size=indicator_size)
         self._setup_custom_checkmark(checkbox)
         # Remove internal spacing and fix size so indicator is truly centered
         checkbox.setText("")
-        checkbox.setStyleSheet("QCheckBox { spacing: 0px; }")
         checkbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        checkbox.setFixedSize(18, 18)
-
-        if is_disabled:
-            # Gray out existing masks
-            checkbox.setStyleSheet("QCheckBox { color: #808080; }")
+        checkbox.setFixedSize(indicator_size + 6, indicator_size + 6)
 
         # Connect to update header checkboxes
         checkbox.stateChanged.connect(lambda: self._update_header_checkboxes())
@@ -440,6 +515,8 @@ class MaskGridDialog(QDialog):
 
         # Store reference
         self.checkboxes[(row_idx, col_idx)] = checkbox
+
+        self._style_mask_checkbox(checkbox, self.theme == 'dark', checkbox.isEnabled())
 
         return widget
 
@@ -585,6 +662,7 @@ class MaskGridDialog(QDialog):
 
     def _refresh_table(self):
         """Refresh the table to reflect current mask state (both created and deleted masks)."""
+        is_dark_mode = (self.theme == 'dark')
         for (row_idx, col_idx), checkbox in self.checkboxes.items():
             row_strand = self.strands[row_idx]
             col_strand = self.strands[col_idx]
@@ -595,13 +673,13 @@ class MaskGridDialog(QDialog):
                 # Mask exists - disable and check the checkbox
                 checkbox.setChecked(True)
                 checkbox.setEnabled(False)
-                checkbox.setStyleSheet("QCheckBox { color: #808080; }")
             else:
                 # Mask doesn't exist - enable and uncheck if it was previously disabled
                 if not checkbox.isEnabled():
                     checkbox.setEnabled(True)
                     checkbox.setChecked(False)
-                    checkbox.setStyleSheet("")
+
+            self._style_mask_checkbox(checkbox, is_dark_mode, checkbox.isEnabled())
 
         # Update header checkboxes
         self._update_header_checkboxes()
@@ -680,21 +758,32 @@ class MaskGridDialog(QDialog):
                 }
                 QCheckBox {
                     color: white;
+                    spacing: 2px;
                 }
                 QCheckBox::indicator {
-                    width: 18px;
-                    height: 18px;
-                    border: 2px solid #666;
-                    border-radius: 3px;
-                    background-color: #2C2C2C;
+                    width: 20px;
+                    height: 20px;
+                    min-width: 20px;
+                    min-height: 20px;
+                    border: 2px solid #666666;
+                    border-radius: 4px;
+                    background-color: #2A2A2A;
+                }
+                QCheckBox::indicator:hover {
+                    border: 2px solid #888888;
+                    background-color: #454545;
                 }
                 QCheckBox::indicator:checked {
                     background-color: #4A6FA5;
                     border: 2px solid #6A9FD5;
                 }
+                QCheckBox::indicator:checked:hover {
+                    background-color: #5A7FB5;
+                    border: 2px solid #7AAFF5;
+                }
                 QCheckBox::indicator:disabled {
-                    background-color: #404040;
-                    border: 2px solid #555;
+                    background-color: #1F1F1F;
+                    border: 2px solid #444444;
                 }
                 QPushButton {
                     background-color: #252525;
@@ -737,21 +826,32 @@ class MaskGridDialog(QDialog):
                 }
                 QCheckBox {
                     color: black;
+                    spacing: 2px;
                 }
                 QCheckBox::indicator {
-                    width: 18px;
-                    height: 18px;
-                    border: 2px solid #999;
-                    border-radius: 3px;
-                    background-color: white;
+                    width: 20px;
+                    height: 20px;
+                    min-width: 20px;
+                    min-height: 20px;
+                    border: 2px solid #AAAAAA;
+                    border-radius: 4px;
+                    background-color: #FFFFFF;
+                }
+                QCheckBox::indicator:hover {
+                    border: 2px solid #888888;
+                    background-color: #F8F8F8;
                 }
                 QCheckBox::indicator:checked {
                     background-color: #A0C0E0;
                     border: 2px solid #7090C0;
                 }
+                QCheckBox::indicator:checked:hover {
+                    background-color: #B0D0F0;
+                    border: 2px solid #8AA0D0;
+                }
                 QCheckBox::indicator:disabled {
-                    background-color: #E0E0E0;
-                    border: 2px solid #BBB;
+                    background-color: #F0F0F0;
+                    border: 2px solid #BBBBBB;
                 }
                 QPushButton {
                     background-color: #FFFFFF;
@@ -769,3 +869,5 @@ class MaskGridDialog(QDialog):
                     background-color: #D0D0D0;
                 }
             """)
+
+        self._restyle_all_checkboxes()

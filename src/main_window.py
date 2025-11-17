@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
     QSplitter, QFileDialog, QScrollArea
 )
-from PyQt5.QtCore import Qt, QSize, pyqtSlot, pyqtSignal, QTimer
+from PyQt5.QtCore import Qt, QSize, pyqtSlot, pyqtSignal, QTimer, QEvent
 from PyQt5.QtGui import QIcon, QFont, QImage, QPainter, QColor
 from PyQt5.QtWidgets import QApplication
 from layer_state_manager import LayerStateManager
@@ -104,6 +104,9 @@ class MainWindow(QMainWindow):
         pass
 
         pass
+
+        # Install event filter to intercept space key before it reaches child widgets
+        self.installEventFilter(self)
 
         # Connection will be handled in setup_connections
 
@@ -2014,9 +2017,21 @@ class MainWindow(QMainWindow):
         # This method is no longer needed, but we'll keep it empty for compatibility
         self.unpress_angle_adjust_button()
 
+    def eventFilter(self, obj, event):
+        """Filter events to catch Space key before it reaches child widgets (like buttons)."""
+        # Intercept key press events for Space key
+        if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Space:
+            # Only handle if no modifiers are pressed
+            if event.modifiers() == Qt.NoModifier:
+                if hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'toggle_pan_mode'):
+                    self.layer_panel.toggle_pan_mode()
+                    return True  # Event handled, don't propagate to child widgets (prevents button clicks)
+
+        # Let other events pass through
+        return super().eventFilter(obj, event)
 
     def keyPressEvent(self, event):
-        """Handle key press events, specifically Escape to exit mask edit mode and Space to toggle pan mode."""
+        """Handle key press events, specifically Escape to exit mask edit mode."""
         if event.key() == Qt.Key_Escape:
             # Check if we are in mask edit mode using the layer panel's flag
             if hasattr(self, 'layer_panel') and self.layer_panel.mask_editing:
@@ -2026,13 +2041,6 @@ class MainWindow(QMainWindow):
                 self.canvas.exit_mask_edit_mode()
                 event.accept() # Indicate the event was handled
                 return # Stop further processing
-
-        # Space bar to toggle pan mode
-        elif event.key() == Qt.Key_Space:
-            if hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'toggle_pan_mode'):
-                self.layer_panel.toggle_pan_mode()
-                event.accept()  # Indicate the event was handled
-                return  # Stop further processing
 
         # Undo: Ctrl+Z (Windows/Linux) or Cmd+Z (Mac)
         elif event.key() == Qt.Key_Z and event.modifiers() == Qt.ControlModifier:

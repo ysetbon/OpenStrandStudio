@@ -856,7 +856,7 @@ class SettingsDialog(QDialog):
                 elif item.spacerItem():
                     spacer = item.spacerItem()
             # Log container and layout geometry
-            # Let the layout decide the width – zero works fine
+            # Let the layout decide the width ΓÇô zero works fine
             self.button_color_label.setMinimumWidth(0)
             self.button_color_label.updateGeometry()
             self.button_color_label.repaint()
@@ -900,7 +900,7 @@ class SettingsDialog(QDialog):
                 self.default_strand_color_container.updateGeometry()
                 self.default_strand_color_container.update()
                 
-            # Let the layout decide the width – zero works fine
+            # Let the layout decide the width ΓÇô zero works fine
             self.default_strand_color_label.setMinimumWidth(0)
             self.default_strand_color_label.updateGeometry()
             self.default_strand_color_label.repaint()
@@ -942,7 +942,7 @@ class SettingsDialog(QDialog):
                 self.default_stroke_color_container.updateGeometry()
                 self.default_stroke_color_container.update()
                 
-            # Let the layout decide the width – zero works fine
+            # Let the layout decide the width ΓÇô zero works fine
             self.default_stroke_color_label.setMinimumWidth(0)
             self.default_stroke_color_label.updateGeometry()
             self.default_stroke_color_label.repaint()
@@ -1403,7 +1403,7 @@ class SettingsDialog(QDialog):
 
         # Left side: categories list
         self.categories_list = QListWidget()
-        self.categories_list.setFixedWidth(200)  # Increased width for better appearance
+        self.categories_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.categories_list.itemClicked.connect(self.change_category)
 
         categories = [
@@ -1418,6 +1418,19 @@ class SettingsDialog(QDialog):
             (_['samples'] if 'samples' in _ else 'Samples'),
             _['about']  # Keep About as the last item
         ]
+
+        # Dynamically size the category list so longer translations do not clip.
+        font_metrics = QFontMetrics(self.categories_list.font())
+        max_category_width = 0
+        for category in categories:
+            try:
+                text_width = font_metrics.horizontalAdvance(category)
+            except AttributeError:
+                text_width = font_metrics.width(category)
+            max_category_width = max(max_category_width, text_width)
+        self.category_panel_width = max(240, max_category_width + 40)
+        self.categories_list.setFixedWidth(self.category_panel_width)
+
         for category in categories:
             item = QListWidgetItem(category)
             item.setTextAlignment(Qt.AlignCenter)
@@ -2371,7 +2384,7 @@ class SettingsDialog(QDialog):
             # Play Video Button
             play_button = QPushButton(_['play_video'])
             # Set fixed size based on longest translation and increased height
-            play_button.setFixedSize(180, 40)  # Width for "Reproducir Vídeo" + padding, height increased
+            play_button.setFixedSize(180, 40)  # Width for "Reproducir V├¡deo" + padding, height increased
             play_button.setStyleSheet("QPushButton { padding: 5px; }")
             
             # Create a horizontal layout to center the button
@@ -2520,23 +2533,23 @@ class SettingsDialog(QDialog):
         <h3 style="margin-top: 12px;">{_['selection_indicators_title']}</h3>
         <ul>
             <li style="margin-bottom: 12px;">
-                <span style="color: #FF0000; font-size: 18px; font-weight: bold;">●</span>
+                <span style="color: #FF0000; font-size: 18px; font-weight: bold;">ΓùÅ</span>
                 <span class="button-name">{_['red_circle_name']}</span> - {_['red_circle_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: #0000FF; font-size: 18px; font-weight: bold;">●</span>
+                <span style="color: #0000FF; font-size: 18px; font-weight: bold;">ΓùÅ</span>
                 <span class="button-name">{_['blue_circle_name']}</span> - {_['blue_circle_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: rgba(255, 0, 0, 1); font-size: 18px; font-weight: bold;">■</span>
+                <span style="color: rgba(255, 0, 0, 1); font-size: 18px; font-weight: bold;">Γûá</span>
                 <span class="button-name">{_['red_square_name']}</span> - {_['red_square_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: rgba(34 ,139,34, 1); font-size: 18px; font-weight: bold;">■</span>
+                <span style="color: rgba(34 ,139,34, 1); font-size: 18px; font-weight: bold;">Γûá</span>
                 <span class="button-name">{_['green_square_name']}</span> - {_['green_square_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: rgba(255, 222, 23, 1); font-size: 18px; font-weight: bold;">■</span>
+                <span style="color: rgba(255, 222, 23, 1); font-size: 18px; font-weight: bold;">Γûá</span>
                 <span class="button-name">{_['yellow_square_name']}</span> - {_['yellow_square_desc']}
             </li>
         </ul>
@@ -2727,6 +2740,15 @@ class SettingsDialog(QDialog):
         main_layout.addWidget(self.categories_list)
         main_layout.addWidget(self.stacked_widget)
 
+        # Expand dialog width so localized text (e.g., Portuguese) fits without scrolling.
+        left_margin, _, right_margin, _ = main_layout.getContentsMargins()
+        spacing = main_layout.spacing()
+        right_panel_min_width = max(self.general_settings_widget.minimumWidth(), 650)
+        dialog_min_width = self.category_panel_width + right_panel_min_width + spacing + left_margin + right_margin
+        self.setMinimumWidth(dialog_min_width)
+        target_height = max(self.height(), self.sizeHint().height())
+        self.resize(max(self.width(), dialog_min_width), target_height)
+
         # Prevent dialog from being resizable
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowMinimizeButtonHint)
@@ -2758,7 +2780,7 @@ class SettingsDialog(QDialog):
             buttons.extend(self.sample_buttons)
         
         for button in buttons:
-            # Increase height for sample project and history buttons to better fit tall glyphs like 'ק'
+            # Increase height for sample project and history buttons to better fit tall glyphs like '╫º'
             if (
                 (hasattr(self, 'sample_buttons') and button in self.sample_buttons) or
                 button in (self.load_history_button, self.clear_history_button)
@@ -3310,23 +3332,23 @@ class SettingsDialog(QDialog):
         <h3 style="margin-top: 12px;">{_['selection_indicators_title']}</h3>
         <ul>
             <li style="margin-bottom: 12px;">
-                <span style="color: #FF0000; font-size: 18px; font-weight: bold;">●</span>
+                <span style="color: #FF0000; font-size: 18px; font-weight: bold;">ΓùÅ</span>
                 <span class="button-name">{_['red_circle_name']}</span> - {_['red_circle_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: #0000FF; font-size: 18px; font-weight: bold;">●</span>
+                <span style="color: #0000FF; font-size: 18px; font-weight: bold;">ΓùÅ</span>
                 <span class="button-name">{_['blue_circle_name']}</span> - {_['blue_circle_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: rgba(255, 0, 0, 1); font-size: 18px; font-weight: bold;">■</span>
+                <span style="color: rgba(255, 0, 0, 1); font-size: 18px; font-weight: bold;">Γûá</span>
                 <span class="button-name">{_['red_square_name']}</span> - {_['red_square_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: rgba(34 ,139,34, 1); font-size: 18px; font-weight: bold;">■</span>
+                <span style="color: rgba(34 ,139,34, 1); font-size: 18px; font-weight: bold;">Γûá</span>
                 <span class="button-name">{_['green_square_name']}</span> - {_['green_square_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: rgba(255, 222, 23, 1); font-size: 18px; font-weight: bold;">■</span>
+                <span style="color: rgba(255, 222, 23, 1); font-size: 18px; font-weight: bold;">Γûá</span>
                 <span class="button-name">{_['yellow_square_name']}</span> - {_['yellow_square_desc']}
             </li>
         </ul>
@@ -3825,23 +3847,23 @@ class SettingsDialog(QDialog):
             <h3 style="margin-top: 12px;">{_['selection_indicators_title']}</h3>
             <ul>
                 <li style="margin-bottom: 12px;">
-                    <span style="color: #FF0000; font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">●</span>
+                    <span style="color: #FF0000; font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">ΓùÅ</span>
                     <span class="button-name">{_['red_circle_name']}</span> - {_['red_circle_desc']}
                 </li>
                 <li style="margin-bottom: 12px;">
-                    <span style="color: #0000FF; font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">●</span>
+                    <span style="color: #0000FF; font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">ΓùÅ</span>
                     <span class="button-name">{_['blue_circle_name']}</span> - {_['blue_circle_desc']}
                 </li>
                 <li style="margin-bottom: 12px;">
-                    <span style="color: rgba(255, 0, 0, 1); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">■</span>
+                    <span style="color: rgba(255, 0, 0, 1); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">Γûá</span>
                     <span class="button-name">{_['red_square_name']}</span> - {_['red_square_desc']}
                 </li>
                 <li style="margin-bottom: 12px;">
-                    <span style="color: rgba(34 ,139,34, 1); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">■</span>
+                    <span style="color: rgba(34 ,139,34, 1); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">Γûá</span>
                     <span class="button-name">{_['green_square_name']}</span> - {_['green_square_desc']}
                 </li>
                 <li style="margin-bottom: 12px;">
-                    <span style="color: rgba(255, 222, 23, 1); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">■</span>
+                    <span style="color: rgba(255, 222, 23, 1); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">Γûá</span>
                     <span class="button-name">{_['yellow_square_name']}</span> - {_['yellow_square_desc']}
                 </li>
             </ul>
@@ -4604,7 +4626,7 @@ class SettingsDialog(QDialog):
                 de_url = QUrl.fromLocalFile(de_flag_path).toString()
                 img_tag = f'<img src="{de_url}" alt="DE" width="30" height="20" style="vertical-align:text-bottom;" />'
                 # Replace true emoji if present
-                html = html.replace('🇩🇪', img_tag)
+                html = html.replace('≡ƒç⌐≡ƒç¬', img_tag)
                 # Replace fallback textual rendering "DE" that some systems show instead of the flag
                 html = html.replace(' DE:', f' {img_tag}:')
                 html = html.replace(' DE</', f' {img_tag}</')
@@ -5424,7 +5446,7 @@ class SettingsDialog(QDialog):
                     state_label = _.get('history_state_label', 'State')
 
                     if self.is_rtl_language(self.current_language):
-                        item = QListWidgetItem(f"תאריך לא תקין - ({state_label} {data['step']}) {session_id}")
+                        item = QListWidgetItem(f"╫¬╫É╫¿╫Ö╫Ü ╫£╫É ╫¬╫º╫Ö╫ƒ - ({state_label} {data['step']}) {session_id}")
                         item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                     else:
                         item = QListWidgetItem(f"{session_id} ({state_label} {data['step']}) - Invalid Date Format")
@@ -5539,9 +5561,9 @@ class SettingsDialog(QDialog):
 
         # Refresh icon widgets on show (can happen after super)
         if hasattr(self, 'undo_icon_widget'):
-            self.update_icon_widget(self.undo_icon_widget, '↶')
+            self.update_icon_widget(self.undo_icon_widget, 'Γå╢')
         if hasattr(self, 'redo_icon_widget'):
-            self.update_icon_widget(self.redo_icon_widget, '↷')
+            self.update_icon_widget(self.redo_icon_widget, 'Γå╖')
         if hasattr(self, 'third_cp_icon_widget'):
             self.update_third_cp_icon_widget(self.third_cp_icon_widget)
 

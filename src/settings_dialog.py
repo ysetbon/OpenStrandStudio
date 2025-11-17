@@ -223,6 +223,8 @@ class SettingsDialog(QDialog):
         if hasattr(self, 'general_settings_widget'):
             # Set the content area to RTL for Hebrew
             self.general_settings_widget.setLayoutDirection(direction)
+            # Ensure numeric inputs follow the language's reading direction
+            self.apply_numeric_input_alignment(self.general_settings_widget, is_rtl)
             
             # Set proper text alignment for general settings labels
             if is_rtl:
@@ -489,6 +491,7 @@ class SettingsDialog(QDialog):
         if hasattr(self, 'layer_panel_rows'):
             # Keep the layer panel settings widget with content direction
             self.layer_panel_settings_widget.setLayoutDirection(direction)
+            self.apply_numeric_input_alignment(self.layer_panel_settings_widget, is_rtl)
 
             for row in self.layer_panel_rows:
                 # The stored object can be either a layout or a container QWidget
@@ -561,6 +564,18 @@ class SettingsDialog(QDialog):
                         
         # Reorganize widget order for language change
         self.reorganize_layouts_for_language(is_rtl)
+
+    def apply_numeric_input_alignment(self, container_widget, is_rtl):
+        """Align numeric spin boxes according to the current language direction."""
+        if not container_widget:
+            return
+
+        alignment = Qt.AlignRight | Qt.AlignVCenter if is_rtl else Qt.AlignLeft | Qt.AlignVCenter
+
+        for spinbox in container_widget.findChildren(QSpinBox):
+            spinbox.setAlignment(alignment)
+        for spinbox in container_widget.findChildren(QDoubleSpinBox):
+            spinbox.setAlignment(alignment)
 
     def reorganize_layouts_for_language(self, is_rtl):
         """Reorganize widget order in layouts based on language direction."""
@@ -2324,12 +2339,14 @@ class SettingsDialog(QDialog):
         # Save Settings button
         self.save_settings_button = QPushButton(_['save_settings_button'])
         self.save_settings_button.setMinimumWidth(150)
+        self.save_settings_button.setMinimumHeight(40)
         self.save_settings_button.clicked.connect(self.export_settings_to_json)
         buttons_layout.addWidget(self.save_settings_button)
 
         # Load Settings button
         self.load_settings_button = QPushButton(_['load_settings_button'])
         self.load_settings_button.setMinimumWidth(150)
+        self.load_settings_button.setMinimumHeight(40)
         self.load_settings_button.clicked.connect(self.import_settings_from_json)
         buttons_layout.addWidget(self.load_settings_button)
 
@@ -2521,23 +2538,23 @@ class SettingsDialog(QDialog):
         <h3 style="margin-top: 12px;">{_['selection_indicators_title']}</h3>
         <ul>
             <li style="margin-bottom: 12px;">
-                <span style="color: #FF0000; font-size: 18px; font-weight: bold;">ΓùÅ</span>
+                <span style="color: #FF0000; font-size: 18px; font-weight: bold;">●</span>
                 <span class="button-name">{_['red_circle_name']}</span> - {_['red_circle_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: #0000FF; font-size: 18px; font-weight: bold;">ΓùÅ</span>
+                <span style="color: #0000FF; font-size: 18px; font-weight: bold;">●</span>
                 <span class="button-name">{_['blue_circle_name']}</span> - {_['blue_circle_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: rgba(255, 0, 0, 1); font-size: 18px; font-weight: bold;">Γûá</span>
+                <span style="color: rgba(255, 0, 0, 1); font-size: 18px; font-weight: bold;">■</span>
                 <span class="button-name">{_['red_square_name']}</span> - {_['red_square_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: rgba(34 ,139,34, 1); font-size: 18px; font-weight: bold;">Γûá</span>
+                <span style="color: rgba(34 ,139,34, 1); font-size: 18px; font-weight: bold;">■</span>
                 <span class="button-name">{_['green_square_name']}</span> - {_['green_square_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: rgba(255, 222, 23, 1); font-size: 18px; font-weight: bold;">Γûá</span>
+                <span style="color: rgba(255, 222, 23, 1); font-size: 18px; font-weight: bold;">■</span>
                 <span class="button-name">{_['yellow_square_name']}</span> - {_['yellow_square_desc']}
             </li>
         </ul>
@@ -3358,23 +3375,23 @@ class SettingsDialog(QDialog):
         <h3 style="margin-top: 12px;">{_['selection_indicators_title']}</h3>
         <ul>
             <li style="margin-bottom: 12px;">
-                <span style="color: #FF0000; font-size: 18px; font-weight: bold;">ΓùÅ</span>
+                <span style="color: #FF0000; font-size: 18px; font-weight: bold;">●</span>
                 <span class="button-name">{_['red_circle_name']}</span> - {_['red_circle_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: #0000FF; font-size: 18px; font-weight: bold;">ΓùÅ</span>
+                <span style="color: #0000FF; font-size: 18px; font-weight: bold;">●</span>
                 <span class="button-name">{_['blue_circle_name']}</span> - {_['blue_circle_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: rgba(255, 0, 0, 1); font-size: 18px; font-weight: bold;">Γûá</span>
+                <span style="color: rgba(255, 0, 0, 1); font-size: 18px; font-weight: bold;">■</span>
                 <span class="button-name">{_['red_square_name']}</span> - {_['red_square_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: rgba(34 ,139,34, 1); font-size: 18px; font-weight: bold;">Γûá</span>
+                <span style="color: rgba(34 ,139,34, 1); font-size: 18px; font-weight: bold;">■</span>
                 <span class="button-name">{_['green_square_name']}</span> - {_['green_square_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: rgba(255, 222, 23, 1); font-size: 18px; font-weight: bold;">Γûá</span>
+                <span style="color: rgba(255, 222, 23, 1); font-size: 18px; font-weight: bold;">■</span>
                 <span class="button-name">{_['yellow_square_name']}</span> - {_['yellow_square_desc']}
             </li>
         </ul>
@@ -3874,23 +3891,23 @@ class SettingsDialog(QDialog):
             <h3 style="margin-top: 12px;">{_['selection_indicators_title']}</h3>
             <ul>
                 <li style="margin-bottom: 12px;">
-                    <span style="color: #FF0000; font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">ΓùÅ</span>
+                    <span style="color: #FF0000; font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">●</span>
                     <span class="button-name">{_['red_circle_name']}</span> - {_['red_circle_desc']}
                 </li>
                 <li style="margin-bottom: 12px;">
-                    <span style="color: #0000FF; font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">ΓùÅ</span>
+                    <span style="color: #0000FF; font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">●</span>
                     <span class="button-name">{_['blue_circle_name']}</span> - {_['blue_circle_desc']}
                 </li>
                 <li style="margin-bottom: 12px;">
-                    <span style="color: rgba(255, 0, 0, 1); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">Γûá</span>
+                    <span style="color: rgba(255, 0, 0, 1); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">■</span>
                     <span class="button-name">{_['red_square_name']}</span> - {_['red_square_desc']}
                 </li>
                 <li style="margin-bottom: 12px;">
-                    <span style="color: rgba(34 ,139,34, 1); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">Γûá</span>
+                    <span style="color: rgba(34 ,139,34, 1); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">■</span>
                     <span class="button-name">{_['green_square_name']}</span> - {_['green_square_desc']}
                 </li>
                 <li style="margin-bottom: 12px;">
-                    <span style="color: rgba(255, 222, 23, 1); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">Γûá</span>
+                    <span style="color: rgba(255, 222, 23, 1); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">■</span>
                     <span class="button-name">{_['yellow_square_name']}</span> - {_['yellow_square_desc']}
                 </li>
             </ul>

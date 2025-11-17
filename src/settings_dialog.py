@@ -122,9 +122,6 @@ class SettingsDialog(QDialog):
         
         self.setWindowTitle(translations[self.current_language]['settings'])
         
-        # Set fixed size for the dialog
-        self.setFixedSize(800, 600)
-        
         # If no settings were loaded, initialize shadow color from canvas if available
         if self.shadow_color == QColor(0, 0, 0, 150) and canvas:
             if hasattr(canvas, 'shadow_color'):
@@ -1419,22 +1416,13 @@ class SettingsDialog(QDialog):
             _['about']  # Keep About as the last item
         ]
 
-        # Dynamically size the category list so longer translations do not clip.
-        font_metrics = QFontMetrics(self.categories_list.font())
-        max_category_width = 0
-        for category in categories:
-            try:
-                text_width = font_metrics.horizontalAdvance(category)
-            except AttributeError:
-                text_width = font_metrics.width(category)
-            max_category_width = max(max_category_width, text_width)
-        self.category_panel_width = max(240, max_category_width + 40)
-        self.categories_list.setFixedWidth(self.category_panel_width)
-
         for category in categories:
             item = QListWidgetItem(category)
             item.setTextAlignment(Qt.AlignCenter)
             self.categories_list.addItem(item)
+        
+        # Size the category list after translations are applied to avoid clipping
+        self.update_category_panel_width()
 
         # Right side: stacked widget for different settings pages
         self.stacked_widget = QStackedWidget()
@@ -2726,28 +2714,12 @@ class SettingsDialog(QDialog):
         about_layout.addWidget(self.about_text_browser)
         self.stacked_widget.addWidget(self.about_widget)
 
-        # Ensure consistent sizes for all pages
-        self.general_settings_widget.setMinimumWidth(550)  # Set minimum width for content
-        self.change_language_widget.setMinimumWidth(550)
-        self.tutorial_widget.setMinimumWidth(550)
-        self.button_explanations_widget.setMinimumWidth(550)  # Add min width for button explanations
-        self.history_widget.setMinimumWidth(550)
-        self.whats_new_widget.setMinimumWidth(550) # Set min width for new page
-        self.about_widget.setMinimumWidth(550)
-        self.samples_widget.setMinimumWidth(550)
-
         # Add widgets to main layout with proper spacing
         main_layout.addWidget(self.categories_list)
         main_layout.addWidget(self.stacked_widget)
 
         # Expand dialog width so localized text (e.g., Portuguese) fits without scrolling.
-        left_margin, _, right_margin, _ = main_layout.getContentsMargins()
-        spacing = main_layout.spacing()
-        right_panel_min_width = max(self.general_settings_widget.minimumWidth(), 650)
-        dialog_min_width = self.category_panel_width + right_panel_min_width + spacing + left_margin + right_margin
-        self.setMinimumWidth(dialog_min_width)
-        target_height = max(self.height(), self.sizeHint().height())
-        self.resize(max(self.width(), dialog_min_width), target_height)
+        self.adjust_dialog_geometry()
 
         # Prevent dialog from being resizable
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
@@ -2759,6 +2731,60 @@ class SettingsDialog(QDialog):
   
         # Style the buttons consistently
         self.style_dialog_buttons()
+
+    def update_category_panel_width(self):
+        """Recalculate and apply the category list width based on current translations."""
+        if not hasattr(self, 'categories_list'):
+            return
+        font_metrics = QFontMetrics(self.categories_list.font())
+        max_category_width = 0
+        for i in range(self.categories_list.count()):
+            text = self.categories_list.item(i).text()
+            try:
+                text_width = font_metrics.horizontalAdvance(text)
+            except AttributeError:
+                text_width = font_metrics.width(text)
+            max_category_width = max(max_category_width, text_width)
+        # 10 px padding on each side keeps text readable without wasting space
+        self.category_panel_width = max_category_width + 20
+        self.categories_list.setFixedWidth(self.category_panel_width)
+
+    def adjust_dialog_geometry(self):
+        """Resize the dialog so the content area fits the active translations exactly."""
+        if (
+            not hasattr(self, 'categories_list') or
+            not hasattr(self, 'stacked_widget') or
+            not hasattr(self, 'category_panel_width')
+        ):
+            return
+        layout = self.layout()
+        if not layout:
+            return
+
+        left_margin, _, right_margin, _ = layout.getContentsMargins()
+        spacing = layout.spacing()
+
+        right_panel_min_width = 0
+        for index in range(self.stacked_widget.count()):
+            page = self.stacked_widget.widget(index)
+            if not page:
+                continue
+            width_hints = [
+                page.minimumWidth(),
+                page.sizeHint().width(),
+                page.minimumSizeHint().width(),
+            ]
+            right_panel_min_width = max(right_panel_min_width, *width_hints)
+
+        # Fallback to a sane minimum if pages have not reported widths yet
+        if right_panel_min_width <= 0:
+            right_panel_min_width = self.stacked_widget.sizeHint().width()
+
+        dialog_min_width = self.category_panel_width + right_panel_min_width + spacing + left_margin + right_margin
+        self.setMinimumWidth(dialog_min_width)
+
+        target_height = self.sizeHint().height()
+        self.resize(dialog_min_width, target_height)
 
     def style_dialog_buttons(self):
         """Apply consistent styling to all buttons in the dialog"""
@@ -3655,6 +3681,7 @@ class SettingsDialog(QDialog):
         self.categories_list.item(7).setText(_['whats_new']) # Update what's new category name
         self.categories_list.item(8).setText(_['samples'] if 'samples' in _ else 'Samples')
         self.categories_list.item(9).setText(_['about']) # About remains last
+        self.update_category_panel_width()
         # Update labels and buttons
         self.theme_label.setText(_['select_theme'])
         self.shadow_color_label.setText(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
@@ -4005,6 +4032,9 @@ class SettingsDialog(QDialog):
 
         # Recompute button widths based on translated text to prevent truncation
         self.style_dialog_buttons()
+
+        # Resize the dialog to tightly wrap the newly translated content
+        self.adjust_dialog_geometry()
 
 
 

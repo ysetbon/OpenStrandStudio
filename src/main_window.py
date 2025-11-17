@@ -105,8 +105,10 @@ class MainWindow(QMainWindow):
 
         pass
 
-        # Install event filter to intercept space key before it reaches child widgets
-        self.installEventFilter(self)
+        # Install global event filter so we can intercept Space before any child widget sees it
+        app = QApplication.instance()
+        if app:
+            app.installEventFilter(self)
 
         # Connection will be handled in setup_connections
 
@@ -2019,13 +2021,18 @@ class MainWindow(QMainWindow):
 
     def eventFilter(self, obj, event):
         """Filter events to catch Space key before it reaches child widgets (like buttons)."""
-        # Intercept key press events for Space key
-        if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Space:
-            # Only handle if no modifiers are pressed
-            if event.modifiers() == Qt.NoModifier:
-                if hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'toggle_pan_mode'):
-                    self.layer_panel.toggle_pan_mode()
-                    return True  # Event handled, don't propagate to child widgets (prevents button clicks)
+        if event.type() in (QEvent.KeyPress, QEvent.KeyRelease, QEvent.ShortcutOverride):
+            if event.key() == Qt.Key_Space and event.modifiers() == Qt.NoModifier:
+                # Check if the target widget (obj) belongs to this window
+                if obj and hasattr(obj, 'window'):
+                    target_window = obj.window()
+                    if target_window is self:
+                        # This event is for a widget in our window, intercept it
+                        if event.type() == QEvent.KeyPress:
+                            if hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'toggle_pan_mode'):
+                                self.layer_panel.toggle_pan_mode()
+                        event.accept()
+                        return True  # Swallow all Space events so focused buttons never activate
 
         # Let other events pass through
         return super().eventFilter(obj, event)

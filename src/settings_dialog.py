@@ -2558,7 +2558,16 @@ class SettingsDialog(QDialog):
                 <span class="button-name">{_['yellow_square_name']}</span> - {_['yellow_square_desc']}
             </li>
         </ul>
-        
+
+        <h2>{_['global_shortcuts_title']}</h2>
+        <ul>
+            <li><span class="button-name">{_['shortcut_space_desc'].split(' - ')[0]}</span> - {_['shortcut_space_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['shortcut_escape_desc'].split(' - ')[0]}</span> - {_['shortcut_escape_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['shortcut_undo_desc'].split(' - ')[0]}</span> - {_['shortcut_undo_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['shortcut_redo_desc'].split(' - ')[0]}</span> - {_['shortcut_redo_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['shortcut_clear_suppression_desc'].split(' - ')[0]}</span> - {_['shortcut_clear_suppression_desc'].split(' - ')[1]}</li>
+        </ul>
+
         <h2>{_['general_settings_buttons']}</h2>
         <ul>
             <li><span class="button-name">{_['theme_select_desc'].split(' - ')[0]}</span> - {_['theme_select_desc'].split(' - ')[1]}</li>
@@ -3395,7 +3404,16 @@ class SettingsDialog(QDialog):
                 <span class="button-name">{_['yellow_square_name']}</span> - {_['yellow_square_desc']}
             </li>
         </ul>
-        
+
+        <h2>{_['global_shortcuts_title']}</h2>
+        <ul>
+            <li><span class="button-name">{_['shortcut_space_desc'].split(' - ')[0]}</span> - {_['shortcut_space_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['shortcut_escape_desc'].split(' - ')[0]}</span> - {_['shortcut_escape_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['shortcut_undo_desc'].split(' - ')[0]}</span> - {_['shortcut_undo_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['shortcut_redo_desc'].split(' - ')[0]}</span> - {_['shortcut_redo_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['shortcut_clear_suppression_desc'].split(' - ')[0]}</span> - {_['shortcut_clear_suppression_desc'].split(' - ')[1]}</li>
+        </ul>
+
         <h2>{_['general_settings_buttons']}</h2>
         <ul>
             <li><span class="button-name">{_['theme_select_desc'].split(' - ')[0]}</span> - {_['theme_select_desc'].split(' - ')[1]}</li>
@@ -3911,7 +3929,16 @@ class SettingsDialog(QDialog):
                     <span class="button-name">{_['yellow_square_name']}</span> - {_['yellow_square_desc']}
                 </li>
             </ul>
-            
+
+            <h2>{_['global_shortcuts_title']}</h2>
+            <ul>
+                <li><span class="button-name">{_['shortcut_space_desc'].split(' - ')[0]}</span> - {_['shortcut_space_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['shortcut_escape_desc'].split(' - ')[0]}</span> - {_['shortcut_escape_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['shortcut_undo_desc'].split(' - ')[0]}</span> - {_['shortcut_undo_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['shortcut_redo_desc'].split(' - ')[0]}</span> - {_['shortcut_redo_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['shortcut_clear_suppression_desc'].split(' - ')[0]}</span> - {_['shortcut_clear_suppression_desc'].split(' - ')[1]}</li>
+            </ul>
+
             <h2>{_['general_settings_buttons']}</h2>
             <ul>
                 <li><span class="button-name">{_['theme_select_desc'].split(' - ')[0]}</span> - {_['theme_select_desc'].split(' - ')[1]}</li>

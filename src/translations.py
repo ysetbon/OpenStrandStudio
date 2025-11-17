@@ -331,6 +331,15 @@ translations = {
         'green_square_desc': 'Hover indicator for control points',
         'yellow_square_name': 'Semi-transparent Yellow Square',
         'yellow_square_desc': 'Active selection indicator when control point is being dragged',
+
+        # Global Shortcuts (Main Window)
+        'global_shortcuts_title': 'Global Shortcuts (Main Window)',
+        'shortcut_space_desc': 'Space - Toggle pan mode on/off',
+        'shortcut_escape_desc': 'Escape - Exit mask edit mode',
+        'shortcut_undo_desc': 'Ctrl+Z - Undo',
+        'shortcut_redo_desc': 'Ctrl+Y or Ctrl+Shift+Z - Redo',
+        'shortcut_clear_suppression_desc': 'Ctrl+Shift+D - Clear canvas suppression flags (debug feature)',
+
         'groups': 'Groups',
         'masked_layers': 'Masked Layers',
         'colors': 'Colors',
@@ -928,6 +937,15 @@ translations = {
         'green_square_desc': 'Indicateur de survol pour les points de contrôle',
         'yellow_square_name': 'Carré jaune semi-transparent',
         'yellow_square_desc': 'Indicateur de sélection actif lorsqu\'un point de contrôle est déplacé',
+
+        # Global Shortcuts (Main Window)
+        'global_shortcuts_title': 'Raccourcis Globaux (Fenêtre Principale)',
+        'shortcut_space_desc': 'Espace - Activer/désactiver le mode panoramique',
+        'shortcut_escape_desc': 'Échap - Quitter le mode d\'édition de masque',
+        'shortcut_undo_desc': 'Ctrl+Z - Annuler',
+        'shortcut_redo_desc': 'Ctrl+Y ou Ctrl+Maj+Z - Rétablir',
+        'shortcut_clear_suppression_desc': 'Ctrl+Maj+D - Effacer les drapeaux de suppression du canevas (fonctionnalité de débogage)',
+
         'general_settings_buttons': 'Paramètres Généraux',
         'theme_select_desc': 'Sélection du Thème - Choisir entre les thèmes clair et sombre pour l\'interface',
         'shadow_color_desc': 'Couleur de l\'Ombre - Définir la couleur utilisée pour les ombres des brins',
@@ -1394,6 +1412,15 @@ translations = {
         'green_square_desc': 'Hover-Indikator für Kontrollpunkte',
         'yellow_square_name': 'Halbtransparentes gelbes Quadrat',
         'yellow_square_desc': 'Aktiver Auswahlindikator beim Ziehen eines Kontrollpunkts',
+
+        # Global Shortcuts (Main Window)
+        'global_shortcuts_title': 'Globale Tastenkombinationen (Hauptfenster)',
+        'shortcut_space_desc': 'Leertaste - Pan-Modus ein-/ausschalten',
+        'shortcut_escape_desc': 'Escape - Maskenbearbeitungsmodus verlassen',
+        'shortcut_undo_desc': 'Strg+Z - Rückgängig',
+        'shortcut_redo_desc': 'Strg+Y oder Strg+Umschalt+Z - Wiederherstellen',
+        'shortcut_clear_suppression_desc': 'Strg+Umschalt+D - Canvas-Unterdrückungsflags löschen (Debug-Funktion)',
+
         'general_settings_buttons': 'Allgemeine Einstellungen',
         'theme_select_desc': 'Themenauswahl - Wählen Sie zwischen hellen und dunklen Themen für die Oberfläche',
         'shadow_color_desc': 'Schattenfarbe - Legen Sie die Farbe für Strangschatten fest',
@@ -1863,6 +1890,15 @@ translations = {
         'green_square_desc': 'Indicatore di hover per i punti di controllo',
         'yellow_square_name': 'Quadrato giallo semitrasparente',
         'yellow_square_desc': 'Indicatore di selezione attivo quando un punto di controllo viene trascinato',
+
+        # Global Shortcuts (Main Window)
+        'global_shortcuts_title': 'Scorciatoie Globali (Finestra Principale)',
+        'shortcut_space_desc': 'Spazio - Attiva/disattiva la modalità panoramica',
+        'shortcut_escape_desc': 'Esc - Esci dalla modalità di modifica maschera',
+        'shortcut_undo_desc': 'Ctrl+Z - Annulla',
+        'shortcut_redo_desc': 'Ctrl+Y o Ctrl+Maiusc+Z - Ripristina',
+        'shortcut_clear_suppression_desc': 'Ctrl+Maiusc+D - Cancella flag di soppressione canvas (funzionalità di debug)',
+
         'general_settings_buttons': 'Impostazioni Generali',
         'theme_select_desc': 'Selezione Tema - Scegli tra temi chiari e scuri per l\'interfaccia',
         'shadow_color_desc': 'Colore Ombra - Imposta il colore usato per le ombre dei fili',
@@ -2336,6 +2372,15 @@ translations = {
         'green_square_desc': 'Indicador de desplazamiento para puntos de control',
         'yellow_square_name': 'Cuadrado amarillo semitransparente',
         'yellow_square_desc': 'Indicador de selección activo cuando se arrastra un punto de control',
+
+        # Global Shortcuts (Main Window)
+        'global_shortcuts_title': 'Atajos Globales (Ventana Principal)',
+        'shortcut_space_desc': 'Espacio - Activar/desactivar el modo panorámico',
+        'shortcut_escape_desc': 'Escape - Salir del modo de edición de máscara',
+        'shortcut_undo_desc': 'Ctrl+Z - Deshacer',
+        'shortcut_redo_desc': 'Ctrl+Y o Ctrl+Mayús+Z - Rehacer',
+        'shortcut_clear_suppression_desc': 'Ctrl+Mayús+D - Borrar banderas de supresión del lienzo (función de depuración)',
+
         'general_settings_buttons': 'Configuración General',
         'theme_select_desc': 'Selección de Tema - Elige entre temas claros y oscuros para la interfaz',
         'shadow_color_desc': 'Color de Sombra - Establece el color usado para las sombras de las hebras',
@@ -2807,6 +2852,15 @@ translations = {
         'green_square_desc': 'Indicador de hover para pontos de controle',
         'yellow_square_name': 'Quadrado amarelo semitransparente',
         'yellow_square_desc': 'Indicador de seleção ativo quando um ponto de controle está sendo arrastado',
+
+        # Global Shortcuts (Main Window)
+        'global_shortcuts_title': 'Atalhos Globais (Janela Principal)',
+        'shortcut_space_desc': 'Espaço - Ativar/desativar o modo panorâmico',
+        'shortcut_escape_desc': 'Escape - Sair do modo de edição de máscara',
+        'shortcut_undo_desc': 'Ctrl+Z - Desfazer',
+        'shortcut_redo_desc': 'Ctrl+Y ou Ctrl+Shift+Z - Refazer',
+        'shortcut_clear_suppression_desc': 'Ctrl+Shift+D - Limpar sinalizadores de supressão da tela (recurso de depuração)',
+
         'general_settings_buttons': 'Configurações Gerais',
         'theme_select_desc': 'Seleção de Tema - Escolha entre temas claro e escuro para a interface',
         'shadow_color_desc': 'Cor da Sombra - Define a cor usada para as sombras dos fios',
@@ -3286,6 +3340,15 @@ translations = {
         'green_square_desc': 'מחוון ריחוף לנקודות בקרה',
         'yellow_square_name': 'ריבוע צהוב חצי שקוף',
         'yellow_square_desc': 'מחוון בחירה פעיל כאשר נקודת בקרה נגררת',
+
+        # Global Shortcuts (Main Window)
+        'global_shortcuts_title': 'קיצורי מקשים גלובליים (חלון ראשי)',
+        'shortcut_space_desc': 'רווח - הפעל/כבה מצב פן',
+        'shortcut_escape_desc': 'Escape - צא ממצב עריכת מסכה',
+        'shortcut_undo_desc': 'Ctrl+Z - בטל פעולה',
+        'shortcut_redo_desc': 'Ctrl+Y או Ctrl+Shift+Z - בצע שוב',
+        'shortcut_clear_suppression_desc': 'Ctrl+Shift+D - נקה דגלי דיכוי קנבס (תכונת דיבאג)',
+
         'general_settings_buttons': 'הגדרות כלליות',
         'theme_select_desc': 'בחירת ערכת נושא - בחר בין ערכות נושא בהירות וכהות לממשק',
         'shadow_color_desc': 'צבע צל - הגדר את הצבע המשמש לצללי חוטים',

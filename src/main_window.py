@@ -2049,21 +2049,6 @@ class MainWindow(QMainWindow):
                 event.accept() # Indicate the event was handled
                 return # Stop further processing
 
-        # Undo: Ctrl+Z (Windows/Linux) or Cmd+Z (Mac)
-        elif event.key() == Qt.Key_Z and event.modifiers() == Qt.ControlModifier:
-            if hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'undo_redo_manager'):
-                self.layer_panel.undo_redo_manager.undo()
-                event.accept()
-                return
-
-        # Redo: Ctrl+Y (Windows/Linux) or Cmd+Shift+Z (Mac)
-        elif (event.key() == Qt.Key_Y and event.modifiers() == Qt.ControlModifier) or \
-             (event.key() == Qt.Key_Z and event.modifiers() == (Qt.ControlModifier | Qt.ShiftModifier)):
-            if hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'undo_redo_manager'):
-                self.layer_panel.undo_redo_manager.redo()
-                event.accept()
-                return
-
         # Debug key combination: Ctrl+Shift+D to clear canvas suppression flags
         elif event.key() == Qt.Key_D and event.modifiers() == (Qt.ControlModifier | Qt.ShiftModifier):
             if hasattr(self.canvas, 'clear_suppression_flags'):

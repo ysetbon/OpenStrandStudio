@@ -2020,8 +2020,34 @@ class MainWindow(QMainWindow):
         self.unpress_angle_adjust_button()
 
     def eventFilter(self, obj, event):
-        """Filter events to catch Space key before it reaches child widgets (like buttons)."""
+        """Filter events to catch keyboard shortcuts before they reach child widgets."""
         if event.type() in (QEvent.KeyPress, QEvent.KeyRelease, QEvent.ShortcutOverride):
+            # Handle undo/redo keyboard shortcuts globally
+            if event.type() == QEvent.KeyPress:
+                # Prevent auto-repeat: only trigger on first press, not when holding keys
+                if not event.isAutoRepeat():
+                    # Check if the target widget belongs to this window
+                    if obj and hasattr(obj, 'window'):
+                        target_window = obj.window()
+                        if target_window is self:
+                            # Undo: Z key - programmatically click the button to match exact behavior
+                            if event.key() == Qt.Key_Z and event.modifiers() == Qt.NoModifier:
+                                if hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'undo_redo_manager'):
+                                    manager = self.layer_panel.undo_redo_manager
+                                    if manager.undo_button and manager.undo_button.isEnabled():
+                                        manager.undo_button.click()
+                                        event.accept()
+                                        return True
+
+                            # Redo: X key - programmatically click the button to match exact behavior
+                            elif event.key() == Qt.Key_X and event.modifiers() == Qt.NoModifier:
+                                if hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'undo_redo_manager'):
+                                    manager = self.layer_panel.undo_redo_manager
+                                    if manager.redo_button and manager.redo_button.isEnabled():
+                                        manager.redo_button.click()
+                                        event.accept()
+                                        return True
+
             if event.key() == Qt.Key_Space and event.modifiers() == Qt.NoModifier:
                 # Check if the target widget (obj) belongs to this window
                 if obj and hasattr(obj, 'window'):

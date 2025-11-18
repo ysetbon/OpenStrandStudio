@@ -937,6 +937,20 @@ class UndoRedoManager(QObject):
                 if current_shadow_overrides != prev_shadow_overrides:
                     return False
 
+                # Compare attached strands count - critical for detecting new attached strands
+                current_attached_count = 0
+                for strand in self.canvas.strands:
+                    if hasattr(strand, 'attached_strands'):
+                        current_attached_count += len(strand.attached_strands)
+
+                prev_attached_count = 0
+                for strand_data in prev_data.get('strands', []):
+                    if 'attached_strands' in strand_data:
+                        prev_attached_count += len(strand_data['attached_strands'])
+
+                if current_attached_count != prev_attached_count:
+                    return False
+
                 # If we made it here, states are identical based on checked properties
                 return True
                 
@@ -3550,7 +3564,11 @@ def connect_strand_creation(canvas, undo_redo_manager):
     if hasattr(canvas, 'strand_created'):
         def on_strand_really_created(strand):
             # IMPORTANT: Skip saving for AttachedStrands - the attach mode handler will take care of it
-            
+
+            # Skip if we're already handling this save via the attach mode handler
+            if getattr(undo_redo_manager, '_attach_save_in_progress', False):
+                return
+
             # Check if this strand is the current_strand in attach mode (indicates it's an AttachedStrand being created)
             current_strand = getattr(canvas, 'current_strand', None)
             if current_strand == strand:

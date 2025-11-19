@@ -2771,8 +2771,8 @@ class SettingsDialog(QDialog):
             except AttributeError:
                 text_width = font_metrics.width(text)
             max_category_width = max(max_category_width, text_width)
-        # 10 px padding on each side keeps text readable without wasting space
-        self.category_panel_width = max_category_width + 20
+        # 13 px padding on each side keeps text readable without wasting space (added 3 px buffer)
+        self.category_panel_width = max_category_width + 26
         self.categories_list.setFixedWidth(self.category_panel_width)
 
     def adjust_dialog_geometry(self):
@@ -2838,6 +2838,8 @@ class SettingsDialog(QDialog):
                 button in (self.load_history_button, self.clear_history_button)
             ):
                 button.setFixedHeight(40)  # Taller height for these specific buttons
+            elif button in (self.save_settings_button, self.load_settings_button):
+                button.setFixedHeight(37)  # Give save/load buttons +5 px height
             else:
                 button.setFixedHeight(32)  # Default height for other dialog buttons
             button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)

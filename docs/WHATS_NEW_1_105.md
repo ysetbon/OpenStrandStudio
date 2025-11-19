@@ -13,12 +13,9 @@
 - Smart handling skips invalid mask combos.
 
 ### Space-to-Pan
-- Hold Space to temporarily pan the canvas.
-- Your previous tool comes back the moment you release it.
-
-### Undo / Redo
-- Press Z to undo and X to redo.
-- Works globally, with safeguards to avoid repeated actions.
+- Space - Hold Space to temporarily pan the canvas. Your previous tool comes back the moment you release it.
+- Z: Undo your last action.
+- X: Redo what you just undid.
 
 ### Better Selection & Zoom
 - Selection stays accurate and easy to grab at any zoom level.

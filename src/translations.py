@@ -208,13 +208,9 @@ translations = {
             <li style="font-size:18px;"><b>Mask Grid:</b> Quickly create multiple strand masks using a visual N&#215;N grid interface in group functionalities.</li>
             <li style="font-size:18px;"><b>Keyboard Shortcuts:</b>
                 <ul style="margin-left: 0px;">
-                    <li><b>Space-to-Pan:</b> Hold the Space key to quickly pan/unpan the canvas</li>
-                    <li><b>Undo / Redo:</b>
-                        <ul style="margin-left: 0px;">
-                            <li><b>Z:</b> Undo your last action</li>
-                            <li><b>X:</b> Redo what you just undid</li>
-                        </ul>
-                    </li>
+                    <li><b>Space -</b> Hold the Space key to quickly pan/unpan the canvas</li>
+                    <li><b>Z:</b> Undo your last action</li>
+                    <li><b>X:</b> Redo what you just undid</li>
                 </ul>
             </li>
             <li style="font-size:18px;"><b>Fixed Selection & Zoom:</b> Selection in move, select, and attach modes now remains accurate at all zoom levels</li>
@@ -450,18 +446,18 @@ translations = {
         'about': 'About',
         'about_info': '''
         <h2>About OpenStrand Studio</h2>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             OpenStrand Studio was developed by Yonatan Setbon. The software is designed to create any knot in a diagrammatic way by using layers for each section of a strand and incorporating masked layers that allow for an "over-under effect."
         </p>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             Yonatan runs a YouTube channel dedicated to lanyards called <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, where many tutorials feature diagrams of knots. This software was created to facilitate designing any knot, in order to demonstrate and explain how to make complex tutorials involving knot tying.
         </p>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             Feel free to contact me at <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> or connect with me on
             <a href="https://www.instagram.com/ysetbon/">Instagram</a> or
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
-        <p style="font-size:13px;">
+        <p style="font-size:18px;">
             © 2025 OpenStrand Studio
         </p>
         ''',
@@ -627,12 +623,8 @@ translations = {
             <li style="font-size:18px;"><b>Raccourcis Clavier :</b>
                 <ul style="margin-left: 0px;">
                     <li><b>Espace pour Panoramique :</b> Maintenez la touche Espace pour panoramiquer/dé-panoramiquer rapidement le canevas</li>
-                    <li><b>Annuler / Rétablir :</b>
-                        <ul style="margin-left: 0px;">
-                            <li><b>Z :</b> Annuler votre dernière action</li>
-                            <li><b>X :</b> Rétablir ce que vous venez d'annuler</li>
-                        </ul>
-                    </li>
+                    <li><b>Z :</b> Annuler votre dernière action</li>
+                    <li><b>X :</b> Rétablir ce que vous venez d'annuler</li>
                 </ul>
             </li>
             <li style="font-size:18px;"><b>Sélection et Zoom Corrigés :</b> La sélection dans les modes déplacement, sélection et attache reste maintenant précise à tous les niveaux de zoom</li>
@@ -875,18 +867,18 @@ translations = {
         # About translations
         'about_info': '''
         <h2>À propos d'OpenStrand Studio</h2>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             OpenStrand Studio a été développé par Yonatan Setbon. Ce logiciel a été conçu pour créer n'importe quel nœud de manière schématique en utilisant des calques pour chaque section d'un brin et en incorporant des calques masqués qui permettent un effet "dessus-dessous".
         </p>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             Yonatan anime une chaîne YouTube dédiée aux bracelets appelée <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, où de nombreux tutoriels présentent des diagrammes de nœuds. Ce logiciel a été créé pour faciliter la conception de tout nœud, afin de démontrer et d'expliquer comment réaliser des tutoriels de nouage complexes.
         </p>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             N'hésitez pas à me contacter à <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> ou à me suivre sur
             <a href="https://www.instagram.com/ysetbon/">Instagram</a> ou
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
-        <p style="font-size:13px;">
+        <p style="font-size:18px;">
             © 2025 OpenStrand Studio
         </p>
         ''' ,
@@ -1125,12 +1117,8 @@ translations = {
             <li style="font-size:18px;"><b>Tastaturkürzel:</b>
                 <ul style="margin-left: 0px;">
                     <li><b>Leertaste zum Schwenken:</b> Halten Sie die Leertaste gedrückt, um die Leinwand schnell zu schwenken/zu entschwenken</li>
-                    <li><b>Rückgängig / Wiederherstellen:</b>
-                        <ul style="margin-left: 0px;">
-                            <li><b>Z:</b> Letzte Aktion rückgängig machen</li>
-                            <li><b>X:</b> Rückgängig gemachte Aktion wiederherstellen</li>
-                        </ul>
-                    </li>
+                    <li><b>Z:</b> Letzte Aktion rückgängig machen</li>
+                    <li><b>X:</b> Rückgängig gemachte Aktion wiederherstellen</li>
                 </ul>
             </li>
             <li style="font-size:18px;"><b>Auswahl & Zoom Korrigiert:</b> Die Auswahl in den Modi Verschieben, Auswählen und Anhängen bleibt nun auf allen Zoomstufen präzise</li>
@@ -1140,18 +1128,18 @@ translations = {
         # About translations
         'about_info': '''
         <h2>Über OpenStrand Studio</h2>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             OpenStrand Studio wurde von Yonatan Setbon entwickelt. Die Software ist dafür gedacht, beliebige Knoten schematisch zu erstellen, indem Ebenen für jeden Abschnitt eines Strangs verwendet werden und maskierte Ebenen ein "Über-Unter-Effekt" ermöglichen.
         </p>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             Yonatan betreibt einen YouTube-Kanal zum Thema Lanyards namens <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, in dem viele Tutorials Knotendiagramme zeigen. Diese Software wurde entwickelt, um das Entwerfen beliebiger Knoten zu erleichtern, um zu demonstrieren und zu erklären, wie man komplexe Knotentutorials erstellt.
         </p>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             Kontakt: <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> oder folgen Sie mir auf
             <a href="https://www.instagram.com/ysetbon/">Instagram</a> oder
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
-        <p style="font-size:13px;">
+        <p style="font-size:18px;">
             © 2025 OpenStrand Studio
         </p>
         ''',
@@ -1557,12 +1545,8 @@ translations = {
             <li style="font-size:18px;"><b>Scorciatoie da Tastiera:</b>
                 <ul style="margin-left: 0px;">
                     <li><b>Spazio per Panoramica:</b> Tieni premuto il tasto Spazio per panoramicare/de-panoramicare rapidamente la tela</li>
-                    <li><b>Annulla / Ripristina:</b>
-                        <ul style="margin-left: 0px;">
-                            <li><b>Z:</b> Annulla l'ultima azione</li>
-                            <li><b>X:</b> Ripristina ciò che hai appena annullato</li>
-                        </ul>
-                    </li>
+                    <li><b>Z:</b> Annulla l'ultima azione</li>
+                    <li><b>X:</b> Ripristina ciò che hai appena annullato</li>
                 </ul>
             </li>
             <li style="font-size:18px;"><b>Selezione e Zoom Corretti:</b> La selezione nelle modalità sposta, seleziona e attacca ora rimane precisa a tutti i livelli di zoom</li>
@@ -1806,18 +1790,18 @@ translations = {
         # About translations
         'about_info': '''
         <h2>Informazioni su OpenStrand Studio</h2>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             OpenStrand Studio è stato sviluppato da Yonatan Setbon. Il software è stato progettato per creare qualsiasi nodo in modo schematico utilizzando strati per ogni sezione di un filo e incorporando strati mascherati che consentono un effetto "sopra-sotto".
         </p>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             Yonatan gestisce un canale YouTube dedicato ai nastro di sicurezza chiamato <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, dove molti tutorial presentano diagrammi di nodi. Questo software è stato creato per facilitare la progettazione di qualsiasi nodo, al fine di dimostrare e spiegare come realizzare tutorial di nuovo nodo complessi.
         </p>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             Sentitevi liberi di contattarmi a <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> o di seguirmi su
             <a href="https://www.instagram.com/ysetbon/">Instagram</a> o
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
-        <p style="font-size:13px;">
+        <p style="font-size:18px;">
             © 2025 OpenStrand Studio
         </p>
         ''' ,
@@ -2027,12 +2011,8 @@ translations = {
             <li style="font-size:18px;"><b>Atajos de Teclado:</b>
                 <ul style="margin-left: 0px;">
                     <li><b>Espacio para Desplazar:</b> Mantén presionada la tecla Espacio para desplazar/no desplazar rápidamente el lienzo</li>
-                    <li><b>Deshacer / Rehacer:</b>
-                        <ul style="margin-left: 0px;">
-                            <li><b>Z:</b> Deshacer tu última acción</li>
-                            <li><b>X:</b> Rehacer lo que acabas de deshacer</li>
-                        </ul>
-                    </li>
+                    <li><b>Z:</b> Deshacer tu última acción</li>
+                    <li><b>X:</b> Rehacer lo que acabas de deshacer</li>
                 </ul>
             </li>
             <li style="font-size:18px;"><b>Selección y Zoom Corregidos:</b> La selección en los modos mover, seleccionar y adjuntar ahora permanece precisa en todos los niveles de zoom</li>
@@ -2277,18 +2257,18 @@ translations = {
         # About translations
         'about_info': '''
         <h2>Acerca de OpenStrand Studio</h2>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             OpenStrand Studio fue desarrollado por Yonatan Setbon. El software está diseñado para crear cualquier nudo de manera esquemática utilizando capas para cada sección de un cordón y utilizando capas enmascaradas que permiten un efecto "sobre-debajo".
         </p>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             Yonatan mantiene un canal de YouTube dedicado a los nudos de lazo llamado <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, donde muchos tutoriales muestran diagramas de nudos. Este software fue creado para facilitar el diseño de cualquier nudo, con el fin de demostrar y explicar cómo realizar tutoriales de nudo complejos.
         </p>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             Siéntase libre de contactarme a <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> o seguirme en
             <a href="https://www.instagram.com/ysetbon/">Instagram</a> o
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
-        <p style="font-size:13px;">
+        <p style="font-size:18px;">
             © 2025 OpenStrand Studio
         </p>
         ''' ,
@@ -2498,12 +2478,8 @@ translations = {
             <li style="font-size:18px;"><b>Atalhos de Teclado:</b>
                 <ul style="margin-left: 0px;">
                     <li><b>Espaço para Panorâmica:</b> Mantenha pressionada a tecla Espaço para panorâmicar/despanorâmicar rapidamente a tela</li>
-                    <li><b>Desfazer / Refazer:</b>
-                        <ul style="margin-left: 0px;">
-                            <li><b>Z:</b> Desfazer sua última ação</li>
-                            <li><b>X:</b> Refazer o que você acabou de desfazer</li>
-                        </ul>
-                    </li>
+                    <li><b>Z:</b> Desfazer sua última ação</li>
+                    <li><b>X:</b> Refazer o que você acabou de desfazer</li>
                 </ul>
             </li>
             <li style="font-size:18px;"><b>Seleção e Zoom Corrigidos:</b> A seleção nos modos mover, selecionar e anexar agora permanece precisa em todos os níveis de zoom</li>
@@ -2746,18 +2722,18 @@ translations = {
         # About translations
         'about_info': '''
         <h2>Sobre OpenStrand Studio</h2>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             OpenStrand Studio foi desenvolvido por Yonatan Setbon. O software foi projetado para criar qualquer nó de forma esquemática usando camadas para cada seção de um fio e incorporando camadas mascaradas que permitem um efeito "sobre-sobre".
         </p>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             Yonatan mantém um canal do YouTube dedicado a cordões de segurança chamado <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, onde vários tutoriais apresentam diagramas de nós. Este software foi criado para facilitar o design de qualquer nó, com o objetivo de demonstrar e explicar como realizar tutoriais de nó complexo.
         </p>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             Sinta-se à vontade para me contatar em <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> ou me seguir no
             <a href="https://www.instagram.com/ysetbon/">Instagram</a> ou
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
-        <p style="font-size:13px;">
+        <p style="font-size:18px;">
             © 2025 OpenStrand Studio
         </p>
         ''' ,
@@ -2974,12 +2950,8 @@ translations = {
             <li style="font-size:18px;"><b>קיצורי מקלדת:</b>
                 <ul style="margin-left: 0px;">
                     <li><b>רווח להזזה:</b> החזק את מקש הרווח כדי להזיז/לבטל הזזה במהירות של הקנבס</li>
-                    <li><b>ביטול / שחזור:</b>
-                        <ul style="margin-left: 0px;">
-                            <li><b>Z:</b> בטל את הפעולה האחרונה שלך</li>
-                            <li><b>X:</b> שחזר את מה שביטלת זה עתה</li>
-                        </ul>
-                    </li>
+                    <li><b>Z:</b> בטל את הפעולה האחרונה שלך</li>
+                    <li><b>X:</b> שחזר את מה שביטלת זה עתה</li>
                 </ul>
             </li>
             <li style="font-size:18px;"><b>בחירה וזום תוקנו:</b> בחירה במצבי הזזה, בחירה וחיבור כעת נשארת מדויקת בכל רמות הזום</li>
@@ -3179,16 +3151,16 @@ translations = {
         'about': 'אודות',
         'about_info': '''
         <h2>אודות OpenStrand Studio</h2>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             OpenStrand Studio פותחה על ידי יהונתן סטבון. התוכנה מיועדת ליצירת כל קשר באופן סכמטי על ידי שימוש בשכבות לכל קטע של חוט ושילוב שכבות עם מסכות המאפשרות אפקט "מעל-מתחת".
         </p>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             יהונתן מפעיל ערוץ YouTube ייעודי לרצועות בשם <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, בו מדריכים רבים מציגים דיאגרמות של קשרים. תוכנה זו נוצרה כדי להקל על עיצוב כל קשר, במטרה להדגים ולהסביר כיצד להכין מדריכים מורכבים הכוללים קשירת קשרים.
         </p>
-        <p style="font-size:15px;">
+        <p style="font-size:18px;">
             אתם מוזמנים לפנות אליי בכתובת <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> או להתחבר איתי ב־<a href="https://www.instagram.com/ysetbon/">Instagram</a> או ב־<a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
-        <p style="font-size:13px;">
+        <p style="font-size:18px;">
             © 2025 OpenStrand Studio
         </p>
         ''',

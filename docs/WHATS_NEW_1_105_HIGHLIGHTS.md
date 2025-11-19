@@ -12,13 +12,9 @@
 
 ---
 
-### Keyboard Shortcuts 
-### Space-to-Pan
+### Keyboard Shortcuts
 
-- Hold the **Space** key to quickly pan/unpan the canvas  
-
-###  Undo / Redo
-
+- **Space** - Hold the Space key to quickly pan/unpan the canvas  
 - **Z:** Undo your last action  
 - **X:** Redo what you just undid  
 

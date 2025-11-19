@@ -4,7 +4,8 @@
       "Bash(python:*)",
       "Bash(grep:*)",
       "Bash(sed:*)",
-      "Read(C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\**)"
+      "Read(C:\\Users\\YonatanSetbon\\.vscode\\OpenStrandStudio\\**)",
+      "Bash(git show:*)"
     ],
     "deny": [],
     "ask": []

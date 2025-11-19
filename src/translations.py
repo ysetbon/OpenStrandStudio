@@ -203,34 +203,23 @@ translations = {
         'curve_shape_full_desc': 'Curve Shape - Controls the mathematical curve type (1.0=sharp angles, 2.0=smooth curves, 3.0=very smooth)',
         'reset_curvature_full_desc': 'Reset Curvature Settings - Restores Control Influence, Distance Boost, and Curve Shape to defaults',
         'whats_new_info': '''
-        <h2>What's New in Version 1.104</h2>
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Enhanced Shadow Editor Dialog:</b> Take precise control of shadow rendering at the layer level
-                <ul style="margin-left: 20px;">
-                    <li><b>Layer-by-Layer Control:</b> Customize how shadows from each strand appear on layers below</li>
-                    <li><b>Visibility & Intensity:</b> Toggle shadow visibility and enable full shadow coverage per layer</li>
-                    <li><b>Subtract Layers:</b> Fine-tune shadow calculations by selecting which layers to subtract</li>
-                    <li><b>Visual Debugging:</b> Preview shadow paths to verify your shadow configuration</li>
+        <h2>What's New in Version 1.105</h2>
+        
+            <li style="font-size:18px;"><b>Mask Grid:</b> Quickly create multiple strand masks using a visual N&#215;N grid interface in group functionalities.</li>
+            <li style="font-size:18px;"><b>Keyboard Shortcuts:</b>
+                <ul style="margin-left: 0px;">
+                    <li><b>Space-to-Pan:</b> Hold the Space key to quickly pan/unpan the canvas</li>
+                    <li><b>Undo / Redo:</b>
+                        <ul style="margin-left: 0px;">
+                            <li><b>Z:</b> Undo your last action</li>
+                            <li><b>X:</b> Redo what you just undid</li>
+                        </ul>
+                    </li>
                 </ul>
             </li>
-            <li style="font-size:15px;"><b>Save & Load User Settings:</b> Export and import your personalized configuration
-                <ul style="margin-left: 20px;">
-                    <li><b>Complete Settings Export:</b> Save all preferences including theme, language, colors, and parameters</li>
-                    <li><b>Easy Backup & Sharing:</b> Store your settings as JSON files for backup or sharing across devices</li>
-                    <li><b>Quick Restore:</b> Load previously saved settings with a single click</li>
-                </ul>
-            </li>
-            <li style="font-size:15px;"><b>Stability & Quality Improvements:</b> Comprehensive bug fixes and UX enhancements
-                <ul style="margin-left: 20px;">
-                    <li><b>Shadow Rendering:</b> Resolved multiple shadow painter rendering issues</li>
-                    <li><b>Strand Painting:</b> Fixed rendering bugs for strand paths and attached strands</li>
-                    <li><b>Control Points:</b> Corrected control point loading when opening saved JSON files</li>
-                    <li><b>Move Tool:</b> Fixed positioning issues when moving strand sides and attached strands</li>
-                    <li><b>User Experience:</b> Various interface refinements for smoother workflow</li>
-                </ul>
-            </li>
-        </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.104</p>
+            <li style="font-size:18px;"><b>Fixed Selection & Zoom:</b> Selection in move, select, and attach modes now remains accurate at all zoom levels</li>
+        
+        <p style="font-size:16px;">© 2025 OpenStrand Studio - Version 1.105</p>
         ''',
 
 
@@ -635,7 +624,7 @@ translations = {
         <h2>Nouveautés de la version 1.104</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>Éditeur d'ombres amélioré :</b> Contrôle précis du rendu des ombres au niveau des calques
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 0px;">
                     <li><b>Contrôle calque par calque :</b> Personnalisez l'apparence des ombres de chaque brin sur les calques inférieurs</li>
                     <li><b>Visibilité et intensité :</b> Activez/désactivez la visibilité des ombres et activez la couverture d'ombre complète par calque</li>
                     <li><b>Soustraire des calques :</b> Ajustez finement les calculs d'ombre en sélectionnant les calques à soustraire</li>
@@ -643,14 +632,14 @@ translations = {
                 </ul>
             </li>
             <li style="font-size:15px;"><b>Sauvegarder et charger les paramètres utilisateur :</b> Exportez et importez votre configuration personnalisée
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 0px;">
                     <li><b>Exportation complète des paramètres :</b> Sauvegardez toutes les préférences incluant le thème, la langue, les couleurs et les paramètres</li>
                     <li><b>Sauvegarde et partage faciles :</b> Stockez vos paramètres sous forme de fichiers JSON pour sauvegarde ou partage entre appareils</li>
                     <li><b>Restauration rapide :</b> Chargez les paramètres précédemment sauvegardés en un seul clic</li>
                 </ul>
             </li>
             <li style="font-size:15px;"><b>Améliorations de stabilité et de qualité :</b> Corrections de bugs complètes et améliorations de l'expérience utilisateur
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 0px;">
                     <li><b>Rendu des ombres :</b> Résolution de multiples problèmes de rendu du peintre d'ombres</li>
                     <li><b>Peinture des brins :</b> Correction des bugs de rendu pour les chemins de brins et les brins attachés</li>
                     <li><b>Points de contrôle :</b> Correction du chargement des points de contrôle lors de l'ouverture de fichiers JSON sauvegardés</li>
@@ -1144,7 +1133,7 @@ translations = {
         <h2>Neu in Version 1.104</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>Verbesserter Schatten-Editor:</b> Präzise Steuerung des Schatten-Renderings auf Ebenenebene
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 0px;">
                     <li><b>Ebenenweise Steuerung:</b> Passen Sie an, wie Schatten von jedem Strang auf darunterliegenden Ebenen erscheinen</li>
                     <li><b>Sichtbarkeit und Intensität:</b> Schalten Sie die Schattensichtbarkeit um und aktivieren Sie vollständige Schattenabdeckung pro Ebene</li>
                     <li><b>Ebenen subtrahieren:</b> Feinabstimmung der Schattenberechnungen durch Auswahl der zu subtrahierenden Ebenen</li>
@@ -1152,14 +1141,14 @@ translations = {
                 </ul>
             </li>
             <li style="font-size:15px;"><b>Benutzereinstellungen speichern und laden:</b> Exportieren und importieren Sie Ihre personalisierte Konfiguration
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 0px;">
                     <li><b>Vollständiger Einstellungsexport:</b> Speichern Sie alle Einstellungen einschließlich Design, Sprache, Farben und Parameter</li>
                     <li><b>Einfache Sicherung und Freigabe:</b> Speichern Sie Ihre Einstellungen als JSON-Dateien zur Sicherung oder Freigabe zwischen Geräten</li>
                     <li><b>Schnelle Wiederherstellung:</b> Laden Sie zuvor gespeicherte Einstellungen mit einem einzigen Klick</li>
                 </ul>
             </li>
             <li style="font-size:15px;"><b>Stabilitäts- und Qualitätsverbesserungen:</b> Umfassende Fehlerbehebungen und UX-Verbesserungen
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 0px;">
                     <li><b>Schatten-Rendering:</b> Behebung mehrerer Schatten-Rendering-Probleme</li>
                     <li><b>Strang-Zeichnung:</b> Behebung von Rendering-Fehlern bei Strangpfaden und angehängten Strängen</li>
                     <li><b>Kontrollpunkte:</b> Korrektur des Ladens von Kontrollpunkten beim Öffnen gespeicherter JSON-Dateien</li>
@@ -1587,7 +1576,7 @@ translations = {
         <h2>Novità della versione 1.104</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>Editor Ombra Migliorato:</b> Controllo preciso del rendering delle ombre a livello di livello
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 0px;">
                     <li><b>Controllo livello per livello:</b> Personalizza come le ombre di ogni trefolo appaiono sui livelli sottostanti</li>
                     <li><b>Visibilità e intensità:</b> Attiva/disattiva la visibilità dell'ombra e abilita la copertura completa dell'ombra per livello</li>
                     <li><b>Sottrai livelli:</b> Regola finemente i calcoli delle ombre selezionando quali livelli sottrarre</li>
@@ -1595,14 +1584,14 @@ translations = {
                 </ul>
             </li>
             <li style="font-size:15px;"><b>Salva e carica impostazioni utente:</b> Esporta e importa la tua configurazione personalizzata
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 0px;">
                     <li><b>Esportazione completa delle impostazioni:</b> Salva tutte le preferenze inclusi tema, lingua, colori e parametri</li>
                     <li><b>Backup e condivisione facili:</b> Archivia le tue impostazioni come file JSON per il backup o la condivisione tra dispositivi</li>
                     <li><b>Ripristino rapido:</b> Carica le impostazioni precedentemente salvate con un singolo clic</li>
                 </ul>
             </li>
             <li style="font-size:15px;"><b>Miglioramenti di stabilità e qualità:</b> Correzioni complete di bug e miglioramenti UX
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 0px;">
                     <li><b>Rendering ombra:</b> Risolti molteplici problemi di rendering del pittore di ombre</li>
                     <li><b>Pittura trefolo:</b> Corretti bug di rendering per i percorsi dei trefoli e i trefoli attaccati</li>
                     <li><b>Punti di controllo:</b> Corretto il caricamento dei punti di controllo all'apertura di file JSON salvati</li>
@@ -2068,7 +2057,7 @@ translations = {
         <h2>Novedades de la versión 1.104</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>Editor de Sombras Mejorado:</b> Control preciso del renderizado de sombras a nivel de capa
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 0px;">
                     <li><b>Control capa por capa:</b> Personaliza cómo las sombras de cada hebra aparecen en las capas inferiores</li>
                     <li><b>Visibilidad e intensidad:</b> Activa/desactiva la visibilidad de la sombra y habilita la cobertura completa de sombra por capa</li>
                     <li><b>Restar capas:</b> Ajusta finamente los cálculos de sombra seleccionando qué capas restar</li>
@@ -2076,14 +2065,14 @@ translations = {
                 </ul>
             </li>
             <li style="font-size:15px;"><b>Guardar y cargar configuraciones de usuario:</b> Exporta e importa tu configuración personalizada
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 0px;">
                     <li><b>Exportación completa de configuraciones:</b> Guarda todas las preferencias incluyendo tema, idioma, colores y parámetros</li>
                     <li><b>Copia de seguridad y compartición fáciles:</b> Almacena tus configuraciones como archivos JSON para copia de seguridad o compartir entre dispositivos</li>
                     <li><b>Restauración rápida:</b> Carga configuraciones guardadas previamente con un solo clic</li>
                 </ul>
             </li>
             <li style="font-size:15px;"><b>Mejoras de estabilidad y calidad:</b> Correcciones completas de errores y mejoras de UX
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 0px;">
                     <li><b>Renderizado de sombras:</b> Se resolvieron múltiples problemas de renderizado del pintor de sombras</li>
                     <li><b>Pintura de hebras:</b> Se corrigieron errores de renderizado para rutas de hebras y hebras adjuntas</li>
                     <li><b>Puntos de control:</b> Se corrigió la carga de puntos de control al abrir archivos JSON guardados</li>
@@ -2550,7 +2539,7 @@ translations = {
         <h2>Novidades da versão 1.104</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>Editor de Sombras Aprimorado:</b> Controle preciso da renderização de sombras no nível da camada
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 0px;">
                     <li><b>Controle camada por camada:</b> Personalize como as sombras de cada mecha aparecem nas camadas abaixo</li>
                     <li><b>Visibilidade e intensidade:</b> Alterne a visibilidade da sombra e ative a cobertura completa de sombra por camada</li>
                     <li><b>Subtrair camadas:</b> Ajuste finamente os cálculos de sombra selecionando quais camadas subtrair</li>
@@ -2558,14 +2547,14 @@ translations = {
                 </ul>
             </li>
             <li style="font-size:15px;"><b>Salvar e carregar configurações do usuário:</b> Exporte e importe sua configuração personalizada
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 0px;">
                     <li><b>Exportação completa de configurações:</b> Salve todas as preferências incluindo tema, idioma, cores e parâmetros</li>
                     <li><b>Backup e compartilhamento fáceis:</b> Armazene suas configurações como arquivos JSON para backup ou compartilhamento entre dispositivos</li>
                     <li><b>Restauração rápida:</b> Carregue configurações salvas anteriormente com um único clique</li>
                 </ul>
             </li>
             <li style="font-size:15px;"><b>Melhorias de estabilidade e qualidade:</b> Correções abrangentes de bugs e melhorias de UX
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 0px;">
                     <li><b>Renderização de sombra:</b> Resolvidos múltiplos problemas de renderização do pintor de sombras</li>
                     <li><b>Pintura de mecha:</b> Corrigidos bugs de renderização para caminhos de mechas e mechas anexadas</li>
                     <li><b>Pontos de controle:</b> Corrigido o carregamento de pontos de controle ao abrir arquivos JSON salvos</li>
@@ -3037,7 +3026,7 @@ translations = {
         <h2>מה חדש בגרסה 1.104</h2>
         <ul style="margin-top: 5px; margin-bottom: 5px;">
             <li style="font-size:15px;"><b>עורך צללים משופר:</b> קבל שליטה מדויקת על רינדור צללים ברמת השכבה
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 0px;">
                     <li><b>שליטה שכבה אחר שכבה:</b> התאם אישית כיצד צללים מכל חוט מופיעים על שכבות מתחת</li>
                     <li><b>נראות ועוצמה:</b> הפעל/כבה נראות צל והפעל כיסוי צל מלא לכל שכבה</li>
                     <li><b>חיסור שכבות:</b> כוונן עדין חישובי צל על ידי בחירת אילו שכבות לחסר</li>
@@ -3045,14 +3034,14 @@ translations = {
                 </ul>
             </li>
             <li style="font-size:15px;"><b>שמור וטען הגדרות משתמש:</b> ייצא ויבא את התצורה המותאמת אישית שלך
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 0px;">
                     <li><b>ייצוא הגדרות מלא:</b> שמור את כל ההעדפות כולל ערכת נושא, שפה, צבעים ופרמטרים</li>
                     <li><b>גיבוי ושיתוף קל:</b> אחסן את ההגדרות שלך כקבצי JSON לגיבוי או שיתוף בין מכשירים</li>
                     <li><b>שחזור מהיר:</b> טען הגדרות שנשמרו קודם לכן בלחיצה אחת</li>
                 </ul>
             </li>
             <li style="font-size:15px;"><b>שיפורי יציבות ואיכות:</b> תיקוני באגים מקיפים ושיפורי חווית משתמש
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 0px;">
                     <li><b>רינדור צל:</b> נפתרו בעיות רינדור מרובות של צייר צללים</li>
                     <li><b>ציור חוטים:</b> תוקנו באגי רינדור עבור נתיבי חוטים וחוטים מחוברים</li>
                     <li><b>נקודות בקרה:</b> תוקנה טעינת נקודות בקרה בעת פתיחת קבצי JSON שמורים</li>

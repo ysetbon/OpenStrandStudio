@@ -621,34 +621,23 @@ translations = {
         'curve_shape_full_desc': 'Forme de Courbe - Contrôle le type de courbe mathématique (1.0=angles aigus, 2.0=courbes lisses, 3.0=très lisse)',
         'reset_curvature_full_desc': "Réinitialiser les Paramètres de Courbure - Restaure l'Influence, l'Amplification et la Forme aux valeurs par défaut",
         'whats_new_info': '''
-        <h2>Nouveautés de la version 1.104</h2>
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Éditeur d'ombres amélioré :</b> Contrôle précis du rendu des ombres au niveau des calques
+        <h2>Nouveautés de la version 1.105</h2>
+
+            <li style="font-size:18px;"><b>Grille de Masque :</b> Créez rapidement plusieurs masques de brins à l'aide d'une interface de grille visuelle N&#215;N dans les fonctionnalités de groupe.</li>
+            <li style="font-size:18px;"><b>Raccourcis Clavier :</b>
                 <ul style="margin-left: 0px;">
-                    <li><b>Contrôle calque par calque :</b> Personnalisez l'apparence des ombres de chaque brin sur les calques inférieurs</li>
-                    <li><b>Visibilité et intensité :</b> Activez/désactivez la visibilité des ombres et activez la couverture d'ombre complète par calque</li>
-                    <li><b>Soustraire des calques :</b> Ajustez finement les calculs d'ombre en sélectionnant les calques à soustraire</li>
-                    <li><b>Débogage visuel :</b> Prévisualisez les chemins d'ombre pour vérifier votre configuration d'ombre</li>
+                    <li><b>Espace pour Panoramique :</b> Maintenez la touche Espace pour panoramiquer/dé-panoramiquer rapidement le canevas</li>
+                    <li><b>Annuler / Rétablir :</b>
+                        <ul style="margin-left: 0px;">
+                            <li><b>Z :</b> Annuler votre dernière action</li>
+                            <li><b>X :</b> Rétablir ce que vous venez d'annuler</li>
+                        </ul>
+                    </li>
                 </ul>
             </li>
-            <li style="font-size:15px;"><b>Sauvegarder et charger les paramètres utilisateur :</b> Exportez et importez votre configuration personnalisée
-                <ul style="margin-left: 0px;">
-                    <li><b>Exportation complète des paramètres :</b> Sauvegardez toutes les préférences incluant le thème, la langue, les couleurs et les paramètres</li>
-                    <li><b>Sauvegarde et partage faciles :</b> Stockez vos paramètres sous forme de fichiers JSON pour sauvegarde ou partage entre appareils</li>
-                    <li><b>Restauration rapide :</b> Chargez les paramètres précédemment sauvegardés en un seul clic</li>
-                </ul>
-            </li>
-            <li style="font-size:15px;"><b>Améliorations de stabilité et de qualité :</b> Corrections de bugs complètes et améliorations de l'expérience utilisateur
-                <ul style="margin-left: 0px;">
-                    <li><b>Rendu des ombres :</b> Résolution de multiples problèmes de rendu du peintre d'ombres</li>
-                    <li><b>Peinture des brins :</b> Correction des bugs de rendu pour les chemins de brins et les brins attachés</li>
-                    <li><b>Points de contrôle :</b> Correction du chargement des points de contrôle lors de l'ouverture de fichiers JSON sauvegardés</li>
-                    <li><b>Outil de déplacement :</b> Correction des problèmes de positionnement lors du déplacement des côtés de brins et des brins attachés</li>
-                    <li><b>Expérience utilisateur :</b> Divers raffinements de l'interface pour un flux de travail plus fluide</li>
-                </ul>
-            </li>
-        </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.104</p>
+            <li style="font-size:18px;"><b>Sélection et Zoom Corrigés :</b> La sélection dans les modes déplacement, sélection et attache reste maintenant précise à tous les niveaux de zoom</li>
+
+        <p style="font-size:16px;">© 2025 OpenStrand Studio - Version 1.105</p>
         ''',
 
 
@@ -1130,34 +1119,23 @@ translations = {
         'toggle_shadow_desc': 'Schatten ein/aus - Zeigt/verbirgt Schatten auf Strängen',
         'layer_state_desc': 'Layer-Status - Zeigt Debug-Informationen zu Ebenen',
         'whats_new_info': '''
-        <h2>Neu in Version 1.104</h2>
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Verbesserter Schatten-Editor:</b> Präzise Steuerung des Schatten-Renderings auf Ebenenebene
+        <h2>Neu in Version 1.105</h2>
+
+            <li style="font-size:18px;"><b>Maskenraster:</b> Erstellen Sie schnell mehrere Strangmasken mit einer visuellen N&#215;N-Raster-Oberfläche in Gruppenfunktionalitäten.</li>
+            <li style="font-size:18px;"><b>Tastaturkürzel:</b>
                 <ul style="margin-left: 0px;">
-                    <li><b>Ebenenweise Steuerung:</b> Passen Sie an, wie Schatten von jedem Strang auf darunterliegenden Ebenen erscheinen</li>
-                    <li><b>Sichtbarkeit und Intensität:</b> Schalten Sie die Schattensichtbarkeit um und aktivieren Sie vollständige Schattenabdeckung pro Ebene</li>
-                    <li><b>Ebenen subtrahieren:</b> Feinabstimmung der Schattenberechnungen durch Auswahl der zu subtrahierenden Ebenen</li>
-                    <li><b>Visuelle Fehlersuche:</b> Vorschau der Schattenpfade zur Überprüfung Ihrer Schattenkonfiguration</li>
+                    <li><b>Leertaste zum Schwenken:</b> Halten Sie die Leertaste gedrückt, um die Leinwand schnell zu schwenken/zu entschwenken</li>
+                    <li><b>Rückgängig / Wiederherstellen:</b>
+                        <ul style="margin-left: 0px;">
+                            <li><b>Z:</b> Letzte Aktion rückgängig machen</li>
+                            <li><b>X:</b> Rückgängig gemachte Aktion wiederherstellen</li>
+                        </ul>
+                    </li>
                 </ul>
             </li>
-            <li style="font-size:15px;"><b>Benutzereinstellungen speichern und laden:</b> Exportieren und importieren Sie Ihre personalisierte Konfiguration
-                <ul style="margin-left: 0px;">
-                    <li><b>Vollständiger Einstellungsexport:</b> Speichern Sie alle Einstellungen einschließlich Design, Sprache, Farben und Parameter</li>
-                    <li><b>Einfache Sicherung und Freigabe:</b> Speichern Sie Ihre Einstellungen als JSON-Dateien zur Sicherung oder Freigabe zwischen Geräten</li>
-                    <li><b>Schnelle Wiederherstellung:</b> Laden Sie zuvor gespeicherte Einstellungen mit einem einzigen Klick</li>
-                </ul>
-            </li>
-            <li style="font-size:15px;"><b>Stabilitäts- und Qualitätsverbesserungen:</b> Umfassende Fehlerbehebungen und UX-Verbesserungen
-                <ul style="margin-left: 0px;">
-                    <li><b>Schatten-Rendering:</b> Behebung mehrerer Schatten-Rendering-Probleme</li>
-                    <li><b>Strang-Zeichnung:</b> Behebung von Rendering-Fehlern bei Strangpfaden und angehängten Strängen</li>
-                    <li><b>Kontrollpunkte:</b> Korrektur des Ladens von Kontrollpunkten beim Öffnen gespeicherter JSON-Dateien</li>
-                    <li><b>Verschieben-Werkzeug:</b> Behebung von Positionierungsproblemen beim Verschieben von Strangseiten und angehängten Strängen</li>
-                    <li><b>Benutzererfahrung:</b> Verschiedene Schnittstellenverbesserungen für einen reibungsloseren Arbeitsablauf</li>
-                </ul>
-            </li>
-        </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Version 1.104</p>
+            <li style="font-size:18px;"><b>Auswahl & Zoom Korrigiert:</b> Die Auswahl in den Modi Verschieben, Auswählen und Anhängen bleibt nun auf allen Zoomstufen präzise</li>
+
+        <p style="font-size:16px;">© 2025 OpenStrand Studio - Version 1.105</p>
         ''',
         # About translations
         'about_info': '''
@@ -1573,34 +1551,23 @@ translations = {
         'curve_shape_full_desc': 'Forma Curva - Controlla il tipo di curva matematica (1.0=angoli acuti, 2.0=curve lisce, 3.0=molto liscio)',
         'reset_curvature_full_desc': 'Ripristina Impostazioni Curvatura - Ripristina Influenza, Amplificazione e Forma ai valori predefiniti',
         'whats_new_info': '''
-        <h2>Novità della versione 1.104</h2>
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Editor Ombra Migliorato:</b> Controllo preciso del rendering delle ombre a livello di livello
+        <h2>Novità della versione 1.105</h2>
+
+            <li style="font-size:18px;"><b>Griglia Maschera:</b> Crea rapidamente più maschere di trefolo utilizzando un'interfaccia griglia visiva N&#215;N nelle funzionalità di gruppo.</li>
+            <li style="font-size:18px;"><b>Scorciatoie da Tastiera:</b>
                 <ul style="margin-left: 0px;">
-                    <li><b>Controllo livello per livello:</b> Personalizza come le ombre di ogni trefolo appaiono sui livelli sottostanti</li>
-                    <li><b>Visibilità e intensità:</b> Attiva/disattiva la visibilità dell'ombra e abilita la copertura completa dell'ombra per livello</li>
-                    <li><b>Sottrai livelli:</b> Regola finemente i calcoli delle ombre selezionando quali livelli sottrarre</li>
-                    <li><b>Debug visivo:</b> Visualizza in anteprima i percorsi delle ombre per verificare la configurazione delle ombre</li>
+                    <li><b>Spazio per Panoramica:</b> Tieni premuto il tasto Spazio per panoramicare/de-panoramicare rapidamente la tela</li>
+                    <li><b>Annulla / Ripristina:</b>
+                        <ul style="margin-left: 0px;">
+                            <li><b>Z:</b> Annulla l'ultima azione</li>
+                            <li><b>X:</b> Ripristina ciò che hai appena annullato</li>
+                        </ul>
+                    </li>
                 </ul>
             </li>
-            <li style="font-size:15px;"><b>Salva e carica impostazioni utente:</b> Esporta e importa la tua configurazione personalizzata
-                <ul style="margin-left: 0px;">
-                    <li><b>Esportazione completa delle impostazioni:</b> Salva tutte le preferenze inclusi tema, lingua, colori e parametri</li>
-                    <li><b>Backup e condivisione facili:</b> Archivia le tue impostazioni come file JSON per il backup o la condivisione tra dispositivi</li>
-                    <li><b>Ripristino rapido:</b> Carica le impostazioni precedentemente salvate con un singolo clic</li>
-                </ul>
-            </li>
-            <li style="font-size:15px;"><b>Miglioramenti di stabilità e qualità:</b> Correzioni complete di bug e miglioramenti UX
-                <ul style="margin-left: 0px;">
-                    <li><b>Rendering ombra:</b> Risolti molteplici problemi di rendering del pittore di ombre</li>
-                    <li><b>Pittura trefolo:</b> Corretti bug di rendering per i percorsi dei trefoli e i trefoli attaccati</li>
-                    <li><b>Punti di controllo:</b> Corretto il caricamento dei punti di controllo all'apertura di file JSON salvati</li>
-                    <li><b>Strumento sposta:</b> Corretti problemi di posizionamento durante lo spostamento dei lati dei trefoli e dei trefoli attaccati</li>
-                    <li><b>Esperienza utente:</b> Vari raffinamenti dell'interfaccia per un flusso di lavoro più fluido</li>
-                </ul>
-            </li>
-        </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versione 1.104</p>
+            <li style="font-size:18px;"><b>Selezione e Zoom Corretti:</b> La selezione nelle modalità sposta, seleziona e attacca ora rimane precisa a tutti i livelli di zoom</li>
+
+        <p style="font-size:16px;">© 2025 OpenStrand Studio - Versione 1.105</p>
         ''',
 
 
@@ -2054,34 +2021,23 @@ translations = {
         'curve_shape_full_desc': 'Forma de Curva - Controla el tipo de curva matemática (1.0=ángulos agudos, 2.0=curvas suaves, 3.0=muy suave)',
         'reset_curvature_full_desc': 'Restablecer Configuración de Curvatura - Restaura Influencia, Amplificación y Forma a valores predeterminados',
         'whats_new_info': '''
-        <h2>Novedades de la versión 1.104</h2>
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Editor de Sombras Mejorado:</b> Control preciso del renderizado de sombras a nivel de capa
+        <h2>Novedades de la versión 1.105</h2>
+
+            <li style="font-size:18px;"><b>Cuadrícula de Máscara:</b> Crea rápidamente múltiples máscaras de hebra usando una interfaccia de cuadrícula visual N&#215;N en funcionalidades de grupo.</li>
+            <li style="font-size:18px;"><b>Atajos de Teclado:</b>
                 <ul style="margin-left: 0px;">
-                    <li><b>Control capa por capa:</b> Personaliza cómo las sombras de cada hebra aparecen en las capas inferiores</li>
-                    <li><b>Visibilidad e intensidad:</b> Activa/desactiva la visibilidad de la sombra y habilita la cobertura completa de sombra por capa</li>
-                    <li><b>Restar capas:</b> Ajusta finamente los cálculos de sombra seleccionando qué capas restar</li>
-                    <li><b>Depuración visual:</b> Vista previa de las rutas de sombra para verificar tu configuración de sombras</li>
+                    <li><b>Espacio para Desplazar:</b> Mantén presionada la tecla Espacio para desplazar/no desplazar rápidamente el lienzo</li>
+                    <li><b>Deshacer / Rehacer:</b>
+                        <ul style="margin-left: 0px;">
+                            <li><b>Z:</b> Deshacer tu última acción</li>
+                            <li><b>X:</b> Rehacer lo que acabas de deshacer</li>
+                        </ul>
+                    </li>
                 </ul>
             </li>
-            <li style="font-size:15px;"><b>Guardar y cargar configuraciones de usuario:</b> Exporta e importa tu configuración personalizada
-                <ul style="margin-left: 0px;">
-                    <li><b>Exportación completa de configuraciones:</b> Guarda todas las preferencias incluyendo tema, idioma, colores y parámetros</li>
-                    <li><b>Copia de seguridad y compartición fáciles:</b> Almacena tus configuraciones como archivos JSON para copia de seguridad o compartir entre dispositivos</li>
-                    <li><b>Restauración rápida:</b> Carga configuraciones guardadas previamente con un solo clic</li>
-                </ul>
-            </li>
-            <li style="font-size:15px;"><b>Mejoras de estabilidad y calidad:</b> Correcciones completas de errores y mejoras de UX
-                <ul style="margin-left: 0px;">
-                    <li><b>Renderizado de sombras:</b> Se resolvieron múltiples problemas de renderizado del pintor de sombras</li>
-                    <li><b>Pintura de hebras:</b> Se corrigieron errores de renderizado para rutas de hebras y hebras adjuntas</li>
-                    <li><b>Puntos de control:</b> Se corrigió la carga de puntos de control al abrir archivos JSON guardados</li>
-                    <li><b>Herramienta de mover:</b> Se corrigieron problemas de posicionamiento al mover lados de hebras y hebras adjuntas</li>
-                    <li><b>Experiencia de usuario:</b> Varios refinamientos de interfaz para un flujo de trabajo más fluido</li>
-                </ul>
-            </li>
-        </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - Versión 1.104</p>
+            <li style="font-size:18px;"><b>Selección y Zoom Corregidos:</b> La selección en los modos mover, seleccionar y adjuntar ahora permanece precisa en todos los niveles de zoom</li>
+
+        <p style="font-size:16px;">© 2025 OpenStrand Studio - Versión 1.105</p>
 
         ''',
  
@@ -2536,34 +2492,23 @@ translations = {
         'curve_shape_full_desc': 'Forma da Curva - Controla o tipo de curva matemática (1.0=ângulos agudos, 2.0=curvas suaves, 3.0=muito suave)',
         'reset_curvature_full_desc': 'Redefinir Configurações de Curvatura - Restaura Influência, Amplificação e Forma aos padrões',
         'whats_new_info': '''
-        <h2>Novidades da versão 1.104</h2>
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>Editor de Sombras Aprimorado:</b> Controle preciso da renderização de sombras no nível da camada
+        <h2>Novidades da versão 1.105</h2>
+
+            <li style="font-size:18px;"><b>Grade de Máscara:</b> Crie rapidamente múltiplas máscaras de mecha usando uma interface de grade visual N&#215;N nas funcionalidades de grupo.</li>
+            <li style="font-size:18px;"><b>Atalhos de Teclado:</b>
                 <ul style="margin-left: 0px;">
-                    <li><b>Controle camada por camada:</b> Personalize como as sombras de cada mecha aparecem nas camadas abaixo</li>
-                    <li><b>Visibilidade e intensidade:</b> Alterne a visibilidade da sombra e ative a cobertura completa de sombra por camada</li>
-                    <li><b>Subtrair camadas:</b> Ajuste finamente os cálculos de sombra selecionando quais camadas subtrair</li>
-                    <li><b>Depuração visual:</b> Visualize os caminhos de sombra para verificar sua configuração de sombra</li>
+                    <li><b>Espaço para Panorâmica:</b> Mantenha pressionada a tecla Espaço para panorâmicar/despanorâmicar rapidamente a tela</li>
+                    <li><b>Desfazer / Refazer:</b>
+                        <ul style="margin-left: 0px;">
+                            <li><b>Z:</b> Desfazer sua última ação</li>
+                            <li><b>X:</b> Refazer o que você acabou de desfazer</li>
+                        </ul>
+                    </li>
                 </ul>
             </li>
-            <li style="font-size:15px;"><b>Salvar e carregar configurações do usuário:</b> Exporte e importe sua configuração personalizada
-                <ul style="margin-left: 0px;">
-                    <li><b>Exportação completa de configurações:</b> Salve todas as preferências incluindo tema, idioma, cores e parâmetros</li>
-                    <li><b>Backup e compartilhamento fáceis:</b> Armazene suas configurações como arquivos JSON para backup ou compartilhamento entre dispositivos</li>
-                    <li><b>Restauração rápida:</b> Carregue configurações salvas anteriormente com um único clique</li>
-                </ul>
-            </li>
-            <li style="font-size:15px;"><b>Melhorias de estabilidade e qualidade:</b> Correções abrangentes de bugs e melhorias de UX
-                <ul style="margin-left: 0px;">
-                    <li><b>Renderização de sombra:</b> Resolvidos múltiplos problemas de renderização do pintor de sombras</li>
-                    <li><b>Pintura de mecha:</b> Corrigidos bugs de renderização para caminhos de mechas e mechas anexadas</li>
-                    <li><b>Pontos de controle:</b> Corrigido o carregamento de pontos de controle ao abrir arquivos JSON salvos</li>
-                    <li><b>Ferramenta de mover:</b> Corrigidos problemas de posicionamento ao mover lados de mechas e mechas anexadas</li>
-                    <li><b>Experiência do usuário:</b> Vários refinamentos de interface para um fluxo de trabalho mais suave</li>
-                </ul>
-            </li>
-        </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio – Versão 1.104</p>
+            <li style="font-size:18px;"><b>Seleção e Zoom Corrigidos:</b> A seleção nos modos mover, selecionar e anexar agora permanece precisa em todos os níveis de zoom</li>
+
+        <p style="font-size:16px;">© 2025 OpenStrand Studio – Versão 1.105</p>
         ''',
 
 
@@ -3023,34 +2968,23 @@ translations = {
         'reset_curvature_full_desc': 'אפס הגדרות עקמומיות - מחזיר השפעה, הגברה וצורה לברירת המחדל',
         'whats_new_info': '''
         <div dir="rtl" style="text-align: right;">
-        <h2>מה חדש בגרסה 1.104</h2>
-        <ul style="margin-top: 5px; margin-bottom: 5px;">
-            <li style="font-size:15px;"><b>עורך צללים משופר:</b> קבל שליטה מדויקת על רינדור צללים ברמת השכבה
+        <h2>מה חדש בגרסה 1.105</h2>
+
+            <li style="font-size:18px;"><b>רשת מסכות:</b> צור במהירות מספר מסכות חוטים באמצעות ממשק רשת חזותי N&#215;N בפונקציונליות קבוצות.</li>
+            <li style="font-size:18px;"><b>קיצורי מקלדת:</b>
                 <ul style="margin-left: 0px;">
-                    <li><b>שליטה שכבה אחר שכבה:</b> התאם אישית כיצד צללים מכל חוט מופיעים על שכבות מתחת</li>
-                    <li><b>נראות ועוצמה:</b> הפעל/כבה נראות צל והפעל כיסוי צל מלא לכל שכבה</li>
-                    <li><b>חיסור שכבות:</b> כוונן עדין חישובי צל על ידי בחירת אילו שכבות לחסר</li>
-                    <li><b>דיבאג חזותי:</b> תצוגה מקדימה של נתיבי צל כדי לאמת את תצורת הצל שלך</li>
+                    <li><b>רווח להזזה:</b> החזק את מקש הרווח כדי להזיז/לבטל הזזה במהירות של הקנבס</li>
+                    <li><b>ביטול / שחזור:</b>
+                        <ul style="margin-left: 0px;">
+                            <li><b>Z:</b> בטל את הפעולה האחרונה שלך</li>
+                            <li><b>X:</b> שחזר את מה שביטלת זה עתה</li>
+                        </ul>
+                    </li>
                 </ul>
             </li>
-            <li style="font-size:15px;"><b>שמור וטען הגדרות משתמש:</b> ייצא ויבא את התצורה המותאמת אישית שלך
-                <ul style="margin-left: 0px;">
-                    <li><b>ייצוא הגדרות מלא:</b> שמור את כל ההעדפות כולל ערכת נושא, שפה, צבעים ופרמטרים</li>
-                    <li><b>גיבוי ושיתוף קל:</b> אחסן את ההגדרות שלך כקבצי JSON לגיבוי או שיתוף בין מכשירים</li>
-                    <li><b>שחזור מהיר:</b> טען הגדרות שנשמרו קודם לכן בלחיצה אחת</li>
-                </ul>
-            </li>
-            <li style="font-size:15px;"><b>שיפורי יציבות ואיכות:</b> תיקוני באגים מקיפים ושיפורי חווית משתמש
-                <ul style="margin-left: 0px;">
-                    <li><b>רינדור צל:</b> נפתרו בעיות רינדור מרובות של צייר צללים</li>
-                    <li><b>ציור חוטים:</b> תוקנו באגי רינדור עבור נתיבי חוטים וחוטים מחוברים</li>
-                    <li><b>נקודות בקרה:</b> תוקנה טעינת נקודות בקרה בעת פתיחת קבצי JSON שמורים</li>
-                    <li><b>כלי הזזה:</b> תוקנו בעיות מיקום בעת הזזת צדי חוטים וחוטים מחוברים</li>
-                    <li><b>חוויית משתמש:</b> שיפורי ממשק שונים לזרימת עבודה חלקה יותר</li>
-                </ul>
-            </li>
-        </ul>
-        <p style="font-size:13px;">© 2025 OpenStrand Studio - גרסה 1.104</p>
+            <li style="font-size:18px;"><b>בחירה וזום תוקנו:</b> בחירה במצבי הזזה, בחירה וחיבור כעת נשארת מדויקת בכל רמות הזום</li>
+
+        <p style="font-size:16px;">© 2025 OpenStrand Studio - גרסה 1.105</p>
         </div>
         ''',
 

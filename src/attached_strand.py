@@ -2451,7 +2451,7 @@ class AttachedStrand(Strand):
 
         is_setting_staring_circle = getattr(self, 'is_setting_staring_circle', False)
         
-        # --- Handle hidden state comprehensively ---
+        # --- MODIFIED: Handle hidden state comprehensively ---
         if self.is_hidden:
             # Draw arrow shadow first if arrow casts shadow is enabled
             if getattr(self, 'full_arrow_visible', False) and getattr(self, 'arrow_casts_shadow', False):
@@ -2592,10 +2592,12 @@ class AttachedStrand(Strand):
                 
                 # Draw start arrow if visible
                 if getattr(self, 'start_arrow_visible', False):
-                    # Calculate tangent and unit vector
+                    # Calculate tangent and unit vector at start
                     tangent_s = self.calculate_cubic_tangent(0.0001)
                     len_s = math.hypot(tangent_s.x(), tangent_s.y())
+                    
                     if len_s:
+                        # Calculate arrow direction and points
                         unit_s = QPointF(tangent_s.x() / len_s, tangent_s.y() / len_s)
                         arrow_dir_s = QPointF(-unit_s.x(), -unit_s.y())
                         
@@ -2643,10 +2645,12 @@ class AttachedStrand(Strand):
                 
                 # Draw end arrow if visible
                 if getattr(self, 'end_arrow_visible', False):
-                    # Calculate tangent and unit vector
+                    # Calculate tangent and unit vector at end
                     tangent_e = self.calculate_cubic_tangent(0.9999)
                     len_e = math.hypot(tangent_e.x(), tangent_e.y())
+                    
                     if len_e:
+                        # Calculate arrow direction and points
                         unit_e = QPointF(tangent_e.x() / len_e, tangent_e.y() / len_e)
                         arrow_dir_e = QPointF(unit_e.x(), unit_e.y())
                         
@@ -2691,25 +2695,29 @@ class AttachedStrand(Strand):
                         painter.setPen(border_pen_hidden_indiv)
                         painter.setBrush(Qt.NoBrush)
                         painter.drawPolygon(arrow_poly_e)
-
+                
                 painter.restore()
 
-            painter.restore()  # Restore top-level painter state before returning
+            painter.restore() # Top Level Restore - MUST restore before returning!
             return # Skip drawing strand body etc.
-        # --- END Handle hidden state ---
+        # --- END MODIFIED ---
+
+        # --- REMOVED original full_arrow_visible and is_hidden check here ---
 
         # Get the path representing the strand as a cubic Bézier curve
         path = self.get_path()
 
-        # Create a stroker for the stroke path
+        # --- ADD BACK: Create a stroker for the stroke path --- 
         stroke_stroker = QPainterPathStroker()
         stroke_stroker.setWidth(self.width + self.stroke_width * 2)
         stroke_stroker.setJoinStyle(Qt.MiterJoin)
         stroke_stroker.setCapStyle(Qt.FlatCap)
         stroke_path = stroke_stroker.createStroke(path)
         stroke_path.setFillRule(Qt.WindingFill)
+        # --- END ADD BACK ---
 
         # Draw shadow for overlapping strands - using the utility function
+        # This must be called before drawing the strand itself
         painter.save()  # Protect painter state from shadow drawing modifications
         try:
             # Import is inside try block to handle potential import errors
@@ -2737,10 +2745,23 @@ class AttachedStrand(Strand):
             pass
         finally:
             painter.restore()  # Restore painter state after shadow drawing
-
+        
         # Draw highlight if selected (before shadow-only check so highlights show even in shadow-only mode)
         if self.is_selected and not isinstance(self.parent, MaskedStrand):
+            
+            # We need stroke_path for highlighting, so calculate it here
+            stroke_stroker = QPainterPathStroker()
+            stroke_stroker.setWidth(self.width + self.stroke_width * 2)
+            stroke_stroker.setJoinStyle(Qt.MiterJoin)
+            stroke_stroker.setCapStyle(Qt.FlatCap)
+            # Get the path representing the strand as a cubic Bézier curve
+            path = self.get_path()
+            stroke_path = stroke_stroker.createStroke(path)
+            
             # Create a shortened path for the highlight (10 pixels from each end)
+            # Use percentAtLength to get accurate t values for pixel offsets
+            total_length = path.length()
+                   # Create a shortened path for the highlight (10 pixels from each end)
             # Use percentAtLength to get accurate t values for pixel offsets
             total_length = path.length()
             if self.start_circle_stroke_color.alpha() == 0:
@@ -2752,7 +2773,6 @@ class AttachedStrand(Strand):
             else:
                 t_end_point = 0.0
             if self.start_circle_stroke_color.alpha() == 0 or self.end_circle_stroke_color.alpha() == 0:
-    
                 if total_length > 10:  # Only shorten if path is longer than 20 pixels
                     # Get t values at exactly 10 pixels from start and 10 pixels from end
                     t_start = path.percentAtLength(t_start_point)
@@ -2845,15 +2865,20 @@ class AttachedStrand(Strand):
                 painter.drawLine(end_line_start_extended, end_line_end_extended)
             
             painter.restore()
-
+        else:
+            if hasattr(self, 'layer_name') and self.layer_name == '1_2':
+                pass
+        
+        
         # --- START: Skip visual rendering in shadow-only mode ---
         if getattr(self, 'shadow_only', False):
             # In shadow-only mode, skip all visual drawing but preserve shadows and highlights
-            painter.restore()
+            painter.restore()  # Top Level Restore 
             return
         # --- END: Skip visual rendering in shadow-only mode ---
 
-        # Draw dashed extension lines
+        # NEW: Draw dashed extension lines for attached strands
+        painter.save()  # Save state before modifying for extensions/arrows
         ext_len = getattr(self.canvas, 'extension_length', 100)
         dash_count = getattr(self.canvas, 'extension_dash_count', 10)
         dash_width = getattr(self.canvas, 'extension_dash_width', self.stroke_width)
@@ -2892,7 +2917,7 @@ class AttachedStrand(Strand):
                 end_pt = QPointF(raw_end.x() - unit_end.x()*dash_gap, raw_end.y() - unit_end.y()*dash_gap)
                 painter.drawLine(start_pt, end_pt)
 
-        # Draw arrow heads for attached strands
+        # --- NEW: Draw arrow heads for attached strands ---
         arrow_len = getattr(self.canvas, 'arrow_head_length', 20)
         arrow_width = getattr(self.canvas, 'arrow_head_width', 10)
         # Arrow gap and shaft parameters
@@ -2983,9 +3008,18 @@ class AttachedStrand(Strand):
                 painter.setPen(border_pen)
                 painter.setBrush(Qt.NoBrush)
                 painter.drawPolygon(arrow_poly)
+        # --- END NEW ---
 
+        painter.restore()  # Restore state after extensions/arrows drawing
 
-        # Create combined paths for stroke and fill
+        # Prepare combined paths for stroke and fill
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Calculate the angle based on the tangent at the start point
+        angle = self.calculate_start_tangent()
+
+        # Create combined stroke path that will include strand body + semi-circles
         combined_stroke_path = QPainterPath()
         combined_stroke_path.setFillRule(Qt.WindingFill)
         combined_stroke_path.addPath(stroke_path)  # Add the main strand stroke
@@ -3002,9 +3036,10 @@ class AttachedStrand(Strand):
         combined_fill_path.addPath(fill_path)  # Add the main strand fill
 
         # Add start circle to combined paths if enabled
+        # Check both conditions: has_circles[0] alone OR has_circles[0] with attached children
         has_attached_at_start = any(isinstance(child, AttachedStrand) and child.start == self.start for child in self.attached_strands)
         
-        if self.has_circles[0] and self.start_circle_stroke_color.alpha() > 0 and not has_attached_at_start:
+        if self.has_circles[0] and self.start_circle_stroke_color.alpha() > 0:
             total_diameter = self.width + self.stroke_width * 2
             circle_radius = total_diameter / 2
 
@@ -3029,61 +3064,24 @@ class AttachedStrand(Strand):
             combined_stroke_path.addPath(outer_mask)
 
             # Add inner circle to combined fill path
-            inner_circle = QPainterPath()
-            inner_circle.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
-            combined_fill_path.addPath(inner_circle)
-     
+            inner = QPainterPath()
+            inner.addEllipse(self.start, self.width * 0.5 , self.width * 0.5)
+            combined_fill_path.addPath(inner)
+            
             # Add side line to combined fill path (only when stroke is visible)
             if self.start_circle_stroke_color.alpha() > 0:
                 just_inner = QPainterPath()
-                just_inner.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width, self.width)
+                just_inner.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width , self.width)
                 tr_inner = QTransform().translate(self.start.x(), self.start.y())
                 tr_inner.rotate(math.degrees(angle))
                 just_inner = tr_inner.map(just_inner)
                 combined_fill_path.addPath(just_inner)
 
-
-        # Add half-circle attachments at endpoints where there are AttachedStrand children
-        # Start endpoint half-circle
-        if self.has_circles[0] and self.start_circle_stroke_color.alpha() > 0 and has_attached_at_start:
-            tangent = self.calculate_cubic_tangent(0.0001)
-            angle = math.atan2(tangent.y(), tangent.x())
-            total_d = self.width + self.stroke_width * 2
-            radius = total_d / 2
-
-            # Creating Outer Circle Half-Circle
-            mask = QPainterPath()
-            rect_width = total_d * 2
-            rect_height = total_d * 2
-            mask.addRect(0, -rect_height / 2, rect_width, rect_height)
-            tr = QTransform().translate(self.start.x(), self.start.y())
-            tr.rotate(math.degrees(angle))
-            mask = tr.map(mask)
-            outer = QPainterPath(); outer.addEllipse(self.start, radius, radius)
-            outer_half = outer.subtracted(mask)
-            outer_half.setFillRule(Qt.WindingFill)  # Set fill rule after subtraction
-            # Subtract inner to make a ring half for the stroke
-            inner_full = QPainterPath(); inner_full.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
-            ring_half = outer_half.subtracted(inner_full)
-            ring_half.setFillRule(Qt.WindingFill)  # Set fill rule after subtraction
-            # Add ring to stroke and full inner to fill
-            combined_stroke_path.addPath(ring_half)
-            combined_fill_path.addPath(inner_full)
-            
-            # Add side line to combined fill path
-            if self.start_circle_stroke_color.alpha() > 0:
-                just_inner_side = QPainterPath()
-                just_inner_side.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width, self.width)
-                tr_inner_side = QTransform().translate(self.start.x(), self.start.y())
-                tr_inner_side.rotate(math.degrees(angle))
-                just_inner_side = tr_inner_side.map(just_inner_side)
-                combined_fill_path.addPath(just_inner_side)
-                
         # End endpoint half-circle (only if circle is enabled)
-        has_attached_at_end = any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands)
-        strand_label_direct = getattr(self, 'layer_name', f'0x{id(self):x}')
+        has_attached_at_end_draw = any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands)
+        strand_label = getattr(self, 'layer_name', f'0x{id(self):x}')
 
-        if self.has_circles[1] and has_attached_at_end:
+        if self.has_circles[1] and has_attached_at_end_draw:
             tangent = self.calculate_cubic_tangent(0.9999)
             angle_end = math.atan2(tangent.y(), tangent.x())
             total_d = self.width + self.stroke_width * 2
@@ -3097,17 +3095,19 @@ class AttachedStrand(Strand):
             tr = QTransform().translate(self.end.x(), self.end.y())
             tr.rotate(math.degrees(angle_end - math.pi))
             mask = tr.map(mask)
-            outer = QPainterPath(); outer.addEllipse(self.end, radius, radius)
-            outer_half = outer.subtracted(mask)
-            outer_half.setFillRule(Qt.WindingFill)  # Set fill rule after subtraction
-            inner_full = QPainterPath(); inner_full.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
-            ring_half = outer_half.subtracted(inner_full)
-            ring_half.setFillRule(Qt.WindingFill)  # Set fill rule after subtraction
+            outer = QPainterPath()
+            outer.addEllipse(self.end, radius, radius)
+            clip = outer.subtracted(mask)
+            # Add to combined stroke path - use end_circle_stroke_color for consistency
+            combined_stroke_path.addPath(clip)
 
-            combined_stroke_path.addPath(ring_half)
-            combined_fill_path.addPath(inner_full)
 
-            # Add side line to combined fill path
+            # Add the inner circle (fill) to combined fill path
+            inner = QPainterPath()
+            inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+            combined_fill_path.addPath(inner)
+
+            # Add side line to combined fill path (only when stroke is visible)
             if self.end_circle_stroke_color.alpha() > 0:
                 just_inner_side = QPainterPath()
                 just_inner_side.addRect(-self.stroke_width, -self.width*0.5, self.stroke_width, self.width)
@@ -3115,7 +3115,6 @@ class AttachedStrand(Strand):
                 tr_inner_side.rotate(math.degrees(angle_end))
                 just_inner_side = tr_inner_side.map(just_inner_side)
                 combined_fill_path.addPath(just_inner_side)
-        
         if self.start_circle_stroke_color.alpha() == 0 and is_setting_staring_circle and self.has_circles[0]:        
                     
             
@@ -3123,6 +3122,7 @@ class AttachedStrand(Strand):
             # Sample the curve at a small offset to get better tangent for curved paths
             # This handles cases where control points create sharp curves
             t_sample = 0.001  # Small offset for more accurate direction
+
             # Get a point slightly along the curve to calculate direction
             point_at_start = self.start
             point_at_sample = self.point_at(t_sample)
@@ -3142,7 +3142,7 @@ class AttachedStrand(Strand):
             dx_start = half_total_width * math.cos(perp_angle_start)
             dy_start = half_total_width * math.sin(perp_angle_start)
 
-            half_stroke_width = self.stroke_width / 2
+            half_stroke_width = self.stroke_width 
             dx_tangent = half_stroke_width * math.cos(angle_start)
             dy_tangent = half_stroke_width * math.sin(angle_start)
 
@@ -3162,11 +3162,51 @@ class AttachedStrand(Strand):
             start_side_line_path.lineTo(corner4)
             start_side_line_path.closeSubpath()
 
-            # NOTE: addPath keeps the rectangle as its own sub-path without triggering boolean simplification.
-            #combined_fill_path.addPath(start_side_line_path)
+            # NOTE: using addPath keeps sub-paths separate and avoids boolean simplification issues.
+                        # Add inner circle to combined fill path at start
             inner_circle_start = QPainterPath()
             inner_circle_start.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
             combined_fill_path.addPath(inner_circle_start)
+            combined_fill_path.setFillRule(Qt.WindingFill)  # Ensure fill rule persists after adding path
+
+        if self.has_circles[1]:
+            # Use t=0.9999 to get proper tangent even when control_point2 is at endpoint
+            t_end = 0.9999
+            tangent_end = self.calculate_cubic_tangent(t_end)
+            if tangent_end.manhattanLength() == 0:
+                tangent_end = self.end - self.start
+
+            angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+            perp_angle_end = angle_end + math.pi / 2
+            half_total_width_end = (self.width) / 2
+            dx_end = half_total_width_end * math.cos(perp_angle_end)
+            dy_end = half_total_width_end * math.sin(perp_angle_end)
+
+            half_stroke_width_end = self.stroke_width / 2
+            dx_tangent_end = half_stroke_width_end * math.cos(angle_end)
+            dy_tangent_end = half_stroke_width_end * math.sin(angle_end)
+
+            # Arrange corners in order: left-back, right-back, right-front, left-front (at end)
+            end_corner1 = QPointF(self.end.x() - dx_end - dx_tangent_end, self.end.y() - dy_end - dy_tangent_end)
+            end_corner2 = QPointF(self.end.x() + dx_end - dx_tangent_end, self.end.y() + dy_end - dy_tangent_end)
+            end_corner3 = QPointF(self.end.x() + dx_end + dx_tangent_end, self.end.y() + dy_end + dy_tangent_end)
+            end_corner4 = QPointF(self.end.x() - dx_end + dx_tangent_end, self.end.y() - dy_end + dy_tangent_end)
+
+            end_side_line_path = QPainterPath()
+            end_side_line_path.moveTo(end_corner1)
+            end_side_line_path.lineTo(end_corner2)
+            end_side_line_path.lineTo(end_corner3)
+            end_side_line_path.lineTo(end_corner4)
+            end_side_line_path.closeSubpath()
+
+            # Add inner circle to combined fill path
+            inner_circle_end = QPainterPath()
+            inner_circle_end.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+            combined_fill_path.addPath(inner_circle_end)
+
+            combined_fill_path.addPath(end_side_line_path)
+
+            
             combined_fill_path.setFillRule(Qt.WindingFill)  # Ensure fill rule persists after adding path
 
 
@@ -3178,9 +3218,9 @@ class AttachedStrand(Strand):
         painter.setPen(Qt.NoPen)  # Explicitly set pen to NoPen again before fill
         painter.setBrush(self.color)
         painter.drawPath(combined_fill_path)
-
+       
         # Draw the end line conditionally
-        if self.end_line_visible and not self.has_circles[1]:
+        if self.end_line_visible and not self.has_circles[1]: # Only draw end line if visible
             side_pen = QPen(self.stroke_color, self.stroke_width)
             side_pen.setCapStyle(Qt.FlatCap)
             side_color = QColor(self.stroke_color)
@@ -3188,6 +3228,7 @@ class AttachedStrand(Strand):
             side_pen.setColor(side_color)
             painter.setPen(side_pen)
             painter.drawLine(self.end_line_start, self.end_line_end)
+
         # (start cover already merged into combined_fill_path above)
         # Draw highlights for selected C-shapes after main drawing
         if self.is_selected and not isinstance(self.parent, MaskedStrand):
@@ -3219,8 +3260,10 @@ class AttachedStrand(Strand):
                 painter.setBrush(QColor('red'))
                 painter.drawPath(ring_path)
             
-            # End C-shape highlight
-            if self.has_circles[1] and has_attached_at_end and self.end_circle_stroke_color.alpha() > 0:
+            # End C-shape highlight for attached children
+            if (self.has_circles[1] and any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands)
+                and self.end_circle_stroke_color.alpha() > 0):
+                
                 tangent = self.calculate_cubic_tangent(0.9999)
                 angle_end = math.atan2(tangent.y(), tangent.x())
                 total_d = self.width + self.stroke_width * 2
@@ -3246,6 +3289,10 @@ class AttachedStrand(Strand):
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(QColor('red'))
                 painter.drawPath(ring_path)
+        
+        # Restore painter state
+        painter.restore()
+
 
         # --- Draw full strand arrow on TOP of strand body (if not hidden) ---
         if getattr(self, 'full_arrow_visible', False): # 'not self.is_hidden' is implicit due to earlier return
@@ -3326,7 +3373,7 @@ class AttachedStrand(Strand):
         # Draw ending circle ON TOP of everything if needed
         # For attached strands, check the attachment side to determine which closed_connection to use
         attachment_side = getattr(self, 'attachment_side', 1)
-        is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections and self.closed_connections[attachment_side]                
+        is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections and self.closed_connections[attachment_side]
         if self.has_circles == [True, True] or (self.has_circles[1] and is_closed_connection):
             # Check for attached children that would skip circle drawing
             skip_end_circle = any(
@@ -3382,4 +3429,4 @@ class AttachedStrand(Strand):
                     just_inner_end = tr_inner_end.map(just_inner_end)
                     painter.drawPath(just_inner_end)
 
-        painter.restore()  # Restore top-level painter state for direct drawing
+        painter.restore() # Top Level Restore for normal execution path

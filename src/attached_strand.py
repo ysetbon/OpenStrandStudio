@@ -1302,9 +1302,60 @@ class AttachedStrand(Strand):
 
             combined_fill_path.addPath(end_side_line_path)
 
-            
+
             combined_fill_path.setFillRule(Qt.WindingFill)  # Ensure fill rule persists after adding path
 
+        # --- ADD close knot semi-circle to combined paths ---
+        # Check for closed connection at end (for close knot feature)
+        attachment_side = getattr(self, 'attachment_side', 1)
+        is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections and self.closed_connections[attachment_side]
+
+        if self.has_circles[1] and is_closed_connection:
+            # Skip if there are attached children at the end
+            skip_end_circle = any(
+                isinstance(child, AttachedStrand) and child.start == self.end
+                for child in getattr(self.parent, 'attached_strands', [])
+            ) or any(
+                isinstance(child, AttachedStrand) and child.start == self.end
+                for child in getattr(self, 'attached_strands', [])
+            )
+
+            if not skip_end_circle:
+                total_diameter = self.width + self.stroke_width * 2
+                circle_radius = total_diameter / 2
+                tangent_end_knot = self.calculate_cubic_tangent(0.9999)
+                angle_end_knot = math.atan2(tangent_end_knot.y(), tangent_end_knot.x())
+
+                # Create mask for semi-circle (mask on left side for end)
+                mask_rect_end_knot = QPainterPath()
+                rect_width_knot = total_diameter * 2
+                rect_height_knot = total_diameter * 2
+                mask_rect_end_knot.addRect(-rect_width_knot, -rect_height_knot / 2, rect_width_knot, rect_height_knot)
+                transform_end_knot = QTransform()
+                transform_end_knot.translate(self.end.x(), self.end.y())
+                transform_end_knot.rotate(math.degrees(angle_end_knot))
+                mask_rect_end_knot = transform_end_knot.map(mask_rect_end_knot)
+
+                # Create outer semi-circle and add to stroke path
+                outer_circle_end_knot = QPainterPath()
+                outer_circle_end_knot.addEllipse(self.end, circle_radius, circle_radius)
+                outer_mask_end_knot = outer_circle_end_knot.subtracted(mask_rect_end_knot)
+                combined_stroke_path.addPath(outer_mask_end_knot)
+
+                # Create inner circle and add to fill path
+                inner_circle_end_knot = QPainterPath()
+                inner_circle_end_knot.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+                combined_fill_path.addPath(inner_circle_end_knot)
+
+                # Add side line to fill path (only when stroke is visible)
+                if self.end_circle_stroke_color.alpha() > 0:
+                    just_inner_end_knot = QPainterPath()
+                    just_inner_end_knot.addRect(-self.stroke_width, -self.width * 0.5, self.stroke_width, self.width)
+                    tr_inner_end_knot = QTransform().translate(self.end.x(), self.end.y())
+                    tr_inner_end_knot.rotate(math.degrees(angle_end_knot))
+                    just_inner_end_knot = tr_inner_end_knot.map(just_inner_end_knot)
+                    combined_fill_path.addPath(just_inner_end_knot)
+        # --- END close knot semi-circle ---
 
         # Now paint everything together - stroke first, then fill
         painter.setPen(Qt.NoPen)
@@ -1504,15 +1555,16 @@ class AttachedStrand(Strand):
                 outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
 
                 # Draw stroke using end_circle_stroke_color for end circle
+                # NOTE: Commented out - now handled via combined_fill_path.addPath() above
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(self.end_circle_stroke_color)
-                painter.drawPath(outer_mask_end)
+                # painter.drawPath(outer_mask_end)  # Handled by combined_stroke_path
 
                 # Draw fill using main color
                 inner_circle_end = QPainterPath()
                 inner_circle_end.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
                 painter.setBrush(self.color)
-                painter.drawPath(inner_circle_end)
+                # painter.drawPath(inner_circle_end)  # Handled by combined_fill_path
 
                 # Draw side line that covers the inner circle (only when stroke is visible)
                 if self.end_circle_stroke_color.alpha() > 0:
@@ -1523,7 +1575,7 @@ class AttachedStrand(Strand):
                     tr_inner_end = QTransform().translate(self.end.x(), self.end.y())
                     tr_inner_end.rotate(math.degrees(angle_end))
                     just_inner_end = tr_inner_end.map(just_inner_end)
-                    painter.drawPath(just_inner_end)
+                    # painter.drawPath(just_inner_end)  # Handled by combined_fill_path
 
         painter.restore() # Top Level Restore for normal execution path
 
@@ -3206,9 +3258,60 @@ class AttachedStrand(Strand):
 
             combined_fill_path.addPath(end_side_line_path)
 
-            
+
             combined_fill_path.setFillRule(Qt.WindingFill)  # Ensure fill rule persists after adding path
 
+        # --- ADD close knot semi-circle to combined paths ---
+        # Check for closed connection at end (for close knot feature)
+        attachment_side = getattr(self, 'attachment_side', 1)
+        is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections and self.closed_connections[attachment_side]
+
+        if self.has_circles[1] and is_closed_connection:
+            # Skip if there are attached children at the end
+            skip_end_circle = any(
+                isinstance(child, AttachedStrand) and child.start == self.end
+                for child in getattr(self.parent, 'attached_strands', [])
+            ) or any(
+                isinstance(child, AttachedStrand) and child.start == self.end
+                for child in getattr(self, 'attached_strands', [])
+            )
+
+            if not skip_end_circle:
+                total_diameter = self.width + self.stroke_width * 2
+                circle_radius = total_diameter / 2
+                tangent_end_knot = self.calculate_cubic_tangent(0.9999)
+                angle_end_knot = math.atan2(tangent_end_knot.y(), tangent_end_knot.x())
+
+                # Create mask for semi-circle (mask on left side for end)
+                mask_rect_end_knot = QPainterPath()
+                rect_width_knot = total_diameter * 2
+                rect_height_knot = total_diameter * 2
+                mask_rect_end_knot.addRect(-rect_width_knot, -rect_height_knot / 2, rect_width_knot, rect_height_knot)
+                transform_end_knot = QTransform()
+                transform_end_knot.translate(self.end.x(), self.end.y())
+                transform_end_knot.rotate(math.degrees(angle_end_knot))
+                mask_rect_end_knot = transform_end_knot.map(mask_rect_end_knot)
+
+                # Create outer semi-circle and add to stroke path
+                outer_circle_end_knot = QPainterPath()
+                outer_circle_end_knot.addEllipse(self.end, circle_radius, circle_radius)
+                outer_mask_end_knot = outer_circle_end_knot.subtracted(mask_rect_end_knot)
+                combined_stroke_path.addPath(outer_mask_end_knot)
+
+                # Create inner circle and add to fill path
+                inner_circle_end_knot = QPainterPath()
+                inner_circle_end_knot.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+                combined_fill_path.addPath(inner_circle_end_knot)
+
+                # Add side line to fill path (only when stroke is visible)
+                if self.end_circle_stroke_color.alpha() > 0:
+                    just_inner_end_knot = QPainterPath()
+                    just_inner_end_knot.addRect(-self.stroke_width, -self.width * 0.5, self.stroke_width, self.width)
+                    tr_inner_end_knot = QTransform().translate(self.end.x(), self.end.y())
+                    tr_inner_end_knot.rotate(math.degrees(angle_end_knot))
+                    just_inner_end_knot = tr_inner_end_knot.map(just_inner_end_knot)
+                    combined_fill_path.addPath(just_inner_end_knot)
+        # --- END close knot semi-circle ---
 
         # Now paint everything together - stroke first, then fill
         painter.setPen(Qt.NoPen)
@@ -3408,15 +3511,16 @@ class AttachedStrand(Strand):
                 outer_mask_end = outer_circle_end.subtracted(mask_rect_end)
 
                 # Draw stroke using end_circle_stroke_color for end circle
+                # NOTE: Commented out - now handled via combined_fill_path.addPath() above
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(self.end_circle_stroke_color)
-                painter.drawPath(outer_mask_end)
+                # painter.drawPath(outer_mask_end)  # Handled by combined_stroke_path
 
                 # Draw fill using main color
                 inner_circle_end = QPainterPath()
                 inner_circle_end.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
                 painter.setBrush(self.color)
-                painter.drawPath(inner_circle_end)
+                # painter.drawPath(inner_circle_end)  # Handled by combined_fill_path
 
                 # Draw side line that covers the inner circle (only when stroke is visible)
                 if self.end_circle_stroke_color.alpha() > 0:
@@ -3427,6 +3531,6 @@ class AttachedStrand(Strand):
                     tr_inner_end = QTransform().translate(self.end.x(), self.end.y())
                     tr_inner_end.rotate(math.degrees(angle_end))
                     just_inner_end = tr_inner_end.map(just_inner_end)
-                    painter.drawPath(just_inner_end)
+                    # painter.drawPath(just_inner_end)  # Handled by combined_fill_path
 
         painter.restore() # Top Level Restore for normal execution path

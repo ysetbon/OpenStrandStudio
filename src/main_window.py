@@ -2065,6 +2065,46 @@ class MainWindow(QMainWindow):
 
     def keyPressEvent(self, event):
         """Handle key press events, specifically Escape to exit mask edit mode."""
+        
+        # Handle custom shortcuts
+        if not event.isAutoRepeat():
+            # 'n' for New Strand
+            if event.key() == Qt.Key_N and event.modifiers() == Qt.NoModifier:
+                if hasattr(self, 'layer_panel') and self.layer_panel:
+                    self.layer_panel.request_new_strand()
+                    event.accept()
+                    return
+
+            # '1' for Draw Names
+            if event.key() == Qt.Key_1 and event.modifiers() == Qt.NoModifier:
+                if hasattr(self, 'layer_panel') and self.layer_panel:
+                    self.layer_panel.request_draw_names()
+                    event.accept()
+                    return
+
+            # 'l' for Lock Layers
+            if event.key() == Qt.Key_L and event.modifiers() == Qt.NoModifier:
+                if hasattr(self, 'layer_panel') and self.layer_panel:
+                    # Use click() to properly toggle the checkable button state
+                    # which toggle_lock_mode relies on
+                    self.layer_panel.lock_layers_button.click()
+                    event.accept()
+                    return
+            
+            # 'd' for Delete Strand
+            if event.key() == Qt.Key_D and event.modifiers() == Qt.NoModifier:
+                if hasattr(self, 'layer_panel') and self.layer_panel:
+                    self.layer_panel.request_delete_strand()
+                    event.accept()
+                    return
+
+            # 'a' for Deselect All
+            if event.key() == Qt.Key_A and event.modifiers() == Qt.NoModifier:
+                if hasattr(self, 'layer_panel') and self.layer_panel:
+                    self.layer_panel.deselect_all()
+                    event.accept()
+                    return
+
         if event.key() == Qt.Key_Escape:
             # Check if we are in mask edit mode using the layer panel's flag
             if hasattr(self, 'layer_panel') and self.layer_panel.mask_editing:

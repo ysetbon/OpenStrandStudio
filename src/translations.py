@@ -211,6 +211,11 @@ translations = {
                     <li><b>Space -</b> Hold the Space key to quickly pan/unpan the canvas</li>
                     <li><b>Z:</b> Undo your last action</li>
                     <li><b>X:</b> Redo what you just undid</li>
+                    <li><b>N:</b> New Strand</li>
+                    <li><b>1:</b> Draw Names</li>
+                    <li><b>L:</b> Lock Layers</li>
+                    <li><b>D:</b> Delete Strand</li>
+                    <li><b>A:</b> Deselect All</li>
                 </ul>
             </li>
             <li style="font-size:18px;"><b>Fixed Selection & Zoom:</b> Selection in move, select, and attach modes now remains accurate at all zoom levels</li>
@@ -325,6 +330,11 @@ translations = {
         'shortcut_undo_desc': 'Z - Undo',
         'shortcut_redo_desc': 'X - Redo',
         'shortcut_clear_suppression_desc': 'Ctrl+Shift+D - Clear canvas suppression flags (debug feature)',
+        'shortcut_new_strand_desc': 'N - New Strand',
+        'shortcut_draw_names_desc': '1 - Draw Names',
+        'shortcut_lock_layers_desc': 'L - Lock Layers',
+        'shortcut_delete_strand_desc': 'D - Delete Strand',
+        'shortcut_deselect_all_desc': 'A - Deselect All',
 
         'groups': 'Groups',
         'masked_layers': 'Masked Layers',
@@ -626,6 +636,11 @@ translations = {
                     <li><b>Espace pour Panoramique :</b> Maintenez la touche Espace pour panoramiquer/dé-panoramiquer rapidement le canevas</li>
                     <li><b>Z :</b> Annuler votre dernière action</li>
                     <li><b>X :</b> Rétablir ce que vous venez d'annuler</li>
+                    <li><b>N :</b> Nouveau Brin</li>
+                    <li><b>1 :</b> Dessin. Noms</li>
+                    <li><b>L :</b> Verr. Calques</li>
+                    <li><b>D :</b> Supprim. Brin</li>
+                    <li><b>A :</b> Désél. Tous</li>
                 </ul>
             </li>
             <li style="font-size:18px;"><b>Sélection et Zoom Corrigés :</b> La sélection dans les modes déplacement, sélection et attache reste maintenant précise à tous les niveaux de zoom</li>
@@ -917,6 +932,11 @@ translations = {
         'shortcut_undo_desc': 'Z - Annuler',
         'shortcut_redo_desc': 'X - Rétablir',
         'shortcut_clear_suppression_desc': 'Ctrl+Maj+D - Effacer les drapeaux de suppression du canevas (fonctionnalité de débogage)',
+        'shortcut_new_strand_desc': 'N - Nouveau Brin',
+        'shortcut_draw_names_desc': '1 - Dessin. Noms',
+        'shortcut_lock_layers_desc': 'L - Verr. Calques',
+        'shortcut_delete_strand_desc': 'D - Supprim. Brin',
+        'shortcut_deselect_all_desc': 'A - Désél. Tous',
 
         'general_settings_buttons': 'Paramètres Généraux',
         'theme_select_desc': 'Sélection du Thème - Choisir entre les thèmes clair et sombre pour l\'interface',
@@ -1121,6 +1141,11 @@ translations = {
                     <li><b>Leertaste zum Schwenken:</b> Halten Sie die Leertaste gedrückt, um die Leinwand schnell zu schwenken/zu entschwenken</li>
                     <li><b>Z:</b> Letzte Aktion rückgängig machen</li>
                     <li><b>X:</b> Rückgängig gemachte Aktion wiederherstellen</li>
+                    <li><b>N:</b> Neuer Strang</li>
+                    <li><b>1:</b> Namen zeigen</li>
+                    <li><b>L:</b> Sperrmodus</li>
+                    <li><b>D:</b> Strang entf.</li>
+                    <li><b>A:</b> Alle abwählen</li>
                 </ul>
             </li>
             <li style="font-size:18px;"><b>Auswahl & Zoom Korrigiert:</b> Die Auswahl in den Modi Verschieben, Auswählen und Anhängen bleibt nun auf allen Zoomstufen präzise</li>
@@ -1378,6 +1403,11 @@ translations = {
         'shortcut_undo_desc': 'Z - Rückgängig',
         'shortcut_redo_desc': 'X - Wiederherstellen',
         'shortcut_clear_suppression_desc': 'Strg+Umschalt+D - Canvas-Unterdrückungsflags löschen (Debug-Funktion)',
+        'shortcut_new_strand_desc': 'N - Neuer Strang',
+        'shortcut_draw_names_desc': '1 - Namen zeigen',
+        'shortcut_lock_layers_desc': 'L - Sperrmodus',
+        'shortcut_delete_strand_desc': 'D - Strang entf.',
+        'shortcut_deselect_all_desc': 'A - Alle abwählen',
 
         'general_settings_buttons': 'Allgemeine Einstellungen',
         'theme_select_desc': 'Themenauswahl - Wählen Sie zwischen hellen und dunklen Themen für die Oberfläche',
@@ -1550,6 +1580,11 @@ translations = {
                     <li><b>Spazio per Panoramica:</b> Tieni premuto il tasto Spazio per panoramicare/de-panoramicare rapidamente la tela</li>
                     <li><b>Z:</b> Annulla l'ultima azione</li>
                     <li><b>X:</b> Ripristina ciò che hai appena annullato</li>
+                    <li><b>N:</b> Nuovo Trefolo</li>
+                    <li><b>1:</b> Disegna Nomi</li>
+                    <li><b>L:</b> Blocca Liv.</li>
+                    <li><b>D:</b> Elim. Trefolo</li>
+                    <li><b>A:</b> Desel. Tutto</li>
                 </ul>
             </li>
             <li style="font-size:18px;"><b>Selezione e Zoom Corretti:</b> La selezione nelle modalità sposta, seleziona e attacca ora rimane precisa a tutti i livelli di zoom</li>
@@ -1842,6 +1877,11 @@ translations = {
         'shortcut_undo_desc': 'Z - Annulla',
         'shortcut_redo_desc': 'X - Ripristina',
         'shortcut_clear_suppression_desc': 'Ctrl+Maiusc+D - Cancella flag di soppressione canvas (funzionalità di debug)',
+        'shortcut_new_strand_desc': 'N - Nuovo Trefolo',
+        'shortcut_draw_names_desc': '1 - Disegna Nomi',
+        'shortcut_lock_layers_desc': 'L - Blocca Liv.',
+        'shortcut_delete_strand_desc': 'D - Elim. Trefolo',
+        'shortcut_deselect_all_desc': 'A - Desel. Tutto',
 
         'general_settings_buttons': 'Impostazioni Generali',
         'theme_select_desc': 'Selezione Tema - Scegli tra temi chiari e scuri per l\'interfaccia',
@@ -2017,6 +2057,11 @@ translations = {
                     <li><b>Espacio para Desplazar:</b> Mantén presionada la tecla Espacio para desplazar/no desplazar rápidamente el lienzo</li>
                     <li><b>Z:</b> Deshacer tu última acción</li>
                     <li><b>X:</b> Rehacer lo que acabas de deshacer</li>
+                    <li><b>N:</b> Nuevo Cordón</li>
+                    <li><b>1:</b> Ver Nombres</li>
+                    <li><b>L:</b> Bloq. Capas</li>
+                    <li><b>D:</b> Elim. Cordón</li>
+                    <li><b>A:</b> Deselec. Todo</li>
                 </ul>
             </li>
             <li style="font-size:18px;"><b>Selección y Zoom Corregidos:</b> La selección en los modos mover, seleccionar y adjuntar ahora permanece precisa en todos los niveles de zoom</li>
@@ -2310,6 +2355,11 @@ translations = {
         'shortcut_undo_desc': 'Z - Deshacer',
         'shortcut_redo_desc': 'X - Rehacer',
         'shortcut_clear_suppression_desc': 'Ctrl+Mayús+D - Borrar banderas de supresión del lienzo (función de depuración)',
+        'shortcut_new_strand_desc': 'N - Nuevo Cordón',
+        'shortcut_draw_names_desc': '1 - Ver Nombres',
+        'shortcut_lock_layers_desc': 'L - Bloq. Capas',
+        'shortcut_delete_strand_desc': 'D - Elim. Cordón',
+        'shortcut_deselect_all_desc': 'A - Deselec. Todo',
 
         'general_settings_buttons': 'Configuración General',
         'theme_select_desc': 'Selección de Tema - Elige entre temas claros y oscuros para la interfaz',
@@ -2485,6 +2535,11 @@ translations = {
                     <li><b>Espaço para Panorâmica:</b> Mantenha pressionada a tecla Espaço para panorâmicar/despanorâmicar rapidamente a tela</li>
                     <li><b>Z:</b> Desfazer sua última ação</li>
                     <li><b>X:</b> Refazer o que você acabou de desfazer</li>
+                    <li><b>N:</b> Nova Mecha</li>
+                    <li><b>1:</b> Exib. Nomes</li>
+                    <li><b>L:</b> Bloq. Camad.</li>
+                    <li><b>D:</b> Excl. Mecha</li>
+                    <li><b>A:</b> Desmar. Tudo</li>
                 </ul>
             </li>
             <li style="font-size:18px;"><b>Seleção e Zoom Corrigidos:</b> A seleção nos modos mover, selecionar e anexar agora permanece precisa em todos os níveis de zoom</li>
@@ -2776,6 +2831,11 @@ translations = {
         'shortcut_undo_desc': 'Z - Desfazer',
         'shortcut_redo_desc': 'X - Refazer',
         'shortcut_clear_suppression_desc': 'Ctrl+Shift+D - Limpar sinalizadores de supressão da tela (recurso de depuração)',
+        'shortcut_new_strand_desc': 'N - Nova Mecha',
+        'shortcut_draw_names_desc': '1 - Exib. Nomes',
+        'shortcut_lock_layers_desc': 'L - Bloq. Camad.',
+        'shortcut_delete_strand_desc': 'D - Excl. Mecha',
+        'shortcut_deselect_all_desc': 'A - Desmar. Tudo',
 
         'general_settings_buttons': 'Configurações Gerais',
         'theme_select_desc': 'Seleção de Tema - Escolha entre temas claro e escuro para a interface',
@@ -2958,6 +3018,11 @@ translations = {
                     <li><b>רווח להזזה:</b> החזק את מקש הרווח כדי להזיז/לבטל הזזה במהירות של הקנבס</li>
                     <li><b>Z:</b> בטל את הפעולה האחרונה שלך</li>
                     <li><b>X:</b> שחזר את מה שביטלת זה עתה</li>
+                    <li><b>N:</b> חוט חדש</li>
+                    <li><b>1:</b> צייר שמות</li>
+                    <li><b>L:</b> נעל שכבות</li>
+                    <li><b>D:</b> מחק חוט</li>
+                    <li><b>A:</b> בטל בחירה</li>
                 </ul>
             </li>
             <li style="font-size:18px;"><b>בחירה וזום תוקנו:</b> בחירה במצבי הזזה, בחירה וחיבור כעת נשארת מדויקת בכל רמות הזום</li>
@@ -3250,6 +3315,11 @@ translations = {
         'shortcut_undo_desc': 'Z - בטל פעולה',
         'shortcut_redo_desc': 'X - בצע שוב',
         'shortcut_clear_suppression_desc': 'Ctrl+Shift+D - נקה דגלי דיכוי קנבס (תכונת דיבאג)',
+        'shortcut_new_strand_desc': 'N - חוט חדש',
+        'shortcut_draw_names_desc': '1 - צייר שמות',
+        'shortcut_lock_layers_desc': 'L - נעל שכבות',
+        'shortcut_delete_strand_desc': 'D - מחק חוט',
+        'shortcut_deselect_all_desc': 'A - בטל בחירה',
 
         'general_settings_buttons': 'הגדרות כלליות',
         'theme_select_desc': 'בחירת ערכת נושא - בחר בין ערכות נושא בהירות וכהות לממשק',

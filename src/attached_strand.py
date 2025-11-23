@@ -958,11 +958,20 @@ class AttachedStrand(Strand):
             perp_angle_start = angle_start + math.pi / 2
             perp_angle_end = angle_end + math.pi / 2
             
+            # Shift side lines to be outside the path area
+            shift_dist = self.stroke_width / 2.0
+            
+            # End shift: along tangent direction (angle_end)
+            shift_x_end = shift_dist * math.cos(angle_end)
+            shift_y_end = shift_dist * math.sin(angle_end)
+            end_center_x = self.end.x() + shift_x_end
+            end_center_y = self.end.y() + shift_y_end
+
             # Calculate extended positions for end line
             dx_end_extended = highlight_half_width * math.cos(perp_angle_end)
             dy_end_extended = highlight_half_width * math.sin(perp_angle_end)
-            end_line_start_extended = QPointF(self.end.x() - dx_end_extended, self.end.y() - dy_end_extended)
-            end_line_end_extended = QPointF(self.end.x() + dx_end_extended, self.end.y() + dy_end_extended)
+            end_line_start_extended = QPointF(end_center_x - dx_end_extended, end_center_y - dy_end_extended)
+            end_line_end_extended = QPointF(end_center_x + dx_end_extended, end_center_y + dy_end_extended)
             
             # Create a pen for the red sideline highlight
             highlight_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width + 10, Qt.SolidLine)
@@ -2920,11 +2929,20 @@ class AttachedStrand(Strand):
             perp_angle_start = angle_start + math.pi / 2
             perp_angle_end = angle_end + math.pi / 2
             
+            # Shift side lines to be outside the path area
+            shift_dist = self.stroke_width / 2.0
+            
+            # End shift: along tangent direction (angle_end)
+            shift_x_end = shift_dist * math.cos(angle_end)
+            shift_y_end = shift_dist * math.sin(angle_end)
+            end_center_x = self.end.x() + shift_x_end
+            end_center_y = self.end.y() + shift_y_end
+
             # Calculate extended positions for end line
             dx_end_extended = highlight_half_width * math.cos(perp_angle_end)
             dy_end_extended = highlight_half_width * math.sin(perp_angle_end)
-            end_line_start_extended = QPointF(self.end.x() - dx_end_extended, self.end.y() - dy_end_extended)
-            end_line_end_extended = QPointF(self.end.x() + dx_end_extended, self.end.y() + dy_end_extended)
+            end_line_start_extended = QPointF(end_center_x - dx_end_extended, end_center_y - dy_end_extended)
+            end_line_end_extended = QPointF(end_center_x + dx_end_extended, end_center_y + dy_end_extended)
             
             # Create a pen for the red sideline highlight
             highlight_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width + 10, Qt.SolidLine)

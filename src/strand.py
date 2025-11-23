@@ -2076,17 +2076,32 @@ class Strand:
                 perp_angle_start = angle_start + math.pi / 2
                 perp_angle_end = angle_end + math.pi / 2
                 
+                # Shift side lines to be outside the path area
+                shift_dist = self.stroke_width / 2.0
+
+                # Start shift: opposite to tangent direction (angle_start)
+                shift_x_start = shift_dist * math.cos(angle_start + math.pi)
+                shift_y_start = shift_dist * math.sin(angle_start + math.pi)
+                start_center_x = self.start.x() + shift_x_start
+                start_center_y = self.start.y() + shift_y_start
+
+                # End shift: along tangent direction (angle_end)
+                shift_x_end = shift_dist * math.cos(angle_end)
+                shift_y_end = shift_dist * math.sin(angle_end)
+                end_center_x = self.end.x() + shift_x_end
+                end_center_y = self.end.y() + shift_y_end
+                
                 # Calculate extended positions for start line
                 dx_start_extended = highlight_half_width * math.cos(perp_angle_start)
                 dy_start_extended = highlight_half_width * math.sin(perp_angle_start)
-                start_line_start_extended = QPointF(self.start.x() - dx_start_extended, self.start.y() - dy_start_extended)
-                start_line_end_extended = QPointF(self.start.x() + dx_start_extended, self.start.y() + dy_start_extended)
+                start_line_start_extended = QPointF(start_center_x - dx_start_extended, start_center_y - dy_start_extended)
+                start_line_end_extended = QPointF(start_center_x + dx_start_extended, start_center_y + dy_start_extended)
                 
                 # Calculate extended positions for end line
                 dx_end_extended = highlight_half_width * math.cos(perp_angle_end)
                 dy_end_extended = highlight_half_width * math.sin(perp_angle_end)
-                end_line_start_extended = QPointF(self.end.x() - dx_end_extended, self.end.y() - dy_end_extended)
-                end_line_end_extended = QPointF(self.end.x() + dx_end_extended, self.end.y() + dy_end_extended)
+                end_line_start_extended = QPointF(end_center_x - dx_end_extended, end_center_y - dy_end_extended)
+                end_line_end_extended = QPointF(end_center_x + dx_end_extended, end_center_y + dy_end_extended)
                 
                 # Create highlight pen for side lines
                 highlight_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width + 10 , Qt.SolidLine)
@@ -2958,17 +2973,32 @@ class Strand:
                 perp_angle_start = angle_start + math.pi / 2
                 perp_angle_end = angle_end + math.pi / 2
                 
+                # Shift side lines to be outside the path area
+                shift_dist = self.stroke_width / 2.0
+
+                # Start shift: opposite to tangent direction (angle_start)
+                shift_x_start = shift_dist * math.cos(angle_start + math.pi)
+                shift_y_start = shift_dist * math.sin(angle_start + math.pi)
+                start_center_x = self.start.x() + shift_x_start
+                start_center_y = self.start.y() + shift_y_start
+
+                # End shift: along tangent direction (angle_end)
+                shift_x_end = shift_dist * math.cos(angle_end)
+                shift_y_end = shift_dist * math.sin(angle_end)
+                end_center_x = self.end.x() + shift_x_end
+                end_center_y = self.end.y() + shift_y_end
+                
                 # Calculate extended positions for start line
                 dx_start_extended = highlight_half_width * math.cos(perp_angle_start)
                 dy_start_extended = highlight_half_width * math.sin(perp_angle_start)
-                start_line_start_extended = QPointF(self.start.x() - dx_start_extended, self.start.y() - dy_start_extended)
-                start_line_end_extended = QPointF(self.start.x() + dx_start_extended, self.start.y() + dy_start_extended)
+                start_line_start_extended = QPointF(start_center_x - dx_start_extended, start_center_y - dy_start_extended)
+                start_line_end_extended = QPointF(start_center_x + dx_start_extended, start_center_y + dy_start_extended)
                 
                 # Calculate extended positions for end line
                 dx_end_extended = highlight_half_width * math.cos(perp_angle_end)
                 dy_end_extended = highlight_half_width * math.sin(perp_angle_end)
-                end_line_start_extended = QPointF(self.end.x() - dx_end_extended, self.end.y() - dy_end_extended)
-                end_line_end_extended = QPointF(self.end.x() + dx_end_extended, self.end.y() + dy_end_extended)
+                end_line_start_extended = QPointF(end_center_x - dx_end_extended, end_center_y - dy_end_extended)
+                end_line_end_extended = QPointF(end_center_x + dx_end_extended, end_center_y + dy_end_extended)
                 
                 # Create highlight pen for side lines
                 highlight_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width + 10 , Qt.SolidLine)

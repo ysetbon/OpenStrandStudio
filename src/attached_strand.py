@@ -1307,8 +1307,8 @@ class AttachedStrand(Strand):
 
         # --- ADD close knot semi-circle to combined paths ---
         # Check for closed connection at end (for close knot feature)
-        attachment_side = getattr(self, 'attachment_side', 1)
-        is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections and self.closed_connections[attachment_side]
+        # Use index 1 specifically because we are handling the end circle here
+        is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections and self.closed_connections[1]
 
         if self.has_circles[1] and is_closed_connection:
             # Skip if there are attached children at the end
@@ -1319,6 +1319,12 @@ class AttachedStrand(Strand):
                 isinstance(child, AttachedStrand) and child.start == self.end
                 for child in getattr(self, 'attached_strands', [])
             )
+
+            # BUT if it's a closed connection, we want to show the circle regardless of attachments
+            # because the "closed" property implies a visual termination/cap.
+            # (Overriding the skip logic specifically for closed connections)
+            if is_closed_connection:
+                skip_end_circle = False
 
             if not skip_end_circle:
                 total_diameter = self.width + self.stroke_width * 2
@@ -3263,8 +3269,8 @@ class AttachedStrand(Strand):
 
         # --- ADD close knot semi-circle to combined paths ---
         # Check for closed connection at end (for close knot feature)
-        attachment_side = getattr(self, 'attachment_side', 1)
-        is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections and self.closed_connections[attachment_side]
+        # Use index 1 specifically because we are handling the end circle here
+        is_closed_connection = hasattr(self, 'closed_connections') and self.closed_connections and self.closed_connections[1]
 
         if self.has_circles[1] and is_closed_connection:
             # Skip if there are attached children at the end
@@ -3275,6 +3281,12 @@ class AttachedStrand(Strand):
                 isinstance(child, AttachedStrand) and child.start == self.end
                 for child in getattr(self, 'attached_strands', [])
             )
+
+            # BUT if it's a closed connection, we want to show the circle regardless of attachments
+            # because the "closed" property implies a visual termination/cap.
+            # (Overriding the skip logic specifically for closed connections)
+            if is_closed_connection:
+                skip_end_circle = False
 
             if not skip_end_circle:
                 total_diameter = self.width + self.stroke_width * 2

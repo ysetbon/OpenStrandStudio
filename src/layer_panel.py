@@ -2002,12 +2002,13 @@ class LayerPanel(QWidget):
 
     def keyPressEvent(self, event):
         """Handle key press events, specifically for entering masked mode."""
-        pass
+        super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
         """Handle key release events, specifically for exiting masked mode."""
         if event.key() == Qt.Key_Control:
             self.exit_masked_mode()
+        super().keyReleaseEvent(event)
 
     def enter_masked_mode(self):
         """Enter masked mode, update UI, and emit relevant signal."""

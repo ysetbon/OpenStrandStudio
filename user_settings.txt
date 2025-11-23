@@ -1,5 +1,5 @@
 Theme: default
-Language: he
+Language: en
 ShadowColor: 0,0,0,150
 DrawOnlyAffectedStrand: false
 EnableThirdControlPoint: false

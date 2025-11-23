@@ -2071,14 +2071,16 @@ class MainWindow(QMainWindow):
             # 'n' for New Strand
             if event.key() == Qt.Key_N and event.modifiers() == Qt.NoModifier:
                 if hasattr(self, 'layer_panel') and self.layer_panel:
-                    self.layer_panel.request_new_strand()
+                    # Simulate button click to respect enabled/disabled state
+                    self.layer_panel.add_new_strand_button.click()
                     event.accept()
                     return
 
             # '1' for Draw Names
             if event.key() == Qt.Key_1 and event.modifiers() == Qt.NoModifier:
                 if hasattr(self, 'layer_panel') and self.layer_panel:
-                    self.layer_panel.request_draw_names()
+                    # Simulate button click to respect enabled/disabled state
+                    self.layer_panel.draw_names_button.click()
                     event.accept()
                     return
 
@@ -2094,14 +2096,16 @@ class MainWindow(QMainWindow):
             # 'd' for Delete Strand
             if event.key() == Qt.Key_D and event.modifiers() == Qt.NoModifier:
                 if hasattr(self, 'layer_panel') and self.layer_panel:
-                    self.layer_panel.request_delete_strand()
+                    # Simulate button click to respect enabled/disabled state
+                    self.layer_panel.delete_strand_button.click()
                     event.accept()
                     return
 
             # 'a' for Deselect All
             if event.key() == Qt.Key_A and event.modifiers() == Qt.NoModifier:
                 if hasattr(self, 'layer_panel') and self.layer_panel:
-                    self.layer_panel.deselect_all()
+                    # Simulate button click to respect enabled/disabled state
+                    self.layer_panel.deselect_all_button.click()
                     event.accept()
                     return
 

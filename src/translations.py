@@ -214,7 +214,8 @@ translations = {
                 </ul>
             </li>
             <li style="font-size:18px;"><b>Fixed Selection & Zoom:</b> Selection in move, select, and attach modes now remains accurate at all zoom levels</li>
-        
+            <li style="font-size:18px;"><b>Smoother Knot Connections:</b> Fixed a rendering issue where "closed knots" (loops) would sometimes show visible seams or gaps at the connection point. Strands now merge seamlessly for a cleaner look.</li>
+
         <p style="font-size:16px;">© 2025 OpenStrand Studio - Version 1.105</p>
         ''',
 
@@ -628,6 +629,7 @@ translations = {
                 </ul>
             </li>
             <li style="font-size:18px;"><b>Sélection et Zoom Corrigés :</b> La sélection dans les modes déplacement, sélection et attache reste maintenant précise à tous les niveaux de zoom</li>
+            <li style="font-size:18px;"><b>Connexions de Nœuds Plus Fluides :</b> Correction d'un problème de rendu où les "nœuds fermés" (boucles) affichaient parfois des coutures ou des espaces visibles au point de connexion. Les brins fusionnent maintenant de manière homogène pour un aspect plus propre.</li>
 
         <p style="font-size:16px;">© 2025 OpenStrand Studio - Version 1.105</p>
         ''',
@@ -1122,6 +1124,7 @@ translations = {
                 </ul>
             </li>
             <li style="font-size:18px;"><b>Auswahl & Zoom Korrigiert:</b> Die Auswahl in den Modi Verschieben, Auswählen und Anhängen bleibt nun auf allen Zoomstufen präzise</li>
+            <li style="font-size:18px;"><b>Glattere Knotenverbindungen:</b> Ein Rendering-Problem wurde behoben, bei dem "geschlossene Knoten" (Schleifen) manchmal sichtbare Nähte oder Lücken am Verbindungspunkt zeigten. Stränge verschmelzen jetzt nahtlos für ein saubereres Aussehen.</li>
 
         <p style="font-size:16px;">© 2025 OpenStrand Studio - Version 1.105</p>
         ''',
@@ -1550,6 +1553,7 @@ translations = {
                 </ul>
             </li>
             <li style="font-size:18px;"><b>Selezione e Zoom Corretti:</b> La selezione nelle modalità sposta, seleziona e attacca ora rimane precisa a tutti i livelli di zoom</li>
+            <li style="font-size:18px;"><b>Connessioni Nodi Più Fluide:</b> Risolto un problema di rendering in cui i "nodi chiusi" (anelli) mostravano a volte cuciture o spazi visibili nel punto di connessione. I trefoli ora si fondono senza soluzione di continuità per un aspetto più pulito.</li>
 
         <p style="font-size:16px;">© 2025 OpenStrand Studio - Versione 1.105</p>
         ''',
@@ -2016,6 +2020,7 @@ translations = {
                 </ul>
             </li>
             <li style="font-size:18px;"><b>Selección y Zoom Corregidos:</b> La selección en los modos mover, seleccionar y adjuntar ahora permanece precisa en todos los niveles de zoom</li>
+            <li style="font-size:18px;"><b>Conexiones de Nudos Más Suaves:</b> Se corrigió un problema de renderizado donde los "nudos cerrados" (bucles) a veces mostraban costuras o huecos visibles en el punto de conexión. Las hebras ahora se fusionan perfectamente para una apariencia más limpia.</li>
 
         <p style="font-size:16px;">© 2025 OpenStrand Studio - Versión 1.105</p>
 
@@ -2483,6 +2488,7 @@ translations = {
                 </ul>
             </li>
             <li style="font-size:18px;"><b>Seleção e Zoom Corrigidos:</b> A seleção nos modos mover, selecionar e anexar agora permanece precisa em todos os níveis de zoom</li>
+            <li style="font-size:18px;"><b>Conexões de Nós Mais Suaves:</b> Corrigido um problema de renderização onde "nós fechados" (laços) às vezes mostravam costuras ou lacunas visíveis no ponto de conexão. As mechas agora se fundem perfeitamente para uma aparência mais limpa.</li>
 
         <p style="font-size:16px;">© 2025 OpenStrand Studio – Versão 1.105</p>
         ''',
@@ -2955,6 +2961,7 @@ translations = {
                 </ul>
             </li>
             <li style="font-size:18px;"><b>בחירה וזום תוקנו:</b> בחירה במצבי הזזה, בחירה וחיבור כעת נשארת מדויקת בכל רמות הזום</li>
+            <li style="font-size:18px;"><b>חיבורי קשרים חלקים יותר:</b> תוקנה בעיית רינדור בה "קשרים סגורים" (לולאות) הציגו לפעמים תפרים או פערים נראים בנקודת החיבור. החוטים כעת מתמזגים בצורה חלקה למראה נקי יותר.</li>
 
         <p style="font-size:16px;">© 2025 OpenStrand Studio - גרסה 1.105</p>
         </div>

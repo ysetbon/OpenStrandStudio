@@ -1616,13 +1616,31 @@ class Strand:
         dx_end = half_total_width * math.cos(perp_angle_end)
         dy_end = half_total_width * math.sin(perp_angle_end)
 
+        # Shift side lines to be outside the path area
+        # Shift amount is half the stroke width, so the inner edge of the line touches the path end
+        shift_dist = self.stroke_width / 2.0
+
+        # Start shift: opposite to tangent direction (angle_start)
+        # angle_start points "in" to the curve (tangent at t=0), so we add PI to go "out"
+        shift_x_start = shift_dist * math.cos(angle_start + math.pi)
+        shift_y_start = shift_dist * math.sin(angle_start + math.pi)
+        start_center_x = self.start.x() + shift_x_start
+        start_center_y = self.start.y() + shift_y_start
+
+        # End shift: along tangent direction (angle_end)
+        # angle_end points "out" of the curve (tangent at t=1 points forward), so we use it directly
+        shift_x_end = shift_dist * math.cos(angle_end)
+        shift_y_end = shift_dist * math.sin(angle_end)
+        end_center_x = self.end.x() + shift_x_end
+        end_center_y = self.end.y() + shift_y_end
+
         # Start side line positions
-        self.start_line_start = QPointF(self.start.x() - dx_start, self.start.y() - dy_start)
-        self.start_line_end = QPointF(self.start.x() + dx_start, self.start.y() + dy_start)
+        self.start_line_start = QPointF(start_center_x - dx_start, start_center_y - dy_start)
+        self.start_line_end = QPointF(start_center_x + dx_start, start_center_y + dy_start)
 
         # End side line positions
-        self.end_line_start = QPointF(self.end.x() - dx_end, self.end.y() - dy_end)
-        self.end_line_end = QPointF(self.end.x() + dx_end, self.end.y() + dy_end)
+        self.end_line_start = QPointF(end_center_x - dx_end, end_center_y - dy_end)
+        self.end_line_end = QPointF(end_center_x + dx_end, end_center_y + dy_end)
 
     def set_attachable(self, attachable):
         self.attachable = attachable

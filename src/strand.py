@@ -2182,6 +2182,76 @@ class Strand:
             just_inner = tr_inner.map(just_inner)
             combined_fill_path.addPath(just_inner)
 
+        # Start closed connection
+        if (hasattr(self, 'closed_connections') and self.closed_connections[0]
+            and self.start_circle_stroke_color.alpha() > 0):
+            tangent = self.calculate_cubic_tangent(0.0001)
+            angle = math.atan2(tangent.y(), tangent.x())
+            total_d = self.width + self.stroke_width * 2
+            radius = total_d / 2
+
+            # Create outer semi-circle and add to combined_stroke_path
+            mask = QPainterPath()
+            rect_width = total_d * 2
+            rect_height = total_d * 2
+            mask.addRect(0, -rect_height / 2, rect_width, rect_height)
+            tr = QTransform().translate(self.start.x(), self.start.y())
+            tr.rotate(math.degrees(angle))
+            mask = tr.map(mask)
+
+            outer = QPainterPath()
+            outer.addEllipse(self.start, radius, radius)
+            clip = outer.subtracted(mask)
+            combined_stroke_path.addPath(clip)
+
+            # Add inner circle to combined_fill_path
+            inner = QPainterPath()
+            inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+            combined_fill_path.addPath(inner)
+
+            # Add side line rectangle to combined_fill_path
+            just_inner = QPainterPath()
+            just_inner.addRect(-self.stroke_width, -self.width * 0.5, self.stroke_width, self.width)
+            tr_inner = QTransform().translate(self.start.x(), self.start.y())
+            tr_inner.rotate(math.degrees(angle))
+            just_inner = tr_inner.map(just_inner)
+            combined_fill_path.addPath(just_inner)
+
+        # End closed connection
+        if (hasattr(self, 'closed_connections') and self.closed_connections[1]
+            and self.end_circle_stroke_color.alpha() > 0):
+            tangent = self.calculate_cubic_tangent(0.9999)
+            angle = math.atan2(tangent.y(), tangent.x())
+            total_d = self.width + self.stroke_width * 2
+            radius = total_d / 2
+
+            # Create outer semi-circle and add to combined_stroke_path
+            mask = QPainterPath()
+            rect_width = total_d * 2
+            rect_height = total_d * 2
+            mask.addRect(-rect_width, -rect_height / 2, rect_width, rect_height)
+            tr = QTransform().translate(self.end.x(), self.end.y())
+            tr.rotate(math.degrees(angle))
+            mask = tr.map(mask)
+
+            outer = QPainterPath()
+            outer.addEllipse(self.end, radius, radius)
+            clip = outer.subtracted(mask)
+            combined_stroke_path.addPath(clip)
+
+            # Add inner circle to combined_fill_path
+            inner = QPainterPath()
+            inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+            combined_fill_path.addPath(inner)
+
+            # Add side line rectangle to combined_fill_path
+            just_inner = QPainterPath()
+            just_inner.addRect(-self.stroke_width, -self.width * 0.5, self.stroke_width, self.width)
+            tr_inner = QTransform().translate(self.end.x(), self.end.y())
+            tr_inner.rotate(math.degrees(angle))
+            just_inner = tr_inner.map(just_inner)
+            combined_fill_path.addPath(just_inner)
+
         # --- START: Skip strand body drawing in shadow-only mode ---
         if not getattr(self, 'shadow_only', False):
             # Draw combined_stroke_path with the stroke color
@@ -2388,101 +2458,7 @@ class Strand:
             # Continue drawing even if control points fail
         # Half-circle attachments are now handled by combined_stroke_path and combined_fill_path above
 
-        # --- NEW: Draw semi-circles on top for closed connections ---
-        # Draw semi-circle on top when start connection is closed (only if visible)
-        if (hasattr(self, 'closed_connections') and self.closed_connections[0]
-            and self.start_circle_stroke_color.alpha() > 0 and not shadow_only_mode):
-            tangent = self.calculate_cubic_tangent(0.0001)
-            angle = math.atan2(tangent.y(), tangent.x())
-            total_d = self.width + self.stroke_width * 2
-            radius = total_d / 2
-
-            # Create ring-shaped half-circle for stroke so it doesn't fill the interior
-            mask = QPainterPath()
-            rect_width = total_d * 2
-            rect_height = total_d * 2
-            mask.addRect(0, -rect_height / 2, rect_width, rect_height)
-            tr = QTransform().translate(self.start.x(), self.start.y())
-            tr.rotate(math.degrees(angle))
-            mask = tr.map(mask)
-
-            outer = QPainterPath()
-            outer.addEllipse(self.start, radius, radius)
-            outer_half = outer.subtracted(mask)
-
-            inner_full = QPainterPath()
-            inner_full.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
-            ring_half = outer_half.subtracted(inner_full)
-
-            # Draw the stroke ring only if it's visible
-            if self.start_circle_stroke_color.alpha() > 0:
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.stroke_color)
-                painter.drawPath(ring_half)
-
-            # Draw the inner circle (fill) over everything only if visible
-            if self.start_circle_stroke_color.alpha() > 0:
-                painter.setBrush(self.color)
-                painter.drawPath(inner_full)
-
-            # Draw side line that covers the inner circle (only when stroke is visible)
-            if self.start_circle_stroke_color.alpha() > 0:
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.color)
-                just_inner = QPainterPath()
-                just_inner.addRect(-self.stroke_width,  -self.width*0.5, self.stroke_width , self.width)
-                tr_inner = QTransform().translate(self.start.x(), self.start.y())
-                tr_inner.rotate(math.degrees(angle))
-                just_inner = tr_inner.map(just_inner)
-                painter.drawPath(just_inner)
-
-        # Draw semi-circle on top when end connection is closed (only if visible)
-        if (hasattr(self, 'closed_connections') and self.closed_connections[1]
-            and self.end_circle_stroke_color.alpha() > 0 and not shadow_only_mode):
-            tangent = self.calculate_cubic_tangent(0.9999)
-            angle = math.atan2(tangent.y(), tangent.x())
-            total_d = self.width + self.stroke_width * 2
-            radius = total_d / 2
-
-            # Create ring-shaped half-circle for stroke so it doesn't fill the interior
-            mask = QPainterPath()
-            rect_width = total_d * 2
-            rect_height = total_d * 2
-            mask.addRect(-rect_width, -rect_height/2, rect_width, rect_height)
-            tr = QTransform().translate(self.end.x(), self.end.y())
-            tr.rotate(math.degrees(angle))
-            mask = tr.map(mask)
-
-            outer = QPainterPath()
-            outer.addEllipse(self.end, radius, radius)
-            outer_half = outer.subtracted(mask)
-
-            inner_full = QPainterPath()
-            inner_full.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
-            ring_half = outer_half.subtracted(inner_full)
-
-            # Draw the stroke ring only if it's visible
-            if self.end_circle_stroke_color.alpha() > 0:
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.stroke_color)
-                painter.drawPath(ring_half)
-
-            # Draw the inner circle (fill) over everything only if visible
-            if self.end_circle_stroke_color.alpha() > 0:
-                painter.setBrush(self.color)
-                painter.drawPath(inner_full)
-
-            # Draw side line that covers the inner circle (only when stroke is visible)
-            if self.end_circle_stroke_color.alpha() > 0:
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.color) 
-                just_inner = QPainterPath()
-                just_inner.addRect(-self.stroke_width,  -self.width*0.5, self.stroke_width, self.width)
-                tr_inner = QTransform().translate(self.end.x(), self.end.y())
-                tr_inner.rotate(math.degrees(angle))
-                just_inner = tr_inner.map(just_inner)
-                painter.drawPath(just_inner)
-        # --- END NEW ---
+        # Closed connections handling moved to combined_paths logic
 
         # --- Draw full strand arrow on TOP of strand body (if not hidden) ---
         if getattr(self, 'full_arrow_visible', False) and not shadow_only_mode: # 'not self.is_hidden' is implicit due to earlier return
@@ -3088,6 +3064,76 @@ class Strand:
             just_inner = tr_inner.map(just_inner)
             combined_fill_path.addPath(just_inner)
 
+        # Start closed connection
+        if (hasattr(self, 'closed_connections') and self.closed_connections[0]
+            and self.start_circle_stroke_color.alpha() > 0):
+            tangent = self.calculate_cubic_tangent(0.0001)
+            angle = math.atan2(tangent.y(), tangent.x())
+            total_d = self.width + self.stroke_width * 2
+            radius = total_d / 2
+
+            # Create outer semi-circle and add to combined_stroke_path
+            mask = QPainterPath()
+            rect_width = total_d * 2
+            rect_height = total_d * 2
+            mask.addRect(0, -rect_height / 2, rect_width, rect_height)
+            tr = QTransform().translate(self.start.x(), self.start.y())
+            tr.rotate(math.degrees(angle))
+            mask = tr.map(mask)
+
+            outer = QPainterPath()
+            outer.addEllipse(self.start, radius, radius)
+            clip = outer.subtracted(mask)
+            combined_stroke_path.addPath(clip)
+
+            # Add inner circle to combined_fill_path
+            inner = QPainterPath()
+            inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+            combined_fill_path.addPath(inner)
+
+            # Add side line rectangle to combined_fill_path
+            just_inner = QPainterPath()
+            just_inner.addRect(-self.stroke_width, -self.width * 0.5, self.stroke_width, self.width)
+            tr_inner = QTransform().translate(self.start.x(), self.start.y())
+            tr_inner.rotate(math.degrees(angle))
+            just_inner = tr_inner.map(just_inner)
+            combined_fill_path.addPath(just_inner)
+
+        # End closed connection
+        if (hasattr(self, 'closed_connections') and self.closed_connections[1]
+            and self.end_circle_stroke_color.alpha() > 0):
+            tangent = self.calculate_cubic_tangent(0.9999)
+            angle = math.atan2(tangent.y(), tangent.x())
+            total_d = self.width + self.stroke_width * 2
+            radius = total_d / 2
+
+            # Create outer semi-circle and add to combined_stroke_path
+            mask = QPainterPath()
+            rect_width = total_d * 2
+            rect_height = total_d * 2
+            mask.addRect(-rect_width, -rect_height / 2, rect_width, rect_height)
+            tr = QTransform().translate(self.end.x(), self.end.y())
+            tr.rotate(math.degrees(angle))
+            mask = tr.map(mask)
+
+            outer = QPainterPath()
+            outer.addEllipse(self.end, radius, radius)
+            clip = outer.subtracted(mask)
+            combined_stroke_path.addPath(clip)
+
+            # Add inner circle to combined_fill_path
+            inner = QPainterPath()
+            inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+            combined_fill_path.addPath(inner)
+
+            # Add side line rectangle to combined_fill_path
+            just_inner = QPainterPath()
+            just_inner.addRect(-self.stroke_width, -self.width * 0.5, self.stroke_width, self.width)
+            tr_inner = QTransform().translate(self.end.x(), self.end.y())
+            tr_inner.rotate(math.degrees(angle))
+            just_inner = tr_inner.map(just_inner)
+            combined_fill_path.addPath(just_inner)
+
         # --- START: Skip strand body drawing in shadow-only mode ---
         if not getattr(self, 'shadow_only', False):
             # Draw combined_stroke_path with the stroke color
@@ -3294,101 +3340,7 @@ class Strand:
             # Continue drawing even if control points fail
         # Half-circle attachments are now handled by combined_stroke_path and combined_fill_path above
 
-        # --- NEW: Draw semi-circles on top for closed connections ---
-        # Draw semi-circle on top when start connection is closed (only if visible)
-        if (hasattr(self, 'closed_connections') and self.closed_connections[0]
-            and self.start_circle_stroke_color.alpha() > 0 and not shadow_only_mode):
-            tangent = self.calculate_cubic_tangent(0.0001)
-            angle = math.atan2(tangent.y(), tangent.x())
-            total_d = self.width + self.stroke_width * 2
-            radius = total_d / 2
-
-            # Create ring-shaped half-circle for stroke so it doesn't fill the interior
-            mask = QPainterPath()
-            rect_width = total_d * 2
-            rect_height = total_d * 2
-            mask.addRect(0, -rect_height / 2, rect_width, rect_height)
-            tr = QTransform().translate(self.start.x(), self.start.y())
-            tr.rotate(math.degrees(angle))
-            mask = tr.map(mask)
-
-            outer = QPainterPath()
-            outer.addEllipse(self.start, radius, radius)
-            outer_half = outer.subtracted(mask)
-
-            inner_full = QPainterPath()
-            inner_full.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
-            ring_half = outer_half.subtracted(inner_full)
-
-            # Draw the stroke ring only if it's visible
-            if self.start_circle_stroke_color.alpha() > 0:
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.stroke_color)
-                painter.drawPath(ring_half)
-
-            # Draw the inner circle (fill) over everything only if visible
-            if self.start_circle_stroke_color.alpha() > 0:
-                painter.setBrush(self.color)
-                painter.drawPath(inner_full)
-
-            # Draw side line that covers the inner circle (only when stroke is visible)
-            if self.start_circle_stroke_color.alpha() > 0:
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.color)
-                just_inner = QPainterPath()
-                just_inner.addRect(-self.stroke_width,  -self.width*0.5, self.stroke_width , self.width)
-                tr_inner = QTransform().translate(self.start.x(), self.start.y())
-                tr_inner.rotate(math.degrees(angle))
-                just_inner = tr_inner.map(just_inner)
-                painter.drawPath(just_inner)
-
-        # Draw semi-circle on top when end connection is closed (only if visible)
-        if (hasattr(self, 'closed_connections') and self.closed_connections[1]
-            and self.end_circle_stroke_color.alpha() > 0 and not shadow_only_mode):
-            tangent = self.calculate_cubic_tangent(0.9999)
-            angle = math.atan2(tangent.y(), tangent.x())
-            total_d = self.width + self.stroke_width * 2
-            radius = total_d / 2
-
-            # Create ring-shaped half-circle for stroke so it doesn't fill the interior
-            mask = QPainterPath()
-            rect_width = total_d * 2
-            rect_height = total_d * 2
-            mask.addRect(-rect_width, -rect_height/2, rect_width, rect_height)
-            tr = QTransform().translate(self.end.x(), self.end.y())
-            tr.rotate(math.degrees(angle))
-            mask = tr.map(mask)
-
-            outer = QPainterPath()
-            outer.addEllipse(self.end, radius, radius)
-            outer_half = outer.subtracted(mask)
-
-            inner_full = QPainterPath()
-            inner_full.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
-            ring_half = outer_half.subtracted(inner_full)
-
-            # Draw the stroke ring only if it's visible
-            if self.end_circle_stroke_color.alpha() > 0:
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.stroke_color)
-                painter.drawPath(ring_half)
-
-            # Draw the inner circle (fill) over everything only if visible
-            if self.end_circle_stroke_color.alpha() > 0:
-                painter.setBrush(self.color)
-                painter.drawPath(inner_full)
-
-            # Draw side line that covers the inner circle (only when stroke is visible)
-            if self.end_circle_stroke_color.alpha() > 0:
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.color) 
-                just_inner = QPainterPath()
-                just_inner.addRect(-self.stroke_width,  -self.width*0.5, self.stroke_width, self.width)
-                tr_inner = QTransform().translate(self.end.x(), self.end.y())
-                tr_inner.rotate(math.degrees(angle))
-                just_inner = tr_inner.map(just_inner)
-                painter.drawPath(just_inner)
-        # --- END NEW ---
+        # Closed connections handling moved to combined_paths logic
 
         # --- Draw full strand arrow on TOP of strand body (if not hidden) ---
         if getattr(self, 'full_arrow_visible', False) and not shadow_only_mode: # 'not self.is_hidden' is implicit due to earlier return

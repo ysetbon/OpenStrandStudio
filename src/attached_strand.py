@@ -1366,7 +1366,7 @@ class AttachedStrand(Strand):
         painter.setBrush(self.color)
         painter.drawPath(combined_fill_path)
        
-        # Draw the end line conditionally
+        # Draw the end line conditionally this is after drawing the combined_stroke_path and combined_fill_path
         if self.end_line_visible and not self.has_circles[1]: # Only draw end line if visible
             side_pen = QPen(self.stroke_color, self.stroke_width)
             side_pen.setCapStyle(Qt.FlatCap)
@@ -3322,7 +3322,7 @@ class AttachedStrand(Strand):
         painter.setBrush(self.color)
         painter.drawPath(combined_fill_path)
        
-        # Draw the end line conditionally
+        # Draw the end line conditionally this is after drawing the combined_stroke_path and combined_fill_path
         if self.end_line_visible and not self.has_circles[1]: # Only draw end line if visible
             side_pen = QPen(self.stroke_color, self.stroke_width)
             side_pen.setCapStyle(Qt.FlatCap)

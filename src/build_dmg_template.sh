@@ -2,7 +2,7 @@
 
 ################################################################################
 # OpenStrand Studio macOS DMG Builder TEMPLATE
-# Date: Created November 15, 2025
+# Date: Created November 24, 2025
 #
 # LOGIC EXPLANATION:
 # ==================

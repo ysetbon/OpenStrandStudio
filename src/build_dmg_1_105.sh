@@ -139,7 +139,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p><b>What's New in Version 1.105:</b></p>
     <ul>
-        <li><b>Mask Grid:</b> Quickly visualize how many mask strands are created using strong N×N grid rendering with fixed group functionality.</li>
+        <li><b>Mask Grid:</b> Quickly visualize how many mask strands are created using strong NxN grid rendering with fixed group functionality.</li>
         <li><b>Keyboard Shortcuts:</b> Space to move, Z to undo, X to redo, N for new strand, 1 for names, L for lock, D for delete, A to deselect.</li>
         <li><b>Fixed Selection & Zoom:</b> Selection during zoom mode, selection and connection now remain accurate at all zoom levels.</li>
         <li><b>Smoother Knot Connections:</b> Rendering fix where closed knots sometimes showed seams or visible gaps at the connection point.</li>
@@ -150,7 +150,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p><b>Neu in Version 1.105:</b></p>
     <ul>
-        <li><b>Maskengitter:</b> Visualisieren Sie schnell, wie viele Maskenstränge erstellt werden, mit starkem N×N-Gitter-Rendering und fester Gruppenfunktion.</li>
+        <li><b>Maskengitter:</b> Visualisieren Sie schnell, wie viele Maskenstränge erstellt werden, mit starkem NxN-Gitter-Rendering und fester Gruppenfunktion.</li>
         <li><b>Tastaturkürzel:</b> Leertaste zum Verschieben, Z zum Rückgängig, X zum Wiederholen, N für neuen Strang, 1 für Namen, L zum Sperren, D zum Löschen, A zum Abwählen.</li>
         <li><b>Auswahl und Zoom korrigiert:</b> Auswahl im Zoom-Modus, Auswahl und Verbindung bleiben jetzt bei allen Zoomstufen genau.</li>
         <li><b>Glattere Knotenverbindungen:</b> Rendering-Korrektur, bei der geschlossene Knoten manchmal Nähte oder sichtbare Lücken am Verbindungspunkt zeigten.</li>
@@ -161,7 +161,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p><b>Nouveautés de la version 1.105:</b></p>
     <ul>
-        <li><b>Grille de masques:</b> Visualisez rapidement le nombre de brins de masque créés grâce à un rendu puissant de grille N×N avec fonction de groupe fixe.</li>
+        <li><b>Grille de masques:</b> Visualisez rapidement le nombre de brins de masque créés grâce à un rendu puissant de grille NxN avec fonction de groupe fixe.</li>
         <li><b>Raccourcis clavier:</b> Espace pour déplacer, Z annuler, X rétablir, N nouveau brin, 1 noms, L verrouiller, D supprimer, A désélectionner.</li>
         <li><b>Sélection et zoom corrigés:</b> Sélection en mode zoom, la sélection et la connexion restent désormais précises à tous les niveaux de zoom.</li>
         <li><b>Connexions de nœuds plus fluides:</b> Correction de rendu où les nœuds fermés montraient parfois des coutures ou des espaces visibles au point de connexion.</li>
@@ -172,7 +172,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p><b>Novità della versione 1.105:</b></p>
     <ul>
-        <li><b>Griglia maschere:</b> Visualizza rapidamente quanti fili maschera vengono creati utilizzando un forte rendering griglia N×N con funzionalità gruppo fisso.</li>
+        <li><b>Griglia maschere:</b> Visualizza rapidamente quanti fili maschera vengono creati utilizzando un forte rendering griglia NxN con funzionalità gruppo fisso.</li>
         <li><b>Scorciatoie tastiera:</b> Spazio per spostare, Z annulla, X ripristina, N nuovo filo, 1 nomi, L blocca, D elimina, A deseleziona.</li>
         <li><b>Selezione e zoom corretti:</b> Selezione in modalità zoom, la selezione e connessione ora rimangono accurate a tutti i livelli di zoom.</li>
         <li><b>Connessioni nodi più fluide:</b> Correzione rendering dove nodi chiusi mostravano talvolta cuciture o spazi visibili nel punto di connessione.</li>
@@ -183,7 +183,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p><b>Novedades de la versión 1.105:</b></p>
     <ul>
-        <li><b>Cuadrícula de máscaras:</b> Visualice rápidamente cuántos hilos de máscara se crean usando renderizado fuerte de cuadrícula N×N con funcionalidad de grupo fijo.</li>
+        <li><b>Cuadrícula de máscaras:</b> Visualice rápidamente cuántos hilos de máscara se crean usando renderizado fuerte de cuadrícula NxN con funcionalidad de grupo fijo.</li>
         <li><b>Atajos de teclado:</b> Espacio para mover, Z deshacer, X rehacer, N nuevo hilo, 1 nombres, L bloquear, D eliminar, A deseleccionar.</li>
         <li><b>Selección y zoom corregidos:</b> Selección en modo zoom, la selección y conexión ahora permanecen precisas en todos los niveles de zoom.</li>
         <li><b>Conexiones de nudos más suaves:</b> Corrección de renderizado donde nudos cerrados a veces mostraban costuras o espacios visibles en el punto de conexión.</li>
@@ -194,7 +194,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p><b>Novidades da versão 1.105:</b></p>
     <ul>
-        <li><b>Grade de máscaras:</b> Visualize rapidamente quantos fios de máscara são criados usando renderização forte de grade N×N com funcionalidade de grupo fixo.</li>
+        <li><b>Grade de máscaras:</b> Visualize rapidamente quantos fios de máscara são criados usando renderização forte de grade NxN com funcionalidade de grupo fixo.</li>
         <li><b>Atalhos de teclado:</b> Espaço para mover, Z desfazer, X refazer, N novo fio, 1 nomes, L bloquear, D excluir, A desmarcar.</li>
         <li><b>Seleção e zoom corrigidos:</b> Seleção no modo zoom, a seleção e conexão agora permanecem precisas em todos os níveis de zoom.</li>
         <li><b>Conexões de nós mais suaves:</b> Correção de renderização onde nós fechados às vezes mostravam costuras ou lacunas visíveis no ponto de conexão.</li>
@@ -354,7 +354,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires pour installer ce logiciel.</p>
     <p><b>Nouveautés de la version 1.105:</b></p>
     <ul>
-        <li><b>Grille de masques:</b> Visualisez rapidement le nombre de brins de masque créés grâce à un rendu puissant de grille N×N avec fonction de groupe fixe.</li>
+        <li><b>Grille de masques:</b> Visualisez rapidement le nombre de brins de masque créés grâce à un rendu puissant de grille NxN avec fonction de groupe fixe.</li>
         <li><b>Raccourcis clavier:</b> Espace pour déplacer, Z annuler, X rétablir, N nouveau brin, 1 noms, L verrouiller, D supprimer, A désélectionner.</li>
         <li><b>Sélection et zoom corrigés:</b> Sélection en mode zoom, la sélection et la connexion restent désormais précises à tous les niveaux de zoom.</li>
         <li><b>Connexions de nœuds plus fluides:</b> Correction de rendu où les nœuds fermés montraient parfois des coutures ou des espaces visibles au point de connexion.</li>
@@ -365,7 +365,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p><b>What's New in Version 1.105:</b></p>
     <ul>
-        <li><b>Mask Grid:</b> Quickly visualize how many mask strands are created using strong N×N grid rendering with fixed group functionality.</li>
+        <li><b>Mask Grid:</b> Quickly visualize how many mask strands are created using strong NxN grid rendering with fixed group functionality.</li>
         <li><b>Keyboard Shortcuts:</b> Space to move, Z to undo, X to redo, N for new strand, 1 for names, L for lock, D for delete, A to deselect.</li>
         <li><b>Fixed Selection & Zoom:</b> Selection during zoom mode, selection and connection now remain accurate at all zoom levels.</li>
         <li><b>Smoother Knot Connections:</b> Rendering fix where closed knots sometimes showed seams or visible gaps at the connection point.</li>
@@ -376,7 +376,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p><b>Neu in Version 1.105:</b></p>
     <ul>
-        <li><b>Maskengitter:</b> Visualisieren Sie schnell, wie viele Maskenstränge erstellt werden, mit starkem N×N-Gitter-Rendering und fester Gruppenfunktion.</li>
+        <li><b>Maskengitter:</b> Visualisieren Sie schnell, wie viele Maskenstränge erstellt werden, mit starkem NxN-Gitter-Rendering und fester Gruppenfunktion.</li>
         <li><b>Tastaturkürzel:</b> Leertaste zum Verschieben, Z zum Rückgängig, X zum Wiederholen, N für neuen Strang, 1 für Namen, L zum Sperren, D zum Löschen, A zum Abwählen.</li>
         <li><b>Auswahl und Zoom korrigiert:</b> Auswahl im Zoom-Modus, Auswahl und Verbindung bleiben jetzt bei allen Zoomstufen genau.</li>
         <li><b>Glattere Knotenverbindungen:</b> Rendering-Korrektur, bei der geschlossene Knoten manchmal Nähte oder sichtbare Lücken am Verbindungspunkt zeigten.</li>
@@ -387,7 +387,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p><b>Novità della versione 1.105:</b></p>
     <ul>
-        <li><b>Griglia maschere:</b> Visualizza rapidamente quanti fili maschera vengono creati utilizzando un forte rendering griglia N×N con funzionalità gruppo fisso.</li>
+        <li><b>Griglia maschere:</b> Visualizza rapidamente quanti fili maschera vengono creati utilizzando un forte rendering griglia NxN con funzionalità gruppo fisso.</li>
         <li><b>Scorciatoie tastiera:</b> Spazio per spostare, Z annulla, X ripristina, N nuovo filo, 1 nomi, L blocca, D elimina, A deseleziona.</li>
         <li><b>Selezione e zoom corretti:</b> Selezione in modalità zoom, la selezione e connessione ora rimangono accurate a tutti i livelli di zoom.</li>
         <li><b>Connessioni nodi più fluide:</b> Correzione rendering dove nodi chiusi mostravano talvolta cuciture o spazi visibili nel punto di connessione.</li>
@@ -398,7 +398,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p><b>Novedades de la versión 1.105:</b></p>
     <ul>
-        <li><b>Cuadrícula de máscaras:</b> Visualice rápidamente cuántos hilos de máscara se crean usando renderizado fuerte de cuadrícula N×N con funcionalidad de grupo fijo.</li>
+        <li><b>Cuadrícula de máscaras:</b> Visualice rápidamente cuántos hilos de máscara se crean usando renderizado fuerte de cuadrícula NxN con funcionalidad de grupo fijo.</li>
         <li><b>Atajos de teclado:</b> Espacio para mover, Z deshacer, X rehacer, N nuevo hilo, 1 nombres, L bloquear, D eliminar, A deseleccionar.</li>
         <li><b>Selección y zoom corregidos:</b> Selección en modo zoom, la selección y conexión ahora permanecen precisas en todos los niveles de zoom.</li>
         <li><b>Conexiones de nudos más suaves:</b> Corrección de renderizado donde nudos cerrados a veces mostraban costuras o espacios visibles en el punto de conexión.</li>
@@ -409,7 +409,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p><b>Novidades da versão 1.105:</b></p>
     <ul>
-        <li><b>Grade de máscaras:</b> Visualize rapidamente quantos fios de máscara são criados usando renderização forte de grade N×N com funcionalidade de grupo fixo.</li>
+        <li><b>Grade de máscaras:</b> Visualize rapidamente quantos fios de máscara são criados usando renderização forte de grade NxN com funcionalidade de grupo fixo.</li>
         <li><b>Atalhos de teclado:</b> Espaço para mover, Z desfazer, X refazer, N novo fio, 1 nomes, L bloquear, D excluir, A desmarcar.</li>
         <li><b>Seleção e zoom corrigidos:</b> Seleção no modo zoom, a seleção e conexão agora permanecem precisas em todos os níveis de zoom.</li>
         <li><b>Conexões de nós mais suaves:</b> Correção de renderização onde nós fechados às vezes mostravam costuras ou lacunas visíveis no ponto de conexão.</li>
@@ -444,7 +444,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p><b>Neu in Version 1.105:</b></p>
     <ul>
-        <li><b>Maskengitter:</b> Visualisieren Sie schnell, wie viele Maskenstränge erstellt werden, mit starkem N×N-Gitter-Rendering und fester Gruppenfunktion.</li>
+        <li><b>Maskengitter:</b> Visualisieren Sie schnell, wie viele Maskenstränge erstellt werden, mit starkem NxN-Gitter-Rendering und fester Gruppenfunktion.</li>
         <li><b>Tastaturkürzel:</b> Leertaste zum Verschieben, Z zum Rückgängig, X zum Wiederholen, N für neuen Strang, 1 für Namen, L zum Sperren, D zum Löschen, A zum Abwählen.</li>
         <li><b>Auswahl und Zoom korrigiert:</b> Auswahl im Zoom-Modus, Auswahl und Verbindung bleiben jetzt bei allen Zoomstufen genau.</li>
         <li><b>Glattere Knotenverbindungen:</b> Rendering-Korrektur, bei der geschlossene Knoten manchmal Nähte oder sichtbare Lücken am Verbindungspunkt zeigten.</li>
@@ -455,7 +455,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p><b>What's New in Version 1.105:</b></p>
     <ul>
-        <li><b>Mask Grid:</b> Quickly visualize how many mask strands are created using strong N×N grid rendering with fixed group functionality.</li>
+        <li><b>Mask Grid:</b> Quickly visualize how many mask strands are created using strong NxN grid rendering with fixed group functionality.</li>
         <li><b>Keyboard Shortcuts:</b> Space to move, Z to undo, X to redo, N for new strand, 1 for names, L for lock, D for delete, A to deselect.</li>
         <li><b>Fixed Selection & Zoom:</b> Selection during zoom mode, selection and connection now remain accurate at all zoom levels.</li>
         <li><b>Smoother Knot Connections:</b> Rendering fix where closed knots sometimes showed seams or visible gaps at the connection point.</li>
@@ -466,7 +466,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p><b>Nouveautés de la version 1.105:</b></p>
     <ul>
-        <li><b>Grille de masques:</b> Visualisez rapidement le nombre de brins de masque créés grâce à un rendu puissant de grille N×N avec fonction de groupe fixe.</li>
+        <li><b>Grille de masques:</b> Visualisez rapidement le nombre de brins de masque créés grâce à un rendu puissant de grille NxN avec fonction de groupe fixe.</li>
         <li><b>Raccourcis clavier:</b> Espace pour déplacer, Z annuler, X rétablir, N nouveau brin, 1 noms, L verrouiller, D supprimer, A désélectionner.</li>
         <li><b>Sélection et zoom corrigés:</b> Sélection en mode zoom, la sélection et la connexion restent désormais précises à tous les niveaux de zoom.</li>
         <li><b>Connexions de nœuds plus fluides:</b> Correction de rendu où les nœuds fermés montraient parfois des coutures ou des espaces visibles au point de connexion.</li>
@@ -477,7 +477,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p><b>Novità della versione 1.105:</b></p>
     <ul>
-        <li><b>Griglia maschere:</b> Visualizza rapidamente quanti fili maschera vengono creati utilizzando un forte rendering griglia N×N con funzionalità gruppo fisso.</li>
+        <li><b>Griglia maschere:</b> Visualizza rapidamente quanti fili maschera vengono creati utilizzando un forte rendering griglia NxN con funzionalità gruppo fisso.</li>
         <li><b>Scorciatoie tastiera:</b> Spazio per spostare, Z annulla, X ripristina, N nuovo filo, 1 nomi, L blocca, D elimina, A deseleziona.</li>
         <li><b>Selezione e zoom corretti:</b> Selezione in modalità zoom, la selezione e connessione ora rimangono accurate a tutti i livelli di zoom.</li>
         <li><b>Connessioni nodi più fluide:</b> Correzione rendering dove nodi chiusi mostravano talvolta cuciture o spazi visibili nel punto di connessione.</li>
@@ -488,7 +488,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p><b>Novedades de la versión 1.105:</b></p>
     <ul>
-        <li><b>Cuadrícula de máscaras:</b> Visualice rápidamente cuántos hilos de máscara se crean usando renderizado fuerte de cuadrícula N×N con funcionalidad de grupo fijo.</li>
+        <li><b>Cuadrícula de máscaras:</b> Visualice rápidamente cuántos hilos de máscara se crean usando renderizado fuerte de cuadrícula NxN con funcionalidad de grupo fijo.</li>
         <li><b>Atajos de teclado:</b> Espacio para mover, Z deshacer, X rehacer, N nuevo hilo, 1 nombres, L bloquear, D eliminar, A deseleccionar.</li>
         <li><b>Selección y zoom corregidos:</b> Selección en modo zoom, la selección y conexión ahora permanecen precisas en todos los niveles de zoom.</li>
         <li><b>Conexiones de nudos más suaves:</b> Corrección de renderizado donde nudos cerrados a veces mostraban costuras o espacios visibles en el punto de conexión.</li>
@@ -499,7 +499,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p><b>Novidades da versão 1.105:</b></p>
     <ul>
-        <li><b>Grade de máscaras:</b> Visualize rapidamente quantos fios de máscara são criados usando renderização forte de grade N×N com funcionalidade de grupo fixo.</li>
+        <li><b>Grade de máscaras:</b> Visualize rapidamente quantos fios de máscara são criados usando renderização forte de grade NxN com funcionalidade de grupo fixo.</li>
         <li><b>Atalhos de teclado:</b> Espaço para mover, Z desfazer, X refazer, N novo fio, 1 nomes, L bloquear, D excluir, A desmarcar.</li>
         <li><b>Seleção e zoom corrigidos:</b> Seleção no modo zoom, a seleção e conexão agora permanecem precisas em todos os níveis de zoom.</li>
         <li><b>Conexões de nós mais suaves:</b> Correção de renderização onde nós fechados às vezes mostravam costuras ou lacunas visíveis no ponto de conexão.</li>
@@ -534,7 +534,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p><b>Novità della versione 1.105:</b></p>
     <ul>
-        <li><b>Griglia maschere:</b> Visualizza rapidamente quanti fili maschera vengono creati utilizzando un forte rendering griglia N×N con funzionalità gruppo fisso.</li>
+        <li><b>Griglia maschere:</b> Visualizza rapidamente quanti fili maschera vengono creati utilizzando un forte rendering griglia NxN con funzionalità gruppo fisso.</li>
         <li><b>Scorciatoie tastiera:</b> Spazio per spostare, Z annulla, X ripristina, N nuovo filo, 1 nomi, L blocca, D elimina, A deseleziona.</li>
         <li><b>Selezione e zoom corretti:</b> Selezione in modalità zoom, la selezione e connessione ora rimangono accurate a tutti i livelli di zoom.</li>
         <li><b>Connessioni nodi più fluide:</b> Correzione rendering dove nodi chiusi mostravano talvolta cuciture o spazi visibili nel punto di connessione.</li>
@@ -545,7 +545,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p><b>What's New in Version 1.105:</b></p>
     <ul>
-        <li><b>Mask Grid:</b> Quickly visualize how many mask strands are created using strong N×N grid rendering with fixed group functionality.</li>
+        <li><b>Mask Grid:</b> Quickly visualize how many mask strands are created using strong NxN grid rendering with fixed group functionality.</li>
         <li><b>Keyboard Shortcuts:</b> Space to move, Z to undo, X to redo, N for new strand, 1 for names, L for lock, D for delete, A to deselect.</li>
         <li><b>Fixed Selection & Zoom:</b> Selection during zoom mode, selection and connection now remain accurate at all zoom levels.</li>
         <li><b>Smoother Knot Connections:</b> Rendering fix where closed knots sometimes showed seams or visible gaps at the connection point.</li>
@@ -556,7 +556,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p><b>Neu in Version 1.105:</b></p>
     <ul>
-        <li><b>Maskengitter:</b> Visualisieren Sie schnell, wie viele Maskenstränge erstellt werden, mit starkem N×N-Gitter-Rendering und fester Gruppenfunktion.</li>
+        <li><b>Maskengitter:</b> Visualisieren Sie schnell, wie viele Maskenstränge erstellt werden, mit starkem NxN-Gitter-Rendering und fester Gruppenfunktion.</li>
         <li><b>Tastaturkürzel:</b> Leertaste zum Verschieben, Z zum Rückgängig, X zum Wiederholen, N für neuen Strang, 1 für Namen, L zum Sperren, D zum Löschen, A zum Abwählen.</li>
         <li><b>Auswahl und Zoom korrigiert:</b> Auswahl im Zoom-Modus, Auswahl und Verbindung bleiben jetzt bei allen Zoomstufen genau.</li>
         <li><b>Glattere Knotenverbindungen:</b> Rendering-Korrektur, bei der geschlossene Knoten manchmal Nähte oder sichtbare Lücken am Verbindungspunkt zeigten.</li>
@@ -567,7 +567,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p><b>Nouveautés de la version 1.105:</b></p>
     <ul>
-        <li><b>Grille de masques:</b> Visualisez rapidement le nombre de brins de masque créés grâce à un rendu puissant de grille N×N avec fonction de groupe fixe.</li>
+        <li><b>Grille de masques:</b> Visualisez rapidement le nombre de brins de masque créés grâce à un rendu puissant de grille NxN avec fonction de groupe fixe.</li>
         <li><b>Raccourcis clavier:</b> Espace pour déplacer, Z annuler, X rétablir, N nouveau brin, 1 noms, L verrouiller, D supprimer, A désélectionner.</li>
         <li><b>Sélection et zoom corrigés:</b> Sélection en mode zoom, la sélection et la connexion restent désormais précises à tous les niveaux de zoom.</li>
         <li><b>Connexions de nœuds plus fluides:</b> Correction de rendu où les nœuds fermés montraient parfois des coutures ou des espaces visibles au point de connexion.</li>
@@ -578,7 +578,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p><b>Novedades de la versión 1.105:</b></p>
     <ul>
-        <li><b>Cuadrícula de máscaras:</b> Visualice rápidamente cuántos hilos de máscara se crean usando renderizado fuerte de cuadrícula N×N con funcionalidad de grupo fijo.</li>
+        <li><b>Cuadrícula de máscaras:</b> Visualice rápidamente cuántos hilos de máscara se crean usando renderizado fuerte de cuadrícula NxN con funcionalidad de grupo fijo.</li>
         <li><b>Atajos de teclado:</b> Espacio para mover, Z deshacer, X rehacer, N nuevo hilo, 1 nombres, L bloquear, D eliminar, A deseleccionar.</li>
         <li><b>Selección y zoom corregidos:</b> Selección en modo zoom, la selección y conexión ahora permanecen precisas en todos los niveles de zoom.</li>
         <li><b>Conexiones de nudos más suaves:</b> Corrección de renderizado donde nudos cerrados a veces mostraban costuras o espacios visibles en el punto de conexión.</li>
@@ -589,7 +589,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p><b>Novidades da versão 1.105:</b></p>
     <ul>
-        <li><b>Grade de máscaras:</b> Visualize rapidamente quantos fios de máscara são criados usando renderização forte de grade N×N com funcionalidade de grupo fixo.</li>
+        <li><b>Grade de máscaras:</b> Visualize rapidamente quantos fios de máscara são criados usando renderização forte de grade NxN com funcionalidade de grupo fixo.</li>
         <li><b>Atalhos de teclado:</b> Espaço para mover, Z desfazer, X refazer, N novo fio, 1 nomes, L bloquear, D excluir, A desmarcar.</li>
         <li><b>Seleção e zoom corrigidos:</b> Seleção no modo zoom, a seleção e conexão agora permanecem precisas em todos os níveis de zoom.</li>
         <li><b>Conexões de nós mais suaves:</b> Correção de renderização onde nós fechados às vezes mostravam costuras ou lacunas visíveis no ponto de conexão.</li>
@@ -624,7 +624,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p><b>Novedades de la versión 1.105:</b></p>
     <ul>
-        <li><b>Cuadrícula de máscaras:</b> Visualice rápidamente cuántos hilos de máscara se crean usando renderizado fuerte de cuadrícula N×N con funcionalidad de grupo fijo.</li>
+        <li><b>Cuadrícula de máscaras:</b> Visualice rápidamente cuántos hilos de máscara se crean usando renderizado fuerte de cuadrícula NxN con funcionalidad de grupo fijo.</li>
         <li><b>Atajos de teclado:</b> Espacio para mover, Z deshacer, X rehacer, N nuevo hilo, 1 nombres, L bloquear, D eliminar, A deseleccionar.</li>
         <li><b>Selección y zoom corregidos:</b> Selección en modo zoom, la selección y conexión ahora permanecen precisas en todos los niveles de zoom.</li>
         <li><b>Conexiones de nudos más suaves:</b> Corrección de renderizado donde nudos cerrados a veces mostraban costuras o espacios visibles en el punto de conexión.</li>
@@ -635,7 +635,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p><b>What's New in Version 1.105:</b></p>
     <ul>
-        <li><b>Mask Grid:</b> Quickly visualize how many mask strands are created using strong N×N grid rendering with fixed group functionality.</li>
+        <li><b>Mask Grid:</b> Quickly visualize how many mask strands are created using strong NxN grid rendering with fixed group functionality.</li>
         <li><b>Keyboard Shortcuts:</b> Space to move, Z to undo, X to redo, N for new strand, 1 for names, L for lock, D for delete, A to deselect.</li>
         <li><b>Fixed Selection & Zoom:</b> Selection during zoom mode, selection and connection now remain accurate at all zoom levels.</li>
         <li><b>Smoother Knot Connections:</b> Rendering fix where closed knots sometimes showed seams or visible gaps at the connection point.</li>
@@ -646,7 +646,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p><b>Nouveautés de la version 1.105:</b></p>
     <ul>
-        <li><b>Grille de masques:</b> Visualisez rapidement le nombre de brins de masque créés grâce à un rendu puissant de grille N×N avec fonction de groupe fixe.</li>
+        <li><b>Grille de masques:</b> Visualisez rapidement le nombre de brins de masque créés grâce à un rendu puissant de grille NxN avec fonction de groupe fixe.</li>
         <li><b>Raccourcis clavier:</b> Espace pour déplacer, Z annuler, X rétablir, N nouveau brin, 1 noms, L verrouiller, D supprimer, A désélectionner.</li>
         <li><b>Sélection et zoom corrigés:</b> Sélection en mode zoom, la sélection et la connexion restent désormais précises à tous les niveaux de zoom.</li>
         <li><b>Connexions de nœuds plus fluides:</b> Correction de rendu où les nœuds fermés montraient parfois des coutures ou des espaces visibles au point de connexion.</li>
@@ -657,7 +657,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p><b>Neu in Version 1.105:</b></p>
     <ul>
-        <li><b>Maskengitter:</b> Visualisieren Sie schnell, wie viele Maskenstränge erstellt werden, mit starkem N×N-Gitter-Rendering und fester Gruppenfunktion.</li>
+        <li><b>Maskengitter:</b> Visualisieren Sie schnell, wie viele Maskenstränge erstellt werden, mit starkem NxN-Gitter-Rendering und fester Gruppenfunktion.</li>
         <li><b>Tastaturkürzel:</b> Leertaste zum Verschieben, Z zum Rückgängig, X zum Wiederholen, N für neuen Strang, 1 für Namen, L zum Sperren, D zum Löschen, A zum Abwählen.</li>
         <li><b>Auswahl und Zoom korrigiert:</b> Auswahl im Zoom-Modus, Auswahl und Verbindung bleiben jetzt bei allen Zoomstufen genau.</li>
         <li><b>Glattere Knotenverbindungen:</b> Rendering-Korrektur, bei der geschlossene Knoten manchmal Nähte oder sichtbare Lücken am Verbindungspunkt zeigten.</li>
@@ -668,7 +668,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p><b>Novità della versione 1.105:</b></p>
     <ul>
-        <li><b>Griglia maschere:</b> Visualizza rapidamente quanti fili maschera vengono creati utilizzando un forte rendering griglia N×N con funzionalità gruppo fisso.</li>
+        <li><b>Griglia maschere:</b> Visualizza rapidamente quanti fili maschera vengono creati utilizzando un forte rendering griglia NxN con funzionalità gruppo fisso.</li>
         <li><b>Scorciatoie tastiera:</b> Spazio per spostare, Z annulla, X ripristina, N nuovo filo, 1 nomi, L blocca, D elimina, A deseleziona.</li>
         <li><b>Selezione e zoom corretti:</b> Selezione in modalità zoom, la selezione e connessione ora rimangono accurate a tutti i livelli di zoom.</li>
         <li><b>Connessioni nodi più fluide:</b> Correzione rendering dove nodi chiusi mostravano talvolta cuciture o spazi visibili nel punto di connessione.</li>
@@ -679,7 +679,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p><b>Novidades da versão 1.105:</b></p>
     <ul>
-        <li><b>Grade de máscaras:</b> Visualize rapidamente quantos fios de máscara são criados usando renderização forte de grade N×N com funcionalidade de grupo fixo.</li>
+        <li><b>Grade de máscaras:</b> Visualize rapidamente quantos fios de máscara são criados usando renderização forte de grade NxN com funcionalidade de grupo fixo.</li>
         <li><b>Atalhos de teclado:</b> Espaço para mover, Z desfazer, X refazer, N novo fio, 1 nomes, L bloquear, D excluir, A desmarcar.</li>
         <li><b>Seleção e zoom corrigidos:</b> Seleção no modo zoom, a seleção e conexão agora permanecem precisas em todos os níveis de zoom.</li>
         <li><b>Conexões de nós mais suaves:</b> Correção de renderização onde nós fechados às vezes mostravam costuras ou lacunas visíveis no ponto de conexão.</li>
@@ -714,7 +714,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p><b>Novidades da versão 1.105:</b></p>
     <ul>
-        <li><b>Grade de máscaras:</b> Visualize rapidamente quantos fios de máscara são criados usando renderização forte de grade N×N com funcionalidade de grupo fixo.</li>
+        <li><b>Grade de máscaras:</b> Visualize rapidamente quantos fios de máscara são criados usando renderização forte de grade NxN com funcionalidade de grupo fixo.</li>
         <li><b>Atalhos de teclado:</b> Espaço para mover, Z desfazer, X refazer, N novo fio, 1 nomes, L bloquear, D excluir, A desmarcar.</li>
         <li><b>Seleção e zoom corrigidos:</b> Seleção no modo zoom, a seleção e conexão agora permanecem precisas em todos os níveis de zoom.</li>
         <li><b>Conexões de nós mais suaves:</b> Correção de renderização onde nós fechados às vezes mostravam costuras ou lacunas visíveis no ponto de conexão.</li>
@@ -725,7 +725,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p><b>What's New in Version 1.105:</b></p>
     <ul>
-        <li><b>Mask Grid:</b> Quickly visualize how many mask strands are created using strong N×N grid rendering with fixed group functionality.</li>
+        <li><b>Mask Grid:</b> Quickly visualize how many mask strands are created using strong NxN grid rendering with fixed group functionality.</li>
         <li><b>Keyboard Shortcuts:</b> Space to move, Z to undo, X to redo, N for new strand, 1 for names, L for lock, D for delete, A to deselect.</li>
         <li><b>Fixed Selection & Zoom:</b> Selection during zoom mode, selection and connection now remain accurate at all zoom levels.</li>
         <li><b>Smoother Knot Connections:</b> Rendering fix where closed knots sometimes showed seams or visible gaps at the connection point.</li>
@@ -736,7 +736,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p><b>Nouveautés de la version 1.105:</b></p>
     <ul>
-        <li><b>Grille de masques:</b> Visualisez rapidement le nombre de brins de masque créés grâce à un rendu puissant de grille N×N avec fonction de groupe fixe.</li>
+        <li><b>Grille de masques:</b> Visualisez rapidement le nombre de brins de masque créés grâce à un rendu puissant de grille NxN avec fonction de groupe fixe.</li>
         <li><b>Raccourcis clavier:</b> Espace pour déplacer, Z annuler, X rétablir, N nouveau brin, 1 noms, L verrouiller, D supprimer, A désélectionner.</li>
         <li><b>Sélection et zoom corrigés:</b> Sélection en mode zoom, la sélection et la connexion restent désormais précises à tous les niveaux de zoom.</li>
         <li><b>Connexions de nœuds plus fluides:</b> Correction de rendu où les nœuds fermés montraient parfois des coutures ou des espaces visibles au point de connexion.</li>
@@ -747,7 +747,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p><b>Neu in Version 1.105:</b></p>
     <ul>
-        <li><b>Maskengitter:</b> Visualisieren Sie schnell, wie viele Maskenstränge erstellt werden, mit starkem N×N-Gitter-Rendering und fester Gruppenfunktion.</li>
+        <li><b>Maskengitter:</b> Visualisieren Sie schnell, wie viele Maskenstränge erstellt werden, mit starkem NxN-Gitter-Rendering und fester Gruppenfunktion.</li>
         <li><b>Tastaturkürzel:</b> Leertaste zum Verschieben, Z zum Rückgängig, X zum Wiederholen, N für neuen Strang, 1 für Namen, L zum Sperren, D zum Löschen, A zum Abwählen.</li>
         <li><b>Auswahl und Zoom korrigiert:</b> Auswahl im Zoom-Modus, Auswahl und Verbindung bleiben jetzt bei allen Zoomstufen genau.</li>
         <li><b>Glattere Knotenverbindungen:</b> Rendering-Korrektur, bei der geschlossene Knoten manchmal Nähte oder sichtbare Lücken am Verbindungspunkt zeigten.</li>
@@ -758,7 +758,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p><b>Novità della versione 1.105:</b></p>
     <ul>
-        <li><b>Griglia maschere:</b> Visualizza rapidamente quanti fili maschera vengono creati utilizzando un forte rendering griglia N×N con funzionalità gruppo fisso.</li>
+        <li><b>Griglia maschere:</b> Visualizza rapidamente quanti fili maschera vengono creati utilizzando un forte rendering griglia NxN con funzionalità gruppo fisso.</li>
         <li><b>Scorciatoie tastiera:</b> Spazio per spostare, Z annulla, X ripristina, N nuovo filo, 1 nomi, L blocca, D elimina, A deseleziona.</li>
         <li><b>Selezione e zoom corretti:</b> Selezione in modalità zoom, la selezione e connessione ora rimangono accurate a tutti i livelli di zoom.</li>
         <li><b>Connessioni nodi più fluide:</b> Correzione rendering dove nodi chiusi mostravano talvolta cuciture o spazi visibili nel punto di connessione.</li>
@@ -769,7 +769,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p><b>Novedades de la versión 1.105:</b></p>
     <ul>
-        <li><b>Cuadrícula de máscaras:</b> Visualice rápidamente cuántos hilos de máscara se crean usando renderizado fuerte de cuadrícula N×N con funcionalidad de grupo fijo.</li>
+        <li><b>Cuadrícula de máscaras:</b> Visualice rápidamente cuántos hilos de máscara se crean usando renderizado fuerte de cuadrícula NxN con funcionalidad de grupo fijo.</li>
         <li><b>Atajos de teclado:</b> Espacio para mover, Z deshacer, X rehacer, N nuevo hilo, 1 nombres, L bloquear, D eliminar, A deseleccionar.</li>
         <li><b>Selección y zoom corregidos:</b> Selección en modo zoom, la selección y conexión ahora permanecen precisas en todos los niveles de zoom.</li>
         <li><b>Conexiones de nudos más suaves:</b> Corrección de renderizado donde nudos cerrados a veces mostraban costuras o espacios visibles en el punto de conexión.</li>
@@ -817,7 +817,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p dir="ltr">This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p dir="ltr"><b>What's New in Version 1.105:</b></p>
     <ul dir="ltr">
-        <li><b>Mask Grid:</b> Quickly visualize how many mask strands are created using strong N×N grid rendering with fixed group functionality.</li>
+        <li><b>Mask Grid:</b> Quickly visualize how many mask strands are created using strong NxN grid rendering with fixed group functionality.</li>
         <li><b>Keyboard Shortcuts:</b> Space to move, Z to undo, X to redo, N for new strand, 1 for names, L for lock, D for delete, A to deselect.</li>
         <li><b>Fixed Selection & Zoom:</b> Selection during zoom mode, selection and connection now remain accurate at all zoom levels.</li>
         <li><b>Smoother Knot Connections:</b> Rendering fix where closed knots sometimes showed seams or visible gaps at the connection point.</li>
@@ -828,7 +828,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p dir="ltr">Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p dir="ltr"><b>Nouveautés de la version 1.105:</b></p>
     <ul dir="ltr">
-        <li><b>Grille de masques:</b> Visualisez rapidement le nombre de brins de masque créés grâce à un rendu puissant de grille N×N avec fonction de groupe fixe.</li>
+        <li><b>Grille de masques:</b> Visualisez rapidement le nombre de brins de masque créés grâce à un rendu puissant de grille NxN avec fonction de groupe fixe.</li>
         <li><b>Raccourcis clavier:</b> Espace pour déplacer, Z annuler, X rétablir, N nouveau brin, 1 noms, L verrouiller, D supprimer, A désélectionner.</li>
         <li><b>Sélection et zoom corrigés:</b> Sélection en mode zoom, la sélection et la connexion restent désormais précises à tous les niveaux de zoom.</li>
         <li><b>Connexions de nœuds plus fluides:</b> Correction de rendu où les nœuds fermés montraient parfois des coutures ou des espaces visibles au point de connexion.</li>
@@ -839,7 +839,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p dir="ltr">Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p dir="ltr"><b>Neu in Version 1.105:</b></p>
     <ul dir="ltr">
-        <li><b>Maskengitter:</b> Visualisieren Sie schnell, wie viele Maskenstränge erstellt werden, mit starkem N×N-Gitter-Rendering und fester Gruppenfunktion.</li>
+        <li><b>Maskengitter:</b> Visualisieren Sie schnell, wie viele Maskenstränge erstellt werden, mit starkem NxN-Gitter-Rendering und fester Gruppenfunktion.</li>
         <li><b>Tastaturkürzel:</b> Leertaste zum Verschieben, Z zum Rückgängig, X zum Wiederholen, N für neuen Strang, 1 für Namen, L zum Sperren, D zum Löschen, A zum Abwählen.</li>
         <li><b>Auswahl und Zoom korrigiert:</b> Auswahl im Zoom-Modus, Auswahl und Verbindung bleiben jetzt bei allen Zoomstufen genau.</li>
         <li><b>Glattere Knotenverbindungen:</b> Rendering-Korrektur, bei der geschlossene Knoten manchmal Nähte oder sichtbare Lücken am Verbindungspunkt zeigten.</li>
@@ -850,7 +850,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p dir="ltr">Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p dir="ltr"><b>Novità della versione 1.105:</b></p>
     <ul dir="ltr">
-        <li><b>Griglia maschere:</b> Visualizza rapidamente quanti fili maschera vengono creati utilizzando un forte rendering griglia N×N con funzionalità gruppo fisso.</li>
+        <li><b>Griglia maschere:</b> Visualizza rapidamente quanti fili maschera vengono creati utilizzando un forte rendering griglia NxN con funzionalità gruppo fisso.</li>
         <li><b>Scorciatoie tastiera:</b> Spazio per spostare, Z annulla, X ripristina, N nuovo filo, 1 nomi, L blocca, D elimina, A deseleziona.</li>
         <li><b>Selezione e zoom corretti:</b> Selezione in modalità zoom, la selezione e connessione ora rimangono accurate a tutti i livelli di zoom.</li>
         <li><b>Connessioni nodi più fluide:</b> Correzione rendering dove nodi chiusi mostravano talvolta cuciture o spazi visibili nel punto di connessione.</li>
@@ -861,7 +861,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p dir="ltr">Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p dir="ltr"><b>Novedades de la versión 1.105:</b></p>
     <ul dir="ltr">
-        <li><b>Cuadrícula de máscaras:</b> Visualice rápidamente cuántos hilos de máscara se crean usando renderizado fuerte de cuadrícula N×N con funcionalidad de grupo fijo.</li>
+        <li><b>Cuadrícula de máscaras:</b> Visualice rápidamente cuántos hilos de máscara se crean usando renderizado fuerte de cuadrícula NxN con funcionalidad de grupo fijo.</li>
         <li><b>Atajos de teclado:</b> Espacio para mover, Z deshacer, X rehacer, N nuevo hilo, 1 nombres, L bloquear, D eliminar, A deseleccionar.</li>
         <li><b>Selección y zoom corregidos:</b> Selección en modo zoom, la selección y conexión ahora permanecen precisas en todos los niveles de zoom.</li>
         <li><b>Conexiones de nudos más suaves:</b> Corrección de renderizado donde nudos cerrados a veces mostraban costuras o espacios visibles en el punto de conexión.</li>
@@ -872,7 +872,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p dir="ltr">Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p dir="ltr"><b>Novidades da versão 1.105:</b></p>
     <ul dir="ltr">
-        <li><b>Grade de máscaras:</b> Visualize rapidamente quantos fios de máscara são criados usando renderização forte de grade N×N com funcionalidade de grupo fixo.</li>
+        <li><b>Grade de máscaras:</b> Visualize rapidamente quantos fios de máscara são criados usando renderização forte de grade NxN com funcionalidade de grupo fixo.</li>
         <li><b>Atalhos de teclado:</b> Espaço para mover, Z desfazer, X refazer, N novo fio, 1 nomes, L bloquear, D excluir, A desmarcar.</li>
         <li><b>Seleção e zoom corrigidos:</b> Seleção no modo zoom, a seleção e conexão agora permanecem precisas em todos os níveis de zoom.</li>
         <li><b>Conexões de nós mais suaves:</b> Correção de renderização onde nós fechados às vezes mostravam costuras ou lacunas visíveis no ponto de conexão.</li>

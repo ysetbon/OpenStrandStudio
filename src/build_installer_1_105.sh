@@ -2,7 +2,7 @@
 
 ################################################################################
 # OpenStrand Studio macOS PKG Installer Builder TEMPLATE
-# Date: Created November 15, 2025
+# Date: Created November 24, 2025
 #
 # LOGIC EXPLANATION:
 # ==================
@@ -139,7 +139,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p><b>What's New in Version 1.105:</b></p>
     <ul>
-        <li><b>Mask Grid:</b> Quickly create multiple strand masks using a visual N×N grid interface in group functionalities.</li>
+        <li><b>Mask Grid:</b> Quickly create multiple strand masks using a visual NxN grid interface in group functionalities.</li>
         <li><b>Keyboard Shortcuts:</b> Space to pan, Z to undo, X to redo, N for new strand, 1 for draw names, L to lock layers, D to delete strand, A to deselect all.</li>
         <li><b>Fixed Selection &amp; Zoom:</b> Selection in move, select, and attach modes now remains accurate at all zoom levels.</li>
         <li><b>Smoother Knot Connections:</b> Fixed a rendering issue where closed knots would sometimes show visible seams or gaps at the connection point.</li>
@@ -150,7 +150,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p><b>Neu in Version 1.105:</b></p>
     <ul>
-        <li><b>Maskenraster:</b> Erstellen Sie schnell mehrere Strangmasken mit einer visuellen N×N-Raster-Oberfläche in Gruppenfunktionalitäten.</li>
+        <li><b>Maskenraster:</b> Erstellen Sie schnell mehrere Strangmasken mit einer visuellen NxN-Raster-Oberfläche in Gruppenfunktionalitäten.</li>
         <li><b>Tastaturkürzel:</b> Leertaste zum Schwenken, Z zum Rückgängig machen, X zum Wiederherstellen, N für neuen Strang, 1 für Namen zeigen, L zum Sperren, D zum Entfernen, A zum Abwählen.</li>
         <li><b>Auswahl &amp; Zoom Korrigiert:</b> Die Auswahl in den Modi Verschieben, Auswählen und Anhängen bleibt nun auf allen Zoomstufen präzise.</li>
         <li><b>Glattere Knotenverbindungen:</b> Ein Rendering-Problem wurde behoben, bei dem geschlossene Knoten manchmal sichtbare Nähte oder Lücken am Verbindungspunkt zeigten.</li>
@@ -161,7 +161,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p><b>Nouveautés de la version 1.105 :</b></p>
     <ul>
-        <li><b>Grille de Masque :</b> Créez rapidement plusieurs masques de brins à l'aide d'une interface de grille visuelle N×N dans les fonctionnalités de groupe.</li>
+        <li><b>Grille de Masque :</b> Créez rapidement plusieurs masques de brins à l'aide d'une interface de grille visuelle NxN dans les fonctionnalités de groupe.</li>
         <li><b>Raccourcis Clavier :</b> Espace pour panoramiquer, Z pour annuler, X pour rétablir, N pour nouveau brin, 1 pour noms, L pour verrouiller, D pour supprimer, A pour désélectionner.</li>
         <li><b>Sélection et Zoom Corrigés :</b> La sélection dans les modes déplacement, sélection et attache reste maintenant précise à tous les niveaux de zoom.</li>
         <li><b>Connexions de Nœuds Plus Fluides :</b> Correction d'un problème de rendu où les nœuds fermés affichaient parfois des coutures ou des espaces visibles au point de connexion.</li>
@@ -172,7 +172,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p><b>Novità della versione 1.105:</b></p>
     <ul>
-        <li><b>Griglia Maschera:</b> Crea rapidamente più maschere di trefolo utilizzando un'interfaccia griglia visiva N×N nelle funzionalità di gruppo.</li>
+        <li><b>Griglia Maschera:</b> Crea rapidamente più maschere di trefolo utilizzando un'interfaccia griglia visiva NxN nelle funzionalità di gruppo.</li>
         <li><b>Scorciatoie da Tastiera:</b> Spazio per panoramica, Z per annullare, X per ripristinare, N per nuovo trefolo, 1 per nomi, L per bloccare, D per eliminare, A per deselezionare.</li>
         <li><b>Selezione e Zoom Corretti:</b> La selezione nelle modalità sposta, seleziona e attacca ora rimane precisa a tutti i livelli di zoom.</li>
         <li><b>Connessioni Nodi Più Fluide:</b> Risolto un problema di rendering in cui i nodi chiusi mostravano a volte cuciture o spazi visibili nel punto di connessione.</li>
@@ -183,7 +183,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p><b>Novedades de la versión 1.105:</b></p>
     <ul>
-        <li><b>Cuadrícula de Máscara:</b> Crea rápidamente múltiples máscaras de hebra usando una interfaz de cuadrícula visual N×N en funcionalidades de grupo.</li>
+        <li><b>Cuadrícula de Máscara:</b> Crea rápidamente múltiples máscaras de hebra usando una interfaz de cuadrícula visual NxN en funcionalidades de grupo.</li>
         <li><b>Atajos de Teclado:</b> Espacio para desplazar, Z para deshacer, X para rehacer, N para nuevo cordón, 1 para nombres, L para bloquear, D para eliminar, A para deseleccionar.</li>
         <li><b>Selección y Zoom Corregidos:</b> La selección en los modos mover, seleccionar y adjuntar ahora permanece precisa en todos los niveles de zoom.</li>
         <li><b>Conexiones de Nudos Más Suaves:</b> Se corrigió un problema de renderizado donde los nudos cerrados a veces mostraban costuras o huecos visibles en el punto de conexión.</li>
@@ -194,7 +194,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p><b>Novidades da versão 1.105:</b></p>
     <ul>
-        <li><b>Grade de Máscara:</b> Crie rapidamente múltiplas máscaras de mecha usando uma interface de grade visual N×N nas funcionalidades de grupo.</li>
+        <li><b>Grade de Máscara:</b> Crie rapidamente múltiplas máscaras de mecha usando uma interface de grade visual NxN nas funcionalidades de grupo.</li>
         <li><b>Atalhos de Teclado:</b> Espaço para panorâmica, Z para desfazer, X para refazer, N para nova mecha, 1 para nomes, L para bloquear, D para excluir, A para desmarcar.</li>
         <li><b>Seleção e Zoom Corrigidos:</b> A seleção nos modos mover, selecionar e anexar agora permanece precisa em todos os níveis de zoom.</li>
         <li><b>Conexões de Nós Mais Suaves:</b> Corrigido um problema de renderização onde nós fechados às vezes mostravam costuras ou lacunas visíveis no ponto de conexão.</li>
@@ -354,7 +354,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires pour installer ce logiciel.</p>
     <p><b>Nouveautés de la version 1.105 :</b></p>
     <ul>
-        <li><b>Grille de Masque :</b> Créez rapidement plusieurs masques de brins à l'aide d'une interface de grille visuelle N×N dans les fonctionnalités de groupe.</li>
+        <li><b>Grille de Masque :</b> Créez rapidement plusieurs masques de brins à l'aide d'une interface de grille visuelle NxN dans les fonctionnalités de groupe.</li>
         <li><b>Raccourcis Clavier :</b> Espace pour panoramiquer, Z pour annuler, X pour rétablir, N pour nouveau brin, 1 pour noms, L pour verrouiller, D pour supprimer, A pour désélectionner.</li>
         <li><b>Sélection et Zoom Corrigés :</b> La sélection dans les modes déplacement, sélection et attache reste maintenant précise à tous les niveaux de zoom.</li>
         <li><b>Connexions de Nœuds Plus Fluides :</b> Correction d'un problème de rendu où les nœuds fermés affichaient parfois des coutures ou des espaces visibles au point de connexion.</li>
@@ -365,7 +365,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p><b>What's New in Version 1.105:</b></p>
     <ul>
-        <li><b>Mask Grid:</b> Quickly create multiple strand masks using a visual N×N grid interface in group functionalities.</li>
+        <li><b>Mask Grid:</b> Quickly create multiple strand masks using a visual NxN grid interface in group functionalities.</li>
         <li><b>Keyboard Shortcuts:</b> Space to pan, Z to undo, X to redo, N for new strand, 1 for draw names, L to lock layers, D to delete strand, A to deselect all.</li>
         <li><b>Fixed Selection &amp; Zoom:</b> Selection in move, select, and attach modes now remains accurate at all zoom levels.</li>
         <li><b>Smoother Knot Connections:</b> Fixed a rendering issue where closed knots would sometimes show visible seams or gaps at the connection point.</li>
@@ -376,7 +376,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p><b>Neu in Version 1.105:</b></p>
     <ul>
-        <li><b>Maskenraster:</b> Erstellen Sie schnell mehrere Strangmasken mit einer visuellen N×N-Raster-Oberfläche in Gruppenfunktionalitäten.</li>
+        <li><b>Maskenraster:</b> Erstellen Sie schnell mehrere Strangmasken mit einer visuellen NxN-Raster-Oberfläche in Gruppenfunktionalitäten.</li>
         <li><b>Tastaturkürzel:</b> Leertaste zum Schwenken, Z zum Rückgängig machen, X zum Wiederherstellen, N für neuen Strang, 1 für Namen zeigen, L zum Sperren, D zum Entfernen, A zum Abwählen.</li>
         <li><b>Auswahl &amp; Zoom Korrigiert:</b> Die Auswahl in den Modi Verschieben, Auswählen und Anhängen bleibt nun auf allen Zoomstufen präzise.</li>
         <li><b>Glattere Knotenverbindungen:</b> Ein Rendering-Problem wurde behoben, bei dem geschlossene Knoten manchmal sichtbare Nähte oder Lücken am Verbindungspunkt zeigten.</li>
@@ -387,7 +387,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p><b>Novità della versione 1.105:</b></p>
     <ul>
-        <li><b>Griglia Maschera:</b> Crea rapidamente più maschere di trefolo utilizzando un'interfaccia griglia visiva N×N nelle funzionalità di gruppo.</li>
+        <li><b>Griglia Maschera:</b> Crea rapidamente più maschere di trefolo utilizzando un'interfaccia griglia visiva NxN nelle funzionalità di gruppo.</li>
         <li><b>Scorciatoie da Tastiera:</b> Spazio per panoramica, Z per annullare, X per ripristinare, N per nuovo trefolo, 1 per nomi, L per bloccare, D per eliminare, A per deselezionare.</li>
         <li><b>Selezione e Zoom Corretti:</b> La selezione nelle modalità sposta, seleziona e attacca ora rimane precisa a tutti i livelli di zoom.</li>
         <li><b>Connessioni Nodi Più Fluide:</b> Risolto un problema di rendering in cui i nodi chiusi mostravano a volte cuciture o spazi visibili nel punto di connessione.</li>
@@ -398,7 +398,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p><b>Novedades de la versión 1.105:</b></p>
     <ul>
-        <li><b>Cuadrícula de Máscara:</b> Crea rápidamente múltiples máscaras de hebra usando una interfaz de cuadrícula visual N×N en funcionalidades de grupo.</li>
+        <li><b>Cuadrícula de Máscara:</b> Crea rápidamente múltiples máscaras de hebra usando una interfaz de cuadrícula visual NxN en funcionalidades de grupo.</li>
         <li><b>Atajos de Teclado:</b> Espacio para desplazar, Z para deshacer, X para rehacer, N para nuevo cordón, 1 para nombres, L para bloquear, D para eliminar, A para deseleccionar.</li>
         <li><b>Selección y Zoom Corregidos:</b> La selección en los modos mover, seleccionar y adjuntar ahora permanece precisa en todos los niveles de zoom.</li>
         <li><b>Conexiones de Nudos Más Suaves:</b> Se corrigió un problema de renderizado donde los nudos cerrados a veces mostraban costuras o huecos visibles en el punto de conexión.</li>
@@ -409,7 +409,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p><b>Novidades da versão 1.105:</b></p>
     <ul>
-        <li><b>Grade de Máscara:</b> Crie rapidamente múltiplas máscaras de mecha usando uma interface de grade visual N×N nas funcionalidades de grupo.</li>
+        <li><b>Grade de Máscara:</b> Crie rapidamente múltiplas máscaras de mecha usando uma interface de grade visual NxN nas funcionalidades de grupo.</li>
         <li><b>Atalhos de Teclado:</b> Espaço para panorâmica, Z para desfazer, X para refazer, N para nova mecha, 1 para nomes, L para bloquear, D para excluir, A para desmarcar.</li>
         <li><b>Seleção e Zoom Corrigidos:</b> A seleção nos modos mover, selecionar e anexar agora permanece precisa em todos os níveis de zoom.</li>
         <li><b>Conexões de Nós Mais Suaves:</b> Corrigido um problema de renderização onde nós fechados às vezes mostravam costuras ou lacunas visíveis no ponto de conexão.</li>
@@ -444,7 +444,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p><b>Neu in Version 1.105:</b></p>
     <ul>
-        <li><b>Maskenraster:</b> Erstellen Sie schnell mehrere Strangmasken mit einer visuellen N×N-Raster-Oberfläche in Gruppenfunktionalitäten.</li>
+        <li><b>Maskenraster:</b> Erstellen Sie schnell mehrere Strangmasken mit einer visuellen NxN-Raster-Oberfläche in Gruppenfunktionalitäten.</li>
         <li><b>Tastaturkürzel:</b> Leertaste zum Schwenken, Z zum Rückgängig machen, X zum Wiederherstellen, N für neuen Strang, 1 für Namen zeigen, L zum Sperren, D zum Entfernen, A zum Abwählen.</li>
         <li><b>Auswahl &amp; Zoom Korrigiert:</b> Die Auswahl in den Modi Verschieben, Auswählen und Anhängen bleibt nun auf allen Zoomstufen präzise.</li>
         <li><b>Glattere Knotenverbindungen:</b> Ein Rendering-Problem wurde behoben, bei dem geschlossene Knoten manchmal sichtbare Nähte oder Lücken am Verbindungspunkt zeigten.</li>
@@ -455,7 +455,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p><b>What's New in Version 1.105:</b></p>
     <ul>
-        <li><b>Mask Grid:</b> Quickly create multiple strand masks using a visual N×N grid interface in group functionalities.</li>
+        <li><b>Mask Grid:</b> Quickly create multiple strand masks using a visual NxN grid interface in group functionalities.</li>
         <li><b>Keyboard Shortcuts:</b> Space to pan, Z to undo, X to redo, N for new strand, 1 for draw names, L to lock layers, D to delete strand, A to deselect all.</li>
         <li><b>Fixed Selection &amp; Zoom:</b> Selection in move, select, and attach modes now remains accurate at all zoom levels.</li>
         <li><b>Smoother Knot Connections:</b> Fixed a rendering issue where closed knots would sometimes show visible seams or gaps at the connection point.</li>
@@ -466,7 +466,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p><b>Nouveautés de la version 1.105 :</b></p>
     <ul>
-        <li><b>Grille de Masque :</b> Créez rapidement plusieurs masques de brins à l'aide d'une interface de grille visuelle N×N dans les fonctionnalités de groupe.</li>
+        <li><b>Grille de Masque :</b> Créez rapidement plusieurs masques de brins à l'aide d'une interface de grille visuelle NxN dans les fonctionnalités de groupe.</li>
         <li><b>Raccourcis Clavier :</b> Espace pour panoramiquer, Z pour annuler, X pour rétablir, N pour nouveau brin, 1 pour noms, L pour verrouiller, D pour supprimer, A pour désélectionner.</li>
         <li><b>Sélection et Zoom Corrigés :</b> La sélection dans les modes déplacement, sélection et attache reste maintenant précise à tous les niveaux de zoom.</li>
         <li><b>Connexions de Nœuds Plus Fluides :</b> Correction d'un problème de rendu où les nœuds fermés affichaient parfois des coutures ou des espaces visibles au point de connexion.</li>
@@ -477,7 +477,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p><b>Novità della versione 1.105:</b></p>
     <ul>
-        <li><b>Griglia Maschera:</b> Crea rapidamente più maschere di trefolo utilizzando un'interfaccia griglia visiva N×N nelle funzionalità di gruppo.</li>
+        <li><b>Griglia Maschera:</b> Crea rapidamente più maschere di trefolo utilizzando un'interfaccia griglia visiva NxN nelle funzionalità di gruppo.</li>
         <li><b>Scorciatoie da Tastiera:</b> Spazio per panoramica, Z per annullare, X per ripristinare, N per nuovo trefolo, 1 per nomi, L per bloccare, D per eliminare, A per deselezionare.</li>
         <li><b>Selezione e Zoom Corretti:</b> La selezione nelle modalità sposta, seleziona e attacca ora rimane precisa a tutti i livelli di zoom.</li>
         <li><b>Connessioni Nodi Più Fluide:</b> Risolto un problema di rendering in cui i nodi chiusi mostravano a volte cuciture o spazi visibili nel punto di connessione.</li>
@@ -488,7 +488,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p><b>Novedades de la versión 1.105:</b></p>
     <ul>
-        <li><b>Cuadrícula de Máscara:</b> Crea rápidamente múltiples máscaras de hebra usando una interfaz de cuadrícula visual N×N en funcionalidades de grupo.</li>
+        <li><b>Cuadrícula de Máscara:</b> Crea rápidamente múltiples máscaras de hebra usando una interfaz de cuadrícula visual NxN en funcionalidades de grupo.</li>
         <li><b>Atajos de Teclado:</b> Espacio para desplazar, Z para deshacer, X para rehacer, N para nuevo cordón, 1 para nombres, L para bloquear, D para eliminar, A para deseleccionar.</li>
         <li><b>Selección y Zoom Corregidos:</b> La selección en los modos mover, seleccionar y adjuntar ahora permanece precisa en todos los niveles de zoom.</li>
         <li><b>Conexiones de Nudos Más Suaves:</b> Se corrigió un problema de renderizado donde los nudos cerrados a veces mostraban costuras o huecos visibles en el punto de conexión.</li>
@@ -499,7 +499,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p><b>Novidades da versão 1.105:</b></p>
     <ul>
-        <li><b>Grade de Máscara:</b> Crie rapidamente múltiplas máscaras de mecha usando uma interface de grade visual N×N nas funcionalidades de grupo.</li>
+        <li><b>Grade de Máscara:</b> Crie rapidamente múltiplas máscaras de mecha usando uma interface de grade visual NxN nas funcionalidades de grupo.</li>
         <li><b>Atalhos de Teclado:</b> Espaço para panorâmica, Z para desfazer, X para refazer, N para nova mecha, 1 para nomes, L para bloquear, D para excluir, A para desmarcar.</li>
         <li><b>Seleção e Zoom Corrigidos:</b> A seleção nos modos mover, selecionar e anexar agora permanece precisa em todos os níveis de zoom.</li>
         <li><b>Conexões de Nós Mais Suaves:</b> Corrigido um problema de renderização onde nós fechados às vezes mostravam costuras ou lacunas visíveis no ponto de conexão.</li>
@@ -534,7 +534,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p><b>Novità della versione 1.105:</b></p>
     <ul>
-        <li><b>Griglia Maschera:</b> Crea rapidamente più maschere di trefolo utilizzando un'interfaccia griglia visiva N×N nelle funzionalità di gruppo.</li>
+        <li><b>Griglia Maschera:</b> Crea rapidamente più maschere di trefolo utilizzando un'interfaccia griglia visiva NxN nelle funzionalità di gruppo.</li>
         <li><b>Scorciatoie da Tastiera:</b> Spazio per panoramica, Z per annullare, X per ripristinare, N per nuovo trefolo, 1 per nomi, L per bloccare, D per eliminare, A per deselezionare.</li>
         <li><b>Selezione e Zoom Corretti:</b> La selezione nelle modalità sposta, seleziona e attacca ora rimane precisa a tutti i livelli di zoom.</li>
         <li><b>Connessioni Nodi Più Fluide:</b> Risolto un problema di rendering in cui i nodi chiusi mostravano a volte cuciture o spazi visibili nel punto di connessione.</li>
@@ -545,7 +545,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p><b>What's New in Version 1.105:</b></p>
     <ul>
-        <li><b>Mask Grid:</b> Quickly create multiple strand masks using a visual N×N grid interface in group functionalities.</li>
+        <li><b>Mask Grid:</b> Quickly create multiple strand masks using a visual NxN grid interface in group functionalities.</li>
         <li><b>Keyboard Shortcuts:</b> Space to pan, Z to undo, X to redo, N for new strand, 1 for draw names, L to lock layers, D to delete strand, A to deselect all.</li>
         <li><b>Fixed Selection &amp; Zoom:</b> Selection in move, select, and attach modes now remains accurate at all zoom levels.</li>
         <li><b>Smoother Knot Connections:</b> Fixed a rendering issue where closed knots would sometimes show visible seams or gaps at the connection point.</li>
@@ -556,7 +556,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p><b>Neu in Version 1.105:</b></p>
     <ul>
-        <li><b>Maskenraster:</b> Erstellen Sie schnell mehrere Strangmasken mit einer visuellen N×N-Raster-Oberfläche in Gruppenfunktionalitäten.</li>
+        <li><b>Maskenraster:</b> Erstellen Sie schnell mehrere Strangmasken mit einer visuellen NxN-Raster-Oberfläche in Gruppenfunktionalitäten.</li>
         <li><b>Tastaturkürzel:</b> Leertaste zum Schwenken, Z zum Rückgängig machen, X zum Wiederherstellen, N für neuen Strang, 1 für Namen zeigen, L zum Sperren, D zum Entfernen, A zum Abwählen.</li>
         <li><b>Auswahl &amp; Zoom Korrigiert:</b> Die Auswahl in den Modi Verschieben, Auswählen und Anhängen bleibt nun auf allen Zoomstufen präzise.</li>
         <li><b>Glattere Knotenverbindungen:</b> Ein Rendering-Problem wurde behoben, bei dem geschlossene Knoten manchmal sichtbare Nähte oder Lücken am Verbindungspunkt zeigten.</li>
@@ -567,7 +567,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p><b>Nouveautés de la version 1.105 :</b></p>
     <ul>
-        <li><b>Grille de Masque :</b> Créez rapidement plusieurs masques de brins à l'aide d'une interface de grille visuelle N×N dans les fonctionnalités de groupe.</li>
+        <li><b>Grille de Masque :</b> Créez rapidement plusieurs masques de brins à l'aide d'une interface de grille visuelle NxN dans les fonctionnalités de groupe.</li>
         <li><b>Raccourcis Clavier :</b> Espace pour panoramiquer, Z pour annuler, X pour rétablir, N pour nouveau brin, 1 pour noms, L pour verrouiller, D pour supprimer, A pour désélectionner.</li>
         <li><b>Sélection et Zoom Corrigés :</b> La sélection dans les modes déplacement, sélection et attache reste maintenant précise à tous les niveaux de zoom.</li>
         <li><b>Connexions de Nœuds Plus Fluides :</b> Correction d'un problème de rendu où les nœuds fermés affichaient parfois des coutures ou des espaces visibles au point de connexion.</li>
@@ -578,7 +578,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p><b>Novedades de la versión 1.105:</b></p>
     <ul>
-        <li><b>Cuadrícula de Máscara:</b> Crea rápidamente múltiples máscaras de hebra usando una interfaz de cuadrícula visual N×N en funcionalidades de grupo.</li>
+        <li><b>Cuadrícula de Máscara:</b> Crea rápidamente múltiples máscaras de hebra usando una interfaz de cuadrícula visual NxN en funcionalidades de grupo.</li>
         <li><b>Atajos de Teclado:</b> Espacio para desplazar, Z para deshacer, X para rehacer, N para nuevo cordón, 1 para nombres, L para bloquear, D para eliminar, A para deseleccionar.</li>
         <li><b>Selección y Zoom Corregidos:</b> La selección en los modos mover, seleccionar y adjuntar ahora permanece precisa en todos los niveles de zoom.</li>
         <li><b>Conexiones de Nudos Más Suaves:</b> Se corrigió un problema de renderizado donde los nudos cerrados a veces mostraban costuras o huecos visibles en el punto de conexión.</li>
@@ -589,7 +589,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p><b>Novidades da versão 1.105:</b></p>
     <ul>
-        <li><b>Grade de Máscara:</b> Crie rapidamente múltiplas máscaras de mecha usando uma interface de grade visual N×N nas funcionalidades de grupo.</li>
+        <li><b>Grade de Máscara:</b> Crie rapidamente múltiplas máscaras de mecha usando uma interface de grade visual NxN nas funcionalidades de grupo.</li>
         <li><b>Atalhos de Teclado:</b> Espaço para panorâmica, Z para desfazer, X para refazer, N para nova mecha, 1 para nomes, L para bloquear, D para excluir, A para desmarcar.</li>
         <li><b>Seleção e Zoom Corrigidos:</b> A seleção nos modos mover, selecionar e anexar agora permanece precisa em todos os níveis de zoom.</li>
         <li><b>Conexões de Nós Mais Suaves:</b> Corrigido um problema de renderização onde nós fechados às vezes mostravam costuras ou lacunas visíveis no ponto de conexão.</li>
@@ -624,7 +624,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p><b>Novedades de la versión 1.105:</b></p>
     <ul>
-        <li><b>Cuadrícula de Máscara:</b> Crea rápidamente múltiples máscaras de hebra usando una interfaz de cuadrícula visual N×N en funcionalidades de grupo.</li>
+        <li><b>Cuadrícula de Máscara:</b> Crea rápidamente múltiples máscaras de hebra usando una interfaz de cuadrícula visual NxN en funcionalidades de grupo.</li>
         <li><b>Atajos de Teclado:</b> Espacio para desplazar, Z para deshacer, X para rehacer, N para nuevo cordón, 1 para nombres, L para bloquear, D para eliminar, A para deseleccionar.</li>
         <li><b>Selección y Zoom Corregidos:</b> La selección en los modos mover, seleccionar y adjuntar ahora permanece precisa en todos los niveles de zoom.</li>
         <li><b>Conexiones de Nudos Más Suaves:</b> Se corrigió un problema de renderizado donde los nudos cerrados a veces mostraban costuras o huecos visibles en el punto de conexión.</li>
@@ -635,7 +635,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p><b>What's New in Version 1.105:</b></p>
     <ul>
-        <li><b>Mask Grid:</b> Quickly create multiple strand masks using a visual N×N grid interface in group functionalities.</li>
+        <li><b>Mask Grid:</b> Quickly create multiple strand masks using a visual NxN grid interface in group functionalities.</li>
         <li><b>Keyboard Shortcuts:</b> Space to pan, Z to undo, X to redo, N for new strand, 1 for draw names, L to lock layers, D to delete strand, A to deselect all.</li>
         <li><b>Fixed Selection &amp; Zoom:</b> Selection in move, select, and attach modes now remains accurate at all zoom levels.</li>
         <li><b>Smoother Knot Connections:</b> Fixed a rendering issue where closed knots would sometimes show visible seams or gaps at the connection point.</li>
@@ -646,7 +646,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p><b>Nouveautés de la version 1.105 :</b></p>
     <ul>
-        <li><b>Grille de Masque :</b> Créez rapidement plusieurs masques de brins à l'aide d'une interface de grille visuelle N×N dans les fonctionnalités de groupe.</li>
+        <li><b>Grille de Masque :</b> Créez rapidement plusieurs masques de brins à l'aide d'une interface de grille visuelle NxN dans les fonctionnalités de groupe.</li>
         <li><b>Raccourcis Clavier :</b> Espace pour panoramiquer, Z pour annuler, X pour rétablir, N pour nouveau brin, 1 pour noms, L pour verrouiller, D pour supprimer, A pour désélectionner.</li>
         <li><b>Sélection et Zoom Corrigés :</b> La sélection dans les modes déplacement, sélection et attache reste maintenant précise à tous les niveaux de zoom.</li>
         <li><b>Connexions de Nœuds Plus Fluides :</b> Correction d'un problème de rendu où les nœuds fermés affichaient parfois des coutures ou des espaces visibles au point de connexion.</li>
@@ -657,7 +657,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p><b>Neu in Version 1.105:</b></p>
     <ul>
-        <li><b>Maskenraster:</b> Erstellen Sie schnell mehrere Strangmasken mit einer visuellen N×N-Raster-Oberfläche in Gruppenfunktionalitäten.</li>
+        <li><b>Maskenraster:</b> Erstellen Sie schnell mehrere Strangmasken mit einer visuellen NxN-Raster-Oberfläche in Gruppenfunktionalitäten.</li>
         <li><b>Tastaturkürzel:</b> Leertaste zum Schwenken, Z zum Rückgängig machen, X zum Wiederherstellen, N für neuen Strang, 1 für Namen zeigen, L zum Sperren, D zum Entfernen, A zum Abwählen.</li>
         <li><b>Auswahl &amp; Zoom Korrigiert:</b> Die Auswahl in den Modi Verschieben, Auswählen und Anhängen bleibt nun auf allen Zoomstufen präzise.</li>
         <li><b>Glattere Knotenverbindungen:</b> Ein Rendering-Problem wurde behoben, bei dem geschlossene Knoten manchmal sichtbare Nähte oder Lücken am Verbindungspunkt zeigten.</li>
@@ -668,7 +668,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p><b>Novità della versione 1.105:</b></p>
     <ul>
-        <li><b>Griglia Maschera:</b> Crea rapidamente più maschere di trefolo utilizzando un'interfaccia griglia visiva N×N nelle funzionalità di gruppo.</li>
+        <li><b>Griglia Maschera:</b> Crea rapidamente più maschere di trefolo utilizzando un'interfaccia griglia visiva NxN nelle funzionalità di gruppo.</li>
         <li><b>Scorciatoie da Tastiera:</b> Spazio per panoramica, Z per annullare, X per ripristinare, N per nuovo trefolo, 1 per nomi, L per bloccare, D per eliminare, A per deselezionare.</li>
         <li><b>Selezione e Zoom Corretti:</b> La selezione nelle modalità sposta, seleziona e attacca ora rimane precisa a tutti i livelli di zoom.</li>
         <li><b>Connessioni Nodi Più Fluide:</b> Risolto un problema di rendering in cui i nodi chiusi mostravano a volte cuciture o spazi visibili nel punto di connessione.</li>
@@ -679,7 +679,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p><b>Novidades da versão 1.105:</b></p>
     <ul>
-        <li><b>Grade de Máscara:</b> Crie rapidamente múltiplas máscaras de mecha usando uma interface de grade visual N×N nas funcionalidades de grupo.</li>
+        <li><b>Grade de Máscara:</b> Crie rapidamente múltiplas máscaras de mecha usando uma interface de grade visual NxN nas funcionalidades de grupo.</li>
         <li><b>Atalhos de Teclado:</b> Espaço para panorâmica, Z para desfazer, X para refazer, N para nova mecha, 1 para nomes, L para bloquear, D para excluir, A para desmarcar.</li>
         <li><b>Seleção e Zoom Corrigidos:</b> A seleção nos modos mover, selecionar e anexar agora permanece precisa em todos os níveis de zoom.</li>
         <li><b>Conexões de Nós Mais Suaves:</b> Corrigido um problema de renderização onde nós fechados às vezes mostravam costuras ou lacunas visíveis no ponto de conexão.</li>
@@ -714,7 +714,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p><b>Novidades da versão 1.105:</b></p>
     <ul>
-        <li><b>Grade de Máscara:</b> Crie rapidamente múltiplas máscaras de mecha usando uma interface de grade visual N×N nas funcionalidades de grupo.</li>
+        <li><b>Grade de Máscara:</b> Crie rapidamente múltiplas máscaras de mecha usando uma interface de grade visual NxN nas funcionalidades de grupo.</li>
         <li><b>Atalhos de Teclado:</b> Espaço para panorâmica, Z para desfazer, X para refazer, N para nova mecha, 1 para nomes, L para bloquear, D para excluir, A para desmarcar.</li>
         <li><b>Seleção e Zoom Corrigidos:</b> A seleção nos modos mover, selecionar e anexar agora permanece precisa em todos os níveis de zoom.</li>
         <li><b>Conexões de Nós Mais Suaves:</b> Corrigido um problema de renderização onde nós fechados às vezes mostravam costuras ou lacunas visíveis no ponto de conexão.</li>
@@ -725,7 +725,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p><b>What's New in Version 1.105:</b></p>
     <ul>
-        <li><b>Mask Grid:</b> Quickly create multiple strand masks using a visual N×N grid interface in group functionalities.</li>
+        <li><b>Mask Grid:</b> Quickly create multiple strand masks using a visual NxN grid interface in group functionalities.</li>
         <li><b>Keyboard Shortcuts:</b> Space to pan, Z to undo, X to redo, N for new strand, 1 for draw names, L to lock layers, D to delete strand, A to deselect all.</li>
         <li><b>Fixed Selection &amp; Zoom:</b> Selection in move, select, and attach modes now remains accurate at all zoom levels.</li>
         <li><b>Smoother Knot Connections:</b> Fixed a rendering issue where closed knots would sometimes show visible seams or gaps at the connection point.</li>
@@ -736,7 +736,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p><b>Nouveautés de la version 1.105 :</b></p>
     <ul>
-        <li><b>Grille de Masque :</b> Créez rapidement plusieurs masques de brins à l'aide d'une interface de grille visuelle N×N dans les fonctionnalités de groupe.</li>
+        <li><b>Grille de Masque :</b> Créez rapidement plusieurs masques de brins à l'aide d'une interface de grille visuelle NxN dans les fonctionnalités de groupe.</li>
         <li><b>Raccourcis Clavier :</b> Espace pour panoramiquer, Z pour annuler, X pour rétablir, N pour nouveau brin, 1 pour noms, L pour verrouiller, D pour supprimer, A pour désélectionner.</li>
         <li><b>Sélection et Zoom Corrigés :</b> La sélection dans les modes déplacement, sélection et attache reste maintenant précise à tous les niveaux de zoom.</li>
         <li><b>Connexions de Nœuds Plus Fluides :</b> Correction d'un problème de rendu où les nœuds fermés affichaient parfois des coutures ou des espaces visibles au point de connexion.</li>
@@ -747,7 +747,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p><b>Neu in Version 1.105:</b></p>
     <ul>
-        <li><b>Maskenraster:</b> Erstellen Sie schnell mehrere Strangmasken mit einer visuellen N×N-Raster-Oberfläche in Gruppenfunktionalitäten.</li>
+        <li><b>Maskenraster:</b> Erstellen Sie schnell mehrere Strangmasken mit einer visuellen NxN-Raster-Oberfläche in Gruppenfunktionalitäten.</li>
         <li><b>Tastaturkürzel:</b> Leertaste zum Schwenken, Z zum Rückgängig machen, X zum Wiederherstellen, N für neuen Strang, 1 für Namen zeigen, L zum Sperren, D zum Entfernen, A zum Abwählen.</li>
         <li><b>Auswahl &amp; Zoom Korrigiert:</b> Die Auswahl in den Modi Verschieben, Auswählen und Anhängen bleibt nun auf allen Zoomstufen präzise.</li>
         <li><b>Glattere Knotenverbindungen:</b> Ein Rendering-Problem wurde behoben, bei dem geschlossene Knoten manchmal sichtbare Nähte oder Lücken am Verbindungspunkt zeigten.</li>
@@ -758,7 +758,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p><b>Novità della versione 1.105:</b></p>
     <ul>
-        <li><b>Griglia Maschera:</b> Crea rapidamente più maschere di trefolo utilizzando un'interfaccia griglia visiva N×N nelle funzionalità di gruppo.</li>
+        <li><b>Griglia Maschera:</b> Crea rapidamente più maschere di trefolo utilizzando un'interfaccia griglia visiva NxN nelle funzionalità di gruppo.</li>
         <li><b>Scorciatoie da Tastiera:</b> Spazio per panoramica, Z per annullare, X per ripristinare, N per nuovo trefolo, 1 per nomi, L per bloccare, D per eliminare, A per deselezionare.</li>
         <li><b>Selezione e Zoom Corretti:</b> La selezione nelle modalità sposta, seleziona e attacca ora rimane precisa a tutti i livelli di zoom.</li>
         <li><b>Connessioni Nodi Più Fluide:</b> Risolto un problema di rendering in cui i nodi chiusi mostravano a volte cuciture o spazi visibili nel punto di connessione.</li>
@@ -769,7 +769,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p><b>Novedades de la versión 1.105:</b></p>
     <ul>
-        <li><b>Cuadrícula de Máscara:</b> Crea rápidamente múltiples máscaras de hebra usando una interfaz de cuadrícula visual N×N en funcionalidades de grupo.</li>
+        <li><b>Cuadrícula de Máscara:</b> Crea rápidamente múltiples máscaras de hebra usando una interfaz de cuadrícula visual NxN en funcionalidades de grupo.</li>
         <li><b>Atajos de Teclado:</b> Espacio para desplazar, Z para deshacer, X para rehacer, N para nuevo cordón, 1 para nombres, L para bloquear, D para eliminar, A para deseleccionar.</li>
         <li><b>Selección y Zoom Corregidos:</b> La selección en los modos mover, seleccionar y adjuntar ahora permanece precisa en todos los niveles de zoom.</li>
         <li><b>Conexiones de Nudos Más Suaves:</b> Se corrigió un problema de renderizado donde los nudos cerrados a veces mostraban costuras o huecos visibles en el punto de conexión.</li>
@@ -817,7 +817,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p dir="ltr">This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p dir="ltr"><b>What's New in Version 1.105:</b></p>
     <ul dir="ltr">
-        <li><b>Mask Grid:</b> Quickly create multiple strand masks using a visual N×N grid interface in group functionalities.</li>
+        <li><b>Mask Grid:</b> Quickly create multiple strand masks using a visual NxN grid interface in group functionalities.</li>
         <li><b>Keyboard Shortcuts:</b> Space to pan, Z to undo, X to redo, N for new strand, 1 for draw names, L to lock layers, D to delete strand, A to deselect all.</li>
         <li><b>Fixed Selection &amp; Zoom:</b> Selection in move, select, and attach modes now remains accurate at all zoom levels.</li>
         <li><b>Smoother Knot Connections:</b> Fixed a rendering issue where closed knots would sometimes show visible seams or gaps at the connection point.</li>
@@ -828,7 +828,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p dir="ltr">Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p dir="ltr"><b>Nouveautés de la version 1.105 :</b></p>
     <ul dir="ltr">
-        <li><b>Grille de Masque :</b> Créez rapidement plusieurs masques de brins à l'aide d'une interface de grille visuelle N×N dans les fonctionnalités de groupe.</li>
+        <li><b>Grille de Masque :</b> Créez rapidement plusieurs masques de brins à l'aide d'une interface de grille visuelle NxN dans les fonctionnalités de groupe.</li>
         <li><b>Raccourcis Clavier :</b> Espace pour panoramiquer, Z pour annuler, X pour rétablir, N pour nouveau brin, 1 pour noms, L pour verrouiller, D pour supprimer, A pour désélectionner.</li>
         <li><b>Sélection et Zoom Corrigés :</b> La sélection dans les modes déplacement, sélection et attache reste maintenant précise à tous les niveaux de zoom.</li>
         <li><b>Connexions de Nœuds Plus Fluides :</b> Correction d'un problème de rendu où les nœuds fermés affichaient parfois des coutures ou des espaces visibles au point de connexion.</li>
@@ -839,7 +839,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p dir="ltr">Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p dir="ltr"><b>Neu in Version 1.105:</b></p>
     <ul dir="ltr">
-        <li><b>Maskenraster:</b> Erstellen Sie schnell mehrere Strangmasken mit einer visuellen N×N-Raster-Oberfläche in Gruppenfunktionalitäten.</li>
+        <li><b>Maskenraster:</b> Erstellen Sie schnell mehrere Strangmasken mit einer visuellen NxN-Raster-Oberfläche in Gruppenfunktionalitäten.</li>
         <li><b>Tastaturkürzel:</b> Leertaste zum Schwenken, Z zum Rückgängig machen, X zum Wiederherstellen, N für neuen Strang, 1 für Namen zeigen, L zum Sperren, D zum Entfernen, A zum Abwählen.</li>
         <li><b>Auswahl &amp; Zoom Korrigiert:</b> Die Auswahl in den Modi Verschieben, Auswählen und Anhängen bleibt nun auf allen Zoomstufen präzise.</li>
         <li><b>Glattere Knotenverbindungen:</b> Ein Rendering-Problem wurde behoben, bei dem geschlossene Knoten manchmal sichtbare Nähte oder Lücken am Verbindungspunkt zeigten.</li>
@@ -850,7 +850,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p dir="ltr">Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p dir="ltr"><b>Novità della versione 1.105:</b></p>
     <ul dir="ltr">
-        <li><b>Griglia Maschera:</b> Crea rapidamente più maschere di trefolo utilizzando un'interfaccia griglia visiva N×N nelle funzionalità di gruppo.</li>
+        <li><b>Griglia Maschera:</b> Crea rapidamente più maschere di trefolo utilizzando un'interfaccia griglia visiva NxN nelle funzionalità di gruppo.</li>
         <li><b>Scorciatoie da Tastiera:</b> Spazio per panoramica, Z per annullare, X per ripristinare, N per nuovo trefolo, 1 per nomi, L per bloccare, D per eliminare, A per deselezionare.</li>
         <li><b>Selezione e Zoom Corretti:</b> La selezione nelle modalità sposta, seleziona e attacca ora rimane precisa a tutti i livelli di zoom.</li>
         <li><b>Connessioni Nodi Più Fluide:</b> Risolto un problema di rendering in cui i nodi chiusi mostravano a volte cuciture o spazi visibili nel punto di connessione.</li>
@@ -861,7 +861,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p dir="ltr">Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p dir="ltr"><b>Novedades de la versión 1.105:</b></p>
     <ul dir="ltr">
-        <li><b>Cuadrícula de Máscara:</b> Crea rápidamente múltiples máscaras de hebra usando una interfaz de cuadrícula visual N×N en funcionalidades de grupo.</li>
+        <li><b>Cuadrícula de Máscara:</b> Crea rápidamente múltiples máscaras de hebra usando una interfaz de cuadrícula visual NxN en funcionalidades de grupo.</li>
         <li><b>Atajos de Teclado:</b> Espacio para desplazar, Z para deshacer, X para rehacer, N para nuevo cordón, 1 para nombres, L para bloquear, D para eliminar, A para deseleccionar.</li>
         <li><b>Selección y Zoom Corregidos:</b> La selección en los modos mover, seleccionar y adjuntar ahora permanece precisa en todos los niveles de zoom.</li>
         <li><b>Conexiones de Nudos Más Suaves:</b> Se corrigió un problema de renderizado donde los nudos cerrados a veces mostraban costuras o huecos visibles en el punto de conexión.</li>
@@ -872,7 +872,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <p dir="ltr">Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p dir="ltr"><b>Novidades da versão 1.105:</b></p>
     <ul dir="ltr">
-        <li><b>Grade de Máscara:</b> Crie rapidamente múltiplas máscaras de mecha usando uma interface de grade visual N×N nas funcionalidades de grupo.</li>
+        <li><b>Grade de Máscara:</b> Crie rapidamente múltiplas máscaras de mecha usando uma interface de grade visual NxN nas funcionalidades de grupo.</li>
         <li><b>Atalhos de Teclado:</b> Espaço para panorâmica, Z para desfazer, X para refazer, N para nova mecha, 1 para nomes, L para bloquear, D para excluir, A para desmarcar.</li>
         <li><b>Seleção e Zoom Corrigidos:</b> A seleção nos modos mover, selecionar e anexar agora permanece precisa em todos os níveis de zoom.</li>
         <li><b>Conexões de Nós Mais Suaves:</b> Corrigido um problema de renderização onde nós fechados às vezes mostravam costuras ou lacunas visíveis no ponto de conexão.</li>

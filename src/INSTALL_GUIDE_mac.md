@@ -1,6 +1,6 @@
 # OpenStrand Studio - macOS Installation Guide
 
-## Version 1.102 - Released September 8, 2025
+## Version 1.105 - Released November 27, 2025
 
 This guide provides instructions for building and packaging OpenStrand Studio for macOS.
 
@@ -48,7 +48,7 @@ This will create an installer package in the `installer_output` directory.
 
 ## Step 4: Distribute the Application
 
-You can distribute the installer package (`OpenStrand Studio_1_102.pkg`) to users. When they run it, it will:
+You can distribute the installer package (`OpenStrand Studio_1_105.pkg`) to users. When they run it, it will:
 
 1. Install the application to their Applications folder (including SVG resources)
 2. Create a desktop icon

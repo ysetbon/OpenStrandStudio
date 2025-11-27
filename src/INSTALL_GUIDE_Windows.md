@@ -1,6 +1,6 @@
 # Installation Guide for Windows
 
-## Version 1.102 - Released September 8, 2025
+## Version 1.105 - Released November 27, 2025
 
 ## Prerequisites
 
@@ -173,7 +173,7 @@ After building the .exe, create a professional installer using Inno Setup (Recom
 
 2. Use the provided Inno Setup script:
    - Navigate to `src\inno setup\`
-   - Open `OpenStrand Studio1_102.iss` in Inno Setup Compiler
+   - Open `OpenStrand Studio1_105.iss` in Inno Setup Compiler
    - Click "Compile" to create the installer
 
 3. The installer will be created in the `dist` folder with features:

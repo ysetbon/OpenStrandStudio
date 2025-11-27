@@ -518,6 +518,32 @@ These updates focus on performance improvements and visual enhancements to provi
    - Improved logical flow for control point manipulation
    - Better prevention of invalid control point states
 
+------
+
+## Version 1.105 (Released: 27/11/2025)
+
+### New Features and Improvements:
+
+1. **Mask Grid:**
+   - Quickly create multiple strand masks using a visual N×N grid interface in group functionalities
+
+2. **Keyboard Shortcuts:**
+   - Space: Hold to quickly pan/unpan the canvas
+   - Z: Undo your last action
+   - X: Redo what you just undid
+   - N: New Strand
+   - 1: Draw Names
+   - L: Lock Layers
+   - D: Delete Strand
+   - A: Deselect All
+
+3. **Fixed Selection & Zoom:**
+   - Selection in move, select, and attach modes now remains accurate at all zoom levels
+
+4. **Smoother Knot Connections:**
+   - Fixed a rendering issue where "closed knots" (loops) would sometimes show visible seams or gaps at the connection point
+   - Strands now merge seamlessly for a cleaner look
+
 ------------------------------------------------------------------------------------------
 # OpenStrand Studio - Français
 
@@ -1038,5 +1064,31 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
    - Les contrôles de centre et de biais ne peuvent pas bouger lorsque le point de contrôle de départ n'est pas activé
    - Flux logique amélioré pour la manipulation des points de contrôle
    - Meilleure prévention des états de points de contrôle invalides
+
+------
+
+## Version 1.105 (Sortie : 27/11/2025)
+
+### Nouvelles Fonctionnalités et Améliorations :
+
+1. **Grille de Masques :**
+   - Créez rapidement plusieurs masques de brins à l'aide d'une interface de grille visuelle N×N dans les fonctionnalités de groupe
+
+2. **Raccourcis Clavier :**
+   - Espace : Maintenez pour panoramiquer/dé-panoramiquer rapidement le canevas
+   - Z : Annuler votre dernière action
+   - X : Rétablir ce que vous venez d'annuler
+   - N : Nouveau Brin
+   - 1 : Dessiner les Noms
+   - L : Verrouiller les Calques
+   - D : Supprimer le Brin
+   - A : Désélectionner Tout
+
+3. **Sélection et Zoom Corrigés :**
+   - La sélection dans les modes déplacement, sélection et attache reste maintenant précise à tous les niveaux de zoom
+
+4. **Connexions de Nœuds Plus Fluides :**
+   - Correction d'un problème de rendu où les "nœuds fermés" (boucles) affichaient parfois des coutures ou des espaces visibles au point de connexion
+   - Les brins fusionnent maintenant de manière homogène pour un aspect plus propre
 
 ------

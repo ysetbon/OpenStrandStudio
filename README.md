@@ -1,34 +1,29 @@
-# OpenStrand Studio - Version 1.104
+# OpenStrand Studio - Version 1.105
 
 An advanced diagramming tool for creating tutorials involving strand manipulation (knots, hitches, etc.)
 with dynamic masking that automatically adjusts the over-under effects between strands,
 making complex patterns clear and easy to understand.
 
-## What's New in Version 1.104
+## What's New in Version 1.105
 
 ### ✨ New Features
 
-- **Enhanced Shadow Editor Dialog**: Take precise control of shadow rendering at the layer level
-  - **Layer-by-Layer Control**: Customize how shadows from each strand appear on layers below
-  - **Visibility & Intensity**: Toggle shadow visibility and enable full shadow coverage per layer
+- **Mask Grid**: Quickly create multiple strand masks using a visual N×N grid interface in group functionalities.
 
-- **Duplicate Strand Feature**: Quickly copy existing strands for faster diagram creation
-  - **Smart Duplication**: Duplicates strand shape, width, color, and all properties
-  - **Efficient Workflow**: Speed up repetitive pattern creation
-
-- **Copy Properties Between Strands**: Copy visual properties from one strand to another
-  - **One-Click Styling**: Select a source strand, then apply its properties to target strands
-  - **Consistent Design**: Maintain uniform appearance across multiple strands
-
-- **New Tutorial & Sample Projects**: Interactive guides and example files to help you learn
-  - **Step-by-Step Tutorials**: Learn key features through guided walkthroughs
-  - **Ready-to-Use Samples**: Explore various knot patterns and techniques
+- **Keyboard Shortcuts**: New shortcuts for faster workflow:
+  - **Space**: Hold to quickly pan/unpan the canvas
+  - **Z**: Undo your last action
+  - **X**: Redo what you just undid
+  - **N**: New Strand
+  - **1**: Draw Names
+  - **L**: Lock Layers
+  - **D**: Delete Strand
+  - **A**: Deselect All
 
 ### 🐛 Bug Fixes & Improvements
 
-- **Attach Points**: Enhanced reliability when attaching control points to other strands
-- **Move Tool**: Fixed positioning issues when moving strand sides and attached strands
-- **User Experience**: Various interface refinements for smoother workflow
+- **Fixed Selection & Zoom**: Selection in move, select, and attach modes now remains accurate at all zoom levels.
+- **Smoother Knot Connections**: Fixed a rendering issue where "closed knots" (loops) would sometimes show visible seams or gaps at the connection point. Strands now merge seamlessly for a cleaner look.
 
 ## Features
 
@@ -85,4 +80,4 @@ Created by Yonatan Setbon
 
 ---
 
-© 2025 OpenStrand Studio - Version 1.104
+© 2025 OpenStrand Studio - Version 1.105

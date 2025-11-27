@@ -53,7 +53,7 @@
 
 # Set variables
 APP_NAME="OpenStrandStudio"
-VERSION="1.105"
+VERSION="1_105"
 APP_DATE="02_November_2025"
 PUBLISHER="Yonatan Setbon"
 IDENTIFIER="com.yonatan.openstrandstudio"
@@ -323,16 +323,6 @@ cp "$RESOURCES_DIR/welcome.html" "$RESOURCES_DIR/en.lproj/welcome.html"
 # 1) Remove the top-level licence file so Installer cannot fall back to it and
 #    is forced to use the per-language copies that live inside *.lproj folders.
 rm -f "$RESOURCES_DIR/license.html"
-# 1) Remove the top-level licence file so Installer cannot fall back to it and
-#    is forced to use the per-language copies that live inside *.lproj folders.
-rm -f "$RESOURCES_DIR/license.html"
-# 2) Guarantee that the multi-language Welcome page is present inside every
-#    *.lproj folder (the top-level copy must stay untouched). We simply copy
-#    the already-created top-level welcome.html into each language directory.
-for lang in "${LANG_CODES[@]}"; do
-    mkdir -p "$RESOURCES_DIR/${lang}.lproj"
-    cp -f "$RESOURCES_DIR/welcome.html" "$RESOURCES_DIR/${lang}.lproj/welcome.html"
-done
 # 2) Guarantee that the multi-language Welcome page is present inside every
 #    *.lproj folder (the top-level copy must stay untouched). We simply copy
 #    the already-created top-level welcome.html into each language directory.

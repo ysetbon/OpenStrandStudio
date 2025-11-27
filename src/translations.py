@@ -73,7 +73,14 @@ translations = {
 <br><br>
 <b>Order:</b> The sequence of layers (strands) in the canvas.<br>
 <br>
-<b>Connections:</b> The relationships between strands, indicating which strands are connected or attached.<br>
+<b>Connections:</b> Each strand has two endpoints [start, end]. Values show what's attached:<br>
+- 'null' = free/unconnected<br>
+- 'strand_id(0)' = connected to that strand's start point<br>
+- 'strand_id(1)' = connected to that strand's end point<br>
+<br>
+Examples:<br>
+- '1_1': ['null', '1_2(0)'] → 1_1's start is free, 1_1's end connects to 1_2's start<br>
+- '1_2': ['1_1(1)', '1_3(0)'] → 1_2's start connects to 1_1's end, 1_2's end connects to 1_3's start<br>
 <br>
 <b>Groups:</b> The groups of strands that are collectively manipulated.<br>
 <br>
@@ -552,7 +559,14 @@ translations = {
 <br><br>
 <b>Ordre :</b> La séquence des couches (brins) dans le canevas.<br>
 <br>
-<b>Connexions :</b> Les relations entre les brins, indiquant quels brins sont connectés ou attachés.<br>
+<b>Connexions :</b> Chaque brin a deux extrémités [début, fin]. Les valeurs montrent ce qui est attaché :<br>
+- 'null' = libre/non connecté<br>
+- 'strand_id(0)' = connecté au point de départ de ce brin<br>
+- 'strand_id(1)' = connecté au point final de ce brin<br>
+<br>
+Exemples :<br>
+- '1_1': ['null', '1_2(0)'] → le début de 1_1 est libre, la fin de 1_1 se connecte au début de 1_2<br>
+- '1_2': ['1_1(1)', '1_3(0)'] → le début de 1_2 se connecte à la fin de 1_1, la fin de 1_2 se connecte au début de 1_3<br>
 <br>
 <b>Groupes :</b> Les groupes de brins qui sont manipulés collectivement.<br>
 <br>
@@ -1027,7 +1041,14 @@ translations = {
 <br><br>
 <b>Reihenfolge:</b> Die Abfolge der Ebenen (Stränge) auf der Leinwand.<br>
 <br>
-<b>Verbindungen:</b> Die Beziehungen zwischen Strängen, die anzeigen, welche Stränge verbunden oder angeheftet sind.<br>
+<b>Verbindungen:</b> Jeder Strang hat zwei Endpunkte [Anfang, Ende]. Werte zeigen, was verbunden ist:<br>
+- 'null' = frei/nicht verbunden<br>
+- 'strand_id(0)' = verbunden mit dem Startpunkt dieses Strangs<br>
+- 'strand_id(1)' = verbunden mit dem Endpunkt dieses Strangs<br>
+<br>
+Beispiele:<br>
+- '1_1': ['null', '1_2(0)'] → 1_1s Anfang ist frei, 1_1s Ende verbindet sich mit 1_2s Anfang<br>
+- '1_2': ['1_1(1)', '1_3(0)'] → 1_2s Anfang verbindet sich mit 1_1s Ende, 1_2s Ende verbindet sich mit 1_3s Anfang<br>
 <br>
 <b>Gruppen:</b> Die Gruppen von Strängen, die gemeinsam bearbeitet werden.<br>
 <br>
@@ -1496,7 +1517,14 @@ translations = {
 <br><br>
 <b>Ordine:</b> La sequenza dei livelli (trefoli) nell'area di disegno.<br>
 <br>
-<b>Connessioni:</b> Le relazioni tra i trefoli, indicando quali trefoli sono connessi o collegati.<br>
+<b>Connessioni:</b> Ogni trefolo ha due estremità [inizio, fine]. I valori mostrano cosa è collegato:<br>
+- 'null' = libero/non connesso<br>
+- 'strand_id(0)' = connesso al punto iniziale di quel trefolo<br>
+- 'strand_id(1)' = connesso al punto finale di quel trefolo<br>
+<br>
+Esempi:<br>
+- '1_1': ['null', '1_2(0)'] → l'inizio di 1_1 è libero, la fine di 1_1 si connette all'inizio di 1_2<br>
+- '1_2': ['1_1(1)', '1_3(0)'] → l'inizio di 1_2 si connette alla fine di 1_1, la fine di 1_2 si connette all'inizio di 1_3<br>
 <br>
 <b>Gruppi:</b> I gruppi di trefoli che vengono manipolati collettivamente.<br>
 <br>
@@ -1973,7 +2001,14 @@ translations = {
 <br><br>
 <b>Orden:</b> La secuencia de capas (cordones) en el lienzo.<br>
 <br>
-<b>Conexiones:</b> Las relaciones entre los cordones, indicando qué cordones están conectados o unidos.<br>
+<b>Conexiones:</b> Cada cordón tiene dos extremos [inicio, fin]. Los valores muestran qué está conectado:<br>
+- 'null' = libre/no conectado<br>
+- 'strand_id(0)' = conectado al punto inicial de ese cordón<br>
+- 'strand_id(1)' = conectado al punto final de ese cordón<br>
+<br>
+Ejemplos:<br>
+- '1_1': ['null', '1_2(0)'] → el inicio de 1_1 está libre, el fin de 1_1 se conecta al inicio de 1_2<br>
+- '1_2': ['1_1(1)', '1_3(0)'] → el inicio de 1_2 se conecta al fin de 1_1, el fin de 1_2 se conecta al inicio de 1_3<br>
 <br>
 <b>Grupos:</b> Los grupos de cordones que se manipulan colectivamente.<br>
 <br>
@@ -2451,7 +2486,14 @@ translations = {
 <br><br>
 <b>Ordem:</b> A sequência de camadas (mechas) na tela.<br>
 <br>
-<b>Conexões:</b> Os relacionamentos entre mechas, indicando quais mechas estão conectadas ou anexadas.<br>
+<b>Conexões:</b> Cada mecha tem dois pontos extremos [início, fim]. Os valores mostram o que está conectado:<br>
+- 'null' = livre/não conectado<br>
+- 'strand_id(0)' = conectado ao ponto inicial dessa mecha<br>
+- 'strand_id(1)' = conectado ao ponto final dessa mecha<br>
+<br>
+Exemplos:<br>
+- '1_1': ['null', '1_2(0)'] → o início de 1_1 está livre, o fim de 1_1 conecta ao início de 1_2<br>
+- '1_2': ['1_1(1)', '1_3(0)'] → o início de 1_2 conecta ao fim de 1_1, o fim de 1_2 conecta ao início de 1_3<br>
 <br>
 <b>Grupos:</b> Os grupos de mechas que são manipulados coletivamente.<br>
 <br>
@@ -2933,7 +2975,14 @@ translations = {
 <br><br>
 <b>סדר:</b> רצף השכבות (חוטים) בקנבס.<br>
 <br>
-<b>חיבורים:</b> היחסים בין החוטים, המציינים אילו חוטים מחוברים או מצורפים.<br>
+<b>חיבורים:</b> לכל חוט יש שתי נקודות קצה [התחלה, סוף]. הערכים מראים מה מחובר:<br>
+- <span dir="ltr">'null'</span> = חופשי/לא מחובר<br>
+- <span dir="ltr">'strand_id(0)'</span> = מחובר לנקודת ההתחלה של אותו חוט<br>
+- <span dir="ltr">'strand_id(1)'</span> = מחובר לנקודת הסיום של אותו חוט<br>
+<br>
+דוגמאות:<br>
+- <span dir="ltr">'1_1': ['null', '1_2(0)']</span> ← ההתחלה של 1_1 חופשית, הסוף של 1_1 מתחבר להתחלה של 2_1<br>
+- <span dir="ltr">'2_1': ['(0)3_1', '(1)1_1']</span> ← ההתחלה של 2_1 מתחברת לסוף של 1_1, הסוף של 2_1 מתחבר להתחלה של 3_1<br>
 <br>
 <b>קבוצות:</b> קבוצות החוטים שמטופלות באופן קולקטיבי.<br>
 <br>

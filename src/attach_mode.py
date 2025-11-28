@@ -578,12 +578,17 @@ class AttachMode(QObject):
         if self.canvas.current_strand:
             # The event position is already in canvas coordinates (converted by the canvas)
             canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()
-            
+
             # No need for coordinate conversion - canvas_pos is already in canvas coordinates
             # Just constrain coordinates to stay within visible viewport when zoomed out
             constrained_pos = self.constrain_coordinates_to_visible_viewport(canvas_pos)
 
             snapped_pos = self._get_snapped_attachment_position(constrained_pos)
+
+            # Skip update if snapped position hasn't changed (optimization for snap-to-grid)
+            if self.last_snapped_pos and snapped_pos == self.last_snapped_pos:
+                return
+
             self.canvas.current_strand.end = snapped_pos
             self.canvas.current_strand.update_shape()
             self.target_pos = snapped_pos

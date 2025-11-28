@@ -1439,17 +1439,25 @@ class MoveMode:
         
     def force_redraw_while_holding(self):
         """Force periodic redraws while holding the mouse button, even without movement."""
-        
+
         if not self.is_moving:
             # If not in moving state, stop the timer
             self.hold_timer.stop()
             return
-            
-        
+
+        # Skip redraw if position hasn't changed since last redraw (optimization for snap-to-grid)
+        if hasattr(self, '_last_redrawn_pos') and hasattr(self, 'last_snapped_pos'):
+            if self._last_redrawn_pos and self.last_snapped_pos and self._last_redrawn_pos == self.last_snapped_pos:
+                return
+
+        # Track the position we're redrawing at
+        if hasattr(self, 'last_snapped_pos'):
+            self._last_redrawn_pos = self.last_snapped_pos
+
         # Reset the frame counter to ensure full redraws
         if hasattr(self.canvas, '_frames_since_click'):
             self.canvas._frames_since_click = 0
-            
+
         # Handle background cache based on optimization setting
         if self.draw_only_affected_strand:
             # When drawing only affected strands, we want to keep the background cache valid
@@ -1469,10 +1477,6 @@ class MoveMode:
 
         # Force a full redraw of the canvas
         self.canvas.update()
-        
-        # Ensure this method is called again on the next event loop iteration
-        from PyQt5.QtCore import QTimer
-        QTimer.singleShot(0, self.canvas.update)
 
     def cancel_movement(self):
         """Externally cancel any ongoing move operation."""
@@ -2273,6 +2277,9 @@ class MoveMode:
         self.affected_strand = strand
         self.selected_rectangle = area
         self.is_moving = True
+        # Reset position tracking for snap-to-grid optimization
+        self._last_redrawn_pos = None
+        self._last_continuous_redraw_pos = None
         # Set the flag if we're moving a control point (include bias controls)
         self.is_moving_control_point = side in ['control_point1', 'control_point2', 'control_point_center', 'bias_control', 'bias_triangle', 'bias_circle']
         # Set the flag if we're moving a strand endpoint
@@ -3723,16 +3730,25 @@ class MoveMode:
 
     def force_continuous_redraw(self):
         """Force continuous redraw to keep grid and strands visible even when not moving the mouse."""
-        
+
         # Stop the timer if we're not in an active movement
         if not self.is_moving or not self.affected_strand:
             self.redraw_timer.stop()
             return
-            
+
+        # Skip redraw if position hasn't changed since last redraw (optimization for snap-to-grid)
+        if hasattr(self, '_last_continuous_redraw_pos') and hasattr(self, 'last_snapped_pos'):
+            if self._last_continuous_redraw_pos and self.last_snapped_pos and self._last_continuous_redraw_pos == self.last_snapped_pos:
+                return
+
+        # Track the position we're redrawing at
+        if hasattr(self, 'last_snapped_pos'):
+            self._last_continuous_redraw_pos = self.last_snapped_pos
+
         # Always invalidate the background cache to ensure grid and other strands are visible
         if hasattr(self.canvas, 'background_cache_valid'):
             self.canvas.background_cache_valid = False
-                
+
         # Force a single redraw of the canvas - no additional timers to prevent infinite loops
         self.canvas.update()
 
@@ -3826,20 +3842,24 @@ class MoveMode:
         # Extra logging for zoom-out debugging
         if hasattr(self.canvas, 'zoom_factor') and self.canvas.zoom_factor < 0.8:
             pass
-        
+
+        # Skip update if snapped position hasn't changed (optimization for snap-to-grid)
+        if self.last_snapped_pos and snapped_pos == self.last_snapped_pos:
+            return
+
         # Update target position for gradual movement
         self.target_pos = snapped_pos
-        
+
         # Update last snapped position for next movement
         self.last_snapped_pos = snapped_pos
-        
+
         # Ensure the background cache is invalidated for continuous refresh
         if hasattr(self.canvas, 'background_cache_valid'):
             self.canvas.background_cache_valid = False
-        
+
         # Update strand position directly for immediate feedback
         self.update_strand_position(snapped_pos)
-        
+
         # Mouse movement provides continuous updates - no need for additional timers
         # Only force a single immediate update
         self.canvas.update()

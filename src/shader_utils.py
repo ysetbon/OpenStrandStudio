@@ -99,6 +99,11 @@ def draw_mask_strand_shadow(
     and removes a large amount of canvas / layer specific logic that is not
     required for the basic visual effect.
     """
+    # Early return if shadows are disabled (defense-in-depth check)
+    if first_strand and hasattr(first_strand, 'canvas') and first_strand.canvas:
+        if hasattr(first_strand.canvas, 'shadow_enabled') and not first_strand.canvas.shadow_enabled:
+            return
+
     painter.save()
     # ------------------------------------------------------------------
     # Determine the region that should receive the shadow – this is the

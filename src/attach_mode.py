@@ -606,6 +606,11 @@ class AttachMode(QObject):
             self.move_timer.stop()
             return
 
+        # If already at target, stop the timer (optimization for snap-to-grid)
+        if self.target_pos == self.last_snapped_pos:
+            self.move_timer.stop()
+            return
+
         # Calculate the distance to move
         dx = self.target_pos.x() - self.last_snapped_pos.x()
         dy = self.target_pos.y() - self.last_snapped_pos.y()

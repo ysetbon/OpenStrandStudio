@@ -2463,36 +2463,6 @@ class Strand:
                 painter.drawPolygon(arrow_poly)
         # --- END NEW ---
 
-        # Draw the selection path
-        painter.save() # SAVE 3
-        selection_pen = QPen(QColor('transparent'), 0, Qt.DashLine)
-        painter.setPen(selection_pen)
-        painter.setBrush(Qt.NoBrush)
-        painter.drawPath(self.get_selection_path())  # Use get_selection_path to show selection area
-        painter.drawPath(path)
-        painter.restore() # RESTORE 3
-
-        # Draw the selection path for debugging
-        painter.save() # SAVE 4
-        debug_pen = QPen(QColor('transparent'), 0, Qt.DashLine)
-        painter.setPen(debug_pen)
-        painter.setBrush(Qt.NoBrush)
-        painter.drawPath(self.get_selection_path())
-        painter.restore() # RESTORE 4
-
-        # Control points are now only drawn by StrandDrawingCanvas.draw_control_points
-        # This prevents duplicate drawing of control points
-        # By keeping the try-except for compatibility but disabling the actual drawing
-        try:
-            # Control point drawing code removed to avoid conflicts with canvas drawing
-            pass
-        except Exception as e:
-            pass
-            # Continue drawing even if control points fail
-        # Half-circle attachments are now handled by combined_stroke_path and combined_fill_path above
-
-        # Closed connections handling moved to combined_paths logic
-
         # --- Draw full strand arrow on TOP of strand body (if not hidden) ---
         if getattr(self, 'full_arrow_visible', False) and not shadow_only_mode: # 'not self.is_hidden' is implicit due to earlier return
             painter.save()
@@ -3359,36 +3329,6 @@ class Strand:
                 painter.setBrush(Qt.NoBrush)
                 painter.drawPolygon(arrow_poly)
         # --- END NEW ---
-
-        # Draw the selection path
-        painter.save() # SAVE 3
-        selection_pen = QPen(QColor('transparent'), 0, Qt.DashLine)
-        painter.setPen(selection_pen)
-        painter.setBrush(Qt.NoBrush)
-        painter.drawPath(self.get_selection_path())  # Use get_selection_path to show selection area
-        painter.drawPath(path)
-        painter.restore() # RESTORE 3
-
-        # Draw the selection path for debugging
-        painter.save() # SAVE 4
-        debug_pen = QPen(QColor('transparent'), 0, Qt.DashLine)
-        painter.setPen(debug_pen)
-        painter.setBrush(Qt.NoBrush)
-        painter.drawPath(self.get_selection_path())
-        painter.restore() # RESTORE 4
-
-        # Control points are now only drawn by StrandDrawingCanvas.draw_control_points
-        # This prevents duplicate drawing of control points
-        # By keeping the try-except for compatibility but disabling the actual drawing
-        try:
-            # Control point drawing code removed to avoid conflicts with canvas drawing
-            pass
-        except Exception as e:
-            pass
-            # Continue drawing even if control points fail
-        # Half-circle attachments are now handled by combined_stroke_path and combined_fill_path above
-
-        # Closed connections handling moved to combined_paths logic
 
         # --- Draw full strand arrow on TOP of strand body (if not hidden) ---
         if getattr(self, 'full_arrow_visible', False) and not shadow_only_mode: # 'not self.is_hidden' is implicit due to earlier return

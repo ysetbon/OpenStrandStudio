@@ -423,66 +423,9 @@ class MaskedStrand(Strand):
             return
         # --- END: Skip visual rendering in shadow-only mode ---
 
-        # Get the mask path - use edited mask if it exists, otherwise use base mask
-        if hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
-            
-            # Get the base intersection mask
-            path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
-            path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
-            mask_path = path1.intersected(path2)
-            
-            # Calculate new center point and update if needed (but not during loading with absolute coords)
-            new_center = self._calculate_center_from_path(mask_path)
-            if (new_center and self.base_center_point and (
-                abs(new_center.x() - self.base_center_point.x()) > 0.01 or 
-                abs(new_center.y() - self.base_center_point.y()) > 0.01
-            ) and not (hasattr(self, 'using_absolute_coords') and self.using_absolute_coords)):
-                self.update(new_center)
-            
-            # Apply deletion rectangles
-            for rect in self.deletion_rectangles:
-                # Build a bounding rect from corner data.
-                top_left = QPointF(*rect['top_left'])
-                top_right = QPointF(*rect['top_right'])
-                bottom_left = QPointF(*rect['bottom_left'])
-                bottom_right = QPointF(*rect['bottom_right'])
-                deletion_path = QPainterPath()
-
-                deletion_path.moveTo(top_left)
-                deletion_path.lineTo(top_right)
-                deletion_path.lineTo(bottom_right)
-                deletion_path.lineTo(bottom_left)
-                deletion_path.closeSubpath()
-
-                mask_path = mask_path.subtracted(deletion_path)
-            
-            # Use the temp_painter to clip out the parts outside our mask
-            temp_painter.setCompositionMode(QPainter.CompositionMode_DestinationIn)
-            temp_painter.setPen(Qt.NoPen)
-            temp_painter.setBrush(Qt.black)
-            #temp_painter.drawPath(mask_path)
-        else:
-            # Get the base intersection mask
-            path1 = self.get_stroked_path_for_strand(self.first_selected_strand)
-            path2 = self.get_stroked_path_for_strand(self.second_selected_strand)
-            mask_path = path1.intersected(path2)
-            
-            # Use the temp_painter to clip out the parts outside our mask
-            temp_painter.setCompositionMode(QPainter.CompositionMode_DestinationIn)
-            temp_painter.setPen(Qt.NoPen)
-            temp_painter.setBrush(Qt.black)
-            #temp_painter.drawPath(mask_path)
-
         # End painting on the temporary image
         temp_painter.end()
-        
-        # Make sure we're using the correct composition mode to transfer the temp image
-        # to the main painter - this is critical for shadow visibility
-        painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-        
-        # Draw the temp image onto the main painter
-        #painter.drawImage(0, 0, temp_image)
-        
+
         # FINAL LAYER: Draw the mask intersection with antialiasing
         try:
             if hasattr(self, 'first_selected_strand') and self.first_selected_strand:
@@ -516,71 +459,6 @@ class MaskedStrand(Strand):
         
         # Restore the painter state
         painter.restore()
-
-        # Now handle the highlight or debug drawing
-        if self.is_selected:
-            # Draw the mask outline and fill with a semi-transparent red
-            highlight_pen = QPen(QColor(255, 0, 0, 128), 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
-            painter.setPen(highlight_pen)
-            painter.setBrush(QBrush(QColor(255, 0, 0, 128)))
-
-            # Acquire the mask path and set a winding fill rule so the region gets filled.
-            mask_path = self.get_mask_path()
-
-            # Only draw if the mask path is not empty (strands actually intersect)
-            if not mask_path.isEmpty():
-                #mask_path.setFillRule(Qt.WindingFill)
-                #painter.drawPath(mask_path)
-
-                # Always recalculate and draw center points based on current masks
-                self.calculate_center_point()
-
-                # Always show base center point in blue
-                if self.base_center_point:
-                    temp_painter = QPainter(painter.device())  # a new painter for the crosshair
-                    temp_painter.setCompositionMode(QPainter.CompositionMode_Source)
-                    temp_painter.setPen(QPen(QColor('transparent'), 0))
-                    temp_painter.setBrush(QBrush(QColor('transparent')))
-                    center_radius = 0
-                    temp_painter.drawEllipse(self.base_center_point, center_radius, center_radius)
-
-                    # Draw blue crosshair
-                    temp_painter.setPen(QPen(QColor('transparent'), 0))
-                    crosshair_size = 0
-                    temp_painter.drawLine(
-                        QPointF(self.base_center_point.x() - crosshair_size, self.base_center_point.y()),
-                        QPointF(self.base_center_point.x() + crosshair_size, self.base_center_point.y())
-                    )
-                    temp_painter.drawLine(
-                        QPointF(self.base_center_point.x(), self.base_center_point.y() - crosshair_size),
-                        QPointF(self.base_center_point.x(), self.base_center_point.y() + crosshair_size)
-                    )
-                    temp_painter.end()
-
-                # Only show edited center point if there are deletion rectangles
-                if self.edited_center_point and hasattr(self, 'deletion_rectangles') and self.deletion_rectangles:
-                    temp_painter = QPainter(painter.device())  # a new painter for the crosshair
-                    temp_painter.setCompositionMode(QPainter.CompositionMode_Source)
-                    temp_painter.setPen(QPen(QColor('transparent'), 0))
-                    temp_painter.setBrush(QBrush(QColor('transparent')))
-                    center_radius = 0
-                    temp_painter.drawEllipse(self.edited_center_point, center_radius, center_radius)
-
-                    # Draw red crosshair
-                    temp_painter.setPen(QPen(QColor('transparent'), 0))
-                    crosshair_size = 0
-                    temp_painter.drawLine(
-                        QPointF(self.edited_center_point.x() - crosshair_size, self.edited_center_point.y()),
-                        QPointF(self.edited_center_point.x() + crosshair_size, self.edited_center_point.y())
-                    )
-                    temp_painter.drawLine(
-                        QPointF(self.edited_center_point.x(), self.edited_center_point.y() - crosshair_size),
-                        QPointF(self.edited_center_point.x(), self.edited_center_point.y() + crosshair_size)
-                    )
-                    temp_painter.end()
-            else:
-                pass
-
 
     def _draw_direct(self, painter):
         """Draw the masked strand directly to the painter without temporary image optimization.

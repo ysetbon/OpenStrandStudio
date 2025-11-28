@@ -7,7 +7,7 @@ EnableSnapToGrid: true
 EnableSnapToGridAttach: true
 ShowMoveHighlights: true
 NumSteps: 2
-MaxBlurRadius: 50.0
+MaxBlurRadius: 30.0
 ControlPointBaseFraction: 1.00
 DistanceMultiplier: 5.0
 CurveResponseExponent: 1.0

@@ -6,11 +6,15 @@ from functools import lru_cache
 
 
 def _apply_deletion_rects(path: QPainterPath, deletion_rects: List) -> QPainterPath:
-    """Helper to subtract a list of deletion rectangles from a QPainterPath."""
+    """Helper to subtract a list of deletion rectangles from a QPainterPath.
+    Optimized to union all deletion rects first, then subtract once.
+    """
     if not deletion_rects or path.isEmpty():
         return path
 
-    result_path = QPainterPath(path)
+    deletion_union = QPainterPath()
+    deletion_union.setFillRule(Qt.WindingFill)
+
     for rect in deletion_rects:
         rect_path = QPainterPath()
         try:
@@ -34,8 +38,13 @@ def _apply_deletion_rects(path: QPainterPath, deletion_rects: List) -> QPainterP
             continue
 
         if not rect_path.isEmpty():
-            result_path = QPainterPath(result_path).subtracted(rect_path)
-    return result_path
+            deletion_union.addPath(rect_path)
+            
+    if deletion_union.isEmpty():
+        return path
+        
+    # Subtract the union of all deletions at once
+    return path.subtracted(deletion_union)
 
 
 def _union_paths(*paths: QPainterPath) -> QPainterPath:
@@ -217,30 +226,7 @@ def draw_mask_strand_shadow(
     # Apply clipping so the shadow cannot appear where no underlying strand exists
     painter.setClipPath(second_path)
     shading_path = QPainterPath(second_path).intersected(first_path)
-    for rect in (deletion_rects or []):
-        rect_path = QPainterPath()
-        try:
-            if isinstance(rect, QRectF):
-                rect_path.addRect(rect)
-            elif isinstance(rect, dict) and all(k in rect for k in ("top_left", "top_right", "bottom_left", "bottom_right")):
-                tl = QPointF(*rect["top_left"])
-                tr = QPointF(*rect["top_right"])
-                br = QPointF(*rect["bottom_right"])
-                bl = QPointF(*rect["bottom_left"])
-
-                rect_path.moveTo(tl)
-                rect_path.lineTo(tr)
-                rect_path.lineTo(br)
-                rect_path.lineTo(bl)
-                rect_path.closeSubpath()
-            elif all(k in rect for k in ("x", "y", "width", "height")):
-                rect_path.addRect(QRectF(rect["x"], rect["y"], rect["width"], rect["height"]))
-        except Exception as de_err:
-            pass
-            continue
-
-        if not rect_path.isEmpty():
-            shading_path = QPainterPath(shading_path).subtracted(rect_path)
+    shading_path = _apply_deletion_rects(shading_path, deletion_rects)
 
     # --- 2) Draw faded strokes (exactly like draw_strand_shadow) ---
     for i in range(num_steps):

@@ -4212,9 +4212,16 @@ class GroupLayerManager:
             try:
                 control_points_dict = {}
                 for strand in selected_strands:
-                    print(f"[DEBUG]   Processing strand {strand.layer_name}, control_point1={strand.control_point1}, start={strand.start}")
-                    cp1 = QPointF(strand.start) if strand.control_point1 is None else QPointF(strand.control_point1)
-                    cp2 = QPointF(strand.end) if strand.control_point2 is None else QPointF(strand.control_point2)
+                    # Store control points - Handle MaskedStrand differently
+                    if isinstance(strand, MaskedStrand):
+                        # MaskedStrands don't have control points, so we can use start/end or None
+                        cp1 = None
+                        cp2 = None
+                        # Check if we can get proxy control points from component strands if needed
+                    else:
+                        cp1 = QPointF(strand.start) if strand.control_point1 is None else QPointF(strand.control_point1)
+                        cp2 = QPointF(strand.end) if strand.control_point2 is None else QPointF(strand.control_point2)
+                    
                     control_points_dict[strand.layer_name] = {
                         'control_point1': cp1,
                         'control_point2': cp2

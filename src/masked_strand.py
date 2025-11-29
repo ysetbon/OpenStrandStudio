@@ -721,9 +721,7 @@ class MaskedStrand(Strand):
         # Force recalculation of center points
         self.calculate_center_point()
         
-        # Update canvas if available
-        if hasattr(self, 'canvas') and self.canvas:
-            self.canvas.update()
+
             
     
     # Add a more lightweight refresh method that doesn't recalculate everything

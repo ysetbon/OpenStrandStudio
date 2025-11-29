@@ -1103,6 +1103,13 @@ class StrandDrawingCanvas(QWidget):
                     if hasattr(attached_strand, 'update_side_line'):
                         attached_strand.update_side_line()
 
+        # Second pass: Update masked strands to reflect changes in component strands
+        for strand in strands:
+            if isinstance(strand, MaskedStrand):
+                # Force update to recalculate mask based on new component positions
+                if hasattr(strand, 'force_shadow_update'):
+                    strand.force_shadow_update()
+
         self.update()
 
     def snap_point_to_grid(self, point, grid_size):

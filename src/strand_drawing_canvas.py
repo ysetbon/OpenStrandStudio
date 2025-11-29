@@ -3263,6 +3263,11 @@ class StrandDrawingCanvas(QWidget):
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
 
+        # Check if component strands exist before accessing them
+        if not masked_strand.first_selected_strand or not masked_strand.second_selected_strand:
+            painter.restore()
+            return
+
         # First check if there's an actual intersection between the strands
         path1 = masked_strand.get_stroked_path_for_strand(masked_strand.first_selected_strand)
         path2 = masked_strand.get_stroked_path_for_strand(masked_strand.second_selected_strand)

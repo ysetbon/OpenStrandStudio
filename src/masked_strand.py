@@ -306,7 +306,7 @@ class MaskedStrand(Strand):
         if hasattr(self, 'deletion_rectangles'):
             pass
 
-        if not self.first_selected_strand and not self.second_selected_strand:
+        if not self.first_selected_strand or not self.second_selected_strand:
             return
 
         painter.save()
@@ -405,7 +405,6 @@ class MaskedStrand(Strand):
                     max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99,
                 )
 
-                painter.restore()
         except Exception as e:
             # Attempt to refresh even if there was an error
             try:
@@ -463,12 +462,16 @@ class MaskedStrand(Strand):
     def _draw_direct(self, painter):
         """Draw the masked strand directly to the painter without temporary image optimization.
         This method is used when zoomed to avoid clipping issues with bounds calculations."""
-        
+
+        # Check if component strands exist before proceeding
+        if not self.first_selected_strand or not self.second_selected_strand:
+            return
+
         painter.save()  # Balance top-level painter state for direct drawing
 
         # Ensure high-quality rendering for direct drawing
         RenderUtils.setup_painter(painter, enable_high_quality=True)
-        
+
         # Check if hidden
         if self.is_hidden:
             painter.restore()
@@ -1065,12 +1068,16 @@ class MaskedStrand(Strand):
 
     def force_complete_update(self):
         """Force a complete update of the MaskedStrand and all its components."""
+        # Check if component strands exist before proceeding
+        if not self.first_selected_strand or not self.second_selected_strand:
+            return
+
         # Check if we should skip repositioning of deletion rectangles (during loading)
         skip_recalculation = hasattr(self, 'skip_center_recalculation') and self.skip_center_recalculation
-        
+
         # Check if this strand uses absolute coordinates for deletion rectangles
         using_absolute_coords = hasattr(self, 'using_absolute_coords') and self.using_absolute_coords
-        
+
         if using_absolute_coords:
             
             # Just update the mask path without moving deletion rectangles

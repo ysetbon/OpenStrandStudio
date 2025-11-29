@@ -109,24 +109,23 @@ def draw_mask_strand_shadow(
     # Determine the region that should receive the shadow – this is the
     # intersection of the two supplied paths.
     # ------------------------------------------------------------------
-    # Log geometry of input paths
-    pass
-    # Compute intersection of component paths
-    intersection_path = QPainterPath(first_path).intersected(second_path)
-    # Log intersection geometry
-    pass
-
-    if not first_path.isEmpty() and not second_path.isEmpty():
-        intersection_path = QPainterPath(first_path).intersected(second_path)
-        pass
-
-    else:
+    if first_path.isEmpty() or second_path.isEmpty():
         # logging.warning("draw_mask_strand_shadow: both paths empty - nothing to draw")
         painter.restore()  # Restore before returning
         return
 
+    try:
+        # Compute intersection of component paths
+        intersection_path = QPainterPath(first_path).intersected(second_path)
+    except Exception:
+        painter.restore()
+        return
+
     # Apply deletion rectangles to intersection_path if provided
-    intersection_path = _apply_deletion_rects(intersection_path, deletion_rects)
+    try:
+        intersection_path = _apply_deletion_rects(intersection_path, deletion_rects)
+    except Exception:
+        pass # If deletion fails, just use the base intersection
 
     # ------------------------------------------------------------------
     # Resolve shadow colour – mirror the logic from ``draw_strand_shadow``.

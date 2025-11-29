@@ -2815,6 +2815,61 @@ class MoveMode:
                         moving_strand.update_side_line()
                 # --- End fixed movement logic ---
 
+                # --- NEW: Update deletion rectangles for any MaskedStrand that uses moved strands ---
+                # Collect all strands that were moved (primary + connected)
+                all_moved_strands = [self.affected_strand] + list(truly_moving_strands_read_only)
+
+                # Track which MaskedStrands we've already updated to avoid double-updating
+                updated_masked_strands = set()
+
+                # Find all MaskedStrands that contain any of the moved strands
+                for other_strand in self.canvas.strands:
+                    if isinstance(other_strand, MaskedStrand) and other_strand not in updated_masked_strands:
+                        for moved_strand in all_moved_strands:
+                            is_first = (hasattr(other_strand, 'first_selected_strand') and
+                                       other_strand.first_selected_strand == moved_strand)
+                            is_second = (hasattr(other_strand, 'second_selected_strand') and
+                                        other_strand.second_selected_strand == moved_strand)
+
+                            if is_first or is_second:
+                                # Save the OLD center point BEFORE recalculating
+                                old_center = None
+                                if hasattr(other_strand, 'edited_center_point') and other_strand.edited_center_point:
+                                    old_center = QPointF(other_strand.edited_center_point)
+                                elif hasattr(other_strand, 'base_center_point') and other_strand.base_center_point:
+                                    old_center = QPointF(other_strand.base_center_point)
+
+                                # Update the mask path and recalculate center based on new strand positions
+                                if hasattr(other_strand, 'update_mask_path'):
+                                    other_strand.update_mask_path()
+                                if hasattr(other_strand, 'calculate_center_point'):
+                                    other_strand.calculate_center_point()
+
+                                # Get the NEW center point AFTER recalculating
+                                new_center = None
+                                if hasattr(other_strand, 'edited_center_point') and other_strand.edited_center_point:
+                                    new_center = other_strand.edited_center_point
+                                elif hasattr(other_strand, 'base_center_point') and other_strand.base_center_point:
+                                    new_center = other_strand.base_center_point
+
+                                # Calculate delta based on how the CENTER moved
+                                if old_center and new_center:
+                                    dx = new_center.x() - old_center.x()
+                                    dy = new_center.y() - old_center.y()
+
+                                    # Translate deletion rectangles by the center delta
+                                    if hasattr(other_strand, 'deletion_rectangles') and other_strand.deletion_rectangles:
+                                        for rect in other_strand.deletion_rectangles:
+                                            rect['top_left'] = (rect['top_left'][0] + dx, rect['top_left'][1] + dy)
+                                            rect['top_right'] = (rect['top_right'][0] + dx, rect['top_right'][1] + dy)
+                                            rect['bottom_left'] = (rect['bottom_left'][0] + dx, rect['bottom_left'][1] + dy)
+                                            rect['bottom_right'] = (rect['bottom_right'][0] + dx, rect['bottom_right'][1] + dy)
+
+                                affected_strands.add(other_strand)
+                                updated_masked_strands.add(other_strand)
+                                break  # Don't check other moved strands for this mask
+                # --- End MaskedStrand deletion rectangle update ---
+
             # ... (update selection rectangle and selection state)
 
         # ... (calculate update_rect)

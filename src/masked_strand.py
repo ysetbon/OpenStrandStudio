@@ -1,3 +1,4 @@
+import time
 from strand import Strand
 from PyQt5.QtCore import QPointF, Qt, QRectF
 from PyQt5.QtGui import (
@@ -666,60 +667,52 @@ class MaskedStrand(Strand):
             if hasattr(self, 'edited_center_point'):
                 self.edited_center_point = QPointF(new_position)
 
-            # Force a complete shadow and mask update
+            # Force a complete shadow and mask update (this also updates shapes and side lines)
             self.force_shadow_update()
-
-            # Update the shape of both selected strands
-            if hasattr(self, 'first_selected_strand') and self.first_selected_strand:
-                if hasattr(self.first_selected_strand, 'update_shape'):
-                    self.first_selected_strand.update_shape()
-                    if hasattr(self.first_selected_strand, 'update_side_line'):
-                        self.first_selected_strand.update_side_line()
-            
-            if hasattr(self, 'second_selected_strand') and self.second_selected_strand:
-                if hasattr(self.second_selected_strand, 'update_shape'):
-                    self.second_selected_strand.update_shape()
-                    if hasattr(self.second_selected_strand, 'update_side_line'):
-                        self.second_selected_strand.update_side_line()
 
             # Update canvas if available
             if hasattr(self, 'canvas') and self.canvas:
                 self.canvas.update()
-
-            # Force shadow update only when there's actual movement
-            self.force_shadow_update()
     
     # Add this as a separate method
     def force_shadow_update(self):
         """Force recalculation of all shadow paths and cached data."""
-        # Clear all cached paths and positions
-        cached_attrs = [
-            '_shadow_path', '_last_shadow_positions', '_cached_path', '_cached_mask',
-            '_stroke_path', '_fill_path', '_mask_path', '_base_mask_path',
-            'custom_mask_path', '_highlight_path', '_selection_path'
-        ]
-        
-        # Clear all possible caches
-        for attr in cached_attrs:
-            if hasattr(self, attr):
-                delattr(self, attr)
-        
-        # Update all related shapes and components
-        if hasattr(self.first_selected_strand, 'update_shape'):
-            self.first_selected_strand.update_shape()
-            if hasattr(self.first_selected_strand, 'update_side_line'):
-                self.first_selected_strand.update_side_line()
-        
-        if hasattr(self.second_selected_strand, 'update_shape'):
-            self.second_selected_strand.update_shape()
-            if hasattr(self.second_selected_strand, 'update_side_line'):
-                self.second_selected_strand.update_side_line()
-        
-        # Update the mask path
-        self.update_mask_path()
-        
-        # Force recalculation of center points
-        self.calculate_center_point()
+        # Prevent infinite recursion/repeated calls
+        if hasattr(self, '_in_force_shadow_update') and self._in_force_shadow_update:
+            return
+
+        self._in_force_shadow_update = True
+        try:
+            # Clear all cached paths and positions
+            cached_attrs = [
+                '_shadow_path', '_last_shadow_positions', '_cached_path', '_cached_mask',
+                '_stroke_path', '_fill_path', '_mask_path', '_base_mask_path',
+                'custom_mask_path', '_highlight_path', '_selection_path'
+            ]
+
+            # Clear all possible caches
+            for attr in cached_attrs:
+                if hasattr(self, attr):
+                    delattr(self, attr)
+
+            # Update all related shapes and components
+            if hasattr(self.first_selected_strand, 'update_shape'):
+                self.first_selected_strand.update_shape()
+                if hasattr(self.first_selected_strand, 'update_side_line'):
+                    self.first_selected_strand.update_side_line()
+
+            if hasattr(self.second_selected_strand, 'update_shape'):
+                self.second_selected_strand.update_shape()
+                if hasattr(self.second_selected_strand, 'update_side_line'):
+                    self.second_selected_strand.update_side_line()
+
+            # Update the mask path
+            self.update_mask_path()
+
+            # Force recalculation of center points
+            self.calculate_center_point()
+        finally:
+            self._in_force_shadow_update = False
         
 
             
@@ -1117,32 +1110,9 @@ class MaskedStrand(Strand):
             return
         
         # Normal update path for non-loading scenarios
-        # Update mask path
-        self.update_mask_path()
-        
-        # Recalculate center points
-        self.calculate_center_point()
-        
-        # Update shapes of constituent strands
-        if hasattr(self, 'first_selected_strand') and self.first_selected_strand:
-            self.first_selected_strand.update_shape()
-            if hasattr(self.first_selected_strand, 'update_side_line'):
-                self.first_selected_strand.update_side_line()
-        
-        if hasattr(self, 'second_selected_strand') and self.second_selected_strand:
-            self.second_selected_strand.update_shape()
-            if hasattr(self.second_selected_strand, 'update_side_line'):
-                self.second_selected_strand.update_side_line()
-        
-        # Force shadow update
+        # Force shadow update handles: clearing caches, updating strands, mask path, and center points
         self.force_shadow_update()
-        
-        # Update with center point if available
-        if hasattr(self, 'edited_center_point') and self.edited_center_point:
-            self.update(self.edited_center_point)
-        elif hasattr(self, 'base_center_point') and self.base_center_point:
-            self.update(self.base_center_point)
-            
+
         # Update canvas if available
         if hasattr(self, 'canvas') and self.canvas:
             if hasattr(self.canvas, 'background_cache_valid'):

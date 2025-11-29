@@ -2546,12 +2546,11 @@ class MoveMode:
         Args:
             new_pos (QPointF): The new position.
         """
-        
         # Always invalidate the background cache during strand movement
         # to ensure the grid and all strands remain visible
         if hasattr(self.canvas, 'background_cache_valid'):
             self.canvas.background_cache_valid = False
-            
+
         if not self.affected_strand:
             return
 

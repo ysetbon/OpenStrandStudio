@@ -686,10 +686,8 @@ class MaskedStrand(Strand):
             if hasattr(self, 'canvas') and self.canvas:
                 self.canvas.update()
 
-        else:
-            pass
-
-        self.force_shadow_update()
+            # Force shadow update only when there's actual movement
+            self.force_shadow_update()
     
     # Add this as a separate method
     def force_shadow_update(self):

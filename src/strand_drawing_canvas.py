@@ -1674,8 +1674,14 @@ class StrandDrawingCanvas(QWidget):
         """
         Handles the painting of the canvas.
         """
-        # Call base implementation first (background, styles etc.)
-        super().paintEvent(event)
+        try:
+            # Call base implementation first (background, styles etc.)
+            super().paintEvent(event)
+        except Exception as e:
+            import traceback
+            print(f"[CRASH] paintEvent super() failed: {e}")
+            traceback.print_exc()
+            return
 
         # --------------------------------------------------
         # Early-exit guard: During certain operations (e.g. undo/redo) the
@@ -1778,86 +1784,91 @@ class StrandDrawingCanvas(QWidget):
                             pass
                     
             for strand in self.strands:
-                # Reduced high-frequency logging for performance
-            # logging.info(f"Drawing strand '{strand.layer_name}'")
-                if not hasattr(strand, 'canvas'):
-                    strand.canvas = self  # Ensure all strands have canvas reference
-                    
-                # Also draw parent strands that might not be in self.strands
-                # Check if this is an attached strand with a parent
-                if isinstance(strand, AttachedStrand) and hasattr(strand, 'parent_strand') and strand.parent_strand:
-                    parent = strand.parent_strand
-                    if not hasattr(parent, '_already_drawn_this_frame'):
-                        parent._already_drawn_this_frame = True
-                        # Draw the parent strand first
-                        if not hasattr(parent, 'canvas'):
-                            parent.canvas = self
-                        
-                        # Apply the same highlighting logic to parent strand
-                        parent_is_selected = (parent == self.selected_strand or parent == self.selected_attached_strand or getattr(parent, 'is_selected', False))
-                        parent_should_suppress = False
-                        parent_should_force = False
-                        
-                        if (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
-                            (getattr(self.current_mode, 'is_moving_strand_point', False) or getattr(self.current_mode, 'is_moving_control_point', False))):
-                            truly_moving_strands = getattr(self, 'truly_moving_strands', [])
-                            parent_should_be_highlighted = (parent in truly_moving_strands or 
-                                                          (hasattr(parent, 'is_selected') and parent.is_selected))
-                            
-                            if hasattr(self.current_mode, 'draw_only_affected_strand') and self.current_mode.draw_only_affected_strand:
-                                if not parent_should_be_highlighted:
-                                    parent_should_suppress = True
+                try:
+                    # Reduced high-frequency logging for performance
+                    # logging.info(f"Drawing strand '{strand.layer_name}'")
+                    if not hasattr(strand, 'canvas'):
+                        strand.canvas = self  # Ensure all strands have canvas reference
+
+                    # Also draw parent strands that might not be in self.strands
+                    # Check if this is an attached strand with a parent
+                    if isinstance(strand, AttachedStrand) and hasattr(strand, 'parent_strand') and strand.parent_strand:
+                        parent = strand.parent_strand
+                        if not hasattr(parent, '_already_drawn_this_frame'):
+                            parent._already_drawn_this_frame = True
+                            # Draw the parent strand first
+                            if not hasattr(parent, 'canvas'):
+                                parent.canvas = self
+
+                            # Apply the same highlighting logic to parent strand
+                            parent_is_selected = (parent == self.selected_strand or parent == self.selected_attached_strand or getattr(parent, 'is_selected', False))
+                            parent_should_suppress = False
+                            parent_should_force = False
+
+                            if (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and
+                                (getattr(self.current_mode, 'is_moving_strand_point', False) or getattr(self.current_mode, 'is_moving_control_point', False))):
+                                truly_moving_strands = getattr(self, 'truly_moving_strands', [])
+                                parent_should_be_highlighted = (parent in truly_moving_strands or
+                                                              (hasattr(parent, 'is_selected') and parent.is_selected))
+
+                                if hasattr(self.current_mode, 'draw_only_affected_strand') and self.current_mode.draw_only_affected_strand:
+                                    if not parent_should_be_highlighted:
+                                        parent_should_suppress = True
+                                else:
+                                    if parent_should_be_highlighted:
+                                        parent_should_force = True
+                                        if not hasattr(self, '_logged_parent_force_highlight'):
+                                            self._logged_parent_force_highlight = True
+                                            pass
+
+                            # Draw the parent with appropriate highlighting
+                            if (parent_is_selected or parent_should_force) and not isinstance(self.current_mode, MaskMode) and not parent_should_suppress:
+                                self.draw_highlighted_strand(painter, parent)
                             else:
-                                if parent_should_be_highlighted:
-                                    parent_should_force = True
-                                    if not hasattr(self, '_logged_parent_force_highlight'):
-                                        self._logged_parent_force_highlight = True
-                                        pass
-                        
-                        # Draw the parent with appropriate highlighting
-                        if (parent_is_selected or parent_should_force) and not isinstance(self.current_mode, MaskMode) and not parent_should_suppress:
-                            self.draw_highlighted_strand(painter, parent)
+                                parent.draw(painter, skip_painter_setup=True)
+                    # --- MODIFIED: Check both selected_strand and selected_attached_strand, plus is_selected property ---
+                    is_selected_for_highlight = (strand == self.selected_strand or strand == self.selected_attached_strand or getattr(strand, 'is_selected', False))
+
+                    # Check if we should suppress highlighting due to "drag only affected strand" setting
+                    should_suppress_highlight = False
+                    should_force_highlight = False  # New flag to force highlighting when toggle is off
+
+                    if (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and
+                        (getattr(self.current_mode, 'is_moving_strand_point', False) or getattr(self.current_mode, 'is_moving_control_point', False))):
+                        truly_moving_strands = getattr(self, 'truly_moving_strands', [])
+
+                        # Also check if this strand is set to be selected by the move mode
+                        # This handles the case where paintEvent runs before truly_moving_strands is fully populated
+                        strand_should_be_highlighted = (strand in truly_moving_strands or
+                                                       (hasattr(strand, 'is_selected') and strand.is_selected))
+
+                        if hasattr(self.current_mode, 'draw_only_affected_strand') and self.current_mode.draw_only_affected_strand:
+                            # When toggle is ON: suppress non-moving strands
+                            if not strand_should_be_highlighted:
+                                should_suppress_highlight = True
                         else:
-                            parent.draw(painter, skip_painter_setup=True)
-                # --- MODIFIED: Check both selected_strand and selected_attached_strand, plus is_selected property --- 
-                is_selected_for_highlight = (strand == self.selected_strand or strand == self.selected_attached_strand or getattr(strand, 'is_selected', False))
-                
-                # Check if we should suppress highlighting due to "drag only affected strand" setting
-                should_suppress_highlight = False
-                should_force_highlight = False  # New flag to force highlighting when toggle is off
-                
-                if (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
-                    (getattr(self.current_mode, 'is_moving_strand_point', False) or getattr(self.current_mode, 'is_moving_control_point', False))):
-                    truly_moving_strands = getattr(self, 'truly_moving_strands', [])
-                    
-                    # Also check if this strand is set to be selected by the move mode
-                    # This handles the case where paintEvent runs before truly_moving_strands is fully populated
-                    strand_should_be_highlighted = (strand in truly_moving_strands or 
-                                                   (hasattr(strand, 'is_selected') and strand.is_selected))
-                    
-                    if hasattr(self.current_mode, 'draw_only_affected_strand') and self.current_mode.draw_only_affected_strand:
-                        # When toggle is ON: suppress non-moving strands
-                        if not strand_should_be_highlighted:
-                            should_suppress_highlight = True
+                            # When toggle is OFF: force highlight for all strands that should be highlighted
+                            if strand_should_be_highlighted:
+                                should_force_highlight = True
+                                if not hasattr(self, '_logged_force_highlight'):
+                                    self._logged_force_highlight = True
+                                    pass
+
+                    # highlight selected strand if we're not suppressed
+                    # Also force highlight if should_force_highlight is True (when toggle is off and strand is moving)
+                    if (is_selected_for_highlight or should_force_highlight) and not should_suppress_highlight:
+                        # Reduced high-frequency logging for performance
+                        # logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
+                        self.draw_highlighted_strand(painter, strand)
                     else:
-                        # When toggle is OFF: force highlight for all strands that should be highlighted
-                        if strand_should_be_highlighted:
-                            should_force_highlight = True
-                            if not hasattr(self, '_logged_force_highlight'):
-                                self._logged_force_highlight = True
-                                pass
-                
-                # highlight selected strand if we're not suppressed
-                # Also force highlight if should_force_highlight is True (when toggle is off and strand is moving)
-                if (is_selected_for_highlight or should_force_highlight) and not should_suppress_highlight:
-                    # Reduced high-frequency logging for performance
-            # logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
-                    self.draw_highlighted_strand(painter, strand)
-                else:
-                    # Skip painter setup since it's already configured for the main canvas drawing
-                    strand.draw(painter, skip_painter_setup=True)
-                    # Reduced high-frequency logging for performance
-                # logging.info(f"Drawing strand: {strand.layer_name}")
+                        # Skip painter setup since it's already configured for the main canvas drawing
+                        strand.draw(painter, skip_painter_setup=True)
+                        # Reduced high-frequency logging for performance
+                        # logging.info(f"Drawing strand: {strand.layer_name}")
+                except Exception as strand_draw_error:
+                    import traceback
+                    print(f"[CRASH] Error drawing strand {getattr(strand, 'layer_name', 'unknown')}: {strand_draw_error}")
+                    traceback.print_exc()
         else:
             # When optimizing, we only draw the affected strand and connected strands
             affected_strand = None

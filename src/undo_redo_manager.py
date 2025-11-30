@@ -2299,30 +2299,53 @@ class UndoRedoManager(QObject):
             pass
 
 
-    def _load_state(self, step):
-        """Load the state for the specified step and apply it."""
+    def _load_state(self, step, respect_shadow_state=False):
+        """Load the state for the specified step and apply it.
+
+        Args:
+            step: The step number to load
+            respect_shadow_state: If True, use the shadow_enabled value from the saved state.
+                                  If False (default), force shadow to be disabled.
+                                  Set to True when loading from JSON file (Load button).
+                                  Set to False for undo/redo navigation.
+        """
+        # Store for use in _restore_button_states
+        self._respect_shadow_state = respect_shadow_state
+
         filename = self._get_state_filename(step)
 
         if not os.path.exists(filename):
             return False
 
         try:
-            # --- Step 1: Load data from file and inspect its structure --- 
-            
+            # --- Step 1: Load data from file and inspect its structure ---
+
             # First inspect the raw JSON to understand the structure
             with open(filename, 'r') as f:
                 raw_data = json.load(f)
-                
+
             # Log information about the raw data structure
             has_groups_in_file = 'groups' in raw_data and bool(raw_data.get('groups', {}))
             if has_groups_in_file:
                 group_count = len(raw_data.get('groups', {}))
                 group_names = list(raw_data.get('groups', {}).keys())
-            
+
             # Load the data using the normal method
             # --- MODIFIED: Receive selected_strand_name, button states, and shadow_overrides ---
             loaded_strands, loaded_groups_data, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points, shadow_overrides = load_strands(filename, self.canvas)
             # --- END MODIFIED ---
+
+            # Handle shadow state based on context
+            if not respect_shadow_state:
+                # --- FORCE SHADOW DISABLED ON UNDO/REDO ---
+                # Default to no shadow when navigating history via undo/redo
+                shadow_enabled = False
+                self.canvas.shadow_enabled = False
+                # Clean up any preserved shadow state
+                if hasattr(self.canvas, '_preserve_shadow_state'):
+                    delattr(self.canvas, '_preserve_shadow_state')
+            # else: use shadow_enabled value from the saved state (for Load button)
+
             state_has_groups = bool(loaded_groups_data)
             
             # Check if we lost groups during loading
@@ -2364,13 +2387,14 @@ class UndoRedoManager(QObject):
                  if hasattr(strand, 'set_canvas'):
                       strand.set_canvas(self.canvas)
                  # Add any other necessary post-load initialization for strands here
-                 
-                 # Check if we're preserving shadow state from before the load
-                 if hasattr(self.canvas, '_preserve_shadow_state'):
-                     strand.should_draw_shadow = self.canvas._preserve_shadow_state
+
+                 # Set shadow state based on context
+                 if respect_shadow_state:
+                     # Use the shadow_enabled value from the saved state (for Load button)
+                     strand.should_draw_shadow = shadow_enabled
                  else:
-                     # Otherwise use the canvas's current shadow_enabled state
-                     strand.should_draw_shadow = self.canvas.shadow_enabled if hasattr(self.canvas, 'shadow_enabled') else True
+                     # Force shadow disabled for undo/redo navigation
+                     strand.should_draw_shadow = False
                  
             # --- NEW: Restore selection AFTER applying strands --- 
             if selected_strand_name:
@@ -2488,7 +2512,7 @@ class UndoRedoManager(QObject):
                         pass
 
             # --- Step 4: Restore button states ---
-            self._restore_button_states(shadow_enabled, show_control_points)
+            self._restore_button_states(shadow_enabled, show_control_points, self._respect_shadow_state)
                     
             # Update all strands' control points visibility
             for strand in self.canvas.strands:
@@ -2694,7 +2718,9 @@ class UndoRedoManager(QObject):
                 
                 # Load strands and groups from the specified file
                 strands, groups, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points, shadow_overrides = load_strands(filepath, self.canvas)
-                
+
+                # Use the shadow_enabled value from the saved state (respect saved state when loading)
+
                 # First inspect the raw JSON directly to ensure we didn't miss anything
                 with open(filepath, 'r') as f:
                     raw_data = json.load(f)
@@ -2713,6 +2739,10 @@ class UndoRedoManager(QObject):
                     self.canvas.groups = groups
                 else:
                     self.canvas.groups = {}
+
+                # Set shadow state from saved state
+                for strand in self.canvas.strands:
+                    strand.should_draw_shadow = shadow_enabled
 
                 # Set the step pointers to match the loaded state
                 self.current_step = loaded_step
@@ -2790,21 +2820,23 @@ class UndoRedoManager(QObject):
                         
                 
                 # --- Button state restoration for load_specific_state ---
-                
-                # Restore shadow button state
+
+                # Use shadow_enabled value from the saved state
                 self.canvas.shadow_enabled = shadow_enabled
-                
+
                 # Try to find the main window for button restoration
                 main_window = None
                 if hasattr(self.canvas, 'main_window') and self.canvas.main_window:
                     main_window = self.canvas.main_window
+                elif hasattr(self.canvas, 'parent_window') and self.canvas.parent_window:
+                    main_window = self.canvas.parent_window
                 elif hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'main_window'):
                     main_window = self.layer_panel.main_window
                 else:
                     pass
-                
+
                 if main_window:
-                    # Restore shadow button
+                    # Set shadow button to match saved state
                     if hasattr(main_window, 'toggle_shadow_button'):
                         main_window.toggle_shadow_button.setChecked(shadow_enabled)
                     else:
@@ -3263,7 +3295,8 @@ class UndoRedoManager(QObject):
 
 
             # Load the canvas state corresponding to current_step
-            load_success = self._load_state(self.current_step)
+            # Use respect_shadow_state=True to honor the saved shadow state from the JSON file
+            load_success = self._load_state(self.current_step, respect_shadow_state=True)
             if not load_success:
                 return False
 
@@ -3273,22 +3306,28 @@ class UndoRedoManager(QObject):
         except Exception as e:
             return False
 
-    def _restore_button_states(self, shadow_enabled, show_control_points):
+    def _restore_button_states(self, shadow_enabled, show_control_points, respect_shadow_state=False):
         """
         Restore button visual states when loading state during undo/redo operations.
-        
+
         Args:
             shadow_enabled (bool): Whether shadow should be enabled
             show_control_points (bool): Whether control points should be shown
+            respect_shadow_state (bool): If True, use the passed shadow_enabled value.
+                                         If False (default), force shadow to be disabled.
         """
-        
-        # Check if we're preserving states from before the load
-        if hasattr(self.canvas, '_preserve_shadow_state'):
-            # Use preserved states instead of loaded states
-            self.canvas.shadow_enabled = self.canvas._preserve_shadow_state
-            shadow_enabled = self.canvas._preserve_shadow_state
+
+        if not respect_shadow_state:
+            # --- FORCE SHADOW DISABLED ON UNDO/REDO ---
+            # Default to no shadow when navigating history via undo/redo
+            shadow_enabled = False
+            self.canvas.shadow_enabled = False
+
+            # Clean up any preserved shadow state to prevent future interference
+            if hasattr(self.canvas, '_preserve_shadow_state'):
+                delattr(self.canvas, '_preserve_shadow_state')
         else:
-            # Restore canvas properties from file
+            # Use the shadow_enabled value from the saved state (for Load button)
             self.canvas.shadow_enabled = shadow_enabled
             
         if hasattr(self.canvas, '_preserve_control_points_state'):
@@ -3321,11 +3360,16 @@ class UndoRedoManager(QObject):
             else:
                 pass
         
-        # Update all strands' control points visibility
+        # Update all strands' control points visibility and shadow state
         for strand in self.canvas.strands:
             if hasattr(strand, 'show_control_points'):
                 strand.show_control_points = show_control_points
-        
+            # Set shadow state based on context
+            if respect_shadow_state:
+                strand.should_draw_shadow = shadow_enabled
+            else:
+                strand.should_draw_shadow = False
+
 
 def connect_to_move_mode(canvas, undo_redo_manager):
     """

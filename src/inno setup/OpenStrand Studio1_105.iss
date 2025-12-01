@@ -2,7 +2,7 @@
 #define MyAppVersion "1.105"
 #define MyAppPublisher "Yonatan Setbon"
 #define MyAppExeName "OpenStrandStudio.exe"
-#define MyAppDate "27_Nov_2025"
+#define MyAppDate "30_Nov_2025"
 #define SourcePath "C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src"
 #define ExePath "C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\dist"
 
@@ -49,7 +49,7 @@ Source: "{#SourcePath}\images\*.svg"; DestDir: "{app}\images"; Flags: ignorevers
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\box_stitch.ico"; MinVersion: 0,1
-Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\box_stitch.ico"; Tasks: desktopicon; MinVersion: 0,1
+Name: "{userdesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\box_stitch.ico"; Tasks: desktopicon
 Name: "{userprograms}\{#MyAppName}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\box_stitch.ico"
 Name: "{userprograms}\{#MyAppName}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
 
@@ -57,10 +57,10 @@ Name: "{userprograms}\{#MyAppName}\Uninstall {#MyAppName}"; Filename: "{uninstal
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; Flags: unchecked
 
 [Registry]
-Root: HKCR; Subkey: ".oss"; ValueType: string; ValueData: "OpenStrandStudioFile"; Flags: uninsdeletevalue
-Root: HKCR; Subkey: "OpenStrandStudioFile"; ValueType: string; ValueData: "OpenStrand Studio Project"; Flags: uninsdeletekey
-Root: HKCR; Subkey: "OpenStrandStudioFile\DefaultIcon"; ValueType: string; ValueData: "{app}\box_stitch.ico"
-Root: HKCR; Subkey: "OpenStrandStudioFile\shell\open\command"; ValueType: string; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
+Root: HKCU; Subkey: "Software\Classes\.oss"; ValueType: string; ValueData: "OpenStrandStudioFile"; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\OpenStrandStudioFile"; ValueType: string; ValueData: "OpenStrand Studio Project"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\OpenStrandStudioFile\DefaultIcon"; ValueType: string; ValueData: "{app}\box_stitch.ico"
+Root: HKCU; Subkey: "Software\Classes\OpenStrandStudioFile\shell\open\command"; ValueType: string; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{userappdata}\OpenStrandStudio"

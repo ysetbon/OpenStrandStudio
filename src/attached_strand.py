@@ -1371,7 +1371,9 @@ class AttachedStrand(Strand):
                 outer_circle_end_knot = QPainterPath()
                 outer_circle_end_knot.addEllipse(self.end, circle_radius, circle_radius)
                 outer_mask_end_knot = outer_circle_end_knot.subtracted(mask_rect_end_knot)
-                combined_stroke_path.addPath(outer_mask_end_knot)
+                
+                if self.end_circle_stroke_color.alpha() > 0:
+                    combined_stroke_path.addPath(outer_mask_end_knot)
 
                 # Create inner circle and add to fill path
                 inner_circle_end_knot = QPainterPath()
@@ -3342,7 +3344,9 @@ class AttachedStrand(Strand):
                 outer_circle_end_knot = QPainterPath()
                 outer_circle_end_knot.addEllipse(self.end, circle_radius, circle_radius)
                 outer_mask_end_knot = outer_circle_end_knot.subtracted(mask_rect_end_knot)
-                combined_stroke_path.addPath(outer_mask_end_knot)
+                
+                if self.end_circle_stroke_color.alpha() > 0:
+                    combined_stroke_path.addPath(outer_mask_end_knot)
 
                 # Create inner circle and add to fill path
                 inner_circle_end_knot = QPainterPath()

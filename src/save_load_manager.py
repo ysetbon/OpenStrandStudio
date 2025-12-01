@@ -237,34 +237,12 @@ def serialize_strand(strand, canvas, index=None):
             data["control_point2_activated"] = strand.control_point2_activated
 
     if isinstance(strand, MaskedStrand):
-        # Save deletion rectangles with movement offset applied
+        # Save deletion rectangles directly without offset
+        # They are already in absolute coordinates relative to the canvas
         deletion_rects = getattr(strand, 'deletion_rectangles', [])
         
-        # If the strand has moved, apply the movement offset to deletion rectangles before saving
-        if (hasattr(strand, 'edited_center_point') and strand.edited_center_point and 
-            hasattr(strand, 'base_center_point') and strand.base_center_point):
-            
-            delta_x = strand.edited_center_point.x() - strand.base_center_point.x()
-            delta_y = strand.edited_center_point.y() - strand.base_center_point.y()
-            
-            # Only apply offset if there's actual movement
-            if abs(delta_x) > 0.01 or abs(delta_y) > 0.01:
-                adjusted_rects = []
-                for rect in deletion_rects:
-                    adjusted_rect = rect.copy()
-                    # Apply offset to all corner coordinates
-                    if 'top_left' in rect:
-                        adjusted_rect['top_left'] = [rect['top_left'][0] + delta_x, rect['top_left'][1] + delta_y]
-                    if 'top_right' in rect:
-                        adjusted_rect['top_right'] = [rect['top_right'][0] + delta_x, rect['top_right'][1] + delta_y]
-                    if 'bottom_left' in rect:
-                        adjusted_rect['bottom_left'] = [rect['bottom_left'][0] + delta_x, rect['bottom_left'][1] + delta_y]
-                    if 'bottom_right' in rect:
-                        adjusted_rect['bottom_right'] = [rect['bottom_right'][0] + delta_x, rect['bottom_right'][1] + delta_y]
-                    adjusted_rects.append(adjusted_rect)
-                deletion_rects = adjusted_rects
-        
         data["deletion_rectangles"] = deletion_rects
+        
         # Ensure we persist the current center point so that deletion rectangles remain
         # at the correct absolute coordinates after re-loading.  MaskedStrand does not
         # have control points, but the load logic expects a "control_point_center"

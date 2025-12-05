@@ -1103,8 +1103,8 @@ class UndoRedoManager(QObject):
                 # Force a single update now that everything is ready
                 self.canvas.update()
             else:
-                # Normal undo to a saved state
-                self._load_state(self.current_step)
+                # Normal undo to a saved state (preserve shadow state)
+                self._load_state(self.current_step, respect_shadow_state=True)
                 
                 # Check if the state we just loaded is visually identical to the previous state
                 # If yes, continue undoing to the next state
@@ -1577,8 +1577,8 @@ class UndoRedoManager(QObject):
             # Increment the step counter
             self.current_step += 1
             
-            # Load the state (with all suppression flags active)
-            result = self._load_state(self.current_step)
+            # Load the state (with all suppression flags active, preserve shadow state)
+            result = self._load_state(self.current_step, respect_shadow_state=True)
 
             if result:
                 # --- Log state AFTER loading --- 
@@ -2305,9 +2305,9 @@ class UndoRedoManager(QObject):
         Args:
             step: The step number to load
             respect_shadow_state: If True, use the shadow_enabled value from the saved state.
-                                  If False (default), force shadow to be disabled.
-                                  Set to True when loading from JSON file (Load button).
-                                  Set to False for undo/redo navigation.
+                                  If False, force shadow to be disabled.
+                                  Set to True when loading from JSON file (Load button) or during
+                                  undo/redo to preserve the user's shadow setting.
         """
         # Store for use in _restore_button_states
         self._respect_shadow_state = respect_shadow_state
@@ -3314,7 +3314,7 @@ class UndoRedoManager(QObject):
             shadow_enabled (bool): Whether shadow should be enabled
             show_control_points (bool): Whether control points should be shown
             respect_shadow_state (bool): If True, use the passed shadow_enabled value.
-                                         If False (default), force shadow to be disabled.
+                                         If False, force shadow to be disabled.
         """
 
         if not respect_shadow_state:

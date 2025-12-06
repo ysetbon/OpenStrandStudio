@@ -2329,18 +2329,16 @@ class UndoRedoManager(QObject):
                 group_count = len(raw_data.get('groups', {}))
                 group_names = list(raw_data.get('groups', {}).keys())
 
+            # Preserve current shadow state - undo/redo should not affect shadow toggle
+            current_shadow_enabled = getattr(self.canvas, 'shadow_enabled', True)
+
             # Load the data using the normal method
             # --- MODIFIED: Receive selected_strand_name, button states, and shadow_overrides ---
             loaded_strands, loaded_groups_data, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points, shadow_overrides = load_strands(filename, self.canvas)
             # --- END MODIFIED ---
 
-            # Handle shadow state based on context
-            if not respect_shadow_state:
-                # Clean up any preserved shadow state
-                if hasattr(self.canvas, '_preserve_shadow_state'):
-                    delattr(self.canvas, '_preserve_shadow_state')
-            # Always respect the saved shadow_enabled value otherwise
-            self.canvas.shadow_enabled = shadow_enabled
+            # Preserve current shadow state - undo/redo should not affect shadow toggle
+            self.canvas.shadow_enabled = current_shadow_enabled
 
             state_has_groups = bool(loaded_groups_data)
             
@@ -2384,8 +2382,8 @@ class UndoRedoManager(QObject):
                     strand.set_canvas(self.canvas)
                 # Add any other necessary post-load initialization for strands here
 
-                # Set shadow state based on saved value unless explicitly overridden
-                strand.should_draw_shadow = shadow_enabled
+                # Set shadow state based on current (preserved) value - undo/redo should not affect shadow
+                strand.should_draw_shadow = current_shadow_enabled
                  
             # --- NEW: Restore selection AFTER applying strands --- 
             if selected_strand_name:
@@ -2503,7 +2501,8 @@ class UndoRedoManager(QObject):
                         pass
 
             # --- Step 4: Restore button states ---
-            self._restore_button_states(shadow_enabled, show_control_points, self._respect_shadow_state)
+            # Pass current_shadow_enabled to preserve shadow state during undo/redo
+            self._restore_button_states(current_shadow_enabled, show_control_points, self._respect_shadow_state)
                     
             # Update all strands' control points visibility
             for strand in self.canvas.strands:

@@ -520,7 +520,7 @@ These updates focus on performance improvements and visual enhancements to provi
 
 ------
 
-## Version 1.105 (Released: 30/11/2025)
+## Version 1.105 (Released: 06/12/2025)
 
 ### New Features and Improvements:
 
@@ -1067,7 +1067,7 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
 
 ------
 
-## Version 1.105 (Sortie : 30/11/2025)
+## Version 1.105 (Sortie : 06/12/2025)
 
 ### Nouvelles Fonctionnalités et Améliorations :
 

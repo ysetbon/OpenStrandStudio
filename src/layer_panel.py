@@ -967,6 +967,7 @@ class LayerPanel(QWidget):
         
         # Add a label to show mask editing status
         self.mask_edit_label = QLabel("")
+        self.mask_edit_label.setAlignment(Qt.AlignCenter)
         self.mask_edit_label.setStyleSheet("color: red; font-weight: bold;")
         self.left_layout.addWidget(self.mask_edit_label)
         self.mask_edit_label.hide()

@@ -377,16 +377,10 @@ class UndoRedoManager(QObject):
         current_time = time.time()
         last_save_time = getattr(self, '_last_save_time', 0)
         
-        # If we've saved very recently (<500ms), check if we should skip this save  
-        # Increased from 300ms to 500ms to account for 50ms timer delays in signal handlers
-        if (current_time - last_save_time < 0.5) and self.current_step > 0:
-            # Check if the current state would be identical to the previous state
-            if self._would_be_identical_save():
-                return
-            else:
-                pass
-        else:
-            pass
+        # Always check if the current state would be identical to the previous state
+        # This prevents duplicate states from being saved (e.g., shadow toggle only)
+        if self.current_step > 0 and self._would_be_identical_save():
+            return
         
         self._last_save_time = current_time
             
@@ -915,12 +909,9 @@ class UndoRedoManager(QObject):
                     return False
 
                 # Compare button states
-                current_shadow_enabled = getattr(self.canvas, 'shadow_enabled', True)
-                prev_shadow_enabled = prev_data.get('shadow_enabled', True)
-                
-                if current_shadow_enabled != prev_shadow_enabled:
-                    return False
-                
+                # Note: shadow_enabled is intentionally NOT compared here because
+                # shadow toggle is excluded from undo/redo operations
+
                 current_show_control_points = getattr(self.canvas, 'show_control_points', False)
                 prev_show_control_points = prev_data.get('show_control_points', False)
 

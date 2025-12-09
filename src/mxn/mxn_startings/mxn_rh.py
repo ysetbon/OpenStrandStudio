@@ -176,12 +176,12 @@ def generate_json(m, n):
         strands_1.append(main_strand)
         
         # Attached Strand (_2)
-        att_2_end = {"x": end_pt["x"] - extension_length, "y": end_pt["y"]}
+        att_2_end = {"x": start_pt["x"] - 82, "y": end_pt["y"]}
         strand_1_2 = create_strand_base(end_pt, att_2_end, color, f"{h_set_num}_2", h_set_num, "AttachedStrand", main_layer, 1)
         strands_2.append(strand_1_2)
         
         # Attached Strand (_3)
-        att_3_end = {"x": start_pt["x"] + extension_length, "y": start_pt["y"]}
+        att_3_end = {"x": end_pt["x"] + 82, "y": start_pt["y"]}
         strand_1_3 = create_strand_base(start_pt, att_3_end, color, f"{h_set_num}_3", h_set_num, "AttachedStrand", main_layer, 0)
         strands_3.append(strand_1_3)
 
@@ -305,7 +305,7 @@ def generate_json(m, n):
             "selected_strand_name": None,
             "locked_layers": [],
             "lock_mode": False,
-            "shadow_enabled": True,
+            "shadow_enabled": False,
             "show_control_points": show_cp,
             "shadow_overrides": shadow_overrides
         }
@@ -337,4 +337,6 @@ def main():
                     f.write(f"Error {m}x{n}: {e}\n")
 
 if __name__ == "__main__":
+    print("Running main...")
     main()
+    print("Finished main.")

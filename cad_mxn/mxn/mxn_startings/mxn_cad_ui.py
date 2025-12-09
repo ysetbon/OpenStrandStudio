@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import (
     QLabel, QPushButton, QSpinBox, QRadioButton,
     QButtonGroup, QScrollArea, QWidget, QGroupBox,
     QComboBox, QCheckBox, QColorDialog, QMessageBox,
-    QApplication, QSizePolicy
+    QApplication, QSizePolicy, QFileDialog
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QStandardPaths, QSize, QRectF
 from PyQt5.QtGui import QColor, QPixmap, QImage
@@ -61,6 +61,15 @@ class ImagePreviewWidget(QLabel):
             self._update_scaled_pixmap()
         else:
             self.setText(f"Image not found:\n{image_path}")
+            self.original_pixmap = None
+
+    def set_qimage(self, qimage):
+        """Display a QImage directly (in-memory)."""
+        if qimage and not qimage.isNull():
+            self.original_pixmap = QPixmap.fromImage(qimage)
+            self._update_scaled_pixmap()
+        else:
+            self.setText("Failed to generate image")
             self.original_pixmap = None
 
     def clear(self):
@@ -344,6 +353,63 @@ class MxNGeneratorDialog(QDialog):
         self.generate_btn.clicked.connect(self.generate_and_preview)
         parent_layout.addWidget(self.generate_btn)
 
+        # Export buttons row
+        export_layout = QHBoxLayout()
+
+        # Export JSON button
+        self.export_json_btn = QPushButton("Export JSON")
+        self.export_json_btn.setMinimumHeight(35)
+        self.export_json_btn.setEnabled(False)  # Disabled until generation
+        self.export_json_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #1565c0;
+                color: white;
+                font-weight: bold;
+                border: none;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #1976d2;
+            }
+            QPushButton:pressed {
+                background-color: #0d47a1;
+            }
+            QPushButton:disabled {
+                background-color: #555;
+                color: #888;
+            }
+        """)
+        self.export_json_btn.clicked.connect(self.export_json)
+        export_layout.addWidget(self.export_json_btn)
+
+        # Export Image button
+        self.export_image_btn = QPushButton("Export Image")
+        self.export_image_btn.setMinimumHeight(35)
+        self.export_image_btn.setEnabled(False)  # Disabled until generation
+        self.export_image_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #7b1fa2;
+                color: white;
+                font-weight: bold;
+                border: none;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #8e24aa;
+            }
+            QPushButton:pressed {
+                background-color: #6a1b9a;
+            }
+            QPushButton:disabled {
+                background-color: #555;
+                color: #888;
+            }
+        """)
+        self.export_image_btn.clicked.connect(self.export_image)
+        export_layout.addWidget(self.export_image_btn)
+
+        parent_layout.addLayout(export_layout)
+
         # Status label
         self.status_label = QLabel("")
         self.status_label.setWordWrap(True)
@@ -355,6 +421,11 @@ class MxNGeneratorDialog(QDialog):
         self.update_color_pickers()
         self.preview_widget.clear()
         self.status_label.setText("")
+        # Clear in-memory data and disable export buttons
+        self.current_json_data = None
+        self.current_image = None
+        self.export_json_btn.setEnabled(False)
+        self.export_image_btn.setEnabled(False)
 
     def update_color_pickers(self):
         """Dynamically update color pickers when M or N changes."""
@@ -495,7 +566,7 @@ class MxNGeneratorDialog(QDialog):
         self.update_color_pickers()
 
     def generate_and_preview(self):
-        """Generate JSON using mxn_lh/mxn_rh, export image, and show preview."""
+        """Generate JSON and image in memory, then show preview."""
         m = self.m_spinner.value()
         n = self.n_spinner.value()
         is_lh = self.lh_radio.isChecked()
@@ -534,40 +605,39 @@ class MxNGeneratorDialog(QDialog):
 
             json_content = json.dumps(data, indent=2)
 
-            # Step 3: Save JSON file
-            output_dir = os.path.join(self.base_dir, f"mxn_{variant}")
-            os.makedirs(output_dir, exist_ok=True)
-            json_path = os.path.join(output_dir, f"mxn_{variant}_{m}x{n}.json")
+            # Store JSON in memory (no file saving)
+            self.current_json_data = json_content
 
-            with open(json_path, 'w') as f:
-                f.write(json_content)
-
-            self.last_json_path = json_path
-            self.status_label.setText("Exporting image...")
+            self.status_label.setText("Rendering image...")
             QApplication.processEvents()
 
-            # Step 4: Export image using the same logic as export_mxn_images.py
-            images_dir = os.path.join(output_dir, "images")
-            os.makedirs(images_dir, exist_ok=True)
-            image_path = os.path.join(images_dir, f"mxn_{variant}_{m}x{n}.png")
+            # Step 3: Generate image in memory
+            image = self._generate_image_in_memory(json_content, scale_factor)
 
-            success = self._export_json_to_image(json_path, image_path, scale_factor)
+            if image and not image.isNull():
+                # Store image in memory
+                self.current_image = image
 
-            if success:
-                self.last_image_path = image_path
+                # Show the image in preview
+                self.preview_widget.set_qimage(image)
 
-                # Step 5: Show the image in preview
-                self.preview_widget.set_image(image_path)
+                # Enable export buttons
+                self.export_json_btn.setEnabled(True)
+                self.export_image_btn.setEnabled(True)
 
-                self.status_label.setText(f"Generated: {os.path.basename(json_path)}\nExported: {os.path.basename(image_path)}")
+                self.status_label.setText(f"Generated {m}x{n} {variant.upper()} pattern in memory\nUse export buttons to save files")
                 self.save_color_settings()
             else:
-                self.status_label.setText("Failed to export image")
+                self.status_label.setText("Failed to generate image")
+                self.export_json_btn.setEnabled(False)
+                self.export_image_btn.setEnabled(False)
 
         except Exception as e:
             import traceback
             traceback.print_exc()
             self.status_label.setText(f"Error: {str(e)}")
+            self.export_json_btn.setEnabled(False)
+            self.export_image_btn.setEnabled(False)
             QMessageBox.critical(self, "Error", f"Failed to generate pattern:\n{str(e)}")
 
     def _calculate_strands_bounds(self, canvas):
@@ -702,6 +772,164 @@ class MxNGeneratorDialog(QDialog):
             import traceback
             traceback.print_exc()
             return False
+
+    def _generate_image_in_memory(self, json_content, scale_factor):
+        """Generate image in memory from JSON content string (no file I/O)."""
+        try:
+            from main_window import MainWindow
+            from save_load_manager import load_strands, apply_loaded_strands
+            from render_utils import RenderUtils
+            from PyQt5.QtGui import QPainter
+            import tempfile
+
+            main_window = self._get_main_window()
+            if main_window is None:
+                return None
+
+            canvas = main_window.canvas
+
+            # Clear existing strands
+            canvas.strands = []
+            canvas.strand_colors = {}
+            canvas.selected_strand = None
+            canvas.current_strand = None
+
+            # Parse JSON content
+            data = json.loads(json_content)
+
+            # Handle history format - extract current state data
+            if data.get('type') == 'OpenStrandStudioHistory':
+                current_step = data.get('current_step', 1)
+                states = data.get('states', [])
+                current_data = None
+                for state in states:
+                    if state['step'] == current_step:
+                        current_data = state['data']
+                        break
+
+                if not current_data:
+                    return None
+            else:
+                current_data = data
+
+            # Write to temp file for load_strands (it requires a file path)
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp:
+                json.dump(current_data, tmp)
+                temp_path = tmp.name
+
+            try:
+                strands, groups, _, _, _, _, _, shadow_overrides = load_strands(temp_path, canvas)
+            finally:
+                os.unlink(temp_path)
+
+            apply_loaded_strands(canvas, strands, groups, shadow_overrides)
+
+            # Configure canvas for export
+            canvas.show_grid = False
+            canvas.show_control_points = False
+            canvas.shadow_enabled = False
+            canvas.should_draw_names = False
+
+            if hasattr(canvas, 'is_attaching'):
+                canvas.is_attaching = False
+            if hasattr(canvas, 'attach_preview_strand'):
+                canvas.attach_preview_strand = None
+
+            for strand in canvas.strands:
+                strand.should_draw_shadow = False
+
+            # Calculate bounds and set canvas size dynamically
+            bounds = self._calculate_strands_bounds(canvas)
+            canvas_width = max(800, min(4000, int(bounds.width())))
+            canvas_height = max(600, min(3000, int(bounds.height())))
+            canvas.setFixedSize(canvas_width, canvas_height)
+            canvas.zoom_factor = 1.0
+            canvas.center_all_strands()
+            canvas.update()
+            QApplication.processEvents()
+
+            # Create image sized to actual content bounds
+            image_width = int(bounds.width() * scale_factor)
+            image_height = int(bounds.height() * scale_factor)
+            image = QImage(image_width, image_height, QImage.Format_ARGB32_Premultiplied)
+
+            if self.transparent_checkbox.isChecked():
+                image.fill(Qt.transparent)
+            else:
+                image.fill(Qt.white)
+
+            painter = QPainter(image)
+            RenderUtils.setup_painter(painter, enable_high_quality=True)
+            painter.scale(scale_factor, scale_factor)
+
+            # Translate to render content from bounds origin
+            painter.translate(-bounds.x(), -bounds.y())
+
+            for strand in canvas.strands:
+                strand.draw(painter, skip_painter_setup=True)
+
+            if canvas.current_strand:
+                canvas.current_strand.draw(painter, skip_painter_setup=True)
+
+            painter.end()
+
+            return image
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return None
+
+    def export_json(self):
+        """Export the current JSON data to a file chosen by the user."""
+        if not self.current_json_data:
+            QMessageBox.warning(self, "No Data", "Please generate a pattern first.")
+            return
+
+        m = self.m_spinner.value()
+        n = self.n_spinner.value()
+        variant = "lh" if self.lh_radio.isChecked() else "rh"
+        default_name = f"mxn_{variant}_{m}x{n}.json"
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export JSON",
+            default_name,
+            "JSON Files (*.json);;All Files (*)"
+        )
+
+        if file_path:
+            try:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(self.current_json_data)
+                self.status_label.setText(f"JSON exported to:\n{os.path.basename(file_path)}")
+            except Exception as e:
+                QMessageBox.critical(self, "Export Error", f"Failed to export JSON:\n{str(e)}")
+
+    def export_image(self):
+        """Export the current image to a file chosen by the user."""
+        if not self.current_image or self.current_image.isNull():
+            QMessageBox.warning(self, "No Image", "Please generate a pattern first.")
+            return
+
+        m = self.m_spinner.value()
+        n = self.n_spinner.value()
+        variant = "lh" if self.lh_radio.isChecked() else "rh"
+        default_name = f"mxn_{variant}_{m}x{n}.png"
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Image",
+            default_name,
+            "PNG Files (*.png);;JPEG Files (*.jpg *.jpeg);;All Files (*)"
+        )
+
+        if file_path:
+            try:
+                self.current_image.save(file_path)
+                self.status_label.setText(f"Image exported to:\n{os.path.basename(file_path)}")
+            except Exception as e:
+                QMessageBox.critical(self, "Export Error", f"Failed to export image:\n{str(e)}")
 
     def get_settings_directory(self):
         """Get settings directory."""

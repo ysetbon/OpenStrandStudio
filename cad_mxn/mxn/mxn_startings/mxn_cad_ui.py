@@ -26,7 +26,7 @@ from PyQt5.QtWidgets import (
     QComboBox, QCheckBox, QColorDialog, QMessageBox,
     QApplication, QSizePolicy
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QStandardPaths, QSize
+from PyQt5.QtCore import Qt, pyqtSignal, QStandardPaths, QSize, QRectF
 from PyQt5.QtGui import QColor, QPixmap, QImage
 
 # Add src directory to path for imports
@@ -104,8 +104,10 @@ class MxNGeneratorDialog(QDialog):
         self.colors = {}  # {set_number: QColor}
         self.color_buttons = {}  # {set_number: QPushButton}
         self.hex_labels = {}  # {set_number: QLabel}
-        self.last_json_path = None
-        self.last_image_path = None
+
+        # In-memory storage for generated content
+        self.current_json_data = None  # JSON string in memory
+        self.current_image = None  # QImage in memory
 
         # Base directory for output
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -568,6 +570,31 @@ class MxNGeneratorDialog(QDialog):
             self.status_label.setText(f"Error: {str(e)}")
             QMessageBox.critical(self, "Error", f"Failed to generate pattern:\n{str(e)}")
 
+    def _calculate_strands_bounds(self, canvas):
+        """Calculate the bounding box of all strands with padding."""
+        if not canvas.strands:
+            return QRectF(0, 0, 1200, 900)
+
+        min_x = min_y = float('inf')
+        max_x = max_y = float('-inf')
+
+        for strand in canvas.strands:
+            points = [strand.start, strand.end]
+            if hasattr(strand, 'control_point1') and strand.control_point1:
+                points.append(strand.control_point1)
+            if hasattr(strand, 'control_point2') and strand.control_point2:
+                points.append(strand.control_point2)
+
+            for point in points:
+                min_x = min(min_x, point.x())
+                max_x = max(max_x, point.x())
+                min_y = min(min_y, point.y())
+                max_y = max(max_y, point.y())
+
+        padding = 100
+        return QRectF(min_x - padding, min_y - padding,
+                      max_x - min_x + 2*padding, max_y - min_y + 2*padding)
+
     def _export_json_to_image(self, json_path, output_path, scale_factor):
         """Export JSON to image using MainWindow and canvas (same as export_mxn_images.py)."""
         try:
@@ -631,17 +658,21 @@ class MxNGeneratorDialog(QDialog):
             for strand in canvas.strands:
                 strand.should_draw_shadow = False
 
-            canvas.setFixedSize(1200, 900)
+            # Calculate bounds and set canvas size dynamically
+            bounds = self._calculate_strands_bounds(canvas)
+            canvas_width = max(800, min(4000, int(bounds.width())))
+            canvas_height = max(600, min(3000, int(bounds.height())))
+            canvas.setFixedSize(canvas_width, canvas_height)
             canvas.zoom_factor = 1.0
             canvas.center_all_strands()
             canvas.update()
             QApplication.processEvents()
 
-            # Create image
-            canvas_size = canvas.size()
-            high_res_size = canvas_size * scale_factor
+            # Create image sized to actual content bounds
+            image_width = int(bounds.width() * scale_factor)
+            image_height = int(bounds.height() * scale_factor)
+            image = QImage(image_width, image_height, QImage.Format_ARGB32_Premultiplied)
 
-            image = QImage(high_res_size, QImage.Format_ARGB32_Premultiplied)
             if self.transparent_checkbox.isChecked():
                 image.fill(Qt.transparent)
             else:
@@ -651,22 +682,11 @@ class MxNGeneratorDialog(QDialog):
             RenderUtils.setup_painter(painter, enable_high_quality=True)
             painter.scale(scale_factor, scale_factor)
 
-            canvas_center = QPointF(canvas_size.width() / 2, canvas_size.height() / 2)
-            painter.translate(canvas_center)
-
-            if hasattr(canvas, 'pan_offset_x') and hasattr(canvas, 'pan_offset_y'):
-                painter.translate(canvas.pan_offset_x, canvas.pan_offset_y)
-
-            if hasattr(canvas, 'zoom_factor') and canvas.zoom_factor != 1.0:
-                painter.scale(canvas.zoom_factor, canvas.zoom_factor)
-
-            painter.translate(-canvas_center)
+            # Translate to render content from bounds origin
+            painter.translate(-bounds.x(), -bounds.y())
 
             for strand in canvas.strands:
-                if strand == canvas.selected_strand:
-                    canvas.draw_highlighted_strand(painter, strand)
-                else:
-                    strand.draw(painter, skip_painter_setup=True)
+                strand.draw(painter, skip_painter_setup=True)
 
             if canvas.current_strand:
                 canvas.current_strand.draw(painter, skip_painter_setup=True)

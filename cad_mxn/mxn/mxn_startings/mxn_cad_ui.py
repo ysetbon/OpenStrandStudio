@@ -638,7 +638,6 @@ class MxNGeneratorDialog(QDialog):
             self.status_label.setText(f"Error: {str(e)}")
             self.export_json_btn.setEnabled(False)
             self.export_image_btn.setEnabled(False)
-            QMessageBox.critical(self, "Error", f"Failed to generate pattern:\n{str(e)}")
 
     def _calculate_strands_bounds(self, canvas):
         """Calculate the bounding box of all strands with padding."""

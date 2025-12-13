@@ -27,7 +27,7 @@ from PyQt5.QtWidgets import (
     QApplication, QSizePolicy, QFileDialog
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QStandardPaths, QSize, QRectF
-from PyQt5.QtGui import QColor, QPixmap, QImage
+from PyQt5.QtGui import QColor, QPixmap, QImage, QFont
 
 # Add src directory to path for imports
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -99,6 +99,7 @@ class MxNGeneratorDialog(QDialog):
     """Dialog for generating MxN strand patterns with live image preview."""
 
     pattern_generated = pyqtSignal(str)  # Emits JSON path when generated
+    BOUNDS_PADDING = 100
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -119,6 +120,9 @@ class MxNGeneratorDialog(QDialog):
         # In-memory storage for generated content
         self.current_json_data = None  # JSON string in memory
         self.current_image = None  # QImage in memory
+        # Emoji markers (stable base labels per current grid size)
+        self._emoji_base_labels = None
+        self._emoji_base_key = None  # (m, n)
 
         # Base directory for output
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -189,6 +193,9 @@ class MxNGeneratorDialog(QDialog):
 
         # === Export Options Section ===
         self._setup_export_section(left_layout)
+
+        # === Endpoint Emojis Section ===
+        self._setup_endpoint_emojis_section(left_layout)
 
         # === Action Buttons ===
         self._setup_action_buttons(left_layout)
@@ -347,6 +354,41 @@ class MxNGeneratorDialog(QDialog):
 
         parent_layout.addWidget(group)
 
+    def _setup_endpoint_emojis_section(self, parent_layout):
+        """Create endpoint emoji marker options (rotate labels around perimeter)."""
+        group = QGroupBox("Endpoint Emojis")
+        layout = QGridLayout(group)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setHorizontalSpacing(8)
+        layout.setVerticalSpacing(6)
+
+        self.show_emojis_checkbox = QCheckBox("Show animal markers")
+        self.show_emojis_checkbox.setChecked(True)
+        self.show_emojis_checkbox.stateChanged.connect(self._on_emoji_settings_changed)
+
+        k_label = QLabel("Rotation k:")
+        self.emoji_k_spinner = QSpinBox()
+        self.emoji_k_spinner.setRange(-9999, 9999)
+        self.emoji_k_spinner.setValue(0)
+        self.emoji_k_spinner.valueChanged.connect(self._on_emoji_settings_changed)
+
+        self.emoji_dir_group = QButtonGroup(self)
+        self.emoji_cw_radio = QRadioButton("CW")
+        self.emoji_ccw_radio = QRadioButton("CCW")
+        self.emoji_dir_group.addButton(self.emoji_cw_radio, 0)
+        self.emoji_dir_group.addButton(self.emoji_ccw_radio, 1)
+        self.emoji_cw_radio.setChecked(True)
+        self.emoji_cw_radio.toggled.connect(self._on_emoji_settings_changed)
+        self.emoji_ccw_radio.toggled.connect(self._on_emoji_settings_changed)
+
+        layout.addWidget(self.show_emojis_checkbox, 0, 0, 1, 3)
+        layout.addWidget(k_label, 1, 0)
+        layout.addWidget(self.emoji_k_spinner, 1, 1)
+        layout.addWidget(self.emoji_cw_radio, 1, 2)
+        layout.addWidget(self.emoji_ccw_radio, 2, 2)
+
+        parent_layout.addWidget(group)
+
     def _setup_action_buttons(self, parent_layout):
         """Create main action buttons."""
         # Generate button (prominent)
@@ -442,8 +484,22 @@ class MxNGeneratorDialog(QDialog):
         # Clear in-memory data and disable export buttons
         self.current_json_data = None
         self.current_image = None
+        self._emoji_base_labels = None
+        self._emoji_base_key = None
         self.export_json_btn.setEnabled(False)
         self.export_image_btn.setEnabled(False)
+
+    def _on_emoji_settings_changed(self):
+        """Re-render preview when emoji options change (no geometry changes)."""
+        if not self.current_json_data:
+            return
+        scale_factor = self.scale_combo.currentData()
+        image = self._generate_image_in_memory(self.current_json_data, scale_factor)
+        if image and not image.isNull():
+            self.current_image = image
+            self.preview_widget.set_qimage(image)
+            self.export_image_btn.setEnabled(True)
+            self.save_color_settings()
 
     def update_color_pickers(self):
         """Dynamically update color pickers when M or N changes."""
@@ -681,9 +737,322 @@ class MxNGeneratorDialog(QDialog):
                 min_y = min(min_y, point.y())
                 max_y = max(max_y, point.y())
 
-        padding = 100
+        padding = self.BOUNDS_PADDING
         return QRectF(min_x - padding, min_y - padding,
                       max_x - min_x + 2*padding, max_y - min_y + 2*padding)
+
+    def _emoji_animal_pool(self):
+        """Base emoji pool used for endpoint markers."""
+        return [
+            "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯",
+            "🦁", "🐮", "🐷", "🐸", "🐵", "🐔", "🐧", "🐦", "🐤", "🦆",
+            "🦉", "🦇", "🐺", "🐗", "🐴", "🦄", "🐝", "🐛", "🦋", "🐌",
+            "🐞", "🐢", "🐍", "🦎", "🦖", "🦕", "🐙", "🦑", "🦐", "🦞",
+            "🦀", "🐡", "🐠", "🐟", "🐬", "🐳", "🐊", "🦓", "🦒", "🦬"
+        ]
+
+    def _emoji_make_labels(self, count, base=None):
+        """Create stable base labels of length count, adding numeric suffix if needed."""
+        if base is None:
+            base = self._emoji_animal_pool()
+        labels = []
+        if count <= 0:
+            return labels
+        base_len = max(1, len(base))
+        for i in range(count):
+            emoji = base[i % base_len]
+            k = i // base_len
+            labels.append(emoji if k == 0 else f"{emoji}{k + 1}")
+        return labels
+
+    def _emoji_rotate_labels(self, labels, k, direction):
+        """Rotate labels by k steps (CW/CCW) around their ring order."""
+        n = len(labels)
+        if n == 0:
+            return labels
+        shift = k % n
+        if shift < 0:
+            shift += n
+        if direction == "ccw":
+            shift = (n - shift) % n
+        out = [None] * n
+        for i in range(n):
+            out[(i + shift) % n] = labels[i]
+        return out
+
+    def _emoji_slot_list_from_rect(self, rect, m, n):
+        """Fallback: compute endpoint slot anchor points from a rectangle layout."""
+        if m < 1 or n < 1:
+            return []
+
+        # Build side lists in geometric order:
+        # - top/bottom: left->right (vertical strand index i)
+        # - left/right: top->bottom (horizontal strand index j)
+        top_slots = []
+        right_slots = []
+        bottom_slots = []
+        left_slots = []
+
+        for i in range(m):
+            x = rect.left() + (i + 0.5) * (rect.width() / m)
+            top_slots.append({"side": "top", "side_index": i, "x": x, "y": rect.top(), "nx": 0.0, "ny": -1.0})
+            bottom_slots.append({"side": "bottom", "side_index": i, "x": x, "y": rect.bottom(), "nx": 0.0, "ny": 1.0})
+
+        for j in range(n):
+            y = rect.top() + (j + 0.5) * (rect.height() / n)
+            right_slots.append({"side": "right", "side_index": j, "x": rect.right(), "y": y, "nx": 1.0, "ny": 0.0})
+            left_slots.append({"side": "left", "side_index": j, "x": rect.left(), "y": y, "nx": -1.0, "ny": 0.0})
+
+        # Perimeter order (clockwise, starting at top-left):
+        # top (L->R), right (T->B), bottom (R->L), left (B->T)
+        slots = top_slots + right_slots + list(reversed(bottom_slots)) + list(reversed(left_slots))
+        for idx, s in enumerate(slots):
+            s["id"] = idx
+        return slots
+
+    def _emoji_compute_slots(self, canvas, bounds, m, n):
+        """
+        Compute perimeter-ordered endpoint slots.
+        Preferred: use actual strand endpoints; fallback to a rectangle distribution.
+        """
+        padding = self.BOUNDS_PADDING
+        content = QRectF(bounds.x() + padding, bounds.y() + padding,
+                         max(1.0, bounds.width() - 2 * padding),
+                         max(1.0, bounds.height() - 2 * padding))
+
+        endpoints = []
+        for strand in getattr(canvas, "strands", []) or []:
+            if hasattr(strand, "start") and strand.start:
+                endpoints.append(strand.start)
+            if hasattr(strand, "end") and strand.end:
+                endpoints.append(strand.end)
+
+        tol = 8.0
+        top_pts, right_pts, bottom_pts, left_pts = [], [], [], []
+        for p in endpoints:
+            x = float(p.x())
+            y = float(p.y())
+            if abs(y - content.top()) <= tol:
+                top_pts.append((x, y))
+            elif abs(x - content.right()) <= tol:
+                right_pts.append((x, y))
+            elif abs(y - content.bottom()) <= tol:
+                bottom_pts.append((x, y))
+            elif abs(x - content.left()) <= tol:
+                left_pts.append((x, y))
+
+        if not (len(top_pts) == m and len(bottom_pts) == m and len(left_pts) == n and len(right_pts) == n):
+            return self._emoji_slot_list_from_rect(content, m, n)
+
+        # Sort into geometric order (not perimeter order) so side_index matches strand index:
+        # - top/bottom: left->right corresponds to vertical strand i
+        # - left/right: top->bottom corresponds to horizontal strand j
+        top_sorted = sorted(top_pts, key=lambda t: t[0])     # left->right
+        right_sorted = sorted(right_pts, key=lambda t: t[1])  # top->bottom
+        bottom_sorted = sorted(bottom_pts, key=lambda t: t[0])  # left->right
+        left_sorted = sorted(left_pts, key=lambda t: t[1])    # top->bottom
+
+        top_slots = [{"side": "top", "side_index": i, "x": x, "y": y, "nx": 0.0, "ny": -1.0}
+                     for i, (x, y) in enumerate(top_sorted)]
+        right_slots = [{"side": "right", "side_index": j, "x": x, "y": y, "nx": 1.0, "ny": 0.0}
+                       for j, (x, y) in enumerate(right_sorted)]
+        bottom_slots = [{"side": "bottom", "side_index": i, "x": x, "y": y, "nx": 0.0, "ny": 1.0}
+                        for i, (x, y) in enumerate(bottom_sorted)]
+        left_slots = [{"side": "left", "side_index": j, "x": x, "y": y, "nx": -1.0, "ny": 0.0}
+                      for j, (x, y) in enumerate(left_sorted)]
+
+        # Perimeter order (clockwise): top, right, bottom reversed, left reversed
+        slots = top_slots + right_slots + list(reversed(bottom_slots)) + list(reversed(left_slots))
+        for idx, s in enumerate(slots):
+            s["id"] = idx
+        return slots
+
+    def _draw_endpoint_emojis(self, painter, canvas, bounds, m, n):
+        """
+        Draw rotated animal emoji labels near each endpoint slot.
+
+        Important: labels are assigned PER ACTUAL STRAND OBJECT (e.g. layer_name like "2_3"),
+        so each strand's start+end share the same animal at rotation 0 (and after rotation).
+        """
+        if not hasattr(self, "show_emojis_checkbox") or not self.show_emojis_checkbox.isChecked():
+            return
+
+        padding = self.BOUNDS_PADDING
+        content = QRectF(bounds.x() + padding, bounds.y() + padding,
+                         max(1.0, bounds.width() - 2 * padding),
+                         max(1.0, bounds.height() - 2 * padding))
+
+        # Helper: map a perimeter position (clockwise, starting at top-left) to a scalar for ordering.
+        # Note: x/y can be interior; we project onto the corresponding edge by using x or y as needed.
+        def perimeter_t(side, x, y):
+            w = content.width()
+            h = content.height()
+            if side == "top":
+                return (x - content.left())
+            if side == "right":
+                return w + (y - content.top())
+            if side == "bottom":
+                return w + h + (content.right() - x)
+            # left
+            return 2 * w + h + (content.bottom() - y)
+
+        # Collect strands with their two endpoints (we infer which sides they belong to from direction).
+        strands_info = []
+        strands = getattr(canvas, "strands", []) or []
+        for si, strand in enumerate(strands):
+            if not (hasattr(strand, "start") and hasattr(strand, "end") and strand.start and strand.end):
+                continue
+
+            # Only label layer "_2" and "_3" strands (skip "_1").
+            # In this project, `layer_name` commonly ends with "_1"/"_2"/"_3" (including composite names).
+            layer_name = getattr(strand, "layer_name", "") or getattr(strand, "name", "") or ""
+            if layer_name:
+                if layer_name.endswith("_1"):
+                    continue
+                if not (layer_name.endswith("_2") or layer_name.endswith("_3")):
+                    continue
+            else:
+                # Fallback when no layer_name exists.
+                try:
+                    set_num = int(getattr(strand, "set_number", -1))
+                except Exception:
+                    set_num = -1
+                if set_num not in (2, 3):
+                    continue
+
+            x1, y1 = float(strand.start.x()), float(strand.start.y())
+            x2, y2 = float(strand.end.x()), float(strand.end.y())
+
+            dx = x2 - x1
+            dy = y2 - y1
+
+            # Assign sides by dominant direction (more robust than "distance to border").
+            if abs(dx) >= abs(dy):
+                # Horizontal: left/right by x
+                if x1 <= x2:
+                    ep_a = {"x": x1, "y": y1, "side": "left", "nx": -1.0, "ny": 0.0}
+                    ep_b = {"x": x2, "y": y2, "side": "right", "nx": 1.0, "ny": 0.0}
+                else:
+                    ep_a = {"x": x2, "y": y2, "side": "left", "nx": -1.0, "ny": 0.0}
+                    ep_b = {"x": x1, "y": y1, "side": "right", "nx": 1.0, "ny": 0.0}
+            else:
+                # Vertical: top/bottom by y
+                if y1 <= y2:
+                    ep_a = {"x": x1, "y": y1, "side": "top", "nx": 0.0, "ny": -1.0}
+                    ep_b = {"x": x2, "y": y2, "side": "bottom", "nx": 0.0, "ny": 1.0}
+                else:
+                    ep_a = {"x": x2, "y": y2, "side": "top", "nx": 0.0, "ny": -1.0}
+                    ep_b = {"x": x1, "y": y1, "side": "bottom", "nx": 0.0, "ny": 1.0}
+
+            strand_id = layer_name or f"{getattr(strand, 'set_number', 'set')}_{si}"
+
+            # Anchor by the earliest endpoint in clockwise perimeter order.
+            t1 = perimeter_t(ep_a["side"], ep_a["x"], ep_a["y"])
+            t2 = perimeter_t(ep_b["side"], ep_b["x"], ep_b["y"])
+            anchor_t = min(t1, t2)
+
+            strands_info.append({
+                "id": strand_id,
+                "anchor_t": anchor_t,
+                "endpoints": [ep_a, ep_b],
+                "width": float(getattr(strand, "width", getattr(canvas, "strand_width", 46))),
+            })
+
+        if not strands_info:
+            return
+
+        # Deduplicate by id (some strand ids may repeat); keep first occurrence deterministically.
+        strands_info.sort(key=lambda s: (s["anchor_t"], str(s["id"])))
+        ordered_ids = []
+        seen = set()
+        for s in strands_info:
+            sid = s["id"]
+            if sid in seen:
+                continue
+            seen.add(sid)
+            ordered_ids.append(sid)
+
+        base_key = (m, n, tuple(ordered_ids))
+        if self._emoji_base_key != base_key or not self._emoji_base_labels or len(self._emoji_base_labels) != len(ordered_ids):
+            self._emoji_base_key = base_key
+            self._emoji_base_labels = self._emoji_make_labels(len(ordered_ids))
+
+        direction = "cw" if self.emoji_cw_radio.isChecked() else "ccw"
+        k = int(self.emoji_k_spinner.value())
+        rotated = self._emoji_rotate_labels(self._emoji_base_labels, k, direction)
+        label_by_id = {sid: rotated[i] for i, sid in enumerate(ordered_ids)}
+
+        # Draw centered emoji text (Qt drawText uses baseline; we want visual centering).
+        font = QFont("Segoe UI Emoji")
+        font.setPointSize(20)
+        painter.setFont(font)
+        fm = painter.fontMetrics()
+
+        # Deduplicate by endpoint position so each border "point" draws exactly one emoji,
+        # even if multiple strands share the same endpoint.
+        # We keep the first label encountered in the deterministic `strands_info` order.
+        q = 0.5  # snap tolerance in px
+        def ep_key(ep):
+            return (
+                ep.get("side", ""),
+                int(round(float(ep["x"]) / q)),
+                int(round(float(ep["y"]) / q)),
+            )
+
+        endpoint_map = {}  # key -> {"ep": ep, "txt": txt, "width": width}
+        for s in strands_info:
+            txt = label_by_id.get(s["id"])
+            if not txt:
+                continue
+            for ep in s["endpoints"]:
+                key = ep_key(ep)
+                if key not in endpoint_map:
+                    endpoint_map[key] = {"ep": ep, "txt": txt, "width": float(s.get("width", 0.0) or 0.0)}
+                else:
+                    # Use the widest strand for outward offset so label sits outside consistently.
+                    endpoint_map[key]["width"] = max(endpoint_map[key]["width"], float(s.get("width", 0.0) or 0.0))
+
+        painter.save()
+        for item in endpoint_map.values():
+            ep = item["ep"]
+            txt = item["txt"]
+            width = item["width"]
+
+            # Offset based on strand width + font, so it sits outside the stitch consistently.
+            outward = (width * 0.5) + (fm.height() * 0.65) + 10.0
+            outward = min(outward, max(24.0, self.BOUNDS_PADDING * 0.8))
+
+            # Project to the exact border edge first so all emojis on a side align:
+            # - left/right share the same x "column"
+            # - top/bottom share the same y "row"
+            side = ep.get("side", "")
+            base_x = float(ep["x"])
+            base_y = float(ep["y"])
+            if side == "left":
+                base_x = float(content.left())
+            elif side == "right":
+                base_x = float(content.right())
+            elif side == "top":
+                base_y = float(content.top())
+            elif side == "bottom":
+                base_y = float(content.bottom())
+
+            x = base_x + float(ep["nx"]) * outward
+            y = base_y + float(ep["ny"]) * outward
+
+            # Centered rect around (x,y)
+            br = fm.boundingRect(txt)
+            w = max(1, br.width() + 6)
+            h = max(1, br.height() + 6)
+            rect = QRectF(x - w / 2.0, y - h / 2.0, w, h)
+
+            # Shadow + text (centered)
+            painter.setPen(QColor(0, 0, 0, 190))
+            painter.drawText(QRectF(rect.x() + 1, rect.y() + 1, rect.width(), rect.height()), Qt.AlignCenter, txt)
+            painter.setPen(QColor(255, 255, 255, 255))
+            painter.drawText(rect, Qt.AlignCenter, txt)
+
+        painter.restore()
 
     def _export_json_to_image(self, json_path, output_path, scale_factor):
         """Export JSON to image using MainWindow and canvas (same as export_mxn_images.py)."""
@@ -780,6 +1149,9 @@ class MxNGeneratorDialog(QDialog):
 
             if canvas.current_strand:
                 canvas.current_strand.draw(painter, skip_painter_setup=True)
+
+            # Draw endpoint emojis after strands (labels rotate around perimeter; geometry unchanged)
+            self._draw_endpoint_emojis(painter, canvas, bounds, self.m_spinner.value(), self.n_spinner.value())
 
             painter.end()
 
@@ -891,6 +1263,9 @@ class MxNGeneratorDialog(QDialog):
             if canvas.current_strand:
                 canvas.current_strand.draw(painter, skip_painter_setup=True)
 
+            # Draw endpoint emojis after strands (labels rotate around perimeter; geometry unchanged)
+            self._draw_endpoint_emojis(painter, canvas, bounds, self.m_spinner.value(), self.n_spinner.value())
+
             painter.end()
 
             return image
@@ -977,6 +1352,11 @@ class MxNGeneratorDialog(QDialog):
             'last_n': self.n_spinner.value(),
             'last_variant': 'lh' if self.lh_radio.isChecked() else 'rh',
             'last_stretch': bool(self.stretch_checkbox.isChecked()),
+            'emoji': {
+                'enabled': bool(getattr(self, "show_emojis_checkbox", None) and self.show_emojis_checkbox.isChecked()),
+                'k': int(getattr(self, "emoji_k_spinner", None).value()) if getattr(self, "emoji_k_spinner", None) else 0,
+                'dir': 'cw' if (getattr(self, "emoji_cw_radio", None) and self.emoji_cw_radio.isChecked()) else 'ccw',
+            },
             'colors': {}
         }
 
@@ -1018,6 +1398,21 @@ class MxNGeneratorDialog(QDialog):
 
             if 'last_stretch' in colors_data:
                 self.stretch_checkbox.setChecked(bool(colors_data.get('last_stretch')))
+
+            # Emoji settings (optional)
+            emoji = colors_data.get('emoji') or {}
+            if hasattr(self, "show_emojis_checkbox") and "enabled" in emoji:
+                self.show_emojis_checkbox.setChecked(bool(emoji.get("enabled")))
+            if hasattr(self, "emoji_k_spinner") and "k" in emoji:
+                try:
+                    self.emoji_k_spinner.setValue(int(emoji.get("k", 0)))
+                except Exception:
+                    pass
+            if hasattr(self, "emoji_cw_radio") and hasattr(self, "emoji_ccw_radio") and "dir" in emoji:
+                if str(emoji.get("dir", "cw")).lower() == "ccw":
+                    self.emoji_ccw_radio.setChecked(True)
+                else:
+                    self.emoji_cw_radio.setChecked(True)
 
             if 'colors' in colors_data:
                 for set_num_str, color_dict in colors_data['colors'].items():

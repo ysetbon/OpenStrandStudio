@@ -40,6 +40,8 @@ if src_dir not in sys.path:
 # Import generators
 from mxn_lh import generate_json as generate_lh_json
 from mxn_rh import generate_json as generate_rh_json
+from mxn_lh_strech import generate_json as generate_lh_strech_json
+from mxn_rh_stretch import generate_json as generate_rh_stretch_json
 
 
 class ImagePreviewWidget(QLabel):
@@ -161,15 +163,20 @@ class MxNGeneratorDialog(QDialog):
         self.resize(1100, 800)
 
         main_layout = QHBoxLayout(self)
-        main_layout.setContentsMargins(10, 10, 10, 10)
-        main_layout.setSpacing(10)
+        # Tighter outer padding
+        main_layout.setContentsMargins(6, 6, 6, 6)
+        main_layout.setSpacing(6)
 
         # Left panel - Controls
         left_panel = QWidget()
         left_layout = QVBoxLayout(left_panel)
-        left_layout.setContentsMargins(5, 5, 5, 5)
-        left_layout.setSpacing(10)
-        left_panel.setFixedWidth(350)
+        # Tighter inner padding + spacing between groups
+        left_layout.setContentsMargins(4, 4, 4, 4)
+        left_layout.setSpacing(6)
+        # Don't hard-fix the width; DPI/font scaling can otherwise crop content.
+        # Use a scroll area wrapper so the control panel is always fully accessible.
+        # Keep this compact so the preview isn't starved for space
+        left_panel.setMinimumWidth(420)
 
         # === Grid Size Section ===
         self._setup_grid_size_section(left_layout)
@@ -186,8 +193,7 @@ class MxNGeneratorDialog(QDialog):
         # === Action Buttons ===
         self._setup_action_buttons(left_layout)
 
-        # Add stretch to push everything up
-        left_layout.addStretch()
+        # Don't force extra empty space at the bottom; the scroll area can handle overflow.
 
         # Right panel - Image Preview
         right_panel = QWidget()
@@ -203,52 +209,64 @@ class MxNGeneratorDialog(QDialog):
         right_layout.addWidget(self.preview_widget)
 
         # Add panels to main layout
-        main_layout.addWidget(left_panel)
+        left_scroll = QScrollArea()
+        left_scroll.setWidgetResizable(True)
+        # If the window is narrow / DPI scaling is high, allow horizontal scrolling
+        # rather than clipping labels and controls.
+        left_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        left_scroll.setWidget(left_panel)
+        left_scroll.setMinimumWidth(440)
+        main_layout.addWidget(left_scroll)
         main_layout.addWidget(right_panel, 1)  # Give preview more space
 
     def _setup_grid_size_section(self, parent_layout):
         """Create grid size M x N spinboxes."""
         group = QGroupBox("Grid Size")
-        layout = QHBoxLayout(group)
+        # Stack into 2 rows so it doesn't clip on smaller widths.
+        layout = QGridLayout(group)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setHorizontalSpacing(8)
+        layout.setVerticalSpacing(6)
 
         # M spinner (vertical strands)
         m_label = QLabel("M (Vertical):")
         self.m_spinner = QSpinBox()
         self.m_spinner.setRange(1, 10)
         self.m_spinner.setValue(self.m_value)
-        self.m_spinner.setMinimumWidth(50)
+        self.m_spinner.setMinimumWidth(60)
         self.m_spinner.valueChanged.connect(self._on_grid_size_changed)
-
-        # "x" label
-        x_label = QLabel(" x ")
-        x_label.setAlignment(Qt.AlignCenter)
 
         # N spinner (horizontal strands)
         n_label = QLabel("N (Horiz):")
         self.n_spinner = QSpinBox()
         self.n_spinner.setRange(1, 10)
         self.n_spinner.setValue(self.n_value)
-        self.n_spinner.setMinimumWidth(50)
+        self.n_spinner.setMinimumWidth(60)
         self.n_spinner.valueChanged.connect(self._on_grid_size_changed)
 
-        layout.addWidget(m_label)
-        layout.addWidget(self.m_spinner)
-        layout.addWidget(x_label)
-        layout.addWidget(n_label)
-        layout.addWidget(self.n_spinner)
-        layout.addStretch()
+        layout.addWidget(m_label, 0, 0)
+        layout.addWidget(self.m_spinner, 0, 1)
+        layout.addWidget(n_label, 1, 0)
+        layout.addWidget(self.n_spinner, 1, 1)
+        layout.setColumnStretch(2, 1)
 
         parent_layout.addWidget(group)
 
     def _setup_variant_section(self, parent_layout):
         """Create LH/RH variant radio buttons."""
         group = QGroupBox("Variant")
-        layout = QHBoxLayout(group)
+        # Use VBoxLayout for simpler vertical stacking without clipping
+        layout = QVBoxLayout(group)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(6)
 
         self.variant_group = QButtonGroup(self)
 
         self.lh_radio = QRadioButton("Left-Hand (LH)")
         self.rh_radio = QRadioButton("Right-Hand (RH)")
+        self.stretch_checkbox = QCheckBox("Stretch")
+        # Stretch doesn't change set count, but clearing preview/status is still desired
+        self.stretch_checkbox.stateChanged.connect(self._on_grid_size_changed)
 
         self.variant_group.addButton(self.lh_radio, 0)
         self.variant_group.addButton(self.rh_radio, 1)
@@ -257,7 +275,7 @@ class MxNGeneratorDialog(QDialog):
 
         layout.addWidget(self.lh_radio)
         layout.addWidget(self.rh_radio)
-        layout.addStretch()
+        layout.addWidget(self.stretch_checkbox)
 
         parent_layout.addWidget(group)
 
@@ -570,7 +588,8 @@ class MxNGeneratorDialog(QDialog):
         m = self.m_spinner.value()
         n = self.n_spinner.value()
         is_lh = self.lh_radio.isChecked()
-        variant = "lh" if is_lh else "rh"
+        is_stretch = self.stretch_checkbox.isChecked()
+        variant = ("lh" if is_lh else "rh") + ("_stretch" if is_stretch else "")
         scale_factor = self.scale_combo.currentData()
 
         self.status_label.setText("Generating pattern...")
@@ -579,9 +598,9 @@ class MxNGeneratorDialog(QDialog):
         try:
             # Step 1: Generate JSON using the actual generator
             if is_lh:
-                json_content = generate_lh_json(m, n)
+                json_content = generate_lh_strech_json(m, n) if is_stretch else generate_lh_json(m, n)
             else:
-                json_content = generate_rh_json(m, n)
+                json_content = generate_rh_stretch_json(m, n) if is_stretch else generate_rh_json(m, n)
 
             # Step 2: Apply custom colors to the JSON
             data = json.loads(json_content)
@@ -625,7 +644,9 @@ class MxNGeneratorDialog(QDialog):
                 self.export_json_btn.setEnabled(True)
                 self.export_image_btn.setEnabled(True)
 
-                self.status_label.setText(f"Generated {m}x{n} {variant.upper()} pattern in memory\nUse export buttons to save files")
+                self.status_label.setText(
+                    f"Generated {m}x{n} {variant.upper()} pattern in memory\nUse export buttons to save files"
+                )
                 self.save_color_settings()
             else:
                 self.status_label.setText("Failed to generate image")
@@ -887,7 +908,9 @@ class MxNGeneratorDialog(QDialog):
 
         m = self.m_spinner.value()
         n = self.n_spinner.value()
-        variant = "lh" if self.lh_radio.isChecked() else "rh"
+        is_stretch = self.stretch_checkbox.isChecked()
+        base_variant = "lh" if self.lh_radio.isChecked() else "rh"
+        variant = base_variant + ("_strech" if (is_stretch and base_variant == "lh") else ("_stretch" if is_stretch else ""))
         default_name = f"mxn_{variant}_{m}x{n}.json"
 
         file_path, _ = QFileDialog.getSaveFileName(
@@ -913,7 +936,9 @@ class MxNGeneratorDialog(QDialog):
 
         m = self.m_spinner.value()
         n = self.n_spinner.value()
-        variant = "lh" if self.lh_radio.isChecked() else "rh"
+        is_stretch = self.stretch_checkbox.isChecked()
+        base_variant = "lh" if self.lh_radio.isChecked() else "rh"
+        variant = base_variant + ("_strech" if (is_stretch and base_variant == "lh") else ("_stretch" if is_stretch else ""))
         default_name = f"mxn_{variant}_{m}x{n}.png"
 
         file_path, _ = QFileDialog.getSaveFileName(
@@ -951,6 +976,7 @@ class MxNGeneratorDialog(QDialog):
             'last_m': self.m_spinner.value(),
             'last_n': self.n_spinner.value(),
             'last_variant': 'lh' if self.lh_radio.isChecked() else 'rh',
+            'last_stretch': bool(self.stretch_checkbox.isChecked()),
             'colors': {}
         }
 
@@ -989,6 +1015,9 @@ class MxNGeneratorDialog(QDialog):
                 self.rh_radio.setChecked(True)
             else:
                 self.lh_radio.setChecked(True)
+
+            if 'last_stretch' in colors_data:
+                self.stretch_checkbox.setChecked(bool(colors_data.get('last_stretch')))
 
             if 'colors' in colors_data:
                 for set_num_str, color_dict in colors_data['colors'].items():

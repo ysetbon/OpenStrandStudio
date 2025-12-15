@@ -694,11 +694,11 @@ class EmojiRenderer:
         This draws a large circular arrow (CW or CCW) with the k value
         displayed in the center of the circle.
 
-        Design:
-        - CCW (counter-clockwise): Nearly complete circle with gap at ~8 o'clock,
-          solid triangle arrowhead at ~9 o'clock pointing counter-clockwise
-        - CW (clockwise): Vertical mirror - gap at ~4 o'clock,
-          solid triangle arrowhead at ~3 o'clock pointing clockwise
+        Design matches the reference SVG:
+        - Arc with stroke-linecap="butt" (flat ends)
+        - Thick stroke relative to radius (~42% ratio)
+        - Isosceles triangle arrowhead with base midpoint at arc endpoint
+        - Arrowhead rotated to match arc tangent + offset angle
 
         Args:
             painter: QPainter to draw with
@@ -729,134 +729,167 @@ class EmojiRenderer:
 
         painter.save()
 
-        # Size of the circular arrow indicator
-        size = 96  # diameter of the circle
-        arrow_thickness = 8
+        # Size of the circular arrow indicator.
+        # We will render the *exact* reference SVG geometry in a 604x604
+        # viewbox, then scale it into this `size` box.
+        size = 96  # diameter of the outer icon box
         margin = 20
 
         # Position in top-right corner
         center_x = bounds.right() - margin - size / 2
         center_y = bounds.top() + margin + size / 2
-        radius = size / 2 - arrow_thickness
-
-        # Styling:
-        # - Transparent BG: use a white outline so the badge reads on dark/colored canvases.
-        # - Non-transparent (white) BG: use a black outline (no white halo).
-        is_transparent_bg = bool(settings.get("transparent", True))
-        outline_color = QColor(255, 255, 255, 255) if is_transparent_bg else QColor(0, 0, 0, 255)
+        # Styling: match the provided SVG (solid black fill), but add a stroke
+        # around the arrow for legibility (same approach as the number).
         fill_color = QColor(0, 0, 0, 255)
 
-        # Reference icon target (matches the user's provided arrow image):
-        # - CCW: small gap around ~7:30-8 o'clock (bottom-left), arrowhead at ~10-11 o'clock (top-left)
-        # - CW: vertical mirror of CCW (gap bottom-right, arrowhead top-right)
-        #
-        # Qt angle system (degrees, counter-clockwise from 3 o'clock):
-        #   3 o'clock = 0°, 12 o'clock = 90°, 9 o'clock = 180°, 6 o'clock = 270°
-        #
-        # NOTE: We draw the near-full arc with the gap defined by arc endpoints,
-        # and place the arrowhead independently along the arc so it matches the
-        # visual reference (arrowhead is not at the arc endpoint).
+        is_transparent_bg = bool(settings.get("transparent", True))
+        outline_color = QColor(255, 255, 255, 255) if is_transparent_bg else QColor(0, 0, 0, 0)
+        outline_number_font = 4 if is_transparent_bg else 2
+        # These widths are in the SVG coordinate space (604x604) and get scaled down with `s`.
+        # (Border thickness in device pixels ~= arrow_outline_extra * s)
+        arrow_outline_extra = 8.0 if is_transparent_bg else 5.0
+        # For a filled shape outlined then filled: visible border ~= pen_width/2.
+        # Match the triangle border to the shaft border (which is `arrow_outline_extra`).
+        arrowhead_outline_width = 2.0 * arrow_outline_extra
 
-        # Small gap placement (CCW bottom-left; CW mirrored bottom-right).
-        gap_center_deg = 225 if not is_cw else 315
-        gap_half = 18  # small gap like the reference icon
-        arc_span = 360 - 2 * gap_half  # near-full arc
+        # Nudge the icon inward so the outline isn't clipped at the top/right edges.
+        # (This replaces the previous SquareCap trick, which made the end "side line" too thick.)
+        margin += 3 if is_transparent_bg else 2
 
-        # Draw arc so its *missing* portion is centered at gap_center_deg.
-        # For CCW: start at (gap_center + gap_half) and draw CCW.
-        # For CW:  start at (gap_center - gap_half) and draw CW.
+        # --- Render the SVG geometry exactly, then scale into `size` ---
+        # Reference SVG:
+        # - viewBox: 0 0 604 604
+        # - Arc path: M 497 211 A 215 215 0 1 1 393 107
+        # - stroke-width: 90, stroke-linecap: butt
+        # - Arrowhead polygon: points="0,-95 0,95 190,0"
+        #   transform="translate(393 107) rotate(25.1)"
+        #
+        # In Qt we draw the same circle arc via drawArc with:
+        # - circle center: (302,302)
+        # - radius: 215
+        # - start angle: 25°
+        # - end angle: 65°
+        # - long CW span: -320°  (because 65° - 25° = 40° small arc; we want the large arc)
+        svg_size = 604.0
+        s = float(size) / svg_size
+
+        # Target rect in device coords
+        icon_left = center_x - size / 2.0
+        icon_top = center_y - size / 2.0
+
+        painter.save()
+        painter.translate(icon_left, icon_top)
+        painter.scale(s, s)
+
+        # Mirror for CCW so the icon is the exact mirrored version of the SVG.
+        # This keeps the arrowhead *identical* in shape and relative placement.
         if not is_cw:
-            start_angle = gap_center_deg + gap_half
-            span_angle = arc_span  # positive = CCW in Qt
-        else:
-            start_angle = gap_center_deg - gap_half
-            span_angle = -arc_span  # negative = CW in Qt
+            painter.translate(svg_size, 0.0)
+            painter.scale(-1.0, 1.0)
 
-        # Draw the circular arc
-        arc_rect = QRectF(
-            center_x - radius,
-            center_y - radius,
-            radius * 2,
-            radius * 2
-        )
+        # Arc (exact proportions)
+        # Outline, then fill
+        arc_outline_pen = QPen(outline_color, 80.0 + (2.0 * arrow_outline_extra), Qt.SolidLine, Qt.FlatCap)
+        painter.setPen(arc_outline_pen)
+        painter.setBrush(Qt.NoBrush)
 
-        # Draw outline first (thicker), then fill (thinner) to simulate stroke
-        outline_pen = QPen(outline_color, arrow_thickness + 4, Qt.SolidLine, Qt.RoundCap)
-        painter.setPen(outline_pen)
-        painter.drawArc(arc_rect, int(start_angle * 16), int(span_angle * 16))
+        arc_rect = QRectF(87.0, 87.0, 430.0, 430.0)  # (302-215, 302-215, 2*215, 2*215)
+        start_angle_deg = 15.0
+        span_angle_deg = -320.0
 
-        fill_pen = QPen(fill_color, arrow_thickness, Qt.SolidLine, Qt.RoundCap)
-        painter.setPen(fill_pen)
-        painter.drawArc(arc_rect, int(start_angle * 16), int(span_angle * 16))
+        fill_cap_deg = 8.0 if is_transparent_bg else 6.0
+        # Shift start along arc direction so end stays the same.
+        shift = fill_cap_deg if span_angle_deg > 0.0 else -fill_cap_deg
+        fill_start_deg = start_angle_deg + shift
+        fill_span_deg = span_angle_deg - shift
 
-        # Draw solid triangle arrowhead, attached to the arc endpoint.
-        #
-        # IMPORTANT (visual alignment):
-        # `drawArc()` uses a pen with `Qt.RoundCap`, so the *visible* arc end extends
-        # past the mathematical endpoint by ~pen_width/2 along the tangent direction.
-        # To make the arrowhead meet the *visible* end exactly, we push the triangle
-        # tip forward by half the outline stroke width.
-        arrow_end_deg = start_angle + span_angle
-        arrow_angle_rad = math.radians(arrow_end_deg)
+        # Draw the outline arc starting at the fill start (flush with fill)
+        # We will add a manual tangential cap to create the "side line" extension
+        # perpendicular to the shaft gradient.
+        painter.drawArc(arc_rect, int(fill_start_deg * 16), int(fill_span_deg * 16))
 
-        # Triangle arrowhead size
-        head_len = 18
-        head_width = 30
+        # ====================================================================
+        # START OF "SIDE LINE" STROKE - Manual cap (rectangular extension)
+        # ====================================================================
+        # This creates a "butt end" that is exactly 90 degrees to the shaft start gradient
+        cx, cy = 302.0, 302.0
+        r = 215.0
+        w_out = 80.0 + (2.0 * arrow_outline_extra)
+        
+        # Geometry for the cap
+        theta = math.radians(fill_start_deg)
+        nx = math.cos(theta)
+        ny = -math.sin(theta)  # Y is down, positive angle is CCW
+        tx = -math.sin(theta)
+        ty = -math.cos(theta)
+        
+        # Extension direction: Backwards from shift direction
+        ext_dir = -1.0 if shift > 0 else 1.0
+        ext_len = r * math.radians(abs(shift))
+        
+        r_in = r - w_out / 2.0
+        r_out = r + w_out / 2.0
+        
+        p_in = (cx + r_in * nx, cy + r_in * ny)
+        p_out = (cx + r_out * nx, cy + r_out * ny)
+        
+        dx = tx * ext_dir * ext_len*0.3
+        dy = ty * ext_dir * ext_len*0.3
+        
+        p_in_ext = (p_in[0] + dx, p_in[1] + dy)
+        p_out_ext = (p_out[0] + dx, p_out[1] + dy)
+        
+        cap_path = QPainterPath()
+        cap_path.moveTo(*p_in)
+        cap_path.lineTo(*p_out)
+        cap_path.lineTo(*p_out_ext)
+        cap_path.lineTo(*p_in_ext)
+        cap_path.closeSubpath()
+        
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(outline_color)
+        painter.drawPath(cap_path)
+        # ====================================================================
+        # END OF "SIDE LINE" STROKE
+        # ====================================================================
 
-        # Calculate arrowhead direction (tangent to circle, pointing in rotation direction)
-        if is_cw:
-            # Clockwise arrow points in direction of decreasing angle (tangent)
-            arrow_dir_angle = arrow_angle_rad - math.pi / 2
-        else:
-            # Counter-clockwise arrow points in direction of increasing angle (tangent)
-            arrow_dir_angle = arrow_angle_rad + math.pi / 2
+        arc_pen = QPen(fill_color, 80.0, Qt.SolidLine, Qt.FlatCap)
+        painter.setPen(arc_pen)
+        painter.setBrush(Qt.NoBrush)
+        painter.drawArc(arc_rect, int(fill_start_deg * 16), int(fill_span_deg * 16))
 
-        # Tip starts at the mathematical arc endpoint...
-        tip_x = center_x + radius * math.cos(arrow_angle_rad)
-        tip_y = center_y - radius * math.sin(arrow_angle_rad)  # Qt Y is inverted
+        # Arrowhead polygon (exact transform)
+        theta = math.radians(25.1)
+        cos_t = math.cos(theta)
+        sin_t = math.sin(theta)
 
-        # ...then advance to the *visible* end of the rounded cap.
-        outline_stroke_w = float(arrow_thickness + 4)
-        cap_advance = outline_stroke_w * 0.5
-        tip_x = tip_x + cap_advance * math.cos(arrow_dir_angle)
-        tip_y = tip_y - cap_advance * math.sin(arrow_dir_angle)  # Qt Y inverted
+        base_mid_x = 393.0
+        base_mid_y = 107.0
 
-        # Calculate the base center (backward from tip along arrow direction)
-        base_x = tip_x - head_len * math.cos(arrow_dir_angle)
-        base_y = tip_y + head_len * math.sin(arrow_dir_angle)  # Qt Y inverted
+        pts = [(0.0, -95.0), (0.0, 95.0), (190.0, 0.0)]
+        tri = QPainterPath()
+        for i, (x, y) in enumerate(pts):
+            xr = (x * cos_t) - (y * sin_t)
+            yr = (x * sin_t) + (y * cos_t)
+            px = base_mid_x + xr
+            py = base_mid_y + yr
+            if i == 0:
+                tri.moveTo(px, py)
+            else:
+                tri.lineTo(px, py)
+        tri.closeSubpath()
 
-        # Calculate the two back corners of the triangle
-        # The base of the triangle is perpendicular to the arrow direction
-        perp_angle = arrow_dir_angle + math.pi / 2
+        # Outline, then fill (matches the number outline style)
+        painter.setBrush(Qt.NoBrush)
+        painter.setPen(QPen(outline_color, arrowhead_outline_width, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        painter.drawPath(tri)
 
-        # Two corners of the triangle base (centered on base_x, base_y)
-        corner1_x = base_x + (head_width / 2) * math.cos(perp_angle)
-        corner1_y = base_y - (head_width / 2) * math.sin(perp_angle)
-        corner2_x = base_x - (head_width / 2) * math.cos(perp_angle)
-        corner2_y = base_y + (head_width / 2) * math.sin(perp_angle)
-
-        # Create solid triangle path
-        triangle = QPainterPath()
-        triangle.moveTo(tip_x, tip_y)
-        triangle.lineTo(corner1_x, corner1_y)
-        triangle.lineTo(corner2_x, corner2_y)
-        triangle.closeSubpath()
-
-        # Draw triangle with a visible white outline:
-        # - Fill black first
-        # - Then stroke white on top (so it stays visible)
         painter.setPen(Qt.NoPen)
         painter.setBrush(QBrush(fill_color))
-        painter.drawPath(triangle)
-
-        painter.setBrush(Qt.NoBrush)
-        painter.setPen(QPen(outline_color, 4, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-        painter.drawPath(triangle)
+        painter.drawPath(tri)
+        painter.restore()
 
         # Draw the number in the center (true outline around glyphs).
-        # Using font metrics + drawText often makes the "stroke" look offset
-        # (because it's typically faked via a shadow). A QPainterPath outline
-        # hugs the glyph shapes exactly.
         font = QFont("Segoe UI", 14)
         font.setBold(True)
 
@@ -866,7 +899,6 @@ class EmojiRenderer:
         text_path.translate(center_x - br.center().x(), center_y - br.center().y())
 
         # Outline, then fill
-        outline_number_font = 4 if is_transparent_bg else 2
         painter.setBrush(Qt.NoBrush)
         painter.setPen(QPen(outline_color, outline_number_font, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
         painter.drawPath(text_path)

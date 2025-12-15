@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400" viewBox="0 0 800 400">
+  <!-- Background -->
+  <rect width="800" height="400" fill="white"/>
+
+  <!-- Labels -->
+  <text x="200" y="50" text-anchor="middle" font-family="Arial" font-size="18" fill="black">Clockwise</text>
+  <text x="600" y="50" text-anchor="middle" font-family="Arial" font-size="18" fill="black">Counter-Clockwise (Mirror)</text>
+
+  <!-- Clockwise Arrow -->
+  <g id="clockwise-arrow">
+    <path d="M 286.60254037844385,149.99999999999994 A 100,100 0 1 1 286.6025403784439,250.0"
+          fill="none"
+          stroke="black"
+          stroke-width="25"
+          stroke-linecap="round"/>
+    <path d="M 271.6025403784439,275.98076211353316 L 311.4230484541327,247.00961894323342 L 276.7820323027551,227.00961894323342 Z" fill="black"/>
+  </g>
+
+  <!-- Counter-Clockwise Arrow (Mirror Reflection) -->
+  <g id="counter-clockwise-arrow">
+    <path d="M 513.3974596215561,150.0 A 100,100 0 1 0 513.3974596215561,250.0"
+          fill="none"
+          stroke="black"
+          stroke-width="25"
+          stroke-linecap="round"/>
+    <path d="M 528.3974596215561,275.98076211353316 L 488.5769515458673,247.00961894323342 L 523.2179676972448,227.00961894323342 Z" fill="black"/>
+  </g>
+
+  <!-- Direction indicators -->
+  <text x="200" y="360" text-anchor="middle" font-family="Arial" font-size="14" fill="gray">↻ Refresh</text>
+  <text x="600" y="360" text-anchor="middle" font-family="Arial" font-size="14" fill="gray">↺ Undo</text>
+</svg>

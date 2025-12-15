@@ -27,7 +27,7 @@ from PyQt5.QtWidgets import (
     QApplication, QSizePolicy, QFileDialog
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QStandardPaths, QSize, QRectF
-from PyQt5.QtGui import QColor, QPixmap, QImage, QFont
+from PyQt5.QtGui import QColor, QPixmap, QImage, QFont, QPainter, QPen, QBrush, QPainterPath
 
 # Add src directory to path for imports
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -843,9 +843,13 @@ class MxNGeneratorDialog(QDialog):
             emoji_settings = {
                 "show": self.show_emojis_checkbox.isChecked() if hasattr(self, "show_emojis_checkbox") else True,
                 "k": self.emoji_k_spinner.value() if hasattr(self, "emoji_k_spinner") else 0,
-                "direction": "cw" if (hasattr(self, "emoji_cw_radio") and self.emoji_cw_radio.isChecked()) else "ccw"
+                "direction": "cw" if (hasattr(self, "emoji_cw_radio") and self.emoji_cw_radio.isChecked()) else "ccw",
+                "transparent": self.transparent_checkbox.isChecked() if hasattr(self, "transparent_checkbox") else True,
             }
             self._emoji_renderer.draw_endpoint_emojis(painter, canvas, bounds, self.m_spinner.value(), self.n_spinner.value(), emoji_settings)
+
+            # Draw rotation indicator badge (k value with arrow) in top-right corner
+            self._emoji_renderer.draw_rotation_indicator(painter, bounds, emoji_settings, scale_factor)
 
             painter.end()
 
@@ -961,9 +965,13 @@ class MxNGeneratorDialog(QDialog):
             emoji_settings = {
                 "show": self.show_emojis_checkbox.isChecked() if hasattr(self, "show_emojis_checkbox") else True,
                 "k": self.emoji_k_spinner.value() if hasattr(self, "emoji_k_spinner") else 0,
-                "direction": "cw" if (hasattr(self, "emoji_cw_radio") and self.emoji_cw_radio.isChecked()) else "ccw"
+                "direction": "cw" if (hasattr(self, "emoji_cw_radio") and self.emoji_cw_radio.isChecked()) else "ccw",
+                "transparent": self.transparent_checkbox.isChecked() if hasattr(self, "transparent_checkbox") else True,
             }
             self._emoji_renderer.draw_endpoint_emojis(painter, canvas, bounds, self.m_spinner.value(), self.n_spinner.value(), emoji_settings)
+
+            # Draw rotation indicator badge (k value with arrow) in top-right corner
+            self._emoji_renderer.draw_rotation_indicator(painter, bounds, emoji_settings, scale_factor)
 
             painter.end()
 

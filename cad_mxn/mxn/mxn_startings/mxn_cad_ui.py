@@ -8,6 +8,7 @@ import sys
 import json
 import random
 import colorsys
+import hashlib
 import warnings
 import logging
 
@@ -133,6 +134,11 @@ class MxNGeneratorDialog(QDialog):
         # MainWindow instance for export (created lazily)
         self._main_window = None
 
+        # Cache: keep a prepared canvas/bounds for fast re-renders
+        # (toggling background / emoji settings should NOT reload strands)
+        self._prepared_canvas_key = None
+        self._prepared_bounds = None
+
         # Setup UI
         self.setup_ui()
         self._apply_theme()
@@ -217,6 +223,9 @@ class MxNGeneratorDialog(QDialog):
 
         self.preview_widget = ImagePreviewWidget()
         right_layout.addWidget(self.preview_widget)
+
+        # Ensure preview panel background matches transparency setting
+        self._update_preview_background_style()
 
         # Add panels to main layout
         left_scroll = QScrollArea()
@@ -353,6 +362,7 @@ class MxNGeneratorDialog(QDialog):
         # Transparent background checkbox
         self.transparent_checkbox = QCheckBox("Transparent Background")
         self.transparent_checkbox.setChecked(True)
+        self.transparent_checkbox.stateChanged.connect(self._on_background_settings_changed)
         layout.addWidget(self.transparent_checkbox)
 
         parent_layout.addWidget(group)
@@ -487,12 +497,25 @@ class MxNGeneratorDialog(QDialog):
         # Clear in-memory data and disable export buttons
         self.current_json_data = None
         self.current_image = None
+        # Invalidate prepared-canvas cache
+        self._prepared_canvas_key = None
+        self._prepared_bounds = None
         self._emoji_renderer.clear_cache()
         self.export_json_btn.setEnabled(False)
         self.export_image_btn.setEnabled(False)
 
     def _on_emoji_settings_changed(self):
         """Re-render preview when emoji options change (no geometry changes)."""
+        # Emoji toggles should update preview immediately
+        self._rerender_preview_if_possible()
+
+    def _on_background_settings_changed(self):
+        """Re-render preview and update panel background when transparency changes."""
+        self._update_preview_background_style()
+        self._rerender_preview_if_possible()
+
+    def _rerender_preview_if_possible(self):
+        """Re-render the current preview image if we have JSON in memory."""
         if not self.current_json_data:
             return
         scale_factor = self.scale_combo.currentData()
@@ -502,6 +525,27 @@ class MxNGeneratorDialog(QDialog):
             self.preview_widget.set_qimage(image)
             self.export_image_btn.setEnabled(True)
             self.save_color_settings()
+
+    def _update_preview_background_style(self):
+        """
+        Match the preview panel background to the transparency setting.
+
+        - Transparent ON: show dark panel (helps visualize alpha)
+        - Transparent OFF: show white panel (matches export background expectation)
+        """
+        if not hasattr(self, "preview_widget") or self.preview_widget is None:
+            return
+
+        # In light theme, keep the panel white in both cases.
+        is_transparent = bool(getattr(self, "transparent_checkbox", None) and self.transparent_checkbox.isChecked())
+        if self.theme != 'dark':
+            bg = "#ffffff"
+            border = "#cccccc"
+        else:
+            bg = "#1a1a1a" if is_transparent else "#ffffff"
+            border = "#555" if is_transparent else "#bbbbbb"
+
+        self.preview_widget.setStyleSheet(f"background-color: {bg}; border: 1px solid {border};")
 
     def update_color_pickers(self):
         """Dynamically update color pickers when M or N changes."""
@@ -866,77 +910,17 @@ class MxNGeneratorDialog(QDialog):
     def _generate_image_in_memory(self, json_content, scale_factor):
         """Generate image in memory from JSON content string (no file I/O)."""
         try:
-            from main_window import MainWindow
-            from save_load_manager import load_strands, apply_loaded_strands
             from render_utils import RenderUtils
             from PyQt5.QtGui import QPainter
-            import tempfile
+            if not self._ensure_canvas_prepared(json_content):
+                return None
 
             main_window = self._get_main_window()
             if main_window is None:
                 return None
 
             canvas = main_window.canvas
-
-            # Clear existing strands
-            canvas.strands = []
-            canvas.strand_colors = {}
-            canvas.selected_strand = None
-            canvas.current_strand = None
-
-            # Parse JSON content
-            data = json.loads(json_content)
-
-            # Handle history format - extract current state data
-            if data.get('type') == 'OpenStrandStudioHistory':
-                current_step = data.get('current_step', 1)
-                states = data.get('states', [])
-                current_data = None
-                for state in states:
-                    if state['step'] == current_step:
-                        current_data = state['data']
-                        break
-
-                if not current_data:
-                    return None
-            else:
-                current_data = data
-
-            # Write to temp file for load_strands (it requires a file path)
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp:
-                json.dump(current_data, tmp)
-                temp_path = tmp.name
-
-            try:
-                strands, groups, _, _, _, _, _, shadow_overrides = load_strands(temp_path, canvas)
-            finally:
-                os.unlink(temp_path)
-
-            apply_loaded_strands(canvas, strands, groups, shadow_overrides)
-
-            # Configure canvas for export
-            canvas.show_grid = False
-            canvas.show_control_points = False
-            canvas.shadow_enabled = False
-            canvas.should_draw_names = False
-
-            if hasattr(canvas, 'is_attaching'):
-                canvas.is_attaching = False
-            if hasattr(canvas, 'attach_preview_strand'):
-                canvas.attach_preview_strand = None
-
-            for strand in canvas.strands:
-                strand.should_draw_shadow = False
-
-            # Calculate bounds and set canvas size dynamically
-            bounds = self._calculate_strands_bounds(canvas)
-            canvas_width = max(800, min(4000, int(bounds.width())))
-            canvas_height = max(600, min(3000, int(bounds.height())))
-            canvas.setFixedSize(canvas_width, canvas_height)
-            canvas.zoom_factor = 1.0
-            canvas.center_all_strands()
-            canvas.update()
-            QApplication.processEvents()
+            bounds = self._prepared_bounds or QRectF(0, 0, 1200, 900)
 
             # Create image sized to actual content bounds
             image_width = int(bounds.width() * scale_factor)
@@ -968,7 +952,9 @@ class MxNGeneratorDialog(QDialog):
                 "direction": "cw" if (hasattr(self, "emoji_cw_radio") and self.emoji_cw_radio.isChecked()) else "ccw",
                 "transparent": self.transparent_checkbox.isChecked() if hasattr(self, "transparent_checkbox") else True,
             }
-            self._emoji_renderer.draw_endpoint_emojis(painter, canvas, bounds, self.m_spinner.value(), self.n_spinner.value(), emoji_settings)
+            self._emoji_renderer.draw_endpoint_emojis(
+                painter, canvas, bounds, self.m_spinner.value(), self.n_spinner.value(), emoji_settings
+            )
 
             # Draw rotation indicator badge (k value with arrow) in top-right corner
             self._emoji_renderer.draw_rotation_indicator(painter, bounds, emoji_settings, scale_factor)
@@ -981,6 +967,106 @@ class MxNGeneratorDialog(QDialog):
             import traceback
             traceback.print_exc()
             return None
+
+    def _make_prepared_canvas_key(self, json_content):
+        """Create a stable cache key for the current JSON content."""
+        if not json_content:
+            return None
+        try:
+            return hashlib.sha1(json_content.encode("utf-8")).hexdigest()
+        except Exception:
+            return str(len(json_content))
+
+    def _ensure_canvas_prepared(self, json_content):
+        """
+        Prepare the hidden MainWindow canvas for fast re-rendering.
+
+        This is the expensive part (load_strands/apply_loaded_strands). We do it once per
+        JSON content, and reuse for quick toggles (background + emoji settings).
+        """
+        key = self._make_prepared_canvas_key(json_content)
+        if key and key == self._prepared_canvas_key and self._prepared_bounds is not None:
+            return True
+
+        main_window = self._get_main_window()
+        if main_window is None:
+            return False
+
+        from save_load_manager import load_strands, apply_loaded_strands
+        import tempfile
+
+        canvas = main_window.canvas
+
+        # Clear existing strands
+        canvas.strands = []
+        canvas.strand_colors = {}
+        canvas.selected_strand = None
+        canvas.current_strand = None
+
+        # Parse JSON content
+        data = json.loads(json_content)
+
+        # Handle history format - extract current state data
+        if data.get('type') == 'OpenStrandStudioHistory':
+            current_step = data.get('current_step', 1)
+            states = data.get('states', [])
+            current_data = None
+            for state in states:
+                if state['step'] == current_step:
+                    current_data = state['data']
+                    break
+            if not current_data:
+                return False
+        else:
+            current_data = data
+
+        # Write to temp file for load_strands (it requires a file path)
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp:
+            json.dump(current_data, tmp)
+            temp_path = tmp.name
+
+        try:
+            strands, groups, _, _, _, _, _, shadow_overrides = load_strands(temp_path, canvas)
+        finally:
+            try:
+                os.unlink(temp_path)
+            except Exception:
+                pass
+
+        apply_loaded_strands(canvas, strands, groups, shadow_overrides)
+
+        # Configure canvas for export/preview rendering
+        canvas.show_grid = False
+        canvas.show_control_points = False
+        canvas.shadow_enabled = False
+        canvas.should_draw_names = False
+
+        if hasattr(canvas, 'is_attaching'):
+            canvas.is_attaching = False
+        if hasattr(canvas, 'attach_preview_strand'):
+            canvas.attach_preview_strand = None
+
+        # IMPORTANT for speed: keep the canvas un-panned/un-zoomed so Strand.draw can
+        # use its faster path (it falls back to slow drawing when panned/zoomed).
+        if hasattr(canvas, "zoom_factor"):
+            canvas.zoom_factor = 1.0
+        if hasattr(canvas, "pan_offset_x"):
+            canvas.pan_offset_x = 0
+        if hasattr(canvas, "pan_offset_y"):
+            canvas.pan_offset_y = 0
+
+        for strand in canvas.strands:
+            strand.should_draw_shadow = False
+
+        # Calculate bounds and set canvas size dynamically (helps internal optimizations)
+        bounds = self._calculate_strands_bounds(canvas)
+        canvas_width = max(800, min(4000, int(bounds.width())))
+        canvas_height = max(600, min(3000, int(bounds.height())))
+        canvas.setFixedSize(canvas_width, canvas_height)
+
+        self._prepared_canvas_key = key
+        self._prepared_bounds = bounds
+        return True
 
     def export_json(self):
         """Export the current JSON data to a file chosen by the user."""

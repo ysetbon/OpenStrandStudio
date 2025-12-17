@@ -673,14 +673,6 @@ class EmojiRenderer:
             h = max(1, br.height() + 6)
             rect = QRectF(x - w / 2.0, y - h / 2.0, w, h)
 
-            # Draw shadow for better visibility
-            painter.setPen(QColor(0, 0, 0, 190))
-            painter.drawText(
-                QRectF(rect.x() + 1, rect.y() + 1, rect.width(), rect.height()),
-                Qt.AlignCenter,
-                txt
-            )
-
             # Draw main text
             painter.setPen(QColor(255, 255, 255, 255))
             painter.drawText(rect, Qt.AlignCenter, txt)

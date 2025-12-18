@@ -407,81 +407,10 @@ def generate_json(m, n, k=0, direction="cw"):
     print(f"Continuation order: {[s['layer_name'] for s in continuation_strands]}")
 
     # =========================================================================
-    # STEP 5: Generate masked strands for _4/_5 crossings
-    #
-    # The masking pattern depends on k (even/odd):
-    # - k even (0, 2, 4...): SAME suffixes (v_4 with h_4, v_5 with h_5)
-    # - k odd (1, 3, 5...): OPPOSITE suffixes (v_5 with h_4, v_4 with h_5)
+    # STEP 5: _4/_5 masks - REMOVED (to be implemented later)
     # =========================================================================
     continuation_masked = []
-
-    # Separate vertical and horizontal continuation strands
-    v_strands_4 = [s for s in strands_4 if s["set_number"] > n]  # Vertical sets
-    v_strands_5 = [s for s in strands_5 if s["set_number"] > n]
-    h_strands_4 = [s for s in strands_4 if s["set_number"] <= n]  # Horizontal sets
-    h_strands_5 = [s for s in strands_5 if s["set_number"] <= n]
-
-    print(f"\n=== STEP 5: Generating masked strands (RH) ===")
-    print(f"v_strands_4: {[s['layer_name'] for s in v_strands_4]}")
-    print(f"v_strands_5: {[s['layer_name'] for s in v_strands_5]}")
-    print(f"h_strands_4: {[s['layer_name'] for s in h_strands_4]}")
-    print(f"h_strands_5: {[s['layer_name'] for s in h_strands_5]}")
-
-    k_is_even = (k % 2 == 0)
-
-    # Masking rule:
-    # Base masks pair OPPOSITE suffixes: v_2 x h_3, v_3 x h_2
-    # Continuation masks should be the OPPOSITE of base pattern:
-    # k even (0, 2, 4...): SAME suffixes (v_4 with h_4, v_5 with h_5) - opposite of base
-    # k odd (1, 3, 5...): OPPOSITE suffixes (v_4 with h_5, v_5 with h_4) - same as base
-    if k_is_even:
-        # k even: same suffixes (OPPOSITE of base _2 x _3 pattern)
-        crossing_pairs = [
-            (v_strands_4, h_strands_4),  # vertical _4 with horizontal _4
-            (v_strands_5, h_strands_5),  # vertical _5 with horizontal _5
-        ]
-        print(f"k={k} is EVEN: using same suffixes (v_4 with h_4, v_5 with h_5) - opposite of base")
-    else:
-        # k odd: opposite suffixes (same as base pattern)
-        crossing_pairs = [
-            (v_strands_4, h_strands_5),  # vertical _4 with horizontal _5
-            (v_strands_5, h_strands_4),  # vertical _5 with horizontal _4
-        ]
-        print(f"k={k} is ODD: using opposite suffixes (v_4 with h_5, v_5 with h_4) - same as base")
-
-    for v_list, h_list in crossing_pairs:
-        for v_strand in v_list:
-            for h_strand in h_list:
-                v_set = v_strand["set_number"]
-                h_set = h_strand["set_number"]
-
-                layer_name = f"{v_strand['layer_name']}_{h_strand['layer_name']}"
-                set_number = int(f"{v_set}{h_set}") if v_set < 10 and h_set < 10 else v_set * 10 + h_set
-
-                # Create masked strand for vertical crossing horizontal
-                masked = create_strand_base(
-                    v_strand["start"], v_strand["end"], v_strand["color"],
-                    layer_name,
-                    set_number,
-                    "MaskedStrand"
-                )
-                masked["first_selected_strand"] = v_strand["layer_name"]
-                masked["second_selected_strand"] = h_strand["layer_name"]
-                continuation_masked.append(masked)
-                print(f"  Created mask: {layer_name} (set_number={set_number})")
-
-    print(f"\nTotal: {len(continuation_masked)} continuation masks")
-    print(f"Continuation mask layer names: {[m['layer_name'] for m in continuation_masked]}")
-
-    # Summary comparison of base vs continuation masks
-    print(f"\n=== MASK COMPARISON (k={k}) ===")
-    print(f"BASE _2/_3 masks (never changes with k):")
-    for m in base_masked:
-        print(f"  {m['first_selected_strand']} x {m['second_selected_strand']}")
-    print(f"CONTINUATION _4/_5 masks (changes with k):")
-    for m in continuation_masked:
-        print(f"  {m['first_selected_strand']} x {m['second_selected_strand']}")
-    print("=" * 50)
+    print(f"\n=== STEP 5: _4/_5 masks skipped (not implemented) ===")
 
     # =========================================================================
     # STEP 6: Combine all strands and build JSON

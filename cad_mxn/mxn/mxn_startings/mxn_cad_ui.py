@@ -385,6 +385,12 @@ class MxNGeneratorDialog(QDialog):
         self.show_emojis_checkbox.setChecked(True)
         self.show_emojis_checkbox.stateChanged.connect(self._on_emoji_settings_changed)
 
+        # Checkbox to show strand names (e.g., "3_2(s)", "1_3(e)") at emoji positions
+        self.show_strand_names_checkbox = QCheckBox("Show strand names")
+        self.show_strand_names_checkbox.setChecked(False)
+        self.show_strand_names_checkbox.setToolTip("Show strand names like '3_2(s)' at each endpoint\n(s)=start, (e)=end")
+        self.show_strand_names_checkbox.stateChanged.connect(self._on_emoji_settings_changed)
+
         k_label = QLabel("Rotation k:")
         self.emoji_k_spinner = QSpinBox()
         self.emoji_k_spinner.setRange(-9999, 9999)
@@ -401,10 +407,11 @@ class MxNGeneratorDialog(QDialog):
         self.emoji_ccw_radio.toggled.connect(self._on_emoji_settings_changed)
 
         layout.addWidget(self.show_emojis_checkbox, 0, 0, 1, 3)
-        layout.addWidget(k_label, 1, 0)
-        layout.addWidget(self.emoji_k_spinner, 1, 1)
-        layout.addWidget(self.emoji_cw_radio, 1, 2)
-        layout.addWidget(self.emoji_ccw_radio, 2, 2)
+        layout.addWidget(self.show_strand_names_checkbox, 1, 0, 1, 3)
+        layout.addWidget(k_label, 2, 0)
+        layout.addWidget(self.emoji_k_spinner, 2, 1)
+        layout.addWidget(self.emoji_cw_radio, 2, 2)
+        layout.addWidget(self.emoji_ccw_radio, 3, 2)
 
         parent_layout.addWidget(group)
 
@@ -1042,6 +1049,7 @@ class MxNGeneratorDialog(QDialog):
             # Draw endpoint emojis after strands (labels rotate around perimeter; geometry unchanged)
             emoji_settings = {
                 "show": self.show_emojis_checkbox.isChecked() if hasattr(self, "show_emojis_checkbox") else True,
+                "show_strand_names": self.show_strand_names_checkbox.isChecked() if hasattr(self, "show_strand_names_checkbox") else False,
                 "k": self.emoji_k_spinner.value() if hasattr(self, "emoji_k_spinner") else 0,
                 "direction": "cw" if (hasattr(self, "emoji_cw_radio") and self.emoji_cw_radio.isChecked()) else "ccw",
                 "transparent": self.transparent_checkbox.isChecked() if hasattr(self, "transparent_checkbox") else True,
@@ -1104,6 +1112,7 @@ class MxNGeneratorDialog(QDialog):
             # Draw endpoint emojis after strands (labels rotate around perimeter; geometry unchanged)
             emoji_settings = {
                 "show": self.show_emojis_checkbox.isChecked() if hasattr(self, "show_emojis_checkbox") else True,
+                "show_strand_names": self.show_strand_names_checkbox.isChecked() if hasattr(self, "show_strand_names_checkbox") else False,
                 "k": self.emoji_k_spinner.value() if hasattr(self, "emoji_k_spinner") else 0,
                 "direction": "cw" if (hasattr(self, "emoji_cw_radio") and self.emoji_cw_radio.isChecked()) else "ccw",
                 "transparent": self.transparent_checkbox.isChecked() if hasattr(self, "transparent_checkbox") else True,
@@ -1303,6 +1312,7 @@ class MxNGeneratorDialog(QDialog):
             'last_stretch': bool(self.stretch_checkbox.isChecked()),
             'emoji': {
                 'enabled': bool(getattr(self, "show_emojis_checkbox", None) and self.show_emojis_checkbox.isChecked()),
+                'show_strand_names': bool(getattr(self, "show_strand_names_checkbox", None) and self.show_strand_names_checkbox.isChecked()),
                 'k': int(getattr(self, "emoji_k_spinner", None).value()) if getattr(self, "emoji_k_spinner", None) else 0,
                 'dir': 'cw' if (getattr(self, "emoji_cw_radio", None) and self.emoji_cw_radio.isChecked()) else 'ccw',
             },
@@ -1352,6 +1362,8 @@ class MxNGeneratorDialog(QDialog):
             emoji = colors_data.get('emoji') or {}
             if hasattr(self, "show_emojis_checkbox") and "enabled" in emoji:
                 self.show_emojis_checkbox.setChecked(bool(emoji.get("enabled")))
+            if hasattr(self, "show_strand_names_checkbox") and "show_strand_names" in emoji:
+                self.show_strand_names_checkbox.setChecked(bool(emoji.get("show_strand_names")))
             if hasattr(self, "emoji_k_spinner") and "k" in emoji:
                 try:
                     self.emoji_k_spinner.setValue(int(emoji.get("k", 0)))

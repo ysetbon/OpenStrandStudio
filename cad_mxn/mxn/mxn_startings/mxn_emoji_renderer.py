@@ -19,7 +19,7 @@ Usage:
 """
 
 from PyQt5.QtCore import QRectF, Qt
-from PyQt5.QtGui import QColor, QFont, QPen, QBrush, QPainterPath
+from PyQt5.QtGui import QColor, QFont, QImage, QPainter, QPen, QBrush, QPainterPath
 
 
 class EmojiRenderer:
@@ -44,6 +44,9 @@ class EmojiRenderer:
         # This ensures the same strands get the same emojis until grid size changes
         self._emoji_base_labels = None
         self._emoji_base_key = None
+        # Cache for visual (pixel-tight) emoji extents to place strand names based on what
+        # is actually rendered, not on font-metric bounding boxes.
+        self._emoji_visual_extents_cache = {}
 
     def clear_cache(self):
         """
@@ -54,6 +57,129 @@ class EmojiRenderer:
         """
         self._emoji_base_labels = None
         self._emoji_base_key = None
+        self._emoji_visual_extents_cache = {}
+
+    def _font_cache_key(self, font: QFont):
+        # QFont is not reliably hashable across PyQt versions; use a stable tuple key.
+        return (
+            font.family(),
+            float(font.pointSizeF()),
+            int(font.pixelSize()),
+            bool(font.bold()),
+            bool(font.italic()),
+            int(font.weight()),
+            font.styleName(),
+        )
+
+    def _compute_alpha_bounds(self, alpha8: QImage, threshold: int = 8):
+        """
+        Return (min_x, min_y, max_x, max_y) bounds of non-transparent pixels, or None.
+
+        Note: `alpha8` must be `QImage.Format_Alpha8`.
+        """
+        w = int(alpha8.width())
+        h = int(alpha8.height())
+        if w <= 0 or h <= 0:
+            return None
+
+        ptr = alpha8.bits()
+        ptr.setsize(alpha8.byteCount())
+        data = bytes(ptr)  # small (few 100KB); cache avoids repeated work
+        bpl = int(alpha8.bytesPerLine())
+
+        min_x, min_y = w, h
+        max_x, max_y = -1, -1
+
+        for y in range(h):
+            row = data[y * bpl : y * bpl + w]
+            any_hit = False
+            for x, a in enumerate(row):
+                if a > threshold:
+                    any_hit = True
+                    if x < min_x:
+                        min_x = x
+                    if x > max_x:
+                        max_x = x
+            if any_hit:
+                if y < min_y:
+                    min_y = y
+                if y > max_y:
+                    max_y = y
+
+        if max_x < 0 or max_y < 0:
+            return None
+        return (min_x, min_y, max_x, max_y)
+
+    def _get_visual_text_extents(self, txt: str, font: QFont):
+        """
+        Measure pixel-tight extents of rendered text around a known center.
+
+        Returns a dict of directional extents (logical units):
+            { "left": dL, "right": dR, "top": dT, "bottom": dB }
+        where d* are distances from the drawn center to the tight pixel edge.
+        """
+        if not txt:
+            return {"left": 0.0, "right": 0.0, "top": 0.0, "bottom": 0.0}
+
+        key = (txt, self._font_cache_key(font))
+        cached = self._emoji_visual_extents_cache.get(key)
+        if cached is not None:
+            return cached
+
+        # Supersample to reduce the effect of hinting/antialiasing on bounds.
+        ss = 4  # supersample factor
+        logical_size = 128.0
+        img_w = int(logical_size * ss)
+        img_h = int(logical_size * ss)
+
+        img = QImage(img_w, img_h, QImage.Format_ARGB32_Premultiplied)
+        img.fill(Qt.transparent)
+
+        p = QPainter(img)
+        p.setRenderHint(QPainter.Antialiasing, True)
+        p.setRenderHint(QPainter.TextAntialiasing, True)
+        p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        p.scale(ss, ss)
+        p.setFont(font)
+        p.setPen(QColor(255, 255, 255, 255))
+        p.drawText(QRectF(0.0, 0.0, logical_size, logical_size), Qt.AlignCenter, txt)
+        p.end()
+
+        alpha = img.convertToFormat(QImage.Format_Alpha8)
+        bounds = self._compute_alpha_bounds(alpha, threshold=8)
+
+        # Fallback: if we fail to detect pixels (e.g. font engine edge-cases),
+        # use font-metric tight bounds, which are still better than boundingRect().
+        if bounds is None:
+            # We deliberately avoid importing QFontMetrics at module scope.
+            # The metrics object needs a paint device anyway, so reuse `alpha`.
+            p2 = QPainter(alpha)
+            p2.setFont(font)
+            fm = p2.fontMetrics()
+            tbr = fm.tightBoundingRect(txt)
+            p2.end()
+            # tightBoundingRect is in device pixels; treat as centered.
+            cached = {
+                "left": float(tbr.width()) * 0.5,
+                "right": float(tbr.width()) * 0.5,
+                "top": float(tbr.height()) * 0.5,
+                "bottom": float(tbr.height()) * 0.5,
+            }
+            self._emoji_visual_extents_cache[key] = cached
+            return cached
+
+        min_x, min_y, max_x, max_y = bounds
+        cx = (img_w - 1) * 0.5
+        cy = (img_h - 1) * 0.5
+
+        cached = {
+            "left": float(cx - min_x) / ss,
+            "right": float(max_x - cx) / ss,
+            "top": float(cy - min_y) / ss,
+            "bottom": float(max_y - cy) / ss,
+        }
+        self._emoji_visual_extents_cache[key] = cached
+        return cached
 
     def get_animal_pool(self):
         """
@@ -458,7 +584,7 @@ class EmojiRenderer:
                 int(round(float(ep["y"]) / q)),
             )
 
-        endpoint_map = {}  # key -> {"ep": ep, "t": float, "width": float}
+        endpoint_map = {}  # key -> {"ep": ep, "t": float, "width": float, "strand_name": str, "ep_type": str}
 
         for si, strand in enumerate(strands):
             # Skip strands without valid endpoints
@@ -499,28 +625,47 @@ class EmojiRenderer:
                 if x1 <= x2:
                     ep_a = {"x": x1, "y": y1, "side": "left", "nx": -1.0, "ny": 0.0}
                     ep_b = {"x": x2, "y": y2, "side": "right", "nx": 1.0, "ny": 0.0}
+                    ep_a_type = "start"
+                    ep_b_type = "end"
                 else:
                     ep_a = {"x": x2, "y": y2, "side": "left", "nx": -1.0, "ny": 0.0}
                     ep_b = {"x": x1, "y": y1, "side": "right", "nx": 1.0, "ny": 0.0}
+                    ep_a_type = "end"
+                    ep_b_type = "start"
             else:
                 # Vertical strand: endpoints on top/bottom
                 if y1 <= y2:
                     ep_a = {"x": x1, "y": y1, "side": "top", "nx": 0.0, "ny": -1.0}
                     ep_b = {"x": x2, "y": y2, "side": "bottom", "nx": 0.0, "ny": 1.0}
+                    ep_a_type = "start"
+                    ep_b_type = "end"
                 else:
                     ep_a = {"x": x2, "y": y2, "side": "top", "nx": 0.0, "ny": -1.0}
                     ep_b = {"x": x1, "y": y1, "side": "bottom", "nx": 0.0, "ny": 1.0}
+                    ep_a_type = "end"
+                    ep_b_type = "start"
 
             strand_width = float(getattr(strand, "width", getattr(canvas, "strand_width", 46)))
 
-            for ep in (ep_a, ep_b):
+            for ep, ep_type in [(ep_a, ep_a_type), (ep_b, ep_b_type)]:
                 key = ep_key(ep)
                 t = perimeter_t(ep["side"], ep["x"], ep["y"])
                 if key not in endpoint_map:
-                    endpoint_map[key] = {"ep": ep, "t": float(t), "width": strand_width}
+                    endpoint_map[key] = {
+                        "ep": ep,
+                        "t": float(t),
+                        "width": strand_width,
+                        # Only store strand_name for END points (free ends at perimeter)
+                        "strand_name": suffix_source if ep_type == "end" else "",
+                        "ep_type": ep_type
+                    }
                 else:
                     # Use the widest strand width for outward offset calculation.
                     endpoint_map[key]["width"] = max(endpoint_map[key]["width"], strand_width)
+                    # If this is an END point and we don't have a name yet, use it
+                    if ep_type == "end" and not endpoint_map[key].get("strand_name"):
+                        endpoint_map[key]["strand_name"] = suffix_source
+                        endpoint_map[key]["ep_type"] = ep_type
 
         if not endpoint_map:
             return
@@ -635,21 +780,34 @@ class EmojiRenderer:
                 "ep": item["ep"],
                 "txt": txt,
                 "width": float(item.get("width", 0.0) or 0.0),
+                "strand_name": item.get("strand_name", ""),
+                "ep_type": item.get("ep_type", ""),
             })
+
+        # Check if strand names should be shown
+        show_strand_names = settings.get("show_strand_names", False)
 
         # Draw each emoji label
         painter.save()
+
+        # Setup font for strand names (much smaller than emoji)
+        name_font = QFont("Segoe UI")
+        name_font.setPointSize(7)
+        name_font.setBold(True)
+        name_fm = painter.fontMetrics()
 
         for item in draw_items:
             ep = item["ep"]
             txt = item["txt"]
             width = item["width"]
+            strand_name = item.get("strand_name", "")
+            ep_type = item.get("ep_type", "")
 
             # Calculate outward offset so emoji sits outside the strand
             outward = (width * 0.5) + (fm.height() * 0.65) + 10.0
             outward = min(outward, max(24.0, self.BOUNDS_PADDING * 0.8))
 
-            # Project endpoint to exact border edge for alignment
+            # Project endpoint to exact border edge for alignment (keep emoji positions stable).
             side = ep.get("side", "")
             base_x = float(ep["x"])
             base_y = float(ep["y"])
@@ -663,9 +821,12 @@ class EmojiRenderer:
             elif side == "bottom":
                 base_y = float(content.bottom())
 
+            nx = float(ep.get("nx", 0.0) or 0.0)
+            ny = float(ep.get("ny", 0.0) or 0.0)
+
             # Apply outward offset using normal vector
-            x = base_x + float(ep["nx"]) * outward
-            y = base_y + float(ep["ny"]) * outward
+            x = base_x + nx * outward
+            y = base_y + ny * outward
 
             # Calculate centered text rectangle
             br = fm.boundingRect(txt)
@@ -673,9 +834,49 @@ class EmojiRenderer:
             h = max(1, br.height() + 6)
             rect = QRectF(x - w / 2.0, y - h / 2.0, w, h)
 
-            # Draw main text
+            # Draw main emoji text
             painter.setPen(QColor(255, 255, 255, 255))
             painter.drawText(rect, Qt.AlignCenter, txt)
+
+            # Draw strand name if enabled (only for END points of _2/_3 strands)
+            if show_strand_names and strand_name:
+                # Format: just the strand name like "3_2" or "1_3"
+                name_txt = strand_name
+
+                painter.setFont(name_font)
+                name_fm = painter.fontMetrics()
+                name_br = name_fm.boundingRect(name_txt)
+                name_w = max(1, name_br.width() + 4)
+                name_h = max(1, name_br.height() + 2)
+
+                # Place the name at the true midpoint between:
+                # - the endpoint (distance 0 from the endpoint), and
+                # - the emoji's *visual* inner edge (measured from actual rendered pixels).
+                ext = self._get_visual_text_extents(txt, font)
+                if abs(nx) > 0.5:
+                    inward_extent = ext["right"] if nx < 0.0 else ext["left"]
+                else:
+                    inward_extent = ext["bottom"] if ny < 0.0 else ext["top"]
+
+                emoji_inner_edge_off = max(1.0, outward - float(inward_extent))
+                mid_dist = emoji_inner_edge_off * 0.5
+
+                name_x = base_x + nx * mid_dist
+                name_y = base_y + ny * mid_dist
+
+                name_rect = QRectF(name_x - name_w / 2.0, name_y - name_h / 2.0, name_w, name_h)
+
+                # Draw background for readability (subtle)
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QColor(0, 0, 0, 150))
+                painter.drawRoundedRect(name_rect.adjusted(-1, -1, 1, 1), 2, 2)
+
+                # Draw strand name text
+                painter.setPen(QColor(255, 255, 255, 255))
+                painter.drawText(name_rect, Qt.AlignCenter, name_txt)
+
+                # Reset font to emoji font
+                painter.setFont(font)
 
         painter.restore()
 

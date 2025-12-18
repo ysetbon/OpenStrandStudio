@@ -289,32 +289,18 @@ def generate_json(m, n, k=0, direction="cw"):
     # =========================================================================
     # STEP 4: Generate continuation strands (_4, _5)
     #
-    # For RH pattern:
-    # - Vertical _2 is at TOP, so _4 extends DOWN from _2 end
-    # - Vertical _3 is at BOTTOM, so _5 extends UP from _3 end
-    # - Horizontal _2 extends LEFT, so _4 extends RIGHT
-    # - Horizontal _3 extends RIGHT, so _5 extends LEFT
+    # Per the docstring:
+    # - _4 attaches to _2's end and extends to the paired position (same emoji)
+    # - _5 attaches to _3's end and extends to the paired position (same emoji)
+    #
+    # The end position is determined by the emoji pairing (which depends on k).
     # =========================================================================
     strands_4 = []
     strands_5 = []
 
-    # Calculate pattern extents for extension length
-    all_x = []
-    all_y = []
-    for s in base_strands:
-        all_x.extend([s["start"]["x"], s["end"]["x"]])
-        all_y.extend([s["start"]["y"], s["end"]["y"]])
-
-    pattern_width = max(all_x) - min(all_x) if all_x else 400
-    pattern_height = max(all_y) - min(all_y) if all_y else 400
-
-    # Extension length should be substantial (full pattern span + extra)
-    h_extension = pattern_width + tail_offset
-    v_extension = pattern_height + tail_offset
-
     print(f"\n=== STEP 4: Generating _4 and _5 strands (RH) ===")
-    print(f"Pattern width: {pattern_width}, height: {pattern_height}")
-    print(f"h_extension: {h_extension}, v_extension: {v_extension}")
+    print(f"Using emoji pairings to determine end positions (k={k}, {direction})")
+    print(f"Pairings: {pairings}")
 
     for strand in base_strands:
         if strand["type"] != "AttachedStrand":
@@ -323,48 +309,23 @@ def generate_json(m, n, k=0, direction="cw"):
         layer_name = strand["layer_name"]
         set_num = strand["set_number"]
         color = strand["color"]
-        is_horizontal = set_num <= n
 
         if layer_name.endswith("_2"):
-            # _5 attaches to _2 end (SWAPPED: opposite of base where _2 was)
+            # _4 attaches to _2's end and goes to the paired position
             start_x = strand["end"]["x"]
             start_y = strand["end"]["y"]
 
-            if is_horizontal:
-                # Horizontal _2 extends LEFT, so _5 extends RIGHT
-                end_x = start_x + h_extension
-                end_y = start_y
+            # Get paired position from emoji pairing
+            pairing_key = f"{layer_name}_end"
+            if pairing_key in pairings:
+                paired_pos = pairings[pairing_key]
+                end_x = paired_pos["x"]
+                end_y = paired_pos["y"]
             else:
-                # RH Vertical _2 extends DOWN, so _5 extends UP
+                # Fallback: shouldn't happen if pairings are computed correctly
+                print(f"  WARNING: No pairing found for {pairing_key}, using start position")
                 end_x = start_x
-                end_y = start_y - v_extension
-
-            strand_5 = create_strand_base(
-                {"x": start_x, "y": start_y},
-                {"x": end_x, "y": end_y},
-                color,
-                f"{set_num}_5",
-                set_num,
-                "AttachedStrand",
-                layer_name,
-                1,
-            )
-            strands_5.append(strand_5)
-            print(f"  Created {set_num}_5 (from _2): start=({start_x}, {start_y}), end=({end_x}, {end_y}), is_horizontal={is_horizontal}")
-
-        elif layer_name.endswith("_3"):
-            # _4 attaches to _3 end (SWAPPED: opposite of base where _3 was)
-            start_x = strand["end"]["x"]
-            start_y = strand["end"]["y"]
-
-            if is_horizontal:
-                # Horizontal _3 extends RIGHT, so _4 extends LEFT
-                end_x = start_x - h_extension
                 end_y = start_y
-            else:
-                # RH Vertical _3 extends UP, so _4 extends DOWN
-                end_x = start_x
-                end_y = start_y + v_extension
 
             strand_4 = create_strand_base(
                 {"x": start_x, "y": start_y},
@@ -377,7 +338,37 @@ def generate_json(m, n, k=0, direction="cw"):
                 1,
             )
             strands_4.append(strand_4)
-            print(f"  Created {set_num}_4 (from _3): start=({start_x}, {start_y}), end=({end_x}, {end_y}), is_horizontal={is_horizontal}")
+            print(f"  Created {set_num}_4 (from _2): start=({start_x}, {start_y}), end=({end_x}, {end_y})")
+
+        elif layer_name.endswith("_3"):
+            # _5 attaches to _3's end and goes to the paired position
+            start_x = strand["end"]["x"]
+            start_y = strand["end"]["y"]
+
+            # Get paired position from emoji pairing
+            pairing_key = f"{layer_name}_end"
+            if pairing_key in pairings:
+                paired_pos = pairings[pairing_key]
+                end_x = paired_pos["x"]
+                end_y = paired_pos["y"]
+            else:
+                # Fallback: shouldn't happen if pairings are computed correctly
+                print(f"  WARNING: No pairing found for {pairing_key}, using start position")
+                end_x = start_x
+                end_y = start_y
+
+            strand_5 = create_strand_base(
+                {"x": start_x, "y": start_y},
+                {"x": end_x, "y": end_y},
+                color,
+                f"{set_num}_5",
+                set_num,
+                "AttachedStrand",
+                layer_name,
+                1,
+            )
+            strands_5.append(strand_5)
+            print(f"  Created {set_num}_5 (from _3): start=({start_x}, {start_y}), end=({end_x}, {end_y})")
 
     # Order: vertical strands first (set > n), then horizontal (set <= n)
     # Within each group: by set_number, then _4 before _5
@@ -516,61 +507,94 @@ def compute_emoji_pairings(strands, m, n, k, direction):
     """
     Compute which endpoints pair together based on emoji rotation.
 
-    For RH stretch pattern:
-    - Horizontal strands (sets 1..n): _2 end is on LEFT, _3 end is on RIGHT
-    - Vertical strands (sets n+1..n+m): _2 end is on BOTTOM (extends down), _3 end is on TOP (extends up)
-
-    Note: RH verticals are swapped from LH - _2 is attached at TOP but extends DOWN,
-    _3 is attached at BOTTOM but extends UP.
+    This must match EXACTLY how mxn_emoji_renderer assigns emojis:
+    - The renderer considers BOTH start AND end of each _2/_3 strand
+    - Endpoints are classified by strand DIRECTION (horizontal vs vertical)
+    - Endpoints are sorted by perimeter position (clockwise from top-left)
+    - Top/Right get unique labels, Bottom/Left mirror them
+    - Rotation k shifts all labels around the perimeter
+    - Each endpoint pairs with the OTHER endpoint that has the same emoji
 
     Returns:
         dict: {"{layer_name}_end": {"x": x, "y": y}, ...}
     """
-    # Separate horizontal and vertical strand endpoints
-    left_eps = []   # Horizontal _2 ends
-    right_eps = []  # Horizontal _3 ends
-    top_eps = []    # Vertical _3 ends (RH: _3 extends UP from bottom)
-    bottom_eps = [] # Vertical _2 ends (RH: _2 extends DOWN from top)
+    # Collect BOTH start and end of each _2/_3 strand (matching emoji renderer)
+    all_endpoints = []
 
     for strand in strands:
         if strand["type"] != "AttachedStrand":
             continue
 
         layer_name = strand["layer_name"]
-        set_num = strand["set_number"]
-        is_horizontal = set_num <= n
+        if not (layer_name.endswith("_2") or layer_name.endswith("_3")):
+            continue
 
-        ep = {
+        # Get both start and end positions
+        start_x = strand["start"]["x"]
+        start_y = strand["start"]["y"]
+        end_x = strand["end"]["x"]
+        end_y = strand["end"]["y"]
+
+        dx = end_x - start_x
+        dy = end_y - start_y
+
+        # Classify endpoints by strand DIRECTION (same as emoji renderer)
+        if abs(dx) >= abs(dy):
+            # Horizontal strand
+            if start_x <= end_x:
+                start_side = "left"
+                end_side = "right"
+            else:
+                start_side = "right"
+                end_side = "left"
+        else:
+            # Vertical strand
+            if start_y <= end_y:
+                start_side = "top"
+                end_side = "bottom"
+            else:
+                start_side = "bottom"
+                end_side = "top"
+
+        # Add START endpoint
+        all_endpoints.append({
             "layer_name": layer_name,
-            "x": strand["end"]["x"],
-            "y": strand["end"]["y"],
-            "set_number": set_num,
-        }
+            "endpoint_type": "start",
+            "x": start_x,
+            "y": start_y,
+            "side": start_side,
+            "set_number": strand["set_number"],
+        })
 
-        if layer_name.endswith("_2"):
-            if is_horizontal:
-                ep["side"] = "left"
-                left_eps.append(ep)
-            else:
-                # RH: _2 extends DOWN, so end is at BOTTOM
-                ep["side"] = "bottom"
-                bottom_eps.append(ep)
-        elif layer_name.endswith("_3"):
-            if is_horizontal:
-                ep["side"] = "right"
-                right_eps.append(ep)
-            else:
-                # RH: _3 extends UP, so end is at TOP
-                ep["side"] = "top"
-                top_eps.append(ep)
+        # Add END endpoint
+        all_endpoints.append({
+            "layer_name": layer_name,
+            "endpoint_type": "end",
+            "x": end_x,
+            "y": end_y,
+            "side": end_side,
+            "set_number": strand["set_number"],
+        })
 
-    # Sort by position to establish consistent ordering
-    left_eps.sort(key=lambda ep: ep["y"])
-    right_eps.sort(key=lambda ep: ep["y"])
+    if not all_endpoints:
+        return {}
+
+    # Group endpoints by side
+    top_eps = [ep for ep in all_endpoints if ep["side"] == "top"]
+    right_eps = [ep for ep in all_endpoints if ep["side"] == "right"]
+    bottom_eps = [ep for ep in all_endpoints if ep["side"] == "bottom"]
+    left_eps = [ep for ep in all_endpoints if ep["side"] == "left"]
+
+    # Sort by position (same as emoji renderer):
+    # Top/Bottom: sort by X (left to right)
+    # Left/Right: sort by Y (top to bottom)
     top_eps.sort(key=lambda ep: ep["x"])
     bottom_eps.sort(key=lambda ep: ep["x"])
+    left_eps.sort(key=lambda ep: ep["y"])
+    right_eps.sort(key=lambda ep: ep["y"])
 
     # Build perimeter order (clockwise from top-left):
+    # top (L->R), right (T->B), bottom (R->L reversed), left (B->T reversed)
     perimeter_order = (
         top_eps +
         right_eps +
@@ -586,17 +610,23 @@ def compute_emoji_pairings(strands, m, n, k, direction):
     for idx, ep in enumerate(perimeter_order):
         ep["perimeter_index"] = idx
 
-    # Build base labels with mirroring at k=0
+    # Build base labels with mirroring at k=0 (SAME AS EMOJI RENDERER)
+    # Top and Right get unique labels
+    # Bottom mirrors Top, Left mirrors Right
     top_count = len(top_eps)
     right_count = len(right_eps)
     bottom_count = len(bottom_eps)
     left_count = len(left_eps)
 
+    # Unique labels for top and right
     top_labels = list(range(top_count))
     right_labels = list(range(top_count, top_count + right_count))
+
+    # Mirror for bottom and left
     bottom_labels = list(reversed(top_labels[:bottom_count]))
     left_labels = list(reversed(right_labels[:left_count]))
 
+    # Combine in perimeter order
     base_labels = top_labels + right_labels + bottom_labels + left_labels
 
     # Apply rotation k
@@ -606,22 +636,22 @@ def compute_emoji_pairings(strands, m, n, k, direction):
     for idx, ep in enumerate(perimeter_order):
         ep["emoji_index"] = rotated_labels[idx]
 
-    # Build pairing map
-    opposite_side_map = {
-        "top": "bottom",
-        "bottom": "top",
-        "left": "right",
-        "right": "left",
-    }
-
-    by_side = {"top": top_eps, "bottom": bottom_eps, "left": left_eps, "right": right_eps}
-
+    # Build pairing map: for each END endpoint, find where the matching emoji is
+    # The _4 strand attaches to _2's END and goes to where the same emoji appears
+    # The _5 strand attaches to _3's END and goes to where the same emoji appears
     pairings = {}
     for ep in perimeter_order:
-        opposite_side = opposite_side_map[ep["side"]]
+        # Only build pairings for END endpoints (since _4/_5 attach to ends)
+        if ep.get("endpoint_type") != "end":
+            continue
+
         target_emoji = ep["emoji_index"]
 
-        for other_ep in by_side[opposite_side]:
+        # Find the OTHER endpoint with the same emoji (any endpoint except this one)
+        for other_ep in perimeter_order:
+            # Skip self (same layer AND same endpoint type)
+            if other_ep["layer_name"] == ep["layer_name"] and other_ep.get("endpoint_type") == ep.get("endpoint_type"):
+                continue
             if other_ep["emoji_index"] == target_emoji:
                 pairings[f"{ep['layer_name']}_end"] = {
                     "x": other_ep["x"],
@@ -631,10 +661,10 @@ def compute_emoji_pairings(strands, m, n, k, direction):
 
     # Debug output
     print(f"\n=== Emoji Pairing Debug RH (k={k}, {direction}) ===")
-    print(f"Top ({len(top_eps)}): {[(ep['layer_name'], ep['emoji_index']) for ep in top_eps]}")
-    print(f"Right ({len(right_eps)}): {[(ep['layer_name'], ep['emoji_index']) for ep in right_eps]}")
-    print(f"Bottom ({len(bottom_eps)}): {[(ep['layer_name'], ep['emoji_index']) for ep in bottom_eps]}")
-    print(f"Left ({len(left_eps)}): {[(ep['layer_name'], ep['emoji_index']) for ep in left_eps]}")
+    print(f"Top ({len(top_eps)}): {[(ep['layer_name'], ep.get('endpoint_type','?'), ep['emoji_index']) for ep in top_eps]}")
+    print(f"Right ({len(right_eps)}): {[(ep['layer_name'], ep.get('endpoint_type','?'), ep['emoji_index']) for ep in right_eps]}")
+    print(f"Bottom ({len(bottom_eps)}): {[(ep['layer_name'], ep.get('endpoint_type','?'), ep['emoji_index']) for ep in bottom_eps]}")
+    print(f"Left ({len(left_eps)}): {[(ep['layer_name'], ep.get('endpoint_type','?'), ep['emoji_index']) for ep in left_eps]}")
     print(f"Pairings: {pairings}")
     print("=" * 50)
 

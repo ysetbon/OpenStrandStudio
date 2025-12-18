@@ -909,9 +909,9 @@
             },
             "width": 46,
             "color": {
-              "r": 23,
-              "g": 44,
-              "b": 117,
+              "r": 192,
+              "g": 101,
+              "b": 175,
               "a": 255
             },
             "stroke_color": {
@@ -1002,9 +1002,9 @@
             },
             "width": 46,
             "color": {
-              "r": 23,
-              "g": 44,
-              "b": 117,
+              "r": 192,
+              "g": 101,
+              "b": 175,
               "a": 255
             },
             "stroke_color": {
@@ -1095,9 +1095,9 @@
             },
             "width": 46,
             "color": {
-              "r": 23,
-              "g": 44,
-              "b": 117,
+              "r": 192,
+              "g": 101,
+              "b": 175,
               "a": 255
             },
             "stroke_color": {
@@ -1188,9 +1188,9 @@
             },
             "width": 46,
             "color": {
-              "r": 23,
-              "g": 44,
-              "b": 117,
+              "r": 192,
+              "g": 101,
+              "b": 175,
               "a": 255
             },
             "stroke_color": {
@@ -1276,8 +1276,8 @@
               "y": 560.0
             },
             "end": {
-              "x": 1260.0,
-              "y": 280.0
+              "x": 1176.0,
+              "y": 308.0
             },
             "width": 46,
             "color": {
@@ -1345,13 +1345,13 @@
                 "y": 560.0
               },
               {
-                "x": 1260.0,
-                "y": 280.0
+                "x": 1176.0,
+                "y": 308.0
               }
             ],
             "control_point_center": {
-              "x": 1260.0,
-              "y": 420.0
+              "x": 1218.0,
+              "y": 434.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -1376,8 +1376,8 @@
               "y": 224.0
             },
             "end": {
-              "x": 1204.0,
-              "y": 504.0
+              "x": 1288.0,
+              "y": 476.0
             },
             "width": 46,
             "color": {
@@ -1445,13 +1445,13 @@
                 "y": 224.0
               },
               {
-                "x": 1204.0,
-                "y": 504.0
+                "x": 1288.0,
+                "y": 476.0
               }
             ],
             "control_point_center": {
-              "x": 1204.0,
-              "y": 364.0
+              "x": 1246.0,
+              "y": 350.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -1476,8 +1476,8 @@
               "y": 364.0
             },
             "end": {
-              "x": 1288.0,
-              "y": 364.0
+              "x": 1260.0,
+              "y": 280.0
             },
             "width": 46,
             "color": {
@@ -1545,13 +1545,13 @@
                 "y": 364.0
               },
               {
-                "x": 1288.0,
-                "y": 364.0
+                "x": 1260.0,
+                "y": 280.0
               }
             ],
             "control_point_center": {
-              "x": 1204.0,
-              "y": 364.0
+              "x": 1190.0,
+              "y": 322.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -1577,7 +1577,7 @@
             },
             "end": {
               "x": 1176.0,
-              "y": 308.0
+              "y": 420.0
             },
             "width": 46,
             "color": {
@@ -1646,12 +1646,12 @@
               },
               {
                 "x": 1176.0,
-                "y": 308.0
+                "y": 420.0
               }
             ],
             "control_point_center": {
               "x": 1260.0,
-              "y": 308.0
+              "y": 364.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -1677,7 +1677,7 @@
             },
             "end": {
               "x": 1288.0,
-              "y": 476.0
+              "y": 364.0
             },
             "width": 46,
             "color": {
@@ -1746,12 +1746,12 @@
               },
               {
                 "x": 1288.0,
-                "y": 476.0
+                "y": 364.0
               }
             ],
             "control_point_center": {
               "x": 1204.0,
-              "y": 476.0
+              "y": 420.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -1776,8 +1776,8 @@
               "y": 420.0
             },
             "end": {
-              "x": 1176.0,
-              "y": 420.0
+              "x": 1204.0,
+              "y": 504.0
             },
             "width": 46,
             "color": {
@@ -1845,13 +1845,13 @@
                 "y": 420.0
               },
               {
-                "x": 1176.0,
-                "y": 420.0
+                "x": 1204.0,
+                "y": 504.0
               }
             ],
             "control_point_center": {
-              "x": 1260.0,
-              "y": 420.0
+              "x": 1274.0,
+              "y": 462.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -1876,14 +1876,14 @@
               "y": 560.0
             },
             "end": {
-              "x": 1260.0,
-              "y": 280.0
+              "x": 1176.0,
+              "y": 308.0
             },
             "width": 46,
             "color": {
-              "r": 23,
-              "g": 44,
-              "b": 117,
+              "r": 192,
+              "g": 101,
+              "b": 175,
               "a": 255
             },
             "stroke_color": {
@@ -1897,7 +1897,7 @@
               false,
               false
             ],
-            "layer_name": "3_4_1_4",
+            "layer_name": "3_4_1_5",
             "set_number": 31,
             "is_first_strand": false,
             "is_start_side": true,
@@ -1944,8 +1944,8 @@
               null
             ],
             "control_point_center": {
-              "x": 1260.0,
-              "y": 420.0
+              "x": 1218.0,
+              "y": 434.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -1959,7 +1959,7 @@
             "control_point2_activated": false,
             "deletion_rectangles": [],
             "first_selected_strand": "3_4",
-            "second_selected_strand": "1_4"
+            "second_selected_strand": "1_5"
           },
           {
             "type": "MaskedStrand",
@@ -1969,14 +1969,14 @@
               "y": 560.0
             },
             "end": {
-              "x": 1260.0,
-              "y": 280.0
+              "x": 1176.0,
+              "y": 308.0
             },
             "width": 46,
             "color": {
-              "r": 23,
-              "g": 44,
-              "b": 117,
+              "r": 192,
+              "g": 101,
+              "b": 175,
               "a": 255
             },
             "stroke_color": {
@@ -1990,7 +1990,7 @@
               false,
               false
             ],
-            "layer_name": "3_4_2_4",
+            "layer_name": "3_4_2_5",
             "set_number": 32,
             "is_first_strand": false,
             "is_start_side": true,
@@ -2037,8 +2037,8 @@
               null
             ],
             "control_point_center": {
-              "x": 1260.0,
-              "y": 420.0
+              "x": 1218.0,
+              "y": 434.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -2052,7 +2052,7 @@
             "control_point2_activated": false,
             "deletion_rectangles": [],
             "first_selected_strand": "3_4",
-            "second_selected_strand": "2_4"
+            "second_selected_strand": "2_5"
           },
           {
             "type": "MaskedStrand",
@@ -2062,14 +2062,14 @@
               "y": 224.0
             },
             "end": {
-              "x": 1204.0,
-              "y": 504.0
+              "x": 1288.0,
+              "y": 476.0
             },
             "width": 46,
             "color": {
-              "r": 23,
-              "g": 44,
-              "b": 117,
+              "r": 192,
+              "g": 101,
+              "b": 175,
               "a": 255
             },
             "stroke_color": {
@@ -2083,7 +2083,7 @@
               false,
               false
             ],
-            "layer_name": "3_5_1_5",
+            "layer_name": "3_5_1_4",
             "set_number": 31,
             "is_first_strand": false,
             "is_start_side": true,
@@ -2130,8 +2130,8 @@
               null
             ],
             "control_point_center": {
-              "x": 1204.0,
-              "y": 364.0
+              "x": 1246.0,
+              "y": 350.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -2145,7 +2145,7 @@
             "control_point2_activated": false,
             "deletion_rectangles": [],
             "first_selected_strand": "3_5",
-            "second_selected_strand": "1_5"
+            "second_selected_strand": "1_4"
           },
           {
             "type": "MaskedStrand",
@@ -2155,14 +2155,14 @@
               "y": 224.0
             },
             "end": {
-              "x": 1204.0,
-              "y": 504.0
+              "x": 1288.0,
+              "y": 476.0
             },
             "width": 46,
             "color": {
-              "r": 23,
-              "g": 44,
-              "b": 117,
+              "r": 192,
+              "g": 101,
+              "b": 175,
               "a": 255
             },
             "stroke_color": {
@@ -2176,7 +2176,7 @@
               false,
               false
             ],
-            "layer_name": "3_5_2_5",
+            "layer_name": "3_5_2_4",
             "set_number": 32,
             "is_first_strand": false,
             "is_start_side": true,
@@ -2223,8 +2223,8 @@
               null
             ],
             "control_point_center": {
-              "x": 1204.0,
-              "y": 364.0
+              "x": 1246.0,
+              "y": 350.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -2238,7 +2238,7 @@
             "control_point2_activated": false,
             "deletion_rectangles": [],
             "first_selected_strand": "3_5",
-            "second_selected_strand": "2_5"
+            "second_selected_strand": "2_4"
           }
         ],
         "groups": {},
@@ -3155,9 +3155,9 @@
             },
             "width": 46,
             "color": {
-              "r": 23,
-              "g": 44,
-              "b": 117,
+              "r": 192,
+              "g": 101,
+              "b": 175,
               "a": 255
             },
             "stroke_color": {
@@ -3248,9 +3248,9 @@
             },
             "width": 46,
             "color": {
-              "r": 23,
-              "g": 44,
-              "b": 117,
+              "r": 192,
+              "g": 101,
+              "b": 175,
               "a": 255
             },
             "stroke_color": {
@@ -3341,9 +3341,9 @@
             },
             "width": 46,
             "color": {
-              "r": 23,
-              "g": 44,
-              "b": 117,
+              "r": 192,
+              "g": 101,
+              "b": 175,
               "a": 255
             },
             "stroke_color": {
@@ -3434,9 +3434,9 @@
             },
             "width": 46,
             "color": {
-              "r": 23,
-              "g": 44,
-              "b": 117,
+              "r": 192,
+              "g": 101,
+              "b": 175,
               "a": 255
             },
             "stroke_color": {
@@ -3522,8 +3522,8 @@
               "y": 560.0
             },
             "end": {
-              "x": 1260.0,
-              "y": 280.0
+              "x": 1176.0,
+              "y": 308.0
             },
             "width": 46,
             "color": {
@@ -3591,13 +3591,13 @@
                 "y": 560.0
               },
               {
-                "x": 1260.0,
-                "y": 280.0
+                "x": 1176.0,
+                "y": 308.0
               }
             ],
             "control_point_center": {
-              "x": 1260.0,
-              "y": 420.0
+              "x": 1218.0,
+              "y": 434.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -3622,8 +3622,8 @@
               "y": 224.0
             },
             "end": {
-              "x": 1204.0,
-              "y": 504.0
+              "x": 1288.0,
+              "y": 476.0
             },
             "width": 46,
             "color": {
@@ -3691,13 +3691,13 @@
                 "y": 224.0
               },
               {
-                "x": 1204.0,
-                "y": 504.0
+                "x": 1288.0,
+                "y": 476.0
               }
             ],
             "control_point_center": {
-              "x": 1204.0,
-              "y": 364.0
+              "x": 1246.0,
+              "y": 350.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -3722,8 +3722,8 @@
               "y": 364.0
             },
             "end": {
-              "x": 1288.0,
-              "y": 364.0
+              "x": 1260.0,
+              "y": 280.0
             },
             "width": 46,
             "color": {
@@ -3791,13 +3791,13 @@
                 "y": 364.0
               },
               {
-                "x": 1288.0,
-                "y": 364.0
+                "x": 1260.0,
+                "y": 280.0
               }
             ],
             "control_point_center": {
-              "x": 1204.0,
-              "y": 364.0
+              "x": 1190.0,
+              "y": 322.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -3823,7 +3823,7 @@
             },
             "end": {
               "x": 1176.0,
-              "y": 308.0
+              "y": 420.0
             },
             "width": 46,
             "color": {
@@ -3892,12 +3892,12 @@
               },
               {
                 "x": 1176.0,
-                "y": 308.0
+                "y": 420.0
               }
             ],
             "control_point_center": {
               "x": 1260.0,
-              "y": 308.0
+              "y": 364.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -3923,7 +3923,7 @@
             },
             "end": {
               "x": 1288.0,
-              "y": 476.0
+              "y": 364.0
             },
             "width": 46,
             "color": {
@@ -3992,12 +3992,12 @@
               },
               {
                 "x": 1288.0,
-                "y": 476.0
+                "y": 364.0
               }
             ],
             "control_point_center": {
               "x": 1204.0,
-              "y": 476.0
+              "y": 420.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -4022,8 +4022,8 @@
               "y": 420.0
             },
             "end": {
-              "x": 1176.0,
-              "y": 420.0
+              "x": 1204.0,
+              "y": 504.0
             },
             "width": 46,
             "color": {
@@ -4091,13 +4091,13 @@
                 "y": 420.0
               },
               {
-                "x": 1176.0,
-                "y": 420.0
+                "x": 1204.0,
+                "y": 504.0
               }
             ],
             "control_point_center": {
-              "x": 1260.0,
-              "y": 420.0
+              "x": 1274.0,
+              "y": 462.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -4122,14 +4122,14 @@
               "y": 560.0
             },
             "end": {
-              "x": 1260.0,
-              "y": 280.0
+              "x": 1176.0,
+              "y": 308.0
             },
             "width": 46,
             "color": {
-              "r": 23,
-              "g": 44,
-              "b": 117,
+              "r": 192,
+              "g": 101,
+              "b": 175,
               "a": 255
             },
             "stroke_color": {
@@ -4143,7 +4143,7 @@
               false,
               false
             ],
-            "layer_name": "3_4_1_4",
+            "layer_name": "3_4_1_5",
             "set_number": 31,
             "is_first_strand": false,
             "is_start_side": true,
@@ -4190,8 +4190,8 @@
               null
             ],
             "control_point_center": {
-              "x": 1260.0,
-              "y": 420.0
+              "x": 1218.0,
+              "y": 434.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -4205,7 +4205,7 @@
             "control_point2_activated": false,
             "deletion_rectangles": [],
             "first_selected_strand": "3_4",
-            "second_selected_strand": "1_4"
+            "second_selected_strand": "1_5"
           },
           {
             "type": "MaskedStrand",
@@ -4215,14 +4215,14 @@
               "y": 560.0
             },
             "end": {
-              "x": 1260.0,
-              "y": 280.0
+              "x": 1176.0,
+              "y": 308.0
             },
             "width": 46,
             "color": {
-              "r": 23,
-              "g": 44,
-              "b": 117,
+              "r": 192,
+              "g": 101,
+              "b": 175,
               "a": 255
             },
             "stroke_color": {
@@ -4236,7 +4236,7 @@
               false,
               false
             ],
-            "layer_name": "3_4_2_4",
+            "layer_name": "3_4_2_5",
             "set_number": 32,
             "is_first_strand": false,
             "is_start_side": true,
@@ -4283,8 +4283,8 @@
               null
             ],
             "control_point_center": {
-              "x": 1260.0,
-              "y": 420.0
+              "x": 1218.0,
+              "y": 434.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -4298,7 +4298,7 @@
             "control_point2_activated": false,
             "deletion_rectangles": [],
             "first_selected_strand": "3_4",
-            "second_selected_strand": "2_4"
+            "second_selected_strand": "2_5"
           },
           {
             "type": "MaskedStrand",
@@ -4308,14 +4308,14 @@
               "y": 224.0
             },
             "end": {
-              "x": 1204.0,
-              "y": 504.0
+              "x": 1288.0,
+              "y": 476.0
             },
             "width": 46,
             "color": {
-              "r": 23,
-              "g": 44,
-              "b": 117,
+              "r": 192,
+              "g": 101,
+              "b": 175,
               "a": 255
             },
             "stroke_color": {
@@ -4329,7 +4329,7 @@
               false,
               false
             ],
-            "layer_name": "3_5_1_5",
+            "layer_name": "3_5_1_4",
             "set_number": 31,
             "is_first_strand": false,
             "is_start_side": true,
@@ -4376,8 +4376,8 @@
               null
             ],
             "control_point_center": {
-              "x": 1204.0,
-              "y": 364.0
+              "x": 1246.0,
+              "y": 350.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -4391,7 +4391,7 @@
             "control_point2_activated": false,
             "deletion_rectangles": [],
             "first_selected_strand": "3_5",
-            "second_selected_strand": "1_5"
+            "second_selected_strand": "1_4"
           },
           {
             "type": "MaskedStrand",
@@ -4401,14 +4401,14 @@
               "y": 224.0
             },
             "end": {
-              "x": 1204.0,
-              "y": 504.0
+              "x": 1288.0,
+              "y": 476.0
             },
             "width": 46,
             "color": {
-              "r": 23,
-              "g": 44,
-              "b": 117,
+              "r": 192,
+              "g": 101,
+              "b": 175,
               "a": 255
             },
             "stroke_color": {
@@ -4422,7 +4422,7 @@
               false,
               false
             ],
-            "layer_name": "3_5_2_5",
+            "layer_name": "3_5_2_4",
             "set_number": 32,
             "is_first_strand": false,
             "is_start_side": true,
@@ -4469,8 +4469,8 @@
               null
             ],
             "control_point_center": {
-              "x": 1204.0,
-              "y": 364.0
+              "x": 1246.0,
+              "y": 350.0
             },
             "control_point_center_locked": false,
             "bias_control": {
@@ -4484,7 +4484,7 @@
             "control_point2_activated": false,
             "deletion_rectangles": [],
             "first_selected_strand": "3_5",
-            "second_selected_strand": "2_5"
+            "second_selected_strand": "2_4"
           }
         ],
         "groups": {},

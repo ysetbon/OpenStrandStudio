@@ -43,6 +43,8 @@ from mxn_lh import generate_json as generate_lh_json
 from mxn_rh import generate_json as generate_rh_json
 from mxn_lh_strech import generate_json as generate_lh_strech_json
 from mxn_rh_stretch import generate_json as generate_rh_stretch_json
+from mxn_lh_continuation import generate_json as generate_lh_continuation_json
+from mxn_rh_continuation import generate_json as generate_rh_continuation_json
 
 # Import emoji renderer (handles all emoji/label drawing logic)
 from mxn_emoji_renderer import EmojiRenderer
@@ -290,6 +292,10 @@ class MxNGeneratorDialog(QDialog):
         self.variant_group.addButton(self.lh_radio, 0)
         self.variant_group.addButton(self.rh_radio, 1)
 
+        # Update continuation button when variant changes (RH not supported yet)
+        self.lh_radio.toggled.connect(self._on_variant_changed)
+        self.rh_radio.toggled.connect(self._on_variant_changed)
+
         self.lh_radio.setChecked(True)  # Default to LH
 
         layout.addWidget(self.lh_radio)
@@ -483,6 +489,33 @@ class MxNGeneratorDialog(QDialog):
 
         parent_layout.addLayout(export_layout)
 
+        # Continuation button (only enabled when stretch + emojis are on)
+        self.continuation_btn = QPushButton("Generate Continuation (+4, +5)")
+        self.continuation_btn.setMinimumHeight(35)
+        self.continuation_btn.setEnabled(False)  # Disabled until base pattern generated
+        self.continuation_btn.setToolTip("Generate continuation strands based on current emoji pairing (requires Stretch mode + Emojis)")
+        self.continuation_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #e65100;
+                color: white;
+                font-weight: bold;
+                border: none;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #ef6c00;
+            }
+            QPushButton:pressed {
+                background-color: #d84315;
+            }
+            QPushButton:disabled {
+                background-color: #555;
+                color: #888;
+            }
+        """)
+        self.continuation_btn.clicked.connect(self.generate_continuation)
+        parent_layout.addWidget(self.continuation_btn)
+
         # Status label
         self.status_label = QLabel("")
         self.status_label.setWordWrap(True)
@@ -503,11 +536,18 @@ class MxNGeneratorDialog(QDialog):
         self._emoji_renderer.clear_cache()
         self.export_json_btn.setEnabled(False)
         self.export_image_btn.setEnabled(False)
+        self.continuation_btn.setEnabled(False)
 
     def _on_emoji_settings_changed(self):
         """Re-render preview when emoji options change (no geometry changes)."""
         # Emoji toggles should update preview immediately
         self._rerender_preview_if_possible()
+        # Update continuation button state (depends on emoji checkbox)
+        self._update_continuation_button_state()
+
+    def _on_variant_changed(self):
+        """Handle LH/RH variant change - update continuation button state."""
+        self._update_continuation_button_state()
 
     def _on_background_settings_changed(self):
         """Re-render preview and update panel background when transparency changes."""
@@ -746,6 +786,9 @@ class MxNGeneratorDialog(QDialog):
                 self.export_json_btn.setEnabled(True)
                 self.export_image_btn.setEnabled(True)
 
+                # Enable continuation button if stretch mode and emojis are on
+                self._update_continuation_button_state()
+
                 self.status_label.setText(
                     f"Generated {m}x{n} {variant.upper()} pattern in memory\nUse export buttons to save files"
                 )
@@ -754,6 +797,7 @@ class MxNGeneratorDialog(QDialog):
                 self.status_label.setText("Failed to generate image")
                 self.export_json_btn.setEnabled(False)
                 self.export_image_btn.setEnabled(False)
+                self.continuation_btn.setEnabled(False)
 
         except Exception as e:
             import traceback
@@ -761,6 +805,118 @@ class MxNGeneratorDialog(QDialog):
             self.status_label.setText(f"Error: {str(e)}")
             self.export_json_btn.setEnabled(False)
             self.export_image_btn.setEnabled(False)
+            self.continuation_btn.setEnabled(False)
+
+    def _update_continuation_button_state(self):
+        """Enable continuation button only when stretch mode + emojis are on + pattern generated."""
+        # Guard: button may not exist during initialization
+        if not hasattr(self, 'continuation_btn'):
+            return
+
+        can_continue = (
+            self.current_json_data is not None and
+            self.show_emojis_checkbox.isChecked() and
+            self.stretch_checkbox.isChecked()
+        )
+        self.continuation_btn.setEnabled(can_continue)
+
+        # Update tooltip based on state
+        if not self.stretch_checkbox.isChecked():
+            self.continuation_btn.setToolTip("Requires Stretch mode to be enabled")
+        elif not self.show_emojis_checkbox.isChecked():
+            self.continuation_btn.setToolTip("Requires Emojis to be shown")
+        elif self.current_json_data is None:
+            self.continuation_btn.setToolTip("Generate a base pattern first")
+        else:
+            self.continuation_btn.setToolTip("Generate continuation strands based on current emoji pairing")
+
+    def generate_continuation(self):
+        """Generate continuation pattern (_4, _5 strands) based on current emoji pairing."""
+        m = self.m_spinner.value()
+        n = self.n_spinner.value()
+        k = self.emoji_k_spinner.value()
+        direction = "cw" if self.emoji_cw_radio.isChecked() else "ccw"
+        is_lh = self.lh_radio.isChecked()
+        scale_factor = self.scale_combo.currentData()
+
+        self.status_label.setText("Generating continuation pattern...")
+        QApplication.processEvents()
+
+        try:
+            # Generate continuation JSON
+            if is_lh:
+                json_content = generate_lh_continuation_json(m, n, k, direction)
+            else:
+                json_content = generate_rh_continuation_json(m, n, k, direction)
+
+            # Apply custom colors to the JSON
+            data = json.loads(json_content)
+            custom_colors = {}
+            for set_num, qcolor in self.colors.items():
+                custom_colors[set_num] = {
+                    "r": qcolor.red(),
+                    "g": qcolor.green(),
+                    "b": qcolor.blue(),
+                    "a": qcolor.alpha()
+                }
+
+            # Apply colors to all states
+            if data.get('type') == 'OpenStrandStudioHistory':
+                for state in data.get('states', []):
+                    strands = state.get('data', {}).get('strands', [])
+                    for strand in strands:
+                        set_num = strand.get('set_number')
+                        if set_num and set_num in custom_colors:
+                            strand['color'] = custom_colors[set_num]
+
+            json_content = json.dumps(data, indent=2)
+
+            # Store JSON in memory
+            self.current_json_data = json_content
+
+            # Invalidate canvas cache (new strands)
+            self._prepared_canvas_key = None
+            self._prepared_bounds = None
+            self._emoji_renderer.clear_cache()
+
+            self.status_label.setText("Rendering continuation image...")
+            QApplication.processEvents()
+
+            # Generate image in memory
+            image = self._generate_image_in_memory(json_content, scale_factor)
+
+            if image and not image.isNull():
+                self.current_image = image
+                self.preview_widget.set_qimage(image)
+
+                self.export_json_btn.setEnabled(True)
+                self.export_image_btn.setEnabled(True)
+
+                # Auto-save JSON to appropriate continuation folder
+                pattern_type = "lh" if is_lh else "rh"
+                output_dir = os.path.join(os.path.dirname(os.path.dirname(script_dir)), "src", f"mxn_{pattern_type}_continuation")
+                os.makedirs(output_dir, exist_ok=True)
+
+                filename = f"mxn_{pattern_type}_strech_{m}x{n}_continue_k{k}_{direction}.json"
+                output_path = os.path.join(output_dir, filename)
+
+                with open(output_path, 'w') as f:
+                    f.write(json_content)
+
+                print(f"\nExported JSON to: {output_path}")
+
+                self.status_label.setText(
+                    f"Generated {m}x{n} {pattern_type.upper()} continuation (k={k}, {direction.upper()})\n"
+                    f"Saved to: {filename}"
+                )
+                self.save_color_settings()
+            else:
+                self.status_label.setText("Failed to generate continuation image")
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self.status_label.setText(f"Error generating continuation: {str(e)}")
 
     def _calculate_strands_bounds(self, canvas):
         """Calculate the bounding box of all strands with padding."""

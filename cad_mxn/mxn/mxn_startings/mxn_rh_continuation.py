@@ -294,9 +294,24 @@ def generate_json(m, n, k=0, direction="cw"):
     # - _5 attaches to _3's end and extends to the paired position (same emoji)
     #
     # The end position is determined by the emoji pairing (which depends on k).
+    # The ends are extended further outward (by tail_offset) to reach near the emoji positions.
     # =========================================================================
     strands_4 = []
     strands_5 = []
+
+    import math
+
+    def extend_endpoint(start_x, start_y, end_x, end_y, extension):
+        """Extend the endpoint further in the same direction by the given amount."""
+        dx = end_x - start_x
+        dy = end_y - start_y
+        length = math.sqrt(dx * dx + dy * dy)
+        if length < 0.001:
+            return end_x, end_y
+        # Normalize and extend
+        nx = dx / length
+        ny = dy / length
+        return end_x + nx * extension, end_y + ny * extension
 
     print(f"\n=== STEP 4: Generating _4 and _5 strands (RH) ===")
     print(f"Using emoji pairings to determine end positions (k={k}, {direction})")
@@ -319,13 +334,16 @@ def generate_json(m, n, k=0, direction="cw"):
             pairing_key = f"{layer_name}_end"
             if pairing_key in pairings:
                 paired_pos = pairings[pairing_key]
-                end_x = paired_pos["x"]
-                end_y = paired_pos["y"]
+                base_end_x = paired_pos["x"]
+                base_end_y = paired_pos["y"]
             else:
                 # Fallback: shouldn't happen if pairings are computed correctly
                 print(f"  WARNING: No pairing found for {pairing_key}, using start position")
-                end_x = start_x
-                end_y = start_y
+                base_end_x = start_x
+                base_end_y = start_y
+
+            # Extend the end further outward (near emoji position)
+            end_x, end_y = extend_endpoint(start_x, start_y, base_end_x, base_end_y, tail_offset)
 
             strand_4 = create_strand_base(
                 {"x": start_x, "y": start_y},
@@ -338,7 +356,7 @@ def generate_json(m, n, k=0, direction="cw"):
                 1,
             )
             strands_4.append(strand_4)
-            print(f"  Created {set_num}_4 (from _2): start=({start_x}, {start_y}), end=({end_x}, {end_y})")
+            print(f"  Created {set_num}_4 (from _2): start=({start_x}, {start_y}), end=({end_x:.1f}, {end_y:.1f})")
 
         elif layer_name.endswith("_3"):
             # _5 attaches to _3's end and goes to the paired position
@@ -349,13 +367,16 @@ def generate_json(m, n, k=0, direction="cw"):
             pairing_key = f"{layer_name}_end"
             if pairing_key in pairings:
                 paired_pos = pairings[pairing_key]
-                end_x = paired_pos["x"]
-                end_y = paired_pos["y"]
+                base_end_x = paired_pos["x"]
+                base_end_y = paired_pos["y"]
             else:
                 # Fallback: shouldn't happen if pairings are computed correctly
                 print(f"  WARNING: No pairing found for {pairing_key}, using start position")
-                end_x = start_x
-                end_y = start_y
+                base_end_x = start_x
+                base_end_y = start_y
+
+            # Extend the end further outward (near emoji position)
+            end_x, end_y = extend_endpoint(start_x, start_y, base_end_x, base_end_y, tail_offset)
 
             strand_5 = create_strand_base(
                 {"x": start_x, "y": start_y},
@@ -368,7 +389,7 @@ def generate_json(m, n, k=0, direction="cw"):
                 1,
             )
             strands_5.append(strand_5)
-            print(f"  Created {set_num}_5 (from _3): start=({start_x}, {start_y}), end=({end_x}, {end_y})")
+            print(f"  Created {set_num}_5 (from _3): start=({start_x}, {start_y}), end=({end_x:.1f}, {end_y:.1f})")
 
     # Order: vertical strands first (set > n), then horizontal (set <= n)
     # Within each group: by set_number, then _4 before _5

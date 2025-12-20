@@ -279,6 +279,7 @@ def generate_json(m, n, k=0, direction="cw"):
     # =========================================================================
     # STEP 3: Compute emoji pairings based on k and direction
     # =========================================================================
+
     pairings = compute_emoji_pairings(base_strands, m, n, k, direction)
 
     # =========================================================================
@@ -446,6 +447,123 @@ def generate_json(m, n, k=0, direction="cw"):
         history["states"].append({"step": step, "data": state_data})
 
     return json.dumps(history, indent=2)
+
+def get_perimeter_order(m, n):
+    """
+    Build the ordered list of strand ends around the perimeter (k=0).
+    Order: Top (L->R), Right (T->B), Bottom (R->L), Left (B->T).
+    Based on geometry:
+    - Vertical (_3 is Top, _2 is Bottom)
+    - Horizontal (_2 is Right, _3 is Left)
+    """
+    # Top (m): n+1 .. n+m (Vertical Top ends = _3)
+    top = [f"{i}_3" for i in range(n + 1, n + m + 1)]
+    # Right (n): 1 .. n (Horizontal Right ends = _2)
+    right = [f"{i}_2" for i in range(1, n + 1)]
+    # Bottom (m): n+m .. n+1 (Vertical Bottom ends = _2)
+    bottom = [f"{i}_2" for i in range(n + m, n, -1)]
+    # Left (n): n .. 1 (Horizontal Left ends = _3)
+    left = [f"{i}_3" for i in range(n, 0, -1)]
+    
+    return top + right + bottom + left
+
+def get_horizontal_order(m, n):
+    """
+    Get the horizontal order for a given m and n. it should be 1_2 1_3 2_2 2_3 3_2 3_3 ... n_2 n_3. 
+    """
+    horizontal_order = []
+    for i in range(1, n + 1):
+        horizontal_order.extend([f"{i}_2", f"{i}_3"])
+    return horizontal_order
+def get_vertical_order(m, n):
+    """
+    Get the vertical order for a given m and n. it should be n+1_2 n+1_3 n+2_2 n+2_3 ... n+m_2 n+m_3.
+    """
+    vertical_order = []
+    for i in range(n + 1, n + m + 1):
+        vertical_order.extend([f"{i}_2", f"{i}_3"])
+    return vertical_order
+def get_horizontal_order_k(m, n, k, direction):
+    """
+    Get the horizontal order for a given k and direction. this is by shifiting the horizontal order by k positions, making sure its clockwise or counterclockwise based on the direction similar to how we rotate the emojis.
+    """
+    horizontal_order = get_horizontal_order(m, n)
+    total = len(horizontal_order)
+    if total == 0:
+        return horizontal_order
+
+    # Convention:
+    # - "cw"  => rotate RIGHT by k
+    # - "ccw" => rotate LEFT  by k
+    if direction == "cw":
+        shift = (-k) % total
+    else:
+        shift = k % total
+    return horizontal_order[shift:] + horizontal_order[:shift]
+def get_vertical_order_k(m, n, k, direction):
+    """
+    Get the vertical order for a given k and direction. this is by shifiting the vertical order by k positions, making sure its clockwise or counterclockwise based on the direction similar to how we rotate the emojis.
+    """
+    vertical_order = get_vertical_order(m, n)
+    total = len(vertical_order)
+    if total == 0:
+        return vertical_order
+
+    # Convention:
+    # - "cw"  => rotate RIGHT by k
+    # - "ccw" => rotate LEFT  by k
+    if direction == "cw":
+        shift = (-k) % total
+    else:
+        shift = k % total
+    return vertical_order[shift:] + vertical_order[:shift]
+
+def get_mask_order_k(m, n, k, direction):
+    """
+    From get_horizontal_order_k and get_vertical_order_k, get the mask order for a given k and direction.
+
+    For even values of k, we pair odd indexes of get_vertical_order_k with even indexes of get_horizontal_order_k, and vice versa. 
+    Example for 2x2 with k=0, horizontal order is 1_2 1_3 2_2 2_3 and vertical order is 3_2 3_3 4_2 4_3, 
+    so the mask order is 3_2_1_3 3_2_2_3 3_3_1_2 3_3_2_2 4_2_1_3 4_2_2_3 4_3_1_2 4_3_2_2.
+
+    For odd values of k, we pair odd indexes of get_vertical_order_k with odd indexes of get_horizontal_order_k, and vice versa. Example for 2x2 with k=1, horizontal order is 2_3 1_2 1_3 2_2 and vertical order is 4_3 3_2 3_3 4_2, so the mask order is 4_3_2_3 4_3_1_2 4_2_2_3 4_2_1_2 3_2_2_3 3_2_1_2 3_3_2_3 3_3_1_2.
+    """
+    horizontal_order_k = get_horizontal_order_k(m, n, k, direction)
+    vertical_order_k = get_vertical_order_k(m, n, k, direction)
+
+    if not horizontal_order_k or not vertical_order_k:
+        return []
+
+    #h_even is the even indexes of horizontal_order
+    #h_odd is the odd indexes of horizontal_order
+    h_even = [h for idx, h in enumerate(horizontal_order_k) if idx % 2 == 0]
+    h_odd = [h for idx, h in enumerate(horizontal_order_k) if idx % 2 == 1]
+    
+    mask_order = []
+
+    if k % 2 == 0:
+        for idx, v in enumerate(vertical_order_k):
+            # If v index is even, pair with h_odd; if v index is odd, pair with h_even
+            target_h = h_odd if idx % 2 == 0 else h_even
+            for h in target_h:
+                mask_order.append(f"{v}_{h}")
+    else:
+        for idx, v in enumerate(vertical_order_k):
+            # If v index is even, pair with h_even; if v index is odd, pair with h_odd
+            target_h = h_even if idx % 2 == 0 else h_odd
+            for h in target_h:
+                mask_order.append(f"{v}_{h}")
+
+    return mask_order
+
+
+def compute_4_5_masks(base_strands, continuation_strands, m, n, k, direction):
+    """
+    Compute the masks for the _4 and _5 strands. use get_mask_order_k to get the mask order.
+    """
+
+
+
 
 
 def compute_emoji_pairings(strands, m, n, k, direction):

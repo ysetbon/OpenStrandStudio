@@ -642,11 +642,11 @@ def get_vertical_order_k(m, n, k, direction):
 
     example for 2x2 with k = 1 cw, total order is (top: 3_3 4_3, right: 1_2 2_2, bottom: 4_2 3_2, left: 2_3 1_3) 3_3 4_3 1_2 2_2 4_2 3_2 2_3 1_3, pointers: 1->3_3, 2->3_2, 3->4_3, 4->4_2, vertical order is 3_3 3_2 4_3 4_2.
 
-    example for 2x2 with k = 2 cw, initial pointers: 1->3_2, 2->3_3, 3->4_2, 4->4_3 (for k = 0) , and the total order is (top: 4_2 3_2, left: 1_2 2_2, bottom: 3_3 4_3, right: 2_3 1_3) 4_2 3_2 1_2 2_2 3_3 4_3 2_3 1_3, we shift the pointers by k-1 = 1 positions, so the new pointers are (shifting to the left by 1 position): 1->4_2, 2->2_3, 3->3_2, 4->3_3, vertical order is 4_2 2_3 3_2 3_3.
+    example for 2x2 with k = 2 cw, initial pointers: 1->3_2, 2->3_3, 3->4_2, 4->4_3 (for k = 0) , and the total order is (top: 4_2 3_2, left: 1_2 2_2, bottom: 3_3 4_3, right: 2_3 1_3) 4_2 3_2 1_2 2_2 3_3 4_3 2_3 1_3, we shift the pointers by k-1 = 1 positions, so the new pointers are (shifting to the left by 1 position): 1->4_2, 2->2_2, 3->1_3, 4->3_3, vertical order is 4_2 2_2 1_3 3_3.
 
-    example for 2x2 with k = 3 cw, initial pointers: 1->3_3, 2->3_2, 3->4_3, 4->4_2 (for k = 1) , and the total order is (top: 3_3 4_3, right: 1_2 2_2, bottom: 4_2 3_2, left: 2_3 1_3) 3_3 4_3 1_2 2_2 4_2 3_2 2_3 1_3, we shift the pointers by k-1 = 2 positions, so the new pointers are (shifting to the left by 2 positions): 1->1_2, 2->4_2, 3->2_2, 4->3_2, vertical order is 1_2 4_2 2_2 3_2.
+    example for 2x2 with k = 3 cw, initial pointers: 1->3_3, 2->3_2, 3->4_3, 4->4_2 (for k = 1) , and the total order is (top: 3_3 4_3, right: 1_2 2_2, bottom: 4_2 3_2, left: 2_3 1_3) 3_3 4_3 1_2 2_2 4_2 3_2 2_3 1_3, we shift the pointers by k-1 = 2 positions, so the new pointers are (shifting to the left by 2 positions): 1->2_3, 2->2_2, 3->1_3, 4->1_2, vertical order is 2_3 2_2 1_3 1_2.
 
-    example for 2x2 with k = -1 cw, initial pointers: 1->3_3 2->3_2 3->4_3 4->4_2 (for k = 1) , and the total order is (top: 3_3 4_3, right: 1_2 2_2, bottom: 4_2 3_2, left: 2_3 1_3) 3_3 4_3 1_2 2_2 4_2 3_2 2_3 1_3, we shift the pointers by k-1 = -2 positions, so the new pointers are (shifting to the right by 2 positions): 1->2_3, 2->4_2, 3->1_3, 4->3_2, vertical order is 2_3 4_2 1_3 3_2.
+    example for 2x2 with k = -1 cw, initial pointers: 1->3_3 2->3_2 3->4_3 4->4_2 (for k = 1) , and the total order is (top: 3_3 4_3, right: 1_2 2_2, bottom: 4_2 3_2, left: 2_3 1_3) 3_3 4_3 1_2 2_2 4_2 3_2 2_3 1_3, we shift the pointers by k-1 = -2 positions, so the new pointers are (shifting to the right by 2 positions): 1->1_2, 2->1_3, 3->2_2, 4->2_3, vertical order is 1_2 1_3 2_2 2_3.
 
 
     When direction is ccw, just change the k value to -k.

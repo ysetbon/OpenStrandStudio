@@ -387,26 +387,71 @@ def generate_json(m, n, k=0, direction="cw"):
             strands_5.append(strand_5)
             print(f"  Created {set_num}_5 (from _3): start=({start_x}, {start_y}), end=({end_x:.1f}, {end_y:.1f})")
 
-    # Order: vertical strands first (set > n), then horizontal (set <= n)
-    # Within each group: by set_number, then _4 before _5
-    # Result for 1x2: 3_4, 3_5, 1_4, 1_5, 2_4, 2_5
+    # Order continuation strands based on get_vertical_order_k then get_horizontal_order_k
+    # Convert _2 -> _4 and _3 -> _5 for the ordering
+    vertical_order_k = get_vertical_order_k(m, n, k, direction)
+    horizontal_order_k = get_horizontal_order_k(m, n, k, direction)
+
+    # Convert vertical order (_2/_3) to continuation order (_4/_5)
+    vertical_continuation_order = []
+    for layer in vertical_order_k:
+        # e.g., "3_2" -> "3_4", "3_3" -> "3_5"
+        parts = layer.split("_")
+        new_suffix = "4" if parts[1] == "2" else "5"
+        vertical_continuation_order.append(f"{parts[0]}_{new_suffix}")
+
+    # Convert horizontal order (_2/_3) to continuation order (_4/_5)
+    horizontal_continuation_order = []
+    for layer in horizontal_order_k:
+        # e.g., "1_2" -> "1_4", "1_3" -> "1_5"
+        parts = layer.split("_")
+        new_suffix = "4" if parts[1] == "2" else "5"
+        horizontal_continuation_order.append(f"{parts[0]}_{new_suffix}")
+
+    # Combined order: vertical first, then horizontal
+    continuation_order = vertical_continuation_order + horizontal_continuation_order
+
+    print(f"\nVertical order (k={k}, {direction}): {vertical_order_k} -> {vertical_continuation_order}")
+    print(f"Horizontal order (k={k}, {direction}): {horizontal_order_k} -> {horizontal_continuation_order}")
+
+    # Build lookup and sort continuation strands by the computed order
     all_continuation = strands_4 + strands_5
-    all_continuation.sort(key=lambda s: (
-        0 if s["set_number"] > n else 1,  # Vertical first (set > n)
-        s["set_number"],                   # Then by set number
-        s["layer_name"].endswith("_5")     # _4 before _5
-    ))
-    continuation_strands = all_continuation
+    strand_lookup = {s["layer_name"]: s for s in all_continuation}
+
+    continuation_strands = []
+    for layer_name in continuation_order:
+        if layer_name in strand_lookup:
+            continuation_strands.append(strand_lookup[layer_name])
 
     print(f"\nTotal: {len(strands_4)} _4 strands: {[s['layer_name'] for s in strands_4]}")
     print(f"Total: {len(strands_5)} _5 strands: {[s['layer_name'] for s in strands_5]}")
     print(f"Continuation order: {[s['layer_name'] for s in continuation_strands]}")
 
     # =========================================================================
-    # STEP 5: _4/_5 masks - REMOVED (to be implemented later)
+    # STEP 5: Generate _4/_5 masks using get_mask_order_k
     # =========================================================================
+    print(f"\n=== STEP 5: Generating _4/_5 continuation masks ===")
+
+    masks_info = compute_4_5_masks(base_strands, continuation_strands, m, n, k, direction)
+
     continuation_masked = []
-    print(f"\n=== STEP 5: _4/_5 masks skipped (not implemented) ===")
+    for mask_info in masks_info:
+        v_strand = mask_info["v_strand"]
+        h_strand = mask_info["h_strand"]
+
+        # Create MaskedStrand using vertical strand's geometry
+        masked_strand = create_strand_base(
+            v_strand["start"], v_strand["end"], v_strand["color"],
+            mask_info["layer_name"],
+            mask_info["set_number"],
+            "MaskedStrand"
+        )
+        masked_strand["first_selected_strand"] = mask_info["first_strand"]
+        masked_strand["second_selected_strand"] = mask_info["second_strand"]
+        continuation_masked.append(masked_strand)
+        print(f"  Created _4/_5 mask: {mask_info['layer_name']}")
+
+    print(f"Total _4/_5 masks created: {len(continuation_masked)}")
 
     # =========================================================================
     # STEP 6: Combine all strands and build JSON
@@ -540,8 +585,8 @@ def get_mask_order_k(m, n, k, direction):
     h_odd = [h for idx, h in enumerate(horizontal_order_k) if idx % 2 == 1]
     
     mask_order = []
-
-    if k % 2 == 0:
+    
+    if k % 2 == 1:
         for idx, v in enumerate(vertical_order_k):
             # If v index is even, pair with h_odd; if v index is odd, pair with h_even
             target_h = h_odd if idx % 2 == 0 else h_even
@@ -559,8 +604,74 @@ def get_mask_order_k(m, n, k, direction):
 
 def compute_4_5_masks(base_strands, continuation_strands, m, n, k, direction):
     """
-    Compute the masks for the _4 and _5 strands. use get_mask_order_k to get the mask order.
+    Compute the masks for the _4 and _5 strands using get_mask_order_k.
+
+    The mask order from get_mask_order_k gives pairings like "3_2_1_3"
+    which means vertical strand 3_2 crosses horizontal strand 1_3.
+
+    For _4/_5 strands:
+    - _4 strands attach to _2 ends, so 3_2 → 3_4
+    - _5 strands attach to _3 ends, so 1_3 → 1_5
+
+    This creates masks like "3_4_1_5" for the continuation crossings.
+
+    Returns:
+        list: List of mask dictionaries with keys:
+            - first_strand: layer name of first strand (vertical _4 or _5)
+            - second_strand: layer name of second strand (horizontal _4 or _5)
+            - layer_name: combined mask name
     """
+    mask_order = get_mask_order_k(m, n, k, direction)
+
+    print(f"\n=== Computing _4/_5 masks ===")
+    print(f"Base mask order from get_mask_order_k: {mask_order}")
+
+    # Build lookup for continuation strands by layer name
+    strand_lookup = {s["layer_name"]: s for s in continuation_strands}
+
+    masks_info = []
+
+    for mask_entry in mask_order:
+        # Parse the mask entry: "3_2_1_3" → vertical="3_2", horizontal="1_3"
+        parts = mask_entry.split("_")
+        if len(parts) != 4:
+            print(f"  Warning: Invalid mask entry format: {mask_entry}")
+            continue
+
+        v_set = parts[0]
+        v_suffix = parts[1]  # "2" or "3"
+        h_set = parts[2]
+        h_suffix = parts[3]  # "2" or "3"
+
+        # Convert to _4 and _5
+        # _2 → _4, _3 → _5
+        v_new_suffix = "4" if v_suffix == "2" else "5"
+        h_new_suffix = "4" if h_suffix == "2" else "5"
+
+        v_layer = f"{v_set}_{v_new_suffix}"  # e.g., "3_4"
+        h_layer = f"{h_set}_{h_new_suffix}"  # e.g., "1_5"
+
+        # Check if strands exist
+        v_strand = strand_lookup.get(v_layer)
+        h_strand = strand_lookup.get(h_layer)
+
+        if not v_strand or not h_strand:
+            print(f"  Warning: Could not find strands {v_layer} and/or {h_layer}")
+            continue
+
+        mask_info = {
+            "first_strand": v_layer,
+            "second_strand": h_layer,
+            "layer_name": f"{v_layer}_{h_layer}",
+            "v_strand": v_strand,
+            "h_strand": h_strand,
+            "set_number": int(f"{v_set}{h_set}"),
+        }
+        masks_info.append(mask_info)
+        print(f"  Mask: {mask_entry} -> {v_layer}_{h_layer}")
+
+    print(f"Total _4/_5 mask pairs: {len(masks_info)}")
+    return masks_info
 
 
 

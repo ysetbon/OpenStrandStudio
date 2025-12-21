@@ -796,8 +796,79 @@ def get_horizontal_order_k(m, n, k, direction):
 
 
 def get_vertical_order_k(m, n, k, direction):
- #todo: implement this
-    return []
+    """
+    Get the *vertical* endpoint order for an m×n continuation, at rotation `k` and `direction`.
+
+    This is the RH analogue of `mxn_lh_continuation.get_vertical_order_k`, following the
+    exact same conventions already used by RH `get_horizontal_order_k`:
+
+    - **Direction handling**: RH flips `k` when `direction == "cw"` (so the examples below
+      are written for **ccw**, matching `get_horizontal_order_k` in this file).
+    - **Negative k**: if `k < 0`, it is normalized using `k = 4*(m+n) - k` (same as RH horizontal).
+    - **Parity**:
+      - even `k`: base pointers come from the `k=0` pattern and are shifted in
+        `get_starting_order(m, n)` by `-(k-1)` (left by `k-1`).
+      - odd `k`: base pointers come from the `k=1` pattern and are shifted in
+        `get_starting_order_oposite_orientation(m, n)` by `+(k-2)` (right by `k-2`).
+
+    The returned list has length `2*m` and contains labels like `"3_2"` / `"3_3"`.
+
+    CCW examples for **m=2, n=2** (vertical sets are 3 and 4):
+
+    - k = 0 (ccw)  -> ["3_3", "3_2", "4_3", "4_2"]
+    - k = 1 (ccw)  -> ["3_2", "3_3", "4_2", "4_3"]
+    - k = 2 (ccw)  -> ["1_2", "4_2", "3_3", "2_3"]
+    - k = 3 (ccw)  -> ["4_2", "1_2", "2_3", "3_3"]
+    - k = -1 (ccw) -> ["2_2", "4_3", "3_2", "1_3"]
+    """
+
+    # Match RH horizontal convention: flip k for "cw"
+    if direction == "cw":
+        k = -k
+
+    total_len = 2 * (m + n)
+    full_order = get_starting_order(m, n)
+    full_order_oposite_orientation = get_starting_order_oposite_orientation(m, n)
+
+    # RH is opposite of LH, so the base pointers swap the _2/_3 ordering vs LH.
+    # k=0 pointers for vertical order: ["(n+1)_3", "(n+1)_2", "(n+2)_3", "(n+2)_2", ...]
+    pointer_k0 = []
+    for i in range(m):
+        pointer_k0.append(f"{n+1+i}_3")
+        pointer_k0.append(f"{n+1+i}_2")
+
+    # k=1 pointers for vertical order: ["(n+1)_2", "(n+1)_3", "(n+2)_2", "(n+2)_3", ...]
+    pointer_k1 = []
+    for i in range(m):
+        pointer_k1.append(f"{n+1+i}_2")
+        pointer_k1.append(f"{n+1+i}_3")
+
+    if k == 0:
+        return pointer_k0
+    if k == 1:
+        return pointer_k1
+
+    if k < 0:
+        k = 4 * (m + n) - k
+
+    # Precompute indices for O(1) shifts
+    full_index = {s: idx for idx, s in enumerate(full_order)}
+    opp_index = {s: idx for idx, s in enumerate(full_order_oposite_orientation)}
+
+    if k % 2 == 0:
+        # Shift left by (k-1) in the full RH starting order
+        out = list(pointer_k0)
+        for i, label in enumerate(out):
+            shift_position = full_index[label]
+            out[i] = full_order[(shift_position - k + 1) % total_len]
+        return out
+
+    # Odd k: shift right by (k-2) in the opposite-orientation perimeter
+    out = list(pointer_k1)
+    for i, label in enumerate(out):
+        shift_position = opp_index[label]
+        out[i] = full_order_oposite_orientation[(shift_position + k - 2) % total_len]
+    return out
 
 def get_mask_order_k(m, n, k, direction):
     """

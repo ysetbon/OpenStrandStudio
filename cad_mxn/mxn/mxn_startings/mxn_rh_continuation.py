@@ -391,26 +391,71 @@ def generate_json(m, n, k=0, direction="cw"):
             strands_5.append(strand_5)
             print(f"  Created {set_num}_5 (from _3): start=({start_x}, {start_y}), end=({end_x:.1f}, {end_y:.1f})")
 
-    # Order: vertical strands first (set > n), then horizontal (set <= n)
-    # Within each group: by set_number, then _4 before _5
-    # Result for 1x2: 3_4, 3_5, 1_4, 1_5, 2_4, 2_5
+    # Order continuation strands based on get_vertical_order_k then get_horizontal_order_k
+    # Convert _2 -> _4 and _3 -> _5 for the ordering
+    vertical_order_k = get_vertical_order_k(m, n, k, direction)
+    horizontal_order_k = get_horizontal_order_k(m, n, k, direction)
+
+    # Convert vertical order (_2/_3) to continuation order (_4/_5)
+    vertical_continuation_order = []
+    for layer in vertical_order_k:
+        # e.g., "3_2" -> "3_4", "3_3" -> "3_5"
+        parts = layer.split("_")
+        new_suffix = "4" if parts[1] == "2" else "5"
+        vertical_continuation_order.append(f"{parts[0]}_{new_suffix}")
+
+    # Convert horizontal order (_2/_3) to continuation order (_4/_5)
+    horizontal_continuation_order = []
+    for layer in horizontal_order_k:
+        # e.g., "1_2" -> "1_4", "1_3" -> "1_5"
+        parts = layer.split("_")
+        new_suffix = "4" if parts[1] == "2" else "5"
+        horizontal_continuation_order.append(f"{parts[0]}_{new_suffix}")
+
+    # Combined order: vertical first, then horizontal
+    continuation_order = vertical_continuation_order + horizontal_continuation_order
+
+    print(f"\nVertical order (k={k}, {direction}): {vertical_order_k} -> {vertical_continuation_order}")
+    print(f"Horizontal order (k={k}, {direction}): {horizontal_order_k} -> {horizontal_continuation_order}")
+
+    # Build lookup and sort continuation strands by the computed order
     all_continuation = strands_4 + strands_5
-    all_continuation.sort(key=lambda s: (
-        0 if s["set_number"] > n else 1,  # Vertical first (set > n)
-        s["set_number"],                   # Then by set number
-        s["layer_name"].endswith("_5")     # _4 before _5
-    ))
-    continuation_strands = all_continuation
+    strand_lookup = {s["layer_name"]: s for s in all_continuation}
+
+    continuation_strands = []
+    for layer_name in continuation_order:
+        if layer_name in strand_lookup:
+            continuation_strands.append(strand_lookup[layer_name])
 
     print(f"\nTotal: {len(strands_4)} _4 strands: {[s['layer_name'] for s in strands_4]}")
     print(f"Total: {len(strands_5)} _5 strands: {[s['layer_name'] for s in strands_5]}")
     print(f"Continuation order: {[s['layer_name'] for s in continuation_strands]}")
 
     # =========================================================================
-    # STEP 5: _4/_5 masks - REMOVED (to be implemented later)
+    # STEP 5: Generate _4/_5 masks using get_mask_order_k
     # =========================================================================
+    print(f"\n=== STEP 5: Generating _4/_5 continuation masks ===")
+
+    masks_info = compute_4_5_masks(base_strands, continuation_strands, m, n, k, direction)
+
     continuation_masked = []
-    print(f"\n=== STEP 5: _4/_5 masks skipped (not implemented) ===")
+    for mask_info in masks_info:
+        v_strand = mask_info["v_strand"]
+        h_strand = mask_info["h_strand"]
+
+        # Create MaskedStrand using vertical strand's geometry
+        masked_strand = create_strand_base(
+            v_strand["start"], v_strand["end"], v_strand["color"],
+            mask_info["layer_name"],
+            mask_info["set_number"],
+            "MaskedStrand"
+        )
+        masked_strand["first_selected_strand"] = mask_info["first_strand"]
+        masked_strand["second_selected_strand"] = mask_info["second_strand"]
+        continuation_masked.append(masked_strand)
+        print(f"  Created _4/_5 mask: {mask_info['layer_name']}")
+
+    print(f"Total _4/_5 masks created: {len(continuation_masked)}")
 
     # =========================================================================
     # STEP 6: Combine all strands and build JSON
@@ -649,6 +694,218 @@ def rotate_labels(labels, k, direction):
         out[(i + shift) % n] = labels[i]
 
     return out
+
+
+def get_starting_order(m, n):
+    """
+    RH version: starting by top LEFT side and going CLOCKWISE. Top side + right side + bottom side + left side.
+    This is the OPPOSITE of LH's get_starting_order.
+    """
+    top = [f"{i}_3" for i in range(n + 1, n + m + 1)]
+    right = [f"{i}_3" for i in range(1, n + 1)]
+    bottom = [f"{i}_2" for i in reversed(range(n + 1, n + m + 1))]
+    left = [f"{i}_2" for i in reversed(range(1, n + 1))]
+    return top + right + bottom + left
+
+
+def get_starting_order_oposite_orientation(m, n):
+    """
+    RH version: starting by top RIGHT side and going COUNTERCLOCKWISE. Top side + left side + bottom side + right side.
+    This is the OPPOSITE of LH's get_starting_order_oposite_orientation.
+    """
+    top = [f"{i}_3" for i in reversed(range(n + 1, n + m + 1))]
+    left = [f"{i}_2" for i in range(1, n + 1)]
+    bottom = [f"{i}_2" for i in range(n + 1, n + m + 1)]
+    right = [f"{i}_3" for i in reversed(range(1, n + 1))]
+    return top + left + bottom + right
+
+
+def get_horizontal_order_k(m, n, k, direction):
+    f"""
+    This code works properly!
+    if k is even - full order is top + right + bottom + left of get_starting_order. horizontal order when k = 0 we have pointer 1 to be pointing at first element of right side (1_3), pointer 2 pointing at last element of left side (1_2), pointer 3 pointing at second element of right side (2_3), pointer 4 pointing at second element of one before last left side (2_2), etc. if k is even we shift the pointers to the right or left by k-1 positions (shifting to the left if k is positive, shifting to the right if k is negative) of the array of the total get_starting_order.
+
+    if k is odd - full order is top + left + bottom + right of get_starting_order_oposite_orientation. horizontal order when k = 1 we have pointer 1 to be pointing at last element of left side (1_2), pointer 2 pointing at first element of right side (1_3), pointer 3 pointing at second element of left side (2_2), pointer 4 pointing at second element of one before last right side (2_3), etc. if k is odd and not 1 we shift the pointers base on the pointer of k = 1 and shifter by k - 2 positions of the array of the total get_starting_order_oposite_orientation.
+
+    if k is negative, it is equals to 4*(m+n) + k.
+
+    example for 2x2 with k = 0 ccw, total order is (top:[3_3, 4_3] right:[1_3, 2_3] bottom:[4_2, 3_2] left:[2_2, 1_2]) ["3_3", "4_3", "1_3", "2_3", "4_2", "3_2", "2_2", "1_2"]
+    so pointers: 1->1_3, 2->1_2, 3->2_3, 4->2_2, horizontal order is 1_3 1_2 2_3 2_2.
+
+    example for 2x2 with k = 1 ccw, get_starting_order_oposite_orientation (top: [4_3, 3_3] left[1_2, 2_2] bottom[3_2, 4_2] right[2_3, 1_3]) ["4_3", "3_3", "1_2", "2_2", "3_2", "4_2", "2_3", "1_3"] so pointers: 1->1_2, 2->1_3, 3->2_2, 4->2_3, horizontal order is 1_2 1_3 2_2 2_3.
+
+    example for 2x2 with k = 2 ccw, initial pointers: 1->1_3, 2->1_2, 3->2_3, 4->2_2 (for k = 0) , and the total order is (top:["3_3", "4_3"] right: ["1_3", "2_3"] bottom: ["4_2", "3_2"] left: ["2_2", "1_2"]) ["3_3", "4_3", "1_3", "2_3", "4_2", "3_2", "2_2", "1_2"], we shift the pointers by k - 1 = 1 positions, so the new pointers are (shifting to the left by 1 position): 1->4_3, 2->2_2, 3->1_3, 4->3_2, horizontal order is 4_3 2_2 1_3 3_2.
+
+    example for 2x2 with k = 3 ccw, initial pointers: 1->1_2, 2->1_3, 3->2_2, 4->2_3 (for k = 1) , and the get_starting_order_oposite_orientation (top: [4_3, 3_3] left[1_2, 2_2] bottom[3_2, 4_2] right[2_3, 1_3]) ["4_3", "3_3", "1_2", "2_2", "3_2", "4_2", "2_3", "1_3"], we shift the pointers by k - 2 = 1 positions, so the new pointers are (shifting to the right by 1 positions): 1->2_2, 2->4_3, 3->3_2, 4->1_3, horizontal order is 2_2 4_3 3_2 1_3.
+
+    example for 2x2 with k = -1 ccw, its eqals 4*(m+n) + k = 4*(2+2) - (-1) = 17, initial pointers: 1->1_2, 2->1_3, 3->2_2, 4->2_3 (for k = 1) , and the get_starting_order_oposite_orientation (top: [4_3, 3_3] left[1_2, 2_2] bottom[3_2, 4_2] right[2_3, 1_3]) ["4_3", "3_3", "1_2", "2_2", "3_2", "4_2", "2_3", "1_3"], we shift the pointers by k-2 =17-2 positions, so the new pointers are (shifting to the right by 15 positions): 1->3_3, 2->2_3, 3->1_2, 4->4_2, horizontal order is 3_3 2_3 1_2 4_2.
+
+    When direction is ccw, just change the k value to -k.
+    """
+
+    if direction == "cw":
+        k = -k
+
+    total_len = 2 * (m + n)
+    full_order = get_starting_order(m, n)
+    full_order_oposite_orientation = get_starting_order_oposite_orientation(m, n)
+    # RH is opposite of LH, so k=0 pointers start with _3 (swapped from LH)
+    # k=0 pointers for horizontal order pointer = ["1_3", "1_2", "2_3", "2_2", ...]
+    pointer_k0 = []
+    for i in range(n):
+        pointer_k0.append(f"{i+1}_3")
+        pointer_k0.append(f"{i+1}_2")
+    # k=1 pointers for horizontal order pointer = ["1_2", "1_3", "2_2", "2_3", ...]
+    pointer_k1 = []
+    for i in range(n):
+        pointer_k1.append(f"{i+1}_2")
+        pointer_k1.append(f"{i+1}_3")
+    if k == 0:
+        return pointer_k0
+    elif k == 1:
+        return pointer_k1
+    if k < 0:
+        k = 4*(m+n) - k
+    
+    if k % 2 == 0:
+        pointer_k = pointer_k0
+        for i in range(len(pointer_k)):
+            #search the strand in the full_order
+            for strand in full_order:
+                #find the strand in pointer_k[i]
+                if pointer_k[i] == strand:
+                    #get the shift position of the strand in the full_order
+                    shift_position = full_order.index(strand)
+                    #shift to the left by k-1 positions
+                    pointer_k[i] = full_order[(shift_position - k + 1) % total_len]
+                    break
+    else:
+        pointer_k = pointer_k1
+        for i in range(len(pointer_k)):
+            #search the strand in the full_order
+            for strand in full_order_oposite_orientation:
+                #find the strand in pointer_k[i]
+                if pointer_k[i] == strand:
+                    #get the shift position of the strand in the full_order
+                    shift_position = full_order_oposite_orientation.index(strand)
+                    #shift to the right by k-2 positions
+                    pointer_k[i] = full_order_oposite_orientation[(shift_position + k - 2) % total_len]
+                    break
+    return pointer_k
+
+
+
+def get_vertical_order_k(m, n, k, direction):
+ #todo: implement this
+    return []
+
+def get_mask_order_k(m, n, k, direction):
+    """
+    From get_horizontal_order_k and get_vertical_order_k, get the mask order for a given k and direction.
+
+    For even values of k, we pair odd indexes of get_vertical_order_k with even indexes of get_horizontal_order_k, and vice versa.
+
+    For odd values of k, we pair odd indexes of get_vertical_order_k with odd indexes of get_horizontal_order_k, and vice versa.
+    """
+    horizontal_order_k = get_horizontal_order_k(m, n, k, direction)
+    vertical_order_k = get_vertical_order_k(m, n, k, direction)
+
+    if not horizontal_order_k or not vertical_order_k:
+        return []
+
+    #h_even is the even indexes of horizontal_order
+    #h_odd is the odd indexes of horizontal_order
+    h_even = [h for idx, h in enumerate(horizontal_order_k) if idx % 2 == 0]
+    h_odd = [h for idx, h in enumerate(horizontal_order_k) if idx % 2 == 1]
+
+    mask_order = []
+
+    if k % 2 == 1:
+        for idx, v in enumerate(vertical_order_k):
+            # If v index is even, pair with h_odd; if v index is odd, pair with h_even
+            target_h = h_odd if idx % 2 == 0 else h_even
+            for h in target_h:
+                mask_order.append(f"{v}_{h}")
+    else:
+        for idx, v in enumerate(vertical_order_k):
+            # If v index is even, pair with h_even; if v index is odd, pair with h_odd
+            target_h = h_even if idx % 2 == 0 else h_odd
+            for h in target_h:
+                mask_order.append(f"{v}_{h}")
+
+    return mask_order
+
+
+def compute_4_5_masks(base_strands, continuation_strands, m, n, k, direction):
+    """
+    Compute the masks for the _4 and _5 strands using get_mask_order_k.
+
+    The mask order from get_mask_order_k gives pairings like "3_2_1_3"
+    which means vertical strand 3_2 crosses horizontal strand 1_3.
+
+    For _4/_5 strands:
+    - _4 strands attach to _2 ends, so 3_2 → 3_4
+    - _5 strands attach to _3 ends, so 1_3 → 1_5
+
+    This creates masks like "3_4_1_5" for the continuation crossings.
+
+    Returns:
+        list: List of mask dictionaries with keys:
+            - first_strand: layer name of first strand (vertical _4 or _5)
+            - second_strand: layer name of second strand (horizontal _4 or _5)
+            - layer_name: combined mask name
+    """
+    mask_order = get_mask_order_k(m, n, k, direction)
+
+    print(f"\n=== Computing _4/_5 masks (RH) ===")
+    print(f"Base mask order from get_mask_order_k: {mask_order}")
+
+    # Build lookup for continuation strands by layer name
+    strand_lookup = {s["layer_name"]: s for s in continuation_strands}
+
+    masks_info = []
+
+    for mask_entry in mask_order:
+        # Parse the mask entry: "3_2_1_3" → vertical="3_2", horizontal="1_3"
+        parts = mask_entry.split("_")
+        if len(parts) != 4:
+            print(f"  Warning: Invalid mask entry format: {mask_entry}")
+            continue
+
+        v_set = parts[0]
+        v_suffix = parts[1]  # "2" or "3"
+        h_set = parts[2]
+        h_suffix = parts[3]  # "2" or "3"
+
+        # Convert to _4 and _5
+        # _2 → _4, _3 → _5
+        v_new_suffix = "4" if v_suffix == "2" else "5"
+        h_new_suffix = "4" if h_suffix == "2" else "5"
+
+        v_layer = f"{v_set}_{v_new_suffix}"  # e.g., "3_4"
+        h_layer = f"{h_set}_{h_new_suffix}"  # e.g., "1_5"
+
+        # Check if strands exist
+        v_strand = strand_lookup.get(v_layer)
+        h_strand = strand_lookup.get(h_layer)
+
+        if not v_strand or not h_strand:
+            print(f"  Warning: Could not find strands {v_layer} and/or {h_layer}")
+            continue
+
+        mask_info = {
+            "first_strand": v_layer,
+            "second_strand": h_layer,
+            "layer_name": f"{v_layer}_{h_layer}",
+            "v_strand": v_strand,
+            "h_strand": h_strand,
+            "set_number": int(f"{v_set}{h_set}"),
+        }
+        masks_info.append(mask_info)
+        print(f"  Mask: {mask_entry} -> {v_layer}_{h_layer}")
+
+    print(f"Total _4/_5 mask pairs: {len(masks_info)}")
+    return masks_info
 
 
 def main():

@@ -493,24 +493,6 @@ def generate_json(m, n, k=0, direction="cw"):
 
     return json.dumps(history, indent=2)
 
-def get_perimeter_order(m, n):
-    """
-    Build the ordered list of strand ends around the perimeter (k=0).
-    Order: Top (L->R), Right (T->B), Bottom (R->L), Left (B->T).
-    Based on geometry:
-    - Vertical (_3 is Top, _2 is Bottom)
-    - Horizontal (_2 is Right, _3 is Left)
-    """
-    # Top (m): n+1 .. n+m (Vertical Top ends = _3)
-    top = [f"{i}_3" for i in range(n + 1, n + m + 1)]
-    # Right (n): 1 .. n (Horizontal Right ends = _2)
-    right = [f"{i}_2" for i in range(1, n + 1)]
-    # Bottom (m): n+m .. n+1 (Vertical Bottom ends = _2)
-    bottom = [f"{i}_2" for i in range(n + m, n, -1)]
-    # Left (n): n .. 1 (Horizontal Left ends = _3)
-    left = [f"{i}_3" for i in range(n, 0, -1)]
-    
-    return top + right + bottom + left
 
 def get_starting_order(m, n):
     """

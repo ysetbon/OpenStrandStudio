@@ -496,7 +496,17 @@ def generate_json(m, n, k=0, direction="cw"):
 
 def get_starting_order(m, n):
     """
-    starting by top right side and going counterclockwise. Top side + left side + bottom side + right side.
+    LH version: starting by the **top-right** and going **counterclockwise**.
+    Perimeter order is: **top + left + bottom + right**.
+
+    Matches the UI/emoji layout:
+    - Top side uses `_2` (right → left)
+    - Left side uses `_2` (top → bottom)
+    - Bottom side uses `_3` (left → right)
+    - Right side uses `_3` (bottom → top)
+
+    Example (m=2, n=2):
+    ["4_2", "3_2", "1_2", "2_2", "3_3", "4_3", "2_3", "1_3"]
     """
     top = [f"{i}_2" for i in reversed(range(n + 1, n + m + 1))]
     left = [f"{i}_2" for i in range(1, n  + 1)]
@@ -508,12 +518,27 @@ def get_starting_order(m, n):
 def get_starting_order_oposite_orientation(m, n):
     """
     starting by top left side and going clockwise. Top side + right side + bottom side + left side.
+
+    Matches the UI/emoji layout:
+    - Top side uses `_2` (left → right)
+    - Right side uses `_3` (top → bottom)
+    - Bottom side uses `_3` (right → left)
+    - Left side uses `_2` (bottom → top)
+
+    Example (m=2, n=2):
+    ["3_2", "4_2", "1_3", "2_3", "4_3", "3_3", "2_2", "1_2"]
     """
-    top = [f"{i}_3" for i in range(n + 1, n + m + 1)]
-    left = [f"{i}_3" for i in reversed(range(1, n  + 1))]
-    bottom = [f"{i}_2" for i in reversed(range(n + 1, n + m + 1))]
-    right = [f"{i}_2" for i in range(1, n  + 1)]
+ 
+    # Top: vertical sets (n+1..n+m), `_2`, left -> right
+    top = [f"{i}_2" for i in range(n + 1, n + m + 1)]
+    # Right: horizontal sets (1..n), `_3`, top -> bottom
+    right = [f"{i}_3" for i in range(1, n + 1)]
+    # Bottom: vertical sets (n+1..n+m), `_3`, right -> left
+    bottom = [f"{i}_3" for i in reversed(range(n + 1, n + m + 1))]
+    # Left: horizontal sets (1..n), `_2`, bottom -> top
+    left = [f"{i}_2" for i in reversed(range(1, n + 1))]
     return top + right + bottom + left
+
 def get_horizontal_order_k(m, n, k, direction):
     """
     
@@ -524,7 +549,7 @@ def get_horizontal_order_k(m, n, k, direction):
 
     example for 2x2 with k = 0 cw, total order is (top: 4_2 3_2, left: 1_2 2_2, bottom: 3_3 4_3, right: 2_3 1_3) 4_2 3_2 1_2 2_2 3_3 4_3 2_3 1_3, so pointers: 1->1_2, 2->1_3, 3->2_2, 4->2_3, horizontal order is 1_2 1_3 2_2 2_3.
 
-    example for 2x2 with k = 1 cw, total order is (top: 3_3 4_3, right: 1_2 2_2, bottom: 4_2 3_2, left: 2_3 1_3) 3_3 4_3 1_2 2_2 4_2 3_2 2_3 1_3, pointers: 1->1_3, 2->1_2, 3->2_3, 4->2_2, horizontal order is 1_3 1_2 2_3 2_2.
+    example for 2x2 with k = 1 cw, total order is (top: 3_3 4_3, right: 1_2 2_2, bottom: 4_2 3_2, left: 2_3 1_3) ["3_2", "4_2", "1_3", "2_3", "4_3", "3_3", "2_2", "1_2"], pointers: 1->1_3, 2->1_2, 3->2_3, 4->2_2, horizontal order is 1_3 1_2 2_3 2_2.
 
     example for 2x2 with k = 2 cw, initial pointers: 1->1_2, 2->1_3, 3->2_2, 4->2_3 (for k = 0) , and the total order is (top: 4_2 3_2, left: 1_2 2_2, bottom: 3_3 4_3, right: 2_3 1_3) 4_2 3_2 1_2 2_2 3_3 4_3 2_3 1_3, we shift the pointers by k-1 = 1 positions, so the new pointers are (shifting to the left by 1 position): 1->3_2, 2->2_3, 3->1_2, 4->4_3, horizontal order is 3_2 2_3 1_2 4_3.
     

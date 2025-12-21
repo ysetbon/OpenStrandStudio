@@ -712,6 +712,11 @@ def get_starting_order_oposite_orientation(m, n):
     """
     RH version: starting by top RIGHT side and going COUNTERCLOCKWISE. Top side + left side + bottom side + right side.
     This is the OPPOSITE of LH's get_starting_order_oposite_orientation.
+    top: ["4_3", "3_3"]
+    left: ["1_2", "2_2"]
+    bottom: ["3_2", "4_2"]
+    right: ["2_3", "1_3"]
+    top + left + bottom + right = ["4_3", "3_3", "1_2", "2_2", "3_2", "4_2", "2_3", "1_3"]
     """
     top = [f"{i}_3" for i in reversed(range(n + 1, n + m + 1))]
     left = [f"{i}_2" for i in range(1, n + 1)]

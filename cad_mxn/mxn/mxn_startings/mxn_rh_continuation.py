@@ -743,7 +743,7 @@ def get_horizontal_order_k(m, n, k, direction):
 
     example for 2x2 with k = 3 ccw, initial pointers: 1->1_2, 2->1_3, 3->2_2, 4->2_3 (for k = 1) , and the get_starting_order_oposite_orientation (top: [4_3, 3_3] left[1_2, 2_2] bottom[3_2, 4_2] right[2_3, 1_3]) ["4_3", "3_3", "1_2", "2_2", "3_2", "4_2", "2_3", "1_3"], we shift the pointers by k - 2 = 1 positions, so the new pointers are (shifting to the right by 1 positions): 1->2_2, 2->4_3, 3->3_2, 4->1_3, horizontal order is 2_2 4_3 3_2 1_3.
 
-    example for 2x2 with k = -1 ccw, its eqals 4*(m+n) + k = 4*(2+2) - (-1) = 17, initial pointers: 1->1_2, 2->1_3, 3->2_2, 4->2_3 (for k = 1) , and the get_starting_order_oposite_orientation (top: [4_3, 3_3] left[1_2, 2_2] bottom[3_2, 4_2] right[2_3, 1_3]) ["4_3", "3_3", "1_2", "2_2", "3_2", "4_2", "2_3", "1_3"], we shift the pointers by k-2 =17-2 positions, so the new pointers are (shifting to the right by 15 positions): 1->3_3, 2->2_3, 3->1_2, 4->4_2, horizontal order is 3_3 2_3 1_2 4_2.
+    example for 2x2 with k = -1 ccw, its eqals 4*(m+n) - k = 4*(2+2) - (-1) = 17, initial pointers: 1->1_2, 2->1_3, 3->2_2, 4->2_3 (for k = 1) , and the get_starting_order_oposite_orientation (top: [4_3, 3_3] left[1_2, 2_2] bottom[3_2, 4_2] right[2_3, 1_3]) ["4_3", "3_3", "1_2", "2_2", "3_2", "4_2", "2_3", "1_3"], we shift the pointers by k-2 =17-2 positions, so the new pointers are (shifting to the right by 15 positions): 1->3_3, 2->2_3, 3->1_2, 4->4_2, horizontal order is 3_3 2_3 1_2 4_2.
 
     When direction is ccw, just change the k value to -k.
     """

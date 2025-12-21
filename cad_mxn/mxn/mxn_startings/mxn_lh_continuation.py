@@ -507,6 +507,10 @@ def get_starting_order(m, n):
 
     Example (m=2, n=2):
     ["4_2", "3_2", "1_2", "2_2", "3_3", "4_3", "2_3", "1_3"]
+    top: ["4_2", "3_2"]
+    left: ["1_2", "2_2"]
+    bottom: ["3_3", "4_3"]
+    right: ["2_3", "1_3"]
     """
     top = [f"{i}_2" for i in reversed(range(n + 1, n + m + 1))]
     left = [f"{i}_2" for i in range(1, n  + 1)]
@@ -527,6 +531,10 @@ def get_starting_order_oposite_orientation(m, n):
 
     Example (m=2, n=2):
     ["3_2", "4_2", "1_3", "2_3", "4_3", "3_3", "2_2", "1_2"]
+    top: ["3_2", "4_2"]
+    right: ["1_3", "2_3"]
+    bottom: ["4_3", "3_3"]
+    left: ["2_2", "1_2"]
     """
  
     # Top: vertical sets (n+1..n+m), `_2`, left -> right
@@ -541,22 +549,23 @@ def get_starting_order_oposite_orientation(m, n):
 
 def get_horizontal_order_k(m, n, k, direction):
     """
-    
-    if k is even - full order is top + left + bottom + right of get_starting_order. horizontal order when k = 0 we have pointer 1 to be pointing at first element of left side (1_2), pointer 2 pointing at last element of right side (1_3), pointer 3 pointing at second element of left side (2_2), pointer 4 pointing at second element of one before last right side (2_3), etc. if k is even we shift the pointers to the right or left by k-1 positions (shifting to the left if k is positive, shifting to the right if k is negative) of the array of the total get_starting_order.
-    
-    if k is odd - full order is top + right + bottom + left of get_starting_order_oposite_orientation. horizontal order when k = 1 we have pointer 1 to be pointing at last element of left side (1_3), pointer 2 pointing at first element of right side (1_2), pointer 3 pointing at second before last element of left side (2_3), pointer 4 pointing at second element right side (2_2), etc. if k is odd and not 1 we shift the pointers base on the pointer of k = 1 and shifter by k - 1 positions of the array of the total get_starting_order_oposite_orientation.
+    This code works properly!
+    if k is even - full order is top + left + bottom + right of get_starting_order. horizontal order when k = 0 we have pointer 1 to be pointing at first element of left side (1_2), pointer 2 pointing at last element of right side (1_3), pointer 3 pointing at second element of left side (2_2), pointer 4 pointing at one before last element of right side (2_3), etc. if k is even and not 0 we shift the pointers to the left by k-1 positions of the array of the total get_starting_order.
 
+    if k is odd - full order is top + right + bottom + left of get_starting_order_oposite_orientation. horizontal order when k = 1 we have pointer 1 to be pointing at first element of right side (1_3), pointer 2 pointing at last element of left side (1_2), pointer 3 pointing at second element of right side (2_3), pointer 4 pointing at one before last element of left side (2_2), etc. if k is odd and not 1 we shift the pointers to the right by k - 2 positions of the array of the total get_starting_order_oposite_orientation.
 
-    example for 2x2 with k = 0 cw, total order is (top: 4_2 3_2, left: 1_2 2_2, bottom: 3_3 4_3, right: 2_3 1_3) 4_2 3_2 1_2 2_2 3_3 4_3 2_3 1_3, so pointers: 1->1_2, 2->1_3, 3->2_2, 4->2_3, horizontal order is 1_2 1_3 2_2 2_3.
+    if k is negative, it is equals to 4*(m+n) + k.
 
-    example for 2x2 with k = 1 cw, total order is (top: 3_3 4_3, right: 1_2 2_2, bottom: 4_2 3_2, left: 2_3 1_3) ["3_2", "4_2", "1_3", "2_3", "4_3", "3_3", "2_2", "1_2"], pointers: 1->1_3, 2->1_2, 3->2_3, 4->2_2, horizontal order is 1_3 1_2 2_3 2_2.
+    example for 2x2 with k = 0 cw, total order is (top:[4_2, 3_2] left:[1_2, 2_2] bottom:[3_3, 4_3] right:[2_3, 1_3]) ["4_2", "3_2", "1_2", "2_2", "3_3", "4_3", "2_3", "1_3"]
+    so pointers: 1->1_2, 2->1_3, 3->2_2, 4->2_3, horizontal order is 1_2 1_3 2_2 2_3.
 
-    example for 2x2 with k = 2 cw, initial pointers: 1->1_2, 2->1_3, 3->2_2, 4->2_3 (for k = 0) , and the total order is (top: 4_2 3_2, left: 1_2 2_2, bottom: 3_3 4_3, right: 2_3 1_3) 4_2 3_2 1_2 2_2 3_3 4_3 2_3 1_3, we shift the pointers by k-1 = 1 positions, so the new pointers are (shifting to the left by 1 position): 1->3_2, 2->2_3, 3->1_2, 4->4_3, horizontal order is 3_2 2_3 1_2 4_3.
-    
-    example for 2x2 with k = 3 cw, initial pointers: 1->1_3, 2->1_2, 3->2_3, 4->2_2 (for k = 1) , and the total order is (top: 3_3 4_3, right: 1_2 2_2, bottom: 4_2 3_2, left: 2_3 1_3) 3_3 4_3 1_2 2_2 4_2 3_2 2_3 1_3, we shift the pointers by k-1 = 2 positions, so the new pointers are (shifting to the left by 2 positions): 1->3_2, 2->3_3, 3->4_2, 4->4_3, horizontal order is 3_2 3_3 4_2 4_3.
+    example for 2x2 with k = 1 cw, get_starting_order_oposite_orientation (top: [3_2, 4_2] right[1_3, 2_3] bottom[4_3, 3_3] left[2_2, 1_2]) ["3_2", "4_2", "1_3", "2_3", "4_3", "3_3", "2_2", "1_2"] so pointers: 1->1_3, 2->1_2, 3->2_3, 4->2_2, horizontal order is 1_3 1_2 2_3 2_2.
 
-    example for 2x2 with k = -1 cw, initial pointers: 1->1_3 2->1_2 3->2_3 4->2_2 (for k = 1) , and the total order is (top: 3_3 4_3, right: 1_2 2_2, bottom: 4_2 3_2, left: 2_3 1_3) 3_3 4_3 1_2 2_2 4_2 3_2 2_3 1_3, we shift the pointers by k-1 = -2 positions, so the new pointers are (shifting to the right by 2 positions): 1->4_3, 2->4_2, 3->3_3, 4->3_2, horizontal order is 4_3 4_2 3_3 3_2.
+    example for 2x2 with k = 2 cw, initial pointers: 1->1_2, 2->1_3, 3->2_2, 4->2_3 (for k = 0) , and the total order is (top:[4_2, 3_2] left:[1_2, 2_2] bottom:[3_3, 4_3] right:[2_3, 1_3]) ["4_2", "3_2", "1_2", "2_2", "3_3", "4_3", "2_3", "1_3"], we shift the pointers by k - 1 = 1 positions, so the new pointers are (shifting to the left by 1 position): 1->3_2, 2->2_3, 3->1_2, 4->4_3, horizontal order is 3_2 2_3 1_2 4_3.
 
+    example for 2x2 with k = 3 cw, initial pointers: 1->1_3, 2->1_2, 3->2_3, 4->2_2 (for k = 1) , and the get_starting_order_oposite_orientation (top: [3_2, 4_2] right[1_3, 2_3] bottom[4_3, 3_3] left[2_2, 1_2]) ["3_2", "4_2", "1_3", "2_3", "4_3", "3_3", "2_2", "1_2"], we shift the pointers by k - 2 = 1 positions, so the new pointers are (shifting to the right  by 1 position): 1->2_3, 2->3_2, 3->4_3, 4->1_2, horizontal order is 2_3 3_2 4_3 1_2.
+
+    example for 2x2 with k = -1 cw, its eqals 4*(m+n) - k = 4*(2+2) - (-1) = 17, initial pointers: 1->1_3, 2->1_2, 3->2_3, 4->2_2 (for k = 1) , and the get_starting_order_oposite_orientation (top: [3_2, 4_2] right[1_3, 2_3] bottom[4_3, 3_3] left[2_2, 1_2]) ["3_2", "4_2", "1_3", "2_3", "4_3", "3_3", "2_2", "1_2"], we shift the pointers by 17 - 2 = 15 positions, so the new pointers are (shifting to the right by 15 positions): 1->4_2, 2->2_2, 3->1_3, 4->3_3, horizontal order is 4_2 2_2 1_3 3_3.
 
     When direction is ccw, just change the k value to -k.
     """

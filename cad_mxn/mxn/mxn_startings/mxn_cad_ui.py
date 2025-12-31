@@ -901,7 +901,7 @@ class MxNGeneratorDialog(QDialog):
 
                 # Auto-save JSON to appropriate continuation folder
                 pattern_type = "lh" if is_lh else "rh"
-                output_dir = os.path.join(os.path.dirname(os.path.dirname(script_dir)), "src", f"mxn_{pattern_type}_continuation")
+                output_dir = os.path.join(os.path.dirname(os.path.dirname(script_dir)), "mxn", "mxn_continueing", f"mxn_{pattern_type}_continuation")
                 os.makedirs(output_dir, exist_ok=True)
 
                 filename = f"mxn_{pattern_type}_strech_{m}x{n}_continue_k{k}_{direction}.json"

@@ -608,7 +608,8 @@ def get_horizontal_order_k(m, n, k, direction):
             strand = pointer_k[i]
             shift_position = full_order_oposite_orientation.index(strand)
             pointer_k[i] = full_order_oposite_orientation[(shift_position + k - 2) % total_len]
-
+    for i in range(len(pointer_k)):
+        print(f"horizontal_order_k[{i}]: {pointer_k[i]}")
     return pointer_k
 
 def get_vertical_order_k(m, n, k, direction):
@@ -663,23 +664,30 @@ def get_vertical_order_k(m, n, k, direction):
     if k < 0:
         k = 4 * (m + n) - k
 
-    # Precompute indices for O(1) shifts (avoids repeated .index() scans)
-    full_index = {s: idx for idx, s in enumerate(full_order)}
-    opp_index = {s: idx for idx, s in enumerate(full_order_oposite_orientation)}
-
     if k % 2 == 0:
         # Even k: shift LEFT by (k - 1) on get_starting_order
         out = list(pointer_k0)
-        for i, label in enumerate(out):
-            shift_position = full_index[label]
-            out[i] = full_order[(shift_position - k + 1) % total_len]
-        return out
+        for i in range(len(out)):
+            # search the strand in the full_order (same break logic style as RH horizontal)
+            for strand in full_order:
+                if out[i] == strand:
+                    shift_position = full_order.index(strand)
+                    out[i] = full_order[(shift_position - k + 1) % total_len]
+                    break
+        
+    else:
+        # Odd k: shift RIGHT by (k - 2) on get_starting_order_oposite_orientation
+        out = list(pointer_k1)
+        for i in range(len(out)):
+            # search the strand in the full_order_oposite_orientation (same break logic style as RH horizontal)
+            for strand in full_order_oposite_orientation:
+                if out[i] == strand:
+                    shift_position = full_order_oposite_orientation.index(strand)
+                    out[i] = full_order_oposite_orientation[(shift_position + k - 2) % total_len]
+                    break
+    for i in range(len(out)):
+        print(f"vertical_order_k[{i}]: {out[i]}")
 
-    # Odd k: shift RIGHT by (k - 2) on get_starting_order_oposite_orientation
-    out = list(pointer_k1)
-    for i, label in enumerate(out):
-        shift_position = opp_index[label]
-        out[i] = full_order_oposite_orientation[(shift_position + k - 2) % total_len]
     return out
 
 def get_mask_order_k(m, n, k, direction):
@@ -997,34 +1005,3 @@ def rotate_labels(labels, k, direction):
     return out
 
 
-def main():
-    """Test the generator."""
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(script_dir, "mxn_lh_continuation")
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Test cases
-    test_cases = [
-        (1, 2, 0, "cw"),
-        (1, 2, 1, "cw"),
-        (2, 2, 0, "cw"),
-        (2, 2, 1, "ccw"),
-    ]
-
-    for m, n, k, direction in test_cases:
-        try:
-            json_content = generate_json(m, n, k, direction)
-            file_name = f"mxn_lh_continuation_{m}x{n}_k{k}_{direction}.json"
-            with open(os.path.join(output_dir, file_name), "w") as file:
-                file.write(json_content)
-            print(f"Generated {file_name}")
-        except Exception as e:
-            print(f"Error {m}x{n} k={k} {direction}: {e}")
-            import traceback
-            traceback.print_exc()
-
-
-if __name__ == "__main__":
-    print("Running LH Continuation generator...")
-    main()
-    print("Finished.")

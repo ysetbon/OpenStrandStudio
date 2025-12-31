@@ -249,12 +249,13 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         main_layout = QHBoxLayout(central_widget)
 
-        # Create the horizontal layout for buttons
+        # Create the horizontal layout for buttons (proportional sizing)
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(10)
-        button_layout.setContentsMargins(10, 5, 10, 5)
-        button_layout.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)  # Align buttons to the left and center vertically
+        button_layout.setSpacing(10)  # Minimal spacing between buttons
+        button_layout.setContentsMargins(4, 2, 4, 2)
+        # No alignment set - buttons will stretch proportionally
 
+        # Create buttons (keep original labels)
         self.attach_button = QPushButton("Attach Mode")
         self.move_button = QPushButton("Move Mode")
         self.rotate_button = QPushButton("Rotate Mode")
@@ -265,6 +266,14 @@ class MainWindow(QMainWindow):
         self.save_image_button = QPushButton("Save as Image")
         self.select_strand_button = QPushButton("Select Strand")
         self.mask_button = QPushButton("Mask Mode")
+
+        # Set all buttons to expand proportionally with a maximum width
+        for btn in [self.attach_button, self.move_button, self.rotate_button,
+                    self.toggle_grid_button, self.angle_adjust_button, self.save_button,
+                    self.load_button, self.save_image_button, self.select_strand_button,
+                    self.mask_button]:
+            btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            btn.setMaximumWidth(100)
 
         # Create the settings button
         self.settings_button = QPushButton()
@@ -301,14 +310,18 @@ class MainWindow(QMainWindow):
         self.toggle_control_points_button = QPushButton("Toggle Control Points")
         self.toggle_control_points_button.setCheckable(True)
         self.toggle_control_points_button.setChecked(True)  # Start with button pressed (points visible)
+        self.toggle_control_points_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.toggle_control_points_button.setMaximumWidth(100)
 
         # Create the toggle shadow button
         self.toggle_shadow_button = QPushButton("Toggle Shadow")
         self.toggle_shadow_button.setCheckable(True)
         self.toggle_shadow_button.setChecked(False)  # Shadow is disabled by default
         self.toggle_shadow_button.setToolTip("Enable/disable shadow effects for overlapping strands")
+        self.toggle_shadow_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.toggle_shadow_button.setMaximumWidth(100)
         
-        # Add buttons to the button layout
+        # Add buttons without stretch factor to prevent large gaps
         button_layout.addWidget(self.mask_button)
         button_layout.addWidget(self.select_strand_button)
         button_layout.addWidget(self.attach_button)
@@ -322,77 +335,35 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(self.toggle_control_points_button)
         button_layout.addWidget(self.toggle_shadow_button)
 
-        # Add a horizontal spacer to push the layer state button to the right
-        spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        button_layout.addItem(spacer)
+        # Add stretch to separate main buttons from right-side buttons
+        button_layout.addStretch()
 
-        # Create a layout for the layer state button
-        layer_state_layout = QHBoxLayout()
+        # Layer state button (also proportional)
         self.layer_state_button = QPushButton("Layer State")
         self.layer_state_button.setCheckable(True)
+        self.layer_state_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.layer_state_button.setMaximumWidth(100)
         self.layer_state_button.clicked.connect(self.show_layer_state_log)
-        layer_state_layout.addWidget(self.layer_state_button)
+        button_layout.addWidget(self.layer_state_button)
 
-        button_layout.addLayout(layer_state_layout)
-
-        # Add the settings button
-        button_layout.addWidget(self.settings_button)
-
-        button_layout.setSpacing(10)  # Ensure consistent spacing between buttons
+        # Settings button (fixed size, no stretch)
+        button_layout.addWidget(self.settings_button, 0)
 
         # Set up the splitter and layouts
         self.splitter = QSplitter(Qt.Horizontal)
-        
+
         self.left_widget = QWidget()  # store as instance variable
         left_layout = QVBoxLayout(self.left_widget)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(0)
 
-        # Wrap the button layout in a container widget
+        # Button container - no scroll needed, buttons scale proportionally
         button_container = QWidget()
         button_container.setLayout(button_layout)
-        button_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # No vertical resizing
+        button_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        button_container.setFixedHeight(40)  # Fixed height for button bar
 
-        # Get the button container's height and fix its height
-        button_height = button_container.sizeHint().height()
-        button_container.setFixedHeight(button_height)
-
-        # Set up the scroll area
-        scroll_area = QScrollArea()
-        scroll_area.setWidget(button_container)
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)  # Explicitly disable vertical scrollbar
-        scroll_area.setFixedHeight(button_height + 15)  # Fixed height for scroll area
-        
-        scroll_area.setStyleSheet("""
-            QScrollArea {
-                border: none;
-                margin: 0px;
-                padding: 0px;
-            }
-            QScrollArea > QWidget > QWidget {
-                margin: 0px;
-                padding: 0px;
-            }
-            QScrollBar:horizontal {
-                border: none;
-                height: 12px;
-                margin: 0px;
-            }
-            QScrollBar::handle:horizontal {
-                border: none;
-                border-radius: 6px;
-            }
-        """)
-        
-        # Disable vertical scrolling by overriding the wheelEvent
-        def disable_vertical_scroll(event):
-            if event.angleDelta().y() != 0:
-                event.ignore()
-            else:
-                QScrollArea.wheelEvent(scroll_area, event)
-        scroll_area.wheelEvent = disable_vertical_scroll
-
-        left_layout.addWidget(scroll_area)
+        left_layout.addWidget(button_container)
         left_layout.addWidget(self.canvas)
         self.splitter.addWidget(self.left_widget)
         self.splitter.addWidget(self.layer_panel)
@@ -444,17 +415,12 @@ class MainWindow(QMainWindow):
         ]
         
         for button in buttons:
-            # Change size policy to Preferred so buttons expand based on their content.
-            button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+            # Change size policy to Expanding so buttons fill available space up to max width
+            button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             button.setFixedHeight(32)  # Maintain consistent height
             # Removed the fixed minimum width for all buttons here:
             # button.setMinimumWidth(100)
         
-        # Special handling for buttons with longer text
-        long_text_buttons = [self.save_button, self.load_button, self.save_image_button]
-        for button in long_text_buttons:
-            button.setMinimumWidth(120)  # Allow more width for longer text
-
         # Apply button styles
         self.setup_button_styles()
         pass
@@ -1138,6 +1104,7 @@ class MainWindow(QMainWindow):
             self.unpress_angle_adjust_button()
 
     def setup_button_styles(self):
+        # Proportional button style - NO min-width so buttons can shrink
         button_style = """
             QPushButton {{
                 background-color: {bg_color};
@@ -1146,57 +1113,48 @@ class MainWindow(QMainWindow):
                 border: 0px solid black;
                 border-radius: 6px;
                 height: 35px;
-                min-width: 100px;
-                position: relative;
-                padding: 0px 0px;
+                padding: 0px 4px;
             }}
             QPushButton:hover {{
                 background-color: {hover_color};
             }}
             QPushButton:pressed {{
                 background-color: {pressed_color};
-                height: 35px;
-                min-width: 100px;
                 margin: 1px 1px;
             }}
             QPushButton:checked {{
                 background-color: {checked_color};
                 border: 4px solid black;
                 border-radius: 6px;
-                padding: 0px 0px;
+                padding: 0px 4px;
             }}
             QPushButton:checked:pressed {{
                 background-color: {pressed_color};
-                padding: 0px 0px;
-                height: 35px;
-                min-width: 100px;
+                padding: 0px 4px;
                 margin: 2px 2px;
                 border: 4px solid #2C2C2C;
             }}
         """
-        # Special style for angle adjust button with larger min-width
-        angle_adjust_button_style = button_style.replace("min-width: 100px;", "min-width: 140px;")
+        # Same style for angle adjust button (proportional, no special width)
+        angle_adjust_button_style = button_style
 
-        # Separate style for non-checkable buttons (no size change on press)
+        # Proportional style for non-checkable buttons (same padding as other buttons)
         non_checkable_button_style = """
             QPushButton {{
                 background-color: {bg_color};
                 color: black;
                 font-weight: bold;
                 border: 0px solid black;
-                padding: 6px 12px;
-                border-radius: 8px;
+                padding: 0px 4px;
+                border-radius: 6px;
                 height: 35px;
-                min-width: 70px;
             }}
             QPushButton:hover {{
                 background-color: {hover_color};
             }}
             QPushButton:pressed {{
                 background-color: {pressed_color};
-                padding: 6px 12px;
-                height: 35px;
-                min-width: 70px;
+                padding: 0px 4px;
             }}
         """
 

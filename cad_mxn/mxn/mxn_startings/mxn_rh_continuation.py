@@ -748,8 +748,12 @@ def get_horizontal_order_k(m, n, k, direction):
     When direction is ccw, just change the k value to -k.
     """
 
+    # Normalize k to the perimeter length and flip for CW (opposite of CCW)
+    P = 4 * (m + n)
     if direction == "cw":
-        k = -k
+        k = (-k) % P
+    else:
+        k = k % P
 
     total_len = 2 * (m + n)
     full_order = get_starting_order(m, n)
@@ -769,9 +773,6 @@ def get_horizontal_order_k(m, n, k, direction):
         return pointer_k0
     elif k == 1:
         return pointer_k1
-    if k < 0:
-        k = 4*(m+n) - k
-    
     if k % 2 == 0:
         pointer_k = pointer_k0
         for i in range(len(pointer_k)):
@@ -796,6 +797,9 @@ def get_horizontal_order_k(m, n, k, direction):
                     #shift to the right by k-2 positions
                     pointer_k[i] = full_order_oposite_orientation[(shift_position + k - 2) % total_len]
                     break
+
+    for i in range(len(pointer_k)):
+        print(f"horizontal_order_k[{i}]: {pointer_k[i]}")
     return pointer_k
 
 
@@ -828,8 +832,12 @@ def get_vertical_order_k(m, n, k, direction):
     """
 
     # Match RH horizontal convention: flip k for "cw"
+    P = 4 * (m + n)
     if direction == "cw":
-        k = -k
+        # Important: do a *safe* flip so k=0 stays 0 (avoid returning P)
+        k = (-k) % P
+    else:
+        k = k % P
 
     total_len = 2 * (m + n)
     full_order = get_starting_order(m, n)
@@ -853,26 +861,33 @@ def get_vertical_order_k(m, n, k, direction):
     if k == 1:
         return pointer_k1
 
-    if k < 0:
-        k = 4 * (m + n) - k
-
-    # Precompute indices for O(1) shifts
-    full_index = {s: idx for idx, s in enumerate(full_order)}
-    opp_index = {s: idx for idx, s in enumerate(full_order_oposite_orientation)}
-
     if k % 2 == 0:
         # Shift left by (k-1) in the full RH starting order
         out = list(pointer_k0)
-        for i, label in enumerate(out):
-            shift_position = full_index[label]
-            out[i] = full_order[(shift_position - k + 1) % total_len]
-        return out
-
-    # Odd k: shift right by (k-2) in the opposite-orientation perimeter
-    out = list(pointer_k1)
-    for i, label in enumerate(out):
-        shift_position = opp_index[label]
-        out[i] = full_order_oposite_orientation[(shift_position + k - 2) % total_len]
+        for i in range(len(out)):
+            # search the strand in the full_order (same break logic as get_horizontal_order_k)
+            for strand in full_order:
+                if out[i] == strand:
+                    # get the shift position of the strand in the full_order
+                    shift_position = full_order.index(strand)
+                    # shift to the left by k-1 positions
+                    out[i] = full_order[(shift_position - k + 1) % total_len]
+                    break
+        
+        # Odd k: shift right by (k-2) in the opposite-orientation perimeter
+    else:
+        out = list(pointer_k1)
+        for i in range(len(out)):
+            # search the strand in the full_order_oposite_orientation (same break logic as get_horizontal_order_k)
+            for strand in full_order_oposite_orientation:
+                if out[i] == strand:
+                    # get the shift position of the strand in the full_order_oposite_orientation
+                    shift_position = full_order_oposite_orientation.index(strand)
+                    # shift to the right by k-2 positions
+                    out[i] = full_order_oposite_orientation[(shift_position + k - 2) % total_len]
+                    break
+    for i in range(len(out)):
+        print(f"vertical_order_k[{i}]: {out[i]}")
     return out
 
 def get_mask_order_k(m, n, k, direction):
@@ -984,34 +999,3 @@ def compute_4_5_masks(base_strands, continuation_strands, m, n, k, direction):
     return masks_info
 
 
-def main():
-    """Test the generator."""
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(script_dir, "mxn_rh_continuation")
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Test cases
-    test_cases = [
-        (1, 2, 0, "cw"),
-        (1, 2, 1, "cw"),
-        (2, 2, 0, "cw"),
-        (2, 2, 1, "ccw"),
-    ]
-
-    for m, n, k, direction in test_cases:
-        try:
-            json_content = generate_json(m, n, k, direction)
-            file_name = f"mxn_rh_continuation_{m}x{n}_k{k}_{direction}.json"
-            with open(os.path.join(output_dir, file_name), "w") as file:
-                file.write(json_content)
-            print(f"Generated {file_name}")
-        except Exception as e:
-            print(f"Error {m}x{n} k={k} {direction}: {e}")
-            import traceback
-            traceback.print_exc()
-
-
-if __name__ == "__main__":
-    print("Running RH Continuation generator...")
-    main()
-    print("Finished.")

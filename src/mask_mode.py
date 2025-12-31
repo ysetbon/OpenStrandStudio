@@ -12,9 +12,11 @@ class MaskMode(QObject):
         self.canvas = canvas
         self.undo_redo_manager = undo_redo_manager # Store the manager
         self.selected_strands = []
+        self.hovered_strand = None  # Track strand being hovered for highlight
 
     def activate(self):
         self.selected_strands = []
+        self.hovered_strand = None  # Reset hover state on activation
         # Preserve the currently selected strand's highlighting if there is one
         # The canvas.selected_strand should maintain its is_selected flag
         if hasattr(self.canvas, 'selected_strand') and self.canvas.selected_strand:
@@ -24,6 +26,7 @@ class MaskMode(QObject):
 
     def deactivate(self):
         self.selected_strands = []
+        self.hovered_strand = None  # Reset hover state on deactivation
         self.canvas.setCursor(Qt.ArrowCursor)
 
     def handle_mouse_press(self, event):
@@ -234,7 +237,41 @@ class MaskMode(QObject):
         self.canvas.update()
 
     def draw(self, painter):
-        """Draw highlights for selected strands using their paths."""
+        """Draw highlights for selected and hovered strands using their paths."""
+        # Draw hover highlight first (so selection highlight draws on top)
+        # Only draw hover if the strand is not already selected
+        if self.hovered_strand and self.hovered_strand not in self.selected_strands:
+            painter.save()
+            RenderUtils.setup_painter(painter, enable_high_quality=True)
+
+            strand = self.hovered_strand
+            # Get the path representing the strand
+            path = strand.get_path()
+
+            # Create a stroker for the highlight with squared ends
+            stroke_stroker = QPainterPathStroker()
+            stroke_stroker.setWidth(strand.width + strand.stroke_width * 2)
+            stroke_stroker.setJoinStyle(Qt.MiterJoin)
+            stroke_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
+            stroke_path = stroke_stroker.createStroke(path)
+
+            # Draw the hover highlight with semi-transparent yellow (similar to selection rectangle style)
+            # Using QColor(255, 230, 160) like the control point selection boxes, but less transparent
+            hover_color = QColor(255, 230, 160, 170)  # Yellow with less transparency
+            painter.setBrush(hover_color)
+
+            # Set the pen with black border for visibility
+            hover_pen = QPen(Qt.black, 2, Qt.SolidLine)
+            hover_pen.setJoinStyle(Qt.MiterJoin)
+            hover_pen.setCapStyle(Qt.FlatCap)
+            painter.setPen(hover_pen)
+
+            # Draw the filled hover highlight path
+            painter.drawPath(stroke_path)
+
+            painter.restore()
+
+        # Draw selection highlights for selected strands
         for strand in self.selected_strands:
             painter.save()
             RenderUtils.setup_painter(painter, enable_high_quality=True)
@@ -253,7 +290,7 @@ class MaskMode(QObject):
             highlight_color = QColor('red')
             highlight_color.setAlpha(128)  # Set transparency (0-255)
             painter.setBrush(highlight_color)
-        
+
             # Set the pen with the same transparency as the fill
             highlight_pen = QPen(highlight_color, strand.stroke_width * 2)
             highlight_pen.setJoinStyle(Qt.MiterJoin)
@@ -277,8 +314,26 @@ class MaskMode(QObject):
             painter.restore()
 
     def mouseMoveEvent(self, event):
-        # Implement if needed
-        pass
+        """Handle mouse move to detect strand hovering and show hover highlight."""
+        pos = event.pos()
+        strands_at_point = self.find_strands_at_point(pos)
+
+        # Filter out masked strands if there are non-masked strands at the same point
+        non_masked_strands = [(s, t) for s, t in strands_at_point if not isinstance(s, MaskedStrand)]
+        if non_masked_strands:
+            strands_at_point = non_masked_strands
+
+        old_hovered = self.hovered_strand
+
+        if len(strands_at_point) >= 1:
+            # Take the first strand found at this point
+            self.hovered_strand = strands_at_point[0][0]
+        else:
+            self.hovered_strand = None
+
+        # Only update if hover state changed
+        if old_hovered != self.hovered_strand:
+            self.canvas.update()
 
     def mouseReleaseEvent(self, event):
         # Implement if needed

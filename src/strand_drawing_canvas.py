@@ -59,7 +59,8 @@ class StrandDrawingCanvas(QWidget):
         """Initialize the StrandDrawingCanvas."""
         super().__init__(parent)
         self.setMinimumSize(700, 700)  # Set minimum size for the canvas
-        
+        self.setMouseTracking(True)  # Enable mouse tracking for hover effects
+
         # High-DPI rendering settings
         self.use_supersampling = True  # Disable supersampling
         self.supersampling_factor = 2  # 16x more pixels for ultra-crisp rendering

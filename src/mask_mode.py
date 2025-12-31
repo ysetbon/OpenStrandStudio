@@ -33,11 +33,6 @@ class MaskMode(QObject):
         pos = event.pos()
         strands_at_point = self.find_strands_at_point(pos)
 
-        # Filter out masked strands if there are non-masked strands at the same point
-        non_masked_strands = [(s, t) for s, t in strands_at_point if not isinstance(s, MaskedStrand)]
-        if non_masked_strands:
-            strands_at_point = non_masked_strands
-
         if len(strands_at_point) == 1:
             selected_strand, selection_type = strands_at_point[0]
             self.handle_strand_selection(selected_strand)
@@ -47,6 +42,9 @@ class MaskMode(QObject):
     def find_strands_at_point(self, pos):
         results = []
         for strand in self.canvas.strands:
+            # Skip masked strands entirely - we never want to select or hover them in mask mode
+            if isinstance(strand, MaskedStrand):
+                continue
             contains_start = strand.get_start_selection_path().contains(pos)
             contains_end = strand.get_end_selection_path().contains(pos)
             if contains_start:
@@ -317,11 +315,6 @@ class MaskMode(QObject):
         """Handle mouse move to detect strand hovering and show hover highlight."""
         pos = event.pos()
         strands_at_point = self.find_strands_at_point(pos)
-
-        # Filter out masked strands if there are non-masked strands at the same point
-        non_masked_strands = [(s, t) for s, t in strands_at_point if not isinstance(s, MaskedStrand)]
-        if non_masked_strands:
-            strands_at_point = non_masked_strands
 
         old_hovered = self.hovered_strand
 

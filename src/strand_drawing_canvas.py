@@ -2065,6 +2065,9 @@ class StrandDrawingCanvas(QWidget):
         if hasattr(self.current_mode, 'draw'):
             self.current_mode.draw(painter)
 
+        # Initialize yellow_rectangle before MoveMode block so it's available for eraser overlap check
+        yellow_rectangle = None
+
         # Draw selection area if in MoveMode - MOVED AFTER current_mode.draw to ensure squares are painted after selected attached strand
         if isinstance(self.current_mode, MoveMode):  # Removed the selected_rectangle check
             painter.save()
@@ -2537,21 +2540,6 @@ class StrandDrawingCanvas(QWidget):
                     painter.setBrush(QColor(0, 120, 255, 100))  # Semi-transparent blue
                     painter.setPen(QPen(QColor(0, 120, 255, 200), 2, Qt.SolidLine))
                     painter.drawPath(shadow_path)
-
-        # Draw the eraser cursor for mask editing
-        if self.mask_edit_mode:
-            if hasattr(self, 'last_pos'):
-                eraser_rect = QRectF(
-                    self.last_pos.x() - self.eraser_size/2,
-                    self.last_pos.y() - self.eraser_size/2,
-                    self.eraser_size,
-                    self.eraser_size
-                )
-                eraser_overlaps_yellow = yellow_rectangle and self.rectangles_overlap(eraser_rect, yellow_rectangle)
-                if not eraser_overlaps_yellow:
-                    painter.setPen(QPen(Qt.white, 1, Qt.DashLine))
-                    painter.setBrush(Qt.NoBrush)
-                    painter.drawEllipse(eraser_rect)
 
         # Reduced high-frequency logging for performance during moves
         # logging.info(

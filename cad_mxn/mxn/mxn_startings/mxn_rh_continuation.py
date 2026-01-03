@@ -726,13 +726,13 @@ def get_starting_order_oposite_orientation(m, n):
 
 
 def get_horizontal_order_k(m, n, k, direction):
-    f"""
+    """
     This code works properly!
-    if k is even - full order is top + right + bottom + left of get_starting_order. horizontal order when k = 0 we have pointer 1 to be pointing at first element of right side (1_3), pointer 2 pointing at last element of left side (1_2), pointer 3 pointing at second element of right side (2_3), pointer 4 pointing at second element of one before last left side (2_2), etc. if k is even we shift the pointers to the right or left by k-1 positions (shifting to the left if k is positive, shifting to the right if k is negative) of the array of the total get_starting_order.
+    if k is even - full order is top + right + bottom + left of get_starting_order. horizontal order when k = 0 we have pointer 1 to be pointing at first element of right side (1_3), pointer 2 pointing at last element of left side (1_2), pointer 3 pointing at second element of right side (2_3), pointer 4 pointing at second element of one before last left side (2_2), etc. if k is even we shift the pointers to the left by k/2 positions of the array of the total get_starting_order.
 
-    if k is odd - full order is top + left + bottom + right of get_starting_order_oposite_orientation. horizontal order when k = 1 we have pointer 1 to be pointing at last element of left side (1_2), pointer 2 pointing at first element of right side (1_3), pointer 3 pointing at second element of left side (2_2), pointer 4 pointing at second element of one before last right side (2_3), etc. if k is odd and not 1 we shift the pointers base on the pointer of k = 1 and shifter by k - 2 positions of the array of the total get_starting_order_oposite_orientation.
+    if k is odd - full order is top + left + bottom + right of get_starting_order_oposite_orientation. horizontal order when k = 1 we have pointer 1 to be pointing at last element of left side (1_2), pointer 2 pointing at first element of right side (1_3), pointer 3 pointing at second element of left side (2_2), pointer 4 pointing at second element of one before last right side (2_3), etc. if k is odd and not 1 we shift the pointers based on the pointers of k = 1 and shift to the right by (k-1)/2 positions of the array of the total get_starting_order_oposite_orientation.
 
-    if k is negative, it is equals to 4*(m+n) + k.
+    k is interpreted modulo P = 4*(m+n) after applying direction handling (see code below).
 
     example for 2x2 with k = 0 ccw, total order is (top:[3_3, 4_3] right:[1_3, 2_3] bottom:[4_2, 3_2] left:[2_2, 1_2]) ["3_3", "4_3", "1_3", "2_3", "4_2", "3_2", "2_2", "1_2"]
     so pointers: 1->1_3, 2->1_2, 3->2_3, 4->2_2, horizontal order is 1_3 1_2 2_3 2_2.
@@ -774,7 +774,8 @@ def get_horizontal_order_k(m, n, k, direction):
     elif k == 1:
         return pointer_k1
     if k % 2 == 0:
-        pointer_k = pointer_k0
+        shift_steps = k // 2
+        pointer_k = list(pointer_k0)
         for i in range(len(pointer_k)):
             #search the strand in the full_order
             for strand in full_order:
@@ -782,11 +783,12 @@ def get_horizontal_order_k(m, n, k, direction):
                 if pointer_k[i] == strand:
                     #get the shift position of the strand in the full_order
                     shift_position = full_order.index(strand)
-                    #shift to the left by k-1 positions
-                    pointer_k[i] = full_order[(shift_position - k + 1) % total_len]
+                    # shift LEFT by (k/2) positions
+                    pointer_k[i] = full_order[(shift_position - shift_steps) % total_len]
                     break
     else:
-        pointer_k = pointer_k1
+        shift_steps = (k - 1) // 2
+        pointer_k = list(pointer_k1)
         for i in range(len(pointer_k)):
             #search the strand in the full_order
             for strand in full_order_oposite_orientation:
@@ -794,8 +796,8 @@ def get_horizontal_order_k(m, n, k, direction):
                 if pointer_k[i] == strand:
                     #get the shift position of the strand in the full_order
                     shift_position = full_order_oposite_orientation.index(strand)
-                    #shift to the right by k-2 positions
-                    pointer_k[i] = full_order_oposite_orientation[(shift_position + k - 2) % total_len]
+                    # shift RIGHT by ((k-1)/2) positions
+                    pointer_k[i] = full_order_oposite_orientation[(shift_position + shift_steps) % total_len]
                     break
 
     for i in range(len(pointer_k)):
@@ -813,12 +815,13 @@ def get_vertical_order_k(m, n, k, direction):
 
     - **Direction handling**: RH flips `k` when `direction == "cw"` (so the examples below
       are written for **ccw**, matching `get_horizontal_order_k` in this file).
-    - **Negative k**: if `k < 0`, it is normalized using `k = 4*(m+n) - k` (same as RH horizontal).
+    - **k normalization**: k is interpreted modulo `P = 4*(m+n)` after applying the RH direction handling
+      (same convention as RH `get_horizontal_order_k` in this file).
     - **Parity**:
       - even `k`: base pointers come from the `k=0` pattern and are shifted in
-        `get_starting_order(m, n)` by `-(k-1)` (left by `k-1`).
+        `get_starting_order(m, n)` by `-(k/2)` (left by `k/2`).
       - odd `k`: base pointers come from the `k=1` pattern and are shifted in
-        `get_starting_order_oposite_orientation(m, n)` by `+(k-2)` (right by `k-2`).
+        `get_starting_order_oposite_orientation(m, n)` by `+((k-1)/2)` (right by `(k-1)/2`).
 
     The returned list has length `2*m` and contains labels like `"3_2"` / `"3_3"`.
 
@@ -862,7 +865,8 @@ def get_vertical_order_k(m, n, k, direction):
         return pointer_k1
 
     if k % 2 == 0:
-        # Shift left by (k-1) in the full RH starting order
+        # Shift left by (k/2) in the full RH starting order
+        shift_steps = k // 2
         out = list(pointer_k0)
         for i in range(len(out)):
             # search the strand in the full_order (same break logic as get_horizontal_order_k)
@@ -870,12 +874,13 @@ def get_vertical_order_k(m, n, k, direction):
                 if out[i] == strand:
                     # get the shift position of the strand in the full_order
                     shift_position = full_order.index(strand)
-                    # shift to the left by k-1 positions
-                    out[i] = full_order[(shift_position - k + 1) % total_len]
+                    # shift to the left by (k/2) positions
+                    out[i] = full_order[(shift_position - shift_steps) % total_len]
                     break
         
-        # Odd k: shift right by (k-2) in the opposite-orientation perimeter
     else:
+        # Odd k: shift right by ((k-1)/2) in the opposite-orientation perimeter
+        shift_steps = (k - 1) // 2
         out = list(pointer_k1)
         for i in range(len(out)):
             # search the strand in the full_order_oposite_orientation (same break logic as get_horizontal_order_k)
@@ -883,8 +888,8 @@ def get_vertical_order_k(m, n, k, direction):
                 if out[i] == strand:
                     # get the shift position of the strand in the full_order_oposite_orientation
                     shift_position = full_order_oposite_orientation.index(strand)
-                    # shift to the right by k-2 positions
-                    out[i] = full_order_oposite_orientation[(shift_position + k - 2) % total_len]
+                    # shift to the right by ((k-1)/2) positions
+                    out[i] = full_order_oposite_orientation[(shift_position + shift_steps) % total_len]
                     break
     for i in range(len(out)):
         print(f"vertical_order_k[{i}]: {out[i]}")

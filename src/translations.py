@@ -210,25 +210,12 @@ Examples:<br>
         'curve_shape_full_desc': 'Curve Shape - Controls the mathematical curve type (1.0=sharp angles, 2.0=smooth curves, 3.0=very smooth)',
         'reset_curvature_full_desc': 'Reset Curvature Settings - Restores Control Influence, Distance Boost, and Curve Shape to defaults',
         'whats_new_info': '''
-        <h2>What's New in Version 1.105</h2>
-        
-            <li style="font-size:18px;"><b>Mask Grid:</b> Quickly create multiple strand masks using a visual N&#215;N grid interface in group functionalities.</li>
-            <li style="font-size:18px;"><b>Keyboard Shortcuts:</b>
-                <ul style="margin-left: 0px;">
-                    <li><b>Space -</b> Hold the Space key to quickly pan/unpan the canvas</li>
-                    <li><b>Z:</b> Undo your last action</li>
-                    <li><b>X:</b> Redo what you just undid</li>
-                    <li><b>N:</b> New Strand</li>
-                    <li><b>1:</b> Draw Names</li>
-                    <li><b>L:</b> Lock Layers</li>
-                    <li><b>D:</b> Delete Strand</li>
-                    <li><b>A:</b> Deselect All</li>
-                </ul>
-            </li>
-            <li style="font-size:18px;"><b>Fixed Selection & Zoom:</b> Selection in move, select, and attach modes now remains accurate at all zoom levels</li>
-            <li style="font-size:18px;"><b>Smoother Knot Connections:</b> Fixed a rendering issue where "closed knots" (loops) would sometimes show visible seams or gaps at the connection point. Strands now merge seamlessly for a cleaner look.</li>
+        <h2>What's New in Version 1.106</h2>
 
-        <p style="font-size:16px;">© 2025 OpenStrand Studio - Version 1.105</p>
+            <li style="font-size:18px;"><b>Hover Highlight in Select and Mask Modes:</b> Strands now highlight when hovering over them in Select mode and Mask mode, providing better visual feedback for strand selection.</li>
+            <li style="font-size:18px;"><b>Main Buttons Responsiveness:</b> Fixed main window buttons (at the top of the canvas) to display correctly on any screen size and aspect ratio.</li>
+
+        <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.106</p>
         ''',
 
 
@@ -642,25 +629,12 @@ Exemples :<br>
         'curve_shape_full_desc': 'Forme de Courbe - Contrôle le type de courbe mathématique (1.0=angles aigus, 2.0=courbes lisses, 3.0=très lisse)',
         'reset_curvature_full_desc': "Réinitialiser les Paramètres de Courbure - Restaure l'Influence, l'Amplification et la Forme aux valeurs par défaut",
         'whats_new_info': '''
-        <h2>Nouveautés de la version 1.105</h2>
+        <h2>Nouveautés de la version 1.106</h2>
 
-            <li style="font-size:18px;"><b>Grille de Masque :</b> Créez rapidement plusieurs masques de brins à l'aide d'une interface de grille visuelle N&#215;N dans les fonctionnalités de groupe.</li>
-            <li style="font-size:18px;"><b>Raccourcis Clavier :</b>
-                <ul style="margin-left: 0px;">
-                    <li><b>Espace pour Panoramique :</b> Maintenez la touche Espace pour panoramiquer/dé-panoramiquer rapidement le canevas</li>
-                    <li><b>Z :</b> Annuler votre dernière action</li>
-                    <li><b>X :</b> Rétablir ce que vous venez d'annuler</li>
-                    <li><b>N :</b> Nouveau Brin</li>
-                    <li><b>1 :</b> Dessin. Noms</li>
-                    <li><b>L :</b> Verr. Calques</li>
-                    <li><b>D :</b> Supprim. Brin</li>
-                    <li><b>A :</b> Désél. Tous</li>
-                </ul>
-            </li>
-            <li style="font-size:18px;"><b>Sélection et Zoom Corrigés :</b> La sélection dans les modes déplacement, sélection et attache reste maintenant précise à tous les niveaux de zoom</li>
-            <li style="font-size:18px;"><b>Connexions de Nœuds Plus Fluides :</b> Correction d'un problème de rendu où les "nœuds fermés" (boucles) affichaient parfois des coutures ou des espaces visibles au point de connexion. Les brins fusionnent maintenant de manière homogène pour un aspect plus propre.</li>
+            <li style="font-size:18px;"><b>Surbrillance au survol dans les modes Sélection et Masque :</b> Les brins sont maintenant mis en surbrillance lorsque vous passez la souris dessus en mode Sélection et en mode Masque, offrant un meilleur retour visuel pour la sélection des brins.</li>
+            <li style="font-size:18px;"><b>Réactivité des boutons principaux :</b> Correction des boutons de la fenêtre principale (en haut du canevas) pour qu'ils s'affichent correctement sur toute taille d'écran et tout rapport d'aspect.</li>
 
-        <p style="font-size:16px;">© 2025 OpenStrand Studio - Version 1.105</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.106</p>
         ''',
 
 
@@ -1154,25 +1128,12 @@ Beispiele:<br>
         'toggle_shadow_desc': 'Schatten ein/aus - Zeigt/verbirgt Schatten auf Strängen',
         'layer_state_desc': 'Layer-Status - Zeigt Debug-Informationen zu Ebenen',
         'whats_new_info': '''
-        <h2>Neu in Version 1.105</h2>
+        <h2>Neu in Version 1.106</h2>
 
-            <li style="font-size:18px;"><b>Maskenraster:</b> Erstellen Sie schnell mehrere Strangmasken mit einer visuellen N&#215;N-Raster-Oberfläche in Gruppenfunktionalitäten.</li>
-            <li style="font-size:18px;"><b>Tastaturkürzel:</b>
-                <ul style="margin-left: 0px;">
-                    <li><b>Leertaste zum Schwenken:</b> Halten Sie die Leertaste gedrückt, um die Leinwand schnell zu schwenken/zu entschwenken</li>
-                    <li><b>Z:</b> Letzte Aktion rückgängig machen</li>
-                    <li><b>X:</b> Rückgängig gemachte Aktion wiederherstellen</li>
-                    <li><b>N:</b> Neuer Strang</li>
-                    <li><b>1:</b> Namen zeigen</li>
-                    <li><b>L:</b> Sperrmodus</li>
-                    <li><b>D:</b> Strang entf.</li>
-                    <li><b>A:</b> Alle abwählen</li>
-                </ul>
-            </li>
-            <li style="font-size:18px;"><b>Auswahl & Zoom Korrigiert:</b> Die Auswahl in den Modi Verschieben, Auswählen und Anhängen bleibt nun auf allen Zoomstufen präzise</li>
-            <li style="font-size:18px;"><b>Glattere Knotenverbindungen:</b> Ein Rendering-Problem wurde behoben, bei dem "geschlossene Knoten" (Schleifen) manchmal sichtbare Nähte oder Lücken am Verbindungspunkt zeigten. Stränge verschmelzen jetzt nahtlos für ein saubereres Aussehen.</li>
+            <li style="font-size:18px;"><b>Hervorhebung beim Überfahren in Auswahl- und Maskenmodi:</b> Stränge werden jetzt hervorgehoben, wenn Sie mit der Maus darüber fahren, im Auswahlmodus und im Maskenmodus, für besseres visuelles Feedback bei der Strangauswahl.</li>
+            <li style="font-size:18px;"><b>Reaktionsfähigkeit der Hauptschaltflächen:</b> Die Schaltflächen im Hauptfenster (oben auf der Leinwand) werden jetzt auf jeder Bildschirmgröße und jedem Seitenverhältnis korrekt angezeigt.</li>
 
-        <p style="font-size:16px;">© 2025 OpenStrand Studio - Version 1.105</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.106</p>
         ''',
         # About translations
         'about_info': '''
@@ -1600,25 +1561,12 @@ Esempi:<br>
         'curve_shape_full_desc': 'Forma Curva - Controlla il tipo di curva matematica (1.0=angoli acuti, 2.0=curve lisce, 3.0=molto liscio)',
         'reset_curvature_full_desc': 'Ripristina Impostazioni Curvatura - Ripristina Influenza, Amplificazione e Forma ai valori predefiniti',
         'whats_new_info': '''
-        <h2>Novità della versione 1.105</h2>
+        <h2>Novità della versione 1.106</h2>
 
-            <li style="font-size:18px;"><b>Griglia Maschera:</b> Crea rapidamente più maschere di trefolo utilizzando un'interfaccia griglia visiva N&#215;N nelle funzionalità di gruppo.</li>
-            <li style="font-size:18px;"><b>Scorciatoie da Tastiera:</b>
-                <ul style="margin-left: 0px;">
-                    <li><b>Spazio per Panoramica:</b> Tieni premuto il tasto Spazio per panoramicare/de-panoramicare rapidamente la tela</li>
-                    <li><b>Z:</b> Annulla l'ultima azione</li>
-                    <li><b>X:</b> Ripristina ciò che hai appena annullato</li>
-                    <li><b>N:</b> Nuovo Trefolo</li>
-                    <li><b>1:</b> Disegna Nomi</li>
-                    <li><b>L:</b> Blocca Liv.</li>
-                    <li><b>D:</b> Elim. Trefolo</li>
-                    <li><b>A:</b> Desel. Tutto</li>
-                </ul>
-            </li>
-            <li style="font-size:18px;"><b>Selezione e Zoom Corretti:</b> La selezione nelle modalità sposta, seleziona e attacca ora rimane precisa a tutti i livelli di zoom</li>
-            <li style="font-size:18px;"><b>Connessioni Nodi Più Fluide:</b> Risolto un problema di rendering in cui i "nodi chiusi" (anelli) mostravano a volte cuciture o spazi visibili nel punto di connessione. I trefoli ora si fondono senza soluzione di continuità per un aspetto più pulito.</li>
+            <li style="font-size:18px;"><b>Evidenziazione al passaggio del mouse nei modi Selezione e Maschera:</b> I trefoli ora si evidenziano quando si passa il mouse sopra di essi in modalità Selezione e in modalità Maschera, fornendo un miglior feedback visivo per la selezione dei trefoli.</li>
+            <li style="font-size:18px;"><b>Reattività dei pulsanti principali:</b> Corretti i pulsanti della finestra principale (in alto sulla tela) per visualizzarsi correttamente su qualsiasi dimensione dello schermo e rapporto d'aspetto.</li>
 
-        <p style="font-size:16px;">© 2025 OpenStrand Studio - Versione 1.105</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio - Versione 1.106</p>
         ''',
 
 
@@ -2084,26 +2032,12 @@ Ejemplos:<br>
         'curve_shape_full_desc': 'Forma de Curva - Controla el tipo de curva matemática (1.0=ángulos agudos, 2.0=curvas suaves, 3.0=muy suave)',
         'reset_curvature_full_desc': 'Restablecer Configuración de Curvatura - Restaura Influencia, Amplificación y Forma a valores predeterminados',
         'whats_new_info': '''
-        <h2>Novedades de la versión 1.105</h2>
+        <h2>Novedades de la versión 1.106</h2>
 
-            <li style="font-size:18px;"><b>Cuadrícula de Máscara:</b> Crea rápidamente múltiples máscaras de hebra usando una interfaccia de cuadrícula visual N&#215;N en funcionalidades de grupo.</li>
-            <li style="font-size:18px;"><b>Atajos de Teclado:</b>
-                <ul style="margin-left: 0px;">
-                    <li><b>Espacio para Desplazar:</b> Mantén presionada la tecla Espacio para desplazar/no desplazar rápidamente el lienzo</li>
-                    <li><b>Z:</b> Deshacer tu última acción</li>
-                    <li><b>X:</b> Rehacer lo que acabas de deshacer</li>
-                    <li><b>N:</b> Nuevo Cordón</li>
-                    <li><b>1:</b> Ver Nombres</li>
-                    <li><b>L:</b> Bloq. Capas</li>
-                    <li><b>D:</b> Elim. Cordón</li>
-                    <li><b>A:</b> Deselec. Todo</li>
-                </ul>
-            </li>
-            <li style="font-size:18px;"><b>Selección y Zoom Corregidos:</b> La selección en los modos mover, seleccionar y adjuntar ahora permanece precisa en todos los niveles de zoom</li>
-            <li style="font-size:18px;"><b>Conexiones de Nudos Más Suaves:</b> Se corrigió un problema de renderizado donde los "nudos cerrados" (bucles) a veces mostraban costuras o huecos visibles en el punto de conexión. Las hebras ahora se fusionan perfectamente para una apariencia más limpia.</li>
+            <li style="font-size:18px;"><b>Resaltado al pasar el cursor en modos Selección y Máscara:</b> Las hebras ahora se resaltan al pasar el cursor sobre ellas en modo Selección y en modo Máscara, proporcionando mejor retroalimentación visual para la selección de hebras.</li>
+            <li style="font-size:18px;"><b>Reactividad de los botones principales:</b> Corregidos los botones de la ventana principal (en la parte superior del lienzo) para que se muestren correctamente en cualquier tamaño de pantalla y relación de aspecto.</li>
 
-        <p style="font-size:16px;">© 2025 OpenStrand Studio - Versión 1.105</p>
-
+        <p style="font-size:16px;">© 2026 OpenStrand Studio - Versión 1.106</p>
         ''',
  
 
@@ -2569,25 +2503,12 @@ Exemplos:<br>
         'curve_shape_full_desc': 'Forma da Curva - Controla o tipo de curva matemática (1.0=ângulos agudos, 2.0=curvas suaves, 3.0=muito suave)',
         'reset_curvature_full_desc': 'Redefinir Configurações de Curvatura - Restaura Influência, Amplificação e Forma aos padrões',
         'whats_new_info': '''
-        <h2>Novidades da versão 1.105</h2>
+        <h2>Novidades da versão 1.106</h2>
 
-            <li style="font-size:18px;"><b>Grade de Máscara:</b> Crie rapidamente múltiplas máscaras de mecha usando uma interface de grade visual N&#215;N nas funcionalidades de grupo.</li>
-            <li style="font-size:18px;"><b>Atalhos de Teclado:</b>
-                <ul style="margin-left: 0px;">
-                    <li><b>Espaço para Panorâmica:</b> Mantenha pressionada a tecla Espaço para panorâmicar/despanorâmicar rapidamente a tela</li>
-                    <li><b>Z:</b> Desfazer sua última ação</li>
-                    <li><b>X:</b> Refazer o que você acabou de desfazer</li>
-                    <li><b>N:</b> Nova Mecha</li>
-                    <li><b>1:</b> Exib. Nomes</li>
-                    <li><b>L:</b> Bloq. Camad.</li>
-                    <li><b>D:</b> Excl. Mecha</li>
-                    <li><b>A:</b> Desmar. Tudo</li>
-                </ul>
-            </li>
-            <li style="font-size:18px;"><b>Seleção e Zoom Corrigidos:</b> A seleção nos modos mover, selecionar e anexar agora permanece precisa em todos os níveis de zoom</li>
-            <li style="font-size:18px;"><b>Conexões de Nós Mais Suaves:</b> Corrigido um problema de renderização onde "nós fechados" (laços) às vezes mostravam costuras ou lacunas visíveis no ponto de conexão. As mechas agora se fundem perfeitamente para uma aparência mais limpa.</li>
+            <li style="font-size:18px;"><b>Destaque ao passar o cursor nos modos Seleção e Máscara:</b> As mechas agora são destacadas ao passar o cursor sobre elas no modo Seleção e no modo Máscara, fornecendo melhor feedback visual para a seleção de mechas.</li>
+            <li style="font-size:18px;"><b>Responsividade dos botões principais:</b> Corrigidos os botões da janela principal (no topo da tela) para serem exibidos corretamente em qualquer tamanho de tela e proporção de aspecto.</li>
 
-        <p style="font-size:16px;">© 2025 OpenStrand Studio – Versão 1.105</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio – Versão 1.106</p>
         ''',
 
 
@@ -3059,25 +2980,12 @@ Exemplos:<br>
         'reset_curvature_full_desc': 'אפס הגדרות עקמומיות - מחזיר השפעה, הגברה וצורה לברירת המחדל',
         'whats_new_info': '''
         <div dir="rtl" style="text-align: right;">
-        <h2>מה חדש בגרסה 1.105</h2>
+        <h2>מה חדש בגרסה 1.106</h2>
 
-            <li style="font-size:18px;"><b>רשת מסכות:</b> צור במהירות מספר מסכות חוטים באמצעות ממשק רשת חזותי N&#215;N בפונקציונליות קבוצות.</li>
-            <li style="font-size:18px;"><b>קיצורי מקלדת:</b>
-                <ul style="margin-left: 0px;">
-                    <li><b>רווח להזזה:</b> החזק את מקש הרווח כדי להזיז/לבטל הזזה במהירות של הקנבס</li>
-                    <li><b>Z:</b> בטל את הפעולה האחרונה שלך</li>
-                    <li><b>X:</b> שחזר את מה שביטלת זה עתה</li>
-                    <li><b>N:</b> חוט חדש</li>
-                    <li><b>1:</b> צייר שמות</li>
-                    <li><b>L:</b> נעל שכבות</li>
-                    <li><b>D:</b> מחק חוט</li>
-                    <li><b>A:</b> בטל בחירה</li>
-                </ul>
-            </li>
-            <li style="font-size:18px;"><b>בחירה וזום תוקנו:</b> בחירה במצבי הזזה, בחירה וחיבור כעת נשארת מדויקת בכל רמות הזום</li>
-            <li style="font-size:18px;"><b>חיבורי קשרים חלקים יותר:</b> תוקנה בעיית רינדור בה "קשרים סגורים" (לולאות) הציגו לפעמים תפרים או פערים נראים בנקודת החיבור. החוטים כעת מתמזגים בצורה חלקה למראה נקי יותר.</li>
+            <li style="font-size:18px;"><b>הדגשה בריחוף במצבי בחירה ומסכה:</b> חוטים מודגשים כעת בריחוף מעליהם במצב בחירה ובמצב מסכה, מספקים משוב חזותי טוב יותר לבחירת חוטים.</li>
+            <li style="font-size:18px;"><b>תגובתיות כפתורים ראשיים:</b> תוקנו כפתורי החלון הראשי (בחלק העליון של הקנבס) להצגה נכונה בכל גודל מסך ויחס גובה-רוחב.</li>
 
-        <p style="font-size:16px;">© 2025 OpenStrand Studio - גרסה 1.105</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio - גרסה 1.106</p>
         </div>
         ''',
 

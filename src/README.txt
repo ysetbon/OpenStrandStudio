@@ -544,6 +544,21 @@ These updates focus on performance improvements and visual enhancements to provi
    - Fixed a rendering issue where "closed knots" (loops) would sometimes show visible seams or gaps at the connection point
    - Strands now merge seamlessly for a cleaner look
 
+------
+
+## Version 1.106 (Released: 04/01/2026)
+
+### New Features and Improvements:
+
+1. **Hover Highlight in Select and Mask Modes:**
+   - Strands now highlight when hovering over them in Select mode
+   - Strands also highlight when hovering in Mask mode
+   - Provides better visual feedback for strand selection
+
+2. **Main Buttons Responsiveness:**
+   - Fixed main window buttons (at the top of the canvas) to display correctly on any screen size and aspect ratio
+   - Improved button layout for better compatibility across different displays
+
 ------------------------------------------------------------------------------------------
 # OpenStrand Studio - Français
 
@@ -1090,5 +1105,20 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
 4. **Connexions de Nœuds Plus Fluides :**
    - Correction d'un problème de rendu où les "nœuds fermés" (boucles) affichaient parfois des coutures ou des espaces visibles au point de connexion
    - Les brins fusionnent maintenant de manière homogène pour un aspect plus propre
+
+------
+
+## Version 1.106 (Sortie : 04/01/2026)
+
+### Nouvelles Fonctionnalités et Améliorations :
+
+1. **Surbrillance au survol dans les modes Sélection et Masque :**
+   - Les brins sont maintenant mis en surbrillance lorsque vous passez la souris dessus en mode Sélection
+   - Les brins sont également mis en surbrillance lors du survol en mode Masque
+   - Offre un meilleur retour visuel pour la sélection des brins
+
+2. **Réactivité des boutons principaux :**
+   - Correction des boutons de la fenêtre principale (en haut du canevas) pour qu'ils s'affichent correctement sur toute taille d'écran et tout rapport d'aspect
+   - Amélioration de la disposition des boutons pour une meilleure compatibilité avec différents écrans
 
 ------

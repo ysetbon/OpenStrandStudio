@@ -5,6 +5,7 @@ from render_utils import RenderUtils
 from attach_mode import AttachMode
 from move_mode import MoveMode
 from mask_mode import MaskMode  # Add this import
+from select_mode import SelectMode
 from strand import Strand
 from attached_strand import AttachedStrand
 from masked_strand import MaskedStrand
@@ -476,6 +477,10 @@ class StrandDrawingCanvas(QWidget):
         # Pass the undo_redo_manager instance here
         self.mask_mode = MaskMode(self, self.undo_redo_manager if hasattr(self, 'undo_redo_manager') else None)
         self.mask_mode.mask_created.connect(self.create_masked_layer)
+
+        # Select mode setup
+        self.select_mode = SelectMode(self)
+        self.select_mode.strand_selected.connect(self._handle_select_mode_selection)
 
         # Angle adjust mode setup (if used)
         self.angle_adjust_mode = AngleAdjustMode(self)
@@ -3850,12 +3855,7 @@ class StrandDrawingCanvas(QWidget):
         elif self.is_drawing_new_strand:
             self.new_strand_start_point = self.snap_to_grid_for_attach(canvas_pos)
 
-        if self.current_mode == "select":
-            # Get the position from the event
-            pass
-            self.handle_strand_selection(canvas_pos)
-            
-        elif self.current_mode == self.mask_mode:
+        if self.current_mode == self.mask_mode:
             # Create a new event with converted coordinates
             new_event = type(event)(event.type(), canvas_pos, event.button(), event.buttons(), event.modifiers())
             self.mask_mode.handle_mouse_press(new_event)
@@ -4298,7 +4298,7 @@ class StrandDrawingCanvas(QWidget):
         """
         if not hasattr(self, '_pre_creation_state') or not self._pre_creation_state:
             pass
-            self.current_mode = "select"
+            self.current_mode = self.select_mode
             self.show_control_points = False
             return
         
@@ -4567,7 +4567,7 @@ class StrandDrawingCanvas(QWidget):
             self.current_mode = self.move_mode
             self.setCursor(Qt.OpenHandCursor)
         elif mode == "select":
-            self.current_mode = "select"  # This is a string, not an object
+            self.current_mode = self.select_mode
             self.setCursor(Qt.PointingHandCursor)
         elif mode == "mask":
             self.current_mode = self.mask_mode
@@ -5882,6 +5882,20 @@ class StrandDrawingCanvas(QWidget):
                 self.select_strand(None)
                 self.strand_selected.emit(-1)  # Emit -1 to indicate deselection
 
+    def _handle_select_mode_selection(self, index):
+        """Handle strand selection from SelectMode."""
+        if index >= 0 and index < len(self.strands):
+            # Check if the strand is locked and prevent selection
+            if (hasattr(self, 'layer_panel') and self.layer_panel and
+                hasattr(self.layer_panel, 'locked_layers') and
+                index in self.layer_panel.locked_layers):
+                return
+
+            self.select_strand(index)
+            self.strand_selected.emit(index)
+        else:
+            self.select_strand(None)
+            self.strand_selected.emit(-1)
 
     def find_strands_at_point(self, pos):
         results = []
@@ -5894,7 +5908,7 @@ class StrandDrawingCanvas(QWidget):
         return results
         
     def exit_select_mode(self):
-        if self.current_mode == "select" or self.current_mode == self.mask_mode:
+        if self.current_mode == self.select_mode or self.current_mode == self.mask_mode:
             self.current_mode = self.attach_mode
             self.setCursor(Qt.ArrowCursor)
         self.update()

@@ -765,8 +765,18 @@ class EmojiRenderer:
         rotated = self.rotate_labels(self._emoji_base_labels, k, direction)
 
         # Setup font for drawing
+        #
+        # IMPORTANT (Windows/Qt):
+        # Some emoji glyphs can show colored "fringing" (often green/magenta) due to
+        # ClearType/subpixel antialiasing, especially on light/transparent backgrounds.
+        # Disabling subpixel AA makes the edges consistent and removes the lime halo.
         font = QFont("Segoe UI Emoji")
         font.setPointSize(20)
+        try:
+            font.setStyleStrategy(QFont.PreferAntialias | QFont.NoSubpixelAntialias)
+        except Exception:
+            # Some Qt/PyQt builds may not expose all style strategy flags; safe to ignore.
+            pass
         painter.setFont(font)
         fm = painter.fontMetrics()
 
@@ -790,10 +800,19 @@ class EmojiRenderer:
         # Draw each emoji label
         painter.save()
 
+        # IMPORTANT: Reset painter state to prevent strand colors bleeding into emoji rendering
+        # (The strand.draw() calls may leave the brush set to a strand color)
+        painter.setBrush(Qt.NoBrush)
+        painter.setPen(Qt.NoPen)
+
         # Setup font for strand names (much smaller than emoji)
         name_font = QFont("Segoe UI")
         name_font.setPointSize(7)
         name_font.setBold(True)
+        try:
+            name_font.setStyleStrategy(QFont.PreferAntialias | QFont.NoSubpixelAntialias)
+        except Exception:
+            pass
         name_fm = painter.fontMetrics()
 
         for item in draw_items:
@@ -834,7 +853,14 @@ class EmojiRenderer:
             h = max(1, br.height() + 6)
             rect = QRectF(x - w / 2.0, y - h / 2.0, w, h)
 
-            # Draw main emoji text
+            # Draw main emoji text (ensure no brush bleeding from strand colors)
+            # NoBrush prevents strand colors from bleeding into emoji rendering.
+            #
+            # NOTE: `drawText()` requires a *visible* pen; using a fully-transparent pen
+            # can trigger odd platform-specific rendering paths (and reintroduce fringing).
+            # For color emojis, the glyph carries its own colors; the pen color is mainly
+            # relevant for monochrome fallback glyphs.
+            painter.setBrush(Qt.NoBrush)
             painter.setPen(QColor(255, 255, 255, 255))
             painter.drawText(rect, Qt.AlignCenter, txt)
 

@@ -47,6 +47,9 @@ class EmojiRenderer:
         # Cache for visual (pixel-tight) emoji extents to place strand names based on what
         # is actually rendered, not on font-metric bounding boxes.
         self._emoji_visual_extents_cache = {}
+        # Cache for rendered emoji glyph images (used to avoid Windows ClearType fringing
+        # on transparent backgrounds and to speed up repeated renders).
+        self._emoji_glyph_cache = {}
 
     def clear_cache(self):
         """
@@ -58,6 +61,7 @@ class EmojiRenderer:
         self._emoji_base_labels = None
         self._emoji_base_key = None
         self._emoji_visual_extents_cache = {}
+        self._emoji_glyph_cache = {}
 
     def _font_cache_key(self, font: QFont):
         # QFont is not reliably hashable across PyQt versions; use a stable tuple key.
@@ -181,6 +185,62 @@ class EmojiRenderer:
         self._emoji_visual_extents_cache[key] = cached
         return cached
 
+    def _get_emoji_glyph_image(self, txt: str, font: QFont, logical_w: int, logical_h: int, ss: int = 3):
+        """
+        Render an emoji into a cached, supersampled offscreen image.
+
+        Why: On Windows, drawing color emoji text directly onto a transparent target can
+        produce colored halos (lime/magenta/black) due to LCD/subpixel AA assumptions.
+        Rendering into an offscreen buffer and then scaling down removes the fringe.
+        """
+        if not txt:
+            return None
+
+        lw = max(1, int(logical_w))
+        lh = max(1, int(logical_h))
+        key = ("emoji_glyph", txt, self._font_cache_key(font), lw, lh, int(ss))
+        cached = self._emoji_glyph_cache.get(key)
+        if cached is not None:
+            return cached
+
+        img_w = max(1, int(lw * ss))
+        img_h = max(1, int(lh * ss))
+
+        # Render into straight-alpha first. Some Windows emoji rendering paths can
+        # produce edge colors that look like a "stroke" when drawn directly into a
+        # premultiplied surface. Converting after render helps normalize.
+        img_straight = QImage(img_w, img_h, QImage.Format_ARGB32)
+        img_straight.fill(Qt.transparent)
+
+        p = QPainter(img_straight)
+        p.setRenderHint(QPainter.Antialiasing, True)
+        p.setRenderHint(QPainter.TextAntialiasing, True)
+        p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        p.scale(ss, ss)
+        p.setFont(font)
+        # Pen color is irrelevant for color emoji glyphs, but use transparent to
+        # avoid black stroke artifacts around the emojis.
+        p.setPen(QColor(0, 0, 0, 0))
+        p.setBrush(Qt.NoBrush)
+        p.drawText(QRectF(0.0, 0.0, float(lw), float(lh)), Qt.AlignCenter, txt)
+        p.end()
+
+        # Convert to premultiplied (our target images are premultiplied).
+        img = img_straight.convertToFormat(QImage.Format_ARGB32_Premultiplied)
+
+        # Clean fully/near-transparent pixels to transparent black to avoid colored
+        # fringing when compositing (common with emoji edges on Windows).
+        # This is cheap (glyph images are small) and cached.
+        alpha_cutoff = 10  # 0..255
+        for y in range(img.height()):
+            for x in range(img.width()):
+                a = QColor.fromRgba(img.pixel(x, y)).alpha()
+                if a <= alpha_cutoff:
+                    img.setPixel(x, y, 0)
+
+        self._emoji_glyph_cache[key] = img
+        return img
+
     def get_animal_pool(self):
         """
         Get the pool of animal emojis used for endpoint markers.
@@ -195,7 +255,8 @@ class EmojiRenderer:
         """
         return [
             # Common pets and farm animals
-            "\U0001F436", "\U0001F431", "\U0001F42D", "\U0001F439", "\U0001F430",  # dog, cat, mouse, hamster, rabbit
+            "\U0001F436", "\U0001F431", "\U0001F42D", "\U0001F430", "\U0001F994",  # dog, cat, mouse, rabbit, hedgehog 
+
             # Wild animals
             "\U0001F98A", "\U0001F43B", "\U0001F43C", "\U0001F428", "\U0001F42F",  # fox, bear, panda, koala, tiger
             "\U0001F981", "\U0001F42E", "\U0001F437", "\U0001F438", "\U0001F435",  # lion, cow, pig, frog, monkey
@@ -813,7 +874,7 @@ class EmojiRenderer:
             name_font.setStyleStrategy(QFont.PreferAntialias | QFont.NoSubpixelAntialias)
         except Exception:
             pass
-        name_fm = painter.fontMetrics()
+        # name_fm is computed on-demand after setting the font (see below).
 
         for item in draw_items:
             ep = item["ep"]
@@ -853,16 +914,19 @@ class EmojiRenderer:
             h = max(1, br.height() + 6)
             rect = QRectF(x - w / 2.0, y - h / 2.0, w, h)
 
-            # Draw main emoji text (ensure no brush bleeding from strand colors)
-            # NoBrush prevents strand colors from bleeding into emoji rendering.
-            #
-            # NOTE: `drawText()` requires a *visible* pen; using a fully-transparent pen
-            # can trigger odd platform-specific rendering paths (and reintroduce fringing).
-            # For color emojis, the glyph carries its own colors; the pen color is mainly
-            # relevant for monochrome fallback glyphs.
+            # Draw emoji in a way that avoids Windows ClearType/subpixel fringing on alpha.
+            # Render into a cached supersampled buffer, then scale down into `rect`.
             painter.setBrush(Qt.NoBrush)
-            painter.setPen(QColor(255, 255, 255, 255))
-            painter.drawText(rect, Qt.AlignCenter, txt)
+            painter.setPen(Qt.NoPen)
+            # Render at the *same* logical size we used before (based on font metrics),
+            # so the emoji appears the same size as the direct drawText() version.
+            glyph_img = self._get_emoji_glyph_image(txt, font, int(w), int(h), ss=3)
+            if glyph_img is not None:
+                painter.drawImage(rect, glyph_img)
+            else:
+                # Fallback: direct text draw (should rarely happen)
+                painter.setPen(QColor(0, 0, 0, 255))
+                painter.drawText(rect, Qt.AlignCenter, txt)
 
             # Draw strand name if enabled (only for END points of _2/_3 strands)
             if show_strand_names and strand_name:

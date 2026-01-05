@@ -168,6 +168,10 @@ class BatchGenerator:
 
         base_name = f"{pattern_type}_{m}x{n}_{k}_{direction}"
 
+        # Create subfolder for this pattern
+        pattern_folder = os.path.join(output_folder, base_name)
+        os.makedirs(pattern_folder, exist_ok=True)
+
         try:
             # 1. Generate base/preview (stretch pattern)
             if pattern_type == "lh":
@@ -190,7 +194,7 @@ class BatchGenerator:
 
             # Export preview image with markers
             image = self._render_image(bounds, m, n, emoji_settings)
-            preview_path = os.path.join(output_folder, f"{base_name}.png")
+            preview_path = os.path.join(pattern_folder, f"{base_name}_starting_position.png")
             image.save(preview_path)
 
             # 2. Generate continuation pattern (_4, _5)
@@ -206,17 +210,17 @@ class BatchGenerator:
 
             # Export continuation with markers
             image = self._render_image(bounds, m, n, emoji_settings)
-            cont_path = os.path.join(output_folder, f"{base_name}_continuation_emojis.png")
+            cont_path = os.path.join(pattern_folder, f"{base_name}_continuation_emojis.png")
             image.save(cont_path)
 
             # Export continuation without markers
             emoji_settings["show"] = False
             image = self._render_image(bounds, m, n, emoji_settings)
-            cont_nm_path = os.path.join(output_folder, f"{base_name}_continuation_no_emojis.png")
+            cont_nm_path = os.path.join(pattern_folder, f"{base_name}_continuation_no_emojis.png")
             image.save(cont_nm_path)
 
             # Export JSON
-            json_path = os.path.join(output_folder, f"{base_name}_continuation.json")
+            json_path = os.path.join(pattern_folder, f"{base_name}_continuation.json")
             with open(json_path, 'w') as f:
                 f.write(cont_json)
 

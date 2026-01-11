@@ -19,12 +19,37 @@ import sys
 import random
 import colorsys
 
+# Emoji names matching the order in mxn_emoji_renderer.get_animal_pool()
+EMOJI_NAMES = [
+    "dog", "cat", "mouse", "rabbit", "hedgehog",      # 0-4
+    "fox", "bear", "panda", "koala", "tiger",         # 5-9
+    "lion", "cow", "pig", "frog", "monkey",           # 10-14
+    "chicken", "penguin", "bird", "chick", "duck",    # 15-19
+    "owl", "bat", "wolf", "boar", "horse",            # 20-24
+    "unicorn", "bee", "bug", "butterfly", "snail",    # 25-29
+    "ladybug", "turtle", "snake", "lizard", "t-rex",  # 30-34
+    "sauropod", "octopus", "squid", "shrimp", "lobster",  # 35-39
+    "crab", "blowfish", "tropical_fish", "fish", "dolphin",  # 40-44
+    "whale", "crocodile", "zebra", "giraffe", "bison"  # 45-49
+]
+
+def get_emoji_name(index):
+    """Get emoji name by index, with fallback for out-of-range indices."""
+    if 0 <= index < len(EMOJI_NAMES):
+        return EMOJI_NAMES[index]
+    return f"emoji_{index}"
+
 
 __all__ = [
     "generate_json",
     # Backwards/alternate public entrypoints
     "mxn_lh_continue",
     "mxn_lh_continute",
+    # Parallel alignment functions
+    "align_horizontal_strands_parallel",
+    "align_vertical_strands_parallel",
+    "apply_parallel_alignment",
+    "print_alignment_debug",
 ]
 
 
@@ -1014,5 +1039,1446 @@ def rotate_labels(labels, k, direction):
         out[(i + shift) % n] = labels[i]
 
     return out
+
+
+# =============================================================================
+# PARALLEL ALIGNMENT FUNCTIONS
+# =============================================================================
+
+import math
+
+def get_parallel_alignment_preview(all_strands, n, m):
+    """
+    Get preview information for parallel alignment angle ranges.
+    Returns first/last strand positions and default angle ranges for both H and V.
+
+    Returns:
+        dict with:
+            - horizontal: {first, last, initial_angle, angle_min, angle_max}
+            - vertical: {first, last, initial_angle, angle_min, angle_max}
+    """
+    result = {"horizontal": None, "vertical": None}
+
+    # Collect horizontal _4/_5 strands (set_number <= n)
+    h_strands = []
+    for strand in all_strands:
+        if strand["type"] != "AttachedStrand":
+            continue
+        layer_name = strand["layer_name"]
+        set_num = strand["set_number"]
+        if set_num > n:
+            continue
+        if layer_name.endswith("_4") or layer_name.endswith("_5"):
+            # Find the _2 or _3 strand this attaches to
+            suffix = "_2" if layer_name.endswith("_4") else "_3"
+            base_name = layer_name.rsplit("_", 1)[0] + suffix
+            s2_3 = next((s for s in all_strands if s["layer_name"] == base_name), None)
+            if s2_3:
+                h_strands.append({
+                    "strand": strand,
+                    "strand_2_3": s2_3,
+                    "set_number": set_num,
+                    "start": {"x": strand["start"]["x"], "y": strand["start"]["y"]},
+                    "target": {"x": strand["end"]["x"], "y": strand["end"]["y"]},
+                })
+
+    if len(h_strands) >= 2:
+        # Sort by set_number, then by layer_name (_4 before _5 within each set)
+        h_strands.sort(key=lambda h: (h["set_number"], h["strand"]["layer_name"]))
+
+        first_h = h_strands[0]
+        last_h = h_strands[-1]
+
+        # Calculate initial angle of first strand
+        dx = first_h["target"]["x"] - first_h["start"]["x"]
+        dy = first_h["target"]["y"] - first_h["start"]["y"]
+        initial_angle = math.degrees(math.atan2(dy, dx))
+
+        # Get full strand order
+        strand_order = [h["strand"]["layer_name"] for h in h_strands]
+
+        result["horizontal"] = {
+            "first_start": first_h["start"],
+            "first_target": first_h["target"],
+            "last_start": last_h["start"],
+            "last_target": last_h["target"],
+            "initial_angle": initial_angle,
+            "angle_min": initial_angle - 20,
+            "angle_max": initial_angle + 20,
+            "first_name": first_h["strand"]["layer_name"],
+            "last_name": last_h["strand"]["layer_name"],
+            "strand_order": strand_order,
+        }
+
+    # Collect vertical _4/_5 strands (set_number > n)
+    v_strands = []
+    for strand in all_strands:
+        if strand["type"] != "AttachedStrand":
+            continue
+        layer_name = strand["layer_name"]
+        set_num = strand["set_number"]
+        if set_num <= n:
+            continue
+        if layer_name.endswith("_4") or layer_name.endswith("_5"):
+            suffix = "_2" if layer_name.endswith("_4") else "_3"
+            base_name = layer_name.rsplit("_", 1)[0] + suffix
+            s2_3 = next((s for s in all_strands if s["layer_name"] == base_name), None)
+            if s2_3:
+                v_strands.append({
+                    "strand": strand,
+                    "strand_2_3": s2_3,
+                    "set_number": set_num,
+                    "start": {"x": strand["start"]["x"], "y": strand["start"]["y"]},
+                    "target": {"x": strand["end"]["x"], "y": strand["end"]["y"]},
+                })
+
+    if len(v_strands) >= 2:
+        # Sort by set_number, then by layer_name (_4 before _5 within each set)
+        v_strands.sort(key=lambda v: (v["set_number"], v["strand"]["layer_name"]))
+
+        first_v = v_strands[0]
+        last_v = v_strands[-1]
+
+        # Calculate initial angle of first strand
+        dx = first_v["target"]["x"] - first_v["start"]["x"]
+        dy = first_v["target"]["y"] - first_v["start"]["y"]
+        initial_angle = math.degrees(math.atan2(dy, dx))
+
+        # Get full strand order
+        strand_order = [v["strand"]["layer_name"] for v in v_strands]
+
+        result["vertical"] = {
+            "first_start": first_v["start"],
+            "first_target": first_v["target"],
+            "last_start": last_v["start"],
+            "last_target": last_v["target"],
+            "initial_angle": initial_angle,
+            "angle_min": initial_angle - 20,
+            "angle_max": initial_angle + 20,
+            "first_name": first_v["strand"]["layer_name"],
+            "last_name": last_v["strand"]["layer_name"],
+            "strand_order": strand_order,
+        }
+
+    return result
+
+
+def align_horizontal_strands_parallel(all_strands, n,
+                                       angle_step_degrees=0.5,
+                                       max_extension=100.0, strand_width=46,
+                                       custom_angle_min=None, custom_angle_max=None,
+                                       on_config_callback=None):
+    """
+    Parallel alignment of horizontal _4/_5 strands using first-last pair approach.
+
+    Algorithm:
+    1. Calculate angle range: first strand's initial angle ±20° (or use custom range)
+    2. LAST strand should use angle + 180° (opposite direction)
+    3. For each angle in range, check if first and last can reach their targets
+    4. Then check if MIDDLE strands can adapt (with extensions if needed)
+    5. Validate gaps are within strand_width to strand_width*1.5
+
+    Args:
+        all_strands: List of all strand dictionaries
+        n: Number of horizontal strand sets (horizontal sets are 1..n)
+        angle_step_degrees: Step size for angle search (default 0.5°)
+        max_extension: Maximum allowed extension for _2/_3 strands
+        strand_width: Width of strands for gap calculation (default 46)
+        custom_angle_min: Optional custom minimum angle (degrees)
+        custom_angle_max: Optional custom maximum angle (degrees)
+        on_config_callback: Optional callback(angle_deg, extension, result) called for each config
+
+    Returns:
+        dict with success, angle, configurations, gaps, etc.
+    """
+
+    # Separate strands by type
+    strands_2 = []  # Horizontal _2 strands
+    strands_3 = []  # Horizontal _3 strands
+    strands_4 = []  # Horizontal _4 strands
+    strands_5 = []  # Horizontal _5 strands
+
+    for strand in all_strands:
+        if strand["type"] != "AttachedStrand":
+            continue
+
+        layer_name = strand["layer_name"]
+        set_num = strand["set_number"]
+
+        # Only process horizontal strands (set_number <= n)
+        if set_num > n:
+            continue
+
+        if layer_name.endswith("_2"):
+            strands_2.append(strand)
+        elif layer_name.endswith("_3"):
+            strands_3.append(strand)
+        elif layer_name.endswith("_4"):
+            strands_4.append(strand)
+        elif layer_name.endswith("_5"):
+            strands_5.append(strand)
+
+    if not strands_4 and not strands_5:
+        return {
+            "success": False,
+            "message": "No horizontal _4/_5 strands found"
+        }
+
+
+    # Collect all horizontal _4/_5 strands with their target positions
+    horizontal_strands = []
+
+    for s4 in strands_4:
+        set_num = s4["set_number"]
+        s2 = next((s for s in strands_2 if s["set_number"] == set_num), None)
+        if s2:
+            horizontal_strands.append({
+                "strand_4_5": s4,
+                "strand_2_3": s2,
+                "type": "_4",
+                "set_number": set_num,
+                "original_start": {"x": s4["start"]["x"], "y": s4["start"]["y"]},
+                "target_position": {"x": s4["end"]["x"], "y": s4["end"]["y"]},
+            })
+
+    for s5 in strands_5:
+        set_num = s5["set_number"]
+        s3 = next((s for s in strands_3 if s["set_number"] == set_num), None)
+        if s3:
+            horizontal_strands.append({
+                "strand_4_5": s5,
+                "strand_2_3": s3,
+                "type": "_5",
+                "set_number": set_num,
+                "original_start": {"x": s5["start"]["x"], "y": s5["start"]["y"]},
+                "target_position": {"x": s5["end"]["x"], "y": s5["end"]["y"]},
+            })
+
+    # Sort by set_number, then by type (_4 before _5 within each set)
+    horizontal_strands.sort(key=lambda h: (h["set_number"], h["type"]))
+
+    num_strands = len(horizontal_strands)
+    if num_strands < 2:
+        return {
+            "success": False,
+            "message": "Need at least 2 horizontal strands for parallel alignment"
+        }
+
+    # Get FIRST and LAST strands
+    first_strand = horizontal_strands[0]
+    last_strand = horizontal_strands[-1]
+
+    # Get _2/_3 extension directions for first and last strands
+    first_s23 = first_strand["strand_2_3"]
+    first_s23_dx = first_s23["end"]["x"] - first_s23["start"]["x"]
+    first_s23_dy = first_s23["end"]["y"] - first_s23["start"]["y"]
+    first_s23_len = math.sqrt(first_s23_dx**2 + first_s23_dy**2)
+    first_s23_nx = first_s23_dx / first_s23_len if first_s23_len > 0.001 else 0
+    first_s23_ny = first_s23_dy / first_s23_len if first_s23_len > 0.001 else 0
+
+    last_s23 = last_strand["strand_2_3"]
+    last_s23_dx = last_s23["end"]["x"] - last_s23["start"]["x"]
+    last_s23_dy = last_s23["end"]["y"] - last_s23["start"]["y"]
+    last_s23_len = math.sqrt(last_s23_dx**2 + last_s23_dy**2)
+    last_s23_nx = last_s23_dx / last_s23_len if last_s23_len > 0.001 else 0
+    last_s23_ny = last_s23_dy / last_s23_len if last_s23_len > 0.001 else 0
+
+    # Store original start positions
+    first_original_start = {"x": first_strand["original_start"]["x"], "y": first_strand["original_start"]["y"]}
+    last_original_start = {"x": last_strand["original_start"]["x"], "y": last_strand["original_start"]["y"]}
+
+    print(f"\n=== Horizontal Parallel Alignment (First-Last Pair Approach) ===")
+    print(f"Found {num_strands} horizontal _4/_5 strands")
+    print(f"Max extension: {max_extension}")
+    print(f"Strand width: {strand_width}")
+    print(f"First-Last pair extension: 0 to 200 px (step 5)")
+
+    # Debug: Print details of each strand
+    print(f"\n--- Strand Details ---")
+    for i, h in enumerate(horizontal_strands):
+        dx = h['target_position']['x'] - h['original_start']['x']
+        dy = h['target_position']['y'] - h['original_start']['y']
+        angle = math.degrees(math.atan2(dy, dx))
+        label = ""
+        if i == 0:
+            label = " [FIRST]"
+        elif i == num_strands - 1:
+            label = " [LAST]"
+        print(f"  {i+1}. {h['strand_4_5']['layer_name']}{label} angle={angle:.1f}°")
+
+    # Calculate the initial angle of the FIRST strand (from start to target)
+    first_dx = first_strand["target_position"]["x"] - first_strand["original_start"]["x"]
+    first_dy = first_strand["target_position"]["y"] - first_strand["original_start"]["y"]
+    first_initial_angle = math.degrees(math.atan2(first_dy, first_dx))
+
+    # Use custom angle range if provided, otherwise use ±20° from initial angle
+    use_custom_h = custom_angle_min is not None and custom_angle_max is not None
+    if use_custom_h:
+        base_angle_min = custom_angle_min
+        base_angle_max = custom_angle_max
+        print(f"\n--- Using CUSTOM Horizontal Angle Range ---")
+        print(f"    Custom range: {base_angle_min:.2f}° to {base_angle_max:.2f}°")
+    else:
+        base_angle_min = first_initial_angle - 20
+        base_angle_max = first_initial_angle + 20
+        print(f"\n--- Angle Range: First strand initial angle ±20° ---")
+        print(f"    First strand initial angle: {first_initial_angle:.2f}°")
+        print(f"    Angle range: {base_angle_min:.2f}° to {base_angle_max:.2f}°")
+
+    # Outer loop: extend first-last pair starting points (0 to 200 px, step 5)
+    best_result = None
+    best_pair_extension = 0
+
+    # Track best fallback candidate (max-min optimization: maximize the worst gap)
+    best_fallback = None
+    best_fallback_worst_gap = -float('inf')
+    best_fallback_extension = 0
+    best_fallback_angle = 0
+
+    for pair_extension in range(0, 210, 10):  # Step 10px instead of 5px
+        # Extend first and last strand starting positions
+        first_strand["original_start"]["x"] = first_original_start["x"] + pair_extension * first_s23_nx
+        first_strand["original_start"]["y"] = first_original_start["y"] + pair_extension * first_s23_ny
+        last_strand["original_start"]["x"] = last_original_start["x"] + pair_extension * last_s23_nx
+        last_strand["original_start"]["y"] = last_original_start["y"] + pair_extension * last_s23_ny
+
+        # Recalculate the first strand's angle after extension (for auto mode)
+        first_dx_ext = first_strand["target_position"]["x"] - first_strand["original_start"]["x"]
+        first_dy_ext = first_strand["target_position"]["y"] - first_strand["original_start"]["y"]
+        first_angle_ext = math.degrees(math.atan2(first_dy_ext, first_dx_ext))
+
+        # Use custom angles directly, or recalculate based on extension
+        if use_custom_h:
+            angle_min_deg = base_angle_min
+            angle_max_deg = base_angle_max
+        else:
+            angle_min_deg = first_angle_ext - 10
+            angle_max_deg = first_angle_ext + 10
+
+        if pair_extension % 40 == 0:  # Log every 40px
+            print(f"\n--- Pair Extension: {pair_extension}px ---")
+            print(f"    First strand angle (extended): {first_angle_ext:.2f}°")
+            print(f"    Angle range: {angle_min_deg:.2f}° to {angle_max_deg:.2f}°")
+
+        # Search within the angle range
+        angle_start = int(angle_min_deg * 100)
+        angle_end = int(angle_max_deg * 100)
+        step = max(1, int(angle_step_degrees * 100))
+
+        best_gap_variance = float('inf')
+        angles_tested = 0
+        valid_count = 0
+        fail_reasons = {}
+
+        for angle_hundredth in range(angle_start, angle_end + 1, step):
+            angle_deg = angle_hundredth / 100.0
+            angle_rad = math.radians(angle_deg)
+            angles_tested += 1
+
+            result = try_angle_configuration_first_last(
+                horizontal_strands,
+                angle_rad,
+                max_extension,
+                strand_width,
+                verbose=False
+            )
+
+            # Call callback for each configuration tried
+            if on_config_callback:
+                on_config_callback(angle_deg, pair_extension, result, "horizontal")
+
+            if result["valid"]:
+                valid_count += 1
+                gap_variance = result["gap_variance"]
+
+                if gap_variance < best_gap_variance:
+                    best_gap_variance = gap_variance
+                    best_result = result
+                    best_result["angle_degrees"] = angle_deg
+                    best_result["pair_extension"] = pair_extension
+                    best_pair_extension = pair_extension
+
+                    if gap_variance < 0.01:
+                        break
+            else:
+                # Track failure reason
+                reason = result.get("reason", "unknown")
+                fail_reasons[reason] = fail_reasons.get(reason, 0) + 1
+
+                # Track fallback: only consider if directions are valid (no crossing)
+                fallback = result.get("fallback")
+                if fallback and result.get("directions_valid", False):
+                    worst_gap = fallback.get("worst_gap", 0)
+                    if worst_gap > best_fallback_worst_gap:
+                        best_fallback_worst_gap = worst_gap
+                        best_fallback = fallback
+                        best_fallback_extension = pair_extension
+                        best_fallback_angle = angle_deg
+
+        # Log summary for this extension
+        if pair_extension % 20 == 0 or valid_count > 0:
+            print(f"\n  Extension {pair_extension}px: tested {angles_tested} angles, {valid_count} valid")
+            if fail_reasons:
+                top_reasons = sorted(fail_reasons.items(), key=lambda x: -x[1])[:3]
+                for reason, count in top_reasons:
+                    print(f"    - {reason}: {count} times")
+
+        if best_result and best_result.get("pair_extension") == pair_extension:
+            print(f"\n  >>> SUCCESS at extension {pair_extension}px, angle {best_result['angle_degrees']:.2f}°")
+            print(f"      Gap variance: {best_result['gap_variance']:.4f}, Avg gap: {best_result['average_gap']:.2f}px")
+            break  # Found a valid configuration, stop extending
+
+    # Restore original positions (they will be updated by apply_parallel_alignment)
+    first_strand["original_start"]["x"] = first_original_start["x"]
+    first_strand["original_start"]["y"] = first_original_start["y"]
+    last_strand["original_start"]["x"] = last_original_start["x"]
+    last_strand["original_start"]["y"] = last_original_start["y"]
+
+    if best_result:
+        print(f"\n=== Best Solution Found ===")
+        print(f"Pair extension: {best_pair_extension}px")
+        print(f"Angle: {best_result['angle_degrees']:.2f}°")
+        print(f"Gap variance: {best_result['gap_variance']:.4f}")
+        print(f"Average gap: {best_result['average_gap']:.2f}")
+
+        return {
+            "success": True,
+            "angle": best_result["angle"],
+            "angle_degrees": best_result["angle_degrees"],
+            "configurations": best_result["configurations"],
+            "average_gap": best_result["average_gap"],
+            "gap_variance": best_result["gap_variance"],
+            "pair_extension": best_pair_extension,
+            "min_gap": best_result.get("min_gap", strand_width),
+            "max_gap": best_result.get("max_gap", strand_width * 1.5),
+            "message": f"Found parallel configuration at {best_result['angle_degrees']:.2f}° (pair ext: {best_pair_extension}px)"
+        }
+    elif best_fallback:
+        # Return best fallback candidate (max-min: the one with maximum worst gap)
+        print(f"\n=== Best Fallback Candidate (no valid solution) ===")
+        print(f"Pair extension: {best_fallback_extension}px")
+        print(f"Angle: {best_fallback_angle:.2f}°")
+        print(f"Worst gap (min): {best_fallback_worst_gap:.2f}px")
+        print(f"Average gap: {best_fallback['average_gap']:.2f}px")
+        print(f"All gaps: {[f'{g:.1f}' for g in best_fallback['gaps']]}")
+
+        return {
+            "success": False,
+            "is_fallback": True,
+            "angle": best_fallback["angle"],
+            "angle_degrees": best_fallback_angle,
+            "configurations": best_fallback["configurations"],
+            "average_gap": best_fallback["average_gap"],
+            "gap_variance": best_fallback["gap_variance"],
+            "worst_gap": best_fallback_worst_gap,
+            "gaps": best_fallback["gaps"],
+            "pair_extension": best_fallback_extension,
+            "min_gap": best_fallback.get("min_gap", strand_width),
+            "max_gap": best_fallback.get("max_gap", strand_width * 1.5),
+            "message": f"Fallback: best candidate at {best_fallback_angle:.2f}° (worst gap: {best_fallback_worst_gap:.1f}px)"
+        }
+    else:
+        print(f"\n=== No Solution Found ===")
+        print(f"Tried pair extensions from 0 to 200px")
+        return {
+            "success": False,
+            "message": "Could not find any valid configuration or fallback (tried pair extensions 0-200px)"
+        }
+
+
+def align_vertical_strands_parallel(all_strands, n, m,
+                                     angle_step_degrees=0.5,
+                                     max_extension=100.0, strand_width=46,
+                                     custom_angle_min=None, custom_angle_max=None,
+                                     on_config_callback=None):
+    """
+    Parallel alignment of vertical _4/_5 strands using first-last pair approach.
+
+    Algorithm:
+    1. Calculate angle range: first strand's initial angle ±20° (or use custom range)
+    2. LAST strand should use angle + 180° (opposite direction)
+    3. For each angle in range, check if first and last can reach their targets
+    4. Then check if MIDDLE strands can adapt (with extensions if needed)
+    5. Validate gaps are within strand_width to strand_width*1.5
+
+    Args:
+        all_strands: List of all strand dictionaries
+        n: Number of horizontal strand sets
+        m: Number of vertical strand sets (vertical sets are n+1 to n+m)
+        angle_step_degrees: Step size for angle search (default 0.5°)
+        max_extension: Maximum allowed extension for _2/_3 strands
+        strand_width: Width of strands for gap calculation (default 46)
+        custom_angle_min: Optional custom minimum angle (degrees)
+        custom_angle_max: Optional custom maximum angle (degrees)
+        on_config_callback: Optional callback(angle_deg, extension, result) called for each config
+
+    Returns:
+        dict: {
+            "success": bool,
+            "angle": float (radians),
+            "configurations": list of strand configurations,
+            "average_gap": float,
+            "gap_variance": float,
+            "message": str
+        }
+    """
+
+    # Separate strands by type - VERTICAL strands (set_number > n)
+    strands_2 = []  # Vertical _2 strands
+    strands_3 = []  # Vertical _3 strands
+    strands_4 = []  # Vertical _4 strands
+    strands_5 = []  # Vertical _5 strands
+
+    for strand in all_strands:
+        if strand["type"] != "AttachedStrand":
+            continue
+
+        layer_name = strand["layer_name"]
+        set_num = strand["set_number"]
+
+        # Only process vertical strands (set_number > n and <= n+m)
+        if set_num <= n or set_num > n + m:
+            continue
+
+        if layer_name.endswith("_2"):
+            strands_2.append(strand)
+        elif layer_name.endswith("_3"):
+            strands_3.append(strand)
+        elif layer_name.endswith("_4"):
+            strands_4.append(strand)
+        elif layer_name.endswith("_5"):
+            strands_5.append(strand)
+
+    if not strands_4 and not strands_5:
+        return {
+            "success": False,
+            "message": "No vertical _4/_5 strands found"
+        }
+
+    # Collect all vertical _4/_5 strands with their target positions
+    vertical_strands = []
+
+    for s4 in strands_4:
+        set_num = s4["set_number"]
+        # Find corresponding _2 strand
+        s2 = next((s for s in strands_2 if s["set_number"] == set_num), None)
+        if s2:
+            vertical_strands.append({
+                "strand_4_5": s4,
+                "strand_2_3": s2,
+                "type": "_4",
+                "set_number": set_num,
+                "original_start": {"x": s4["start"]["x"], "y": s4["start"]["y"]},
+                "target_position": {"x": s4["end"]["x"], "y": s4["end"]["y"]},
+            })
+
+    for s5 in strands_5:
+        set_num = s5["set_number"]
+        # Find corresponding _3 strand
+        s3 = next((s for s in strands_3 if s["set_number"] == set_num), None)
+        if s3:
+            vertical_strands.append({
+                "strand_4_5": s5,
+                "strand_2_3": s3,
+                "type": "_5",
+                "set_number": set_num,
+                "original_start": {"x": s5["start"]["x"], "y": s5["start"]["y"]},
+                "target_position": {"x": s5["end"]["x"], "y": s5["end"]["y"]},
+            })
+
+    # Sort by set_number, then by type (_4 before _5 within each set)
+    vertical_strands.sort(key=lambda v: (v["set_number"], v["type"]))
+
+    num_strands = len(vertical_strands)
+    if num_strands < 2:
+        return {
+            "success": False,
+            "message": "Need at least 2 vertical strands for parallel alignment"
+        }
+
+    # Get FIRST and LAST strands
+    first_strand = vertical_strands[0]
+    last_strand = vertical_strands[-1]
+
+    # Get _2/_3 extension directions for first and last strands
+    first_s23 = first_strand["strand_2_3"]
+    first_s23_dx = first_s23["end"]["x"] - first_s23["start"]["x"]
+    first_s23_dy = first_s23["end"]["y"] - first_s23["start"]["y"]
+    first_s23_len = math.sqrt(first_s23_dx**2 + first_s23_dy**2)
+    first_s23_nx = first_s23_dx / first_s23_len if first_s23_len > 0.001 else 0
+    first_s23_ny = first_s23_dy / first_s23_len if first_s23_len > 0.001 else 0
+
+    last_s23 = last_strand["strand_2_3"]
+    last_s23_dx = last_s23["end"]["x"] - last_s23["start"]["x"]
+    last_s23_dy = last_s23["end"]["y"] - last_s23["start"]["y"]
+    last_s23_len = math.sqrt(last_s23_dx**2 + last_s23_dy**2)
+    last_s23_nx = last_s23_dx / last_s23_len if last_s23_len > 0.001 else 0
+    last_s23_ny = last_s23_dy / last_s23_len if last_s23_len > 0.001 else 0
+
+    # Store original start positions
+    first_original_start = {"x": first_strand["original_start"]["x"], "y": first_strand["original_start"]["y"]}
+    last_original_start = {"x": last_strand["original_start"]["x"], "y": last_strand["original_start"]["y"]}
+
+    print(f"\n=== Vertical Parallel Alignment (First-Last Pair Approach) ===")
+    print(f"Found {num_strands} vertical _4/_5 strands")
+    print(f"Max extension: {max_extension}")
+    print(f"Strand width: {strand_width}")
+    print(f"First-Last pair extension: 0 to 200 px (step 5)")
+
+    # Debug: Print details of each strand
+    print(f"\n--- Vertical Strand Details ---")
+    for i, v in enumerate(vertical_strands):
+        dx = v['target_position']['x'] - v['original_start']['x']
+        dy = v['target_position']['y'] - v['original_start']['y']
+        angle = math.degrees(math.atan2(dy, dx))
+        label = ""
+        if i == 0:
+            label = " [FIRST]"
+        elif i == num_strands - 1:
+            label = " [LAST]"
+        print(f"  {i+1}. {v['strand_4_5']['layer_name']}{label} angle={angle:.1f}°")
+
+    # Calculate the initial angle of the FIRST strand (from start to target)
+    first_dx = first_strand["target_position"]["x"] - first_strand["original_start"]["x"]
+    first_dy = first_strand["target_position"]["y"] - first_strand["original_start"]["y"]
+    first_initial_angle = math.degrees(math.atan2(first_dy, first_dx))
+
+    # Use custom angle range if provided, otherwise use ±20° from initial angle
+    use_custom_v = custom_angle_min is not None and custom_angle_max is not None
+    if use_custom_v:
+        base_angle_min = custom_angle_min
+        base_angle_max = custom_angle_max
+        print(f"\n--- Using CUSTOM Vertical Angle Range ---")
+        print(f"    Custom range: {base_angle_min:.2f}° to {base_angle_max:.2f}°")
+    else:
+        base_angle_min = first_initial_angle - 20
+        base_angle_max = first_initial_angle + 20
+        print(f"\n--- Angle Range: First strand initial angle ±20° ---")
+        print(f"    First strand initial angle: {first_initial_angle:.2f}°")
+        print(f"    Angle range: {base_angle_min:.2f}° to {base_angle_max:.2f}°")
+
+    # Outer loop: extend first-last pair starting points (0 to 200 px, step 5)
+    best_result = None
+    best_pair_extension = 0
+
+    # Track best fallback candidate (max-min optimization: maximize the worst gap)
+    best_fallback = None
+    best_fallback_worst_gap = -float('inf')
+    best_fallback_extension = 0
+    best_fallback_angle = 0
+
+    for pair_extension in range(0, 210, 10):  # Step 10px instead of 5px
+        # Extend first and last strand starting positions
+        first_strand["original_start"]["x"] = first_original_start["x"] + pair_extension * first_s23_nx
+        first_strand["original_start"]["y"] = first_original_start["y"] + pair_extension * first_s23_ny
+        last_strand["original_start"]["x"] = last_original_start["x"] + pair_extension * last_s23_nx
+        last_strand["original_start"]["y"] = last_original_start["y"] + pair_extension * last_s23_ny
+
+        # Recalculate the first strand's angle after extension (for auto mode)
+        first_dx_ext = first_strand["target_position"]["x"] - first_strand["original_start"]["x"]
+        first_dy_ext = first_strand["target_position"]["y"] - first_strand["original_start"]["y"]
+        first_angle_ext = math.degrees(math.atan2(first_dy_ext, first_dx_ext))
+
+        # Use custom angles directly, or recalculate based on extension
+        if use_custom_v:
+            angle_min_deg = base_angle_min
+            angle_max_deg = base_angle_max
+        else:
+            angle_min_deg = first_angle_ext - 10
+            angle_max_deg = first_angle_ext + 10
+
+        if pair_extension % 40 == 0:  # Log every 40px
+            print(f"\n--- Pair Extension: {pair_extension}px ---")
+            print(f"    First strand angle (extended): {first_angle_ext:.2f}°")
+            print(f"    Angle range: {angle_min_deg:.2f}° to {angle_max_deg:.2f}°")
+
+        # Search within the angle range
+        angle_start = int(angle_min_deg * 100)
+        angle_end = int(angle_max_deg * 100)
+        step = max(1, int(angle_step_degrees * 100))
+
+        best_gap_variance = float('inf')
+        angles_tested = 0
+        valid_count = 0
+        fail_reasons = {}
+
+        for angle_hundredth in range(angle_start, angle_end + 1, step):
+            angle_deg = angle_hundredth / 100.0
+            angle_rad = math.radians(angle_deg)
+            angles_tested += 1
+
+            result = try_angle_configuration_first_last(
+                vertical_strands,
+                angle_rad,
+                max_extension,
+                strand_width,
+                verbose=False
+            )
+
+            # Call callback for each configuration tried
+            if on_config_callback:
+                on_config_callback(angle_deg, pair_extension, result, "vertical")
+
+            if result["valid"]:
+                valid_count += 1
+                gap_variance = result["gap_variance"]
+
+                if gap_variance < best_gap_variance:
+                    best_gap_variance = gap_variance
+                    best_result = result
+                    best_result["angle_degrees"] = angle_deg
+                    best_result["pair_extension"] = pair_extension
+                    best_pair_extension = pair_extension
+
+                    if gap_variance < 0.01:
+                        break
+            else:
+                # Track failure reason
+                reason = result.get("reason", "unknown")
+                fail_reasons[reason] = fail_reasons.get(reason, 0) + 1
+
+                # Track fallback: only consider if directions are valid (no crossing)
+                fallback = result.get("fallback")
+                if fallback and result.get("directions_valid", False):
+                    worst_gap = fallback.get("worst_gap", 0)
+                    if worst_gap > best_fallback_worst_gap:
+                        best_fallback_worst_gap = worst_gap
+                        best_fallback = fallback
+                        best_fallback_extension = pair_extension
+                        best_fallback_angle = angle_deg
+
+        # Log summary for this extension
+        if pair_extension % 20 == 0 or valid_count > 0:
+            print(f"\n  Extension {pair_extension}px: tested {angles_tested} angles, {valid_count} valid")
+            if fail_reasons:
+                top_reasons = sorted(fail_reasons.items(), key=lambda x: -x[1])[:3]
+                for reason, count in top_reasons:
+                    print(f"    - {reason}: {count} times")
+
+        if best_result and best_result.get("pair_extension") == pair_extension:
+            print(f"\n  >>> SUCCESS at extension {pair_extension}px, angle {best_result['angle_degrees']:.2f}°")
+            print(f"      Gap variance: {best_result['gap_variance']:.4f}, Avg gap: {best_result['average_gap']:.2f}px")
+            break  # Found a valid configuration, stop extending
+
+    # Restore original positions (they will be updated by apply_parallel_alignment)
+    first_strand["original_start"]["x"] = first_original_start["x"]
+    first_strand["original_start"]["y"] = first_original_start["y"]
+    last_strand["original_start"]["x"] = last_original_start["x"]
+    last_strand["original_start"]["y"] = last_original_start["y"]
+
+    if best_result:
+        print(f"\n=== Best Vertical Solution Found ===")
+        print(f"Pair extension: {best_pair_extension}px")
+        print(f"Angle: {best_result['angle_degrees']:.2f}°")
+        print(f"Gap variance: {best_result['gap_variance']:.4f}")
+        print(f"Average gap: {best_result['average_gap']:.2f}")
+
+        return {
+            "success": True,
+            "angle": best_result["angle"],
+            "angle_degrees": best_result["angle_degrees"],
+            "configurations": best_result["configurations"],
+            "average_gap": best_result["average_gap"],
+            "gap_variance": best_result["gap_variance"],
+            "pair_extension": best_pair_extension,
+            "min_gap": best_result.get("min_gap", strand_width),
+            "max_gap": best_result.get("max_gap", strand_width * 1.5),
+            "message": f"Found vertical parallel configuration at {best_result['angle_degrees']:.2f}° (pair ext: {best_pair_extension}px)"
+        }
+    elif best_fallback:
+        # Return best fallback candidate (max-min: the one with maximum worst gap)
+        print(f"\n=== Best Vertical Fallback Candidate (no valid solution) ===")
+        print(f"Pair extension: {best_fallback_extension}px")
+        print(f"Angle: {best_fallback_angle:.2f}°")
+        print(f"Worst gap (min): {best_fallback_worst_gap:.2f}px")
+        print(f"Average gap: {best_fallback['average_gap']:.2f}px")
+        print(f"All gaps: {[f'{g:.1f}' for g in best_fallback['gaps']]}")
+
+        return {
+            "success": False,
+            "is_fallback": True,
+            "angle": best_fallback["angle"],
+            "angle_degrees": best_fallback_angle,
+            "configurations": best_fallback["configurations"],
+            "average_gap": best_fallback["average_gap"],
+            "gap_variance": best_fallback["gap_variance"],
+            "worst_gap": best_fallback_worst_gap,
+            "gaps": best_fallback["gaps"],
+            "pair_extension": best_fallback_extension,
+            "min_gap": best_fallback.get("min_gap", strand_width),
+            "max_gap": best_fallback.get("max_gap", strand_width * 1.5),
+            "message": f"Fallback: best candidate at {best_fallback_angle:.2f}° (worst gap: {best_fallback_worst_gap:.1f}px)"
+        }
+    else:
+        print(f"\n=== No Solution Found ===")
+        print(f"Tried pair extensions from 0 to 200px")
+        return {
+            "success": False,
+            "message": "Could not find any valid configuration or fallback (tried pair extensions 0-200px)"
+        }
+
+
+def try_angle_configuration_first_last(strands_list, angle_rad, max_extension, strand_width, verbose=False):
+    """
+    Try a specific angle using the FIRST-LAST pair approach.
+
+    Algorithm:
+    1. FIRST strand projects to target at angle θ (or θ+180° if going left)
+    2. LAST strand projects at opposite angle
+    3. For 2 strands: search extension combinations to find valid gap
+    4. For 3+ strands: MIDDLE strands adapt with extensions
+    5. Validate gaps are within [strand_width+10, strand_width*1.5]
+
+    Returns:
+        dict with "valid", "configurations", "gaps", "gap_variance", "average_gap"
+    """
+    min_gap = strand_width + 10     # 56 px for width 46
+    max_gap = strand_width * 1.5    # 69 px
+
+    if len(strands_list) < 2:
+        return {"valid": False, "reason": "Need at least 2 strands"}
+
+    angle_deg = math.degrees(angle_rad)
+
+    # Helper function to compute strand config for a given extension
+    def compute_strand_config(h_strand, extension):
+        original_start = h_strand["original_start"]
+        target_position = h_strand["target_position"]
+
+        dx_to_target = target_position["x"] - original_start["x"]
+        dy_to_target = target_position["y"] - original_start["y"]
+        distance_to_target = math.sqrt(dx_to_target**2 + dy_to_target**2)
+
+        if distance_to_target < 0.001:
+            return None
+
+        # Determine if strand is predominantly horizontal or vertical
+        is_vertical = abs(dy_to_target) > abs(dx_to_target)
+
+        if is_vertical:
+            # For vertical strands, check if going down (positive y)
+            goes_positive = dy_to_target >= 0
+        else:
+            # For horizontal strands, check if going right (positive x)
+            goes_positive = dx_to_target >= 0
+
+        strand_angle = angle_rad if goes_positive else angle_rad + math.pi
+        cos_a = math.cos(strand_angle)
+        sin_a = math.sin(strand_angle)
+
+        s2_3 = h_strand["strand_2_3"]
+        s2_3_dx = s2_3["end"]["x"] - s2_3["start"]["x"]
+        s2_3_dy = s2_3["end"]["y"] - s2_3["start"]["y"]
+        s2_3_len = math.sqrt(s2_3_dx**2 + s2_3_dy**2)
+
+        if s2_3_len < 0.001:
+            return None
+
+        s2_3_nx = s2_3_dx / s2_3_len
+        s2_3_ny = s2_3_dy / s2_3_len
+
+        extended_start_x = original_start["x"] + extension * s2_3_nx
+        extended_start_y = original_start["y"] + extension * s2_3_ny
+
+        dx = target_position["x"] - extended_start_x
+        dy = target_position["y"] - extended_start_y
+        length = dx * cos_a + dy * sin_a
+
+        if length <= 10:
+            return None
+
+        end_x = extended_start_x + length * cos_a
+        end_y = extended_start_y + length * sin_a
+
+        return {
+            "strand": h_strand,
+            "extended_start": {"x": extended_start_x, "y": extended_start_y},
+            "end": {"x": end_x, "y": end_y},
+            "length": length,
+            "extension": extension,
+            "angle": strand_angle,
+            "goes_positive": goes_positive,
+        }
+
+    # Special case: exactly 2 strands - search for extension combo with valid gap
+    if len(strands_list) == 2:
+        first_strand = strands_list[0]
+        last_strand = strands_list[1]
+
+        best_config_pair = None
+        best_gap_diff = float('inf')  # How close to ideal gap (center of range)
+        ideal_gap = (min_gap + max_gap) / 2  # 57.5 px
+
+        # Search extension combinations
+        for ext1 in range(0, int(max_extension) + 1, 5):
+            config1 = compute_strand_config(first_strand, ext1)
+            if not config1:
+                continue
+
+            # Precompute line params for config1 (reused for all ext2 iterations)
+            line_params1 = precompute_line_params(config1["extended_start"], config1["end"])
+
+            for ext2 in range(0, int(max_extension) + 1, 5):
+                config2 = compute_strand_config(last_strand, ext2)
+                if not config2:
+                    continue
+
+                # Calculate gap using fast precomputed method
+                px, py = config2["extended_start"]["x"], config2["extended_start"]["y"]
+                gap = fast_perpendicular_distance(line_params1, px, py)
+                abs_gap = abs(gap)
+
+                # Check if gap is in valid range
+                if min_gap <= abs_gap <= max_gap:
+                    gap_diff = abs(abs_gap - ideal_gap)
+                    if gap_diff < best_gap_diff:
+                        best_gap_diff = gap_diff
+                        best_config_pair = (config1, config2, abs_gap, gap)
+
+        if best_config_pair:
+            config1, config2, abs_gap, signed_gap = best_config_pair
+            return {
+                "valid": True,
+                "configurations": [config1, config2],
+                "gaps": [abs_gap],
+                "signed_gaps": [signed_gap],
+                "gap_variance": 0,
+                "average_gap": abs_gap,
+                "worst_gap": abs_gap,
+                "angle": angle_rad,
+                "min_gap": min_gap,
+                "max_gap": max_gap,
+            }
+        else:
+            # No valid gap found - return fallback info
+            # Try to find best available gap
+            config1 = compute_strand_config(first_strand, 0)
+            config2 = compute_strand_config(last_strand, 0)
+            if config1 and config2:
+                line_params1 = precompute_line_params(config1["extended_start"], config1["end"])
+                px, py = config2["extended_start"]["x"], config2["extended_start"]["y"]
+                gap = fast_perpendicular_distance(line_params1, px, py)
+                abs_gap = abs(gap)
+                fallback_data = {
+                    "configurations": [config1, config2],
+                    "gaps": [abs_gap],
+                    "signed_gaps": [gap],
+                    "gap_variance": 0,
+                    "average_gap": abs_gap,
+                    "worst_gap": abs_gap,
+                    "angle": angle_rad,
+                    "min_gap": min_gap,
+                    "max_gap": max_gap,
+                }
+                if abs_gap < min_gap:
+                    return {"valid": False, "reason": f"Gap too small ({abs_gap:.1f} < {min_gap})", "fallback": fallback_data, "directions_valid": True}
+                else:
+                    return {"valid": False, "reason": f"Gap too large ({abs_gap:.1f} > {max_gap})", "fallback": fallback_data, "directions_valid": True}
+            return {"valid": False, "reason": "Could not compute configs for 2-strand case"}
+
+    # For 3+ strands: original logic
+    configurations = []
+
+    for idx, h_strand in enumerate(strands_list):
+        best_config = None
+
+        for extension in range(0, int(max_extension) + 1, 5):
+            config = compute_strand_config(h_strand, extension)
+            if config:
+                best_config = config
+                break
+
+        if not best_config:
+            if verbose:
+                print(f"    FAILED: {h_strand['strand_4_5']['layer_name']} - no valid length at angle {angle_deg:.2f}°")
+            return {"valid": False, "reason": f"Strand {h_strand['strand_4_5']['layer_name']} no valid length"}
+
+        configurations.append(best_config)
+
+    # Calculate gaps between consecutive strands using fast precomputed method
+    gaps = []
+    signed_gaps = []
+
+    # Precompute all line parameters for speed
+    line_params_list = [
+        precompute_line_params(cfg["extended_start"], cfg["end"])
+        for cfg in configurations
+    ]
+
+    for i in range(len(configurations) - 1):
+        config2 = configurations[i + 1]
+        px, py = config2["extended_start"]["x"], config2["extended_start"]["y"]
+        signed_gap = fast_perpendicular_distance(line_params_list[i], px, py)
+
+        # Flip sign for odd-indexed gaps (where LINE strand is _5, which has 180° opposite direction)
+        if i % 2 == 1:
+            signed_gap = -signed_gap
+
+        signed_gaps.append(signed_gap)
+        gaps.append(abs(signed_gap))
+
+    if not gaps:
+        return {"valid": True, "configurations": configurations, "gaps": [], "gap_variance": 0, "average_gap": 0, "min_gap": min_gap, "max_gap": max_gap}
+
+    # Calculate statistics for fallback tracking
+    gap_sum = sum(gaps)
+    average_gap = gap_sum / len(gaps)
+    gap_variance = sum((g - average_gap)**2 for g in gaps) / len(gaps)
+    worst_gap = min(gaps)  # The smallest gap is the "worst" for max-min optimization
+
+    # Build fallback data (always available even if invalid)
+    fallback_data = {
+        "configurations": configurations,
+        "gaps": gaps,
+        "signed_gaps": signed_gaps,
+        "gap_variance": gap_variance,
+        "average_gap": average_gap,
+        "worst_gap": worst_gap,
+        "angle": angle_rad,
+        "min_gap": min_gap,
+        "max_gap": max_gap,
+    }
+
+    # Validate gaps
+    # 1. Determine expected direction from first-to-last (using first strand's line as reference)
+    last_config = configurations[-1]
+    px, py = last_config["extended_start"]["x"], last_config["extended_start"]["y"]
+    first_to_last_signed = fast_perpendicular_distance(line_params_list[0], px, py)
+    expected_sign = 1 if first_to_last_signed >= 0 else -1
+
+    # 2. Check each gap - track if directions are all correct
+    directions_valid = True
+    for i, sg in enumerate(signed_gaps):
+        abs_gap = abs(sg)
+
+        # Check direction (no crossing)
+        if expected_sign > 0 and sg <= 0:
+            directions_valid = False
+            if verbose:
+                print(f"    Gap {i} wrong direction: {sg:.2f}")
+            return {"valid": False, "reason": f"Gap {i} wrong direction ({sg:.2f})", "fallback": fallback_data, "directions_valid": False}
+        elif expected_sign < 0 and sg >= 0:
+            directions_valid = False
+            if verbose:
+                print(f"    Gap {i} wrong direction: {sg:.2f}")
+            return {"valid": False, "reason": f"Gap {i} wrong direction ({sg:.2f})", "fallback": fallback_data, "directions_valid": False}
+
+        # Check gap range [strand_width, strand_width*1.5]
+        if abs_gap < min_gap:
+            if verbose:
+                print(f"    Gap {i} too small: {abs_gap:.2f} < {min_gap}")
+            return {"valid": False, "reason": f"Gap {i} too small ({abs_gap:.2f} < {min_gap})", "fallback": fallback_data, "directions_valid": directions_valid}
+
+        if abs_gap > max_gap:
+            if verbose:
+                print(f"    Gap {i} too large: {abs_gap:.2f} > {max_gap}")
+            return {"valid": False, "reason": f"Gap {i} too large ({abs_gap:.2f} > {max_gap})", "fallback": fallback_data, "directions_valid": directions_valid}
+
+    return {
+        "valid": True,
+        "configurations": configurations,
+        "gaps": gaps,
+        "signed_gaps": signed_gaps,
+        "gap_variance": gap_variance,
+        "average_gap": average_gap,
+        "worst_gap": worst_gap,
+        "angle": angle_rad,
+        "min_gap": min_gap,
+        "max_gap": max_gap,
+    }
+
+
+def try_angle_configuration(horizontal_strands, angle_rad, emoji_area_radius, max_extension, verbose=False, strand_width=46):
+    """
+    Try a specific angle and check if all strands can be made parallel.
+
+    For parallel strands going in OPPOSITE directions (like _4 going right, _5 going left),
+    we use angle for one direction and angle+180° for the opposite direction.
+    This ensures they have the same SLOPE (parallel) even though they go opposite ways.
+
+    Gap constraints:
+    - All gaps between consecutive strands should be between strand_width+10 and strand_width*1.5
+    - Strands should maintain their relative order (not cross)
+
+    For each strand:
+    1. Determine its natural direction (left or right based on emoji target)
+    2. Use angle or angle+180° based on direction
+    3. Check if end point falls within emoji area
+    4. Calculate required extension for _2/_3 (if any)
+
+    Returns:
+        dict with "valid", "configurations", "gaps", "gap_variance", "average_gap"
+    """
+    # Gap constraints: strand_width+10 to strand_width * 1.5
+    min_gap = strand_width + 10     # 56 px for width 46
+    max_gap = strand_width * 1.5    # 69 px for width 46
+    configurations = []
+    angle_deg = math.degrees(angle_rad)
+
+    for h_strand in horizontal_strands:
+        original_start = h_strand["original_start"]
+        target_position = h_strand["target_position"]
+
+        # Calculate direction to emoji target
+        dx_to_target = target_position["x"] - original_start["x"]
+        dy_to_target = target_position["y"] - original_start["y"]
+        distance_to_target = math.sqrt(dx_to_target**2 + dy_to_target**2)
+
+        if distance_to_target < 0.001:
+            return {"valid": False, "reason": "Target at start"}
+
+        # Determine if strand is predominantly horizontal or vertical
+        is_vertical = abs(dy_to_target) > abs(dx_to_target)
+
+        if is_vertical:
+            # For vertical strands, check if going down (positive y)
+            goes_positive = dy_to_target >= 0
+        else:
+            # For horizontal strands, check if going right (positive x)
+            goes_positive = dx_to_target >= 0
+
+        # For parallel strands: use angle for positive-going, angle+180° for negative-going
+        # This ensures same slope (parallel) regardless of direction
+        if goes_positive:
+            strand_angle = angle_rad
+        else:
+            strand_angle = angle_rad + math.pi  # Add 180°
+
+        cos_a = math.cos(strand_angle)
+        sin_a = math.sin(strand_angle)
+
+        # Try different extensions and lengths to find one that lands in emoji area
+        best_length = None
+        best_end = None
+        best_extension = 0
+        best_extended_start = None
+
+        for extension in range(0, int(max_extension) + 1, 2):  # Finer extension steps
+            # Extended start point (move along _2/_3 direction)
+            s2_3 = h_strand["strand_2_3"]
+            s2_3_dx = s2_3["end"]["x"] - s2_3["start"]["x"]
+            s2_3_dy = s2_3["end"]["y"] - s2_3["start"]["y"]
+            s2_3_len = math.sqrt(s2_3_dx**2 + s2_3_dy**2)
+
+            if s2_3_len < 0.001:
+                continue
+
+            # Normalize _2/_3 direction
+            s2_3_nx = s2_3_dx / s2_3_len
+            s2_3_ny = s2_3_dy / s2_3_len
+
+            # Extended start = original start + extension along _2/_3 direction
+            extended_start_x = original_start["x"] + extension * s2_3_nx
+            extended_start_y = original_start["y"] + extension * s2_3_ny
+
+            # Try different lengths at the strand's angle
+            for length in range(10, 400, 2):  # Finer length steps, longer max
+                end_x = extended_start_x + length * cos_a
+                end_y = extended_start_y + length * sin_a
+
+                # Check if end is within emoji area
+                dist_to_emoji = math.sqrt(
+                    (end_x - target_position["x"])**2 +
+                    (end_y - target_position["y"])**2
+                )
+
+                if dist_to_emoji <= emoji_area_radius:
+                    best_length = length
+                    best_end = {"x": end_x, "y": end_y}
+                    best_extension = extension
+                    best_extended_start = {"x": extended_start_x, "y": extended_start_y}
+                    break
+
+            if best_length is not None:
+                break
+
+        if best_length is None:
+            if verbose:
+                print(f"    FAILED: {h_strand['strand_4_5']['layer_name']} - Could not reach emoji area")
+                print(f"            Start: ({original_start['x']:.1f}, {original_start['y']:.1f})")
+                print(f"            Target: ({target_position['x']:.1f}, {target_position['y']:.1f})")
+                print(f"            Goes positive: {goes_positive}, Strand angle: {math.degrees(strand_angle):.1f}°")
+            return {"valid": False, "reason": f"Strand {h_strand['strand_4_5']['layer_name']} cannot reach emoji area"}
+
+        configurations.append({
+            "strand": h_strand,
+            "extended_start": best_extended_start,
+            "end": best_end,
+            "length": best_length,
+            "extension": best_extension,
+            "angle": strand_angle,
+            "goes_positive": goes_positive,
+        })
+
+    # Calculate gaps between consecutive parallel strands using SIGNED distance
+    # This ensures we can verify strands maintain correct order
+    gaps = []
+    signed_gaps = []
+
+    for i in range(len(configurations) - 1):
+        config1 = configurations[i]
+        config2 = configurations[i + 1]
+
+        # Calculate signed perpendicular distance
+        signed_gap = calculate_signed_perpendicular_distance(
+            config1["extended_start"],
+            config1["end"],
+            config2["extended_start"]
+        )
+        signed_gaps.append(signed_gap)
+        gaps.append(abs(signed_gap))
+
+    if not gaps:
+        return {"valid": True, "configurations": configurations, "gaps": [], "gap_variance": 0, "average_gap": 0}
+
+    # Determine expected direction from first-to-last relationship
+    # All gaps should have the same sign (direction)
+    if len(configurations) >= 2:
+        # Calculate direction from first to last strand
+        first_config = configurations[0]
+        last_config = configurations[-1]
+
+        first_to_last_signed = calculate_signed_perpendicular_distance(
+            first_config["extended_start"],
+            first_config["end"],
+            last_config["extended_start"]
+        )
+
+        # Expected direction: if first_to_last is positive, all gaps should be positive
+        # if first_to_last is negative, all gaps should be negative
+        expected_sign = 1 if first_to_last_signed >= 0 else -1
+
+        # Validate all gaps:
+        # 1. Same direction (same sign)
+        # 2. Within valid range: min_gap (strand_width) to max_gap (strand_width*1.5)
+        for i, sg in enumerate(signed_gaps):
+            abs_gap = abs(sg)
+
+            # Check if gap has correct sign (strands maintain order, don't cross)
+            if expected_sign > 0 and sg <= 0:
+                if verbose:
+                    print(f"    Gap {i} direction mismatch: expected positive, got {sg:.2f} (strands crossing)")
+                return {"valid": False, "reason": f"Gap {i} wrong direction - strands crossing ({sg:.2f})"}
+            elif expected_sign < 0 and sg >= 0:
+                if verbose:
+                    print(f"    Gap {i} direction mismatch: expected negative, got {sg:.2f} (strands crossing)")
+                return {"valid": False, "reason": f"Gap {i} wrong direction - strands crossing ({sg:.2f})"}
+
+            # Check if gap is within valid range [min_gap, max_gap]
+            if abs_gap < min_gap:
+                if verbose:
+                    print(f"    Gap {i} too small: {abs_gap:.2f} < {min_gap}")
+                return {"valid": False, "reason": f"Gap {i} too small ({abs_gap:.2f} < {min_gap})"}
+
+            if abs_gap > max_gap:
+                if verbose:
+                    print(f"    Gap {i} too large: {abs_gap:.2f} > {max_gap:.2f}")
+                return {"valid": False, "reason": f"Gap {i} too large ({abs_gap:.2f} > {max_gap:.2f})"}
+
+    # Calculate variance of gaps (lower = more equal)
+    average_gap = sum(gaps) / len(gaps)
+    gap_variance = sum((g - average_gap)**2 for g in gaps) / len(gaps)
+
+    return {
+        "valid": True,
+        "configurations": configurations,
+        "gaps": gaps,
+        "signed_gaps": signed_gaps,
+        "gap_variance": gap_variance,
+        "average_gap": average_gap,
+        "angle": angle_rad,
+        "min_gap": min_gap,
+        "max_gap": max_gap,
+    }
+
+
+def calculate_perpendicular_distance(line_start, line_end, point):
+    """
+    Calculate perpendicular distance from a point to a line defined by two points.
+
+    Uses the formula: |((y2-y1)*px - (x2-x1)*py + x2*y1 - y2*x1)| / sqrt((y2-y1)^2 + (x2-x1)^2)
+    """
+    x1, y1 = line_start["x"], line_start["y"]
+    x2, y2 = line_end["x"], line_end["y"]
+    px, py = point["x"], point["y"]
+
+    numerator = abs((y2 - y1) * px - (x2 - x1) * py + x2 * y1 - y2 * x1)
+    denominator = math.sqrt((y2 - y1)**2 + (x2 - x1)**2)
+
+    if denominator < 0.001:
+        return 0
+
+    return numerator / denominator
+
+
+def precompute_line_params(line_start, line_end):
+    """
+    Precompute line parameters for fast repeated distance calculations.
+
+    Returns tuple: (dx, dy, c, inv_length) where:
+    - dx, dy: direction vector components
+    - c: constant term (x2*y1 - y2*x1)
+    - inv_length: 1/line_length (precomputed to avoid repeated sqrt and division)
+    """
+    x1, y1 = line_start["x"], line_start["y"]
+    x2, y2 = line_end["x"], line_end["y"]
+
+    dx = x2 - x1
+    dy = y2 - y1
+    c = x2 * y1 - y2 * x1
+
+    length_sq = dx * dx + dy * dy
+    if length_sq < 0.000001:
+        return (dx, dy, c, 0.0)
+
+    inv_length = 1.0 / math.sqrt(length_sq)
+    return (dy, -dx, c, inv_length)  # Note: (dy, -dx) for perpendicular
+
+
+def fast_perpendicular_distance(line_params, px, py):
+    """
+    Fast perpendicular distance using precomputed line parameters.
+
+    Args:
+        line_params: tuple from precompute_line_params()
+        px, py: point coordinates (raw floats, not dict)
+
+    Returns:
+        Signed perpendicular distance
+    """
+    a, b, c, inv_length = line_params
+    if inv_length == 0.0:
+        return 0.0
+    return (a * px + b * py + c) * inv_length
+
+
+def calculate_signed_perpendicular_distance(line_start, line_end, point):
+    """
+    Calculate SIGNED perpendicular distance from a point to a line.
+
+    Positive = point is on one side of the line
+    Negative = point is on the other side
+
+    This helps determine if strands maintain their relative order.
+
+    Note: For multiple calculations to the same line, use precompute_line_params()
+    and fast_perpendicular_distance() instead for better performance.
+    """
+    x1, y1 = line_start["x"], line_start["y"]
+    x2, y2 = line_end["x"], line_end["y"]
+    px, py = point["x"], point["y"]
+
+    # Cross product gives signed distance
+    numerator = (y2 - y1) * px - (x2 - x1) * py + x2 * y1 - y2 * x1
+    denominator = math.sqrt((y2 - y1)**2 + (x2 - x1)**2)
+
+    if denominator < 0.001:
+        return 0
+
+    return numerator / denominator
+
+
+def apply_parallel_alignment(all_strands, alignment_result):
+    """
+    Apply the parallel alignment result to modify the strands.
+
+    This function:
+    1. Updates _4/_5 strand positions (start and end)
+    2. Updates _2/_3 strand end positions (if extended)
+
+    Args:
+        all_strands: List of all strand dictionaries
+        alignment_result: Result from align_horizontal_strands_parallel()
+
+    Returns:
+        List of modified strands
+    """
+    if not alignment_result["success"]:
+        print("Cannot apply alignment: no valid configuration found")
+        return all_strands
+
+    configurations = alignment_result["configurations"]
+
+    # Build lookup for quick access
+    strand_lookup = {s["layer_name"]: s for s in all_strands}
+
+    for config in configurations:
+        h_strand = config["strand"]
+        strand_4_5 = h_strand["strand_4_5"]
+        strand_2_3 = h_strand["strand_2_3"]
+
+        # Update _4/_5 strand
+        layer_name_4_5 = strand_4_5["layer_name"]
+        if layer_name_4_5 in strand_lookup:
+            strand_lookup[layer_name_4_5]["start"] = config["extended_start"].copy()
+            strand_lookup[layer_name_4_5]["end"] = config["end"].copy()
+
+            # Update control points
+            strand_lookup[layer_name_4_5]["control_points"] = [
+                config["extended_start"].copy(),
+                config["end"].copy()
+            ]
+            strand_lookup[layer_name_4_5]["control_point_center"] = {
+                "x": (config["extended_start"]["x"] + config["end"]["x"]) / 2,
+                "y": (config["extended_start"]["y"] + config["end"]["y"]) / 2,
+            }
+
+        # Always update _2/_3 strand end to match _4/_5 start (ensures connection)
+        layer_name_2_3 = strand_2_3["layer_name"]
+        if layer_name_2_3 in strand_lookup:
+            strand_lookup[layer_name_2_3]["end"] = config["extended_start"].copy()
+
+            # Update control points
+            if strand_lookup[layer_name_2_3].get("control_points") and len(strand_lookup[layer_name_2_3]["control_points"]) > 1:
+                strand_lookup[layer_name_2_3]["control_points"][1] = config["extended_start"].copy()
+            strand_lookup[layer_name_2_3]["control_point_center"] = {
+                "x": (strand_lookup[layer_name_2_3]["start"]["x"] + config["extended_start"]["x"]) / 2,
+                "y": (strand_lookup[layer_name_2_3]["start"]["y"] + config["extended_start"]["y"]) / 2,
+            }
+
+    print(f"\nApplied parallel alignment to {len(configurations)} strands")
+
+    return list(strand_lookup.values())
+
+
+def print_alignment_debug(alignment_result):
+    """Print detailed debug information about the alignment result."""
+    if not alignment_result["success"]:
+        print(f"Alignment failed: {alignment_result['message']}")
+        return
+
+    print(f"\n{'='*60}")
+    print(f"PARALLEL ALIGNMENT RESULT")
+    print(f"{'='*60}")
+    print(f"Angle: {alignment_result['angle_degrees']:.2f}° ({alignment_result['angle']:.4f} rad)")
+    print(f"Average gap: {alignment_result['average_gap']:.2f} px")
+    print(f"Gap variance: {alignment_result['gap_variance']:.4f}")
+
+    # Print gap constraints
+    min_gap = alignment_result.get("min_gap", 46)
+    max_gap = alignment_result.get("max_gap", 69)
+    print(f"Gap constraints: {min_gap:.1f} to {max_gap:.1f} px (strand_width to strand_width*1.5)")
+
+    # Print gaps between strands
+    gaps = alignment_result.get("gaps", [])
+    signed_gaps = alignment_result.get("signed_gaps", [])
+    if gaps:
+        print(f"\nGaps between consecutive strands:")
+        for i, (gap, sg) in enumerate(zip(gaps, signed_gaps)):
+            in_range = "OK" if min_gap <= gap <= max_gap else "OUT OF RANGE"
+            print(f"  Gap {i+1}-{i+2}: {gap:.2f} px (signed: {sg:+.2f}) [{in_range}]")
+
+    print(f"\nStrand configurations:")
+
+    for i, config in enumerate(alignment_result["configurations"]):
+        h = config["strand"]
+        print(f"\n  {i+1}. {h['strand_4_5']['layer_name']} (set {h['set_number']})")
+        print(f"     Original start: ({h['original_start']['x']:.1f}, {h['original_start']['y']:.1f})")
+        print(f"     Extended start: ({config['extended_start']['x']:.1f}, {config['extended_start']['y']:.1f})")
+        print(f"     End:            ({config['end']['x']:.1f}, {config['end']['y']:.1f})")
+        print(f"     Extension: {config['extension']:.1f} px")
+        print(f"     Length: {config['length']:.1f} px")
+
+    print(f"\n{'='*60}")
 
 

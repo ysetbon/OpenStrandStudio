@@ -50,6 +50,10 @@ class EmojiRenderer:
         # Cache for rendered emoji glyph images (used to avoid Windows ClearType fringing
         # on transparent backgrounds and to speed up repeated renders).
         self._emoji_glyph_cache = {}
+        # Store original endpoint order before parallel alignment
+        # Maps strand_name -> emoji label (preserves assignment across position changes)
+        self._strand_emoji_map = None
+        self._strand_emoji_map_key = None
 
     def clear_cache(self):
         """
@@ -60,11 +64,21 @@ class EmojiRenderer:
         """
         self._emoji_base_labels = None
         self._emoji_base_key = None
+        self._strand_emoji_map = None
+        self._strand_emoji_map_key = None
+        self.clear_render_cache()
+
+    def clear_render_cache(self):
+        """Clear only render-related caches (keeps emoji assignments stable)."""
         self._emoji_visual_extents_cache = {}
         self._emoji_glyph_cache = {}
 
     def _font_cache_key(self, font: QFont):
         # QFont is not reliably hashable across PyQt versions; use a stable tuple key.
+        try:
+            style_strategy = int(font.styleStrategy())
+        except Exception:
+            style_strategy = 0
         return (
             font.family(),
             float(font.pointSizeF()),
@@ -73,6 +87,7 @@ class EmojiRenderer:
             bool(font.italic()),
             int(font.weight()),
             font.styleName(),
+            style_strategy,
         )
 
     def _compute_alpha_bounds(self, alpha8: QImage, threshold: int = 8):
@@ -231,7 +246,10 @@ class EmojiRenderer:
         # Clean fully/near-transparent pixels to transparent black to avoid colored
         # fringing when compositing (common with emoji edges on Windows).
         # This is cheap (glyph images are small) and cached.
-        alpha_cutoff = 10  # 0..255
+        # Using a higher cutoff (50) to aggressively remove semi-transparent fringe
+        # pixels that can appear as colored strokes around emojis due to LCD/ClearType
+        # subpixel antialiasing.
+        alpha_cutoff = 50  # 0..255
         for y in range(img.height()):
             for x in range(img.width()):
                 a = QColor.fromRgba(img.pixel(x, y)).alpha()
@@ -812,7 +830,9 @@ class EmojiRenderer:
             return out
 
         # Generate or retrieve cached base labels
-        base_key = (m, n, tuple(ordered_keys))
+        # Use a position-independent key (m, n, total_count) so that emoji assignments
+        # stay stable when strand positions change (e.g., after parallel alignment)
+        base_key = (m, n, len(ordered_keys))
         if (self._emoji_base_key != base_key or
             not self._emoji_base_labels or
             len(self._emoji_base_labels) != len(ordered_keys)):

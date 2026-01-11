@@ -45,6 +45,13 @@ from mxn_lh_strech import generate_json as generate_lh_strech_json
 from mxn_rh_stretch import generate_json as generate_rh_stretch_json
 from mxn_lh_continuation import generate_json as generate_lh_continuation_json
 from mxn_rh_continuation import generate_json as generate_rh_continuation_json
+from mxn_lh_continuation import (
+    align_horizontal_strands_parallel,
+    align_vertical_strands_parallel,
+    apply_parallel_alignment,
+    print_alignment_debug,
+    get_parallel_alignment_preview
+)
 
 # Import emoji renderer (handles all emoji/label drawing logic)
 from mxn_emoji_renderer import EmojiRenderer
@@ -406,12 +413,17 @@ class MxNGeneratorDialog(QDialog):
         self.emoji_cw_radio.toggled.connect(self._on_emoji_settings_changed)
         self.emoji_ccw_radio.toggled.connect(self._on_emoji_settings_changed)
 
+        self.refresh_emojis_btn = QPushButton("Refresh emoji painting")
+        self.refresh_emojis_btn.setToolTip("Clear emoji render cache to remove colored halos/strokes")
+        self.refresh_emojis_btn.clicked.connect(self._on_refresh_emojis_clicked)
+
         layout.addWidget(self.show_emojis_checkbox, 0, 0, 1, 3)
         layout.addWidget(self.show_strand_names_checkbox, 1, 0, 1, 3)
         layout.addWidget(k_label, 2, 0)
         layout.addWidget(self.emoji_k_spinner, 2, 1)
         layout.addWidget(self.emoji_cw_radio, 2, 2)
         layout.addWidget(self.emoji_ccw_radio, 3, 2)
+        layout.addWidget(self.refresh_emojis_btn, 4, 0, 1, 3)
 
         parent_layout.addWidget(group)
 
@@ -523,6 +535,115 @@ class MxNGeneratorDialog(QDialog):
         self.continuation_btn.clicked.connect(self.generate_continuation)
         parent_layout.addWidget(self.continuation_btn)
 
+        # Align Parallel button (only enabled after continuation is generated)
+        self.align_parallel_btn = QPushButton("Align Parallel (_4/_5)")
+        self.align_parallel_btn.setMinimumHeight(35)
+        self.align_parallel_btn.setEnabled(False)  # Disabled until continuation generated
+        self.align_parallel_btn.setToolTip("Make horizontal _4/_5 strands parallel with equal spacing")
+        self.align_parallel_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #00838f;
+                color: white;
+                font-weight: bold;
+                border: none;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #0097a7;
+            }
+            QPushButton:pressed {
+                background-color: #006064;
+            }
+            QPushButton:disabled {
+                background-color: #555;
+                color: #888;
+            }
+        """)
+        self.align_parallel_btn.clicked.connect(self.align_parallel_strands)
+        parent_layout.addWidget(self.align_parallel_btn)
+
+        # Angle Range Preview and Controls
+        angle_group = QGroupBox("Angle Range Settings")
+        angle_group.setStyleSheet("QGroupBox { font-weight: bold; color: #aaa; }")
+        angle_layout = QVBoxLayout(angle_group)
+        angle_layout.setSpacing(5)
+
+        # Preview button
+        self.preview_angles_btn = QPushButton("Preview Angle Ranges")
+        self.preview_angles_btn.setMinimumHeight(30)
+        self.preview_angles_btn.setEnabled(False)
+        self.preview_angles_btn.setToolTip("Show dotted lines for angle search ranges")
+        self.preview_angles_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #5c5c5c;
+                color: white;
+                border: none;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #6c6c6c;
+            }
+            QPushButton:disabled {
+                background-color: #444;
+                color: #888;
+            }
+        """)
+        self.preview_angles_btn.clicked.connect(self.preview_angle_ranges)
+        angle_layout.addWidget(self.preview_angles_btn)
+
+        # Horizontal angle range
+        h_angle_layout = QHBoxLayout()
+        h_angle_layout.addWidget(QLabel("H:"))
+        self.h_angle_min_spin = QSpinBox()
+        self.h_angle_min_spin.setRange(-180, 180)
+        self.h_angle_min_spin.setValue(0)
+        self.h_angle_min_spin.setSuffix("°")
+        self.h_angle_min_spin.setToolTip("Horizontal min angle")
+        h_angle_layout.addWidget(self.h_angle_min_spin)
+        h_angle_layout.addWidget(QLabel("to"))
+        self.h_angle_max_spin = QSpinBox()
+        self.h_angle_max_spin.setRange(-180, 180)
+        self.h_angle_max_spin.setValue(40)
+        self.h_angle_max_spin.setSuffix("°")
+        self.h_angle_max_spin.setToolTip("Horizontal max angle")
+        h_angle_layout.addWidget(self.h_angle_max_spin)
+        angle_layout.addLayout(h_angle_layout)
+
+        # Vertical angle range
+        v_angle_layout = QHBoxLayout()
+        v_angle_layout.addWidget(QLabel("V:"))
+        self.v_angle_min_spin = QSpinBox()
+        self.v_angle_min_spin.setRange(-180, 180)
+        self.v_angle_min_spin.setValue(-90)
+        self.v_angle_min_spin.setSuffix("°")
+        self.v_angle_min_spin.setToolTip("Vertical min angle")
+        v_angle_layout.addWidget(self.v_angle_min_spin)
+        v_angle_layout.addWidget(QLabel("to"))
+        self.v_angle_max_spin = QSpinBox()
+        self.v_angle_max_spin.setRange(-180, 180)
+        self.v_angle_max_spin.setValue(-50)
+        self.v_angle_max_spin.setSuffix("°")
+        self.v_angle_max_spin.setToolTip("Vertical max angle")
+        v_angle_layout.addWidget(self.v_angle_max_spin)
+        angle_layout.addLayout(v_angle_layout)
+
+        # Use custom angles checkbox
+        self.use_custom_angles_cb = QCheckBox("Use custom angle ranges")
+        self.use_custom_angles_cb.setToolTip("If checked, use the angles above instead of auto-detected ±20°")
+        angle_layout.addWidget(self.use_custom_angles_cb)
+
+        # Connect spinboxes to update preview when values change
+        self.h_angle_min_spin.valueChanged.connect(self._on_angle_spin_changed)
+        self.h_angle_max_spin.valueChanged.connect(self._on_angle_spin_changed)
+        self.v_angle_min_spin.valueChanged.connect(self._on_angle_spin_changed)
+        self.v_angle_max_spin.valueChanged.connect(self._on_angle_spin_changed)
+
+        parent_layout.addWidget(angle_group)
+
+        # Store preview state
+        self._angle_preview_active = False
+        self._angle_preview_data = None
+
         # Status label
         self.status_label = QLabel("")
         self.status_label.setWordWrap(True)
@@ -544,6 +665,9 @@ class MxNGeneratorDialog(QDialog):
         self.export_json_btn.setEnabled(False)
         self.export_image_btn.setEnabled(False)
         self.continuation_btn.setEnabled(False)
+        self.align_parallel_btn.setEnabled(False)
+        if hasattr(self, 'preview_angles_btn'):
+            self.preview_angles_btn.setEnabled(False)
 
     def _on_emoji_settings_changed(self):
         """Re-render preview when emoji options change (no geometry changes)."""
@@ -551,6 +675,15 @@ class MxNGeneratorDialog(QDialog):
         self._rerender_preview_if_possible()
         # Update continuation button state (depends on emoji checkbox)
         self._update_continuation_button_state()
+
+    def _on_refresh_emojis_clicked(self):
+        """Force-refresh emoji rendering (clears cached emoji glyph images)."""
+        if getattr(self, "_emoji_renderer", None) is not None:
+            if hasattr(self._emoji_renderer, "clear_render_cache"):
+                self._emoji_renderer.clear_render_cache()
+            else:
+                self._emoji_renderer.clear_cache()
+        self._rerender_preview_if_possible()
 
     def _on_variant_changed(self):
         """Handle LH/RH variant change - update continuation button state."""
@@ -837,6 +970,42 @@ class MxNGeneratorDialog(QDialog):
         else:
             self.continuation_btn.setToolTip("Generate continuation strands based on current emoji pairing")
 
+        # Update align parallel button state
+        self._update_align_parallel_button_state()
+
+    def _update_align_parallel_button_state(self):
+        """Enable align parallel button only when continuation has been generated (_4/_5 strands exist)."""
+        # Guard: button may not exist during initialization
+        if not hasattr(self, 'align_parallel_btn'):
+            return
+
+        # Check if we have _4/_5 strands in current data
+        has_continuation = False
+        if self.current_json_data:
+            try:
+                data = json.loads(self.current_json_data)
+                if data.get('type') == 'OpenStrandStudioHistory':
+                    strands = data.get('states', [{}])[0].get('data', {}).get('strands', [])
+                else:
+                    strands = data.get('strands', [])
+
+                has_continuation = any(
+                    s.get('layer_name', '').endswith('_4') or s.get('layer_name', '').endswith('_5')
+                    for s in strands
+                )
+            except:
+                pass
+
+        self.align_parallel_btn.setEnabled(has_continuation)
+        if hasattr(self, 'preview_angles_btn'):
+            self.preview_angles_btn.setEnabled(has_continuation)
+
+        # Update tooltip
+        if not has_continuation:
+            self.align_parallel_btn.setToolTip("Generate continuation first (need _4/_5 strands)")
+        else:
+            self.align_parallel_btn.setToolTip("Make horizontal _4/_5 strands parallel with equal spacing")
+
     def generate_continuation(self):
         """Generate continuation pattern (_4, _5 strands) based on current emoji pairing."""
         m = self.m_spinner.value()
@@ -898,6 +1067,8 @@ class MxNGeneratorDialog(QDialog):
 
                 self.export_json_btn.setEnabled(True)
                 self.export_image_btn.setEnabled(True)
+                self.align_parallel_btn.setEnabled(True)  # Enable parallel alignment
+                self.preview_angles_btn.setEnabled(True)  # Enable angle preview
 
                 # Auto-save JSON to appropriate continuation folder
                 pattern_type = "lh" if is_lh else "rh"
@@ -924,6 +1095,787 @@ class MxNGeneratorDialog(QDialog):
             import traceback
             traceback.print_exc()
             self.status_label.setText(f"Error generating continuation: {str(e)}")
+
+    def _on_angle_spin_changed(self):
+        """Update the angle preview when spinbox values change."""
+        if self._angle_preview_active and self._angle_preview_data:
+            self._draw_angle_preview(self._angle_preview_data)
+
+    def preview_angle_ranges(self):
+        """Preview the angle ranges for parallel alignment with dotted lines."""
+        if not self.current_json_data:
+            self.status_label.setText("No pattern data available")
+            return
+
+        m = self.m_spinner.value()
+        n = self.n_spinner.value()
+
+        try:
+            # Parse current JSON data
+            data = json.loads(self.current_json_data)
+            if data.get('type') == 'OpenStrandStudioHistory':
+                strands = data.get('states', [{}])[0].get('data', {}).get('strands', [])
+            else:
+                strands = data.get('strands', [])
+
+            if not strands:
+                self.status_label.setText("No strands found")
+                return
+
+            # Get preview data
+            preview_data = get_parallel_alignment_preview(strands, n, m)
+            self._angle_preview_data = preview_data
+
+            # Update spin boxes with detected angles
+            if preview_data["horizontal"]:
+                h_data = preview_data["horizontal"]
+                self.h_angle_min_spin.setValue(int(h_data["angle_min"]))
+                self.h_angle_max_spin.setValue(int(h_data["angle_max"]))
+                print(f"Horizontal order: {h_data.get('strand_order', [])}")
+                print(f"  First: {h_data['first_name']}, Last: {h_data['last_name']}")
+                print(f"  Initial angle: {h_data['initial_angle']:.1f}°")
+                print(f"  Range: {h_data['angle_min']:.1f}° to {h_data['angle_max']:.1f}°")
+
+            if preview_data["vertical"]:
+                v_data = preview_data["vertical"]
+                self.v_angle_min_spin.setValue(int(v_data["angle_min"]))
+                self.v_angle_max_spin.setValue(int(v_data["angle_max"]))
+                print(f"Vertical order: {v_data.get('strand_order', [])}")
+                print(f"  First: {v_data['first_name']}, Last: {v_data['last_name']}")
+                print(f"  Initial angle: {v_data['initial_angle']:.1f}°")
+                print(f"  Range: {v_data['angle_min']:.1f}° to {v_data['angle_max']:.1f}°")
+
+            # Draw preview with dotted lines
+            self._draw_angle_preview(preview_data)
+
+            self._angle_preview_active = True
+            self.status_label.setText("Angle ranges shown. Edit values and click Align Parallel.")
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self.status_label.setText(f"Error previewing angles: {str(e)}")
+
+    def _draw_angle_preview(self, preview_data):
+        """Draw dotted lines on the preview showing angle ranges."""
+        if not self.current_image:
+            return
+
+        import math
+
+        # Get scale factor and bounds for coordinate transformation
+        scale_factor = self.scale_combo.currentData()
+        bounds = self._prepared_bounds or QRectF(0, 0, 1200, 900)
+        offset_x = bounds.x()
+        offset_y = bounds.y()
+
+        def transform_coord(x, y):
+            """Transform strand coordinates to image coordinates."""
+            img_x = (x - offset_x) * scale_factor
+            img_y = (y - offset_y) * scale_factor
+            return img_x, img_y
+
+        # Create a copy of the current image to draw on
+        preview_image = self.current_image.copy()
+        painter = QPainter(preview_image)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        line_length = 150 * scale_factor  # Scale line length too
+
+        # Draw horizontal angle preview (cyan/teal color)
+        if preview_data["horizontal"]:
+            h_data = preview_data["horizontal"]
+
+            # First strand - draw from start position
+            start_x, start_y = transform_coord(h_data["first_start"]["x"], h_data["first_start"]["y"])
+
+            # Draw min angle line (dotted)
+            pen = QPen(QColor(0, 255, 255), 4, Qt.DashLine)
+            painter.setPen(pen)
+            angle_min_rad = math.radians(self.h_angle_min_spin.value())
+            end_x = start_x + line_length * math.cos(angle_min_rad)
+            end_y = start_y + line_length * math.sin(angle_min_rad)
+            painter.drawLine(int(start_x), int(start_y), int(end_x), int(end_y))
+
+            # Draw max angle line (dotted)
+            angle_max_rad = math.radians(self.h_angle_max_spin.value())
+            end_x = start_x + line_length * math.cos(angle_max_rad)
+            end_y = start_y + line_length * math.sin(angle_max_rad)
+            painter.drawLine(int(start_x), int(start_y), int(end_x), int(end_y))
+
+            # Draw arc between angles
+            arc_radius = 60 * scale_factor
+            pen.setWidth(3)
+            painter.setPen(pen)
+            arc_rect = QRectF(start_x - arc_radius, start_y - arc_radius, arc_radius * 2, arc_radius * 2)
+            start_angle = int(-self.h_angle_min_spin.value() * 16)  # Qt uses 1/16 degree
+            span_angle = int(-(self.h_angle_max_spin.value() - self.h_angle_min_spin.value()) * 16)
+            painter.drawArc(arc_rect, start_angle, span_angle)
+
+            # Label with background
+            label_text = f"H: {self.h_angle_min_spin.value()}° to {self.h_angle_max_spin.value()}°"
+            font = painter.font()
+            font.setPointSize(int(12 * scale_factor))
+            font.setBold(True)
+            painter.setFont(font)
+            # Draw background rect
+            painter.fillRect(int(start_x + 10), int(start_y - 25 * scale_factor),
+                           int(len(label_text) * 8 * scale_factor), int(20 * scale_factor),
+                           QColor(0, 0, 0, 180))
+            painter.setPen(QPen(QColor(0, 255, 255), 1))
+            painter.drawText(int(start_x + 15), int(start_y - 10 * scale_factor), label_text)
+
+            # Also draw for last strand (lighter color)
+            last_x, last_y = transform_coord(h_data["last_start"]["x"], h_data["last_start"]["y"])
+            pen = QPen(QColor(0, 200, 200), 3, Qt.DotLine)
+            painter.setPen(pen)
+            # Last strand goes opposite direction
+            angle_min_rad = math.radians(self.h_angle_min_spin.value() + 180)
+            end_x = last_x + line_length * math.cos(angle_min_rad)
+            end_y = last_y + line_length * math.sin(angle_min_rad)
+            painter.drawLine(int(last_x), int(last_y), int(end_x), int(end_y))
+            angle_max_rad = math.radians(self.h_angle_max_spin.value() + 180)
+            end_x = last_x + line_length * math.cos(angle_max_rad)
+            end_y = last_y + line_length * math.sin(angle_max_rad)
+            painter.drawLine(int(last_x), int(last_y), int(end_x), int(end_y))
+
+            # Draw a circle at first/last start points
+            painter.setPen(QPen(QColor(0, 255, 255), 3))
+            painter.setBrush(QBrush(QColor(0, 255, 255, 100)))
+            painter.drawEllipse(int(start_x - 8), int(start_y - 8), 16, 16)
+            painter.drawEllipse(int(last_x - 8), int(last_y - 8), 16, 16)
+
+        # Draw vertical angle preview (orange color)
+        if preview_data["vertical"]:
+            v_data = preview_data["vertical"]
+
+            # First strand
+            start_x, start_y = transform_coord(v_data["first_start"]["x"], v_data["first_start"]["y"])
+
+            # Draw min angle line
+            pen = QPen(QColor(255, 165, 0), 4, Qt.DashLine)
+            painter.setPen(pen)
+            angle_min_rad = math.radians(self.v_angle_min_spin.value())
+            end_x = start_x + line_length * math.cos(angle_min_rad)
+            end_y = start_y + line_length * math.sin(angle_min_rad)
+            painter.drawLine(int(start_x), int(start_y), int(end_x), int(end_y))
+
+            # Draw max angle line
+            angle_max_rad = math.radians(self.v_angle_max_spin.value())
+            end_x = start_x + line_length * math.cos(angle_max_rad)
+            end_y = start_y + line_length * math.sin(angle_max_rad)
+            painter.drawLine(int(start_x), int(start_y), int(end_x), int(end_y))
+
+            # Arc
+            arc_radius = 60 * scale_factor
+            pen.setWidth(3)
+            painter.setPen(pen)
+            arc_rect = QRectF(start_x - arc_radius, start_y - arc_radius, arc_radius * 2, arc_radius * 2)
+            start_angle = int(-self.v_angle_min_spin.value() * 16)
+            span_angle = int(-(self.v_angle_max_spin.value() - self.v_angle_min_spin.value()) * 16)
+            painter.drawArc(arc_rect, start_angle, span_angle)
+
+            # Label with background
+            label_text = f"V: {self.v_angle_min_spin.value()}° to {self.v_angle_max_spin.value()}°"
+            painter.fillRect(int(start_x + 10), int(start_y - 25 * scale_factor),
+                           int(len(label_text) * 8 * scale_factor), int(20 * scale_factor),
+                           QColor(0, 0, 0, 180))
+            painter.setPen(QPen(QColor(255, 165, 0), 1))
+            painter.drawText(int(start_x + 15), int(start_y - 10 * scale_factor), label_text)
+
+            # Last strand
+            last_x, last_y = transform_coord(v_data["last_start"]["x"], v_data["last_start"]["y"])
+            pen = QPen(QColor(255, 120, 0), 3, Qt.DotLine)
+            painter.setPen(pen)
+            angle_min_rad = math.radians(self.v_angle_min_spin.value() + 180)
+            end_x = last_x + line_length * math.cos(angle_min_rad)
+            end_y = last_y + line_length * math.sin(angle_min_rad)
+            painter.drawLine(int(last_x), int(last_y), int(end_x), int(end_y))
+            angle_max_rad = math.radians(self.v_angle_max_spin.value() + 180)
+            end_x = last_x + line_length * math.cos(angle_max_rad)
+            end_y = last_y + line_length * math.sin(angle_max_rad)
+            painter.drawLine(int(last_x), int(last_y), int(end_x), int(end_y))
+
+            # Draw circles at first/last start points
+            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setBrush(QBrush(QColor(255, 165, 0, 100)))
+            painter.drawEllipse(int(start_x - 8), int(start_y - 8), 16, 16)
+            painter.drawEllipse(int(last_x - 8), int(last_y - 8), 16, 16)
+
+        painter.end()
+
+        # Update preview widget
+        self.preview_widget.set_qimage(preview_image)
+
+    def align_parallel_strands(self):
+        """Align horizontal AND vertical _4/_5 strands to be parallel with equal spacing."""
+        if not self.current_json_data:
+            self.status_label.setText("No pattern data available")
+            return
+
+        m = self.m_spinner.value()
+        n = self.n_spinner.value()
+        scale_factor = self.scale_combo.currentData()
+
+        # Track results (initialized here so save always has access)
+        h_success = False
+        v_success = False
+        h_angle = None
+        v_angle = None
+        h_gap = None
+        v_gap = None
+
+        self.status_label.setText("Searching for parallel alignment...")
+        QApplication.processEvents()
+
+        try:
+            # Parse current JSON data
+            data = json.loads(self.current_json_data)
+
+            # Get strands from the data
+            if data.get('type') == 'OpenStrandStudioHistory':
+                strands = data.get('states', [{}])[0].get('data', {}).get('strands', [])
+            else:
+                strands = data.get('strands', [])
+
+            if not strands:
+                self.status_label.setText("No strands found in current data")
+                return
+
+            # Check if we have _4/_5 strands (continuation must be generated first)
+            has_continuation = any(
+                s.get('layer_name', '').endswith('_4') or s.get('layer_name', '').endswith('_5')
+                for s in strands
+            )
+            if not has_continuation:
+                self.status_label.setText("Generate continuation first (need _4/_5 strands)")
+                return
+
+            # Check if using custom angles
+            use_custom = self.use_custom_angles_cb.isChecked()
+            h_custom_min = self.h_angle_min_spin.value() if use_custom else None
+            h_custom_max = self.h_angle_max_spin.value() if use_custom else None
+            v_custom_min = self.v_angle_min_spin.value() if use_custom else None
+            v_custom_max = self.v_angle_max_spin.value() if use_custom else None
+
+            if use_custom:
+                print(f"\n*** Using CUSTOM angle ranges (checkbox IS checked) ***")
+                print(f"  Horizontal: {h_custom_min}° to {h_custom_max}°")
+                print(f"  Vertical: {v_custom_min}° to {v_custom_max}°")
+            else:
+                print(f"\n*** Using AUTO angle ranges (checkbox NOT checked) ***")
+                print(f"  Will use initial angle ±10° for each extension step")
+
+            # ============================================================
+            # SETUP OUTPUT FOLDERS FOR ALL ATTEMPTS
+            # ============================================================
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            is_lh = self.lh_radio.isChecked()
+            pattern_type = "lh" if is_lh else "rh"
+            k = self.emoji_k_spinner.value() if hasattr(self, 'emoji_k_spinner') else 0
+            direction = "cw" if (hasattr(self, 'emoji_cw_radio') and self.emoji_cw_radio.isChecked()) else "ccw"
+            diagram_name = f"{m}x{n}"
+
+            base_output_dir = os.path.join(
+                os.path.dirname(os.path.dirname(script_dir)),
+                "mxn", "mxn_output", diagram_name, "parallel"
+            )
+            solution_dir = os.path.join(base_output_dir, "solution")
+            invalid_dir = os.path.join(base_output_dir, "invalid")
+            os.makedirs(solution_dir, exist_ok=True)
+            os.makedirs(invalid_dir, exist_ok=True)
+
+            attempt_count = [0]  # Use list to allow modification in nested function
+
+            def generate_analysis_text(angle_deg, extension, result, direction_type, attempt_num):
+                """Generate detailed analysis text for this configuration."""
+                import math
+
+                lines = []
+                lines.append("=" * 80)
+                lines.append("                    PARALLEL ALIGNMENT ANALYSIS")
+                lines.append("=" * 80)
+
+                is_valid = result.get("valid", False)
+                status_str = "VALID" if is_valid else "INVALID"
+                lines.append(f"Pattern: {pattern_type.upper()} {m}x{n} | K: {k} | Direction: {direction.upper()}")
+                lines.append(f"Attempt: #{attempt_num} | Angle: {angle_deg:.1f}° | Extension: {extension}px | Status: {status_str}")
+                lines.append("=" * 80)
+                lines.append("")
+
+                # Get configurations
+                configs = result.get("configurations")
+                if not configs and result.get("fallback"):
+                    configs = result["fallback"].get("configurations")
+
+                if not configs or len(configs) < 2:
+                    lines.append(f"No configurations available. Reason: {result.get('reason', 'Unknown')}")
+                    return "\n".join(lines)
+
+                # Get data from result or fallback
+                data_source = result if result.get("configurations") else result.get("fallback", result)
+                gaps = data_source.get("gaps", [])
+                signed_gaps = data_source.get("signed_gaps", [])
+                min_gap = data_source.get("min_gap", 46.0)
+                max_gap = data_source.get("max_gap", 69.0)
+                average_gap = data_source.get("average_gap", 0)
+
+                dir_label = "HORIZONTAL" if direction_type == "horizontal" else "VERTICAL"
+                lines.append("-" * 80)
+                lines.append(f"                           {dir_label} STRANDS")
+                lines.append("-" * 80)
+                lines.append("")
+
+                # Extract strand names in order
+                strand_names = []
+                for cfg in configs:
+                    strand_info = cfg.get("strand", {})
+                    strand_4_5 = strand_info.get("strand_4_5", {})
+                    name = strand_4_5.get("layer_name", "unknown")
+                    strand_names.append(name)
+
+                lines.append(f"Strand Order: {strand_names}")
+                lines.append("")
+
+                # Reference line info (first strand)
+                first_cfg = configs[0]
+                first_start = first_cfg.get("extended_start", {})
+                first_end = first_cfg.get("end", {})
+
+                dx = first_end.get("x", 0) - first_start.get("x", 0)
+                dy = first_end.get("y", 0) - first_start.get("y", 0)
+                line_len = math.sqrt(dx*dx + dy*dy)
+
+                if line_len > 0.001:
+                    line_ux, line_uy = dx / line_len, dy / line_len
+                    # Perpendicular unit vector - matches algorithm's cross product sign convention
+                    perp_ux, perp_uy = line_uy, -line_ux
+                else:
+                    line_ux, line_uy = 1.0, 0.0
+                    perp_ux, perp_uy = 0.0, -1.0
+
+                line_angle = math.degrees(math.atan2(dy, dx))
+
+                lines.append("+" + "-" * 78 + "+")
+                lines.append(f"|  REFERENCE LINE (First Strand: {strand_names[0]})" + " " * (78 - 35 - len(strand_names[0])) + "|")
+                lines.append("+" + "-" * 78 + "+")
+                lines.append(f"|  Line Vector:      ({line_ux:+.3f}, {line_uy:+.3f})   |  Angle: {line_angle:.1f}°" + " " * 20 + "|")
+                lines.append(f"|  Perpendicular:    ({perp_ux:+.3f}, {perp_uy:+.3f})   |  (positive direction for gaps)" + " " * 8 + "|")
+                lines.append("+" + "-" * 78 + "+")
+                lines.append("")
+
+                # First to last reference
+                if len(configs) >= 2:
+                    last_cfg = configs[-1]
+                    last_start = last_cfg.get("extended_start", {})
+
+                    # Calculate signed distance from first to last
+                    # Using the perpendicular: distance = (point - line_start) dot perpendicular
+                    fx, fy = first_start.get("x", 0), first_start.get("y", 0)
+                    lx, ly = last_start.get("x", 0), last_start.get("y", 0)
+                    first_to_last_dist = (lx - fx) * perp_ux + (ly - fy) * perp_uy
+                    expected_sign = "+" if first_to_last_dist >= 0 else "-"
+
+                    lines.append("+" + "-" * 78 + "+")
+                    lines.append("|  REFERENCE DIRECTION (First -> Last)" + " " * 40 + "|")
+                    lines.append("+" + "-" * 78 + "+")
+                    lines.append(f"|  {strand_names[0]} -> {strand_names[-1]}" + " " * (78 - 6 - len(strand_names[0]) - len(strand_names[-1])) + "|")
+                    lines.append(f"|  Signed Distance: {first_to_last_dist:+.1f} px" + " " * 50 + "|")
+                    ref_vec = f"({perp_ux:+.3f}, {perp_uy:+.3f})" if first_to_last_dist >= 0 else f"({-perp_ux:+.3f}, {-perp_uy:+.3f})"
+                    lines.append(f"|  Direction Vector: {ref_vec}  <- perpendicular unit vector" + " " * 18 + "|")
+                    lines.append(f"|  Expected Sign: {expected_sign} (all gaps must be {expected_sign} to maintain order)" + " " * 15 + "|")
+                    lines.append("+" + "-" * 78 + "+")
+                    lines.append("")
+
+                # Gap table
+                lines.append("+" + "-" * 12 + "+" + "-" * 12 + "+" + "-" * 21 + "+" + "-" * 8 + "+" + "-" * 22 + "+")
+                lines.append("|   PAIR     |  DISTANCE  |  DIRECTION VECTOR   |  SIGN  |  STATUS              |")
+                lines.append("+" + "-" * 12 + "+" + "-" * 12 + "+" + "-" * 21 + "+" + "-" * 8 + "+" + "-" * 22 + "+")
+
+                crossing_detected = []
+                gap_details = []  # Store details for each gap
+
+                for i in range(len(configs) - 1):
+                    cfg1 = configs[i]
+                    cfg2 = configs[i + 1]
+
+                    name1 = strand_names[i]
+                    name2 = strand_names[i + 1]
+                    pair_str = f"{name1}->{name2}"
+
+                    # Get the LINE (from cfg1) and POINT (from cfg2)
+                    line_start = cfg1.get("extended_start", {})
+                    line_end = cfg1.get("end", {})
+                    point = cfg2.get("extended_start", {})
+
+                    lsx, lsy = line_start.get("x", 0), line_start.get("y", 0)
+                    lex, ley = line_end.get("x", 0), line_end.get("y", 0)
+                    px, py = point.get("x", 0), point.get("y", 0)
+
+                    # Calculate this pair's line direction and perpendicular
+                    pair_dx = lex - lsx
+                    pair_dy = ley - lsy
+                    pair_len = math.sqrt(pair_dx*pair_dx + pair_dy*pair_dy)
+
+                    if pair_len > 0.001:
+                        pair_line_ux, pair_line_uy = pair_dx / pair_len, pair_dy / pair_len
+                        pair_perp_ux, pair_perp_uy = pair_line_uy, -pair_line_ux
+                    else:
+                        pair_line_ux, pair_line_uy = 1.0, 0.0
+                        pair_perp_ux, pair_perp_uy = 0.0, -1.0
+
+                    # Get gap info
+                    if i < len(signed_gaps):
+                        sg = signed_gaps[i]
+                        abs_gap = abs(sg)
+
+                        # Note: signed_gaps already has sign flipped for odd indices in the algorithm
+                        sign = "+" if sg >= 0 else "-"
+
+                        # Direction vector - use first strand's perpendicular for consistency
+                        # (since algorithm flips sign for odd gaps to normalize to first strand's direction)
+                        if sg >= 0:
+                            dir_vec = f"({perp_ux:+.3f}, {perp_uy:+.3f})"
+                        else:
+                            dir_vec = f"({-perp_ux:+.3f}, {-perp_uy:+.3f})"
+
+                        # Check if matches expected
+                        matches = (sign == expected_sign)
+
+                        # Determine status
+                        if not matches:
+                            status = "X CROSSED!"
+                            crossing_detected.append((name1, name2, sign, expected_sign))
+                        elif abs_gap < min_gap:
+                            status = f"X TOO SMALL (<{min_gap:.0f})"
+                        elif abs_gap > max_gap:
+                            status = f"X TOO LARGE (>{max_gap:.0f})"
+                        else:
+                            status = "V VALID"
+
+                        lines.append(f"| {pair_str:10} | {abs_gap:8.1f}px | {dir_vec:19} |   {sign}    | {status:20} |")
+
+                        # Store details for later
+                        gap_details.append({
+                            "pair": pair_str,
+                            "line_start": (lsx, lsy),
+                            "line_end": (lex, ley),
+                            "point": (px, py),
+                            "signed_dist": sg,
+                            "line_vec": (pair_line_ux, pair_line_uy),
+                            "perp_vec": (pair_perp_ux, pair_perp_uy),
+                            "sign_flipped": (i % 2 == 1),  # Odd gaps have sign flipped
+                        })
+                    else:
+                        lines.append(f"| {pair_str:10} |     N/A    |         N/A         |  N/A   | N/A                  |")
+
+                lines.append("+" + "-" * 12 + "+" + "-" * 12 + "+" + "-" * 21 + "+" + "-" * 8 + "+" + "-" * 22 + "+")
+
+                # Add detailed calculation info
+                if gap_details:
+                    lines.append("")
+                    lines.append("DETAILED GAP CALCULATIONS:")
+                    lines.append("-" * 80)
+                    for idx, detail in enumerate(gap_details):
+                        line_strand = strand_names[idx]
+                        point_strand = strand_names[idx + 1]
+                        lines.append(f"  {detail['pair']}:")
+                        lines.append(f"    LINE from {line_strand}:")
+                        lines.append(f"      Start: ({detail['line_start'][0]:.1f}, {detail['line_start'][1]:.1f})")
+                        lines.append(f"      End:   ({detail['line_end'][0]:.1f}, {detail['line_end'][1]:.1f})")
+                        lines.append(f"    POINT from {point_strand}:")
+                        lines.append(f"      Coords: ({detail['point'][0]:.1f}, {detail['point'][1]:.1f})")
+                        lines.append(f"    Line Vector:   ({detail['line_vec'][0]:+.3f}, {detail['line_vec'][1]:+.3f})")
+                        lines.append(f"    Perp Vector:   ({detail['perp_vec'][0]:+.3f}, {detail['perp_vec'][1]:+.3f})")
+                        sign_note = " (sign flipped for _5 line)" if detail.get('sign_flipped') else ""
+                        lines.append(f"    Signed Distance: {detail['signed_dist']:+.2f} px{sign_note}")
+                        lines.append("")
+                lines.append("")
+
+                # Crossing warning
+                if crossing_detected:
+                    for (n1, n2, actual, expected) in crossing_detected:
+                        lines.append(f"  WARNING: CROSSING DETECTED at {n1} -> {n2}:")
+                        exp_vec = f"({perp_ux:+.3f}, {perp_uy:+.3f})" if expected == "+" else f"({-perp_ux:+.3f}, {-perp_uy:+.3f})"
+                        act_vec = f"({perp_ux:+.3f}, {perp_uy:+.3f})" if actual == "+" else f"({-perp_ux:+.3f}, {-perp_uy:+.3f})"
+                        lines.append(f"      Expected vector: {exp_vec}")
+                        lines.append(f"      Actual vector:   {act_vec}  <- OPPOSITE DIRECTION!")
+                        lines.append(f"      This means {n2} is on the WRONG SIDE of {n1}'s line.")
+                    lines.append("")
+
+                # Summary
+                lines.append("Summary:")
+                lines.append(f"  * Valid Range: {min_gap:.1f} px - {max_gap:.1f} px")
+                if gaps:
+                    lines.append(f"  * Average Gap: {average_gap:.1f} px")
+                    lines.append(f"  * Min Gap: {min(gaps):.1f} px")
+                    lines.append(f"  * Max Gap: {max(gaps):.1f} px")
+
+                if crossing_detected:
+                    lines.append(f"  * Direction Check: X FAILED ({len(crossing_detected)} crossing(s) detected)")
+                else:
+                    lines.append("  * Direction Check: V ALL VECTORS MATCH REFERENCE")
+
+                # Gap check
+                gaps_in_range = all(min_gap <= g <= max_gap for g in gaps) if gaps else True
+                if gaps_in_range and not crossing_detected:
+                    lines.append("  * Gap Check: V PASSED")
+                elif not gaps_in_range:
+                    lines.append("  * Gap Check: X FAILED (gaps out of range)")
+
+                lines.append("")
+                lines.append("=" * 80)
+                lines.append("                              FINAL RESULT")
+                lines.append("=" * 80)
+
+                reason = result.get("reason", "")
+                if is_valid:
+                    lines.append(f"  {dir_label}: V PASSED (Angle: {angle_deg:.1f}deg, Avg Gap: {average_gap:.1f} px)")
+                    lines.append("")
+                    lines.append("  Overall: V VALID SOLUTION")
+                else:
+                    lines.append(f"  {dir_label}: X FAILED ({reason})")
+                    lines.append("")
+                    lines.append("  Overall: X INVALID")
+
+                lines.append("=" * 80)
+
+                return "\n".join(lines)
+
+            def save_attempt_callback(angle_deg, extension, result, direction_type):
+                """Save each attempted configuration as an image and analysis text."""
+                attempt_count[0] += 1
+
+                try:
+                    import copy
+                    import math
+
+                    # Determine if valid or invalid
+                    is_valid = result.get("valid", False)
+                    output_dir = solution_dir if is_valid else invalid_dir
+
+                    # Create filename (without extension)
+                    status = "valid" if is_valid else "invalid"
+                    base_filename = f"{pattern_type}_{m}x{n}_k{k}_{direction}_{direction_type}_ext{extension}_ang{angle_deg:.1f}_{status}"
+
+                    # Make a copy of strands
+                    strands_copy = copy.deepcopy(strands)
+
+                    # Get configurations - either from direct result or from fallback
+                    configs = result.get("configurations")
+                    if not configs and result.get("fallback"):
+                        configs = result["fallback"].get("configurations")
+
+                    # Apply configuration if available
+                    if configs:
+                        # Create a result-like dict with the configurations
+                        result_for_apply = {"success": True, "configurations": configs}
+                        strands_copy = apply_parallel_alignment(strands_copy, result_for_apply)
+
+                    # Update JSON data with this configuration
+                    data_copy = copy.deepcopy(data)
+                    if data_copy.get('type') == 'OpenStrandStudioHistory':
+                        for state in data_copy.get('states', []):
+                            state['data']['strands'] = strands_copy
+                    else:
+                        data_copy['strands'] = strands_copy
+
+                    json_copy = json.dumps(data_copy, indent=2)
+
+                    # Generate and save image
+                    img = self._generate_image_in_memory(json_copy, scale_factor)
+                    if img and not img.isNull():
+                        img_path = os.path.join(output_dir, base_filename + ".png")
+                        img.save(img_path)
+
+                        # Generate and save analysis text
+                        analysis_text = generate_analysis_text(angle_deg, extension, result, direction_type, attempt_count[0])
+                        txt_path = os.path.join(output_dir, base_filename + ".txt")
+                        with open(txt_path, 'w', encoding='utf-8') as f:
+                            f.write(analysis_text)
+
+                        if attempt_count[0] % 20 == 0:  # Log every 20th save
+                            print(f"  Saved {attempt_count[0]} images...")
+                except Exception as e:
+                    print(f"  Error saving attempt {attempt_count[0]}: {e}")
+
+            # ============================================================
+            # HORIZONTAL ALIGNMENT
+            # ============================================================
+            print("\n" + "="*60)
+            print("ALIGN HORIZONTAL STRANDS")
+            print("="*60)
+
+            h_result = align_horizontal_strands_parallel(
+                strands,
+                n,
+                angle_step_degrees=0.5,
+                max_extension=100.0,
+                custom_angle_min=h_custom_min,
+                custom_angle_max=h_custom_max,
+                on_config_callback=save_attempt_callback
+            )
+
+            print_alignment_debug(h_result)
+
+            if h_result["success"] or h_result.get("is_fallback"):
+                strands = apply_parallel_alignment(strands, h_result)
+                h_success = h_result["success"]  # Only True for real solutions, not fallback
+                h_angle = h_result.get("angle_degrees", 0)
+                h_gap = h_result.get("average_gap", 0)
+                if h_result.get("is_fallback"):
+                    worst_gap = h_result.get("worst_gap", 0)
+                    print(f"Horizontal FALLBACK applied: angle={h_angle:.2f}°, avg_gap={h_gap:.1f}px, worst_gap={worst_gap:.1f}px")
+                else:
+                    print(f"Horizontal alignment applied: angle={h_angle:.2f}°, gap={h_gap:.1f}px")
+            else:
+                print(f"Horizontal alignment failed: {h_result.get('message', 'Unknown')}")
+
+            # ============================================================
+            # VERTICAL ALIGNMENT
+            # ============================================================
+            print("\n" + "="*60)
+            print("ALIGN VERTICAL STRANDS")
+            print("="*60)
+
+            v_result = align_vertical_strands_parallel(
+                strands,
+                n,
+                m,
+                angle_step_degrees=0.5,
+                max_extension=100.0,
+                custom_angle_min=v_custom_min,
+                custom_angle_max=v_custom_max,
+                on_config_callback=save_attempt_callback
+            )
+
+            print_alignment_debug(v_result)
+
+            if v_result["success"] or v_result.get("is_fallback"):
+                strands = apply_parallel_alignment(strands, v_result)
+                v_success = v_result["success"]  # Only True for real solutions, not fallback
+                v_angle = v_result.get("angle_degrees", 0)
+                v_gap = v_result.get("average_gap", 0)
+                if v_result.get("is_fallback"):
+                    worst_gap = v_result.get("worst_gap", 0)
+                    print(f"Vertical FALLBACK applied: angle={v_angle:.2f}°, avg_gap={v_gap:.1f}px, worst_gap={worst_gap:.1f}px")
+                else:
+                    print(f"Vertical alignment applied: angle={v_angle:.2f}°, gap={v_gap:.1f}px")
+            else:
+                print(f"Vertical alignment failed: {v_result.get('message', 'Unknown')}")
+
+            # ============================================================
+            # UPDATE AND RENDER
+            # ============================================================
+            # Update strands in all states (even partial success)
+            if data.get('type') == 'OpenStrandStudioHistory':
+                for state in data.get('states', []):
+                    state['data']['strands'] = strands
+            else:
+                data['strands'] = strands
+
+            # Update current JSON data
+            self.current_json_data = json.dumps(data, indent=2)
+
+            # Invalidate cache and re-render
+            # Use clear_render_cache() to keep emoji assignments stable (same emojis)
+            # while only clearing the glyph image cache
+            self._prepared_canvas_key = None
+            self._prepared_bounds = None
+            self._emoji_renderer.clear_render_cache()
+
+            self.status_label.setText("Re-rendering with parallel alignment...")
+            QApplication.processEvents()
+
+            # Generate new image (always, so we can save it)
+            image = self._generate_image_in_memory(self.current_json_data, scale_factor)
+
+            if image and not image.isNull():
+                self.current_image = image
+                self.preview_widget.set_qimage(image)
+
+                # Build status message
+                status_parts = []
+                if h_success:
+                    status_parts.append(f"H: {h_angle:.1f}°, gap={h_gap:.1f}px")
+                else:
+                    status_parts.append("H: failed")
+                if v_success:
+                    status_parts.append(f"V: {v_angle:.1f}°, gap={v_gap:.1f}px")
+                else:
+                    status_parts.append("V: failed")
+
+                self.status_label.setText(
+                    f"Parallel alignment: " + " | ".join(status_parts)
+                )
+            else:
+                self.status_label.setText("Failed to render image")
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"Error during alignment: {str(e)}")
+            # h_success, v_success, h_angle, v_angle are already initialized before try block
+
+        # ============================================================
+        # SAVE TO PARALLEL OUTPUT FOLDERS (always runs)
+        # ============================================================
+        print(f"\n>>> ENTERING SAVE BLOCK <<<")
+        print(f"h_success={h_success}, v_success={v_success}")
+        print(f"h_angle={h_angle}, v_angle={v_angle}")
+        try:
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            is_lh = self.lh_radio.isChecked()
+            pattern_type = "lh" if is_lh else "rh"
+            k = self.emoji_k_spinner.value() if hasattr(self, 'emoji_k_spinner') else 0
+            direction = "cw" if (hasattr(self, 'emoji_cw_radio') and self.emoji_cw_radio.isChecked()) else "ccw"
+
+            # Create diagram name based on pattern parameters
+            diagram_name = f"{m}x{n}"
+
+            # Base output directory: mxn_output/{diagram_name}/parallel/
+            base_output_dir = os.path.join(
+                os.path.dirname(os.path.dirname(script_dir)),
+                "mxn", "mxn_output", diagram_name, "parallel"
+            )
+
+            # Determine if solution is valid (both H and V succeeded)
+            is_valid_solution = h_success and v_success
+
+            if is_valid_solution:
+                output_subdir = os.path.join(base_output_dir, "solution")
+            else:
+                output_subdir = os.path.join(base_output_dir, "invalid")
+
+            os.makedirs(output_subdir, exist_ok=True)
+            print(f"\n=== SAVING OUTPUT ===")
+            print(f"Output dir: {output_subdir}")
+
+            # Create filename with pattern details
+            h_status = f"h{h_angle:.1f}" if h_success and h_angle else "h_fail"
+            v_status = f"v{v_angle:.1f}" if v_success and v_angle else "v_fail"
+            filename_base = f"mxn_{pattern_type}_{m}x{n}_k{k}_{direction}_{h_status}_{v_status}"
+
+            # Save image
+            if self.current_image and not self.current_image.isNull():
+                img_path = os.path.join(output_subdir, f"{filename_base}.png")
+                save_result = self.current_image.save(img_path)
+                result_type = "SOLUTION" if is_valid_solution else "INVALID"
+                print(f"{result_type} saved: {img_path}")
+                print(f"Save result: {save_result}")
+            else:
+                print(f"ERROR: No image to save! current_image={self.current_image}")
+
+            if not (h_success or v_success):
+                self.status_label.setText(
+                    f"Could not find parallel alignment (saved to invalid folder)"
+                )
+
+        except Exception as save_error:
+            import traceback
+            traceback.print_exc()
+            print(f"Error saving output: {str(save_error)}")
+            self.status_label.setText(f"Error saving: {str(save_error)}")
 
     def _calculate_strands_bounds(self, canvas):
         """Calculate the bounding box of all strands with padding."""

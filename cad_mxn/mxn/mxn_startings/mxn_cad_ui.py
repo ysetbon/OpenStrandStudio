@@ -133,6 +133,7 @@ class MxNGeneratorDialog(QDialog):
         # In-memory storage for generated content
         self.current_json_data = None  # JSON string in memory
         self.current_image = None  # QImage in memory
+        self._continuation_json_data = None  # Original continuation data (before any extension)
 
         # Emoji renderer (handles all endpoint emoji drawing logic)
         self._emoji_renderer = EmojiRenderer()
@@ -632,6 +633,39 @@ class MxNGeneratorDialog(QDialog):
         self.use_custom_angles_cb.setToolTip("If checked, use the angles above instead of auto-detected ±20°")
         angle_layout.addWidget(self.use_custom_angles_cb)
 
+        # Pair extension offset controls (direct extension, no alignment)
+        ext_offset_label = QLabel("First-Last Pair Extension:")
+        ext_offset_label.setStyleSheet("color: #aaa; font-size: 11px; margin-top: 5px;")
+        angle_layout.addWidget(ext_offset_label)
+
+        # Horizontal pair extension offset
+        h_ext_layout = QHBoxLayout()
+        h_ext_layout.addWidget(QLabel("H:"))
+        self.h_pair_ext_spin = QSpinBox()
+        self.h_pair_ext_spin.setRange(-200, 500)
+        self.h_pair_ext_spin.setValue(0)
+        self.h_pair_ext_spin.setSingleStep(4)  # 4px steps
+        self.h_pair_ext_spin.setSuffix("px")
+        self.h_pair_ext_spin.setToolTip("Extend horizontal _4/_5 starts (and _2/_3 ends). Negative = contract.")
+        h_ext_layout.addWidget(self.h_pair_ext_spin)
+        angle_layout.addLayout(h_ext_layout)
+
+        # Vertical pair extension offset
+        v_ext_layout = QHBoxLayout()
+        v_ext_layout.addWidget(QLabel("V:"))
+        self.v_pair_ext_spin = QSpinBox()
+        self.v_pair_ext_spin.setRange(-200, 500)
+        self.v_pair_ext_spin.setValue(0)
+        self.v_pair_ext_spin.setSingleStep(4)  # 4px steps
+        self.v_pair_ext_spin.setSuffix("px")
+        self.v_pair_ext_spin.setToolTip("Extend vertical _4/_5 starts (and _2/_3 ends). Negative = contract.")
+        v_ext_layout.addWidget(self.v_pair_ext_spin)
+        angle_layout.addLayout(v_ext_layout)
+
+        # Connect pair extension spinboxes to direct extension (no alignment)
+        self.h_pair_ext_spin.valueChanged.connect(self._on_pair_extension_changed)
+        self.v_pair_ext_spin.valueChanged.connect(self._on_pair_extension_changed)
+
         # Connect spinboxes to update preview when values change
         self.h_angle_min_spin.valueChanged.connect(self._on_angle_spin_changed)
         self.h_angle_max_spin.valueChanged.connect(self._on_angle_spin_changed)
@@ -658,6 +692,7 @@ class MxNGeneratorDialog(QDialog):
         # Clear in-memory data and disable export buttons
         self.current_json_data = None
         self.current_image = None
+        self._continuation_json_data = None  # Clear stored continuation
         # Invalidate prepared-canvas cache
         self._prepared_canvas_key = None
         self._prepared_bounds = None
@@ -1052,6 +1087,18 @@ class MxNGeneratorDialog(QDialog):
 
             # Store JSON in memory
             self.current_json_data = json_content
+            # Store original continuation (before any extension is applied)
+            self._continuation_json_data = json_content
+
+            # Reset extension spinboxes to 0 for new continuation
+            if hasattr(self, 'h_pair_ext_spin'):
+                self.h_pair_ext_spin.blockSignals(True)
+                self.h_pair_ext_spin.setValue(0)
+                self.h_pair_ext_spin.blockSignals(False)
+            if hasattr(self, 'v_pair_ext_spin'):
+                self.v_pair_ext_spin.blockSignals(True)
+                self.v_pair_ext_spin.setValue(0)
+                self.v_pair_ext_spin.blockSignals(False)
 
             # Invalidate canvas cache (new strands)
             self._prepared_canvas_key = None
@@ -1103,6 +1150,169 @@ class MxNGeneratorDialog(QDialog):
         """Update the angle preview when spinbox values change."""
         if self._angle_preview_active and self._angle_preview_data:
             self._draw_angle_preview(self._angle_preview_data)
+
+    def _on_pair_extension_changed(self):
+        """Directly apply extension to _4/_5 starts when spinbox changes (no alignment algorithm)."""
+        if not self._continuation_json_data:
+            return
+
+        try:
+            import copy
+            import math
+
+            m = self.m_spinner.value()
+            n = self.n_spinner.value()
+            scale_factor = self.scale_combo.currentData()
+
+            # Get extension values
+            h_ext = self.h_pair_ext_spin.value()
+            v_ext = self.v_pair_ext_spin.value()
+
+            # Parse original continuation data (fresh copy)
+            data = json.loads(self._continuation_json_data)
+            data = copy.deepcopy(data)
+
+            if data.get('type') == 'OpenStrandStudioHistory':
+                strands = data.get('states', [{}])[0].get('data', {}).get('strands', [])
+            else:
+                strands = data.get('strands', [])
+
+            if not strands:
+                return
+
+            # Build lookup for quick access
+            strand_lookup = {s["layer_name"]: s for s in strands}
+
+            # Find _4/_5 strands and their corresponding _2/_3 strands
+            for strand in strands:
+                if strand.get("type") != "AttachedStrand":
+                    continue
+
+                layer_name = strand.get("layer_name", "")
+                set_num = strand.get("set_number", 0)
+
+                # Determine if horizontal or vertical based on set_number
+                is_horizontal = set_num <= n
+                ext_value = h_ext if is_horizontal else v_ext
+
+                if ext_value == 0:
+                    continue  # No extension needed
+
+                # Process _4 strands
+                if layer_name.endswith("_4"):
+                    # Find corresponding _2 strand
+                    base_name = layer_name[:-1]  # e.g., "1_" from "1_4"
+                    s2_name = base_name + "2"
+
+                    if s2_name in strand_lookup:
+                        s2 = strand_lookup[s2_name]
+                        # Get _2/_3 direction
+                        s2_dx = s2["end"]["x"] - s2["start"]["x"]
+                        s2_dy = s2["end"]["y"] - s2["start"]["y"]
+                        s2_len = math.sqrt(s2_dx**2 + s2_dy**2)
+
+                        if s2_len > 0.001:
+                            # Normalize direction
+                            nx = s2_dx / s2_len
+                            ny = s2_dy / s2_len
+
+                            # Extend _4 start along _2 direction
+                            old_start = strand["start"]
+                            new_start_x = old_start["x"] + ext_value * nx
+                            new_start_y = old_start["y"] + ext_value * ny
+
+                            # Update _4 start (keep end fixed!)
+                            strand["start"] = {"x": new_start_x, "y": new_start_y}
+                            if strand.get("control_points") and len(strand["control_points"]) > 0:
+                                strand["control_points"][0] = {"x": new_start_x, "y": new_start_y}
+
+                            # Update control_point_center
+                            strand["control_point_center"] = {
+                                "x": (new_start_x + strand["end"]["x"]) / 2,
+                                "y": (new_start_y + strand["end"]["y"]) / 2,
+                            }
+
+                            # Update _2 end to match _4 start
+                            s2["end"] = {"x": new_start_x, "y": new_start_y}
+                            if s2.get("control_points") and len(s2["control_points"]) > 1:
+                                s2["control_points"][1] = {"x": new_start_x, "y": new_start_y}
+                            s2["control_point_center"] = {
+                                "x": (s2["start"]["x"] + new_start_x) / 2,
+                                "y": (s2["start"]["y"] + new_start_y) / 2,
+                            }
+
+                # Process _5 strands
+                elif layer_name.endswith("_5"):
+                    # Find corresponding _3 strand
+                    base_name = layer_name[:-1]  # e.g., "1_" from "1_5"
+                    s3_name = base_name + "3"
+
+                    if s3_name in strand_lookup:
+                        s3 = strand_lookup[s3_name]
+                        # Get _2/_3 direction
+                        s3_dx = s3["end"]["x"] - s3["start"]["x"]
+                        s3_dy = s3["end"]["y"] - s3["start"]["y"]
+                        s3_len = math.sqrt(s3_dx**2 + s3_dy**2)
+
+                        if s3_len > 0.001:
+                            # Normalize direction
+                            nx = s3_dx / s3_len
+                            ny = s3_dy / s3_len
+
+                            # Extend _5 start along _3 direction
+                            old_start = strand["start"]
+                            new_start_x = old_start["x"] + ext_value * nx
+                            new_start_y = old_start["y"] + ext_value * ny
+
+                            # Update _5 start (keep end fixed!)
+                            strand["start"] = {"x": new_start_x, "y": new_start_y}
+                            if strand.get("control_points") and len(strand["control_points"]) > 0:
+                                strand["control_points"][0] = {"x": new_start_x, "y": new_start_y}
+
+                            # Update control_point_center
+                            strand["control_point_center"] = {
+                                "x": (new_start_x + strand["end"]["x"]) / 2,
+                                "y": (new_start_y + strand["end"]["y"]) / 2,
+                            }
+
+                            # Update _3 end to match _5 start
+                            s3["end"] = {"x": new_start_x, "y": new_start_y}
+                            if s3.get("control_points") and len(s3["control_points"]) > 1:
+                                s3["control_points"][1] = {"x": new_start_x, "y": new_start_y}
+                            s3["control_point_center"] = {
+                                "x": (s3["start"]["x"] + new_start_x) / 2,
+                                "y": (s3["start"]["y"] + new_start_y) / 2,
+                            }
+
+            # Update strands in data
+            if data.get('type') == 'OpenStrandStudioHistory':
+                for state in data.get('states', []):
+                    state['data']['strands'] = strands
+            else:
+                data['strands'] = strands
+
+            # Update current JSON data
+            self.current_json_data = json.dumps(data, indent=2)
+
+            # Invalidate geometry cache but keep emoji assignments
+            self._prepared_canvas_key = None
+            self._prepared_bounds = None
+            self._emoji_renderer.clear_render_cache()
+
+            # Re-render
+            image = self._generate_image_in_memory(self.current_json_data, scale_factor)
+
+            if image and not image.isNull():
+                self.current_image = image
+                self.preview_widget.set_qimage(image)
+                self.status_label.setText(f"Extension applied: H={h_ext}px, V={v_ext}px")
+            else:
+                self.status_label.setText("Failed to render")
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self.status_label.setText(f"Extension error: {str(e)}")
 
     def preview_angle_ranges(self):
         """Preview the angle ranges for parallel alignment with dotted lines."""

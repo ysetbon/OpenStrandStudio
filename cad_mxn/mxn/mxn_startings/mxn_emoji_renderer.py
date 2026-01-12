@@ -54,6 +54,9 @@ class EmojiRenderer:
         # Maps strand_name -> emoji label (preserves assignment across position changes)
         self._strand_emoji_map = None
         self._strand_emoji_map_key = None
+        # Frozen emoji assignments: captures (strand_name, ep_type) -> emoji BEFORE alignment
+        # When set, draw_endpoint_emojis uses these instead of recalculating based on position
+        self._frozen_endpoint_emojis = None  # dict: (strand_name, ep_type) -> emoji
 
     def clear_cache(self):
         """
@@ -66,12 +69,189 @@ class EmojiRenderer:
         self._emoji_base_key = None
         self._strand_emoji_map = None
         self._strand_emoji_map_key = None
+        self._frozen_endpoint_emojis = None
         self.clear_render_cache()
 
     def clear_render_cache(self):
         """Clear only render-related caches (keeps emoji assignments stable)."""
         self._emoji_visual_extents_cache = {}
         self._emoji_glyph_cache = {}
+
+    def freeze_emoji_assignments(self, canvas, bounds, m, n, settings):
+        """
+        Capture and freeze current emoji assignments BEFORE parallel alignment.
+        
+        This stores a mapping of (strand_name, ep_type) -> emoji so that after
+        strands move, the same emoji stays with the same strand endpoint.
+        """
+        padding = self.BOUNDS_PADDING
+        content = QRectF(
+            bounds.x() + padding,
+            bounds.y() + padding,
+            max(1.0, bounds.width() - 2 * padding),
+            max(1.0, bounds.height() - 2 * padding)
+        )
+
+        def perimeter_t(side, x, y):
+            w = content.width()
+            h = content.height()
+            if side == "top":
+                return (x - content.left())
+            if side == "right":
+                return w + (y - content.top())
+            if side == "bottom":
+                return w + h + (content.right() - x)
+            return 2 * w + h + (content.bottom() - y)
+
+        strands = getattr(canvas, "strands", []) or []
+        q = 0.5
+
+        def ep_key(ep):
+            return (
+                ep.get("side", ""),
+                int(round(float(ep["x"]) / q)),
+                int(round(float(ep["y"]) / q)),
+            )
+
+        endpoint_map = {}
+
+        for strand in strands:
+            if not (hasattr(strand, "start") and hasattr(strand, "end") and strand.start and strand.end):
+                continue
+
+            layer_name = getattr(strand, "layer_name", "") or ""
+            strand_name = getattr(strand, "name", "") or ""
+            suffix_source = layer_name or strand_name or ""
+
+            if suffix_source:
+                if suffix_source.endswith("_1"):
+                    continue
+                if not (suffix_source.endswith("_2") or suffix_source.endswith("_3")):
+                    continue
+            else:
+                try:
+                    set_num = int(getattr(strand, "set_number", -1))
+                except Exception:
+                    set_num = -1
+                if set_num not in (2, 3):
+                    continue
+
+            x1, y1 = float(strand.start.x()), float(strand.start.y())
+            x2, y2 = float(strand.end.x()), float(strand.end.y())
+            dx = x2 - x1
+            dy = y2 - y1
+
+            if abs(dx) >= abs(dy):
+                if x1 <= x2:
+                    ep_a = {"x": x1, "y": y1, "side": "left", "nx": -1.0, "ny": 0.0}
+                    ep_b = {"x": x2, "y": y2, "side": "right", "nx": 1.0, "ny": 0.0}
+                    ep_a_type = "start"
+                    ep_b_type = "end"
+                else:
+                    ep_a = {"x": x2, "y": y2, "side": "left", "nx": -1.0, "ny": 0.0}
+                    ep_b = {"x": x1, "y": y1, "side": "right", "nx": 1.0, "ny": 0.0}
+                    ep_a_type = "end"
+                    ep_b_type = "start"
+            else:
+                if y1 <= y2:
+                    ep_a = {"x": x1, "y": y1, "side": "top", "nx": 0.0, "ny": -1.0}
+                    ep_b = {"x": x2, "y": y2, "side": "bottom", "nx": 0.0, "ny": 1.0}
+                    ep_a_type = "start"
+                    ep_b_type = "end"
+                else:
+                    ep_a = {"x": x2, "y": y2, "side": "top", "nx": 0.0, "ny": -1.0}
+                    ep_b = {"x": x1, "y": y1, "side": "bottom", "nx": 0.0, "ny": 1.0}
+                    ep_a_type = "end"
+                    ep_b_type = "start"
+
+            strand_width = float(getattr(strand, "width", getattr(canvas, "strand_width", 46)))
+
+            for ep, ep_type in [(ep_a, ep_a_type), (ep_b, ep_b_type)]:
+                key = ep_key(ep)
+                t = perimeter_t(ep["side"], ep["x"], ep["y"])
+                if key not in endpoint_map:
+                    endpoint_map[key] = {
+                        "ep": ep,
+                        "t": float(t),
+                        "width": strand_width,
+                        "strand_name": suffix_source,
+                        "ep_type": ep_type
+                    }
+
+        if not endpoint_map:
+            self._frozen_endpoint_emojis = None
+            return
+
+        # Sort by perimeter position
+        ordered_eps = sorted(
+            endpoint_map.items(),
+            key=lambda kv: (kv[1]["t"], str(kv[0]))
+        )
+
+        # Build mirrored base labels (same logic as in draw_endpoint_emojis)
+        total = len(ordered_eps)
+        side_to_indices = {"top": [], "right": [], "bottom": [], "left": []}
+        for idx, (_key, item) in enumerate(ordered_eps):
+            side = (item.get("ep") or {}).get("side", "")
+            if side in side_to_indices:
+                side_to_indices[side].append(idx)
+            else:
+                side_to_indices.setdefault(side, []).append(idx)
+
+        top_idx = side_to_indices.get("top", [])
+        right_idx = side_to_indices.get("right", [])
+        bottom_idx = side_to_indices.get("bottom", [])
+        left_idx = side_to_indices.get("left", [])
+
+        top_count = len(top_idx)
+        right_count = len(right_idx)
+
+        unique_needed = top_count + right_count
+        unique = self.make_labels(unique_needed)
+
+        top_labels = unique[:top_count]
+        right_labels = unique[top_count:top_count + right_count]
+        bottom_labels = list(reversed(top_labels))
+        left_labels = list(reversed(right_labels))
+
+        out = [None] * total
+        for dst_i, label in zip(top_idx, top_labels):
+            out[dst_i] = label
+        for dst_i, label in zip(right_idx, right_labels):
+            out[dst_i] = label
+        for dst_i, label in zip(bottom_idx, bottom_labels):
+            out[dst_i] = label
+        for dst_i, label in zip(left_idx, left_labels):
+            out[dst_i] = label
+
+        if any(v is None for v in out):
+            remaining = [i for i, v in enumerate(out) if v is None]
+            extra = self.make_labels(len(remaining))
+            for i, lab in zip(remaining, extra):
+                out[i] = lab
+
+        # Apply rotation
+        direction = settings.get("direction", "cw")
+        k = int(settings.get("k", 0))
+        rotated = self.rotate_labels(out, k, direction)
+
+        # Build frozen map: (strand_name, ep_type) -> emoji
+        # Don't include 'side' - it can change after alignment
+        frozen_map = {}
+        for i, (key, item) in enumerate(ordered_eps):
+            emoji = rotated[i] if i < len(rotated) else None
+            if emoji:
+                strand_name = item.get("strand_name", "")
+                ep_type = item.get("ep_type", "")
+                frozen_key = (strand_name, ep_type)
+                frozen_map[frozen_key] = emoji
+
+        self._frozen_endpoint_emojis = frozen_map
+        print(f"[EmojiRenderer] Frozen {len(frozen_map)} emoji assignments (k={k}, dir={direction})")
+
+    def unfreeze_emoji_assignments(self):
+        """Clear frozen emoji assignments."""
+        self._frozen_endpoint_emojis = None
 
     def _font_cache_key(self, font: QFont):
         # QFont is not reliably hashable across PyQt versions; use a stable tuple key.
@@ -734,15 +914,15 @@ class EmojiRenderer:
                         "ep": ep,
                         "t": float(t),
                         "width": strand_width,
-                        # Only store strand_name for END points (free ends at perimeter)
-                        "strand_name": suffix_source if ep_type == "end" else "",
+                        # Store strand_name for ALL endpoints (needed for frozen emoji lookup)
+                        "strand_name": suffix_source,
                         "ep_type": ep_type
                     }
                 else:
                     # Use the widest strand width for outward offset calculation.
                     endpoint_map[key]["width"] = max(endpoint_map[key]["width"], strand_width)
-                    # If this is an END point and we don't have a name yet, use it
-                    if ep_type == "end" and not endpoint_map[key].get("strand_name"):
+                    # Update strand_name if not set
+                    if not endpoint_map[key].get("strand_name"):
                         endpoint_map[key]["strand_name"] = suffix_source
                         endpoint_map[key]["ep_type"] = ep_type
 
@@ -861,18 +1041,36 @@ class EmojiRenderer:
         painter.setFont(font)
         fm = painter.fontMetrics()
 
+        # Check if we have frozen emoji assignments (from before parallel alignment)
+        use_frozen = self._frozen_endpoint_emojis is not None
+
         # Assign a rotated label per perimeter endpoint slot
         draw_items = []
         for i, (key, item) in enumerate(ordered_eps):
-            txt = rotated[i] if i < len(rotated) else None
+            strand_name = item.get("strand_name", "")
+            ep_type = item.get("ep_type", "")
+            
+            # If frozen, look up emoji by strand identity instead of position order
+            if use_frozen:
+                frozen_key = (strand_name, ep_type)
+                txt = self._frozen_endpoint_emojis.get(frozen_key)
+                if not txt:
+                    # Fallback: try matching just strand_name
+                    for fk, fv in self._frozen_endpoint_emojis.items():
+                        if fk[0] == strand_name:
+                            txt = fv
+                            break
+            else:
+                txt = rotated[i] if i < len(rotated) else None
+            
             if not txt:
                 continue
             draw_items.append({
                 "ep": item["ep"],
                 "txt": txt,
                 "width": float(item.get("width", 0.0) or 0.0),
-                "strand_name": item.get("strand_name", ""),
-                "ep_type": item.get("ep_type", ""),
+                "strand_name": strand_name,
+                "ep_type": ep_type,
             })
 
         # Check if strand names should be shown

@@ -867,6 +867,9 @@ class MxNGeneratorDialog(QDialog):
 
     def generate_and_preview(self):
         """Generate JSON and image in memory, then show preview."""
+        # Clear any frozen emoji assignments from previous alignment
+        self._emoji_renderer.unfreeze_emoji_assignments()
+        
         m = self.m_spinner.value()
         n = self.n_spinner.value()
         is_lh = self.lh_radio.isChecked()
@@ -1698,6 +1701,27 @@ class MxNGeneratorDialog(QDialog):
                             print(f"  Saved {attempt_count[0]} images...")
                 except Exception as e:
                     print(f"  Error saving attempt {attempt_count[0]}: {e}")
+
+            # ============================================================
+            # FREEZE EMOJI ASSIGNMENTS BEFORE ALIGNMENT
+            # ============================================================
+            # Capture current emoji-to-strand mapping so emojis stay with their
+            # original strands even after positions change during alignment
+            print("\n" + "="*60)
+            print("FREEZING EMOJI ASSIGNMENTS (pre-alignment)")
+            print("="*60)
+            
+            if self._ensure_canvas_prepared(self.current_json_data):
+                main_window = self._get_main_window()
+                if main_window:
+                    canvas = main_window.canvas
+                    bounds = self._prepared_bounds
+                    emoji_settings = {
+                        "show": self.show_emojis_checkbox.isChecked() if hasattr(self, "show_emojis_checkbox") else True,
+                        "k": self.emoji_k_spinner.value() if hasattr(self, "emoji_k_spinner") else 0,
+                        "direction": "cw" if (hasattr(self, "emoji_cw_radio") and self.emoji_cw_radio.isChecked()) else "ccw",
+                    }
+                    self._emoji_renderer.freeze_emoji_assignments(canvas, bounds, m, n, emoji_settings)
 
             # ============================================================
             # HORIZONTAL ALIGNMENT

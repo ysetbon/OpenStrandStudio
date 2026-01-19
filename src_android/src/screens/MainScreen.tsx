@@ -1,27 +1,41 @@
-// Main Screen - Main application screen
+// Main Screen - Main application screen with full features
 import React, {useState, useEffect} from 'react';
-import {View, StyleSheet, TouchableOpacity, Text, Alert} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  Alert,
+  Share,
+  Dimensions,
+} from 'react-native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
-import StrandCanvas from '../components/StrandCanvas';
+import EnhancedStrandCanvas from '../components/EnhancedStrandCanvas';
 import Toolbar from '../components/Toolbar';
 import LayerPanel from '../components/LayerPanel';
+import ColorPicker from '../components/ColorPicker';
 import {
   CanvasState,
   InteractionMode,
   Point,
   Layer,
-  GroupLayer,
+  Strand,
 } from '../types';
 import {LayerModel} from '../models/Layer';
 import {StrandModel} from '../models/Strand';
 import {UndoRedoManager} from '../services/UndoRedoManager';
 import {SaveLoadManager} from '../services/SaveLoadManager';
+import {exportToSVGCropped, generateShareData, saveSVGToFile} from '../utils/export';
 
 const MainScreen: React.FC = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const {t} = useTranslation();
   const [undoManager] = useState(() => new UndoRedoManager());
+  const [projectName, setProjectName] = useState('Untitled');
+  const [currentColor, setCurrentColor] = useState('#8B4513');
+  const [currentWidth, setCurrentWidth] = useState(20);
 
   // Initial canvas state
   const [canvasState, setCanvasState] = useState<CanvasState>({
@@ -39,6 +53,7 @@ const MainScreen: React.FC = () => {
   );
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+  const [showLayerPanel, setShowLayerPanel] = useState(true);
 
   // Initialize save/load manager
   useEffect(() => {
@@ -89,6 +104,7 @@ const MainScreen: React.FC = () => {
     updateUndoRedoState();
   };
 
+  // Layer management
   const handleLayerSelect = (layerId: string) => {
     setCanvasState({
       ...canvasState,
@@ -118,29 +134,25 @@ const MainScreen: React.FC = () => {
   };
 
   const handleLayerDelete = (layerId: string) => {
-    Alert.alert(
-      t('confirmDelete'),
-      t('confirmDelete'),
-      [
-        {text: t('cancel'), style: 'cancel'},
-        {
-          text: t('delete'),
-          style: 'destructive',
-          onPress: () => {
-            saveStateForUndo('Delete layer');
-            const newLayers = canvasState.layers.filter(l => l.id !== layerId);
-            setCanvasState({
-              ...canvasState,
-              layers: newLayers,
-              selectedLayerId:
-                canvasState.selectedLayerId === layerId
-                  ? null
-                  : canvasState.selectedLayerId,
-            });
-          },
+    Alert.alert(t('confirmDelete'), t('confirmDelete'), [
+      {text: t('cancel'), style: 'cancel'},
+      {
+        text: t('delete'),
+        style: 'destructive',
+        onPress: () => {
+          saveStateForUndo('Delete layer');
+          const newLayers = canvasState.layers.filter(l => l.id !== layerId);
+          setCanvasState({
+            ...canvasState,
+            layers: newLayers,
+            selectedLayerId:
+              canvasState.selectedLayerId === layerId
+                ? null
+                : canvasState.selectedLayerId,
+          });
         },
-      ],
-    );
+      },
+    ]);
   };
 
   const handleLayerAdd = () => {
@@ -169,26 +181,120 @@ const MainScreen: React.FC = () => {
     });
   };
 
-  const handleStrandSelected = (strandId: string) => {
+  // Strand management
+  const handleStrandSelected = (strandId: string, layerId: string) => {
     setCanvasState({
       ...canvasState,
       selectedStrandId: strandId,
+      selectedLayerId: layerId,
     });
   };
 
-  const handleStrandMoved = (strandId: string, offset: Point) => {
-    // TODO: Implement strand movement
-    console.log('Strand moved:', strandId, offset);
+  const handleStrandMoved = (strandId: string, layerId: string, offset: Point) => {
+    saveStateForUndo('Move strand');
+    const newLayers = canvasState.layers.map(layer => {
+      if (layer.id === layerId && 'strands' in layer) {
+        return {
+          ...layer,
+          strands: layer.strands.map(strand =>
+            strand.id === strandId
+              ? StrandModel.translate(strand, offset)
+              : strand,
+          ),
+        };
+      }
+      return layer;
+    });
+    setCanvasState({...canvasState, layers: newLayers});
   };
 
-  const handleCanvasPan = (offset: Point) => {
+  const handleStrandCreated = (layerId: string, strand: Strand) => {
+    saveStateForUndo('Create strand');
+    const newLayers = canvasState.layers.map(layer => {
+      if (layer.id === layerId && 'strands' in layer) {
+        return LayerModel.addStrand(layer, strand);
+      }
+      return layer;
+    });
     setCanvasState({
       ...canvasState,
-      panOffset: {
-        x: canvasState.panOffset.x + offset.x,
-        y: canvasState.panOffset.y + offset.y,
-      },
+      layers: newLayers,
+      selectedStrandId: strand.id,
     });
+  };
+
+  const handleControlPointMove = (
+    strandId: string,
+    layerId: string,
+    segmentIndex: number,
+    pointType: string,
+    newPos: Point,
+  ) => {
+    const newLayers = canvasState.layers.map(layer => {
+      if (layer.id === layerId && 'strands' in layer) {
+        return {
+          ...layer,
+          strands: layer.strands.map(strand => {
+            if (strand.id === strandId) {
+              const newSegments = strand.segments.map((seg, idx) => {
+                if (idx === segmentIndex) {
+                  return {
+                    ...seg,
+                    bezier: {
+                      ...seg.bezier,
+                      [pointType]: newPos,
+                    },
+                  };
+                }
+                return seg;
+              });
+              return {...strand, segments: newSegments};
+            }
+            return strand;
+          }),
+        };
+      }
+      return layer;
+    });
+    setCanvasState({...canvasState, layers: newLayers});
+  };
+
+  // File operations
+  const handleSave = async () => {
+    const success = await SaveLoadManager.saveToFile(projectName, canvasState);
+    if (success) {
+      Alert.alert(t('projectSaved'), `Project "${projectName}" saved successfully`);
+    } else {
+      Alert.alert(t('errorSaving'), 'Failed to save project');
+    }
+  };
+
+  const handleExport = async () => {
+    const {width, height} = Dimensions.get('window');
+    const svg = exportToSVGCropped(canvasState);
+    const success = await saveSVGToFile(`${projectName}-export`, svg);
+
+    if (success) {
+      Alert.alert('Exported', 'Project exported as SVG successfully');
+    } else {
+      Alert.alert('Export Failed', 'Failed to export project');
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      const shareData = generateShareData(canvasState, projectName);
+      await Share.share({
+        title: shareData.title,
+        message: shareData.message,
+      });
+    } catch (error) {
+      console.error('Share failed:', error);
+    }
+  };
+
+  const handleOpenProjects = () => {
+    navigation.navigate('ProjectManager' as never);
   };
 
   const handleSettings = () => {
@@ -209,30 +315,62 @@ const MainScreen: React.FC = () => {
 
       {/* Main canvas */}
       <View style={styles.canvasContainer}>
-        <StrandCanvas
+        <EnhancedStrandCanvas
           canvasState={canvasState}
+          currentMode={currentMode}
+          currentColor={currentColor}
+          currentWidth={currentWidth}
           onStrandSelected={handleStrandSelected}
           onStrandMoved={handleStrandMoved}
-          onCanvasPan={handleCanvasPan}
+          onStrandCreated={handleStrandCreated}
+          onControlPointMove={handleControlPointMove}
         />
       </View>
 
-      {/* Layer panel */}
-      <LayerPanel
-        layers={canvasState.layers}
-        selectedLayerId={canvasState.selectedLayerId}
-        onLayerSelect={handleLayerSelect}
-        onLayerToggleVisibility={handleLayerToggleVisibility}
-        onLayerToggleLock={handleLayerToggleLock}
-        onLayerDelete={handleLayerDelete}
-        onLayerAdd={handleLayerAdd}
-        onGroupAdd={handleGroupAdd}
-      />
+      {/* Layer panel (collapsible) */}
+      {showLayerPanel && (
+        <LayerPanel
+          layers={canvasState.layers}
+          selectedLayerId={canvasState.selectedLayerId}
+          onLayerSelect={handleLayerSelect}
+          onLayerToggleVisibility={handleLayerToggleVisibility}
+          onLayerToggleLock={handleLayerToggleLock}
+          onLayerDelete={handleLayerDelete}
+          onLayerAdd={handleLayerAdd}
+          onGroupAdd={handleGroupAdd}
+        />
+      )}
 
-      {/* Settings button */}
-      <TouchableOpacity style={styles.settingsButton} onPress={handleSettings}>
-        <Text style={styles.settingsButtonText}>⚙️</Text>
-      </TouchableOpacity>
+      {/* Floating action buttons */}
+      <View style={styles.fabContainer}>
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => setShowLayerPanel(!showLayerPanel)}>
+          <Text style={styles.fabText}>{showLayerPanel ? '📁' : '📂'}</Text>
+        </TouchableOpacity>
+
+        <ColorPicker selectedColor={currentColor} onColorChange={setCurrentColor} />
+
+        <TouchableOpacity style={styles.fab} onPress={handleSave}>
+          <Text style={styles.fabText}>💾</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.fab} onPress={handleOpenProjects}>
+          <Text style={styles.fabText}>📋</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.fab} onPress={handleExport}>
+          <Text style={styles.fabText}>📤</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.fab} onPress={handleShare}>
+          <Text style={styles.fabText}>🔗</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.fab} onPress={handleSettings}>
+          <Text style={styles.fabText}>⚙️</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -245,23 +383,27 @@ const styles = StyleSheet.create({
   canvasContainer: {
     flex: 1,
   },
-  settingsButton: {
+  fabContainer: {
     position: 'absolute',
-    top: 60,
     right: 16,
+    top: 100,
+    alignItems: 'flex-end',
+  },
+  fab: {
     width: 50,
     height: 50,
     borderRadius: 25,
     backgroundColor: '#3498db',
     alignItems: 'center',
     justifyContent: 'center',
+    marginVertical: 8,
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
-  settingsButtonText: {
+  fabText: {
     fontSize: 24,
   },
 });

@@ -52,6 +52,8 @@ src_android/
 
 - **Strand.ts** - Core strand data model with Bezier curves
 - **Layer.ts** - Layer and group layer management
+- **AttachedStrand.ts** - Strand attachment system
+- **MaskedStrand.ts** - Masking and over/under effects
 
 ### Services
 
@@ -60,14 +62,23 @@ src_android/
 
 ### Components
 
-- **StrandCanvas.tsx** - Main canvas for rendering strands using SVG
+- **EnhancedStrandCanvas.tsx** - Main canvas with full interaction support
+- **DrawingMode.tsx** - Touch-based drawing component
 - **Toolbar.tsx** - Tool selection and actions
 - **LayerPanel.tsx** - Layer management UI
+- **ColorPicker.tsx** - Color selection component
 
 ### Screens
 
-- **MainScreen.tsx** - Main application screen
+- **MainScreen.tsx** - Main application screen with full features
 - **SettingsScreen.tsx** - Settings and preferences
+- **ProjectManagerScreen.tsx** - Project management
+
+### Utilities
+
+- **bezier.ts** - Bezier curve mathematics
+- **hitTesting.ts** - Touch/selection hit testing
+- **export.ts** - Export to SVG and other formats
 
 ## Features Implemented
 
@@ -83,23 +94,35 @@ src_android/
 - ✅ Multi-language support (EN, FR, ES)
 - ✅ Settings screen
 
+### Fully Implemented (NEW!)
+
+- ✅ Touch gestures (pan, tap, drag)
+- ✅ Full drawing mode with touch input
+- ✅ Strand selection and manipulation
+- ✅ Move mode with drag gestures
+- ✅ Control point editing
+- ✅ Masking functionality with over/under effects
+- ✅ Attachment system
+- ✅ Color picker
+- ✅ Project manager
+- ✅ Export to SVG
+- ✅ Share functionality
+- ✅ Enhanced canvas with full interaction
+
 ### Partial Implementation
 
-- ⚠️ Touch gestures (pan, tap implemented, but interaction modes need work)
-- ⚠️ Strand drawing (model exists, UI interaction needed)
-- ⚠️ Strand selection and manipulation
-- ⚠️ Masking functionality
-- ⚠️ Attach mode
+- ⚠️ Attach mode (model exists, UI needs refinement)
+- ⚠️ Rotate mode
+- ⚠️ Angle adjust mode
+- ⚠️ Group transformations
+- ⚠️ Import from desktop version
 
 ### Not Yet Implemented
 
-- ❌ Full drawing mode with touch
-- ❌ Advanced masking with over/under effects
-- ❌ Export to image formats
-- ❌ Import from desktop version
-- ❌ Advanced strand editing (angle adjust, control point editing)
-- ❌ Group transformations
-- ❌ Shadows and visual effects
+- ❌ Export to PNG/JPG (only SVG currently)
+- ❌ Advanced shadow customization UI
+- ❌ Zoom/pinch gesture
+- ❌ Multi-select strands
 
 ## Setup Instructions
 

@@ -1,45 +1,56 @@
-// Main Screen - Main application screen with full features
+// Main Screen - Desktop-like layout with toolbar, canvas, and layer panel
 import React, {useState, useEffect} from 'react';
 import {
   View,
   StyleSheet,
-  TouchableOpacity,
-  Text,
   Alert,
   Share,
   Dimensions,
+  StatusBar,
+  Modal,
+  ScrollView,
+  Text,
+  TouchableOpacity,
 } from 'react-native';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 import EnhancedStrandCanvas from '../components/EnhancedStrandCanvas';
 import Toolbar from '../components/Toolbar';
 import LayerPanel from '../components/LayerPanel';
-import ColorPicker from '../components/ColorPicker';
 import {
   CanvasState,
   InteractionMode,
   Point,
   Layer,
+  GroupLayer,
   Strand,
 } from '../types';
 import {LayerModel} from '../models/Layer';
 import {StrandModel} from '../models/Strand';
+import {AttachedStrandModel} from '../models/AttachedStrand';
 import {UndoRedoManager} from '../services/UndoRedoManager';
 import {SaveLoadManager} from '../services/SaveLoadManager';
+import {LayerStateManager} from '../services/LayerStateManager';
 import {exportToSVGCropped, generateShareData, saveSVGToFile} from '../utils/export';
 
 const MainScreen: React.FC = () => {
   const navigation = useNavigation();
-  const route = useRoute();
   const {t} = useTranslation();
   const [undoManager] = useState(() => new UndoRedoManager());
+  const [layerStateManager] = useState(() => new LayerStateManager());
   const [projectName, setProjectName] = useState('Untitled');
-  const [currentColor, setCurrentColor] = useState('#8B4513');
+  const [currentColor, setCurrentColor] = useState('#C8AAE6'); // Default purple like desktop
   const [currentWidth, setCurrentWidth] = useState(20);
+  const [layerStateVisible, setLayerStateVisible] = useState(false);
+  const [layerStateText, setLayerStateText] = useState('');
+
+  // UI state
+  const [showControlPoints, setShowControlPoints] = useState(true);
+  const [showShadows, setShowShadows] = useState(true);
 
   // Initial canvas state
   const [canvasState, setCanvasState] = useState<CanvasState>({
-    layers: [LayerModel.create('layer-1', 'Layer 1')],
+    layers: [LayerModel.create('layer-1', 'Set 1')],
     selectedLayerId: 'layer-1',
     selectedStrandId: null,
     zoom: 1,
@@ -53,7 +64,6 @@ const MainScreen: React.FC = () => {
   );
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
-  const [showLayerPanel, setShowLayerPanel] = useState(true);
 
   // Initialize save/load manager
   useEffect(() => {
@@ -69,6 +79,10 @@ const MainScreen: React.FC = () => {
 
     return () => clearInterval(interval);
   }, [canvasState]);
+
+  useEffect(() => {
+    layerStateManager.saveCurrentState(canvasState);
+  }, [canvasState, layerStateManager]);
 
   const loadAutoSave = async () => {
     const saved = await SaveLoadManager.loadAutoSave();
@@ -104,6 +118,36 @@ const MainScreen: React.FC = () => {
     updateUndoRedoState();
   };
 
+  // Canvas controls
+  const handleZoomIn = () => {
+    setCanvasState(prev => ({
+      ...prev,
+      zoom: Math.min(prev.zoom * 1.2, 5),
+    }));
+  };
+
+  const handleZoomOut = () => {
+    setCanvasState(prev => ({
+      ...prev,
+      zoom: Math.max(prev.zoom / 1.2, 0.2),
+    }));
+  };
+
+  const handleResetView = () => {
+    setCanvasState(prev => ({
+      ...prev,
+      zoom: 1,
+      panOffset: {x: 0, y: 0},
+    }));
+  };
+
+  const handleToggleGrid = () => {
+    setCanvasState(prev => ({
+      ...prev,
+      gridEnabled: !prev.gridEnabled,
+    }));
+  };
+
   // Layer management
   const handleLayerSelect = (layerId: string) => {
     setCanvasState({
@@ -134,7 +178,7 @@ const MainScreen: React.FC = () => {
   };
 
   const handleLayerDelete = (layerId: string) => {
-    Alert.alert(t('confirmDelete'), t('confirmDelete'), [
+    Alert.alert(t('confirmDelete'), t('confirmDeleteMessage'), [
       {text: t('cancel'), style: 'cancel'},
       {
         text: t('delete'),
@@ -144,10 +188,10 @@ const MainScreen: React.FC = () => {
           const newLayers = canvasState.layers.filter(l => l.id !== layerId);
           setCanvasState({
             ...canvasState,
-            layers: newLayers,
+            layers: newLayers.length > 0 ? newLayers : [LayerModel.create('layer-1', 'Set 1')],
             selectedLayerId:
               canvasState.selectedLayerId === layerId
-                ? null
+                ? newLayers[0]?.id || 'layer-1'
                 : canvasState.selectedLayerId,
           });
         },
@@ -155,30 +199,57 @@ const MainScreen: React.FC = () => {
     ]);
   };
 
-  const handleLayerAdd = () => {
-    saveStateForUndo('Add layer');
-    const newLayer = LayerModel.create(
-      `layer-${Date.now()}`,
-      `Layer ${canvasState.layers.length + 1}`,
-    );
-    setCanvasState({
-      ...canvasState,
-      layers: [...canvasState.layers, newLayer],
-      selectedLayerId: newLayer.id,
-    });
+  const handleResetStates = () => {
+    undoManager.clear();
+    undoManager.setCurrentState(canvasState);
+    updateUndoRedoState();
   };
 
-  const handleGroupAdd = () => {
-    saveStateForUndo('Add group');
-    const newGroup = LayerModel.createGroup(
-      `group-${Date.now()}`,
-      `Group ${canvasState.layers.length + 1}`,
-    );
-    setCanvasState({
-      ...canvasState,
-      layers: [...canvasState.layers, newGroup],
-      selectedLayerId: newGroup.id,
-    });
+  const handleRefreshLayers = () => {
+    setCanvasState(prev => ({...prev}));
+  };
+
+  const handleDeselectAll = () => {
+    setCanvasState(prev => ({
+      ...prev,
+      selectedStrandId: null,
+    }));
+  };
+
+  const handleLayerAdd = () => {
+    // Match desktop layer_panel.py request_new_strand() behavior:
+    // 1. Create/select a layer (set)
+    // 2. Switch to drawing mode so user can draw a new strand
+    saveStateForUndo('Add layer');
+
+    // Check if current layer is empty (no strands) - reuse it instead of creating new
+    const currentLayer = canvasState.layers.find(l => l.id === canvasState.selectedLayerId);
+    const isCurrentLayerEmpty = currentLayer && !('layers' in currentLayer) && currentLayer.strands.length === 0;
+
+    if (isCurrentLayerEmpty && currentLayer) {
+      // Reuse the empty current layer, just switch to ATTACH mode
+      setCurrentMode(InteractionMode.ATTACH);
+    } else {
+      // Create a new layer and switch to ATTACH mode
+      const setNumber = canvasState.layers.length + 1;
+      const newLayer = LayerModel.create(
+        `layer-${Date.now()}`,
+        `Set ${setNumber}`,
+      );
+      setCanvasState({
+        ...canvasState,
+        layers: [...canvasState.layers, newLayer],
+        selectedLayerId: newLayer.id,
+      });
+      // Switch to ATTACH mode so user can draw on the canvas
+      // This matches desktop's start_new_strand_mode() which sets is_drawing_new_strand = True
+      setCurrentMode(InteractionMode.ATTACH);
+    }
+  };
+
+  const handleLayerColorChange = (layerId: string, color: string) => {
+    // Store layer color (this would typically be stored in layer metadata)
+    console.log('Layer color changed:', layerId, color);
   };
 
   // Strand management
@@ -191,35 +262,234 @@ const MainScreen: React.FC = () => {
   };
 
   const handleStrandMoved = (strandId: string, layerId: string, offset: Point) => {
-    saveStateForUndo('Move strand');
-    const newLayers = canvasState.layers.map(layer => {
-      if (layer.id === layerId && 'strands' in layer) {
+    setCanvasState(prevState => {
+      const snapOffset = prevState.gridEnabled
+        ? {
+            x: Math.round(offset.x / prevState.gridSize) * prevState.gridSize,
+            y: Math.round(offset.y / prevState.gridSize) * prevState.gridSize,
+          }
+        : offset;
+
+      const translateLayer = (layer: Layer | GroupLayer): Layer | GroupLayer => {
+        if ('layers' in layer) {
+          return {
+            ...layer,
+            layers: layer.layers.map(child => translateLayer(child)),
+          };
+        }
+        if (layer.id !== layerId) {
+          return layer;
+        }
         return {
           ...layer,
-          strands: layer.strands.map(strand =>
-            strand.id === strandId
-              ? StrandModel.translate(strand, offset)
+          strands: layer.strands.map((strand: Strand) =>
+            strand.id === strandId ? StrandModel.translate(strand, snapOffset) : strand,
+          ),
+        };
+      };
+
+      const translatedLayers = prevState.layers.map(layer => translateLayer(layer));
+
+      const collectStrands = (layers: (Layer | GroupLayer)[], acc: Strand[] = []): Strand[] => {
+        layers.forEach(layer => {
+          if ('layers' in layer) {
+            collectStrands(layer.layers, acc);
+            return;
+          }
+          layer.strands.forEach((strand: Strand) => acc.push(strand));
+        });
+        return acc;
+      };
+
+      const allStrands = collectStrands(translatedLayers);
+      const strandMap = new Map<string, Strand>(allStrands.map(strand => [strand.id, strand]));
+
+      const updateAttachments = (layer: Layer | GroupLayer): Layer | GroupLayer => {
+        if ('layers' in layer) {
+          return {
+            ...layer,
+            layers: layer.layers.map(child => updateAttachments(child)),
+          };
+        }
+        return {
+          ...layer,
+          strands: layer.strands.map((strand: Strand) =>
+            AttachedStrandModel.isAttached(strand)
+              ? AttachedStrandModel.updateAttachedPositions(strand, strandMap)
               : strand,
           ),
         };
-      }
-      return layer;
+      };
+
+      const finalLayers = translatedLayers.map(layer => updateAttachments(layer));
+
+      return {
+        ...prevState,
+        layers: finalLayers,
+      };
     });
-    setCanvasState({...canvasState, layers: newLayers});
+  };
+
+  const handleStrandMoveStart = (strandId: string, layerId: string) => {
+    saveStateForUndo('Move strand');
+    layerStateManager.startMovementOperation(canvasState.layers);
+  };
+
+  const handleStrandMoveEnd = (strandId: string, layerId: string) => {
+    layerStateManager.endMovementOperation();
+    updateUndoRedoState();
+  };
+
+  // Handle endpoint movement (desktop-style move mode)
+  // Matches desktop move_mode.py where individual endpoints are moved
+  const handleStrandEndpointMove = (
+    strandId: string,
+    layerId: string,
+    side: 0 | 1,
+    newPos: Point,
+  ) => {
+    setCanvasState(prevState => {
+      const updateLayer = (layer: Layer | GroupLayer): Layer | GroupLayer => {
+        if ('layers' in layer) {
+          return {
+            ...layer,
+            layers: layer.layers.map(child => updateLayer(child)),
+          };
+        }
+        if (layer.id !== layerId) {
+          return layer;
+        }
+        return {
+          ...layer,
+          strands: layer.strands.map((strand: Strand) => {
+            if (strand.id !== strandId) {
+              return strand;
+            }
+            // Update the appropriate endpoint
+            if (side === 0) {
+              // Update start point
+              const newSegments = strand.segments.map((seg, idx) => {
+                if (idx === 0) {
+                  return {
+                    ...seg,
+                    bezier: {
+                      ...seg.bezier,
+                      start: newPos,
+                      // Also update control point 1 if it was at the old start
+                      control1: seg.bezier.control1.x === seg.bezier.start.x &&
+                                seg.bezier.control1.y === seg.bezier.start.y
+                        ? newPos
+                        : seg.bezier.control1,
+                    },
+                  };
+                }
+                return seg;
+              });
+              return {
+                ...strand,
+                segments: newSegments,
+                start: newPos,
+                controlPoint1: strand.controlPoint1?.x === strand.start?.x &&
+                               strand.controlPoint1?.y === strand.start?.y
+                  ? newPos
+                  : strand.controlPoint1,
+              };
+            } else {
+              // Update end point
+              const newSegments = strand.segments.map((seg, idx) => {
+                if (idx === strand.segments.length - 1) {
+                  return {
+                    ...seg,
+                    bezier: {
+                      ...seg.bezier,
+                      end: newPos,
+                      // Also update control point 2 if it was at the old end
+                      control2: seg.bezier.control2.x === seg.bezier.end.x &&
+                                seg.bezier.control2.y === seg.bezier.end.y
+                        ? newPos
+                        : seg.bezier.control2,
+                    },
+                  };
+                }
+                return seg;
+              });
+              return {
+                ...strand,
+                segments: newSegments,
+                end: newPos,
+                controlPoint2: strand.controlPoint2?.x === strand.end?.x &&
+                               strand.controlPoint2?.y === strand.end?.y
+                  ? newPos
+                  : strand.controlPoint2,
+              };
+            }
+          }),
+        };
+      };
+
+      return {
+        ...prevState,
+        layers: prevState.layers.map(layer => updateLayer(layer)),
+      };
+    });
+  };
+
+  // Handle strand updates (for updating parent when child is attached)
+  const handleStrandUpdated = (layerId: string, updatedStrand: Strand) => {
+    setCanvasState(prevState => {
+      const updateLayer = (layer: Layer | GroupLayer): Layer | GroupLayer => {
+        if ('layers' in layer) {
+          return {
+            ...layer,
+            layers: layer.layers.map(child => updateLayer(child)),
+          };
+        }
+        if (layer.id !== layerId) {
+          return layer;
+        }
+        return {
+          ...layer,
+          strands: layer.strands.map((strand: Strand) =>
+            strand.id === updatedStrand.id ? updatedStrand : strand,
+          ),
+        };
+      };
+
+      return {
+        ...prevState,
+        layers: prevState.layers.map(layer => updateLayer(layer)),
+      };
+    });
   };
 
   const handleStrandCreated = (layerId: string, strand: Strand) => {
-    saveStateForUndo('Create strand');
-    const newLayers = canvasState.layers.map(layer => {
-      if (layer.id === layerId && 'strands' in layer) {
-        return LayerModel.addStrand(layer, strand);
-      }
-      return layer;
-    });
-    setCanvasState({
-      ...canvasState,
-      layers: newLayers,
-      selectedStrandId: strand.id,
+    console.log('handleStrandCreated called - layerId:', layerId, 'strand:', strand.id);
+
+    // Use functional update to avoid stale state issues
+    setCanvasState(prevState => {
+      console.log('Current layers:', prevState.layers.map(l => ({id: l.id, name: l.name, hasStrands: 'strands' in l})));
+
+      const newLayers = prevState.layers.map(layer => {
+        if (layer.id === layerId && 'strands' in layer) {
+          console.log('Adding strand to layer:', layer.id);
+          const updatedLayer = LayerModel.addStrand(layer as Layer, strand);
+          console.log('Layer now has strands:', updatedLayer.strands.length);
+          return updatedLayer;
+        }
+        return layer;
+      });
+
+      console.log('Setting new canvas state with layers:', newLayers.length);
+
+      // Save for undo after we have the new state
+      undoManager.saveState(prevState, 'Create strand');
+      updateUndoRedoState();
+
+      return {
+        ...prevState,
+        layers: newLayers,
+        selectedStrandId: strand.id,
+      };
     });
   };
 
@@ -263,38 +533,71 @@ const MainScreen: React.FC = () => {
   const handleSave = async () => {
     const success = await SaveLoadManager.saveToFile(projectName, canvasState);
     if (success) {
-      Alert.alert(t('projectSaved'), `Project "${projectName}" saved successfully`);
+      Alert.alert(t('saved'), `${projectName} saved`);
     } else {
-      Alert.alert(t('errorSaving'), 'Failed to save project');
+      Alert.alert(t('error'), t('saveFailed'));
     }
   };
 
+  const handleLoad = () => {
+    navigation.navigate('ProjectManager' as never);
+  };
+
   const handleExport = async () => {
-    const {width, height} = Dimensions.get('window');
     const svg = exportToSVGCropped(canvasState);
     const success = await saveSVGToFile(`${projectName}-export`, svg);
 
     if (success) {
-      Alert.alert('Exported', 'Project exported as SVG successfully');
+      Alert.alert(t('exported'), t('exportSuccess'));
     } else {
-      Alert.alert('Export Failed', 'Failed to export project');
+      Alert.alert(t('error'), t('exportFailed'));
     }
   };
 
-  const handleShare = async () => {
-    try {
-      const shareData = generateShareData(canvasState, projectName);
-      await Share.share({
-        title: shareData.title,
-        message: shareData.message,
-      });
-    } catch (error) {
-      console.error('Share failed:', error);
-    }
+  const handleSaveImage = async () => {
+    await handleExport();
   };
 
-  const handleOpenProjects = () => {
-    navigation.navigate('ProjectManager' as never);
+  const formatLayerState = () => {
+    const state = layerStateManager.saveCurrentState(canvasState);
+    const formatList = (title: string, items: string[] | null) => {
+      if (!items || items.length === 0) {
+        return `${title}:\n  (empty)\n`;
+      }
+      return `${title}:\n${items.map(item => `  - ${item}`).join('\n')}\n`;
+    };
+
+    const formatDict = (title: string, obj: Record<string, unknown>) => {
+      const keys = Object.keys(obj);
+      if (keys.length === 0) {
+        return `${title}:\n  (empty)\n`;
+      }
+      return `${title}:\n${keys
+        .map(key => `  ${key}: ${JSON.stringify(obj[key])}`)
+        .join('\n')}\n`;
+    };
+
+    const lines = [
+      formatList('Order', state.order),
+      formatDict('Connections', state.connections),
+      formatList('Masked Layers', state.maskedLayers),
+      formatDict('Colors', state.colors),
+      formatDict('Positions', state.positions),
+      `Selected Strand:\n  ${state.selectedStrand ?? 'null'}\n`,
+      `Newest Strand:\n  ${state.newestStrand ?? 'null'}\n`,
+      `Newest Layer:\n  ${state.newestLayer ?? 'null'}\n`,
+    ];
+
+    return lines.join('\n');
+  };
+
+  const handleLayerState = () => {
+    if (layerStateVisible) {
+      setLayerStateVisible(false);
+      return;
+    }
+    setLayerStateText(formatLayerState());
+    setLayerStateVisible(true);
   };
 
   const handleSettings = () => {
@@ -303,74 +606,95 @@ const MainScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* Top toolbar */}
+      <StatusBar hidden />
+
+      {/* Top toolbar - matches desktop button bar */}
       <Toolbar
         currentMode={currentMode}
         onModeChange={setCurrentMode}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        canUndo={canUndo}
-        canRedo={canRedo}
+        gridEnabled={canvasState.gridEnabled}
+        onToggleGrid={handleToggleGrid}
+        showControlPoints={showControlPoints}
+        onToggleControlPoints={() => setShowControlPoints(!showControlPoints)}
+        showShadows={showShadows}
+        onToggleShadows={() => setShowShadows(!showShadows)}
+        onSave={handleSave}
+        onLoad={handleLoad}
+        onSaveImage={handleSaveImage}
+        onLayerState={handleLayerState}
+        layerStateActive={layerStateVisible}
+        onSettings={handleSettings}
       />
 
-      {/* Main canvas */}
-      <View style={styles.canvasContainer}>
-        <EnhancedStrandCanvas
-          canvasState={canvasState}
-          currentMode={currentMode}
-          currentColor={currentColor}
-          currentWidth={currentWidth}
-          onStrandSelected={handleStrandSelected}
-          onStrandMoved={handleStrandMoved}
-          onStrandCreated={handleStrandCreated}
-          onControlPointMove={handleControlPointMove}
-        />
-      </View>
+      {/* Main content area - horizontal split like desktop */}
+      <View style={styles.mainContent}>
+        {/* Canvas area (left/center - takes most space) */}
+        <View style={styles.canvasArea}>
+          <EnhancedStrandCanvas
+            canvasState={canvasState}
+            currentMode={currentMode}
+            currentColor={currentColor}
+            currentWidth={currentWidth}
+            showControlPoints={showControlPoints}
+            showShadows={showShadows}
+            onStrandSelected={handleStrandSelected}
+            onStrandMoveStart={handleStrandMoveStart}
+            onStrandMoved={handleStrandMoved}
+            onStrandMoveEnd={handleStrandMoveEnd}
+            onStrandCreated={handleStrandCreated}
+            onControlPointMove={handleControlPointMove}
+            onStrandEndpointMove={handleStrandEndpointMove}
+            onStrandUpdated={handleStrandUpdated}
+          />
+        </View>
 
-      {/* Layer panel (collapsible) */}
-      {showLayerPanel && (
+        {/* Layer panel (right side - fixed width like desktop) */}
         <LayerPanel
           layers={canvasState.layers}
           selectedLayerId={canvasState.selectedLayerId}
+          zoom={canvasState.zoom}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          isPanMode={currentMode === InteractionMode.PAN}
+          currentColor={currentColor}
           onLayerSelect={handleLayerSelect}
           onLayerToggleVisibility={handleLayerToggleVisibility}
           onLayerToggleLock={handleLayerToggleLock}
           onLayerDelete={handleLayerDelete}
           onLayerAdd={handleLayerAdd}
-          onGroupAdd={handleGroupAdd}
+          onLayerColorChange={handleLayerColorChange}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onResetView={handleResetView}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          onTogglePanMode={() =>
+            setCurrentMode(currentMode === InteractionMode.PAN ? InteractionMode.SELECT : InteractionMode.PAN)
+          }
+          onColorChange={setCurrentColor}
+          onResetStates={handleResetStates}
+          onRefreshLayers={handleRefreshLayers}
+          onDeselectAll={handleDeselectAll}
+          onDrawNamesToggle={() => {}}
+          onToggleLockMode={() => {}}
+          onCreateGroup={() => Alert.alert(t('error'), 'Not implemented')}
         />
-      )}
-
-      {/* Floating action buttons */}
-      <View style={styles.fabContainer}>
-        <TouchableOpacity
-          style={styles.fab}
-          onPress={() => setShowLayerPanel(!showLayerPanel)}>
-          <Text style={styles.fabText}>{showLayerPanel ? '📁' : '📂'}</Text>
-        </TouchableOpacity>
-
-        <ColorPicker selectedColor={currentColor} onColorChange={setCurrentColor} />
-
-        <TouchableOpacity style={styles.fab} onPress={handleSave}>
-          <Text style={styles.fabText}>💾</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.fab} onPress={handleOpenProjects}>
-          <Text style={styles.fabText}>📋</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.fab} onPress={handleExport}>
-          <Text style={styles.fabText}>📤</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.fab} onPress={handleShare}>
-          <Text style={styles.fabText}>🔗</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.fab} onPress={handleSettings}>
-          <Text style={styles.fabText}>⚙️</Text>
-        </TouchableOpacity>
       </View>
+
+      <Modal visible={layerStateVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <ScrollView style={styles.modalScroll}>
+              <Text style={styles.modalText}>{layerStateText}</Text>
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.modalCloseBtn}
+              onPress={() => setLayerStateVisible(false)}>
+              <Text style={styles.modalCloseText}>{t('close')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -378,33 +702,49 @@ const MainScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ecf0f1',
+    backgroundColor: '#ECECEC',
   },
-  canvasContainer: {
+  mainContent: {
     flex: 1,
+    flexDirection: 'row',
   },
-  fabContainer: {
-    position: 'absolute',
-    right: 16,
-    top: 100,
-    alignItems: 'flex-end',
+  canvasArea: {
+    flex: 1,
+    backgroundColor: '#ffffff',
   },
-  fab: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#3498db',
-    alignItems: 'center',
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
-    marginVertical: 8,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    alignItems: 'center',
   },
-  fabText: {
-    fontSize: 24,
+  modalContent: {
+    width: '80%',
+    maxHeight: '80%',
+    backgroundColor: '#ECECEC',
+    borderRadius: 6,
+    padding: 12,
+  },
+  modalScroll: {
+    marginBottom: 12,
+  },
+  modalText: {
+    color: '#000000',
+    fontSize: 12,
+  },
+  modalCloseBtn: {
+    alignSelf: 'center',
+    backgroundColor: '#E8E8E8',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#B0B0B0',
+  },
+  modalCloseText: {
+    color: '#000000',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
 

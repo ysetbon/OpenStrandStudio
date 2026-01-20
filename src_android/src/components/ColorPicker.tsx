@@ -17,11 +17,16 @@ interface ColorPickerProps {
 }
 
 const PRESET_COLORS = [
-  '#8B4513', // Brown (default rope color)
+  '#C8AAE6', // Purple (default desktop color - Set 1)
+  '#AAE6C8', // Green (Set 2)
+  '#E6AAC8', // Pink (Set 3)
+  '#AAC8E6', // Blue (Set 4)
+  '#E6C8AA', // Orange (Set 5)
+  '#C8E6AA', // Lime (Set 6)
+  '#E6AAAA', // Red (Set 7)
+  '#AAE6E6', // Cyan (Set 8)
+  '#8B4513', // Brown
   '#D2691E', // Chocolate
-  '#CD853F', // Peru
-  '#F4A460', // Sandy Brown
-  '#DEB887', // Burlywood
   '#000000', // Black
   '#808080', // Gray
   '#FFFFFF', // White
@@ -30,11 +35,6 @@ const PRESET_COLORS = [
   '#0000FF', // Blue
   '#FFFF00', // Yellow
   '#FF00FF', // Magenta
-  '#00FFFF', // Cyan
-  '#FFA500', // Orange
-  '#800080', // Purple
-  '#A52A2A', // Brown
-  '#696969', // Dim Gray
 ];
 
 const ColorPicker: React.FC<ColorPickerProps> = ({selectedColor, onColorChange}) => {

@@ -36,9 +36,12 @@ export class LayerModel {
    * Add a strand to a layer
    */
   static addStrand(layer: Layer, strand: Strand): Layer {
+    const strandWithLayer = strand.layerName
+      ? strand
+      : {...strand, layerName: layer.name};
     return {
       ...layer,
-      strands: [...layer.strands, strand],
+      strands: [...layer.strands, strandWithLayer],
     };
   }
 

@@ -8,6 +8,7 @@ export interface AttachmentPoint {
   strandId: string;
   segmentIndex: number;
   t: number; // Parameter along the segment (0 to 1)
+  attachmentSide?: 0 | 1;
 }
 
 export interface AttachedStrand extends Strand {
@@ -15,6 +16,15 @@ export interface AttachedStrand extends Strand {
     start?: AttachmentPoint;
     end?: AttachmentPoint;
   };
+  parentId?: string;
+  attachmentSide?: 0 | 1;
+  angle?: number;
+  length?: number;
+  minLength?: number;
+  shadowOnly?: boolean;
+  hasCircles?: [boolean, boolean];
+  startAttached?: boolean;
+  endAttached?: boolean;
 }
 
 export class AttachedStrandModel {
@@ -31,6 +41,64 @@ export class AttachedStrandModel {
       attachments: {
         start: startAttachment,
         end: endAttachment,
+      },
+      startAttached: Boolean(startAttachment),
+      endAttached: Boolean(endAttachment),
+      hasCircles: baseStrand.hasCircles ?? [true, false],
+    };
+  }
+
+  /**
+   * Create an attached strand derived from a parent strand and attachment side.
+   * Uses createInitial() to match desktop behavior where control points start at start position.
+   * Desktop attached_strand.py __init__ lines 15-50
+   */
+  static createFromParent(
+    parent: Strand,
+    startPoint: Point,
+    attachmentSide: 0 | 1,
+  ): AttachedStrand {
+    // Use createInitial instead of createStraight to match desktop behavior
+    // Desktop attached_strand.py creates strand with zero initial length
+    const base = StrandModel.createInitial(
+      `strand-${Date.now()}`,
+      startPoint,
+      {
+        color: parent.style.color,
+        strokeColor: parent.style.strokeColor,
+        strokeWidth: parent.style.strokeWidth,
+        width: parent.style.width,
+        shadowEnabled: parent.style.shadowEnabled,
+        shadowColor: parent.style.shadowColor,
+        shadowOffset: parent.style.shadowOffset,
+        shadowBlur: parent.style.shadowBlur,
+      },
+    );
+
+    return {
+      ...base,
+      parentId: parent.id,
+      attachmentSide,
+      angle: 0,
+      length: 0,
+      minLength: 40,
+      // Match desktop attached_strand.py line 37: has_circles = [True, False]
+      hasCircles: [true, false],
+      shadowOnly: false,
+      startAttached: true,
+      endAttached: false,
+      isStartSide: true,
+      // Inherit curvature parameters from parent (desktop attached_strand.py lines 43-46)
+      curveResponseExponent: parent.curveResponseExponent ?? 1.5,
+      controlPointBaseFraction: parent.controlPointBaseFraction ?? 0.4,
+      distanceMultiplier: parent.distanceMultiplier ?? 1.2,
+      attachments: {
+        start: {
+          strandId: parent.id,
+          segmentIndex: 0,
+          t: attachmentSide === 0 ? 0 : 1,
+          attachmentSide,
+        },
       },
     };
   }
@@ -108,6 +176,8 @@ export class AttachedStrandModel {
     allStrands: Map<string, Strand>,
   ): AttachedStrand {
     let newSegments = [...strand.segments];
+    let updatedStart = strand.start;
+    let updatedEnd = strand.end;
 
     // Update start position if attached
     if (strand.attachments.start && newSegments.length > 0) {
@@ -118,6 +188,7 @@ export class AttachedStrandModel {
           strand.attachments.start.t,
         );
         if (attachPoint) {
+          updatedStart = attachPoint;
           newSegments[0] = {
             ...newSegments[0],
             bezier: {
@@ -139,6 +210,7 @@ export class AttachedStrandModel {
         );
         if (attachPoint) {
           const lastIndex = newSegments.length - 1;
+          updatedEnd = attachPoint;
           newSegments[lastIndex] = {
             ...newSegments[lastIndex],
             bezier: {
@@ -153,6 +225,8 @@ export class AttachedStrandModel {
     return {
       ...strand,
       segments: newSegments,
+      start: updatedStart,
+      end: updatedEnd,
     };
   }
 

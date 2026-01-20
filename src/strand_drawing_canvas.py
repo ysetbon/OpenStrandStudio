@@ -1687,6 +1687,9 @@ class StrandDrawingCanvas(QWidget):
         """
         Handles the painting of the canvas.
         """
+        if getattr(self, "_painting_in_progress", False):
+            return
+        self._painting_in_progress = True
         try:
             # Call base implementation first (background, styles etc.)
             super().paintEvent(event)
@@ -1694,6 +1697,7 @@ class StrandDrawingCanvas(QWidget):
             import traceback
             print(f"[CRASH] paintEvent super() failed: {e}")
             traceback.print_exc()
+            self._painting_in_progress = False
             return
 
         # --------------------------------------------------
@@ -1706,6 +1710,7 @@ class StrandDrawingCanvas(QWidget):
         # --------------------------------------------------
         if getattr(self, "_suppress_repaint", False):
             pass
+            self._painting_in_progress = False
             return  # Skip custom painting while suppression is active
 
         # Proceed with full painting when not suppressed
@@ -2090,7 +2095,7 @@ class StrandDrawingCanvas(QWidget):
                 triangle_has_moved = getattr(selected_strand, 'triangle_has_moved', False)
                 
                 # Create the yellow rectangle with the consistent size for overlap checking
-                yellow_square_size = 120  # Size for the yellow selection square
+                yellow_square_size = 240  # Size for the yellow selection square (2x larger)
                 half_yellow_size = yellow_square_size / 2
                 square_control_size = 50  # Size for control points
                 half_control_size = square_control_size / 2
@@ -2218,12 +2223,12 @@ class StrandDrawingCanvas(QWidget):
                                     )
                                 continue
                                 
-                            # Increased square size for better visibility
-                            square_size = 120
+                            # Increased square size for better visibility (2x larger)
+                            square_size = 240
                             half_size = square_size / 2
                             square_control_size = 50
                             half_control_size = square_control_size / 2
-                            yellow_square_size = 120  # Size for the yellow selection square
+                            yellow_square_size = 240  # Size for the yellow selection square (2x larger)
                             half_yellow_size = yellow_square_size / 2
                             
                             # Skip drawing only the exact selected point, not any overlapping rectangles
@@ -2574,7 +2579,16 @@ class StrandDrawingCanvas(QWidget):
         
         # If using supersampling, now draw the high-res buffer to the widget
         if self.use_supersampling:
+            if self.render_buffer is None or self.render_buffer.isNull():
+                self._painting_in_progress = False
+                return
+            if not self.isVisible() or self.width() <= 0 or self.height() <= 0:
+                self._painting_in_progress = False
+                return
             widget_painter = QPainter(self)
+            if not widget_painter.isActive():
+                self._painting_in_progress = False
+                return
             RenderUtils.setup_painter(widget_painter, enable_high_quality=True)
             
             # Use the highest quality scaling for the final blit
@@ -2583,6 +2597,7 @@ class StrandDrawingCanvas(QWidget):
             # Draw the high-res buffer scaled down with high-quality filtering
             widget_painter.drawImage(self.rect(), self.render_buffer, self.render_buffer.rect())
             widget_painter.end()
+        self._painting_in_progress = False
     
     def _draw_overlays(self, painter):
         """Draw overlay elements like attach mode circles."""

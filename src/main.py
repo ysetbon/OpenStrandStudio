@@ -1,6 +1,8 @@
 import sys
 import os
 import traceback
+import logging
+import faulthandler
 from PyQt5.QtWidgets import QApplication, QDesktopWidget
 from PyQt5.QtCore import Qt, QTimer, QEvent, QObject
 from PyQt5.QtGui import QColor, QCursor, QGuiApplication
@@ -18,6 +20,8 @@ from undo_redo_manager import connect_to_move_mode, connect_to_attach_mode, conn
 # At the start of your main.py
 # os.environ['QT_MAC_WANTS_LAYER'] = '1'
 
+_CRASH_LOG_HANDLE = None
+
 def get_settings_directory():
     """Get the settings directory path consistently across platforms."""
     from PyQt5.QtCore import QStandardPaths
@@ -30,6 +34,34 @@ def get_settings_directory():
         program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
         settings_dir = program_data_dir  # AppDataLocation already includes the app name
     return settings_dir
+
+def setup_crash_logging():
+    global _CRASH_LOG_HANDLE
+    if _CRASH_LOG_HANDLE is not None:
+        return
+
+    settings_dir = get_settings_directory()
+    os.makedirs(settings_dir, exist_ok=True)
+    log_path = os.path.join(settings_dir, "crash.log")
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        handlers=[
+            logging.FileHandler(log_path, encoding="utf-8"),
+            logging.StreamHandler(),
+        ],
+    )
+
+    _CRASH_LOG_HANDLE = open(log_path, "a", encoding="utf-8")
+    faulthandler.enable(_CRASH_LOG_HANDLE, all_threads=True)
+
+    def _excepthook(exc_type, exc, tb):
+        logging.critical("Unhandled exception", exc_info=(exc_type, exc, tb))
+        sys.__excepthook__(exc_type, exc, tb)
+
+    sys.excepthook = _excepthook
+    logging.info("Crash logging enabled: %s", log_path)
 
 def load_user_settings():
     settings_dir = get_settings_directory()
@@ -203,6 +235,7 @@ def load_user_settings():
 
 if __name__ == '__main__':
     pass
+    setup_crash_logging()
 
     # Disable automatic high-DPI scaling to prevent UI elements from being scaled
     # We'll handle high-DPI rendering manually only for canvas elements

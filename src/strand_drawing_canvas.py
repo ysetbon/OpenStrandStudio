@@ -2071,33 +2071,31 @@ class StrandDrawingCanvas(QWidget):
 
         # Draw the connection circle last (always on top) - if highlights are enabled
         if isinstance(self.current_mode, AttachMode) and self.current_mode.affected_strand and (not hasattr(self, 'show_move_highlights') or self.show_move_highlights):
-            if self.current_mode.affected_point == 0:
-                circle_color = QColor(255, 0, 0, 60)  # Red for start point
-            else:
-                circle_color = QColor(0, 0, 255, 60)  # Blue for end point
-                
+            # Use yellow for the selected/pressed circle
+            circle_color = QColor(255, 230, 160, 140)  # Yellow with transparency (selected)
+
             painter.setBrush(QBrush(circle_color))
             painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
             circle_size = 120
             radius = circle_size / 2
-            
-            point = (self.current_mode.affected_strand.start if self.current_mode.affected_point == 0 
+
+            point = (self.current_mode.affected_strand.start if self.current_mode.affected_point == 0
                     else self.current_mode.affected_strand.end)
-            
+
             circle_rect = QRectF(
                 point.x() - radius,
                 point.y() - radius,
                 circle_size,
                 circle_size
             )
-            painter.drawEllipse(circle_rect)
+            #painter.drawEllipse(circle_rect)
 
         # Only draw control points if they're enabled
-        if self.show_control_points:
-            pass
+        # Hide control points when in attach mode and a circle is pressed/selected
+        attach_mode_pressing = (isinstance(self.current_mode, AttachMode) and
+                                getattr(self.current_mode, 'affected_strand', None) is not None)
+        if self.show_control_points and not attach_mode_pressing:
             self.draw_control_points(painter)
-        else:
-            pass
 
         # Draw strand labels if enabled
         if self.should_draw_names:
@@ -2698,6 +2696,11 @@ class StrandDrawingCanvas(QWidget):
         # Draw attach-mode circles on top (if highlights are enabled)
         if isinstance(self.current_mode, AttachMode) and (not hasattr(self, 'show_move_highlights') or self.show_move_highlights):
             painter.save()
+
+            # Get affected state - if a circle is pressed/selected, only draw that one
+            affected_strand = getattr(self.current_mode, 'affected_strand', None)
+            affected_point = getattr(self.current_mode, 'affected_point', None)
+
             for strand in self.strands:
                 if isinstance(strand, MaskedStrand):
                     continue
@@ -2706,48 +2709,107 @@ class StrandDrawingCanvas(QWidget):
                 if getattr(strand, 'is_hidden', False):
                     continue
 
+                # If a circle is pressed/selected, skip all other strands
+                if affected_strand is not None and strand != affected_strand:
+                    continue
+
+                # Get hover state from AttachMode
+                hovered_strand = getattr(self.current_mode, 'hovered_strand', None)
+                hovered_point = getattr(self.current_mode, 'hovered_point', None)
+                hover_color = QColor(255, 220, 0, 60)  # Semi-transparent yellow for hover
+
                 # Draw circles regardless of proximity to other points
                 # Start circle - check has_circles[0] instead of start_attached
                 if not strand.has_circles[0]:  # Show circle if no attachment at start
+                    # Skip if another point on this strand is affected
+                    if affected_strand == strand and affected_point != 0:
+                        pass  # Don't draw start circle if end is affected
                     # Highlight if currently affected
-                    if (getattr(self.current_mode, 'affected_strand', None) == strand and 
-                        getattr(self.current_mode, 'affected_point', None) == 0):
-                        circle_color = QColor(255, 230, 160, 140)  # Yellow with transparency
+                    elif (affected_strand == strand and affected_point == 0):
+                        circle_color = QColor(255, 230, 160, 140)  # Yellow with transparency (selected)
+                        painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
+                        painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
+                        circle_size = 120
+                        radius = circle_size / 2
+                        start_ellipse = QRectF(
+                            strand.start.x() - radius,
+                            strand.start.y() - radius,
+                            circle_size,
+                            circle_size
+                        )
+                        painter.drawEllipse(start_ellipse)
+                    elif strand == hovered_strand and hovered_point == 0:
+                        circle_color = hover_color  # Yellow for hover
+                        painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
+                        painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
+                        circle_size = 120
+                        radius = circle_size / 2
+                        start_ellipse = QRectF(
+                            strand.start.x() - radius,
+                            strand.start.y() - radius,
+                            circle_size,
+                            circle_size
+                        )
+                        painter.drawEllipse(start_ellipse)
                     else:
                         circle_color = QColor(255, 0, 0, 60)  # Default red
-
-                    painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
-                    painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
-                    circle_size = 120
-                    radius = circle_size / 2
-                    start_ellipse = QRectF(
-                        strand.start.x() - radius,
-                        strand.start.y() - radius,
-                        circle_size,
-                        circle_size
-                    )
-                    painter.drawEllipse(start_ellipse)
+                        painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
+                        painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
+                        circle_size = 120
+                        radius = circle_size / 2
+                        start_ellipse = QRectF(
+                            strand.start.x() - radius,
+                            strand.start.y() - radius,
+                            circle_size,
+                            circle_size
+                        )
+                        painter.drawEllipse(start_ellipse)
 
                 # End circle - check has_circles[1] instead of end_attached
                 if not strand.has_circles[1]:  # Show circle if no attachment at end
+                    # Skip if another point on this strand is affected
+                    if affected_strand == strand and affected_point != 1:
+                        pass  # Don't draw end circle if start is affected
                     # Highlight if currently affected
-                    if (getattr(self.current_mode, 'affected_strand', None) == strand and 
-                        getattr(self.current_mode, 'affected_point', None) == 1):
-                        circle_color = QColor(255, 230, 160, 140)  # Yellow with transparency
+                    elif (affected_strand == strand and affected_point == 1):
+                        circle_color = QColor(255, 230, 160, 140)  # Yellow with transparency (selected)
+                        painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
+                        painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
+                        circle_size = 120
+                        radius = circle_size / 2
+                        end_ellipse = QRectF(
+                            strand.end.x() - radius,
+                            strand.end.y() - radius,
+                            circle_size,
+                            circle_size
+                        )
+                        painter.drawEllipse(end_ellipse)
+                    elif strand == hovered_strand and hovered_point == 1:
+                        circle_color = hover_color  # Yellow for hover
+                        painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
+                        painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
+                        circle_size = 120
+                        radius = circle_size / 2
+                        end_ellipse = QRectF(
+                            strand.end.x() - radius,
+                            strand.end.y() - radius,
+                            circle_size,
+                            circle_size
+                        )
+                        painter.drawEllipse(end_ellipse)
                     else:
                         circle_color = QColor(0, 0, 255, 60)  # Default blue
-
-                    painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
-                    painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
-                    circle_size = 120
-                    radius = circle_size / 2
-                    end_ellipse = QRectF(
-                        strand.end.x() - radius,
-                        strand.end.y() - radius,
-                        circle_size,
-                        circle_size
-                    )
-                    painter.drawEllipse(end_ellipse)
+                        painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
+                        painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
+                        circle_size = 120
+                        radius = circle_size / 2
+                        end_ellipse = QRectF(
+                            strand.end.x() - radius,
+                            strand.end.y() - radius,
+                            circle_size,
+                            circle_size
+                        )
+                        painter.drawEllipse(end_ellipse)
 
             painter.restore()
         # ---------------------------------------------------------

@@ -42,6 +42,10 @@ class AttachMode(QObject):
         self.last_update_time = 0  # Time of last update for frame limiting
         self.frame_limit_ms = 16  # Min time between updates (~ 60 fps)
 
+        # Hover tracking for visual feedback
+        self.hovered_strand = None  # The strand being hovered over
+        self.hovered_point = None  # Which point is being hovered (0 for start, 1 for end)
+
     def setup_timer(self):
         """Set up the timer for gradual movement."""
         self.move_timer = QTimer()
@@ -463,11 +467,15 @@ class AttachMode(QObject):
 
     def mousePressEvent(self, event):
         """Handle mouse press events."""
+        # Clear hover state when clicking
+        self.hovered_strand = None
+        self.hovered_point = None
+
         # Store canvas's original control points visibility setting
         if hasattr(self.canvas, 'show_control_points'):
             self.original_control_points_visible = self.canvas.show_control_points
             # Do NOT force control points to be visible - respect user setting
-        
+
         if self.canvas.current_mode == "move":
             return
         
@@ -575,6 +583,11 @@ class AttachMode(QObject):
 
     def mouseMoveEvent(self, event):
         """Handle mouse move events."""
+        # Update hover state when not actively attaching
+        if not self.canvas.current_strand:
+            self._update_hover_state(event.pos())
+            return
+
         if self.canvas.current_strand:
             # The event position is already in canvas coordinates (converted by the canvas)
             canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()
@@ -599,6 +612,51 @@ class AttachMode(QObject):
 
             # Use partial update instead of full canvas update
             self.partial_update()
+
+    def _update_hover_state(self, pos):
+        """
+        Update the hover state based on the current mouse position.
+        Checks if the mouse is hovering over any attachment circle.
+
+        Args:
+            pos (QPointF): The current mouse position.
+        """
+        old_hovered_strand = self.hovered_strand
+        old_hovered_point = self.hovered_point
+
+        # Reset hover state
+        self.hovered_strand = None
+        self.hovered_point = None
+
+        circle_size = 120
+        radius = circle_size / 2
+
+        # Check all strands for hover
+        for strand in self.canvas.strands:
+            if isinstance(strand, MaskedStrand):
+                continue
+            if getattr(strand, 'is_hidden', False):
+                continue
+
+            # Check start point (if no circle attached)
+            if not strand.has_circles[0]:
+                dist_start = math.sqrt((pos.x() - strand.start.x())**2 + (pos.y() - strand.start.y())**2)
+                if dist_start <= radius:
+                    self.hovered_strand = strand
+                    self.hovered_point = 0
+                    break
+
+            # Check end point (if no circle attached)
+            if not strand.has_circles[1]:
+                dist_end = math.sqrt((pos.x() - strand.end.x())**2 + (pos.y() - strand.end.y())**2)
+                if dist_end <= radius:
+                    self.hovered_strand = strand
+                    self.hovered_point = 1
+                    break
+
+        # Only update canvas if hover state changed
+        if old_hovered_strand != self.hovered_strand or old_hovered_point != self.hovered_point:
+            self.canvas.update()
 
     def gradual_move(self):
         """Perform gradual movement of the strand end point."""

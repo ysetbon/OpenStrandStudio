@@ -3,6 +3,7 @@ translations = {
         # MainWindow translations
         'play_video': 'Play Video',
         'main_window_title': 'OpenStrand Studio',
+        'view_mode': 'View',
         'attach_mode': 'Attach',
         'move_mode': 'Move',
         'rotate_mode': 'Rotate',
@@ -476,6 +477,7 @@ Examples:<br>
         # MainWindow translations
         'play_video': 'Lire la vidéo',
         'main_window_title': 'OpenStrand Studio',
+        'view_mode': 'Voir',
         'attach_mode': 'Lier',
         'move_mode': 'Bouger',
         'rotate_mode': 'Pivoter',
@@ -945,6 +947,7 @@ Exemples :<br>
         # MainWindow translations
         'play_video': 'Video abspielen',
         'main_window_title': 'OpenStrand Studio',
+        'view_mode': 'Ansicht',
         'attach_mode': 'Verbinden',
         'move_mode': 'Bewegen',
         'rotate_mode': 'Drehen',
@@ -1410,6 +1413,7 @@ Beispiele:<br>
         # MainWindow translations
         'play_video': 'Riproduci Video',
         'main_window_title': 'OpenStrand Studio',
+        'view_mode': 'Vista',
         'attach_mode': 'Collega',
         'move_mode': 'Sposta',
         'rotate_mode': 'Ruota',
@@ -1879,6 +1883,7 @@ Esempi:<br>
         # MainWindow translations
         'play_video': 'Reproducir Vídeo',
         'main_window_title': 'OpenStrand Studio',
+        'view_mode': 'Ver',
         'attach_mode': 'Unir',
         'move_mode': 'Mover',
         'rotate_mode': 'Rotar',
@@ -2350,6 +2355,7 @@ Ejemplos:<br>
         # MainWindow translations
         'play_video': 'Reproduzir Vídeo',
         'main_window_title': 'OpenStrand Studio',
+        'view_mode': 'Ver',
         'attach_mode': 'Anexar',
         'move_mode': 'Mover',
         'rotate_mode': 'Rotacionar',
@@ -2826,6 +2832,7 @@ Exemplos:<br>
         # MainWindow translations
         'play_video': 'הפעל וידאו',
         'main_window_title': 'OpenStrand Studio',
+        'view_mode': 'תצוגה',
         'attach_mode': 'חיבור',
         'move_mode': 'הזזה',
         'rotate_mode': 'סיבוב',

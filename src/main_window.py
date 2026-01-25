@@ -155,6 +155,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(_['main_window_title'])
 
         # Update button texts
+        self.view_button.setText(_['view_mode'])
         self.attach_button.setText(_['attach_mode'])
         self.move_button.setText(_['move_mode'])
         self.rotate_button.setText(_['rotate_mode'])
@@ -256,6 +257,7 @@ class MainWindow(QMainWindow):
         # No alignment set - buttons will stretch proportionally
 
         # Create buttons (keep original labels)
+        self.view_button = QPushButton("View")
         self.attach_button = QPushButton("Attach Mode")
         self.move_button = QPushButton("Move Mode")
         self.rotate_button = QPushButton("Rotate Mode")
@@ -268,12 +270,12 @@ class MainWindow(QMainWindow):
         self.mask_button = QPushButton("Mask Mode")
 
         # Set all buttons to expand proportionally with a maximum width
-        for btn in [self.attach_button, self.move_button, self.rotate_button,
+        for btn in [self.view_button, self.attach_button, self.move_button, self.rotate_button,
                     self.toggle_grid_button, self.angle_adjust_button, self.save_button,
                     self.load_button, self.save_image_button, self.select_strand_button,
                     self.mask_button]:
             btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            btn.setMaximumWidth(100)
+            btn.setMaximumWidth(90)
 
         # Create the settings button
         self.settings_button = QPushButton()
@@ -311,7 +313,7 @@ class MainWindow(QMainWindow):
         self.toggle_control_points_button.setCheckable(True)
         self.toggle_control_points_button.setChecked(True)  # Start with button pressed (points visible)
         self.toggle_control_points_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.toggle_control_points_button.setMaximumWidth(100)
+        self.toggle_control_points_button.setMaximumWidth(90)
 
         # Create the toggle shadow button
         self.toggle_shadow_button = QPushButton("Toggle Shadow")
@@ -319,9 +321,10 @@ class MainWindow(QMainWindow):
         self.toggle_shadow_button.setChecked(False)  # Shadow is disabled by default
         self.toggle_shadow_button.setToolTip("Enable/disable shadow effects for overlapping strands")
         self.toggle_shadow_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.toggle_shadow_button.setMaximumWidth(100)
+        self.toggle_shadow_button.setMaximumWidth(90)
         
         # Add buttons without stretch factor to prevent large gaps
+        button_layout.addWidget(self.view_button)
         button_layout.addWidget(self.mask_button)
         button_layout.addWidget(self.select_strand_button)
         button_layout.addWidget(self.attach_button)
@@ -342,7 +345,7 @@ class MainWindow(QMainWindow):
         self.layer_state_button = QPushButton("Layer State")
         self.layer_state_button.setCheckable(True)
         self.layer_state_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.layer_state_button.setMaximumWidth(100)
+        self.layer_state_button.setMaximumWidth(90)
         self.layer_state_button.clicked.connect(self.show_layer_state_log)
         button_layout.addWidget(self.layer_state_button)
 
@@ -466,6 +469,7 @@ class MainWindow(QMainWindow):
         self.layer_panel.strand_deleted.connect(self.delete_strand)
 
         # Button connections
+        self.view_button.clicked.connect(self.set_view_mode)
         self.attach_button.clicked.connect(self.set_attach_mode)
         self.move_button.clicked.connect(self.set_move_mode)
         self.rotate_button.clicked.connect(self.set_rotate_mode)
@@ -1059,7 +1063,7 @@ class MainWindow(QMainWindow):
         
         # Helper to pick a safe fallback mode
         def _safe(desired):
-            valid = {"attach", "move", "rotate", "select", "mask"}
+            valid = {"view", "attach", "move", "rotate", "select", "mask"}
             return desired if desired in valid else "attach"
 
         # Use the standard mode switching system like attach button does
@@ -1160,6 +1164,13 @@ class MainWindow(QMainWindow):
 
         buttons = [
             # (button_object, normal_bg, hover_bg, pressed_bg, disabled_bg)
+            (
+                self.view_button,
+                "#C2A1A1",    # normal (dusty rose)
+                "#E2C4C4",    # hover (lighter dusty rose)
+                "#B88A8A",    # pressed (darker dusty rose)
+                "#B88A8A"     # disabled
+            ),
             (
                 self.mask_button,
                 "#199693",    # normal (teal)
@@ -1296,6 +1307,7 @@ class MainWindow(QMainWindow):
 
     def update_button_states(self, active_mode):
         buttons = {
+            "view": self.view_button,
             "attach": self.attach_button,
             "move": self.move_button,
             "rotate": self.rotate_button,
@@ -1329,6 +1341,7 @@ class MainWindow(QMainWindow):
         self.layer_panel.strand_deleted.connect(self.delete_strand)
 
         # Button connections
+        self.view_button.clicked.connect(self.set_view_mode)
         self.attach_button.clicked.connect(self.set_attach_mode)
         self.move_button.clicked.connect(self.set_move_mode)
         self.rotate_button.clicked.connect(self.set_rotate_mode)
@@ -1852,6 +1865,21 @@ class MainWindow(QMainWindow):
         if self.layer_panel.last_selected_index is not None:
             self.select_strand(self.layer_panel.last_selected_index)
 
+    def set_view_mode(self):
+        """Set View Mode - look only mode for camera navigation without editing."""
+        # --- SAFETY: Temporarily suppress lock mode behavior during mode switching ---
+        lock_mode_was_active = False
+        if hasattr(self, "layer_panel") and self.layer_panel and self.layer_panel.lock_mode:
+            lock_mode_was_active = True
+            self.layer_panel._suppress_lock_mode_temporarily = True
+
+        self.update_mode("view")
+        self.canvas.set_mode("view")
+
+        # Restore lock mode behavior if it was active
+        if lock_mode_was_active:
+            self.layer_panel._suppress_lock_mode_temporarily = False
+
     def set_select_mode(self):
         # --- SAFETY: Temporarily suppress lock mode behavior during mode switching ---
         lock_mode_was_active = False
@@ -1861,7 +1889,7 @@ class MainWindow(QMainWindow):
 
         self.update_mode("select")
         self.canvas.set_mode("select")
-        
+
         # Restore lock mode behavior if it was active
         if lock_mode_was_active:
             self.layer_panel._suppress_lock_mode_temporarily = False
@@ -1883,7 +1911,16 @@ class MainWindow(QMainWindow):
         self.update_button_states(mode)
 
         # Update button states based on mode
-        if mode == "select":
+        if mode == "view":
+            self.view_button.setEnabled(False)
+            self.attach_button.setEnabled(True)
+            self.move_button.setEnabled(True)
+            self.angle_adjust_button.setEnabled(True)
+            self.select_strand_button.setEnabled(True)
+            self.mask_button.setEnabled(True)
+            self.rotate_button.setEnabled(True)
+        elif mode == "select":
+            self.view_button.setEnabled(True)
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(True)
             self.angle_adjust_button.setEnabled(True)  # Keep enabled
@@ -1891,6 +1928,7 @@ class MainWindow(QMainWindow):
             self.mask_button.setEnabled(True)
             self.rotate_button.setEnabled(True)
         elif mode == "attach":
+            self.view_button.setEnabled(True)
             self.attach_button.setEnabled(False)
             self.move_button.setEnabled(True)
             self.angle_adjust_button.setEnabled(True)  # Keep enabled
@@ -1898,6 +1936,7 @@ class MainWindow(QMainWindow):
             self.mask_button.setEnabled(True)
             self.rotate_button.setEnabled(True)
         elif mode == "move":
+            self.view_button.setEnabled(True)
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(False)
             self.angle_adjust_button.setEnabled(True)  # Keep enabled
@@ -1905,6 +1944,7 @@ class MainWindow(QMainWindow):
             self.mask_button.setEnabled(True)
             self.rotate_button.setEnabled(True)
         elif mode == "angle_adjust":
+            self.view_button.setEnabled(True)
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(True)
             self.angle_adjust_button.setEnabled(True)  # Keep enabled
@@ -1912,6 +1952,7 @@ class MainWindow(QMainWindow):
             self.mask_button.setEnabled(True)
             self.rotate_button.setEnabled(True)
         elif mode == "mask":
+            self.view_button.setEnabled(True)
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(True)
             self.angle_adjust_button.setEnabled(True)  # Keep enabled
@@ -1919,6 +1960,7 @@ class MainWindow(QMainWindow):
             self.mask_button.setEnabled(False)
             self.rotate_button.setEnabled(True)
         elif mode == "new_strand":
+            self.view_button.setEnabled(True)
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(True)
             self.angle_adjust_button.setEnabled(True)  # Keep enabled
@@ -1926,6 +1968,7 @@ class MainWindow(QMainWindow):
             self.mask_button.setEnabled(False)
             self.rotate_button.setEnabled(True)
         elif mode == "rotate":
+            self.view_button.setEnabled(True)
             self.attach_button.setEnabled(True)
             self.move_button.setEnabled(True)
             self.angle_adjust_button.setEnabled(True)  # Keep enabled
@@ -2084,6 +2127,7 @@ class MainWindow(QMainWindow):
             self.layer_panel._suppress_lock_mode_temporarily = False
         
         # Ensure the attach button is checked and others are unchecked
+        self.view_button.setChecked(False)
         self.attach_button.setChecked(True)
         self.move_button.setChecked(False)
         self.rotate_button.setChecked(False)
@@ -2146,37 +2190,43 @@ class MainWindow(QMainWindow):
         # if hasattr(self, 'toggle_control_points_button'):
         #     self.toggle_control_points_button.setChecked(False)
         
+        # Ensure view mode button is OFF
+        if hasattr(self, 'view_button'):
+            self.view_button.setChecked(False)
+
         # Ensure angle adjust button is OFF
         if hasattr(self, 'angle_adjust_button'):
             self.angle_adjust_button.setChecked(False)
-        
+
         # Ensure attach mode button is OFF
         if hasattr(self, 'attach_button'):
             self.attach_button.setChecked(False)
-        
+
         # Ensure move mode button is OFF
         if hasattr(self, 'move_button'):
             self.move_button.setChecked(False)
-        
+
         # Ensure mask mode button is OFF
         if hasattr(self, 'mask_button'):
             self.mask_button.setChecked(False)
-        
+
         # Ensure rotate mode button is OFF
         if hasattr(self, 'rotate_button'):
             self.rotate_button.setChecked(False)
-        
+
         pass
 
     def _save_button_states(self):
         """Save current button states for restoration after strand creation."""
         if not hasattr(self, '_pre_creation_button_states'):
             self._pre_creation_button_states = {}
-        
+
         # Save button states (except control points which we preserve during creation)
         # Control points button state is preserved as-is during strand creation
         # if hasattr(self, 'toggle_control_points_button'):
         #     self._pre_creation_button_states['control_points'] = self.toggle_control_points_button.isChecked()
+        if hasattr(self, 'view_button'):
+            self._pre_creation_button_states['view'] = self.view_button.isChecked()
         if hasattr(self, 'angle_adjust_button'):
             self._pre_creation_button_states['angle_adjust'] = self.angle_adjust_button.isChecked()
         if hasattr(self, 'attach_button'):
@@ -2187,7 +2237,7 @@ class MainWindow(QMainWindow):
             self._pre_creation_button_states['mask'] = self.mask_button.isChecked()
         if hasattr(self, 'rotate_button'):
             self._pre_creation_button_states['rotate'] = self.rotate_button.isChecked()
-        
+
         pass
 
     def _restore_button_states(self):
@@ -2195,13 +2245,15 @@ class MainWindow(QMainWindow):
         if not hasattr(self, '_pre_creation_button_states') or not self._pre_creation_button_states:
             pass
             return
-        
+
         states = self._pre_creation_button_states
-        
+
         # Restore button states (control points were preserved, so no need to restore)
         # Control points button state was never changed during strand creation
         # if hasattr(self, 'toggle_control_points_button') and 'control_points' in states:
         #     self.toggle_control_points_button.setChecked(states['control_points'])
+        if hasattr(self, 'view_button') and 'view' in states:
+            self.view_button.setChecked(states['view'])
         if hasattr(self, 'angle_adjust_button') and 'angle_adjust' in states:
             self.angle_adjust_button.setChecked(states['angle_adjust'])
         if hasattr(self, 'attach_button') and 'attach' in states:
@@ -2212,10 +2264,10 @@ class MainWindow(QMainWindow):
             self.mask_button.setChecked(states['mask'])
         if hasattr(self, 'rotate_button') and 'rotate' in states:
             self.rotate_button.setChecked(states['rotate'])
-        
+
         # Clear saved states
         self._pre_creation_button_states = {}
-        
+
         pass
 
     def toggle_angle_adjust_mode(self):
@@ -2412,6 +2464,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(_['main_window_title'])
 
         # Update button texts
+        self.view_button.setText(_['view_mode'])
         self.attach_button.setText(_['attach_mode'])
         self.move_button.setText(_['move_mode'])
         self.rotate_button.setText(_['rotate_mode'])

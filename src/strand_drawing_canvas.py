@@ -2312,18 +2312,32 @@ class StrandDrawingCanvas(QWidget):
                                     )
                                 )
                             
-                            # Draw with red color for non-selected rectangles
-                            square_color = QColor(255, 0, 0, 38)  # Red with 85% transparency
-                            painter.setBrush(QBrush(square_color))
+                            # Get hover state from MoveMode
+                            hovered_strand = getattr(self.current_mode, 'hovered_strand', None)
+                            hovered_side = getattr(self.current_mode, 'hovered_side', None)
+
+                            # Default red color for non-selected rectangles
+                            red_color = QColor(255, 0, 0, 38)  # Red with 85% transparency
+                            hover_color = QColor(255, 230, 160, 70)  # Yellow with transparency (same as selection)
                             painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
-                            
+
                             # Draw square around start point if not selected, not overlapping with yellow, and not already drawn
                             if draw_start:
+                                # Check if this start point is being hovered
+                                if strand == hovered_strand and hovered_side == 0:
+                                    painter.setBrush(QBrush(hover_color))
+                                else:
+                                    painter.setBrush(QBrush(red_color))
                                 painter.drawRect(start_rect)
                                 drawn_rectangle_positions.append(QPointF(strand.start))
 
                             # Draw square around end point if not selected, not overlapping with yellow, and not already drawn
                             if draw_end:
+                                # Check if this end point is being hovered
+                                if strand == hovered_strand and hovered_side == 1:
+                                    painter.setBrush(QBrush(hover_color))
+                                else:
+                                    painter.setBrush(QBrush(red_color))
                                 painter.drawRect(end_rect)
                                 drawn_rectangle_positions.append(QPointF(strand.end))
 
@@ -2388,22 +2402,34 @@ class StrandDrawingCanvas(QWidget):
                                 cp1_overlaps_yellow = yellow_rectangle and cp1_rect and self.rectangles_overlap(cp1_rect, yellow_rectangle)
                                 cp2_overlaps_yellow = yellow_rectangle and cp2_rect and self.rectangles_overlap(cp2_rect, yellow_rectangle)
                                 cp3_overlaps_yellow = yellow_rectangle and cp3_rect and self.rectangles_overlap(cp3_rect, yellow_rectangle)
-                                # Draw with green color for non-selected control points
-                                square_color = QColor(0, 100, 0, 38)  # Green with 85% transparency
-                                painter.setBrush(QBrush(square_color))
+                                # Colors for control points
+                                green_color = QColor(0, 100, 0, 38)  # Green with 85% transparency
+                                # hover_color already defined above
                                 painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
-                                
+
                                 # If moving a control point, only draw the specific control point being moved
                                 if is_moving_control_point:
                                     if selected_side == 'control_point1' and cp1_rect and not skip_cp1 and not cp1_overlaps_yellow:
+                                        if strand == hovered_strand and hovered_side == 'control_point1':
+                                            painter.setBrush(QBrush(hover_color))
+                                        else:
+                                            painter.setBrush(QBrush(green_color))
                                         painter.drawRect(cp1_rect)
                                         cp1_drawn = True
                                     elif selected_side == 'control_point2' and cp2_rect and not skip_cp2 and not cp2_overlaps_yellow:
+                                        if strand == hovered_strand and hovered_side == 'control_point2':
+                                            painter.setBrush(QBrush(hover_color))
+                                        else:
+                                            painter.setBrush(QBrush(green_color))
                                         painter.drawRect(cp2_rect)
                                         cp2_drawn = True
                                     elif (selected_side == 'control_point_center' and triangle_has_moved and cp3_rect
                                           and not skip_cp3 and not cp3_overlaps_yellow
                                           and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point):
+                                        if strand == hovered_strand and hovered_side == 'control_point_center':
+                                            painter.setBrush(QBrush(hover_color))
+                                        else:
+                                            painter.setBrush(QBrush(green_color))
                                         painter.drawRect(cp3_rect)
                                         cp3_drawn = True
                                     # Bias controls when moving them
@@ -2430,6 +2456,10 @@ class StrandDrawingCanvas(QWidget):
                                 else:
                                     # Normal drawing when not moving a control point
                                     if cp1_rect and not skip_cp1 and not cp1_overlaps_yellow:
+                                        if strand == hovered_strand and hovered_side == 'control_point1':
+                                            painter.setBrush(QBrush(hover_color))
+                                        else:
+                                            painter.setBrush(QBrush(green_color))
                                         painter.drawRect(cp1_rect)
                                         cp1_drawn = True
 
@@ -2438,27 +2468,43 @@ class StrandDrawingCanvas(QWidget):
                                     # This makes control_point2 visible and clickable
                                     if cp2_rect and not skip_cp2 and not cp2_overlaps_yellow:
                                         if hasattr(strand, 'control_point2_shown') and strand.control_point2_shown:
+                                            if strand == hovered_strand and hovered_side == 'control_point2':
+                                                painter.setBrush(QBrush(hover_color))
+                                            else:
+                                                painter.setBrush(QBrush(green_color))
                                             painter.drawRect(cp2_rect)
                                             cp2_drawn = True
                                     if (triangle_has_moved and cp3_rect and not skip_cp3 and not cp3_overlaps_yellow
                                             and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point):
+                                        if strand == hovered_strand and hovered_side == 'control_point_center':
+                                            painter.setBrush(QBrush(hover_color))
+                                        else:
+                                            painter.setBrush(QBrush(green_color))
                                         painter.drawRect(cp3_rect)
                                         cp3_drawn = True
                                     # Also draw bias control rectangles (transparent green baseline)
                                     if (triangle_has_moved and hasattr(self, 'enable_curvature_bias_control')
                                             and self.enable_curvature_bias_control
                                             and hasattr(strand, 'bias_control') and strand.bias_control):
-                                        tp, cp = strand.bias_control.get_bias_control_positions(strand)
+                                        tp, cp_pos = strand.bias_control.get_bias_control_positions(strand)
                                         if tp:
                                             bias_square_size = 50  # Same size as regular control points
                                             bias_half_size = bias_square_size / 2
                                             bt_rect = QRectF(tp.x() - bias_half_size, tp.y() - bias_half_size, bias_square_size, bias_square_size)
+                                            if strand == hovered_strand and hovered_side == 'bias_triangle':
+                                                painter.setBrush(QBrush(hover_color))
+                                            else:
+                                                painter.setBrush(QBrush(green_color))
                                             painter.drawRect(bt_rect)
                                             bias_triangle_drawn = True
-                                        if cp:
+                                        if cp_pos:
                                             bias_square_size = 50  # Same size as regular control points
                                             bias_half_size = bias_square_size / 2
-                                            bc_rect = QRectF(cp.x() - bias_half_size, cp.y() - bias_half_size, bias_square_size, bias_square_size)
+                                            bc_rect = QRectF(cp_pos.x() - bias_half_size, cp_pos.y() - bias_half_size, bias_square_size, bias_square_size)
+                                            if strand == hovered_strand and hovered_side == 'bias_circle':
+                                                painter.setBrush(QBrush(hover_color))
+                                            else:
+                                                painter.setBrush(QBrush(green_color))
                                             painter.drawRect(bc_rect)
                                             bias_circle_drawn = True
                                 

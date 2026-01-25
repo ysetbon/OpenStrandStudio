@@ -1,419 +1,506 @@
-2026-01-25T13:36:02.068909 - Selection rectangle debug logging started
-2026-01-25T13:36:11.113849 - MOVE_MODE - start_movement strand=1_1 id=0x170de8bcf20 side=1 is_moving_control_point=False is_moving_strand_point=True draw_only_affected=False
-2026-01-25T13:36:11.132789 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.133785 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.151911 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.151911 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.353184 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.353184 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.375564 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.376565 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.413050 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.414064 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.432342 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.433448 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.465523 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.465523 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.484922 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.484922 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.533613 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.533613 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.552414 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.553840 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.687542 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.687542 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.706932 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.708383 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.730401 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.731404 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.751239 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.751239 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.768388 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.768388 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.787226 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.787226 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.808488 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.809567 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.828946 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.830300 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.847917 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:11.848923 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:11.911901 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=False is_moving_strand_point=True
-2026-01-25T13:36:11.912282 - MOVE_MODE - reset_movement_state end flags cleared
-2026-01-25T13:36:12.831272 - MOVE_MODE - start_movement strand=1_1 id=0x170de8bcf20 side=0 is_moving_control_point=False is_moving_strand_point=True draw_only_affected=False
-2026-01-25T13:36:12.848220 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:12.849216 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:12.870146 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:12.870146 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:12.917026 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:12.918348 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:12.935645 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:12.935645 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:12.980822 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:12.981842 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:13.001480 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:13.001480 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:13.046207 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:13.047640 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:13.066679 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:13.067674 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:13.112579 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:13.112579 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:13.134834 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:13.134834 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:13.199283 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:13.199283 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:13.220085 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:13.220085 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:13.240791 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:13.242115 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:13.263504 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:13.264841 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:13.283149 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:13.283149 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:13.302264 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:13.302264 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:13.324411 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:13.324411 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:13.347137 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:13.348632 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:13.366640 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:13.367650 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:13.389495 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:13.389495 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:13.417786 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:13.418460 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:13.440892 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:13.440892 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:13.462217 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=False is_moving_strand_point=True
-2026-01-25T13:36:13.463546 - MOVE_MODE - reset_movement_state end flags cleared
-2026-01-25T13:36:13.977142 - MOVE_MODE - start_movement strand=1_1 id=0x170de8bcf20 side=control_point1 is_moving_control_point=True is_moving_strand_point=False draw_only_affected=False
-2026-01-25T13:36:13.997924 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:13.998935 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:14.021102 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:14.021102 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:14.081856 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:14.082863 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:14.100220 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:14.101290 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:14.122161 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:14.122161 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:14.144874 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:14.145873 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:14.168167 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:14.168167 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:14.195633 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:14.196697 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:14.217079 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:14.217079 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:14.236437 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:14.236437 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:14.255777 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:14.256878 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:14.277527 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:14.278972 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:14.298088 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:14.299095 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:14.318347 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:14.319365 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:14.368404 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=True is_moving_strand_point=False
-2026-01-25T13:36:14.369260 - MOVE_MODE - reset_movement_state end flags cleared
-2026-01-25T13:36:20.745827 - MOVE_MODE - start_movement strand=1_1 id=0x170de8bcf20 side=0 is_moving_control_point=False is_moving_strand_point=True draw_only_affected=False
-2026-01-25T13:36:20.762776 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:20.763773 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:20.780981 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:20.782079 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:20.800462 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:20.800462 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:20.818070 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:20.818070 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:20.880316 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:20.881311 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:20.900787 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:20.900787 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:20.921999 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:20.922996 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:20.944887 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:20.945934 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:20.966439 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:20.966439 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:20.985833 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:20.985833 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:21.006399 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:21.007408 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:21.031418 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:21.032446 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:21.051694 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:21.052759 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:21.129293 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=False is_moving_strand_point=True
-2026-01-25T13:36:21.129907 - MOVE_MODE - reset_movement_state end flags cleared
-2026-01-25T13:36:21.945439 - MOVE_MODE - start_movement strand=1_1 id=0x170de8bcf20 side=1 is_moving_control_point=False is_moving_strand_point=True draw_only_affected=False
-2026-01-25T13:36:21.965397 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:21.966423 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:21.989324 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:21.989324 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.013295 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:22.014284 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.047242 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:22.048257 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.067346 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:22.067346 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.087758 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:22.088763 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.111914 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:22.113235 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.135403 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:22.136422 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.158969 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:22.159967 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.181061 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:22.182118 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.204298 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:22.205304 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.232113 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:22.232113 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.250993 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:22.252123 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.274655 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:22.274655 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.314406 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=False is_moving_strand_point=True
-2026-01-25T13:36:22.315528 - MOVE_MODE - reset_movement_state end flags cleared
-2026-01-25T13:36:22.747135 - MOVE_MODE - start_movement strand=1_1 id=0x170de8bcf20 side=control_point2 is_moving_control_point=True is_moving_strand_point=False draw_only_affected=False
-2026-01-25T13:36:22.763687 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:22.764746 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.782997 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:22.782997 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.846889 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:22.846889 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.866572 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:22.866572 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.888948 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:22.888948 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.913382 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:22.913382 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.934553 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:22.934553 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.956616 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:22.956616 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:22.982770 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:22.982770 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:23.007243 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:23.008527 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:23.031209 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:23.031209 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:23.051835 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:23.051835 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:23.073637 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:23.074675 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:23.095684 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:23.096695 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:23.127738 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=True is_moving_strand_point=False
-2026-01-25T13:36:23.128265 - MOVE_MODE - reset_movement_state end flags cleared
-2026-01-25T13:36:23.716390 - MOVE_MODE - start_movement strand=1_1 id=0x170de8bcf20 side=control_point2 is_moving_control_point=True is_moving_strand_point=False draw_only_affected=False
-2026-01-25T13:36:23.733465 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:23.734723 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:23.751502 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:23.751502 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:23.926711 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:23.927706 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:23.949703 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:23.950747 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:23.979637 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:23.979637 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.000965 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:24.001971 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.026737 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:24.027751 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.049958 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:24.049958 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.072452 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:24.072452 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.097654 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:24.097654 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.117863 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:24.117863 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.142250 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:24.142250 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.165832 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:24.165832 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.187732 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:24.187732 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.211756 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=True is_moving_strand_point=False
-2026-01-25T13:36:24.212232 - MOVE_MODE - reset_movement_state end flags cleared
-2026-01-25T13:36:24.655801 - MOVE_MODE - start_movement strand=1_1 id=0x170de8bcf20 side=1 is_moving_control_point=False is_moving_strand_point=True draw_only_affected=False
-2026-01-25T13:36:24.680550 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:24.680550 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.699585 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:24.699585 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.729361 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:24.729361 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.750270 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:24.751278 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.792398 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:24.793725 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.813833 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:24.813833 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.831130 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:24.832145 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.851036 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:24.851036 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.872879 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:24.874065 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.896530 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:24.896530 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.915896 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:24.915896 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:24.935417 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:24.935417 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:25.141958 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=False is_moving_strand_point=True
-2026-01-25T13:36:25.142672 - MOVE_MODE - reset_movement_state end flags cleared
-2026-01-25T13:36:25.852334 - MOVE_MODE - start_movement strand=1_1 id=0x170de8bcf20 side=0 is_moving_control_point=False is_moving_strand_point=True draw_only_affected=False
-2026-01-25T13:36:25.875595 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:25.875595 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:25.899386 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:25.900487 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:26.016487 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:26.016487 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:26.042412 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:26.044416 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:26.077045 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:26.078039 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:26.103417 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:26.103417 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:26.131536 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:26.132544 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:26.158617 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:26.159609 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:26.182822 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:26.182822 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:26.214357 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
-2026-01-25T13:36:26.215359 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:26.484591 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=False is_moving_strand_point=True
-2026-01-25T13:36:26.485664 - MOVE_MODE - reset_movement_state end flags cleared
-2026-01-25T13:36:27.397021 - MOVE_MODE - start_movement strand=1_1 id=0x170de8bcf20 side=control_point1 is_moving_control_point=True is_moving_strand_point=False draw_only_affected=False
-2026-01-25T13:36:27.417953 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:27.419946 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:27.444649 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:27.445706 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:27.546325 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:27.546325 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:27.567134 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:27.567134 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:27.595453 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:27.596507 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:27.617101 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:27.617101 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:27.647712 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:27.648719 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:27.670430 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
-2026-01-25T13:36:27.671894 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:27.677191 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=True is_moving_strand_point=False
-2026-01-25T13:36:27.678198 - MOVE_MODE - reset_movement_state end flags cleared
-2026-01-25T13:36:28.495320 - MOVE_MODE - start_movement strand=1_1 id=0x170de8bcf20 side=1 is_moving_control_point=False is_moving_strand_point=True draw_only_affected=False
-2026-01-25T13:36:28.513263 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:28.513263 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:28.531342 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:28.532344 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:28.582719 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:28.582719 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:28.607821 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:28.608912 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:28.632141 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:28.632141 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:28.654544 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:28.654544 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:28.679584 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:28.680596 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:28.699195 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:28.699195 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:28.719902 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:28.719902 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:28.746560 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:28.746560 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:28.765239 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:28.766242 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:28.785201 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:28.785201 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:28.830333 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
-2026-01-25T13:36:28.831335 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:28.832716 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=False is_moving_strand_point=True
-2026-01-25T13:36:28.834032 - MOVE_MODE - reset_movement_state end flags cleared
-2026-01-25T13:36:31.552051 - MOVE_MODE - start_movement strand=1_1 id=0x170de8bcf20 side=control_point2 is_moving_control_point=True is_moving_strand_point=False draw_only_affected=False
-2026-01-25T13:36:31.572231 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.573421 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:31.595814 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.595814 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:31.618614 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.619609 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:31.645620 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.647165 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:31.667375 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.667375 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:31.690491 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.691485 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:31.713985 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.714982 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:31.735138 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.736142 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:31.760786 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.760786 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:31.780676 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.780676 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:31.800159 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.801155 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:31.825742 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.826732 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:31.846713 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.847704 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:31.866490 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.866490 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:31.884602 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.885639 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:31.910909 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.910909 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:31.932098 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.932098 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:31.952495 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.953492 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:31.980368 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:31.980368 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:32.008417 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:32.008417 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:32.033185 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:32.033185 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:32.059626 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:32.060904 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:32.085677 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:32.085677 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:32.112729 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:32.112729 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:32.133086 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:32.134082 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:32.160268 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:32.160268 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:32.181187 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:32.181187 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:32.201355 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:32.202359 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:32.428000 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:32.429012 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:32.448805 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:32.449811 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:32.476256 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:32.476256 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:32.497693 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:32.497693 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:32.564440 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:32.564440 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:32.585474 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:32.586825 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:32.615086 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:32.615086 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:32.642178 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:32.643187 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:32.682742 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:32.683739 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:33.031889 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
-2026-01-25T13:36:33.031889 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
-2026-01-25T13:36:33.034500 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=True is_moving_strand_point=False
-2026-01-25T13:36:33.035343 - MOVE_MODE - reset_movement_state end flags cleared
+2026-01-25T13:47:11.425546 - Selection rectangle debug logging started
+2026-01-25T13:47:18.352807 - MOVE_MODE - start_movement strand=1_1 id=0x2883bb58f80 side=0 is_moving_control_point=False is_moving_strand_point=True draw_only_affected=False
+2026-01-25T13:47:18.372742 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.372742 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.397811 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.398805 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.419060 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.420455 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.442160 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.443653 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.466950 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.468792 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.486221 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.487402 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.509411 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.510470 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.532255 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.532255 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.553765 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.554771 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.574120 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.574120 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.596345 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.597589 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.615702 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.616706 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.635010 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.636113 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.656284 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.657294 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.679323 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.680727 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.698390 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.698390 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.716923 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.717919 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.737185 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.737185 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.760308 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.760308 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.780585 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.781941 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.798939 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.799936 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.817485 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:18.817485 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:18.900817 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=False is_moving_strand_point=True
+2026-01-25T13:47:18.902077 - MOVE_MODE - reset_movement_state end flags cleared
+2026-01-25T13:47:19.624019 - MOVE_MODE - start_movement strand=1_1 id=0x2883bb58f80 side=control_point1 is_moving_control_point=True is_moving_strand_point=False draw_only_affected=False
+2026-01-25T13:47:19.647281 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:19.648319 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:19.672488 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:19.673511 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:19.737074 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:19.738118 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:19.761507 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:19.761507 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:19.785837 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:19.785837 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:19.808586 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:19.809584 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:19.834390 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:19.834390 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:19.857914 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:19.857914 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:19.878989 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:19.880273 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:19.947986 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:19.948993 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:19.968285 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:19.968285 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:20.094249 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:20.095440 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:20.114975 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:20.116011 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:20.133598 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:20.134605 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:20.152626 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:20.152626 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:20.170776 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:20.171800 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:20.195606 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:20.196602 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:20.214607 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:20.215604 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:20.324042 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=True is_moving_strand_point=False
+2026-01-25T13:47:20.324642 - MOVE_MODE - reset_movement_state end flags cleared
+2026-01-25T13:47:20.731593 - MOVE_MODE - start_movement strand=1_1 id=0x2883bb58f80 side=control_point1 is_moving_control_point=True is_moving_strand_point=False draw_only_affected=False
+2026-01-25T13:47:20.749535 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:20.749535 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:20.768899 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:20.768899 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:20.815144 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:20.816150 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:20.838099 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:20.838099 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:20.862851 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:20.862851 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:20.883808 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:20.883808 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:20.904642 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:20.904642 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:20.926586 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:20.926586 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:20.951109 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:20.951109 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:20.970143 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:20.970143 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:20.988818 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:20.989841 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:21.084756 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=True is_moving_strand_point=False
+2026-01-25T13:47:21.085851 - MOVE_MODE - reset_movement_state end flags cleared
+2026-01-25T13:47:21.972933 - MOVE_MODE - start_movement strand=1_1 id=0x2883bb58f80 side=control_point2 is_moving_control_point=True is_moving_strand_point=False draw_only_affected=False
+2026-01-25T13:47:21.995182 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2026-01-25T13:47:21.996211 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:22.018425 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2026-01-25T13:47:22.018425 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:22.107711 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2026-01-25T13:47:22.107711 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:22.135029 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2026-01-25T13:47:22.136025 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:22.155959 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2026-01-25T13:47:22.156955 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:22.181549 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2026-01-25T13:47:22.181549 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:22.205360 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2026-01-25T13:47:22.206575 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:22.235192 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2026-01-25T13:47:22.235192 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:22.264622 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2026-01-25T13:47:22.265617 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:22.284291 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2026-01-25T13:47:22.285414 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:22.304060 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2026-01-25T13:47:22.304060 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:22.326670 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2026-01-25T13:47:22.327685 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:22.350834 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2026-01-25T13:47:22.351828 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:22.370780 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2026-01-25T13:47:22.371788 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:22.395044 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point2
+2026-01-25T13:47:22.396035 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:22.420425 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=True is_moving_strand_point=False
+2026-01-25T13:47:22.421561 - MOVE_MODE - reset_movement_state end flags cleared
+2026-01-25T13:47:31.323645 - MOVE_MODE - start_movement strand=1_1 id=0x2883bb58f80 side=control_point_center is_moving_control_point=True is_moving_strand_point=False draw_only_affected=False
+2026-01-25T13:47:31.359131 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2026-01-25T13:47:31.361120 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:31.398819 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2026-01-25T13:47:31.399815 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:31.473538 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2026-01-25T13:47:31.473538 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:31.507396 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2026-01-25T13:47:31.508420 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:31.537478 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2026-01-25T13:47:31.538474 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:31.570405 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2026-01-25T13:47:31.570405 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:31.602924 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2026-01-25T13:47:31.602924 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:31.636967 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2026-01-25T13:47:31.636967 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:31.671196 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2026-01-25T13:47:31.671196 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:31.703639 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2026-01-25T13:47:31.703639 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:32.018597 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2026-01-25T13:47:32.018597 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:32.051513 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2026-01-25T13:47:32.051513 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:32.084663 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2026-01-25T13:47:32.085668 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:32.121123 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2026-01-25T13:47:32.121123 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:32.152728 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2026-01-25T13:47:32.153731 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:32.186044 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2026-01-25T13:47:32.186044 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:32.217787 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2026-01-25T13:47:32.217787 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:32.245820 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point_center
+2026-01-25T13:47:32.246830 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:32.300880 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=True is_moving_strand_point=False
+2026-01-25T13:47:32.302206 - MOVE_MODE - reset_movement_state end flags cleared
+2026-01-25T13:47:32.807360 - MOVE_MODE - start_movement strand=1_1 id=0x2883bb58f80 side=bias_triangle is_moving_control_point=True is_moving_strand_point=False draw_only_affected=False
+2026-01-25T13:47:32.849655 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:32.849655 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:32.885269 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:32.885269 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:32.920124 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:32.921128 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:32.953884 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:32.953884 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:32.985761 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:32.987013 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.020511 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.020511 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.052865 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.054023 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.092776 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.095315 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.128946 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.130357 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.163729 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.163729 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.194028 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.195428 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.235165 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.236161 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.267328 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.268349 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.308127 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.309128 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.354968 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.355965 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.405797 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.405797 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.454635 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.455631 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.502695 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.502695 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.537526 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.537526 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.586668 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.586668 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.620315 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.621312 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.654711 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.655709 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.688686 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.689683 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.722344 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.722344 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.756510 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.757508 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.788493 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.790375 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.825620 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.826616 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.860503 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.861498 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.893294 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.894294 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.925735 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.926786 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.958522 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.959762 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:33.990085 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:33.991091 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.021321 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.022423 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.054367 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.054367 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.085482 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.085482 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.118273 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.119276 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.150442 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.150442 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.187275 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.188411 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.224119 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.226151 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.256689 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.258131 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.296284 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.297660 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.327828 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.328854 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.366550 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.366550 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.399602 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.400611 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.431666 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.431666 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.460990 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.462019 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.488519 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.488519 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.518069 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.519113 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.547559 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.548663 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.571685 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.571685 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.601122 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.601122 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.628457 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.629472 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.652831 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.654329 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.684605 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.685601 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.716206 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.717231 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.743420 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.744596 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.770093 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.770093 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.800204 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.801216 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.830289 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=bias_triangle
+2026-01-25T13:47:34.831324 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:34.834499 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=True is_moving_strand_point=False
+2026-01-25T13:47:34.835582 - MOVE_MODE - reset_movement_state end flags cleared
+2026-01-25T13:47:35.255052 - MOVE_MODE - start_movement strand=1_1 id=0x2883bb58f80 side=control_point1 is_moving_control_point=True is_moving_strand_point=False draw_only_affected=False
+2026-01-25T13:47:35.286789 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:35.286789 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:35.319936 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:35.320933 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:35.455687 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:35.455687 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:35.486270 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:35.486270 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:35.520969 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:35.522252 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:35.555709 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:35.557086 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:35.587002 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:35.587002 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:35.618640 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:35.619656 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:35.650054 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:35.650054 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:35.686510 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:35.687514 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:35.731684 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:35.733131 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:35.773009 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:35.774105 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:35.813170 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:35.814464 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:35.854949 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:35.855956 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:35.894065 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:35.895088 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:35.931775 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:35.933057 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:35.969519 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:35.969519 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:36.008496 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:36.009893 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:36.115060 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:36.116444 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:36.144416 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:36.145422 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:36.172470 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:36.173479 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:36.199417 - draw_control_points loop strand=1_1 moving_control_point=True moving_strand_point=False draw_only_setting_on=False should_skip=False is_affected=True moving_side=control_point1
+2026-01-25T13:47:36.199417 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:36.586456 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=True is_moving_strand_point=False
+2026-01-25T13:47:36.586883 - MOVE_MODE - reset_movement_state end flags cleared
+2026-01-25T13:47:37.029690 - MOVE_MODE - start_movement strand=1_1 id=0x2883bb58f80 side=0 is_moving_control_point=False is_moving_strand_point=True draw_only_affected=False
+2026-01-25T13:47:37.051174 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:37.051174 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:37.083454 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:37.083454 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:37.120966 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:37.120966 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:37.424449 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=False is_moving_strand_point=True
+2026-01-25T13:47:37.426445 - MOVE_MODE - reset_movement_state end flags cleared
+2026-01-25T13:47:38.362186 - MOVE_MODE - reset_movement_state begin affected=None is_moving=False is_moving_control_point=False is_moving_strand_point=False
+2026-01-25T13:47:38.362186 - MOVE_MODE - reset_movement_state end flags cleared
+2026-01-25T13:47:38.634987 - MOVE_MODE - start_movement strand=1_1 id=0x2883bb58f80 side=0 is_moving_control_point=False is_moving_strand_point=True draw_only_affected=False
+2026-01-25T13:47:38.664766 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:38.666235 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:38.692730 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:38.694132 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:38.789171 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:38.790174 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:38.818266 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:38.819743 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:38.855500 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:38.855500 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:38.883456 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:38.883456 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:38.915871 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:38.915871 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:38.950797 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:38.950797 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:38.981134 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:38.982617 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.010092 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.011112 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.038507 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.038507 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.069363 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.069363 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.106725 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.107729 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.148062 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.149059 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.268919 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.268919 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.303397 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.303397 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.332796 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.333799 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.362911 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.363924 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.387195 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.387195 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.415229 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.416256 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.438510 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.439958 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.466825 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.466825 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.493377 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.494383 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.518354 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.518354 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.550883 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.550883 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.743766 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.743766 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.767477 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.768485 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.797458 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.797458 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.819563 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.821011 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.849194 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.850204 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.874611 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.876095 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:39.899767 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:39.899767 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:40.089120 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:40.090542 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:40.121293 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:40.122290 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:40.154048 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:40.154048 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:40.184577 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:40.185640 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:40.218192 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:40.218192 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:40.249948 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:40.251415 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:40.283043 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:40.283043 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:40.316532 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:40.317552 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:40.348230 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:40.349227 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:40.679446 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:40.680470 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:40.702091 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:40.702091 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:40.731970 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:40.731970 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:40.754065 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:40.755081 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:40.862359 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=False is_moving_strand_point=True
+2026-01-25T13:47:40.863225 - MOVE_MODE - reset_movement_state end flags cleared
+2026-01-25T13:47:41.345944 - MOVE_MODE - start_movement strand=1_1 id=0x2883bb58f80 side=0 is_moving_control_point=False is_moving_strand_point=True draw_only_affected=False
+2026-01-25T13:47:41.366167 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:41.366167 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:41.393993 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:41.394988 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:41.416566 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:41.417581 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:41.459680 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:41.460686 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:41.484358 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:41.484358 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:41.514293 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:41.515739 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:41.538440 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:41.538440 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:41.566328 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:41.566328 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:41.593227 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:41.593227 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:41.617862 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:41.617862 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:41.648579 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:41.648579 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:41.676906 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=0
+2026-01-25T13:47:41.677889 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:41.980456 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=False is_moving_strand_point=True
+2026-01-25T13:47:41.981598 - MOVE_MODE - reset_movement_state end flags cleared
+2026-01-25T13:47:42.581491 - MOVE_MODE - start_movement strand=1_1 id=0x2883bb58f80 side=1 is_moving_control_point=False is_moving_strand_point=True draw_only_affected=False
+2026-01-25T13:47:42.603420 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2026-01-25T13:47:42.604417 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:42.629599 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2026-01-25T13:47:42.629599 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:42.653633 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2026-01-25T13:47:42.653633 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:42.682465 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2026-01-25T13:47:42.683460 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:42.710649 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2026-01-25T13:47:42.712057 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:42.734789 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2026-01-25T13:47:42.734789 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:42.764607 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2026-01-25T13:47:42.765634 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:42.788609 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2026-01-25T13:47:42.789607 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:42.815330 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2026-01-25T13:47:42.816327 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:42.843651 - draw_control_points loop strand=1_1 moving_control_point=False moving_strand_point=True draw_only_setting_on=False should_skip=False is_affected=True moving_side=1
+2026-01-25T13:47:42.844660 - Drawing normal control points for strand=1_1 (draw_only_setting_on=False)
+2026-01-25T13:47:43.034998 - MOVE_MODE - reset_movement_state begin affected=1_1 is_moving=True is_moving_control_point=False is_moving_strand_point=True
+2026-01-25T13:47:43.035846 - MOVE_MODE - reset_movement_state end flags cleared

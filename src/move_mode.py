@@ -121,6 +121,10 @@ class MoveMode:
         self.connection_cache = {}  # Cache for connection relationships
         self.cache_valid = False  # Flag to track if cache is valid
 
+        # Hover tracking for visual feedback
+        self.hovered_strand = None  # The strand being hovered over
+        self.hovered_side = None  # Which side is being hovered (0, 1, 'control_point1', 'control_point2', 'control_point_center')
+
     def setup_timer(self):
         """Set up the timer for gradual movement."""
         from PyQt5.QtCore import QTimer
@@ -2172,6 +2176,95 @@ class MoveMode:
 
         return path
 
+    def _update_hover_state(self, pos):
+        """
+        Update the hover state based on the current mouse position.
+        Checks if the mouse is hovering over any strand endpoint or control point.
+
+        Args:
+            pos (QPointF): The current mouse position.
+        """
+        old_hovered_strand = self.hovered_strand
+        old_hovered_side = self.hovered_side
+
+        # Reset hover state
+        self.hovered_strand = None
+        self.hovered_side = None
+
+        # Check all strands for hover
+        for i, strand in enumerate(self.canvas.strands):
+            if getattr(strand, 'deleted', False) or isinstance(strand, MaskedStrand) or getattr(strand, 'is_hidden', False):
+                continue
+            if self.lock_mode_active and i in self.locked_layers:
+                continue
+
+            # Check control points first (they're drawn on top)
+            if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
+                # Check if control points should be shown
+                triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
+
+                if triangle_has_moved:
+                    # Check control_point1 (triangle)
+                    cp1_rect = self.get_control_point_rectangle(strand, 1)
+                    if cp1_rect and cp1_rect.contains(pos):
+                        self.hovered_strand = strand
+                        self.hovered_side = 'control_point1'
+                        break
+
+                    # Check control_point2 (circle)
+                    cp2_rect = self.get_control_point_rectangle(strand, 2)
+                    if cp2_rect and cp2_rect.contains(pos):
+                        self.hovered_strand = strand
+                        self.hovered_side = 'control_point2'
+                        break
+
+                    # Check control_point_center (rectangle) if enabled
+                    if (hasattr(self.canvas, 'enable_third_control_point') and
+                        self.canvas.enable_third_control_point and
+                        hasattr(strand, 'control_point_center')):
+                        cp3_rect = self.get_control_point_rectangle(strand, 3)
+                        if cp3_rect and cp3_rect.contains(pos):
+                            self.hovered_strand = strand
+                            self.hovered_side = 'control_point_center'
+                            break
+
+                    # Check bias controls if enabled
+                    if (hasattr(self.canvas, 'enable_curvature_bias_control') and
+                        self.canvas.enable_curvature_bias_control and
+                        hasattr(strand, 'bias_control') and strand.bias_control):
+                        tp, cp = strand.bias_control.get_bias_control_positions(strand)
+                        bias_size = 50
+                        half_bias = bias_size / 2
+                        if tp:
+                            bt_rect = QRectF(tp.x() - half_bias, tp.y() - half_bias, bias_size, bias_size)
+                            if bt_rect.contains(pos):
+                                self.hovered_strand = strand
+                                self.hovered_side = 'bias_triangle'
+                                break
+                        if cp:
+                            bc_rect = QRectF(cp.x() - half_bias, cp.y() - half_bias, bias_size, bias_size)
+                            if bc_rect.contains(pos):
+                                self.hovered_strand = strand
+                                self.hovered_side = 'bias_circle'
+                                break
+
+            # Check start and end points
+            start_area = self.get_start_area(strand)
+            if start_area.contains(pos):
+                self.hovered_strand = strand
+                self.hovered_side = 0
+                break
+
+            end_area = self.get_end_area(strand)
+            if end_area.contains(pos):
+                self.hovered_strand = strand
+                self.hovered_side = 1
+                break
+
+        # Only update canvas if hover state changed
+        if old_hovered_strand != self.hovered_strand or old_hovered_side != self.hovered_side:
+            self.canvas.update()
+
     def can_move_side(self, strand, side, strand_index):
         """
         Check if the side of a strand can be moved.
@@ -2205,7 +2298,11 @@ class MoveMode:
 
     def start_movement(self, strand, side, area, actual_click_pos=None):
         """Start movement tracking for a strand."""
-        
+
+        # Clear hover state when starting movement
+        self.hovered_strand = None
+        self.hovered_side = None
+
         # Ensure canvas is fully updated before starting movement
         # This is important when movement starts immediately after creating an attached strand
         self.canvas.update()
@@ -3834,8 +3931,9 @@ class MoveMode:
                     self.canvas.update()
                     return
         
-        # If we're not in a moving state, do nothing
+        # If we're not in a moving state, check for hover
         if not self.is_moving:
+            self._update_hover_state(event.pos())
             return
             
         # Get the current position (already converted to canvas coordinates by canvas)

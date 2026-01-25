@@ -397,6 +397,7 @@ class LayerPanel(QWidget):
         # Create left panel (existing layer panel)
         self.left_panel = QWidget()
         self.left_layout = QVBoxLayout(self.left_panel)
+        self.left_layout.setContentsMargins(0, 0, 0, 0)
 
         # **Add the splitter handle at the top of the left layout**
         self.handle = SplitterHandle(self)

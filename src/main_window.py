@@ -1166,7 +1166,7 @@ class MainWindow(QMainWindow):
             # (button_object, normal_bg, hover_bg, pressed_bg, disabled_bg)
             (
                 self.view_button,
-                "#C2A1A1",    # normal (dusty rose)
+                "#ccbaba",    # normal (dusty rose)
                 "#E2C4C4",    # hover (lighter dusty rose)
                 "#B88A8A",    # pressed (darker dusty rose)
                 "#B88A8A"     # disabled

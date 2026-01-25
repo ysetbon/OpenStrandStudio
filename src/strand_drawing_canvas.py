@@ -16,6 +16,7 @@ import math
 import traceback 
 from math import radians, cos, sin, atan2, degrees
 from rotate_mode import RotateMode
+from view_mode import ViewMode
 from PyQt5.QtWidgets import QCheckBox, QLineEdit, QPushButton
 import traceback
 import os
@@ -189,7 +190,8 @@ class StrandDrawingCanvas(QWidget):
         self.pan_offset_y = 0  # Current pan offset in Y direction
         self.pan_start_pos = None  # Mouse position when pan starts
         self.pan_start_offset = None  # Pan offset when drag starts
-        
+        self.view_mode_panning = False  # Whether view mode right-click panning is active
+
         # Canvas boundary tracking (based on zoom history)
         self.min_zoom_achieved = 1.0  # Tracks the minimum zoom level achieved
         self.max_canvas_bounds = None  # Will store the maximum canvas area seen
@@ -481,6 +483,9 @@ class StrandDrawingCanvas(QWidget):
         # Select mode setup
         self.select_mode = SelectMode(self)
         self.select_mode.strand_selected.connect(self._handle_select_mode_selection)
+
+        # View mode setup
+        self.view_mode = ViewMode(self)
 
         # Angle adjust mode setup (if used)
         self.angle_adjust_mode = AngleAdjustMode(self)
@@ -1643,7 +1648,35 @@ class StrandDrawingCanvas(QWidget):
                 pass
             else:
                 pass
-    
+
+    def _update_pan_button_for_view_mode(self, is_panning):
+        """Update the pan button state in layer panel for view mode panning."""
+        layer_panel = None
+
+        # Method 1: Direct reference
+        if hasattr(self, 'layer_panel') and self.layer_panel:
+            layer_panel = self.layer_panel
+
+        # Method 2: Through parent
+        elif hasattr(self, 'parent') and self.parent() and hasattr(self.parent(), 'layer_panel'):
+            layer_panel = self.parent().layer_panel
+
+        # Method 3: Search through QApplication
+        if not layer_panel:
+            from PyQt5.QtWidgets import QApplication
+            for widget in QApplication.allWidgets():
+                if hasattr(widget, 'pan_button') and hasattr(widget, 'canvas') and widget.canvas == self:
+                    layer_panel = widget
+                    break
+
+        # Update the pan button if we found the layer panel
+        if layer_panel and hasattr(layer_panel, 'pan_button'):
+            layer_panel.pan_button.setChecked(is_panning)
+            if is_panning:
+                layer_panel.pan_button.setText("✊")  # Closed hand emoji when active
+            else:
+                layer_panel.pan_button.setText("🖐")  # Open hand emoji when inactive
+
     def update_canvas_bounds(self):
         """Update the maximum canvas bounds based on current zoom level"""
         if self.zoom_factor < self.min_zoom_achieved:
@@ -2095,7 +2128,7 @@ class StrandDrawingCanvas(QWidget):
                 triangle_has_moved = getattr(selected_strand, 'triangle_has_moved', False)
                 
                 # Create the yellow rectangle with the consistent size for overlap checking
-                yellow_square_size = 240  # Size for the yellow selection square (2x larger)
+                yellow_square_size = 120  # Size for the yellow selection square
                 half_yellow_size = yellow_square_size / 2
                 square_control_size = 50  # Size for control points
                 half_control_size = square_control_size / 2
@@ -2223,12 +2256,12 @@ class StrandDrawingCanvas(QWidget):
                                     )
                                 continue
                                 
-                            # Increased square size for better visibility (2x larger)
-                            square_size = 240
+                            # Increased square size for better visibility
+                            square_size = 120
                             half_size = square_size / 2
                             square_control_size = 50
                             half_control_size = square_control_size / 2
-                            yellow_square_size = 240  # Size for the yellow selection square (2x larger)
+                            yellow_square_size = 120  # Size for the yellow selection square
                             half_yellow_size = yellow_square_size / 2
                             
                             # Skip drawing only the exact selected point, not any overlapping rectangles
@@ -3851,7 +3884,18 @@ class StrandDrawingCanvas(QWidget):
             self.exit_pan_mode()
             event.accept()
             return
-        
+
+        # Handle view mode right-click panning
+        if self.current_mode == self.view_mode and event.button() == Qt.RightButton:
+            self.view_mode_panning = True
+            self.pan_start_pos = event.pos()
+            self.pan_start_offset = QPointF(self.pan_offset_x, self.pan_offset_y)
+            self.setCursor(Qt.ClosedHandCursor)
+            # Update the pan button in layer panel
+            self._update_pan_button_for_view_mode(True)
+            event.accept()
+            return
+
         if self.mask_edit_mode and event.button() == Qt.LeftButton:
             self.erase_start_pos = canvas_pos
             pass
@@ -4044,7 +4088,16 @@ class StrandDrawingCanvas(QWidget):
             self.update()
             event.accept()
             return
-        
+
+        # Handle view mode right-click panning
+        if self.view_mode_panning and event.buttons() & Qt.RightButton and self.pan_start_pos:
+            delta = event.pos() - self.pan_start_pos
+            self.pan_offset_x = self.pan_start_offset.x() + delta.x()
+            self.pan_offset_y = self.pan_start_offset.y() + delta.y()
+            self.update()
+            event.accept()
+            return
+
         if self.mask_edit_mode and event.buttons() & Qt.LeftButton and self.erase_start_pos:
             # Update the current erase rectangle
             self.current_erase_rect = QRectF(
@@ -4106,7 +4159,17 @@ class StrandDrawingCanvas(QWidget):
             self.exit_pan_mode()
             event.accept()
             return
-        
+
+        # Handle view mode right-click panning release
+        if self.view_mode_panning and event.button() == Qt.RightButton:
+            self.view_mode_panning = False
+            self.pan_start_pos = None
+            self.pan_start_offset = None
+            self.setCursor(Qt.ArrowCursor)
+            self._update_pan_button_for_view_mode(False)
+            event.accept()
+            return
+
         if self.mask_edit_mode and event.button() == Qt.LeftButton and self.current_erase_rect:
             # Save the deletion rectangle information
             if not hasattr(self.editing_masked_strand, 'deletion_rectangles'):
@@ -4602,6 +4665,9 @@ class StrandDrawingCanvas(QWidget):
         elif mode == "control_points":
             self.toggle_control_points()
             self.current_mode = "control_points"
+        elif mode == "view":
+            self.current_mode = self.view_mode
+            self.setCursor(Qt.ArrowCursor)
         else:
             raise ValueError(f"Unknown mode: {mode}")
 

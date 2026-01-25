@@ -372,7 +372,12 @@ class AttachMode(QObject):
                 if not hasattr(active_strand, 'canvas'):
                     active_strand.canvas = self_canvas
                 active_strand.draw(painter)
-                
+
+                # Draw control points if they're enabled
+                if getattr(self_canvas, 'show_control_points', False):
+                    if hasattr(self_canvas, 'draw_control_points'):
+                        self_canvas.draw_control_points(painter)
+
                 # Ensure strands list is restored to its original state
                 self_canvas.strands = original_strands
                 

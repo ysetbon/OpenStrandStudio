@@ -5522,6 +5522,28 @@ class StrandDrawingCanvas(QWidget):
             self.angle_adjust_completed.emit()  # Add this line
         self.update()
 
+    def _create_control_line_pen(self):
+        return QPen(QColor('green'), 1, Qt.DashLine)
+
+    def _draw_control_points_supersampled(self, painter):
+        widget_size = self.size()
+        buffer_size = widget_size * self.supersampling_factor
+        buffer = QImage(buffer_size, QImage.Format_ARGB32_Premultiplied)
+        buffer.fill(Qt.transparent)
+
+        buffer_painter = QPainter(buffer)
+        if hasattr(buffer_painter.device(), 'setDevicePixelRatio'):
+            buffer_painter.device().setDevicePixelRatio(self.supersampling_factor)
+        RenderUtils.setup_painter(buffer_painter, enable_high_quality=True)
+        buffer_painter.setTransform(painter.transform())
+        self._draw_control_points_impl(buffer_painter)
+        buffer_painter.end()
+
+        painter.save()
+        painter.resetTransform()
+        painter.drawImage(self.rect(), buffer, buffer.rect())
+        painter.restore()
+
     def draw_control_points(self, painter):
         """
         Draw control points for all non-masked strands.
@@ -5533,6 +5555,22 @@ class StrandDrawingCanvas(QWidget):
         if not self.show_control_points:
             return
 
+        if getattr(self, 'use_supersampling', False):
+            device = painter.device()
+            dpr = device.devicePixelRatioF() if hasattr(device, 'devicePixelRatioF') else 1.0
+            if dpr < getattr(self, 'supersampling_factor', 1.0):
+                self._draw_control_points_supersampled(painter)
+                return
+
+        self._draw_control_points_impl(painter)
+
+    def _draw_control_points_impl(self, painter):
+        """
+        Draw control points for all non-masked strands.
+
+        Args:
+            painter (QPainter): The painter used for drawing.
+        """
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
         control_point_radius = 11 * 1.333  # Scaled by 1.333 to enlarge control point shapes
@@ -5625,7 +5663,7 @@ class StrandDrawingCanvas(QWidget):
                 third_cp_enabled = getattr(self, 'enable_third_control_point', False)
                 triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
                 
-                control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
+                control_line_pen = self._create_control_line_pen()
                 painter.setPen(control_line_pen)
                 
                 # Draw lines to small control points (only after triangle has moved)
@@ -5834,7 +5872,7 @@ class StrandDrawingCanvas(QWidget):
             show_triangle_cp = True  # Always show triangle when control points are enabled
             
             # Draw control point lines - only after triangle has moved
-            control_line_pen = QPen(QColor('green'), 1, Qt.DashLine)
+            control_line_pen = self._create_control_line_pen()
             painter.setPen(control_line_pen)
             
             if triangle_has_moved and show_small_cps:

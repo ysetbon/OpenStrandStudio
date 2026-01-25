@@ -2069,32 +2069,8 @@ class StrandDrawingCanvas(QWidget):
             temp_strand.canvas = self
             temp_strand.draw(painter, skip_painter_setup=True)
 
-        # Draw the connection circle last (always on top) - if highlights are enabled
-        if isinstance(self.current_mode, AttachMode) and self.current_mode.affected_strand and (not hasattr(self, 'show_move_highlights') or self.show_move_highlights):
-            # Use yellow for the selected/pressed circle
-            circle_color = QColor(255, 230, 160, 140)  # Yellow with transparency (selected)
-
-            painter.setBrush(QBrush(circle_color))
-            painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
-            circle_size = 120
-            radius = circle_size / 2
-
-            point = (self.current_mode.affected_strand.start if self.current_mode.affected_point == 0
-                    else self.current_mode.affected_strand.end)
-
-            circle_rect = QRectF(
-                point.x() - radius,
-                point.y() - radius,
-                circle_size,
-                circle_size
-            )
-            #painter.drawEllipse(circle_rect)
-
         # Only draw control points if they're enabled
-        # Hide control points when in attach mode and a circle is pressed/selected
-        attach_mode_pressing = (isinstance(self.current_mode, AttachMode) and
-                                getattr(self.current_mode, 'affected_strand', None) is not None)
-        if self.show_control_points and not attach_mode_pressing:
+        if self.show_control_points:
             self.draw_control_points(painter)
 
         # Draw strand labels if enabled
@@ -2716,7 +2692,7 @@ class StrandDrawingCanvas(QWidget):
                 # Get hover state from AttachMode
                 hovered_strand = getattr(self.current_mode, 'hovered_strand', None)
                 hovered_point = getattr(self.current_mode, 'hovered_point', None)
-                hover_color = QColor(255, 220, 0, 60)  # Semi-transparent yellow for hover
+                hover_color = QColor(255, 230, 160, 140)  # Yellow for hover (same as selected)
 
                 # Draw circles regardless of proximity to other points
                 # Start circle - check has_circles[0] instead of start_attached

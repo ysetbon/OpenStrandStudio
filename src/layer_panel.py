@@ -16,7 +16,7 @@ from translations import translations
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea, QLabel,
     QInputDialog, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,
-    QSplitter, QSizePolicy
+    QSplitter, QSizePolicy, QMessageBox
 )
 from PyQt5.QtCore import QEventLoop          #  ← add this import
 
@@ -858,6 +858,26 @@ class LayerPanel(QWidget):
         """)
         self.deselect_all_button.clicked.connect(self.deselect_all)
 
+        # Delete All button
+        self.delete_all_button = QPushButton(_['delete_all'])
+        self.delete_all_button.setStyleSheet("""
+            QPushButton {
+                background-color: #a1a1a1;
+                font-weight: bold;
+                color: black;
+                border: 1px solid #888;
+                border-radius: 4px;
+                padding: 5px 10px;
+            }
+            QPushButton:hover {
+                background-color: #b5b5b5;
+            }
+            QPushButton:pressed {
+                background-color: #8a8a8a;
+            }
+        """)
+        self.delete_all_button.clicked.connect(self.request_delete_all)
+
         # Ensure control buttons expand evenly and stay centered
         for button in (
             self.draw_names_button,
@@ -865,6 +885,7 @@ class LayerPanel(QWidget):
             self.add_new_strand_button,
             self.delete_strand_button,
             self.deselect_all_button,
+            self.delete_all_button,
         ):
             button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
@@ -874,6 +895,7 @@ class LayerPanel(QWidget):
         bottom_layout.addWidget(self.add_new_strand_button)
         bottom_layout.addWidget(self.delete_strand_button)
         bottom_layout.addWidget(self.deselect_all_button)
+        bottom_layout.addWidget(self.delete_all_button)
 
         # Add scroll area and bottom panel to left layout
         self.left_layout.addWidget(self.scroll_area)
@@ -1510,7 +1532,9 @@ class LayerPanel(QWidget):
             self.deselect_all_button.setText(_['clear_all_locks'])
         else:
             self.deselect_all_button.setText(_['deselect_all'])
-            
+
+        self.delete_all_button.setText(_['delete_all'])
+
         # Update button tooltips
         self.set_button_tooltip(self.reset_states_button, _['reset_tooltip'])
         self.set_button_tooltip(self.refresh_button, _['refresh_tooltip'])
@@ -2925,6 +2949,63 @@ class LayerPanel(QWidget):
             
             # Emit the signal for other components to react to deselection
             self.deselect_all_requested.emit()
+
+    def request_delete_all(self):
+        """Delete all strands after confirmation."""
+        # Check if there are any strands to delete
+        if not self.canvas.strands:
+            return
+
+        # Get translation
+        _ = translations[self.language_code]
+
+        # Show confirmation dialog with translated buttons
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(_['delete_all'])
+        msg_box.setText(_['delete_all_confirm'])
+        msg_box.setIcon(QMessageBox.Question)
+        yes_button = msg_box.addButton(_['yes'], QMessageBox.YesRole)
+        no_button = msg_box.addButton(_['no'], QMessageBox.NoRole)
+        msg_box.setDefaultButton(no_button)
+        msg_box.exec_()
+
+        if msg_box.clickedButton() == yes_button:
+            # Save state for undo before deleting
+            if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+                self.undo_redo_manager.save_state()
+
+            # Clear all strands from canvas
+            self.canvas.strands.clear()
+
+            # Clear selection state
+            self.canvas.selected_strand = None
+            self.canvas.selected_strand_index = None
+            self.canvas.selected_attached_strand = None
+
+            # Clear layer buttons
+            for button in self.layer_buttons:
+                button.setParent(None)
+                button.deleteLater()
+            self.layer_buttons.clear()
+
+            # Reset set colors
+            self.set_colors.clear()
+
+            # Clear any locked layers
+            self.locked_layers.clear()
+
+            # Clear multi-selected layers
+            self.multi_selected_layers.clear()
+
+            # Update delete button state
+            self.update_delete_button_state()
+
+            # Update canvas
+            self.canvas.update()
+
+            # Save state AFTER deletion to capture the "deleted" state for redo
+            if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+                self.undo_redo_manager.save_state(allow_empty=True)
 
     def on_color_changed(self, set_number, color):
         """Handle color change for a set of strands."""

@@ -191,11 +191,13 @@ class MainWindow(QMainWindow):
         # Apply theme to other widgets if necessary
     def load_settings_from_file(self):
         # Use the AppData directory
-        from PyQt5.QtCore import QStandardPaths
         from PyQt5.QtGui import QColor
 
-        app_name = "OpenStrand Studio"
-        program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+        app_name = "OpenStrandStudio"  # No space - consistent folder name
+        if sys.platform.startswith('darwin'):  # macOS
+            program_data_dir = os.path.expanduser('~/Library/Application Support')
+        else:  # Windows
+            program_data_dir = os.environ.get('APPDATA', '')
         pass
         settings_dir = os.path.join(program_data_dir, app_name)
         pass

@@ -25,14 +25,14 @@ _CRASH_LOG_HANDLE = None
 def get_settings_directory():
     """Get the settings directory path consistently across platforms."""
     from PyQt5.QtCore import QStandardPaths
-    
-    app_name = "OpenStrand Studio"
+
+    app_name = "OpenStrandStudio"  # No space - consistent folder name for both platforms
     if sys.platform.startswith('darwin'):  # macOS
         program_data_dir = os.path.expanduser('~/Library/Application Support')
         settings_dir = os.path.join(program_data_dir, app_name)
-    else:
-        program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
-        settings_dir = program_data_dir  # AppDataLocation already includes the app name
+    else:  # Windows
+        program_data_dir = os.path.join(os.environ.get('APPDATA', ''), app_name)
+        settings_dir = program_data_dir
     return settings_dir
 
 def setup_crash_logging():

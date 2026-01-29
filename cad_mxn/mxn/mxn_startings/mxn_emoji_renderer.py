@@ -380,7 +380,7 @@ class EmojiRenderer:
         self._emoji_visual_extents_cache[key] = cached
         return cached
 
-    def _get_emoji_glyph_image(self, txt: str, font: QFont, logical_w: int, logical_h: int, ss: int = 3):
+    def _get_emoji_glyph_image(self, txt: str, font: QFont, logical_w: int, logical_h: int, ss: int = 4):
         """
         Render an emoji into a cached, supersampled offscreen image.
 
@@ -411,6 +411,7 @@ class EmojiRenderer:
         p.setRenderHint(QPainter.Antialiasing, True)
         p.setRenderHint(QPainter.TextAntialiasing, True)
         p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        p.setCompositionMode(QPainter.CompositionMode_Source)
         p.scale(ss, ss)
         p.setFont(font)
         # Pen color is irrelevant for color emoji glyphs, but use transparent to
@@ -429,7 +430,7 @@ class EmojiRenderer:
         # Using a higher cutoff (50) to aggressively remove semi-transparent fringe
         # pixels that can appear as colored strokes around emojis due to LCD/ClearType
         # subpixel antialiasing.
-        alpha_cutoff = 50  # 0..255
+        alpha_cutoff = 70  # 0..255
         for y in range(img.height()):
             for x in range(img.width()):
                 a = QColor.fromRgba(img.pixel(x, y)).alpha()

@@ -2583,6 +2583,7 @@ class MxNGeneratorDialog(QDialog):
                     color: white;
                 }
                 QGroupBox {
+                    background-color: transparent;
                     color: white;
                     border: 1px solid #555;
                     border-radius: 4px;
@@ -2594,9 +2595,11 @@ class MxNGeneratorDialog(QDialog):
                     subcontrol-origin: margin;
                     left: 10px;
                     padding: 0 3px;
+                    background-color: transparent;
                 }
                 QLabel {
                     color: white;
+                    background-color: transparent;
                 }
                 QSpinBox, QComboBox {
                     background-color: #3D3D3D;
@@ -2616,6 +2619,7 @@ class MxNGeneratorDialog(QDialog):
                 }
                 QRadioButton, QCheckBox {
                     color: white;
+                    background-color: transparent;
                 }
                 QRadioButton::indicator, QCheckBox::indicator {
                     width: 16px;

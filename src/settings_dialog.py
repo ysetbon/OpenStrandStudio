@@ -58,6 +58,7 @@ class SettingsDialog(QDialog):
         self.snap_to_grid_enabled = True  # Default to snap to grid enabled (move mode)
         self.snap_to_grid_attach_enabled = True  # Default to snap to grid enabled for attach/create mode
         self.show_move_highlights = True  # Default to showing highlights in move modes
+        self.show_hover_highlights = True  # Default to showing hover highlights
         # NEW: Use extended mask option (controls extra expansion of masked areas)
         # self.use_extended_mask = False  # Default to using exact mask (small +3 offset)
         # Extension line parameters
@@ -303,7 +304,7 @@ class SettingsDialog(QDialog):
             # Also update direction for QHBoxLayouts within General Settings
             general_setting_layouts = [
                 'theme_layout', 'shadow_layout', 'performance_layout', 
-                'third_control_layout', 'snap_to_grid_layout', 'snap_to_grid_attach_layout', 'show_highlights_layout', # 'extended_mask_layout', 
+                'third_control_layout', 'snap_to_grid_layout', 'snap_to_grid_attach_layout', 'show_highlights_layout', 'show_hover_highlights_layout', # 'extended_mask_layout', 
                 'num_steps_layout', 'blur_radius_layout',
                 'curvature_bias_layout', 'base_fraction_layout',
                 'distance_mult_layout', 'curve_response_layout',
@@ -685,7 +686,22 @@ class SettingsDialog(QDialog):
             # Force immediate update
             self.show_highlights_layout.invalidate()
             self.show_highlights_layout.activate()
-                
+
+        # Show hover highlights layout reorganization
+        if hasattr(self, 'show_hover_highlights_layout') and hasattr(self, 'show_hover_highlights_label') and hasattr(self, 'show_hover_highlights_checkbox'):
+            self.clear_layout(self.show_hover_highlights_layout)
+            if is_rtl:
+                self.show_hover_highlights_layout.addStretch()
+                self.show_hover_highlights_layout.addWidget(self.show_hover_highlights_checkbox)
+                self.show_hover_highlights_layout.addWidget(self.show_hover_highlights_label)
+            else:
+                self.show_hover_highlights_layout.addWidget(self.show_hover_highlights_label)
+                self.show_hover_highlights_layout.addWidget(self.show_hover_highlights_checkbox)
+                self.show_hover_highlights_layout.addStretch()
+            # Force immediate update
+            self.show_hover_highlights_layout.invalidate()
+            self.show_hover_highlights_layout.activate()
+
         # Default arrow color checkbox layout reorganization
         if hasattr(self, 'checkbox_layout') and hasattr(self, 'default_arrow_color_label') and hasattr(self, 'default_arrow_color_checkbox'):
             self.clear_layout(self.checkbox_layout)
@@ -1262,6 +1278,9 @@ class SettingsDialog(QDialog):
                         elif line.startswith('ShowMoveHighlights:'):
                             value = line.split(':', 1)[1].strip().lower()
                             self.show_move_highlights = (value == 'true')
+                        elif line.startswith('ShowHoverHighlights:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            self.show_hover_highlights = (value == 'true')
                         # elif line.startswith('UseExtendedMask:'):
                         #     value = line.split(':', 1)[1].strip().lower()
                         #     self.use_extended_mask = (value == 'true')
@@ -1686,6 +1705,25 @@ class SettingsDialog(QDialog):
             self.show_highlights_layout.addStretch()
         
         general_layout.addLayout(self.show_highlights_layout)
+
+        # Show Hover Highlights Option
+        if not hasattr(self, 'show_hover_highlights_layout'):
+            self.show_hover_highlights_layout = QHBoxLayout()
+        self.show_hover_highlights_label = QLabel(_['show_hover_highlights'] if 'show_hover_highlights' in _ else "Show hover highlights")
+        self.show_hover_highlights_checkbox = QCheckBox()
+        self.show_hover_highlights_checkbox.setChecked(self.show_hover_highlights)
+
+        # Add widgets in proper order for current language
+        if self.is_rtl_language(self.current_language):
+            self.show_hover_highlights_layout.addStretch()
+            self.show_hover_highlights_layout.addWidget(self.show_hover_highlights_checkbox)
+            self.show_hover_highlights_layout.addWidget(self.show_hover_highlights_label)
+        else:
+            self.show_hover_highlights_layout.addWidget(self.show_hover_highlights_label)
+            self.show_hover_highlights_layout.addWidget(self.show_hover_highlights_checkbox)
+            self.show_hover_highlights_layout.addStretch()
+
+        general_layout.addLayout(self.show_hover_highlights_layout)
         # general_layout.addLayout(self.extended_mask_layout)
 
         # Add Shadow Blur Steps
@@ -3517,10 +3555,17 @@ class SettingsDialog(QDialog):
         
         # Apply Show Move Highlights Setting
         self.show_move_highlights = self.show_highlights_checkbox.isChecked()
-        
+
         if self.canvas:
             # Set the new value in canvas
             self.canvas.show_move_highlights = self.show_move_highlights
+
+        # Apply Show Hover Highlights Setting
+        self.show_hover_highlights = self.show_hover_highlights_checkbox.isChecked()
+
+        if self.canvas:
+            # Set the new value in canvas
+            self.canvas.show_hover_highlights = self.show_hover_highlights
 
             # Check if the third control point setting changed
             if previous_third_control_point != self.enable_third_control_point:
@@ -3739,6 +3784,8 @@ class SettingsDialog(QDialog):
         if hasattr(self, 'snap_to_grid_attach_label'):
             self.snap_to_grid_attach_label.setText(_['enable_snap_to_grid_attach'] if 'enable_snap_to_grid_attach' in _ else "Enable snap to grid for attach/create mode")
         self.show_highlights_label.setText(_['show_move_highlights'] if 'show_move_highlights' in _ else "Show highlights in move modes")
+        if hasattr(self, 'show_hover_highlights_label'):
+            self.show_hover_highlights_label.setText(_['show_hover_highlights'] if 'show_hover_highlights' in _ else "Show hover highlights")
         # self.extended_mask_label.setText(_['use_extended_mask'] if 'use_extended_mask' in _ else "Use extended mask (wider overlap)")
         self.num_steps_label.setText(_['shadow_blur_steps'] if 'shadow_blur_steps' in _ else "Shadow Blur Steps:")
         self.blur_radius_label.setText(_['shadow_blur_radius'] if 'shadow_blur_radius' in _ else "Shadow Blur Radius:")
@@ -4196,6 +4243,7 @@ class SettingsDialog(QDialog):
                 file.write(f"EnableSnapToGridAttach: {str(self.snap_to_grid_attach_enabled).lower()}\n")
                 # Save show move highlights setting
                 file.write(f"ShowMoveHighlights: {str(self.show_move_highlights).lower()}\n")
+                file.write(f"ShowHoverHighlights: {str(self.show_hover_highlights).lower()}\n")
                 # Save shadow blur settings
                 file.write(f"NumSteps: {self.num_steps}\n")
                 file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place
@@ -4236,6 +4284,7 @@ class SettingsDialog(QDialog):
                     local_file.write(f"EnableSnapToGrid: {str(self.snap_to_grid_enabled).lower()}\n")
                     local_file.write(f"EnableSnapToGridAttach: {str(self.snap_to_grid_attach_enabled).lower()}\n")
                     local_file.write(f"ShowMoveHighlights: {str(self.show_move_highlights).lower()}\n")
+                    local_file.write(f"ShowHoverHighlights: {str(self.show_hover_highlights).lower()}\n")
                     local_file.write(f"NumSteps: {self.num_steps}\n")
                     local_file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place
                     # Save curvature settings
@@ -4310,6 +4359,7 @@ class SettingsDialog(QDialog):
                 'snap_to_grid_enabled': self.snap_to_grid_enabled,
                 'snap_to_grid_attach_enabled': self.snap_to_grid_attach_enabled,
                 'show_move_highlights': self.show_move_highlights,
+                'show_hover_highlights': self.show_hover_highlights,
                 'num_steps': self.num_steps,
                 'max_blur_radius': self.max_blur_radius,
                 'control_point_base_fraction': self.base_fraction_spinbox.value(),
@@ -4430,6 +4480,10 @@ class SettingsDialog(QDialog):
             if 'show_move_highlights' in settings:
                 self.show_move_highlights = settings['show_move_highlights']
                 self.show_highlights_checkbox.setChecked(self.show_move_highlights)
+
+            if 'show_hover_highlights' in settings:
+                self.show_hover_highlights = settings['show_hover_highlights']
+                self.show_hover_highlights_checkbox.setChecked(self.show_hover_highlights)
 
             if 'num_steps' in settings:
                 self.num_steps = settings['num_steps']

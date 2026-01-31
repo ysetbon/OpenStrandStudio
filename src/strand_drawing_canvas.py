@@ -475,6 +475,15 @@ class StrandDrawingCanvas(QWidget):
         except Exception as e:
             pass
 
+        # Apply show_hover_highlights setting from user settings if available
+        self.show_hover_highlights = True  # Default value
+        try:
+            show_hover_setting = self.load_show_hover_highlights_setting()
+            if show_hover_setting is not None:
+                self.show_hover_highlights = show_hover_setting
+        except Exception as e:
+            pass
+
         # Mask mode setup
         # Pass the undo_redo_manager instance here
         self.mask_mode = MaskMode(self, self.undo_redo_manager if hasattr(self, 'undo_redo_manager') else None)
@@ -1502,6 +1511,37 @@ class StrandDrawingCanvas(QWidget):
             pass
             return None
 
+    def load_show_hover_highlights_setting(self):
+        """Load show_hover_highlights setting from user_settings.txt if available."""
+        try:
+            import os
+            import sys
+            from PyQt5.QtCore import QStandardPaths
+
+            # Use the appropriate directory for each OS
+            app_name = "OpenStrand Studio"
+            if sys.platform == 'darwin':  # macOS
+                program_data_dir = os.path.expanduser('~/Library/Application Support')
+                settings_dir = os.path.join(program_data_dir, app_name)
+            else:
+                program_data_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+                settings_dir = program_data_dir  # AppDataLocation already includes the app name
+
+            file_path = os.path.join(settings_dir, 'user_settings.txt')
+
+            if os.path.exists(file_path):
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    for line in file:
+                        line = line.strip()
+                        if line.startswith('ShowHoverHighlights:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            return (value == 'true')
+
+            return None
+        except Exception as e:
+            pass
+            return None
+
     def show_control_points(self, visible):
         """Show or hide control points on the canvas."""
         self.control_points_visible = visible
@@ -2286,9 +2326,12 @@ class StrandDrawingCanvas(QWidget):
                                     )
                                 )
                             
-                            # Get hover state from MoveMode
-                            hovered_strand = getattr(self.current_mode, 'hovered_strand', None)
-                            hovered_side = getattr(self.current_mode, 'hovered_side', None)
+                            # Get hover state from MoveMode (only if hover highlights are enabled)
+                            hovered_strand = None
+                            hovered_side = None
+                            if getattr(self, 'show_hover_highlights', True):
+                                hovered_strand = getattr(self.current_mode, 'hovered_strand', None)
+                                hovered_side = getattr(self.current_mode, 'hovered_side', None)
 
                             # Get hovered point position to skip red rectangles at same location
                             hovered_point_pos = None
@@ -2749,9 +2792,12 @@ class StrandDrawingCanvas(QWidget):
                 if affected_strand is not None and strand != affected_strand:
                     continue
 
-                # Get hover state from AttachMode
-                hovered_strand = getattr(self.current_mode, 'hovered_strand', None)
-                hovered_point = getattr(self.current_mode, 'hovered_point', None)
+                # Get hover state from AttachMode (only if hover highlights are enabled)
+                hovered_strand = None
+                hovered_point = None
+                if getattr(self, 'show_hover_highlights', True):
+                    hovered_strand = getattr(self.current_mode, 'hovered_strand', None)
+                    hovered_point = getattr(self.current_mode, 'hovered_point', None)
                 hover_color = QColor(255, 230, 160, 140)  # Yellow for hover (same as selected)
 
                 # Draw circles regardless of proximity to other points

@@ -100,6 +100,9 @@ class SelectMode(QObject):
 
     def draw(self, painter):
         """Draw hover highlight for hovered strand."""
+        # Check if hover highlights are enabled
+        if not getattr(self.canvas, 'show_hover_highlights', True):
+            return
         if self.hovered_strand:
             painter.save()
             RenderUtils.setup_painter(painter, enable_high_quality=True)

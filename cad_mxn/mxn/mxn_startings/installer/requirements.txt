@@ -1,0 +1,5 @@
+# Requirements for MxN CAD Generator
+# Install with: pip install -r requirements.txt
+
+PyQt5>=5.15.0
+pyinstaller>=5.0.0

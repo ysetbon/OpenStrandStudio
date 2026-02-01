@@ -213,12 +213,14 @@ Examples:<br>
         'curve_shape_full_desc': 'Curve Shape - Controls the mathematical curve type (1.0=sharp angles, 2.0=smooth curves, 3.0=very smooth)',
         'reset_curvature_full_desc': 'Reset Curvature Settings - Restores Control Influence, Distance Boost, and Curve Shape to defaults',
         'whats_new_info': '''
-        <h2>What's New in Version 1.106</h2>
+        <h2>What's New in Version 1.107</h2>
 
-            <li style="font-size:18px;"><b>Hover Highlight in Select and Mask Modes:</b> Strands now highlight when hovering over them in Select mode and Mask mode, providing better visual feedback for strand selection.</li>
-            <li style="font-size:18px;"><b>Main Buttons Responsiveness:</b> Fixed main window buttons (at the top of the canvas) to display correctly on any screen size and aspect ratio.</li>
+            <li style="font-size:18px;"><b>Hover Highlights in Attach, Move, and Select Modes:</b> Points and strands now highlight in yellow when hovering over them, making it clear what will be selected or moved when you click.</li>
+            <li style="font-size:18px;"><b>View Mode:</b> New "look only" mode for safely navigating your design. Pan and zoom without accidentally selecting or editing anything - perfect for reviewing your work.</li>
+            <li style="font-size:18px;"><b>Delete All Button:</b> Added a "Delete All" button in the layer panel to quickly remove all strands at once.</li>
+            <li style="font-size:18px;"><b>Crash Log for Bug Reporting:</b> Added automatic crash logging to help identify and fix bugs more efficiently in future updates.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.106</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.107</p>
         ''',
 
 
@@ -638,12 +640,14 @@ Exemples :<br>
         'curve_shape_full_desc': 'Forme de Courbe - Contrôle le type de courbe mathématique (1.0=angles aigus, 2.0=courbes lisses, 3.0=très lisse)',
         'reset_curvature_full_desc': "Réinitialiser les Paramètres de Courbure - Restaure l'Influence, l'Amplification et la Forme aux valeurs par défaut",
         'whats_new_info': '''
-        <h2>Nouveautés de la version 1.106</h2>
+        <h2>Nouveautés de la version 1.107</h2>
 
-            <li style="font-size:18px;"><b>Surbrillance au survol dans les modes Sélection et Masque :</b> Les brins sont maintenant mis en surbrillance lorsque vous passez la souris dessus en mode Sélection et en mode Masque, offrant un meilleur retour visuel pour la sélection des brins.</li>
-            <li style="font-size:18px;"><b>Réactivité des boutons principaux :</b> Correction des boutons de la fenêtre principale (en haut du canevas) pour qu'ils s'affichent correctement sur toute taille d'écran et tout rapport d'aspect.</li>
+            <li style="font-size:18px;"><b>Surbrillance au survol dans les modes Attacher, Déplacer et Sélection :</b> Les points et les brins sont maintenant mis en surbrillance en jaune au survol, indiquant clairement ce qui sera sélectionné ou déplacé lors du clic.</li>
+            <li style="font-size:18px;"><b>Mode Visualisation :</b> Nouveau mode "lecture seule" pour naviguer en toute sécurité dans votre design. Déplacez-vous et zoomez sans sélectionner ou modifier accidentellement - parfait pour examiner votre travail.</li>
+            <li style="font-size:18px;"><b>Bouton Tout Supprimer :</b> Ajout d'un bouton "Tout Supprimer" dans le panneau des calques pour supprimer rapidement tous les brins en une seule fois.</li>
+            <li style="font-size:18px;"><b>Journal des Plantages :</b> Ajout d'un journal automatique des plantages pour identifier et corriger les bugs plus efficacement dans les futures mises à jour.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.106</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.107</p>
         ''',
 
 
@@ -1144,12 +1148,14 @@ Beispiele:<br>
         'toggle_shadow_desc': 'Schatten ein/aus - Zeigt/verbirgt Schatten auf Strängen',
         'layer_state_desc': 'Layer-Status - Zeigt Debug-Informationen zu Ebenen',
         'whats_new_info': '''
-        <h2>Neu in Version 1.106</h2>
+        <h2>Neu in Version 1.107</h2>
 
-            <li style="font-size:18px;"><b>Hervorhebung beim Überfahren in Auswahl- und Maskenmodi:</b> Stränge werden jetzt hervorgehoben, wenn Sie mit der Maus darüber fahren, im Auswahlmodus und im Maskenmodus, für besseres visuelles Feedback bei der Strangauswahl.</li>
-            <li style="font-size:18px;"><b>Reaktionsfähigkeit der Hauptschaltflächen:</b> Die Schaltflächen im Hauptfenster (oben auf der Leinwand) werden jetzt auf jeder Bildschirmgröße und jedem Seitenverhältnis korrekt angezeigt.</li>
+            <li style="font-size:18px;"><b>Hervorhebung beim Überfahren in Anhänge-, Verschiebe- und Auswahlmodi:</b> Punkte und Stränge werden jetzt gelb hervorgehoben, wenn Sie mit der Maus darüber fahren, sodass klar erkennbar ist, was beim Klicken ausgewählt oder verschoben wird.</li>
+            <li style="font-size:18px;"><b>Ansichtsmodus:</b> Neuer "Nur-Ansicht"-Modus zum sicheren Navigieren in Ihrem Design. Schwenken und zoomen Sie, ohne versehentlich etwas auszuwählen oder zu bearbeiten - perfekt zum Überprüfen Ihrer Arbeit.</li>
+            <li style="font-size:18px;"><b>Alles Löschen Schaltfläche:</b> Eine "Alles Löschen"-Schaltfläche wurde im Ebenenbedienfeld hinzugefügt, um alle Stränge auf einmal schnell zu entfernen.</li>
+            <li style="font-size:18px;"><b>Absturzprotokoll:</b> Automatische Absturzprotokollierung hinzugefügt, um Fehler in zukünftigen Updates effizienter zu identifizieren und zu beheben.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.106</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.107</p>
         ''',
         # About translations
         'about_info': '''
@@ -1584,12 +1590,14 @@ Esempi:<br>
         'curve_shape_full_desc': 'Forma Curva - Controlla il tipo di curva matematica (1.0=angoli acuti, 2.0=curve lisce, 3.0=molto liscio)',
         'reset_curvature_full_desc': 'Ripristina Impostazioni Curvatura - Ripristina Influenza, Amplificazione e Forma ai valori predefiniti',
         'whats_new_info': '''
-        <h2>Novità della versione 1.106</h2>
+        <h2>Novità della versione 1.107</h2>
 
-            <li style="font-size:18px;"><b>Evidenziazione al passaggio del mouse nei modi Selezione e Maschera:</b> I trefoli ora si evidenziano quando si passa il mouse sopra di essi in modalità Selezione e in modalità Maschera, fornendo un miglior feedback visivo per la selezione dei trefoli.</li>
-            <li style="font-size:18px;"><b>Reattività dei pulsanti principali:</b> Corretti i pulsanti della finestra principale (in alto sulla tela) per visualizzarsi correttamente su qualsiasi dimensione dello schermo e rapporto d'aspetto.</li>
+            <li style="font-size:18px;"><b>Evidenziazione al passaggio nei modi Attacca, Sposta e Selezione:</b> I punti e i fili ora si evidenziano in giallo al passaggio del mouse, rendendo chiaro cosa verrà selezionato o spostato al clic.</li>
+            <li style="font-size:18px;"><b>Modalità Visualizzazione:</b> Nuova modalità "solo visualizzazione" per navigare in sicurezza nel tuo design. Sposta e ingrandisci senza selezionare o modificare accidentalmente - perfetto per rivedere il tuo lavoro.</li>
+            <li style="font-size:18px;"><b>Pulsante Elimina Tutto:</b> Aggiunto un pulsante "Elimina Tutto" nel pannello livelli per rimuovere rapidamente tutti i fili in una volta.</li>
+            <li style="font-size:18px;"><b>Registro Errori:</b> Aggiunta la registrazione automatica degli errori per identificare e correggere i bug in modo più efficiente nei futuri aggiornamenti.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio - Versione 1.106</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio - Versione 1.107</p>
         ''',
 
 
@@ -2062,12 +2070,14 @@ Ejemplos:<br>
         'curve_shape_full_desc': 'Forma de Curva - Controla el tipo de curva matemática (1.0=ángulos agudos, 2.0=curvas suaves, 3.0=muy suave)',
         'reset_curvature_full_desc': 'Restablecer Configuración de Curvatura - Restaura Influencia, Amplificación y Forma a valores predeterminados',
         'whats_new_info': '''
-        <h2>Novedades de la versión 1.106</h2>
+        <h2>Novedades de la versión 1.107</h2>
 
-            <li style="font-size:18px;"><b>Resaltado al pasar el cursor en modos Selección y Máscara:</b> Las hebras ahora se resaltan al pasar el cursor sobre ellas en modo Selección y en modo Máscara, proporcionando mejor retroalimentación visual para la selección de hebras.</li>
-            <li style="font-size:18px;"><b>Reactividad de los botones principales:</b> Corregidos los botones de la ventana principal (en la parte superior del lienzo) para que se muestren correctamente en cualquier tamaño de pantalla y relación de aspecto.</li>
+            <li style="font-size:18px;"><b>Resaltado al pasar el cursor en modos Adjuntar, Mover y Selección:</b> Los puntos y las hebras ahora se resaltan en amarillo al pasar el cursor, dejando claro qué se seleccionará o moverá al hacer clic.</li>
+            <li style="font-size:18px;"><b>Modo Visualización:</b> Nuevo modo "solo ver" para navegar de forma segura por tu diseño. Desplázate y haz zoom sin seleccionar o editar accidentalmente - perfecto para revisar tu trabajo.</li>
+            <li style="font-size:18px;"><b>Botón Eliminar Todo:</b> Se agregó un botón "Eliminar Todo" en el panel de capas para eliminar rápidamente todas las hebras de una vez.</li>
+            <li style="font-size:18px;"><b>Registro de Errores:</b> Se agregó registro automático de errores para identificar y corregir bugs de manera más eficiente en futuras actualizaciones.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio - Versión 1.106</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio - Versión 1.107</p>
         ''',
  
 
@@ -2540,12 +2550,14 @@ Exemplos:<br>
         'curve_shape_full_desc': 'Forma da Curva - Controla o tipo de curva matemática (1.0=ângulos agudos, 2.0=curvas suaves, 3.0=muito suave)',
         'reset_curvature_full_desc': 'Redefinir Configurações de Curvatura - Restaura Influência, Amplificação e Forma aos padrões',
         'whats_new_info': '''
-        <h2>Novidades da versão 1.106</h2>
+        <h2>Novidades da versão 1.107</h2>
 
-            <li style="font-size:18px;"><b>Destaque ao passar o cursor nos modos Seleção e Máscara:</b> As mechas agora são destacadas ao passar o cursor sobre elas no modo Seleção e no modo Máscara, fornecendo melhor feedback visual para a seleção de mechas.</li>
-            <li style="font-size:18px;"><b>Responsividade dos botões principais:</b> Corrigidos os botões da janela principal (no topo da tela) para serem exibidos corretamente em qualquer tamanho de tela e proporção de aspecto.</li>
+            <li style="font-size:18px;"><b>Destaque ao passar o cursor nos modos Anexar, Mover e Seleção:</b> Os pontos e mechas agora são destacados em amarelo ao passar o cursor, deixando claro o que será selecionado ou movido ao clicar.</li>
+            <li style="font-size:18px;"><b>Modo Visualização:</b> Novo modo "apenas visualizar" para navegar com segurança pelo seu design. Mova e amplie sem selecionar ou editar acidentalmente - perfeito para revisar seu trabalho.</li>
+            <li style="font-size:18px;"><b>Botão Excluir Tudo:</b> Adicionado um botão "Excluir Tudo" no painel de camadas para remover rapidamente todas as mechas de uma vez.</li>
+            <li style="font-size:18px;"><b>Registro de Erros:</b> Adicionado registro automático de erros para identificar e corrigir bugs de forma mais eficiente em futuras atualizações.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio – Versão 1.106</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio – Versão 1.107</p>
         ''',
 
 
@@ -3024,12 +3036,14 @@ Exemplos:<br>
         'reset_curvature_full_desc': 'אפס הגדרות עקמומיות - מחזיר השפעה, הגברה וצורה לברירת המחדל',
         'whats_new_info': '''
         <div dir="rtl" style="text-align: right;">
-        <h2>מה חדש בגרסה 1.106</h2>
+        <h2>מה חדש בגרסה 1.107</h2>
 
-            <li style="font-size:18px;"><b>הדגשה בריחוף במצבי בחירה ומסכה:</b> חוטים מודגשים כעת בריחוף מעליהם במצב בחירה ובמצב מסכה, מספקים משוב חזותי טוב יותר לבחירת חוטים.</li>
-            <li style="font-size:18px;"><b>תגובתיות כפתורים ראשיים:</b> תוקנו כפתורי החלון הראשי (בחלק העליון של הקנבס) להצגה נכונה בכל גודל מסך ויחס גובה-רוחב.</li>
+            <li style="font-size:18px;"><b>הדגשה בריחוף במצבי חיבור, הזזה ובחירה:</b> נקודות וחוטים מודגשים כעת בצהוב בריחוף מעליהם, מבהירים מה ייבחר או יוזז בלחיצה.</li>
+            <li style="font-size:18px;"><b>מצב תצוגה:</b> מצב "צפייה בלבד" חדש לניווט בטוח בעיצוב שלך. הזז וקרב ללא בחירה או עריכה בטעות - מושלם לסקירת העבודה שלך.</li>
+            <li style="font-size:18px;"><b>כפתור מחק הכל:</b> נוסף כפתור "מחק הכל" בלוח השכבות להסרה מהירה של כל החוטים בבת אחת.</li>
+            <li style="font-size:18px;"><b>יומן קריסות:</b> נוספה רישום אוטומטי של קריסות לזיהוי ותיקון באגים ביעילות רבה יותר בעדכונים עתידיים.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio - גרסה 1.106</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio - גרסה 1.107</p>
         </div>
         ''',
 

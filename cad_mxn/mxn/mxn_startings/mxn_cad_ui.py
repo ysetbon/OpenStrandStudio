@@ -173,6 +173,8 @@ class MxNGeneratorDialog(QDialog):
     def _get_main_window(self):
         """Get or create a MainWindow instance for export."""
         if self._main_window is None:
+            app = QApplication.instance()
+            original_app_stylesheet = app.styleSheet() if app else ""
             try:
                 from main_window import MainWindow
                 self._main_window = MainWindow()
@@ -181,6 +183,13 @@ class MxNGeneratorDialog(QDialog):
             except Exception as e:
                 print(f"Failed to create MainWindow: {e}")
                 return None
+            finally:
+                # MainWindow applies a global QApplication stylesheet in __init__.
+                # Restore the pre-existing app style so this dialog keeps its theme.
+                if app is not None:
+                    app.setStyleSheet(original_app_stylesheet)
+                self._apply_theme()
+                self._update_preview_background_style()
         return self._main_window
 
     def setup_ui(self):
@@ -761,28 +770,27 @@ class MxNGeneratorDialog(QDialog):
         image = self._generate_image_in_memory(self.current_json_data, scale_factor)
         if image and not image.isNull():
             self.current_image = image
+            self._update_preview_background_style()
             self.preview_widget.set_qimage(image)
             self.export_image_btn.setEnabled(True)
             self.save_color_settings()
 
     def _update_preview_background_style(self):
         """
-        Match the preview panel background to the transparency setting.
+        Keep preview background consistent with the app theme.
 
-        - Transparent ON: show dark panel (helps visualize alpha)
-        - Transparent OFF: show white panel (matches export background expectation)
+        In dark theme we keep a dark preview panel at all times to avoid a
+        bright frame around centered generated images.
         """
         if not hasattr(self, "preview_widget") or self.preview_widget is None:
             return
 
-        # In light theme, keep the panel white in both cases.
-        is_transparent = bool(getattr(self, "transparent_checkbox", None) and self.transparent_checkbox.isChecked())
-        if self.theme != 'dark':
+        if self.theme == 'dark':
+            bg = "#1a1a1a"
+            border = "#555"
+        else:
             bg = "#ffffff"
             border = "#cccccc"
-        else:
-            bg = "#1a1a1a" if is_transparent else "#ffffff"
-            border = "#555" if is_transparent else "#bbbbbb"
 
         self.preview_widget.setStyleSheet(f"background-color: {bg}; border: 1px solid {border};")
 
@@ -980,6 +988,9 @@ class MxNGeneratorDialog(QDialog):
             if image and not image.isNull():
                 # Store image in memory
                 self.current_image = image
+
+                # Keep preview panel styling stable before showing the pixmap
+                self._update_preview_background_style()
 
                 # Show the image in preview
                 self.preview_widget.set_qimage(image)

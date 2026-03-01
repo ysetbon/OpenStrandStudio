@@ -149,6 +149,10 @@ class MxNGeneratorDialog(QDialog):
         self._prepared_canvas_key = None
         self._prepared_bounds = None
 
+        # Strand layer cache: avoids re-drawing all strands when only emoji settings change
+        self._cached_strand_layer = None       # QImage with strands on transparent bg
+        self._cached_strand_layer_key = None   # (canvas_key, scale_factor)
+
         # Setup UI
         self.setup_ui()
         self._apply_theme()
@@ -693,9 +697,11 @@ class MxNGeneratorDialog(QDialog):
         self.current_json_data = None
         self.current_image = None
         self._continuation_json_data = None  # Clear stored continuation
-        # Invalidate prepared-canvas cache
+        # Invalidate prepared-canvas cache and strand layer cache
         self._prepared_canvas_key = None
         self._prepared_bounds = None
+        self._cached_strand_layer = None
+        self._cached_strand_layer_key = None
         self._emoji_renderer.clear_cache()
         self.export_json_btn.setEnabled(False)
         self.export_image_btn.setEnabled(False)
@@ -1100,9 +1106,11 @@ class MxNGeneratorDialog(QDialog):
                 self.v_pair_ext_spin.setValue(0)
                 self.v_pair_ext_spin.blockSignals(False)
 
-            # Invalidate canvas cache (new strands)
+            # Invalidate canvas cache and strand layer cache (new strands)
             self._prepared_canvas_key = None
             self._prepared_bounds = None
+            self._cached_strand_layer = None
+            self._cached_strand_layer_key = None
             self._emoji_renderer.clear_cache()
 
             self.status_label.setText("Rendering continuation image...")
@@ -1297,6 +1305,8 @@ class MxNGeneratorDialog(QDialog):
             # Invalidate geometry cache but keep emoji assignments
             self._prepared_canvas_key = None
             self._prepared_bounds = None
+            self._cached_strand_layer = None
+            self._cached_strand_layer_key = None
             self._emoji_renderer.clear_render_cache()
 
             # Re-render
@@ -2016,6 +2026,8 @@ class MxNGeneratorDialog(QDialog):
             # while only clearing the glyph image cache
             self._prepared_canvas_key = None
             self._prepared_bounds = None
+            self._cached_strand_layer = None
+            self._cached_strand_layer_key = None
             self._emoji_renderer.clear_render_cache()
 
             self.status_label.setText("Re-rendering with parallel alignment...")
@@ -2136,6 +2148,47 @@ class MxNGeneratorDialog(QDialog):
         return QRectF(min_x - padding, min_y - padding,
                       max_x - min_x + 2*padding, max_y - min_y + 2*padding)
 
+    def _build_emoji_settings(self):
+        """Build a consistent emoji settings dict for all render paths."""
+        return {
+            "show": self.show_emojis_checkbox.isChecked() if hasattr(self, "show_emojis_checkbox") else True,
+            "show_strand_names": self.show_strand_names_checkbox.isChecked() if hasattr(self, "show_strand_names_checkbox") else False,
+            "k": self.emoji_k_spinner.value() if hasattr(self, "emoji_k_spinner") else 0,
+            "direction": "cw" if (hasattr(self, "emoji_cw_radio") and self.emoji_cw_radio.isChecked()) else "ccw",
+            "transparent": self.transparent_checkbox.isChecked() if hasattr(self, "transparent_checkbox") else True,
+        }
+
+    def _render_emoji_overlay_layer(self, canvas, bounds, scale_factor, image_width, image_height):
+        """
+        Render emojis + rotation indicator into an isolated transparent layer.
+
+        This keeps emoji painting independent from strand painter state and avoids
+        pen/brush/composition bleed from strand drawing.
+        """
+        from render_utils import RenderUtils
+        from PyQt5.QtGui import QPainter
+
+        emoji_settings = self._build_emoji_settings()
+        if not emoji_settings.get("show", True):
+            return None
+
+        emoji_layer = QImage(image_width, image_height, QImage.Format_ARGB32_Premultiplied)
+        emoji_layer.fill(Qt.transparent)
+
+        ep = QPainter(emoji_layer)
+        RenderUtils.setup_painter(ep, enable_high_quality=True)
+        ep.setCompositionMode(QPainter.CompositionMode_SourceOver)
+        ep.scale(scale_factor, scale_factor)
+        ep.translate(-bounds.x(), -bounds.y())
+
+        self._emoji_renderer.draw_endpoint_emojis(
+            ep, canvas, bounds, self.m_spinner.value(), self.n_spinner.value(), emoji_settings
+        )
+        self._emoji_renderer.draw_rotation_indicator(ep, bounds, emoji_settings, scale_factor)
+        ep.end()
+
+        return emoji_layer
+
     def _export_json_to_image(self, json_path, output_path, scale_factor):
         """Export JSON to image using MainWindow and canvas (same as export_mxn_images.py)."""
         try:
@@ -2232,18 +2285,22 @@ class MxNGeneratorDialog(QDialog):
             if canvas.current_strand:
                 canvas.current_strand.draw(painter, skip_painter_setup=True)
 
-            # Draw endpoint emojis after strands (labels rotate around perimeter; geometry unchanged)
-            emoji_settings = {
-                "show": self.show_emojis_checkbox.isChecked() if hasattr(self, "show_emojis_checkbox") else True,
-                "show_strand_names": self.show_strand_names_checkbox.isChecked() if hasattr(self, "show_strand_names_checkbox") else False,
-                "k": self.emoji_k_spinner.value() if hasattr(self, "emoji_k_spinner") else 0,
-                "direction": "cw" if (hasattr(self, "emoji_cw_radio") and self.emoji_cw_radio.isChecked()) else "ccw",
-                "transparent": self.transparent_checkbox.isChecked() if hasattr(self, "transparent_checkbox") else True,
-            }
-            self._emoji_renderer.draw_endpoint_emojis(painter, canvas, bounds, self.m_spinner.value(), self.n_spinner.value(), emoji_settings)
+            ### Legacy direct emoji painting path (kept for reference; disabled to avoid halo/stroke artifacts)
+            ### emoji_settings = self._build_emoji_settings()
+            ### self._emoji_renderer.draw_endpoint_emojis(
+            ###     painter, canvas, bounds, self.m_spinner.value(), self.n_spinner.value(), emoji_settings
+            ### )
+            ### self._emoji_renderer.draw_rotation_indicator(painter, bounds, emoji_settings, scale_factor)
 
-            # Draw rotation indicator badge (k value with arrow) in top-right corner
-            self._emoji_renderer.draw_rotation_indicator(painter, bounds, emoji_settings, scale_factor)
+            # New path: render emojis in isolated layer, then composite over strands.
+            emoji_layer = self._render_emoji_overlay_layer(
+                canvas, bounds, scale_factor, image_width, image_height
+            )
+            if emoji_layer is not None:
+                painter.save()
+                painter.resetTransform()
+                painter.drawImage(0, 0, emoji_layer)
+                painter.restore()
 
             painter.end()
 
@@ -2258,7 +2315,11 @@ class MxNGeneratorDialog(QDialog):
             return False
 
     def _generate_image_in_memory(self, json_content, scale_factor):
-        """Generate image in memory from JSON content string (no file I/O)."""
+        """Generate image in memory from JSON content string (no file I/O).
+
+        Uses a cached strand layer to avoid re-drawing strands when only
+        emoji settings (k, direction, show) or background change.
+        """
         try:
             from render_utils import RenderUtils
             from PyQt5.QtGui import QPainter
@@ -2272,9 +2333,34 @@ class MxNGeneratorDialog(QDialog):
             canvas = main_window.canvas
             bounds = self._prepared_bounds or QRectF(0, 0, 1200, 900)
 
-            # Create image sized to actual content bounds
             image_width = int(bounds.width() * scale_factor)
             image_height = int(bounds.height() * scale_factor)
+
+            # --- Step A: Strand layer (cached) ---
+            strand_layer_key = (self._prepared_canvas_key, scale_factor)
+            if (self._cached_strand_layer_key != strand_layer_key
+                    or self._cached_strand_layer is None):
+                # Render strands onto a transparent image
+                strand_layer = QImage(image_width, image_height, QImage.Format_ARGB32_Premultiplied)
+                strand_layer.fill(Qt.transparent)
+
+                sp = QPainter(strand_layer)
+                RenderUtils.setup_painter(sp, enable_high_quality=True)
+                sp.scale(scale_factor, scale_factor)
+                sp.translate(-bounds.x(), -bounds.y())
+
+                for strand in canvas.strands:
+                    strand.draw(sp, skip_painter_setup=True)
+
+                if canvas.current_strand:
+                    canvas.current_strand.draw(sp, skip_painter_setup=True)
+
+                sp.end()
+
+                self._cached_strand_layer = strand_layer
+                self._cached_strand_layer_key = strand_layer_key
+
+            # --- Step B: Composite final image ---
             image = QImage(image_width, image_height, QImage.Format_ARGB32_Premultiplied)
 
             if self.transparent_checkbox.isChecked():
@@ -2284,31 +2370,25 @@ class MxNGeneratorDialog(QDialog):
 
             painter = QPainter(image)
             RenderUtils.setup_painter(painter, enable_high_quality=True)
-            painter.scale(scale_factor, scale_factor)
 
-            # Translate to render content from bounds origin
-            painter.translate(-bounds.x(), -bounds.y())
+            # Draw cached strand layer
+            painter.drawImage(0, 0, self._cached_strand_layer)
 
-            for strand in canvas.strands:
-                strand.draw(painter, skip_painter_setup=True)
+            ### Legacy direct emoji painting path (kept for reference; disabled to avoid halo/stroke artifacts)
+            ### painter.scale(scale_factor, scale_factor)
+            ### painter.translate(-bounds.x(), -bounds.y())
+            ### emoji_settings = self._build_emoji_settings()
+            ### self._emoji_renderer.draw_endpoint_emojis(
+            ###     painter, canvas, bounds, self.m_spinner.value(), self.n_spinner.value(), emoji_settings
+            ### )
+            ### self._emoji_renderer.draw_rotation_indicator(painter, bounds, emoji_settings, scale_factor)
 
-            if canvas.current_strand:
-                canvas.current_strand.draw(painter, skip_painter_setup=True)
-
-            # Draw endpoint emojis after strands (labels rotate around perimeter; geometry unchanged)
-            emoji_settings = {
-                "show": self.show_emojis_checkbox.isChecked() if hasattr(self, "show_emojis_checkbox") else True,
-                "show_strand_names": self.show_strand_names_checkbox.isChecked() if hasattr(self, "show_strand_names_checkbox") else False,
-                "k": self.emoji_k_spinner.value() if hasattr(self, "emoji_k_spinner") else 0,
-                "direction": "cw" if (hasattr(self, "emoji_cw_radio") and self.emoji_cw_radio.isChecked()) else "ccw",
-                "transparent": self.transparent_checkbox.isChecked() if hasattr(self, "transparent_checkbox") else True,
-            }
-            self._emoji_renderer.draw_endpoint_emojis(
-                painter, canvas, bounds, self.m_spinner.value(), self.n_spinner.value(), emoji_settings
+            # New path: render emojis in isolated layer, then composite over strands.
+            emoji_layer = self._render_emoji_overlay_layer(
+                canvas, bounds, scale_factor, image_width, image_height
             )
-
-            # Draw rotation indicator badge (k value with arrow) in top-right corner
-            self._emoji_renderer.draw_rotation_indicator(painter, bounds, emoji_settings, scale_factor)
+            if emoji_layer is not None:
+                painter.drawImage(0, 0, emoji_layer)
 
             painter.end()
 

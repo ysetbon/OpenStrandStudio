@@ -5,15 +5,22 @@ PyInstaller spec file for MxN CAD UI
 
 import os
 import sys
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules, collect_dynamic_libs
 
 # Paths
-INSTALLER_DIR = os.path.dirname(os.path.abspath(SPECPATH))
+# SPECPATH is already the directory containing the spec file, not the file path itself
+INSTALLER_DIR = os.path.abspath(SPECPATH)
 MXN_STARTINGS_DIR = os.path.dirname(INSTALLER_DIR)
 CAD_MXN_DIR = os.path.dirname(os.path.dirname(MXN_STARTINGS_DIR))
 ROOT_DIR = os.path.dirname(CAD_MXN_DIR)
 SRC_DIR = os.path.join(ROOT_DIR, 'src')
 
 block_cipher = None
+
+# Collect PyQt5 data files and plugins
+pyqt5_datas = collect_data_files('PyQt5', include_py_files=False)
+pyqt5_binaries = collect_dynamic_libs('PyQt5')
+pyqt5_hiddenimports = collect_submodules('PyQt5')
 
 # Collect all Python files from mxn_startings directory
 mxn_modules = []
@@ -30,9 +37,9 @@ for f in os.listdir(SRC_DIR):
 a = Analysis(
     [os.path.join(MXN_STARTINGS_DIR, 'mxn_cad_ui.py')],
     pathex=[MXN_STARTINGS_DIR, SRC_DIR],
-    binaries=[],
-    datas=mxn_modules + src_modules,
-    hiddenimports=[
+    binaries=pyqt5_binaries,
+    datas=mxn_modules + src_modules + pyqt5_datas,
+    hiddenimports=pyqt5_hiddenimports + [
         'PyQt5',
         'PyQt5.QtWidgets',
         'PyQt5.QtCore',
@@ -99,9 +106,9 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    upx_exclude=[],
+    upx_exclude=['qwindows.dll', 'Qt5*.dll', 'PyQt5*.dll'],  # Don't compress Qt DLLs
     runtime_tmpdir=None,
-    console=False,  # Set to True for debugging
+    console=True,  # Set to True for debugging - change to False for release
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

@@ -50,6 +50,10 @@ class EmojiRenderer:
         # Cache for rendered emoji glyph images (used to avoid Windows ClearType fringing
         # on transparent backgrounds and to speed up repeated renders).
         self._emoji_glyph_cache = {}
+        # Cache of per-glyph diagnostics used for console debugging of halo/stroke artifacts.
+        self._emoji_glyph_diagnostics = {}
+        # Incremented per draw pass to make terminal logs easier to correlate.
+        self._emoji_debug_draw_pass = 0
         # Store original endpoint order before parallel alignment
         # Maps strand_name -> emoji label (preserves assignment across position changes)
         self._strand_emoji_map = None
@@ -76,6 +80,79 @@ class EmojiRenderer:
         """Clear only render-related caches (keeps emoji assignments stable)."""
         self._emoji_visual_extents_cache = {}
         self._emoji_glyph_cache = {}
+        self._emoji_glyph_diagnostics = {}
+
+    def _analyze_glyph_halo(self, img: QImage):
+        """
+        Analyze low-alpha edge pixels to estimate colored halo risk.
+
+        Returns a dict:
+            {
+                "edge_pixels": int,
+                "suspicious_pixels": int,
+                "suspicious_ratio": float,
+                "max_chroma": int,
+                "status": "OK" | "POSSIBLE_HALO",
+                "threshold_low_alpha": int,
+                "threshold_chroma": int,
+            }
+        """
+        if img is None or img.isNull():
+            return {
+                "edge_pixels": 0,
+                "suspicious_pixels": 0,
+                "suspicious_ratio": 0.0,
+                "max_chroma": 0,
+                "status": "OK",
+                "threshold_low_alpha": 110,
+                "threshold_chroma": 40,
+            }
+
+        threshold_low_alpha = 110
+        threshold_chroma = 40
+        threshold_min_brightness = 24
+        edge_pixels = 0
+        suspicious_pixels = 0
+        max_chroma = 0
+
+        for y in range(img.height()):
+            for x in range(img.width()):
+                c = QColor.fromRgba(img.pixel(x, y))
+                a = int(c.alpha())
+                if a <= 0 or a > threshold_low_alpha:
+                    continue
+
+                edge_pixels += 1
+
+                # Un-premultiply to estimate displayed edge color.
+                pr, pg, pb = int(c.red()), int(c.green()), int(c.blue())
+                r = (pr * 255 + (a // 2)) // a
+                g = (pg * 255 + (a // 2)) // a
+                b = (pb * 255 + (a // 2)) // a
+                r = 0 if r < 0 else (255 if r > 255 else r)
+                g = 0 if g < 0 else (255 if g > 255 else g)
+                b = 0 if b < 0 else (255 if b > 255 else b)
+
+                bright = max(r, g, b)
+                chroma = max(r, g, b) - min(r, g, b)
+                if chroma > max_chroma:
+                    max_chroma = chroma
+
+                if bright >= threshold_min_brightness and chroma >= threshold_chroma:
+                    suspicious_pixels += 1
+
+        ratio = (float(suspicious_pixels) / float(edge_pixels)) if edge_pixels > 0 else 0.0
+        status = "POSSIBLE_HALO" if (suspicious_pixels >= 8 and ratio >= 0.12) else "OK"
+
+        return {
+            "edge_pixels": int(edge_pixels),
+            "suspicious_pixels": int(suspicious_pixels),
+            "suspicious_ratio": float(ratio),
+            "max_chroma": int(max_chroma),
+            "status": status,
+            "threshold_low_alpha": int(threshold_low_alpha),
+            "threshold_chroma": int(threshold_chroma),
+        }
 
     def freeze_emoji_assignments(self, canvas, bounds, m, n, settings):
         """
@@ -396,48 +473,96 @@ class EmojiRenderer:
         key = ("emoji_glyph", txt, self._font_cache_key(font), lw, lh, int(ss))
         cached = self._emoji_glyph_cache.get(key)
         if cached is not None:
+            if key not in self._emoji_glyph_diagnostics:
+                self._emoji_glyph_diagnostics[key] = self._analyze_glyph_halo(cached)
             return cached
 
         img_w = max(1, int(lw * ss))
         img_h = max(1, int(lh * ss))
 
-        # Render into straight-alpha first. Some Windows emoji rendering paths can
-        # produce edge colors that look like a "stroke" when drawn directly into a
-        # premultiplied surface. Converting after render helps normalize.
-        img_straight = QImage(img_w, img_h, QImage.Format_ARGB32)
-        img_straight.fill(Qt.transparent)
+        def _render_on_opaque_bg(bg_value: int) -> QImage:
+            img = QImage(img_w, img_h, QImage.Format_ARGB32)
+            img.fill(QColor(bg_value, bg_value, bg_value, 255))
 
-        p = QPainter(img_straight)
-        p.setRenderHint(QPainter.Antialiasing, True)
-        p.setRenderHint(QPainter.TextAntialiasing, True)
-        p.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        p.setCompositionMode(QPainter.CompositionMode_Source)
-        p.scale(ss, ss)
-        p.setFont(font)
-        # Pen color is irrelevant for color emoji glyphs, but use transparent to
-        # avoid black stroke artifacts around the emojis.
-        p.setPen(QColor(0, 0, 0, 0))
-        p.setBrush(Qt.NoBrush)
-        p.drawText(QRectF(0.0, 0.0, float(lw), float(lh)), Qt.AlignCenter, txt)
-        p.end()
+            p = QPainter(img)
+            p.setRenderHint(QPainter.Antialiasing, True)
+            p.setRenderHint(QPainter.TextAntialiasing, True)
+            p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+            p.setCompositionMode(QPainter.CompositionMode_SourceOver)
+            p.scale(ss, ss)
+            p.setFont(font)
+            # For color emoji fonts this pen is ignored; for monochrome fallback
+            # it keeps a deterministic foreground so matte recovery stays stable.
+            p.setPen(QColor(0, 0, 0, 255))
+            p.setBrush(Qt.NoBrush)
+            p.drawText(QRectF(0.0, 0.0, float(lw), float(lh)), Qt.AlignCenter, txt)
+            p.end()
+            return img
 
-        # Convert to premultiplied (our target images are premultiplied).
-        img = img_straight.convertToFormat(QImage.Format_ARGB32_Premultiplied)
+        ### Legacy transparent-surface paint path kept for reference:
+        ### img_straight = QImage(img_w, img_h, QImage.Format_ARGB32)
+        ### img_straight.fill(Qt.transparent)
+        ### p = QPainter(img_straight)
+        ### p.setRenderHint(QPainter.Antialiasing, True)
+        ### p.setRenderHint(QPainter.TextAntialiasing, True)
+        ### p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        ### p.setCompositionMode(QPainter.CompositionMode_Source)
+        ### p.scale(ss, ss)
+        ### p.setFont(font)
+        ### p.setPen(QColor(0, 0, 0, 0))
+        ### p.setBrush(Qt.NoBrush)
+        ### p.drawText(QRectF(0.0, 0.0, float(lw), float(lh)), Qt.AlignCenter, txt)
+        ### p.end()
+        ### img = img_straight.convertToFormat(QImage.Format_ARGB32_Premultiplied)
 
-        # Clean fully/near-transparent pixels to transparent black to avoid colored
-        # fringing when compositing (common with emoji edges on Windows).
-        # This is cheap (glyph images are small) and cached.
-        # Using a higher cutoff (50) to aggressively remove semi-transparent fringe
-        # pixels that can appear as colored strokes around emojis due to LCD/ClearType
-        # subpixel antialiasing.
-        alpha_cutoff = 70  # 0..255
+        # Render against black + white mattes, then reconstruct alpha/color.
+        # This avoids LCD/subpixel edge tint that can appear as a colored stroke.
+        img_black = _render_on_opaque_bg(0)
+        img_white = _render_on_opaque_bg(255)
+        img = QImage(img_w, img_h, QImage.Format_ARGB32_Premultiplied)
+        img.fill(Qt.transparent)
+
+        # Aggressive cleanup for near-edge fringe pixels.
+        alpha_cutoff = 96  # 0..255
         for y in range(img.height()):
             for x in range(img.width()):
-                a = QColor.fromRgba(img.pixel(x, y)).alpha()
+                cb = QColor.fromRgb(img_black.pixel(x, y))
+                cw = QColor.fromRgb(img_white.pixel(x, y))
+
+                # Recover alpha from black/white matte pair.
+                ar = 255 - (cw.red() - cb.red())
+                ag = 255 - (cw.green() - cb.green())
+                ab = 255 - (cw.blue() - cb.blue())
+                a = int(round((ar + ag + ab) / 3.0))
+                if a < 0:
+                    a = 0
+                elif a > 255:
+                    a = 255
+
+                # Suppress low-alpha edge tint aggressively.
+                if a < 224:
+                    a = (a * a + 127) // 255
                 if a <= alpha_cutoff:
-                    img.setPixel(x, y, 0)
+                    continue
+
+                # Recover straight RGB from the black-matte pass: Cb = A * F / 255
+                fr = (cb.red() * 255 + (a // 2)) // a
+                fg = (cb.green() * 255 + (a // 2)) // a
+                fb = (cb.blue() * 255 + (a // 2)) // a
+
+                # Clamp to 8-bit range
+                fr = 0 if fr < 0 else (255 if fr > 255 else fr)
+                fg = 0 if fg < 0 else (255 if fg > 255 else fg)
+                fb = 0 if fb < 0 else (255 if fb > 255 else fb)
+
+                # Store as premultiplied ARGB (target image format).
+                pr = (fr * a + 127) // 255
+                pg = (fg * a + 127) // 255
+                pb = (fb * a + 127) // 255
+                img.setPixel(x, y, (a << 24) | (pr << 16) | (pg << 8) | pb)
 
         self._emoji_glyph_cache[key] = img
+        self._emoji_glyph_diagnostics[key] = self._analyze_glyph_halo(img)
         return img
 
     def get_animal_pool(self):
@@ -1079,6 +1204,12 @@ class EmojiRenderer:
 
         # Draw each emoji label
         painter.save()
+        self._emoji_debug_draw_pass += 1
+        print(
+            f"[EmojiRenderer][DrawPass {self._emoji_debug_draw_pass}] "
+            f"count={len(draw_items)} k={k} dir={direction} names={bool(show_strand_names)}",
+            flush=True
+        )
 
         # IMPORTANT: Reset painter state to prevent strand colors bleeding into emoji rendering
         # (The strand.draw() calls may leave the brush set to a strand color)
@@ -1142,10 +1273,27 @@ class EmojiRenderer:
             glyph_img = self._get_emoji_glyph_image(txt, font, int(w), int(h), ss=3)
             if glyph_img is not None:
                 painter.drawImage(rect, glyph_img)
+                glyph_key = ("emoji_glyph", txt, self._font_cache_key(font), int(w), int(h), 3)
+                diag = self._emoji_glyph_diagnostics.get(glyph_key) or self._analyze_glyph_halo(glyph_img)
+                self._emoji_glyph_diagnostics[glyph_key] = diag
+                print(
+                    f"[EmojiRenderer][GlyphCheck] pass={self._emoji_debug_draw_pass} "
+                    f"emoji={txt} strand={strand_name or '-'} ep={ep_type or '-'} side={side or '-'} "
+                    f"status={diag['status']} edge={diag['edge_pixels']} suspicious={diag['suspicious_pixels']} "
+                    f"ratio={diag['suspicious_ratio']:.3f} max_chroma={diag['max_chroma']} "
+                    f"pos=({x:.1f},{y:.1f})",
+                    flush=True
+                )
             else:
                 # Fallback: direct text draw (should rarely happen)
                 painter.setPen(QColor(0, 0, 0, 255))
                 painter.drawText(rect, Qt.AlignCenter, txt)
+                print(
+                    f"[EmojiRenderer][GlyphCheck] pass={self._emoji_debug_draw_pass} "
+                    f"emoji={txt} strand={strand_name or '-'} ep={ep_type or '-'} side={side or '-'} "
+                    f"status=FALLBACK_DIRECT_TEXT pos=({x:.1f},{y:.1f})",
+                    flush=True
+                )
 
             # Draw strand name if enabled (only for END points of _2/_3 strands)
             if show_strand_names and strand_name:

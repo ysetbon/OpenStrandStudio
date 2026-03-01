@@ -6,6 +6,7 @@ Generates MxN strand patterns using mxn_lh.py/mxn_rh.py and displays exported im
 import os
 import sys
 import json
+import copy
 import random
 import colorsys
 import hashlib
@@ -27,7 +28,7 @@ from PyQt5.QtWidgets import (
     QComboBox, QCheckBox, QColorDialog, QMessageBox,
     QApplication, QSizePolicy, QFileDialog
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QStandardPaths, QSize, QRectF
+from PyQt5.QtCore import Qt, pyqtSignal, QStandardPaths, QSize, QRectF, QPointF
 from PyQt5.QtGui import QColor, QPixmap, QImage, QFont, QPainter, QPen, QBrush, QPainterPath
 
 # Add src directory to path for imports
@@ -1194,7 +1195,6 @@ class MxNGeneratorDialog(QDialog):
             return
 
         try:
-            import copy
             import math
 
             m = self.m_spinner.value()
@@ -1638,6 +1638,51 @@ class MxNGeneratorDialog(QDialog):
             os.makedirs(invalid_dir, exist_ok=True)
 
             attempt_count = [0]  # Use list to allow modification in nested function
+            attempt_render_contexts = {}
+
+            def get_attempt_render_context(direction_type):
+                """
+                Build a prepared-canvas render context once per direction search.
+                Keeps alignment logic unchanged while avoiding per-attempt JSON reload.
+                """
+                context = attempt_render_contexts.get(direction_type)
+                if context is not None:
+                    return context
+
+                try:
+                    # Build stage data using the current "strands" list in this scope.
+                    stage_data = copy.deepcopy(data)
+                    if stage_data.get('type') == 'OpenStrandStudioHistory':
+                        for state in stage_data.get('states', []):
+                            if isinstance(state, dict) and isinstance(state.get('data'), dict):
+                                state['data']['strands'] = strands
+                    else:
+                        stage_data['strands'] = strands
+
+                    stage_json = json.dumps(stage_data, separators=(',', ':'))
+                    if not self._ensure_canvas_prepared(stage_json):
+                        return None
+
+                    main_window = self._get_main_window()
+                    if not main_window:
+                        return None
+
+                    canvas = main_window.canvas
+                    strand_lookup = {
+                        s.layer_name: s for s in canvas.strands
+                        if hasattr(s, "layer_name") and s.layer_name
+                    }
+                    snapshot = self._snapshot_canvas_geometry(strand_lookup)
+                    context = {
+                        "canvas": canvas,
+                        "strand_lookup": strand_lookup,
+                        "snapshot": snapshot,
+                    }
+                    attempt_render_contexts[direction_type] = context
+                    return context
+                except Exception as context_error:
+                    print(f"Fast attempt render context failed ({direction_type}): {context_error}")
+                    return None
 
             def generate_analysis_text(angle_deg, extension, result, direction_type, attempt_num):
                 """Generate detailed analysis text for this configuration."""
@@ -1899,9 +1944,6 @@ class MxNGeneratorDialog(QDialog):
                 attempt_count[0] += 1
 
                 try:
-                    import copy
-                    import math
-
                     # Determine if valid or invalid
                     is_valid = result.get("valid", False)
                     output_dir = solution_dir if is_valid else invalid_dir
@@ -1910,32 +1952,70 @@ class MxNGeneratorDialog(QDialog):
                     status = "valid" if is_valid else "invalid"
                     base_filename = f"{pattern_type}_{m}x{n}_k{k}_{direction}_{direction_type}_ext{extension}_ang{angle_deg:.1f}_{status}"
 
-                    # Make a copy of strands
-                    strands_copy = copy.deepcopy(strands)
-
                     # Get configurations - either from direct result or from fallback
                     configs = result.get("configurations")
                     if not configs and result.get("fallback"):
                         configs = result["fallback"].get("configurations")
 
-                    # Apply configuration if available
-                    if configs:
-                        # Create a result-like dict with the configurations
-                        result_for_apply = {"success": True, "configurations": configs}
-                        strands_copy = apply_parallel_alignment(strands_copy, result_for_apply)
+                    # Use reduced scale for invalid images to speed up export
+                    attempt_scale = scale_factor if is_valid else scale_factor * 0.0625
 
-                    # Update JSON data with this configuration
-                    data_copy = copy.deepcopy(data)
-                    if data_copy.get('type') == 'OpenStrandStudioHistory':
-                        for state in data_copy.get('states', []):
-                            state['data']['strands'] = strands_copy
-                    else:
-                        data_copy['strands'] = strands_copy
+                    # Fast path: render from a prepared canvas by applying/restoring geometry in memory.
+                    img = None
+                    context = get_attempt_render_context(direction_type)
+                    if context is not None:
+                        modified_layers = set()
+                        try:
+                            if configs:
+                                modified_layers = self._apply_alignment_configs_to_canvas(
+                                    context["strand_lookup"], configs
+                                )
+                            img = self._render_current_canvas_image(context["canvas"], attempt_scale)
+                        except Exception as fast_render_error:
+                            print(
+                                f"Fast attempt render failed ({direction_type}, "
+                                f"ang={angle_deg:.1f}, ext={extension}): {fast_render_error}"
+                            )
+                            img = None
+                        finally:
+                            try:
+                                self._restore_canvas_geometry(
+                                    context["strand_lookup"],
+                                    context["snapshot"],
+                                    layer_names=modified_layers
+                                )
+                            except Exception as restore_error:
+                                print(
+                                    f"Fast attempt restore failed ({direction_type}): "
+                                    f"{restore_error}"
+                                )
+                                attempt_render_contexts.pop(direction_type, None)
+                                img = None
 
-                    json_copy = json.dumps(data_copy, indent=2)
+                    # Fallback path: keep old JSON-based flow for robustness.
+                    if img is None or img.isNull():
+                        if context is not None:
+                            print(
+                                f"Using JSON fallback render ({direction_type}, "
+                                f"ang={angle_deg:.1f}, ext={extension})"
+                            )
+                        strands_copy = copy.deepcopy(strands)
+                        if configs:
+                            # Create a result-like dict with the configurations
+                            result_for_apply = {"success": True, "configurations": configs}
+                            strands_copy = apply_parallel_alignment(strands_copy, result_for_apply)
 
-                    # Generate and save image
-                    img = self._generate_image_in_memory(json_copy, scale_factor)
+                        # Update JSON data with this configuration
+                        data_copy = copy.deepcopy(data)
+                        if data_copy.get('type') == 'OpenStrandStudioHistory':
+                            for state in data_copy.get('states', []):
+                                state['data']['strands'] = strands_copy
+                        else:
+                            data_copy['strands'] = strands_copy
+
+                        json_copy = json.dumps(data_copy, separators=(',', ':'))
+                        img = self._generate_image_in_memory(json_copy, attempt_scale)
+
                     if img and not img.isNull():
                         img_path = os.path.join(output_dir, base_filename + ".png")
                         img.save(img_path)
@@ -2217,6 +2297,204 @@ class MxNGeneratorDialog(QDialog):
         ep.end()
 
         return emoji_layer
+
+    def _snapshot_canvas_geometry(self, strand_lookup):
+        """Capture strand geometry by layer name for fast restore between attempts."""
+        snapshot = {}
+        failures = []
+        for layer_name, strand in strand_lookup.items():
+            try:
+                cp1 = getattr(strand, "control_point1", None)
+                cp2 = getattr(strand, "control_point2", None)
+                cp_center = getattr(strand, "control_point_center", None)
+                snapshot[layer_name] = {
+                    "start": QPointF(strand.start),
+                    "end": QPointF(strand.end),
+                    "control_point1": QPointF(cp1) if cp1 is not None else None,
+                    "control_point2": QPointF(cp2) if cp2 is not None else None,
+                    "control_point_center": QPointF(cp_center) if cp_center is not None else None,
+                    "control_point_center_locked": getattr(strand, "control_point_center_locked", False),
+                }
+            except Exception as snapshot_error:
+                failures.append(f"{layer_name}: {snapshot_error}")
+
+        if failures:
+            preview = "; ".join(failures[:3])
+            if len(failures) > 3:
+                preview += f"; ... (+{len(failures) - 3} more)"
+            raise RuntimeError(f"Snapshot failed for {len(failures)} strand(s): {preview}")
+
+        return snapshot
+
+    def _set_canvas_strand_geometry(
+        self,
+        strand,
+        start,
+        end,
+        control_point1=None,
+        control_point2=None,
+        control_point_center=None,
+        control_point_center_locked=None,
+    ):
+        """Set strand geometry and update shape exactly once."""
+        start_pt = QPointF(start)
+        end_pt = QPointF(end)
+
+        # Intentional: setting _start/_end avoids triggering update_shape() twice via
+        # public property setters; we then call update_shape() once at the end.
+        if hasattr(strand, "_start"):
+            strand._start = start_pt
+        else:
+            strand.start = start_pt
+
+        if hasattr(strand, "_end"):
+            strand._end = end_pt
+        else:
+            strand.end = end_pt
+
+        if control_point1 is not None and hasattr(strand, "control_point1"):
+            strand.control_point1 = QPointF(control_point1)
+        if control_point2 is not None and hasattr(strand, "control_point2"):
+            strand.control_point2 = QPointF(control_point2)
+        if control_point_center is not None and hasattr(strand, "control_point_center"):
+            strand.control_point_center = QPointF(control_point_center)
+        if control_point_center_locked is not None and hasattr(strand, "control_point_center_locked"):
+            strand.control_point_center_locked = control_point_center_locked
+
+        if hasattr(strand, "update_shape"):
+            strand.update_shape()
+
+    def _restore_canvas_geometry(self, strand_lookup, snapshot, layer_names=None):
+        """Restore strand geometry for a prepared attempt-render canvas."""
+        if layer_names is None:
+            items = snapshot.items()
+        else:
+            items = ((layer_name, snapshot.get(layer_name)) for layer_name in layer_names)
+
+        missing_layers = []
+        failed_layers = []
+        for layer_name, geometry in items:
+            if geometry is None:
+                missing_layers.append(layer_name)
+                continue
+            strand = strand_lookup.get(layer_name)
+            if strand is None:
+                missing_layers.append(layer_name)
+                continue
+            try:
+                self._set_canvas_strand_geometry(
+                    strand,
+                    geometry["start"],
+                    geometry["end"],
+                    control_point1=geometry.get("control_point1"),
+                    control_point2=geometry.get("control_point2"),
+                    control_point_center=geometry.get("control_point_center"),
+                    control_point_center_locked=geometry.get("control_point_center_locked"),
+                )
+            except Exception as restore_error:
+                failed_layers.append(f"{layer_name}: {restore_error}")
+
+        if missing_layers or failed_layers:
+            messages = []
+            if missing_layers:
+                sample = ", ".join(missing_layers[:5])
+                if len(missing_layers) > 5:
+                    sample += f", ... (+{len(missing_layers) - 5} more)"
+                messages.append(f"missing {len(missing_layers)} layer(s): {sample}")
+            if failed_layers:
+                sample = "; ".join(failed_layers[:3])
+                if len(failed_layers) > 3:
+                    sample += f"; ... (+{len(failed_layers) - 3} more)"
+                messages.append(f"restore failed for {len(failed_layers)} strand(s): {sample}")
+            raise RuntimeError(" | ".join(messages))
+
+    def _set_canvas_strand_line_geometry(self, strand, start_xy, end_xy):
+        """Set straight strand geometry from dict points {x, y}."""
+        start = QPointF(float(start_xy["x"]), float(start_xy["y"]))
+        end = QPointF(float(end_xy["x"]), float(end_xy["y"]))
+        self._set_canvas_strand_geometry(
+            strand,
+            start,
+            end,
+            control_point1=start,
+            control_point2=end,
+            control_point_center=QPointF(
+                (start.x() + end.x()) * 0.5,
+                (start.y() + end.y()) * 0.5,
+            ),
+        )
+
+    def _apply_alignment_configs_to_canvas(self, strand_lookup, configs):
+        """Apply alignment configs (from continuation solver) directly onto prepared canvas strands."""
+        modified_layers = set()
+        for config in configs or []:
+            h_info = config.get("strand") or {}
+            strand_4_5_info = h_info.get("strand_4_5") or {}
+            strand_2_3_info = h_info.get("strand_2_3") or {}
+            extended_start = config.get("extended_start")
+            end_point = config.get("end")
+
+            if not extended_start or not end_point:
+                continue
+
+            layer_4_5 = strand_4_5_info.get("layer_name")
+            layer_2_3 = strand_2_3_info.get("layer_name")
+
+            strand_4_5 = strand_lookup.get(layer_4_5)
+            if strand_4_5 is not None:
+                self._set_canvas_strand_line_geometry(strand_4_5, extended_start, end_point)
+                if layer_4_5:
+                    modified_layers.add(layer_4_5)
+
+            strand_2_3 = strand_lookup.get(layer_2_3)
+            if strand_2_3 is not None:
+                current_start = {"x": strand_2_3.start.x(), "y": strand_2_3.start.y()}
+                self._set_canvas_strand_line_geometry(strand_2_3, current_start, extended_start)
+                if layer_2_3:
+                    modified_layers.add(layer_2_3)
+
+        return modified_layers
+
+    def _render_current_canvas_image(self, canvas, scale_factor):
+        """Render current prepared canvas state without JSON reload/cache lookups."""
+        from render_utils import RenderUtils
+
+        bounds = self._calculate_strands_bounds(canvas)
+        canvas_width = max(800, min(4000, int(bounds.width())))
+        canvas_height = max(600, min(3000, int(bounds.height())))
+        canvas.setFixedSize(canvas_width, canvas_height)
+
+        image_width = max(1, int(bounds.width() * scale_factor))
+        image_height = max(1, int(bounds.height() * scale_factor))
+        image = QImage(image_width, image_height, QImage.Format_ARGB32_Premultiplied)
+
+        if self.transparent_checkbox.isChecked():
+            image.fill(Qt.transparent)
+        else:
+            image.fill(Qt.white)
+
+        painter = QPainter(image)
+        RenderUtils.setup_painter(painter, enable_high_quality=True)
+        painter.scale(scale_factor, scale_factor)
+        painter.translate(-bounds.x(), -bounds.y())
+
+        for strand in canvas.strands:
+            strand.draw(painter, skip_painter_setup=True)
+
+        if canvas.current_strand:
+            canvas.current_strand.draw(painter, skip_painter_setup=True)
+
+        emoji_layer = self._render_emoji_overlay_layer(
+            canvas, bounds, scale_factor, image_width, image_height
+        )
+        if emoji_layer is not None:
+            painter.save()
+            painter.resetTransform()
+            painter.drawImage(0, 0, emoji_layer)
+            painter.restore()
+
+        painter.end()
+        return image
 
     def _export_json_to_image(self, json_path, output_path, scale_factor):
         """Export JSON to image using MainWindow and canvas (same as export_mxn_images.py)."""

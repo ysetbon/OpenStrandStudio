@@ -1259,11 +1259,6 @@ class EmojiRenderer:
         # Draw each emoji label
         painter.save()
         self._emoji_debug_draw_pass += 1
-        print(
-            f"[EmojiRenderer][DrawPass {self._emoji_debug_draw_pass}] "
-            f"count={len(draw_items)} k={k} dir={direction} names={bool(show_strand_names)}",
-            flush=True
-        )
 
         # IMPORTANT: Reset painter state to prevent strand colors bleeding into emoji rendering
         # (The strand.draw() calls may leave the brush set to a strand color)
@@ -1330,24 +1325,10 @@ class EmojiRenderer:
                 glyph_key = ("emoji_asset_glyph", txt, int(w), int(h), 3)
                 diag = self._emoji_glyph_diagnostics.get(glyph_key) or self._analyze_glyph_halo(glyph_img)
                 self._emoji_glyph_diagnostics[glyph_key] = diag
-                print(
-                    f"[EmojiRenderer][GlyphCheck] pass={self._emoji_debug_draw_pass} "
-                    f"emoji={txt} strand={strand_name or '-'} ep={ep_type or '-'} side={side or '-'} "
-                    f"source=twemoji status={diag['status']} edge={diag['edge_pixels']} suspicious={diag['suspicious_pixels']} "
-                    f"ratio={diag['suspicious_ratio']:.3f} max_chroma={diag['max_chroma']} "
-                    f"pos=({x:.1f},{y:.1f})",
-                    flush=True
-                )
             else:
                 # Fallback: direct text draw (should rarely happen)
                 painter.setPen(QColor(0, 0, 0, 255))
                 painter.drawText(rect, Qt.AlignCenter, txt)
-                print(
-                    f"[EmojiRenderer][GlyphCheck] pass={self._emoji_debug_draw_pass} "
-                    f"emoji={txt} strand={strand_name or '-'} ep={ep_type or '-'} side={side or '-'} "
-                    f"status=FALLBACK_DIRECT_TEXT pos=({x:.1f},{y:.1f})",
-                    flush=True
-                )
 
             # Draw strand name if enabled (only for END points of _2/_3 strands)
             if show_strand_names and strand_name:

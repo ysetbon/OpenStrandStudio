@@ -422,13 +422,24 @@ class MxNGeneratorDialog(QDialog):
         self.refresh_emojis_btn.setToolTip("Clear emoji render cache to remove colored halos/strokes")
         self.refresh_emojis_btn.clicked.connect(self._on_refresh_emojis_clicked)
 
+        # Emoji set selector
+        emoji_set_label = QLabel("Emoji style:")
+        self.emoji_set_combo = QComboBox()
+        self.emoji_set_combo.addItem("OpenMoji", "openmoji")
+        self.emoji_set_combo.addItem("Twemoji (Twitter)", "twemoji")
+        self.emoji_set_combo.addItem("Fluent 3D (Microsoft)", "fluent")
+        self.emoji_set_combo.addItem("JoyPixels", "joypixels")
+        self.emoji_set_combo.currentIndexChanged.connect(self._on_emoji_set_changed)
+
         layout.addWidget(self.show_emojis_checkbox, 0, 0, 1, 3)
         layout.addWidget(self.show_strand_names_checkbox, 1, 0, 1, 3)
-        layout.addWidget(k_label, 2, 0)
-        layout.addWidget(self.emoji_k_spinner, 2, 1)
-        layout.addWidget(self.emoji_cw_radio, 2, 2)
-        layout.addWidget(self.emoji_ccw_radio, 3, 2)
-        layout.addWidget(self.refresh_emojis_btn, 4, 0, 1, 3)
+        layout.addWidget(emoji_set_label, 2, 0)
+        layout.addWidget(self.emoji_set_combo, 2, 1, 1, 2)
+        layout.addWidget(k_label, 3, 0)
+        layout.addWidget(self.emoji_k_spinner, 3, 1)
+        layout.addWidget(self.emoji_cw_radio, 3, 2)
+        layout.addWidget(self.emoji_ccw_radio, 4, 2)
+        layout.addWidget(self.refresh_emojis_btn, 5, 0, 1, 3)
 
         parent_layout.addWidget(group)
 
@@ -709,6 +720,13 @@ class MxNGeneratorDialog(QDialog):
         self.align_parallel_btn.setEnabled(False)
         if hasattr(self, 'preview_angles_btn'):
             self.preview_angles_btn.setEnabled(False)
+
+    def _on_emoji_set_changed(self):
+        """Switch emoji asset set and re-render."""
+        set_name = self.emoji_set_combo.currentData()
+        if set_name and getattr(self, "_emoji_renderer", None) is not None:
+            self._emoji_renderer.set_emoji_set(set_name)
+        self._rerender_preview_if_possible()
 
     def _on_emoji_settings_changed(self):
         """Re-render preview when emoji options change (no geometry changes)."""
@@ -2581,6 +2599,7 @@ class MxNGeneratorDialog(QDialog):
                 'show_strand_names': bool(getattr(self, "show_strand_names_checkbox", None) and self.show_strand_names_checkbox.isChecked()),
                 'k': int(getattr(self, "emoji_k_spinner", None).value()) if getattr(self, "emoji_k_spinner", None) else 0,
                 'dir': 'cw' if (getattr(self, "emoji_cw_radio", None) and self.emoji_cw_radio.isChecked()) else 'ccw',
+                'set': self.emoji_set_combo.currentData() if getattr(self, "emoji_set_combo", None) else 'openmoji',
             },
             'colors': {}
         }
@@ -2635,6 +2654,10 @@ class MxNGeneratorDialog(QDialog):
                     self.emoji_k_spinner.setValue(int(emoji.get("k", 0)))
                 except Exception:
                     pass
+            if hasattr(self, "emoji_set_combo") and "set" in emoji:
+                idx = self.emoji_set_combo.findData(emoji.get("set", "openmoji"))
+                if idx >= 0:
+                    self.emoji_set_combo.setCurrentIndex(idx)
             if hasattr(self, "emoji_cw_radio") and hasattr(self, "emoji_ccw_radio") and "dir" in emoji:
                 if str(emoji.get("dir", "cw")).lower() == "ccw":
                     self.emoji_ccw_radio.setChecked(True)

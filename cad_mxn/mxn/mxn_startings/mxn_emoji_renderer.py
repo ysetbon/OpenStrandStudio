@@ -18,6 +18,8 @@ Usage:
     renderer.draw_endpoint_emojis(painter, canvas, bounds, m, n, settings)
 """
 
+import os
+
 from PyQt5.QtCore import QRectF, Qt
 from PyQt5.QtGui import QColor, QFont, QImage, QPainter, QPen, QBrush, QPainterPath
 
@@ -50,6 +52,23 @@ class EmojiRenderer:
         # Cache for rendered emoji glyph images (used to avoid Windows ClearType fringing
         # on transparent backgrounds and to speed up repeated renders).
         self._emoji_glyph_cache = {}
+        # Cache for base emoji assets loaded from local transparent PNG files.
+        self._emoji_asset_base_cache = {}
+        # Available emoji sets and current selection
+        self._emoji_sets_base = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "emoji_assets"
+        )
+        self.AVAILABLE_EMOJI_SETS = {
+            "twemoji": "twemoji_72",
+            "openmoji": "openmoji_72",
+            "fluent": "fluent_emoji",
+            "joypixels": "joypixels_72",
+        }
+        self._current_emoji_set = "openmoji"
+        self._emoji_assets_dir = os.path.join(
+            self._emoji_sets_base, "openmoji_72"
+        )
         # Cache of per-glyph diagnostics used for console debugging of halo/stroke artifacts.
         self._emoji_glyph_diagnostics = {}
         # Incremented per draw pass to make terminal logs easier to correlate.
@@ -81,6 +100,31 @@ class EmojiRenderer:
         self._emoji_visual_extents_cache = {}
         self._emoji_glyph_cache = {}
         self._emoji_glyph_diagnostics = {}
+
+    def set_emoji_set(self, set_name):
+        """
+        Switch to a different emoji asset set.
+
+        Args:
+            set_name: One of "twemoji", "openmoji", "fluent", "joypixels"
+        """
+        if set_name not in self.AVAILABLE_EMOJI_SETS:
+            print(f"[EmojiRenderer] Unknown emoji set: {set_name}", flush=True)
+            return
+        if set_name == self._current_emoji_set:
+            return
+        self._current_emoji_set = set_name
+        self._emoji_assets_dir = os.path.join(
+            self._emoji_sets_base,
+            self.AVAILABLE_EMOJI_SETS[set_name]
+        )
+        # Clear caches so images reload from the new set
+        self._emoji_asset_base_cache = {}
+        self.clear_render_cache()
+
+    def get_emoji_set(self):
+        """Return the name of the currently active emoji set."""
+        return self._current_emoji_set
 
     def _analyze_glyph_halo(self, img: QImage):
         """
@@ -330,6 +374,60 @@ class EmojiRenderer:
         """Clear frozen emoji assignments."""
         self._frozen_endpoint_emojis = None
 
+    def _split_label_emoji_suffix(self, txt: str):
+        """Split label into (emoji_base, numeric_suffix)."""
+        if not txt:
+            return "", ""
+        idx = len(txt)
+        while idx > 0 and txt[idx - 1].isdigit():
+            idx -= 1
+        return txt[:idx], txt[idx:]
+
+    def _emoji_code_from_base(self, emoji_base: str):
+        """Convert an emoji string to Twemoji codepoint filename format."""
+        if not emoji_base:
+            return None
+        cps = []
+        for ch in emoji_base:
+            cp = ord(ch)
+            if cp == 0xFE0F:
+                continue
+            cps.append(f"{cp:x}")
+        if not cps:
+            return None
+        return "-".join(cps)
+
+    def _get_emoji_asset_base(self, txt: str):
+        """
+        Load base emoji PNG from local Twemoji asset set.
+
+        Returns:
+            QImage (premultiplied) or None if asset is unavailable.
+        """
+        emoji_base, _suffix = self._split_label_emoji_suffix(txt or "")
+        code = self._emoji_code_from_base(emoji_base)
+        if not code:
+            return None
+
+        if code in self._emoji_asset_base_cache:
+            return self._emoji_asset_base_cache[code]
+
+        asset_path = os.path.join(self._emoji_assets_dir, f"{code}.png")
+        if not os.path.exists(asset_path):
+            self._emoji_asset_base_cache[code] = None
+            print(f"[EmojiRenderer] Missing emoji asset: {asset_path}", flush=True)
+            return None
+
+        img = QImage(asset_path)
+        if img.isNull():
+            self._emoji_asset_base_cache[code] = None
+            print(f"[EmojiRenderer] Failed loading emoji asset: {asset_path}", flush=True)
+            return None
+
+        img = img.convertToFormat(QImage.Format_ARGB32_Premultiplied)
+        self._emoji_asset_base_cache[code] = img
+        return img
+
     def _font_cache_key(self, font: QFont):
         # QFont is not reliably hashable across PyQt versions; use a stable tuple key.
         try:
@@ -459,18 +557,17 @@ class EmojiRenderer:
 
     def _get_emoji_glyph_image(self, txt: str, font: QFont, logical_w: int, logical_h: int, ss: int = 4):
         """
-        Render an emoji into a cached, supersampled offscreen image.
+        Build an emoji glyph image from local Twemoji PNG assets.
 
-        Why: On Windows, drawing color emoji text directly onto a transparent target can
-        produce colored halos (lime/magenta/black) due to LCD/subpixel AA assumptions.
-        Rendering into an offscreen buffer and then scaling down removes the fringe.
+        This avoids OS font-renderer differences and removes platform-specific
+        glyph-edge artifacts from color emoji text rendering.
         """
         if not txt:
             return None
 
         lw = max(1, int(logical_w))
         lh = max(1, int(logical_h))
-        key = ("emoji_glyph", txt, self._font_cache_key(font), lw, lh, int(ss))
+        key = ("emoji_asset_glyph", txt, lw, lh, int(ss))
         cached = self._emoji_glyph_cache.get(key)
         if cached is not None:
             if key not in self._emoji_glyph_diagnostics:
@@ -479,87 +576,44 @@ class EmojiRenderer:
 
         img_w = max(1, int(lw * ss))
         img_h = max(1, int(lh * ss))
+        base_img = self._get_emoji_asset_base(txt)
+        if base_img is None:
+            # No local asset for this label.
+            return None
 
-        def _render_on_opaque_bg(bg_value: int) -> QImage:
-            img = QImage(img_w, img_h, QImage.Format_ARGB32)
-            img.fill(QColor(bg_value, bg_value, bg_value, 255))
+        alpha_src = base_img.convertToFormat(QImage.Format_Alpha8)
+        src_bounds = self._compute_alpha_bounds(alpha_src, threshold=1)
+        if src_bounds is not None:
+            sx1, sy1, sx2, sy2 = src_bounds
+            src_rect = QRectF(float(sx1), float(sy1), float(sx2 - sx1 + 1), float(sy2 - sy1 + 1))
+        else:
+            src_rect = QRectF(0.0, 0.0, float(base_img.width()), float(base_img.height()))
 
-            p = QPainter(img)
-            p.setRenderHint(QPainter.Antialiasing, True)
-            p.setRenderHint(QPainter.TextAntialiasing, True)
-            p.setRenderHint(QPainter.SmoothPixmapTransform, True)
-            p.setCompositionMode(QPainter.CompositionMode_SourceOver)
-            p.scale(ss, ss)
-            p.setFont(font)
-            # For color emoji fonts this pen is ignored; for monochrome fallback
-            # it keeps a deterministic foreground so matte recovery stays stable.
-            p.setPen(QColor(0, 0, 0, 255))
-            p.setBrush(Qt.NoBrush)
-            p.drawText(QRectF(0.0, 0.0, float(lw), float(lh)), Qt.AlignCenter, txt)
-            p.end()
-            return img
-
-        ### Legacy transparent-surface paint path kept for reference:
-        ### img_straight = QImage(img_w, img_h, QImage.Format_ARGB32)
-        ### img_straight.fill(Qt.transparent)
-        ### p = QPainter(img_straight)
-        ### p.setRenderHint(QPainter.Antialiasing, True)
-        ### p.setRenderHint(QPainter.TextAntialiasing, True)
-        ### p.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        ### p.setCompositionMode(QPainter.CompositionMode_Source)
-        ### p.scale(ss, ss)
-        ### p.setFont(font)
-        ### p.setPen(QColor(0, 0, 0, 0))
-        ### p.setBrush(Qt.NoBrush)
-        ### p.drawText(QRectF(0.0, 0.0, float(lw), float(lh)), Qt.AlignCenter, txt)
-        ### p.end()
-        ### img = img_straight.convertToFormat(QImage.Format_ARGB32_Premultiplied)
-
-        # Render against black + white mattes, then reconstruct alpha/color.
-        # This avoids LCD/subpixel edge tint that can appear as a colored stroke.
-        img_black = _render_on_opaque_bg(0)
-        img_white = _render_on_opaque_bg(255)
         img = QImage(img_w, img_h, QImage.Format_ARGB32_Premultiplied)
         img.fill(Qt.transparent)
+        p = QPainter(img)
+        p.setRenderHint(QPainter.Antialiasing, True)
+        p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        p.setRenderHint(QPainter.TextAntialiasing, True)
+        p.setCompositionMode(QPainter.CompositionMode_SourceOver)
+        p.drawImage(QRectF(0.0, 0.0, float(img_w), float(img_h)), base_img, src_rect)
 
-        # Aggressive cleanup for near-edge fringe pixels.
-        alpha_cutoff = 96  # 0..255
-        for y in range(img.height()):
-            for x in range(img.width()):
-                cb = QColor.fromRgb(img_black.pixel(x, y))
-                cw = QColor.fromRgb(img_white.pixel(x, y))
+        # If a numeric suffix exists (e.g. emoji2), draw it on top so behavior
+        # remains compatible when label counts exceed base pool size.
+        _emoji_base, suffix = self._split_label_emoji_suffix(txt)
+        if suffix:
+            sf = QFont("Segoe UI", max(8, int(img_h * 0.18)))
+            sf.setBold(True)
+            p.setFont(sf)
+            suffix_rect = QRectF(float(img_w) * 0.58, float(img_h) * 0.56, float(img_w) * 0.40, float(img_h) * 0.40)
+            p.setPen(QColor(0, 0, 0, 230))
+            p.drawText(suffix_rect.adjusted(-2.0, -2.0, 0.0, 0.0), Qt.AlignCenter, suffix)
+            p.setPen(QColor(255, 255, 255, 255))
+            p.drawText(suffix_rect, Qt.AlignCenter, suffix)
+        p.end()
 
-                # Recover alpha from black/white matte pair.
-                ar = 255 - (cw.red() - cb.red())
-                ag = 255 - (cw.green() - cb.green())
-                ab = 255 - (cw.blue() - cb.blue())
-                a = int(round((ar + ag + ab) / 3.0))
-                if a < 0:
-                    a = 0
-                elif a > 255:
-                    a = 255
-
-                # Suppress low-alpha edge tint aggressively.
-                if a < 224:
-                    a = (a * a + 127) // 255
-                if a <= alpha_cutoff:
-                    continue
-
-                # Recover straight RGB from the black-matte pass: Cb = A * F / 255
-                fr = (cb.red() * 255 + (a // 2)) // a
-                fg = (cb.green() * 255 + (a // 2)) // a
-                fb = (cb.blue() * 255 + (a // 2)) // a
-
-                # Clamp to 8-bit range
-                fr = 0 if fr < 0 else (255 if fr > 255 else fr)
-                fg = 0 if fg < 0 else (255 if fg > 255 else fg)
-                fb = 0 if fb < 0 else (255 if fb > 255 else fb)
-
-                # Store as premultiplied ARGB (target image format).
-                pr = (fr * a + 127) // 255
-                pg = (fg * a + 127) // 255
-                pb = (fb * a + 127) // 255
-                img.setPixel(x, y, (a << 24) | (pr << 16) | (pg << 8) | pb)
+        ### Legacy font-based emoji rasterization kept for reference (disabled):
+        ### Render emoji text with QPainter.drawText(...) and post-process alpha/chroma.
 
         self._emoji_glyph_cache[key] = img
         self._emoji_glyph_diagnostics[key] = self._analyze_glyph_halo(img)
@@ -1273,13 +1327,13 @@ class EmojiRenderer:
             glyph_img = self._get_emoji_glyph_image(txt, font, int(w), int(h), ss=3)
             if glyph_img is not None:
                 painter.drawImage(rect, glyph_img)
-                glyph_key = ("emoji_glyph", txt, self._font_cache_key(font), int(w), int(h), 3)
+                glyph_key = ("emoji_asset_glyph", txt, int(w), int(h), 3)
                 diag = self._emoji_glyph_diagnostics.get(glyph_key) or self._analyze_glyph_halo(glyph_img)
                 self._emoji_glyph_diagnostics[glyph_key] = diag
                 print(
                     f"[EmojiRenderer][GlyphCheck] pass={self._emoji_debug_draw_pass} "
                     f"emoji={txt} strand={strand_name or '-'} ep={ep_type or '-'} side={side or '-'} "
-                    f"status={diag['status']} edge={diag['edge_pixels']} suspicious={diag['suspicious_pixels']} "
+                    f"source=twemoji status={diag['status']} edge={diag['edge_pixels']} suspicious={diag['suspicious_pixels']} "
                     f"ratio={diag['suspicious_ratio']:.3f} max_chroma={diag['max_chroma']} "
                     f"pos=({x:.1f},{y:.1f})",
                     flush=True

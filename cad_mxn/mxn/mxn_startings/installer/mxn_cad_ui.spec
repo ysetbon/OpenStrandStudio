@@ -34,11 +34,24 @@ for f in os.listdir(SRC_DIR):
     if f.endswith('.py'):
         src_modules.append((os.path.join(SRC_DIR, f), '.'))
 
+# Collect Twemoji PNG assets used by mxn_emoji_renderer
+emoji_assets = []
+EMOJI_ASSETS_DIR = os.path.join(MXN_STARTINGS_DIR, 'emoji_assets', 'twemoji_72')
+if os.path.isdir(EMOJI_ASSETS_DIR):
+    for f in os.listdir(EMOJI_ASSETS_DIR):
+        if f.lower().endswith('.png'):
+            emoji_assets.append(
+                (
+                    os.path.join(EMOJI_ASSETS_DIR, f),
+                    os.path.join('emoji_assets', 'twemoji_72')
+                )
+            )
+
 a = Analysis(
     [os.path.join(MXN_STARTINGS_DIR, 'mxn_cad_ui.py')],
     pathex=[MXN_STARTINGS_DIR, SRC_DIR],
     binaries=pyqt5_binaries,
-    datas=mxn_modules + src_modules + pyqt5_datas,
+    datas=mxn_modules + src_modules + emoji_assets + pyqt5_datas,
     hiddenimports=pyqt5_hiddenimports + [
         'PyQt5',
         'PyQt5.QtWidgets',

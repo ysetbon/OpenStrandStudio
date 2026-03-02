@@ -225,13 +225,23 @@ class EmojiRenderer:
             return 2 * w + h + (content.bottom() - y)
 
         strands = getattr(canvas, "strands", []) or []
-        q = 0.5
+        # Snap tolerance in pixels for endpoint-slot identity.
+        # IMPORTANT: keys must match the eventual border-projected draw positions:
+        # - top/bottom slots are identified by X only
+        # - left/right slots are identified by Y only
+        # Otherwise two geometrically close endpoints can collapse to the same draw
+        # position but still get different keys, causing stacked emojis.
+        q = 4.0
 
         def ep_key(ep):
+            side = ep.get("side", "")
+            if side in ("top", "bottom"):
+                axis = float(ep["x"])
+            else:
+                axis = float(ep["y"])
             return (
-                ep.get("side", ""),
-                int(round(float(ep["x"]) / q)),
-                int(round(float(ep["y"]) / q)),
+                side,
+                int(round(axis / q)),
             )
 
         endpoint_map = {}
@@ -1013,14 +1023,21 @@ class EmojiRenderer:
         # assignment as users expect.
         strands = getattr(canvas, "strands", []) or []
 
-        q = 0.5  # Snap tolerance in pixels for endpoint identity
+        # Snap tolerance in pixels for endpoint-slot identity.
+        # Match keying to projected draw positions so near-duplicate endpoints
+        # (common after V adjustments) collapse to one slot instead of stacking.
+        q = 4.0
 
         def ep_key(ep):
-            """Generate a unique key for an endpoint based on its position."""
+            """Generate a unique key for an endpoint slot on a given perimeter side."""
+            side = ep.get("side", "")
+            if side in ("top", "bottom"):
+                axis = float(ep["x"])
+            else:
+                axis = float(ep["y"])
             return (
-                ep.get("side", ""),
-                int(round(float(ep["x"]) / q)),
-                int(round(float(ep["y"]) / q)),
+                side,
+                int(round(axis / q)),
             )
 
         endpoint_map = {}  # key -> {"ep": ep, "t": float, "width": float, "strand_name": str, "ep_type": str}
@@ -1189,10 +1206,24 @@ class EmojiRenderer:
 
             return out
 
-        # Generate or retrieve cached base labels
-        # Use a position-independent key (m, n, total_count) so that emoji assignments
-        # stay stable when strand positions change (e.g., after parallel alignment)
-        base_key = (m, n, len(ordered_keys))
+        # Generate or retrieve cached base labels.
+        # Keep cache mostly position-independent, but include side counts so we
+        # rebuild if geometry temporarily reports a different side distribution.
+        side_counts = {"top": 0, "right": 0, "bottom": 0, "left": 0}
+        for _key, item in ordered_eps:
+            side = (item.get("ep") or {}).get("side", "")
+            if side in side_counts:
+                side_counts[side] += 1
+
+        base_key = (
+            m,
+            n,
+            len(ordered_keys),
+            side_counts["top"],
+            side_counts["right"],
+            side_counts["bottom"],
+            side_counts["left"],
+        )
         if (self._emoji_base_key != base_key or
             not self._emoji_base_labels or
             len(self._emoji_base_labels) != len(ordered_keys)):

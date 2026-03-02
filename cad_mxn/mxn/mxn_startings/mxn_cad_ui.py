@@ -659,6 +659,31 @@ class MxNGeneratorDialog(QDialog):
         self.use_custom_angles_cb.setToolTip("If checked, use the angles above instead of auto-detected ±20°")
         angle_layout.addWidget(self.use_custom_angles_cb)
 
+        # Pair extension search controls (outer loop parameters)
+        ext_search_label = QLabel("Pair Extension Search:")
+        ext_search_label.setStyleSheet("color: #aaa; font-size: 11px; margin-top: 5px;")
+        angle_layout.addWidget(ext_search_label)
+
+        ext_search_layout = QHBoxLayout()
+        ext_search_layout.addWidget(QLabel("Max:"))
+        self.pair_ext_max_spin = QSpinBox()
+        self.pair_ext_max_spin.setRange(0, 1000)
+        self.pair_ext_max_spin.setValue(200)
+        self.pair_ext_max_spin.setSingleStep(50)
+        self.pair_ext_max_spin.setSuffix("px")
+        self.pair_ext_max_spin.setToolTip("Maximum pair extension to search (outer loop upper bound)")
+        ext_search_layout.addWidget(self.pair_ext_max_spin)
+
+        ext_search_layout.addWidget(QLabel("Step:"))
+        self.pair_ext_step_spin = QSpinBox()
+        self.pair_ext_step_spin.setRange(1, 100)
+        self.pair_ext_step_spin.setValue(10)
+        self.pair_ext_step_spin.setSingleStep(1)
+        self.pair_ext_step_spin.setSuffix("px")
+        self.pair_ext_step_spin.setToolTip("Pair extension step size (outer loop increment)")
+        ext_search_layout.addWidget(self.pair_ext_step_spin)
+        angle_layout.addLayout(ext_search_layout)
+
         # Pair extension offset controls (direct extension, no alignment)
         ext_offset_label = QLabel("First-Last Pair Extension:")
         ext_offset_label.setStyleSheet("color: #aaa; font-size: 11px; margin-top: 5px;")
@@ -1604,6 +1629,10 @@ class MxNGeneratorDialog(QDialog):
                 self.status_label.setText("Generate continuation first (need _4/_5 strands)")
                 return
 
+            # Read pair extension search parameters from UI
+            pair_ext_max = self.pair_ext_max_spin.value()
+            pair_ext_step = self.pair_ext_step_spin.value()
+
             # Check if using custom angles
             use_custom = self.use_custom_angles_cb.isChecked()
             h_custom_min = self.h_angle_min_spin.value() if use_custom else None
@@ -2066,7 +2095,9 @@ class MxNGeneratorDialog(QDialog):
                 max_extension=100.0,
                 custom_angle_min=h_custom_min,
                 custom_angle_max=h_custom_max,
-                on_config_callback=save_attempt_callback
+                on_config_callback=save_attempt_callback,
+                max_pair_extension=pair_ext_max,
+                pair_extension_step=pair_ext_step
             )
 
             print_alignment_debug(h_result)
@@ -2099,7 +2130,9 @@ class MxNGeneratorDialog(QDialog):
                 max_extension=100.0,
                 custom_angle_min=v_custom_min,
                 custom_angle_max=v_custom_max,
-                on_config_callback=save_attempt_callback
+                on_config_callback=save_attempt_callback,
+                max_pair_extension=pair_ext_max,
+                pair_extension_step=pair_ext_step
             )
 
             print_alignment_debug(v_result)

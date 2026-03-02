@@ -1167,7 +1167,9 @@ def align_horizontal_strands_parallel(all_strands, n,
                                        angle_step_degrees=0.5,
                                        max_extension=100.0, strand_width=46,
                                        custom_angle_min=None, custom_angle_max=None,
-                                       on_config_callback=None):
+                                       on_config_callback=None,
+                                       max_pair_extension=200,
+                                       pair_extension_step=10):
     """
     Parallel alignment of horizontal _4/_5 strands using first-last pair approach.
 
@@ -1291,7 +1293,7 @@ def align_horizontal_strands_parallel(all_strands, n,
     print(f"Found {num_strands} horizontal _4/_5 strands")
     print(f"Max extension: {max_extension}")
     print(f"Strand width: {strand_width}")
-    print(f"First-Last pair extension: 0 to 200 px (step 5)")
+    print(f"First-Last pair extension: 0 to {max_pair_extension} px (step {pair_extension_step})")
 
     # Debug: Print details of each strand
     print(f"\n--- Strand Details ---")
@@ -1335,7 +1337,7 @@ def align_horizontal_strands_parallel(all_strands, n,
     best_fallback_extension = 0
     best_fallback_angle = 0
 
-    for pair_extension in range(0, 210, 10):  # Step 10px instead of 5px
+    for pair_extension in range(0, max_pair_extension + pair_extension_step, pair_extension_step):
         # Extend first and last strand starting positions
         first_strand["original_start"]["x"] = first_original_start["x"] + pair_extension * first_s23_nx
         first_strand["original_start"]["y"] = first_original_start["y"] + pair_extension * first_s23_ny
@@ -1479,10 +1481,10 @@ def align_horizontal_strands_parallel(all_strands, n,
         }
     else:
         print(f"\n=== No Solution Found ===")
-        print(f"Tried pair extensions from 0 to 200px")
+        print(f"Tried pair extensions from 0 to {max_pair_extension}px (step {pair_extension_step})")
         return {
             "success": False,
-            "message": "Could not find any valid configuration or fallback (tried pair extensions 0-200px)"
+            "message": f"Could not find any valid configuration or fallback (tried pair extensions 0-{max_pair_extension}px)"
         }
 
 
@@ -1490,7 +1492,9 @@ def align_vertical_strands_parallel(all_strands, n, m,
                                      angle_step_degrees=0.5,
                                      max_extension=100.0, strand_width=46,
                                      custom_angle_min=None, custom_angle_max=None,
-                                     on_config_callback=None):
+                                     on_config_callback=None,
+                                     max_pair_extension=200,
+                                     pair_extension_step=10):
     """
     Parallel alignment of vertical _4/_5 strands using first-last pair approach.
 
@@ -1623,7 +1627,7 @@ def align_vertical_strands_parallel(all_strands, n, m,
     print(f"Found {num_strands} vertical _4/_5 strands")
     print(f"Max extension: {max_extension}")
     print(f"Strand width: {strand_width}")
-    print(f"First-Last pair extension: 0 to 200 px (step 5)")
+    print(f"First-Last pair extension: 0 to {max_pair_extension} px (step {pair_extension_step})")
 
     # Debug: Print details of each strand
     print(f"\n--- Vertical Strand Details ---")
@@ -1667,7 +1671,7 @@ def align_vertical_strands_parallel(all_strands, n, m,
     best_fallback_extension = 0
     best_fallback_angle = 0
 
-    for pair_extension in range(0, 210, 10):  # Step 10px instead of 5px
+    for pair_extension in range(0, max_pair_extension + pair_extension_step, pair_extension_step):
         # Extend first and last strand starting positions
         first_strand["original_start"]["x"] = first_original_start["x"] + pair_extension * first_s23_nx
         first_strand["original_start"]["y"] = first_original_start["y"] + pair_extension * first_s23_ny
@@ -1811,10 +1815,10 @@ def align_vertical_strands_parallel(all_strands, n, m,
         }
     else:
         print(f"\n=== No Solution Found ===")
-        print(f"Tried pair extensions from 0 to 200px")
+        print(f"Tried pair extensions from 0 to {max_pair_extension}px (step {pair_extension_step})")
         return {
             "success": False,
-            "message": "Could not find any valid configuration or fallback (tried pair extensions 0-200px)"
+            "message": f"Could not find any valid configuration or fallback (tried pair extensions 0-{max_pair_extension}px)"
         }
 
 

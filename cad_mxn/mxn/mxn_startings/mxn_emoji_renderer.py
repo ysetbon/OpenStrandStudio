@@ -60,15 +60,14 @@ class EmojiRenderer:
             "emoji_assets"
         )
         self.AVAILABLE_EMOJI_SETS = {
-            "twemoji": "twemoji_72",
+            "default": None,  # Use system font rendering (no local PNG assets)
+            "twemoji": "twemoji_512",
             "openmoji": "openmoji_72",
             "fluent": "fluent_emoji",
             "joypixels": "joypixels_72",
         }
-        self._current_emoji_set = "openmoji"
-        self._emoji_assets_dir = os.path.join(
-            self._emoji_sets_base, "openmoji_72"
-        )
+        self._current_emoji_set = "default"
+        self._emoji_assets_dir = None
         # Cache of per-glyph diagnostics used for console debugging of halo/stroke artifacts.
         self._emoji_glyph_diagnostics = {}
         # Incremented per draw pass to make terminal logs easier to correlate.
@@ -106,7 +105,7 @@ class EmojiRenderer:
         Switch to a different emoji asset set.
 
         Args:
-            set_name: One of "twemoji", "openmoji", "fluent", "joypixels"
+            set_name: One of "default", "twemoji", "openmoji", "fluent", "joypixels"
         """
         if set_name not in self.AVAILABLE_EMOJI_SETS:
             print(f"[EmojiRenderer] Unknown emoji set: {set_name}", flush=True)
@@ -114,10 +113,13 @@ class EmojiRenderer:
         if set_name == self._current_emoji_set:
             return
         self._current_emoji_set = set_name
-        self._emoji_assets_dir = os.path.join(
-            self._emoji_sets_base,
-            self.AVAILABLE_EMOJI_SETS[set_name]
-        )
+        folder = self.AVAILABLE_EMOJI_SETS[set_name]
+        if folder is not None:
+            self._emoji_assets_dir = os.path.join(
+                self._emoji_sets_base, folder
+            )
+        else:
+            self._emoji_assets_dir = None
         # Clear caches so images reload from the new set
         self._emoji_asset_base_cache = {}
         self.clear_render_cache()
@@ -414,6 +416,8 @@ class EmojiRenderer:
         Returns:
             QImage (premultiplied) or None if asset is unavailable.
         """
+        if self._emoji_assets_dir is None:
+            return None
         emoji_base, _suffix = self._split_label_emoji_suffix(txt or "")
         code = self._emoji_code_from_base(emoji_base)
         if not code:
@@ -1314,7 +1318,8 @@ class EmojiRenderer:
             ep_type = item.get("ep_type", "")
 
             # Calculate outward offset so emoji sits outside the strand
-            outward = (width * 0.5) + (fm.height() * 0.65) + 10.0
+            # Use fixed 50px emoji size (matching PNG assets) instead of font metrics
+            outward = (width * 0.5) + (50 * 0.65) + 10.0
             outward = min(outward, max(24.0, self.BOUNDS_PADDING * 0.8))
 
             # Project endpoint to exact border edge for alignment (keep emoji positions stable).
@@ -1338,19 +1343,17 @@ class EmojiRenderer:
             x = base_x + nx * outward
             y = base_y + ny * outward
 
-            # Calculate centered text rectangle
-            br = fm.boundingRect(txt)
-            w = max(1, br.width() + 6)
-            h = max(1, br.height() + 6)
-            rect = QRectF(x - w / 2.0, y - h / 2.0, w, h)
+            # Use exact 50x50 pixel size matching the original PNG assets.
+            w = 38
+            h = 38
+            rect = QRectF(x - w / 2.0, y - h / 2.0, float(w), float(h))
 
             # Draw emoji in a way that avoids Windows ClearType/subpixel fringing on alpha.
             # Render into a cached supersampled buffer, then scale down into `rect`.
             painter.setBrush(Qt.NoBrush)
             painter.setPen(Qt.NoPen)
-            # Render at the *same* logical size we used before (based on font metrics),
-            # so the emoji appears the same size as the direct drawText() version.
-            glyph_img = self._get_emoji_glyph_image(txt, font, int(w), int(h), ss=3)
+            # Render at the exact 50x50 logical size matching the source PNG assets.
+            glyph_img = self._get_emoji_glyph_image(txt, font, w, h, ss=3)
             if glyph_img is not None:
                 painter.drawImage(rect, glyph_img)
                 glyph_key = ("emoji_asset_glyph", txt, int(w), int(h), 3)

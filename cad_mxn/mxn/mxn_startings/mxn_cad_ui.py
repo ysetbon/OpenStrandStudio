@@ -435,10 +435,11 @@ class MxNGeneratorDialog(QDialog):
         # Emoji set selector
         emoji_set_label = QLabel("Emoji style:")
         self.emoji_set_combo = QComboBox()
-        self.emoji_set_combo.addItem("OpenMoji", "openmoji")
+        self.emoji_set_combo.addItem("Default (System)", "default")
         self.emoji_set_combo.addItem("Twemoji (Twitter)", "twemoji")
-        self.emoji_set_combo.addItem("Fluent 3D (Microsoft)", "fluent")
+        self.emoji_set_combo.addItem("OpenMoji", "openmoji")
         self.emoji_set_combo.addItem("JoyPixels", "joypixels")
+        self.emoji_set_combo.addItem("Fluent 3D (Microsoft)", "fluent")
         self.emoji_set_combo.currentIndexChanged.connect(self._on_emoji_set_changed)
 
         layout.addWidget(self.show_emojis_checkbox, 0, 0, 1, 3)
@@ -1632,9 +1633,7 @@ class MxNGeneratorDialog(QDialog):
                 os.path.dirname(os.path.dirname(script_dir)),
                 "mxn", "mxn_output", diagram_name, "parallel"
             )
-            solution_dir = os.path.join(base_output_dir, "solution")
             invalid_dir = os.path.join(base_output_dir, "invalid")
-            os.makedirs(solution_dir, exist_ok=True)
             os.makedirs(invalid_dir, exist_ok=True)
 
             attempt_count = [0]  # Use list to allow modification in nested function
@@ -1944,9 +1943,10 @@ class MxNGeneratorDialog(QDialog):
                 attempt_count[0] += 1
 
                 try:
-                    # Determine if valid or invalid
+                    # Attempt-level validity is per-direction only; never treat it as
+                    # a full solution (full solution requires BOTH horizontal+vertical pass).
                     is_valid = result.get("valid", False)
-                    output_dir = solution_dir if is_valid else invalid_dir
+                    output_dir = invalid_dir
 
                     # Create filename (without extension)
                     status = "valid" if is_valid else "invalid"
@@ -2220,6 +2220,12 @@ class MxNGeneratorDialog(QDialog):
                 print(f"Save result: {save_result}")
             else:
                 print(f"ERROR: No image to save! current_image={self.current_image}")
+
+            # Save aligned JSON next to the image in the same output folder.
+            json_path = os.path.join(output_subdir, f"{filename_base}.json")
+            with open(json_path, "w", encoding="utf-8") as f:
+                f.write(self.current_json_data)
+            print(f"JSON saved: {json_path}")
 
             if not (h_success or v_success):
                 self.status_label.setText(
@@ -2888,7 +2894,7 @@ class MxNGeneratorDialog(QDialog):
                 'show_strand_names': bool(getattr(self, "show_strand_names_checkbox", None) and self.show_strand_names_checkbox.isChecked()),
                 'k': int(getattr(self, "emoji_k_spinner", None).value()) if getattr(self, "emoji_k_spinner", None) else 0,
                 'dir': 'cw' if (getattr(self, "emoji_cw_radio", None) and self.emoji_cw_radio.isChecked()) else 'ccw',
-                'set': self.emoji_set_combo.currentData() if getattr(self, "emoji_set_combo", None) else 'openmoji',
+                'set': self.emoji_set_combo.currentData() if getattr(self, "emoji_set_combo", None) else 'default',
             },
             'colors': {}
         }
@@ -2944,7 +2950,7 @@ class MxNGeneratorDialog(QDialog):
                 except Exception:
                     pass
             if hasattr(self, "emoji_set_combo") and "set" in emoji:
-                idx = self.emoji_set_combo.findData(emoji.get("set", "openmoji"))
+                idx = self.emoji_set_combo.findData(emoji.get("set", "default"))
                 if idx >= 0:
                     self.emoji_set_combo.setCurrentIndex(idx)
             if hasattr(self, "emoji_cw_radio") and hasattr(self, "emoji_ccw_radio") and "dir" in emoji:

@@ -1,0 +1,116 @@
+================================================================================
+                    PARALLEL ALIGNMENT ANALYSIS
+================================================================================
+Pattern: LH 2x3 | K: 7 | Direction: CW
+Attempt: #154 | Angle: 41.8° | Extension: 30px | Status: INVALID
+================================================================================
+
+--------------------------------------------------------------------------------
+                           HORIZONTAL STRANDS
+--------------------------------------------------------------------------------
+
+Strand Order: ['1_4', '1_5', '2_4', '2_5', '3_4', '3_5']
+
++------------------------------------------------------------------------------+
+|  REFERENCE LINE (First Strand: 1_4)                                        |
++------------------------------------------------------------------------------+
+|  Line Vector:      (+0.745, +0.667)   |  Angle: 41.8°                    |
+|  Perpendicular:    (+0.667, -0.745)   |  (positive direction for gaps)        |
++------------------------------------------------------------------------------+
+
++------------------------------------------------------------------------------+
+|  REFERENCE DIRECTION (First -> Last)                                        |
++------------------------------------------------------------------------------+
+|  1_4 -> 3_5                                                                  |
+|  Signed Distance: +44.8 px                                                  |
+|  Direction Vector: (+0.667, -0.745)  <- perpendicular unit vector                  |
+|  Expected Sign: + (all gaps must be + to maintain order)               |
++------------------------------------------------------------------------------+
+
++------------+------------+---------------------+--------+----------------------+
+|   PAIR     |  DISTANCE  |  DIRECTION VECTOR   |  SIGN  |  STATUS              |
++------------+------------+---------------------+--------+----------------------+
+| 1_4->1_5   |    191.7px | (+0.667, -0.745)    |   +    | X TOO LARGE (>69)    |
+| 1_5->2_4   |    255.1px | (+0.667, -0.745)    |   +    | X TOO LARGE (>69)    |
+| 2_4->2_5   |    171.7px | (+0.667, -0.745)    |   +    | X TOO LARGE (>69)    |
+| 2_5->3_4   |    255.1px | (-0.667, +0.745)    |   -    | X CROSSED!           |
+| 3_4->3_5   |    191.7px | (-0.667, +0.745)    |   -    | X CROSSED!           |
++------------+------------+---------------------+--------+----------------------+
+
+DETAILED GAP CALCULATIONS:
+--------------------------------------------------------------------------------
+  1_4->1_5:
+    LINE from 1_4:
+      Start: (1042.0, 252.0)
+      End:   (1362.7, 539.0)
+    POINT from 1_5:
+      Coords: (1392.0, 308.0)
+    Line Vector:   (+0.745, +0.667)
+    Perp Vector:   (+0.667, -0.745)
+    Signed Distance: +191.70 px
+
+  1_5->2_4:
+    LINE from 1_5:
+      Start: (1392.0, 308.0)
+      End:   (1415.7, 329.2)
+    POINT from 2_4:
+      Coords: (1072.0, 364.0)
+    Line Vector:   (+0.745, +0.667)
+    Perp Vector:   (+0.667, -0.745)
+    Signed Distance: +255.14 px (sign flipped for _5 line)
+
+  2_4->2_5:
+    LINE from 2_4:
+      Start: (1072.0, 364.0)
+      End:   (1346.5, 609.7)
+    POINT from 2_5:
+      Coords: (1392.0, 420.0)
+    Line Vector:   (+0.745, +0.667)
+    Perp Vector:   (+0.667, -0.745)
+    Signed Distance: +171.69 px
+
+  2_5->3_4:
+    LINE from 2_5:
+      Start: (1392.0, 420.0)
+      End:   (1117.5, 174.3)
+    POINT from 3_4:
+      Coords: (1072.0, 476.0)
+    Line Vector:   (-0.745, -0.667)
+    Perp Vector:   (-0.667, +0.745)
+    Signed Distance: -255.14 px (sign flipped for _5 line)
+
+  3_4->3_5:
+    LINE from 3_4:
+      Start: (1072.0, 476.0)
+      End:   (1048.3, 454.8)
+    POINT from 3_5:
+      Coords: (1422.0, 532.0)
+    Line Vector:   (-0.745, -0.667)
+    Perp Vector:   (-0.667, +0.745)
+    Signed Distance: -191.70 px
+
+
+  WARNING: CROSSING DETECTED at 2_5 -> 3_4:
+      Expected vector: (+0.667, -0.745)
+      Actual vector:   (-0.667, +0.745)  <- OPPOSITE DIRECTION!
+      This means 3_4 is on the WRONG SIDE of 2_5's line.
+  WARNING: CROSSING DETECTED at 3_4 -> 3_5:
+      Expected vector: (+0.667, -0.745)
+      Actual vector:   (-0.667, +0.745)  <- OPPOSITE DIRECTION!
+      This means 3_5 is on the WRONG SIDE of 3_4's line.
+
+Summary:
+  * Valid Range: 56.0 px - 69.0 px
+  * Average Gap: 213.1 px
+  * Min Gap: 171.7 px
+  * Max Gap: 255.1 px
+  * Direction Check: X FAILED (2 crossing(s) detected)
+  * Gap Check: X FAILED (gaps out of range)
+
+================================================================================
+                              FINAL RESULT
+================================================================================
+  HORIZONTAL: X FAILED (Gap 0 too large (191.70 > 69.0))
+
+  Overall: X INVALID
+================================================================================

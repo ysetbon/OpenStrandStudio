@@ -1,0 +1,8 @@
+================================================================================
+                    PARALLEL ALIGNMENT ANALYSIS
+================================================================================
+Pattern: LH 2x3 | K: 7 | Direction: CW
+Attempt: #659 | Angle: 19.6° | Extension: 160px | Status: INVALID
+================================================================================
+
+No configurations available. Reason: Strand 1_5 no valid length

@@ -750,37 +750,34 @@ class MxNGeneratorDialog(QDialog):
         angle_layout.addLayout(ext_search_layout)
 
         # Pair extension offset controls (direct extension, no alignment)
-        ext_offset_label = QLabel("First-Last Pair Extension:")
+        ext_offset_label = QLabel("Opposite Pair Extensions:")
         ext_offset_label.setStyleSheet("color: #aaa; font-size: 11px; margin-top: 5px;")
         angle_layout.addWidget(ext_offset_label)
 
-        # Horizontal pair extension offset
-        h_ext_layout = QHBoxLayout()
-        h_ext_layout.addWidget(QLabel("H:"))
-        self.h_pair_ext_spin = QSpinBox()
-        self.h_pair_ext_spin.setRange(-200, 500)
-        self.h_pair_ext_spin.setValue(0)
-        self.h_pair_ext_spin.setSingleStep(4)  # 4px steps
-        self.h_pair_ext_spin.setSuffix("px")
-        self.h_pair_ext_spin.setToolTip("Extend horizontal _4/_5 starts (and _2/_3 ends). Negative = contract.")
-        h_ext_layout.addWidget(self.h_pair_ext_spin)
-        angle_layout.addLayout(h_ext_layout)
+        self.pair_ext_hint = QLabel("Values are per opposite pair from current k/direction order.")
+        self.pair_ext_hint.setStyleSheet("color: #888; font-size: 10px;")
+        angle_layout.addWidget(self.pair_ext_hint)
 
-        # Vertical pair extension offset
-        v_ext_layout = QHBoxLayout()
-        v_ext_layout.addWidget(QLabel("V:"))
-        self.v_pair_ext_spin = QSpinBox()
-        self.v_pair_ext_spin.setRange(-200, 500)
-        self.v_pair_ext_spin.setValue(0)
-        self.v_pair_ext_spin.setSingleStep(4)  # 4px steps
-        self.v_pair_ext_spin.setSuffix("px")
-        self.v_pair_ext_spin.setToolTip("Extend vertical _4/_5 starts (and _2/_3 ends). Negative = contract.")
-        v_ext_layout.addWidget(self.v_pair_ext_spin)
-        angle_layout.addLayout(v_ext_layout)
+        # Horizontal opposite pairs (_2/_3 names)
+        self.h_pair_group = QGroupBox("H Opposite Pairs")
+        self.h_pair_group.setStyleSheet("QGroupBox { color: #aaa; font-weight: bold; }")
+        self.h_pair_group_layout = QVBoxLayout(self.h_pair_group)
+        self.h_pair_group_layout.setContentsMargins(6, 6, 6, 6)
+        self.h_pair_group_layout.setSpacing(4)
+        angle_layout.addWidget(self.h_pair_group)
 
-        # Connect pair extension spinboxes to direct extension (no alignment)
-        self.h_pair_ext_spin.valueChanged.connect(self._on_pair_extension_changed)
-        self.v_pair_ext_spin.valueChanged.connect(self._on_pair_extension_changed)
+        # Vertical opposite pairs (_2/_3 names)
+        self.v_pair_group = QGroupBox("V Opposite Pairs")
+        self.v_pair_group.setStyleSheet("QGroupBox { color: #aaa; font-weight: bold; }")
+        self.v_pair_group_layout = QVBoxLayout(self.v_pair_group)
+        self.v_pair_group_layout.setContentsMargins(6, 6, 6, 6)
+        self.v_pair_group_layout.setSpacing(4)
+        angle_layout.addWidget(self.v_pair_group)
+
+        # Dynamic pair controls: {(left_label, right_label): QSpinBox}
+        self.h_pair_ext_spins = {}
+        self.v_pair_ext_spins = {}
+        self._refresh_pair_extension_controls(preserve_values=False)
 
         # Connect spinboxes to update preview when values change
         self.h_angle_min_spin.valueChanged.connect(self._on_angle_spin_changed)
@@ -821,6 +818,7 @@ class MxNGeneratorDialog(QDialog):
         self.align_parallel_btn.setEnabled(False)
         if hasattr(self, 'preview_angles_btn'):
             self.preview_angles_btn.setEnabled(False)
+        self._refresh_pair_extension_controls(preserve_values=False)
 
     def _on_emoji_set_changed(self):
         """Switch emoji asset set and re-render."""
@@ -835,6 +833,8 @@ class MxNGeneratorDialog(QDialog):
         self._rerender_preview_if_possible()
         # Update continuation button state (depends on emoji checkbox)
         self._update_continuation_button_state()
+        # Keep pair controls synchronized with k/direction.
+        self._refresh_pair_extension_controls(preserve_values=True)
 
     def _on_refresh_emojis_clicked(self):
         """Force-refresh emoji rendering (clears cached emoji glyph images)."""
@@ -848,6 +848,7 @@ class MxNGeneratorDialog(QDialog):
     def _on_variant_changed(self):
         """Handle LH/RH variant change - update continuation button state."""
         self._update_continuation_button_state()
+        self._refresh_pair_extension_controls(preserve_values=False)
 
     def _on_background_settings_changed(self):
         """Re-render preview and update panel background when transparency changes."""
@@ -1217,15 +1218,9 @@ class MxNGeneratorDialog(QDialog):
             # Store original continuation (before any extension is applied)
             self._continuation_json_data = json_content
 
-            # Reset extension spinboxes to 0 for new continuation
-            if hasattr(self, 'h_pair_ext_spin'):
-                self.h_pair_ext_spin.blockSignals(True)
-                self.h_pair_ext_spin.setValue(0)
-                self.h_pair_ext_spin.blockSignals(False)
-            if hasattr(self, 'v_pair_ext_spin'):
-                self.v_pair_ext_spin.blockSignals(True)
-                self.v_pair_ext_spin.setValue(0)
-                self.v_pair_ext_spin.blockSignals(False)
+            # Reset dynamic pair-extension controls for the new continuation.
+            self._refresh_pair_extension_controls(preserve_values=False)
+            self._reset_pair_extension_values()
 
             # Invalidate canvas cache and strand layer cache (new strands)
             self._prepared_canvas_key = None
@@ -1304,13 +1299,19 @@ class MxNGeneratorDialog(QDialog):
             return
 
         # Compute the H/V sets from current parameters
-        m = self.m_spinner.value()
-        n = self.n_spinner.value()
-        k = self.emoji_k_spinner.value() if hasattr(self, 'emoji_k_spinner') else 0
-        direction = "cw" if (hasattr(self, 'emoji_cw_radio') and self.emoji_cw_radio.isChecked()) else "ccw"
+        h_order_23, v_order_23 = self._get_current_order_lists_23()
 
-        from mxn_lh_continuation import _build_k_based_strand_sets
-        _, h_order, _, v_order = _build_k_based_strand_sets(m, n, k, direction)
+        def convert_23_to_45(order_23):
+            out = []
+            for label in order_23:
+                parts = label.split("_")
+                if len(parts) != 2:
+                    continue
+                out.append(f"{parts[0]}_{'4' if parts[1] == '2' else '5'}")
+            return out
+
+        h_order = convert_23_to_45(h_order_23)
+        v_order = convert_23_to_45(v_order_23)
 
         self.preview_widget.set_qimage(self.current_image)
         self.preview_widget.set_overlay_lines(
@@ -1329,6 +1330,136 @@ class MxNGeneratorDialog(QDialog):
             lines.append("V: " + ", ".join(v_order))
         return lines
 
+    def _get_current_order_lists_23(self):
+        """Return (_2/_3) horizontal and vertical order lists for current m/n/k/direction and variant."""
+        m = self.m_spinner.value()
+        n = self.n_spinner.value()
+        k = self.emoji_k_spinner.value() if hasattr(self, "emoji_k_spinner") else 0
+        direction = "cw" if (hasattr(self, "emoji_cw_radio") and self.emoji_cw_radio.isChecked()) else "ccw"
+
+        try:
+            if hasattr(self, "lh_radio") and self.lh_radio.isChecked():
+                from mxn_lh_continuation import get_horizontal_order_k, get_vertical_order_k
+            else:
+                from mxn_rh_continuation import get_horizontal_order_k, get_vertical_order_k
+
+            h_order = get_horizontal_order_k(m, n, k, direction) or []
+            v_order = get_vertical_order_k(m, n, k, direction) or []
+            return h_order, v_order
+        except Exception as e:
+            print(f"Failed to build order lists for pair controls: {e}")
+            return [], []
+
+    def _build_opposite_pairs(self, order_list):
+        """
+        Build first-last opposite pairs from a perimeter order list.
+        Example: [a,b,c,d] -> [(a,d), (b,c)]
+        """
+        total = len(order_list)
+        return [(order_list[i], order_list[total - 1 - i]) for i in range(total // 2)]
+
+    def _clear_layout_widgets(self, layout):
+        """Delete all items in a layout recursively."""
+        while layout.count():
+            item = layout.takeAt(0)
+            child_layout = item.layout()
+            child_widget = item.widget()
+            if child_layout is not None:
+                self._clear_layout_widgets(child_layout)
+            if child_widget is not None:
+                child_widget.deleteLater()
+
+    def _refresh_pair_extension_controls(self, preserve_values=True):
+        """Rebuild H/V opposite-pair extension rows from current k-order."""
+        if not hasattr(self, "h_pair_group_layout") or not hasattr(self, "v_pair_group_layout"):
+            return
+
+        prev_h = {}
+        prev_v = {}
+        if preserve_values and hasattr(self, "h_pair_ext_spins"):
+            for pair, spin in self.h_pair_ext_spins.items():
+                prev_h[f"{pair[0]}|{pair[1]}"] = spin.value()
+        if preserve_values and hasattr(self, "v_pair_ext_spins"):
+            for pair, spin in self.v_pair_ext_spins.items():
+                prev_v[f"{pair[0]}|{pair[1]}"] = spin.value()
+
+        h_order, v_order = self._get_current_order_lists_23()
+        h_pairs = self._build_opposite_pairs(h_order)
+        v_pairs = self._build_opposite_pairs(v_order)
+
+        self._clear_layout_widgets(self.h_pair_group_layout)
+        self._clear_layout_widgets(self.v_pair_group_layout)
+        self.h_pair_ext_spins = {}
+        self.v_pair_ext_spins = {}
+
+        if not h_pairs:
+            self.h_pair_group_layout.addWidget(QLabel("No pairs"))
+        for left, right in h_pairs:
+            row = QHBoxLayout()
+            lbl = QLabel(f"{left} <-> {right}")
+            lbl.setStyleSheet("color: #bbb;")
+            spin = QSpinBox()
+            spin.setRange(-200, 500)
+            spin.setSingleStep(4)
+            spin.setSuffix("px")
+            spin.setToolTip("Apply this extension to both strands in the pair")
+            key = f"{left}|{right}"
+            spin.setValue(prev_h.get(key, 0))
+            spin.valueChanged.connect(self._on_pair_extension_changed)
+            row.addWidget(lbl)
+            row.addStretch()
+            row.addWidget(spin)
+            self.h_pair_group_layout.addLayout(row)
+            self.h_pair_ext_spins[(left, right)] = spin
+
+        if not v_pairs:
+            self.v_pair_group_layout.addWidget(QLabel("No pairs"))
+        for left, right in v_pairs:
+            row = QHBoxLayout()
+            lbl = QLabel(f"{left} <-> {right}")
+            lbl.setStyleSheet("color: #bbb;")
+            spin = QSpinBox()
+            spin.setRange(-200, 500)
+            spin.setSingleStep(4)
+            spin.setSuffix("px")
+            spin.setToolTip("Apply this extension to both strands in the pair")
+            key = f"{left}|{right}"
+            spin.setValue(prev_v.get(key, 0))
+            spin.valueChanged.connect(self._on_pair_extension_changed)
+            row.addWidget(lbl)
+            row.addStretch()
+            row.addWidget(spin)
+            self.v_pair_group_layout.addLayout(row)
+            self.v_pair_ext_spins[(left, right)] = spin
+
+    def _build_pair_extension_maps(self):
+        """Return two maps ({base_label:_2/_3 -> value}) for horizontal and vertical pairs."""
+        h_map = {}
+        v_map = {}
+
+        for (left, right), spin in getattr(self, "h_pair_ext_spins", {}).items():
+            value = spin.value()
+            h_map[left] = value
+            h_map[right] = value
+
+        for (left, right), spin in getattr(self, "v_pair_ext_spins", {}).items():
+            value = spin.value()
+            v_map[left] = value
+            v_map[right] = value
+
+        return h_map, v_map
+
+    def _reset_pair_extension_values(self):
+        """Reset all dynamic pair extension controls to 0."""
+        for spin in getattr(self, "h_pair_ext_spins", {}).values():
+            spin.blockSignals(True)
+            spin.setValue(0)
+            spin.blockSignals(False)
+        for spin in getattr(self, "v_pair_ext_spins", {}).values():
+            spin.blockSignals(True)
+            spin.setValue(0)
+            spin.blockSignals(False)
+
     def _on_pair_extension_changed(self):
         """Directly apply extension to _4/_5 starts when spinbox changes (no alignment algorithm)."""
         if not self._continuation_json_data:
@@ -1337,13 +1468,10 @@ class MxNGeneratorDialog(QDialog):
         try:
             import math
 
-            m = self.m_spinner.value()
-            n = self.n_spinner.value()
             scale_factor = self.scale_combo.currentData()
 
-            # Get extension values
-            h_ext = self.h_pair_ext_spin.value()
-            v_ext = self.v_pair_ext_spin.value()
+            # Per-pair extension maps keyed by _2/_3 labels (e.g. "4_2", "1_3")
+            h_ext_map, v_ext_map = self._build_pair_extension_maps()
 
             # Parse original continuation data (fresh copy)
             data = json.loads(self._continuation_json_data)
@@ -1366,20 +1494,16 @@ class MxNGeneratorDialog(QDialog):
                     continue
 
                 layer_name = strand.get("layer_name", "")
-                set_num = strand.get("set_number", 0)
-
-                # Determine if horizontal or vertical based on set_number
-                is_horizontal = set_num <= n
-                ext_value = h_ext if is_horizontal else v_ext
-
-                if ext_value == 0:
-                    continue  # No extension needed
 
                 # Process _4 strands
                 if layer_name.endswith("_4"):
                     # Find corresponding _2 strand
                     base_name = layer_name[:-1]  # e.g., "1_" from "1_4"
                     s2_name = base_name + "2"
+                    ext_value = h_ext_map.get(s2_name, v_ext_map.get(s2_name, 0))
+
+                    if ext_value == 0:
+                        continue  # No extension needed for this pair
 
                     if s2_name in strand_lookup:
                         s2 = strand_lookup[s2_name]
@@ -1423,6 +1547,10 @@ class MxNGeneratorDialog(QDialog):
                     # Find corresponding _3 strand
                     base_name = layer_name[:-1]  # e.g., "1_" from "1_5"
                     s3_name = base_name + "3"
+                    ext_value = h_ext_map.get(s3_name, v_ext_map.get(s3_name, 0))
+
+                    if ext_value == 0:
+                        continue  # No extension needed for this pair
 
                     if s3_name in strand_lookup:
                         s3 = strand_lookup[s3_name]
@@ -1484,7 +1612,9 @@ class MxNGeneratorDialog(QDialog):
             if image and not image.isNull():
                 self.current_image = image
                 self.preview_widget.set_qimage(image)
-                self.status_label.setText(f"Extension applied: H={h_ext}px, V={v_ext}px")
+                active_h = sum(1 for s in self.h_pair_ext_spins.values() if s.value() != 0)
+                active_v = sum(1 for s in self.v_pair_ext_spins.values() if s.value() != 0)
+                self.status_label.setText(f"Pair extensions applied: H pairs={active_h}, V pairs={active_v}")
             else:
                 self.status_label.setText("Failed to render")
 

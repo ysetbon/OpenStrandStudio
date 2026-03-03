@@ -69,29 +69,81 @@ class ImagePreviewWidget(QLabel):
         self.setStyleSheet("background-color: #1a1a1a; border: 1px solid #555;")
         self.setText("Generate a pattern to see preview")
         self.original_pixmap = None
+        self._overlay_lines = []
 
     def set_image(self, image_path):
         """Load and display an image from file."""
         if os.path.exists(image_path):
             self.original_pixmap = QPixmap(image_path)
+            self._overlay_lines = []
             self._update_scaled_pixmap()
         else:
             self.setText(f"Image not found:\n{image_path}")
             self.original_pixmap = None
+            self._overlay_lines = []
+            self.setAlignment(Qt.AlignCenter)
+            self.update()
 
     def set_qimage(self, qimage):
         """Display a QImage directly (in-memory)."""
         if qimage and not qimage.isNull():
             self.original_pixmap = QPixmap.fromImage(qimage)
+            self._overlay_lines = []
             self._update_scaled_pixmap()
         else:
             self.setText("Failed to generate image")
             self.original_pixmap = None
+            self._overlay_lines = []
+            self.setAlignment(Qt.AlignCenter)
+            self.update()
 
     def clear(self):
         """Clear the preview."""
         self.original_pixmap = None
         self.setText("Generate a pattern to see preview")
+        self._overlay_lines = []
+        self.setAlignment(Qt.AlignCenter)
+        self.update()
+
+    def set_overlay_lines(self, lines):
+        """Draw optional overlay text lines at the top of the preview widget."""
+        self._overlay_lines = list(lines) if lines else []
+        self.update()
+
+    def paintEvent(self, event):
+        """Paint base preview, then optional H/V set overlay text in widget coordinates."""
+        super().paintEvent(event)
+
+        if not self._overlay_lines or not self.original_pixmap or self.original_pixmap.isNull():
+            return
+
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        font = painter.font()
+        font.setBold(True)
+        font.setPointSize(12)
+        painter.setFont(font)
+        fm = painter.fontMetrics()
+
+        margin_x = 8
+        margin_y = 8
+        line_h = fm.height() + 2
+        cur_y = margin_y + fm.ascent()
+        outline_w = 2
+
+        for text in self._overlay_lines:
+            path = QPainterPath()
+            path.addText(float(margin_x), float(cur_y), painter.font(), text)
+            painter.setPen(QPen(QColor(255, 255, 255), outline_w, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(path)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QBrush(QColor(0, 0, 0)))
+            painter.drawPath(path)
+            cur_y += line_h
+
+        painter.end()
 
     def resizeEvent(self, event):
         """Handle resize to scale image properly."""
@@ -101,6 +153,7 @@ class ImagePreviewWidget(QLabel):
     def _update_scaled_pixmap(self):
         """Scale the pixmap to fit the widget while maintaining aspect ratio."""
         if self.original_pixmap and not self.original_pixmap.isNull():
+            self.setAlignment(Qt.AlignCenter)
             scaled = self.original_pixmap.scaled(
                 self.size(),
                 Qt.KeepAspectRatio,
@@ -617,6 +670,18 @@ class MxNGeneratorDialog(QDialog):
         """)
         self.preview_angles_btn.clicked.connect(self.preview_angle_ranges)
         angle_layout.addWidget(self.preview_angles_btn)
+
+        # Show H/V set toggles
+        hv_set_layout = QHBoxLayout()
+        self.show_h_set_cb = QCheckBox("Show H set")
+        self.show_h_set_cb.setToolTip("Show horizontal strand set names on preview")
+        self.show_h_set_cb.stateChanged.connect(self._on_hv_set_toggle)
+        hv_set_layout.addWidget(self.show_h_set_cb)
+        self.show_v_set_cb = QCheckBox("Show V set")
+        self.show_v_set_cb.setToolTip("Show vertical strand set names on preview")
+        self.show_v_set_cb.stateChanged.connect(self._on_hv_set_toggle)
+        hv_set_layout.addWidget(self.show_v_set_cb)
+        angle_layout.addLayout(hv_set_layout)
 
         # Horizontal angle range
         h_angle_layout = QHBoxLayout()
@@ -1215,6 +1280,55 @@ class MxNGeneratorDialog(QDialog):
         if self._angle_preview_active and self._angle_preview_data:
             self._draw_angle_preview(self._angle_preview_data)
 
+    def _on_hv_set_toggle(self):
+        """Redraw H/V set labels when checkboxes are toggled."""
+        if self._angle_preview_active and self._angle_preview_data:
+            # Re-draw full angle preview (includes labels)
+            self._draw_angle_preview(self._angle_preview_data)
+        elif self.current_image:
+            # No angle preview active — draw labels on the base image
+            self._draw_hv_set_labels_only()
+
+    def _draw_hv_set_labels_only(self):
+        """Draw H/V set labels as a widget overlay without modifying the base image."""
+        if not self.current_image:
+            return
+
+        show_h = self.show_h_set_cb.isChecked()
+        show_v = self.show_v_set_cb.isChecked()
+
+        if not show_h and not show_v:
+            # Nothing to show — restore base image
+            self.preview_widget.set_qimage(self.current_image)
+            self.preview_widget.set_overlay_lines([])
+            return
+
+        # Compute the H/V sets from current parameters
+        m = self.m_spinner.value()
+        n = self.n_spinner.value()
+        k = self.emoji_k_spinner.value() if hasattr(self, 'emoji_k_spinner') else 0
+        direction = "cw" if (hasattr(self, 'emoji_cw_radio') and self.emoji_cw_radio.isChecked()) else "ccw"
+
+        from mxn_lh_continuation import _build_k_based_strand_sets
+        _, h_order, _, v_order = _build_k_based_strand_sets(m, n, k, direction)
+
+        self.preview_widget.set_qimage(self.current_image)
+        self.preview_widget.set_overlay_lines(
+            self._build_hv_set_overlay_lines(
+                h_order if show_h else None,
+                v_order if show_v else None
+            )
+        )
+
+    def _build_hv_set_overlay_lines(self, h_order, v_order):
+        """Build H/V set labels as plain text lines for preview overlay."""
+        lines = []
+        if h_order:
+            lines.append("H: " + ", ".join(h_order))
+        if v_order:
+            lines.append("V: " + ", ".join(v_order))
+        return lines
+
     def _on_pair_extension_changed(self):
         """Directly apply extension to _4/_5 starts when spinbox changes (no alignment algorithm)."""
         if not self._continuation_json_data:
@@ -1400,8 +1514,10 @@ class MxNGeneratorDialog(QDialog):
                 self.status_label.setText("No strands found")
                 return
 
-            # Get preview data
-            preview_data = get_parallel_alignment_preview(strands, n, m)
+            # Get preview data (use k-based grouping for correct H/V sets)
+            k = self.emoji_k_spinner.value() if hasattr(self, 'emoji_k_spinner') else 0
+            direction = "cw" if (hasattr(self, 'emoji_cw_radio') and self.emoji_cw_radio.isChecked()) else "ccw"
+            preview_data = get_parallel_alignment_preview(strands, n, m, k=k, direction=direction)
             self._angle_preview_data = preview_data
 
             # Update spin boxes with detected angles
@@ -1580,10 +1696,21 @@ class MxNGeneratorDialog(QDialog):
             painter.drawEllipse(int(start_x - 8), int(start_y - 8), 16, 16)
             painter.drawEllipse(int(last_x - 8), int(last_y - 8), 16, 16)
 
+        # Draw H/V set labels at the top of the image
+        show_h = hasattr(self, 'show_h_set_cb') and self.show_h_set_cb.isChecked()
+        show_v = hasattr(self, 'show_v_set_cb') and self.show_v_set_cb.isChecked()
+
+        overlay_lines = []
+        if show_h or show_v:
+            h_order = preview_data["horizontal"].get("strand_order", []) if (show_h and preview_data["horizontal"]) else None
+            v_order = preview_data["vertical"].get("strand_order", []) if (show_v and preview_data["vertical"]) else None
+            overlay_lines = self._build_hv_set_overlay_lines(h_order, v_order)
+
         painter.end()
 
         # Update preview widget
         self.preview_widget.set_qimage(preview_image)
+        self.preview_widget.set_overlay_lines(overlay_lines)
 
     def align_parallel_strands(self):
         """Align horizontal AND vertical _4/_5 strands to be parallel with equal spacing."""
@@ -2087,6 +2214,11 @@ class MxNGeneratorDialog(QDialog):
             print("\n" + "="*60)
             print("ALIGN HORIZONTAL STRANDS")
             print("="*60)
+            print(f"  H angle range: {h_custom_min}° to {h_custom_max}°")
+            print(f"  V angle range: {v_custom_min}° to {v_custom_max}°")
+            print(f"  angle_step=0.5°, max_extension=100.0px")
+            print(f"  pair_ext_max={pair_ext_max}px, pair_ext_step={pair_ext_step}px")
+            print(f"  k={k}, direction={direction}, m={m}, n={n}")
 
             h_result = align_horizontal_strands_parallel(
                 strands,
@@ -2097,7 +2229,8 @@ class MxNGeneratorDialog(QDialog):
                 custom_angle_max=h_custom_max,
                 on_config_callback=save_attempt_callback,
                 max_pair_extension=pair_ext_max,
-                pair_extension_step=pair_ext_step
+                pair_extension_step=pair_ext_step,
+                m=m, k=k, direction=direction
             )
 
             print_alignment_debug(h_result)
@@ -2121,6 +2254,10 @@ class MxNGeneratorDialog(QDialog):
             print("\n" + "="*60)
             print("ALIGN VERTICAL STRANDS")
             print("="*60)
+            print(f"  V angle range: {v_custom_min}° to {v_custom_max}°")
+            print(f"  angle_step=0.5°, max_extension=100.0px")
+            print(f"  pair_ext_max={pair_ext_max}px, pair_ext_step={pair_ext_step}px")
+            print(f"  k={k}, direction={direction}, m={m}, n={n}")
 
             v_result = align_vertical_strands_parallel(
                 strands,
@@ -2132,7 +2269,8 @@ class MxNGeneratorDialog(QDialog):
                 custom_angle_max=v_custom_max,
                 on_config_callback=save_attempt_callback,
                 max_pair_extension=pair_ext_max,
-                pair_extension_step=pair_ext_step
+                pair_extension_step=pair_ext_step,
+                k=k, direction=direction
             )
 
             print_alignment_debug(v_result)

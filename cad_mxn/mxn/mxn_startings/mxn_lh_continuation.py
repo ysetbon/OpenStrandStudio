@@ -1047,7 +1047,32 @@ def rotate_labels(labels, k, direction):
 
 import math
 
-def get_parallel_alignment_preview(all_strands, n, m):
+
+def _build_k_based_strand_sets(m, n, k, direction):
+    """
+    Build the k-based horizontal and vertical _4/_5 strand name sets and order lists.
+
+    Returns:
+        (h_names_set, h_order_list, v_names_set, v_order_list)
+    """
+    h_order_23 = get_horizontal_order_k(m, n, k, direction)
+    v_order_23 = get_vertical_order_k(m, n, k, direction)
+
+    def convert_23_to_45(order_list):
+        result = []
+        for label in order_list:
+            parts = label.split("_")
+            new_suffix = "4" if parts[1] == "2" else "5"
+            result.append(f"{parts[0]}_{new_suffix}")
+        return result
+
+    h_order = convert_23_to_45(h_order_23)
+    v_order = convert_23_to_45(v_order_23)
+
+    return set(h_order), h_order, set(v_order), v_order
+
+
+def get_parallel_alignment_preview(all_strands, n, m, k=0, direction="cw"):
     """
     Get preview information for parallel alignment angle ranges.
     Returns first/last strand positions and default angle ranges for both H and V.
@@ -1059,14 +1084,17 @@ def get_parallel_alignment_preview(all_strands, n, m):
     """
     result = {"horizontal": None, "vertical": None}
 
-    # Collect horizontal _4/_5 strands (set_number <= n)
+    # Build k-based strand sets for correct grouping
+    h_names_set, h_order_list, v_names_set, v_order_list = _build_k_based_strand_sets(m, n, k, direction)
+
+    # Collect horizontal _4/_5 strands (k-based grouping)
     h_strands = []
     for strand in all_strands:
         if strand["type"] != "AttachedStrand":
             continue
         layer_name = strand["layer_name"]
         set_num = strand["set_number"]
-        if set_num > n:
+        if layer_name not in h_names_set:
             continue
         if layer_name.endswith("_4") or layer_name.endswith("_5"):
             # Find the _2 or _3 strand this attaches to
@@ -1083,8 +1111,9 @@ def get_parallel_alignment_preview(all_strands, n, m):
                 })
 
     if len(h_strands) >= 2:
-        # Sort by set_number, then by layer_name (_4 before _5 within each set)
-        h_strands.sort(key=lambda h: (h["set_number"], h["strand"]["layer_name"]))
+        # Sort by k-based order
+        h_order_index = {name: i for i, name in enumerate(h_order_list)}
+        h_strands.sort(key=lambda h: h_order_index.get(h["strand"]["layer_name"], 999))
 
         first_h = h_strands[0]
         last_h = h_strands[-1]
@@ -1110,14 +1139,14 @@ def get_parallel_alignment_preview(all_strands, n, m):
             "strand_order": strand_order,
         }
 
-    # Collect vertical _4/_5 strands (set_number > n)
+    # Collect vertical _4/_5 strands (k-based grouping)
     v_strands = []
     for strand in all_strands:
         if strand["type"] != "AttachedStrand":
             continue
         layer_name = strand["layer_name"]
         set_num = strand["set_number"]
-        if set_num <= n:
+        if layer_name not in v_names_set:
             continue
         if layer_name.endswith("_4") or layer_name.endswith("_5"):
             suffix = "_2" if layer_name.endswith("_4") else "_3"
@@ -1133,8 +1162,9 @@ def get_parallel_alignment_preview(all_strands, n, m):
                 })
 
     if len(v_strands) >= 2:
-        # Sort by set_number, then by layer_name (_4 before _5 within each set)
-        v_strands.sort(key=lambda v: (v["set_number"], v["strand"]["layer_name"]))
+        # Sort by k-based order
+        v_order_index = {name: i for i, name in enumerate(v_order_list)}
+        v_strands.sort(key=lambda v: v_order_index.get(v["strand"]["layer_name"], 999))
 
         first_v = v_strands[0]
         last_v = v_strands[-1]
@@ -1169,7 +1199,8 @@ def align_horizontal_strands_parallel(all_strands, n,
                                        custom_angle_min=None, custom_angle_max=None,
                                        on_config_callback=None,
                                        max_pair_extension=200,
-                                       pair_extension_step=10):
+                                       pair_extension_step=10,
+                                       m=None, k=0, direction="cw"):
     """
     Parallel alignment of horizontal _4/_5 strands using first-last pair approach.
 
@@ -1194,11 +1225,19 @@ def align_horizontal_strands_parallel(all_strands, n,
         dict with success, angle, configurations, gaps, etc.
     """
 
-    # Separate strands by type
-    strands_2 = []  # Horizontal _2 strands
-    strands_3 = []  # Horizontal _3 strands
-    strands_4 = []  # Horizontal _4 strands
-    strands_5 = []  # Horizontal _5 strands
+    # Build k-based horizontal strand set
+    if k != 0 and m is not None:
+        h_names_set, h_order_list, _, _ = _build_k_based_strand_sets(m, n, k, direction)
+    else:
+        h_names_set = None
+        h_order_list = None
+
+    # Collect ALL _2/_3 strands (needed for structural pairing regardless of group)
+    strands_2 = []
+    strands_3 = []
+    # Collect horizontal _4/_5 strands (filtered by k-based group)
+    strands_4 = []
+    strands_5 = []
 
     for strand in all_strands:
         if strand["type"] != "AttachedStrand":
@@ -1207,18 +1246,24 @@ def align_horizontal_strands_parallel(all_strands, n,
         layer_name = strand["layer_name"]
         set_num = strand["set_number"]
 
-        # Only process horizontal strands (set_number <= n)
-        if set_num > n:
-            continue
-
         if layer_name.endswith("_2"):
             strands_2.append(strand)
         elif layer_name.endswith("_3"):
             strands_3.append(strand)
         elif layer_name.endswith("_4"):
-            strands_4.append(strand)
+            if h_names_set is not None:
+                if layer_name in h_names_set:
+                    strands_4.append(strand)
+            else:
+                if set_num <= n:
+                    strands_4.append(strand)
         elif layer_name.endswith("_5"):
-            strands_5.append(strand)
+            if h_names_set is not None:
+                if layer_name in h_names_set:
+                    strands_5.append(strand)
+            else:
+                if set_num <= n:
+                    strands_5.append(strand)
 
     if not strands_4 and not strands_5:
         return {
@@ -1256,8 +1301,12 @@ def align_horizontal_strands_parallel(all_strands, n,
                 "target_position": {"x": s5["end"]["x"], "y": s5["end"]["y"]},
             })
 
-    # Sort by set_number, then by type (_4 before _5 within each set)
-    horizontal_strands.sort(key=lambda h: (h["set_number"], h["type"]))
+    # Sort by k-based order if available, otherwise by set_number
+    if h_order_list is not None:
+        h_order_index = {name: i for i, name in enumerate(h_order_list)}
+        horizontal_strands.sort(key=lambda h: h_order_index.get(h["strand_4_5"]["layer_name"], 999))
+    else:
+        horizontal_strands.sort(key=lambda h: (h["set_number"], h["type"]))
 
     num_strands = len(horizontal_strands)
     if num_strands < 2:
@@ -1494,7 +1543,8 @@ def align_vertical_strands_parallel(all_strands, n, m,
                                      custom_angle_min=None, custom_angle_max=None,
                                      on_config_callback=None,
                                      max_pair_extension=200,
-                                     pair_extension_step=10):
+                                     pair_extension_step=10,
+                                     k=0, direction="cw"):
     """
     Parallel alignment of vertical _4/_5 strands using first-last pair approach.
 
@@ -1527,11 +1577,19 @@ def align_vertical_strands_parallel(all_strands, n, m,
         }
     """
 
-    # Separate strands by type - VERTICAL strands (set_number > n)
-    strands_2 = []  # Vertical _2 strands
-    strands_3 = []  # Vertical _3 strands
-    strands_4 = []  # Vertical _4 strands
-    strands_5 = []  # Vertical _5 strands
+    # Build k-based vertical strand set
+    if k != 0:
+        _, _, v_names_set, v_order_list = _build_k_based_strand_sets(m, n, k, direction)
+    else:
+        v_names_set = None
+        v_order_list = None
+
+    # Collect ALL _2/_3 strands (needed for structural pairing regardless of group)
+    strands_2 = []
+    strands_3 = []
+    # Collect vertical _4/_5 strands (filtered by k-based group)
+    strands_4 = []
+    strands_5 = []
 
     for strand in all_strands:
         if strand["type"] != "AttachedStrand":
@@ -1540,18 +1598,24 @@ def align_vertical_strands_parallel(all_strands, n, m,
         layer_name = strand["layer_name"]
         set_num = strand["set_number"]
 
-        # Only process vertical strands (set_number > n and <= n+m)
-        if set_num <= n or set_num > n + m:
-            continue
-
         if layer_name.endswith("_2"):
             strands_2.append(strand)
         elif layer_name.endswith("_3"):
             strands_3.append(strand)
         elif layer_name.endswith("_4"):
-            strands_4.append(strand)
+            if v_names_set is not None:
+                if layer_name in v_names_set:
+                    strands_4.append(strand)
+            else:
+                if n < set_num <= n + m:
+                    strands_4.append(strand)
         elif layer_name.endswith("_5"):
-            strands_5.append(strand)
+            if v_names_set is not None:
+                if layer_name in v_names_set:
+                    strands_5.append(strand)
+            else:
+                if n < set_num <= n + m:
+                    strands_5.append(strand)
 
     if not strands_4 and not strands_5:
         return {
@@ -1590,8 +1654,12 @@ def align_vertical_strands_parallel(all_strands, n, m,
                 "target_position": {"x": s5["end"]["x"], "y": s5["end"]["y"]},
             })
 
-    # Sort by set_number, then by type (_4 before _5 within each set)
-    vertical_strands.sort(key=lambda v: (v["set_number"], v["type"]))
+    # Sort by k-based order if available, otherwise by set_number
+    if v_order_list is not None:
+        v_order_index = {name: i for i, name in enumerate(v_order_list)}
+        vertical_strands.sort(key=lambda v: v_order_index.get(v["strand_4_5"]["layer_name"], 999))
+    else:
+        vertical_strands.sort(key=lambda v: (v["set_number"], v["type"]))
 
     num_strands = len(vertical_strands)
     if num_strands < 2:

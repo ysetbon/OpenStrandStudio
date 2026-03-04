@@ -188,6 +188,7 @@ class MxNGeneratorDialog(QDialog):
         self.current_json_data = None  # JSON string in memory
         self.current_image = None  # QImage in memory
         self._continuation_json_data = None  # Original continuation data (before any extension)
+        self._suppress_auto_save = False  # Block auto-save during programmatic resets
 
         # Emoji renderer (handles all endpoint emoji drawing logic)
         self._emoji_renderer = EmojiRenderer()
@@ -749,6 +750,15 @@ class MxNGeneratorDialog(QDialog):
         ext_search_layout.addWidget(self.pair_ext_step_spin)
         angle_layout.addLayout(ext_search_layout)
 
+        # Auto-save preset when any alignment parameter changes
+        self.h_angle_min_spin.valueChanged.connect(self._auto_save_alignment_preset)
+        self.h_angle_max_spin.valueChanged.connect(self._auto_save_alignment_preset)
+        self.v_angle_min_spin.valueChanged.connect(self._auto_save_alignment_preset)
+        self.v_angle_max_spin.valueChanged.connect(self._auto_save_alignment_preset)
+        self.use_custom_angles_cb.stateChanged.connect(self._auto_save_alignment_preset)
+        self.pair_ext_max_spin.valueChanged.connect(self._auto_save_alignment_preset)
+        self.pair_ext_step_spin.valueChanged.connect(self._auto_save_alignment_preset)
+
         # Pair extension offset controls (direct extension, no alignment)
         ext_offset_label = QLabel("Opposite Pair Extensions:")
         ext_offset_label.setStyleSheet("color: #aaa; font-size: 11px; margin-top: 5px;")
@@ -1219,8 +1229,11 @@ class MxNGeneratorDialog(QDialog):
             self._continuation_json_data = json_content
 
             # Reset dynamic pair-extension controls for the new continuation.
+            # Suppress auto-save so resets don't overwrite the saved preset.
+            self._suppress_auto_save = True
             self._refresh_pair_extension_controls(preserve_values=False)
             self._reset_pair_extension_values()
+            self._suppress_auto_save = False
 
             # Invalidate canvas cache and strand layer cache (new strands)
             self._prepared_canvas_key = None
@@ -1262,6 +1275,15 @@ class MxNGeneratorDialog(QDialog):
                     f"Saved to: {filename}"
                 )
                 self.save_color_settings()
+
+                # Load alignment preset if one exists for this combination
+                self._suppress_auto_save = True
+                if self._load_alignment_preset(m, n, k, direction, pattern_type):
+                    self.status_label.setText(
+                        f"Generated {m}x{n} {pattern_type.upper()} continuation (k={k}, {direction.upper()})\n"
+                        f"Saved to: {filename} | Preset loaded"
+                    )
+                self._suppress_auto_save = False
             else:
                 self.status_label.setText("Failed to generate continuation image")
 
@@ -1406,6 +1428,7 @@ class MxNGeneratorDialog(QDialog):
             key = f"{left}|{right}"
             spin.setValue(prev_h.get(key, 0))
             spin.valueChanged.connect(self._on_pair_extension_changed)
+            spin.valueChanged.connect(self._auto_save_alignment_preset)
             row.addWidget(lbl)
             row.addStretch()
             row.addWidget(spin)
@@ -1426,6 +1449,7 @@ class MxNGeneratorDialog(QDialog):
             key = f"{left}|{right}"
             spin.setValue(prev_v.get(key, 0))
             spin.valueChanged.connect(self._on_pair_extension_changed)
+            spin.valueChanged.connect(self._auto_save_alignment_preset)
             row.addWidget(lbl)
             row.addStretch()
             row.addWidget(spin)
@@ -1859,6 +1883,8 @@ class MxNGeneratorDialog(QDialog):
         v_angle = None
         h_gap = None
         v_gap = None
+        h_result = {}
+        v_result = {}
 
         self.status_label.setText("Searching for parallel alignment...")
         QApplication.processEvents()
@@ -2312,6 +2338,24 @@ class MxNGeneratorDialog(QDialog):
                         with open(txt_path, 'w', encoding='utf-8') as f:
                             f.write(analysis_text)
 
+                        # Save JSON with this attempt's alignment applied
+                        try:
+                            attempt_strands = copy.deepcopy(strands)
+                            if configs:
+                                attempt_result = {"success": True, "configurations": configs}
+                                attempt_strands = apply_parallel_alignment(attempt_strands, attempt_result)
+                            attempt_data = copy.deepcopy(data)
+                            if attempt_data.get('type') == 'OpenStrandStudioHistory':
+                                for state in attempt_data.get('states', []):
+                                    state['data']['strands'] = attempt_strands
+                            else:
+                                attempt_data['strands'] = attempt_strands
+                            json_path = os.path.join(output_dir, base_filename + ".json")
+                            with open(json_path, 'w', encoding='utf-8') as jf:
+                                json.dump(attempt_data, jf, separators=(',', ':'))
+                        except Exception as json_err:
+                            print(f"  Error saving attempt JSON: {json_err}")
+
                         if attempt_count[0] % 20 == 0:  # Log every 20th save
                             print(f"  Saved {attempt_count[0]} images...")
                 except Exception as e:
@@ -2528,6 +2572,72 @@ class MxNGeneratorDialog(QDialog):
                 f.write(self.current_json_data)
             print(f"JSON saved: {json_path}")
 
+            # Save TXT with full alignment details (both H and V)
+            txt_path = os.path.join(output_subdir, f"{filename_base}.txt")
+            with open(txt_path, "w", encoding="utf-8") as f:
+                f.write(f"Pattern: {pattern_type.upper()} {m}x{n} k={k} {direction}\n")
+                f.write(f"Result: {'SOLUTION' if is_valid_solution else 'INVALID'}\n")
+                f.write("=" * 60 + "\n\n")
+
+                # Horizontal details
+                f.write("HORIZONTAL ALIGNMENT\n")
+                f.write("-" * 40 + "\n")
+                if h_success:
+                    f.write(f"Status: SUCCESS\n")
+                    f.write(f"Angle: {h_angle:.2f}°\n")
+                    f.write(f"Average gap: {h_gap:.2f} px\n")
+                    f.write(f"Gap variance: {h_result.get('gap_variance', 'N/A')}\n")
+                    f.write(f"Pair extensions: {h_result.get('pair_extensions', 'N/A')}\n")
+                    for i, cfg in enumerate(h_result.get("configurations", [])):
+                        name = cfg.get("strand", {}).get("strand_4_5", {}).get("layer_name", f"strand_{i}")
+                        ext = cfg.get("extension", 0)
+                        length = cfg.get("length", 0)
+                        f.write(f"  {name}: extension={ext:.1f}px, length={length:.1f}px\n")
+                else:
+                    f.write(f"Status: FAILED\n")
+                    f.write(f"Message: {h_result.get('message', 'Unknown')}\n")
+
+                f.write("\n")
+
+                # Vertical details (includes horizontal reference)
+                f.write("VERTICAL ALIGNMENT\n")
+                f.write("-" * 40 + "\n")
+                if v_success:
+                    f.write(f"Status: SUCCESS\n")
+                    f.write(f"Angle: {v_angle:.2f}°\n")
+                    f.write(f"Average gap: {v_gap:.2f} px\n")
+                    f.write(f"Gap variance: {v_result.get('gap_variance', 'N/A')}\n")
+                    f.write(f"Pair extensions: {v_result.get('pair_extensions', 'N/A')}\n")
+                    for i, cfg in enumerate(v_result.get("configurations", [])):
+                        name = cfg.get("strand", {}).get("strand_4_5", {}).get("layer_name", f"strand_{i}")
+                        ext = cfg.get("extension", 0)
+                        length = cfg.get("length", 0)
+                        f.write(f"  {name}: extension={ext:.1f}px, length={length:.1f}px\n")
+                else:
+                    f.write(f"Status: FAILED\n")
+                    f.write(f"Message: {v_result.get('message', 'Unknown')}\n")
+
+                f.write("\n")
+                f.write("HORIZONTAL REFERENCE (for vertical context)\n")
+                f.write("-" * 40 + "\n")
+                f.write(f"H angle: {h_angle:.2f}°\n" if h_angle is not None else "H angle: N/A\n")
+                f.write(f"H gap: {h_gap:.2f} px\n" if h_gap is not None else "H gap: N/A\n")
+                f.write(f"H success: {h_success}\n")
+
+                f.write("\n")
+                f.write("PARAMETERS\n")
+                f.write("-" * 40 + "\n")
+                f.write(f"H angle range: {self.h_angle_min_spin.value()}° to {self.h_angle_max_spin.value()}°\n")
+                f.write(f"V angle range: {self.v_angle_min_spin.value()}° to {self.v_angle_max_spin.value()}°\n")
+                f.write(f"Custom angles: {self.use_custom_angles_cb.isChecked()}\n")
+                f.write(f"Pair ext max: {self.pair_ext_max_spin.value()}px\n")
+                f.write(f"Pair ext step: {self.pair_ext_step_spin.value()}px\n")
+                f.write(f"Max extension: 100.0px\n")
+                f.write(f"Angle step: 0.5°\n")
+                f.write(f"Strand width: 46px\n")
+
+            print(f"TXT saved: {txt_path}")
+
             if not (h_success or v_success):
                 self.status_label.setText(
                     f"Could not find parallel alignment (saved to invalid folder)"
@@ -2538,6 +2648,107 @@ class MxNGeneratorDialog(QDialog):
             traceback.print_exc()
             print(f"Error saving output: {str(save_error)}")
             self.status_label.setText(f"Error saving: {str(save_error)}")
+
+    def _auto_save_alignment_preset(self):
+        """Auto-save preset whenever any alignment parameter changes in the UI."""
+        if self._suppress_auto_save:
+            return
+        m = self.m_spinner.value()
+        n = self.n_spinner.value()
+        k = self.emoji_k_spinner.value() if hasattr(self, 'emoji_k_spinner') else 0
+        direction = "cw" if (hasattr(self, 'emoji_cw_radio') and self.emoji_cw_radio.isChecked()) else "ccw"
+        pattern_type = "lh" if self.lh_radio.isChecked() else "rh"
+        self._save_alignment_preset(m, n, k, direction, pattern_type)
+
+    def _save_alignment_preset(self, m, n, k, direction, pattern_type):
+        """Save current alignment UI parameters as a preset for this m/n/k/direction."""
+        try:
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            preset_dir = os.path.join(
+                os.path.dirname(os.path.dirname(script_dir)),
+                "mxn", "mxn_presets"
+            )
+            os.makedirs(preset_dir, exist_ok=True)
+
+            # Collect opposite pair extension values
+            h_opposite_pairs = {}
+            for (left, right), spin in getattr(self, "h_pair_ext_spins", {}).items():
+                h_opposite_pairs[f"{left}|{right}"] = spin.value()
+            v_opposite_pairs = {}
+            for (left, right), spin in getattr(self, "v_pair_ext_spins", {}).items():
+                v_opposite_pairs[f"{left}|{right}"] = spin.value()
+
+            preset = {
+                "m": m,
+                "n": n,
+                "k": k,
+                "direction": direction,
+                "pattern_type": pattern_type,
+                "use_custom_angles": self.use_custom_angles_cb.isChecked(),
+                "h_angle_min": self.h_angle_min_spin.value(),
+                "h_angle_max": self.h_angle_max_spin.value(),
+                "v_angle_min": self.v_angle_min_spin.value(),
+                "v_angle_max": self.v_angle_max_spin.value(),
+                "pair_ext_max": self.pair_ext_max_spin.value(),
+                "pair_ext_step": self.pair_ext_step_spin.value(),
+                "h_opposite_pairs": h_opposite_pairs,
+                "v_opposite_pairs": v_opposite_pairs,
+            }
+
+            filename = f"preset_{pattern_type}_{m}x{n}_k{k}_{direction}.json"
+            preset_path = os.path.join(preset_dir, filename)
+            with open(preset_path, "w", encoding="utf-8") as f:
+                json.dump(preset, f, indent=2)
+            print(f"Preset saved: {preset_path}")
+
+        except Exception as e:
+            print(f"Error saving preset: {e}")
+
+    def _load_alignment_preset(self, m, n, k, direction, pattern_type):
+        """Load alignment preset for this m/n/k/direction if it exists, and apply to UI."""
+        try:
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            preset_dir = os.path.join(
+                os.path.dirname(os.path.dirname(script_dir)),
+                "mxn", "mxn_presets"
+            )
+            filename = f"preset_{pattern_type}_{m}x{n}_k{k}_{direction}.json"
+            preset_path = os.path.join(preset_dir, filename)
+
+            if not os.path.exists(preset_path):
+                print(f"No preset found: {preset_path}")
+                return False
+
+            with open(preset_path, "r", encoding="utf-8") as f:
+                preset = json.load(f)
+
+            self.use_custom_angles_cb.setChecked(preset.get("use_custom_angles", False))
+            self.h_angle_min_spin.setValue(preset.get("h_angle_min", 0))
+            self.h_angle_max_spin.setValue(preset.get("h_angle_max", 40))
+            self.v_angle_min_spin.setValue(preset.get("v_angle_min", -90))
+            self.v_angle_max_spin.setValue(preset.get("v_angle_max", -50))
+            self.pair_ext_max_spin.setValue(preset.get("pair_ext_max", 200))
+            self.pair_ext_step_spin.setValue(preset.get("pair_ext_step", 10))
+
+            # Load opposite pair extension values
+            h_opp = preset.get("h_opposite_pairs", {})
+            for (left, right), spin in getattr(self, "h_pair_ext_spins", {}).items():
+                key = f"{left}|{right}"
+                if key in h_opp:
+                    spin.setValue(h_opp[key])
+
+            v_opp = preset.get("v_opposite_pairs", {})
+            for (left, right), spin in getattr(self, "v_pair_ext_spins", {}).items():
+                key = f"{left}|{right}"
+                if key in v_opp:
+                    spin.setValue(v_opp[key])
+
+            print(f"Preset loaded: {preset_path}")
+            return True
+
+        except Exception as e:
+            print(f"Error loading preset: {e}")
+            return False
 
     def _calculate_strands_bounds(self, canvas):
         """Calculate the bounding box of all strands with padding."""

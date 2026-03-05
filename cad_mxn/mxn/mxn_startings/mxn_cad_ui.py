@@ -1949,6 +1949,7 @@ class MxNGeneratorDialog(QDialog):
             os.makedirs(invalid_dir, exist_ok=True)
 
             attempt_count = [0]  # Use list to allow modification in nested function
+            best_h_result_info = [None]  # Mutable container for horizontal result info (set after H phase)
             attempt_render_contexts = {}
 
             def get_attempt_render_context(direction_type):
@@ -1995,7 +1996,7 @@ class MxNGeneratorDialog(QDialog):
                     print(f"Fast attempt render context failed ({direction_type}): {context_error}")
                     return None
 
-            def generate_analysis_text(angle_deg, extension, result, direction_type, attempt_num):
+            def generate_analysis_text(angle_deg, extension, result, direction_type, attempt_num, h_result_info=None):
                 """Generate detailed analysis text for this configuration."""
                 import math
 
@@ -2248,6 +2249,26 @@ class MxNGeneratorDialog(QDialog):
 
                 lines.append("=" * 80)
 
+                # For vertical attempts, include the horizontal result that was used
+                if direction_type == "vertical" and h_result_info is not None:
+                    lines.append("")
+                    lines.append("")
+                    lines.append("=" * 80)
+                    lines.append("        HORIZONTAL RESULT USED (Best from horizontal phase)")
+                    lines.append("=" * 80)
+                    lines.append(f"  Status: {'SUCCESS' if h_result_info.get('success') else 'FAILED/FALLBACK'}")
+                    lines.append(f"  Angle: {h_result_info.get('angle', 'N/A')}")
+                    lines.append(f"  Average Gap: {h_result_info.get('avg_gap', 'N/A')}")
+                    lines.append(f"  Gap Variance: {h_result_info.get('gap_variance', 'N/A')}")
+                    lines.append(f"  First-Last Distance: {h_result_info.get('first_last_distance', 'N/A')}")
+                    lines.append(f"  Pair Extensions: {h_result_info.get('pair_extensions', 'N/A')}")
+                    h_strands = h_result_info.get('strand_details', [])
+                    if h_strands:
+                        lines.append(f"  Strand Order: {[s['name'] for s in h_strands]}")
+                        for s in h_strands:
+                            lines.append(f"    {s['name']}: extension={s['extension']:.1f}px, length={s['length']:.1f}px")
+                    lines.append("=" * 80)
+
                 return "\n".join(lines)
 
             def save_attempt_callback(angle_deg, extension, result, direction_type):
@@ -2333,7 +2354,8 @@ class MxNGeneratorDialog(QDialog):
                         img.save(img_path)
 
                         # Generate and save analysis text
-                        analysis_text = generate_analysis_text(angle_deg, extension, result, direction_type, attempt_count[0])
+                        h_info_for_txt = best_h_result_info[0] if direction_type == "vertical" else None
+                        analysis_text = generate_analysis_text(angle_deg, extension, result, direction_type, attempt_count[0], h_result_info=h_info_for_txt)
                         txt_path = os.path.join(output_dir, base_filename + ".txt")
                         with open(txt_path, 'w', encoding='utf-8') as f:
                             f.write(analysis_text)
@@ -2421,6 +2443,23 @@ class MxNGeneratorDialog(QDialog):
                     print(f"Horizontal alignment applied: angle={h_angle:.2f}°, gap={h_gap:.1f}px")
             else:
                 print(f"Horizontal alignment failed: {h_result.get('message', 'Unknown')}")
+
+            # Build horizontal result info for vertical txt files
+            h_info = {
+                'success': h_result.get("success", False),
+                'angle': f"{h_result.get('angle_degrees', 0):.2f}°",
+                'avg_gap': f"{h_result.get('average_gap', 0):.2f} px",
+                'gap_variance': h_result.get('gap_variance', 'N/A'),
+                'first_last_distance': h_result.get('first_last_distance', 'N/A'),
+                'pair_extensions': h_result.get('pair_extensions', 'N/A'),
+                'strand_details': [],
+            }
+            for cfg in h_result.get("configurations", []):
+                name = cfg.get("strand", {}).get("strand_4_5", {}).get("layer_name", "unknown")
+                ext = cfg.get("extension", 0)
+                length = cfg.get("length", 0)
+                h_info['strand_details'].append({'name': name, 'extension': ext, 'length': length})
+            best_h_result_info[0] = h_info
 
             # ============================================================
             # VERTICAL ALIGNMENT
@@ -2587,6 +2626,7 @@ class MxNGeneratorDialog(QDialog):
                     f.write(f"Angle: {h_angle:.2f}°\n")
                     f.write(f"Average gap: {h_gap:.2f} px\n")
                     f.write(f"Gap variance: {h_result.get('gap_variance', 'N/A')}\n")
+                    f.write(f"First-last distance: {h_result.get('first_last_distance', 'N/A')}\n")
                     f.write(f"Pair extensions: {h_result.get('pair_extensions', 'N/A')}\n")
                     for i, cfg in enumerate(h_result.get("configurations", [])):
                         name = cfg.get("strand", {}).get("strand_4_5", {}).get("layer_name", f"strand_{i}")
@@ -2607,6 +2647,7 @@ class MxNGeneratorDialog(QDialog):
                     f.write(f"Angle: {v_angle:.2f}°\n")
                     f.write(f"Average gap: {v_gap:.2f} px\n")
                     f.write(f"Gap variance: {v_result.get('gap_variance', 'N/A')}\n")
+                    f.write(f"First-last distance: {v_result.get('first_last_distance', 'N/A')}\n")
                     f.write(f"Pair extensions: {v_result.get('pair_extensions', 'N/A')}\n")
                     for i, cfg in enumerate(v_result.get("configurations", [])):
                         name = cfg.get("strand", {}).get("strand_4_5", {}).get("layer_name", f"strand_{i}")

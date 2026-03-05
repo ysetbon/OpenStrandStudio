@@ -1293,6 +1293,7 @@ def _numpy_try_all_angles(strands_list, angles_deg, max_extension, strand_width)
 
     best_result = None
     best_gap_variance = float('inf')
+    best_first_last_dist = float('inf')
 
     for ai in valid_angle_indices:
         ext_idx = first_valid_ext_idx[:, ai]
@@ -1376,15 +1377,17 @@ def _numpy_try_all_angles(strands_list, angles_deg, max_extension, strand_width)
             if not np.any(in_range):
                 continue
 
-            # Find the gap closest to ideal
-            gap_diff = np.where(in_range, np.abs(gap_matrix - ideal_gap), np.inf)
-            best_idx = np.unravel_index(np.argmin(gap_diff), gap_diff.shape)
+            # Find the smallest gap in range (prefer smallest first-last distance)
+            gap_for_ranking = np.where(in_range, gap_matrix, np.inf)
+            best_idx = np.unravel_index(np.argmin(gap_for_ranking), gap_for_ranking.shape)
             best_ext1_idx, best_ext2_idx = best_idx
 
             best_gap = gap_matrix[best_ext1_idx, best_ext2_idx]
             gap_variance = 0.0  # Single gap, no variance
+            first_last_dist = float(best_gap)  # For 2 strands, first-last distance IS the gap
 
-            if gap_variance < best_gap_variance:
+            if (first_last_dist, gap_variance) < (best_first_last_dist, best_gap_variance):
+                best_first_last_dist = first_last_dist
                 best_gap_variance = gap_variance
                 # Reconstruct configs using Python (for return structure)
                 angle_deg_val = float(angles_deg_arr[ai])
@@ -1412,9 +1415,8 @@ def _numpy_try_all_angles(strands_list, angles_deg, max_extension, strand_width)
                         "angle_degrees": angle_deg_val,
                         "min_gap": min_gap,
                         "max_gap": max_gap,
+                        "first_last_distance": abs(sg),
                     }
-                    if gap_variance < 0.01:
-                        return best_result
 
         else:
             # 3+ strands: compute gaps between consecutive
@@ -1453,8 +1455,10 @@ def _numpy_try_all_angles(strands_list, angles_deg, max_extension, strand_width)
             if all_in_range:
                 avg_gap = float(np.mean(abs_gaps))
                 gap_var = float(np.var(abs_gaps))
+                first_last_dist = abs(float(last_sg))
 
-                if gap_var < best_gap_variance:
+                if (first_last_dist, gap_var) < (best_first_last_dist, best_gap_variance):
+                    best_first_last_dist = first_last_dist
                     best_gap_variance = gap_var
                     angle_deg_val = float(angles_deg_arr[ai])
                     angle_rad_val = float(angles_rad[ai])
@@ -1493,11 +1497,72 @@ def _numpy_try_all_angles(strands_list, angles_deg, max_extension, strand_width)
                             "angle_degrees": angle_deg_val,
                             "min_gap": min_gap,
                             "max_gap": max_gap,
+                            "first_last_distance": first_last_dist,
                         }
-                        if gap_var < 0.01:
-                            return best_result
 
     return best_result
+
+
+def _select_best_result(valid_results, distance_tolerance=2.0):
+    """
+    Select best result using tiered priority:
+    1. Smallest first-last distance (within distance_tolerance px)
+    2. Lowest gap variance within that distance group
+    3. If only 1 result at smallest distance, also compare with next group
+    """
+    if not valid_results:
+        return None
+
+    # Sort by first_last_distance
+    sorted_results = sorted(
+        valid_results,
+        key=lambda r: r.get("first_last_distance", float('inf'))
+    )
+
+    smallest_dist = sorted_results[0].get("first_last_distance", float('inf'))
+
+    # Group 1: all results within tolerance of the smallest distance
+    group1 = [r for r in sorted_results
+              if r.get("first_last_distance", float('inf')) <= smallest_dist + distance_tolerance]
+
+    # Best in group 1 by gap variance
+    best_g1 = min(group1, key=lambda r: r.get("gap_variance", float('inf')))
+
+    if len(group1) > 1:
+        # Multiple results in group 1, pick best variance
+        print(f"  Selection: {len(group1)} results in smallest-distance group "
+              f"(dist <= {smallest_dist + distance_tolerance:.1f}px), "
+              f"best variance: {best_g1.get('gap_variance', 'N/A')}")
+        return best_g1
+
+    # Only 1 result in group 1 - also check group 2
+    remaining = [r for r in sorted_results
+                 if r.get("first_last_distance", float('inf')) > smallest_dist + distance_tolerance]
+
+    if not remaining:
+        print(f"  Selection: single result at dist={smallest_dist:.1f}px, no other groups")
+        return best_g1
+
+    # Group 2: within tolerance of the next smallest distance
+    next_smallest = remaining[0].get("first_last_distance", float('inf'))
+    group2 = [r for r in remaining
+              if r.get("first_last_distance", float('inf')) <= next_smallest + distance_tolerance]
+
+    best_g2 = min(group2, key=lambda r: r.get("gap_variance", float('inf')))
+
+    # Compare: if group 2 has better variance, prefer it
+    g1_var = best_g1.get("gap_variance", float('inf'))
+    g2_var = best_g2.get("gap_variance", float('inf'))
+
+    if g2_var < g1_var:
+        g2_dist = best_g2.get("first_last_distance", float('inf'))
+        print(f"  Selection: group2 (dist={g2_dist:.1f}px, var={g2_var:.6f}) beats "
+              f"group1 (dist={smallest_dist:.1f}px, var={g1_var:.6f}) on variance")
+        return best_g2
+    else:
+        print(f"  Selection: group1 (dist={smallest_dist:.1f}px, var={g1_var:.6f}) wins over "
+              f"group2 (dist={next_smallest:.1f}px, var={g2_var:.6f})")
+        return best_g1
 
 
 def _build_config_dict(h_strand, extension, angle_rad, goes_positive):
@@ -1747,8 +1812,7 @@ def align_horizontal_strands_parallel(all_strands, n,
         print(f"    Angle range: {base_angle_min:.2f}° to {base_angle_max:.2f}°")
 
     # Nested loops: one extension range per pair (via itertools.product)
-    best_result = None
-    best_pair_extensions = tuple(0 for _ in pairs)
+    all_valid_results = []
 
     # Track best fallback candidate (max-min optimization: maximize the worst gap)
     best_fallback = None
@@ -1813,16 +1877,12 @@ def align_horizontal_strands_parallel(all_strands, n,
             on_config_callback(np_result["angle_degrees"], combo, np_result, "horizontal")
 
         if np_result and np_result.get("valid"):
-            gap_variance = np_result["gap_variance"]
             np_result["pair_extensions"] = combo
-            if best_result is None or gap_variance < best_result.get("gap_variance", float('inf')):
-                best_result = np_result
-                best_pair_extensions = combo
-
-                if gap_variance < 0.01:
-                    print(f"\n  >>> VALID combo {combo}, angle {np_result['angle_degrees']:.2f}°")
-                    print(f"      Gap variance: {gap_variance:.4f}, Avg gap: {np_result['average_gap']:.2f}px")
-                    found_valid = True
+            all_valid_results.append(np_result)
+            found_valid = True
+            if combo_count % 100 == 1:
+                print(f"\n  >>> VALID combo {combo}, angle {np_result['angle_degrees']:.2f}°")
+                print(f"      Gap variance: {np_result['gap_variance']:.4f}, Avg gap: {np_result['average_gap']:.2f}px, First-last dist: {np_result.get('first_last_distance', 'N/A')}")
         else:
             # Track fallback from non-numpy path for this combo
             fallback_result = try_angle_configuration_first_last(
@@ -1840,11 +1900,6 @@ def align_horizontal_strands_parallel(all_strands, n,
                     best_fallback_angle = fallback_result.get("angle_degrees",
                         angles_deg_list[len(angles_deg_list) // 2] if angles_deg_list else 0)
 
-        if best_result and best_result.get("pair_extensions") == combo:
-            print(f"\n  >>> VALID combo {combo}, angle {best_result['angle_degrees']:.2f}°")
-            print(f"      Gap variance: {best_result['gap_variance']:.4f}, Avg gap: {best_result['average_gap']:.2f}px")
-            found_valid = True
-
     # Restore all original positions
     for pair_idx, (left_strand_p, right_strand_p) in enumerate(pairs):
         l_orig, r_orig = pair_originals[pair_idx]
@@ -1854,12 +1909,15 @@ def align_horizontal_strands_parallel(all_strands, n,
             right_strand_p["original_start"]["x"] = r_orig["x"]
             right_strand_p["original_start"]["y"] = r_orig["y"]
 
+    best_result = _select_best_result(all_valid_results)
     if best_result:
+        best_pair_extensions = best_result.get("pair_extensions", (0,))
         print(f"\n=== Best Solution Found ===")
         print(f"Pair extensions: {best_pair_extensions}")
         print(f"Angle: {best_result['angle_degrees']:.2f}°")
         print(f"Gap variance: {best_result['gap_variance']:.4f}")
         print(f"Average gap: {best_result['average_gap']:.2f}")
+        print(f"First-last distance: {best_result.get('first_last_distance', 'N/A')}")
 
         return {
             "success": True,
@@ -1868,6 +1926,7 @@ def align_horizontal_strands_parallel(all_strands, n,
             "configurations": best_result["configurations"],
             "average_gap": best_result["average_gap"],
             "gap_variance": best_result["gap_variance"],
+            "first_last_distance": best_result.get("first_last_distance"),
             "pair_extension": best_pair_extensions[0] if best_pair_extensions else 0,
             "pair_extensions": best_pair_extensions,
             "min_gap": best_result.get("min_gap", strand_width),
@@ -2121,8 +2180,7 @@ def align_vertical_strands_parallel(all_strands, n, m,
         print(f"    Angle range: {base_angle_min:.2f}° to {base_angle_max:.2f}°")
 
     # Nested loops: one extension range per pair (via itertools.product)
-    best_result = None
-    best_pair_extensions = tuple(0 for _ in pairs)
+    all_valid_results = []
 
     # Track best fallback candidate (max-min optimization: maximize the worst gap)
     best_fallback = None
@@ -2187,16 +2245,12 @@ def align_vertical_strands_parallel(all_strands, n, m,
             on_config_callback(np_result["angle_degrees"], combo, np_result, "vertical")
 
         if np_result and np_result.get("valid"):
-            gap_variance = np_result["gap_variance"]
             np_result["pair_extensions"] = combo
-            if best_result is None or gap_variance < best_result.get("gap_variance", float('inf')):
-                best_result = np_result
-                best_pair_extensions = combo
-
-                if gap_variance < 0.01:
-                    print(f"\n  >>> VALID combo {combo}, angle {np_result['angle_degrees']:.2f}°")
-                    print(f"      Gap variance: {gap_variance:.4f}, Avg gap: {np_result['average_gap']:.2f}px")
-                    found_valid = True
+            all_valid_results.append(np_result)
+            found_valid = True
+            if combo_count % 100 == 1:
+                print(f"\n  >>> VALID combo {combo}, angle {np_result['angle_degrees']:.2f}°")
+                print(f"      Gap variance: {np_result['gap_variance']:.4f}, Avg gap: {np_result['average_gap']:.2f}px, First-last dist: {np_result.get('first_last_distance', 'N/A')}")
         else:
             # Track fallback from non-numpy path for this combo
             fallback_result = try_angle_configuration_first_last(
@@ -2214,11 +2268,6 @@ def align_vertical_strands_parallel(all_strands, n, m,
                     best_fallback_angle = fallback_result.get("angle_degrees",
                         angles_deg_list[len(angles_deg_list) // 2] if angles_deg_list else 0)
 
-        if best_result and best_result.get("pair_extensions") == combo:
-            print(f"\n  >>> VALID combo {combo}, angle {best_result['angle_degrees']:.2f}°")
-            print(f"      Gap variance: {best_result['gap_variance']:.4f}, Avg gap: {best_result['average_gap']:.2f}px")
-            found_valid = True
-
     # Restore all original positions
     for pair_idx, (left_strand_p, right_strand_p) in enumerate(pairs):
         l_orig, r_orig = pair_originals[pair_idx]
@@ -2228,12 +2277,15 @@ def align_vertical_strands_parallel(all_strands, n, m,
             right_strand_p["original_start"]["x"] = r_orig["x"]
             right_strand_p["original_start"]["y"] = r_orig["y"]
 
+    best_result = _select_best_result(all_valid_results)
     if best_result:
+        best_pair_extensions = best_result.get("pair_extensions", (0,))
         print(f"\n=== Best Vertical Solution Found ===")
         print(f"Pair extensions: {best_pair_extensions}")
         print(f"Angle: {best_result['angle_degrees']:.2f}°")
         print(f"Gap variance: {best_result['gap_variance']:.4f}")
         print(f"Average gap: {best_result['average_gap']:.2f}")
+        print(f"First-last distance: {best_result.get('first_last_distance', 'N/A')}")
 
         return {
             "success": True,
@@ -2242,6 +2294,7 @@ def align_vertical_strands_parallel(all_strands, n, m,
             "configurations": best_result["configurations"],
             "average_gap": best_result["average_gap"],
             "gap_variance": best_result["gap_variance"],
+            "first_last_distance": best_result.get("first_last_distance"),
             "pair_extension": best_pair_extensions[0] if best_pair_extensions else 0,
             "pair_extensions": best_pair_extensions,
             "min_gap": best_result.get("min_gap", strand_width),

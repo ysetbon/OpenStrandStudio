@@ -616,33 +616,6 @@ class MxNGeneratorDialog(QDialog):
         self.continuation_btn.clicked.connect(self.generate_continuation)
         parent_layout.addWidget(self.continuation_btn)
 
-        # Align Parallel button (only enabled after continuation is generated)
-        self.align_parallel_btn = QPushButton("Align Parallel (_4/_5)")
-        self.align_parallel_btn.setMinimumHeight(35)
-        self.align_parallel_btn.setEnabled(False)  # Disabled until continuation generated
-        self.align_parallel_btn.setToolTip("Make horizontal _4/_5 strands parallel with equal spacing")
-        self.align_parallel_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #00838f;
-                color: white;
-                font-weight: bold;
-                border: none;
-                border-radius: 5px;
-            }
-            QPushButton:hover {
-                background-color: #0097a7;
-            }
-            QPushButton:pressed {
-                background-color: #006064;
-            }
-            QPushButton:disabled {
-                background-color: #555;
-                color: #888;
-            }
-        """)
-        self.align_parallel_btn.clicked.connect(self.align_parallel_strands)
-        parent_layout.addWidget(self.align_parallel_btn)
-
         # Angle Range Preview and Controls
         angle_group = QGroupBox("Angle Range Settings")
         angle_group.setStyleSheet("QGroupBox { font-weight: bold; color: #aaa; }")
@@ -806,6 +779,33 @@ class MxNGeneratorDialog(QDialog):
         self.status_label.setWordWrap(True)
         self.status_label.setStyleSheet("color: #888; font-size: 11px;")
         parent_layout.addWidget(self.status_label)
+
+        # Align Parallel button (only enabled after continuation is generated)
+        self.align_parallel_btn = QPushButton("Align Parallel (_4/_5)")
+        self.align_parallel_btn.setMinimumHeight(35)
+        self.align_parallel_btn.setEnabled(False)  # Disabled until continuation generated
+        self.align_parallel_btn.setToolTip("Make horizontal _4/_5 strands parallel with equal spacing")
+        self.align_parallel_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #00838f;
+                color: white;
+                font-weight: bold;
+                border: none;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #0097a7;
+            }
+            QPushButton:pressed {
+                background-color: #006064;
+            }
+            QPushButton:disabled {
+                background-color: #555;
+                color: #888;
+            }
+        """)
+        self.align_parallel_btn.clicked.connect(self.align_parallel_strands)
+        parent_layout.addWidget(self.align_parallel_btn)
 
     def _on_grid_size_changed(self):
         """Handle grid size change."""
@@ -1943,9 +1943,9 @@ class MxNGeneratorDialog(QDialog):
 
             base_output_dir = os.path.join(
                 os.path.dirname(os.path.dirname(script_dir)),
-                "mxn", "mxn_output", diagram_name, "parallel"
+                "mxn", "mxn_output", diagram_name, f"k_{k}_{direction}"
             )
-            invalid_dir = os.path.join(base_output_dir, "invalid")
+            invalid_dir = os.path.join(base_output_dir, "valid_options")
             os.makedirs(invalid_dir, exist_ok=True)
 
             attempt_count = [0]  # Use list to allow modification in nested function
@@ -2572,19 +2572,19 @@ class MxNGeneratorDialog(QDialog):
             # Create diagram name based on pattern parameters
             diagram_name = f"{m}x{n}"
 
-            # Base output directory: mxn_output/{diagram_name}/parallel/
+            # Base output directory: mxn_output/{diagram_name}/k_{k}_{direction}/
             base_output_dir = os.path.join(
                 os.path.dirname(os.path.dirname(script_dir)),
-                "mxn", "mxn_output", diagram_name, "parallel"
+                "mxn", "mxn_output", diagram_name, f"k_{k}_{direction}"
             )
 
             # Determine if solution is valid (both H and V succeeded)
             is_valid_solution = h_success and v_success
 
             if is_valid_solution:
-                output_subdir = os.path.join(base_output_dir, "solution")
+                output_subdir = os.path.join(base_output_dir, "best_solution")
             else:
-                output_subdir = os.path.join(base_output_dir, "invalid")
+                output_subdir = os.path.join(base_output_dir, "valid_options")
 
             os.makedirs(output_subdir, exist_ok=True)
             print(f"\n=== SAVING OUTPUT ===")
@@ -2681,7 +2681,7 @@ class MxNGeneratorDialog(QDialog):
 
             if not (h_success or v_success):
                 self.status_label.setText(
-                    f"Could not find parallel alignment (saved to invalid folder)"
+                    f"Could not find parallel alignment (saved to valid_options folder)"
                 )
 
         except Exception as save_error:

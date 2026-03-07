@@ -29,7 +29,16 @@ __all__ = [
     # Backwards/alternate public entrypoints
     "mxn_rh_continue",
     "mxn_rh_continute",
+    # Parallel alignment functions
+    "align_horizontal_strands_parallel",
+    "align_vertical_strands_parallel",
+    "apply_parallel_alignment",
+    "print_alignment_debug",
+    "get_parallel_alignment_preview",
 ]
+
+# Reuse the LH alignment engine, but run it with RH order functions.
+import mxn_lh_continuation as _lh_alignment
 
 
 def mxn_rh_continue(m, n, k=0, direction="cw"):
@@ -40,6 +49,65 @@ def mxn_rh_continue(m, n, k=0, direction="cw"):
 def mxn_rh_continute(m, n, k=0, direction="cw"):
     """Typo-compatible alias for `mxn_rh_continue`."""
     return mxn_rh_continue(m=m, n=n, k=k, direction=direction)
+
+
+def _run_with_rh_ordering(func, *args, **kwargs):
+    """
+    Execute a LH-alignment function while temporarily swapping its order helpers
+    to RH implementations.
+    """
+    original_h = _lh_alignment.get_horizontal_order_k
+    original_v = _lh_alignment.get_vertical_order_k
+    try:
+        _lh_alignment.get_horizontal_order_k = get_horizontal_order_k
+        _lh_alignment.get_vertical_order_k = get_vertical_order_k
+        return func(*args, **kwargs)
+    finally:
+        _lh_alignment.get_horizontal_order_k = original_h
+        _lh_alignment.get_vertical_order_k = original_v
+
+
+def get_parallel_alignment_preview(all_strands, n, m, k=0, direction="cw"):
+    """RH preview helper using RH H/V ordering."""
+    return _run_with_rh_ordering(
+        _lh_alignment.get_parallel_alignment_preview,
+        all_strands,
+        n,
+        m,
+        k=k,
+        direction=direction,
+    )
+
+
+def align_horizontal_strands_parallel(all_strands, n, **kwargs):
+    """RH horizontal alignment using RH H/V ordering."""
+    return _run_with_rh_ordering(
+        _lh_alignment.align_horizontal_strands_parallel,
+        all_strands,
+        n,
+        **kwargs,
+    )
+
+
+def align_vertical_strands_parallel(all_strands, n, m, **kwargs):
+    """RH vertical alignment using RH H/V ordering."""
+    return _run_with_rh_ordering(
+        _lh_alignment.align_vertical_strands_parallel,
+        all_strands,
+        n,
+        m,
+        **kwargs,
+    )
+
+
+def apply_parallel_alignment(all_strands, alignment_result):
+    """Apply alignment result (shared implementation)."""
+    return _lh_alignment.apply_parallel_alignment(all_strands, alignment_result)
+
+
+def print_alignment_debug(alignment_result):
+    """Print alignment debug output (shared implementation)."""
+    return _lh_alignment.print_alignment_debug(alignment_result)
 
 
 def generate_json(m, n, k=0, direction="cw"):
@@ -1002,5 +1070,4 @@ def compute_4_5_masks(base_strands, continuation_strands, m, n, k, direction):
 
     print(f"Total _4/_5 mask pairs: {len(masks_info)}")
     return masks_info
-
 

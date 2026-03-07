@@ -47,11 +47,18 @@ from mxn_rh_stretch import generate_json as generate_rh_stretch_json
 from mxn_lh_continuation import generate_json as generate_lh_continuation_json
 from mxn_rh_continuation import generate_json as generate_rh_continuation_json
 from mxn_lh_continuation import (
-    align_horizontal_strands_parallel,
-    align_vertical_strands_parallel,
-    apply_parallel_alignment,
-    print_alignment_debug,
-    get_parallel_alignment_preview
+    align_horizontal_strands_parallel as align_horizontal_strands_parallel_lh,
+    align_vertical_strands_parallel as align_vertical_strands_parallel_lh,
+    apply_parallel_alignment as apply_parallel_alignment_lh,
+    print_alignment_debug as print_alignment_debug_lh,
+    get_parallel_alignment_preview as get_parallel_alignment_preview_lh
+)
+from mxn_rh_continuation import (
+    align_horizontal_strands_parallel as align_horizontal_strands_parallel_rh,
+    align_vertical_strands_parallel as align_vertical_strands_parallel_rh,
+    apply_parallel_alignment as apply_parallel_alignment_rh,
+    print_alignment_debug as print_alignment_debug_rh,
+    get_parallel_alignment_preview as get_parallel_alignment_preview_rh,
 )
 
 # Import emoji renderer (handles all emoji/label drawing logic)
@@ -1671,7 +1678,8 @@ class MxNGeneratorDialog(QDialog):
             # Get preview data (use k-based grouping for correct H/V sets)
             k = self.emoji_k_spinner.value() if hasattr(self, 'emoji_k_spinner') else 0
             direction = "cw" if (hasattr(self, 'emoji_cw_radio') and self.emoji_cw_radio.isChecked()) else "ccw"
-            preview_data = get_parallel_alignment_preview(strands, n, m, k=k, direction=direction)
+            preview_fn = get_parallel_alignment_preview_lh if self.lh_radio.isChecked() else get_parallel_alignment_preview_rh
+            preview_data = preview_fn(strands, n, m, k=k, direction=direction)
             self._angle_preview_data = preview_data
 
             # Update spin boxes with detected angles
@@ -1911,6 +1919,17 @@ class MxNGeneratorDialog(QDialog):
             if not has_continuation:
                 self.status_label.setText("Generate continuation first (need _4/_5 strands)")
                 return
+
+            if self.lh_radio.isChecked():
+                align_horizontal_fn = align_horizontal_strands_parallel_lh
+                align_vertical_fn = align_vertical_strands_parallel_lh
+                apply_alignment_fn = apply_parallel_alignment_lh
+                print_alignment_fn = print_alignment_debug_lh
+            else:
+                align_horizontal_fn = align_horizontal_strands_parallel_rh
+                align_vertical_fn = align_vertical_strands_parallel_rh
+                apply_alignment_fn = apply_parallel_alignment_rh
+                print_alignment_fn = print_alignment_debug_rh
 
             # Read pair extension search parameters from UI
             pair_ext_max = self.pair_ext_max_spin.value()
@@ -2336,7 +2355,7 @@ class MxNGeneratorDialog(QDialog):
                         if configs:
                             # Create a result-like dict with the configurations
                             result_for_apply = {"success": True, "configurations": configs}
-                            strands_copy = apply_parallel_alignment(strands_copy, result_for_apply)
+                            strands_copy = apply_alignment_fn(strands_copy, result_for_apply)
 
                         # Update JSON data with this configuration
                         data_copy = copy.deepcopy(data)
@@ -2365,7 +2384,7 @@ class MxNGeneratorDialog(QDialog):
                             attempt_strands = copy.deepcopy(strands)
                             if configs:
                                 attempt_result = {"success": True, "configurations": configs}
-                                attempt_strands = apply_parallel_alignment(attempt_strands, attempt_result)
+                                attempt_strands = apply_alignment_fn(attempt_strands, attempt_result)
                             attempt_data = copy.deepcopy(data)
                             if attempt_data.get('type') == 'OpenStrandStudioHistory':
                                 for state in attempt_data.get('states', []):
@@ -2416,7 +2435,7 @@ class MxNGeneratorDialog(QDialog):
             print(f"  pair_ext_max={pair_ext_max}px, pair_ext_step={pair_ext_step}px")
             print(f"  k={k}, direction={direction}, m={m}, n={n}")
 
-            h_result = align_horizontal_strands_parallel(
+            h_result = align_horizontal_fn(
                 strands,
                 n,
                 angle_step_degrees=0.5,
@@ -2429,10 +2448,10 @@ class MxNGeneratorDialog(QDialog):
                 m=m, k=k, direction=direction
             )
 
-            print_alignment_debug(h_result)
+            print_alignment_fn(h_result)
 
             if h_result["success"] or h_result.get("is_fallback"):
-                strands = apply_parallel_alignment(strands, h_result)
+                strands = apply_alignment_fn(strands, h_result)
                 h_success = h_result["success"]  # Only True for real solutions, not fallback
                 h_angle = h_result.get("angle_degrees", 0)
                 h_gap = h_result.get("average_gap", 0)
@@ -2472,7 +2491,7 @@ class MxNGeneratorDialog(QDialog):
             print(f"  pair_ext_max={pair_ext_max}px, pair_ext_step={pair_ext_step}px")
             print(f"  k={k}, direction={direction}, m={m}, n={n}")
 
-            v_result = align_vertical_strands_parallel(
+            v_result = align_vertical_fn(
                 strands,
                 n,
                 m,
@@ -2486,10 +2505,10 @@ class MxNGeneratorDialog(QDialog):
                 k=k, direction=direction
             )
 
-            print_alignment_debug(v_result)
+            print_alignment_fn(v_result)
 
             if v_result["success"] or v_result.get("is_fallback"):
-                strands = apply_parallel_alignment(strands, v_result)
+                strands = apply_alignment_fn(strands, v_result)
                 v_success = v_result["success"]  # Only True for real solutions, not fallback
                 v_angle = v_result.get("angle_degrees", 0)
                 v_gap = v_result.get("average_gap", 0)

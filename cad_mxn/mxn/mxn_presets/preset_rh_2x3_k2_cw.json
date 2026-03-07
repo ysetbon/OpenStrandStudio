@@ -1,0 +1,23 @@
+{
+  "m": 2,
+  "n": 3,
+  "k": 2,
+  "direction": "cw",
+  "pattern_type": "rh",
+  "use_custom_angles": true,
+  "h_angle_min": -159,
+  "h_angle_max": -119,
+  "v_angle_min": 97,
+  "v_angle_max": 137,
+  "pair_ext_max": 50,
+  "pair_ext_step": 1,
+  "h_opposite_pairs": {
+    "2_3|2_2": -40,
+    "4_3|5_2": -48,
+    "3_3|1_2": -48
+  },
+  "v_opposite_pairs": {
+    "5_3|4_2": -48,
+    "3_2|1_3": -48
+  }
+}

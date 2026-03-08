@@ -738,6 +738,8 @@ class MxNGeneratorDialog(QDialog):
         self.use_custom_angles_cb.stateChanged.connect(self._auto_save_alignment_preset)
         self.pair_ext_max_spin.valueChanged.connect(self._auto_save_alignment_preset)
         self.pair_ext_step_spin.valueChanged.connect(self._auto_save_alignment_preset)
+        self.pair_ext_max_spin.valueChanged.connect(self._update_calc_count_label)
+        self.pair_ext_step_spin.valueChanged.connect(self._update_calc_count_label)
 
         # Pair extension offset controls (direct extension, no alignment)
         ext_offset_label = QLabel("Opposite Pair Extensions:")
@@ -786,6 +788,12 @@ class MxNGeneratorDialog(QDialog):
         self.status_label.setWordWrap(True)
         self.status_label.setStyleSheet("color: #888; font-size: 11px;")
         parent_layout.addWidget(self.status_label)
+
+        # Calculation count label (shows estimated work before pressing align)
+        self.calc_count_label = QLabel("")
+        self.calc_count_label.setWordWrap(True)
+        self.calc_count_label.setStyleSheet("color: #ffab40; font-size: 11px; margin-top: 3px;")
+        parent_layout.addWidget(self.calc_count_label)
 
         # Align Parallel button (only enabled after continuation is generated)
         self.align_parallel_btn = QPushButton("Align Parallel (_4/_5)")
@@ -1188,6 +1196,74 @@ class MxNGeneratorDialog(QDialog):
             self.align_parallel_btn.setToolTip("Generate continuation first (need _4/_5 strands)")
         else:
             self.align_parallel_btn.setToolTip("Make horizontal _4/_5 strands parallel with equal spacing")
+
+        self._update_calc_count_label()
+
+    def _update_calc_count_label(self):
+        """Update the label showing estimated number of calculations for alignment."""
+        if not hasattr(self, 'calc_count_label'):
+            return
+
+        # Need continuation data to count strands
+        if not self.current_json_data:
+            self.calc_count_label.setText("")
+            return
+
+        try:
+            data = json.loads(self.current_json_data)
+            if data.get('type') == 'OpenStrandStudioHistory':
+                strands = data.get('states', [{}])[0].get('data', {}).get('strands', [])
+            else:
+                strands = data.get('strands', [])
+
+            # Count horizontal and vertical _4/_5 strands using k-based grouping
+            m = self.m_spinner.value()
+            n = self.n_spinner.value()
+            k = self.emoji_k_spinner.value() if hasattr(self, 'emoji_k_spinner') else 0
+            direction = "cw" if (hasattr(self, 'emoji_cw_radio') and self.emoji_cw_radio.isChecked()) else "ccw"
+            is_lh = self.lh_radio.isChecked()
+
+            if is_lh:
+                from mxn_lh_continuation import _build_k_based_strand_sets as build_sets_lh
+                build_sets = build_sets_lh
+            else:
+                from mxn_rh_continuation import _build_k_based_strand_sets as build_sets_rh
+                build_sets = build_sets_rh
+
+            h_names_set, h_order_list, v_names_set, v_order_list = build_sets(m, n, k, direction)
+
+            # Count _4/_5 strands that match k-based groups
+            h_count = 0
+            v_count = 0
+            for s in strands:
+                ln = s.get('layer_name', '')
+                if ln.endswith('_4') or ln.endswith('_5'):
+                    if ln in h_names_set:
+                        h_count += 1
+                    elif ln in v_names_set:
+                        v_count += 1
+
+            if h_count == 0 and v_count == 0:
+                self.calc_count_label.setText("")
+                return
+
+            h_pairs = (h_count + 1) // 2  # ceiling division for odd counts (middle strand is solo pair)
+            v_pairs = (v_count + 1) // 2
+
+            pair_ext_max = self.pair_ext_max_spin.value()
+            pair_ext_step = self.pair_ext_step_spin.value()
+            ext_steps = (pair_ext_max // pair_ext_step) + 1 if pair_ext_step > 0 else 1
+
+            h_combos = ext_steps ** h_pairs
+            v_combos = ext_steps ** v_pairs
+            total = h_combos + v_combos
+
+            self.calc_count_label.setText(
+                f"Calculations: H={h_combos:,} ({h_count} strands, {h_pairs} pairs) + "
+                f"V={v_combos:,} ({v_count} strands, {v_pairs} pairs) = {total:,} total"
+            )
+        except Exception:
+            self.calc_count_label.setText("")
 
     def generate_continuation(self):
         """Generate continuation pattern (_4, _5 strands) based on current emoji pairing."""
@@ -1962,7 +2038,7 @@ class MxNGeneratorDialog(QDialog):
 
             base_output_dir = os.path.join(
                 os.path.dirname(os.path.dirname(script_dir)),
-                "mxn", "mxn_output", diagram_name, f"k_{k}_{direction}"
+                "mxn", "mxn_output", diagram_name, f"k_{k}_{direction}_{pattern_type}"
             )
             invalid_dir = os.path.join(base_output_dir, "valid_options")
             os.makedirs(invalid_dir, exist_ok=True)
@@ -2591,10 +2667,11 @@ class MxNGeneratorDialog(QDialog):
             # Create diagram name based on pattern parameters
             diagram_name = f"{m}x{n}"
 
-            # Base output directory: mxn_output/{diagram_name}/k_{k}_{direction}/
+            # Base output directory: mxn_output/{diagram_name}/k_{k}_{direction}_{pattern_type}/
+            pattern_type = "lh" if is_lh else "rh"
             base_output_dir = os.path.join(
                 os.path.dirname(os.path.dirname(script_dir)),
-                "mxn", "mxn_output", diagram_name, f"k_{k}_{direction}"
+                "mxn", "mxn_output", diagram_name, f"k_{k}_{direction}_{pattern_type}"
             )
 
             # Determine if solution is valid (both H and V succeeded)

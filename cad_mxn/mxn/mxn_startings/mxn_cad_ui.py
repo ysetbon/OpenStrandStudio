@@ -795,6 +795,22 @@ class MxNGeneratorDialog(QDialog):
         self.calc_count_label.setStyleSheet("color: #ffab40; font-size: 11px; margin-top: 3px;")
         parent_layout.addWidget(self.calc_count_label)
 
+        # GPU toggle checkbox
+        self.use_gpu_cb = QCheckBox("Use GPU (CuPy)")
+        self.use_gpu_cb.setChecked(False)
+        try:
+            from mxn_lh_continuation import _check_cupy_available
+            if _check_cupy_available():
+                self.use_gpu_cb.setToolTip("Use NVIDIA GPU for faster alignment search")
+            else:
+                self.use_gpu_cb.setEnabled(False)
+                self.use_gpu_cb.setToolTip("CuPy not installed or no CUDA GPU found. Install with: pip install cupy-cuda12x")
+        except Exception:
+            self.use_gpu_cb.setEnabled(False)
+            self.use_gpu_cb.setToolTip("CuPy not available")
+        self.use_gpu_cb.setStyleSheet("color: #4fc3f7; font-size: 11px;")
+        parent_layout.addWidget(self.use_gpu_cb)
+
         # Align Parallel button (only enabled after continuation is generated)
         self.align_parallel_btn = QPushButton("Align Parallel (_4/_5)")
         self.align_parallel_btn.setMinimumHeight(35)
@@ -2511,6 +2527,8 @@ class MxNGeneratorDialog(QDialog):
             print(f"  pair_ext_max={pair_ext_max}px, pair_ext_step={pair_ext_step}px")
             print(f"  k={k}, direction={direction}, m={m}, n={n}")
 
+            use_gpu = self.use_gpu_cb.isChecked() if hasattr(self, 'use_gpu_cb') else False
+
             h_result = align_horizontal_fn(
                 strands,
                 n,
@@ -2521,7 +2539,8 @@ class MxNGeneratorDialog(QDialog):
                 on_config_callback=save_attempt_callback,
                 max_pair_extension=pair_ext_max,
                 pair_extension_step=pair_ext_step,
-                m=m, k=k, direction=direction
+                m=m, k=k, direction=direction,
+                use_gpu=use_gpu
             )
 
             print_alignment_fn(h_result)
@@ -2578,7 +2597,8 @@ class MxNGeneratorDialog(QDialog):
                 on_config_callback=save_attempt_callback,
                 max_pair_extension=pair_ext_max,
                 pair_extension_step=pair_ext_step,
-                k=k, direction=direction
+                k=k, direction=direction,
+                use_gpu=use_gpu
             )
 
             print_alignment_fn(v_result)

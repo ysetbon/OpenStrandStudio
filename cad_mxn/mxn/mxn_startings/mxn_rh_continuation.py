@@ -55,14 +55,30 @@ def _run_with_rh_ordering(func, *args, **kwargs):
     """
     Execute a LH-alignment function while temporarily swapping its order helpers
     to RH implementations.
+
+    Why this works:
+    - LH and RH use the SAME alignment math (projections, gaps, etc.)
+    - The ONLY difference is strand ordering (which strands are "horizontal",
+      which are "vertical", and in what order)
+    - The ordering is determined by get_horizontal_order_k() and get_vertical_order_k()
+    - This function temporarily replaces those on the LH module with RH versions,
+      so when the LH code calls them internally, it gets RH ordering instead
     """
+    # Step 1: Save the original LH ordering functions so we can restore them later
     original_h = _lh_alignment.get_horizontal_order_k
     original_v = _lh_alignment.get_vertical_order_k
     try:
+        # Step 2: Replace LH ordering functions with RH versions (monkey-patch)
+        # Now when LH code calls get_horizontal_order_k(), it gets RH's version
         _lh_alignment.get_horizontal_order_k = get_horizontal_order_k
         _lh_alignment.get_vertical_order_k = get_vertical_order_k
+
+        # Step 3: Run the LH function — it uses RH ordering because we swapped above
+        # All kwargs (like use_gpu=True) pass through unchanged
         return func(*args, **kwargs)
     finally:
+        # Step 4: Always restore original LH functions, even if an error occurred
+        # This prevents RH ordering from "leaking" into future LH calls
         _lh_alignment.get_horizontal_order_k = original_h
         _lh_alignment.get_vertical_order_k = original_v
 
@@ -80,7 +96,12 @@ def get_parallel_alignment_preview(all_strands, n, m, k=0, direction="cw"):
 
 
 def align_horizontal_strands_parallel(all_strands, n, **kwargs):
-    """RH horizontal alignment using RH H/V ordering."""
+    """RH horizontal alignment using RH H/V ordering.
+
+    **kwargs passes through everything the caller sends (use_gpu, pair_ext_max, etc.)
+    so RH automatically gets GPU support without any RH-specific code.
+    """
+    # Calls LH's align_horizontal_strands_parallel with RH ordering swapped in
     return _run_with_rh_ordering(
         _lh_alignment.align_horizontal_strands_parallel,
         all_strands,
@@ -90,7 +111,11 @@ def align_horizontal_strands_parallel(all_strands, n, **kwargs):
 
 
 def align_vertical_strands_parallel(all_strands, n, m, **kwargs):
-    """RH vertical alignment using RH H/V ordering."""
+    """RH vertical alignment using RH H/V ordering.
+
+    Same as horizontal — all kwargs (use_gpu, etc.) pass through to LH code.
+    """
+    # Calls LH's align_vertical_strands_parallel with RH ordering swapped in
     return _run_with_rh_ordering(
         _lh_alignment.align_vertical_strands_parallel,
         all_strands,
@@ -101,12 +126,12 @@ def align_vertical_strands_parallel(all_strands, n, m, **kwargs):
 
 
 def apply_parallel_alignment(all_strands, alignment_result):
-    """Apply alignment result (shared implementation)."""
+    """Apply alignment result — no ordering difference, so calls LH directly."""
     return _lh_alignment.apply_parallel_alignment(all_strands, alignment_result)
 
 
 def print_alignment_debug(alignment_result):
-    """Print alignment debug output (shared implementation)."""
+    """Print alignment debug output — no ordering difference, so calls LH directly."""
     return _lh_alignment.print_alignment_debug(alignment_result)
 
 

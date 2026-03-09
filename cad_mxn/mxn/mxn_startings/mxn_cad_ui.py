@@ -254,6 +254,70 @@ class MxNGeneratorDialog(QDialog):
                 self._update_preview_background_style()
         return self._main_window
 
+    def _get_gpu_runtime_status(self):
+        """Return whether CUDA/CuPy is ready and the active NVIDIA device name."""
+        try:
+            from mxn_lh_continuation import _check_cupy_available
+            if not _check_cupy_available():
+                return False, None, "CPU only: CuPy/CUDA unavailable"
+
+            import cupy as cp
+
+            device_name = "NVIDIA GPU"
+            try:
+                props = cp.cuda.runtime.getDeviceProperties(0)
+                if isinstance(props, dict):
+                    device_name = props.get("name", device_name)
+                else:
+                    device_name = getattr(props, "name", device_name)
+                if isinstance(device_name, bytes):
+                    device_name = device_name.decode("utf-8", errors="ignore")
+                device_name = str(device_name).strip() or "NVIDIA GPU"
+            except Exception:
+                pass
+
+            return True, device_name, f"GPU ready: {device_name}"
+        except Exception:
+            return False, None, "CPU only: CuPy/CUDA unavailable"
+
+    def _get_alignment_backend_label(self, use_gpu=None):
+        """Describe the compute backend that alignment will use."""
+        if use_gpu is None:
+            use_gpu = self.use_gpu_cb.isChecked() if hasattr(self, 'use_gpu_cb') else False
+
+        gpu_available, device_name, _ = self._get_gpu_runtime_status()
+        if use_gpu and gpu_available:
+            return f"GPU: {device_name}"
+        if use_gpu:
+            return "CPU fallback"
+        if gpu_available:
+            return f"CPU (GPU ready: {device_name})"
+        return "CPU"
+
+    def _update_gpu_status_ui(self):
+        """Refresh the GPU checkbox and status text."""
+        if not hasattr(self, 'use_gpu_cb') or not hasattr(self, 'gpu_status_label'):
+            return
+
+        gpu_available, device_name, status_text = self._get_gpu_runtime_status()
+
+        if gpu_available:
+            self.use_gpu_cb.setEnabled(True)
+            self.use_gpu_cb.setToolTip(f"Use NVIDIA GPU for faster alignment search ({device_name})")
+            if self.use_gpu_cb.isChecked():
+                self.gpu_status_label.setText(f"Alignment device: GPU selected ({device_name})")
+            else:
+                self.gpu_status_label.setText(f"Alignment device: CPU selected | GPU ready: {device_name}")
+        else:
+            self.use_gpu_cb.setChecked(False)
+            self.use_gpu_cb.setEnabled(False)
+            self.use_gpu_cb.setToolTip("CuPy not installed or no CUDA GPU found. Install with: pip install cupy-cuda12x")
+            self.gpu_status_label.setText(f"Alignment device: {status_text}")
+
+    def _on_gpu_toggle_changed(self, checked):
+        """Update backend summary when the GPU checkbox changes."""
+        self._update_gpu_status_ui()
+
     def setup_ui(self):
         """Setup the main UI layout with image preview."""
         self.setWindowTitle('MxN Pattern Generator')
@@ -798,18 +862,24 @@ class MxNGeneratorDialog(QDialog):
         # GPU toggle checkbox
         self.use_gpu_cb = QCheckBox("Use GPU (CuPy)")
         self.use_gpu_cb.setChecked(False)
-        try:
-            from mxn_lh_continuation import _check_cupy_available
-            if _check_cupy_available():
-                self.use_gpu_cb.setToolTip("Use NVIDIA GPU for faster alignment search")
-            else:
-                self.use_gpu_cb.setEnabled(False)
-                self.use_gpu_cb.setToolTip("CuPy not installed or no CUDA GPU found. Install with: pip install cupy-cuda12x")
-        except Exception:
-            self.use_gpu_cb.setEnabled(False)
-            self.use_gpu_cb.setToolTip("CuPy not available")
         self.use_gpu_cb.setStyleSheet("color: #4fc3f7; font-size: 11px;")
+        self.use_gpu_cb.toggled.connect(self._on_gpu_toggle_changed)
         parent_layout.addWidget(self.use_gpu_cb)
+
+        self.gpu_status_label = QLabel("")
+        self.gpu_status_label.setWordWrap(True)
+        self.gpu_status_label.setStyleSheet("color: #7dd3fc; font-size: 11px; margin-top: 2px;")
+        parent_layout.addWidget(self.gpu_status_label)
+        self._update_gpu_status_ui()
+
+        self.save_horizontal_valid_cb = QCheckBox("Save horizontal valid images/txt/json")
+        self.save_horizontal_valid_cb.setChecked(True)
+        self.save_horizontal_valid_cb.setToolTip(
+            "When enabled, valid horizontal alignment attempts are exported to the valid_options folder"
+        )
+        self.save_horizontal_valid_cb.setStyleSheet("color: #c5e1a5; font-size: 11px;")
+        self.save_horizontal_valid_cb.stateChanged.connect(self._auto_save_alignment_preset)
+        parent_layout.addWidget(self.save_horizontal_valid_cb)
 
         # Align Parallel button (only enabled after continuation is generated)
         self.align_parallel_btn = QPushButton("Align Parallel (_4/_5)")
@@ -1986,10 +2056,12 @@ class MxNGeneratorDialog(QDialog):
         h_result = {}
         v_result = {}
 
-        self.status_label.setText("Searching for parallel alignment...")
-        QApplication.processEvents()
-
         try:
+            use_gpu = self.use_gpu_cb.isChecked() if hasattr(self, 'use_gpu_cb') else False
+            backend_label = self._get_alignment_backend_label(use_gpu)
+            self.status_label.setText(f"Searching for parallel alignment... [{backend_label}]")
+            QApplication.processEvents()
+
             # Parse current JSON data
             data = json.loads(self.current_json_data)
 
@@ -2390,6 +2462,13 @@ class MxNGeneratorDialog(QDialog):
                     # Attempt-level validity is per-direction only; never treat it as
                     # a full solution (full solution requires BOTH horizontal+vertical pass).
                     is_valid = result.get("valid", False)
+                    save_horizontal_valid = (
+                        self.save_horizontal_valid_cb.isChecked()
+                        if hasattr(self, "save_horizontal_valid_cb")
+                        else True
+                    )
+                    if direction_type == "horizontal" and is_valid and not save_horizontal_valid:
+                        return
                     output_dir = invalid_dir
 
                     # Create filename (without extension)
@@ -2527,8 +2606,6 @@ class MxNGeneratorDialog(QDialog):
             print(f"  pair_ext_max={pair_ext_max}px, pair_ext_step={pair_ext_step}px")
             print(f"  k={k}, direction={direction}, m={m}, n={n}")
 
-            use_gpu = self.use_gpu_cb.isChecked() if hasattr(self, 'use_gpu_cb') else False
-
             h_result = align_horizontal_fn(
                 strands,
                 n,
@@ -2660,7 +2737,7 @@ class MxNGeneratorDialog(QDialog):
                     status_parts.append("V: failed")
 
                 self.status_label.setText(
-                    f"Parallel alignment: " + " | ".join(status_parts)
+                    f"Parallel alignment [{backend_label}]: " + " | ".join(status_parts)
                 )
             else:
                 self.status_label.setText("Failed to render image")
@@ -2848,6 +2925,11 @@ class MxNGeneratorDialog(QDialog):
                 "v_angle_max": self.v_angle_max_spin.value(),
                 "pair_ext_max": self.pair_ext_max_spin.value(),
                 "pair_ext_step": self.pair_ext_step_spin.value(),
+                "save_horizontal_valid": (
+                    self.save_horizontal_valid_cb.isChecked()
+                    if hasattr(self, "save_horizontal_valid_cb")
+                    else True
+                ),
                 "h_opposite_pairs": h_opposite_pairs,
                 "v_opposite_pairs": v_opposite_pairs,
             }
@@ -2886,6 +2968,8 @@ class MxNGeneratorDialog(QDialog):
             self.v_angle_max_spin.setValue(preset.get("v_angle_max", -50))
             self.pair_ext_max_spin.setValue(preset.get("pair_ext_max", 200))
             self.pair_ext_step_spin.setValue(preset.get("pair_ext_step", 10))
+            if hasattr(self, "save_horizontal_valid_cb"):
+                self.save_horizontal_valid_cb.setChecked(preset.get("save_horizontal_valid", True))
 
             # Load opposite pair extension values
             h_opp = preset.get("h_opposite_pairs", {})

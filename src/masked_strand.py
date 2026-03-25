@@ -1,4 +1,5 @@
 import time
+import math
 from strand import Strand
 from PyQt5.QtCore import QPointF, Qt, QRectF
 from PyQt5.QtGui import (
@@ -132,18 +133,28 @@ class MaskedStrand(Strand):
         path1 = self.first_selected_strand.get_path()
         path2 = self.second_selected_strand.get_path()
 
+        shadow_width1 = self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2 + shadow_width_offset
         shadow_stroker = QPainterPathStroker()
-        shadow_stroker.setWidth(self.first_selected_strand.width + self.first_selected_strand.stroke_width * 2 + shadow_width_offset)
+        shadow_stroker.setWidth(shadow_width1)
         shadow_stroker.setJoinStyle(Qt.MiterJoin)
         shadow_stroker.setCapStyle(Qt.RoundCap)  # Use RoundCap for smoother shadows
         shadow_path1 = shadow_stroker.createStroke(path1)
+        # Include start circle of attached strands when visible
+        circle1 = self._get_strand_start_circle_path(self.first_selected_strand, shadow_width1 / 2)
+        if not circle1.isEmpty():
+            shadow_path1 = shadow_path1.united(circle1)
 
         # path2 already fetched above
+        shadow_width2 = self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + shadow_width_offset
         shadow_stroker = QPainterPathStroker()
-        shadow_stroker.setWidth(self.second_selected_strand.width + self.second_selected_strand.stroke_width * 2 + shadow_width_offset)
+        shadow_stroker.setWidth(shadow_width2)
         shadow_stroker.setJoinStyle(Qt.MiterJoin)
         shadow_stroker.setCapStyle(Qt.RoundCap)  # Use RoundCap for smoother shadows
         shadow_path2 = shadow_stroker.createStroke(path2)
+        # Include start circle of attached strands when visible
+        circle2 = self._get_strand_start_circle_path(self.second_selected_strand, shadow_width2 / 2)
+        if not circle2.isEmpty():
+            shadow_path2 = shadow_path2.united(circle2)
 
         # Calculate fresh intersection
         intersection_path = shadow_path1.intersected(shadow_path2)
@@ -261,6 +272,28 @@ class MaskedStrand(Strand):
                 mask_path = mask_path.subtracted(deletion_path)
         # Return fresh mask including deletions
         return mask_path
+    def _get_strand_start_circle_path(self, strand, radius):
+        """Build the half-circle path at a strand's start point if the circle is visible.
+        Returns an empty QPainterPath when the circle should not be included."""
+        from attached_strand import AttachedStrand
+
+        # Only attached strands have a start circle that needs including
+        if not isinstance(strand, AttachedStrand):
+            return QPainterPath()
+
+        # Check that the circle is enabled and visually drawn
+        if not (hasattr(strand, 'has_circles') and strand.has_circles[0]):
+            return QPainterPath()
+        if hasattr(strand, 'start_circle_stroke_color') and strand.start_circle_stroke_color.alpha() <= 0:
+            return QPainterPath()
+
+        # Build a full ellipse at the start point – the half that overlaps
+        # the strand body is already covered by the stroked path, so unioning
+        # a full ellipse effectively adds only the visible half-circle.
+        circle = QPainterPath()
+        circle.addEllipse(strand.start, radius, radius)
+        return circle
+
     def get_path_for_strand(self, strand):
         """Helper method to get the stroked path for a strand."""
         path = strand.get_path()
@@ -268,7 +301,12 @@ class MaskedStrand(Strand):
         stroker.setWidth(strand.width)
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
-        return stroker.createStroke(path)
+        stroked = stroker.createStroke(path)
+        # Include start circle of attached strands when visible
+        circle = self._get_strand_start_circle_path(strand, strand.width / 2)
+        if not circle.isEmpty():
+            stroked = stroked.united(circle)
+        return stroked
     def get_stroked_path_for_strand(self, strand):
         """Helper method to get the stroked path for a strand."""
         path = strand.get_path()
@@ -276,7 +314,12 @@ class MaskedStrand(Strand):
         stroker.setWidth(strand.width + strand.stroke_width * 2  )
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
-        return stroker.createStroke(path)
+        stroked = stroker.createStroke(path)
+        # Include start circle of attached strands when visible
+        circle = self._get_strand_start_circle_path(strand, (strand.width + strand.stroke_width * 2) / 2)
+        if not circle.isEmpty():
+            stroked = stroked.united(circle)
+        return stroked
     def get_stroked_path_for_strand_extended(self, strand):
         """Helper method to get the stroked path for a strand."""
         path = strand.get_path()
@@ -284,24 +327,41 @@ class MaskedStrand(Strand):
         stroker.setWidth(strand.width + strand.stroke_width * 2  +4)
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
-        return stroker.createStroke(path)    
+        stroked = stroker.createStroke(path)
+        # Include start circle of attached strands when visible
+        circle = self._get_strand_start_circle_path(strand, (strand.width + strand.stroke_width * 2 + 4) / 2)
+        if not circle.isEmpty():
+            stroked = stroked.united(circle)
+        return stroked    
     def get_stroked_path_for_strand_with_shadow(self, strand):
         """Helper method to get the stroked path for a strand."""
         path = strand.get_path()
+        shadow_width = strand.width + strand.stroke_width * 2 + self.canvas.max_blur_radius
         stroker = QPainterPathStroker()
-        stroker.setWidth(strand.width + strand.stroke_width * 2 + self.canvas.max_blur_radius)
+        stroker.setWidth(shadow_width)
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
-        return stroker.createStroke(path)
-    
+        stroked = stroker.createStroke(path)
+        # Include start circle of attached strands when visible
+        circle = self._get_strand_start_circle_path(strand, shadow_width / 2)
+        if not circle.isEmpty():
+            stroked = stroked.united(circle)
+        return stroked
+
     def get_stroked_path_for_strand_with_shadow_extended(self, strand):
         """Helper method to get the stroked path for a strand."""
         path = strand.get_path()
+        shadow_width = strand.width + strand.stroke_width * 2 + self.canvas.max_blur_radius
         stroker = QPainterPathStroker()
-        stroker.setWidth(strand.width + strand.stroke_width * 2 + self.canvas.max_blur_radius)
+        stroker.setWidth(shadow_width)
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
-        return stroker.createStroke(path)    
+        stroked = stroker.createStroke(path)
+        # Include start circle of attached strands when visible
+        circle = self._get_strand_start_circle_path(strand, shadow_width / 2)
+        if not circle.isEmpty():
+            stroked = stroked.united(circle)
+        return stroked    
     def draw(self, painter, skip_painter_setup=False):
         """Draw the masked strand and apply corner-based deletion rectangles."""
         if hasattr(self, 'deletion_rectangles'):

@@ -87,6 +87,95 @@ def _expand_path_for_shadow_blocker(base_path: QPainterPath, extra_radius: float
     return _union_paths(base_path, expanded_outline)
 
 
+def _get_mask_visual_path(mask_strand) -> QPainterPath:
+    """
+    Return the combined visible geometry of a mask.
+
+    Mask rendering uses both the fill path and the thicker stroke path. Shadow
+    blocking must match that visible footprint or shadows can bleed through the
+    mask's outline or translucent fill.
+    """
+    if mask_strand is None:
+        return QPainterPath()
+
+    fill_path = QPainterPath()
+    stroke_path = QPainterPath()
+
+    if hasattr(mask_strand, "get_mask_path"):
+        try:
+            fill_path = mask_strand.get_mask_path()
+        except Exception:
+            fill_path = QPainterPath()
+
+    if hasattr(mask_strand, "get_mask_path_stroke"):
+        try:
+            stroke_path = mask_strand.get_mask_path_stroke()
+        except Exception:
+            stroke_path = QPainterPath()
+
+    return _union_paths(fill_path, stroke_path)
+
+
+def _subtract_visible_component_mask_coverage(
+    shadow_path: QPainterPath,
+    masked_strands_map: dict,
+    layer_order: List[str],
+    receiving_layer: str,
+    receiving_path: QPainterPath,
+    blur_px: float,
+) -> QPainterPath:
+    """
+    Remove shadow segments that fall beneath a visible mask drawn above one of
+    its component strands.
+
+    This prevents unrelated shadows on a component strand from remaining
+    visible through the mask.
+    """
+    if not isinstance(shadow_path, QPainterPath):
+        return QPainterPath()
+    if shadow_path.isEmpty():
+        return QPainterPath(shadow_path)
+    if not receiving_layer or receiving_layer not in layer_order:
+        return QPainterPath(shadow_path)
+
+    current_shadow = QPainterPath(shadow_path)
+    receiving_index = layer_order.index(receiving_layer)
+
+    for mask_name, mask_info in masked_strands_map.items():
+        components = mask_info.get("components", [])
+        if receiving_layer not in components:
+            continue
+        if mask_name not in layer_order:
+            continue
+
+        mask_strand = mask_info.get("masked_strand")
+        if getattr(mask_strand, "is_hidden", False):
+            continue
+
+        mask_index = layer_order.index(mask_name)
+        if mask_index <= receiving_index:
+            continue
+
+        blocker_path = get_shadow_blocker_path(mask_strand, blur_px)
+        if blocker_path.isEmpty():
+            blocker_path = _get_mask_visual_path(mask_strand)
+        if blocker_path.isEmpty():
+            continue
+
+        if isinstance(receiving_path, QPainterPath) and not receiving_path.isEmpty():
+            try:
+                if not blocker_path.intersects(receiving_path):
+                    continue
+            except Exception:
+                pass
+
+        current_shadow = QPainterPath(current_shadow).subtracted(blocker_path)
+        if current_shadow.isEmpty():
+            break
+
+    return current_shadow
+
+
 def draw_mask_strand_shadow(
     painter,
     first_path: QPainterPath,
@@ -837,6 +926,15 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                     except Exception as e:
                                         # logging.error(f"Error calculating or subtracting overlying mask '{mask_layer_sub}' from shadow intersection: {e}")
                                         pass
+
+                            current_intersection_shadow = _subtract_visible_component_mask_coverage(
+                                current_intersection_shadow,
+                                masked_strands_map,
+                                layer_order,
+                                other_layer,
+                                other_stroke_path,
+                                max_blur_radius,
+                            )
                         # --- END MASK SUBTRACTION FOR THIS INTERSECTION ---
 
                         # --- SUBTRACT INTERMEDIATE STRANDS ---
@@ -1834,7 +1932,7 @@ def get_shadow_blocker_path(mask_strand, blur_px):
         return cache[key]
 
     try:
-        base_path = mask_strand.get_mask_path() if hasattr(mask_strand, "get_mask_path") else QPainterPath()
+        base_path = _get_mask_visual_path(mask_strand)
         if base_path.isEmpty():
             cache[key] = QPainterPath()
             return cache[key]
@@ -1913,15 +2011,15 @@ def calculate_shadow_for_layer_pair(canvas, casting_strand, receiving_strand, ca
     # Apply mask blocking (unless allow_full_shadow is enabled)
     current_shadow = QPainterPath(intersection)
 
+    masked_strands_map = {}
+    for s in canvas.strands:
+        if isinstance(s, MaskedStrand):
+            masked_strands_map[s.layer_name] = {
+                'masked_strand': s,
+                'components': [s.first_selected_strand.layer_name, s.second_selected_strand.layer_name]
+            }
+
     if not allow_full_shadow:
-        # Get all masked strands
-        masked_strands_map = {}
-        for s in canvas.strands:
-            if isinstance(s, MaskedStrand):
-                masked_strands_map[s.layer_name] = {
-                    'masked_strand': s,
-                    'components': [s.first_selected_strand.layer_name, s.second_selected_strand.layer_name]
-                }
 
         # Apply blocking from each mask above the casting strand
         for mask_name, mask_info in masked_strands_map.items():
@@ -1943,5 +2041,14 @@ def calculate_shadow_for_layer_pair(canvas, casting_strand, receiving_strand, ca
                 blocker_path = get_shadow_blocker_path(mask_strand, max_blur_radius)
                 if not blocker_path.isEmpty():
                     current_shadow = QPainterPath(current_shadow).subtracted(blocker_path)
+
+        current_shadow = _subtract_visible_component_mask_coverage(
+            current_shadow,
+            masked_strands_map,
+            layer_order,
+            receiving_layer,
+            receiving_stroke_path,
+            max_blur_radius,
+        )
 
     return current_shadow

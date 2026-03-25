@@ -100,6 +100,8 @@ class MaskedStrand(Strand):
     def set_custom_mask(self, mask_path):
         """Set a custom mask path for this masked strand."""
         self.custom_mask_path = mask_path
+        if hasattr(self, '_shadow_blocker_cache'):
+            delattr(self, '_shadow_blocker_cache')
         # Recalculate center point when mask changes
         self.calculate_center_point()
         
@@ -117,6 +119,8 @@ class MaskedStrand(Strand):
         """Reset to the default intersection mask."""
         self.custom_mask_path = None
         self.deletion_rectangles = []  # Clear the deletion rectangles
+        if hasattr(self, '_shadow_blocker_cache'):
+            delattr(self, '_shadow_blocker_cache')
     def get_masked_shadow_path(self):
         """
         Get the path representing the shadow of the masked area.
@@ -767,7 +771,8 @@ class MaskedStrand(Strand):
             cached_attrs = [
                 '_shadow_path', '_last_shadow_positions', '_cached_path', '_cached_mask',
                 '_stroke_path', '_fill_path', '_mask_path', '_base_mask_path',
-                'custom_mask_path', '_highlight_path', '_selection_path'
+                'custom_mask_path', '_highlight_path', '_selection_path',
+                '_shadow_blocker_cache'
             ]
 
             # Clear all possible caches
@@ -898,7 +903,7 @@ class MaskedStrand(Strand):
             
         
         # Clear any cached paths that depend on the mask
-        cached_attrs = ['_shadow_path', '_cached_path', '_cached_mask', '_base_mask_path']
+        cached_attrs = ['_shadow_path', '_cached_path', '_cached_mask', '_base_mask_path', '_shadow_blocker_cache']
         for attr in cached_attrs:
             if hasattr(self, attr):
                 delattr(self, attr)

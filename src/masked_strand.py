@@ -410,9 +410,9 @@ class MaskedStrand(Strand):
         try:
             # Try different import approaches for robustness
             try:
-                from shader_utils import draw_mask_strand_shadow
+                from shader_utils import draw_mask_strand_shadow, draw_strand_shadow
             except ImportError:
-                from src.shader_utils import draw_mask_strand_shadow
+                from src.shader_utils import draw_mask_strand_shadow, draw_strand_shadow
             
             # Check if shadowing is disabled in the canvas (same as regular strands)
             if hasattr(self.canvas, 'shadow_enabled') and not self.canvas.shadow_enabled:
@@ -440,7 +440,17 @@ class MaskedStrand(Strand):
                 # Tertiary fallback: use our own stored colour
                 if shadow_color is None and hasattr(self, 'shadow_color') and self.shadow_color:
                     shadow_color = QColor(self.shadow_color)
-                    
+
+                # Masks keep their own internal intersection shading, but they also
+                # participate in the regular shadow-editor casting pipeline.
+                draw_strand_shadow(
+                    painter,
+                    self,
+                    shadow_color,
+                    num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
+                    max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99,
+                )
+
                 # Always get fresh paths for both strands to ensure consistent refresh
                 # Always get fresh paths for both strands to ensure consistent refresh
                 strand1_path = self.get_stroked_path_for_strand(self.first_selected_strand)
@@ -544,9 +554,9 @@ class MaskedStrand(Strand):
         try:
             # Draw shadows directly if enabled
             try:
-                from shader_utils import draw_mask_strand_shadow
+                from shader_utils import draw_mask_strand_shadow, draw_strand_shadow
             except ImportError:
-                from src.shader_utils import draw_mask_strand_shadow
+                from src.shader_utils import draw_mask_strand_shadow, draw_strand_shadow
             
             # Check if shadowing is disabled in the canvas
             if hasattr(self.canvas, 'shadow_enabled') and not self.canvas.shadow_enabled:
@@ -573,7 +583,17 @@ class MaskedStrand(Strand):
                 # Tertiary fallback: use our own stored colour
                 if shadow_color is None and hasattr(self, 'shadow_color') and self.shadow_color:
                     shadow_color = QColor(self.shadow_color)
-                    
+
+                # Preserve the existing mask self-shadow while also allowing the mask
+                # layer to cast editable shadows onto lower layers.
+                draw_strand_shadow(
+                    painter,
+                    self,
+                    shadow_color,
+                    num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
+                    max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99,
+                )
+
                 # Always get fresh paths for both strands to ensure consistent refresh
                 strand1_path = self.get_stroked_path_for_strand(self.first_selected_strand)
                 strand1_path_no_stroke = self.get_path_for_strand(self.first_selected_strand)

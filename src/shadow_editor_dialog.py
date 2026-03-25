@@ -4,7 +4,6 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
                              QProxyStyle, QStyle)
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QRect
 from PyQt5.QtGui import QColor, QPalette, QPainter, QPen, QPainterPath
-from masked_strand import MaskedStrand
 from translations import translations
 
 
@@ -728,26 +727,26 @@ class ShadowEditorDialog(QDialog):
         # Get layers below (lower indices = below in Z-order)
         layers_below = layer_order[:casting_index]
 
-        # Filter out masked strands and hidden strands
+        # Hidden layers do not receive editable shadows.
         receiving_layers = []
         for layer_name in layers_below:
             strand = self._find_strand_by_name(layer_name)
-            if strand and not isinstance(strand, MaskedStrand) and not getattr(strand, 'is_hidden', False):
+            if strand and not getattr(strand, 'is_hidden', False):
                 receiving_layers.append((layer_name, strand))
 
-        # Get all available layers for subtraction (all layers except casting layer and masked strands)
+        # Get all available layers for subtraction (all layers except the caster itself).
         available_layers = []
         for layer_name in layer_order:
             if layer_name != self.casting_layer:
                 strand = self._find_strand_by_name(layer_name)
-                if strand and not isinstance(strand, MaskedStrand) and not getattr(strand, 'is_hidden', False):
+                if strand and not getattr(strand, 'is_hidden', False):
                     available_layers.append(layer_name)
 
         # Create list items for each receiving layer
         for layer_name, strand in receiving_layers:
             # Get shadow override if exists
             override = self.canvas.layer_state_manager.get_shadow_override(self.casting_layer, layer_name)
-            is_visible = override.get('visibility', True) if override else True
+            is_visible = self.canvas.layer_state_manager.get_shadow_visibility(self.casting_layer, layer_name)
             allow_full_shadow = override.get('allow_full_shadow', False) if override else False
 
             # Get subtracted layers
@@ -830,7 +829,12 @@ class ShadowEditorDialog(QDialog):
         # Update shadow override
         override = self.canvas.layer_state_manager.get_shadow_override(self.casting_layer, receiving_layer)
         if not override:
-            override = {'visibility': True, 'allow_full_shadow': allow_full}
+            override = {
+                'visibility': self.canvas.layer_state_manager.get_shadow_visibility(
+                    self.casting_layer, receiving_layer
+                ),
+                'allow_full_shadow': allow_full
+            }
         else:
             override['allow_full_shadow'] = allow_full
 

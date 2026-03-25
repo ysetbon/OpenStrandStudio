@@ -295,18 +295,17 @@ class NumberedLayerButton(QPushButton):
             shadow_only_label.setText(shadow_only_text)
         context_menu.addAction(shadow_only_action)
 
-        # Add Edit Shadows option (for non-masked layers)
-        if not is_masked_layer:
-            edit_shadows_text = _['edit_shadows']
-            edit_shadows_label = HoverLabel(edit_shadows_text, self, theme)
-            edit_shadows_label.setMinimumHeight(35)
-            if is_hebrew:
-                edit_shadows_label.setLayoutDirection(Qt.RightToLeft)
-                edit_shadows_label.setAlignment(Qt.AlignLeft)
-            edit_shadows_action = QWidgetAction(self)
-            edit_shadows_action.setDefaultWidget(edit_shadows_label)
-            edit_shadows_action.triggered.connect(lambda: self.open_shadow_editor(layer_panel, index))
-            context_menu.addAction(edit_shadows_action)
+        # Add Edit Shadows option for all layer types, including masks.
+        edit_shadows_text = _['edit_shadows']
+        edit_shadows_label = HoverLabel(edit_shadows_text, self, theme)
+        edit_shadows_label.setMinimumHeight(35)
+        if is_hebrew:
+            edit_shadows_label.setLayoutDirection(Qt.RightToLeft)
+            edit_shadows_label.setAlignment(Qt.AlignLeft)
+        edit_shadows_action = QWidgetAction(self)
+        edit_shadows_action.setDefaultWidget(edit_shadows_label)
+        edit_shadows_action.triggered.connect(lambda: self.open_shadow_editor(layer_panel, index))
+        context_menu.addAction(edit_shadows_action)
 
         if is_masked_layer:
             context_menu.addSeparator()

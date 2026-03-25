@@ -677,6 +677,68 @@ class LayerStateManager(QObject):
         """
         return self.layer_state.get('shadow_overrides', {}).get(casting_layer, {}).get(receiving_layer, None)
 
+    def _find_strand_by_name(self, layer_name):
+        """Find a strand on the current canvas by layer name."""
+        if not self.canvas or not hasattr(self.canvas, 'strands'):
+            return None
+
+        for strand in self.canvas.strands:
+            if getattr(strand, 'layer_name', None) == layer_name:
+                return strand
+
+        return None
+
+    def get_default_shadow_visibility(self, casting_layer, receiving_layer):
+        """
+        Return the default shadow visibility when no explicit override exists.
+
+        Mask layers should not cast a regular editable shadow onto their own
+        first/source strand unless the user explicitly enables it.
+        """
+        casting_strand = self._find_strand_by_name(casting_layer)
+        if isinstance(casting_strand, MaskedStrand):
+            first_component = getattr(
+                getattr(casting_strand, 'first_selected_strand', None),
+                'layer_name',
+                None,
+            )
+            if receiving_layer == first_component:
+                return False
+
+        return True
+
+    def get_default_subtracted_layers(self, casting_layer, receiving_layer):
+        """
+        Return default subtraction layers when no explicit override exists.
+
+        For a masked caster, the second component receiver defaults to
+        subtracting the first component path.
+        """
+        casting_strand = self._find_strand_by_name(casting_layer)
+        if isinstance(casting_strand, MaskedStrand):
+            first_component = getattr(
+                getattr(casting_strand, 'first_selected_strand', None),
+                'layer_name',
+                None,
+            )
+            second_component = getattr(
+                getattr(casting_strand, 'second_selected_strand', None),
+                'layer_name',
+                None,
+            )
+            if receiving_layer == second_component and first_component:
+                return [first_component]
+
+        return []
+
+    def get_shadow_visibility(self, casting_layer, receiving_layer):
+        """Return the effective shadow visibility for a layer pair."""
+        override_data = self.get_shadow_override(casting_layer, receiving_layer)
+        if override_data and 'visibility' in override_data:
+            return override_data['visibility']
+
+        return self.get_default_shadow_visibility(casting_layer, receiving_layer)
+
     def remove_shadow_override(self, casting_layer, receiving_layer):
         """Remove shadow override for a specific shadow relationship."""
         if 'shadow_overrides' in self.layer_state:
@@ -703,8 +765,8 @@ class LayerStateManager(QObject):
         """
         override_data = self.get_shadow_override(casting_layer, receiving_layer)
         if override_data and 'subtracted_layers' in override_data:
-            return override_data['subtracted_layers']
-        return []
+            return override_data['subtracted_layers'] or []
+        return self.get_default_subtracted_layers(casting_layer, receiving_layer)
 
     def set_subtracted_layers(self, casting_layer, receiving_layer, layers):
         """
@@ -718,7 +780,10 @@ class LayerStateManager(QObject):
         # Get existing override data or create new
         override_data = self.get_shadow_override(casting_layer, receiving_layer)
         if override_data is None:
-            override_data = {'visibility': True, 'allow_full_shadow': False}
+            override_data = {
+                'visibility': self.get_default_shadow_visibility(casting_layer, receiving_layer),
+                'allow_full_shadow': False
+            }
 
         # Update subtracted layers
         override_data['subtracted_layers'] = layers if layers else []

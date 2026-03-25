@@ -313,14 +313,6 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         max_blur_radius = 30.0  # Fixed shadow extension for all strand thicknesses
         pass
     
-    # Early return for masked strands to avoid double shading
-    # If this is a masked strand (has get_mask_path method), its shadow 
-    # will already be drawn by draw_mask_strand_shadow
-    if hasattr(strand, "get_mask_path"):
-        pass
-        return
-    if strand.__class__.__name__ == 'MaskedStrand':
-        return
     if not hasattr(strand, 'canvas') or not strand.canvas:
         return
         
@@ -474,9 +466,6 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                     pass
                     continue
                 # If it has a visible full arrow, continue to allow it to receive shadows on the arrow
-            # Skip masked strands
-            if other_strand.__class__.__name__ == 'MaskedStrand':
-                continue
             # Prevent shadow calculation if the other strand is a component of the *same* masked strand
             # (This check is redundant if part_of_same_visible_mask check is working correctly, but kept for safety)
             # Check if other strand is a component of any masked strand
@@ -624,10 +613,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                         shadow_override = None
                         if hasattr(strand.canvas, 'layer_state_manager'):
                             shadow_override = strand.canvas.layer_state_manager.get_shadow_override(this_layer, other_layer)
-
-                        # Skip shadow if visibility is disabled
-                        if shadow_override and not shadow_override.get('visibility', True):
-                            continue
+                            if not strand.canvas.layer_state_manager.get_shadow_visibility(this_layer, other_layer):
+                                continue
 
                         # Check if we should allow complete shadow (skip mask blocking)
                         allow_full_shadow = shadow_override and shadow_override.get('allow_full_shadow', False)
@@ -1917,7 +1904,7 @@ def calculate_shadow_for_layer_pair(canvas, casting_strand, receiving_strand, ca
 
     # Check shadow override visibility
     shadow_override = canvas.layer_state_manager.get_shadow_override(casting_layer, receiving_layer)
-    if shadow_override and not shadow_override.get('visibility', True):
+    if not canvas.layer_state_manager.get_shadow_visibility(casting_layer, receiving_layer):
         return QPainterPath()
 
     # Check if we should allow complete shadow (skip mask blocking)

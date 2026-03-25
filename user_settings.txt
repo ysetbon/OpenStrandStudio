@@ -1,13 +1,13 @@
 Theme: default
-Language: he
-ShadowColor: 0,0,0,150
+Language: en
+ShadowColor: 0,0,0,170
 DrawOnlyAffectedStrand: false
 EnableThirdControlPoint: false
 EnableSnapToGrid: true
 EnableSnapToGridAttach: true
 ShowMoveHighlights: true
 ShowHoverHighlights: true
-NumSteps: 2
+NumSteps: 1
 MaxBlurRadius: 30.0
 ControlPointBaseFraction: 1.00
 DistanceMultiplier: 2.0

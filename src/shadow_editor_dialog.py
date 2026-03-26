@@ -734,13 +734,14 @@ class ShadowEditorDialog(QDialog):
             if strand and not getattr(strand, 'is_hidden', False):
                 receiving_layers.append((layer_name, strand))
 
-        # Get all available layers for subtraction (all layers except the caster itself).
+        # Get all visible layers for subtraction.
+        # The current receiver is excluded per-row below, but the caster itself
+        # remains available so users can subtract its own path if needed.
         available_layers = []
         for layer_name in layer_order:
-            if layer_name != self.casting_layer:
-                strand = self._find_strand_by_name(layer_name)
-                if strand and not getattr(strand, 'is_hidden', False):
-                    available_layers.append(layer_name)
+            strand = self._find_strand_by_name(layer_name)
+            if strand and not getattr(strand, 'is_hidden', False):
+                available_layers.append(layer_name)
 
         # Create list items for each receiving layer
         for layer_name, strand in receiving_layers:

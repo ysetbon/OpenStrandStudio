@@ -378,6 +378,71 @@ def draw_circle_shadow(painter, strand, shadow_color=None):
     """
     pass
 
+
+def _find_canvas_strand_by_layer_name(canvas, layer_name):
+    """Return the strand whose ``layer_name`` exactly matches ``layer_name``."""
+    if not canvas or not layer_name:
+        return None
+
+    for strand in getattr(canvas, 'strands', []):
+        if getattr(strand, 'layer_name', None) == layer_name:
+            return strand
+
+    return None
+
+
+def _get_intermediate_layer_names(layer_order, casting_layer, receiving_layer):
+    """Return the ordered layer names strictly between casting and receiving."""
+    if not layer_order or casting_layer not in layer_order or receiving_layer not in layer_order:
+        return []
+
+    casting_index = layer_order.index(casting_layer)
+    receiving_index = layer_order.index(receiving_layer)
+    start = min(casting_index, receiving_index) + 1
+    end = max(casting_index, receiving_index)
+    return list(layer_order[start:end])
+
+
+def _subtract_named_layer_paths(source_path, canvas, layer_names):
+    """
+    Subtract the rendered geometry of the supplied layers from ``source_path``.
+
+    Returns:
+        tuple[QPainterPath, QPainterPath]: The updated path and the union of all
+        subtraction geometries that were applied.
+    """
+    result_path = QPainterPath(source_path)
+    blocker_path = QPainterPath()
+
+    if result_path.isEmpty() or not canvas or not layer_names:
+        return result_path, blocker_path
+
+    for layer_name in layer_names:
+        strand = _find_canvas_strand_by_layer_name(canvas, layer_name)
+        if not strand or getattr(strand, 'is_hidden', False):
+            continue
+
+        try:
+            subtraction_path = build_rendered_geometry(strand)
+            if hasattr(strand, 'get_mask_path'):
+                subtraction_path = get_proper_masked_strand_path(strand)
+        except Exception:
+            continue
+
+        if subtraction_path.isEmpty():
+            continue
+
+        result_path = QPainterPath(result_path).subtracted(subtraction_path)
+        if blocker_path.isEmpty():
+            blocker_path = QPainterPath(subtraction_path)
+        else:
+            blocker_path.addPath(QPainterPath(subtraction_path))
+
+        if result_path.isEmpty():
+            break
+
+    return result_path, blocker_path
+
 def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur_radius=None):
     """
     Draw shadow for a strand that overlaps with other strands.
@@ -713,56 +778,11 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                         clip_blocker_path = QPainterPath()
                         if hasattr(strand.canvas, 'layer_state_manager'):
                             subtracted_layers = strand.canvas.layer_state_manager.get_subtracted_layers(this_layer, other_layer)
-                            for subtracted_layer_name in subtracted_layers:
-                                # Find the strand for the subtracted layer
-                                subtracted_strand = None
-                                for s in canvas.strands:
-                                    if hasattr(s, 'layer_name') and s.layer_name == subtracted_layer_name:
-                                        subtracted_strand = s
-                                        break
-
-                                if subtracted_strand:
-                                    try:
-                                        # Build the complete visual path of the subtracted strand
-                                        # using the same logic as for other_stroke_path
-                                        subtracted_path = build_rendered_geometry(subtracted_strand)
-
-                                        # Add circle geometry if the subtracted strand has visible circles
-                                        # This matches the logic used for building other_stroke_path (lines 584-600)
-                                        if hasattr(subtracted_strand, 'has_circles') and any(subtracted_strand.has_circles):
-                                            try:
-                                                base_circle_radius = subtracted_strand.width + subtracted_strand.stroke_width * 2
-                                                for circle_idx, circle_flag in enumerate(subtracted_strand.has_circles):
-                                                    if not circle_flag:
-                                                        continue
-                                                    # Check for transparent circles
-                                                    if hasattr(subtracted_strand, 'circle_stroke_color'):
-                                                        circle_color = subtracted_strand.circle_stroke_color
-                                                        if circle_color and circle_color.alpha() == 0:
-                                                            continue  # Transparent circle, skip
-                                                    circle_center = subtracted_strand.start if circle_idx == 0 else subtracted_strand.end
-                                                    circle_path = QPainterPath()
-                                                    circle_path.addEllipse(circle_center, (base_circle_radius / 2), (base_circle_radius / 2))
-                                                    subtracted_path.addPath(circle_path)
-                                            except Exception:
-                                                pass
-
-                                        # Subtract this layer's complete path from the shadow intersection
-                                        # Use only the actual visual strand path, not extended by blur radius
-                                        if not subtracted_path.isEmpty():
-                                            intersection = QPainterPath(intersection).subtracted(subtracted_path)
-                                            # Add the same path to clip blocker (no expansion)
-                                            # This ensures the shadow hole matches exactly the strand's visual area
-                                            if clip_blocker_path.isEmpty():
-                                                clip_blocker_path = QPainterPath(subtracted_path)
-                                            else:
-                                                clip_blocker_path.addPath(QPainterPath(subtracted_path))
-                                            # If intersection is now empty, no need to process further
-                                            if intersection.isEmpty():
-                                                break
-                                    except Exception as e:
-                                        # Log error but continue with other subtractions
-                                        pass
+                            intersection, clip_blocker_path = _subtract_named_layer_paths(
+                                intersection,
+                                canvas,
+                                subtracted_layers,
+                            )
 
                         width_masked_strand = max_blur_radius
                         # --- NEW MASK SUBTRACTION LOGIC ---
@@ -939,39 +959,13 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
 
                         # --- SUBTRACT INTERMEDIATE STRANDS ---
                         # Any strands between the casting and receiving strands should block the shadow
-                        if not current_intersection_shadow.isEmpty():
-                            # Determine the range of indices between casting and receiving
-                            min_index = min(self_index, other_index)
-                            max_index = max(self_index, other_index)
-
-                            # Loop through all strands to find intermediate ones
-                            for intermediate_strand in canvas.strands:
-                                if not hasattr(intermediate_strand, 'layer_name') or not intermediate_strand.layer_name:
-                                    continue
-
-                                intermediate_layer = intermediate_strand.layer_name
-                                if intermediate_layer not in layer_order:
-                                    continue
-
-                                intermediate_index = layer_order.index(intermediate_layer)
-
-                                # Check if this strand is between casting and receiving
-                                if min_index < intermediate_index < max_index:
-                                    # Skip if this is a hidden strand
-                                    if hasattr(intermediate_strand, 'is_hidden') and intermediate_strand.is_hidden:
-                                        continue
-
-                                    try:
-                                        # Get the rendered geometry of the intermediate strand
-                                        intermediate_path = build_rendered_geometry(intermediate_strand)
-                                        if hasattr(intermediate_strand, 'get_mask_path'):
-                                            intermediate_path = get_proper_masked_strand_path(intermediate_strand)
-
-                                        # Subtract the intermediate strand from the shadow
-                                        if not intermediate_path.isEmpty():
-                                            current_intersection_shadow = QPainterPath(current_intersection_shadow).subtracted(intermediate_path)
-                                    except Exception as inter_err:
-                                        pass
+                        if not allow_full_shadow and not current_intersection_shadow.isEmpty():
+                            intermediate_layers = _get_intermediate_layer_names(layer_order, this_layer, other_layer)
+                            current_intersection_shadow, _ = _subtract_named_layer_paths(
+                                current_intersection_shadow,
+                                canvas,
+                                intermediate_layers,
+                            )
                         # --- END INTERMEDIATE STRAND SUBTRACTION ---
 
                         # Apply side line exclusion for both casting and receiving strands
@@ -2008,6 +2002,12 @@ def calculate_shadow_for_layer_pair(canvas, casting_strand, receiving_strand, ca
     # Check if we should allow complete shadow (skip mask blocking)
     allow_full_shadow = shadow_override and shadow_override.get('allow_full_shadow', False)
 
+    # Apply configured layer subtraction in the preview exactly like the main renderer.
+    subtracted_layers = canvas.layer_state_manager.get_subtracted_layers(casting_layer, receiving_layer)
+    intersection, _ = _subtract_named_layer_paths(intersection, canvas, subtracted_layers)
+    if intersection.isEmpty():
+        return QPainterPath()
+
     # Apply mask blocking (unless allow_full_shadow is enabled)
     current_shadow = QPainterPath(intersection)
 
@@ -2050,5 +2050,8 @@ def calculate_shadow_for_layer_pair(canvas, casting_strand, receiving_strand, ca
             receiving_stroke_path,
             max_blur_radius,
         )
+
+        intermediate_layers = _get_intermediate_layer_names(layer_order, casting_layer, receiving_layer)
+        current_shadow, _ = _subtract_named_layer_paths(current_shadow, canvas, intermediate_layers)
 
     return current_shadow

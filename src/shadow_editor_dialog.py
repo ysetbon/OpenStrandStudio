@@ -598,6 +598,8 @@ class ShadowEditorDialog(QDialog):
         self.casting_layer = strand.layer_name
         self.shadow_visible_layer = None  # Track which layer's shadow is being visualized
         self.widget_to_item = {}  # Map widgets to their list items
+        self.shadow_items = []
+        self.section_toggles = {}
 
         # Get language code from canvas
         self.language_code = canvas.language_code if hasattr(canvas, 'language_code') else 'en'
@@ -633,6 +635,10 @@ class ShadowEditorDialog(QDialog):
         self.info_label = QLabel(_['shadow_editor_info'].format(self.casting_layer))
         layout.addWidget(self.info_label)
 
+        # Per-strand toggle row
+        self.toggle_row = self._create_toggle_row()
+        layout.addWidget(self.toggle_row)
+
         # Shadows list
         self.shadows_list_widget = QListWidget()
         self.shadows_list_widget.setSpacing(5)
@@ -643,6 +649,7 @@ class ShadowEditorDialog(QDialog):
 
         # Populate the list
         self._populate_shadow_list()
+        QTimer.singleShot(0, self._sync_column_widths)
 
         # Button box
         self.button_box = QDialogButtonBox(QDialogButtonBox.Close)
@@ -728,9 +735,217 @@ class ShadowEditorDialog(QDialog):
                 }
             """)
 
+    def _create_toggle_row(self):
+        """Create the strand-level toggle row aligned with the shadow items."""
+        return self._build_toggle_row(self.casting_layer, self.strand.color)
+
+    def _build_toggle_row(self, label_text, color):
+        """Build a toggle row with the same column layout as ShadowListItem."""
+        _ = translations[self.language_code]
+
+        row = QWidget()
+        lay = QHBoxLayout(row)
+        lay.setContentsMargins(3, 3, 3, 3)
+        lay.setSpacing(1)
+
+        if self.language_code == 'he':
+            row.setLayoutDirection(Qt.RightToLeft)
+        else:
+            row.setLayoutDirection(Qt.LeftToRight)
+
+        row.setMinimumHeight(42)
+        row.setMinimumWidth(650)
+
+        color_value = color.name() if hasattr(color, 'name') else str(color)
+
+        color_box = QLabel("  ")
+        color_box.setFixedSize(20, 20)
+        color_box.setStyleSheet(
+            f"background-color: {color_value}; border: 1px solid #888; border-radius: 3px;")
+        lay.addWidget(color_box)
+
+        name_label = QLabel(label_text)
+        name_label.setObjectName('toggle_name_label')
+        name_label.setTextFormat(Qt.PlainText)
+        name_label.setMinimumWidth(10)
+        name_label.setWordWrap(False)
+        name_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        name_label.setToolTip(label_text)
+        font = name_label.font()
+        font.setBold(True)
+        name_label.setFont(font)
+        if self.theme == 'dark':
+            name_label.setStyleSheet("color: #DDD; background-color: transparent;")
+        else:
+            name_label.setStyleSheet("color: #333; background-color: transparent;")
+        lay.addWidget(name_label)
+
+        vis_btn = self._create_toggle_button(_['shadow_visible_on'], _['shadow_visible_off'])
+        vis_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        vis_btn.toggled.connect(self._toggle_all_visible)
+        lay.addWidget(vis_btn)
+
+        full_btn = self._create_toggle_button(_['shadow_full_on'], _['shadow_full_off'])
+        full_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        full_btn.toggled.connect(self._toggle_all_full_shadow)
+        lay.addWidget(full_btn)
+
+        sub_btn = self._create_toggle_button(_['shadow_subtract_on'], _['shadow_subtract_off'])
+        sub_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        sub_btn.toggled.connect(self._toggle_all_subtract)
+        lay.addWidget(sub_btn, stretch=0)
+
+        shd_btn = self._create_toggle_button(_['shadow_show_all'], _['shadow_hide_all'])
+        shd_btn.setMinimumWidth(80)
+        shd_btn.setMinimumHeight(36)
+        shd_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        shd_btn.toggled.connect(self._toggle_all_shadows)
+        lay.addWidget(shd_btn, stretch=0)
+
+        if self.theme == 'dark':
+            row.setStyleSheet(
+                "QWidget { background-color: #353535; border-radius: 3px; }"
+                "QLabel { background-color: transparent; border: none; }")
+        else:
+            row.setStyleSheet(
+                "QWidget { background-color: #EAEAEA; border-radius: 3px; }"
+                "QLabel { background-color: transparent; border: none; }")
+
+        self.section_toggles = {
+            'visible': vis_btn,
+            'full': full_btn,
+            'subtract': sub_btn,
+            'shadow': shd_btn,
+            '_row_widget': row,
+        }
+        return row
+
+    def _create_toggle_button(self, on_text, off_text):
+        btn = QPushButton(on_text)
+        btn.setCheckable(True)
+        btn.setChecked(False)
+        btn.setMinimumHeight(28)
+        btn.setProperty('on_text', on_text)
+        btn.setProperty('off_text', off_text)
+        self._style_toggle_button(btn)
+        btn.toggled.connect(lambda checked, b=btn: self._update_toggle_text(b, checked))
+        return btn
+
+    def _update_toggle_text(self, btn, checked):
+        btn.setText(btn.property('off_text') if checked else btn.property('on_text'))
+
+    def _style_toggle_button(self, btn):
+        if self.theme == 'dark':
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #252525; color: white; border: 1px solid #555;
+                    padding: 4px 10px; border-radius: 3px; min-width: 60px;
+                    font-weight: bold; font-size: 9pt;
+                }
+                QPushButton:hover { background-color: #505050; }
+                QPushButton:checked { background-color: #4A6FA5; border: 1px solid #6A9FD5; }
+                QPushButton:checked:hover { background-color: #5A7FB5; }
+            """)
+        else:
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #F0F0F0; color: black; border: 1px solid #BBB;
+                    padding: 4px 10px; border-radius: 3px; min-width: 60px;
+                    font-weight: bold; font-size: 9pt;
+                }
+                QPushButton:hover { background-color: #E0E0E0; }
+                QPushButton:checked { background-color: #A0C0E0; border: 1px solid #7090C0; }
+                QPushButton:checked:hover { background-color: #B0D0F0; }
+            """)
+
+    def _sync_column_widths(self):
+        """Keep the top toggle row aligned with the list item columns."""
+        if not self.shadow_items or not self.section_toggles:
+            return
+
+        name_w = 0
+        vis_w = 0
+        full_w = 0
+        sub_w = 0
+        show_w = 0
+
+        for item in self.shadow_items:
+            name_w = max(name_w, item.name_label.sizeHint().width())
+            vis_w = max(vis_w, item.visibility_checkbox.sizeHint().width(), item.visibility_checkbox.minimumWidth())
+            full_w = max(full_w, item.allow_full_shadow_checkbox.sizeHint().width(), item.allow_full_shadow_checkbox.minimumWidth())
+            sub_w = max(sub_w, item.get_subtract_column_width())
+            show_w = max(show_w, item.show_shadow_button.sizeHint().width())
+
+        row_widget = self.section_toggles.get('_row_widget')
+        if row_widget:
+            name_label = row_widget.findChild(QLabel, 'toggle_name_label')
+            if name_label:
+                name_w = max(name_w, name_label.sizeHint().width())
+        vis_w = max(vis_w, self.section_toggles['visible'].sizeHint().width())
+        full_w = max(full_w, self.section_toggles['full'].sizeHint().width())
+        sub_w = max(sub_w, self.section_toggles['subtract'].sizeHint().width())
+        show_w = max(show_w, self.section_toggles['shadow'].sizeHint().width())
+
+        name_w += 12
+        sub_w += 6
+
+        for item in self.shadow_items:
+            item.name_label.setFixedWidth(name_w)
+            item.set_subtract_column_width(sub_w)
+            self._on_item_size_changed(item)
+
+        if row_widget:
+            name_label = row_widget.findChild(QLabel, 'toggle_name_label')
+            if name_label:
+                name_label.setFixedWidth(name_w)
+        self.section_toggles['visible'].setFixedWidth(vis_w)
+        self.section_toggles['full'].setFixedWidth(full_w)
+        self.section_toggles['subtract'].setFixedWidth(sub_w)
+        self.section_toggles['shadow'].setFixedWidth(show_w)
+
+    def _toggle_all_visible(self, checked):
+        for item in self.shadow_items:
+            item.visibility_checkbox.setChecked(checked)
+
+    def _toggle_all_full_shadow(self, checked):
+        for item in self.shadow_items:
+            item.allow_full_shadow_checkbox.setChecked(checked)
+
+    def _toggle_all_subtract(self, checked):
+        for item in self.shadow_items:
+            for checkbox in item.subtract_checkboxes.values():
+                checkbox.setChecked(checked)
+
+    def _toggle_all_shadows(self, checked):
+        _ = translations[self.language_code]
+        for item in self.shadow_items:
+            item.show_shadow_button.blockSignals(True)
+            item.show_shadow_button.setChecked(checked)
+            item.show_shadow_button.setText(
+                _['shadow_path_hide'] if checked else _['shadow_path_button'])
+            item.is_shadow_visible = checked
+            item.show_shadow_button.blockSignals(False)
+
+            if checked:
+                if hasattr(self.canvas, 'add_visible_shadow_path'):
+                    self.canvas.add_visible_shadow_path(self.casting_layer, item.receiving_layer_name)
+                elif hasattr(self.canvas, 'set_visible_shadow_path'):
+                    self.shadow_visible_layer = item.receiving_layer_name
+                    self.canvas.set_visible_shadow_path(self.casting_layer, item.receiving_layer_name)
+            else:
+                if hasattr(self.canvas, 'remove_visible_shadow_path'):
+                    self.canvas.remove_visible_shadow_path(self.casting_layer, item.receiving_layer_name)
+                elif hasattr(self.canvas, 'set_visible_shadow_path'):
+                    self.shadow_visible_layer = None
+                    self.canvas.set_visible_shadow_path(None, None)
+
+        self.canvas.update()
+
     def _populate_shadow_list(self):
         """Populate the list with layers that receive shadows from this strand."""
         self.shadows_list_widget.clear()
+        self.widget_to_item.clear()
+        self.shadow_items = []
 
         # Get layer order from canvas
         if not hasattr(self.canvas, 'layer_state_manager'):
@@ -798,6 +1013,7 @@ class ShadowEditorDialog(QDialog):
 
             # Store widget to item mapping
             self.widget_to_item[item_widget] = list_item
+            self.shadow_items.append(item_widget)
 
     def _on_item_size_changed(self, widget):
         """Handle when an item widget's size changes (e.g., expand/collapse)."""
@@ -876,12 +1092,18 @@ class ShadowEditorDialog(QDialog):
 
     def _on_show_shadow_requested(self, receiving_layer, enabled):
         """Handle show shadow request."""
-        # Track which layer's shadow is being visualized
-        self.shadow_visible_layer = receiving_layer if enabled else None
-
-        # Set the visible shadow on canvas
-        if hasattr(self.canvas, 'set_visible_shadow_path'):
-            self.canvas.set_visible_shadow_path(self.casting_layer, receiving_layer if enabled else None)
+        if enabled:
+            if hasattr(self.canvas, 'add_visible_shadow_path'):
+                self.canvas.add_visible_shadow_path(self.casting_layer, receiving_layer)
+            elif hasattr(self.canvas, 'set_visible_shadow_path'):
+                self.shadow_visible_layer = receiving_layer
+                self.canvas.set_visible_shadow_path(self.casting_layer, receiving_layer)
+        else:
+            if hasattr(self.canvas, 'remove_visible_shadow_path'):
+                self.canvas.remove_visible_shadow_path(self.casting_layer, receiving_layer)
+            elif hasattr(self.canvas, 'set_visible_shadow_path'):
+                self.shadow_visible_layer = None
+                self.canvas.set_visible_shadow_path(None, None)
 
         # Refresh canvas
         self.canvas.update()
@@ -909,6 +1131,18 @@ class ShadowEditorDialog(QDialog):
         # Update info label
         self.info_label.setText(_['shadow_editor_info'].format(self.casting_layer))
 
+        if self.section_toggles:
+            row_widget = self.section_toggles.get('_row_widget')
+            if row_widget:
+                if self.language_code == 'he':
+                    row_widget.setLayoutDirection(Qt.RightToLeft)
+                else:
+                    row_widget.setLayoutDirection(Qt.LeftToRight)
+            self._update_toggle_labels(self.section_toggles['shadow'], _['shadow_show_all'], _['shadow_hide_all'])
+            self._update_toggle_labels(self.section_toggles['visible'], _['shadow_visible_on'], _['shadow_visible_off'])
+            self._update_toggle_labels(self.section_toggles['full'], _['shadow_full_on'], _['shadow_full_off'])
+            self._update_toggle_labels(self.section_toggles['subtract'], _['shadow_subtract_on'], _['shadow_subtract_off'])
+
         # Update Close button text
         close_button = self.button_box.button(QDialogButtonBox.Close)
         if close_button:
@@ -921,12 +1155,21 @@ class ShadowEditorDialog(QDialog):
             if widget and isinstance(widget, ShadowListItem):
                 widget.update_translations(self.language_code)
 
+        QTimer.singleShot(0, self._sync_column_widths)
+
+    def _update_toggle_labels(self, btn, on_text, off_text):
+        btn.setProperty('on_text', on_text)
+        btn.setProperty('off_text', off_text)
+        btn.setText(off_text if btn.isChecked() else on_text)
+
     def closeEvent(self, event):
         """Handle dialog close - clean up visualizations."""
-        # Hide shadow visualization
-        if self.shadow_visible_layer:
-            if hasattr(self.canvas, 'set_visible_shadow_path'):
-                self.canvas.set_visible_shadow_path(None, None)
+        for item in self.shadow_items:
+            if hasattr(self.canvas, 'remove_visible_shadow_path'):
+                self.canvas.remove_visible_shadow_path(self.casting_layer, item.receiving_layer_name)
+
+        if self.shadow_visible_layer and hasattr(self.canvas, 'set_visible_shadow_path'):
+            self.canvas.set_visible_shadow_path(None, None)
 
         # Clear highlighted shadow
         if hasattr(self.canvas, 'set_highlighted_shadow'):

@@ -297,6 +297,7 @@ class CollapsibleGroupWidget(QWidget):
             _['move_group_strands'],
             _['rotate_group_strands'],
             _['edit_strand_angles'],
+            _['edit_shadows'],
             _['create_mask_grid'],
             _['duplicate_group'],
             _['rename_group'],
@@ -385,8 +386,18 @@ class CollapsibleGroupWidget(QWidget):
         edit_action.triggered.connect(lambda: self.group_panel.edit_strand_angles(self.group_name))
         context_menu.addAction(edit_action)
 
+        # Edit shadows action
+        shadow_label = HoverLabel(menu_items[3], self, theme)
+        if is_rtl:
+            shadow_label.setLayoutDirection(Qt.RightToLeft)
+            shadow_label.setAlignment(Qt.AlignLeft)
+        shadow_action = QWidgetAction(self)
+        shadow_action.setDefaultWidget(shadow_label)
+        shadow_action.triggered.connect(lambda: self.group_panel.open_group_shadow_editor(self.group_name))
+        context_menu.addAction(shadow_action)
+
         # Create mask grid action
-        mask_grid_label = HoverLabel(menu_items[3], self, theme)
+        mask_grid_label = HoverLabel(menu_items[4], self, theme)
         if is_rtl:
             mask_grid_label.setLayoutDirection(Qt.RightToLeft)
             mask_grid_label.setAlignment(Qt.AlignLeft)
@@ -396,7 +407,7 @@ class CollapsibleGroupWidget(QWidget):
         context_menu.addAction(mask_grid_action)
 
         # Duplicate group action
-        duplicate_label = HoverLabel(menu_items[4], self, theme)
+        duplicate_label = HoverLabel(menu_items[5], self, theme)
         if is_rtl:
             duplicate_label.setLayoutDirection(Qt.RightToLeft)
             duplicate_label.setAlignment(Qt.AlignLeft)
@@ -406,7 +417,7 @@ class CollapsibleGroupWidget(QWidget):
         context_menu.addAction(duplicate_action)
 
         # Rename group action
-        rename_label = HoverLabel(menu_items[5], self, theme)
+        rename_label = HoverLabel(menu_items[6], self, theme)
         if is_rtl:
             rename_label.setLayoutDirection(Qt.RightToLeft)
             rename_label.setAlignment(Qt.AlignLeft)
@@ -418,7 +429,7 @@ class CollapsibleGroupWidget(QWidget):
         context_menu.addSeparator()
 
         # Delete group action
-        delete_label = HoverLabel(menu_items[6], self, theme)
+        delete_label = HoverLabel(menu_items[7], self, theme)
         if is_rtl:
             delete_label.setLayoutDirection(Qt.RightToLeft)
             delete_label.setAlignment(Qt.AlignLeft)
@@ -2502,6 +2513,25 @@ class GroupPanel(QWidget):
                 group_widget = self.findChild(CollapsibleGroupWidget, group_name)
                 if group_widget:
                     group_widget.update_layer(index, layer_name, color)
+
+    def open_group_shadow_editor(self, group_name):
+        """Open the group shadow editor dialog for all strands in the group."""
+        group_data = self.canvas.groups.get(group_name)
+        if not group_data:
+            return
+
+        all_strands = list(group_data.get('strands', []))
+        if not all_strands:
+            return
+
+        # Save undo/redo state before opening
+        if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
+            self.canvas.undo_redo_manager._last_save_time = 0
+            self.canvas.undo_redo_manager.save_state()
+
+        from group_shadow_editor_dialog import GroupShadowEditorDialog
+        dialog = GroupShadowEditorDialog(self.canvas, group_name, all_strands, parent=self)
+        dialog.show()
 
     def edit_strand_angles(self, group_name):
         # Fetch group data reliably from canvas.groups

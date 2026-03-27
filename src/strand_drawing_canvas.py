@@ -1310,6 +1310,7 @@ class StrandDrawingCanvas(QWidget):
         self.highlighted_shadow_receiving = None
         self.visible_shadow_casting = None  # Casting layer for visible shadow
         self.visible_shadow_receiving = None  # Receiving layer for visible shadow
+        self.visible_shadow_paths = set()  # Set of (casting, receiving) tuples for multi-shadow display
 
         # Shadow rendering
         self.shadow_enabled = False  # Flag to enable/disable shadow rendering
@@ -2677,35 +2678,36 @@ class StrandDrawingCanvas(QWidget):
                 painter.setPen(QPen(Qt.white, 1, Qt.DashLine))
                 painter.drawRect(self.current_erase_rect)
 
-        # Draw visible shadow path if requested
+        # Draw visible shadow path(s) if requested
+        # Collect all shadow pairs to draw
+        shadow_pairs_to_draw = set()
         if self.visible_shadow_casting and self.visible_shadow_receiving:
-            # Calculate and show the current rendered shadow for this casting->receiving pair
+            shadow_pairs_to_draw.add((self.visible_shadow_casting, self.visible_shadow_receiving))
+        shadow_pairs_to_draw.update(self.visible_shadow_paths)
+
+        if shadow_pairs_to_draw:
             from shader_utils import calculate_shadow_for_layer_pair
 
-            # Find the casting and receiving strands
-            casting_strand = None
-            receiving_strand = None
-            for s in self.strands:
-                if s.layer_name == self.visible_shadow_casting:
-                    casting_strand = s
-                if s.layer_name == self.visible_shadow_receiving:
-                    receiving_strand = s
+            # Build a lookup of strands by layer name
+            strand_lookup = {s.layer_name: s for s in self.strands}
 
-            if casting_strand and receiving_strand:
-                # Get the rendered shadow path (after all mask blocking and overrides)
-                shadow_path = calculate_shadow_for_layer_pair(
-                    self,
-                    casting_strand,
-                    receiving_strand,
-                    self.visible_shadow_casting,
-                    self.visible_shadow_receiving
-                )
+            for cast_layer, recv_layer in shadow_pairs_to_draw:
+                casting_strand = strand_lookup.get(cast_layer)
+                receiving_strand = strand_lookup.get(recv_layer)
 
-                if shadow_path and not shadow_path.isEmpty():
-                    # Draw the current shadow in semi-transparent blue
-                    painter.setBrush(QColor(0, 120, 255, 100))  # Semi-transparent blue
-                    painter.setPen(QPen(QColor(0, 120, 255, 200), 2, Qt.SolidLine))
-                    painter.drawPath(shadow_path)
+                if casting_strand and receiving_strand:
+                    shadow_path = calculate_shadow_for_layer_pair(
+                        self,
+                        casting_strand,
+                        receiving_strand,
+                        cast_layer,
+                        recv_layer
+                    )
+
+                    if shadow_path and not shadow_path.isEmpty():
+                        painter.setBrush(QColor(0, 120, 255, 100))
+                        painter.setPen(QPen(QColor(0, 120, 255, 200), 2, Qt.SolidLine))
+                        painter.drawPath(shadow_path)
 
         # Reduced high-frequency logging for performance during moves
         # logging.info(
@@ -6908,9 +6910,26 @@ class StrandDrawingCanvas(QWidget):
         self.update()
 
     def set_visible_shadow_path(self, casting_layer, receiving_layer):
-        """Set which shadow path should be visualized."""
+        """Set which shadow path should be visualized (single-shadow legacy mode)."""
         self.visible_shadow_casting = casting_layer
         self.visible_shadow_receiving = receiving_layer
+        self.update()
+
+    def add_visible_shadow_path(self, casting_layer, receiving_layer):
+        """Add a shadow path to the set of visible shadow paths."""
+        self.visible_shadow_paths.add((casting_layer, receiving_layer))
+        self.update()
+
+    def remove_visible_shadow_path(self, casting_layer, receiving_layer):
+        """Remove a shadow path from the set of visible shadow paths."""
+        self.visible_shadow_paths.discard((casting_layer, receiving_layer))
+        self.update()
+
+    def clear_visible_shadow_paths(self):
+        """Clear all visible shadow paths."""
+        self.visible_shadow_paths.clear()
+        self.visible_shadow_casting = None
+        self.visible_shadow_receiving = None
         self.update()
 
     def reset_mask(self, strand_index):

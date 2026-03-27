@@ -64,6 +64,7 @@ class ShadowListItem(QWidget):
         self.name_label.setMinimumWidth(10)
         self.name_label.setWordWrap(False)
         self.name_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.name_label.setToolTip(receiving_layer_name)
         layout.addWidget(self.name_label)
 
         # Visibility checkbox
@@ -90,8 +91,8 @@ class ShadowListItem(QWidget):
         layout.addWidget(self.allow_full_shadow_checkbox)
 
         # Subtract layers collapsible section
-        subtract_container = QWidget()
-        subtract_container_layout = QVBoxLayout(subtract_container)
+        self.subtract_container = QWidget()
+        subtract_container_layout = QVBoxLayout(self.subtract_container)
         subtract_container_layout.setContentsMargins(0, 0, 0, 0)
         subtract_container_layout.setSpacing(0)
 
@@ -146,8 +147,8 @@ class ShadowListItem(QWidget):
             subtract_layout.addWidget(self.no_layers_label)
 
         subtract_container_layout.addWidget(self.subtract_content)
-        subtract_container.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
-        layout.addWidget(subtract_container, stretch=0)
+        self.subtract_container.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        layout.addWidget(self.subtract_container, stretch=0)
 
         # Auto-expand if there are any subtracted layers
         if subtracted_layers and len(subtracted_layers) > 0:
@@ -166,6 +167,25 @@ class ShadowListItem(QWidget):
         self.show_shadow_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.show_shadow_button.clicked.connect(self._on_show_shadow_clicked)
         layout.addWidget(self.show_shadow_button, stretch=0)
+
+    def get_subtract_column_width(self):
+        """Return the width needed to show the full subtract column content."""
+        width = self.subtract_toggle_button.sizeHint().width()
+        subtract_layout = self.subtract_content.layout()
+        indent = subtract_layout.contentsMargins().left() if subtract_layout else 0
+
+        if self.no_layers_label:
+            width = max(width, self.no_layers_label.sizeHint().width() + indent)
+
+        for checkbox in self.subtract_checkboxes.values():
+            width = max(width, checkbox.sizeHint().width() + indent)
+
+        return width
+
+    def set_subtract_column_width(self, width):
+        """Keep the subtract column aligned with the rest of the dialog."""
+        self.subtract_container.setFixedWidth(width)
+        self.updateGeometry()
 
     def _apply_large_indicator(self, checkbox, indicator_size=20):
         """Apply a proxy style so the checkbox indicator uses a crisp fixed size."""

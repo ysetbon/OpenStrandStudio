@@ -7,6 +7,22 @@ from PyQt5.QtGui import QColor, QPalette, QPainter, QPen, QPainterPath
 from translations import translations
 
 
+def get_shadow_help_text(language_code):
+    """Return the translated shadow editor help text with English fallback."""
+    fallback = translations['en'].get('shadow_editor_help_text', '')
+    text = translations.get(language_code, {}).get('shadow_editor_help_text', fallback)
+    if language_code == 'he':
+        return f'<div dir="rtl" align="right">{text}</div>'
+    return f'<div dir="ltr" align="left">{text}</div>'
+
+
+def get_shadow_help_alignment(language_code):
+    """Align Hebrew help text to the right to match the rest of the dialog."""
+    if language_code == 'he':
+        return Qt.AlignRight | Qt.AlignTop
+    return Qt.AlignLeft | Qt.AlignTop
+
+
 class LargeIndicatorStyle(QProxyStyle):
     """Proxy style that enforces a specific checkbox indicator size."""
 
@@ -651,6 +667,15 @@ class ShadowEditorDialog(QDialog):
         self._populate_shadow_list()
         QTimer.singleShot(0, self._sync_column_widths)
 
+        self.help_label = QLabel(get_shadow_help_text(self.language_code))
+        self.help_label.setWordWrap(True)
+        self.help_label.setTextFormat(Qt.RichText)
+        self.help_label.setFont(self.info_label.font())
+        self.help_label.setLayoutDirection(Qt.RightToLeft if self.language_code == 'he' else Qt.LeftToRight)
+        self.help_label.setAlignment(get_shadow_help_alignment(self.language_code))
+        self.help_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        layout.addWidget(self.help_label)
+
         # Button box
         self.button_box = QDialogButtonBox(QDialogButtonBox.Close)
         self.button_box.rejected.connect(self.close)
@@ -1130,6 +1155,9 @@ class ShadowEditorDialog(QDialog):
 
         # Update info label
         self.info_label.setText(_['shadow_editor_info'].format(self.casting_layer))
+        self.help_label.setText(get_shadow_help_text(self.language_code))
+        self.help_label.setLayoutDirection(Qt.RightToLeft if self.language_code == 'he' else Qt.LeftToRight)
+        self.help_label.setAlignment(get_shadow_help_alignment(self.language_code))
 
         if self.section_toggles:
             row_widget = self.section_toggles.get('_row_widget')

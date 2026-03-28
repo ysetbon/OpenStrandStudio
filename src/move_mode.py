@@ -2200,17 +2200,17 @@ class MoveMode:
 
             # Check control points first (they're drawn on top)
             if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
-                # Check if control points should be shown
                 triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
 
-                if triangle_has_moved:
-                    # Check control_point1 (triangle)
-                    cp1_rect = self.get_control_point_rectangle(strand, 1)
-                    if cp1_rect and cp1_rect.contains(pos):
-                        self.hovered_strand = strand
-                        self.hovered_side = 'control_point1'
-                        break
+                # The triangle control point is visible from the untouched state, so
+                # it should be able to win hover even before triangle_has_moved.
+                cp1_rect = self.get_control_point_rectangle(strand, 1)
+                if cp1_rect and cp1_rect.contains(pos):
+                    self.hovered_strand = strand
+                    self.hovered_side = 'control_point1'
+                    break
 
+                if triangle_has_moved:
                     # Check control_point2 (circle)
                     cp2_rect = self.get_control_point_rectangle(strand, 2)
                     if cp2_rect and cp2_rect.contains(pos):

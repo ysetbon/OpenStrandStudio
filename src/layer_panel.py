@@ -3,8 +3,8 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
     QScrollArea, QLabel, QSplitter, QInputDialog, QMenu, QAction, QWidgetAction, QToolTip, QFrame  # Add QMenu, QAction and QWidgetAction here
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPoint, QStandardPaths, QMimeData  ,QRect# Added QMimeData
-from PyQt5.QtGui import QColor, QPalette, QDrag, QGuiApplication, QCursor # Added QDrag and QGuiApplication
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPoint, QStandardPaths, QMimeData  ,QRect, QSize, QEvent# Added QMimeData
+from PyQt5.QtGui import QColor, QPalette, QDrag, QGuiApplication, QCursor, QIcon # Added QDrag and QGuiApplication
 # --- Import Correct Drag/Drop Event Types --- 
 from PyQt5.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent, QPainter, QPen # Added Painter/Pen
 from render_utils import RenderUtils
@@ -380,6 +380,7 @@ class LayerPanel(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
         self.last_selected_index = None
+        self._managed_icon_buttons = set()
         
         
         # Determine the base path for settings and temp files
@@ -441,6 +442,12 @@ class LayerPanel(QWidget):
         self.reset_states_button.clicked.connect(self.reset_to_current_state)
         _ = translations[self.language_code]
         self.set_button_tooltip(self.reset_states_button, _['reset_tooltip'])
+        self.configure_layer_panel_icon_button(
+            self.reset_states_button,
+            "home.png",
+            icon_scale=0.68,
+            fallback_text="🏠",
+        )
 
         # Add the home/reset button to the top layout
         top_layout.addWidget(self.reset_states_button)
@@ -451,6 +458,18 @@ class LayerPanel(QWidget):
         # Setup undo/redo manager and buttons AFTER top_panel is added to the layout
         # Pass the determined base_path to setup_undo_redo
         self.undo_redo_manager = setup_undo_redo(self.canvas, self, self.base_path)
+        self.configure_layer_panel_icon_button(
+            self.undo_redo_manager.undo_button,
+            "undo.png",
+            icon_scale=0.60,
+            fallback_text="⮌",
+        )
+        self.configure_layer_panel_icon_button(
+            self.undo_redo_manager.redo_button,
+            "redo.png",
+            icon_scale=0.60,
+            fallback_text="⮎",
+        )
         
         # Create a second row for zoom buttons
         self.zoom_panel = QWidget()
@@ -489,6 +508,12 @@ class LayerPanel(QWidget):
         self.zoom_in_button.clicked.connect(self.canvas.zoom_in)
         _ = translations[self.language_code]
         self.set_button_tooltip(self.zoom_in_button, _['zoom_in_tooltip'])
+        self.configure_layer_panel_icon_button(
+            self.zoom_in_button,
+            "zoom_in.png",
+            icon_scale=0.68,
+            fallback_text="🔍",
+        )
         
         # Create zoom out button
         self.zoom_out_button = TooltipButton("🔎")
@@ -521,6 +546,12 @@ class LayerPanel(QWidget):
         self.zoom_out_button.clicked.connect(self.canvas.zoom_out)
         _ = translations[self.language_code]
         self.set_button_tooltip(self.zoom_out_button, _['zoom_out_tooltip'])
+        self.configure_layer_panel_icon_button(
+            self.zoom_out_button,
+            "zoom_out.png",
+            icon_scale=0.68,
+            fallback_text="🔎",
+        )
         
         # Create pan button
         self.pan_button = TooltipButton("🖐")  # Using a more modern hand emoji
@@ -529,6 +560,12 @@ class LayerPanel(QWidget):
         self.pan_button.clicked.connect(self.toggle_pan_mode)
         _ = translations[self.language_code]
         self.set_button_tooltip(self.pan_button, _['pan_tooltip'])
+        self.configure_layer_panel_icon_button(
+            self.pan_button,
+            "pan_open.png",
+            icon_scale=0.65,
+            fallback_text="🖐",
+        )
         self.pan_button.setStyleSheet("""
             QPushButton {
                 background-color: #8B0000;  /* Dark red color */
@@ -607,6 +644,12 @@ class LayerPanel(QWidget):
         self.refresh_button.clicked.connect(self.refresh_layers)
         _ = translations[self.language_code]
         self.set_button_tooltip(self.refresh_button, _['refresh_tooltip'])
+        self.configure_layer_panel_icon_button(
+            self.refresh_button,
+            "refresh.png",
+            icon_scale=0.64,
+            fallback_text="🔄",
+        )
         
         # Create the center/pan button
         self.center_strands_button = TooltipButton("🎯")
@@ -641,6 +684,12 @@ class LayerPanel(QWidget):
         self.center_strands_button.clicked.connect(self.center_all_strands)
         _ = translations[self.language_code]
         self.set_button_tooltip(self.center_strands_button, _['center_tooltip'])
+        self.configure_layer_panel_icon_button(
+            self.center_strands_button,
+            "center.png",
+            icon_scale=0.68,
+            fallback_text="🎯",
+        )
 
         # Create the multi-select button
         self.multi_select_button = TooltipButton("📄")
@@ -681,6 +730,12 @@ class LayerPanel(QWidget):
         self.multi_select_button.clicked.connect(self.toggle_multi_select_mode)
         _ = translations[self.language_code]
         self.set_button_tooltip(self.multi_select_button, _['hide_mode_tooltip'])
+        self.configure_layer_panel_icon_button(
+            self.multi_select_button,
+            "multi_select_off.png",
+            icon_scale=0.66,
+            fallback_text="📄",
+        )
 
         # Add buttons to refresh layout
         refresh_layout.addWidget(self.refresh_button)
@@ -1493,6 +1548,65 @@ class LayerPanel(QWidget):
         else:
             # Fallback for regular buttons (shouldn't happen)
             button.setToolTip(tooltip_text)
+
+    def get_layer_panel_icon_path(self, icon_filename):
+        """Resolve a layer-panel icon path for both source and packaged builds."""
+        if getattr(sys, 'frozen', False):
+            if sys.platform.startswith('darwin'):
+                base_path = os.path.join(os.path.dirname(sys.executable), '..', 'Resources')
+            else:
+                base_path = sys._MEIPASS
+        else:
+            base_path = os.path.dirname(os.path.abspath(__file__))
+        return os.path.join(base_path, 'layer_panel_icons', icon_filename)
+
+    def configure_layer_panel_icon_button(self, button, icon_filename, icon_scale=0.66, fallback_text=None):
+        """Attach a scalable PNG icon to a circular control button."""
+        if not button:
+            return
+
+        button.setProperty("layer_panel_icon_scale", float(icon_scale))
+        button.setProperty("layer_panel_icon_fallback_text", fallback_text or "")
+        if button not in self._managed_icon_buttons:
+            button.installEventFilter(self)
+            self._managed_icon_buttons.add(button)
+        self.set_layer_panel_button_icon(button, icon_filename, fallback_text=fallback_text)
+
+    def set_layer_panel_button_icon(self, button, icon_filename, fallback_text=None):
+        """Update the displayed icon while keeping a text fallback if assets are missing."""
+        if not button:
+            return
+
+        button.setProperty("layer_panel_icon_name", icon_filename)
+        icon_path = self.get_layer_panel_icon_path(icon_filename)
+
+        if os.path.exists(icon_path):
+            button.setIcon(QIcon(icon_path))
+            button.setText("")
+            self.update_layer_panel_button_icon_size(button)
+            return
+
+        fallback = fallback_text
+        if fallback is None:
+            fallback = button.property("layer_panel_icon_fallback_text") or ""
+        button.setIcon(QIcon())
+        if fallback:
+            button.setText(fallback)
+
+    def update_layer_panel_button_icon_size(self, button):
+        """Scale the icon from the button diameter so it tracks future button-size changes."""
+        if not button or not button.property("layer_panel_icon_name"):
+            return
+
+        diameter = max(1, min(button.width(), button.height()))
+        icon_scale = float(button.property("layer_panel_icon_scale") or 0.66)
+        icon_edge = max(12, int(round(diameter * icon_scale)))
+        button.setIconSize(QSize(icon_edge, icon_edge))
+
+    def eventFilter(self, watched, event):
+        if watched in self._managed_icon_buttons and event.type() == QEvent.Resize:
+            self.update_layer_panel_button_icon_size(watched)
+        return super().eventFilter(watched, event)
     
     def toggle_pan_mode(self):
         """Toggle pan mode on/off"""
@@ -1500,11 +1614,11 @@ class LayerPanel(QWidget):
             self.canvas.toggle_pan_mode()
             # Update button state based on canvas pan mode
             self.pan_button.setChecked(self.canvas.pan_mode)
-            # Update the button icon to indicate pan mode
-            if self.canvas.pan_mode:
-                self.pan_button.setText("✊")  # Closed hand emoji when active
-            else:
-                self.pan_button.setText("🖐")  # Open hand emoji when inactive
+            self.set_layer_panel_button_icon(
+                self.pan_button,
+                "pan_closed.png" if self.canvas.pan_mode else "pan_open.png",
+                fallback_text="✊" if self.canvas.pan_mode else "🖐",
+            )
 
     def reset_mask(self, strand_index):
         """Reset the mask to its original intersection."""
@@ -1637,20 +1751,21 @@ class LayerPanel(QWidget):
         self.multi_select_mode = not self.multi_select_mode
         
         if self.multi_select_mode:
-            # Change to multi-layer emoji when active
-            self.multi_select_button.setText("📚")
             # Clear any existing selections when entering multi-select mode
             self.multi_selected_layers.clear()
             self.update_layer_button_multi_select_display()
         else:
-            # Change back to single-layer emoji when inactive
-            self.multi_select_button.setText("📄")
             # Clear selections and reset display when exiting multi-select mode
             self.multi_selected_layers.clear()
             self.update_layer_button_multi_select_display()
             
         # Update button state
         self.multi_select_button.setChecked(self.multi_select_mode)
+        self.set_layer_panel_button_icon(
+            self.multi_select_button,
+            "multi_select_on.png" if self.multi_select_mode else "multi_select_off.png",
+            fallback_text="📚" if self.multi_select_mode else "📄",
+        )
 
     def update_layer_button_multi_select_display(self):
         """Update the visual display of layer buttons to show multi-selection state"""
@@ -2796,7 +2911,11 @@ class LayerPanel(QWidget):
         if hasattr(self, 'multi_select_button') and self.multi_select_mode:
             self.multi_select_mode = False
             self.multi_select_button.setChecked(False)
-            self.multi_select_button.setText("📄")
+            self.set_layer_panel_button_icon(
+                self.multi_select_button,
+                "multi_select_off.png",
+                fallback_text="📄",
+            )
             self.multi_selected_layers.clear()
             self.update_layer_button_multi_select_display()
 

@@ -7,7 +7,7 @@ import shutil
 from datetime import datetime
 from PyQt5.QtWidgets import QPushButton, QStyle, QStyleOption, QDialog
 from PyQt5.QtCore import QObject, pyqtSignal, Qt, QTimer, QPoint, QEvent
-from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics, QColor, QBrush, QLinearGradient, QPalette
+from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics, QColor, QBrush, QLinearGradient, QPalette, QIcon
 from render_utils import RenderUtils
 from save_load_manager import save_strands, load_strands, apply_loaded_strands
 # Import QTimer here to avoid UnboundLocalError
@@ -133,6 +133,18 @@ class StrokeTextButton(QPushButton):
         option = QStyleOption()
         option.initFrom(self)
         self.style().drawPrimitive(QStyle.PE_Widget, option, painter, self)
+
+        if not self.icon().isNull():
+            icon_size = self.iconSize()
+            icon_width = icon_size.width() if icon_size.width() > 0 else int(min(self.width(), self.height()) * 0.6)
+            icon_height = icon_size.height() if icon_size.height() > 0 else int(min(self.width(), self.height()) * 0.6)
+            icon_x = (self.width() - icon_width) // 2
+            icon_y = (self.height() - icon_height) // 2
+            mode = QIcon.Disabled if not self.isEnabled() else QIcon.Normal
+            state = QIcon.On if self.isChecked() or self.isDown() else QIcon.Off
+            self.icon().paint(painter, icon_x, icon_y, icon_width, icon_height, Qt.AlignCenter, mode, state)
+            painter.end()
+            return
 
         # Draw the text with stroke
         font = self.font()

@@ -2222,6 +2222,12 @@ class StrandDrawingCanvas(QWidget):
             # Track positions where rectangles have been drawn to avoid duplicates
             drawn_rectangle_positions = []
 
+            hovered_strand = None
+            hovered_side = None
+            if getattr(self, 'show_hover_highlights', True):
+                hovered_strand = getattr(self.current_mode, 'hovered_strand', None)
+                hovered_side = getattr(self.current_mode, 'hovered_side', None)
+
             # Skip drawing all rectangles if in optimized drawing mode or if highlights are disabled
             if isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving and self.current_mode.draw_only_affected_strand:
                 # When draw_only_affected_strand is enabled, don't draw any control point rectangles
@@ -2231,7 +2237,12 @@ class StrandDrawingCanvas(QWidget):
                 pass
             # Draw squares around each strand's start/end
             else:
-                for strand in self.strands:
+                overlay_strands = list(self.strands)
+                for extra_strand in (selected_strand, hovered_strand):
+                    if isinstance(extra_strand, AttachedStrand) and extra_strand not in overlay_strands:
+                        overlay_strands.append(extra_strand)
+
+                for strand in overlay_strands:
                     if not isinstance(strand, MaskedStrand):
                         # Skip hidden strands - they should not show moving areas
                         if getattr(strand, 'is_hidden', False):
@@ -2327,13 +2338,6 @@ class StrandDrawingCanvas(QWidget):
                                     )
                                 )
                             
-                            # Get hover state from MoveMode (only if hover highlights are enabled)
-                            hovered_strand = None
-                            hovered_side = None
-                            if getattr(self, 'show_hover_highlights', True):
-                                hovered_strand = getattr(self.current_mode, 'hovered_strand', None)
-                                hovered_side = getattr(self.current_mode, 'hovered_side', None)
-
                             # Get hovered point position to skip red rectangles at same location
                             hovered_point_pos = None
                             if hovered_strand is not None and hovered_side in (0, 1):

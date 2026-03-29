@@ -2176,6 +2176,24 @@ class MoveMode:
 
         return path
 
+    def _iter_hover_candidate_strands(self):
+        """Yield main strands followed by their attached descendants."""
+        seen = set()
+
+        def visit(strand):
+            if strand is None:
+                return
+            strand_id = id(strand)
+            if strand_id in seen:
+                return
+            seen.add(strand_id)
+            yield strand
+            for attached in getattr(strand, 'attached_strands', []):
+                yield from visit(attached)
+
+        for strand in getattr(self.canvas, 'strands', []):
+            yield from visit(strand)
+
     def _update_hover_state(self, pos):
         """
         Update the hover state based on the current mouse position.
@@ -2191,14 +2209,18 @@ class MoveMode:
         self.hovered_strand = None
         self.hovered_side = None
 
-        # Check all strands for hover
-        for i, strand in enumerate(self.canvas.strands):
+        hover_candidates = list(self._iter_hover_candidate_strands())
+
+        # Check control points first across all strands so an overlapping control
+        # point can win hover before any endpoint rectangle at the same position.
+        for strand in hover_candidates:
             if getattr(strand, 'deleted', False) or isinstance(strand, MaskedStrand) or getattr(strand, 'is_hidden', False):
                 continue
-            if self.lock_mode_active and i in self.locked_layers:
-                continue
+            if self.lock_mode_active and strand in self.canvas.strands:
+                strand_index = self.canvas.strands.index(strand)
+                if strand_index in self.locked_layers:
+                    continue
 
-            # Check control points first (they're drawn on top)
             if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
                 triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
 
@@ -2248,18 +2270,27 @@ class MoveMode:
                                 self.hovered_side = 'bias_circle'
                                 break
 
-            # Check start and end points
-            start_area = self.get_start_area(strand)
-            if start_area.contains(pos):
-                self.hovered_strand = strand
-                self.hovered_side = 0
-                break
+        # If no control point matched, fall back to start/end hover checks.
+        if self.hovered_strand is None:
+            for strand in hover_candidates:
+                if getattr(strand, 'deleted', False) or isinstance(strand, MaskedStrand) or getattr(strand, 'is_hidden', False):
+                    continue
+                if self.lock_mode_active and strand in self.canvas.strands:
+                    strand_index = self.canvas.strands.index(strand)
+                    if strand_index in self.locked_layers:
+                        continue
 
-            end_area = self.get_end_area(strand)
-            if end_area.contains(pos):
-                self.hovered_strand = strand
-                self.hovered_side = 1
-                break
+                start_area = self.get_start_area(strand)
+                if start_area.contains(pos):
+                    self.hovered_strand = strand
+                    self.hovered_side = 0
+                    break
+
+                end_area = self.get_end_area(strand)
+                if end_area.contains(pos):
+                    self.hovered_strand = strand
+                    self.hovered_side = 1
+                    break
 
         # Only update canvas if hover state changed
         if old_hovered_strand != self.hovered_strand or old_hovered_side != self.hovered_side:

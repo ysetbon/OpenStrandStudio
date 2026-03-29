@@ -1,6 +1,6 @@
-Theme: default
+Theme: dark
 Language: en
-ShadowColor: 0,0,0,170
+ShadowColor: 0,0,0,30
 DrawOnlyAffectedStrand: false
 EnableThirdControlPoint: false
 EnableSnapToGrid: true

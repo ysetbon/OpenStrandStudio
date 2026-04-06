@@ -781,6 +781,7 @@ class LayerPanel(QWidget):
             QPushButton {
                 background-color: #e07bdb;
                 font-weight: bold;
+                font-size: 14px;
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
@@ -801,6 +802,7 @@ class LayerPanel(QWidget):
             QPushButton {
                 background-color: orange;
                 font-weight: bold;
+                font-size: 14px;
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
@@ -822,6 +824,7 @@ class LayerPanel(QWidget):
             QPushButton {
                 background-color: lightgreen;
                 font-weight: bold;
+                font-size: 14px;
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
@@ -846,6 +849,7 @@ class LayerPanel(QWidget):
         self.delete_strand_button.setStyleSheet("""
             QPushButton {
                 font-weight: bold;
+                font-size: 14px;
                 color: black;
                 background-color: #FF6B6B;
                 border: 1px solid #888;
@@ -899,6 +903,7 @@ class LayerPanel(QWidget):
             QPushButton {
                 background-color: #76acdc;
                 font-weight: bold;
+                font-size: 14px;
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
@@ -919,6 +924,7 @@ class LayerPanel(QWidget):
             QPushButton {
                 background-color: #a1a1a1;
                 font-weight: bold;
+                font-size: 14px;
                 color: black;
                 border: 1px solid #888;
                 border-radius: 4px;
@@ -1183,6 +1189,7 @@ class LayerPanel(QWidget):
             self.delete_strand_button.setStyleSheet("""
                 QPushButton {
                     font-weight: bold;
+                    font-size: 14px;
                     color: black;
                     background-color: #FF6B6B;
                     border: 1px solid #888;
@@ -1222,6 +1229,7 @@ class LayerPanel(QWidget):
             self.delete_strand_button.setStyleSheet("""
                 QPushButton {
                     font-weight: bold;
+                    font-size: 14px;
                     color: black;
                     background-color: #FF6B6B;
                     border: 1px solid #888;
@@ -1255,6 +1263,7 @@ class LayerPanel(QWidget):
             self.delete_strand_button.setStyleSheet("""
                 QPushButton {
                     font-weight: bold;
+                    font-size: 14px;
                     color: black;
                     background-color: #FF6B6B;
                     border: 1px solid #888;
@@ -1288,6 +1297,7 @@ class LayerPanel(QWidget):
             self.delete_strand_button.setStyleSheet("""
                 QPushButton {
                     font-weight: bold;
+                    font-size: 14px;
                     color: black;
                     background-color: #FF6B6B;
                     border: 1px solid #888;

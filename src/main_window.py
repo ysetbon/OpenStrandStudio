@@ -568,6 +568,7 @@ class MainWindow(QMainWindow):
         QWidget {
             background-color: #2C2C2C;
             color: white;
+            font-size: 14px;
         }
         QPushButton {
             background-color: #2C2C2C;
@@ -726,6 +727,7 @@ class MainWindow(QMainWindow):
         QWidget {
             background-color: #FFFFFF;
             color: black;
+            font-size: 14px;
         }
         QLabel {
             color: black;
@@ -888,6 +890,7 @@ class MainWindow(QMainWindow):
         QWidget {
             background-color: #ECECEC;
             color: black;
+            font-size: 14px;
         }
         QLabel {
             color: black;
@@ -1116,6 +1119,7 @@ class MainWindow(QMainWindow):
                 background-color: {bg_color};
                 color: black;
                 font-weight: bold;
+                font-size: 14px;
                 border: 0px solid black;
                 border-radius: 6px;
                 height: 35px;
@@ -1150,6 +1154,7 @@ class MainWindow(QMainWindow):
                 background-color: {bg_color};
                 color: black;
                 font-weight: bold;
+                font-size: 14px;
                 border: 0px solid black;
                 padding: 0px 4px;
                 border-radius: 6px;
@@ -1295,6 +1300,7 @@ class MainWindow(QMainWindow):
                 background-color: #FFD700;
                 color: black;
                 font-weight: bold;
+                font-size: 14px;
                 border: none;
                 padding: 8px 4px;
                 border-radius: 0px;

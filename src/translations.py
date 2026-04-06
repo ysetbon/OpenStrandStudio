@@ -233,6 +233,10 @@ Examples:<br>
         ''',
 
 
+        # Selected Strand settings
+        'selected_strand_settings': 'Selected Strand',
+        'move_selected_only': 'Move Selected Only',
+
         # LayerPanel translations
         'layer_panel_title': 'Layer Panel',
         'draw_names': 'Draw Names',
@@ -667,6 +671,10 @@ Exemples :<br>
         <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.106</p>
         ''',
 
+
+        # Selected Strand settings
+        'selected_strand_settings': 'Brin Sélectionné',
+        'move_selected_only': 'Dépl. Sélect. Seul.',
 
         # LayerPanel translations
         'layer_panel_title': 'Panneau des Couches',
@@ -1202,6 +1210,10 @@ Beispiele:<br>
         ''',
 
 
+        # Selected Strand settings
+        'selected_strand_settings': 'Ausgewählter Strang',
+        'move_selected_only': 'Nur Auswahl bewegen',
+
         # LayerPanel translations
         'layer_panel_title': 'Ebenenpanel',
         'draw_names': 'Namen zeigen',
@@ -1633,6 +1645,10 @@ Esempi:<br>
         <p style="font-size:16px;">© 2026 OpenStrand Studio - Versione 1.106</p>
         ''',
 
+
+        # Selected Strand settings
+        'selected_strand_settings': 'Filo Selezionato',
+        'move_selected_only': 'Muovi Solo Selez.',
 
         # LayerPanel translations
         'layer_panel_title': 'Pannello Livelli',
@@ -2122,6 +2138,10 @@ Ejemplos:<br>
         ''',
  
 
+        # Selected Strand settings
+        'selected_strand_settings': 'Hebra Seleccionada',
+        'move_selected_only': 'Mover Solo Selec.',
+
         # LayerPanel translations
         'layer_panel_title': 'Panel de Capas',
         'draw_names': 'Ver Nombres',
@@ -2609,6 +2629,10 @@ Exemplos:<br>
         <p style="font-size:16px;">© 2026 OpenStrand Studio – Versão 1.106</p>
         ''',
 
+
+        # Selected Strand settings
+        'selected_strand_settings': 'Fio Selecionado',
+        'move_selected_only': 'Mover Só Selec.',
 
         # LayerPanel translations
         'layer_panel_title': 'Painel de Camadas',
@@ -3105,6 +3129,10 @@ Exemplos:<br>
         </div>
         ''',
 
+
+        # Selected Strand settings
+        'selected_strand_settings': 'חוט נבחר',
+        'move_selected_only': 'הזז נבחר בלבד',
 
         # LayerPanel translations
         'layer_panel_title': 'חלונית השכבות',

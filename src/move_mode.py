@@ -1786,6 +1786,24 @@ class MoveMode:
             # If we've reached the target, stop the timer
             self.move_timer.stop()
 
+    def _is_strand_allowed_by_selection(self, strand):
+        """When move_selected_only is on, only allow the selected strand and its relatives."""
+        if not getattr(self.canvas, 'move_selected_only', False):
+            return True
+        selected = self.canvas.selected_strand or self.canvas.selected_attached_strand
+        if selected is None:
+            return True
+        if strand == selected:
+            return True
+        if hasattr(selected, 'attached_strands') and strand in selected.attached_strands:
+            return True
+        if isinstance(selected, AttachedStrand) and hasattr(selected, 'parent_strand'):
+            if strand == selected.parent_strand:
+                return True
+            if hasattr(selected.parent_strand, 'attached_strands') and strand in selected.parent_strand.attached_strands:
+                return True
+        return False
+
     def handle_strand_movement(self, pos, event=None):
         """
         Handle the movement of strands.
@@ -1795,11 +1813,13 @@ class MoveMode:
             event (QMouseEvent): The mouse event (optional, for bias controls).
         """
         self.is_moving = False  # Reset this flag at the start
-        
+
 
         # First pass: Check all control points for all strands (excluding masked strands and hidden strands)
         for strand in self.canvas.strands:
             if not getattr(strand, 'deleted', False) and not isinstance(strand, MaskedStrand) and not getattr(strand, 'is_hidden', False):
+                if not self._is_strand_allowed_by_selection(strand):
+                    continue
                 if self.try_move_control_points(strand, pos, event):
                     return
                 if self.try_move_attached_strands_control_points(strand.attached_strands, pos):
@@ -1808,13 +1828,15 @@ class MoveMode:
         # Second pass: Check start and end points for all strands (excluding masked strands)
         # First, check if we're clicking on a connection point
         connection_point_strands = []
-        
+
         # Check all strands to see if the click position matches any connection points
         for i, strand in enumerate(self.canvas.strands):
             if not getattr(strand, 'deleted', False) and not isinstance(strand, MaskedStrand) and not getattr(strand, 'is_hidden', False) and (not self.lock_mode_active or i not in self.locked_layers):
+                if not self._is_strand_allowed_by_selection(strand):
+                    continue
                 start_area = self.get_start_area(strand)
                 end_area = self.get_end_area(strand)
-                
+
                 if start_area.contains(pos) and self.can_move_side(strand, 0, i):
                     # Always add this strand if we clicked on it
                     if not any(s[0] == strand for s in connection_point_strands):
@@ -1824,10 +1846,12 @@ class MoveMode:
                     if connected_strands:
                         # Add all connected strands at this point
                         for conn_strand, conn_side in connected_strands:
+                            if not self._is_strand_allowed_by_selection(conn_strand):
+                                continue
                             if not any(s[0] == conn_strand for s in connection_point_strands):
                                 conn_area = self.get_end_area(conn_strand) if conn_side == 1 else self.get_start_area(conn_strand)
                                 connection_point_strands.append((conn_strand, conn_side, conn_area))
-                                
+
                 if end_area.contains(pos) and self.can_move_side(strand, 1, i):
                     # Always add this strand if we clicked on it
                     if not any(s[0] == strand for s in connection_point_strands):
@@ -1837,15 +1861,17 @@ class MoveMode:
                     if connected_strands:
                         # Add all connected strands at this point
                         for conn_strand, conn_side in connected_strands:
+                            if not self._is_strand_allowed_by_selection(conn_strand):
+                                continue
                             if not any(s[0] == conn_strand for s in connection_point_strands):
                                 conn_area = self.get_end_area(conn_strand) if conn_side == 1 else self.get_start_area(conn_strand)
                                 connection_point_strands.append((conn_strand, conn_side, conn_area))
-        
+
         # If we found strands at a connection point, handle them specially
         if connection_point_strands:
             for s, side, area in connection_point_strands:
                 pass
-            
+
             # If we have multiple strands at a connection point, prefer the main strand over attached
             # This ensures we start movement with the parent strand when possible
             main_strand_entry = None
@@ -1854,19 +1880,21 @@ class MoveMode:
                 if not isinstance(strand, AttachedStrand):
                     main_strand_entry = entry
                     break
-            
+
             # Use main strand if found, otherwise use first strand
             if main_strand_entry:
                 first_strand, first_side, first_area = main_strand_entry
             else:
                 first_strand, first_side, first_area = connection_point_strands[0]
-                
+
             self.start_movement(first_strand, first_side, first_area, pos)
             return
-        
+
         # Otherwise, iterate in reverse to check topmost strands first (excluding masked strands and hidden strands)
         for i, strand in reversed(list(enumerate(self.canvas.strands))):
             if not getattr(strand, 'deleted', False) and not isinstance(strand, MaskedStrand) and not getattr(strand, 'is_hidden', False) and (not self.lock_mode_active or i not in self.locked_layers):
+                if not self._is_strand_allowed_by_selection(strand):
+                    continue
                 # Debug: Check if this strand has knot connections
                 if hasattr(strand, 'knot_connections') and strand.knot_connections:
                     pass

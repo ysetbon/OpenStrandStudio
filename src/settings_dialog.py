@@ -59,6 +59,7 @@ class SettingsDialog(QDialog):
         self.snap_to_grid_attach_enabled = True  # Default to snap to grid enabled for attach/create mode
         self.show_move_highlights = True  # Default to showing highlights in move modes
         self.show_hover_highlights = True  # Default to showing hover highlights
+        self.move_selected_only = getattr(canvas, 'move_selected_only', False)  # Move only selected strand in move mode
         # NEW: Use extended mask option (controls extra expansion of masked areas)
         # self.use_extended_mask = False  # Default to using exact mask (small +3 offset)
         # Extension line parameters
@@ -1281,6 +1282,9 @@ class SettingsDialog(QDialog):
                         elif line.startswith('ShowHoverHighlights:'):
                             value = line.split(':', 1)[1].strip().lower()
                             self.show_hover_highlights = (value == 'true')
+                        elif line.startswith('MoveSelectedOnly:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            self.move_selected_only = (value == 'true')
                         # elif line.startswith('UseExtendedMask:'):
                         #     value = line.split(':', 1)[1].strip().lower()
                         #     self.use_extended_mask = (value == 'true')
@@ -1440,6 +1444,7 @@ class SettingsDialog(QDialog):
         categories = [
             _['general_settings'],
             _['layer_panel_title'],  # Add Layer Panel Settings category
+            (_['selected_strand_settings'] if 'selected_strand_settings' in _ else 'Selected Strand'),
             _['change_language'],
             _['save_load_settings_title'],  # Add Save/Load Settings category
             _['tutorial'],
@@ -2289,7 +2294,34 @@ class SettingsDialog(QDialog):
         layer_panel_layout.addWidget(self.layer_panel_ok_button)
         self.stacked_widget.addWidget(self.layer_panel_settings_widget)
 
-        # Change Language Page (index 2)
+        # Selected Strand Settings Page (index 2)
+        self.selected_strand_settings_widget = QWidget()
+        selected_strand_layout = QVBoxLayout(self.selected_strand_settings_widget)
+
+        # Move Selected Only checkbox
+        self.move_selected_only_layout = QHBoxLayout()
+        self.move_selected_only_label = QLabel(_['move_selected_only'] if 'move_selected_only' in _ else "Move Selected Only")
+        self.move_selected_only_checkbox = QCheckBox()
+        self.move_selected_only_checkbox.setChecked(self.move_selected_only)
+
+        if self.is_rtl_language(self.current_language):
+            self.move_selected_only_layout.addStretch()
+            self.move_selected_only_layout.addWidget(self.move_selected_only_checkbox)
+            self.move_selected_only_layout.addWidget(self.move_selected_only_label)
+        else:
+            self.move_selected_only_layout.addWidget(self.move_selected_only_label)
+            self.move_selected_only_layout.addWidget(self.move_selected_only_checkbox)
+            self.move_selected_only_layout.addStretch()
+
+        selected_strand_layout.addLayout(self.move_selected_only_layout)
+
+        selected_strand_layout.addStretch()
+        self.selected_strand_ok_button = QPushButton(_['ok'])
+        self.selected_strand_ok_button.clicked.connect(self.apply_all_settings)
+        selected_strand_layout.addWidget(self.selected_strand_ok_button)
+        self.stacked_widget.addWidget(self.selected_strand_settings_widget)
+
+        # Change Language Page (index 3)
         self.change_language_widget = QWidget()
         language_layout = QVBoxLayout(self.change_language_widget)
 
@@ -3567,6 +3599,11 @@ class SettingsDialog(QDialog):
             # Set the new value in canvas
             self.canvas.show_hover_highlights = self.show_hover_highlights
 
+        # Apply Move Selected Only Setting
+        self.move_selected_only = self.move_selected_only_checkbox.isChecked()
+        if self.canvas:
+            self.canvas.move_selected_only = self.move_selected_only
+
             # Check if the third control point setting changed
             if previous_third_control_point != self.enable_third_control_point:
                 # Reset all masked strands if the canvas has strands
@@ -3765,14 +3802,15 @@ class SettingsDialog(QDialog):
         # Update category names
         self.categories_list.item(0).setText(_['general_settings'])
         self.categories_list.item(1).setText(_['layer_panel_title'])
-        self.categories_list.item(2).setText(_['change_language'])
-        self.categories_list.item(3).setText(_['save_load_settings_title'])  # Save/load settings category
-        self.categories_list.item(4).setText(_['tutorial'])
-        self.categories_list.item(5).setText(_['button_explanations']) # Update button guide category name
-        self.categories_list.item(6).setText(_['history']) # Update history category name
-        self.categories_list.item(7).setText(_['whats_new']) # Update what's new category name
-        self.categories_list.item(8).setText(_['samples'] if 'samples' in _ else 'Samples')
-        self.categories_list.item(9).setText(_['about']) # About remains last
+        self.categories_list.item(2).setText(_['selected_strand_settings'] if 'selected_strand_settings' in _ else 'Selected Strand')
+        self.categories_list.item(3).setText(_['change_language'])
+        self.categories_list.item(4).setText(_['save_load_settings_title'])  # Save/load settings category
+        self.categories_list.item(5).setText(_['tutorial'])
+        self.categories_list.item(6).setText(_['button_explanations']) # Update button guide category name
+        self.categories_list.item(7).setText(_['history']) # Update history category name
+        self.categories_list.item(8).setText(_['whats_new']) # Update what's new category name
+        self.categories_list.item(9).setText(_['samples'] if 'samples' in _ else 'Samples')
+        self.categories_list.item(10).setText(_['about']) # About remains last
         self.update_category_panel_width()
         # Update labels and buttons
         self.theme_label.setText(_['select_theme'])
@@ -3794,6 +3832,9 @@ class SettingsDialog(QDialog):
         self.curve_response_label.setText(_['curve_response'] if 'curve_response' in _ else "Curve Type:")
         self.reset_curvature_label.setText(_['reset_curvature_settings'] if 'reset_curvature_settings' in _ else "Reset Curvature Settings:")
         self.reset_curvature_button.setText(_['reset'] if 'reset' in _ else "Reset")
+        # Selected Strand settings labels
+        self.move_selected_only_label.setText(_['move_selected_only'] if 'move_selected_only' in _ else "Move Selected Only")
+        self.selected_strand_ok_button.setText(_['ok'])
         self.reset_curvature_button.setToolTip(_['reset_curvature_tooltip'] if 'reset_curvature_tooltip' in _ else "Reset all curvature settings to default values")
         self.apply_button.setText(_['ok'])
         self.language_ok_button.setText(_['ok'])
@@ -4244,6 +4285,8 @@ class SettingsDialog(QDialog):
                 # Save show move highlights setting
                 file.write(f"ShowMoveHighlights: {str(self.show_move_highlights).lower()}\n")
                 file.write(f"ShowHoverHighlights: {str(self.show_hover_highlights).lower()}\n")
+                # Save move selected only setting
+                file.write(f"MoveSelectedOnly: {str(self.move_selected_only).lower()}\n")
                 # Save shadow blur settings
                 file.write(f"NumSteps: {self.num_steps}\n")
                 file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place

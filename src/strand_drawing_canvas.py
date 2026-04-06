@@ -155,6 +155,7 @@ class StrandDrawingCanvas(QWidget):
         
         self._selected_strand = None
         self.show_control_points = True  # Initialize control points visibility
+        self.move_selected_only = False  # When True, only selected strand is interactive in move mode
         self.current_strand = None  # Currently active strand
         self.strand_width = 46  # Width of strands
         # strand_color will be set from default_strand_color later in this method
@@ -2247,6 +2248,22 @@ class StrandDrawingCanvas(QWidget):
                         # Skip hidden strands - they should not show moving areas
                         if getattr(strand, 'is_hidden', False):
                             continue
+
+                        # When move_selected_only is on, only show areas for selected strand and relatives
+                        if getattr(self, 'move_selected_only', False):
+                            _sel = self.selected_strand or self.selected_attached_strand
+                            if _sel is not None and strand != _sel:
+                                _is_rel = False
+                                if hasattr(_sel, 'attached_strands') and strand in _sel.attached_strands:
+                                    _is_rel = True
+                                if isinstance(_sel, AttachedStrand) and hasattr(_sel, 'parent_strand'):
+                                    if strand == _sel.parent_strand:
+                                        _is_rel = True
+                                    if hasattr(_sel.parent_strand, 'attached_strands') and strand in _sel.parent_strand.attached_strands:
+                                        _is_rel = True
+                                if not _is_rel:
+                                    continue
+
                         if hasattr(strand, 'start') and hasattr(strand, 'end'):
                             # Check if a control point or strand point is being moved
                             is_moving_control_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_control_point', False)
@@ -5728,6 +5745,21 @@ class StrandDrawingCanvas(QWidget):
             # Skip hidden strands - they should not show control points
             if getattr(strand, 'is_hidden', False):
                 continue
+
+            # When move_selected_only is on and in move mode, only show CPs for selected strand and relatives
+            if getattr(self, 'move_selected_only', False) and in_move_mode:
+                _sel = self.selected_strand or self.selected_attached_strand
+                if _sel is not None and strand != _sel:
+                    _is_rel = False
+                    if hasattr(_sel, 'attached_strands') and strand in _sel.attached_strands:
+                        _is_rel = True
+                    if isinstance(_sel, AttachedStrand) and hasattr(_sel, 'parent_strand'):
+                        if strand == _sel.parent_strand:
+                            _is_rel = True
+                        if hasattr(_sel.parent_strand, 'attached_strands') and strand in _sel.parent_strand.attached_strands:
+                            _is_rel = True
+                    if not _is_rel:
+                        continue
 
             # --- Determine if we should skip drawing CPs for this strand ---
             should_skip = False

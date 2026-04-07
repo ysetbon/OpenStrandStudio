@@ -19,7 +19,7 @@ class ViewMode(QObject):
 
     def activate(self):
         """Called when view mode is activated."""
-        self.canvas.setCursor(Qt.ArrowCursor)
+        self.canvas.setCursor(Qt.OpenHandCursor)
 
     def deactivate(self):
         """Called when view mode is deactivated."""

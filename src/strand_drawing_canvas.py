@@ -1716,9 +1716,17 @@ class StrandDrawingCanvas(QWidget):
         if layer_panel and hasattr(layer_panel, 'pan_button'):
             layer_panel.pan_button.setChecked(is_panning)
             if is_panning:
-                layer_panel.pan_button.setText("✊")  # Closed hand emoji when active
+                layer_panel.set_layer_panel_button_icon(
+                    layer_panel.pan_button,
+                    "pan_closed.png",
+                    fallback_text="✊",
+                )
             else:
-                layer_panel.pan_button.setText("🖐")  # Open hand emoji when inactive
+                layer_panel.set_layer_panel_button_icon(
+                    layer_panel.pan_button,
+                    "pan_open.png",
+                    fallback_text="🖐",
+                )
 
     def update_canvas_bounds(self):
         """Update the maximum canvas bounds based on current zoom level"""
@@ -4395,7 +4403,7 @@ class StrandDrawingCanvas(QWidget):
             self.view_mode_panning = False
             self.pan_start_pos = None
             self.pan_start_offset = None
-            self.setCursor(Qt.ArrowCursor)
+            self.setCursor(Qt.OpenHandCursor)
             self._update_pan_button_for_view_mode(False)
             event.accept()
             return

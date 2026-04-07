@@ -8,11 +8,7 @@ from masked_strand import MaskedStrand
 import sys
 
 
-# Import CollapsibleGroupWidget for group recreation
-try:
-    from group_layers import CollapsibleGroupWidget
-except ImportError:
-    CollapsibleGroupWidget = None
+# CollapsibleGroupWidget import removed — GroupPanel now uses QTreeWidget items
 
 # Custom JSON encoder to handle circular references
 class SafeJSONEncoder(json.JSONEncoder):
@@ -1159,11 +1155,10 @@ def apply_loaded_strands(canvas, strands, groups, shadow_overrides=None):
         else:
             pass
 
-    # After all groups are loaded, refresh the group alignment to match button-created behavior
+    # After all groups are loaded, rebuild the tree view from canvas.groups
     if hasattr(canvas, 'group_layer_manager') and hasattr(canvas.group_layer_manager, 'group_panel'):
-        # Set a flag to indicate that groups were loaded from JSON
         canvas.group_layer_manager.group_panel.groups_loaded_from_json = True
-        canvas.group_layer_manager.group_panel.refresh_group_alignment()
+        canvas.group_layer_manager.group_panel.sync_from_canvas()
 
     # Shadow state is handled by the caller (main_window.py) to respect loaded preferences
 

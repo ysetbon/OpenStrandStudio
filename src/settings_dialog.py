@@ -6024,12 +6024,7 @@ class SettingsDialog(QDialog):
                 # Clear group panel UI/state for clean reload
                 if hasattr(parent.canvas, 'group_layer_manager') and hasattr(parent.canvas.group_layer_manager, 'group_panel'):
                     group_panel = parent.canvas.group_layer_manager.group_panel
-                    if hasattr(group_panel, 'scroll_layout'):
-                        while group_panel.scroll_layout.count():
-                            child = group_panel.scroll_layout.takeAt(0)
-                            if child.widget():
-                                child.widget().deleteLater()
-                    group_panel.groups = {}
+                    group_panel.clear_all()
                     group_panel.groups_loaded_from_json = False
 
                 # Apply loaded data

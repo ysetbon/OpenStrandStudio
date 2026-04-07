@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDi
                              QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,  QScrollArea, QMenu, QTableWidget, 
                              QTableWidgetItem, QHeaderView, QSizePolicy,  QMessageBox, QAbstractButton)
 from PyQt5.QtWidgets import QStyleOptionButton, QProxyStyle, QStyle
-from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QPoint
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QPoint, QEvent
 from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon, QIntValidator, QGuiApplication, QPainter, QPen, QPainterPath
 from math import atan2, degrees, isqrt
 from translations import translations
@@ -605,121 +605,411 @@ class GroupPanel(QWidget):
         super().__init__()
         self.layer_panel = layer_panel
         self.canvas = canvas
-        self.groups = {}  # Initialize groups dictionary
-        # Initialize group_widgets as an empty dictionary
-        self.group_widgets = {}
-        # Flag to track if groups were loaded from JSON
+        self.current_theme = self._resolve_theme_name()
+        self.groups = {}  # group_name → {strands, layers, main_strands, control_points}
+        self.group_items = {}  # group_name → QTreeWidgetItem (view only)
+        self.group_widgets = {}  # kept for compat — no longer stores CollapsibleGroupWidgets
         self.groups_loaded_from_json = False
-          # Initialize the layout
+
         self.layout = QVBoxLayout(self)
         self.setLayout(self.layout)
-        # Remove the hardcoded background color
-        # self.setStyleSheet("background-color: white;")
 
-        # Use the application's palette to set the background role
         self.setAutoFillBackground(True)
         palette = self.palette()
         palette.setColor(self.backgroundRole(), palette.window().color())
         self.setPalette(palette)
 
-        # Improved margins and spacing for better centering - match button container padding
-        self.layout.setContentsMargins(10, 5, 10, 5)  # Match button container margins for alignment
-        self.layout.setSpacing(8)  # Slightly increased spacing
+        self.layout.setContentsMargins(10, 5, 10, 5)
+        self.layout.setSpacing(8)
         self.setAcceptDrops(True)
-        
-        # Set minimum width to ensure the panel can accommodate UI elements
-        self.setMinimumWidth(220)  # Ensure panel is wide enough for buttons and content
+        self.setMinimumWidth(220)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        if self.canvas:
-            pass
-        else:
-            pass
+        # --- QTreeWidget replaces scroll_area + scroll_layout + containers ---
+        from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem, QFrame
+        self.tree = QTreeWidget(self)
+        self.tree.setObjectName("groupPanelTree")
+        self.tree.setHeaderHidden(True)
+        self.tree.setColumnCount(1)
+        self.tree.setIndentation(16)
+        self.tree.setRootIsDecorated(False)
+        self.tree.setFrameShape(QFrame.NoFrame)
+        self.tree.setExpandsOnDoubleClick(False)
+        self.tree.setMouseTracking(True)
+        self.tree.viewport().setMouseTracking(True)
+        self.tree.viewport().installEventFilter(self)
+        self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self._on_tree_context_menu)
+        self.tree.itemExpanded.connect(self._on_group_item_expanded)
+        self.tree.itemCollapsed.connect(self._on_group_item_collapsed)
+        self.layout.addWidget(self.tree)
 
-        # Add a scroll area to contain the groups
-        self.scroll_area = QScrollArea(self)
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_content = QWidget()
-        self.scroll_layout = QVBoxLayout(self.scroll_content)
-        # Center align the content and add margins for better appearance
-        self.scroll_layout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
-        self.scroll_layout.setContentsMargins(5, 5, 5, 5)
-        self.scroll_layout.setSpacing(5)
-        self.scroll_area.setWidget(self.scroll_content)
-        self.layout.addWidget(self.scroll_area)
+        # Backward-compat aliases so external hasattr() checks don't break.
+        # These are NEVER used for widget creation/destruction.
+        self.scroll_area = self.tree
+        self.scroll_layout = None  # Sentinel — external code should call sync_from_canvas() instead
+        self.apply_theme()
+
+    def _resolve_theme_name(self):
+        """Return the currently active application theme."""
+        if getattr(self, "current_theme", None):
+            return str(self.current_theme).lower()
+
+        if self.layer_panel:
+            layer_theme = getattr(self.layer_panel, "current_theme", None)
+            if layer_theme:
+                return str(layer_theme).lower()
+
+            parent_window = getattr(self.layer_panel, "parent_window", None)
+            parent_theme = getattr(parent_window, "current_theme", None)
+            if parent_theme:
+                return str(parent_theme).lower()
+
+        return "default"
+
+    def _get_theme_colors(self):
+        theme_name = self._resolve_theme_name()
+
+        if theme_name == "dark":
+            return {
+                "name": "dark",
+                "panel_bg": "#2C2C2C",
+                "tree_bg": "#2C2C2C",
+                "text": "#FFFFFF",
+                "border": "transparent",
+                "hover": "#666666",
+                "selected_bg": "#6A6A6A",
+                "selected_text": "#FFFFFF",
+                "group_bg": "#4D4D4D",
+                "menu_bg": "#333333",
+                "menu_text": "#FFFFFF",
+                "menu_border": "#1A1A1A",
+                "menu_selected_bg": "#F0F0F0",
+                "menu_selected_text": "#000000",
+            }
+
+        if theme_name == "light":
+            return {
+                "name": "light",
+                "panel_bg": "#FFFFFF",
+                "tree_bg": "#FFFFFF",
+                "text": "#000000",
+                "border": "transparent",
+                "hover": "#C4BDB5",
+                "selected_bg": "#B7B0A8",
+                "selected_text": "#000000",
+                "group_bg": "#D5CEC6",
+                "menu_bg": "#F0F0F0",
+                "menu_text": "#000000",
+                "menu_border": "#B8B8B8",
+                "menu_selected_bg": "#333333",
+                "menu_selected_text": "#FFFFFF",
+            }
+
+        return {
+            "name": "default",
+            "panel_bg": "#ECECEC",
+            "tree_bg": "#ECECEC",
+            "text": "#000000",
+            "border": "transparent",
+            "hover": "#A29E99",
+            "selected_bg": "#8F8B86",
+            "selected_text": "#FFFFFF",
+            "group_bg": "#B9B4AE",
+            "menu_bg": "#ECECEC",
+            "menu_text": "#000000",
+            "menu_border": "#B0B0B0",
+            "menu_selected_bg": "#96938F",
+            "menu_selected_text": "#FFFFFF",
+        }
+
+    def apply_theme(self):
+        """Apply explicit theme styling so the panel follows the active app theme."""
+        colors = self._get_theme_colors()
+        self.current_theme = colors["name"]
+
+        self.setStyleSheet(f"background-color: {colors['panel_bg']};")
+        self.tree.setStyleSheet(f"""
+            QTreeWidget {{
+                background-color: {colors['tree_bg']};
+                color: {colors['text']};
+                border: none;
+                outline: none;
+                selection-background-color: {colors['selected_bg']};
+                selection-color: {colors['selected_text']};
+            }}
+            QTreeWidget::item {{
+                color: {colors['text']};
+                padding: 6px 8px;
+                border: none;
+            }}
+            QTreeWidget::item:hover {{
+                background-color: {colors['hover']};
+                color: {colors['text']};
+            }}
+            QTreeWidget::item:selected {{
+                background-color: {colors['selected_bg']};
+                color: {colors['selected_text']};
+            }}
+            QTreeWidget::item:selected:active {{
+                background-color: {colors['selected_bg']};
+                color: {colors['selected_text']};
+            }}
+            QTreeWidget::item:selected:!active {{
+                background-color: {colors['selected_bg']};
+                color: {colors['selected_text']};
+            }}
+            QTreeWidget::branch {{
+                background-color: {colors['tree_bg']};
+            }}
+        """)
+        self._refresh_tree_item_styles(colors)
+        self.tree.viewport().update()
+        self.update()
+
+    def set_theme(self, theme_name):
+        self.current_theme = str(theme_name).lower() if theme_name else "default"
+        self.apply_theme()
+
+    def eventFilter(self, watched, event):
+        if watched is self.tree.viewport():
+            if event.type() == QEvent.MouseMove:
+                item = self.tree.itemAt(event.pos())
+                cursor = Qt.PointingHandCursor if item and item.parent() is None else Qt.ArrowCursor
+                self.tree.viewport().setCursor(cursor)
+            elif event.type() == QEvent.Leave:
+                self.tree.viewport().unsetCursor()
+            elif event.type() == QEvent.MouseButtonRelease and event.button() == Qt.LeftButton:
+                item = self.tree.itemAt(event.pos())
+                if item and item.parent() is None:
+                    self.tree.setCurrentItem(item)
+                    item.setExpanded(not item.isExpanded())
+                    self._update_group_item_label(item)
+                    return True
+
+        return super().eventFilter(watched, event)
     
     def refresh_group_alignment(self):
-        """Refresh the alignment of all groups in the panel."""
+        """No-op kept for backward compatibility.
+
+        The QTreeWidget view is self-managing; call sync_from_canvas() for a
+        full rebuild from the source-of-truth dict.
+        """
         pass
-        pass
-        
-        # Store references to group widgets before removing containers
-        group_widgets = {}
-        
-        # First, extract all group widgets from their containers
-        for i in range(self.scroll_layout.count()):
-            container = self.scroll_layout.itemAt(i).widget()
-            if container:
-                # Find the CollapsibleGroupWidget inside the container
-                group_widget = container.findChild(CollapsibleGroupWidget)
-                if group_widget:
-                    # Store the widget with its group name
-                    for group_name, group_info in self.groups.items():
-                        if group_info.get('widget') == group_widget:
-                            group_widgets[group_name] = group_widget
-                            # Remove the widget from its container but don't delete it
-                            group_widget.setParent(None)
-                            break
-        
-        # Remove all container widgets from the scroll layout
-        while self.scroll_layout.count():
-            child = self.scroll_layout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()  # Only delete the container, not the group widget
-        
-        # Re-add all group widgets with proper alignment containers
-        successfully_added = 0
-        for group_name, group_info in self.groups.items():
-            group_widget = group_widgets.get(group_name) or group_info.get('widget')
-            if group_widget:
-                # Create a new horizontal layout container for alignment
-                group_container = QWidget()
-                group_container_layout = QHBoxLayout(group_container)
-                group_container_layout.setContentsMargins(5, 2, 5, 2)
-                group_container_layout.setSpacing(0)  # No spacing to keep tight alignment
-                group_container_layout.addWidget(group_widget, 0, Qt.AlignLeft)
-                group_container_layout.addStretch()
-                
-                self.scroll_layout.addWidget(group_container)
-                successfully_added += 1
-                pass
-            else:
-                pass
-        
-        # Force update of the scroll area
-        self.scroll_area.update()
+
+    # ------------------------------------------------------------------ #
+    #  View helpers — QTreeWidget item management                         #
+    # ------------------------------------------------------------------ #
+
+    def _add_group_to_tree(self, group_name, layers):
+        """Create a top-level QTreeWidgetItem for *group_name* with children
+        for each unique main-strand identifier found in *layers*."""
+        from PyQt5.QtWidgets import QTreeWidgetItem
+        from PyQt5.QtGui import QFont
+
+        group_item = QTreeWidgetItem(self.tree, [group_name])
+        group_item.setData(0, Qt.UserRole, group_name)
+        font = group_item.font(0)
+        font.setBold(True)
+        group_item.setFont(0, font)
+
+        main_seen = set()
+        for layer_name in layers:
+            main_id = layer_name.split('_')[0] if '_' in layer_name else layer_name
+            if main_id not in main_seen:
+                main_seen.add(main_id)
+                QTreeWidgetItem(group_item, [main_id])
+
+        group_item.setExpanded(True)
+        self._update_group_item_label(group_item, group_name)
+        self._apply_group_item_colors(group_item, self._get_theme_colors())
+        self.group_items[group_name] = group_item
+
+    def _update_group_item_label(self, item, group_name=None):
+        if item is None:
+            return
+
+        actual_name = group_name or item.data(0, Qt.UserRole) or item.text(0)
+        item.setData(0, Qt.UserRole, actual_name)
+        arrow = "▼" if item.isExpanded() else "▶"
+        item.setText(0, f"{arrow} {actual_name}")
+
+    def _apply_group_item_colors(self, group_item, colors):
+        from PyQt5.QtGui import QBrush
+
+        group_item.setForeground(0, QBrush(QColor(colors["text"])))
+        group_item.setBackground(0, QBrush(QColor(colors["group_bg"])))
+        for index in range(group_item.childCount()):
+            child = group_item.child(index)
+            child.setForeground(0, QBrush(QColor(colors["text"])))
+            child.setBackground(0, QBrush(QColor(colors["tree_bg"])))
+
+    def _refresh_tree_item_styles(self, colors):
+        for index in range(self.tree.topLevelItemCount()):
+            item = self.tree.topLevelItem(index)
+            self._update_group_item_label(item)
+            self._apply_group_item_colors(item, colors)
+
+    def _on_group_item_expanded(self, item):
+        if item and item.parent() is None:
+            self._update_group_item_label(item)
+
+    def _on_group_item_collapsed(self, item):
+        if item and item.parent() is None:
+            self._update_group_item_label(item)
+
+    def _remove_group_from_tree(self, group_name):
+        """Remove the QTreeWidgetItem for *group_name* if it exists."""
+        item = self.group_items.pop(group_name, None)
+        if item is not None:
+            idx = self.tree.indexOfTopLevelItem(item)
+            if idx >= 0:
+                self.tree.takeTopLevelItem(idx)
+
+    def _on_tree_context_menu(self, position):
+        """Show the right-click context menu for the group under the cursor."""
+        item = self.tree.itemAt(position)
+        if item is None:
+            return
+
+        # Walk up to the top-level item (the group)
+        while item.parent() is not None:
+            item = item.parent()
+
+        group_name = item.data(0, Qt.UserRole) or item.text(0)
+        if group_name not in self.groups:
+            return
+
+        self._show_group_context_menu(group_name, self.tree.viewport().mapToGlobal(position))
+
+    def _show_group_context_menu(self, group_name, global_pos):
+        """Build and exec the context menu for *group_name*."""
+        from PyQt5.QtWidgets import QMenu, QAction
+
+        # Determine language for translations
+        lang = getattr(self, 'language_code', 'en')
+        if hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'language_code'):
+            lang = self.layer_panel.language_code
+        elif self.canvas and hasattr(self.canvas, 'language_code'):
+            lang = self.canvas.language_code
+
+        t = translations.get(lang, translations.get('en', {}))
+
+        menu = QMenu(self)
+        if hasattr(self.layer_panel, "get_context_menu_stylesheet"):
+            menu.setStyleSheet(self.layer_panel.get_context_menu_stylesheet())
+        else:
+            colors = self._get_theme_colors()
+            menu.setStyleSheet(f"""
+                QMenu {{
+                    background-color: {colors['menu_bg']};
+                    color: {colors['menu_text']};
+                    border: 1px solid {colors['menu_border']};
+                    padding: 4px;
+                }}
+                QMenu::item {{
+                    padding: 6px 20px;
+                }}
+                QMenu::item:selected {{
+                    background-color: {colors['menu_selected_bg']};
+                    color: {colors['menu_selected_text']};
+                }}
+            """)
+
+        actions = [
+            (t.get('move_group_strands', 'Move Group'), lambda: self.start_group_move(group_name)),
+            (t.get('rotate_group_strands', 'Rotate Group'), lambda: self.start_group_rotation(group_name)),
+            (t.get('edit_strand_angles', 'Edit Angles'), lambda: self.edit_strand_angles(group_name)),
+            (t.get('edit_shadows', 'Edit Shadows'), lambda: self.open_group_shadow_editor(group_name)),
+            (t.get('create_mask_grid', 'Create Mask Grid'), lambda: self.create_mask_grid(group_name)),
+            (t.get('duplicate_group', 'Duplicate Group'), lambda: self.duplicate_group(group_name)),
+            (t.get('rename_group', 'Rename Group'), lambda: self.rename_group(group_name)),
+        ]
+        for label, callback in actions:
+            act = menu.addAction(label)
+            act.triggered.connect(callback)
+
+        menu.addSeparator()
+        delete_act = menu.addAction(t.get('delete_group', 'Delete Group'))
+        delete_act.triggered.connect(lambda: self.delete_group(group_name))
+
+        menu.exec_(global_pos)
+
+    def sync_from_canvas(self):
+        """Rebuild the tree view (and self.groups) from canvas.groups.
+
+        This is the ONE method that external code should call instead of
+        touching scroll_layout, creating CollapsibleGroupWidgets, etc.
+        """
+        self.tree.clear()
+        self.group_items.clear()
+        self.groups.clear()
+
+        if not self.canvas or not hasattr(self.canvas, 'groups'):
+            return
+
+        for group_name, group_data in self.canvas.groups.items():
+            layers = group_data.get('layers', [])
+            strands = group_data.get('strands', [])
+            main_strands = group_data.get('main_strands', set())
+            control_points = group_data.get('control_points', {})
+
+            # Resolve any string strand references to live objects
+            resolved_strands = []
+            for s in strands:
+                if isinstance(s, str):
+                    obj = self._find_strand_by_name(s)
+                    if obj:
+                        resolved_strands.append(obj)
+                else:
+                    resolved_strands.append(s)
+
+            resolved_main = set()
+            for ms in main_strands:
+                if isinstance(ms, str):
+                    obj = self._find_strand_by_name(ms)
+                    if obj:
+                        resolved_main.add(obj)
+                elif hasattr(ms, 'layer_name'):
+                    resolved_main.add(ms)
+
+            self.groups[group_name] = {
+                'strands': resolved_strands,
+                'layers': layers,
+                'main_strands': resolved_main,
+                'control_points': control_points,
+            }
+            # Also push resolved objects back into canvas.groups
+            self.canvas.groups[group_name]['strands'] = resolved_strands
+            self.canvas.groups[group_name]['main_strands'] = resolved_main
+
+            self._add_group_to_tree(group_name, layers)
+
         self.update()
-        pass
+
+    def clear_all(self):
+        """Remove every group from the view and data dicts."""
+        self.tree.clear()
+        self.group_items.clear()
+        self.groups.clear()
+
+    def _find_strand_by_name(self, name):
+        """Return the live strand object for *name*, or None."""
+        if not self.canvas:
+            return None
+        for s in self.canvas.strands:
+            if hasattr(s, 'layer_name') and s.layer_name == name:
+                return s
+        return None
     
     def create_group_widget(self, group_name, group_layers):
         pass
     def update_group_display(self, group_name):
         """Update the visual display of a group."""
-        if group_name in self.groups:
-            group_data = self.groups[group_name]
-            # Extract main strand numbers for display
-            main_strands = set()
-            for layer_name in group_data['layers']:
-                main_strand = layer_name.split('_')[0]
-                main_strands.add(main_strand)
-            main_strands_text = ", ".join(sorted(main_strands))
-            
-            # Update the group's display text
-            if hasattr(self, 'group_tree'):
-                group_item = self.group_tree.groups.get(group_name)
-                if group_item:
-                    group_item.setText(0, group_name)
-            pass
+        if group_name in self.groups and group_name in self.group_items:
+            # Rebuild tree children to reflect current layers
+            self._remove_group_from_tree(group_name)
+            self._add_group_to_tree(group_name, self.groups[group_name]['layers'])
 
 
     def add_layer_to_group(self, layer_name, group_name):
@@ -883,47 +1173,21 @@ class GroupPanel(QWidget):
 
     def create_group(self, group_name, strands):
         """Create a new group with the given strands."""
-        pass
-        pass
-        pass
-        
-        # Log group creation details
-        print(f"\n=== Creating Group '{group_name}' ===")
-        print(f"  Total strands to add: {len(strands)}")
-        for strand in strands:
-            strand_type = strand.__class__.__name__
-            layer_name = getattr(strand, 'layer_name', 'unknown')
-            print(f"    - {layer_name} ({strand_type})")
-            if strand_type == 'MaskedStrand':
-                first_comp = getattr(strand, 'first_selected_strand', None)
-                second_comp = getattr(strand, 'second_selected_strand', None)
-                print(f"      Components: {getattr(first_comp, 'layer_name', 'None')}, {getattr(second_comp, 'layer_name', 'None')}")
-                if hasattr(strand, 'deletion_rectangles'):
-                    print(f"      Deletion rectangles: {len(strand.deletion_rectangles)}")
-            elif strand_type == 'AttachedStrand':
-                parent = getattr(strand, 'parent', None)
-                print(f"      Parent: {getattr(parent, 'layer_name', 'None')}")
-                
         if not strands:
-            pass
             return
 
-        # Check if the group already exists
+        layers = [s.layer_name for s in strands if hasattr(s, 'layer_name')]
+
+        # If group already exists, update it in place
         if group_name in self.groups:
-            pass
-            # Update existing group
-            existing_widget = self.groups[group_name]['widget']
-            if existing_widget:
-                # Update the existing widget with new strands
-                for strand in strands:
-                    if strand.layer_name not in self.groups[group_name]['layers']:
-                        existing_widget.add_layer(
-                            layer_name=strand.layer_name,
-                            color=strand.color,
-                            is_masked=hasattr(strand, 'is_masked') and strand.is_masked
-                        )
-            # Refresh alignment to ensure proper display
-            self.refresh_group_alignment()
+            existing_layers = self.groups[group_name]['layers']
+            for strand in strands:
+                if hasattr(strand, 'layer_name') and strand.layer_name not in existing_layers:
+                    existing_layers.append(strand.layer_name)
+                    self.groups[group_name]['strands'].append(strand)
+            # Rebuild tree item to reflect new layers
+            self._remove_group_from_tree(group_name)
+            self._add_group_to_tree(group_name, self.groups[group_name]['layers'])
             return
 
         # Identify main strands (pattern: "x_1" where x is a number)
@@ -933,86 +1197,38 @@ class GroupPanel(QWidget):
                 parts = strand.layer_name.split('_')
                 if len(parts) == 2 and parts[1] == '1':
                     main_strands.add(strand)
-                    pass
 
-        self.groups[group_name] = {
-            'strands': strands,
-            'layers': [strand.layer_name for strand in strands],
-            'widget': None,
-            'main_strands': main_strands,
-            'control_points': {}
-        }
-
-        # Also update canvas.groups to ensure zoom and other canvas operations work correctly
-        if self.canvas and hasattr(self.canvas, 'groups'):
-            self.canvas.groups[group_name] = {
-                'strands': strands,
-                'layers': [strand.layer_name for strand in strands],
-                'main_strands': main_strands,
-                'control_points': {},
-                'data': []
-            }
-        print("[DEBUG] Step 1: Creating CollapsibleGroupWidget...")
-        group_widget = CollapsibleGroupWidget(
-            group_name=group_name,
-            group_panel=self
-        )
-        print("[DEBUG] Step 2: CollapsibleGroupWidget created successfully")
-
-        print("[DEBUG] Step 3: Adding layers to group widget...")
+        # Build control_points dict
+        control_points = {}
         for strand in strands:
-            print(f"[DEBUG]   Adding layer: {strand.layer_name}")
-            group_widget.add_layer(
-                layer_name=strand.layer_name,
-                color=strand.color,
-                is_masked=hasattr(strand, 'is_masked') and strand.is_masked
-            )
-
-            # Safely handle control points
             if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
                 cp1 = strand.control_point1 if isinstance(strand.control_point1, QPointF) else QPointF(strand.start)
                 cp2 = strand.control_point2 if isinstance(strand.control_point2, QPointF) else QPointF(strand.end)
-
-                self.groups[group_name]['control_points'][strand.layer_name] = {
+                control_points[strand.layer_name] = {
                     'control_point1': cp1,
                     'control_point2': cp2
                 }
-        print("[DEBUG] Step 4: All layers added")
 
-        self.groups[group_name]['widget'] = group_widget
+        # Store in self.groups (no 'widget' key)
+        self.groups[group_name] = {
+            'strands': list(strands),
+            'layers': layers,
+            'main_strands': main_strands,
+            'control_points': control_points,
+        }
 
-        # Create a horizontal layout to align the group widget with proper left alignment
-        print("[DEBUG] Step 5: Creating group container...")
-        group_container = QWidget()
-        group_container_layout = QHBoxLayout(group_container)
-        group_container_layout.setContentsMargins(5, 2, 5, 2)  # Consistent margins
-        group_container_layout.setSpacing(0)  # No spacing to keep tight alignment
-        group_container_layout.addWidget(group_widget, 0, Qt.AlignLeft)  # Align left
-        group_container_layout.addStretch()  # Right spacer to push widget to left
-
-        self.scroll_layout.addWidget(group_container)
-        print("[DEBUG] Step 6: Group container added to layout")
-
-        # Additional logging to confirm the group is added to the canvas
+        # Sync to canvas.groups
         if self.canvas and hasattr(self.canvas, 'groups'):
-            if group_name in self.canvas.groups:
-                # Ensure main strands are properly copied to canvas groups
-                self.canvas.groups[group_name]['main_strands'] = main_strands.copy()
+            self.canvas.groups[group_name] = {
+                'strands': list(strands),
+                'layers': list(layers),
+                'main_strands': main_strands.copy(),
+                'control_points': dict(control_points),
+                'data': []
+            }
 
-        # Ensure alignment is proper after adding new group
-        print("[DEBUG] Step 7: Calling refresh_group_alignment...")
-        self.refresh_group_alignment()
-        print("[DEBUG] Step 8: refresh_group_alignment completed")
-
-        # If groups were loaded from JSON, ensure they're all visible after adding a new one
-        if getattr(self, 'groups_loaded_from_json', False):
-            # Force a comprehensive UI update
-            self.scroll_area.update()
-            self.update()
-            # Reset the flag since we've now handled the post-loading state
-            self.groups_loaded_from_json = False
-
-        print("[DEBUG] Step 9: Group creation complete, canvas.update() will be called next")
+        # Add a tree item (the only UI operation)
+        self._add_group_to_tree(group_name, layers)
 
     def start_group_rotation(self, group_name):
         print(f"[DEBUG ROTATE] start_group_rotation called for '{group_name}'")
@@ -1454,32 +1670,14 @@ class GroupPanel(QWidget):
             # Remove group from canvas if applicable
             if self.canvas and group_name in self.canvas.groups:
                 del self.canvas.groups[group_name]
-                pass
-            else:
-                pass
 
             self.group_operation.emit("delete", group_name, self.groups[group_name]['layers'])
-            
-            # Get the widget and its parent container
-            group_widget = self.groups[group_name]['widget']
-            
-            # Find and remove the container widget (not just the group widget)
-            for i in range(self.scroll_layout.count()):
-                container = self.scroll_layout.itemAt(i).widget()
-                if container and container.findChild(CollapsibleGroupWidget) == group_widget:
-                    self.scroll_layout.removeWidget(container)
-                    container.deleteLater()
-                    break
-            
+
+            # Remove tree item (instant, no C++ lifecycle issues)
+            self._remove_group_from_tree(group_name)
+
             # Remove from groups dictionary
             del self.groups[group_name]
-            
-            # Refresh alignment after deletion
-            self.refresh_group_alignment()
-            
-            pass
-        else:
-            pass
     
     def rename_group(self, old_group_name):
         """Rename an existing group."""
@@ -1527,13 +1725,12 @@ class GroupPanel(QWidget):
             del self.canvas.groups[old_group_name]
             pass
         
-        # Update the widget
-        group_widget = group_data.get('widget')
-        if group_widget and hasattr(group_widget, 'group_name'):
-            group_widget.group_name = new_group_name
-            # Update the group button text
-            if hasattr(group_widget, 'group_button'):
-                group_widget.group_button.setText(new_group_name)
+        # Update the tree item text
+        item = self.group_items.pop(old_group_name, None)
+        if item is not None:
+            item.setData(0, Qt.UserRole, new_group_name)
+            self._update_group_item_label(item, new_group_name)
+            self.group_items[new_group_name] = item
         
         # Emit signal for group rename operation
         self.group_operation.emit("rename", old_group_name, group_data['layers'])
@@ -1774,19 +1971,10 @@ class GroupPanel(QWidget):
             if new_group_name in self.groups:
                 self.groups[new_group_name]['data'] = []
             
-            # Force the new group widget to be visible and properly sized
-            if new_group_name in self.groups and self.groups[new_group_name]['widget']:
-                new_widget = self.groups[new_group_name]['widget']
-                
-                
-                new_widget.update_size()
-                new_widget.update_group_display()
-                # Ensure content is visible (not collapsed)
-                if hasattr(new_widget, 'content_widget'):
-                    new_widget.content_widget.setVisible(True)
-                    new_widget.is_collapsed = False
-                # Force widget to update
-                new_widget.update()
+            # Ensure tree item for the new group is expanded
+            item = self.group_items.get(new_group_name)
+            if item:
+                item.setExpanded(True)
                 
             
             # Update LayerStateManager - simply save the current state after all strands are created
@@ -1816,15 +2004,7 @@ class GroupPanel(QWidget):
             if self.canvas:
                 self.canvas.update()
     
-            if new_group_name in self.groups:
-                widget = self.groups[new_group_name].get('widget')
-                if widget:
-                    pass
-                    pass
-                    pass
-                    pass
-                else:
-                    pass
+            pass  # Widget references removed — QTreeWidget items are self-managing
             # Refresh layer panel to ensure deletable states are correct for new layers
             if self.canvas and hasattr(self.canvas, 'layer_panel') and self.canvas.layer_panel:
                 # Use refresh_layers_no_zoom to avoid resetting the view
@@ -2509,44 +2689,12 @@ class GroupPanel(QWidget):
         pass
 
     def create_group_widget(self, group_name, strands, main_strands):
-        """Create UI widget for the duplicated group."""
-        try:
-            # Create the container widget to hold the group
-            container_widget = QWidget()
-            container_layout = QVBoxLayout(container_widget)
-            container_layout.setContentsMargins(0, 0, 0, 0)
-            container_layout.setSpacing(0)
-            
-            # Create the CollapsibleGroupWidget
-            group_widget = CollapsibleGroupWidget(group_name, self, self.canvas)
-            
-            # Set up the layers in the group widget
-            group_widget.update_layers([strand.layer_name for strand in strands if hasattr(strand, 'layer_name')])
-            
-            # Add to container
-            container_layout.addWidget(group_widget)
-            
-            # Add to scroll layout
-            self.scroll_layout.addWidget(container_widget)
-            
-            # Update the group data with widget reference
-            self.groups[group_name]['widget'] = group_widget
-            
-            # Refresh alignment
-            self.refresh_group_alignment()
-            
-            pass
-            
-        except Exception as e:
-            pass
+        """Create UI for the duplicated group — delegates to group_panel.create_group."""
+        self.group_panel.create_group(group_name, strands)
 
     def update_layer(self, index, layer_name, color):
-        # Update the layer information in the groups
-        for group_name, group_info in self.groups.items():
-            if layer_name in group_info['layers']:
-                group_widget = self.findChild(CollapsibleGroupWidget, group_name)
-                if group_widget:
-                    group_widget.update_layer(index, layer_name, color)
+        # No per-layer colour display in QTreeWidget view — no-op
+        pass
 
     def open_group_shadow_editor(self, group_name):
         """Open the group shadow editor dialog for all strands in the group."""
@@ -3623,22 +3771,18 @@ class GroupLayerManager:
                         break
         else:
             # For regular strands, check if parent strand is in any group
-            for group_name, group_data in self.canvas.groups.items():
-                # Get parent strand layer name based on strand type
-                parent_layer_name = None
-                if hasattr(new_strand, 'parent_strand'):
-                    parent_layer_name = new_strand.parent_strand.layer_name
-                elif hasattr(new_strand, 'attached_to'):
-                    parent_layer_name = new_strand.attached_to.layer_name
-                
+            # Wrap in list() — delete_group mutates canvas.groups during iteration
+            for group_name, group_data in list(self.canvas.groups.items()):
+                # AttachedStrand stores its parent as .parent
+                parent_obj = getattr(new_strand, 'parent', None)
+                parent_layer_name = getattr(parent_obj, 'layer_name', None) if parent_obj is not None else None
+
                 if parent_layer_name and any(strand.layer_name == parent_layer_name for strand in group_data['strands']):
-                    pass
                     # Store the original main strands before deletion
                     original_main_strands = list(group_data.get('main_strands', []))
-                    pass
-                    
+
                     # Delete and recreate the group with the new strand
-                    self.delete_group(group_name)
+                    self.group_panel.delete_group(group_name)
                     self.recreate_group(group_name, new_strand, original_main_strands)
 
         # Delete the identified groups

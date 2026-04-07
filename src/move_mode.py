@@ -1133,7 +1133,9 @@ class MoveMode:
             event (QMouseEvent): The mouse event.
         """
         pos = event.pos()
-        
+
+        # Suppress group operations for the entire duration of the drag
+        self.canvas._suppress_group_updates = True
 
         # --- Capture selection at the absolute start ---
         selection_at_press_start = self.canvas.selected_strand or self.canvas.selected_attached_strand
@@ -1487,6 +1489,7 @@ class MoveMode:
     def cancel_movement(self):
         """Externally cancel any ongoing move operation."""
         if self.is_moving:
+            self.canvas._suppress_group_updates = False
             self.reset_movement_state()
             # Restore selection to what it was before the move started
             final_selected_strand = self.originally_selected_strand
@@ -1631,6 +1634,7 @@ class MoveMode:
                 if cp2_distance <= 1.0 and center_at_start:
                     self.affected_strand.triangle_has_moved = False
 
+        self.canvas._suppress_group_updates = False
         self.reset_movement_state()
         
         # --- 4. Restore Selection State --- 

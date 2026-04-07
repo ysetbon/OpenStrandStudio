@@ -12,7 +12,7 @@ from render_utils import RenderUtils
 from save_load_manager import save_strands, load_strands, apply_loaded_strands
 # Import QTimer here to avoid UnboundLocalError
 from PyQt5.QtCore import QTimer
-from group_layers import CollapsibleGroupWidget # Import at the top level to ensure availability
+# CollapsibleGroupWidget import removed — GroupPanel now uses QTreeWidget items
 # Note: We don't import GroupPanel here, as it can cause issues with Qt objects
 # We'll work with instances that are already created
 from masked_strand import MaskedStrand
@@ -1967,304 +1967,32 @@ class UndoRedoManager(QObject):
             return False # Indicate failure or no action
 
     def _clear_group_panel_ui(self, group_panel):
-        """Helper method to reliably clear all widgets from the group panel's scroll layout."""
-        if not group_panel or not hasattr(group_panel, 'scroll_layout'):
+        """Clear all groups from the panel (tree view + data dicts)."""
+        if not group_panel:
             return
-
-        layout = group_panel.scroll_layout
-        # Remove all widgets from the layout
-        while layout.count():
-            child = layout.takeAt(0)
-            if child.widget():
-                widget = child.widget()
-                widget.setParent(None) # Necessary for Qt to schedule deletion
-                widget.deleteLater()
-            # Clean up the layout item itself if it wasn't holding a widget
-            elif child.layout():
-                 # Handle nested layouts if necessary, though not expected here
-                 pass # Or implement recursive clearing if needed
-
-        # Clear internal tracking in the panel if it exists
-        if hasattr(group_panel, 'groups'):
-             group_panel.groups.clear()
+        if hasattr(group_panel, 'clear_all'):
+            group_panel.clear_all()
+        elif hasattr(group_panel, 'groups'):
+            group_panel.groups.clear()
 
 
 
     def _recreate_group_widgets_from_canvas(self, group_panel):
-        """Helper method to recreate group widgets based on self.canvas.groups."""
-        if not group_panel or not hasattr(group_panel, 'scroll_layout'):
-            return
-            
-        # Debug: Print the canvas.groups content to diagnose issues
+        """Rebuild the group panel's tree view from canvas.groups."""
+        if not group_panel:
+            return False
+
         if not hasattr(self.canvas, 'groups') or not self.canvas.groups:
-            return
-            
-        
-        # First clear any existing widgets
-        self._clear_group_panel_ui(group_panel)
-        
-        # Get the scroll_layout to add widgets to
-        scroll_layout = group_panel.scroll_layout
-        
-        # Setup counters for debugging
-        processed = 0
-        created = 0
-        
-        # Iterate through a copy of canvas.groups in case we modify it
-        for group_name, group_data in dict(self.canvas.groups).items():
-            processed += 1
-            
-            # Debug: Print structure of this group's data
-            if isinstance(group_data, dict):
-                if 'strands' in group_data:
-                    strand_count = len(group_data['strands'])
-                    
-                    # Check if strands are strings or objects
-                    strand_types = []
-                    for s in group_data['strands'][:3]:  # Check first few for logging
-                        strand_types.append(type(s).__name__)
-            elif isinstance(group_data, list):
-                pass
-            else:
-                pass
-            
-            try:
-                # Create a new widget for this group
-                group_widget = CollapsibleGroupWidget(group_name=group_name, group_panel=group_panel)
-                
-                # We'll count successful strand additions for this widget
-                strand_count = 0
-                
-                # Convert any string IDs to actual strand objects in the groups data
-                # This is crucial for functions like move/rotate that require actual strand objects
-                if isinstance(group_data, dict) and 'strands' in group_data:
-                    # Create a new list to store the updated strands
-                    updated_strands = []
-                    for strand in group_data['strands']:
-                        if isinstance(strand, str):
-                            # It's a layer ID string, find the actual strand object
-                            strand_obj = None
-                            if hasattr(self.canvas, 'find_strand_by_name'):
-                                strand_obj = self.canvas.find_strand_by_name(strand)
-                            else:
-                                # Fallback: search through strands list
-                                for s in self.canvas.strands:
-                                    if hasattr(s, 'layer_name') and s.layer_name == strand:
-                                        strand_obj = s
-                                        break
-                            
-                            if strand_obj:
-                                updated_strands.append(strand_obj)
-                            else:
-                                # Keep the string if we can't find the object
-                                updated_strands.append(strand)
-                        else:
-                            # It's already a strand object (or something else), keep it as is
-                            updated_strands.append(strand)
-                    
-                    # Replace the old strands list with the updated one
-                    group_data['strands'] = updated_strands
-                    # Update the canvas.groups entry
-                    self.canvas.groups[group_name] = group_data
-                
-                # Determine what strands to process
-                if 'strands' in group_data:
-                    strands_to_process = group_data['strands']
-                elif isinstance(group_data, list):
-                    strands_to_process = group_data
-                else:
-                    strands_to_process = []
-                
-                
-                for strand in strands_to_process:
-                    # Handle both strand objects and layer names
-                    if hasattr(strand, 'layer_name'):
-                        layer_id = strand.layer_name
-                        color = strand.color if hasattr(strand, 'color') else None
-                        is_masked = hasattr(strand, 'is_masked') and strand.is_masked
-                    else:
-                        # We have a layer ID, try to find the actual strand
-                        layer_id = strand
-                        # Try to find the strand object in canvas
-                        strand_obj = None
-                        if hasattr(self.canvas, 'find_strand_by_name'):
-                            strand_obj = self.canvas.find_strand_by_name(layer_id)
-                        else:
-                            # Fallback: search through strands list
-                            for s in self.canvas.strands:
-                                if hasattr(s, 'layer_name') and s.layer_name == layer_id:
-                                    strand_obj = s
-                                    break
-                                    
-                        if strand_obj:
-                            color = strand_obj.color if hasattr(strand_obj, 'color') else None
-                            is_masked = hasattr(strand_obj, 'is_masked') and strand_obj.is_masked
-                        else:
-                            # Use defaults if we can't find the strand
-                            color = None
-                            is_masked = False
-                    
-                    # Add the layer/strand to the widget
-                    # Try multiple approaches to ensure it gets added
-                    added = False
-                    
-                    # Approach 1: Add strand object directly if it has a layer_name
-                    try:
-                        if hasattr(strand, 'layer_name'):
-                            group_widget.add_layer(strand.layer_name, strand.color, is_masked)
-                            strand_count += 1
-                            added = True
-                    except Exception as e1:
-                        pass
-                        
-                    # Approach 2: Add using specific attributes    
-                    if not added:
-                        try:
-                            group_widget.add_layer(layer_id, color, is_masked)
-                            strand_count += 1
-                            added = True
-                        except Exception as e2:
-                            pass
-                    
-                    # Approach 3: Add just the ID as a fallback
-                    if not added:
-                        try:
-                            group_widget.add_layer(layer_id)
-                            strand_count += 1
-                            added = True
-                        except Exception as e3:
-                            pass
-                
-                # Check if any strands were added before proceeding
-                if strand_count == 0:
-                    continue
-                
-                # Add the widget to the scroll layout with proper alignment container
-                
-                # Create a horizontal layout container for proper alignment (matching button-created groups)
-                from PyQt5.QtWidgets import QWidget, QHBoxLayout
-                group_container = QWidget()
-                group_container_layout = QHBoxLayout(group_container)
-                group_container_layout.setContentsMargins(5, 2, 5, 2)
-                group_container_layout.setSpacing(0)
-                group_container_layout.addWidget(group_widget, 0, Qt.AlignLeft)
-                group_container_layout.addStretch()
-                
-                scroll_layout.addWidget(group_container)
-                
-                # Store the group data in the panel's groups dictionary
-                try:
-                    # IMPORTANT: Ensure we use the updated group_data with actual strand objects
-                    # and properly reference the same strands as in canvas.groups
-                    group_panel.groups[group_name] = {
-                        'strands': self.canvas.groups[group_name].get('strands', []),
-                        'layers': [s.layer_name if hasattr(s, 'layer_name') else s 
-                                   for s in self.canvas.groups[group_name].get('strands', [])],
-                        'widget': group_widget
-                    }
-                    
-                    # Preserve main_strands if available, converting to objects if needed
-                    if 'main_strands' in group_data:
-                        main_strands_list = []
-                        for ms in group_data['main_strands']:
-                            if hasattr(ms, 'layer_name'):
-                                # Already a strand object
-                                main_strands_list.append(ms)
-                            else:
-                                # Try to find the strand object
-                                found = False
-                                for s in self.canvas.strands:
-                                    if hasattr(s, 'layer_name') and s.layer_name == ms:
-                                        main_strands_list.append(s)
-                                        found = True
-                                        break
-                                if not found:
-                                    # Add the string ID as fallback
-                                    main_strands_list.append(ms)
-                        
-                        group_panel.groups[group_name]['main_strands'] = main_strands_list
-                    
-                    # Preserve control_points if available
-                    if 'control_points' in group_data:
-                        group_panel.groups[group_name]['control_points'] = group_data['control_points']
-                        
-                except Exception as e:
-                    pass
-                
-                # If this widget should have collapsed state, set it
-                if hasattr(group_widget, 'toggle_collapse') and 'collapsed' in group_data and group_data['collapsed']:
-                    try:
-                        group_widget.toggle_collapse()
-                    except Exception as e:
-                        pass
+            return False
 
-                # Fix/Reconnect the move and rotate signals with correct parameter capture
-                try:
-                    # We need to ensure the group_name is correctly captured in the lambda
-                    # by creating a proper closure with default parameter values
-                    
-                    # For the move function
-                    if hasattr(group_widget, 'move_button') and hasattr(group_widget.move_button, 'clicked'):
-                        try:
-                            # Disconnect any existing connections
-                            group_widget.move_button.clicked.disconnect()
-                        except (TypeError, RuntimeError):
-                            # Expected if no connections exist yet
-                            pass
-                            
-                        # Create a proper function with correct parameter capture
-                        def create_move_handler(name):
-                            return lambda checked=False: group_panel.start_group_move(name)
-                            
-                        # Connect the handler with the specific group name
-                        move_handler = create_move_handler(group_name)
-                        group_widget.move_button.clicked.connect(move_handler)
-                    
-                    # For the rotate function
-                    if hasattr(group_widget, 'rotate_button') and hasattr(group_widget.rotate_button, 'clicked'):
-                        try:
-                            # Disconnect any existing connections
-                            group_widget.rotate_button.clicked.disconnect()
-                        except (TypeError, RuntimeError):
-                            # Expected if no connections exist yet
-                            pass
-                            
-                        # Create a proper function with correct parameter capture
-                        def create_rotate_handler(name):
-                            return lambda checked=False: group_panel.start_group_rotation(name)
-                            
-                        # Connect the handler with the specific group name
-                        rotate_handler = create_rotate_handler(group_name)
-                        group_widget.rotate_button.clicked.connect(rotate_handler)
-                except Exception as e:
-                    pass
-                
-                created += 1
+        # The panel's sync_from_canvas() handles everything:
+        # clears old tree items, resolves string→object strand refs,
+        # rebuilds self.groups, and creates new QTreeWidgetItems.
+        if hasattr(group_panel, 'sync_from_canvas'):
+            group_panel.sync_from_canvas()
+            return bool(group_panel.groups)
 
-            except Exception as e:
-                pass
-        
-        # Force update
-        try:
-            # Update scrollbar and layout
-            if hasattr(group_panel, 'scroll_area') and group_panel.scroll_area:
-                group_panel.scroll_area.verticalScrollBar().setValue(0)
-                
-            # Make sure the panel gets properly refreshed
-            scroll_layout.activate()
-            group_panel.updateGeometry()
-            group_panel.update()
-            
-        except Exception as e:
-            pass
-            
-        
-        # Output the final result of the groups stored in the panel
-        if hasattr(group_panel, 'groups'):
-            pass
-            
-        # Return success/failure status
-        return created > 0
+        return False
 
     def _refresh_group_panel(self, has_loaded_groups):
         """
@@ -2363,13 +2091,7 @@ class UndoRedoManager(QObject):
             
             # Clear the group panel's internal state before loading new groups
             if hasattr(self.canvas, 'group_layer_manager') and hasattr(self.canvas.group_layer_manager, 'group_panel'):
-                self.canvas.group_layer_manager.group_panel.groups = {}
-                # Clear the group panel's visual elements
-                if hasattr(self.canvas.group_layer_manager.group_panel, 'scroll_layout'):
-                    while self.canvas.group_layer_manager.group_panel.scroll_layout.count():
-                        child = self.canvas.group_layer_manager.group_panel.scroll_layout.takeAt(0)
-                        if child.widget():
-                            child.widget().deleteLater()
+                self.canvas.group_layer_manager.group_panel.clear_all()
                 
             # Set the groups data on the canvas
             if state_has_groups:
@@ -2547,63 +2269,12 @@ class UndoRedoManager(QObject):
 
     def _force_clear_all_groups(self):
         """Force a complete removal of all groups from both canvas and UI."""
-        
-        # First try to clear the group manager through canvas
-        try:
-            if hasattr(self.canvas, 'group_layer_manager'):
-                group_manager = self.canvas.group_layer_manager
-                
-                # Try using clear method if it exists
-                if hasattr(group_manager, 'clear'):
-                    group_manager.clear()
-                # Or clear method on tree if it exists
-                elif hasattr(group_manager, 'tree') and hasattr(group_manager.tree, 'clear'):
-                    group_manager.tree.clear()
-        except Exception as e:
-            pass
-            
-        # Then clear the groups from the panel itself
+        # Clear the panel (tree view + data dicts)
         if hasattr(self.canvas, 'group_layer_manager') and hasattr(self.canvas.group_layer_manager, 'group_panel'):
             group_panel = self.canvas.group_layer_manager.group_panel
-            
-            # Get all groups from the panel and delete them one by one
-            groups_to_delete = []
-            if hasattr(group_panel, 'groups'):
-                groups_to_delete = list(group_panel.groups.keys())
-                
-                
-            for group_name in groups_to_delete:
-                try:
-                    # Check if group exists in canvas
-                    if not hasattr(self.canvas, 'groups') or group_name not in self.canvas.groups:
-                        pass
-                    
-                    # Try to use the delete_group method
-                    if hasattr(group_panel, 'delete_group'):
-                        group_panel.delete_group(group_name)
-                except Exception as e:
-                    pass
-                    
-            # Force reset the groups dictionary to be empty
-            if hasattr(group_panel, 'groups'):
-                group_panel.groups = {}
-                
-            # Remove any remaining widgets from the scroll layout
-            if hasattr(group_panel, 'scroll_layout'):
-                # Find all widgets in the scroll layout
-                widget_count = group_panel.scroll_layout.count()
-                
-                # Remove all widgets
-                for i in range(widget_count - 1, -1, -1):  # Remove in reverse order
-                    try:
-                        widget = group_panel.scroll_layout.itemAt(i).widget()
-                        if widget:
-                            widget.setParent(None)
-                            widget.deleteLater()
-                    except Exception as e:
-                        pass
-                        
-                
+            if hasattr(group_panel, 'clear_all'):
+                group_panel.clear_all()
+
         # Ensure canvas.groups is empty
         if hasattr(self.canvas, 'groups'):
             self.canvas.groups = {}
@@ -3144,41 +2815,12 @@ class UndoRedoManager(QObject):
             return False
             
         
-        # Try several approaches to create the group
+        # Create the group via the standard method (now uses QTreeWidget items)
         try:
-            # First approach: Use the standard create_group method
             group_panel.create_group(group_name, existing_strands)
             return True
         except Exception as e:
-            
-            # Second approach: Try to use the CollapsibleGroupWidget directly
-            try:
-                # Create a new widget
-                widget = CollapsibleGroupWidget(group_name=group_name, group_panel=group_panel)
-                
-                # Add strands to it
-                for strand in existing_strands:
-                    widget.add_layer(
-                        layer_name=strand.layer_name,
-                        color=strand.color if hasattr(strand, 'color') else None,
-                        is_masked=hasattr(strand, 'is_masked') and strand.is_masked
-                    )
-                
-                # Add to the scroll layout
-                if hasattr(group_panel, 'scroll_layout'):
-                    group_panel.scroll_layout.addWidget(widget)
-                    
-                    # Store in groups dictionary
-                    group_panel.groups[group_name] = {
-                        'strands': existing_strands,
-                        'layers': [s.layer_name for s in existing_strands],
-                        'widget': widget
-                    }
-                    return True
-            except Exception as e:
-                pass
-        
-        # If all approaches failed, log an error
+            pass
         return False
 
     def set_theme(self, theme_name):

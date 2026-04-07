@@ -438,26 +438,23 @@ class AttachMode(QObject):
             # Use full update on release to ensure everything is drawn correctly
             self.canvas.update()
 
-        # Apply deferred group update now that dragging is complete
+        # Gate stays set so strand_created.emit() below won't trigger synchronous
+        # group updates via on_strand_created.  Cleared inside deferred callback.
         if hasattr(self, '_pending_group_update') and self._pending_group_update:
             pgu = self._pending_group_update
             self._pending_group_update = None
-            group_name = pgu['parent_group_name']
             new_strand = pgu['new_strand']
             parent_strand = pgu['parent_strand']
 
-            # Now handle group cleanup (delete/recreate) that was deferred from mouse press
-            self.canvas.attach_strand(parent_strand, new_strand)
+            def _deferred_group_update():
+                self.canvas._suppress_group_updates = False
+                if hasattr(self.canvas, 'group_layer_manager') and self.canvas.group_layer_manager:
+                    self.canvas.group_layer_manager.update_groups_with_new_strand(new_strand)
 
-            # Add new strand to group if group still exists
-            if group_name and group_name in self.canvas.groups:
-                if new_strand.layer_name not in self.canvas.groups[group_name].get('layers', []):
-                    self.canvas.groups[group_name]['layers'].append(new_strand.layer_name)
-                if new_strand not in self.canvas.groups[group_name].get('strands', []):
-                    self.canvas.groups[group_name]['strands'].append(new_strand)
-
-            # Emit strand_attached signal and update groups now that strand is finalized
+            QTimer.singleShot(0, _deferred_group_update)
             self.strand_attached.emit(parent_strand, new_strand)
+        else:
+            self.canvas._suppress_group_updates = False
 
         # Check if we're finishing a strand creation (have a current_strand being dragged)
         if self.canvas.current_strand:
@@ -1074,6 +1071,9 @@ class AttachMode(QObject):
                 count += 1
                 
             new_strand.layer_name = f"{set_number}_{count}"
+
+        # Suppress group operations while mouse is held down
+        self.canvas._suppress_group_updates = True
 
         # Defer all group operations until mouse release to avoid crashes
         # from group delete/recreate during drag operations

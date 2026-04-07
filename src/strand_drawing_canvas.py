@@ -140,6 +140,7 @@ class StrandDrawingCanvas(QWidget):
         self.move_start_pos = None
         
         self.groups = {}  # Add this line to initialize the groups attribute
+        self._suppress_group_updates = False  # Gate: block group ops during mouse drags
         self.rotating_group = None
         self.rotation_center = None
         self.original_strand_positions = {}
@@ -3793,7 +3794,8 @@ class StrandDrawingCanvas(QWidget):
             self.layer_panel.update_attachable_states()
 
         # Inform the GroupLayerManager about the new strand
-        if hasattr(self, 'group_layer_manager') and self.group_layer_manager:
+        # Skip when suppressed (during mouse drags) — deferred to next event-loop tick
+        if hasattr(self, 'group_layer_manager') and self.group_layer_manager and not self._suppress_group_updates:
             self.group_layer_manager.update_groups_with_new_strand(strand)
 
         pass
@@ -4493,6 +4495,7 @@ class StrandDrawingCanvas(QWidget):
         self._suppress_layer_panel_refresh = False
         self._suppress_repaint = False
         self._suppress_attachment_updates = False
+        self._suppress_group_updates = False
         pass
     
     def _reset_all_modes_for_new_strand(self):

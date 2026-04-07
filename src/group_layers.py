@@ -1019,6 +1019,20 @@ class GroupPanel(QWidget):
         # Fetch group data reliably from canvas.groups
         group_data = self.canvas.groups.get(group_name)
         if group_data:
+            # Rebuild strands list from live canvas.strands to avoid stale references
+            # (e.g. after individual strand moves in move mode)
+            layers_in_group = group_data.get('layers', [])
+            refreshed_strands = []
+            for strand in self.canvas.strands:
+                if hasattr(strand, 'layer_name') and strand.layer_name in layers_in_group:
+                    if strand not in refreshed_strands:
+                        refreshed_strands.append(strand)
+                    if hasattr(strand, 'attached_strands'):
+                        for attached in strand.attached_strands:
+                            if attached not in refreshed_strands:
+                                refreshed_strands.append(attached)
+            group_data['strands'] = refreshed_strands
+
             # Set the active group name
             self.active_group_name = group_name
             if self.canvas:
@@ -1066,12 +1080,21 @@ class GroupPanel(QWidget):
 
                 print("[DEBUG ROTATE] About to start canvas rotation and show dialog...")
                 self.canvas.start_group_rotation(group_name)
-                dialog = GroupRotateDialog(group_name, group_panel=self, parent=self)
-                dialog.rotation_updated.connect(self.update_group_rotation)
-                dialog.rotation_finished.connect(self.finish_group_rotation)
-                print("[DEBUG ROTATE] Dialog created, about to exec...")
-                dialog.exec_()
-                print("[DEBUG ROTATE] Dialog closed")
+                # Disable GC during dialog to prevent Qt C++ access violations
+                # from objects being collected while the modal event loop runs
+                import gc as _gc
+                _gc_was_enabled = _gc.isenabled()
+                _gc.disable()
+                try:
+                    dialog = GroupRotateDialog(group_name, group_panel=self, parent=self)
+                    dialog.rotation_updated.connect(self.update_group_rotation)
+                    dialog.rotation_finished.connect(self.finish_group_rotation)
+                    print("[DEBUG ROTATE] Dialog created, about to exec...")
+                    dialog.exec_()
+                    print("[DEBUG ROTATE] Dialog closed")
+                finally:
+                    if _gc_was_enabled:
+                        _gc.enable()
             else:
                 print("[DEBUG ROTATE] No canvas")
         else:
@@ -1352,14 +1375,25 @@ class GroupPanel(QWidget):
     def finish_group_rotation(self, group_name):
         """Finish the rotation of a group and ensure data is preserved."""
         pass
-        
+
         # Use a flag to ensure we only save once per rotation
         if hasattr(self, '_rotation_save_done') and self._rotation_save_done:
             pass
             return
-            
 
-            
+        # Disable GC to prevent Qt C++ access violations during cleanup/repaint
+        import gc as _gc
+        _gc_was_enabled = _gc.isenabled()
+        _gc.disable()
+
+        try:
+            self._finish_group_rotation_inner(group_name)
+        finally:
+            if _gc_was_enabled:
+                _gc.enable()
+
+    def _finish_group_rotation_inner(self, group_name):
+        """Inner implementation of finish_group_rotation (GC-protected by caller)."""
         if self.canvas:
             try:
                 # Get the current main strands before preserving
@@ -4575,6 +4609,20 @@ class GroupLayerManager:
         # Fetch group data reliably from canvas.groups
         group_data = self.canvas.groups.get(group_name)
         if group_data:
+            # Rebuild strands list from live canvas.strands to avoid stale references
+            # (e.g. after individual strand moves in move mode)
+            layers_in_group = group_data.get('layers', [])
+            refreshed_strands = []
+            for strand in self.canvas.strands:
+                if hasattr(strand, 'layer_name') and strand.layer_name in layers_in_group:
+                    if strand not in refreshed_strands:
+                        refreshed_strands.append(strand)
+                    if hasattr(strand, 'attached_strands'):
+                        for attached in strand.attached_strands:
+                            if attached not in refreshed_strands:
+                                refreshed_strands.append(attached)
+            group_data['strands'] = refreshed_strands
+
             # Set the active group name
             self.active_group_name = group_name
             if self.canvas:
@@ -4620,10 +4668,19 @@ class GroupLayerManager:
                     self.pre_rotation_state[strand.layer_name] = state
                 
                 self.canvas.start_group_rotation(group_name)
-                dialog = GroupRotateDialog(group_name, self, parent=self.main_window)
-                dialog.rotation_updated.connect(self.update_group_rotation)
-                dialog.rotation_finished.connect(self.finish_group_rotation)
-                dialog.exec_()
+                # Disable GC during dialog to prevent Qt C++ access violations
+                # from objects being collected while the modal event loop runs
+                import gc as _gc
+                _gc_was_enabled = _gc.isenabled()
+                _gc.disable()
+                try:
+                    dialog = GroupRotateDialog(group_name, self, parent=self.main_window)
+                    dialog.rotation_updated.connect(self.update_group_rotation)
+                    dialog.rotation_finished.connect(self.finish_group_rotation)
+                    dialog.exec_()
+                finally:
+                    if _gc_was_enabled:
+                        _gc.enable()
             else:
                 pass
         else:
@@ -4649,13 +4706,21 @@ class GroupLayerManager:
 
     def finish_group_rotation(self, group_name):
         if self.active_group_name == group_name:
-            # Restore group data after rotation
-            self.group_layer_manager.restore_group_data(group_name)
-            pass
-            # Clean up pre-rotation state
-            self.pre_rotation_state = {}
-            self.active_group_name = None
-            pass
+            # Disable GC to prevent Qt C++ access violations during cleanup
+            import gc as _gc
+            _gc_was_enabled = _gc.isenabled()
+            _gc.disable()
+            try:
+                # Restore group data after rotation
+                self.group_layer_manager.restore_group_data(group_name)
+                pass
+                # Clean up pre-rotation state
+                self.pre_rotation_state = {}
+                self.active_group_name = None
+                pass
+            finally:
+                if _gc_was_enabled:
+                    _gc.enable()
 
     def edit_strand_angles(self, group_name):
         # Fetch group data reliably from canvas.groups

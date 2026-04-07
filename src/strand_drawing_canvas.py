@@ -835,12 +835,17 @@ class StrandDrawingCanvas(QWidget):
         #logging.info(f"Canvas group data updated for group '{group_name}'")
     def finish_group_rotation(self, group_name):
         """Finish rotating a group of strands."""
-        #logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Starting for group '{group_name}'")
+        # Disable GC to prevent Qt C++ access violations during cleanup/repaint
+        import gc as _gc
+        _gc_was_enabled = _gc.isenabled()
+        _gc.disable()
+        try:
+            self._finish_group_rotation_inner(group_name)
+        finally:
+            if _gc_was_enabled:
+                _gc.enable()
 
-        # Log initial state
-        #logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Current rotating_group_name: {getattr(self, 'rotating_group_name', None)}")
-        #logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Group exists in self.groups: {group_name in self.groups}")
-        
+    def _finish_group_rotation_inner(self, group_name):
         if hasattr(self, 'pre_rotation_main_strands'):
             pass
         else:

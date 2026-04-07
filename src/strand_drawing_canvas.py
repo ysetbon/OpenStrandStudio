@@ -157,6 +157,7 @@ class StrandDrawingCanvas(QWidget):
         self._selected_strand = None
         self.show_control_points = True  # Initialize control points visibility
         self.move_selected_only = False  # When True, only selected strand is interactive in move mode
+        self.show_cp_selected_only = False  # When True, only show control points for selected strand
         self.current_strand = None  # Currently active strand
         self.strand_width = 46  # Width of strands
         # strand_color will be set from default_strand_color later in this method

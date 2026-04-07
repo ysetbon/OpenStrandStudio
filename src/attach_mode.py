@@ -438,12 +438,33 @@ class AttachMode(QObject):
             # Use full update on release to ensure everything is drawn correctly
             self.canvas.update()
 
+        # Apply deferred group update now that dragging is complete
+        if hasattr(self, '_pending_group_update') and self._pending_group_update:
+            pgu = self._pending_group_update
+            self._pending_group_update = None
+            group_name = pgu['parent_group_name']
+            new_strand = pgu['new_strand']
+            parent_strand = pgu['parent_strand']
+
+            # Now handle group cleanup (delete/recreate) that was deferred from mouse press
+            self.canvas.attach_strand(parent_strand, new_strand)
+
+            # Add new strand to group if group still exists
+            if group_name and group_name in self.canvas.groups:
+                if new_strand.layer_name not in self.canvas.groups[group_name].get('layers', []):
+                    self.canvas.groups[group_name]['layers'].append(new_strand.layer_name)
+                if new_strand not in self.canvas.groups[group_name].get('strands', []):
+                    self.canvas.groups[group_name]['strands'].append(new_strand)
+
+            # Emit strand_attached signal and update groups now that strand is finalized
+            self.strand_attached.emit(parent_strand, new_strand)
+
         # Check if we're finishing a strand creation (have a current_strand being dragged)
         if self.canvas.current_strand:
             # If the strand has a non-zero length, create it
             if self.canvas.current_strand.start != self.canvas.current_strand.end:
                 # No-op: previously logged strand creation details
-                
+
                 self.strand_created.emit(self.canvas.current_strand)
                 
                 # State saving will be handled by the enhanced mouseReleaseEvent in undo_redo_manager.py
@@ -1054,29 +1075,22 @@ class AttachMode(QObject):
                 
             new_strand.layer_name = f"{set_number}_{count}"
 
-        # Call canvas's attach_strand method FIRST to handle any group cleanup
-        self.canvas.attach_strand(parent_strand, new_strand)
+        # Defer all group operations until mouse release to avoid crashes
+        # from group delete/recreate during drag operations
+        self._pending_group_update = {
+            'parent_group_name': parent_group_name,
+            'new_strand': new_strand,
+            'parent_strand': parent_strand,
+        }
 
-        # If parent was in a group and the group still exists after attach_strand processing, update group data
-        if parent_group and parent_group_name and parent_group_name in self.canvas.groups:
-            # Add new strand to group
-            self.canvas.groups[parent_group_name]['layers'].append(new_strand.layer_name)
-            self.canvas.groups[parent_group_name]['strands'].append(new_strand)
-        elif parent_group and parent_group_name:
-            # Group was deleted or not found after attach_strand processing
-            pass
-        
         # Update connections in layer state manager
-        # NOTE: Don't manually update connections here - let LayerStateManager.save_current_state() 
+        # NOTE: Don't manually update connections here - let LayerStateManager.save_current_state()
         # calculate them based on the actual strand relationships (parent/child, attachment_side, etc.)
         # This ensures connections are always in the correct format: [start_connection(end_point), end_connection(end_point)]
         if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
             # Force a state save to recalculate connections properly
             self.canvas.layer_state_manager.save_current_state()
             # Note: State saving will be handled by the undo_redo_manager through strand_created signal
-        
-        # Emit signals
-        self.strand_attached.emit(parent_strand, new_strand)
 
     def try_attach_to_attached_strands(self, attached_strands, pos, circle_radius):
         """Recursively try to attach to any of the attached strands."""

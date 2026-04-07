@@ -236,6 +236,7 @@ Examples:<br>
         # Selected Strand settings
         'selected_strand_settings': 'Selected Strand',
         'move_selected_only': 'Move Selected Only',
+        'show_cp_selected_only': 'Show CP Selected Only',
 
         # LayerPanel translations
         'layer_panel_title': 'Layer Panel',
@@ -675,6 +676,7 @@ Exemples :<br>
         # Selected Strand settings
         'selected_strand_settings': 'Brin Sélectionné',
         'move_selected_only': 'Dépl. Sélect. Seul.',
+        'show_cp_selected_only': 'Afficher PC Sélect. Seul.',
 
         # LayerPanel translations
         'layer_panel_title': 'Panneau des Couches',
@@ -1213,6 +1215,7 @@ Beispiele:<br>
         # Selected Strand settings
         'selected_strand_settings': 'Ausgewählter Strang',
         'move_selected_only': 'Nur Auswahl bewegen',
+        'show_cp_selected_only': 'KP nur Auswahl zeigen',
 
         # LayerPanel translations
         'layer_panel_title': 'Ebenenpanel',
@@ -1649,6 +1652,7 @@ Esempi:<br>
         # Selected Strand settings
         'selected_strand_settings': 'Filo Selezionato',
         'move_selected_only': 'Muovi Solo Selez.',
+        'show_cp_selected_only': 'Mostra PC Solo Selez.',
 
         # LayerPanel translations
         'layer_panel_title': 'Pannello Livelli',
@@ -2141,6 +2145,7 @@ Ejemplos:<br>
         # Selected Strand settings
         'selected_strand_settings': 'Hebra Seleccionada',
         'move_selected_only': 'Mover Solo Selec.',
+        'show_cp_selected_only': 'Mostrar PC Solo Selec.',
 
         # LayerPanel translations
         'layer_panel_title': 'Panel de Capas',
@@ -2633,6 +2638,7 @@ Exemplos:<br>
         # Selected Strand settings
         'selected_strand_settings': 'Fio Selecionado',
         'move_selected_only': 'Mover Só Selec.',
+        'show_cp_selected_only': 'Mostrar PC Só Selec.',
 
         # LayerPanel translations
         'layer_panel_title': 'Painel de Camadas',
@@ -3133,6 +3139,7 @@ Exemplos:<br>
         # Selected Strand settings
         'selected_strand_settings': 'חוט נבחר',
         'move_selected_only': 'הזז נבחר בלבד',
+        'show_cp_selected_only': 'הצג נק. בקרה נבחר בלבד',
 
         # LayerPanel translations
         'layer_panel_title': 'חלונית השכבות',

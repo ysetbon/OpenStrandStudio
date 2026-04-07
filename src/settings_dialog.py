@@ -60,6 +60,7 @@ class SettingsDialog(QDialog):
         self.show_move_highlights = True  # Default to showing highlights in move modes
         self.show_hover_highlights = True  # Default to showing hover highlights
         self.move_selected_only = getattr(canvas, 'move_selected_only', False)  # Move only selected strand in move mode
+        self.show_cp_selected_only = getattr(canvas, 'show_cp_selected_only', False)  # Show CPs only for selected strand family
         # NEW: Use extended mask option (controls extra expansion of masked areas)
         # self.use_extended_mask = False  # Default to using exact mask (small +3 offset)
         # Extension line parameters
@@ -115,6 +116,11 @@ class SettingsDialog(QDialog):
             self.canvas.strand_width = self.default_strand_width
             self.canvas.stroke_width = self.default_stroke_width
         
+        # Apply loaded selected strand settings to canvas
+        if self.canvas:
+            self.canvas.move_selected_only = self.move_selected_only
+            self.canvas.show_cp_selected_only = self.show_cp_selected_only
+
         # Apply loaded extension line settings to canvas
         if self.canvas:
             self.canvas.extension_length = self.extension_length
@@ -1285,6 +1291,9 @@ class SettingsDialog(QDialog):
                         elif line.startswith('MoveSelectedOnly:'):
                             value = line.split(':', 1)[1].strip().lower()
                             self.move_selected_only = (value == 'true')
+                        elif line.startswith('ShowCPSelectedOnly:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            self.show_cp_selected_only = (value == 'true')
                         # elif line.startswith('UseExtendedMask:'):
                         #     value = line.split(':', 1)[1].strip().lower()
                         #     self.use_extended_mask = (value == 'true')
@@ -2314,6 +2323,23 @@ class SettingsDialog(QDialog):
             self.move_selected_only_layout.addStretch()
 
         selected_strand_layout.addLayout(self.move_selected_only_layout)
+
+        # Show CP Selected Only checkbox
+        self.show_cp_selected_only_layout = QHBoxLayout()
+        self.show_cp_selected_only_label = QLabel(_['show_cp_selected_only'] if 'show_cp_selected_only' in _ else "Show CP Selected Only")
+        self.show_cp_selected_only_checkbox = QCheckBox()
+        self.show_cp_selected_only_checkbox.setChecked(self.show_cp_selected_only)
+
+        if self.is_rtl_language(self.current_language):
+            self.show_cp_selected_only_layout.addStretch()
+            self.show_cp_selected_only_layout.addWidget(self.show_cp_selected_only_checkbox)
+            self.show_cp_selected_only_layout.addWidget(self.show_cp_selected_only_label)
+        else:
+            self.show_cp_selected_only_layout.addWidget(self.show_cp_selected_only_label)
+            self.show_cp_selected_only_layout.addWidget(self.show_cp_selected_only_checkbox)
+            self.show_cp_selected_only_layout.addStretch()
+
+        selected_strand_layout.addLayout(self.show_cp_selected_only_layout)
 
         selected_strand_layout.addStretch()
         self.selected_strand_ok_button = QPushButton(_['ok'])
@@ -3604,6 +3630,12 @@ class SettingsDialog(QDialog):
         if self.canvas:
             self.canvas.move_selected_only = self.move_selected_only
 
+        # Apply Show CP Selected Only Setting
+        self.show_cp_selected_only = self.show_cp_selected_only_checkbox.isChecked()
+        if self.canvas:
+            self.canvas.show_cp_selected_only = self.show_cp_selected_only
+            self.canvas.update()
+
             # Check if the third control point setting changed
             if previous_third_control_point != self.enable_third_control_point:
                 # Reset all masked strands if the canvas has strands
@@ -3834,6 +3866,7 @@ class SettingsDialog(QDialog):
         self.reset_curvature_button.setText(_['reset'] if 'reset' in _ else "Reset")
         # Selected Strand settings labels
         self.move_selected_only_label.setText(_['move_selected_only'] if 'move_selected_only' in _ else "Move Selected Only")
+        self.show_cp_selected_only_label.setText(_['show_cp_selected_only'] if 'show_cp_selected_only' in _ else "Show CP Selected Only")
         self.selected_strand_ok_button.setText(_['ok'])
         self.reset_curvature_button.setToolTip(_['reset_curvature_tooltip'] if 'reset_curvature_tooltip' in _ else "Reset all curvature settings to default values")
         self.apply_button.setText(_['ok'])
@@ -4287,6 +4320,7 @@ class SettingsDialog(QDialog):
                 file.write(f"ShowHoverHighlights: {str(self.show_hover_highlights).lower()}\n")
                 # Save move selected only setting
                 file.write(f"MoveSelectedOnly: {str(self.move_selected_only).lower()}\n")
+                file.write(f"ShowCPSelectedOnly: {str(self.show_cp_selected_only).lower()}\n")
                 # Save shadow blur settings
                 file.write(f"NumSteps: {self.num_steps}\n")
                 file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place

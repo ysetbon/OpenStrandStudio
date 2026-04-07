@@ -1220,6 +1220,8 @@ class MoveMode:
         control_point_moved = False
         for strand in self.canvas.strands:
             if not getattr(strand, 'deleted', False) and not getattr(strand, 'is_hidden', False):
+                if not self._is_strand_allowed_by_selection(strand):
+                    continue
                 if self.try_move_control_points(strand, pos, event):
                     control_point_moved = True
                     
@@ -1787,22 +1789,10 @@ class MoveMode:
             self.move_timer.stop()
 
     def _is_strand_allowed_by_selection(self, strand):
-        """When move_selected_only is on, only allow the selected strand and its relatives."""
-        if not getattr(self.canvas, 'move_selected_only', False):
+        """When move_selected_only or show_cp_selected_only is on, only allow the selected strand and its relatives."""
+        if not getattr(self.canvas, 'move_selected_only', False) and not getattr(self.canvas, 'show_cp_selected_only', False):
             return True
-        selected = self.canvas.selected_strand or self.canvas.selected_attached_strand
-        if selected is None:
-            return True
-        if strand == selected:
-            return True
-        if hasattr(selected, 'attached_strands') and strand in selected.attached_strands:
-            return True
-        if isinstance(selected, AttachedStrand) and hasattr(selected, 'parent_strand'):
-            if strand == selected.parent_strand:
-                return True
-            if hasattr(selected.parent_strand, 'attached_strands') and strand in selected.parent_strand.attached_strands:
-                return True
-        return False
+        return self.canvas.is_strand_in_selected_family(strand)
 
     def handle_strand_movement(self, pos, event=None):
         """
@@ -1917,6 +1907,8 @@ class MoveMode:
         """
         for attached_strand in attached_strands:
             if not getattr(attached_strand, 'deleted', False) and not getattr(attached_strand, 'is_hidden', False):
+                if not self._is_strand_allowed_by_selection(attached_strand):
+                    continue
                 if self.try_move_control_points(attached_strand, pos):
                     return True
                 if self.try_move_attached_strands_control_points(attached_strand.attached_strands, pos):
@@ -1936,6 +1928,8 @@ class MoveMode:
         """
         for attached_strand in attached_strands:
             if not getattr(attached_strand, 'deleted', False) and not getattr(attached_strand, 'is_hidden', False):
+                if not self._is_strand_allowed_by_selection(attached_strand):
+                    continue
                 if self.try_move_strand(attached_strand, pos, -1):  # Pass -1 if not in main strands list
                     return True
                 if self.try_move_attached_strands_start_end(attached_strand.attached_strands, pos):

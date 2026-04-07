@@ -460,8 +460,10 @@ class AttachMode(QObject):
         
         # Reset all properties including affected_strand
         self.affected_strand = None
+        # Clear CP filter reference used during attachment
+        self.canvas._cp_filter_strand = None
         # Ensure current_strand is set to None *after* potential logging
-        self.canvas.current_strand = None 
+        self.canvas.current_strand = None
         self.move_timer.stop()
         self.start_pos = None
         self.current_end = None
@@ -968,7 +970,12 @@ class AttachMode(QObject):
             if hasattr(self.canvas.selected_attached_strand, 'end_selected'):
                 self.canvas.selected_attached_strand.end_selected = False
             self.canvas.selected_attached_strand = None
-        
+
+        # When show_cp_selected_only is on, store parent as filter reference
+        # so its family CPs remain visible during attachment (without triggering highlight)
+        if getattr(self.canvas, 'show_cp_selected_only', False):
+            self.canvas._cp_filter_strand = parent_strand
+
         # Find the parent strand's group before creating new strand
         parent_group = None
         parent_group_name = None

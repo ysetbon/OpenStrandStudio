@@ -157,7 +157,8 @@ class StrandDrawingCanvas(QWidget):
         self._selected_strand = None
         self.show_control_points = True  # Initialize control points visibility
         self.move_selected_only = False  # When True, only selected strand is interactive in move mode
-        self.show_cp_selected_only = False  # When True, only show control points for selected strand
+        self.show_cp_selected_only = False  # When True, only show control points for selected strand family
+        self._cp_filter_strand = None  # Fallback reference strand for CP family filter (used during attach)
         self.current_strand = None  # Currently active strand
         self.strand_width = 46  # Width of strands
         # strand_color will be set from default_strand_color later in this method
@@ -536,6 +537,12 @@ class StrandDrawingCanvas(QWidget):
             #logging.info(f"Selected strand set to {strand.layer_name}. Caller: {self.get_caller()}")
             pass
         self._selected_strand = strand
+        # Clear attach-mode filter reference when selection changes
+        if hasattr(self, '_cp_filter_strand'):
+            self._cp_filter_strand = None
+        # When either filter is active, selection change affects which CPs are visible
+        if getattr(self, 'show_cp_selected_only', False) or getattr(self, 'move_selected_only', False):
+            self.update()
 
     def get_caller(self):
         import traceback
@@ -2267,20 +2274,10 @@ class StrandDrawingCanvas(QWidget):
                         if getattr(strand, 'is_hidden', False):
                             continue
 
-                        # When move_selected_only is on, only show areas for selected strand and relatives
-                        if getattr(self, 'move_selected_only', False):
-                            _sel = self.selected_strand or self.selected_attached_strand
-                            if _sel is not None and strand != _sel:
-                                _is_rel = False
-                                if hasattr(_sel, 'attached_strands') and strand in _sel.attached_strands:
-                                    _is_rel = True
-                                if isinstance(_sel, AttachedStrand) and hasattr(_sel, 'parent_strand'):
-                                    if strand == _sel.parent_strand:
-                                        _is_rel = True
-                                    if hasattr(_sel.parent_strand, 'attached_strands') and strand in _sel.parent_strand.attached_strands:
-                                        _is_rel = True
-                                if not _is_rel:
-                                    continue
+                        # Family filter: hide selection areas for non-family strands
+                        if getattr(self, 'move_selected_only', False) or getattr(self, 'show_cp_selected_only', False):
+                            if not self.is_strand_in_selected_family(strand):
+                                continue
 
                         if hasattr(strand, 'start') and hasattr(strand, 'end'):
                             # Check if a control point or strand point is being moved
@@ -5699,6 +5696,50 @@ class StrandDrawingCanvas(QWidget):
         painter.drawImage(self.rect(), buffer, buffer.rect())
         painter.restore()
 
+    def is_strand_in_selected_family(self, strand):
+        """Centralized family check for move_selected_only and show_cp_selected_only.
+        Returns True if the strand should be visible/interactive, False to hide/block it."""
+        from attached_strand import AttachedStrand
+        from move_mode import MoveMode
+
+        check_move = getattr(self, 'move_selected_only', False)
+        check_cp = getattr(self, 'show_cp_selected_only', False)
+
+        if not check_move and not check_cp:
+            return True
+
+        # Determine the reference strand: prefer explicit selection, fall back to affected_strand during drag
+        selected = self.selected_strand or self.selected_attached_strand
+        if selected is None:
+            # During active drag, canvas clears selected_strand — fall back to MoveMode.affected_strand
+            if hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode):
+                selected = getattr(self.current_mode, 'affected_strand', None)
+        if selected is None:
+            # During attach mode, use the stored filter reference (parent strand)
+            selected = getattr(self, '_cp_filter_strand', None)
+        if selected is None:
+            # If any filter is active and nothing is selected, hide everything
+            return False
+
+        if strand == selected:
+            return True
+
+        # move_selected_only: strict — only the exact selected strand
+        if check_move and not check_cp:
+            return False
+
+        # show_cp_selected_only: allow family (parent, siblings, direct children)
+        # Children of selected
+        if hasattr(selected, 'attached_strands') and strand in selected.attached_strands:
+            return True
+        # If selected is an attached strand, allow parent and siblings
+        if isinstance(selected, AttachedStrand) and hasattr(selected, 'parent_strand'):
+            if strand == selected.parent_strand:
+                return True
+            if hasattr(selected.parent_strand, 'attached_strands') and strand in selected.parent_strand.attached_strands:
+                return True
+        return False
+
     def draw_control_points(self, painter):
         """
         Draw control points for all non-masked strands.
@@ -5772,20 +5813,10 @@ class StrandDrawingCanvas(QWidget):
             if getattr(strand, 'is_hidden', False):
                 continue
 
-            # When move_selected_only is on and in move mode, only show CPs for selected strand and relatives
-            if getattr(self, 'move_selected_only', False) and in_move_mode:
-                _sel = self.selected_strand or self.selected_attached_strand
-                if _sel is not None and strand != _sel:
-                    _is_rel = False
-                    if hasattr(_sel, 'attached_strands') and strand in _sel.attached_strands:
-                        _is_rel = True
-                    if isinstance(_sel, AttachedStrand) and hasattr(_sel, 'parent_strand'):
-                        if strand == _sel.parent_strand:
-                            _is_rel = True
-                        if hasattr(_sel.parent_strand, 'attached_strands') and strand in _sel.parent_strand.attached_strands:
-                            _is_rel = True
-                    if not _is_rel:
-                        continue
+            # Family filter: hide CPs for non-family strands when either toggle is active
+            if getattr(self, 'show_cp_selected_only', False) or (getattr(self, 'move_selected_only', False) and in_move_mode):
+                if not self.is_strand_in_selected_family(strand):
+                    continue
 
             # --- Determine if we should skip drawing CPs for this strand ---
             should_skip = False

@@ -282,8 +282,8 @@ class CollapsibleGroupWidget(QWidget):
         from PyQt5.QtWidgets import QMenu, QAction, QWidgetAction
         _ = translations[self.language_code]
         
-        # Create menu without parent to avoid inheriting layout
-        context_menu = QMenu()
+        # Create menu with parent for proper C++ object ownership
+        context_menu = QMenu(self.group_button)
         
         # Check if RTL language
         is_rtl = self.is_rtl_language(self.language_code)
@@ -776,7 +776,7 @@ class GroupPanel(QWidget):
         group_data = self.canvas.groups.get(group_name)
         if group_data:
             # Pass self.canvas as the first parameter and group_name as the second
-            dialog = GroupMoveDialog(self.canvas, group_name)
+            dialog = GroupMoveDialog(self.canvas, group_name, parent=self)
             dialog.move_updated.connect(self.update_group_move)
             dialog.move_finished.connect(self.finish_group_move)
             dialog.exec_()
@@ -1066,7 +1066,7 @@ class GroupPanel(QWidget):
 
                 print("[DEBUG ROTATE] About to start canvas rotation and show dialog...")
                 self.canvas.start_group_rotation(group_name)
-                dialog = GroupRotateDialog(group_name, self)
+                dialog = GroupRotateDialog(group_name, group_panel=self, parent=self)
                 dialog.rotation_updated.connect(self.update_group_rotation)
                 dialog.rotation_finished.connect(self.finish_group_rotation)
                 print("[DEBUG ROTATE] Dialog created, about to exec...")
@@ -2530,8 +2530,9 @@ class GroupPanel(QWidget):
             self.canvas.undo_redo_manager.save_state()
 
         from group_shadow_editor_dialog import GroupShadowEditorDialog
-        dialog = GroupShadowEditorDialog(self.canvas, group_name, all_strands, parent=self)
-        dialog.show()
+        # Store reference to prevent garbage collection of non-modal dialog
+        self._group_shadow_dialog = GroupShadowEditorDialog(self.canvas, group_name, all_strands, parent=self)
+        self._group_shadow_dialog.show()
 
     def edit_strand_angles(self, group_name):
         # Fetch group data reliably from canvas.groups
@@ -2765,8 +2766,8 @@ class GroupMoveDialog(QDialog):
     move_updated = pyqtSignal(str, float, float)  # group_name, dx, dy
     move_finished = pyqtSignal(str)  # group_name
 
-    def __init__(self, canvas, group_name):
-        super().__init__()
+    def __init__(self, canvas, group_name, parent=None):
+        super().__init__(parent)
         # Remove Windows context-help button
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.canvas = canvas  # Canvas instance
@@ -4619,7 +4620,7 @@ class GroupLayerManager:
                     self.pre_rotation_state[strand.layer_name] = state
                 
                 self.canvas.start_group_rotation(group_name)
-                dialog = GroupRotateDialog(group_name, self)
+                dialog = GroupRotateDialog(group_name, self, parent=self.main_window)
                 dialog.rotation_updated.connect(self.update_group_rotation)
                 dialog.rotation_finished.connect(self.finish_group_rotation)
                 dialog.exec_()
@@ -4679,16 +4680,16 @@ class GroupLayerManager:
             editable_layers = [strand.layer_name for strand in all_strands 
                               if hasattr(strand, 'layer_name') and self.is_layer_editable(strand.layer_name)]
             
-            # Pass the fetched data to the dialog
+            # Pass the fetched data to the dialog with proper QWidget parent
             dialog = StrandAngleEditDialog(
-                group_name, 
+                group_name,
                 {
                     'strands': all_strands, # Pass the actual strand objects
                     'layers': [s.layer_name for s in all_strands if hasattr(s, 'layer_name')],
                     'editable_layers': editable_layers
-                }, 
-                self.canvas, 
-                self
+                },
+                self.canvas,
+                self.main_window
             )
             dialog.finished.connect(lambda: self.update_group_after_angle_edit(group_name))
             dialog.exec_()
@@ -4714,21 +4715,22 @@ class GroupRotateDialog(QDialog):
     rotation_updated = pyqtSignal(str, float)
     rotation_finished = pyqtSignal(str)
 
-    def __init__(self, group_name, parent=None):
-        super().__init__(parent)
+    def __init__(self, group_name, group_panel=None, parent=None):
+        # Use parent for Qt ownership; fall back to group_panel if it's a QWidget
+        qt_parent = parent
+        if qt_parent is None and group_panel is not None and isinstance(group_panel, QWidget):
+            qt_parent = group_panel
+        super().__init__(qt_parent)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.group_name = group_name
-        self.canvas = parent.canvas if parent and hasattr(parent, 'canvas') else None
-        # Connect our rotation_updated signal to a local slot so we can rotate immediately.
-        self.group_panel = parent  # Now we can access pre_rotation_state
-        # Connect the signal to our unified slot
-                # Define the language code, defaulting to 'en' if not available
+        self.canvas = group_panel.canvas if group_panel and hasattr(group_panel, 'canvas') else None
+        # Store group_panel reference to access pre_rotation_state
+        self.group_panel = group_panel
+        # Define the language code, defaulting to 'en' if not available
         self.language_code = self.canvas.language_code if self.canvas else 'en'
         _ = translations[self.language_code]
         self.original_angle = self.canvas.current_rotation_angle or 0.0
         self.rotation_updated.connect(self.on_angle_changed)
-
-        self.canvas = parent.canvas if parent and hasattr(parent, 'canvas') else None
         self.setWindowTitle(f"{_['rotate_group_strands']} {group_name}")
         self.angle = 0
         

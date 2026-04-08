@@ -596,27 +596,30 @@ class StrandDrawingCanvas(QWidget):
         self.pre_rotation_state = {}
 
         for strand in group_data['strands']:
-            # 1) Store the basic geometry
-            self.pre_rotation_state[strand.layer_name] = {
-                'start': QPointF(strand.start),
-                'end':   QPointF(strand.end)
-            }
-            # Control points if available
-            if hasattr(strand, "control_point1") and strand.control_point1 is not None:
-                self.pre_rotation_state[strand.layer_name]['control_point1'] = QPointF(strand.control_point1)
-            if hasattr(strand, "control_point2") and strand.control_point2 is not None:
-                self.pre_rotation_state[strand.layer_name]['control_point2'] = QPointF(strand.control_point2)
+            try:
+                # 1) Store the basic geometry
+                self.pre_rotation_state[strand.layer_name] = {
+                    'start': QPointF(strand.start),
+                    'end':   QPointF(strand.end)
+                }
+                # Control points if available
+                if hasattr(strand, "control_point1") and strand.control_point1 is not None:
+                    self.pre_rotation_state[strand.layer_name]['control_point1'] = QPointF(strand.control_point1)
+                if hasattr(strand, "control_point2") and strand.control_point2 is not None:
+                    self.pre_rotation_state[strand.layer_name]['control_point2'] = QPointF(strand.control_point2)
 
-            # 2) For MaskedStrand, store deletion_rectangles 
-            if isinstance(strand, MaskedStrand) and hasattr(strand, 'deletion_rectangles'):
-                self.pre_rotation_state[strand.layer_name]['deletion_rectangles'] = []
-                for rect in strand.deletion_rectangles:
-                    self.pre_rotation_state[strand.layer_name]['deletion_rectangles'].append({
-                        'top_left':     QPointF(*rect['top_left']),
-                        'top_right':    QPointF(*rect['top_right']),
-                        'bottom_left':  QPointF(*rect['bottom_left']),
-                        'bottom_right': QPointF(*rect['bottom_right']),
-                    })
+                # 2) For MaskedStrand, store deletion_rectangles
+                if isinstance(strand, MaskedStrand) and hasattr(strand, 'deletion_rectangles'):
+                    self.pre_rotation_state[strand.layer_name]['deletion_rectangles'] = []
+                    for rect in strand.deletion_rectangles:
+                        self.pre_rotation_state[strand.layer_name]['deletion_rectangles'].append({
+                            'top_left':     QPointF(*rect['top_left']),
+                            'top_right':    QPointF(*rect['top_right']),
+                            'bottom_left':  QPointF(*rect['bottom_left']),
+                            'bottom_right': QPointF(*rect['bottom_right']),
+                        })
+            except RuntimeError:
+                continue
 
         # Done: now we have an unrotated "snapshot"
         #logging.info(f"start_group_rotation: stored pre-rotation state for group '{group_name}'")
@@ -641,33 +644,36 @@ class StrandDrawingCanvas(QWidget):
             self.rotating_group_name = group_name
             self.original_strand_positions = {}
             for strand in group_data['strands']:
-                # Store all current positions
-                state = {
-                    'start': QPointF(strand.start),
-                    'end': QPointF(strand.end)
-                }
-                if not isinstance(strand, MaskedStrand):
-                    # For non-masked strands, also store control points if they exist
-                    if hasattr(strand, 'control_point1'):
-                        state['control_point1'] = QPointF(strand.control_point1)
-                    if hasattr(strand, 'control_point2'):
-                        state['control_point2'] = QPointF(strand.control_point2)
-                else:
-                    # Always store an empty list under "deletion_rectangles", so the rotation code can handle MaskedStrands consistently
-                    state['deletion_rectangles'] = []
-                    # If any deletion_rectangles do exist, store them now.
-                    if hasattr(strand, 'deletion_rectangles') and strand.deletion_rectangles:
-                        for rect in strand.deletion_rectangles:
-                            rect_corners = {
-                                'top_left': QPointF(*rect['top_left']),
-                                'top_right': QPointF(*rect['top_right']),
-                                'bottom_left': QPointF(*rect['bottom_left']),
-                                'bottom_right': QPointF(*rect['bottom_right'])
-                            }
-                            state['deletion_rectangles'].append(rect_corners)
+                try:
+                    # Store all current positions
+                    state = {
+                        'start': QPointF(strand.start),
+                        'end': QPointF(strand.end)
+                    }
+                    if not isinstance(strand, MaskedStrand):
+                        # For non-masked strands, also store control points if they exist
+                        if hasattr(strand, 'control_point1'):
+                            state['control_point1'] = QPointF(strand.control_point1)
+                        if hasattr(strand, 'control_point2'):
+                            state['control_point2'] = QPointF(strand.control_point2)
+                    else:
+                        # Always store an empty list under "deletion_rectangles", so the rotation code can handle MaskedStrands consistently
+                        state['deletion_rectangles'] = []
+                        # If any deletion_rectangles do exist, store them now.
+                        if hasattr(strand, 'deletion_rectangles') and strand.deletion_rectangles:
+                            for rect in strand.deletion_rectangles:
+                                rect_corners = {
+                                    'top_left': QPointF(*rect['top_left']),
+                                    'top_right': QPointF(*rect['top_right']),
+                                    'bottom_left': QPointF(*rect['bottom_left']),
+                                    'bottom_right': QPointF(*rect['bottom_right'])
+                                }
+                                state['deletion_rectangles'].append(rect_corners)
 
-                self.pre_rotation_state[strand.layer_name] = state
-                self.original_strand_positions[strand] = state
+                    self.pre_rotation_state[strand.layer_name] = state
+                    self.original_strand_positions[strand] = state
+                except RuntimeError:
+                    continue
             # Calculate center
             self.calculate_group_center(group_data['strands'])
             #logging.info(f"Started rotation for group '{group_name}'")
@@ -690,44 +696,53 @@ class StrandDrawingCanvas(QWidget):
 
             # Set rotation flag on all strands to prevent knot connection maintenance during rotation
             for strand in group_data['strands']:
-                strand._is_being_rotated = True
-
-            for strand in group_data['strands']:
-                original_pos = self.pre_rotation_state.get(strand.layer_name)
-                if not original_pos:
+                try:
+                    strand._is_being_rotated = True
+                except RuntimeError:
                     continue
 
-                # 1) Revert geometry from pre_rotation_state
-                strand.start = QPointF(original_pos['start'])
-                strand.end   = QPointF(original_pos['end'])
-                if 'control_point1' in original_pos:
-                    strand.control_point1 = QPointF(original_pos['control_point1'])
-                if 'control_point2' in original_pos:
-                    strand.control_point2 = QPointF(original_pos['control_point2'])
+            for strand in group_data['strands']:
+                try:
+                    original_pos = self.pre_rotation_state.get(strand.layer_name)
+                    if not original_pos:
+                        continue
 
-                # If MaskedStrand, revert each corner
-                if isinstance(strand, MaskedStrand) and 'deletion_rectangles' in original_pos:
-                    # Ensure the strand has at least that many rectangles
-                    while len(strand.deletion_rectangles) < len(original_pos['deletion_rectangles']):
-                        strand.deletion_rectangles.append({
-                            'top_left': (0,0), 'top_right': (0,0),
-                            'bottom_left': (0,0), 'bottom_right': (0,0),
-                        })
+                    # 1) Revert geometry from pre_rotation_state
+                    strand.start = QPointF(original_pos['start'])
+                    strand.end   = QPointF(original_pos['end'])
+                    if 'control_point1' in original_pos:
+                        strand.control_point1 = QPointF(original_pos['control_point1'])
+                    if 'control_point2' in original_pos:
+                        strand.control_point2 = QPointF(original_pos['control_point2'])
 
-                    # Copy each corner from original
-                    for i, orig_corners in enumerate(original_pos['deletion_rectangles']):
-                        strand.deletion_rectangles[i]['top_left']     = (orig_corners['top_left'].x(), orig_corners['top_left'].y())
-                        strand.deletion_rectangles[i]['top_right']    = (orig_corners['top_right'].x(), orig_corners['top_right'].y())
-                        strand.deletion_rectangles[i]['bottom_left']  = (orig_corners['bottom_left'].x(), orig_corners['bottom_left'].y())
-                        strand.deletion_rectangles[i]['bottom_right'] = (orig_corners['bottom_right'].x(), orig_corners['bottom_right'].y())
+                    # If MaskedStrand, revert each corner
+                    if isinstance(strand, MaskedStrand) and 'deletion_rectangles' in original_pos:
+                        # Ensure the strand has at least that many rectangles
+                        while len(strand.deletion_rectangles) < len(original_pos['deletion_rectangles']):
+                            strand.deletion_rectangles.append({
+                                'top_left': (0,0), 'top_right': (0,0),
+                                'bottom_left': (0,0), 'bottom_right': (0,0),
+                            })
 
-                # 2) Now perform exactly one rotation step
-                #    i.e. rotate from the original baseline to 'angle' degrees
-                self.rotate_strand(strand, center, angle)
+                        # Copy each corner from original
+                        for i, orig_corners in enumerate(original_pos['deletion_rectangles']):
+                            strand.deletion_rectangles[i]['top_left']     = (orig_corners['top_left'].x(), orig_corners['top_left'].y())
+                            strand.deletion_rectangles[i]['top_right']    = (orig_corners['top_right'].x(), orig_corners['top_right'].y())
+                            strand.deletion_rectangles[i]['bottom_left']  = (orig_corners['bottom_left'].x(), orig_corners['bottom_left'].y())
+                            strand.deletion_rectangles[i]['bottom_right'] = (orig_corners['bottom_right'].x(), orig_corners['bottom_right'].y())
+
+                    # 2) Now perform exactly one rotation step
+                    #    i.e. rotate from the original baseline to 'angle' degrees
+                    self.rotate_strand(strand, center, angle)
+                except RuntimeError:
+                    continue
 
             # Clear rotation flag after all rotations are complete
             for strand in group_data['strands']:
-                strand._is_being_rotated = False
+                try:
+                    strand._is_being_rotated = False
+                except RuntimeError:
+                    continue
 
             self.update()  # Trigger redraw
         else:
@@ -756,53 +771,33 @@ class StrandDrawingCanvas(QWidget):
 
     def rotate_strand(self, strand, center, angle):
         """Rotate the strand around 'center' by 'angle' degrees, including control points."""
+        try:
+            strand.start = self.rotate_point(strand.start, center, angle)
+            strand.end   = self.rotate_point(strand.end, center, angle)
 
-        strand.start = self.rotate_point(strand.start, center, angle)
-        strand.end   = self.rotate_point(strand.end, center, angle)
+            # Rotate control points if present
+            if hasattr(strand, "control_point1") and strand.control_point1 is not None:
+                strand.control_point1 = self.rotate_point(strand.control_point1, center, angle)
+            if hasattr(strand, "control_point2") and strand.control_point2 is not None:
+                strand.control_point2 = self.rotate_point(strand.control_point2, center, angle)
 
+            # If it's a MaskedStrand, also rotate the deletion rectangle corners
+            if hasattr(strand, "deletion_rectangles"):
+                for rect in strand.deletion_rectangles:
+                    tl = self.rotate_point(QPointF(*rect["top_left"]), center, angle)
+                    tr = self.rotate_point(QPointF(*rect["top_right"]), center, angle)
+                    bl = self.rotate_point(QPointF(*rect["bottom_left"]), center, angle)
+                    br = self.rotate_point(QPointF(*rect["bottom_right"]), center, angle)
+                    rect["top_left"]     = (tl.x(), tl.y())
+                    rect["top_right"]    = (tr.x(), tr.y())
+                    rect["bottom_left"]  = (bl.x(), bl.y())
+                    rect["bottom_right"] = (br.x(), br.y())
 
-
-        # Rotate control points if present
-
-        if hasattr(strand, "control_point1") and strand.control_point1 is not None:
-
-            strand.control_point1 = self.rotate_point(strand.control_point1, center, angle)
-
-        if hasattr(strand, "control_point2") and strand.control_point2 is not None:
-
-            strand.control_point2 = self.rotate_point(strand.control_point2, center, angle)
-
-
-
-        # If it's a MaskedStrand, also rotate the deletion rectangle corners
-
-        if hasattr(strand, "deletion_rectangles"):
-
-            for rect in strand.deletion_rectangles:
-
-                tl = self.rotate_point(QPointF(*rect["top_left"]), center, angle)
-
-                tr = self.rotate_point(QPointF(*rect["top_right"]), center, angle)
-
-                bl = self.rotate_point(QPointF(*rect["bottom_left"]), center, angle)
-
-                br = self.rotate_point(QPointF(*rect["bottom_right"]), center, angle)
-
-                rect["top_left"]     = (tl.x(), tl.y())
-
-                rect["top_right"]    = (tr.x(), tr.y())
-
-                rect["bottom_left"]  = (bl.x(), bl.y())
-
-                rect["bottom_right"] = (br.x(), br.y())
-
-
-
-        strand.update_shape()
-
-        if hasattr(strand, "update_side_line"):
-
-            strand.update_side_line()
+            strand.update_shape()
+            if hasattr(strand, "update_side_line"):
+                strand.update_side_line()
+        except RuntimeError:
+            pass
 
 
 
@@ -810,19 +805,22 @@ class StrandDrawingCanvas(QWidget):
     def calculate_group_center(self, strands):
         all_points = []
         for strand in strands:
-            all_points.extend([strand.start, strand.end])
-            # Include strand's control points if present
-            if hasattr(strand, 'control_point1') and strand.control_point1 is not None:
-                all_points.append(strand.control_point1)
-            if hasattr(strand, 'control_point2') and strand.control_point2 is not None:
-                all_points.append(strand.control_point2)
-            if hasattr(strand, 'deletion_rectangles'):
-                for rect in strand.deletion_rectangles:
-                    # Unpack the tuples into x,y coordinates
-                    all_points.append(QPointF(*rect['top_left']))
-                    all_points.append(QPointF(*rect['top_right'])) 
-                    all_points.append(QPointF(*rect['bottom_left']))
-                    all_points.append(QPointF(*rect['bottom_right']))
+            try:
+                all_points.extend([strand.start, strand.end])
+                # Include strand's control points if present
+                if hasattr(strand, 'control_point1') and strand.control_point1 is not None:
+                    all_points.append(strand.control_point1)
+                if hasattr(strand, 'control_point2') and strand.control_point2 is not None:
+                    all_points.append(strand.control_point2)
+                if hasattr(strand, 'deletion_rectangles'):
+                    for rect in strand.deletion_rectangles:
+                        # Unpack the tuples into x,y coordinates
+                        all_points.append(QPointF(*rect['top_left']))
+                        all_points.append(QPointF(*rect['top_right']))
+                        all_points.append(QPointF(*rect['bottom_left']))
+                        all_points.append(QPointF(*rect['bottom_right']))
+            except RuntimeError:
+                continue
         if all_points:
             center_x = sum(point.x() for point in all_points) / len(all_points)
             center_y = sum(point.y() for point in all_points) / len(all_points)
@@ -873,8 +871,11 @@ class StrandDrawingCanvas(QWidget):
                 # Clear rotation flag on all strands in the group
                 group_data = self.groups[group_name]
                 for strand in group_data.get('strands', []):
-                    if hasattr(strand, '_is_being_rotated'):
-                        strand._is_being_rotated = False
+                    try:
+                        if hasattr(strand, '_is_being_rotated'):
+                            strand._is_being_rotated = False
+                    except RuntimeError:
+                        continue
             else:
                 #logging.error(f"[StrandDrawingCanvas.finish_group_rotation] Group {group_name} not found in self.groups")
                 pass
@@ -894,10 +895,13 @@ class StrandDrawingCanvas(QWidget):
 
 
     def update_original_positions_recursively(self, strand):
-        strand.original_start = QPointF(strand.start)
-        strand.original_end = QPointF(strand.end)
-        for attached_strand in strand.attached_strands:
-            self.update_original_positions_recursively(attached_strand)
+        try:
+            strand.original_start = QPointF(strand.start)
+            strand.original_end = QPointF(strand.end)
+            for attached_strand in strand.attached_strands:
+                self.update_original_positions_recursively(attached_strand)
+        except RuntimeError:
+            pass
 
              
     def create_strand(self, start, end, set_number):
@@ -947,13 +951,16 @@ class StrandDrawingCanvas(QWidget):
         """
         Recursively initialize original positions for a strand and its attached strands.
         """
-        if not hasattr(strand, 'original_start'):
-            strand.original_start = QPointF(strand.start)
-            strand.original_end = QPointF(strand.end)
-        for attached_strand in strand.attached_strands:
-            if isinstance(attached_strand, MaskedStrand):
-                continue
-            self.initialize_strand_original_positions_recursively(attached_strand)
+        try:
+            if not hasattr(strand, 'original_start'):
+                strand.original_start = QPointF(strand.start)
+                strand.original_end = QPointF(strand.end)
+            for attached_strand in strand.attached_strands:
+                if isinstance(attached_strand, MaskedStrand):
+                    continue
+                self.initialize_strand_original_positions_recursively(attached_strand)
+        except RuntimeError:
+            pass
     def extract_main_layer(self, layer_name):
         """Extract the main layer number from a layer name."""
         parts = layer_name.split('_')
@@ -964,16 +971,22 @@ class StrandDrawingCanvas(QWidget):
     def find_attached_strands(self, strand):
         attached = []
         for other_strand in self.strands:
-            if other_strand != strand:
-                if self.is_strand_attached(strand, other_strand):
-                    attached.append(other_strand)
+            try:
+                if other_strand != strand:
+                    if self.is_strand_attached(strand, other_strand):
+                        attached.append(other_strand)
+            except RuntimeError:
+                continue
         return attached
 
     def is_strand_attached(self, strand1, strand2):
-        return (strand1.start == strand2.start or
-                strand1.start == strand2.end or
-                strand1.end == strand2.start or
-                strand1.end == strand2.end)
+        try:
+            return (strand1.start == strand2.start or
+                    strand1.start == strand2.end or
+                    strand1.end == strand2.start or
+                    strand1.end == strand2.end)
+        except RuntimeError:
+            return False
 
  
 

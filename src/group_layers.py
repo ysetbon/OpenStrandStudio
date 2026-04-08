@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel, 
                              QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,  QScrollArea, QMenu, QTableWidget, 
                              QTableWidgetItem, QHeaderView, QSizePolicy,  QMessageBox, QAbstractButton)
-from PyQt5.QtWidgets import QStyleOptionButton, QProxyStyle, QStyle
+from PyQt5.QtWidgets import QStyleOptionButton, QProxyStyle, QStyle, QStyledItemDelegate
 from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QPoint, QEvent
 from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon, QIntValidator, QGuiApplication, QPainter, QPen, QPainterPath
 from math import atan2, degrees, isqrt
@@ -597,6 +597,44 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QInputDialog
 from PyQt5.QtCore import pyqtSignal, Qt, QPointF
 from PyQt5.QtGui import QDragEnterEvent, QDropEvent
 
+
+class _GroupTreeDelegate(QStyledItemDelegate):
+    """Custom delegate that paints group and child items with proper hover effects."""
+
+    def __init__(self, panel, parent=None):
+        super().__init__(parent or panel.tree)
+        self._panel = panel
+
+    def paint(self, painter, option, index):
+        colors = self._panel._get_theme_colors()
+        item = self._panel.tree.itemFromIndex(index)
+        is_group = item is not None and item.parent() is None
+        is_hovered = bool(option.state & QStyle.State_MouseOver)
+
+        if is_group:
+            bg = colors["group_hover_bg"] if is_hovered else colors["tree_bg"]
+        else:
+            bg = colors["child_hover_bg"] if is_hovered else colors["tree_bg"]
+
+        painter.fillRect(option.rect, QColor(bg))
+
+        # Draw text
+        painter.save()
+        painter.setPen(QColor(colors["text"]))
+        if is_group:
+            font = painter.font()
+            font.setBold(True)
+            painter.setFont(font)
+        text_rect = option.rect.adjusted(8, 0, 0, 0)
+        painter.drawText(text_rect, Qt.AlignVCenter | Qt.AlignLeft, index.data() or "")
+        painter.restore()
+
+    def sizeHint(self, option, index):
+        hint = super().sizeHint(option, index)
+        hint.setHeight(max(hint.height(), 28))
+        return hint
+
+
 class GroupPanel(QWidget):
     group_operation = pyqtSignal(str, str, list)  # operation, group_name, layer_indices
     move_group_started = pyqtSignal(str, list)  # New signal
@@ -626,7 +664,7 @@ class GroupPanel(QWidget):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         # --- QTreeWidget replaces scroll_area + scroll_layout + containers ---
-        from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem, QFrame
+        from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem, QFrame, QAbstractItemView
         self.tree = QTreeWidget(self)
         self.tree.setObjectName("groupPanelTree")
         self.tree.setHeaderHidden(True)
@@ -635,19 +673,24 @@ class GroupPanel(QWidget):
         self.tree.setRootIsDecorated(False)
         self.tree.setFrameShape(QFrame.NoFrame)
         self.tree.setExpandsOnDoubleClick(False)
+        self.tree.setSelectionMode(QAbstractItemView.NoSelection)
+        self.tree.setFocusPolicy(Qt.NoFocus)
         self.tree.setMouseTracking(True)
         self.tree.viewport().setMouseTracking(True)
+        self.tree.viewport().setAttribute(Qt.WA_Hover, True)
         self.tree.viewport().installEventFilter(self)
         self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self._on_tree_context_menu)
         self.tree.itemExpanded.connect(self._on_group_item_expanded)
         self.tree.itemCollapsed.connect(self._on_group_item_collapsed)
+        self.tree.setItemDelegate(_GroupTreeDelegate(self))
         self.layout.addWidget(self.tree)
 
         # Backward-compat aliases so external hasattr() checks don't break.
         # These are NEVER used for widget creation/destruction.
         self.scroll_area = self.tree
         self.scroll_layout = None  # Sentinel — external code should call sync_from_canvas() instead
+        self._hovered_group_name = None
         self.apply_theme()
 
     def _resolve_theme_name(self):
@@ -677,10 +720,9 @@ class GroupPanel(QWidget):
                 "tree_bg": "#2C2C2C",
                 "text": "#FFFFFF",
                 "border": "transparent",
-                "hover": "#666666",
-                "selected_bg": "#6A6A6A",
-                "selected_text": "#FFFFFF",
                 "group_bg": "#4D4D4D",
+                "group_hover_bg": "#666666",
+                "child_hover_bg": "#3A3A3A",
                 "menu_bg": "#333333",
                 "menu_text": "#FFFFFF",
                 "menu_border": "#1A1A1A",
@@ -695,10 +737,9 @@ class GroupPanel(QWidget):
                 "tree_bg": "#FFFFFF",
                 "text": "#000000",
                 "border": "transparent",
-                "hover": "#C4BDB5",
-                "selected_bg": "#B7B0A8",
-                "selected_text": "#000000",
                 "group_bg": "#D5CEC6",
+                "group_hover_bg": "#C4BDB5",
+                "child_hover_bg": "#F0F0F0",
                 "menu_bg": "#F0F0F0",
                 "menu_text": "#000000",
                 "menu_border": "#B8B8B8",
@@ -712,10 +753,9 @@ class GroupPanel(QWidget):
             "tree_bg": "#ECECEC",
             "text": "#000000",
             "border": "transparent",
-            "hover": "#A29E99",
-            "selected_bg": "#8F8B86",
-            "selected_text": "#FFFFFF",
             "group_bg": "#B9B4AE",
+            "group_hover_bg": "#A29E99",
+            "child_hover_bg": "#E0E0E0",
             "menu_bg": "#ECECEC",
             "menu_text": "#000000",
             "menu_border": "#B0B0B0",
@@ -735,29 +775,9 @@ class GroupPanel(QWidget):
                 color: {colors['text']};
                 border: none;
                 outline: none;
-                selection-background-color: {colors['selected_bg']};
-                selection-color: {colors['selected_text']};
             }}
             QTreeWidget::item {{
-                color: {colors['text']};
-                padding: 6px 8px;
                 border: none;
-            }}
-            QTreeWidget::item:hover {{
-                background-color: {colors['hover']};
-                color: {colors['text']};
-            }}
-            QTreeWidget::item:selected {{
-                background-color: {colors['selected_bg']};
-                color: {colors['selected_text']};
-            }}
-            QTreeWidget::item:selected:active {{
-                background-color: {colors['selected_bg']};
-                color: {colors['selected_text']};
-            }}
-            QTreeWidget::item:selected:!active {{
-                background-color: {colors['selected_bg']};
-                color: {colors['selected_text']};
             }}
             QTreeWidget::branch {{
                 background-color: {colors['tree_bg']};
@@ -775,14 +795,16 @@ class GroupPanel(QWidget):
         if watched is self.tree.viewport():
             if event.type() == QEvent.MouseMove:
                 item = self.tree.itemAt(event.pos())
+                hovered_group_name = item.data(0, Qt.UserRole) if item and item.parent() is None else None
+                self._set_hovered_group_name(hovered_group_name)
                 cursor = Qt.PointingHandCursor if item and item.parent() is None else Qt.ArrowCursor
                 self.tree.viewport().setCursor(cursor)
             elif event.type() == QEvent.Leave:
+                self._set_hovered_group_name(None)
                 self.tree.viewport().unsetCursor()
             elif event.type() == QEvent.MouseButtonRelease and event.button() == Qt.LeftButton:
                 item = self.tree.itemAt(event.pos())
                 if item and item.parent() is None:
-                    self.tree.setCurrentItem(item)
                     item.setExpanded(not item.isExpanded())
                     self._update_group_item_label(item)
                     return True
@@ -835,14 +857,16 @@ class GroupPanel(QWidget):
         item.setText(0, f"{arrow} {actual_name}")
 
     def _apply_group_item_colors(self, group_item, colors):
-        from PyQt5.QtGui import QBrush
+        """Colors are now handled entirely by _GroupTreeDelegate.
+        This method is kept for backward compatibility but is a no-op."""
+        pass
 
-        group_item.setForeground(0, QBrush(QColor(colors["text"])))
-        group_item.setBackground(0, QBrush(QColor(colors["group_bg"])))
-        for index in range(group_item.childCount()):
-            child = group_item.child(index)
-            child.setForeground(0, QBrush(QColor(colors["text"])))
-            child.setBackground(0, QBrush(QColor(colors["tree_bg"])))
+    def _set_hovered_group_name(self, group_name):
+        if group_name == self._hovered_group_name:
+            return
+
+        self._hovered_group_name = group_name
+        self.tree.viewport().update()
 
     def _refresh_tree_item_styles(self, colors):
         for index in range(self.tree.topLevelItemCount()):
@@ -992,6 +1016,7 @@ class GroupPanel(QWidget):
         self.tree.clear()
         self.group_items.clear()
         self.groups.clear()
+        self._hovered_group_name = None
 
     def _find_strand_by_name(self, name):
         """Return the live strand object for *name*, or None."""

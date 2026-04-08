@@ -1732,18 +1732,33 @@ class GroupPanel(QWidget):
 
 
     def delete_group(self, group_name):
+        print(f"[GROUP DELETE] GroupPanel.delete_group('{group_name}') called")
+        print(f"[GROUP DELETE]   in self.groups: {group_name in self.groups}")
+        print(f"[GROUP DELETE]   in canvas.groups: {self.canvas and group_name in self.canvas.groups}")
+
+        # Always clean canvas.groups, regardless of group_panel.groups state
+        if self.canvas and group_name in self.canvas.groups:
+            del self.canvas.groups[group_name]
+            print(f"[GROUP DELETE]   Removed from canvas.groups")
+
         if group_name in self.groups:
-            # Remove group from canvas if applicable
-            if self.canvas and group_name in self.canvas.groups:
-                del self.canvas.groups[group_name]
+            try:
+                self.group_operation.emit("delete", group_name, self.groups[group_name].get('layers', []))
+            except (RuntimeError, KeyError):
+                pass
 
-            self.group_operation.emit("delete", group_name, self.groups[group_name]['layers'])
-
-            # Remove tree item (instant, no C++ lifecycle issues)
+            # Remove tree item
             self._remove_group_from_tree(group_name)
 
             # Remove from groups dictionary
             del self.groups[group_name]
+            print(f"[GROUP DELETE]   Removed from self.groups")
+        else:
+            # Group not in self.groups but might still have a tree item
+            self._remove_group_from_tree(group_name)
+            print(f"[GROUP DELETE]   Was not in self.groups (cleaned tree item only)")
+
+        print(f"[GROUP DELETE]   Final state — self.groups: {list(self.groups.keys())}, canvas.groups: {list(self.canvas.groups.keys()) if self.canvas else 'N/A'}")
     
     def rename_group(self, old_group_name):
         """Rename an existing group."""

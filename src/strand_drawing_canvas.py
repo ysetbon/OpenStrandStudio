@@ -5290,8 +5290,14 @@ class StrandDrawingCanvas(QWidget):
             self._suppress_attachment_updates_during_deletion = False
             return False
 
-        set_number = strand.set_number
-        is_main_strand = strand.layer_name.split('_')[1] == '1'
+        try:
+            set_number = strand.set_number
+        except (RuntimeError, AttributeError):
+            set_number = -1
+        try:
+            is_main_strand = strand.layer_name.split('_')[1] == '1'
+        except (RuntimeError, AttributeError, IndexError):
+            is_main_strand = False
         is_attached_strand = isinstance(strand, AttachedStrand)
         
         # Debug logging to understand strand type
@@ -5311,18 +5317,22 @@ class StrandDrawingCanvas(QWidget):
 
         # Collect masks to remove
         masks_to_remove = []
-        for s in self.strands:
+        for s in list(self.strands):
             if isinstance(s, MaskedStrand):
-                if is_attached_strand:
-                    # For attached strands, remove masks that involve this strand at either start or end
-                    mask_parts = s.layer_name.split('_')
-                    if len(mask_parts) == 4 and (strand.layer_name == mask_parts[0] + '_' + mask_parts[1] or 
-                                                strand.layer_name == mask_parts[2] + '_' + mask_parts[3]):
-                        masks_to_remove.append(s)
-                else:
-                    # For main strands, remove masks related to this strand and its attachments
-                    if any(self.is_strand_involved_in_mask(s, remove_strand) for remove_strand in strands_to_remove):
-                        masks_to_remove.append(s)
+                try:
+                    if is_attached_strand:
+                        # For attached strands, remove masks that involve this strand at either start or end
+                        mask_parts = s.layer_name.split('_')
+                        if len(mask_parts) == 4 and (strand.layer_name == mask_parts[0] + '_' + mask_parts[1] or
+                                                    strand.layer_name == mask_parts[2] + '_' + mask_parts[3]):
+                            masks_to_remove.append(s)
+                    else:
+                        # For main strands, remove masks related to this strand and its attachments
+                        if any(self.is_strand_involved_in_mask(s, remove_strand) for remove_strand in strands_to_remove):
+                            masks_to_remove.append(s)
+                except (RuntimeError, AttributeError):
+                    # Strand's C++ object already deleted — mark for removal
+                    masks_to_remove.append(s)
 
         # Log strands and masks to be removed
         pass
@@ -5335,15 +5345,34 @@ class StrandDrawingCanvas(QWidget):
                 indices_to_remove.append(self.strands.index(s))
 
         # Delete groups containing the strands to be removed
-        self.delete_groups_containing_strands(strands_to_remove)
+        try:
+            self.delete_groups_containing_strands(strands_to_remove + masks_to_remove)
+        except Exception as e:
+            print(f"[DEBUG] Error deleting groups during strand removal: {e}")
+            # Fallback: clean canvas.groups directly
+            try:
+                strand_names = set()
+                for s in strands_to_remove + masks_to_remove:
+                    try:
+                        strand_names.add(s.layer_name)
+                    except (RuntimeError, AttributeError):
+                        pass
+                for gn in list(self.groups.keys()):
+                    if any(ln in self.groups[gn].get('layers', []) for ln in strand_names):
+                        del self.groups[gn]
+            except Exception:
+                pass
 
         # Remove collected strands and masks
         for s in strands_to_remove + masks_to_remove:
             if s in self.strands:
                 self.strands.remove(s)
                 pass
-                if not isinstance(s, MaskedStrand):
-                    self.remove_strand_circles(s)
+                try:
+                    if not isinstance(s, MaskedStrand):
+                        self.remove_strand_circles(s)
+                except (RuntimeError, AttributeError):
+                    pass
 
         # Update selection if the removed strand was selected
         if self.selected_strand in strands_to_remove + masks_to_remove:
@@ -5359,32 +5388,44 @@ class StrandDrawingCanvas(QWidget):
         pass
         if is_attached_strand:
             pass
-            parent_strand = self.find_parent_strand(strand)
-            pass
-            if parent_strand:
-                parent_strand.attached_strands = [s for s in parent_strand.attached_strands if s != strand]
+            try:
+                parent_strand = self.find_parent_strand(strand)
                 pass
-                self.remove_parent_circle(parent_strand, strand)
-            else:
+                if parent_strand:
+                    parent_strand.attached_strands = [s for s in parent_strand.attached_strands if s != strand]
+                    pass
+                    self.remove_parent_circle(parent_strand, strand)
+                else:
+                    pass
+            except (RuntimeError, AttributeError):
                 pass
         else:
             pass
         
         # Clean up knot connections for all strands being removed
         for s in strands_to_remove:
-            self.cleanup_knot_connections(s)
+            try:
+                self.cleanup_knot_connections(s)
+            except (RuntimeError, AttributeError):
+                pass
                 
         # Clean up connections in layer state manager
-        if hasattr(self, 'layer_state_manager') and self.layer_state_manager:
-            self.layer_state_manager.removeStrandConnections(strand.layer_name)
+        try:
+            if hasattr(self, 'layer_state_manager') and self.layer_state_manager:
+                self.layer_state_manager.removeStrandConnections(strand.layer_name)
+                pass
+        except (RuntimeError, AttributeError):
             pass
 
         # Update layer names and set numbers
-        if is_main_strand:
-            self.update_layer_names_for_set(set_number)
-            self.update_set_numbers_after_main_strand_deletion(set_number)
-        elif is_attached_strand:
-            self.update_layer_names_for_attached_strand_deletion(set_number)
+        try:
+            if is_main_strand:
+                self.update_layer_names_for_set(set_number)
+                self.update_set_numbers_after_main_strand_deletion(set_number)
+            elif is_attached_strand:
+                self.update_layer_names_for_attached_strand_deletion(set_number)
+        except (RuntimeError, AttributeError):
+            pass
 
         # Skip geometry refresh during deletion - let suppression mechanism handle it
         # self.refresh_geometry_based_attachments()
@@ -5398,15 +5439,42 @@ class StrandDrawingCanvas(QWidget):
 
         # Update the layer panel
         if self.layer_panel:
-            self.layer_panel.update_after_deletion(set_number, indices_to_remove, is_main_strand)
-            self.update_layer_panel_colors()
-            # Re-evaluate layer button states after deletion to update deletability
-            self.layer_panel.update_layer_button_states()
+            try:
+                self.layer_panel.update_after_deletion(set_number, indices_to_remove, is_main_strand)
+                self.update_layer_panel_colors()
+                # Re-evaluate layer button states after deletion to update deletability
+                self.layer_panel.update_layer_button_states()
+            except (RuntimeError, AttributeError) as e:
+                print(f"[DEBUG] Error updating layer panel after deletion: {e}")
+                try:
+                    self.layer_panel.refresh()
+                except Exception:
+                    pass
 
 
 
-        pass
-        pass
+        # Final verification: log group state after strand deletion is complete
+        try:
+            strand_name = getattr(strand, 'layer_name', '?')
+        except RuntimeError:
+            strand_name = '?'
+        print(f"[GROUP DELETE] === Strand '{strand_name}' deletion complete ===")
+        print(f"[GROUP DELETE]   canvas.groups remaining: {list(self.groups.keys())}")
+        if hasattr(self, 'group_layer_manager') and self.group_layer_manager and self.group_layer_manager.group_panel:
+            print(f"[GROUP DELETE]   group_panel.groups remaining: {list(self.group_layer_manager.group_panel.groups.keys())}")
+            print(f"[GROUP DELETE]   group_panel.group_items remaining: {list(self.group_layer_manager.group_panel.group_items.keys())}")
+        # Check for any orphan groups (in canvas but not in panel or vice versa)
+        if hasattr(self, 'group_layer_manager') and self.group_layer_manager and self.group_layer_manager.group_panel:
+            panel_groups = set(self.group_layer_manager.group_panel.groups.keys())
+            canvas_groups = set(self.groups.keys())
+            orphan_canvas = canvas_groups - panel_groups
+            orphan_panel = panel_groups - canvas_groups
+            if orphan_canvas:
+                print(f"[GROUP DELETE]   WARNING: Orphan groups in canvas.groups (not in panel): {orphan_canvas}")
+            if orphan_panel:
+                print(f"[GROUP DELETE]   WARNING: Orphan groups in group_panel (not in canvas): {orphan_panel}")
+            if not orphan_canvas and not orphan_panel:
+                print(f"[GROUP DELETE]   OK: canvas.groups and group_panel.groups are in sync")
         return True
     
     def _cleanup_after_deletion(self):
@@ -5430,24 +5498,74 @@ class StrandDrawingCanvas(QWidget):
     def delete_groups_containing_strands(self, strands):
         """
         Deletes groups that contain any of the given strands.
+        Checks both group_panel.groups and canvas.groups to avoid stale entries.
         """
+        strands_layer_names = set()
+        for strand in strands:
+            try:
+                strands_layer_names.add(strand.layer_name)
+            except (RuntimeError, AttributeError):
+                pass
+
+        print(f"[GROUP DELETE] Strands being removed: {strands_layer_names}")
+        print(f"[GROUP DELETE] canvas.groups BEFORE: {list(self.groups.keys())}")
+
         if not hasattr(self, 'group_layer_manager') or not self.group_layer_manager:
+            # Even without group_layer_manager, clean canvas.groups directly
+            if hasattr(self, 'groups') and self.groups:
+                for group_name in list(self.groups.keys()):
+                    group_data = self.groups[group_name]
+                    if any(ln in group_data.get('layers', []) for ln in strands_layer_names):
+                        print(f"[GROUP DELETE] Removing '{group_name}' from canvas.groups (no group_layer_manager)")
+                        del self.groups[group_name]
+            print(f"[GROUP DELETE] canvas.groups AFTER: {list(self.groups.keys())}")
             return
 
         group_panel = self.group_layer_manager.group_panel
         if not group_panel:
+            print(f"[GROUP DELETE] No group_panel — cleaning canvas.groups directly")
+            for group_name in list(self.groups.keys()):
+                group_data = self.groups[group_name]
+                if any(ln in group_data.get('layers', []) for ln in strands_layer_names):
+                    print(f"[GROUP DELETE] Removing '{group_name}' from canvas.groups")
+                    del self.groups[group_name]
+            print(f"[GROUP DELETE] canvas.groups AFTER: {list(self.groups.keys())}")
             return
 
-        strands_layer_names = [strand.layer_name for strand in strands]
+        print(f"[GROUP DELETE] group_panel.groups BEFORE: {list(group_panel.groups.keys())}")
 
-        groups_to_delete = []
-        for group_name, group_data in group_panel.groups.items():
-            if any(layer_name in group_data['layers'] for layer_name in strands_layer_names):
-                groups_to_delete.append(group_name)
+        # Collect from BOTH dicts to catch groups that exist in one but not the other
+        groups_to_delete = set()
 
+        # Check group_panel.groups
+        for group_name, group_data in list(group_panel.groups.items()):
+            if any(ln in group_data.get('layers', []) for ln in strands_layer_names):
+                print(f"[GROUP DELETE] Found '{group_name}' in group_panel.groups (layers: {group_data.get('layers', [])})")
+                groups_to_delete.add(group_name)
+
+        # Also check canvas.groups for any that group_panel missed
+        for group_name, group_data in list(self.groups.items()):
+            if any(ln in group_data.get('layers', []) for ln in strands_layer_names):
+                if group_name not in groups_to_delete:
+                    print(f"[GROUP DELETE] Found '{group_name}' in canvas.groups ONLY (was missing from group_panel!)")
+                groups_to_delete.add(group_name)
+
+        if not groups_to_delete:
+            print(f"[GROUP DELETE] No groups to delete")
+        else:
+            print(f"[GROUP DELETE] Groups to delete: {groups_to_delete}")
+
+        # Delete from all locations
         for group_name in groups_to_delete:
-            pass
+            print(f"[GROUP DELETE] Deleting '{group_name}' via group_panel.delete_group...")
             group_panel.delete_group(group_name)
+            # Ensure canvas.groups is also cleaned (in case delete_group skipped it)
+            if group_name in self.groups:
+                print(f"[GROUP DELETE] '{group_name}' still in canvas.groups after delete_group — removing directly")
+                del self.groups[group_name]
+
+        print(f"[GROUP DELETE] canvas.groups AFTER: {list(self.groups.keys())}")
+        print(f"[GROUP DELETE] group_panel.groups AFTER: {list(group_panel.groups.keys())}")
     def update_layer_panel_colors(self):
         if self.layer_panel:
             for strand in self.strands:

@@ -1705,8 +1705,13 @@ class LayerPanel(QWidget):
 
     def is_masked_layer(self, button):
         # Check if the button text follows the masked layer naming convention
-        index = self.layer_buttons.index(button)
-        return isinstance(self.canvas.strands[index], MaskedStrand)
+        try:
+            index = self.layer_buttons.index(button)
+            if index < len(self.canvas.strands):
+                return isinstance(self.canvas.strands[index], MaskedStrand)
+        except (ValueError, IndexError, RuntimeError):
+            pass
+        return False
 
 
     def add_group(self, group_name, layers):
@@ -2735,9 +2740,12 @@ class LayerPanel(QWidget):
 
     def update_masked_layers(self, deleted_set_number, strands_removed):
         """Update masked layers after deletion, ensuring only specific masked layer is removed."""
-        
+
         # Skip if we're deleting a masked layer - this is handled separately in request_delete_strand
-        if len(strands_removed) == 1 and isinstance(self.canvas.strands[strands_removed[0]], MaskedStrand):
+        try:
+            if len(strands_removed) == 1 and strands_removed[0] < len(self.canvas.strands) and isinstance(self.canvas.strands[strands_removed[0]], MaskedStrand):
+                return
+        except (RuntimeError, IndexError):
             return
         
         # Only proceed with regular strand deletion logic
@@ -2981,21 +2989,19 @@ class LayerPanel(QWidget):
         """
         if 0 <= index < len(self.canvas.strands):
             strand = self.canvas.strands[index]
-            set_number = strand.set_number
-            
-            # Log states before deletion
-            for i, s in enumerate(self.canvas.strands):
-                if hasattr(s, 'attached_strands'):
-                    pass
+            try:
+                set_number = strand.set_number
+            except (RuntimeError, AttributeError):
+                set_number = -1
 
             # Remove the strand from the canvas
-            self.canvas.remove_strand(strand)
+            try:
+                self.canvas.remove_strand(strand)
+            except (RuntimeError, AttributeError):
+                # Strand C++ object already deleted
+                if strand in self.canvas.strands:
+                    self.canvas.strands.remove(strand)
             self.canvas.update()
-
-            # Log states after deletion
-            for i, s in enumerate(self.canvas.strands):
-                if hasattr(s, 'attached_strands'):
-                    pass
 
             # Remove the corresponding layer button
             if index < len(self.layer_buttons):
@@ -3004,23 +3010,29 @@ class LayerPanel(QWidget):
                 button.deleteLater()
 
             # Update set_counts
-            if set_number in self.set_counts:
+            if set_number >= 0 and set_number in self.set_counts:
                 self.set_counts[set_number] -= 1
                 if self.set_counts[set_number] <= 0:
                     del self.set_counts[set_number]
 
             # Remove set color if no strands are left in the set
-            if not any(s.set_number == set_number for s in self.canvas.strands):
-                if set_number in self.set_colors:
-                    del self.set_colors[set_number]
+            try:
+                if not any(s.set_number == set_number for s in self.canvas.strands):
+                    if set_number in self.set_colors:
+                        del self.set_colors[set_number]
+            except (RuntimeError, AttributeError):
+                pass
 
             # Update current_set to the lowest available set number
-            existing_sets = set(
-                strand.set_number for strand in self.canvas.strands if hasattr(strand, 'set_number')
-            )
-            if existing_sets:
-                self.current_set = min(existing_sets)
-            else:
+            try:
+                existing_sets = set(
+                    s.set_number for s in self.canvas.strands if hasattr(s, 'set_number')
+                )
+                if existing_sets:
+                    self.current_set = min(existing_sets)
+                else:
+                    self.current_set = 1
+            except (RuntimeError, AttributeError):
                 self.current_set = 1
             self.refresh()
             # Do a single refresh
@@ -3069,8 +3081,11 @@ class LayerPanel(QWidget):
                 button.setChecked(False)
 
             # Deselect all strands in the canvas
-            for strand in self.canvas.strands:
-                strand.is_selected = False
+            for strand in list(self.canvas.strands):
+                try:
+                    strand.is_selected = False
+                except RuntimeError:
+                    pass
 
             # Update the canvas to reflect changes
             self.canvas.selected_strand = None
@@ -3486,9 +3501,14 @@ class LayerPanel(QWidget):
                 btn.customContextMenuRequested.connect(partial(self.show_multi_select_context_menu, i))
 
                 if isinstance(strand, MaskedStrand):
-                    btn.set_border_color(strand.second_selected_strand.color)
-                    if strand.first_selected_strand:
-                        btn.set_color(strand.first_selected_strand.color)
+                    try:
+                        if strand.second_selected_strand is not None:
+                            btn.set_border_color(strand.second_selected_strand.color)
+                        if strand.first_selected_strand is not None:
+                            btn.set_color(strand.first_selected_strand.color)
+                    except (RuntimeError, AttributeError):
+                        # Component strand's C++ object was deleted
+                        pass
 
                 btn.set_hidden(strand.is_hidden)
 
@@ -3500,10 +3520,15 @@ class LayerPanel(QWidget):
             #
             sel = self.canvas.selected_strand
             if sel:
-                for btn in self.layer_buttons:
-                    if getattr(btn, "layer_name", "") == sel.layer_name:
-                        btn.setChecked(True)
-                        break
+                try:
+                    sel_name = sel.layer_name
+                    for btn in self.layer_buttons:
+                        if getattr(btn, "layer_name", "") == sel_name:
+                            btn.setChecked(True)
+                            break
+                except (RuntimeError, AttributeError):
+                    # Selected strand's C++ object was deleted
+                    self.canvas.selected_strand = None
 
             #
             # 2‑d  Misc. book‑keeping

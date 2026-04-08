@@ -3175,391 +3175,409 @@ class StrandDrawingCanvas(QWidget):
             self.layer_panel.update_colors_for_set(set_number, color)
         self.update()
     def draw_grid(self, painter):
-        """Draw the grid on the canvas, accounting for zoom level."""
-        # Adjust grid appearance based on zoom level
-        if hasattr(self, 'zoom_factor') and self.zoom_factor != 1.0:
-            # Adjust line thickness and opacity based on zoom
-            if self.zoom_factor < 0.5:
-                # When very zoomed out, make grid lines slightly thicker and more visible
-                line_width = 1.5
-                color = QColor(180, 180, 180)  # Slightly darker
-            elif self.zoom_factor < 1.0:
-                # When moderately zoomed out, standard appearance
-                line_width = 1
-                color = QColor(200, 200, 200)
+        try:
+            """Draw the grid on the canvas, accounting for zoom level."""
+            # Adjust grid appearance based on zoom level
+            if hasattr(self, 'zoom_factor') and self.zoom_factor != 1.0:
+                # Adjust line thickness and opacity based on zoom
+                if self.zoom_factor < 0.5:
+                    # When very zoomed out, make grid lines slightly thicker and more visible
+                    line_width = 1.5
+                    color = QColor(180, 180, 180)  # Slightly darker
+                elif self.zoom_factor < 1.0:
+                    # When moderately zoomed out, standard appearance
+                    line_width = 1
+                    color = QColor(200, 200, 200)
+                else:
+                    # When zoomed in, keep standard appearance
+                    line_width = 1
+                    color = QColor(200, 200, 200)
             else:
-                # When zoomed in, keep standard appearance
                 line_width = 1
                 color = QColor(200, 200, 200)
-        else:
-            line_width = 1
-            color = QColor(200, 200, 200)
+                
+            painter.setPen(QPen(color, line_width))
             
-        painter.setPen(QPen(color, line_width))
-        
-        # Get the content's bounding box
-        content_rect = self.get_bounding_rect()
-
-        # Get the visible area in canvas coordinates
-        top_left_canvas = self.screen_to_canvas(QPointF(0, 0))
-        bottom_right_canvas = self.screen_to_canvas(QPointF(self.width(), self.height()))
-        visible_rect = QRectF(top_left_canvas, bottom_right_canvas)
-        
-        # The area to draw the grid on is the union of the content and what's visible
-        if hasattr(self, 'zoom_factor') and self.zoom_factor > 1.0:
-            fixed_size = 8000
-            # Center the fixed-size grid area around the current view's center
-            grid_area = QRectF(
-                visible_rect.center().x() - fixed_size / 2,
-                visible_rect.center().y() - fixed_size / 2,
-                fixed_size,
-                fixed_size
-            )
-        else:
-            grid_area = content_rect.united(visible_rect) if not content_rect.isEmpty() else visible_rect
+            # Get the content's bounding box
+            content_rect = self.get_bounding_rect()
+    
+            # Get the visible area in canvas coordinates
+            top_left_canvas = self.screen_to_canvas(QPointF(0, 0))
+            bottom_right_canvas = self.screen_to_canvas(QPointF(self.width(), self.height()))
+            visible_rect = QRectF(top_left_canvas, bottom_right_canvas)
             
-            # Add padding to ensure the grid is drawn well beyond the edges.
-            padding = max(self.width(), self.height()) / self.zoom_factor
-            grid_area.adjust(-padding, -padding, padding, padding)
-
-        left = grid_area.left()
-        top = grid_area.top()
-        right = grid_area.right()
-        bottom = grid_area.bottom()
-        
-        # Calculate grid line positions
-        # Find the first grid line position that's <= left bound
-        start_x = int(left // self.grid_size) * self.grid_size
-        start_y = int(top // self.grid_size) * self.grid_size
-        
-        # Draw vertical lines
-        x = start_x
-        while x <= right:
-            painter.drawLine(int(x), int(top), int(x), int(bottom))
-            x += self.grid_size
+            # The area to draw the grid on is the union of the content and what's visible
+            if hasattr(self, 'zoom_factor') and self.zoom_factor > 1.0:
+                fixed_size = 8000
+                # Center the fixed-size grid area around the current view's center
+                grid_area = QRectF(
+                    visible_rect.center().x() - fixed_size / 2,
+                    visible_rect.center().y() - fixed_size / 2,
+                    fixed_size,
+                    fixed_size
+                )
+            else:
+                grid_area = content_rect.united(visible_rect) if not content_rect.isEmpty() else visible_rect
+                
+                # Add padding to ensure the grid is drawn well beyond the edges.
+                padding = max(self.width(), self.height()) / self.zoom_factor
+                grid_area.adjust(-padding, -padding, padding, padding)
+    
+            left = grid_area.left()
+            top = grid_area.top()
+            right = grid_area.right()
+            bottom = grid_area.bottom()
             
-        # Draw horizontal lines
-        y = start_y
-        while y <= bottom:
-            painter.drawLine(int(left), int(y), int(right), int(y))
-            y += self.grid_size
+            # Calculate grid line positions
+            # Find the first grid line position that's <= left bound
+            start_x = int(left // self.grid_size) * self.grid_size
+            start_y = int(top // self.grid_size) * self.grid_size
+            
+            # Draw vertical lines
+            x = start_x
+            while x <= right:
+                painter.drawLine(int(x), int(top), int(x), int(bottom))
+                x += self.grid_size
+                
+            # Draw horizontal lines
+            y = start_y
+            while y <= bottom:
+                painter.drawLine(int(left), int(y), int(right), int(y))
+                y += self.grid_size
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in draw_grid: {e}")
+            return
 
     def _calculate_strand_curve_center(self, strand):
-        """Calculate the actual center point on the Bézier curve path.
-
-        For strands with three control points (when control_point_center is locked),
-        the center is the junction point between the two cubic Bézier segments.
-
-        For standard strands with two control points, we calculate the point at t=0.5
-        on the virtual cubic Bézier curve.
-
-        For straight lines (unmoved control points), we use the linear midpoint.
-        """
-        # Check if using three control points mode
-        if (hasattr(strand, 'canvas') and strand.canvas and
-            hasattr(strand.canvas, 'enable_third_control_point') and
-            strand.canvas.enable_third_control_point and
-            hasattr(strand, 'control_point_center_locked') and
-            strand.control_point_center_locked):
-            # The center control point IS the midpoint of the curve
-            return strand.control_point_center
-
-        # Check if control points are at their default positions (unmoved)
-        cp1_at_start = (abs(strand.control_point1.x() - strand.start.x()) < 1.0 and
-                       abs(strand.control_point1.y() - strand.start.y()) < 1.0)
-        cp2_at_start = (abs(strand.control_point2.x() - strand.start.x()) < 1.0 and
-                       abs(strand.control_point2.y() - strand.start.y()) < 1.0)
-
-        if cp1_at_start and cp2_at_start:
-            # Straight line - linear midpoint is correct
-            return (strand.start + strand.end) / 2
-
-        # For standard two-control-point mode, calculate the virtual center point
-        # This matches the logic in strand.get_path() lines 1238-1240
-        virtual_center = QPointF(
-            (strand.control_point1.x() + strand.control_point2.x()) / 2,
-            (strand.control_point1.y() + strand.control_point2.y()) / 2
-        )
-
-        # The virtual center is used to create two cubic Bézier segments
-        # The actual midpoint of the curve is at the junction between these segments
-        # which is the virtual center point itself when the curve passes through it
-        return virtual_center
+        try:
+            """Calculate the actual center point on the Bézier curve path.
+    
+            For strands with three control points (when control_point_center is locked),
+            the center is the junction point between the two cubic Bézier segments.
+    
+            For standard strands with two control points, we calculate the point at t=0.5
+            on the virtual cubic Bézier curve.
+    
+            For straight lines (unmoved control points), we use the linear midpoint.
+            """
+            # Check if using three control points mode
+            if (hasattr(strand, 'canvas') and strand.canvas and
+                hasattr(strand.canvas, 'enable_third_control_point') and
+                strand.canvas.enable_third_control_point and
+                hasattr(strand, 'control_point_center_locked') and
+                strand.control_point_center_locked):
+                # The center control point IS the midpoint of the curve
+                return strand.control_point_center
+    
+            # Check if control points are at their default positions (unmoved)
+            cp1_at_start = (abs(strand.control_point1.x() - strand.start.x()) < 1.0 and
+                           abs(strand.control_point1.y() - strand.start.y()) < 1.0)
+            cp2_at_start = (abs(strand.control_point2.x() - strand.start.x()) < 1.0 and
+                           abs(strand.control_point2.y() - strand.start.y()) < 1.0)
+    
+            if cp1_at_start and cp2_at_start:
+                # Straight line - linear midpoint is correct
+                return (strand.start + strand.end) / 2
+    
+            # For standard two-control-point mode, calculate the virtual center point
+            # This matches the logic in strand.get_path() lines 1238-1240
+            virtual_center = QPointF(
+                (strand.control_point1.x() + strand.control_point2.x()) / 2,
+                (strand.control_point1.y() + strand.control_point2.y()) / 2
+            )
+    
+            # The virtual center is used to create two cubic Bézier segments
+            # The actual midpoint of the curve is at the junction between these segments
+            # which is the virtual center point itself when the curve passes through it
+            return virtual_center
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in _calculate_strand_curve_center: {e}")
+            return
 
     def draw_strand_label(self, painter, strand):
-        """Draw the label for a strand."""
-        if isinstance(strand, MaskedStrand):
-            mask_path = strand.get_mask_path()
-            center = mask_path.boundingRect().center()
-        else:
-            # Calculate the actual center point ON the Bézier curve path
-            center = self._calculate_strand_curve_center(strand)
-
-        text = getattr(strand, 'layer_name', f"{strand.set_number}_1")
-        font = painter.font()
-        font.setPointSize(12)  # You can adjust this value to change the font size
-        painter.setFont(font)
-
-        metrics = painter.fontMetrics()
-        text_width = metrics.width(text)
-        text_height = metrics.height()
-
-        text_rect = QRectF(center.x() - text_width / 2, center.y() - text_height / 2, text_width, text_height)
-
-        text_path = QPainterPath()
-        text_path.addText(text_rect.center().x() - text_width / 2, text_rect.center().y() + text_height / 4, font, text)
-
-        if isinstance(strand, MaskedStrand):
-            painter.setClipPath(mask_path)
-
-        # Draw white outline
-        painter.setPen(QPen(Qt.white, 6, Qt.SolidLine))
-        painter.drawPath(text_path)
-
-        # Draw black text
-        painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
-        painter.fillPath(text_path, QBrush(Qt.black))
-        painter.drawPath(text_path)
-
-        if isinstance(strand, MaskedStrand):
-            painter.setClipping(False)
+        try:
+            """Draw the label for a strand."""
+            if isinstance(strand, MaskedStrand):
+                mask_path = strand.get_mask_path()
+                center = mask_path.boundingRect().center()
+            else:
+                # Calculate the actual center point ON the Bézier curve path
+                center = self._calculate_strand_curve_center(strand)
+    
+            text = getattr(strand, 'layer_name', f"{strand.set_number}_1")
+            font = painter.font()
+            font.setPointSize(12)  # You can adjust this value to change the font size
+            painter.setFont(font)
+    
+            metrics = painter.fontMetrics()
+            text_width = metrics.width(text)
+            text_height = metrics.height()
+    
+            text_rect = QRectF(center.x() - text_width / 2, center.y() - text_height / 2, text_width, text_height)
+    
+            text_path = QPainterPath()
+            text_path.addText(text_rect.center().x() - text_width / 2, text_rect.center().y() + text_height / 4, font, text)
+    
+            if isinstance(strand, MaskedStrand):
+                painter.setClipPath(mask_path)
+    
+            # Draw white outline
+            painter.setPen(QPen(Qt.white, 6, Qt.SolidLine))
+            painter.drawPath(text_path)
+    
+            # Draw black text
+            painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
+            painter.fillPath(text_path, QBrush(Qt.black))
+            painter.drawPath(text_path)
+    
+            if isinstance(strand, MaskedStrand):
+                painter.setClipping(False)
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in draw_strand_label: {e}")
+            return
 
     def draw_highlighted_strand(self, painter, strand):
-        """Draw a highlighted version of a strand."""
-        if isinstance(strand, MaskedStrand):
-            self.draw_highlighted_masked_strand(painter, strand)
-        else:
-            # Check if the strand is hidden - if so, just draw it normally without C-shapes
-            if hasattr(strand, 'is_hidden') and strand.is_hidden:
-                # Skip painter setup since it's already configured in the main drawing loop
-                strand.draw(painter, skip_painter_setup=True)
-                return
+        try:
+            """Draw a highlighted version of a strand."""
+            if isinstance(strand, MaskedStrand):
+                self.draw_highlighted_masked_strand(painter, strand)
+            else:
+                # Check if the strand is hidden - if so, just draw it normally without C-shapes
+                if hasattr(strand, 'is_hidden') and strand.is_hidden:
+                    # Skip painter setup since it's already configured in the main drawing loop
+                    strand.draw(painter, skip_painter_setup=True)
+                    return
+                    
+                # Check if we're moving a control point and get lock mode info
+                is_moving_control_point = False
+                is_strand_locked = False
+                if hasattr(self, 'current_mode') and self.current_mode.__class__.__name__ == 'MoveMode':
+                    move_mode = self.current_mode
+                    is_moving_control_point = move_mode.is_moving_control_point
+                    
+                    # Check if strand is locked in lock mode
+                    if move_mode.lock_mode_active and strand in self.strands:
+                        strand_index = self.strands.index(strand)
+                        is_strand_locked = strand_index in move_mode.locked_layers
                 
-            # Check if we're moving a control point and get lock mode info
-            is_moving_control_point = False
-            is_strand_locked = False
-            if hasattr(self, 'current_mode') and self.current_mode.__class__.__name__ == 'MoveMode':
-                move_mode = self.current_mode
-                is_moving_control_point = move_mode.is_moving_control_point
-                
-                # Check if strand is locked in lock mode
-                if move_mode.lock_mode_active and strand in self.strands:
+                # Also check if strand is locked in layer panel (even outside of move mode)
+                if not is_strand_locked and self.layer_panel and strand in self.strands:
                     strand_index = self.strands.index(strand)
-                    is_strand_locked = strand_index in move_mode.locked_layers
-            
-            # Also check if strand is locked in layer panel (even outside of move mode)
-            if not is_strand_locked and self.layer_panel and strand in self.strands:
-                strand_index = self.strands.index(strand)
-                is_strand_locked = strand_index in self.layer_panel.locked_layers
-                if is_strand_locked:
-                    pass
-
-            # Draw the regular strand first (including shadow)
-            strand.draw(painter, skip_painter_setup=True)
-            
-
-
-            # Slightly thinner stroke for circles
-            pass
-            for i, has_circle in enumerate(strand.has_circles):
-                # Skip drawing C-shapes when moving control points or when strand is locked
-                if has_circle:
-                    if is_moving_control_point:
+                    is_strand_locked = strand_index in self.layer_panel.locked_layers
+                    if is_strand_locked:
                         pass
-                    elif is_strand_locked:
-                        pass
-                    elif not has_circle:
-                        pass
-                    else:
-                        # Reduced high-frequency logging for performance during moves
-                        # logging.info(f"Drawing C-shape for {strand.layer_name} at position {i}")
-                        pass
+    
+                # Draw the regular strand first (including shadow)
+                strand.draw(painter, skip_painter_setup=True)
                 
-                # Check if we should draw C-shapes for this strand
-                should_draw_c_shape = has_circle and not is_moving_control_point and not is_strand_locked
-                
-                # If strand is in truly_moving_strands, always draw C-shapes regardless of is_selected
-                if not should_draw_c_shape and has_circle:
-                    truly_moving_strands = getattr(self, 'truly_moving_strands', [])
-                    if strand in truly_moving_strands:
-                        should_draw_c_shape = True
-                        pass
-                
-                if should_draw_c_shape:
-                    # Debug logging for C-shape drawing
-                    pass
-                    
-                    # Save painter state
-                    painter.save()
-                    
-                    center = strand.start if i == 0 else strand.end
-                    
-                    # --- NEW: Check for hidden attached strands at this connection point --- 
-                    skip_c_shape = False
-                    
-                    # First check if the selected strand itself is a hidden attached strand connecting here
-                    if (self.selected_attached_strand and 
-                        isinstance(self.selected_attached_strand, AttachedStrand) and 
-                        hasattr(self.selected_attached_strand, 'is_hidden') and 
-                        self.selected_attached_strand.is_hidden and
-                        (not (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
-                              getattr(self.current_mode, 'draw_only_affected_strand', False)) and
-                         (self.points_are_close(self.selected_attached_strand.start, center) or 
-                          self.points_are_close(self.selected_attached_strand.end, center)))):
-                        skip_c_shape = True
-                        pass
-                    
-                    # Also check other hidden attached strands
-                    if not skip_c_shape:
-                        for other_strand in self.strands:
-                            if isinstance(other_strand, AttachedStrand) and other_strand.is_hidden:
-                                # Check if the hidden attached strand connects to the current center point AND is the selected strand
-                                if (not (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
-                                        getattr(self.current_mode, 'draw_only_affected_strand', False)) and
-                                    (self.points_are_close(other_strand.start, center) or self.points_are_close(other_strand.end, center)) and other_strand == self.selected_strand):
-                                    skip_c_shape = True
-                                    pass
-                                    break # Found the selected hidden attached strand, no need to check further
-                                
-                    if skip_c_shape:
-                        painter.restore() # Restore painter state
-                        continue # Skip drawing C-shape for this point
-                    # --- END NEW CHECK ---
-
-                    # Calculate the proper radius for the highlight
-                    # The highlighted strand outline uses: QPen(QColor('red'), self.stroke_width + 8)
-                    # This pen is drawn around the stroke path, so the outer edge is at:
-                    highlight_pen_thickness = 10  # Fixed thickness instead of stroke_width + 8
-                    stroke_path_radius = (strand.width + strand.stroke_width * 2) / 2
-                    outer_radius = stroke_path_radius + highlight_pen_thickness / 2
-                    inner_radius = strand.width / 2 + 6
-                    
-                    # Create a full circle path for the outer circle
-                    outer_circle = QPainterPath()
-                    outer_circle.addEllipse(center, outer_radius, outer_radius)
-                    
-                    # Create a path for the inner circle
-                    inner_circle = QPainterPath()
-                    inner_circle.addEllipse(center, inner_radius, inner_radius)
-                    
-                    # Create a ring path by subtracting the inner circle from the outer circle
-                    ring_path = outer_circle.subtracted(inner_circle)
-                    
-                    # Calculate angle based on curve tangent
-                    # For ending point, use t=0.99 to get the curve's actual direction near the end
-                    angle = 0.0 # Default angle
-                    tangent = strand.calculate_cubic_tangent(0.0 if i == 0 else 0.99)
-                    if tangent.manhattanLength() > 1e-6:
-                        angle = math.atan2(tangent.y(), tangent.x())
-                    else:
-                        # Fallback: use direction from start to end if tangent is zero
-                        direction_vector = strand.end - strand.start
-                        if direction_vector.manhattanLength() > 1e-6:
-                            angle = math.atan2(direction_vector.y(), direction_vector.x())
-
-                    # Create a masking rectangle to create a C-shape
-                    # Create a masking rectangle to create a C-shape
-                    mask_rect = QPainterPath()
-                    rect_width = (outer_radius) * 2  # Make it slightly larger to ensure clean cut
-                    rect_height = (outer_radius) * 2
-                    # Place the masking rectangle in local (0,0) space; it will be positioned via the
-                    # transform.  This keeps the rectangle logic consistent with the working addRect(0 …)
-                    # approach you provided.
-                    mask_rect.addRect(0, -rect_height / 2, rect_width, rect_height)
-                    
-                    # Apply rotation transform to the masking rectangle
-                    transform = QTransform()
-                    transform.translate(center.x(), center.y())
-                    # Adjust angle based on whether it's start or end point
-                    if i == 0:
-                        transform.rotate(math.degrees(angle))
-                    else:
-                        transform.rotate(math.degrees(angle - math.pi))
-                    
-                    mask_rect = transform.map(mask_rect)
-                    
-                    # Create the C-shaped highlight
-                    c_shape_path = ring_path.subtracted(mask_rect)
-                    
-                    # Now create the stroke and color parts within the C-shape
-                    # Outer part (stroke area) - from outer_radius to stroke boundary
-                    stroke_outer_radius = outer_radius
-                    stroke_inner_radius = strand.width / 2 + strand.stroke_width
-                    
-                    stroke_outer_circle = QPainterPath()
-                    stroke_outer_circle.addEllipse(center, stroke_outer_radius, stroke_outer_radius)
-                    stroke_inner_circle = QPainterPath()
-                    stroke_inner_circle.addEllipse(center, stroke_inner_radius, stroke_inner_radius)
-                    stroke_ring = stroke_outer_circle.subtracted(stroke_inner_circle)
-                    stroke_c_shape = stroke_ring.subtracted(mask_rect)
-                    
-                    # Inner part (color area) - from stroke boundary to inner_radius
-                    color_outer_radius = strand.width / 2 + strand.stroke_width
-                    color_inner_radius = inner_radius
-                    
-                    color_outer_circle = QPainterPath()
-                    color_outer_circle.addEllipse(center, color_outer_radius, color_outer_radius)
-                    color_inner_circle = QPainterPath()
-                    color_inner_circle.addEllipse(center, color_inner_radius, color_inner_radius)
-                    color_ring = color_outer_circle.subtracted(color_inner_circle)
-                    color_c_shape = color_ring.subtracted(mask_rect)
-                    
-                    # Draw the stroke part in red (or transparent red if circle stroke is transparent)
-                    painter.setPen(Qt.NoPen)
-                    
-                    # Check if this circle has transparent stroke - skip drawing if transparent
-                    if hasattr(strand, 'start_circle_stroke_color') and hasattr(strand, 'end_circle_stroke_color'):
-                        circle_stroke_color = strand.start_circle_stroke_color if i == 0 else strand.end_circle_stroke_color
-                        if circle_stroke_color and circle_stroke_color.alpha() == 0:
-                            # Skip drawing C-shape for transparent circles
-                            painter.restore()
-                            continue
+    
+    
+                # Slightly thinner stroke for circles
+                pass
+                for i, has_circle in enumerate(strand.has_circles):
+                    # Skip drawing C-shapes when moving control points or when strand is locked
+                    if has_circle:
+                        if is_moving_control_point:
+                            pass
+                        elif is_strand_locked:
+                            pass
+                        elif not has_circle:
+                            pass
                         else:
-                            # Use solid red for normal circles
-                            painter.setBrush(QColor(255, 0, 0, 255))
-                    else:
-                        # Default to solid red if properties don't exist
-                        painter.setBrush(QColor(255, 0, 0, 255))
+                            # Reduced high-frequency logging for performance during moves
+                            # logging.info(f"Drawing C-shape for {strand.layer_name} at position {i}")
+                            pass
+                    
+                    # Check if we should draw C-shapes for this strand
+                    should_draw_c_shape = has_circle and not is_moving_control_point and not is_strand_locked
+                    
+                    # If strand is in truly_moving_strands, always draw C-shapes regardless of is_selected
+                    if not should_draw_c_shape and has_circle:
+                        truly_moving_strands = getattr(self, 'truly_moving_strands', [])
+                        if strand in truly_moving_strands:
+                            should_draw_c_shape = True
+                            pass
+                    
+                    if should_draw_c_shape:
+                        # Debug logging for C-shape drawing
+                        pass
                         
-                    painter.drawPath(stroke_c_shape)
-                    
-                    # Draw the color part in transparent 
-                    painter.setBrush(QColor(0, 0, 0, 0))
-                    painter.drawPath(color_c_shape)
-                    
-                    # Restore painter state
-                    painter.restore()
-                    
-                    # Debug logging for C-shape completion
-                    pass
-            
-            # This restore was likely misplaced inside the loop, moved outside
-            # painter.restore()
+                        # Save painter state
+                        painter.save()
+                        
+                        center = strand.start if i == 0 else strand.end
+                        
+                        # --- NEW: Check for hidden attached strands at this connection point --- 
+                        skip_c_shape = False
+                        
+                        # First check if the selected strand itself is a hidden attached strand connecting here
+                        if (self.selected_attached_strand and 
+                            isinstance(self.selected_attached_strand, AttachedStrand) and 
+                            hasattr(self.selected_attached_strand, 'is_hidden') and 
+                            self.selected_attached_strand.is_hidden and
+                            (not (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
+                                  getattr(self.current_mode, 'draw_only_affected_strand', False)) and
+                             (self.points_are_close(self.selected_attached_strand.start, center) or 
+                              self.points_are_close(self.selected_attached_strand.end, center)))):
+                            skip_c_shape = True
+                            pass
+                        
+                        # Also check other hidden attached strands
+                        if not skip_c_shape:
+                            for other_strand in self.strands:
+                                if isinstance(other_strand, AttachedStrand) and other_strand.is_hidden:
+                                    # Check if the hidden attached strand connects to the current center point AND is the selected strand
+                                    if (not (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
+                                            getattr(self.current_mode, 'draw_only_affected_strand', False)) and
+                                        (self.points_are_close(other_strand.start, center) or self.points_are_close(other_strand.end, center)) and other_strand == self.selected_strand):
+                                        skip_c_shape = True
+                                        pass
+                                        break # Found the selected hidden attached strand, no need to check further
+                                    
+                        if skip_c_shape:
+                            painter.restore() # Restore painter state
+                            continue # Skip drawing C-shape for this point
+                        # --- END NEW CHECK ---
+    
+                        # Calculate the proper radius for the highlight
+                        # The highlighted strand outline uses: QPen(QColor('red'), self.stroke_width + 8)
+                        # This pen is drawn around the stroke path, so the outer edge is at:
+                        highlight_pen_thickness = 10  # Fixed thickness instead of stroke_width + 8
+                        stroke_path_radius = (strand.width + strand.stroke_width * 2) / 2
+                        outer_radius = stroke_path_radius + highlight_pen_thickness / 2
+                        inner_radius = strand.width / 2 + 6
+                        
+                        # Create a full circle path for the outer circle
+                        outer_circle = QPainterPath()
+                        outer_circle.addEllipse(center, outer_radius, outer_radius)
+                        
+                        # Create a path for the inner circle
+                        inner_circle = QPainterPath()
+                        inner_circle.addEllipse(center, inner_radius, inner_radius)
+                        
+                        # Create a ring path by subtracting the inner circle from the outer circle
+                        ring_path = outer_circle.subtracted(inner_circle)
+                        
+                        # Calculate angle based on curve tangent
+                        # For ending point, use t=0.99 to get the curve's actual direction near the end
+                        angle = 0.0 # Default angle
+                        tangent = strand.calculate_cubic_tangent(0.0 if i == 0 else 0.99)
+                        if tangent.manhattanLength() > 1e-6:
+                            angle = math.atan2(tangent.y(), tangent.x())
+                        else:
+                            # Fallback: use direction from start to end if tangent is zero
+                            direction_vector = strand.end - strand.start
+                            if direction_vector.manhattanLength() > 1e-6:
+                                angle = math.atan2(direction_vector.y(), direction_vector.x())
+    
+                        # Create a masking rectangle to create a C-shape
+                        # Create a masking rectangle to create a C-shape
+                        mask_rect = QPainterPath()
+                        rect_width = (outer_radius) * 2  # Make it slightly larger to ensure clean cut
+                        rect_height = (outer_radius) * 2
+                        # Place the masking rectangle in local (0,0) space; it will be positioned via the
+                        # transform.  This keeps the rectangle logic consistent with the working addRect(0 …)
+                        # approach you provided.
+                        mask_rect.addRect(0, -rect_height / 2, rect_width, rect_height)
+                        
+                        # Apply rotation transform to the masking rectangle
+                        transform = QTransform()
+                        transform.translate(center.x(), center.y())
+                        # Adjust angle based on whether it's start or end point
+                        if i == 0:
+                            transform.rotate(math.degrees(angle))
+                        else:
+                            transform.rotate(math.degrees(angle - math.pi))
+                        
+                        mask_rect = transform.map(mask_rect)
+                        
+                        # Create the C-shaped highlight
+                        c_shape_path = ring_path.subtracted(mask_rect)
+                        
+                        # Now create the stroke and color parts within the C-shape
+                        # Outer part (stroke area) - from outer_radius to stroke boundary
+                        stroke_outer_radius = outer_radius
+                        stroke_inner_radius = strand.width / 2 + strand.stroke_width
+                        
+                        stroke_outer_circle = QPainterPath()
+                        stroke_outer_circle.addEllipse(center, stroke_outer_radius, stroke_outer_radius)
+                        stroke_inner_circle = QPainterPath()
+                        stroke_inner_circle.addEllipse(center, stroke_inner_radius, stroke_inner_radius)
+                        stroke_ring = stroke_outer_circle.subtracted(stroke_inner_circle)
+                        stroke_c_shape = stroke_ring.subtracted(mask_rect)
+                        
+                        # Inner part (color area) - from stroke boundary to inner_radius
+                        color_outer_radius = strand.width / 2 + strand.stroke_width
+                        color_inner_radius = inner_radius
+                        
+                        color_outer_circle = QPainterPath()
+                        color_outer_circle.addEllipse(center, color_outer_radius, color_outer_radius)
+                        color_inner_circle = QPainterPath()
+                        color_inner_circle.addEllipse(center, color_inner_radius, color_inner_radius)
+                        color_ring = color_outer_circle.subtracted(color_inner_circle)
+                        color_c_shape = color_ring.subtracted(mask_rect)
+                        
+                        # Draw the stroke part in red (or transparent red if circle stroke is transparent)
+                        painter.setPen(Qt.NoPen)
+                        
+                        # Check if this circle has transparent stroke - skip drawing if transparent
+                        if hasattr(strand, 'start_circle_stroke_color') and hasattr(strand, 'end_circle_stroke_color'):
+                            circle_stroke_color = strand.start_circle_stroke_color if i == 0 else strand.end_circle_stroke_color
+                            if circle_stroke_color and circle_stroke_color.alpha() == 0:
+                                # Skip drawing C-shape for transparent circles
+                                painter.restore()
+                                continue
+                            else:
+                                # Use solid red for normal circles
+                                painter.setBrush(QColor(255, 0, 0, 255))
+                        else:
+                            # Default to solid red if properties don't exist
+                            painter.setBrush(QColor(255, 0, 0, 255))
+                            
+                        painter.drawPath(stroke_c_shape)
+                        
+                        # Draw the color part in transparent 
+                        painter.setBrush(QColor(0, 0, 0, 0))
+                        painter.drawPath(color_c_shape)
+                        
+                        # Restore painter state
+                        painter.restore()
+                        
+                        # Debug logging for C-shape completion
+                        pass
+                
+                # This restore was likely misplaced inside the loop, moved outside
+                # painter.restore()
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in draw_highlighted_strand: {e}")
+            return
 
     def draw_moving_strand(self, painter, strand):
-        """Draw a moving strand without temporary state changes to prevent flickering."""
-        if isinstance(strand, MaskedStrand):
-            # For masked strands, just draw normally
-            masked_strand = strand
-            painter.save()
-            painter.setRenderHint(QPainter.Antialiasing)
-            
-            # Draw the regular masked strand
-            # Skip painter setup since it's already configured in the main painting loop
-            masked_strand.draw(painter, skip_painter_setup=True)
-            
-            painter.restore()
-        else:
-            # For regular strands, draw normally without modifying is_selected state
-            painter.save()
-            
-            # Draw the strand without changing its selection state to prevent flickering
-            # Skip painter setup since it's already configured in the main painting loop
-            strand.draw(painter, skip_painter_setup=True)
-            
-            painter.restore()
-
-     
+        try:
+            """Draw a moving strand without temporary state changes to prevent flickering."""
+            if isinstance(strand, MaskedStrand):
+                # For masked strands, just draw normally
+                masked_strand = strand
+                painter.save()
+                painter.setRenderHint(QPainter.Antialiasing)
+                
+                # Draw the regular masked strand
+                # Skip painter setup since it's already configured in the main painting loop
+                masked_strand.draw(painter, skip_painter_setup=True)
+                
+                painter.restore()
+            else:
+                # For regular strands, draw normally without modifying is_selected state
+                painter.save()
+                
+                # Draw the strand without changing its selection state to prevent flickering
+                # Skip painter setup since it's already configured in the main painting loop
+                strand.draw(painter, skip_painter_setup=True)
+                
+                painter.restore()
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in draw_moving_strand: {e}")
+            return
 
     def draw_highlighted_masked_strand(self, painter, masked_strand):
         painter.save()
@@ -3807,31 +3825,40 @@ class StrandDrawingCanvas(QWidget):
         if isinstance(strand, AttachedStrand):
             self.update_attachment_statuses()
     def get_next_available_set_number(self):
-        existing_set_numbers = set(
-            strand.set_number
-            for strand in self.strands
-            if hasattr(strand, 'set_number') and not isinstance(strand, MaskedStrand)
-        )
-        return max(existing_set_numbers, default=0) + 1
-    def get_next_strand_number(self, set_number):
-        """Get the next available strand number for a set."""
-        # Get all existing numbers for this set
-        existing_numbers = []
-        for strand in self.strands:
-            if strand.set_number == set_number:
-                try:
-                    # Extract the number after the underscore (e.g., '1_3' -> 3)
-                    number = int(strand.layer_name.split('_')[1])
-                    existing_numbers.append(number)
-                except (IndexError, ValueError):
-                    continue
-        
-        # If no existing numbers, start with 1
-        if not existing_numbers:
+        try:
+            existing_set_numbers = set(
+                strand.set_number
+                for strand in self.strands
+                if hasattr(strand, 'set_number') and not isinstance(strand, MaskedStrand)
+            )
+            return max(existing_set_numbers, default=0) + 1
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in get_next_available_set_number: {e}")
             return 1
-            
-        # Get the next sequential number
-        return max(existing_numbers) + 1
+
+    def get_next_strand_number(self, set_number):
+        try:
+            """Get the next available strand number for a set."""
+            # Get all existing numbers for this set
+            existing_numbers = []
+            for strand in self.strands:
+                if strand.set_number == set_number:
+                    try:
+                        # Extract the number after the underscore (e.g., '1_3' -> 3)
+                        number = int(strand.layer_name.split('_')[1])
+                        existing_numbers.append(number)
+                    except (IndexError, ValueError):
+                        continue
+
+            # If no existing numbers, start with 1
+            if not existing_numbers:
+                return 1
+
+            # Get the next sequential number
+            return max(existing_numbers) + 1
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in get_next_strand_number: {e}")
+            return 1
 
     def attach_strand(self, parent_strand, new_strand):
         """Handle group cleanup when a new strand is attached."""
@@ -4071,35 +4098,39 @@ class StrandDrawingCanvas(QWidget):
             pass
     def deselect_all_strands(self):
         """Deselect all strands and update the canvas."""
-        def deselect_strand_recursively(strand):
-            # CRITICAL FIX: Never clear is_selected for strands that are in truly_moving_strands
-            if hasattr(self, 'truly_moving_strands') and strand in self.truly_moving_strands:
-                pass
-                return  # Skip this strand
-            
-            strand.is_selected = False
-            strand.start_selected = False
-            strand.end_selected = False
-            if hasattr(strand, 'attached_strands'):
-                for attached_strand in strand.attached_strands:
-                    # CRITICAL FIX: Never clear is_selected for attached strands that are in truly_moving_strands
-                    if hasattr(self, 'truly_moving_strands') and attached_strand in self.truly_moving_strands:
-                        pass
-                        continue
-                    deselect_strand_recursively(attached_strand)
+        try:
+            def deselect_strand_recursively(strand):
+                # CRITICAL FIX: Never clear is_selected for strands that are in truly_moving_strands
+                if hasattr(self, 'truly_moving_strands') and strand in self.truly_moving_strands:
+                    pass
+                    return  # Skip this strand
 
-        for strand in self.strands:
-            deselect_strand_recursively(strand)
-            
-        # Clear selected strand references
-        self.selected_strand = None
-        self.selected_strand_index = None
-        self.selected_attached_strand = None
-        
-        # Emit the deselect_all signal for connected objects
-        self.deselect_all_signal.emit()
+                strand.is_selected = False
+                strand.start_selected = False
+                strand.end_selected = False
+                if hasattr(strand, 'attached_strands'):
+                    for attached_strand in strand.attached_strands:
+                        # CRITICAL FIX: Never clear is_selected for attached strands that are in truly_moving_strands
+                        if hasattr(self, 'truly_moving_strands') and attached_strand in self.truly_moving_strands:
+                            pass
+                            continue
+                        deselect_strand_recursively(attached_strand)
 
-        self.update()  # Redraw the canvas to reflect changes
+            for strand in self.strands:
+                deselect_strand_recursively(strand)
+
+            # Clear selected strand references
+            self.selected_strand = None
+            self.selected_strand_index = None
+            self.selected_attached_strand = None
+
+            # Emit the deselect_all signal for connected objects
+            self.deselect_all_signal.emit()
+
+            self.update()  # Redraw the canvas to reflect changes
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in deselect_all_strands: {e}")
+            return
 
     def mousePressEvent(self, event):
         # Convert screen coordinates to canvas coordinates for zoom
@@ -4732,137 +4763,141 @@ class StrandDrawingCanvas(QWidget):
         event.accept()
 
     def finalize_new_strand(self):
-        if self.new_strand_start_point and self.new_strand_end_point:
-            # Ensure coordinates are properly normalized regardless of zoom level
-            start_point = self.snap_to_grid_for_attach(self._normalize_coordinate_for_zoom(self.new_strand_start_point))
-            end_point = self.snap_to_grid_for_attach(self._normalize_coordinate_for_zoom(self.new_strand_end_point))
-            
-            new_strand = Strand(start_point, end_point, self.strand_width, 
-                               self.default_strand_color, self.default_stroke_color, self.stroke_width)
-            new_strand.set_number = self.new_strand_set_number
-            new_strand.set_color(self.strand_colors[self.new_strand_set_number])
-            new_strand.layer_name = f"{self.new_strand_set_number}_1"  # Main strand
-            new_strand.is_start_side = True
-            # Apply control point influence parameters from canvas settings
-            new_strand.curve_response_exponent = self.curve_response_exponent
-            new_strand.control_point_base_fraction = self.control_point_base_fraction
-            new_strand.distance_multiplier = self.distance_multiplier
-            # Set the shadow color to the default shadow color
-            new_strand.shadow_color = self.default_shadow_color
-            
-            self.add_strand(new_strand)
-            new_strand_index = len(self.strands) - 1
-            
-            # Clear any previously selected attached strands before selecting the new strand
-            if self.selected_attached_strand:
-                self.selected_attached_strand.is_selected = False
-                # Also clear the start_selected property to remove semi-circle highlighting
-                if hasattr(self.selected_attached_strand, 'start_selected'):
-                    self.selected_attached_strand.start_selected = False
+        try:
+            if self.new_strand_start_point and self.new_strand_end_point:
+                # Ensure coordinates are properly normalized regardless of zoom level
+                start_point = self.snap_to_grid_for_attach(self._normalize_coordinate_for_zoom(self.new_strand_start_point))
+                end_point = self.snap_to_grid_for_attach(self._normalize_coordinate_for_zoom(self.new_strand_end_point))
+                
+                new_strand = Strand(start_point, end_point, self.strand_width, 
+                                   self.default_strand_color, self.default_stroke_color, self.stroke_width)
+                new_strand.set_number = self.new_strand_set_number
+                new_strand.set_color(self.strand_colors[self.new_strand_set_number])
+                new_strand.layer_name = f"{self.new_strand_set_number}_1"  # Main strand
+                new_strand.is_start_side = True
+                # Apply control point influence parameters from canvas settings
+                new_strand.curve_response_exponent = self.curve_response_exponent
+                new_strand.control_point_base_fraction = self.control_point_base_fraction
+                new_strand.distance_multiplier = self.distance_multiplier
+                # Set the shadow color to the default shadow color
+                new_strand.shadow_color = self.default_shadow_color
+                
+                self.add_strand(new_strand)
+                new_strand_index = len(self.strands) - 1
+                
+                # Clear any previously selected attached strands before selecting the new strand
+                if self.selected_attached_strand:
+                    self.selected_attached_strand.is_selected = False
+                    # Also clear the start_selected property to remove semi-circle highlighting
+                    if hasattr(self.selected_attached_strand, 'start_selected'):
+                        self.selected_attached_strand.start_selected = False
+                    self.selected_attached_strand = None
+                
+                # Also deselect all strands to ensure clean selection state
+                for strand in self.strands:
+                    strand.is_selected = False
+                    # Clear semi-circle highlighting properties
+                    if hasattr(strand, 'start_selected'):
+                        strand.start_selected = False
+                    if hasattr(strand, 'end_selected'):
+                        strand.end_selected = False
+                    # Debug logging for strand clearing
+                    if hasattr(strand, 'layer_name'):
+                        pass
+                    if hasattr(strand, 'attached_strands'):
+                        for attached in strand.attached_strands:
+                            attached.is_selected = False
+                            # Clear semi-circle highlighting for attached strands too
+                            if hasattr(attached, 'start_selected'):
+                                attached.start_selected = False
+                            if hasattr(attached, 'end_selected'):
+                                attached.end_selected = False
+                            # Debug logging for attached strand clearing
+                            if hasattr(attached, 'layer_name'):
+                                pass
+                
+                # Reset MoveMode selection state
+                if hasattr(self, 'move_mode') and self.move_mode:
+                    self.move_mode.reset_selection()
+                
+                # Force canvas update after clearing highlighting to ensure visual changes take effect
+                pass
+                self.update()
+                
+                # Ensure consistent state after strand creation (zoom-independent)
+                self._ensure_consistent_post_creation_state()
+                
+                # Clear any previously restored attached-strand selection so old semicircle highlights disappear
                 self.selected_attached_strand = None
-            
-            # Also deselect all strands to ensure clean selection state
-            for strand in self.strands:
-                strand.is_selected = False
-                # Clear semi-circle highlighting properties
-                if hasattr(strand, 'start_selected'):
-                    strand.start_selected = False
-                if hasattr(strand, 'end_selected'):
-                    strand.end_selected = False
-                # Debug logging for strand clearing
-                if hasattr(strand, 'layer_name'):
-                    pass
-                if hasattr(strand, 'attached_strands'):
-                    for attached in strand.attached_strands:
-                        attached.is_selected = False
-                        # Clear semi-circle highlighting for attached strands too
-                        if hasattr(attached, 'start_selected'):
-                            attached.start_selected = False
-                        if hasattr(attached, 'end_selected'):
-                            attached.end_selected = False
-                        # Debug logging for attached strand clearing
-                        if hasattr(attached, 'layer_name'):
-                            pass
-            
-            # Reset MoveMode selection state
-            if hasattr(self, 'move_mode') and self.move_mode:
-                self.move_mode.reset_selection()
-            
-            # Force canvas update after clearing highlighting to ensure visual changes take effect
-            pass
-            self.update()
-            
-            # Ensure consistent state after strand creation (zoom-independent)
-            self._ensure_consistent_post_creation_state()
-            
-            # Clear any previously restored attached-strand selection so old semicircle highlights disappear
-            self.selected_attached_strand = None
-            
-            # Ensure the new strand is selected and highlighted
-            new_strand.is_selected = True
-            self.selected_strand = new_strand
-            self.newest_strand = new_strand
-            self.selected_strand_index = new_strand_index
-            self.last_selected_strand_index = new_strand_index
-            
-            self.is_drawing_new_strand = False
-            self.new_strand_start_point = None
-            self.new_strand_end_point = None
-            self.setCursor(Qt.ArrowCursor)
-            
-            # Emit signals and update UI
-            self.strand_selected.emit(new_strand_index)
-            if hasattr(self, 'layer_panel'):
-                # Get main window reference for update suppression
-                main_window = None
-                if hasattr(self.layer_panel, 'parent_window'):
-                    main_window = self.layer_panel.parent_window
-                elif hasattr(self.layer_panel, 'parent'):
-                    main_window = self.layer_panel.parent()
                 
-                # Temporarily suppress UI updates to prevent window flash during strand creation
-                if main_window:
-                    main_window.setUpdatesEnabled(False)
-                self._suppress_layer_panel_refresh = True
-                self._suppress_repaint = True
-                self._suppress_attachment_updates = True
+                # Ensure the new strand is selected and highlighted
+                new_strand.is_selected = True
+                self.selected_strand = new_strand
+                self.newest_strand = new_strand
+                self.selected_strand_index = new_strand_index
+                self.last_selected_strand_index = new_strand_index
                 
-                try:
-                    self.layer_panel.on_strand_created(new_strand)
-                    # Ensure the layer panel selection is updated
-                    self.layer_panel.select_layer(new_strand_index, emit_signal=False)
-                except Exception as e:
-                    pass
-                finally:
-                    # Re-enable UI updates - ALWAYS execute this even if there's an exception
+                self.is_drawing_new_strand = False
+                self.new_strand_start_point = None
+                self.new_strand_end_point = None
+                self.setCursor(Qt.ArrowCursor)
+                
+                # Emit signals and update UI
+                self.strand_selected.emit(new_strand_index)
+                if hasattr(self, 'layer_panel'):
+                    # Get main window reference for update suppression
+                    main_window = None
+                    if hasattr(self.layer_panel, 'parent_window'):
+                        main_window = self.layer_panel.parent_window
+                    elif hasattr(self.layer_panel, 'parent'):
+                        main_window = self.layer_panel.parent()
+                    
+                    # Temporarily suppress UI updates to prevent window flash during strand creation
                     if main_window:
-                        main_window.setUpdatesEnabled(True)
-                    self._suppress_layer_panel_refresh = False
-                    self._suppress_repaint = False
-                    self._suppress_attachment_updates = False
+                        main_window.setUpdatesEnabled(False)
+                    self._suppress_layer_panel_refresh = True
+                    self._suppress_repaint = True
+                    self._suppress_attachment_updates = True
+                    
+                    try:
+                        self.layer_panel.on_strand_created(new_strand)
+                        # Ensure the layer panel selection is updated
+                        self.layer_panel.select_layer(new_strand_index, emit_signal=False)
+                    except Exception as e:
+                        pass
+                    finally:
+                        # Re-enable UI updates - ALWAYS execute this even if there's an exception
+                        if main_window:
+                            main_window.setUpdatesEnabled(True)
+                        self._suppress_layer_panel_refresh = False
+                        self._suppress_repaint = False
+                        self._suppress_attachment_updates = False
+                    
+                    # The layer panel already performed a lightweight update; avoid costly refresh() to prevent flash.
+                    pass
                 
-                # The layer panel already performed a lightweight update; avoid costly refresh() to prevent flash.
+                # Force a canvas update to show the selection
+                self.update()
+                
+                # Ensure suppression flags are cleared after strand creation
+                self.clear_suppression_flags()
+                
+                # Add this line to emit the strand_created signal
+                # This is crucial for updating the layer_state_manager and enabling proper shading
+                self.strand_created.emit(new_strand)
+    
+                # --- ADD LOGGING FOR STRAND CREATION (Button initiated) ---
+                # Check *before* accessing attributes for logging
+                if new_strand:
+                    pass
+                # --- END LOGGING ---
+    
                 pass
-            
-            # Force a canvas update to show the selection
-            self.update()
-            
-            # Ensure suppression flags are cleared after strand creation
-            self.clear_suppression_flags()
-            
-            # Add this line to emit the strand_created signal
-            # This is crucial for updating the layer_state_manager and enabling proper shading
-            self.strand_created.emit(new_strand)
-
-            # --- ADD LOGGING FOR STRAND CREATION (Button initiated) ---
-            # Check *before* accessing attributes for logging
-            if new_strand:
+            else:
                 pass
-            # --- END LOGGING ---
-
-            pass
-        else:
-            pass
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in finalize_new_strand: {e}")
+            return
     def set_mode(self, mode):
         """
         Set the current mode of the canvas.
@@ -5023,24 +5058,32 @@ class StrandDrawingCanvas(QWidget):
         """
         Remove any circles associated with the given strand.
         """
-        if hasattr(strand, 'has_circles'):
-            if strand.has_circles[0]:
-                strand.has_circles[0] = False
-                pass
-            if strand.has_circles[1]:
-                strand.has_circles[1] = False
-                pass
+        try:
+            if hasattr(strand, 'has_circles'):
+                if strand.has_circles[0]:
+                    strand.has_circles[0] = False
+                    pass
+                if strand.has_circles[1]:
+                    strand.has_circles[1] = False
+                    pass
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in remove_strand_circles: {e}")
+            return
 
     def get_all_related_masked_strands(self, strand):
         """
         Get all masked strands that involve the given strand.
         This includes masks directly involving the main strand or any of its attached strands.
         """
-        related_masked_strands = []
-        for s in self.strands:
-            if isinstance(s, MaskedStrand) and self.is_strand_involved_in_mask(s, strand):
-                related_masked_strands.append(s)
-        return related_masked_strands
+        try:
+            related_masked_strands = []
+            for s in self.strands:
+                if isinstance(s, MaskedStrand) and self.is_strand_involved_in_mask(s, strand):
+                    related_masked_strands.append(s)
+            return related_masked_strands
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in get_all_related_masked_strands: {e}")
+            return []
 
 
 
@@ -5063,18 +5106,22 @@ class StrandDrawingCanvas(QWidget):
 
 
     def is_related_strand(self, strand, set_number):
-        layer_name = strand.layer_name
-        parts = layer_name.split('_')
-        
-        # Direct relationship: starts with set_number_
-        if parts[0] == str(set_number):
-            return True
-        
-        # Check for masked layers involving the set_number
-        if len(parts) > 2 and str(set_number) in parts:
-            return True
-        
-        return False
+        try:
+            layer_name = strand.layer_name
+            parts = layer_name.split('_')
+
+            # Direct relationship: starts with set_number_
+            if parts[0] == str(set_number):
+                return True
+
+            # Check for masked layers involving the set_number
+            if len(parts) > 2 and str(set_number) in parts:
+                return True
+
+            return False
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in is_related_strand: {e}")
+            return False
     def update_layer_names_for_attached_strand_deletion(self, set_number):
         pass
         # Do nothing here to keep original names
@@ -5083,18 +5130,26 @@ class StrandDrawingCanvas(QWidget):
 
     def remove_attached_strands(self, parent_strand):
         """Recursively remove all attached strands."""
-        attached_strands = parent_strand.attached_strands.copy()  # Create a copy to iterate over
-        for attached_strand in attached_strands:
-            if attached_strand in self.strands:
-                self.strands.remove(attached_strand)
-                self.remove_attached_strands(attached_strand)
-        parent_strand.attached_strands.clear()  # Clear the list of attached strands
+        try:
+            attached_strands = parent_strand.attached_strands.copy()  # Create a copy to iterate over
+            for attached_strand in attached_strands:
+                if attached_strand in self.strands:
+                    self.strands.remove(attached_strand)
+                    self.remove_attached_strands(attached_strand)
+            parent_strand.attached_strands.clear()  # Clear the list of attached strands
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in remove_attached_strands: {e}")
+            return
 
     def find_parent_strand(self, attached_strand):
-        for strand in self.strands:
-            if attached_strand in strand.attached_strands:
-                return strand
-        return None
+        try:
+            for strand in self.strands:
+                if attached_strand in strand.attached_strands:
+                    return strand
+            return None
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in find_parent_strand: {e}")
+            return None
 
     def clear_strands(self):
         """Clear all strands from the canvas."""
@@ -5136,10 +5191,14 @@ class StrandDrawingCanvas(QWidget):
 
     def get_strand_at_position(self, pos):
         """Get the strand at the given position."""
-        for strand in reversed(self.strands):  # Check from top to bottom
-            if strand.get_path().contains(pos):
-                return strand
-        return None
+        try:
+            for strand in reversed(self.strands):  # Check from top to bottom
+                if strand.get_path().contains(pos):
+                    return strand
+            return None
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in get_strand_at_position: {e}")
+            return None
 
     def get_strand_index(self, strand):
         """Get the index of a given strand."""
@@ -5164,30 +5223,34 @@ class StrandDrawingCanvas(QWidget):
 
     def get_bounding_rect(self):
         """Get the bounding rectangle of all strands."""
-        if not self.strands:
+        try:
+            if not self.strands:
+                return QRectF()
+
+            total_rect = QRectF()
+
+            for strand in self.strands:
+                strand_rect = QRectF()
+                if isinstance(strand, MaskedStrand):
+                    strand_rect = strand.get_mask_path().boundingRect()
+                else:
+                    path = strand.get_path()
+                    stroker = QPainterPathStroker()
+                    stroker.setWidth(strand.width + strand.stroke_width * 2)
+                    stroker.setJoinStyle(Qt.MiterJoin)
+                    stroker.setCapStyle(Qt.FlatCap)
+                    stroke_path = stroker.createStroke(path)
+                    strand_rect = stroke_path.boundingRect()
+
+                if total_rect.isNull():
+                    total_rect = strand_rect
+                else:
+                    total_rect = total_rect.united(strand_rect)
+
+            return total_rect
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in get_bounding_rect: {e}")
             return QRectF()
-
-        total_rect = QRectF()
-
-        for strand in self.strands:
-            strand_rect = QRectF()
-            if isinstance(strand, MaskedStrand):
-                strand_rect = strand.get_mask_path().boundingRect()
-            else:
-                path = strand.get_path()
-                stroker = QPainterPathStroker()
-                stroker.setWidth(strand.width + strand.stroke_width * 2)
-                stroker.setJoinStyle(Qt.MiterJoin)
-                stroker.setCapStyle(Qt.FlatCap)
-                stroke_path = stroker.createStroke(path)
-                strand_rect = stroke_path.boundingRect()
-            
-            if total_rect.isNull():
-                total_rect = strand_rect
-            else:
-                total_rect = total_rect.united(strand_rect)
-                
-        return total_rect
 
     def zoom_to_fit(self):
         """Zoom and center the view to fit all strands."""
@@ -5255,21 +5318,25 @@ class StrandDrawingCanvas(QWidget):
         return self.selected_strand
 
     def clear_selection(self):
-        # Instead of referencing self.selected_strand directly in the f-string:
-        # logging.info(f"Clearing selection. Current selected strand: {self.selected_strand}")
+        try:
+            # Instead of referencing self.selected_strand directly in the f-string:
+            # logging.info(f"Clearing selection. Current selected strand: {self.selected_strand}")
 
-        # First, capture a non-logging property (like layer_name), or safely handle None:
-        strand_desc = self.selected_strand.layer_name if self.selected_strand else "None"
-        pass
+            # First, capture a non-logging property (like layer_name), or safely handle None:
+            strand_desc = self.selected_strand.layer_name if self.selected_strand else "None"
+            pass
 
-        # Then proceed with clearing selection
-        self.selected_strand = None
-        self.selected_strand_index = None
-        
-        # Emit the deselect_all signal for connected objects
-        self.deselect_all_signal.emit()
-        
-        self.update()
+            # Then proceed with clearing selection
+            self.selected_strand = None
+            self.selected_strand_index = None
+
+            # Emit the deselect_all signal for connected objects
+            self.deselect_all_signal.emit()
+
+            self.update()
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in clear_selection: {e}")
+            return
 
     def refresh_canvas(self):
         """Refresh the entire canvas, updating all strands."""
@@ -5479,92 +5546,100 @@ class StrandDrawingCanvas(QWidget):
     
     def _cleanup_after_deletion(self):
         """Clean up flags and temporary data after strand deletion is complete."""
-        pass
-        
-        # Clean up _deletion_freed_ends from all strands
-        for s in self.strands:
-            if hasattr(s, '_deletion_freed_ends'):
-                pass
-                delattr(s, '_deletion_freed_ends')
-        
-        # Re-enable attachment updates
-        self._suppress_attachment_updates_during_deletion = False
-        pass
-        
-        # Don't call update_attachment_statuses here - the attachment states are already correct
-        # from the deletion process and calling it would override the freed ends based on geometry
-        pass
+        try:
+            pass
+
+            # Clean up _deletion_freed_ends from all strands
+            for s in self.strands:
+                if hasattr(s, '_deletion_freed_ends'):
+                    pass
+                    delattr(s, '_deletion_freed_ends')
+
+            # Re-enable attachment updates
+            self._suppress_attachment_updates_during_deletion = False
+            pass
+
+            # Don't call update_attachment_statuses here - the attachment states are already correct
+            # from the deletion process and calling it would override the freed ends based on geometry
+            pass
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in _cleanup_after_deletion: {e}")
+            return
 
     def delete_groups_containing_strands(self, strands):
         """
         Deletes groups that contain any of the given strands.
         Checks both group_panel.groups and canvas.groups to avoid stale entries.
         """
-        strands_layer_names = set()
-        for strand in strands:
-            try:
-                strands_layer_names.add(strand.layer_name)
-            except (RuntimeError, AttributeError):
-                pass
-
-        print(f"[GROUP DELETE] Strands being removed: {strands_layer_names}")
-        print(f"[GROUP DELETE] canvas.groups BEFORE: {list(self.groups.keys())}")
-
-        if not hasattr(self, 'group_layer_manager') or not self.group_layer_manager:
-            # Even without group_layer_manager, clean canvas.groups directly
-            if hasattr(self, 'groups') and self.groups:
+        try:
+            strands_layer_names = set()
+            for strand in strands:
+                try:
+                    strands_layer_names.add(strand.layer_name)
+                except (RuntimeError, AttributeError):
+                    pass
+    
+            print(f"[GROUP DELETE] Strands being removed: {strands_layer_names}")
+            print(f"[GROUP DELETE] canvas.groups BEFORE: {list(self.groups.keys())}")
+    
+            if not hasattr(self, 'group_layer_manager') or not self.group_layer_manager:
+                # Even without group_layer_manager, clean canvas.groups directly
+                if hasattr(self, 'groups') and self.groups:
+                    for group_name in list(self.groups.keys()):
+                        group_data = self.groups[group_name]
+                        if any(ln in group_data.get('layers', []) for ln in strands_layer_names):
+                            print(f"[GROUP DELETE] Removing '{group_name}' from canvas.groups (no group_layer_manager)")
+                            del self.groups[group_name]
+                print(f"[GROUP DELETE] canvas.groups AFTER: {list(self.groups.keys())}")
+                return
+    
+            group_panel = self.group_layer_manager.group_panel
+            if not group_panel:
+                print(f"[GROUP DELETE] No group_panel — cleaning canvas.groups directly")
                 for group_name in list(self.groups.keys()):
                     group_data = self.groups[group_name]
                     if any(ln in group_data.get('layers', []) for ln in strands_layer_names):
-                        print(f"[GROUP DELETE] Removing '{group_name}' from canvas.groups (no group_layer_manager)")
+                        print(f"[GROUP DELETE] Removing '{group_name}' from canvas.groups")
                         del self.groups[group_name]
-            print(f"[GROUP DELETE] canvas.groups AFTER: {list(self.groups.keys())}")
-            return
-
-        group_panel = self.group_layer_manager.group_panel
-        if not group_panel:
-            print(f"[GROUP DELETE] No group_panel — cleaning canvas.groups directly")
-            for group_name in list(self.groups.keys()):
-                group_data = self.groups[group_name]
+                print(f"[GROUP DELETE] canvas.groups AFTER: {list(self.groups.keys())}")
+                return
+    
+            print(f"[GROUP DELETE] group_panel.groups BEFORE: {list(group_panel.groups.keys())}")
+    
+            # Collect from BOTH dicts to catch groups that exist in one but not the other
+            groups_to_delete = set()
+    
+            # Check group_panel.groups
+            for group_name, group_data in list(group_panel.groups.items()):
                 if any(ln in group_data.get('layers', []) for ln in strands_layer_names):
-                    print(f"[GROUP DELETE] Removing '{group_name}' from canvas.groups")
+                    print(f"[GROUP DELETE] Found '{group_name}' in group_panel.groups (layers: {group_data.get('layers', [])})")
+                    groups_to_delete.add(group_name)
+    
+            # Also check canvas.groups for any that group_panel missed
+            for group_name, group_data in list(self.groups.items()):
+                if any(ln in group_data.get('layers', []) for ln in strands_layer_names):
+                    if group_name not in groups_to_delete:
+                        print(f"[GROUP DELETE] Found '{group_name}' in canvas.groups ONLY (was missing from group_panel!)")
+                    groups_to_delete.add(group_name)
+    
+            if not groups_to_delete:
+                print(f"[GROUP DELETE] No groups to delete")
+            else:
+                print(f"[GROUP DELETE] Groups to delete: {groups_to_delete}")
+    
+            # Delete from all locations
+            for group_name in groups_to_delete:
+                print(f"[GROUP DELETE] Deleting '{group_name}' via group_panel.delete_group...")
+                group_panel.delete_group(group_name)
+                # Ensure canvas.groups is also cleaned (in case delete_group skipped it)
+                if group_name in self.groups:
+                    print(f"[GROUP DELETE] '{group_name}' still in canvas.groups after delete_group — removing directly")
                     del self.groups[group_name]
+    
             print(f"[GROUP DELETE] canvas.groups AFTER: {list(self.groups.keys())}")
+        except RuntimeError as e:
+            print(f"[StrandDrawingCanvas] RuntimeError in delete_groups_containing_strands: {e}")
             return
-
-        print(f"[GROUP DELETE] group_panel.groups BEFORE: {list(group_panel.groups.keys())}")
-
-        # Collect from BOTH dicts to catch groups that exist in one but not the other
-        groups_to_delete = set()
-
-        # Check group_panel.groups
-        for group_name, group_data in list(group_panel.groups.items()):
-            if any(ln in group_data.get('layers', []) for ln in strands_layer_names):
-                print(f"[GROUP DELETE] Found '{group_name}' in group_panel.groups (layers: {group_data.get('layers', [])})")
-                groups_to_delete.add(group_name)
-
-        # Also check canvas.groups for any that group_panel missed
-        for group_name, group_data in list(self.groups.items()):
-            if any(ln in group_data.get('layers', []) for ln in strands_layer_names):
-                if group_name not in groups_to_delete:
-                    print(f"[GROUP DELETE] Found '{group_name}' in canvas.groups ONLY (was missing from group_panel!)")
-                groups_to_delete.add(group_name)
-
-        if not groups_to_delete:
-            print(f"[GROUP DELETE] No groups to delete")
-        else:
-            print(f"[GROUP DELETE] Groups to delete: {groups_to_delete}")
-
-        # Delete from all locations
-        for group_name in groups_to_delete:
-            print(f"[GROUP DELETE] Deleting '{group_name}' via group_panel.delete_group...")
-            group_panel.delete_group(group_name)
-            # Ensure canvas.groups is also cleaned (in case delete_group skipped it)
-            if group_name in self.groups:
-                print(f"[GROUP DELETE] '{group_name}' still in canvas.groups after delete_group — removing directly")
-                del self.groups[group_name]
-
-        print(f"[GROUP DELETE] canvas.groups AFTER: {list(self.groups.keys())}")
         print(f"[GROUP DELETE] group_panel.groups AFTER: {list(group_panel.groups.keys())}")
     def update_layer_panel_colors(self):
         if self.layer_panel:

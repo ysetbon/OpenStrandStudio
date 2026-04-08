@@ -1112,21 +1112,9 @@ class GroupPanel(QWidget):
                 return
 
             for group_name, group_data in self.canvas.groups.items():
-                layers = group_data.get('layers', [])
-                strands = group_data.get('strands', [])
                 main_strands = group_data.get('main_strands', set())
-                control_points = group_data.get('control_points', {})
 
-                # Resolve any string strand references to live objects
-                resolved_strands = []
-                for s in strands:
-                    if isinstance(s, str):
-                        obj = self._find_strand_by_name(s)
-                        if obj:
-                            resolved_strands.append(obj)
-                    else:
-                        resolved_strands.append(s)
-
+                # Resolve any string main_strand references to live objects
                 resolved_main = set()
                 for ms in main_strands:
                     if isinstance(ms, str):
@@ -1137,16 +1125,19 @@ class GroupPanel(QWidget):
                         resolved_main.add(ms)
 
                 self.groups[group_name] = {
-                    'strands': resolved_strands,
-                    'layers': layers,
                     'main_strands': resolved_main,
-                    'control_points': control_points,
                 }
-                # Also push resolved objects back into canvas.groups
-                self.canvas.groups[group_name]['strands'] = resolved_strands
-                self.canvas.groups[group_name]['main_strands'] = resolved_main
+                # Keep canvas.groups minimal too
+                self.canvas.groups[group_name] = {
+                    'main_strands': resolved_main,
+                }
 
-                self._add_group_to_tree(group_name, layers)
+                # Build branch IDs for tree display
+                branch_ids = []
+                for ms in resolved_main:
+                    name = getattr(ms, 'layer_name', str(ms))
+                    branch_ids.append(f"{name.split('_')[0]}_1")
+                self._add_group_to_tree(group_name, branch_ids)
 
             self.update()
         except RuntimeError:
@@ -1174,48 +1165,19 @@ class GroupPanel(QWidget):
         """Update the visual display of a group."""
         try:
             if group_name in self.groups and group_name in self.group_items:
-                # Rebuild tree children to reflect current layers
+                resolved = self.resolve_group_data(group_name)
+                layers = resolved['layers'] if resolved else []
                 self._remove_group_from_tree(group_name)
-                self._add_group_to_tree(group_name, self.groups[group_name]['layers'])
+                self._add_group_to_tree(group_name, layers)
         except RuntimeError:
             pass
 
 
     def add_layer_to_group(self, layer_name, group_name):
-        """Add a layer to an existing group in the panel."""
-        if group_name in self.groups:
-            group_data = self.groups[group_name]
-            if layer_name not in group_data['layers']:
-                group_data['layers'].append(layer_name)
-                if hasattr(self.canvas, 'find_strand_by_name'):
-                    strand = self.canvas.find_strand_by_name(layer_name)
-                    if strand:
-                        group_data['strands'].append(strand)
-                        # Store original positions for the new strand
-                        try:
-                            strand.original_start = QPointF(strand.start)
-                            strand.original_end = QPointF(strand.end)
-                            # Check for None control points (MaskedStrands have None control points)
-                            if strand.control_point1 is not None:
-                                strand.original_control_point1 = QPointF(strand.control_point1)
-                            else:
-                                strand.original_control_point1 = QPointF(strand.start)
-
-                            if strand.control_point2 is not None:
-                                strand.original_control_point2 = QPointF(strand.control_point2)
-                            else:
-                                strand.original_control_point2 = QPointF(strand.end)
-                        except (RuntimeError, TypeError):
-                            pass
-                        pass
-                
-                # Update the group's visual representation
-                self.update_group_display(group_name)
-                pass
-            else:
-                pass
-        else:
-            pass
+        """Add a layer to an existing group — no-op since groups resolve dynamically."""
+        # Groups now resolve their strands/layers on-demand from main_strands.
+        # New strands in the same branch are automatically included.
+        pass
 
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasFormat("application/x-strand-data"):
@@ -1241,18 +1203,19 @@ class GroupPanel(QWidget):
     def start_group_move(self, group_name):
         try:
             print(f"[DEBUG MOVE] start_group_move called for {group_name!r}")
-            if not self.canvas or not hasattr(self.canvas, 'groups'):
-                print(f"[DEBUG MOVE]   no canvas/groups available for {group_name!r}")
+            if not self.canvas:
+                print(f"[DEBUG MOVE]   no canvas available for {group_name!r}")
                 return
-            # Fetch group data reliably from canvas.groups
-            group_data = self.canvas.groups.get(group_name)
-            if group_data:
+            # Resolve group data on-demand
+            resolved = self.resolve_group_data(group_name)
+            if resolved:
+                # Populate canvas.groups with resolved data for the duration of the operation
+                self.canvas.groups[group_name] = resolved
                 print(
                     f"[DEBUG MOVE]   opening GroupMoveDialog for {group_name!r}: "
-                    f"layers={group_data.get('layers', [])}, "
-                    f"strands={[getattr(s, 'layer_name', None) for s in group_data.get('strands', [])]}"
+                    f"layers={resolved.get('layers', [])}, "
+                    f"strands={[getattr(s, 'layer_name', None) for s in resolved.get('strands', [])]}"
                 )
-                # Pass self.canvas as the first parameter and group_name as the second
                 dialog = GroupMoveDialog(self.canvas, group_name, parent=self)
                 dialog.move_updated.connect(self.update_group_move)
                 dialog.move_finished.connect(self.finish_group_move)
@@ -1260,7 +1223,7 @@ class GroupPanel(QWidget):
                 dialog.exec_()
                 print(f"[DEBUG MOVE]   GroupMoveDialog closed for {group_name!r}")
             else:
-                print(f"[DEBUG MOVE]   group {group_name!r} not found in canvas.groups")
+                print(f"[DEBUG MOVE]   group {group_name!r} not found")
         except RuntimeError:
             pass
 
@@ -1272,8 +1235,8 @@ class GroupPanel(QWidget):
                 f"group={group_name!r}, dx={total_dx}, dy={total_dy}"
             )
             if self.canvas:
-                # Fetch group data reliably from canvas.groups
-                group_data = self.canvas.groups.get(group_name)
+                # Resolve group data on-demand
+                group_data = self.resolve_group_data(group_name)
                 if not group_data:
                     print(f"[DEBUG MOVE]   no group data found for {group_name!r}")
                     return
@@ -1380,39 +1343,18 @@ class GroupPanel(QWidget):
 
 
     def create_group(self, group_name, strands):
-        """Create a new group with the given strands."""
+        """Create a new group with the given strands.
+
+        Only the main_strands (root x_1 strands) are stored persistently.
+        Full strand/layer lists are rebuilt on-demand via resolve_group_data().
+        """
         if not strands:
             print(f"[GROUP CREATE] Refusing to create group {group_name!r}: no strands provided")
             return
 
-        layers = [s.layer_name for s in strands if hasattr(s, 'layer_name')]
-        print(
-            f"[GROUP CREATE] create_group called for {group_name!r}: "
-            f"layers={layers}, strand_types={[type(s).__name__ for s in strands if hasattr(s, 'layer_name')]}"
-        )
-
-        # If group already exists, update it in place
+        # If group already exists, just skip — data is rebuilt on demand
         if group_name in self.groups:
-            existing_layers = self.groups[group_name]['layers']
-            print(
-                f"[GROUP CREATE]   group {group_name!r} already exists in panel; "
-                f"existing_layers before update={list(existing_layers)}"
-            )
-            for strand in strands:
-                if hasattr(strand, 'layer_name') and strand.layer_name not in existing_layers:
-                    existing_layers.append(strand.layer_name)
-                    self.groups[group_name]['strands'].append(strand)
-                    print(
-                        f"[GROUP CREATE]   appended missing strand {strand.layer_name!r} "
-                        f"to existing group {group_name!r}"
-                    )
-            # Rebuild tree item to reflect new layers
-            self._remove_group_from_tree(group_name)
-            self._add_group_to_tree(group_name, self.groups[group_name]['layers'])
-            print(
-                f"[GROUP CREATE]   updated existing group {group_name!r}: "
-                f"layers now={self.groups[group_name]['layers']}"
-            )
+            print(f"[GROUP CREATE]   group {group_name!r} already exists, skipping")
             return
 
         # Identify main strands (pattern: "x_1" where x is a number)
@@ -1423,71 +1365,104 @@ class GroupPanel(QWidget):
                 if len(parts) == 2 and parts[1] == '1':
                     main_strands.add(strand)
 
-        # Build control_points dict
-        control_points = {}
-        for strand in strands:
-            try:
-                if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
-                    cp1 = strand.control_point1 if isinstance(strand.control_point1, QPointF) else QPointF(strand.start)
-                    cp2 = strand.control_point2 if isinstance(strand.control_point2, QPointF) else QPointF(strand.end)
-                    control_points[strand.layer_name] = {
-                        'control_point1': cp1,
-                        'control_point2': cp2
-                    }
-            except (RuntimeError, TypeError):
-                continue
-
-        # Store in self.groups (no 'widget' key)
+        # Store minimal data — only main_strands
         self.groups[group_name] = {
-            'strands': list(strands),
-            'layers': layers,
             'main_strands': main_strands,
-            'control_points': control_points,
         }
         print(
             f"[GROUP CREATE]   stored panel group {group_name!r}: "
-            f"layers={layers}, main_strands="
-            f"{[getattr(s, 'layer_name', str(s)) for s in main_strands]}"
+            f"main_strands={[getattr(s, 'layer_name', str(s)) for s in main_strands]}"
         )
 
-        # Sync to canvas.groups
+        # Sync to canvas.groups (minimal)
         if self.canvas and hasattr(self.canvas, 'groups'):
             self.canvas.groups[group_name] = {
-                'strands': list(strands),
-                'layers': list(layers),
                 'main_strands': main_strands.copy(),
-                'control_points': dict(control_points),
-                'data': []
             }
-            print(
-                f"[GROUP CREATE]   synced canvas group {group_name!r}: "
-                f"layers={self.canvas.groups[group_name]['layers']}, "
-                f"main_strands="
-                f"{[getattr(s, 'layer_name', str(s)) for s in self.canvas.groups[group_name]['main_strands']]}"
-            )
+
+        # Build branch IDs for tree display
+        branch_ids = []
+        for ms in main_strands:
+            name = getattr(ms, 'layer_name', str(ms))
+            branch_ids.append(name.split('_')[0])
 
         # Add a tree item (the only UI operation)
-        self._add_group_to_tree(group_name, layers)
+        # _add_group_to_tree expects layers but only uses branch IDs from them
+        self._add_group_to_tree(group_name, [f"{b}_1" for b in branch_ids])
         print(f"[GROUP CREATE]   tree updated for {group_name!r}")
+
+    def resolve_group_data(self, group_name):
+        """Rebuild full group data on-demand from main_strands by scanning canvas.strands.
+
+        Returns a dict with: strands, layers, main_strands, control_points.
+        Returns None if the group doesn't exist.
+        """
+        group_data = self.groups.get(group_name)
+        if not group_data:
+            if self.canvas and hasattr(self.canvas, 'groups'):
+                group_data = self.canvas.groups.get(group_name)
+            if not group_data:
+                return None
+
+        main_strands = group_data.get('main_strands', set())
+
+        # Get branch numbers from main strands
+        branches = set()
+        for ms in main_strands:
+            name = getattr(ms, 'layer_name', str(ms))
+            branches.add(name.split('_')[0])
+
+        # Collect all canvas strands in those branches (including masks)
+        resolved_strands = []
+        resolved_layers = []
+        control_points = {}
+        if self.canvas:
+            for strand in list(self.canvas.strands):
+                try:
+                    if not hasattr(strand, 'layer_name') or not strand.layer_name:
+                        continue
+                    if strand in resolved_strands:
+                        continue
+
+                    parts = strand.layer_name.split('_')
+                    belongs = False
+
+                    if isinstance(strand, MaskedStrand):
+                        # Masked strand: layer_name = "A_B_C_D"
+                        if len(parts) == 4:
+                            belongs = parts[0] in branches or parts[2] in branches
+                    else:
+                        belongs = parts[0] in branches
+
+                    if belongs:
+                        resolved_strands.append(strand)
+                        resolved_layers.append(strand.layer_name)
+                        if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
+                            cp1 = strand.control_point1 if isinstance(strand.control_point1, QPointF) else QPointF(strand.start)
+                            cp2 = strand.control_point2 if isinstance(strand.control_point2, QPointF) else QPointF(strand.end)
+                            control_points[strand.layer_name] = {
+                                'control_point1': cp1,
+                                'control_point2': cp2
+                            }
+                except (RuntimeError, AttributeError):
+                    continue
+
+        return {
+            'strands': resolved_strands,
+            'layers': resolved_layers,
+            'main_strands': main_strands,
+            'control_points': control_points,
+            'data': [],
+        }
 
     def start_group_rotation(self, group_name):
         print(f"[DEBUG ROTATE] start_group_rotation called for '{group_name}'")
-        # Fetch group data reliably from canvas.groups
-        group_data = self.canvas.groups.get(group_name)
+        # Resolve group data on-demand from main_strands
+        group_data = self.resolve_group_data(group_name)
         if group_data:
-            # Rebuild strands list from live canvas.strands to avoid stale references
-            # (e.g. after individual strand moves in move mode)
-            layers_in_group = group_data.get('layers', [])
-            refreshed_strands = []
-            for strand in list(self.canvas.strands):
-                if hasattr(strand, 'layer_name') and strand.layer_name in layers_in_group:
-                    if strand not in refreshed_strands:
-                        refreshed_strands.append(strand)
-                    if hasattr(strand, 'attached_strands'):
-                        for attached in list(strand.attached_strands):
-                            if attached not in refreshed_strands:
-                                refreshed_strands.append(attached)
-            group_data['strands'] = refreshed_strands
+            # Populate canvas.groups with resolved data for the duration of the operation
+            if self.canvas and hasattr(self.canvas, 'groups'):
+                self.canvas.groups[group_name] = group_data
 
             # Set the active group name
             self.active_group_name = group_name
@@ -1599,21 +1574,11 @@ class GroupPanel(QWidget):
 
     def update_group_strands(self, group_name):
         """
-        Refresh the group's strands to include any newly added strands.
+        Refresh the group's strands from main_strands via resolve_group_data.
         """
-        group_data = self.groups[group_name]
-        # Get all strands that belong to the group's layers
-        updated_strands = []
-        for strand in list(self.canvas.strands):
-            if strand.layer_name in group_data['layers']:
-                if strand not in updated_strands:
-                    updated_strands.append(strand)
-                # Include any attached strands
-                if hasattr(strand, 'attached_strands'):
-                    for attached_strand in strand.attached_strands:
-                        if attached_strand not in updated_strands:
-                            updated_strands.append(attached_strand)
-        group_data['strands'] = updated_strands
+        resolved = self.resolve_group_data(group_name)
+        if resolved and self.canvas and hasattr(self.canvas, 'groups'):
+            self.canvas.groups[group_name] = resolved
 
     def start_smooth_rotation(self, group_name, final_angle, steps=1, interval=1):
         """
@@ -1955,10 +1920,7 @@ class GroupPanel(QWidget):
 
 
     def delete_group(self, group_name):
-        import traceback
         print(f"[GROUP DELETE] GroupPanel.delete_group('{group_name}') called")
-        print(f"[GROUP DELETE]   CALL STACK:")
-        traceback.print_stack()
         print(f"[GROUP DELETE]   in self.groups: {group_name in self.groups}")
         print(f"[GROUP DELETE]   in canvas.groups: {self.canvas and group_name in self.canvas.groups}")
 
@@ -1969,7 +1931,10 @@ class GroupPanel(QWidget):
 
         if group_name in self.groups:
             try:
-                self.group_operation.emit("delete", group_name, self.groups[group_name].get('layers', []))
+                # Resolve layers on-demand for the signal
+                resolved = self.resolve_group_data(group_name)
+                layers = resolved['layers'] if resolved else []
+                self.group_operation.emit("delete", group_name, layers)
             except (RuntimeError, KeyError):
                 pass
 
@@ -2040,7 +2005,9 @@ class GroupPanel(QWidget):
             self.group_items[new_group_name] = item
         
         # Emit signal for group rename operation
-        self.group_operation.emit("rename", old_group_name, group_data['layers'])
+        resolved = self.resolve_group_data(new_group_name)
+        layers = resolved['layers'] if resolved else []
+        self.group_operation.emit("rename", old_group_name, layers)
         
         pass
 
@@ -2058,8 +2025,10 @@ class GroupPanel(QWidget):
             from masked_strand import MaskedStrand
             from attached_strand import AttachedStrand
             
-            # Get the original group data
-            original_group = self.groups[group_name]
+            # Get the original group data resolved on-demand
+            original_group = self.resolve_group_data(group_name)
+            if not original_group:
+                return
             original_strands = original_group['strands']
             
             # Log what we're starting with
@@ -3041,43 +3010,37 @@ class GroupPanel(QWidget):
 
     def edit_strand_angles(self, group_name):
         try:
-            # Fetch group data reliably from canvas.groups
-            group_data = self.canvas.groups.get(group_name)
-            if group_data:
-                # Get all strands in the group, including main strands, from canvas.groups
-                all_strands = list(group_data.get('strands', [])) # Use list() to create a copy
+            # Resolve full strand list from root strands
+            group_data = self.resolve_group_data(group_name)
+            if not group_data:
+                return
+            all_strands = list(group_data.get('strands', []))
+            if not all_strands:
+                return
 
-                if not all_strands:
-                     pass
-                     return
+            # Set flag to prevent undo/redo saves during dialog interaction
+            if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
+                self.canvas.layer_panel.undo_redo_manager._skip_save = True
+            if hasattr(self.canvas, 'undo_redo_manager'):
+                self.canvas.undo_redo_manager._skip_save = True
 
-                pass
+            # Create editable layers list
+            editable_layers = [strand.layer_name for strand in all_strands
+                              if hasattr(strand, 'layer_name') and self.is_layer_editable(strand.layer_name)]
 
-                # Set flag to prevent undo/redo saves during dialog interaction
-                if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
-                    self.canvas.layer_panel.undo_redo_manager._skip_save = True
-                if hasattr(self.canvas, 'undo_redo_manager'):
-                    self.canvas.undo_redo_manager._skip_save = True
-
-                # Create editable layers list
-                editable_layers = [strand.layer_name for strand in all_strands
-                                  if hasattr(strand, 'layer_name') and self.is_layer_editable(strand.layer_name)]
-
-                # Pass the fetched data to the dialog
-                dialog = StrandAngleEditDialog(
-                    group_name,
-                    {
-                        'strands': all_strands, # Pass the actual strand objects
-                        'layers': [s.layer_name for s in all_strands if hasattr(s, 'layer_name')],
-                        'editable_layers': editable_layers
-                    },
-                    self.canvas,
-                    self
-                )
-                dialog.finished.connect(lambda: self.update_group_after_angle_edit(group_name))
-                dialog.exec_()
-            else:
-                pass
+            # Pass the fetched data to the dialog
+            dialog = StrandAngleEditDialog(
+                group_name,
+                {
+                    'strands': all_strands,
+                    'layers': [s.layer_name for s in all_strands if hasattr(s, 'layer_name')],
+                    'editable_layers': editable_layers
+                },
+                self.canvas,
+                self
+            )
+            dialog.finished.connect(lambda: self.update_group_after_angle_edit(group_name))
+            dialog.exec_()
         except RuntimeError:
             pass
 
@@ -3148,64 +3111,16 @@ class GroupPanel(QWidget):
     def preserve_group_data(self, group_name):
         """Ensure group data is preserved in both GroupPanel and Canvas."""
         if group_name in self.groups:
-            group_data = self.groups[group_name]
-            pass
-            pass
-            pass
-            # Update canvas groups
             if not hasattr(self.canvas, 'groups'):
                 self.canvas.groups = {}
-                pass
-                
-            # Get all strands for this group (snapshot to avoid mutation during iteration)
-            group_strands = list(group_data.get('strands', []))
-            pass
 
-            # Log main strands before update
-            pass
-
-            # Create updated group data
-            updated_group_data = {
-                'layers': [strand.layer_name for strand in group_strands if hasattr(strand, 'layer_name')],
-                'strands': group_strands,
-                'control_points': {},
-                'main_strands': group_data.get('main_strands', [])
-            }
-
-            pass
-            pass
-
-            # Update control points
-            for strand in group_strands:
-                if not hasattr(strand, 'layer_name'):
-                    continue
-                try:
-                    # Check if control points exist (they don't for MaskedStrand)
-                    control_data = {}
-                    if strand.control_point1 is not None:
-                        control_data['control_point1'] = QPointF(strand.control_point1)
-                    else:
-                        control_data['control_point1'] = None
-
-                    if strand.control_point2 is not None:
-                        control_data['control_point2'] = QPointF(strand.control_point2)
-                    else:
-                        control_data['control_point2'] = None
-
-                    updated_group_data['control_points'][strand.layer_name] = control_data
-                except RuntimeError:
-                    # Strand's C++ object was deleted
-                    pass
-                pass
-            
-            # Update the canvas groups
-            self.canvas.groups[group_name] = updated_group_data
-            
-            pass
+            # Resolve fresh data on-demand
+            resolved = self.resolve_group_data(group_name)
+            if resolved:
+                self.canvas.groups[group_name] = resolved
             return True
-            
-        pass
-        return False 
+
+        return False
 
     def rotate_any_group(self, group_name: str, new_angle: float):
         """
@@ -3233,46 +3148,14 @@ class GroupPanel(QWidget):
         except RuntimeError:
             pass
     def update_group_after_angle_edit(self, group_name):
-        """Update group data after angle adjustments."""
+        """Update group data after angle adjustments — resolve fresh from canvas."""
         try:
             if group_name not in self.groups or not self.canvas:
                 return
-            group_data = self.groups[group_name]
-            
-            # Refresh the complete list of strands
-            all_strands = []
-            
-            # First get all main strands
-            for layer_name in group_data['layers']:
-                strand = self.canvas.find_strand_by_name(layer_name)
-                if strand and strand not in all_strands:
-                    all_strands.append(strand)
-            
-            # Then get their attached strands
-            for strand in all_strands.copy():
-                if hasattr(strand, 'attached_strands'):
-                    for attached_strand in strand.attached_strands:
-                        if attached_strand not in all_strands:
-                            all_strands.append(attached_strand)
-            
-            # Update the group's strands list
-            group_data['strands'] = all_strands
-            
-            # Update control points data
-            group_data['control_points'] = {}
-            for strand in all_strands:
-                if isinstance(strand, MaskedStrand):
-                    continue
-                try:
-                    group_data['control_points'][strand.layer_name] = {
-                        'control_point1': QPointF(strand.control_point1) if strand.control_point1 is not None else QPointF(strand.start),
-                        'control_point2': QPointF(strand.control_point2) if strand.control_point2 is not None else QPointF(strand.end)
-                    }
-                except (RuntimeError, TypeError):
-                    continue
+            resolved = self.resolve_group_data(group_name)
+            if resolved and hasattr(self.canvas, 'groups'):
+                self.canvas.groups[group_name] = resolved
         except RuntimeError:
-            pass
-            
             pass
     def is_layer_editable(self, layer_name):
         # This method should check if the layer has a green rectangle
@@ -4068,152 +3951,8 @@ class GroupLayerManager:
             return parts[0]
         return None
     def recreate_group(self, group_name, new_strand, original_main_strands=None):
-        """Recreate a group after a strand is attached, maintaining all original branches."""
-        print(
-            f"[GROUP RECREATE] recreate_group start for {group_name!r}: "
-            f"new={getattr(new_strand, 'layer_name', None)!r}, "
-            f"original_main_strands={original_main_strands}"
-        )
-        print(
-            f"[GROUP RECREATE]   canvas.strands snapshot="
-            f"{[getattr(strand, 'layer_name', None) for strand in list(self.canvas.strands)] if self.canvas else 'N/A'}"
-        )
-        
-        # Helper function to convert string to strand object if needed
-        def ensure_strand_object(strand_id):
-            if isinstance(strand_id, str):
-                # If it's just a number, append "_1" to get the main strand name
-                if strand_id.isdigit():
-                    strand_id = f"{strand_id}_1"
-                # Find the actual strand object by name
-                for strand in list(self.canvas.strands):
-                    if hasattr(strand, 'layer_name') and strand.layer_name == strand_id:
-                        print(
-                            f"[GROUP RECREATE]   resolved strand id {strand_id!r} "
-                            f"to live object {type(strand).__name__}"
-                        )
-                        return strand
-                print(f"[GROUP RECREATE]   could not resolve strand id {strand_id!r}")
-                return None
-            return strand_id
-
-        # Initialize main strands set
-        all_main_strands = set()
-        
-        # Process original main strands - this should be the primary source of main strands
-        if original_main_strands:
-            for strand_id in original_main_strands:
-                strand_obj = ensure_strand_object(strand_id)
-                if strand_obj:
-                    all_main_strands.add(strand_obj)
-            print(
-                f"[GROUP RECREATE]   main strands from original_main_strands="
-                f"{[getattr(s, 'layer_name', str(s)) for s in all_main_strands]}"
-            )
-        
-        # Only if we have no main strands, check existing group data
-        if not all_main_strands and self.canvas and group_name in self.canvas.groups:
-            existing_group = self.canvas.groups[group_name]
-            if 'main_strands' in existing_group:
-                for strand in existing_group['main_strands']:
-                    strand_obj = ensure_strand_object(strand)
-                    if strand_obj:
-                        all_main_strands.add(strand_obj)
-                print(
-                    f"[GROUP RECREATE]   main strands from existing group data="
-                    f"{[getattr(s, 'layer_name', str(s)) for s in all_main_strands]}"
-                )
-        
-        # Only if we still have no main strands, derive from strands (last resort)
-        if not all_main_strands and self.canvas:
-            for strand in list(self.canvas.strands):
-                if hasattr(strand, 'layer_name'):
-                    parts = strand.layer_name.split('_')
-                    if len(parts) == 2 and parts[1] == '1':  # Only add main strands (x_1 pattern)
-                        all_main_strands.add(strand)
-            if all_main_strands:
-                print(
-                    f"[GROUP RECREATE]   main strands from fallback scan="
-                    f"{[getattr(s, 'layer_name', str(s)) for s in all_main_strands]}"
-                )
-        if not all_main_strands:
-            print(f"[GROUP RECREATE]   WARNING: no main strands resolved for {group_name!r}")
-        
-        # Initialize the group in canvas.groups
-        self.canvas.groups[group_name] = {
-            'layers': [],
-            'strands': [],
-            'control_points': {},
-            'main_strands': list(all_main_strands)
-        }
-        print(
-            f"[GROUP RECREATE]   initialized canvas.groups[{group_name!r}] with main_strands="
-            f"{[getattr(s, 'layer_name', str(s)) for s in self.canvas.groups[group_name]['main_strands']]}"
-        )
-        
-        # Collect all strands for each branch
-        all_strands = []
-        for main_strand in all_main_strands:
-            if hasattr(main_strand, 'layer_name'):
-                branch = self.extract_main_layer(main_strand.layer_name)
-                branch_strands = []
-                print(
-                    f"[GROUP RECREATE]   scanning branch {branch!r} from main strand "
-                    f"{main_strand.layer_name!r}"
-                )
-                for strand in list(self.canvas.strands):
-                    if hasattr(strand, 'layer_name') and self.extract_main_layer(strand.layer_name) == branch:
-                        branch_strands.append(strand)
-                print(
-                    f"[GROUP RECREATE]   branch {branch!r} produced strands="
-                    f"{[getattr(strand, 'layer_name', None) for strand in branch_strands]}"
-                )
-                all_strands.extend(branch_strands)
-        print(
-            f"[GROUP RECREATE]   all_strands before dedupe/create="
-            f"{[getattr(strand, 'layer_name', None) for strand in all_strands]}"
-        )
-        
-        # Add all strands to the group
-        for strand in all_strands:
-            if hasattr(strand, 'layer_name'):
-                self.canvas.groups[group_name]['layers'].append(strand.layer_name)
-                self.canvas.groups[group_name]['strands'].append(strand)
-                self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
-                    'control_point1': strand.control_point1 if hasattr(strand, 'control_point1') else None,
-                    'control_point2': strand.control_point2 if hasattr(strand, 'control_point2') else None
-                }
-        print(
-            f"[GROUP RECREATE]   canvas.groups[{group_name!r}] before panel create: "
-            f"layers={self.canvas.groups[group_name]['layers']}, "
-            f"strands={[getattr(strand, 'layer_name', None) for strand in self.canvas.groups[group_name]['strands']]}"
-        )
-        
-        # Create the group in the group panel
-        print(
-            f"[GROUP RECREATE]   calling group_panel.create_group for {group_name!r} "
-            f"with strands={[getattr(strand, 'layer_name', None) for strand in all_strands]}"
-        )
-        self.group_panel.create_group(group_name, all_strands)
-        print(
-            f"[GROUP RECREATE]   after panel create for {group_name!r}: "
-            f"panel.layers="
-            f"{self.group_panel.groups.get(group_name, {}).get('layers', []) if hasattr(self, 'group_panel') else 'N/A'}, "
-            f"canvas.layers="
-            f"{self.canvas.groups.get(group_name, {}).get('layers', []) if self.canvas else 'N/A'}"
-        )
-        
-        # Verify final group composition
-        final_branches = set()
-        for strand in all_strands:
-            if hasattr(strand, 'layer_name'):
-                final_branches.add(self.extract_main_layer(strand.layer_name))
-        print(
-            f"[GROUP RECREATE] finish for {group_name!r}: "
-            f"final_branches={sorted(final_branches)}, "
-            f"final_layers="
-            f"{self.canvas.groups.get(group_name, {}).get('layers', []) if self.canvas else 'N/A'}"
-        )
+        """No-op: groups now resolve dynamically. Kept as stub for compatibility."""
+        pass
     def preserve_group_data(self, group_name):
         """Store the current group data before any transformations."""
         if self.canvas and group_name in self.canvas.groups:
@@ -4283,14 +4022,12 @@ class GroupLayerManager:
         # Call update_translations to update UI
         self.update_translations()
     def on_strand_created(self, new_strand):
+        # Groups only store root strands and resolve dynamically — no update needed
         pass
-        self.update_groups_with_new_strand(new_strand)
-        # Update groups with the new strand
-        self.group_layer_manager.update_groups_with_new_strand(new_strand)
 
     def on_strand_attached(self, parent_strand, new_strand):
+        # Groups only store root strands and resolve dynamically — no update needed
         pass
-        self.update_groups_with_new_strand(new_strand)
 
     def _begin_group_update_once(self, strand):
         """Return True only for the first live group-update pass of a new strand."""
@@ -4321,153 +4058,51 @@ class GroupLayerManager:
             strand._oss_group_update_in_progress = False
 
     def add_strand_to_group(self, group_name, strand):
-        """Add a strand to an existing group."""
-        pass
-        if group_name in self.canvas.groups:
-            group_data = self.canvas.groups[group_name]
-            if strand.layer_name not in group_data['layers']:
-                # Add to canvas groups
-                group_data['layers'].append(strand.layer_name)
-                group_data['strands'].append(strand)
-                
-                # Add to group panel groups
-                if hasattr(self, 'group_panel'):
-                    self.group_panel.add_layer_to_group(strand.layer_name, group_name)
-                
-                pass
-            else:
-                pass
-        else:
-            pass
+        """Add a strand to an existing group by refreshing resolved data."""
+        # Just refresh the resolved cache — the strand is already on the canvas
+        if self.canvas:
+            group_data = self.canvas._resolve_group_strands(group_name)
+            if group_data:
+                self.canvas.groups[group_name] = group_data
 
 
     def update_groups_with_new_strand(self, new_strand):
         """
-        Checks all groups and deletes any that are invalidated by the addition of new_strand.
+        Called only for masked strands — deletes groups whose branches are involved in the mask.
+        Regular strands do NOT call this; groups resolve dynamically from root strands.
         """
+        if not isinstance(new_strand, MaskedStrand):
+            return
         if not self._begin_group_update_once(new_strand):
             return
 
-        processed = False
         try:
-            groups_to_delete = []
-            new_layer_name = getattr(new_strand, 'layer_name', None)
-            parent_obj = getattr(new_strand, 'parent', None)
-            parent_layer_name = getattr(parent_obj, 'layer_name', None) if parent_obj is not None else None
-
-            print(
-                f"[GROUP UPDATE] update_groups_with_new_strand start: "
-                f"new={new_layer_name!r}, type={type(new_strand).__name__}, "
-                f"parent={parent_layer_name!r}"
-            )
-            print(
-                f"[GROUP UPDATE]   canvas.groups before: "
-                f"{list(self.canvas.groups.keys()) if self.canvas and hasattr(self.canvas, 'groups') else 'N/A'}"
-            )
-            print(
-                f"[GROUP UPDATE]   panel.groups before: "
-                f"{list(self.group_panel.groups.keys()) if hasattr(self, 'group_panel') and self.group_panel else 'N/A'}"
-            )
-
-            # Check if this is a masked strand
-            if isinstance(new_strand, MaskedStrand):
-                # For masked strands, properly extract the original layer names being masked
-                # Format: "2_1_3_1" should give us ['2_1', '3_1']
-                layer_parts = new_strand.layer_name.split('_')
-                if len(layer_parts) >= 4:
-                    # Reconstruct the original layer names
-                    original_layer_names = [f"{layer_parts[0]}_{layer_parts[1]}", f"{layer_parts[2]}_{layer_parts[3]}"]
-                else:
-                    # Fallback for unexpected format
-                    original_layer_names = layer_parts[:2]
-
-                print(
-                    f"[GROUP UPDATE]   masked strand layers considered: "
-                    f"{original_layer_names}"
-                )
-
-                # Find any groups containing any of the masked layers
-                for group_name, group_data in list(self.group_panel.groups.items()):
-                    for layer in group_data['layers']:
-                        # Check if the full layer name matches any of the original masked layers
-                        if layer in original_layer_names:
-                            print(
-                                f"[GROUP UPDATE]   scheduling delete for masked-layer match: "
-                                f"group={group_name!r}, layer={layer!r}, "
-                                f"group_layers={group_data.get('layers', [])}"
-                            )
-                            groups_to_delete.append(group_name)
-                            break
+            layer_parts = new_strand.layer_name.split('_')
+            if len(layer_parts) >= 4:
+                original_layer_names = [f"{layer_parts[0]}_{layer_parts[1]}", f"{layer_parts[2]}_{layer_parts[3]}"]
             else:
-                # For regular strands, check if parent strand is in any group
-                # Wrap in list() — delete_group mutates canvas.groups during iteration
-                for group_name, group_data in list(self.canvas.groups.items()):
-                    group_layers = list(group_data.get('layers', []))
-                    group_strands = [
-                        getattr(strand, 'layer_name', None)
-                        for strand in group_data.get('strands', [])
-                    ]
-                    parent_in_group = (
-                        parent_layer_name and
-                        any(strand.layer_name == parent_layer_name for strand in group_data.get('strands', []))
-                    )
+                original_layer_names = layer_parts[:2]
 
-                    print(
-                        f"[GROUP UPDATE]   checking group={group_name!r}: "
-                        f"parent_in_group={bool(parent_in_group)}, "
-                        f"group_layers={group_layers}, group_strands={group_strands}"
-                    )
+            masked_branches = set(name.split('_')[0] for name in original_layer_names)
 
-                    if parent_in_group:
-                        # If the new strand is already in this group, skip —
-                        # a deferred timer may fire after the group was created
-                        # with the strand already included.
-                        if new_layer_name and new_layer_name in group_data.get('layers', []):
-                            print(
-                                f"[GROUP UPDATE]   skipping group={group_name!r} because "
-                                f"new strand {new_layer_name!r} is already present"
-                            )
-                            continue
+            groups_to_delete = []
+            for group_name in list(self.group_panel.groups.keys()):
+                resolved = self.group_panel.resolve_group_data(group_name)
+                if not resolved:
+                    continue
+                group_branches = set(l.split('_')[0] for l in resolved.get('layers', []))
+                if masked_branches & group_branches:
+                    groups_to_delete.append(group_name)
 
-                        # Store the original main strands before deletion
-                        original_main_strands = list(group_data.get('main_strands', []))
-                        original_main_names = [
-                            getattr(strand, 'layer_name', str(strand))
-                            for strand in original_main_strands
-                        ]
-
-                        print(
-                            f"[GROUP UPDATE]   deleting/recreating group={group_name!r} "
-                            f"because parent {parent_layer_name!r} matched. "
-                            f"new={new_layer_name!r}, original_main_strands={original_main_names}"
-                        )
-
-                        # Delete and recreate the group with the new strand
-                        self.group_panel.delete_group(group_name)
-                        self.recreate_group(group_name, new_strand, original_main_strands)
-
-            # Delete the identified groups
             for group_name in groups_to_delete:
-                print(f"[GROUP UPDATE]   deleting invalidated group={group_name!r}")
                 self.group_panel.delete_group(group_name)
-                if self.canvas and group_name in self.canvas.groups:
-                    del self.canvas.groups[group_name]
-                    print(f"[GROUP UPDATE]   removed {group_name!r} from canvas.groups after delete")
 
-            # If any groups were deleted, refresh the alignment
             if groups_to_delete:
                 self.group_panel.refresh_group_alignment()
-                print("[GROUP UPDATE]   refreshed group alignment after deletions")
-            processed = True
         except RuntimeError:
             pass
         finally:
-            print(
-                f"[GROUP UPDATE] finish: new={getattr(new_strand, 'layer_name', None)!r}, "
-                f"processed={processed}, canvas.groups after="
-                f"{list(self.canvas.groups.keys()) if self.canvas and hasattr(self.canvas, 'groups') else 'N/A'}"
-            )
-            self._finish_group_update_once(new_strand, processed)
+            self._finish_group_update_once(new_strand, True)
 
     def extract_main_layer(self, layer_name):
         """Extract the main layer number from a layer name (e.g., '1' from '1_1')."""
@@ -5126,228 +4761,43 @@ class GroupLayerManager:
             traceback.print_exc()
 
     def _create_group_inner(self, group_name, selected_main_strands):
-        """Inner implementation of create_group. Strands snapshot is taken from live canvas.strands."""
+        """Inner implementation of create_group.
+
+        Only collects the root strands (x_1) matching the selected branches
+        and passes them to group_panel.create_group, which stores minimal data.
+        Full strand lists are resolved on-demand.
+        """
         print(
             f"[GROUP FLOW] _create_group_inner start for {group_name!r}: "
             f"selected_main_strands={sorted(selected_main_strands)}"
         )
-        print(
-            f"[GROUP FLOW]   canvas.strands snapshot="
-            f"{[getattr(strand, 'layer_name', None) for strand in list(self.canvas.strands)] if self.canvas else 'N/A'}"
-        )
-        # Create the group in canvas.groups first
+
+        # Collect root strands from canvas that match selected branches
+        root_strands = []
         if self.canvas:
-            self.canvas.groups[group_name] = {
-                'strands': [],
-                'layers': [],
-                'main_strands': selected_main_strands,
-                'control_points': {},
-                'data': []
-            }
-            print(
-                f"[GROUP FLOW]   initialized provisional canvas group {group_name!r} "
-                f"with main_strands={sorted(selected_main_strands)}"
-            )
-
-        # Collect strands that match the selected main strands
-        selected_strands = []
-        layers_data = []
-        additional_strands_to_add = []  # Strands to add due to mask dependencies
-
-        # Helper to safely build strand_data dict
-        def _safe_strand_data(strand):
-            try:
-                cp1 = strand.control_point1 if isinstance(strand.control_point1, QPointF) else QPointF(strand.start)
-                cp2 = strand.control_point2 if isinstance(strand.control_point2, QPointF) else QPointF(strand.end)
-                return {
-                    'layer_name': strand.layer_name,
-                    'start': QPointF(strand.start),
-                    'end': QPointF(strand.end),
-                    'control_point1': cp1,
-                    'control_point2': cp2,
-                    'width': strand.width,
-                    'color': QColor(strand.color),
-                    'stroke_color': QColor(strand.stroke_color),
-                    'stroke_width': strand.stroke_width,
-                    'has_circles': strand.has_circles.copy() if hasattr(strand, 'has_circles') and strand.has_circles is not None else [True, True],
-                    'attached_strands': list(strand.attached_strands) if hasattr(strand, 'attached_strands') and strand.attached_strands is not None else [],
-                    'is_first_strand': getattr(strand, 'is_first_strand', False),
-                    'is_start_side': getattr(strand, 'is_start_side', True),
-                    'set_number': getattr(strand, 'set_number', 0)
-                }, cp1, cp2
-            except (RuntimeError, TypeError, AttributeError):
-                return None, None, None
-
-        # First pass: collect strands that match the selected main strands
-        # Snapshot the list to avoid issues if strands change during iteration
-        strands_snapshot = list(self.canvas.strands)
-        for strand in strands_snapshot:
-            if not hasattr(strand, 'layer_name'):
-                print(f"[GROUP FLOW]   skipping non-strand object of type {type(strand).__name__}")
-                continue
-            try:
-                main_layer = self.extract_main_layer(strand.layer_name)
-            except (RuntimeError, AttributeError):
-                print(f"[GROUP FLOW]   failed to extract main layer for {getattr(strand, 'layer_name', None)!r}")
-                continue
-            print(
-                f"[GROUP FLOW]   considering {strand.layer_name!r} ({type(strand).__name__}), "
-                f"main_layer={main_layer!r}, selected={main_layer in selected_main_strands}"
-            )
-            if main_layer in selected_main_strands:
-                selected_strands.append(strand)  # Keep original strands for group panel
-                print(f"[GROUP FLOW]   selected {strand.layer_name!r} for group {group_name!r}")
-
-                # If this is a MaskedStrand, ensure its component strands are also included
-                if hasattr(strand, '__class__') and strand.__class__.__name__ == 'MaskedStrand':
-                    if hasattr(strand, 'first_selected_strand') and strand.first_selected_strand:
-                        if strand.first_selected_strand not in selected_strands:
-                            additional_strands_to_add.append(strand.first_selected_strand)
-                            print(
-                                f"[GROUP FLOW]   queued mask dependency "
-                                f"{getattr(strand.first_selected_strand, 'layer_name', None)!r}"
-                            )
-                    if hasattr(strand, 'second_selected_strand') and strand.second_selected_strand:
-                        if strand.second_selected_strand not in selected_strands:
-                            additional_strands_to_add.append(strand.second_selected_strand)
-                            print(
-                                f"[GROUP FLOW]   queued mask dependency "
-                                f"{getattr(strand.second_selected_strand, 'layer_name', None)!r}"
-                            )
-
-                strand_data, cp1, cp2 = _safe_strand_data(strand)
-                if strand_data is not None:
-                    layers_data.append(strand_data)
-                    # Add to canvas groups
-                    if self.canvas and group_name in self.canvas.groups:
-                        self.canvas.groups[group_name]['layers'].append(strand.layer_name)
-                        self.canvas.groups[group_name]['strands'].append(strand)
-                        self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
-                            'control_point1': cp1,
-                            'control_point2': cp2
-                        }
-                        print(
-                            f"[GROUP FLOW]   provisionally added {strand.layer_name!r} "
-                            f"to canvas group {group_name!r}"
-                        )
-                else:
-                    print(f"[GROUP FLOW]   _safe_strand_data failed for {getattr(strand, 'layer_name', None)!r}")
-
-        print(
-            f"[GROUP FLOW]   first pass summary for {group_name!r}: "
-            f"selected={[getattr(s, 'layer_name', None) for s in selected_strands]}, "
-            f"additional={[getattr(s, 'layer_name', None) for s in additional_strands_to_add]}"
-        )
-
-        # Second pass: process additional strands from mask dependencies
-        for strand in additional_strands_to_add:
-            if strand not in selected_strands:  # Avoid duplicates
-                selected_strands.append(strand)
-                print(
-                    f"[GROUP FLOW]   adding dependency strand {getattr(strand, 'layer_name', None)!r} "
-                    f"for group {group_name!r}"
-                )
-
-                strand_data, cp1, cp2 = _safe_strand_data(strand)
-                if strand_data is not None:
-                    layers_data.append(strand_data)
-                    # Add to canvas groups
-                    if self.canvas and group_name in self.canvas.groups:
-                        self.canvas.groups[group_name]['layers'].append(strand.layer_name)
-                        self.canvas.groups[group_name]['strands'].append(strand)
-                        self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
-                            'control_point1': cp1,
-                            'control_point2': cp2
-                        }
-                        print(
-                            f"[GROUP FLOW]   provisionally added dependency {strand.layer_name!r} "
-                            f"to canvas group {group_name!r}"
-                        )
-                else:
-                    print(
-                        f"[GROUP FLOW]   _safe_strand_data failed for dependency "
-                        f"{getattr(strand, 'layer_name', None)!r}"
-                    )
-
-        print(
-            f"[GROUP FLOW]   second pass summary for {group_name!r}: "
-            f"selected={[getattr(s, 'layer_name', None) for s in selected_strands]}, "
-            f"layers_data_count={len(layers_data)}"
-        )
-
-        if not selected_strands:
-            print(f"[GROUP FLOW]   no selected strands found for {group_name!r}; cleaning provisional group")
-            pass
-            if self.canvas and group_name in self.canvas.groups:
-                del self.canvas.groups[group_name]
-            return
-
-        # Create the group in the group panel with original strand objects
-        try:
-            print(
-                f"[GROUP FLOW]   invoking group_panel.create_group for {group_name!r} "
-                f"with {[getattr(s, 'layer_name', None) for s in selected_strands]}"
-            )
-            self.group_panel.create_group(group_name, selected_strands)
-        except RuntimeError as e:
-            print(f"[DEBUG] ERROR in group_panel.create_group: {e}")
-            return
-        print("[DEBUG] Step 10: create_group returned, now updating canvas.groups...")
-
-        # Update the group in canvas.groups with all data
-        if self.canvas and group_name in self.canvas.groups:
-            print("[DEBUG] Step 11: Building control_points dict...")
-            try:
-                control_points_dict = {}
-                for strand in selected_strands:
-                    try:
-                        # Store control points - Handle MaskedStrand differently
-                        if isinstance(strand, MaskedStrand):
-                            cp1 = None
-                            cp2 = None
-                        else:
-                            cp1 = QPointF(strand.start) if strand.control_point1 is None else QPointF(strand.control_point1)
-                            cp2 = QPointF(strand.end) if strand.control_point2 is None else QPointF(strand.control_point2)
-
-                        control_points_dict[strand.layer_name] = {
-                            'control_point1': cp1,
-                            'control_point2': cp2
-                        }
-                    except (RuntimeError, TypeError, AttributeError):
+            for strand in list(self.canvas.strands):
+                try:
+                    if not hasattr(strand, 'layer_name'):
                         continue
-                print("[DEBUG] Step 12: control_points dict built successfully")
+                    parts = strand.layer_name.split('_')
+                    if len(parts) == 2 and parts[1] == '1' and parts[0] in selected_main_strands:
+                        root_strands.append(strand)
+                except (RuntimeError, AttributeError):
+                    continue
 
-                self.canvas.groups[group_name].update({
-                    'strands': selected_strands,
-                    'layers': [strand.layer_name for strand in selected_strands if hasattr(strand, 'layer_name')],
-                    'data': layers_data,
-                    'main_strands': selected_main_strands,
-                    'control_points': control_points_dict
-                })
-                print("[DEBUG] Step 13: canvas.groups updated")
-                print(
-                    f"[GROUP FLOW]   canvas group {group_name!r} after update: "
-                    f"layers={self.canvas.groups[group_name].get('layers', [])}, "
-                    f"data_count={len(self.canvas.groups[group_name].get('data', []))}, "
-                    f"main_strands={sorted(self.canvas.groups[group_name].get('main_strands', []))}"
-                )
-            except Exception as e:
-                print(f"[DEBUG] ERROR in canvas.groups update: {e}")
-                import traceback
-                traceback.print_exc()
+        if not root_strands:
+            print(f"[GROUP FLOW]   no root strands found for {group_name!r}")
+            return
 
-        print("[DEBUG] Step 14: About to call canvas.update()...")
+        try:
+            self.group_panel.create_group(group_name, root_strands)
+        except RuntimeError as e:
+            print(f"[GROUP FLOW] ERROR in group_panel.create_group: {e}")
+            return
+
         if hasattr(self, 'canvas') and self.canvas:
-            print(
-                f"[GROUP FLOW]   before canvas.update for {group_name!r}: "
-                f"canvas.groups keys={list(self.canvas.groups.keys())}"
-            )
             self.canvas.update()
-            print(
-                f"[GROUP FLOW]   after canvas.update for {group_name!r}: "
-                f"layers={self.canvas.groups.get(group_name, {}).get('layers', [])}"
-            )
-        print("[DEBUG] Step 15: canvas.update() completed")
+
         print(
             f"[GROUP FLOW] _create_group_inner finish for {group_name!r}: "
             f"panel_group_exists={group_name in self.group_panel.groups if hasattr(self, 'group_panel') else 'N/A'}, "
@@ -5482,27 +4932,19 @@ class GroupLayerManager:
     def get_group_data(self):
         try:
             group_data = {}
-            pass
-            
-            for group_name, group_info in self.group_panel.groups.items():
-                pass
-                
+
+            for group_name in self.group_panel.groups:
+                resolved = self.group_panel.resolve_group_data(group_name)
+                if not resolved:
+                    continue
+
                 group_data[group_name] = {
-                    "layers": [strand.layer_name for strand in group_info.get('strands', [])],
-                    "strands": [strand.layer_name for strand in group_info.get('strands', [])],
-                    "main_strands": list(group_info.get('main_strands', set())),
-                    "control_points": {}
+                    "layers": resolved.get('layers', []),
+                    "strands": resolved.get('layers', []),  # layer names as strings
+                    "main_strands": list(resolved.get('main_strands', set())),
+                    "control_points": resolved.get('control_points', {})
                 }
-                
-                # Add control points if they exist
-                if self.canvas and group_name in self.canvas.groups:
-                    group_data[group_name]['control_points'] = self.canvas.groups[group_name].get('control_points', {})
-                
-                # Log the collected data for this group
-                pass
-            
-            pass
-            pass
+
             return group_data
         except RuntimeError:
             pass
@@ -5511,48 +4953,15 @@ class GroupLayerManager:
 
     def apply_group_data(self, group_data):
         try:
-            pass
-            pass
-
-            # Log the contents of strand_dict
-            pass
-            for layer_name, strand in self.strand_dict.items():
-                pass
-
             for group_name, group_info in group_data.items():
-                pass
-                
                 strands = []
-                for layer_name in group_info["strands"]:
-                    pass
+                for layer_name in group_info.get("strands", []):
                     strand = self.strand_dict.get(layer_name)
                     if strand:
                         strands.append(strand)
-                        pass
-                        pass
-                    else:
-                        pass
 
                 if strands:
                     self.group_panel.create_group(group_name, strands)
-                    pass
-                    
-                    self.canvas.groups[group_name] = {
-                        "layers": group_info["layers"],
-                        "strands": strands,
-                        "main_strands": group_info.get("main_strands", set()),
-                        "control_points": group_info.get("control_points", {})
-                    }
-                    pass
-                else:
-                    pass
-
-            # Log the contents of strand_dict after applying group data
-            pass
-            for layer_name, strand in self.strand_dict.items():
-                pass
-
-            pass
         except RuntimeError:
             pass
     def move_group_strands(self, group_name, dx, dy):
@@ -5638,39 +5047,19 @@ class GroupLayerManager:
     def start_group_move(self, group_name):
         try:
             if self.canvas:
-                self.canvas.start_group_move(group_name, self.group_panel.groups[group_name]['layers'])
+                group_data = self.canvas._resolve_group_strands(group_name)
+                if group_data:
+                    self.canvas.start_group_move(group_name, group_data['layers'])
         except RuntimeError:
             pass
 
     def update_group(self, group_name):
         try:
-            if group_name in self.group_panel.groups:
-                group_data = self.group_panel.groups[group_name]
-                main_layers = set([layer.split('_')[0] for layer in group_data['layers']])
-                
-                new_layers_data = []
-                for main_layer in main_layers:
-                    sub_layers = self.get_sub_layers(main_layer)
-                    for sub_layer in sub_layers:
-                        if sub_layer not in group_data['layers']:
-                            layer_index = self.get_layer_index(sub_layer)
-                            if layer_index < len(self.canvas.strands):
-                                strand = self.canvas.strands[layer_index]
-                                strand_data = {
-                                    'start': QPointF(strand.start),
-                                    'end': QPointF(strand.end)
-                                }
-                                new_layers_data.append((sub_layer, strand_data))
-                
-                for layer_name, strand_data in new_layers_data:
-                    self.group_panel.add_layer_to_group(layer_name, group_name, strand_data)
-                    
-                    # Update canvas groups
-                    if self.canvas and group_name in self.canvas.groups:
-                        strand = self.canvas.find_strand_by_name(layer_name)
-                        if strand:
-                            self.canvas.groups[group_name]['strands'].append(strand)
-                            self.canvas.groups[group_name]['layers'].append(layer_name)
+            # Resolve and refresh cached group data from roots
+            if self.canvas:
+                group_data = self.canvas._resolve_group_strands(group_name)
+                if group_data:
+                    self.canvas.groups[group_name] = group_data
         except RuntimeError:
             pass
 
@@ -5695,28 +5084,15 @@ class GroupLayerManager:
 
     def start_group_rotation(self, group_name):
         try:
-            # Fetch group data reliably from canvas.groups
-            group_data = self.canvas.groups.get(group_name)
+            # Resolve full strand list from root strands
+            group_data = self.canvas._resolve_group_strands(group_name)
             if group_data:
-                # Rebuild strands list from live canvas.strands to avoid stale references
-                # (e.g. after individual strand moves in move mode)
-                layers_in_group = group_data.get('layers', [])
-                refreshed_strands = []
-                for strand in list(self.canvas.strands):
-                    if hasattr(strand, 'layer_name') and strand.layer_name in layers_in_group:
-                        if strand not in refreshed_strands:
-                            refreshed_strands.append(strand)
-                        if hasattr(strand, 'attached_strands'):
-                            for attached in list(strand.attached_strands):
-                                if attached not in refreshed_strands:
-                                    refreshed_strands.append(attached)
-                group_data['strands'] = refreshed_strands
+                # Cache resolved data on canvas
+                self.canvas.groups[group_name] = group_data
 
                 # Set the active group name
                 self.active_group_name = group_name
                 if self.canvas:
-                    # Store the current state of all strands in the group before rotation
-                    # Using strands list from canvas.groups
                     strands_to_rotate = group_data.get('strands', [])
                     if not strands_to_rotate:
                         pass
@@ -5823,51 +5199,41 @@ class GroupLayerManager:
             QTimer.singleShot(0, _clear_rotation_session)
 
     def edit_strand_angles(self, group_name):
-        # Fetch group data reliably from canvas.groups
-        group_data = self.canvas.groups.get(group_name)
-        if group_data:
-            # Get all strands in the group, including main strands, from canvas.groups
-            all_strands = list(group_data.get('strands', [])) # Use list() to create a copy
-            
-            if not all_strands:
-                 pass
-                 return
+        # Resolve full strand list from root strands
+        group_data = self.canvas._resolve_group_strands(group_name)
+        if not group_data:
+            return
+        all_strands = list(group_data.get('strands', []))
+        if not all_strands:
+            return
 
-            pass
-            
-            # Set flag to prevent undo/redo saves during dialog interaction
-            if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
-                self.canvas.layer_panel.undo_redo_manager._skip_save = True
-            if hasattr(self.canvas, 'undo_redo_manager'):
-                self.canvas.undo_redo_manager._skip_save = True
-            
-            # Create editable layers list
-            editable_layers = [strand.layer_name for strand in all_strands 
-                              if hasattr(strand, 'layer_name') and self.is_layer_editable(strand.layer_name)]
-            
-            # Pass the fetched data to the dialog with proper QWidget parent
-            dialog = StrandAngleEditDialog(
-                group_name,
-                {
-                    'strands': all_strands, # Pass the actual strand objects
-                    'layers': [s.layer_name for s in all_strands if hasattr(s, 'layer_name')],
-                    'editable_layers': editable_layers
-                },
-                self.canvas,
-                self.main_window
-            )
-            dialog.finished.connect(lambda: self.update_group_after_angle_edit(group_name))
-            dialog.exec_()
-        else:
-            pass
+        # Set flag to prevent undo/redo saves during dialog interaction
+        if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
+            self.canvas.layer_panel.undo_redo_manager._skip_save = True
+        if hasattr(self.canvas, 'undo_redo_manager'):
+            self.canvas.undo_redo_manager._skip_save = True
+
+        # Create editable layers list
+        editable_layers = [strand.layer_name for strand in all_strands
+                          if hasattr(strand, 'layer_name') and self.is_layer_editable(strand.layer_name)]
+
+        # Pass the fetched data to the dialog with proper QWidget parent
+        dialog = StrandAngleEditDialog(
+            group_name,
+            {
+                'strands': all_strands,
+                'layers': [s.layer_name for s in all_strands if hasattr(s, 'layer_name')],
+                'editable_layers': editable_layers
+            },
+            self.canvas,
+            self.main_window
+        )
+        dialog.finished.connect(lambda: self.update_group_after_angle_edit(group_name))
+        dialog.exec_()
 
     def get_group_strands(self, group_name):
-        group_layers = self.groups[group_name]['layers']
-        strands = []
-        for strand in list(self.canvas.strands):
-            if strand.layer_name in group_layers:
-                strands.append(strand)
-        return strands
+        resolved = self.group_panel.resolve_group_data(group_name)
+        return resolved.get('strands', []) if resolved else []
     def is_layer_editable(self, layer_name):
         # Implement the logic to determine if a layer is editable
         return True  # Placeholder implementation
@@ -5917,10 +5283,12 @@ class GroupRotateDialog(QDialog):
         print(f"[DEBUG ROTATE DIALOG] __init__ complete for {group_name!r}")
 
     def setup_ui(self):
-        print(f"[DEBUG ROTATE DIALOG] setup_ui start for {self.group_name!r}")
+        print(f"[DEBUG ROTATE DIALOG] setup_ui start for {self.group_name!r}", flush=True)
+        import sys; sys.stdout.flush()
         layout = QVBoxLayout(self)
         self.language_code = self.canvas.language_code if self.canvas else 'en'
         _ = translations[self.language_code]
+        print(f"[DEBUG ROTATE DIALOG] setup_ui: layout created, applying theme", flush=True)
 
         # Apply theme-aware styling to the entire dialog
         is_dark_mode = getattr(self.canvas, 'is_dark_mode', False)
@@ -6007,6 +5375,7 @@ class GroupRotateDialog(QDialog):
                 }
             """)
 
+        print(f"[DEBUG ROTATE DIALOG] setup_ui: theme applied, creating widgets", flush=True)
         # Angle slider
         angle_layout = QHBoxLayout()
         angle_layout.addWidget(QLabel(_['angle']))
@@ -6088,15 +5457,17 @@ class GroupRotateDialog(QDialog):
           around that center by `self.angle`.
         """
         try:
-            if not self.canvas or not hasattr(self.canvas, 'groups') or self.group_name not in self.canvas.groups:
-                print(
-                    f"[DEBUG ROTATE DIALOG] rotate_group_strands early exit for {self.group_name!r}: "
-                    f"canvas_present={self.canvas is not None}, "
-                    f"group_exists={self.group_name in self.canvas.groups if self.canvas and hasattr(self.canvas, 'groups') else False}"
-                )
+            if not self.canvas:
                 return
 
-            group_data = self.canvas.groups[self.group_name]
+            # Use cached resolved data, or resolve on-demand
+            group_data = self.canvas.groups.get(self.group_name)
+            if not group_data or 'strands' not in group_data:
+                group_data = self.canvas._resolve_group_strands(self.group_name)
+                if group_data:
+                    self.canvas.groups[self.group_name] = group_data
+            if not group_data or not group_data.get('strands'):
+                return
             print(
                 f"[DEBUG ROTATE DIALOG] rotate_group_strands start for {self.group_name!r}: "
                 f"angle={self.angle}, strands="

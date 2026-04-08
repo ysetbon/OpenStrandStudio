@@ -97,15 +97,15 @@ class MaskGridDialog(QDialog):
         Only regular strands should appear in the mask grid - MaskedStrand objects
         should be filtered out since they represent masks, not base layers.
         """
-        if not hasattr(self.canvas, 'groups') or self.group_name not in self.canvas.groups:
+        # Resolve full strand list from root strands on-demand
+        group_data = None
+        if hasattr(self.canvas, '_resolve_group_strands'):
+            group_data = self.canvas._resolve_group_strands(self.group_name)
+        if not group_data:
             return []
 
-        group_data = self.canvas.groups[self.group_name]
-        layer_names = group_data.get('layers', [])
-
         strands = []
-        for layer_name in layer_names:
-            strand = self.canvas.find_strand_by_name(layer_name)
+        for strand in group_data.get('strands', []):
             # Only include regular strands, exclude MaskedStrand objects
             if strand and not isinstance(strand, MaskedStrand):
                 strands.append(strand)

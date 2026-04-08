@@ -519,7 +519,7 @@ class AttachedStrand(Strand):
             point_at_0 = self.point_at(0.0)
             point_at_0001 = self.point_at(0.0001)
             tangent = point_at_0001 - point_at_0
-            print(f"Tangent: {tangent.manhattanLength()}")
+            pass
             # If still zero, use start to end as last resort
             if tangent.manhattanLength() == 0:
                 tangent = self.end - self.start

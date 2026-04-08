@@ -2419,8 +2419,8 @@ class MainWindow(QMainWindow):
                 save_strands(self.canvas.strands, groups, filename, self.canvas)
                 pass
     def edit_group_angles(self, group_name):
-        if group_name in self.canvas.groups:
-            group_data = self.canvas.groups[group_name]
+        group_data = self.canvas._resolve_group_strands(group_name)
+        if group_data:
             dialog = StrandAngleEditDialog(group_name, group_data, canvas=self.canvas)
             dialog.angle_changed.connect(self.canvas.update_strand_angle)
             dialog.exec_()

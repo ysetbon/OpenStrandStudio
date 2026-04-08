@@ -506,53 +506,13 @@ class AttachMode(QObject):
                 # Use full update on release to ensure everything is drawn correctly
                 self.canvas.update()
 
-            # Gate stays set so strand_created.emit() below won't trigger synchronous
-            # group updates via on_strand_created.  Cleared inside deferred callback.
+            # Groups now resolve dynamically — no delete/recreate needed on attach.
+            # Just clear the suppression flag and emit the signal.
             if hasattr(self, '_pending_group_update') and self._pending_group_update:
                 pgu = self._pending_group_update
                 self._pending_group_update = None
-                new_strand = pgu['new_strand']
-                parent_strand = pgu['parent_strand']
-
-                def _deferred_group_update():
-                    try:
-                        self.canvas._suppress_group_updates = False
-                        if hasattr(self.canvas, 'group_layer_manager') and self.canvas.group_layer_manager:
-                            strand_name = getattr(new_strand, 'layer_name', None)
-                            parent_name = getattr(parent_strand, 'layer_name', None)
-                            print(
-                                f"[ATTACH DEFERRED] Starting deferred group update: "
-                                f"new={strand_name!r}, parent={parent_name!r}"
-                            )
-                            # If the strand is already part of a group (e.g. user
-                            # created a group before this timer fired), skip the
-                            # update — it would incorrectly delete+recreate the group.
-                            if strand_name and hasattr(self.canvas, 'groups'):
-                                for group_name, gdata in self.canvas.groups.items():
-                                    if strand_name in gdata.get('layers', []):
-                                        print(
-                                            f"[ATTACH DEFERRED] Skipping deferred update for "
-                                            f"{strand_name!r}: already in group {group_name!r} layers"
-                                        )
-                                        return
-                                    if any(getattr(s, 'layer_name', None) == strand_name
-                                           for s in gdata.get('strands', [])):
-                                        print(
-                                            f"[ATTACH DEFERRED] Skipping deferred update for "
-                                            f"{strand_name!r}: already in group {group_name!r} strands"
-                                        )
-                                        return
-                            print(
-                                f"[ATTACH DEFERRED] Calling update_groups_with_new_strand "
-                                f"for new={strand_name!r}, parent={parent_name!r}, "
-                                f"groups={list(self.canvas.groups.keys()) if hasattr(self.canvas, 'groups') else 'N/A'}"
-                            )
-                            self.canvas.group_layer_manager.update_groups_with_new_strand(new_strand)
-                    except RuntimeError:
-                        return
-
-                QTimer.singleShot(0, _deferred_group_update)
-                self.strand_attached.emit(parent_strand, new_strand)
+                self.canvas._suppress_group_updates = False
+                self.strand_attached.emit(pgu['parent_strand'], pgu['new_strand'])
             else:
                 self.canvas._suppress_group_updates = False
 
@@ -1154,14 +1114,15 @@ class AttachMode(QObject):
             # Find the parent strand's group before creating new strand
             parent_group = None
             parent_group_name = None
-            if hasattr(self.canvas, 'groups') and self.canvas.groups:
-                for group_name, group_data in self.canvas.groups.items():
-                    if parent_strand.layer_name in group_data.get('layers', []):
-                        parent_group = group_data
-                        parent_group_name = group_name
-                        break
-                
-                # Previously logged case where parent_group was not found
+            if hasattr(self.canvas, '_resolve_group_strands') and hasattr(self.canvas, 'group_layer_manager') and self.canvas.group_layer_manager:
+                panel = getattr(self.canvas.group_layer_manager, 'group_panel', None)
+                if panel and hasattr(panel, 'groups'):
+                    for group_name in panel.groups:
+                        resolved = self.canvas._resolve_group_strands(group_name)
+                        if resolved and parent_strand.layer_name in resolved.get('layers', []):
+                            parent_group = resolved
+                            parent_group_name = group_name
+                            break
             
             self.affected_strand = parent_strand
             self.affected_point = side

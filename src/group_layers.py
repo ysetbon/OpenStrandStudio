@@ -447,10 +447,19 @@ class CollapsibleGroupWidget(QWidget):
             context_menu.addAction(delete_action)
             
             # Show menu at the cursor position with screen-aware positioning
+            # Use popup() instead of exec_() to avoid nested event loops.
+            # exec_() creates a nested Qt event loop that can pump repaint events
+            # for widgets in a transitional state, causing C++ access violations.
             global_pos = self.get_screen_aware_global_pos(position)
-            context_menu.exec_(global_pos)
+            self._active_context_menu = context_menu
+            context_menu.aboutToHide.connect(self._on_context_menu_hidden)
+            context_menu.popup(global_pos)
         except RuntimeError:
             pass
+
+    def _on_context_menu_hidden(self):
+        """Clear the held context-menu reference once the menu closes."""
+        self._active_context_menu = None
 
     def get_screen_aware_global_pos(self, pos):
         """
@@ -1231,38 +1240,54 @@ class GroupPanel(QWidget):
 
     def start_group_move(self, group_name):
         try:
+            print(f"[DEBUG MOVE] start_group_move called for {group_name!r}")
             if not self.canvas or not hasattr(self.canvas, 'groups'):
+                print(f"[DEBUG MOVE]   no canvas/groups available for {group_name!r}")
                 return
             # Fetch group data reliably from canvas.groups
             group_data = self.canvas.groups.get(group_name)
             if group_data:
+                print(
+                    f"[DEBUG MOVE]   opening GroupMoveDialog for {group_name!r}: "
+                    f"layers={group_data.get('layers', [])}, "
+                    f"strands={[getattr(s, 'layer_name', None) for s in group_data.get('strands', [])]}"
+                )
                 # Pass self.canvas as the first parameter and group_name as the second
                 dialog = GroupMoveDialog(self.canvas, group_name, parent=self)
                 dialog.move_updated.connect(self.update_group_move)
                 dialog.move_finished.connect(self.finish_group_move)
+                print(f"[DEBUG MOVE]   executing GroupMoveDialog for {group_name!r}")
                 dialog.exec_()
+                print(f"[DEBUG MOVE]   GroupMoveDialog closed for {group_name!r}")
             else:
-                pass
+                print(f"[DEBUG MOVE]   group {group_name!r} not found in canvas.groups")
         except RuntimeError:
             pass
 
     def update_group_move(self, group_name, total_dx, total_dy):
         """Update the position of all strands in the group."""
         try:
+            print(
+                f"[DEBUG MOVE] update_group_move called: "
+                f"group={group_name!r}, dx={total_dx}, dy={total_dy}"
+            )
             if self.canvas:
                 # Fetch group data reliably from canvas.groups
                 group_data = self.canvas.groups.get(group_name)
                 if not group_data:
-                     pass
-                     return
+                    print(f"[DEBUG MOVE]   no group data found for {group_name!r}")
+                    return
 
                 # Create a QPointF for the movement delta
                 delta = QPointF(total_dx, total_dy)
-                pass
+                print(
+                    f"[DEBUG MOVE]   moving strands for {group_name!r}: "
+                    f"{[getattr(s, 'layer_name', None) for s in group_data.get('strands', [])]}"
+                )
 
                 strands_to_move = list(group_data.get('strands', []))
                 if not strands_to_move:
-                    pass
+                    print(f"[DEBUG MOVE]   no strands to move for {group_name!r}")
                     return
 
                 for strand in strands_to_move:
@@ -1315,16 +1340,20 @@ class GroupPanel(QWidget):
                      strand.updating_position = False
 
                 # Update the canvas
+                print(f"[DEBUG MOVE]   calling canvas.update() after move for {group_name!r}")
                 self.canvas.update()
+                print(f"[DEBUG MOVE]   canvas.update() returned after move for {group_name!r}")
             else:
-                pass
+                print(f"[DEBUG MOVE]   update_group_move has no canvas for {group_name!r}")
         except RuntimeError:
             pass
 
     def finish_group_move(self, group_name):
         try:
+            print(f"[DEBUG MOVE] finish_group_move called for {group_name!r}")
             if self.canvas:
                 self.canvas.reset_group_move(group_name)
+                print(f"[DEBUG MOVE] finish_group_move completed reset for {group_name!r}")
         except RuntimeError:
             pass
 
@@ -1353,20 +1382,37 @@ class GroupPanel(QWidget):
     def create_group(self, group_name, strands):
         """Create a new group with the given strands."""
         if not strands:
+            print(f"[GROUP CREATE] Refusing to create group {group_name!r}: no strands provided")
             return
 
         layers = [s.layer_name for s in strands if hasattr(s, 'layer_name')]
+        print(
+            f"[GROUP CREATE] create_group called for {group_name!r}: "
+            f"layers={layers}, strand_types={[type(s).__name__ for s in strands if hasattr(s, 'layer_name')]}"
+        )
 
         # If group already exists, update it in place
         if group_name in self.groups:
             existing_layers = self.groups[group_name]['layers']
+            print(
+                f"[GROUP CREATE]   group {group_name!r} already exists in panel; "
+                f"existing_layers before update={list(existing_layers)}"
+            )
             for strand in strands:
                 if hasattr(strand, 'layer_name') and strand.layer_name not in existing_layers:
                     existing_layers.append(strand.layer_name)
                     self.groups[group_name]['strands'].append(strand)
+                    print(
+                        f"[GROUP CREATE]   appended missing strand {strand.layer_name!r} "
+                        f"to existing group {group_name!r}"
+                    )
             # Rebuild tree item to reflect new layers
             self._remove_group_from_tree(group_name)
             self._add_group_to_tree(group_name, self.groups[group_name]['layers'])
+            print(
+                f"[GROUP CREATE]   updated existing group {group_name!r}: "
+                f"layers now={self.groups[group_name]['layers']}"
+            )
             return
 
         # Identify main strands (pattern: "x_1" where x is a number)
@@ -1398,6 +1444,11 @@ class GroupPanel(QWidget):
             'main_strands': main_strands,
             'control_points': control_points,
         }
+        print(
+            f"[GROUP CREATE]   stored panel group {group_name!r}: "
+            f"layers={layers}, main_strands="
+            f"{[getattr(s, 'layer_name', str(s)) for s in main_strands]}"
+        )
 
         # Sync to canvas.groups
         if self.canvas and hasattr(self.canvas, 'groups'):
@@ -1408,9 +1459,16 @@ class GroupPanel(QWidget):
                 'control_points': dict(control_points),
                 'data': []
             }
+            print(
+                f"[GROUP CREATE]   synced canvas group {group_name!r}: "
+                f"layers={self.canvas.groups[group_name]['layers']}, "
+                f"main_strands="
+                f"{[getattr(s, 'layer_name', str(s)) for s in self.canvas.groups[group_name]['main_strands']]}"
+            )
 
         # Add a tree item (the only UI operation)
         self._add_group_to_tree(group_name, layers)
+        print(f"[GROUP CREATE]   tree updated for {group_name!r}")
 
     def start_group_rotation(self, group_name):
         print(f"[DEBUG ROTATE] start_group_rotation called for '{group_name}'")
@@ -1481,18 +1539,59 @@ class GroupPanel(QWidget):
                         continue
 
                 print("[DEBUG ROTATE] About to start canvas rotation and show dialog...")
-                self.canvas.start_group_rotation(group_name)
-                dialog = GroupRotateDialog(group_name, group_panel=self, parent=self)
+                # Suppress canvas repainting during rotation setup to prevent
+                # Windows access-violation crashes when the modal dialog's
+                # event loop triggers a premature paintEvent on the canvas.
+                self.canvas._suppress_repaint = True
+                try:
+                    print(
+                        f"[DEBUG ROTATE] Calling canvas.start_group_rotation for '{group_name}' "
+                        f"with canvas_group_layers={self.canvas.groups.get(group_name, {}).get('layers', []) if self.canvas else 'N/A'}"
+                    )
+                    self.canvas.start_group_rotation(group_name)
+                    print(f"[DEBUG ROTATE] canvas.start_group_rotation returned for '{group_name}'")
+                except Exception as e:
+                    print(f"[DEBUG ROTATE] canvas.start_group_rotation failed for '{group_name}': {e}")
+                    self.canvas._suppress_repaint = False
+                    import traceback
+                    traceback.print_exc()
+                    raise
+                try:
+                    print(f"[DEBUG ROTATE] Constructing GroupRotateDialog for '{group_name}'")
+                    parent_widget = self.window() or self
+                    print(
+                        f"[DEBUG ROTATE] Using parent widget {type(parent_widget).__name__} "
+                        f"for GroupRotateDialog('{group_name}')"
+                    )
+                    dialog = GroupRotateDialog(group_name, group_panel=self, parent=parent_widget)
+                    print(f"[DEBUG ROTATE] GroupRotateDialog constructed for '{group_name}'")
+                except Exception as e:
+                    print(f"[DEBUG ROTATE] GroupRotateDialog construction failed for '{group_name}': {e}")
+                    self.canvas._suppress_repaint = False
+                    import traceback
+                    traceback.print_exc()
+                    raise
+                print(f"[DEBUG ROTATE] Connecting dialog signals for '{group_name}'")
                 dialog.rotation_updated.connect(self.update_group_rotation)
                 dialog.rotation_finished.connect(self.finish_group_rotation)
-                # Pin dialog so it survives the modal event loop
+                dialog.finished.connect(
+                    lambda result, name=group_name: print(
+                        f"[DEBUG ROTATE] Dialog finished for '{name}' with result={result}"
+                    )
+                )
+                # Keep a strong reference while the dialog is open.
                 self._rotation_dialog_ref = dialog
-                try:
-                    print("[DEBUG ROTATE] Dialog created, about to exec...")
-                    dialog.exec_()
-                    print("[DEBUG ROTATE] Dialog closed")
-                finally:
-                    self._rotation_dialog_ref = None
+                dialog.finished.connect(lambda *_args, owner=self: setattr(owner, '_rotation_dialog_ref', None))
+                print("[DEBUG ROTATE] Dialog created, about to exec...")
+                dialog.setModal(True)
+                # Flush pending events (including any queued paint events)
+                # while repaint is suppressed, then re-enable painting so
+                # the rotation slider can update the canvas normally.
+                from PyQt5.QtWidgets import QApplication
+                QApplication.processEvents()
+                self.canvas._suppress_repaint = False
+                dialog.exec_()
+                print("[DEBUG ROTATE] Dialog exec completed")
             else:
                 print("[DEBUG ROTATE] No canvas")
         else:
@@ -1766,18 +1865,24 @@ class GroupPanel(QWidget):
         """
         Public method that starts a smooth rotation toward 'angle'.
         """
-        pass
+        print(
+            f"[DEBUG ROTATE] update_group_rotation called: "
+            f"group={group_name!r}, angle={angle}, active_group={getattr(self, 'active_group_name', None)!r}"
+        )
         self.start_smooth_rotation(group_name, angle, steps=1, interval=1)
 
 
 
     def finish_group_rotation(self, group_name):
         """Finish the rotation of a group and ensure data is preserved."""
-        pass
+        print(
+            f"[DEBUG ROTATE] finish_group_rotation called for {group_name!r}: "
+            f"save_done={getattr(self, '_rotation_save_done', False)}"
+        )
 
         # Use a flag to ensure we only save once per rotation
         if hasattr(self, '_rotation_save_done') and self._rotation_save_done:
-            pass
+            print(f"[DEBUG ROTATE] finish_group_rotation early exit for {group_name!r}: save already done")
             return
 
         self._finish_group_rotation_inner(group_name)
@@ -1785,6 +1890,10 @@ class GroupPanel(QWidget):
     def _finish_group_rotation_inner(self, group_name):
         """Finish a group rotation: canvas teardown first, then deferred session-state wipe."""
         from PyQt5.QtCore import QTimer
+        print(
+            f"[DEBUG ROTATE] _finish_group_rotation_inner start for {group_name!r}: "
+            f"canvas_group_exists={group_name in self.canvas.groups if self.canvas else 'N/A'}"
+        )
         if self.canvas:
             try:
                 # Get the current main strands before preserving
@@ -1804,8 +1913,12 @@ class GroupPanel(QWidget):
 
                 # Finish rotation in canvas before wiping session state so any
                 # pending rotation_updated signals still find a valid snapshot.
+                print(f"[DEBUG ROTATE] Calling canvas.finish_group_rotation for {group_name!r}")
                 self.canvas.finish_group_rotation(group_name)
+                print(f"[DEBUG ROTATE] canvas.finish_group_rotation returned for {group_name!r}")
+                print(f"[DEBUG ROTATE] Calling canvas.update() during finish for {group_name!r}")
                 self.canvas.update()
+                print(f"[DEBUG ROTATE] canvas.update() returned during finish for {group_name!r}")
 
                 # Save state once after rotation is complete
                 try:
@@ -1824,13 +1937,16 @@ class GroupPanel(QWidget):
                             if hasattr(self, 'pre_rotation_state'):
                                 delattr(self, 'pre_rotation_state')
                             self.active_group_name = None
+                            print(f"[DEBUG ROTATE] Cleared deferred rotation session for {expected_group!r}")
                     except RuntimeError:
                         pass
 
                 QTimer.singleShot(0, _clear_rotation_session)
+                print(f"[DEBUG ROTATE] Scheduled deferred rotation session clear for {group_name!r}")
 
             except Exception as e:
                 import traceback
+                print(f"[DEBUG ROTATE] _finish_group_rotation_inner failed for {group_name!r}: {e}")
                 traceback.print_exc()
         else:
             pass
@@ -1839,7 +1955,10 @@ class GroupPanel(QWidget):
 
 
     def delete_group(self, group_name):
+        import traceback
         print(f"[GROUP DELETE] GroupPanel.delete_group('{group_name}') called")
+        print(f"[GROUP DELETE]   CALL STACK:")
+        traceback.print_stack()
         print(f"[GROUP DELETE]   in self.groups: {group_name in self.groups}")
         print(f"[GROUP DELETE]   in canvas.groups: {self.canvas and group_name in self.canvas.groups}")
 
@@ -3174,6 +3293,10 @@ class GroupMoveDialog(QDialog):
     move_finished = pyqtSignal(str)  # group_name
 
     def __init__(self, canvas, group_name, parent=None):
+        print(
+            f"[DEBUG MOVE DIALOG] __init__ start for {group_name!r}: "
+            f"canvas_present={canvas is not None}, parent={type(parent).__name__ if parent else None}"
+        )
         super().__init__(parent)
         # Remove Windows context-help button
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
@@ -3189,15 +3312,22 @@ class GroupMoveDialog(QDialog):
         self.setWindowTitle(f"{_['move_group']}: {group_name}")
         
         # Initialize original positions
+        print(f"[DEBUG MOVE DIALOG] initializing original positions for {group_name!r}")
         self.initialize_original_positions()
+        print(f"[DEBUG MOVE DIALOG] building UI for {group_name!r}")
         self.setup_ui()
+        print(f"[DEBUG MOVE DIALOG] __init__ complete for {group_name!r}")
 
     def initialize_original_positions(self):
         """Store the original positions of all strands in the group."""
         group_data = self.canvas.groups.get(self.group_name)
         if not group_data:
-            pass
+            print(f"[DEBUG MOVE DIALOG] no group data during init for {self.group_name!r}")
             return
+        print(
+            f"[DEBUG MOVE DIALOG] storing originals for {self.group_name!r}: "
+            f"strands={[getattr(s, 'layer_name', None) for s in list(group_data.get('strands', []))]}"
+        )
 
         for strand in list(group_data.get('strands', [])):
             try:
@@ -3247,12 +3377,99 @@ class GroupMoveDialog(QDialog):
                 continue
 
     def setup_ui(self):
+        print(f"[DEBUG MOVE DIALOG] setup_ui start for {self.group_name!r}")
         _ = translations[self.language_code]
         layout = QVBoxLayout(self)
         
         # Set RTL layout direction for Hebrew
         if self.language_code == 'he':
             self.setLayoutDirection(Qt.RightToLeft)
+
+        # Apply theme-aware styling to the entire dialog
+        is_dark_mode = getattr(self.canvas, 'is_dark_mode', False)
+        if is_dark_mode:
+            self.setStyleSheet("""
+                QDialog {
+                    background-color: #2C2C2C;
+                    color: white;
+                }
+                QLabel {
+                    color: white;
+                }
+                QLineEdit {
+                    background-color: #2B2B2B;
+                    color: white;
+                    border: 1px solid #555555;
+                    border-radius: 4px;
+                    padding: 2px 4px;
+                }
+                QSlider::groove:horizontal {
+                    background: #555555;
+                    height: 6px;
+                    border-radius: 3px;
+                }
+                QSlider::handle:horizontal {
+                    background: #AAAAAA;
+                    width: 14px;
+                    margin: -4px 0;
+                    border-radius: 7px;
+                }
+                QSlider::handle:horizontal:hover {
+                    background: #CCCCCC;
+                }
+                QPushButton {
+                    background-color: #252525;
+                    color: white;
+                    font-weight: bold;
+                    border: 2px solid #000000;
+                    padding: 8px 12px;
+                    border-radius: 4px;
+                    min-width: 50px;
+                }
+                QPushButton:hover {
+                    background-color: #505050;
+                    border: 2px solid #666666;
+                }
+                QPushButton:pressed {
+                    background-color: #151515;
+                    border: 2px solid #000000;
+                }
+            """)
+        else:
+            self.setStyleSheet("""
+                QDialog {
+                    background-color: #FFFFFF;
+                    color: #000000;
+                }
+                QLabel {
+                    color: #000000;
+                }
+                QLineEdit {
+                    background-color: #FFFFFF;
+                    color: #000000;
+                    border: 1px solid #CCCCCC;
+                    border-radius: 4px;
+                    padding: 2px 4px;
+                }
+                QPushButton {
+                    background-color: #F0F0F0;
+                    color: #000000;
+                    font-weight: bold;
+                    border: 1px solid #BBBBBB;
+                    padding: 8px 12px;
+                    border-radius: 4px;
+                    min-width: 50px;
+                }
+                QPushButton:hover {
+                    background-color: #E0E0E0;
+                    border: 1px solid #999999;
+                }
+                QPushButton:pressed {
+                    background-color: #D0D0D0;
+                    border: 1px solid #888888;
+                }
+            """)
+        print(f"[DEBUG MOVE DIALOG] setup_ui complete for {self.group_name!r}")
 
         # Line 1: X movement controls (original slider)
         x_layout = QHBoxLayout()
@@ -3391,8 +3608,18 @@ class GroupMoveDialog(QDialog):
         """Update positions based on original positions and current deltas"""
         try:
             if not self.canvas or self.group_name not in self.canvas.groups:
+                print(
+                    f"[DEBUG MOVE DIALOG] update_positions early exit for {self.group_name!r}: "
+                    f"canvas_present={self.canvas is not None}, "
+                    f"group_exists={self.group_name in self.canvas.groups if self.canvas else False}"
+                )
                 return
             group_data = self.canvas.groups[self.group_name]
+            print(
+                f"[DEBUG MOVE DIALOG] update_positions for {self.group_name!r}: "
+                f"dx={self.total_dx}, dy={self.total_dy}, strands="
+                f"{[getattr(s, 'layer_name', None) for s in list(group_data.get('strands', []))]}"
+            )
 
             # Create exact delta point
             delta = QPointF(self.total_dx, self.total_dy)
@@ -3448,20 +3675,27 @@ class GroupMoveDialog(QDialog):
                     continue
 
             # Emit the movement signal with exact values
+            print(
+                f"[DEBUG MOVE DIALOG] emitting move_updated for {self.group_name!r}: "
+                f"dx={float(self.total_dx)}, dy={float(self.total_dy)}"
+            )
             self.move_updated.emit(self.group_name, float(self.total_dx), float(self.total_dy))
             # Update the canvas
             self.canvas.update()
+            print(f"[DEBUG MOVE DIALOG] update_positions complete for {self.group_name!r}")
         except RuntimeError:
             pass
 
     def update_dx_from_slider(self):
         self.total_dx = int(self.dx_slider.value())  # Ensure integer value
+        print(f"[DEBUG MOVE DIALOG] dx slider changed for {self.group_name!r}: {self.total_dx}")
         self.dx_value.setText(str(self.total_dx))
         self.dx_input.setText(str(self.total_dx))
         self.update_positions()
 
     def update_dy_from_slider(self):
         self.total_dy = int(self.dy_slider.value())  # Ensure integer value
+        print(f"[DEBUG MOVE DIALOG] dy slider changed for {self.group_name!r}: {self.total_dy}")
         self.dy_value.setText(str(self.total_dy))
         self.dy_input.setText(str(self.total_dy))
         self.update_positions()
@@ -3471,10 +3705,15 @@ class GroupMoveDialog(QDialog):
             value = int(self.dx_input.text())
             value = max(min(value, 600), -600)
             self.total_dx = value
+            print(f"[DEBUG MOVE DIALOG] dx input changed for {self.group_name!r}: {value}")
             self.dx_slider.setValue(value)
             self.dx_value.setText(str(value))
             self.update_positions()
         except ValueError:
+            print(
+                f"[DEBUG MOVE DIALOG] invalid dx input for {self.group_name!r}: "
+                f"text={self.dx_input.text()!r}"
+            )
             pass
 
     def update_dy_from_input(self):
@@ -3482,10 +3721,15 @@ class GroupMoveDialog(QDialog):
             value = int(self.dy_input.text())
             value = max(min(value, 600), -600)
             self.total_dy = value
+            print(f"[DEBUG MOVE DIALOG] dy input changed for {self.group_name!r}: {value}")
             self.dy_slider.setValue(value)
             self.dy_value.setText(str(value))
             self.update_positions()
         except ValueError:
+            print(
+                f"[DEBUG MOVE DIALOG] invalid dy input for {self.group_name!r}: "
+                f"text={self.dy_input.text()!r}"
+            )
             pass
 
     def apply_x_grid_movement(self):
@@ -3493,10 +3737,15 @@ class GroupMoveDialog(QDialog):
         try:
             grid_steps = int(self.x_grid_input.text())
             if grid_steps == 0:
+                print(f"[DEBUG MOVE DIALOG] apply_x_grid_movement skipped for {self.group_name!r}: zero steps")
                 return
             
             grid_pixels = grid_steps * self.canvas.grid_size
             self.total_dx += grid_pixels
+            print(
+                f"[DEBUG MOVE DIALOG] apply_x_grid_movement for {self.group_name!r}: "
+                f"grid_steps={grid_steps}, grid_pixels={grid_pixels}, total_dx={self.total_dx}"
+            )
             
             # Update the pixel movement controls to show the new total
             self.dx_slider.setValue(max(min(self.total_dx, 600), -600))
@@ -3510,6 +3759,10 @@ class GroupMoveDialog(QDialog):
             self.update_positions()
             
         except ValueError:
+            print(
+                f"[DEBUG MOVE DIALOG] invalid x grid input for {self.group_name!r}: "
+                f"text={self.x_grid_input.text()!r}"
+            )
             pass
 
     def apply_y_grid_movement(self):
@@ -3517,10 +3770,15 @@ class GroupMoveDialog(QDialog):
         try:
             grid_steps = int(self.y_grid_input.text())
             if grid_steps == 0:
+                print(f"[DEBUG MOVE DIALOG] apply_y_grid_movement skipped for {self.group_name!r}: zero steps")
                 return
             
             grid_pixels = grid_steps * self.canvas.grid_size
             self.total_dy += grid_pixels
+            print(
+                f"[DEBUG MOVE DIALOG] apply_y_grid_movement for {self.group_name!r}: "
+                f"grid_steps={grid_steps}, grid_pixels={grid_pixels}, total_dy={self.total_dy}"
+            )
             
             # Update the pixel movement controls to show the new total
             self.dy_slider.setValue(max(min(self.total_dy, 600), -600))
@@ -3534,6 +3792,10 @@ class GroupMoveDialog(QDialog):
             self.update_positions()
             
         except ValueError:
+            print(
+                f"[DEBUG MOVE DIALOG] invalid y grid input for {self.group_name!r}: "
+                f"text={self.y_grid_input.text()!r}"
+            )
             pass
 
     def increment_x_grid(self):
@@ -3574,6 +3836,10 @@ class GroupMoveDialog(QDialog):
 
     def on_ok_clicked(self):
         """Finalize the movement by storing current positions as new originals"""
+        print(
+            f"[DEBUG MOVE DIALOG] on_ok_clicked for {self.group_name!r}: "
+            f"dx={getattr(self, 'total_dx', None)}, dy={getattr(self, 'total_dy', None)}"
+        )
         try:
             self._finalize_move()
         except RuntimeError:
@@ -3587,8 +3853,13 @@ class GroupMoveDialog(QDialog):
     def _finalize_move(self):
         """Store current strand positions as new originals."""
         if not self.canvas or self.group_name not in self.canvas.groups:
+            print(f"[DEBUG MOVE DIALOG] _finalize_move early exit for {self.group_name!r}")
             return
         group_data = self.canvas.groups[self.group_name]
+        print(
+            f"[DEBUG MOVE DIALOG] _finalize_move storing positions for {self.group_name!r}: "
+            f"strands={[getattr(s, 'layer_name', None) for s in list(group_data.get('strands', []))]}"
+        )
         for strand in list(group_data.get('strands', [])):
                 # Store final positions as new originals
                 strand.original_start = QPointF(strand.start)
@@ -3632,6 +3903,7 @@ class GroupMoveDialog(QDialog):
                              })
 
     def snap_to_grid(self):
+        print(f"[DEBUG MOVE DIALOG] snap_to_grid clicked for {self.group_name!r}")
         try:
             if self.canvas:
                 self.canvas.snap_group_to_grid(self.group_name)
@@ -3797,8 +4069,15 @@ class GroupLayerManager:
         return None
     def recreate_group(self, group_name, new_strand, original_main_strands=None):
         """Recreate a group after a strand is attached, maintaining all original branches."""
-        pass
-        pass
+        print(
+            f"[GROUP RECREATE] recreate_group start for {group_name!r}: "
+            f"new={getattr(new_strand, 'layer_name', None)!r}, "
+            f"original_main_strands={original_main_strands}"
+        )
+        print(
+            f"[GROUP RECREATE]   canvas.strands snapshot="
+            f"{[getattr(strand, 'layer_name', None) for strand in list(self.canvas.strands)] if self.canvas else 'N/A'}"
+        )
         
         # Helper function to convert string to strand object if needed
         def ensure_strand_object(strand_id):
@@ -3809,8 +4088,12 @@ class GroupLayerManager:
                 # Find the actual strand object by name
                 for strand in list(self.canvas.strands):
                     if hasattr(strand, 'layer_name') and strand.layer_name == strand_id:
+                        print(
+                            f"[GROUP RECREATE]   resolved strand id {strand_id!r} "
+                            f"to live object {type(strand).__name__}"
+                        )
                         return strand
-                pass
+                print(f"[GROUP RECREATE]   could not resolve strand id {strand_id!r}")
                 return None
             return strand_id
 
@@ -3823,7 +4106,10 @@ class GroupLayerManager:
                 strand_obj = ensure_strand_object(strand_id)
                 if strand_obj:
                     all_main_strands.add(strand_obj)
-            pass
+            print(
+                f"[GROUP RECREATE]   main strands from original_main_strands="
+                f"{[getattr(s, 'layer_name', str(s)) for s in all_main_strands]}"
+            )
         
         # Only if we have no main strands, check existing group data
         if not all_main_strands and self.canvas and group_name in self.canvas.groups:
@@ -3833,7 +4119,10 @@ class GroupLayerManager:
                     strand_obj = ensure_strand_object(strand)
                     if strand_obj:
                         all_main_strands.add(strand_obj)
-                pass
+                print(
+                    f"[GROUP RECREATE]   main strands from existing group data="
+                    f"{[getattr(s, 'layer_name', str(s)) for s in all_main_strands]}"
+                )
         
         # Only if we still have no main strands, derive from strands (last resort)
         if not all_main_strands and self.canvas:
@@ -3843,7 +4132,12 @@ class GroupLayerManager:
                     if len(parts) == 2 and parts[1] == '1':  # Only add main strands (x_1 pattern)
                         all_main_strands.add(strand)
             if all_main_strands:
-                pass
+                print(
+                    f"[GROUP RECREATE]   main strands from fallback scan="
+                    f"{[getattr(s, 'layer_name', str(s)) for s in all_main_strands]}"
+                )
+        if not all_main_strands:
+            print(f"[GROUP RECREATE]   WARNING: no main strands resolved for {group_name!r}")
         
         # Initialize the group in canvas.groups
         self.canvas.groups[group_name] = {
@@ -3852,6 +4146,10 @@ class GroupLayerManager:
             'control_points': {},
             'main_strands': list(all_main_strands)
         }
+        print(
+            f"[GROUP RECREATE]   initialized canvas.groups[{group_name!r}] with main_strands="
+            f"{[getattr(s, 'layer_name', str(s)) for s in self.canvas.groups[group_name]['main_strands']]}"
+        )
         
         # Collect all strands for each branch
         all_strands = []
@@ -3859,12 +4157,22 @@ class GroupLayerManager:
             if hasattr(main_strand, 'layer_name'):
                 branch = self.extract_main_layer(main_strand.layer_name)
                 branch_strands = []
+                print(
+                    f"[GROUP RECREATE]   scanning branch {branch!r} from main strand "
+                    f"{main_strand.layer_name!r}"
+                )
                 for strand in list(self.canvas.strands):
                     if hasattr(strand, 'layer_name') and self.extract_main_layer(strand.layer_name) == branch:
                         branch_strands.append(strand)
-                        pass
-                pass
+                print(
+                    f"[GROUP RECREATE]   branch {branch!r} produced strands="
+                    f"{[getattr(strand, 'layer_name', None) for strand in branch_strands]}"
+                )
                 all_strands.extend(branch_strands)
+        print(
+            f"[GROUP RECREATE]   all_strands before dedupe/create="
+            f"{[getattr(strand, 'layer_name', None) for strand in all_strands]}"
+        )
         
         # Add all strands to the group
         for strand in all_strands:
@@ -3875,18 +4183,37 @@ class GroupLayerManager:
                     'control_point1': strand.control_point1 if hasattr(strand, 'control_point1') else None,
                     'control_point2': strand.control_point2 if hasattr(strand, 'control_point2') else None
                 }
-                pass
+        print(
+            f"[GROUP RECREATE]   canvas.groups[{group_name!r}] before panel create: "
+            f"layers={self.canvas.groups[group_name]['layers']}, "
+            f"strands={[getattr(strand, 'layer_name', None) for strand in self.canvas.groups[group_name]['strands']]}"
+        )
         
         # Create the group in the group panel
+        print(
+            f"[GROUP RECREATE]   calling group_panel.create_group for {group_name!r} "
+            f"with strands={[getattr(strand, 'layer_name', None) for strand in all_strands]}"
+        )
         self.group_panel.create_group(group_name, all_strands)
-        pass
+        print(
+            f"[GROUP RECREATE]   after panel create for {group_name!r}: "
+            f"panel.layers="
+            f"{self.group_panel.groups.get(group_name, {}).get('layers', []) if hasattr(self, 'group_panel') else 'N/A'}, "
+            f"canvas.layers="
+            f"{self.canvas.groups.get(group_name, {}).get('layers', []) if self.canvas else 'N/A'}"
+        )
         
         # Verify final group composition
         final_branches = set()
         for strand in all_strands:
             if hasattr(strand, 'layer_name'):
                 final_branches.add(self.extract_main_layer(strand.layer_name))
-        pass
+        print(
+            f"[GROUP RECREATE] finish for {group_name!r}: "
+            f"final_branches={sorted(final_branches)}, "
+            f"final_layers="
+            f"{self.canvas.groups.get(group_name, {}).get('layers', []) if self.canvas else 'N/A'}"
+        )
     def preserve_group_data(self, group_name):
         """Store the current group data before any transformations."""
         if self.canvas and group_name in self.canvas.groups:
@@ -3965,6 +4292,34 @@ class GroupLayerManager:
         pass
         self.update_groups_with_new_strand(new_strand)
 
+    def _begin_group_update_once(self, strand):
+        """Return True only for the first live group-update pass of a new strand."""
+        if strand is None:
+            return False
+        if getattr(strand, '_oss_group_update_processed', False):
+            print(
+                f"[GROUP UPDATE] Skipping already-processed strand "
+                f"{getattr(strand, 'layer_name', None)}"
+            )
+            return False
+        if getattr(strand, '_oss_group_update_in_progress', False):
+            print(
+                f"[GROUP UPDATE] Skipping in-progress strand "
+                f"{getattr(strand, 'layer_name', None)}"
+            )
+            return False
+        strand._oss_group_update_in_progress = True
+        return True
+
+    def _finish_group_update_once(self, strand, processed):
+        """Clear the in-progress flag and optionally mark the strand as processed."""
+        if strand is None:
+            return
+        if processed:
+            strand._oss_group_update_processed = True
+        if hasattr(strand, '_oss_group_update_in_progress'):
+            strand._oss_group_update_in_progress = False
+
     def add_strand_to_group(self, group_name, strand):
         """Add a strand to an existing group."""
         pass
@@ -3990,8 +4345,29 @@ class GroupLayerManager:
         """
         Checks all groups and deletes any that are invalidated by the addition of new_strand.
         """
+        if not self._begin_group_update_once(new_strand):
+            return
+
+        processed = False
         try:
             groups_to_delete = []
+            new_layer_name = getattr(new_strand, 'layer_name', None)
+            parent_obj = getattr(new_strand, 'parent', None)
+            parent_layer_name = getattr(parent_obj, 'layer_name', None) if parent_obj is not None else None
+
+            print(
+                f"[GROUP UPDATE] update_groups_with_new_strand start: "
+                f"new={new_layer_name!r}, type={type(new_strand).__name__}, "
+                f"parent={parent_layer_name!r}"
+            )
+            print(
+                f"[GROUP UPDATE]   canvas.groups before: "
+                f"{list(self.canvas.groups.keys()) if self.canvas and hasattr(self.canvas, 'groups') else 'N/A'}"
+            )
+            print(
+                f"[GROUP UPDATE]   panel.groups before: "
+                f"{list(self.group_panel.groups.keys()) if hasattr(self, 'group_panel') and self.group_panel else 'N/A'}"
+            )
 
             # Check if this is a masked strand
             if isinstance(new_strand, MaskedStrand):
@@ -4005,27 +4381,66 @@ class GroupLayerManager:
                     # Fallback for unexpected format
                     original_layer_names = layer_parts[:2]
 
-                pass
+                print(
+                    f"[GROUP UPDATE]   masked strand layers considered: "
+                    f"{original_layer_names}"
+                )
 
                 # Find any groups containing any of the masked layers
                 for group_name, group_data in list(self.group_panel.groups.items()):
                     for layer in group_data['layers']:
                         # Check if the full layer name matches any of the original masked layers
                         if layer in original_layer_names:
-                            pass
+                            print(
+                                f"[GROUP UPDATE]   scheduling delete for masked-layer match: "
+                                f"group={group_name!r}, layer={layer!r}, "
+                                f"group_layers={group_data.get('layers', [])}"
+                            )
                             groups_to_delete.append(group_name)
                             break
             else:
                 # For regular strands, check if parent strand is in any group
                 # Wrap in list() — delete_group mutates canvas.groups during iteration
                 for group_name, group_data in list(self.canvas.groups.items()):
-                    # AttachedStrand stores its parent as .parent
-                    parent_obj = getattr(new_strand, 'parent', None)
-                    parent_layer_name = getattr(parent_obj, 'layer_name', None) if parent_obj is not None else None
+                    group_layers = list(group_data.get('layers', []))
+                    group_strands = [
+                        getattr(strand, 'layer_name', None)
+                        for strand in group_data.get('strands', [])
+                    ]
+                    parent_in_group = (
+                        parent_layer_name and
+                        any(strand.layer_name == parent_layer_name for strand in group_data.get('strands', []))
+                    )
 
-                    if parent_layer_name and any(strand.layer_name == parent_layer_name for strand in group_data.get('strands', [])):
+                    print(
+                        f"[GROUP UPDATE]   checking group={group_name!r}: "
+                        f"parent_in_group={bool(parent_in_group)}, "
+                        f"group_layers={group_layers}, group_strands={group_strands}"
+                    )
+
+                    if parent_in_group:
+                        # If the new strand is already in this group, skip —
+                        # a deferred timer may fire after the group was created
+                        # with the strand already included.
+                        if new_layer_name and new_layer_name in group_data.get('layers', []):
+                            print(
+                                f"[GROUP UPDATE]   skipping group={group_name!r} because "
+                                f"new strand {new_layer_name!r} is already present"
+                            )
+                            continue
+
                         # Store the original main strands before deletion
                         original_main_strands = list(group_data.get('main_strands', []))
+                        original_main_names = [
+                            getattr(strand, 'layer_name', str(strand))
+                            for strand in original_main_strands
+                        ]
+
+                        print(
+                            f"[GROUP UPDATE]   deleting/recreating group={group_name!r} "
+                            f"because parent {parent_layer_name!r} matched. "
+                            f"new={new_layer_name!r}, original_main_strands={original_main_names}"
+                        )
 
                         # Delete and recreate the group with the new strand
                         self.group_panel.delete_group(group_name)
@@ -4033,18 +4448,26 @@ class GroupLayerManager:
 
             # Delete the identified groups
             for group_name in groups_to_delete:
-                pass
+                print(f"[GROUP UPDATE]   deleting invalidated group={group_name!r}")
                 self.group_panel.delete_group(group_name)
                 if self.canvas and group_name in self.canvas.groups:
                     del self.canvas.groups[group_name]
-                    pass
+                    print(f"[GROUP UPDATE]   removed {group_name!r} from canvas.groups after delete")
 
             # If any groups were deleted, refresh the alignment
             if groups_to_delete:
                 self.group_panel.refresh_group_alignment()
-                pass
+                print("[GROUP UPDATE]   refreshed group alignment after deletions")
+            processed = True
         except RuntimeError:
             pass
+        finally:
+            print(
+                f"[GROUP UPDATE] finish: new={getattr(new_strand, 'layer_name', None)!r}, "
+                f"processed={processed}, canvas.groups after="
+                f"{list(self.canvas.groups.keys()) if self.canvas and hasattr(self.canvas, 'groups') else 'N/A'}"
+            )
+            self._finish_group_update_once(new_strand, processed)
 
     def extract_main_layer(self, layer_name):
         """Extract the main layer number from a layer name (e.g., '1' from '1_1')."""
@@ -4401,6 +4824,77 @@ class GroupLayerManager:
         if self.language_code == 'he':
             dialog.setLayoutDirection(Qt.RightToLeft)
         
+        # Apply theme-aware styling
+        is_dark_mode = getattr(self.canvas, 'is_dark_mode', False)
+        if is_dark_mode:
+            dialog.setStyleSheet("""
+                QDialog {
+                    background-color: #2C2C2C;
+                    color: white;
+                }
+                QLabel {
+                    color: white;
+                }
+                QLineEdit {
+                    background-color: #2B2B2B;
+                    color: white;
+                    border: 1px solid #555555;
+                    border-radius: 4px;
+                    padding: 4px;
+                }
+                QPushButton {
+                    background-color: #252525;
+                    color: white;
+                    font-weight: bold;
+                    border: 2px solid #000000;
+                    padding: 8px 12px;
+                    border-radius: 4px;
+                    min-width: 80px;
+                }
+                QPushButton:hover {
+                    background-color: #505050;
+                    border: 2px solid #666666;
+                }
+                QPushButton:pressed {
+                    background-color: #151515;
+                    border: 2px solid #000000;
+                }
+            """)
+        else:
+            dialog.setStyleSheet("""
+                QDialog {
+                    background-color: #FFFFFF;
+                    color: #000000;
+                }
+                QLabel {
+                    color: #000000;
+                }
+                QLineEdit {
+                    background-color: #FFFFFF;
+                    color: #000000;
+                    border: 1px solid #CCCCCC;
+                    border-radius: 4px;
+                    padding: 4px;
+                }
+                QPushButton {
+                    background-color: #F0F0F0;
+                    color: #000000;
+                    font-weight: bold;
+                    border: 1px solid #BBBBBB;
+                    padding: 8px 12px;
+                    border-radius: 4px;
+                    min-width: 80px;
+                }
+                QPushButton:hover {
+                    background-color: #E0E0E0;
+                    border: 1px solid #999999;
+                }
+                QPushButton:pressed {
+                    background-color: #D0D0D0;
+                    border: 1px solid #888888;
+                }
+            """)
+        
         layout = QVBoxLayout(dialog)
         
         # Label
@@ -4463,6 +4957,63 @@ class GroupLayerManager:
         # Set RTL layout direction for Hebrew
         if self.language_code == 'he':
             dialog.setLayoutDirection(Qt.RightToLeft)
+        
+        # Apply theme-aware styling
+        is_dark_mode = getattr(self.canvas, 'is_dark_mode', False)
+        if is_dark_mode:
+            dialog.setStyleSheet("""
+                QDialog {
+                    background-color: #2C2C2C;
+                    color: white;
+                }
+                QLabel {
+                    color: white;
+                }
+                QPushButton {
+                    background-color: #252525;
+                    color: white;
+                    font-weight: bold;
+                    border: 2px solid #000000;
+                    padding: 8px 12px;
+                    border-radius: 4px;
+                    min-width: 80px;
+                }
+                QPushButton:hover {
+                    background-color: #505050;
+                    border: 2px solid #666666;
+                }
+                QPushButton:pressed {
+                    background-color: #151515;
+                    border: 2px solid #000000;
+                }
+            """)
+        else:
+            dialog.setStyleSheet("""
+                QDialog {
+                    background-color: #FFFFFF;
+                    color: #000000;
+                }
+                QLabel {
+                    color: #000000;
+                }
+                QPushButton {
+                    background-color: #F0F0F0;
+                    color: #000000;
+                    font-weight: bold;
+                    border: 1px solid #BBBBBB;
+                    padding: 8px 12px;
+                    border-radius: 4px;
+                    min-width: 80px;
+                }
+                QPushButton:hover {
+                    background-color: #E0E0E0;
+                    border: 1px solid #999999;
+                }
+                QPushButton:pressed {
+                    background-color: #D0D0D0;
+                    border: 1px solid #888888;
+                }
+            """)
         
         layout = QVBoxLayout(dialog)
         
@@ -4551,15 +5102,21 @@ class GroupLayerManager:
 
         # Get the available main strands
         main_strands = self.get_unique_main_strands()
+        print(f"[GROUP FLOW] create_group request for {group_name!r}: available_main_strands={sorted(main_strands)}")
 
         # Open a dialog to select main strands to include in the group
         selected_main_strands = self.open_main_strand_selection_dialog(main_strands)
         if not selected_main_strands:
+            print(f"[GROUP FLOW] create_group aborted for {group_name!r}: no main strands selected")
             pass
             return
 
         # Convert selected_main_strands to a set
         selected_main_strands = set(selected_main_strands)
+        print(
+            f"[GROUP FLOW] create_group continuing for {group_name!r}: "
+            f"selected_main_strands={sorted(selected_main_strands)}"
+        )
 
         try:
             self._create_group_inner(group_name, selected_main_strands)
@@ -4570,6 +5127,14 @@ class GroupLayerManager:
 
     def _create_group_inner(self, group_name, selected_main_strands):
         """Inner implementation of create_group. Strands snapshot is taken from live canvas.strands."""
+        print(
+            f"[GROUP FLOW] _create_group_inner start for {group_name!r}: "
+            f"selected_main_strands={sorted(selected_main_strands)}"
+        )
+        print(
+            f"[GROUP FLOW]   canvas.strands snapshot="
+            f"{[getattr(strand, 'layer_name', None) for strand in list(self.canvas.strands)] if self.canvas else 'N/A'}"
+        )
         # Create the group in canvas.groups first
         if self.canvas:
             self.canvas.groups[group_name] = {
@@ -4579,7 +5144,10 @@ class GroupLayerManager:
                 'control_points': {},
                 'data': []
             }
-            pass
+            print(
+                f"[GROUP FLOW]   initialized provisional canvas group {group_name!r} "
+                f"with main_strands={sorted(selected_main_strands)}"
+            )
 
         # Collect strands that match the selected main strands
         selected_strands = []
@@ -4615,25 +5183,37 @@ class GroupLayerManager:
         strands_snapshot = list(self.canvas.strands)
         for strand in strands_snapshot:
             if not hasattr(strand, 'layer_name'):
+                print(f"[GROUP FLOW]   skipping non-strand object of type {type(strand).__name__}")
                 continue
             try:
                 main_layer = self.extract_main_layer(strand.layer_name)
             except (RuntimeError, AttributeError):
+                print(f"[GROUP FLOW]   failed to extract main layer for {getattr(strand, 'layer_name', None)!r}")
                 continue
+            print(
+                f"[GROUP FLOW]   considering {strand.layer_name!r} ({type(strand).__name__}), "
+                f"main_layer={main_layer!r}, selected={main_layer in selected_main_strands}"
+            )
             if main_layer in selected_main_strands:
                 selected_strands.append(strand)  # Keep original strands for group panel
+                print(f"[GROUP FLOW]   selected {strand.layer_name!r} for group {group_name!r}")
 
                 # If this is a MaskedStrand, ensure its component strands are also included
                 if hasattr(strand, '__class__') and strand.__class__.__name__ == 'MaskedStrand':
-                    pass
                     if hasattr(strand, 'first_selected_strand') and strand.first_selected_strand:
                         if strand.first_selected_strand not in selected_strands:
                             additional_strands_to_add.append(strand.first_selected_strand)
-                            pass
+                            print(
+                                f"[GROUP FLOW]   queued mask dependency "
+                                f"{getattr(strand.first_selected_strand, 'layer_name', None)!r}"
+                            )
                     if hasattr(strand, 'second_selected_strand') and strand.second_selected_strand:
                         if strand.second_selected_strand not in selected_strands:
                             additional_strands_to_add.append(strand.second_selected_strand)
-                            pass
+                            print(
+                                f"[GROUP FLOW]   queued mask dependency "
+                                f"{getattr(strand.second_selected_strand, 'layer_name', None)!r}"
+                            )
 
                 strand_data, cp1, cp2 = _safe_strand_data(strand)
                 if strand_data is not None:
@@ -4646,11 +5226,27 @@ class GroupLayerManager:
                             'control_point1': cp1,
                             'control_point2': cp2
                         }
+                        print(
+                            f"[GROUP FLOW]   provisionally added {strand.layer_name!r} "
+                            f"to canvas group {group_name!r}"
+                        )
+                else:
+                    print(f"[GROUP FLOW]   _safe_strand_data failed for {getattr(strand, 'layer_name', None)!r}")
+
+        print(
+            f"[GROUP FLOW]   first pass summary for {group_name!r}: "
+            f"selected={[getattr(s, 'layer_name', None) for s in selected_strands]}, "
+            f"additional={[getattr(s, 'layer_name', None) for s in additional_strands_to_add]}"
+        )
 
         # Second pass: process additional strands from mask dependencies
         for strand in additional_strands_to_add:
             if strand not in selected_strands:  # Avoid duplicates
                 selected_strands.append(strand)
+                print(
+                    f"[GROUP FLOW]   adding dependency strand {getattr(strand, 'layer_name', None)!r} "
+                    f"for group {group_name!r}"
+                )
 
                 strand_data, cp1, cp2 = _safe_strand_data(strand)
                 if strand_data is not None:
@@ -4663,10 +5259,24 @@ class GroupLayerManager:
                             'control_point1': cp1,
                             'control_point2': cp2
                         }
+                        print(
+                            f"[GROUP FLOW]   provisionally added dependency {strand.layer_name!r} "
+                            f"to canvas group {group_name!r}"
+                        )
+                else:
+                    print(
+                        f"[GROUP FLOW]   _safe_strand_data failed for dependency "
+                        f"{getattr(strand, 'layer_name', None)!r}"
+                    )
 
-                pass
+        print(
+            f"[GROUP FLOW]   second pass summary for {group_name!r}: "
+            f"selected={[getattr(s, 'layer_name', None) for s in selected_strands]}, "
+            f"layers_data_count={len(layers_data)}"
+        )
 
         if not selected_strands:
+            print(f"[GROUP FLOW]   no selected strands found for {group_name!r}; cleaning provisional group")
             pass
             if self.canvas and group_name in self.canvas.groups:
                 del self.canvas.groups[group_name]
@@ -4674,6 +5284,10 @@ class GroupLayerManager:
 
         # Create the group in the group panel with original strand objects
         try:
+            print(
+                f"[GROUP FLOW]   invoking group_panel.create_group for {group_name!r} "
+                f"with {[getattr(s, 'layer_name', None) for s in selected_strands]}"
+            )
             self.group_panel.create_group(group_name, selected_strands)
         except RuntimeError as e:
             print(f"[DEBUG] ERROR in group_panel.create_group: {e}")
@@ -4711,6 +5325,12 @@ class GroupLayerManager:
                     'control_points': control_points_dict
                 })
                 print("[DEBUG] Step 13: canvas.groups updated")
+                print(
+                    f"[GROUP FLOW]   canvas group {group_name!r} after update: "
+                    f"layers={self.canvas.groups[group_name].get('layers', [])}, "
+                    f"data_count={len(self.canvas.groups[group_name].get('data', []))}, "
+                    f"main_strands={sorted(self.canvas.groups[group_name].get('main_strands', []))}"
+                )
             except Exception as e:
                 print(f"[DEBUG] ERROR in canvas.groups update: {e}")
                 import traceback
@@ -4718,8 +5338,21 @@ class GroupLayerManager:
 
         print("[DEBUG] Step 14: About to call canvas.update()...")
         if hasattr(self, 'canvas') and self.canvas:
+            print(
+                f"[GROUP FLOW]   before canvas.update for {group_name!r}: "
+                f"canvas.groups keys={list(self.canvas.groups.keys())}"
+            )
             self.canvas.update()
+            print(
+                f"[GROUP FLOW]   after canvas.update for {group_name!r}: "
+                f"layers={self.canvas.groups.get(group_name, {}).get('layers', [])}"
+            )
         print("[DEBUG] Step 15: canvas.update() completed")
+        print(
+            f"[GROUP FLOW] _create_group_inner finish for {group_name!r}: "
+            f"panel_group_exists={group_name in self.group_panel.groups if hasattr(self, 'group_panel') else 'N/A'}, "
+            f"canvas_group_exists={group_name in self.canvas.groups if self.canvas else 'N/A'}"
+        )
     def get_main_layers(self):
         return list(set([layer.split('_')[0] for layer in self.get_all_layers()]))
 
@@ -5123,16 +5756,26 @@ class GroupLayerManager:
 
                         self.pre_rotation_state[strand.layer_name] = state
 
+                    self.canvas._suppress_repaint = True
                     self.canvas.start_group_rotation(group_name)
                 dialog = GroupRotateDialog(group_name, self, parent=self.main_window)
                 dialog.rotation_updated.connect(self.update_group_rotation)
                 dialog.rotation_finished.connect(self.finish_group_rotation)
-                # Pin dialog so it survives the modal event loop
+                dialog.finished.connect(
+                    lambda result, name=group_name: print(
+                        f"[DEBUG ROTATE] Dialog finished for '{name}' with result={result}"
+                    )
+                )
+                # Keep a strong reference while the dialog is open.
                 self._rotation_dialog_ref = dialog
-                try:
-                    dialog.exec_()
-                finally:
-                    self._rotation_dialog_ref = None
+                dialog.finished.connect(lambda *_args, owner=self: setattr(owner, '_rotation_dialog_ref', None))
+                dialog.setModal(True)
+                # Flush pending paint events while repaint is suppressed,
+                # then re-enable so the rotation slider can update normally.
+                from PyQt5.QtWidgets import QApplication
+                QApplication.processEvents()
+                self.canvas._suppress_repaint = False
+                dialog.open()
             else:
                 pass
         except RuntimeError:
@@ -5238,6 +5881,11 @@ class GroupRotateDialog(QDialog):
     rotation_finished = pyqtSignal(str)
 
     def __init__(self, group_name, group_panel=None, parent=None):
+        print(
+            f"[DEBUG ROTATE DIALOG] __init__ start for {group_name!r}: "
+            f"group_panel={type(group_panel).__name__ if group_panel else None}, "
+            f"parent={type(parent).__name__ if parent else None}"
+        )
         # Use parent for Qt ownership; fall back to group_panel if it's a QWidget
         qt_parent = parent
         if qt_parent is None and group_panel is not None and isinstance(group_panel, QWidget):
@@ -5260,12 +5908,103 @@ class GroupRotateDialog(QDialog):
         if self.language_code == 'he':
             self.setLayoutDirection(Qt.RightToLeft)
         
+        print(
+            f"[DEBUG ROTATE DIALOG] __init__ before setup_ui for {group_name!r}: "
+            f"canvas_present={self.canvas is not None}, original_angle={self.original_angle}"
+        )
         self.setup_ui()
+        print(f"[DEBUG ROTATE DIALOG] __init__ complete for {group_name!r}")
 
     def setup_ui(self):
+        print(f"[DEBUG ROTATE DIALOG] setup_ui start for {self.group_name!r}")
         layout = QVBoxLayout(self)
         self.language_code = self.canvas.language_code if self.canvas else 'en'
         _ = translations[self.language_code]
+
+        # Apply theme-aware styling to the entire dialog
+        is_dark_mode = getattr(self.canvas, 'is_dark_mode', False)
+        if is_dark_mode:
+            self.setStyleSheet("""
+                QDialog {
+                    background-color: #2C2C2C;
+                    color: white;
+                }
+                QLabel {
+                    color: white;
+                }
+                QLineEdit {
+                    background-color: #2B2B2B;
+                    color: white;
+                    border: 1px solid #555555;
+                    border-radius: 4px;
+                    padding: 2px 4px;
+                }
+                QSlider::groove:horizontal {
+                    background: #555555;
+                    height: 6px;
+                    border-radius: 3px;
+                }
+                QSlider::handle:horizontal {
+                    background: #AAAAAA;
+                    width: 14px;
+                    margin: -4px 0;
+                    border-radius: 7px;
+                }
+                QSlider::handle:horizontal:hover {
+                    background: #CCCCCC;
+                }
+                QPushButton {
+                    background-color: #252525;
+                    color: white;
+                    font-weight: bold;
+                    border: 2px solid #000000;
+                    padding: 8px 12px;
+                    border-radius: 4px;
+                    min-width: 80px;
+                }
+                QPushButton:hover {
+                    background-color: #505050;
+                    border: 2px solid #666666;
+                }
+                QPushButton:pressed {
+                    background-color: #151515;
+                    border: 2px solid #000000;
+                }
+            """)
+        else:
+            self.setStyleSheet("""
+                QDialog {
+                    background-color: #FFFFFF;
+                    color: #000000;
+                }
+                QLabel {
+                    color: #000000;
+                }
+                QLineEdit {
+                    background-color: #FFFFFF;
+                    color: #000000;
+                    border: 1px solid #CCCCCC;
+                    border-radius: 4px;
+                    padding: 2px 4px;
+                }
+                QPushButton {
+                    background-color: #F0F0F0;
+                    color: #000000;
+                    font-weight: bold;
+                    border: 1px solid #BBBBBB;
+                    padding: 8px 12px;
+                    border-radius: 4px;
+                    min-width: 80px;
+                }
+                QPushButton:hover {
+                    background-color: #E0E0E0;
+                    border: 1px solid #999999;
+                }
+                QPushButton:pressed {
+                    background-color: #D0D0D0;
+                    border: 1px solid #888888;
+                }
+            """)
 
         # Angle slider
         angle_layout = QHBoxLayout()
@@ -5292,9 +6031,11 @@ class GroupRotateDialog(QDialog):
         ok_button = QPushButton(_['ok'])
         ok_button.clicked.connect(self.on_ok_clicked)
         layout.addWidget(ok_button)
+        print(f"[DEBUG ROTATE DIALOG] setup_ui complete for {self.group_name!r}")
 
     def update_angle_from_slider(self):
         offset = self.angle_slider.value()
+        print(f"[DEBUG ROTATE DIALOG] slider changed for {self.group_name!r}: offset={offset}")
         self.angle_input.setText(str(offset))
         # Emit the absolute angle
         self.rotation_updated.emit(self.group_name, offset)
@@ -5303,18 +6044,26 @@ class GroupRotateDialog(QDialog):
     def update_angle_from_input(self):
         try:
             offset = float(self.angle_input.text())
+            print(f"[DEBUG ROTATE DIALOG] input changed for {self.group_name!r}: offset={offset}")
             self.angle_slider.setValue(int(offset))
             # Emit the absolute angle
             self.rotation_updated.emit(self.group_name, offset)
         except ValueError:
+            print(
+                f"[DEBUG ROTATE DIALOG] invalid input for {self.group_name!r}: "
+                f"text={self.angle_input.text()!r}"
+            )
             pass
     def on_angle_changed(self, group_name, new_angle):
-        pass
+        print(
+            f"[DEBUG ROTATE DIALOG] on_angle_changed: "
+            f"group={group_name!r}, new_angle={new_angle}"
+        )
         # Call GroupPanel's update_group_rotation (which should rotate absolutely)
         if self.group_panel:
             self.group_panel.update_group_rotation(group_name, new_angle)
         else:
-            pass
+            print(f"[DEBUG ROTATE DIALOG] no group_panel available for {group_name!r}")
 
 
     def on_rotation_updated(self, group_name, angle):
@@ -5335,10 +6084,19 @@ class GroupRotateDialog(QDialog):
         """
         try:
             if not self.canvas or not hasattr(self.canvas, 'groups') or self.group_name not in self.canvas.groups:
-                pass
+                print(
+                    f"[DEBUG ROTATE DIALOG] rotate_group_strands early exit for {self.group_name!r}: "
+                    f"canvas_present={self.canvas is not None}, "
+                    f"group_exists={self.group_name in self.canvas.groups if self.canvas and hasattr(self.canvas, 'groups') else False}"
+                )
                 return
 
             group_data = self.canvas.groups[self.group_name]
+            print(
+                f"[DEBUG ROTATE DIALOG] rotate_group_strands start for {self.group_name!r}: "
+                f"angle={self.angle}, strands="
+                f"{[getattr(s, 'layer_name', None) for s in list(group_data.get('strands', []))]}"
+            )
 
             # 1) Calculate rotation center.
             rotation_center = self.calculate_group_center(group_data['strands'])
@@ -5394,7 +6152,9 @@ class GroupRotateDialog(QDialog):
 
             # 7) Redraw the canvas
             self.canvas.update()
+            print(f"[DEBUG ROTATE DIALOG] rotate_group_strands finished for {self.group_name!r}")
         except RuntimeError:
+            print(f"[DEBUG ROTATE DIALOG] rotate_group_strands RuntimeError for {self.group_name!r}")
             pass
 
     def rotate_point(self, point: QPointF, pivot: QPointF, angle_radians: float) -> QPointF:
@@ -5447,12 +6207,35 @@ class GroupRotateDialog(QDialog):
     def on_ok_clicked(self):
         try:
             final_angle = float(self.angle_input.text())
+            print(f"[DEBUG ROTATE DIALOG] on_ok_clicked for {self.group_name!r}: final_angle={final_angle}")
             self.rotation_updated.emit(self.group_name, final_angle)
         except ValueError:
+            print(
+                f"[DEBUG ROTATE DIALOG] on_ok_clicked invalid value for {self.group_name!r}: "
+                f"text={self.angle_input.text()!r}"
+            )
             pass  # Ignore invalid input
-        self.rotation_finished.emit(self.group_name)
+        self._finish_and_close()
         self.accept()
-        
+
+    def reject(self):
+        self._finish_and_close()
+        super().reject()
+
+    def closeEvent(self, event):
+        self._finish_and_close()
+        super().closeEvent(event)
+
+    def _finish_and_close(self):
+        """Emit rotation_finished exactly once, regardless of how the dialog is closed."""
+        if getattr(self, '_already_finished', False):
+            print(f"[DEBUG ROTATE DIALOG] _finish_and_close ignored for {self.group_name!r}: already finished")
+            return
+        self._already_finished = True
+        print(f"[DEBUG ROTATE] Dialog closing for '{self.group_name}'")
+        print(f"[DEBUG ROTATE DIALOG] emitting rotation_finished for {self.group_name!r}")
+        self.rotation_finished.emit(self.group_name)
+
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QDoubleValidator

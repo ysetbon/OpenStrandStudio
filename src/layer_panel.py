@@ -1127,7 +1127,12 @@ class LayerPanel(QWidget):
 
     def create_layer_button(self, index, strand, count):
         """Create a layer button for the given strand."""
-        button = NumberedLayerButton(strand.layer_name, count, strand.color)
+        button = NumberedLayerButton(
+            strand.layer_name,
+            count,
+            strand.color,
+            parent=self.scroll_content,
+        )
         button.clicked.connect(partial(self.select_layer, index))
         button.color_changed.connect(self.on_color_changed)
         
@@ -2470,7 +2475,11 @@ class LayerPanel(QWidget):
 
     def add_masked_layer_button(self, layer1, layer2):
         """Add a new button for a masked layer."""
-        button = NumberedLayerButton(f"{self.layer_buttons[layer1].text()}_{self.layer_buttons[layer2].text()}", 0)
+        button = NumberedLayerButton(
+            f"{self.layer_buttons[layer1].text()}_{self.layer_buttons[layer2].text()}",
+            0,
+            parent=self.scroll_content,
+        )
         # Set the masked layer's color to match the first selected strand
         button.set_color(self.layer_buttons[layer1].color)
         # Set the border color to match the second selected strand
@@ -3489,9 +3498,12 @@ class LayerPanel(QWidget):
                         or getattr(self.canvas, "default_strand_color",
                                     QColor(200, 170, 230, 255))
 
-                btn = NumberedLayerButton(strand.layer_name,
-                                        self.set_counts[set_no],
-                                        colour)
+                btn = NumberedLayerButton(
+                    strand.layer_name,
+                    self.set_counts[set_no],
+                    colour,
+                    parent=self.scroll_content,
+                )
                 btn.layer_name = strand.layer_name          # reliable lookup
                 btn.clicked.connect(partial(self.select_layer, i))
                 btn.color_changed.connect(self.on_color_changed)

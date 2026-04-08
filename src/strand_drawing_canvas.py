@@ -581,15 +581,35 @@ class StrandDrawingCanvas(QWidget):
         Preserves group data and sets rotating_group_name to group_name.
         Applicable whether the group is masked or unmasked.
         """
+        print(
+            f"[CANVAS ROTATE] start_group_rotation start for {group_name!r}: "
+            f"group_exists={group_name in self.groups}, "
+            f"group_keys={list(self.groups.keys())}"
+        )
         if group_name not in self.groups:
-            pass
+            print(f"[CANVAS ROTATE] start_group_rotation early exit: {group_name!r} not in canvas.groups")
             return
 
         self.rotating_group_name = group_name
         group_data = self.groups[group_name]  
+        print(
+            f"[CANVAS ROTATE] initial group data for {group_name!r}: "
+            f"layers={group_data.get('layers', [])}, "
+            f"strands={[getattr(s, 'layer_name', None) for s in group_data.get('strands', [])]}"
+        )
 
         # Compute rotation center (if not already done)
         self.rotation_center = self.calculate_group_center(group_data['strands'])
+        if self.rotation_center is None:
+            print(
+                f"[CANVAS ROTATE] calculate_group_center returned None for {group_name!r}; "
+                f"falling back to origin"
+            )
+            self.rotation_center = QPointF(0, 0)
+        print(
+            f"[CANVAS ROTATE] computed initial center for {group_name!r}: "
+            f"({self.rotation_center.x()}, {self.rotation_center.y()})"
+        )
 
         # Create or clear pre_rotation_state for fresh usage
         self.pre_rotation_state = {}
@@ -622,22 +642,36 @@ class StrandDrawingCanvas(QWidget):
 
         # Done: now we have an unrotated "snapshot"
         #logging.info(f"start_group_rotation: stored pre-rotation state for group '{group_name}'")
+        print(
+            f"[CANVAS ROTATE] stored first snapshot for {group_name!r}: "
+            f"layers={list(self.pre_rotation_state.keys())}"
+        )
 
         if self.group_layer_manager and self.group_layer_manager.group_panel:
             # Synchronize group data from GroupPanel
             group_data = self.group_layer_manager.group_panel.groups.get(group_name)
             if group_data:
                 self.groups[group_name] = group_data
+                print(
+                    f"[CANVAS ROTATE] synced group data from panel for {group_name!r}: "
+                    f"layers={group_data.get('layers', [])}, "
+                    f"strands={[getattr(s, 'layer_name', None) for s in group_data.get('strands', [])]}"
+                )
             #else:
                 #logging.warning(f"Group '{group_name}' not found in GroupPanel")
         else:
             #logging.error("GroupLayerManager or GroupPanel not properly connected to StrandDrawingCanvas")
+            print(f"[CANVAS ROTATE] missing group_layer_manager/group_panel for {group_name!r}")
             return
 
         if group_name in self.groups:
             group_data = self.groups[group_name]
             # Store the original main strands before rotation
             self.pre_rotation_main_strands = list(group_data.get('main_strands', []))
+            print(
+                f"[CANVAS ROTATE] pre_rotation_main_strands for {group_name!r}="
+                f"{[getattr(s, 'layer_name', str(s)) for s in self.pre_rotation_main_strands]}"
+            )
             #logging.info(f"Stored pre-rotation main strands for group {group_name}: {self.pre_rotation_main_strands}")
             
             self.rotating_group_name = group_name
@@ -675,11 +709,20 @@ class StrandDrawingCanvas(QWidget):
                     continue
             # Calculate center
             self.calculate_group_center(group_data['strands'])
+            print(
+                f"[CANVAS ROTATE] final center for {group_name!r}: "
+                f"({self.rotation_center.x()}, {self.rotation_center.y()}); "
+                f"original_positions={len(self.original_strand_positions)}"
+            )
             #logging.info(f"Started rotation for group '{group_name}'")
-            self.update()
+            # Avoid scheduling an immediate repaint before the rotation dialog is shown.
+            # On Windows this can trigger a native crash once the modal dialog enters
+            # its event loop, even though the rotation state is already fully prepared.
+            print(f"[CANVAS ROTATE] skipping immediate canvas.update() for {group_name!r}")
+            print(f"[CANVAS ROTATE] start_group_rotation complete for {group_name!r}")
         else:
             #logging.warning(f"Attempted to start rotation for non-existent group: {group_name}")
-            pass
+            print(f"[CANVAS ROTATE] group disappeared before rotation setup completed: {group_name!r}")
 
     def rotate_group(self, group_name, angle):
         """
@@ -828,11 +871,13 @@ class StrandDrawingCanvas(QWidget):
             self.rotation_center = QPointF(0, 0)
 
         self.current_rotation_angle = 0  # Initialize rotation angle
+        return self.rotation_center
     def update_group_data(self, group_name, group_data):
         self.groups[group_name] = group_data.copy()
         #logging.info(f"Canvas group data updated for group '{group_name}'")
     def finish_group_rotation(self, group_name):
         """Finish rotating a group of strands."""
+        print(f"[CANVAS ROTATE] finish_group_rotation called for {group_name!r}")
         try:
             self._finish_group_rotation_inner(group_name)
         except RuntimeError as e:
@@ -929,18 +974,23 @@ class StrandDrawingCanvas(QWidget):
         """
         Initialize original positions for group strands and their attached strands.
         """
+        print(f"[CANVAS MOVE] initialize_original_positions start for {group_name!r}")
         if not self.group_layer_manager:
-            pass
+            print(f"[CANVAS MOVE]   no group_layer_manager for {group_name!r}")
             return
         
         group_data = self.group_layer_manager.group_panel.groups.get(group_name)
         if group_data:
             strands = group_data['strands']
+            print(
+                f"[CANVAS MOVE]   initializing originals for {group_name!r}: "
+                f"strands={[getattr(s, 'layer_name', None) for s in strands]}"
+            )
             for strand in strands:
                 self.initialize_strand_original_positions_recursively(strand)
         else:
             #logging.warning(f"Group '{group_name}' not found in group panel")
-            pass
+            print(f"[CANVAS MOVE]   group {group_name!r} not found in group panel")
 
 
     def initialize_strand_original_positions_recursively(self, strand):
@@ -999,11 +1049,16 @@ class StrandDrawingCanvas(QWidget):
         Resets the group move operation by deleting temporary attributes
         used during the movement.
         """
+        print(f"[CANVAS MOVE] reset_group_move called for {group_name!r}")
         if group_name not in self.groups:
-            pass
+            print(f"[CANVAS MOVE]   reset skipped: {group_name!r} not in canvas.groups")
             return
 
         strands = self.groups[group_name]['strands']
+        print(
+            f"[CANVAS MOVE]   resetting originals for {group_name!r}: "
+            f"strands={[getattr(s, 'layer_name', None) for s in strands]}"
+        )
 
         for strand in strands:
             if isinstance(strand, MaskedStrand):
@@ -1028,6 +1083,7 @@ class StrandDrawingCanvas(QWidget):
                         del attached_strand.original_end
 
         self.update()
+        print(f"[CANVAS MOVE] reset_group_move complete for {group_name!r}")
 
     def validate_group_data(self, group_name):
         """Validate and repair group data if necessary."""
@@ -1113,13 +1169,19 @@ class StrandDrawingCanvas(QWidget):
         Snaps all points of strands and attached strands (excluding masked strands)
         in the specified group to the closest points on the grid.
         """
+        print(f"[CANVAS MOVE] snap_group_to_grid called for {group_name!r}")
         if group_name not in self.groups:
-            pass
+            print(f"[CANVAS MOVE]   snap skipped: {group_name!r} not in canvas.groups")
             return
 
         grid_size = self.grid_size  # Ensure grid_size is defined in your class
+        print(f"[CANVAS MOVE]   grid_size={grid_size}")
 
         strands = self.groups[group_name]['strands']
+        print(
+            f"[CANVAS MOVE]   snapping strands for {group_name!r}: "
+            f"{[getattr(s, 'layer_name', None) for s in strands]}"
+        )
 
         for strand in strands:
             if isinstance(strand, MaskedStrand):
@@ -1156,6 +1218,7 @@ class StrandDrawingCanvas(QWidget):
                     strand.force_shadow_update()
 
         self.update()
+        print(f"[CANVAS MOVE] snap_group_to_grid complete for {group_name!r}")
 
     def snap_point_to_grid(self, point, grid_size):
         """
@@ -1176,6 +1239,10 @@ class StrandDrawingCanvas(QWidget):
 
     def start_group_move(self, group_name, layers):
         # Refresh group data to include any new strands
+        print(
+            f"[CANVAS MOVE] start_group_move called for {group_name!r}: "
+            f"layers={layers}"
+        )
         self.refresh_group_data(group_name)
         
         # Initialize original positions for all strands in the group
@@ -1187,7 +1254,7 @@ class StrandDrawingCanvas(QWidget):
         self.move_group_layers = layers
         self.move_start_pos = None
         self.setCursor(Qt.OpenHandCursor)
-        pass
+        print(f"[CANVAS MOVE] start_group_move prepared state for {group_name!r}")
 
     def refresh_group_data(self, group_name):
         if hasattr(self, 'group_layer_manager') and self.group_layer_manager.group_panel:
@@ -2783,6 +2850,17 @@ class StrandDrawingCanvas(QWidget):
                 self._painting_in_progress = False
                 return
             if not self.isVisible() or self.width() <= 0 or self.height() <= 0:
+                self._painting_in_progress = False
+                return
+            # Guard against creating a QPainter on a widget whose native
+            # window handle is not ready (e.g. during modal dialog setup
+            # on Windows).  winId() forces the native handle to exist; if
+            # that returns 0 the widget is not yet mapped.
+            try:
+                if not self.winId():
+                    self._painting_in_progress = False
+                    return
+            except RuntimeError:
                 self._painting_in_progress = False
                 return
             widget_painter = QPainter(self)
@@ -6519,15 +6597,19 @@ class StrandDrawingCanvas(QWidget):
         pass
 
     def move_group(self, group_name, total_dx, total_dy):
-        pass
+        print(
+            f"[CANVAS MOVE] move_group called: "
+            f"group={group_name!r}, dx={total_dx}, dy={total_dy}"
+        )
 
         # Initialize original positions if not already initialized
         if not hasattr(self, 'original_positions_initialized') or not self.original_positions_initialized:
+            print(f"[CANVAS MOVE]   originals not initialized for {group_name!r}; initializing now")
             self.initialize_original_positions(group_name)
             self.original_positions_initialized = True
 
         if self.group_layer_manager is None:
-            pass
+            print(f"[CANVAS MOVE]   no group_layer_manager for move_group {group_name!r}")
             return
 
         group_data = self.group_layer_manager.group_panel.groups.get(group_name)
@@ -6535,6 +6617,11 @@ class StrandDrawingCanvas(QWidget):
         if group_data:
             updated_strands = set()
             group_layers = group_data['layers']
+            print(
+                f"[CANVAS MOVE]   group_data for {group_name!r}: "
+                f"layers={group_layers}, strands="
+                f"{[getattr(s, 'layer_name', None) for s in group_data.get('strands', [])]}"
+            )
 
             for layer_name in group_layers:
                 strand = self.find_strand_by_name(layer_name)
@@ -6548,12 +6635,16 @@ class StrandDrawingCanvas(QWidget):
                 if strand:
                     self.move_entire_strand(strand, total_dx, total_dy)
                     updated_strands.add(strand)
-                    pass
+            print(
+                f"[CANVAS MOVE]   move_group updated strands for {group_name!r}: "
+                f"{[getattr(s, 'layer_name', None) for s in updated_strands]}"
+            )
 
             # Force a redraw of the canvas
             self.update()
+            print(f"[CANVAS MOVE] move_group complete for {group_name!r}")
         else:
-            pass
+            print(f"[CANVAS MOVE]   no group_data found for move_group {group_name!r}")
 
     def update_attached_strands_recursively(self, strand, dx, dy, updated_strands, group_layers):
         """

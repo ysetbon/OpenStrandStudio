@@ -518,6 +518,35 @@ class AttachMode(QObject):
                     try:
                         self.canvas._suppress_group_updates = False
                         if hasattr(self.canvas, 'group_layer_manager') and self.canvas.group_layer_manager:
+                            strand_name = getattr(new_strand, 'layer_name', None)
+                            parent_name = getattr(parent_strand, 'layer_name', None)
+                            print(
+                                f"[ATTACH DEFERRED] Starting deferred group update: "
+                                f"new={strand_name!r}, parent={parent_name!r}"
+                            )
+                            # If the strand is already part of a group (e.g. user
+                            # created a group before this timer fired), skip the
+                            # update — it would incorrectly delete+recreate the group.
+                            if strand_name and hasattr(self.canvas, 'groups'):
+                                for group_name, gdata in self.canvas.groups.items():
+                                    if strand_name in gdata.get('layers', []):
+                                        print(
+                                            f"[ATTACH DEFERRED] Skipping deferred update for "
+                                            f"{strand_name!r}: already in group {group_name!r} layers"
+                                        )
+                                        return
+                                    if any(getattr(s, 'layer_name', None) == strand_name
+                                           for s in gdata.get('strands', [])):
+                                        print(
+                                            f"[ATTACH DEFERRED] Skipping deferred update for "
+                                            f"{strand_name!r}: already in group {group_name!r} strands"
+                                        )
+                                        return
+                            print(
+                                f"[ATTACH DEFERRED] Calling update_groups_with_new_strand "
+                                f"for new={strand_name!r}, parent={parent_name!r}, "
+                                f"groups={list(self.canvas.groups.keys()) if hasattr(self.canvas, 'groups') else 'N/A'}"
+                            )
                             self.canvas.group_layer_manager.update_groups_with_new_strand(new_strand)
                     except RuntimeError:
                         return

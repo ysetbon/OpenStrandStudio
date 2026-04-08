@@ -1376,7 +1376,7 @@ class NumberedLayerButton(QPushButton):
                     
             if canvas:
                 canvas.update()
-                canvas.repaint()
+                QTimer.singleShot(0, canvas.update)
                 
                 # Save state for undo/redo to persist the transparent stroke color change
                 if hasattr(canvas, 'undo_redo_manager'):
@@ -1459,7 +1459,7 @@ class NumberedLayerButton(QPushButton):
                 while current_parent is not None:
                     if hasattr(current_parent, 'canvas'):
                         current_parent.canvas.update()
-                        current_parent.canvas.repaint()
+                        QTimer.singleShot(0, current_parent.canvas.update)
                         
                         # Save state for undo/redo to persist the transparent stroke color change
                         if hasattr(current_parent.canvas, 'undo_redo_manager'):
@@ -2650,9 +2650,7 @@ class NumberedLayerButton(QPushButton):
         
         # Update canvas
         layer_panel.canvas.update()
-        
-        # Force a repaint to ensure circles are drawn
-        layer_panel.canvas.repaint()
+        QTimer.singleShot(0, layer_panel.canvas.update)
         
         # Store connection information for future coordinate maintenance
         if not hasattr(strand, 'knot_connections'):
@@ -2732,9 +2730,8 @@ class NumberedLayerButton(QPushButton):
             # Force a complete canvas repaint
             if layer_panel and hasattr(layer_panel, 'canvas'):
                 # Clear any cached drawing data
-                layer_panel.canvas.repaint()
-                # Also call update for good measure
                 layer_panel.canvas.update()
+                QTimer.singleShot(0, layer_panel.canvas.update)
                 # Save state for undo/redo
                 if hasattr(layer_panel.canvas, 'undo_redo_manager'):
                     # Force save by resetting the time check

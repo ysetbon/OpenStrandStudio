@@ -6718,6 +6718,11 @@ class StrandDrawingCanvas(QWidget):
                 abs(point1.y() - point2.y()) <= tolerance)
 
     def update(self):
+        if getattr(self, "_painting_in_progress", False):
+            # Never mutate attachment state from inside an active paint. Just queue
+            # a normal async redraw and let the current frame finish first.
+            super().update()
+            return
         # Skip update_attachment_statuses if we're in the middle of attaching, moving, during undo/redo, or during deletion
         if hasattr(self, 'current_mode') and (
             (hasattr(self.current_mode, 'is_attaching') and self.current_mode.is_attaching) or
@@ -6737,6 +6742,14 @@ class StrandDrawingCanvas(QWidget):
         else:
             self.update_attachment_statuses()
             super().update()
+
+    def repaint(self, *args):
+        if getattr(self, "_painting_in_progress", False):
+            # Fall back to an async update when a paint is already active so we
+            # do not recurse into paintEvent.
+            super().update()
+            return
+        super().repaint(*args)
 
     def update_attachment_statuses(self):
         """Update attachment statuses and has_circles states of all strands."""

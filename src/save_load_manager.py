@@ -1,5 +1,5 @@
 import json
-from PyQt5.QtCore import QPointF, Qt
+from PyQt5.QtCore import QPointF, Qt, QTimer
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QWidget, QHBoxLayout
 from strand import Strand
@@ -996,9 +996,8 @@ def load_strands(filename, canvas):
     
     # Force a complete redraw of the canvas to ensure shadows are rendered
     canvas.update()
-    # Also force a repaint which guarantees immediate visual update (unless suppressed for undo/redo)
-    if hasattr(canvas, 'repaint') and not getattr(canvas, '_suppress_repaint', False):
-        canvas.repaint()
+    if not getattr(canvas, '_suppress_repaint', False):
+        QTimer.singleShot(0, canvas.update)
     elif getattr(canvas, '_suppress_repaint', False):
         pass
 
@@ -1175,9 +1174,8 @@ def apply_loaded_strands(canvas, strands, groups, shadow_overrides=None):
 
     if hasattr(canvas, 'update'):
         canvas.update()
-        # Also force a repaint which guarantees immediate visual update (unless suppressed for undo/redo)
-        if hasattr(canvas, 'repaint') and not getattr(canvas, '_suppress_repaint', False):
-            canvas.repaint()
+        if not getattr(canvas, '_suppress_repaint', False):
+            QTimer.singleShot(0, canvas.update)
         elif getattr(canvas, '_suppress_repaint', False):
             pass
 

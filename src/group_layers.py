@@ -5900,7 +5900,8 @@ class GroupRotateDialog(QDialog):
         self.language_code = self.canvas.language_code if self.canvas else 'en'
         _ = translations[self.language_code]
         self.original_angle = self.canvas.current_rotation_angle or 0.0
-        self.rotation_updated.connect(self.on_angle_changed)
+        # Note: rotation_updated is connected externally to update_group_rotation,
+        # so we don't also connect it internally to on_angle_changed (which does the same thing).
         self.setWindowTitle(f"{_['rotate_group_strands']} {group_name}")
         self.angle = 0
         
@@ -6036,7 +6037,9 @@ class GroupRotateDialog(QDialog):
     def update_angle_from_slider(self):
         offset = self.angle_slider.value()
         print(f"[DEBUG ROTATE DIALOG] slider changed for {self.group_name!r}: offset={offset}")
+        self.angle_input.blockSignals(True)
         self.angle_input.setText(str(offset))
+        self.angle_input.blockSignals(False)
         # Emit the absolute angle
         self.rotation_updated.emit(self.group_name, offset)
 
@@ -6045,7 +6048,9 @@ class GroupRotateDialog(QDialog):
         try:
             offset = float(self.angle_input.text())
             print(f"[DEBUG ROTATE DIALOG] input changed for {self.group_name!r}: offset={offset}")
+            self.angle_slider.blockSignals(True)
             self.angle_slider.setValue(int(offset))
+            self.angle_slider.blockSignals(False)
             # Emit the absolute angle
             self.rotation_updated.emit(self.group_name, offset)
         except ValueError:

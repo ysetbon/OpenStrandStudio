@@ -5058,7 +5058,7 @@ class SettingsDialog(QDialog):
             
             # Refresh the canvas
             self.canvas.update()
-            self.canvas.repaint()
+            QTimer.singleShot(0, self.canvas.update)
             
             # If canvas has a scene (QGraphicsScene), update it too
             if hasattr(self.canvas, 'scene') and hasattr(self.canvas.scene, 'update'):

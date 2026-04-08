@@ -14,7 +14,6 @@ from angle_adjust_mode import AngleAdjustMode
 from PyQt5.QtWidgets import QWidget, QMenu, QAction
 import math
 import traceback
-import gc
 from math import radians, cos, sin, atan2, degrees
 from rotate_mode import RotateMode
 from view_mode import ViewMode
@@ -834,15 +833,12 @@ class StrandDrawingCanvas(QWidget):
         #logging.info(f"Canvas group data updated for group '{group_name}'")
     def finish_group_rotation(self, group_name):
         """Finish rotating a group of strands."""
-        # Disable GC to prevent Qt C++ access violations during cleanup/repaint
-        import gc as _gc
-        _gc_was_enabled = _gc.isenabled()
-        _gc.disable()
         try:
             self._finish_group_rotation_inner(group_name)
-        finally:
-            if _gc_was_enabled:
-                _gc.enable()
+        except RuntimeError as e:
+            import traceback
+            print(f"[CRASH] finish_group_rotation failed: {e}")
+            traceback.print_exc()
 
     def _finish_group_rotation_inner(self, group_name):
         if hasattr(self, 'pre_rotation_main_strands'):
@@ -1801,20 +1797,14 @@ class StrandDrawingCanvas(QWidget):
         if getattr(self, "_painting_in_progress", False):
             return
         self._painting_in_progress = True
-        # Disable GC during painting to prevent access violations from
-        # Qt C++ objects being collected mid-draw (seen during dialog.exec_())
-        gc_was_enabled = gc.isenabled()
-        gc.disable()
         try:
             # Call base implementation first (background, styles etc.)
             super().paintEvent(event)
-        except Exception as e:
+        except RuntimeError as e:
             import traceback
             print(f"[CRASH] paintEvent super() failed: {e}")
             traceback.print_exc()
             self._painting_in_progress = False
-            if gc_was_enabled:
-                gc.enable()
             return
 
         # --------------------------------------------------
@@ -1826,10 +1816,7 @@ class StrandDrawingCanvas(QWidget):
         # next paint event will render the final, correct canvas in one go.
         # --------------------------------------------------
         if getattr(self, "_suppress_repaint", False):
-            pass
             self._painting_in_progress = False
-            if gc_was_enabled:
-                gc.enable()
             return  # Skip custom painting while suppression is active
 
         # Proceed with full painting when not suppressed
@@ -2794,19 +2781,13 @@ class StrandDrawingCanvas(QWidget):
         if self.use_supersampling:
             if self.render_buffer is None or self.render_buffer.isNull():
                 self._painting_in_progress = False
-                if gc_was_enabled:
-                    gc.enable()
                 return
             if not self.isVisible() or self.width() <= 0 or self.height() <= 0:
                 self._painting_in_progress = False
-                if gc_was_enabled:
-                    gc.enable()
                 return
             widget_painter = QPainter(self)
             if not widget_painter.isActive():
                 self._painting_in_progress = False
-                if gc_was_enabled:
-                    gc.enable()
                 return
             RenderUtils.setup_painter(widget_painter, enable_high_quality=True)
             
@@ -2817,8 +2798,6 @@ class StrandDrawingCanvas(QWidget):
             widget_painter.drawImage(self.rect(), self.render_buffer, self.render_buffer.rect())
             widget_painter.end()
         self._painting_in_progress = False
-        if gc_was_enabled:
-            gc.enable()
     
     def _draw_overlays(self, painter):
         """Draw overlay elements like attach mode circles."""

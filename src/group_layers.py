@@ -635,6 +635,11 @@ class _GroupTreeDelegate(QStyledItemDelegate):
         self._panel = panel
 
     def paint(self, painter, option, index):
+        # save() and restore() MUST always be balanced — an unbalanced painter
+        # state corrupts the Qt C++ painter stack and causes an access violation
+        # on the very next paint call.  Use try/finally so restore() always runs
+        # after save(), even if an exception (of any kind) is raised mid-draw.
+        painter_saved = False
         try:
             colors = self._panel._get_theme_colors()
             item = self._panel.tree.itemFromIndex(index)
@@ -650,6 +655,7 @@ class _GroupTreeDelegate(QStyledItemDelegate):
 
             # Draw text
             painter.save()
+            painter_saved = True
             painter.setPen(QColor(colors["text"]))
             if is_group:
                 font = painter.font()
@@ -657,14 +663,25 @@ class _GroupTreeDelegate(QStyledItemDelegate):
                 painter.setFont(font)
             text_rect = option.rect.adjusted(8, 0, 0, 0)
             painter.drawText(text_rect, Qt.AlignVCenter | Qt.AlignLeft, index.data() or "")
-            painter.restore()
-        except RuntimeError:
-            pass
+        except Exception:
+            # Log — do NOT re-raise.  Any exception escaping paint() crashes Qt
+            # with an access violation because the C++ painter stack is already
+            # active.  The finally block below ensures save()/restore() is always
+            # balanced regardless of which exception was raised.
+            import traceback
+            traceback.print_exc()
+        finally:
+            if painter_saved:
+                painter.restore()
 
     def sizeHint(self, option, index):
-        hint = super().sizeHint(option, index)
-        hint.setHeight(max(hint.height(), 28))
-        return hint
+        try:
+            hint = super().sizeHint(option, index)
+            hint.setHeight(max(hint.height(), 28))
+            return hint
+        except Exception:
+            from PyQt5.QtCore import QSize
+            return QSize(100, 28)
 
 
 class GroupPanel(QWidget):
@@ -715,7 +732,11 @@ class GroupPanel(QWidget):
         self.tree.customContextMenuRequested.connect(self._on_tree_context_menu)
         self.tree.itemExpanded.connect(self._on_group_item_expanded)
         self.tree.itemCollapsed.connect(self._on_group_item_collapsed)
-        self.tree.setItemDelegate(_GroupTreeDelegate(self))
+        # Do NOT install a custom Python delegate.  Python-level paint/sizeHint
+        # overrides are called from inside Qt's C++ painting pipeline; if they
+        # crash or raise before Python can catch them, the process dies with an
+        # access violation.  Hover/selection styling is handled entirely via
+        # QSS in apply_theme() below, which is pure C++ and always safe.
         self.layout.addWidget(self.tree)
 
         # Backward-compat aliases so external hasattr() checks don't break.
@@ -810,6 +831,15 @@ class GroupPanel(QWidget):
             }}
             QTreeWidget::item {{
                 border: none;
+                padding: 2px 4px;
+            }}
+            QTreeWidget::item:hover {{
+                background-color: {colors['group_hover_bg']};
+                color: {colors['text']};
+            }}
+            QTreeWidget::item:selected {{
+                background-color: {colors['menu_selected_bg']};
+                color: {colors['menu_selected_text']};
             }}
             QTreeWidget::branch {{
                 background-color: {colors['tree_bg']};
@@ -872,12 +902,27 @@ class GroupPanel(QWidget):
             font.setBold(True)
             group_item.setFont(0, font)
 
+            # Keep Python references to child items on the parent item itself.
+            #
+            # If we only store them in a local list, Python GC deletes the wrappers
+            # the moment _add_group_to_tree returns (refcount → 0).  In some PyQt5
+            # builds that still triggers the C++ QTreeWidgetItem destructor even
+            # though Qt "owns" the items, leaving dangling pointers in the tree
+            # model.  Any repaint after that (e.g. the one triggered by
+            # menu.exec_() below) then dereferences those pointers → access
+            # violation.
+            #
+            # Attaching _child_items to group_item keeps the wrappers alive for
+            # exactly as long as the parent tree item itself is alive in Python.
+            child_items = []
             main_seen = set()
             for layer_name in layers:
                 main_id = layer_name.split('_')[0] if '_' in layer_name else layer_name
                 if main_id not in main_seen:
                     main_seen.add(main_id)
-                    QTreeWidgetItem(group_item, [main_id])
+                    child_items.append(QTreeWidgetItem(group_item, [main_id]))
+
+            group_item._child_items = child_items   # outlives this function ✓
 
             group_item.setExpanded(True)
             self._update_group_item_label(group_item, group_name)
@@ -980,7 +1025,13 @@ class GroupPanel(QWidget):
 
             t = translations.get(lang, translations.get('en', {}))
 
-            menu = QMenu(self)
+            # Use the top-level window as parent instead of self (the embedded
+            # GroupPanel widget).  QMenu(self) can crash on Windows when Qt's
+            # C++ constructor tries to acquire native window resources from a
+            # widget whose handle is in a transitional state (e.g. mid-repaint).
+            # self.window() always points to the stable, fully-shown top-level.
+            parent_widget = self.window() or self
+            menu = QMenu(parent_widget)
             if hasattr(self.layer_panel, "get_context_menu_stylesheet"):
                 menu.setStyleSheet(self.layer_panel.get_context_menu_stylesheet())
             else:
@@ -1018,9 +1069,24 @@ class GroupPanel(QWidget):
             delete_act = menu.addAction(t.get('delete_group', 'Delete Group'))
             delete_act.triggered.connect(lambda: self.delete_group(group_name))
 
-            menu.exec_(global_pos)
+            # Use popup() instead of exec_().
+            # exec_() creates a *nested* Qt event loop; Qt can then pump repaint
+            # events for the underlying tree widget whose model index state is
+            # unstable, crashing in pure C++ code before any Python exception
+            # handler can run.  popup() is non-blocking: the menu renders in the
+            # main event loop where the call stack is clean.
+            # Keep a strong reference so the menu isn't GC'd before the user
+            # interacts with it (QMenu parented to self.window() won't be auto-
+            # deleted until we clear this reference or the parent is destroyed).
+            self._active_context_menu = menu
+            menu.aboutToHide.connect(self._on_context_menu_hidden)
+            menu.popup(global_pos)
         except RuntimeError:
             pass
+
+    def _on_context_menu_hidden(self):
+        """Clear the held context-menu reference once the menu closes."""
+        self._active_context_menu = None
 
     def sync_from_canvas(self):
         """Rebuild the tree view (and self.groups) from canvas.groups.
@@ -1256,10 +1322,10 @@ class GroupPanel(QWidget):
             pass
 
     def finish_group_move(self, group_name):
-        pass
-        if self.canvas:
-            self.canvas.reset_group_move(group_name)
-        else:
+        try:
+            if self.canvas:
+                self.canvas.reset_group_move(group_name)
+        except RuntimeError:
             pass
 
     def snap_to_grid(self):
@@ -1753,10 +1819,13 @@ class GroupPanel(QWidget):
                 # rotation_updated) that fire before the next iteration of the event
                 # loop can still access pre_rotation_state and active_group_name.
                 def _clear_rotation_session(expected_group=group_name):
-                    if self.active_group_name == expected_group:
-                        if hasattr(self, 'pre_rotation_state'):
-                            delattr(self, 'pre_rotation_state')
-                        self.active_group_name = None
+                    try:
+                        if self.active_group_name == expected_group:
+                            if hasattr(self, 'pre_rotation_state'):
+                                delattr(self, 'pre_rotation_state')
+                            self.active_group_name = None
+                    except RuntimeError:
+                        pass
 
                 QTimer.singleShot(0, _clear_rotation_session)
 
@@ -3046,7 +3115,9 @@ class GroupPanel(QWidget):
             pass
     def update_group_after_angle_edit(self, group_name):
         """Update group data after angle adjustments."""
-        if group_name in self.groups and self.canvas:
+        try:
+            if group_name not in self.groups or not self.canvas:
+                return
             group_data = self.groups[group_name]
             
             # Refresh the complete list of strands
@@ -3057,7 +3128,6 @@ class GroupPanel(QWidget):
                 strand = self.canvas.find_strand_by_name(layer_name)
                 if strand and strand not in all_strands:
                     all_strands.append(strand)
-                    pass
             
             # Then get their attached strands
             for strand in all_strands.copy():
@@ -3065,7 +3135,6 @@ class GroupPanel(QWidget):
                     for attached_strand in strand.attached_strands:
                         if attached_strand not in all_strands:
                             all_strands.append(attached_strand)
-                            pass
             
             # Update the group's strands list
             group_data['strands'] = all_strands
@@ -3073,11 +3142,8 @@ class GroupPanel(QWidget):
             # Update control points data
             group_data['control_points'] = {}
             for strand in all_strands:
-                # Skip masked strands
                 if isinstance(strand, MaskedStrand):
-                    pass
                     continue
-
                 try:
                     group_data['control_points'][strand.layer_name] = {
                         'control_point1': QPointF(strand.control_point1) if strand.control_point1 is not None else QPointF(strand.start),
@@ -3085,6 +3151,8 @@ class GroupPanel(QWidget):
                     }
                 except (RuntimeError, TypeError):
                     continue
+        except RuntimeError:
+            pass
             
             pass
     def is_layer_editable(self, layer_name):
@@ -3321,72 +3389,70 @@ class GroupMoveDialog(QDialog):
 
     def update_positions(self):
         """Update positions based on original positions and current deltas"""
-        if self.canvas and self.group_name in self.canvas.groups:
+        try:
+            if not self.canvas or self.group_name not in self.canvas.groups:
+                return
             group_data = self.canvas.groups[self.group_name]
 
             # Create exact delta point
             delta = QPointF(self.total_dx, self.total_dy)
-            pass
 
             for strand in list(group_data.get('strands', [])):
-                strand.updating_position = True  # Flag to potentially optimize updates
+                try:
+                    strand.updating_position = True  # Flag to potentially optimize updates
 
-                if isinstance(strand, MaskedStrand):
-                    # Translate deletion rectangles from their original positions
-                    if hasattr(strand, 'original_deletion_rectangles') and strand.original_deletion_rectangles:
-                        # Ensure the current list exists and matches the original length
-                        if not hasattr(strand, 'deletion_rectangles') or len(strand.deletion_rectangles) != len(strand.original_deletion_rectangles):
-                            strand.deletion_rectangles = [
-                                {'top_left': (0,0), 'top_right': (0,0), 'bottom_left': (0,0), 'bottom_right': (0,0)} 
-                                for _ in strand.original_deletion_rectangles
-                            ]
-                            pass
+                    if isinstance(strand, MaskedStrand):
+                        # Translate deletion rectangles from their original positions
+                        if hasattr(strand, 'original_deletion_rectangles') and strand.original_deletion_rectangles:
+                            # Ensure the current list exists and matches the original length
+                            if not hasattr(strand, 'deletion_rectangles') or len(strand.deletion_rectangles) != len(strand.original_deletion_rectangles):
+                                strand.deletion_rectangles = [
+                                    {'top_left': (0,0), 'top_right': (0,0), 'bottom_left': (0,0), 'bottom_right': (0,0)} 
+                                    for _ in strand.original_deletion_rectangles
+                                ]
 
-                        for i, orig_rect_data in enumerate(strand.original_deletion_rectangles):
-                            # Add delta to original QPointF corners
-                            new_tl = orig_rect_data['top_left'] + delta
-                            new_tr = orig_rect_data['top_right'] + delta
-                            new_bl = orig_rect_data['bottom_left'] + delta
-                            new_br = orig_rect_data['bottom_right'] + delta
+                            for i, orig_rect_data in enumerate(strand.original_deletion_rectangles):
+                                # Add delta to original QPointF corners
+                                new_tl = orig_rect_data['top_left'] + delta
+                                new_tr = orig_rect_data['top_right'] + delta
+                                new_bl = orig_rect_data['bottom_left'] + delta
+                                new_br = orig_rect_data['bottom_right'] + delta
 
-                            # Update the current rectangle with new (x, y) tuples
-                            strand.deletion_rectangles[i]['top_left'] = (new_tl.x(), new_tl.y())
-                            strand.deletion_rectangles[i]['top_right'] = (new_tr.x(), new_tr.y())
-                            strand.deletion_rectangles[i]['bottom_left'] = (new_bl.x(), new_bl.y())
-                            strand.deletion_rectangles[i]['bottom_right'] = (new_br.x(), new_br.y())
-                        
-                        # Update mask path and center point based on the moved rectangles
-                        if hasattr(strand, 'update_mask_path'):
-                            strand.update_mask_path()
-                        if hasattr(strand, 'calculate_center_point'):
-                            strand.calculate_center_point()
-                        pass
-                    else:
-                         pass
-                
-                else: # Handle regular/attached strands
-                    # Move control points (start/end moved above)
-                    if hasattr(strand, 'original_control_point1'):
-                        strand.control_point1 = strand.original_control_point1 + delta
-                    if hasattr(strand, 'original_control_point2'):
-                        strand.control_point2 = strand.original_control_point2 + delta
-                    if hasattr(strand, 'original_control_point_center'):
-                         strand.control_point_center = strand.original_control_point_center + delta
+                                # Update the current rectangle with new (x, y) tuples
+                                strand.deletion_rectangles[i]['top_left'] = (new_tl.x(), new_tl.y())
+                                strand.deletion_rectangles[i]['top_right'] = (new_tr.x(), new_tr.y())
+                                strand.deletion_rectangles[i]['bottom_left'] = (new_bl.x(), new_bl.y())
+                                strand.deletion_rectangles[i]['bottom_right'] = (new_br.x(), new_br.y())
 
-                    pass
+                            # Update mask path and center point based on the moved rectangles
+                            if hasattr(strand, 'update_mask_path'):
+                                strand.update_mask_path()
+                            if hasattr(strand, 'calculate_center_point'):
+                                strand.calculate_center_point()
 
-                    # Update shape and side lines for non-masked strands
-                    if hasattr(strand, 'update_shape'):
-                         strand.update_shape()
-                    if hasattr(strand, 'update_side_line'):
-                        strand.update_side_line()
+                    else:  # Handle regular/attached strands
+                        if hasattr(strand, 'original_control_point1'):
+                            strand.control_point1 = strand.original_control_point1 + delta
+                        if hasattr(strand, 'original_control_point2'):
+                            strand.control_point2 = strand.original_control_point2 + delta
+                        if hasattr(strand, 'original_control_point_center'):
+                            strand.control_point_center = strand.original_control_point_center + delta
 
-                strand.updating_position = False # Reset flag
+                        if hasattr(strand, 'update_shape'):
+                            strand.update_shape()
+                        if hasattr(strand, 'update_side_line'):
+                            strand.update_side_line()
+
+                    strand.updating_position = False  # Reset flag
+                except RuntimeError:
+                    continue
 
             # Emit the movement signal with exact values
             self.move_updated.emit(self.group_name, float(self.total_dx), float(self.total_dy))
             # Update the canvas
             self.canvas.update()
+        except RuntimeError:
+            pass
 
     def update_dx_from_slider(self):
         self.total_dx = int(self.dx_slider.value())  # Ensure integer value
@@ -3508,9 +3574,22 @@ class GroupMoveDialog(QDialog):
 
     def on_ok_clicked(self):
         """Finalize the movement by storing current positions as new originals"""
-        if self.canvas and self.group_name in self.canvas.groups:
-            group_data = self.canvas.groups[self.group_name]
-            for strand in list(group_data.get('strands', [])):
+        try:
+            self._finalize_move()
+        except RuntimeError:
+            import traceback
+            print(f"[WARN] _finalize_move failed for group '{self.group_name}'; "
+                  f"original_* state may be partially updated:")
+            traceback.print_exc()
+        self.move_finished.emit(self.group_name)
+        self.accept()
+
+    def _finalize_move(self):
+        """Store current strand positions as new originals."""
+        if not self.canvas or self.group_name not in self.canvas.groups:
+            return
+        group_data = self.canvas.groups[self.group_name]
+        for strand in list(group_data.get('strands', [])):
                 # Store final positions as new originals
                 strand.original_start = QPointF(strand.start)
                 strand.original_end = QPointF(strand.end)
@@ -3552,13 +3631,14 @@ class GroupMoveDialog(QDialog):
                                  'height': rect.get('height')
                              })
 
-
-        self.move_finished.emit(self.group_name)
-        self.accept()
-
     def snap_to_grid(self):
-        if self.canvas:
-            self.canvas.snap_group_to_grid(self.group_name)
+        try:
+            if self.canvas:
+                self.canvas.snap_group_to_grid(self.group_name)
+        except RuntimeError:
+            import traceback
+            print(f"[WARN] snap_group_to_grid failed for group '{self.group_name}':")
+            traceback.print_exc()
         self.move_finished.emit(self.group_name)
         self.accept()
 
@@ -4673,12 +4753,11 @@ class GroupLayerManager:
         return unique_main_strands
     def save(self, filename):
         data = {
-            "groups": self.get_group_data(),  # Ensure group data is included
+            "groups": self.get_group_data(),
             "strands": [self.serialize_strand(strand) for strand in list(self.canvas.strands)]
         }
         with open(filename, 'w') as f:
             json.dump(data, f, indent=2)
-        pass
     def load(self, filename):
         with open(filename, 'r') as f:
             data = json.load(f)
@@ -4703,8 +4782,10 @@ class GroupLayerManager:
                 "attached_strands": [self.canvas.strands.index(attached_strand) for attached_strand in strand.attached_strands if attached_strand in self.canvas.strands],
                 "has_circles": strand.has_circles.copy() if strand.has_circles is not None else [True, True]
             }
-        except RuntimeError:
-            pass
+        except RuntimeError as e:
+            # Re-raise: silently dropping a strand corrupts saved files.
+            # The caller (save()) will fail loudly rather than write partial data.
+            raise
 
     def deserialize_strand(self, data):
         start = QPointF(data["start"]["x"], data["start"]["y"])
@@ -5089,9 +5170,12 @@ class GroupLayerManager:
             # or repaints issued before the next event-loop iteration can still
             # read pre_rotation_state and active_group_name safely.
             def _clear_rotation_session(expected_group=group_name):
-                if self.active_group_name == expected_group:
-                    self.pre_rotation_state = {}
-                    self.active_group_name = None
+                try:
+                    if self.active_group_name == expected_group:
+                        self.pre_rotation_state = {}
+                        self.active_group_name = None
+                except RuntimeError:
+                    pass
 
             QTimer.singleShot(0, _clear_rotation_session)
 
@@ -5480,9 +5564,11 @@ class StrandAngleEditDialog(QDialog):
         self.setup_ui()
         self.adjust_dialog_size()
 
-        # Timers for handling continuous adjustment
+        # Timers for handling continuous adjustment.
+        # Connect slots ONCE here so that start/stop never accumulate duplicate connections.
         self.adjustment_timer = QTimer(self)
         self.adjustment_timer.setInterval(10)  # 10 milliseconds (0.01 seconds)
+        self.adjustment_timer.timeout.connect(self.perform_continuous_adjustment)
         self.initial_delay_timer = QTimer(self)
         self.initial_delay_timer.setSingleShot(True)
         self.initial_delay_timer.setInterval(500)  # 0.5 seconds
@@ -6057,14 +6143,10 @@ class StrandAngleEditDialog(QDialog):
         # Clear the continuous adjustment flag
         self.is_adjusting_continuously = False
 
-        # Disconnect timers to avoid multiple connections
+        # Disconnect the one-shot initial_delay_timer slot (it varies per button press).
+        # Do NOT disconnect adjustment_timer — its slot is connected once at init.
         try:
             self.initial_delay_timer.timeout.disconnect()
-        except TypeError:
-            pass  # Not connected
-
-        try:
-            self.adjustment_timer.timeout.disconnect()
         except TypeError:
             pass  # Not connected
             
@@ -6092,25 +6174,21 @@ class StrandAngleEditDialog(QDialog):
     def start_continuous_adjustment_plus(self):
         self.stop_adjustment()
         self.current_adjustment = self.delta_continuous_plus
-        self.adjustment_timer.timeout.connect(self.perform_continuous_adjustment)
         self.adjustment_timer.start()
 
     def start_continuous_adjustment_minus(self):
         self.stop_adjustment()
         self.current_adjustment = self.delta_continuous_minus
-        self.adjustment_timer.timeout.connect(self.perform_continuous_adjustment)
         self.adjustment_timer.start()
 
     def start_continuous_adjustment_plus_plus(self):
         self.stop_adjustment()
         self.current_adjustment = self.delta_fast_continuous_plus
-        self.adjustment_timer.timeout.connect(self.perform_continuous_adjustment)
         self.adjustment_timer.start()
 
     def start_continuous_adjustment_minus_minus(self):
         self.stop_adjustment()
         self.current_adjustment = self.delta_fast_continuous_minus
-        self.adjustment_timer.timeout.connect(self.perform_continuous_adjustment)
         self.adjustment_timer.start()
 
     def perform_continuous_adjustment(self):
@@ -6951,6 +7029,12 @@ class StrandAngleEditDialog(QDialog):
         self.dialog_closing = True
         # Perform final cleanup (this will save state if needed)
         self.stop_adjustment()
+        # Disconnect theme_changed so canvas repaints don't hit a partially-torn-down dialog
+        try:
+            if self.canvas and hasattr(self.canvas, 'theme_changed'):
+                self.canvas.theme_changed.disconnect(self.on_theme_changed)
+        except (RuntimeError, TypeError):
+            pass
         # Re-enable saving for future operations
         if self.canvas and hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
             self.canvas.layer_panel.undo_redo_manager._skip_save = False

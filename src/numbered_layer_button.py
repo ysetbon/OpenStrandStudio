@@ -1196,85 +1196,82 @@ class NumberedLayerButton(QPushButton):
         Args:
             event (QPaintEvent): The paint event.
         """
-        super().paintEvent(event)
+        from PyQt5 import sip
+        if sip.isdeleted(self):
+            return
+
+        try:
+            super().paintEvent(event)
+        except RuntimeError:
+            return
+
         painter = QPainter(self)
-        RenderUtils.setup_ui_painter(painter)
+        if not painter.isActive():
+            return
+        try:
+            RenderUtils.setup_ui_painter(painter)
 
-        # Set up the font
-        font = QFont(painter.font())
-        font.setBold(True)
-        font.setPointSize(12)
-        painter.setFont(font)
+            font = QFont(painter.font())
+            font.setBold(True)
+            font.setPointSize(12)
+            painter.setFont(font)
 
-        # Get the button's rectangle
-        rect = self.rect()
+            rect = self.rect()
 
-        # Calculate text position
-        fm = painter.fontMetrics()
+            temp_path = QPainterPath()
+            temp_path.addText(0, 0, font, self._text)
+            text_bounds = temp_path.boundingRect()
 
-        # Create text path at baseline to get accurate bounding rect
-        temp_path = QPainterPath()
-        temp_path.addText(0, 0, font, self._text)
-        text_bounds = temp_path.boundingRect()
+            x = (rect.width() - text_bounds.width()) / 2 - text_bounds.x()
+            y = (rect.height() - text_bounds.height()) / 2 - text_bounds.y() + 1
 
-        # Center based on actual visual bounds
-        x = (rect.width() - text_bounds.width()) / 2 - text_bounds.x()
-        y = (rect.height() - text_bounds.height()) / 2 - text_bounds.y() + 1
+            path = QPainterPath()
+            path.addText(x, y, font, self._text)
 
-        # Create final text path at centered position
-        path = QPainterPath()
-        path.addText(x, y, font, self._text)
+            painter.setPen(Qt.black)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(path)
 
-        # Draw text outline
-        painter.setPen(Qt.black)
-        painter.setBrush(Qt.NoBrush)
-        painter.drawPath(path)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(Qt.white)
+            painter.drawPath(path)
 
-        # Fill text
-        painter.setPen(Qt.NoPen)
-        painter.setBrush(Qt.white)
-        painter.drawPath(path)
+            if self.locked:
+                lock_icon = QIcon.fromTheme("lock")
+                if not lock_icon.isNull():
+                    painter.save()
+                    painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+                    painter.fillRect(rect.adjusted(5, 5, -5, -5), QColor(255, 165, 0, 200))
+                    lock_icon.paint(painter, rect.adjusted(5, 5, -5, -5))
+                    painter.restore()
+                else:
+                    painter.setPen(QColor(255, 165, 0))
+                    painter.drawText(rect, Qt.AlignCenter, "🔒")
 
-        # Draw orange lock icon if locked
-        if self.locked:
-            lock_icon = QIcon.fromTheme("lock")
-            if not lock_icon.isNull():
+            if self.attachable:
+                green_color = QColor("#3BA424")
+                black_color = QColor(Qt.black)
+
+                painter.setPen(QPen(black_color, 2))
+                painter.setBrush(Qt.NoBrush)
+                painter.drawRect(QRect(rect.width() - 9, 0, 9, rect.height()))
+
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(green_color)
+                painter.drawRect(QRect(rect.width() - 8, 1, 7, rect.height() - 2))
+
+            if self.is_hidden:
                 painter.save()
-                painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-                painter.fillRect(rect.adjusted(5, 5, -5, -5), QColor(255, 165, 0, 200))  # Semi-transparent orange
-                lock_icon.paint(painter, rect.adjusted(5, 5, -5, -5))
+                pen = QPen(QColor(160, 160, 160), 2, Qt.DashLine)
+                painter.setPen(pen)
+                for i in range(-rect.height(), rect.width(), 10):
+                    painter.drawLine(i, rect.height(), i + rect.height(), 0)
                 painter.restore()
-            else:
-                painter.setPen(QColor(255, 165, 0))  # Orange color
-                painter.drawText(rect, Qt.AlignCenter, "🔒")
-
-        # Draw green indicator with black stroke if attachable
-        if self.attachable:
-            green_color = QColor("#3BA424")  # Green color
-            black_color = QColor(Qt.black)  # Black color for stroke
-            
-            # Draw black stroke
-            painter.setPen(QPen(black_color, 2))  # 2-pixel black stroke
-            painter.setBrush(Qt.NoBrush)  # No fill for the stroke
-            painter.drawRect(QRect(rect.width() - 9, 0, 9, rect.height()))
-            
-            # Draw green fill
-            painter.setPen(Qt.NoPen)  # No pen for the fill
-            painter.setBrush(green_color)
-            painter.drawRect(QRect(rect.width() - 8, 1, 7, rect.height() - 2))
-
-        # NEW: Draw dashed lines if hidden
-        if self.is_hidden:
-            painter.save()
-            pen = QPen(QColor(160, 160, 160), 2, Qt.DashLine) # Slightly darker gray dashed line
-            painter.setPen(pen)
-            # Draw several diagonal lines
-            for i in range(-rect.height(), rect.width(), 10):
-                 painter.drawLine(i, rect.height(), i + rect.height(), 0)
-            painter.restore()
-        
-        # Ensure painter is properly ended
-        painter.end()
+        except Exception:
+            import traceback
+            traceback.print_exc()
+        finally:
+            painter.end()
 
     def set_transparent_circle_stroke(self):
         """

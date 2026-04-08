@@ -5850,20 +5850,7 @@ class StrandDrawingCanvas(QWidget):
         if strand == selected:
             return True
 
-        # move_selected_only: strict — only the exact selected strand
-        if check_move and not check_cp:
-            return False
-
-        # show_cp_selected_only: allow family (parent, siblings, direct children)
-        # Children of selected
-        if hasattr(selected, 'attached_strands') and strand in selected.attached_strands:
-            return True
-        # If selected is an attached strand, allow parent and siblings
-        if isinstance(selected, AttachedStrand) and hasattr(selected, 'parent_strand'):
-            if strand == selected.parent_strand:
-                return True
-            if hasattr(selected.parent_strand, 'attached_strands') and strand in selected.parent_strand.attached_strands:
-                return True
+        # Both move_selected_only and show_cp_selected_only: strict — only the exact selected strand
         return False
 
     def draw_control_points(self, painter):

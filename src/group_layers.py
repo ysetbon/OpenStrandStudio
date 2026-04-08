@@ -7,13 +7,11 @@ from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon, QIntValidato
 from math import atan2, degrees, isqrt
 from translations import translations
 from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
-from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel,
     QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,QScrollArea,
     QMenu,  QTableWidget, QTableWidgetItem, QHeaderView, QSizePolicy, QAbstractScrollArea
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QPointF
 from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon, QIntValidator
 from strand import Strand
 from masked_strand import MaskedStrand  # Add this import
@@ -1418,21 +1416,17 @@ class GroupPanel(QWidget):
 
                 print("[DEBUG ROTATE] About to start canvas rotation and show dialog...")
                 self.canvas.start_group_rotation(group_name)
-                # Disable GC during dialog to prevent Qt C++ access violations
-                # from objects being collected while the modal event loop runs
-                import gc as _gc
-                _gc_was_enabled = _gc.isenabled()
-                _gc.disable()
+                dialog = GroupRotateDialog(group_name, group_panel=self, parent=self)
+                dialog.rotation_updated.connect(self.update_group_rotation)
+                dialog.rotation_finished.connect(self.finish_group_rotation)
+                # Pin dialog so it survives the modal event loop
+                self._rotation_dialog_ref = dialog
                 try:
-                    dialog = GroupRotateDialog(group_name, group_panel=self, parent=self)
-                    dialog.rotation_updated.connect(self.update_group_rotation)
-                    dialog.rotation_finished.connect(self.finish_group_rotation)
                     print("[DEBUG ROTATE] Dialog created, about to exec...")
                     dialog.exec_()
                     print("[DEBUG ROTATE] Dialog closed")
                 finally:
-                    if _gc_was_enabled:
-                        _gc.enable()
+                    self._rotation_dialog_ref = None
             else:
                 print("[DEBUG ROTATE] No canvas")
         else:
@@ -1720,73 +1714,57 @@ class GroupPanel(QWidget):
             pass
             return
 
-        # Disable GC to prevent Qt C++ access violations during cleanup/repaint
-        import gc as _gc
-        _gc_was_enabled = _gc.isenabled()
-        _gc.disable()
-
-        try:
-            self._finish_group_rotation_inner(group_name)
-        finally:
-            if _gc_was_enabled:
-                _gc.enable()
+        self._finish_group_rotation_inner(group_name)
 
     def _finish_group_rotation_inner(self, group_name):
-        """Inner implementation of finish_group_rotation (GC-protected by caller)."""
+        """Finish a group rotation: canvas teardown first, then deferred session-state wipe."""
+        from PyQt5.QtCore import QTimer
         if self.canvas:
             try:
                 # Get the current main strands before preserving
                 current_main_strands = []
                 if group_name in self.canvas.groups:
                     current_main_strands = self.canvas.groups[group_name].get('main_strands', [])
-                    pass
-                
+
                 # Preserve group data
-                if self.preserve_group_data(group_name):
-                    pass
-                else:
-                    pass
-                
+                self.preserve_group_data(group_name)
+
                 # Clear rotation flag on all strands in the group
                 if group_name in self.canvas.groups:
                     group_data = self.canvas.groups[group_name]
                     for strand in list(group_data.get('strands', [])):
                         if hasattr(strand, '_is_being_rotated'):
                             strand._is_being_rotated = False
-                    
-                # Clean up rotation state
-                if hasattr(self, 'pre_rotation_state'):
-                    delattr(self, 'pre_rotation_state')
-                    pass
-                
-                # Finish rotation in canvas
+
+                # Finish rotation in canvas before wiping session state so any
+                # pending rotation_updated signals still find a valid snapshot.
                 self.canvas.finish_group_rotation(group_name)
                 self.canvas.update()
-                
+
                 # Save state once after rotation is complete
                 try:
                     if hasattr(self.canvas, 'layer_panel') and self.canvas.layer_panel is not None and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
-                        # Mark that we're saving to prevent duplicate saves BEFORE calling save_state
                         self._rotation_save_done = True
-
-                        pass
                         self.canvas.layer_panel.undo_redo_manager.save_state()
                 except RuntimeError:
                     pass
-                    
-                    # Schedule cleanup of the flag after a short delay
-                    from PyQt5.QtCore import QTimer
-                    QTimer.singleShot(300, lambda: setattr(self, '_rotation_save_done', False))
-                
+
+                # Defer session-state teardown so any queued Qt events (repaints,
+                # rotation_updated) that fire before the next iteration of the event
+                # loop can still access pre_rotation_state and active_group_name.
+                def _clear_rotation_session(expected_group=group_name):
+                    if self.active_group_name == expected_group:
+                        if hasattr(self, 'pre_rotation_state'):
+                            delattr(self, 'pre_rotation_state')
+                        self.active_group_name = None
+
+                QTimer.singleShot(0, _clear_rotation_session)
+
             except Exception as e:
-                pass
                 import traceback
-                pass
+                traceback.print_exc()
         else:
             pass
-        
-        # Clear the active group name
-        self.active_group_name = None
 
 
 
@@ -4454,8 +4432,6 @@ class GroupLayerManager:
     # In GroupLayerManager
     def create_group(self):
         """Create a new group with selected main strands and their control points."""
-        import gc as _gc
-
         # Access the current translation dictionary
         self.language_code = self.canvas.language_code if self.canvas else 'en'
         _ = translations[self.language_code]
@@ -4505,21 +4481,15 @@ class GroupLayerManager:
         # Convert selected_main_strands to a set
         selected_main_strands = set(selected_main_strands)
 
-        # Disable GC during group creation to prevent Qt C++ access violations
-        _gc_was_enabled = _gc.isenabled()
-        _gc.disable()
         try:
             self._create_group_inner(group_name, selected_main_strands)
         except Exception as e:
             print(f"[DEBUG] ERROR in create_group: {e}")
             import traceback
             traceback.print_exc()
-        finally:
-            if _gc_was_enabled:
-                _gc.enable()
 
     def _create_group_inner(self, group_name, selected_main_strands):
-        """Inner implementation of create_group (GC-protected by caller)."""
+        """Inner implementation of create_group. Strands snapshot is taken from live canvas.strands."""
         # Create the group in canvas.groups first
         if self.canvas:
             self.canvas.groups[group_name] = {
@@ -5073,19 +5043,15 @@ class GroupLayerManager:
                         self.pre_rotation_state[strand.layer_name] = state
 
                     self.canvas.start_group_rotation(group_name)
-                    # Disable GC during dialog to prevent Qt C++ access violations
-                # from objects being collected while the modal event loop runs
-                import gc as _gc
-                _gc_was_enabled = _gc.isenabled()
-                _gc.disable()
+                dialog = GroupRotateDialog(group_name, self, parent=self.main_window)
+                dialog.rotation_updated.connect(self.update_group_rotation)
+                dialog.rotation_finished.connect(self.finish_group_rotation)
+                # Pin dialog so it survives the modal event loop
+                self._rotation_dialog_ref = dialog
                 try:
-                    dialog = GroupRotateDialog(group_name, self, parent=self.main_window)
-                    dialog.rotation_updated.connect(self.update_group_rotation)
-                    dialog.rotation_finished.connect(self.finish_group_rotation)
                     dialog.exec_()
                 finally:
-                    if _gc_was_enabled:
-                        _gc.enable()
+                    self._rotation_dialog_ref = None
             else:
                 pass
         except RuntimeError:
@@ -5114,21 +5080,20 @@ class GroupLayerManager:
 
     def finish_group_rotation(self, group_name):
         if self.active_group_name == group_name:
-            # Disable GC to prevent Qt C++ access violations during cleanup
-            import gc as _gc
-            _gc_was_enabled = _gc.isenabled()
-            _gc.disable()
-            try:
-                # Restore group data after rotation
-                self.group_layer_manager.restore_group_data(group_name)
-                pass
-                # Clean up pre-rotation state
-                self.pre_rotation_state = {}
-                self.active_group_name = None
-                pass
-            finally:
-                if _gc_was_enabled:
-                    _gc.enable()
+            from PyQt5.QtCore import QTimer
+            # Restore group data; do this synchronously so the canvas is
+            # consistent before any pending repaints fire.
+            self.group_layer_manager.restore_group_data(group_name)
+
+            # Defer session-state teardown so queued rotation_updated signals
+            # or repaints issued before the next event-loop iteration can still
+            # read pre_rotation_state and active_group_name safely.
+            def _clear_rotation_session(expected_group=group_name):
+                if self.active_group_name == expected_group:
+                    self.pre_rotation_state = {}
+                    self.active_group_name = None
+
+            QTimer.singleShot(0, _clear_rotation_session)
 
     def edit_strand_angles(self, group_name):
         # Fetch group data reliably from canvas.groups

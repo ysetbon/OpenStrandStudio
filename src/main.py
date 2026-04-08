@@ -55,6 +55,8 @@ def setup_crash_logging():
 
     _CRASH_LOG_HANDLE = open(log_path, "a", encoding="utf-8")
     faulthandler.enable(_CRASH_LOG_HANDLE, all_threads=True)
+    # Also enable faulthandler on stderr so native crashes print to console
+    faulthandler.enable(sys.stderr, all_threads=True)
 
     def _excepthook(exc_type, exc, tb):
         logging.critical("Unhandled exception", exc_info=(exc_type, exc, tb))
@@ -848,4 +850,7 @@ if __name__ == '__main__':
         current_shadow = window.canvas.default_shadow_color
         
 
+    # Watchdog: dump all thread stacks 1 second after a crash-inducing hang
+    # This auto-cancels on clean exit.
+    faulthandler.dump_traceback_later(timeout=120, repeat=True, file=sys.stderr)
     sys.exit(app.exec_())

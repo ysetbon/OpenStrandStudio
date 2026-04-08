@@ -648,10 +648,16 @@ class _GroupTreeDelegate(QStyledItemDelegate):
         # state corrupts the Qt C++ painter stack and causes an access violation
         # on the very next paint call.  Use try/finally so restore() always runs
         # after save(), even if an exception (of any kind) is raised mid-draw.
+        if not index.isValid():
+            return
         painter_saved = False
         try:
             colors = self._panel._get_theme_colors()
-            item = self._panel.tree.itemFromIndex(index)
+            try:
+                item = self._panel.tree.itemFromIndex(index)
+            except RuntimeError:
+                # C++ tree item was deleted
+                return
             is_group = item is not None and item.parent() is None
             is_hovered = bool(option.state & QStyle.State_MouseOver)
 
@@ -905,38 +911,34 @@ class GroupPanel(QWidget):
             from PyQt5.QtWidgets import QTreeWidgetItem
             from PyQt5.QtGui import QFont
 
-            group_item = QTreeWidgetItem(self.tree, [group_name])
-            group_item.setData(0, Qt.UserRole, group_name)
-            font = group_item.font(0)
-            font.setBold(True)
-            group_item.setFont(0, font)
+            # Block tree signals/updates during item creation to prevent
+            # the tree from repainting with partially-built items.
+            self.tree.setUpdatesEnabled(False)
+            try:
+                group_item = QTreeWidgetItem(self.tree, [group_name])
+                group_item.setData(0, Qt.UserRole, group_name)
+                font = group_item.font(0)
+                font.setBold(True)
+                group_item.setFont(0, font)
 
-            # Keep Python references to child items on the parent item itself.
-            #
-            # If we only store them in a local list, Python GC deletes the wrappers
-            # the moment _add_group_to_tree returns (refcount → 0).  In some PyQt5
-            # builds that still triggers the C++ QTreeWidgetItem destructor even
-            # though Qt "owns" the items, leaving dangling pointers in the tree
-            # model.  Any repaint after that (e.g. the one triggered by
-            # menu.exec_() below) then dereferences those pointers → access
-            # violation.
-            #
-            # Attaching _child_items to group_item keeps the wrappers alive for
-            # exactly as long as the parent tree item itself is alive in Python.
-            child_items = []
-            main_seen = set()
-            for layer_name in layers:
-                main_id = layer_name.split('_')[0] if '_' in layer_name else layer_name
-                if main_id not in main_seen:
-                    main_seen.add(main_id)
-                    child_items.append(QTreeWidgetItem(group_item, [main_id]))
+                # Keep Python references to child items to prevent GC from
+                # deleting the C++ wrappers (dangling pointer → access violation).
+                child_items = []
+                main_seen = set()
+                for layer_name in layers:
+                    main_id = layer_name.split('_')[0] if '_' in layer_name else layer_name
+                    if main_id not in main_seen:
+                        main_seen.add(main_id)
+                        child_items.append(QTreeWidgetItem(group_item, [main_id]))
 
-            group_item._child_items = child_items   # outlives this function ✓
+                group_item._child_items = child_items
 
-            group_item.setExpanded(True)
-            self._update_group_item_label(group_item, group_name)
-            self._apply_group_item_colors(group_item, self._get_theme_colors())
-            self.group_items[group_name] = group_item
+                group_item.setExpanded(True)
+                self._update_group_item_label(group_item, group_name)
+                self._apply_group_item_colors(group_item, self._get_theme_colors())
+                self.group_items[group_name] = group_item
+            finally:
+                self.tree.setUpdatesEnabled(True)
         except RuntimeError:
             pass
 
@@ -1114,30 +1116,27 @@ class GroupPanel(QWidget):
             for group_name, group_data in self.canvas.groups.items():
                 main_strands = group_data.get('main_strands', set())
 
-                # Resolve any string main_strand references to live objects
-                resolved_main = set()
+                # Normalize to string names — never store strand objects
+                resolved_names = set()
                 for ms in main_strands:
-                    if isinstance(ms, str):
-                        obj = self._find_strand_by_name(ms)
-                        if obj:
-                            resolved_main.add(obj)
-                    elif hasattr(ms, 'layer_name'):
-                        resolved_main.add(ms)
+                    name = getattr(ms, 'layer_name', str(ms))
+                    resolved_names.add(name)
 
                 self.groups[group_name] = {
-                    'main_strands': resolved_main,
+                    'main_strands': resolved_names,
                 }
                 # Keep canvas.groups minimal too
                 self.canvas.groups[group_name] = {
-                    'main_strands': resolved_main,
+                    'main_strands': resolved_names.copy(),
                 }
 
-                # Build branch IDs for tree display
-                branch_ids = []
-                for ms in resolved_main:
-                    name = getattr(ms, 'layer_name', str(ms))
-                    branch_ids.append(f"{name.split('_')[0]}_1")
-                self._add_group_to_tree(group_name, branch_ids)
+                # Add to tree for display
+                self.tree.setUpdatesEnabled(False)
+                try:
+                    branch_ids = [f"{n.split('_')[0]}_1" for n in resolved_names]
+                    self._add_group_to_tree(group_name, branch_ids)
+                finally:
+                    self.tree.setUpdatesEnabled(True)
 
             self.update()
         except RuntimeError:
@@ -1357,39 +1356,44 @@ class GroupPanel(QWidget):
             print(f"[GROUP CREATE]   group {group_name!r} already exists, skipping")
             return
 
-        # Identify main strands (pattern: "x_1" where x is a number)
-        main_strands = set()
+        # Identify main strand names (pattern: "x_1" where x is a number)
+        # Store as strings, not strand objects — avoids C++ dangling pointer
+        # issues if Python GC touches these during unrelated operations.
+        main_strand_names = set()
         for strand in strands:
             if hasattr(strand, 'layer_name'):
                 parts = strand.layer_name.split('_')
                 if len(parts) == 2 and parts[1] == '1':
-                    main_strands.add(strand)
+                    main_strand_names.add(strand.layer_name)
 
-        # Store minimal data — only main_strands
+        # Store minimal data — only main strand names as strings
         self.groups[group_name] = {
-            'main_strands': main_strands,
+            'main_strands': main_strand_names,
         }
         print(
             f"[GROUP CREATE]   stored panel group {group_name!r}: "
-            f"main_strands={[getattr(s, 'layer_name', str(s)) for s in main_strands]}"
+            f"main_strands={sorted(main_strand_names)}"
         )
 
         # Sync to canvas.groups (minimal)
         if self.canvas and hasattr(self.canvas, 'groups'):
             self.canvas.groups[group_name] = {
-                'main_strands': main_strands.copy(),
+                'main_strands': main_strand_names.copy(),
             }
 
-        # Build branch IDs for tree display
-        branch_ids = []
-        for ms in main_strands:
-            name = getattr(ms, 'layer_name', str(ms))
-            branch_ids.append(name.split('_')[0])
+        # Defer tree update to avoid access violation during repaint
+        branch_ids = [f"{ms.split('_')[0]}_1" for ms in main_strand_names]
+        from PyQt5.QtCore import QTimer
+        QTimer.singleShot(0, lambda n=group_name, b=branch_ids: self._deferred_add_group_to_tree(n, b))
+        print(f"[GROUP CREATE]   tree update scheduled for {group_name!r}")
 
-        # Add a tree item (the only UI operation)
-        # _add_group_to_tree expects layers but only uses branch IDs from them
-        self._add_group_to_tree(group_name, [f"{b}_1" for b in branch_ids])
-        print(f"[GROUP CREATE]   tree updated for {group_name!r}")
+    def _deferred_add_group_to_tree(self, group_name, branch_ids):
+        """Add tree item after current event processing is complete."""
+        try:
+            self._add_group_to_tree(group_name, branch_ids)
+            print(f"[GROUP CREATE]   tree updated for {group_name!r}")
+        except Exception as e:
+            print(f"[GROUP CREATE]   tree update failed for {group_name!r}: {e}")
 
     def resolve_group_data(self, group_name):
         """Rebuild full group data on-demand from main_strands by scanning canvas.strands.

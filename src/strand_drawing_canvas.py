@@ -59,13 +59,13 @@ class StrandDrawingCanvas(QWidget):
 
     def __init__(self, parent=None):
         """Initialize the StrandDrawingCanvas."""
+        self._painting_in_progress = False
         super().__init__(parent)
         self.setMinimumSize(700, 700)  # Set minimum size for the canvas
         self.setMouseTracking(True)  # Enable mouse tracking for hover effects
 
         # High-DPI rendering settings
-        self._painting_in_progress = False  # Guard against recursive paint
-        self.use_supersampling = True  # Disable supersampling
+        self.use_supersampling = True  # Enable supersampling
         self.supersampling_factor = 2  # 16x more pixels for ultra-crisp rendering
         self.render_buffer = None  # Will be created when needed
         # Temporary logging to trace selection rectangles while debugging move mode
@@ -226,6 +226,7 @@ class StrandDrawingCanvas(QWidget):
         # Use the default colors for the current colors initially
         self.strand_color = self.default_strand_color
         self.stroke_color = self.default_stroke_color
+
 
     def load_shadow_color_from_settings(self):
         """Load only the shadow color from the settings file."""
@@ -582,7 +583,7 @@ class StrandDrawingCanvas(QWidget):
 
         Scans self.strands for every strand whose branch number matches
         one of the root strands stored in the group.  For MaskedStrands
-        (layer_name like "A_B_C_D"), the mask is included if either
+        (layer_name like A_B_C_D), the mask is included if either
         component branch (A or C) belongs to the group.
         Returns a dict with keys: strands, layers, main_strands,
         control_points, data.  Returns None when the group cannot be found.
@@ -1782,6 +1783,17 @@ class StrandDrawingCanvas(QWidget):
         if getattr(self, "_painting_in_progress", False):
             return
         self._painting_in_progress = True
+        try:
+            self._paintEventInner(event)
+        except Exception as e:
+            import traceback
+            print(f"[CRASH] paintEvent failed: {e}", flush=True)
+            traceback.print_exc()
+        finally:
+            self._painting_in_progress = False
+
+    def _paintEventInner(self, event):
+        """Actual painting logic, called from paintEvent with recursion guard."""
         if not self.use_supersampling:
             try:
                 # Call base implementation only for non-supersampled path
@@ -1790,7 +1802,6 @@ class StrandDrawingCanvas(QWidget):
                 import traceback
                 print(f"[CRASH] paintEvent super() failed: {e}")
                 traceback.print_exc()
-                self._painting_in_progress = False
                 return
 
         # Proceed with full painting when not suppressed
@@ -2754,36 +2765,24 @@ class StrandDrawingCanvas(QWidget):
         # If using supersampling, now draw the high-res buffer to the widget
         if self.use_supersampling:
             if self.render_buffer is None or self.render_buffer.isNull():
-                self._painting_in_progress = False
                 return
             if not self.isVisible() or self.width() <= 0 or self.height() <= 0:
-                self._painting_in_progress = False
                 return
-            # Guard against creating a QPainter on a widget whose native
-            # window handle is not ready (e.g. during modal dialog setup
-            # on Windows).  winId() forces the native handle to exist; if
-            # that returns 0 the widget is not yet mapped.
+            # Check native window exists without calling winId() (which
+            # forces creation and can trigger recursive paintEvent).
+            if not self.testAttribute(Qt.WA_WState_Created):
+                return
             try:
-                if not self.winId():
-                    self._painting_in_progress = False
+                widget_painter = QPainter(self)
+                if not widget_painter.isActive():
                     return
-            except RuntimeError:
-                self._painting_in_progress = False
-                return
-            widget_painter = QPainter(self)
-            if not widget_painter.isActive():
-                self._painting_in_progress = False
-                return
-            RenderUtils.setup_painter(widget_painter, enable_high_quality=True)
-            
-            # Use the highest quality scaling for the final blit
-            widget_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
-            
-            # Draw the high-res buffer scaled down with high-quality filtering
-            widget_painter.drawImage(self.rect(), self.render_buffer, self.render_buffer.rect())
-            widget_painter.end()
-        self._painting_in_progress = False
-    
+                RenderUtils.setup_painter(widget_painter, enable_high_quality=True)
+                widget_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+                widget_painter.drawImage(self.rect(), self.render_buffer, self.render_buffer.rect())
+                widget_painter.end()
+            except Exception:
+                pass
+
     def _draw_overlays(self, painter):
         """Draw overlay elements like attach mode circles."""
         # Note: painter is already set up with transformations when this is called

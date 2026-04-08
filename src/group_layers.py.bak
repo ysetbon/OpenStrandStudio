@@ -294,163 +294,163 @@ class CollapsibleGroupWidget(QWidget):
 
             # Create menu with parent for proper C++ object ownership
             context_menu = QMenu(self.group_button)
-            
-            # Check if RTL language
-            is_rtl = self.is_rtl_language(self.language_code)
-            
-            # Apply RTL layout direction for Hebrew
-            if is_rtl:
-                context_menu.setLayoutDirection(Qt.RightToLeft)
-            
-            # Get all menu items
-            menu_items = [
-                _['move_group_strands'],
-                _['rotate_group_strands'],
-                _['edit_strand_angles'],
-                _['edit_shadows'],
-                _['create_mask_grid'],
-                _['duplicate_group'],
-                _['rename_group'],
-                _['delete_group']
-            ]
-            
-            # Get theme for HoverLabel
-            theme = 'dark' if (self.canvas and hasattr(self.canvas, 'is_dark_mode') and self.canvas.is_dark_mode) else 'light'
-            
-            # Apply theme-based styling
-            # Determine if we're using RTL for Hebrew - adding 20px extra padding on right side only
-            item_padding = "padding: 6px 40px 6px 6px;" if is_rtl else "padding: 6px 40px 6px 6px;"
-            
-            if theme == 'dark':
-                context_menu.setStyleSheet(f"""
-                    QMenu {{
-                        background-color: #2C2C2C;
-                        border: 1px solid #555;
-                        padding: 2px;
-                        min-width: 120px;
-                    }}
-                    QMenu::item {{
-                        color: #FFFFFF;
-                        background-color: transparent;
-                        {item_padding}
-                    }}
-                    QMenu::item:selected {{
-                        background-color: #505050;
-                    }}
-                    QMenu::separator {{
-                        height: 1px;
-                        background-color: #555;
-                        margin: 4px 10px;
-                    }}
-                """)
-            else:
-                context_menu.setStyleSheet(f"""
-                    QMenu {{
-                        background-color: #FFFFFF;
-                        border: 1px solid #CCC;
-                        min-width: 120px;
-                    }}
-                    QMenu::item {{
-                        color: #000000;
-                        background-color: transparent;
-                        {item_padding}
-                    }}
-                    QMenu::item:selected {{
-                        background-color: #D3D3D3;
-                    }}
-                    QMenu::separator {{
-                        height: 1px;
-                        background-color: #CCC;
-                        margin: 4px 10px;
-                    }}
-                """)
+        
+        # Check if RTL language
+        is_rtl = self.is_rtl_language(self.language_code)
+        
+        # Apply RTL layout direction for Hebrew
+        if is_rtl:
+            context_menu.setLayoutDirection(Qt.RightToLeft)
+        
+        # Get all menu items
+        menu_items = [
+            _['move_group_strands'],
+            _['rotate_group_strands'],
+            _['edit_strand_angles'],
+            _['edit_shadows'],
+            _['create_mask_grid'],
+            _['duplicate_group'],
+            _['rename_group'],
+            _['delete_group']
+        ]
+        
+        # Get theme for HoverLabel
+        theme = 'dark' if (self.canvas and hasattr(self.canvas, 'is_dark_mode') and self.canvas.is_dark_mode) else 'light'
+        
+        # Apply theme-based styling
+        # Determine if we're using RTL for Hebrew - adding 20px extra padding on right side only
+        item_padding = "padding: 6px 40px 6px 6px;" if is_rtl else "padding: 6px 40px 6px 6px;"
+        
+        if theme == 'dark':
+            context_menu.setStyleSheet(f"""
+                QMenu {{
+                    background-color: #2C2C2C;
+                    border: 1px solid #555;
+                    padding: 2px;
+                    min-width: 120px;
+                }}
+                QMenu::item {{
+                    color: #FFFFFF;
+                    background-color: transparent;
+                    {item_padding}
+                }}
+                QMenu::item:selected {{
+                    background-color: #505050;
+                }}
+                QMenu::separator {{
+                    height: 1px;
+                    background-color: #555;
+                    margin: 4px 10px;
+                }}
+            """)
+        else:
+            context_menu.setStyleSheet(f"""
+                QMenu {{
+                    background-color: #FFFFFF;
+                    border: 1px solid #CCC;
+                    min-width: 120px;
+                }}
+                QMenu::item {{
+                    color: #000000;
+                    background-color: transparent;
+                    {item_padding}
+                }}
+                QMenu::item:selected {{
+                    background-color: #D3D3D3;
+                }}
+                QMenu::separator {{
+                    height: 1px;
+                    background-color: #CCC;
+                    margin: 4px 10px;
+                }}
+            """)
 
-            # Create actions using HoverLabel widgets for proper RTL support
-            # Move strands action
-            move_label = HoverLabel(menu_items[0], self, theme)
-            if is_rtl:
-                move_label.setLayoutDirection(Qt.RightToLeft)
-                move_label.setAlignment(Qt.AlignLeft)
-            move_action = QWidgetAction(self)
-            move_action.setDefaultWidget(move_label)
-            move_action.triggered.connect(lambda: self.group_panel.start_group_move(self.group_name))
-            context_menu.addAction(move_action)
-            
-            # Rotate strands action
-            rotate_label = HoverLabel(menu_items[1], self, theme)
-            if is_rtl:
-                rotate_label.setLayoutDirection(Qt.RightToLeft)
-                rotate_label.setAlignment(Qt.AlignLeft)
-            rotate_action = QWidgetAction(self)
-            rotate_action.setDefaultWidget(rotate_label)
-            rotate_action.triggered.connect(lambda: self.group_panel.start_group_rotation(self.group_name))
-            context_menu.addAction(rotate_action)
-            
-            # Edit angles action
-            edit_label = HoverLabel(menu_items[2], self, theme)
-            if is_rtl:
-                edit_label.setLayoutDirection(Qt.RightToLeft)
-                edit_label.setAlignment(Qt.AlignLeft)
-            edit_action = QWidgetAction(self)
-            edit_action.setDefaultWidget(edit_label)
-            edit_action.triggered.connect(lambda: self.group_panel.edit_strand_angles(self.group_name))
-            context_menu.addAction(edit_action)
+        # Create actions using HoverLabel widgets for proper RTL support
+        # Move strands action
+        move_label = HoverLabel(menu_items[0], self, theme)
+        if is_rtl:
+            move_label.setLayoutDirection(Qt.RightToLeft)
+            move_label.setAlignment(Qt.AlignLeft)
+        move_action = QWidgetAction(self)
+        move_action.setDefaultWidget(move_label)
+        move_action.triggered.connect(lambda: self.group_panel.start_group_move(self.group_name))
+        context_menu.addAction(move_action)
+        
+        # Rotate strands action
+        rotate_label = HoverLabel(menu_items[1], self, theme)
+        if is_rtl:
+            rotate_label.setLayoutDirection(Qt.RightToLeft)
+            rotate_label.setAlignment(Qt.AlignLeft)
+        rotate_action = QWidgetAction(self)
+        rotate_action.setDefaultWidget(rotate_label)
+        rotate_action.triggered.connect(lambda: self.group_panel.start_group_rotation(self.group_name))
+        context_menu.addAction(rotate_action)
+        
+        # Edit angles action
+        edit_label = HoverLabel(menu_items[2], self, theme)
+        if is_rtl:
+            edit_label.setLayoutDirection(Qt.RightToLeft)
+            edit_label.setAlignment(Qt.AlignLeft)
+        edit_action = QWidgetAction(self)
+        edit_action.setDefaultWidget(edit_label)
+        edit_action.triggered.connect(lambda: self.group_panel.edit_strand_angles(self.group_name))
+        context_menu.addAction(edit_action)
 
-            # Edit shadows action
-            shadow_label = HoverLabel(menu_items[3], self, theme)
-            if is_rtl:
-                shadow_label.setLayoutDirection(Qt.RightToLeft)
-                shadow_label.setAlignment(Qt.AlignLeft)
-            shadow_action = QWidgetAction(self)
-            shadow_action.setDefaultWidget(shadow_label)
-            shadow_action.triggered.connect(lambda: self.group_panel.open_group_shadow_editor(self.group_name))
-            context_menu.addAction(shadow_action)
+        # Edit shadows action
+        shadow_label = HoverLabel(menu_items[3], self, theme)
+        if is_rtl:
+            shadow_label.setLayoutDirection(Qt.RightToLeft)
+            shadow_label.setAlignment(Qt.AlignLeft)
+        shadow_action = QWidgetAction(self)
+        shadow_action.setDefaultWidget(shadow_label)
+        shadow_action.triggered.connect(lambda: self.group_panel.open_group_shadow_editor(self.group_name))
+        context_menu.addAction(shadow_action)
 
-            # Create mask grid action
-            mask_grid_label = HoverLabel(menu_items[4], self, theme)
-            if is_rtl:
-                mask_grid_label.setLayoutDirection(Qt.RightToLeft)
-                mask_grid_label.setAlignment(Qt.AlignLeft)
-            mask_grid_action = QWidgetAction(self)
-            mask_grid_action.setDefaultWidget(mask_grid_label)
-            mask_grid_action.triggered.connect(lambda: self.group_panel.create_mask_grid(self.group_name))
-            context_menu.addAction(mask_grid_action)
+        # Create mask grid action
+        mask_grid_label = HoverLabel(menu_items[4], self, theme)
+        if is_rtl:
+            mask_grid_label.setLayoutDirection(Qt.RightToLeft)
+            mask_grid_label.setAlignment(Qt.AlignLeft)
+        mask_grid_action = QWidgetAction(self)
+        mask_grid_action.setDefaultWidget(mask_grid_label)
+        mask_grid_action.triggered.connect(lambda: self.group_panel.create_mask_grid(self.group_name))
+        context_menu.addAction(mask_grid_action)
 
-            # Duplicate group action
-            duplicate_label = HoverLabel(menu_items[5], self, theme)
-            if is_rtl:
-                duplicate_label.setLayoutDirection(Qt.RightToLeft)
-                duplicate_label.setAlignment(Qt.AlignLeft)
-            duplicate_action = QWidgetAction(self)
-            duplicate_action.setDefaultWidget(duplicate_label)
-            duplicate_action.triggered.connect(lambda: self.group_panel.duplicate_group(self.group_name))
-            context_menu.addAction(duplicate_action)
+        # Duplicate group action
+        duplicate_label = HoverLabel(menu_items[5], self, theme)
+        if is_rtl:
+            duplicate_label.setLayoutDirection(Qt.RightToLeft)
+            duplicate_label.setAlignment(Qt.AlignLeft)
+        duplicate_action = QWidgetAction(self)
+        duplicate_action.setDefaultWidget(duplicate_label)
+        duplicate_action.triggered.connect(lambda: self.group_panel.duplicate_group(self.group_name))
+        context_menu.addAction(duplicate_action)
 
-            # Rename group action
-            rename_label = HoverLabel(menu_items[6], self, theme)
-            if is_rtl:
-                rename_label.setLayoutDirection(Qt.RightToLeft)
-                rename_label.setAlignment(Qt.AlignLeft)
-            rename_action = QWidgetAction(self)
-            rename_action.setDefaultWidget(rename_label)
-            rename_action.triggered.connect(lambda: self.group_panel.rename_group(self.group_name))
-            context_menu.addAction(rename_action)
+        # Rename group action
+        rename_label = HoverLabel(menu_items[6], self, theme)
+        if is_rtl:
+            rename_label.setLayoutDirection(Qt.RightToLeft)
+            rename_label.setAlignment(Qt.AlignLeft)
+        rename_action = QWidgetAction(self)
+        rename_action.setDefaultWidget(rename_label)
+        rename_action.triggered.connect(lambda: self.group_panel.rename_group(self.group_name))
+        context_menu.addAction(rename_action)
 
-            context_menu.addSeparator()
+        context_menu.addSeparator()
 
-            # Delete group action
-            delete_label = HoverLabel(menu_items[7], self, theme)
-            if is_rtl:
-                delete_label.setLayoutDirection(Qt.RightToLeft)
-                delete_label.setAlignment(Qt.AlignLeft)
-            delete_action = QWidgetAction(self)
-            delete_action.setDefaultWidget(delete_label)
-            delete_action.triggered.connect(lambda: self.group_panel.delete_group(self.group_name))
-            context_menu.addAction(delete_action)
-            
-            # Show menu at the cursor position with screen-aware positioning
-            global_pos = self.get_screen_aware_global_pos(position)
-            context_menu.exec_(global_pos)
+        # Delete group action
+        delete_label = HoverLabel(menu_items[7], self, theme)
+        if is_rtl:
+            delete_label.setLayoutDirection(Qt.RightToLeft)
+            delete_label.setAlignment(Qt.AlignLeft)
+        delete_action = QWidgetAction(self)
+        delete_action.setDefaultWidget(delete_label)
+        delete_action.triggered.connect(lambda: self.group_panel.delete_group(self.group_name))
+        context_menu.addAction(delete_action)
+        
+        # Show menu at the cursor position with screen-aware positioning
+        global_pos = self.get_screen_aware_global_pos(position)
+        context_menu.exec_(global_pos)
         except RuntimeError:
             pass
 
@@ -975,52 +975,52 @@ class GroupPanel(QWidget):
 
             # Determine language for translations
             lang = getattr(self, 'language_code', 'en')
-            if hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'language_code'):
-                lang = self.layer_panel.language_code
-            elif self.canvas and hasattr(self.canvas, 'language_code'):
-                lang = self.canvas.language_code
+        if hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'language_code'):
+            lang = self.layer_panel.language_code
+        elif self.canvas and hasattr(self.canvas, 'language_code'):
+            lang = self.canvas.language_code
 
-            t = translations.get(lang, translations.get('en', {}))
+        t = translations.get(lang, translations.get('en', {}))
 
-            menu = QMenu(self)
-            if hasattr(self.layer_panel, "get_context_menu_stylesheet"):
-                menu.setStyleSheet(self.layer_panel.get_context_menu_stylesheet())
-            else:
-                colors = self._get_theme_colors()
-                menu.setStyleSheet(f"""
-                    QMenu {{
-                        background-color: {colors['menu_bg']};
-                        color: {colors['menu_text']};
-                        border: 1px solid {colors['menu_border']};
-                        padding: 4px;
-                    }}
-                    QMenu::item {{
-                        padding: 6px 20px;
-                    }}
-                    QMenu::item:selected {{
-                        background-color: {colors['menu_selected_bg']};
-                        color: {colors['menu_selected_text']};
-                    }}
-                """)
+        menu = QMenu(self)
+        if hasattr(self.layer_panel, "get_context_menu_stylesheet"):
+            menu.setStyleSheet(self.layer_panel.get_context_menu_stylesheet())
+        else:
+            colors = self._get_theme_colors()
+            menu.setStyleSheet(f"""
+                QMenu {{
+                    background-color: {colors['menu_bg']};
+                    color: {colors['menu_text']};
+                    border: 1px solid {colors['menu_border']};
+                    padding: 4px;
+                }}
+                QMenu::item {{
+                    padding: 6px 20px;
+                }}
+                QMenu::item:selected {{
+                    background-color: {colors['menu_selected_bg']};
+                    color: {colors['menu_selected_text']};
+                }}
+            """)
 
-            actions = [
-                (t.get('move_group_strands', 'Move Group'), lambda: self.start_group_move(group_name)),
-                (t.get('rotate_group_strands', 'Rotate Group'), lambda: self.start_group_rotation(group_name)),
-                (t.get('edit_strand_angles', 'Edit Angles'), lambda: self.edit_strand_angles(group_name)),
-                (t.get('edit_shadows', 'Edit Shadows'), lambda: self.open_group_shadow_editor(group_name)),
-                (t.get('create_mask_grid', 'Create Mask Grid'), lambda: self.create_mask_grid(group_name)),
-                (t.get('duplicate_group', 'Duplicate Group'), lambda: self.duplicate_group(group_name)),
-                (t.get('rename_group', 'Rename Group'), lambda: self.rename_group(group_name)),
-            ]
-            for label, callback in actions:
-                act = menu.addAction(label)
-                act.triggered.connect(callback)
+        actions = [
+            (t.get('move_group_strands', 'Move Group'), lambda: self.start_group_move(group_name)),
+            (t.get('rotate_group_strands', 'Rotate Group'), lambda: self.start_group_rotation(group_name)),
+            (t.get('edit_strand_angles', 'Edit Angles'), lambda: self.edit_strand_angles(group_name)),
+            (t.get('edit_shadows', 'Edit Shadows'), lambda: self.open_group_shadow_editor(group_name)),
+            (t.get('create_mask_grid', 'Create Mask Grid'), lambda: self.create_mask_grid(group_name)),
+            (t.get('duplicate_group', 'Duplicate Group'), lambda: self.duplicate_group(group_name)),
+            (t.get('rename_group', 'Rename Group'), lambda: self.rename_group(group_name)),
+        ]
+        for label, callback in actions:
+            act = menu.addAction(label)
+            act.triggered.connect(callback)
 
-            menu.addSeparator()
-            delete_act = menu.addAction(t.get('delete_group', 'Delete Group'))
-            delete_act.triggered.connect(lambda: self.delete_group(group_name))
+        menu.addSeparator()
+        delete_act = menu.addAction(t.get('delete_group', 'Delete Group'))
+        delete_act.triggered.connect(lambda: self.delete_group(group_name))
 
-            menu.exec_(global_pos)
+        menu.exec_(global_pos)
         except RuntimeError:
             pass
 
@@ -1039,41 +1039,41 @@ class GroupPanel(QWidget):
                 return
 
             for group_name, group_data in self.canvas.groups.items():
-                layers = group_data.get('layers', [])
-                strands = group_data.get('strands', [])
-                main_strands = group_data.get('main_strands', set())
-                control_points = group_data.get('control_points', {})
+            layers = group_data.get('layers', [])
+            strands = group_data.get('strands', [])
+            main_strands = group_data.get('main_strands', set())
+            control_points = group_data.get('control_points', {})
 
-                # Resolve any string strand references to live objects
-                resolved_strands = []
-                for s in strands:
-                    if isinstance(s, str):
-                        obj = self._find_strand_by_name(s)
-                        if obj:
-                            resolved_strands.append(obj)
-                    else:
-                        resolved_strands.append(s)
+            # Resolve any string strand references to live objects
+            resolved_strands = []
+            for s in strands:
+                if isinstance(s, str):
+                    obj = self._find_strand_by_name(s)
+                    if obj:
+                        resolved_strands.append(obj)
+                else:
+                    resolved_strands.append(s)
 
-                resolved_main = set()
-                for ms in main_strands:
-                    if isinstance(ms, str):
-                        obj = self._find_strand_by_name(ms)
-                        if obj:
-                            resolved_main.add(obj)
-                    elif hasattr(ms, 'layer_name'):
-                        resolved_main.add(ms)
+            resolved_main = set()
+            for ms in main_strands:
+                if isinstance(ms, str):
+                    obj = self._find_strand_by_name(ms)
+                    if obj:
+                        resolved_main.add(obj)
+                elif hasattr(ms, 'layer_name'):
+                    resolved_main.add(ms)
 
-                self.groups[group_name] = {
-                    'strands': resolved_strands,
-                    'layers': layers,
-                    'main_strands': resolved_main,
-                    'control_points': control_points,
-                }
-                # Also push resolved objects back into canvas.groups
-                self.canvas.groups[group_name]['strands'] = resolved_strands
-                self.canvas.groups[group_name]['main_strands'] = resolved_main
+            self.groups[group_name] = {
+                'strands': resolved_strands,
+                'layers': layers,
+                'main_strands': resolved_main,
+                'control_points': control_points,
+            }
+            # Also push resolved objects back into canvas.groups
+            self.canvas.groups[group_name]['strands'] = resolved_strands
+            self.canvas.groups[group_name]['main_strands'] = resolved_main
 
-                self._add_group_to_tree(group_name, layers)
+            self._add_group_to_tree(group_name, layers)
 
             self.update()
         except RuntimeError:
@@ -2615,169 +2615,166 @@ class GroupPanel(QWidget):
 
     def copy_strand_properties(self, original, new_strand):
         """Copy common strand properties from original to new strand."""
-        try:
-            from PyQt5.QtCore import QPointF
-            from PyQt5.QtGui import QColor
-
-            # Copy control points (create new QPointF objects, but check for None values)
-            if hasattr(original, 'control_point1') and original.control_point1 is not None:
-                new_strand.control_point1 = QPointF(original.control_point1.x(), original.control_point1.y())
-            elif hasattr(original, 'control_point1'):
-                new_strand.control_point1 = None
+        from PyQt5.QtCore import QPointF
+        from PyQt5.QtGui import QColor
+        
+        # Copy control points (create new QPointF objects, but check for None values)
+        if hasattr(original, 'control_point1') and original.control_point1 is not None:
+            new_strand.control_point1 = QPointF(original.control_point1.x(), original.control_point1.y())
+        elif hasattr(original, 'control_point1'):
+            new_strand.control_point1 = None
             
-            if hasattr(original, 'control_point2') and original.control_point2 is not None:
-                new_strand.control_point2 = QPointF(original.control_point2.x(), original.control_point2.y())
-            elif hasattr(original, 'control_point2'):
-                new_strand.control_point2 = None
+        if hasattr(original, 'control_point2') and original.control_point2 is not None:
+            new_strand.control_point2 = QPointF(original.control_point2.x(), original.control_point2.y())
+        elif hasattr(original, 'control_point2'):
+            new_strand.control_point2 = None
             
-            if hasattr(original, 'control_point_center') and original.control_point_center is not None:
-                new_strand.control_point_center = QPointF(original.control_point_center.x(), original.control_point_center.y())
-            elif hasattr(original, 'control_point_center'):
-                new_strand.control_point_center = None
+        if hasattr(original, 'control_point_center') and original.control_point_center is not None:
+            new_strand.control_point_center = QPointF(original.control_point_center.x(), original.control_point_center.y())
+        elif hasattr(original, 'control_point_center'):
+            new_strand.control_point_center = None
         
-            # Copy visibility and state flags
-            if hasattr(original, 'is_hidden'):
-                new_strand.is_hidden = original.is_hidden
-            if hasattr(original, 'shadow_only'):
-                new_strand.shadow_only = original.shadow_only
-            if hasattr(original, 'start_line_visible'):
-                new_strand.start_line_visible = original.start_line_visible
-            if hasattr(original, 'end_line_visible'):
-                new_strand.end_line_visible = original.end_line_visible
-            if hasattr(original, 'control_point_center_locked'):
-                new_strand.control_point_center_locked = original.control_point_center_locked
+        # Copy visibility and state flags
+        if hasattr(original, 'is_hidden'):
+            new_strand.is_hidden = original.is_hidden
+        if hasattr(original, 'shadow_only'):
+            new_strand.shadow_only = original.shadow_only
+        if hasattr(original, 'start_line_visible'):
+            new_strand.start_line_visible = original.start_line_visible
+        if hasattr(original, 'end_line_visible'):
+            new_strand.end_line_visible = original.end_line_visible
+        if hasattr(original, 'control_point_center_locked'):
+            new_strand.control_point_center_locked = original.control_point_center_locked
 
-            # Copy control point movement state flag - CRITICAL for control point visibility
-            if hasattr(original, 'triangle_has_moved'):
-                new_strand.triangle_has_moved = original.triangle_has_moved
+        # Copy control point movement state flag - CRITICAL for control point visibility
+        if hasattr(original, 'triangle_has_moved'):
+            new_strand.triangle_has_moved = original.triangle_has_moved
 
-            # Copy control point activation state - CRITICAL for attached strands
-            if hasattr(original, 'control_point2_activated'):
-                new_strand.control_point2_activated = original.control_point2_activated
+        # Copy control point activation state - CRITICAL for attached strands
+        if hasattr(original, 'control_point2_activated'):
+            new_strand.control_point2_activated = original.control_point2_activated
 
-            # Copy control point visibility state
-            if hasattr(original, 'control_point2_shown'):
-                new_strand.control_point2_shown = original.control_point2_shown
+        # Copy control point visibility state
+        if hasattr(original, 'control_point2_shown'):
+            new_strand.control_point2_shown = original.control_point2_shown
 
-            # Copy attachment status
-            if hasattr(original, 'start_attached'):
-                new_strand.start_attached = original.start_attached
-            if hasattr(original, 'end_attached'):
-                new_strand.end_attached = original.end_attached
+        # Copy attachment status
+        if hasattr(original, 'start_attached'):
+            new_strand.start_attached = original.start_attached
+        if hasattr(original, 'end_attached'):
+            new_strand.end_attached = original.end_attached
         
-            # Copy other properties
-            if hasattr(original, 'has_circles'):
-                new_strand.has_circles = list(original.has_circles)  # Copy list without deepcopy
-            if hasattr(original, 'is_start_side'):
-                new_strand.is_start_side = original.is_start_side
-            if hasattr(original, 'side_line_color'):
-                new_strand.side_line_color = QColor(original.side_line_color)  # Create new QColor
-            if hasattr(original, 'shadow_color'):
-                new_strand.shadow_color = QColor(original.shadow_color)  # Create new QColor
+        # Copy other properties
+        if hasattr(original, 'has_circles'):
+            new_strand.has_circles = list(original.has_circles)  # Copy list without deepcopy
+        if hasattr(original, 'is_start_side'):
+            new_strand.is_start_side = original.is_start_side
+        if hasattr(original, 'side_line_color'):
+            new_strand.side_line_color = QColor(original.side_line_color)  # Create new QColor
+        if hasattr(original, 'shadow_color'):
+            new_strand.shadow_color = QColor(original.shadow_color)  # Create new QColor
         
-            # Copy circle stroke colors (for transparent circles)
-            if hasattr(original, '_circle_stroke_color') and original._circle_stroke_color is not None:
-                new_strand._circle_stroke_color = QColor(original._circle_stroke_color)
-            if hasattr(original, 'circle_stroke_color') and original.circle_stroke_color is not None:
-                new_strand.circle_stroke_color = QColor(original.circle_stroke_color)
-            if hasattr(original, '_start_circle_stroke_color') and original._start_circle_stroke_color is not None:
-                new_strand._start_circle_stroke_color = QColor(original._start_circle_stroke_color)
-            if hasattr(original, 'start_circle_stroke_color') and original.start_circle_stroke_color is not None:
-                new_strand.start_circle_stroke_color = QColor(original.start_circle_stroke_color)
-            if hasattr(original, '_end_circle_stroke_color') and original._end_circle_stroke_color is not None:
-                new_strand._end_circle_stroke_color = QColor(original._end_circle_stroke_color)
-            if hasattr(original, 'end_circle_stroke_color') and original.end_circle_stroke_color is not None:
-                new_strand.end_circle_stroke_color = QColor(original.end_circle_stroke_color)
+        # Copy circle stroke colors (for transparent circles)
+        if hasattr(original, '_circle_stroke_color') and original._circle_stroke_color is not None:
+            new_strand._circle_stroke_color = QColor(original._circle_stroke_color)
+        if hasattr(original, 'circle_stroke_color') and original.circle_stroke_color is not None:
+            new_strand.circle_stroke_color = QColor(original.circle_stroke_color)
+        if hasattr(original, '_start_circle_stroke_color') and original._start_circle_stroke_color is not None:
+            new_strand._start_circle_stroke_color = QColor(original._start_circle_stroke_color)
+        if hasattr(original, 'start_circle_stroke_color') and original.start_circle_stroke_color is not None:
+            new_strand.start_circle_stroke_color = QColor(original.start_circle_stroke_color)
+        if hasattr(original, '_end_circle_stroke_color') and original._end_circle_stroke_color is not None:
+            new_strand._end_circle_stroke_color = QColor(original._end_circle_stroke_color)
+        if hasattr(original, 'end_circle_stroke_color') and original.end_circle_stroke_color is not None:
+            new_strand.end_circle_stroke_color = QColor(original.end_circle_stroke_color)
         
-            # Copy curvature settings
-            if hasattr(original, 'curve_response_exponent'):
-                new_strand.curve_response_exponent = original.curve_response_exponent
-            if hasattr(original, 'control_point_base_fraction'):
-                new_strand.control_point_base_fraction = original.control_point_base_fraction
-            if hasattr(original, 'distance_multiplier'):
-                new_strand.distance_multiplier = original.distance_multiplier
-            if hasattr(original, 'endpoint_tension'):
-                new_strand.endpoint_tension = original.endpoint_tension
+        # Copy curvature settings
+        if hasattr(original, 'curve_response_exponent'):
+            new_strand.curve_response_exponent = original.curve_response_exponent
+        if hasattr(original, 'control_point_base_fraction'):
+            new_strand.control_point_base_fraction = original.control_point_base_fraction
+        if hasattr(original, 'distance_multiplier'):
+            new_strand.distance_multiplier = original.distance_multiplier
+        if hasattr(original, 'endpoint_tension'):
+            new_strand.endpoint_tension = original.endpoint_tension
         
-            # Copy arrow visibility properties
-            if hasattr(original, 'full_arrow_visible'):
-                new_strand.full_arrow_visible = original.full_arrow_visible
-            if hasattr(original, 'start_arrow_visible'):
-                new_strand.start_arrow_visible = original.start_arrow_visible
-            if hasattr(original, 'end_arrow_visible'):
-                new_strand.end_arrow_visible = original.end_arrow_visible
+        # Copy arrow visibility properties
+        if hasattr(original, 'full_arrow_visible'):
+            new_strand.full_arrow_visible = original.full_arrow_visible
+        if hasattr(original, 'start_arrow_visible'):
+            new_strand.start_arrow_visible = original.start_arrow_visible
+        if hasattr(original, 'end_arrow_visible'):
+            new_strand.end_arrow_visible = original.end_arrow_visible
         
-            # Copy extension visibility properties  
-            if hasattr(original, 'start_extension_visible'):
-                new_strand.start_extension_visible = original.start_extension_visible
-            if hasattr(original, 'end_extension_visible'):
-                new_strand.end_extension_visible = original.end_extension_visible
+        # Copy extension visibility properties  
+        if hasattr(original, 'start_extension_visible'):
+            new_strand.start_extension_visible = original.start_extension_visible
+        if hasattr(original, 'end_extension_visible'):
+            new_strand.end_extension_visible = original.end_extension_visible
         
-            # Copy attachable property
-            if hasattr(original, 'attachable'):
-                new_strand.attachable = original.attachable
+        # Copy attachable property
+        if hasattr(original, 'attachable'):
+            new_strand.attachable = original.attachable
         
-            # Initialize knot_connections for the new strand
-            # Note: The actual connections will be rebuilt in update_knot_connections_for_duplicated_group
-            if hasattr(original, 'knot_connections'):
-                new_strand.knot_connections = {}  # Initialize empty, will be populated later
+        # Initialize knot_connections for the new strand
+        # Note: The actual connections will be rebuilt in update_knot_connections_for_duplicated_group
+        if hasattr(original, 'knot_connections'):
+            new_strand.knot_connections = {}  # Initialize empty, will be populated later
         
-            # Copy bias control properties for small control points (triangle and circle)
-            if hasattr(original, 'bias_control') and original.bias_control is not None:
-                # Import the CurvatureBiasControl class
-                from curvature_bias_control import CurvatureBiasControl
+        # Copy bias control properties for small control points (triangle and circle)
+        if hasattr(original, 'bias_control') and original.bias_control is not None:
+            # Import the CurvatureBiasControl class
+            from curvature_bias_control import CurvatureBiasControl
             
-                # Create a new bias control object for the new strand
-                if self.canvas and hasattr(self.canvas, 'enable_curvature_bias_control'):
-                    new_strand.bias_control = CurvatureBiasControl(self.canvas)
+            # Create a new bias control object for the new strand
+            if self.canvas and hasattr(self.canvas, 'enable_curvature_bias_control'):
+                new_strand.bias_control = CurvatureBiasControl(self.canvas)
                 
-                    # Copy the bias values (0.5 = neutral position)
-                    new_strand.bias_control.triangle_bias = original.bias_control.triangle_bias
-                    new_strand.bias_control.circle_bias = original.bias_control.circle_bias
+                # Copy the bias values (0.5 = neutral position)
+                new_strand.bias_control.triangle_bias = original.bias_control.triangle_bias
+                new_strand.bias_control.circle_bias = original.bias_control.circle_bias
                 
-                    # Copy the actual positions if they have been manually moved
-                    if hasattr(original.bias_control, 'triangle_position') and original.bias_control.triangle_position is not None:
-                        new_strand.bias_control.triangle_position = QPointF(
-                            original.bias_control.triangle_position.x(),
-                            original.bias_control.triangle_position.y()
-                        )
+                # Copy the actual positions if they have been manually moved
+                if hasattr(original.bias_control, 'triangle_position') and original.bias_control.triangle_position is not None:
+                    new_strand.bias_control.triangle_position = QPointF(
+                        original.bias_control.triangle_position.x(),
+                        original.bias_control.triangle_position.y()
+                    )
                 
-                    if hasattr(original.bias_control, 'circle_position') and original.bias_control.circle_position is not None:
-                        new_strand.bias_control.circle_position = QPointF(
-                            original.bias_control.circle_position.x(),
-                            original.bias_control.circle_position.y()
-                        )
+                if hasattr(original.bias_control, 'circle_position') and original.bias_control.circle_position is not None:
+                    new_strand.bias_control.circle_position = QPointF(
+                        original.bias_control.circle_position.x(),
+                        original.bias_control.circle_position.y()
+                    )
                 
-                    # Copy drag offsets if they exist
-                    if hasattr(original.bias_control, 'triangle_drag_offset'):
-                        new_strand.bias_control.triangle_drag_offset = QPointF(
-                            original.bias_control.triangle_drag_offset.x(),
-                            original.bias_control.triangle_drag_offset.y()
-                        )
+                # Copy drag offsets if they exist
+                if hasattr(original.bias_control, 'triangle_drag_offset'):
+                    new_strand.bias_control.triangle_drag_offset = QPointF(
+                        original.bias_control.triangle_drag_offset.x(),
+                        original.bias_control.triangle_drag_offset.y()
+                    )
                 
-                    if hasattr(original.bias_control, 'circle_drag_offset'):
-                        new_strand.bias_control.circle_drag_offset = QPointF(
-                            original.bias_control.circle_drag_offset.x(),
-                            original.bias_control.circle_drag_offset.y()
-                        )
-                else:
-                    new_strand.bias_control = None
-                # Store original connections for later remapping
-                new_strand._original_knot_connections = original.knot_connections.copy() if original.knot_connections else {}
+                if hasattr(original.bias_control, 'circle_drag_offset'):
+                    new_strand.bias_control.circle_drag_offset = QPointF(
+                        original.bias_control.circle_drag_offset.x(),
+                        original.bias_control.circle_drag_offset.y()
+                    )
             else:
-                new_strand.knot_connections = {}
-                new_strand._original_knot_connections = {}
+                new_strand.bias_control = None
+            # Store original connections for later remapping
+            new_strand._original_knot_connections = original.knot_connections.copy() if original.knot_connections else {}
+        else:
+            new_strand.knot_connections = {}
+            new_strand._original_knot_connections = {}
         
-            # IMPORTANT: Update side lines after copying control points to ensure correct angles
-            # The side line angles are calculated based on the tangent vectors at the strand endpoints,
-            # which are derived from the control points. We must call update_side_line() to recalculate
-            # these angles based on the copied control points.
-            # NOTE: Skip for MaskedStrand as it has control_point1 and control_point2 set to None by design
-            from masked_strand import MaskedStrand
-            if hasattr(new_strand, 'update_side_line') and not isinstance(new_strand, MaskedStrand):
-                new_strand.update_side_line()
-        except RuntimeError:
-            pass
+        # IMPORTANT: Update side lines after copying control points to ensure correct angles
+        # The side line angles are calculated based on the tangent vectors at the strand endpoints,
+        # which are derived from the control points. We must call update_side_line() to recalculate
+        # these angles based on the copied control points.
+        # NOTE: Skip for MaskedStrand as it has control_point1 and control_point2 set to None by design
+        from masked_strand import MaskedStrand
+        if hasattr(new_strand, 'update_side_line') and not isinstance(new_strand, MaskedStrand):
+            new_strand.update_side_line()
 
     def generate_new_layer_name(self, original_layer_name, set_mapping):
         """Generate new layer name based on set number mapping."""
@@ -2917,17 +2914,14 @@ class GroupPanel(QWidget):
 
     def create_mask_grid(self, group_name):
         """Open the mask grid dialog for creating mask layers."""
-        try:
-            from mask_grid_dialog import MaskGridDialog
+        from mask_grid_dialog import MaskGridDialog
 
-            # Create and show the dialog (non-modal)
-            dialog = MaskGridDialog(self.canvas, group_name, parent=self.layer_panel)
-            if dialog.strands:  # Only show if there are strands in the group
-                # Store reference to prevent garbage collection
-                self._mask_grid_dialog = dialog
-                dialog.show()
-        except RuntimeError:
-            pass
+        # Create and show the dialog (non-modal)
+        dialog = MaskGridDialog(self.canvas, group_name, parent=self.layer_panel)
+        if dialog.strands:  # Only show if there are strands in the group
+            # Store reference to prevent garbage collection
+            self._mask_grid_dialog = dialog
+            dialog.show()
 
     def finish_group_rotation_duplicate_remove_me(self, group_name):
         """DUPLICATE METHOD - SHOULD BE REMOVED - Finish the rotation of a group and ensure data is preserved."""
@@ -3046,26 +3040,23 @@ class GroupPanel(QWidget):
         Rotate the specified group by the given new_angle.
         This ensures rotating_group_name is set for both masked/unmasked groups.
         """
-        try:
-            if not group_name:
-                return
+        if not group_name:
+            return
 
-            if not hasattr(self, 'canvas'):
-                pass
-                return
-
-            # 1) Mark the group as active
-            self.canvas.start_group_rotation(group_name)
-
-            # 2) Perform actual rotation
-            self.canvas.rotate_group(group_name, new_angle)
-
-            # 3) Finish the rotation
-            self.canvas.finish_group_rotation(group_name)
-
+        if not hasattr(self, 'canvas'):
             pass
-        except RuntimeError:
-            pass
+            return
+
+        # 1) Mark the group as active
+        self.canvas.start_group_rotation(group_name)
+
+        # 2) Perform actual rotation
+        self.canvas.rotate_group(group_name, new_angle)
+
+        # 3) Finish the rotation
+        self.canvas.finish_group_rotation(group_name)
+
+        pass
     def update_group_after_angle_edit(self, group_name):
         """Update group data after angle adjustments."""
         if group_name in self.groups and self.canvas:
@@ -3932,60 +3923,57 @@ class GroupLayerManager:
         """
         Checks all groups and deletes any that are invalidated by the addition of new_strand.
         """
-        try:
-            groups_to_delete = []
+        groups_to_delete = []
 
-            # Check if this is a masked strand
-            if isinstance(new_strand, MaskedStrand):
-                # For masked strands, properly extract the original layer names being masked
-                # Format: "2_1_3_1" should give us ['2_1', '3_1']
-                layer_parts = new_strand.layer_name.split('_')
-                if len(layer_parts) >= 4:
-                    # Reconstruct the original layer names
-                    original_layer_names = [f"{layer_parts[0]}_{layer_parts[1]}", f"{layer_parts[2]}_{layer_parts[3]}"]
-                else:
-                    # Fallback for unexpected format
-                    original_layer_names = layer_parts[:2]
-
-                pass
-
-                # Find any groups containing any of the masked layers
-                for group_name, group_data in list(self.group_panel.groups.items()):
-                    for layer in group_data['layers']:
-                        # Check if the full layer name matches any of the original masked layers
-                        if layer in original_layer_names:
-                            pass
-                            groups_to_delete.append(group_name)
-                            break
+        # Check if this is a masked strand
+        if isinstance(new_strand, MaskedStrand):
+            # For masked strands, properly extract the original layer names being masked
+            # Format: "2_1_3_1" should give us ['2_1', '3_1']
+            layer_parts = new_strand.layer_name.split('_')
+            if len(layer_parts) >= 4:
+                # Reconstruct the original layer names
+                original_layer_names = [f"{layer_parts[0]}_{layer_parts[1]}", f"{layer_parts[2]}_{layer_parts[3]}"]
             else:
-                # For regular strands, check if parent strand is in any group
-                # Wrap in list() — delete_group mutates canvas.groups during iteration
-                for group_name, group_data in list(self.canvas.groups.items()):
-                    # AttachedStrand stores its parent as .parent
-                    parent_obj = getattr(new_strand, 'parent', None)
-                    parent_layer_name = getattr(parent_obj, 'layer_name', None) if parent_obj is not None else None
+                # Fallback for unexpected format
+                original_layer_names = layer_parts[:2]
+            
+            pass
+            
+            # Find any groups containing any of the masked layers
+            for group_name, group_data in list(self.group_panel.groups.items()):
+                for layer in group_data['layers']:
+                    # Check if the full layer name matches any of the original masked layers
+                    if layer in original_layer_names:
+                        pass
+                        groups_to_delete.append(group_name)
+                        break
+        else:
+            # For regular strands, check if parent strand is in any group
+            # Wrap in list() — delete_group mutates canvas.groups during iteration
+            for group_name, group_data in list(self.canvas.groups.items()):
+                # AttachedStrand stores its parent as .parent
+                parent_obj = getattr(new_strand, 'parent', None)
+                parent_layer_name = getattr(parent_obj, 'layer_name', None) if parent_obj is not None else None
 
-                    if parent_layer_name and any(strand.layer_name == parent_layer_name for strand in group_data.get('strands', [])):
-                        # Store the original main strands before deletion
-                        original_main_strands = list(group_data.get('main_strands', []))
+                if parent_layer_name and any(strand.layer_name == parent_layer_name for strand in group_data.get('strands', [])):
+                    # Store the original main strands before deletion
+                    original_main_strands = list(group_data.get('main_strands', []))
 
-                        # Delete and recreate the group with the new strand
-                        self.group_panel.delete_group(group_name)
-                        self.recreate_group(group_name, new_strand, original_main_strands)
+                    # Delete and recreate the group with the new strand
+                    self.group_panel.delete_group(group_name)
+                    self.recreate_group(group_name, new_strand, original_main_strands)
 
-            # Delete the identified groups
-            for group_name in groups_to_delete:
+        # Delete the identified groups
+        for group_name in groups_to_delete:
+            pass
+            self.group_panel.delete_group(group_name)
+            if self.canvas and group_name in self.canvas.groups:
+                del self.canvas.groups[group_name]
                 pass
-                self.group_panel.delete_group(group_name)
-                if self.canvas and group_name in self.canvas.groups:
-                    del self.canvas.groups[group_name]
-                    pass
-
-            # If any groups were deleted, refresh the alignment
-            if groups_to_delete:
-                self.group_panel.refresh_group_alignment()
-                pass
-        except RuntimeError:
+        
+        # If any groups were deleted, refresh the alignment
+        if groups_to_delete:
+            self.group_panel.refresh_group_alignment()
             pass
 
     def extract_main_layer(self, layer_name):
@@ -4718,23 +4706,20 @@ class GroupLayerManager:
         self.apply_group_data(data["groups"])  # Ensure group data is applied
         pass
     def serialize_strand(self, strand):
-        try:
-            cp1 = strand.control_point1 if strand.control_point1 is not None else strand.start
-            cp2 = strand.control_point2 if strand.control_point2 is not None else strand.end
-            return {
-                "layer_name": strand.layer_name,
-                "start": {"x": strand.start.x(), "y": strand.start.y()},
-                "end": {"x": strand.end.x(), "y": strand.end.y()},
-                "control_point1": {"x": cp1.x(), "y": cp1.y()},
-                "control_point2": {"x": cp2.x(), "y": cp2.y()},
-                "width": strand.width,
-                "color": self.serialize_color(strand.color),
-                "is_masked": isinstance(strand, MaskedStrand),
-                "attached_strands": [self.canvas.strands.index(attached_strand) for attached_strand in strand.attached_strands if attached_strand in self.canvas.strands],
-                "has_circles": strand.has_circles.copy() if strand.has_circles is not None else [True, True]
-            }
-        except RuntimeError:
-            pass
+        cp1 = strand.control_point1 if strand.control_point1 is not None else strand.start
+        cp2 = strand.control_point2 if strand.control_point2 is not None else strand.end
+        return {
+            "layer_name": strand.layer_name,
+            "start": {"x": strand.start.x(), "y": strand.start.y()},
+            "end": {"x": strand.end.x(), "y": strand.end.y()},
+            "control_point1": {"x": cp1.x(), "y": cp1.y()},
+            "control_point2": {"x": cp2.x(), "y": cp2.y()},
+            "width": strand.width,
+            "color": self.serialize_color(strand.color),
+            "is_masked": isinstance(strand, MaskedStrand),
+            "attached_strands": [self.canvas.strands.index(attached_strand) for attached_strand in strand.attached_strands if attached_strand in self.canvas.strands],
+            "has_circles": strand.has_circles.copy() if strand.has_circles is not None else [True, True]
+        }
 
     def deserialize_strand(self, data):
         start = QPointF(data["start"]["x"], data["start"]["y"])
@@ -4759,18 +4744,15 @@ class GroupLayerManager:
 
 
     def clear(self):
-        try:
-            self.tree.clear()
-            self.group_panel.groups.clear()
-            if self.group_panel.scroll_layout is not None:
-                for i in reversed(range(self.group_panel.scroll_layout.count())):
-                    widget = self.group_panel.scroll_layout.itemAt(i).widget()
-                    if widget is not None:
-                        widget.setParent(None)
-            if self.canvas:
-                self.canvas.groups.clear()
-        except RuntimeError:
-            pass
+        self.tree.clear()
+        self.group_panel.groups.clear()
+        if self.group_panel.scroll_layout is not None:
+            for i in reversed(range(self.group_panel.scroll_layout.count())):
+                widget = self.group_panel.scroll_layout.itemAt(i).widget()
+                if widget is not None:
+                    widget.setParent(None)
+        if self.canvas:
+            self.canvas.groups.clear()
 
     def update_layer_color(self, index, color):
         item = self.tree.topLevelItem(index)
@@ -4783,297 +4765,272 @@ class GroupLayerManager:
             self.tree.setCurrentItem(item)
 
     def refresh(self):
-        try:
-            # Instead of clearing the group panel, update existing groups and layers
-            pass
-            for i, button in enumerate(self.layer_panel.layer_buttons):
-                layer_name = button.text()
-                color = button.color
-                # Update existing layers in groups
-                self.group_panel.update_layer(i, layer_name, color)
-            # Do not call self.group_panel.clear() here
-        except RuntimeError:
-            pass
+        # Instead of clearing the group panel, update existing groups and layers
+        pass
+        for i, button in enumerate(self.layer_panel.layer_buttons):
+            layer_name = button.text()
+            color = button.color
+            # Update existing layers in groups
+            self.group_panel.update_layer(i, layer_name, color)
+        # Do not call self.group_panel.clear() here
 
     def get_group_data(self):
-        try:
-            group_data = {}
+        group_data = {}
+        pass
+        
+        for group_name, group_info in self.group_panel.groups.items():
             pass
             
-            for group_name, group_info in self.group_panel.groups.items():
-                pass
-                
-                group_data[group_name] = {
-                    "layers": [strand.layer_name for strand in group_info.get('strands', [])],
-                    "strands": [strand.layer_name for strand in group_info.get('strands', [])],
-                    "main_strands": list(group_info.get('main_strands', set())),
-                    "control_points": {}
-                }
-                
-                # Add control points if they exist
-                if self.canvas and group_name in self.canvas.groups:
-                    group_data[group_name]['control_points'] = self.canvas.groups[group_name].get('control_points', {})
-                
-                # Log the collected data for this group
-                pass
+            group_data[group_name] = {
+                "layers": [strand.layer_name for strand in group_info.get('strands', [])],
+                "strands": [strand.layer_name for strand in group_info.get('strands', [])],
+                "main_strands": list(group_info.get('main_strands', set())),
+                "control_points": {}
+            }
             
+            # Add control points if they exist
+            if self.canvas and group_name in self.canvas.groups:
+                group_data[group_name]['control_points'] = self.canvas.groups[group_name].get('control_points', {})
+            
+            # Log the collected data for this group
             pass
-            pass
-            return group_data
-        except RuntimeError:
-            pass
+        
+        pass
+        pass
+        return group_data
 
 
 
     def apply_group_data(self, group_data):
-        try:
-            pass
+        pass
+        pass
+
+        # Log the contents of strand_dict
+        pass
+        for layer_name, strand in self.strand_dict.items():
             pass
 
-            # Log the contents of strand_dict
+        for group_name, group_info in group_data.items():
             pass
-            for layer_name, strand in self.strand_dict.items():
+            
+            strands = []
+            for layer_name in group_info["strands"]:
                 pass
-
-            for group_name, group_info in group_data.items():
-                pass
-                
-                strands = []
-                for layer_name in group_info["strands"]:
+                strand = self.strand_dict.get(layer_name)
+                if strand:
+                    strands.append(strand)
                     pass
-                    strand = self.strand_dict.get(layer_name)
-                    if strand:
-                        strands.append(strand)
-                        pass
-                        pass
-                    else:
-                        pass
-
-                if strands:
-                    self.group_panel.create_group(group_name, strands)
-                    pass
-                    
-                    self.canvas.groups[group_name] = {
-                        "layers": group_info["layers"],
-                        "strands": strands,
-                        "main_strands": group_info.get("main_strands", set()),
-                        "control_points": group_info.get("control_points", {})
-                    }
                     pass
                 else:
                     pass
 
-            # Log the contents of strand_dict after applying group data
-            pass
-            for layer_name, strand in self.strand_dict.items():
+            if strands:
+                self.group_panel.create_group(group_name, strands)
+                pass
+                
+                self.canvas.groups[group_name] = {
+                    "layers": group_info["layers"],
+                    "strands": strands,
+                    "main_strands": group_info.get("main_strands", set()),
+                    "control_points": group_info.get("control_points", {})
+                }
+                pass
+            else:
                 pass
 
+        # Log the contents of strand_dict after applying group data
+        pass
+        for layer_name, strand in self.strand_dict.items():
             pass
-        except RuntimeError:
-            pass
+
+        pass
     def move_group_strands(self, group_name, dx, dy):
-        try:
-            if group_name in self.groups:
-                group_data = self.groups[group_name]
-                updated_strands = []
+        if group_name in self.groups:
+            group_data = self.groups[group_name]
+            updated_strands = []
 
-                # Create QPointF for the movement delta
-                delta = QPointF(dx, dy)
-                
-                for strand in list(group_data.get('strands', [])):
-                    # Check if this is a MaskedStrand - handle differently
-                    if isinstance(strand, MaskedStrand):
-                        # MaskedStrands don't have control points - move start/end only
-                        strand.start += delta
-                        strand.end += delta
+            # Create QPointF for the movement delta
+            delta = QPointF(dx, dy)
+            
+            for strand in list(group_data.get('strands', [])):
+                # Check if this is a MaskedStrand - handle differently
+                if isinstance(strand, MaskedStrand):
+                    # MaskedStrands don't have control points - move start/end only
+                    strand.start += delta
+                    strand.end += delta
 
-                        # Move deletion rectangles along with the masked strand
-                        if hasattr(strand, 'deletion_rectangles') and strand.deletion_rectangles:
-                            for rect in strand.deletion_rectangles:
-                                rect['top_left'] = (rect['top_left'][0] + dx, rect['top_left'][1] + dy)
-                                rect['top_right'] = (rect['top_right'][0] + dx, rect['top_right'][1] + dy)
-                                rect['bottom_left'] = (rect['bottom_left'][0] + dx, rect['bottom_left'][1] + dy)
-                                rect['bottom_right'] = (rect['bottom_right'][0] + dx, rect['bottom_right'][1] + dy)
+                    # Move deletion rectangles along with the masked strand
+                    if hasattr(strand, 'deletion_rectangles') and strand.deletion_rectangles:
+                        for rect in strand.deletion_rectangles:
+                            rect['top_left'] = (rect['top_left'][0] + dx, rect['top_left'][1] + dy)
+                            rect['top_right'] = (rect['top_right'][0] + dx, rect['top_right'][1] + dy)
+                            rect['bottom_left'] = (rect['bottom_left'][0] + dx, rect['bottom_left'][1] + dy)
+                            rect['bottom_right'] = (rect['bottom_right'][0] + dx, rect['bottom_right'][1] + dy)
 
-                        # Update mask path and center point
-                        if hasattr(strand, 'force_complete_update'):
-                            strand.force_complete_update()
-                        elif hasattr(strand, 'update_mask_path'):
-                            strand.update_mask_path()
-                    else:
-                        # Regular strand handling
-                        # Store original control points before moving
-                        original_cp1 = QPointF(strand.control_point1) if strand.control_point1 is not None else QPointF(strand.start)
-                        original_cp2 = QPointF(strand.control_point2) if strand.control_point2 is not None else QPointF(strand.end)
+                    # Update mask path and center point
+                    if hasattr(strand, 'force_complete_update'):
+                        strand.force_complete_update()
+                    elif hasattr(strand, 'update_mask_path'):
+                        strand.update_mask_path()
+                else:
+                    # Regular strand handling
+                    # Store original control points before moving
+                    original_cp1 = QPointF(strand.control_point1) if strand.control_point1 is not None else QPointF(strand.start)
+                    original_cp2 = QPointF(strand.control_point2) if strand.control_point2 is not None else QPointF(strand.end)
 
-                        # Move all points including control points
-                        strand.start += delta
-                        strand.end += delta
-                        strand.control_point1 = original_cp1 + delta  # Apply delta to original control points
-                        strand.control_point2 = original_cp2 + delta  # Apply delta to original control points
+                    # Move all points including control points
+                    strand.start += delta
+                    strand.end += delta
+                    strand.control_point1 = original_cp1 + delta  # Apply delta to original control points
+                    strand.control_point2 = original_cp2 + delta  # Apply delta to original control points
 
-                        # Update the strand's shape
-                        strand.update_shape()
-                        if hasattr(strand, 'update_side_line'):
-                            strand.update_side_line()
+                    # Update the strand's shape
+                    strand.update_shape()
+                    if hasattr(strand, 'update_side_line'):
+                        strand.update_side_line()
 
-                        # Store the updated control points in the group data
-                        if 'control_points' not in self.canvas.groups[group_name]:
-                            self.canvas.groups[group_name]['control_points'] = {}
+                    # Store the updated control points in the group data
+                    if 'control_points' not in self.canvas.groups[group_name]:
+                        self.canvas.groups[group_name]['control_points'] = {}
 
-                        self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
-                            'control_point1': strand.control_point1,
-                            'control_point2': strand.control_point2
-                        }
+                    self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
+                        'control_point1': strand.control_point1,
+                        'control_point2': strand.control_point2
+                    }
 
-                    updated_strands.append(strand)
+                updated_strands.append(strand)
 
-                # Update the canvas with all modified strands
-                if self.canvas:
-                    self.canvas.update()
-        except RuntimeError:
-            pass
+            # Update the canvas with all modified strands
+            if self.canvas:
+                self.canvas.update()
     def update_strands(self, strands):
         """Update multiple strands at once."""
-        try:
-            for strand in strands:
-                # Ensure we're updating all strand properties including control points
-                existing_strand = self.find_strand_by_name(strand.layer_name)
-                if existing_strand:
-                    existing_strand.start = QPointF(strand.start)
-                    existing_strand.end = QPointF(strand.end)
-                    existing_strand.control_point1 = QPointF(strand.control_point1) if strand.control_point1 is not None else QPointF(strand.start)
-                    existing_strand.control_point2 = QPointF(strand.control_point2) if strand.control_point2 is not None else QPointF(strand.end)
-                    existing_strand.update_shape()
-                    if hasattr(existing_strand, 'update_side_line'):
-                        existing_strand.update_side_line()
-            
-            self.update()
-        except RuntimeError:
-            pass
+        for strand in strands:
+            # Ensure we're updating all strand properties including control points
+            existing_strand = self.find_strand_by_name(strand.layer_name)
+            if existing_strand:
+                existing_strand.start = QPointF(strand.start)
+                existing_strand.end = QPointF(strand.end)
+                existing_strand.control_point1 = QPointF(strand.control_point1) if strand.control_point1 is not None else QPointF(strand.start)
+                existing_strand.control_point2 = QPointF(strand.control_point2) if strand.control_point2 is not None else QPointF(strand.end)
+                existing_strand.update_shape()
+                if hasattr(existing_strand, 'update_side_line'):
+                    existing_strand.update_side_line()
+        
+        self.update()
     def start_group_move(self, group_name):
-        try:
-            if self.canvas:
-                self.canvas.start_group_move(group_name, self.group_panel.groups[group_name]['layers'])
-        except RuntimeError:
-            pass
+        if self.canvas:
+            self.canvas.start_group_move(group_name, self.group_panel.groups[group_name]['layers'])
 
     def update_group(self, group_name):
-        try:
-            if group_name in self.group_panel.groups:
-                group_data = self.group_panel.groups[group_name]
-                main_layers = set([layer.split('_')[0] for layer in group_data['layers']])
+        if group_name in self.group_panel.groups:
+            group_data = self.group_panel.groups[group_name]
+            main_layers = set([layer.split('_')[0] for layer in group_data['layers']])
+            
+            new_layers_data = []
+            for main_layer in main_layers:
+                sub_layers = self.get_sub_layers(main_layer)
+                for sub_layer in sub_layers:
+                    if sub_layer not in group_data['layers']:
+                        layer_index = self.get_layer_index(sub_layer)
+                        if layer_index < len(self.canvas.strands):
+                            strand = self.canvas.strands[layer_index]
+                            strand_data = {
+                                'start': QPointF(strand.start),
+                                'end': QPointF(strand.end)
+                            }
+                            new_layers_data.append((sub_layer, strand_data))
+            
+            for layer_name, strand_data in new_layers_data:
+                self.group_panel.add_layer_to_group(layer_name, group_name, strand_data)
                 
-                new_layers_data = []
-                for main_layer in main_layers:
-                    sub_layers = self.get_sub_layers(main_layer)
-                    for sub_layer in sub_layers:
-                        if sub_layer not in group_data['layers']:
-                            layer_index = self.get_layer_index(sub_layer)
-                            if layer_index < len(self.canvas.strands):
-                                strand = self.canvas.strands[layer_index]
-                                strand_data = {
-                                    'start': QPointF(strand.start),
-                                    'end': QPointF(strand.end)
-                                }
-                                new_layers_data.append((sub_layer, strand_data))
-                
-                for layer_name, strand_data in new_layers_data:
-                    self.group_panel.add_layer_to_group(layer_name, group_name, strand_data)
-                    
-                    # Update canvas groups
-                    if self.canvas and group_name in self.canvas.groups:
-                        strand = self.canvas.find_strand_by_name(layer_name)
-                        if strand:
-                            self.canvas.groups[group_name]['strands'].append(strand)
-                            self.canvas.groups[group_name]['layers'].append(layer_name)
-        except RuntimeError:
-            pass
+                # Update canvas groups
+                if self.canvas and group_name in self.canvas.groups:
+                    strand = self.canvas.find_strand_by_name(layer_name)
+                    if strand:
+                        self.canvas.groups[group_name]['strands'].append(strand)
+                        self.canvas.groups[group_name]['layers'].append(layer_name)
 
     def on_group_operation(self, operation, group_name, layer_indices):
-        try:
-            pass
-            if operation == "move":
-                self.start_group_move(group_name)
-            elif operation == "rotate":
-                self.start_group_rotation(group_name)
-            elif operation == "edit_angles":
-                self.edit_strand_angles(group_name)
-            elif operation == "delete":
-                # Remove the group from canvas groups
-                if self.canvas and group_name in self.canvas.groups:
-                    del self.canvas.groups[group_name]
-                    pass
-                else:
-                    pass
-        except RuntimeError:
-            pass
+        pass
+        if operation == "move":
+            self.start_group_move(group_name)
+        elif operation == "rotate":
+            self.start_group_rotation(group_name)
+        elif operation == "edit_angles":
+            self.edit_strand_angles(group_name)
+        elif operation == "delete":
+            # Remove the group from canvas groups
+            if self.canvas and group_name in self.canvas.groups:
+                del self.canvas.groups[group_name]
+                pass
+            else:
+                pass
 
     def start_group_rotation(self, group_name):
-        try:
-            # Fetch group data reliably from canvas.groups
-            group_data = self.canvas.groups.get(group_name)
-            if group_data:
-                # Rebuild strands list from live canvas.strands to avoid stale references
-                # (e.g. after individual strand moves in move mode)
-                layers_in_group = group_data.get('layers', [])
-                refreshed_strands = []
-                for strand in list(self.canvas.strands):
-                    if hasattr(strand, 'layer_name') and strand.layer_name in layers_in_group:
-                        if strand not in refreshed_strands:
-                            refreshed_strands.append(strand)
-                        if hasattr(strand, 'attached_strands'):
-                            for attached in list(strand.attached_strands):
-                                if attached not in refreshed_strands:
-                                    refreshed_strands.append(attached)
-                group_data['strands'] = refreshed_strands
+        # Fetch group data reliably from canvas.groups
+        group_data = self.canvas.groups.get(group_name)
+        if group_data:
+            # Rebuild strands list from live canvas.strands to avoid stale references
+            # (e.g. after individual strand moves in move mode)
+            layers_in_group = group_data.get('layers', [])
+            refreshed_strands = []
+            for strand in list(self.canvas.strands):
+                if hasattr(strand, 'layer_name') and strand.layer_name in layers_in_group:
+                    if strand not in refreshed_strands:
+                        refreshed_strands.append(strand)
+                    if hasattr(strand, 'attached_strands'):
+                        for attached in list(strand.attached_strands):
+                            if attached not in refreshed_strands:
+                                refreshed_strands.append(attached)
+            group_data['strands'] = refreshed_strands
 
-                # Set the active group name
-                self.active_group_name = group_name
-                if self.canvas:
-                    # Store the current state of all strands in the group before rotation
-                    # Using strands list from canvas.groups
-                    strands_to_rotate = group_data.get('strands', [])
-                    if not strands_to_rotate:
+            # Set the active group name
+            self.active_group_name = group_name
+            if self.canvas:
+                # Store the current state of all strands in the group before rotation
+                # Using strands list from canvas.groups
+                strands_to_rotate = group_data.get('strands', [])
+                if not strands_to_rotate:
+                    pass
+                    return
+
+                self.pre_rotation_state = {}
+                
+                for strand in strands_to_rotate:
+                    # Store all current positions and angles
+                    state = {
+                        'start': QPointF(strand.start),
+                        'end': QPointF(strand.end)
+                    }
+                    
+                    # Only store control points for regular strands, not masked strands
+                    if not isinstance(strand, MaskedStrand):
+                        state['control_point1'] = QPointF(strand.control_point1) if strand.control_point1 else QPointF(strand.start)
+                        state['control_point2'] = QPointF(strand.control_point2) if strand.control_point2 else QPointF(strand.end)
+                        # Store control_point_center if it exists
+                        if hasattr(strand, 'control_point_center') and strand.control_point_center:
+                            state['control_point_center'] = QPointF(strand.control_point_center)
                         pass
-                        return
-
-                    self.pre_rotation_state = {}
-
-                    for strand in strands_to_rotate:
-                        # Store all current positions and angles
-                        state = {
-                            'start': QPointF(strand.start),
-                            'end': QPointF(strand.end)
-                        }
-
-                        # Only store control points for regular strands, not masked strands
-                        if not isinstance(strand, MaskedStrand):
-                            state['control_point1'] = QPointF(strand.control_point1) if strand.control_point1 else QPointF(strand.start)
-                            state['control_point2'] = QPointF(strand.control_point2) if strand.control_point2 else QPointF(strand.end)
-                            # Store control_point_center if it exists
-                            if hasattr(strand, 'control_point_center') and strand.control_point_center:
-                                state['control_point_center'] = QPointF(strand.control_point_center)
-                            pass
-                        else:
-                            pass
-                                 # NEW: Store each deletion rectangle's original corners.
-                            if hasattr(strand, 'deletion_rectangles'):
-                                rect_corners = []
-                                for rect in strand.deletion_rectangles:
-                                    rect_corners.append({
-                                        'top_left': QPointF(*rect['top_left']),
-                                        'top_right': QPointF(*rect['top_right']),
-                                        'bottom_left': QPointF(*rect['bottom_left']),
-                                        'bottom_right': QPointF(*rect['bottom_right'])
-                                    })
-                                state['deletion_rectangles'] = rect_corners
-                            # ------------------------------------------------------------------
-
-                        self.pre_rotation_state[strand.layer_name] = state
-
-                    self.canvas.start_group_rotation(group_name)
-                    # Disable GC during dialog to prevent Qt C++ access violations
+                    else:
+                        pass
+                             # NEW: Store each deletion rectangle's original corners.
+                        if hasattr(strand, 'deletion_rectangles'):
+                            rect_corners = []
+                            for rect in strand.deletion_rectangles:
+                                rect_corners.append({
+                                    'top_left': QPointF(*rect['top_left']),
+                                    'top_right': QPointF(*rect['top_right']),
+                                    'bottom_left': QPointF(*rect['bottom_left']),
+                                    'bottom_right': QPointF(*rect['bottom_right'])
+                                })
+                            state['deletion_rectangles'] = rect_corners
+                        # ------------------------------------------------------------------
+                
+                    self.pre_rotation_state[strand.layer_name] = state
+                
+                self.canvas.start_group_rotation(group_name)
+                # Disable GC during dialog to prevent Qt C++ access violations
                 # from objects being collected while the modal event loop runs
                 import gc as _gc
                 _gc_was_enabled = _gc.isenabled()
@@ -5088,7 +5045,7 @@ class GroupLayerManager:
                         _gc.enable()
             else:
                 pass
-        except RuntimeError:
+        else:
             pass
 
     def update_group_rotation(self, group_name, angle):
@@ -5097,19 +5054,16 @@ class GroupLayerManager:
         based on the group's pre-rotation snapshot. This prevents repeatedly
         stacking rotations on already-rotated geometry.
         """
-        try:
+        pass
+        
+        # Ensure we only rotate if this is the currently active group
+        if group_name != self.active_group_name:
             pass
+            return
 
-            # Ensure we only rotate if this is the currently active group
-            if group_name != self.active_group_name:
-                pass
-                return
-
-            if self.canvas and hasattr(self, '_perform_immediate_group_rotation'):
-                self._perform_immediate_group_rotation(group_name, angle)
-            else:
-                pass
-        except RuntimeError:
+        if self.canvas and hasattr(self, '_perform_immediate_group_rotation'):
+            self._perform_immediate_group_rotation(group_name, angle)
+        else:
             pass
 
     def finish_group_rotation(self, group_name):
@@ -5284,69 +5238,66 @@ class GroupRotateDialog(QDialog):
         - rotates every strand's start/end and (if masked) its deletion rect corners
           around that center by `self.angle`.
         """
-        try:
-            if not self.canvas or not hasattr(self.canvas, 'groups') or self.group_name not in self.canvas.groups:
-                pass
-                return
-
-            group_data = self.canvas.groups[self.group_name]
-
-            # 1) Calculate rotation center.
-            rotation_center = self.calculate_group_center(group_data['strands'])
-
-            # 2) Convert the user-typed angle to radians
-            angle_radians = math.radians(self.angle)
-
-            # 3) Retrieve the snapshot of original geometry
-            if hasattr(self.group_panel, 'pre_rotation_state'):
-                pre_state = self.group_panel.pre_rotation_state
-            else:
-                pre_state = {}
-
-            # 4) Set rotation flag on all strands to prevent knot connection maintenance during rotation
-            for strand in list(group_data.get('strands', [])):
-                strand._is_being_rotated = True
-
-            # 5) Rotate each strand from original positions
-            for strand in list(group_data.get('strands', [])):
-                layer_name = strand.layer_name
-                if layer_name in pre_state:
-                    original_positions = pre_state[layer_name]
-
-                    # Rotate the main geometry (start/end)
-                    strand.start = self.rotate_point(original_positions['start'], rotation_center, angle_radians)
-                    strand.end   = self.rotate_point(original_positions['end'],   rotation_center, angle_radians)
-                    if 'control_point1' in original_positions:
-                        strand.control_point1 = self.rotate_point(original_positions['control_point1'], rotation_center, angle_radians)
-                    if 'control_point2' in original_positions:
-                        strand.control_point2 = self.rotate_point(original_positions['control_point2'], rotation_center, angle_radians)
-                    # If MaskedStrand, also rotate deletion rectangle corners
-                    if isinstance(strand, MaskedStrand) and 'deletion_rectangles' in original_positions:
-                        for rect_idx, corners in enumerate(original_positions['deletion_rectangles']):
-                            tl = self.rotate_point(corners['top_left'],     rotation_center, angle_radians)
-                            tr = self.rotate_point(corners['top_right'],    rotation_center, angle_radians)
-                            bl = self.rotate_point(corners['bottom_left'],  rotation_center, angle_radians)
-                            br = self.rotate_point(corners['bottom_right'], rotation_center, angle_radians)
-
-                            # Store them back as float tuples
-                            strand.deletion_rectangles[rect_idx]['top_left']     = (tl.x(), tl.y())
-                            strand.deletion_rectangles[rect_idx]['top_right']    = (tr.x(), tr.y())
-                            strand.deletion_rectangles[rect_idx]['bottom_left']  = (bl.x(), bl.y())
-                            strand.deletion_rectangles[rect_idx]['bottom_right'] = (br.x(), br.y())
-
-                    # Update the strand's shape
-                    strand.update_shape()
-                    if hasattr(strand, 'update_side_line'):
-                        strand.update_side_line()
-
-            # 6) Clear rotation flag after all rotations are complete
-            for strand in list(group_data.get('strands', [])):
-                strand._is_being_rotated = False
-
-            # 7) Redraw the canvas
-            self.canvas.update()
-        except RuntimeError:
+        if not self.canvas or not hasattr(self.canvas, 'groups') or self.group_name not in self.canvas.groups:
             pass
+            return
+
+        group_data = self.canvas.groups[self.group_name]
+
+        # 1) Calculate rotation center. 
+        rotation_center = self.calculate_group_center(group_data['strands'])
+
+        # 2) Convert the user-typed angle to radians
+        angle_radians = math.radians(self.angle)
+
+        # 3) Retrieve the snapshot of original geometry
+        if hasattr(self.group_panel, 'pre_rotation_state'):
+            pre_state = self.group_panel.pre_rotation_state
+        else:
+            pre_state = {}
+
+        # 4) Set rotation flag on all strands to prevent knot connection maintenance during rotation
+        for strand in list(group_data.get('strands', [])):
+            strand._is_being_rotated = True
+
+        # 5) Rotate each strand from original positions
+        for strand in list(group_data.get('strands', [])):
+            layer_name = strand.layer_name
+            if layer_name in pre_state:
+                original_positions = pre_state[layer_name]
+
+                # Rotate the main geometry (start/end)
+                strand.start = self.rotate_point(original_positions['start'], rotation_center, angle_radians)
+                strand.end   = self.rotate_point(original_positions['end'],   rotation_center, angle_radians)
+                if 'control_point1' in original_positions:
+                    strand.control_point1 = self.rotate_point(original_positions['control_point1'], rotation_center, angle_radians)
+                if 'control_point2' in original_positions:
+                    strand.control_point2 = self.rotate_point(original_positions['control_point2'], rotation_center, angle_radians)
+                # If MaskedStrand, also rotate deletion rectangle corners
+                if isinstance(strand, MaskedStrand) and 'deletion_rectangles' in original_positions:
+                    for rect_idx, corners in enumerate(original_positions['deletion_rectangles']):
+                        tl = self.rotate_point(corners['top_left'],     rotation_center, angle_radians)
+                        tr = self.rotate_point(corners['top_right'],    rotation_center, angle_radians)
+                        bl = self.rotate_point(corners['bottom_left'],  rotation_center, angle_radians)
+                        br = self.rotate_point(corners['bottom_right'], rotation_center, angle_radians)
+
+                        # Store them back as float tuples
+                        strand.deletion_rectangles[rect_idx]['top_left']     = (tl.x(), tl.y())
+                        strand.deletion_rectangles[rect_idx]['top_right']    = (tr.x(), tr.y())
+                        strand.deletion_rectangles[rect_idx]['bottom_left']  = (bl.x(), bl.y())
+                        strand.deletion_rectangles[rect_idx]['bottom_right'] = (br.x(), br.y())
+
+                # Update the strand's shape
+                strand.update_shape()
+                if hasattr(strand, 'update_side_line'):
+                    strand.update_side_line()
+
+        # 6) Clear rotation flag after all rotations are complete
+        for strand in list(group_data.get('strands', [])):
+            strand._is_being_rotated = False
+
+        # 7) Redraw the canvas
+        self.canvas.update()
 
     def rotate_point(self, point: QPointF, pivot: QPointF, angle_radians: float) -> QPointF:
         dx = point.x() - pivot.x()
@@ -5361,40 +5312,37 @@ class GroupRotateDialog(QDialog):
         Example: compute the average of all start/end points & rectangle corners
         or use your existing approach to find the center.
         """
-        try:
-            center_sum = QPointF(0, 0)
-            total_points = 0
+        center_sum = QPointF(0, 0)
+        total_points = 0
 
-            if hasattr(self.group_panel, 'pre_rotation_state'):
-                pre_state = self.group_panel.pre_rotation_state
-            else:
-                pre_state = {}
+        if hasattr(self.group_panel, 'pre_rotation_state'):
+            pre_state = self.group_panel.pre_rotation_state
+        else:
+            pre_state = {}
 
-            for strand in strands:
-                st = pre_state.get(strand.layer_name)
-                if not st:
-                    continue
+        for strand in strands:
+            st = pre_state.get(strand.layer_name)
+            if not st:
+                continue
 
-                # start, end
-                center_sum += st['start']
-                center_sum += st['end']
-                total_points += 2
+            # start, end
+            center_sum += st['start']
+            center_sum += st['end']
+            total_points += 2
 
-                # If masked, add rectangle corners
-                if isinstance(strand, MaskedStrand) and 'deletion_rectangles' in st:
-                    for corners in st['deletion_rectangles']:
-                        center_sum += corners['top_left']
-                        center_sum += corners['top_right']
-                        center_sum += corners['bottom_left']
-                        center_sum += corners['bottom_right']
-                        total_points += 4
+            # If masked, add rectangle corners
+            if isinstance(strand, MaskedStrand) and 'deletion_rectangles' in st:
+                for corners in st['deletion_rectangles']:
+                    center_sum += corners['top_left']
+                    center_sum += corners['top_right']
+                    center_sum += corners['bottom_left']
+                    center_sum += corners['bottom_right']
+                    total_points += 4
 
-            if total_points > 0:
-                return QPointF(center_sum.x() / total_points, center_sum.y() / total_points)
-            else:
-                return QPointF(0, 0)  # fallback if nothing found
-        except RuntimeError:
-            return QPointF(0, 0)
+        if total_points > 0:
+            return QPointF(center_sum.x() / total_points, center_sum.y() / total_points)
+        else:
+            return QPointF(0, 0)  # fallback if nothing found
     def on_ok_clicked(self):
         try:
             final_angle = float(self.angle_input.text())
@@ -5801,123 +5749,120 @@ class StrandAngleEditDialog(QDialog):
         """)
 
     def populate_table(self):
-        try:
-            self.table.setRowCount(len(self.group_data['strands']))
-            self.initializing = True
+        self.table.setRowCount(len(self.group_data['strands']))
+        self.initializing = True
 
-            is_dark_mode = False
-            if hasattr(self.canvas, 'is_dark_mode'):
-                is_dark_mode = self.canvas.is_dark_mode
+        is_dark_mode = False
+        if hasattr(self.canvas, 'is_dark_mode'):
+            is_dark_mode = self.canvas.is_dark_mode
 
-            for row, strand in enumerate(self.group_data['strands']):
-                is_main_strand = strand.layer_name.endswith("_1")
-                is_masked = isinstance(strand, MaskedStrand)
-                is_attachable = strand.is_attachable()
-                is_editable = not is_main_strand and not is_masked and is_attachable
+        for row, strand in enumerate(self.group_data['strands']):
+            is_main_strand = strand.layer_name.endswith("_1")
+            is_masked = isinstance(strand, MaskedStrand)
+            is_attachable = strand.is_attachable()
+            is_editable = not is_main_strand and not is_masked and is_attachable
 
-                # Layer Name
-                layer_name_item = QTableWidgetItem(str(strand.layer_name))
-                self.set_item_style(layer_name_item, is_editable)
-                self.table.setItem(row, 0, layer_name_item)
+            # Layer Name
+            layer_name_item = QTableWidgetItem(str(strand.layer_name))
+            self.set_item_style(layer_name_item, is_editable)
+            self.table.setItem(row, 0, layer_name_item)
 
-                # Angle
-                angle = self.calculate_angle(strand)
-                angle_item = QTableWidgetItem(f"{angle:.2f}")
-                self.set_item_style(angle_item, is_editable)
-                self.table.setItem(row, 1, angle_item)
+            # Angle
+            angle = self.calculate_angle(strand)
+            angle_item = QTableWidgetItem(f"{angle:.2f}")
+            self.set_item_style(angle_item, is_editable)
+            self.table.setItem(row, 1, angle_item)
 
-                # Angle adjustment buttons (+/-1 degree)
-                angle_buttons = self.create_angle_buttons(row)
-                if is_dark_mode:
-                    angle_buttons.setStyleSheet("background-color: #2B2B2B;")
-                self.table.setCellWidget(row, 2, angle_buttons)
+            # Angle adjustment buttons (+/-1 degree)
+            angle_buttons = self.create_angle_buttons(row)
+            if is_dark_mode:
+                angle_buttons.setStyleSheet("background-color: #2B2B2B;")
+            self.table.setCellWidget(row, 2, angle_buttons)
 
-                # Fast angle adjustment buttons (+/-5 degrees)
-                fast_angle_buttons = self.create_fast_angle_buttons(row)
-                if is_dark_mode:
-                    fast_angle_buttons.setStyleSheet("background-color: #2B2B2B;")
-                self.table.setCellWidget(row, 3, fast_angle_buttons)
+            # Fast angle adjustment buttons (+/-5 degrees)
+            fast_angle_buttons = self.create_fast_angle_buttons(row)
+            if is_dark_mode:
+                fast_angle_buttons.setStyleSheet("background-color: #2B2B2B;")
+            self.table.setCellWidget(row, 3, fast_angle_buttons)
 
-                # End X coordinate
-                end_x_item = QTableWidgetItem(f"{strand.end.x():.2f}")
-                self.set_item_style(end_x_item, is_editable)
-                self.table.setItem(row, 4, end_x_item)
+            # End X coordinate
+            end_x_item = QTableWidgetItem(f"{strand.end.x():.2f}")
+            self.set_item_style(end_x_item, is_editable)
+            self.table.setItem(row, 4, end_x_item)
 
-                # End Y coordinate
-                end_y_item = QTableWidgetItem(f"{strand.end.y():.2f}")
-                self.set_item_style(end_y_item, is_editable)
-                self.table.setItem(row, 5, end_y_item)
+            # End Y coordinate
+            end_y_item = QTableWidgetItem(f"{strand.end.y():.2f}")
+            self.set_item_style(end_y_item, is_editable)
+            self.table.setItem(row, 5, end_y_item)
 
-                # Checkboxes for angle syncing
-                x_checkbox = QCheckBox("x")
-                x_plus_180_checkbox = QCheckBox("180+x")
+            # Checkboxes for angle syncing
+            x_checkbox = QCheckBox("x")
+            x_plus_180_checkbox = QCheckBox("180+x")
 
-                # Apply shared styling helpers for better visuals
-                for checkbox in (x_checkbox, x_plus_180_checkbox):
-                    checkbox.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-                    self._apply_large_indicator(checkbox, indicator_size=20)
-                    self._setup_custom_checkmark(checkbox)
-                    self._set_checkbox_min_width(checkbox)
-                    self._style_angle_checkbox(checkbox, is_dark_mode, checkbox.isEnabled())
+            # Apply shared styling helpers for better visuals
+            for checkbox in (x_checkbox, x_plus_180_checkbox):
+                checkbox.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+                self._apply_large_indicator(checkbox, indicator_size=20)
+                self._setup_custom_checkmark(checkbox)
+                self._set_checkbox_min_width(checkbox)
+                self._style_angle_checkbox(checkbox, is_dark_mode, checkbox.isEnabled())
 
-                # Create container widgets for checkboxes with zero margins
-                x_widget = QWidget()
-                x_layout = QHBoxLayout(x_widget)
-                x_layout.setContentsMargins(3, 0, 3, 0)
-                x_layout.setAlignment(Qt.AlignCenter)
-                x_layout.addWidget(x_checkbox)
-                if is_dark_mode:
-                    x_widget.setStyleSheet("background-color: #2B2B2B;")
+            # Create container widgets for checkboxes with zero margins
+            x_widget = QWidget()
+            x_layout = QHBoxLayout(x_widget)
+            x_layout.setContentsMargins(3, 0, 3, 0)
+            x_layout.setAlignment(Qt.AlignCenter)
+            x_layout.addWidget(x_checkbox)
+            if is_dark_mode:
+                x_widget.setStyleSheet("background-color: #2B2B2B;")
 
-                x_plus_180_widget = QWidget()
-                x_plus_180_layout = QHBoxLayout(x_plus_180_widget)
-                x_plus_180_layout.setContentsMargins(3, 0, 3, 0)
-                x_plus_180_layout.setAlignment(Qt.AlignCenter)
-                x_plus_180_layout.addWidget(x_plus_180_checkbox)
-                if is_dark_mode:
-                    x_plus_180_widget.setStyleSheet("background-color: #2B2B2B;")
+            x_plus_180_widget = QWidget()
+            x_plus_180_layout = QHBoxLayout(x_plus_180_widget)
+            x_plus_180_layout.setContentsMargins(3, 0, 3, 0)
+            x_plus_180_layout.setAlignment(Qt.AlignCenter)
+            x_plus_180_layout.addWidget(x_plus_180_checkbox)
+            if is_dark_mode:
+                x_plus_180_widget.setStyleSheet("background-color: #2B2B2B;")
 
-                self.table.setCellWidget(row, 6, x_widget)
-                self.table.setCellWidget(row, 7, x_plus_180_widget)
+            self.table.setCellWidget(row, 6, x_widget)
+            self.table.setCellWidget(row, 7, x_plus_180_widget)
 
-                # 'Attachable' indicator
-                if is_main_strand:
-                    attachable_text = 'X'
-                else:
-                    attachable_text = '' if is_attachable else 'No'
+            # 'Attachable' indicator
+            if is_main_strand:
+                attachable_text = 'X'
+            else:
+                attachable_text = '' if is_attachable else 'No'
 
-                attachable_item = QTableWidgetItem(attachable_text)
-                attachable_item.setTextAlignment(Qt.AlignCenter)
-                attachable_item.setFlags(attachable_item.flags() & ~Qt.ItemIsEditable)
-                self.set_item_style(attachable_item, is_editable)
-                self.table.setItem(row, 8, attachable_item)
+            attachable_item = QTableWidgetItem(attachable_text)
+            attachable_item.setTextAlignment(Qt.AlignCenter)
+            attachable_item.setFlags(attachable_item.flags() & ~Qt.ItemIsEditable)
+            self.set_item_style(attachable_item, is_editable)
+            self.table.setItem(row, 8, attachable_item)
 
-                # Connect checkbox state changes
-                x_checkbox.stateChanged.connect(lambda state, r=row: self.on_checkbox_changed(r, 6, state))
-                x_plus_180_checkbox.stateChanged.connect(lambda state, r=row: self.on_checkbox_changed(r, 7, state))
+            # Connect checkbox state changes
+            x_checkbox.stateChanged.connect(lambda state, r=row: self.on_checkbox_changed(r, 6, state))
+            x_plus_180_checkbox.stateChanged.connect(lambda state, r=row: self.on_checkbox_changed(r, 7, state))
 
-                # Disable interaction for non-editable strands
-                if not is_editable:
-                    for col in [0, 1, 4, 5, 8]:
-                        item = self.table.item(row, col)
-                        if item:
-                            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-                    for col in [2, 3, 6, 7]:
-                        widget = self.table.cellWidget(row, col)
-                        if widget:
-                            widget.setEnabled(False)
-                            if col in [6, 7]:
-                                checkbox = widget.findChild(QCheckBox)
-                                if checkbox:
-                                    self._style_angle_checkbox(checkbox, is_dark_mode, False)
-                                if is_dark_mode:
-                                    widget.setStyleSheet("background-color: #252525;")
-                                else:
-                                    widget.setStyleSheet("background-color: #F5F5F5;")
+            # Disable interaction for non-editable strands
+            if not is_editable:
+                for col in [0, 1, 4, 5, 8]:
+                    item = self.table.item(row, col)
+                    if item:
+                        item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                for col in [2, 3, 6, 7]:
+                    widget = self.table.cellWidget(row, col)
+                    if widget:
+                        widget.setEnabled(False)
+                        if col in [6, 7]:
+                            checkbox = widget.findChild(QCheckBox)
+                            if checkbox:
+                                self._style_angle_checkbox(checkbox, is_dark_mode, False)
+                            if is_dark_mode:
+                                widget.setStyleSheet("background-color: #252525;")
+                            else:
+                                widget.setStyleSheet("background-color: #F5F5F5;")
 
-            self.initializing = False
-        except RuntimeError:
-            pass
+        self.initializing = False
 
     def set_item_style(self, item, is_editable):
         is_dark_mode = self.canvas.is_dark_mode if hasattr(self.canvas, 'is_dark_mode') else False
@@ -6579,142 +6524,133 @@ class StrandAngleEditDialog(QDialog):
             self.updating = False
 
     def update_table_row(self, row):
-        try:
-            strand = self.group_data['strands'][row]
-            angle = self.calculate_angle(strand)
-            end_x = strand.end.x()
-            end_y = strand.end.y()
+        strand = self.group_data['strands'][row]
+        angle = self.calculate_angle(strand)
+        end_x = strand.end.x()
+        end_y = strand.end.y()
 
-            # Update angle
-            angle_item = self.table.item(row, 1)
-            if angle_item is None:
-                angle_item = QTableWidgetItem()
-                self.table.setItem(row, 1, angle_item)
-            angle_item.setText(f"{angle:.2f}")
+        # Update angle
+        angle_item = self.table.item(row, 1)
+        if angle_item is None:
+            angle_item = QTableWidgetItem()
+            self.table.setItem(row, 1, angle_item)
+        angle_item.setText(f"{angle:.2f}")
 
-            # Update end X
-            end_x_item = self.table.item(row, 4)
-            if end_x_item is None:
-                end_x_item = QTableWidgetItem()
-                self.table.setItem(row, 4, end_x_item)
-            end_x_item.setText(f"{end_x:.2f}")
+        # Update end X
+        end_x_item = self.table.item(row, 4)
+        if end_x_item is None:
+            end_x_item = QTableWidgetItem()
+            self.table.setItem(row, 4, end_x_item)
+        end_x_item.setText(f"{end_x:.2f}")
 
-            # Update end Y
-            end_y_item = self.table.item(row, 5)
-            if end_y_item is None:
-                end_y_item = QTableWidgetItem()
-                self.table.setItem(row, 5, end_y_item)
-            end_y_item.setText(f"{end_y:.2f}")
-        except RuntimeError:
-            pass
+        # Update end Y
+        end_y_item = self.table.item(row, 5)
+        if end_y_item is None:
+            end_y_item = QTableWidgetItem()
+            self.table.setItem(row, 5, end_y_item)
+        end_y_item.setText(f"{end_y:.2f}")
 
 
     def update_strand_angle(self, strand, new_angle, update_linked=True):
-        try:
-            # Skip masked strands
-            if isinstance(strand, MaskedStrand):
-                pass
-                return
-
-            if not hasattr(strand, 'start') or not hasattr(strand, 'end'):
-                return
-
-            # Store original control points if not already stored
-            if not hasattr(strand, 'pre_rotation_points'):
-                strand.pre_rotation_points = {
-                    'start': QPointF(strand.start),
-                    'end': QPointF(strand.end),
-                    'control_point1': QPointF(strand.control_point1) if strand.control_point1 is not None else QPointF(strand.start),
-                    'control_point2': QPointF(strand.control_point2) if strand.control_point2 is not None else QPointF(strand.end),
-                    'last_angle': self.calculate_angle(strand)  # Store current angle
-                }
-                # Store control_point_center if it exists
-                if hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
-                    strand.pre_rotation_points['control_point_center'] = QPointF(strand.control_point_center)
-
-            # Calculate the angle difference
-            current_angle = self.calculate_angle(strand)
-            angle_diff = new_angle - current_angle
-
-            # Calculate the center of rotation (strand's start point)
-            center = strand.start
-
-            # Helper function to rotate a point around the center
-            def rotate_point(point, angle_rad):
-                if point is None:
-                    return None
-                dx = point.x() - center.x()
-                dy = point.y() - center.y()
-                cos_angle = cos(angle_rad)
-                sin_angle = sin(angle_rad)
-                new_x = center.x() + dx * cos_angle - dy * sin_angle
-                new_y = center.y() + dx * sin_angle + dy * cos_angle
-                return QPointF(new_x, new_y)
-
-            # Convert angle difference to radians
-            angle_rad = radians(angle_diff)
-
-            # Rotate end point and control points
-            strand.end = rotate_point(strand.end, angle_rad)
-            strand.control_point1 = rotate_point(strand.control_point1, angle_rad) if strand.control_point1 is not None else None
-            strand.control_point2 = rotate_point(strand.control_point2, angle_rad) if strand.control_point2 is not None else None
-
-            # Rotate control_point_center if it exists
-            if hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
-                strand.control_point_center = rotate_point(strand.control_point_center, angle_rad)
-
-            # Update the strand's shape
-            strand.update_shape()
-            if hasattr(strand, 'update_side_line'):
-                strand.update_side_line()
-
-            # Store the new angle as the last angle
-            if hasattr(strand, 'pre_rotation_points'):
-                strand.pre_rotation_points['last_angle'] = new_angle
-
-            # Update x_angle if this is the main strand
-            if strand.layer_name.endswith('_1'):
-                self.x_angle = new_angle
-                if hasattr(self, 'x_angle_input'):
-                    self.x_angle_input.setText(f"{new_angle:.2f}")
-
-            # Update linked strands if needed
-            if update_linked:
-                self.update_linked_strands(current_strand=strand)
-
-            # Update the canvas
-            if self.canvas:
-                self.canvas.update()
-        except RuntimeError:
+        # Skip masked strands
+        if isinstance(strand, MaskedStrand):
             pass
+            return
+
+        if not hasattr(strand, 'start') or not hasattr(strand, 'end'):
+            return
+
+        # Store original control points if not already stored
+        if not hasattr(strand, 'pre_rotation_points'):
+            strand.pre_rotation_points = {
+                'start': QPointF(strand.start),
+                'end': QPointF(strand.end),
+                'control_point1': QPointF(strand.control_point1) if strand.control_point1 is not None else QPointF(strand.start),
+                'control_point2': QPointF(strand.control_point2) if strand.control_point2 is not None else QPointF(strand.end),
+                'last_angle': self.calculate_angle(strand)  # Store current angle
+            }
+            # Store control_point_center if it exists
+            if hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+                strand.pre_rotation_points['control_point_center'] = QPointF(strand.control_point_center)
+
+        # Calculate the angle difference
+        current_angle = self.calculate_angle(strand)
+        angle_diff = new_angle - current_angle
+
+        # Calculate the center of rotation (strand's start point)
+        center = strand.start
+
+        # Helper function to rotate a point around the center
+        def rotate_point(point, angle_rad):
+            if point is None:
+                return None
+            dx = point.x() - center.x()
+            dy = point.y() - center.y()
+            cos_angle = cos(angle_rad)
+            sin_angle = sin(angle_rad)
+            new_x = center.x() + dx * cos_angle - dy * sin_angle
+            new_y = center.y() + dx * sin_angle + dy * cos_angle
+            return QPointF(new_x, new_y)
+
+        # Convert angle difference to radians
+        angle_rad = radians(angle_diff)
+
+        # Rotate end point and control points
+        strand.end = rotate_point(strand.end, angle_rad)
+        strand.control_point1 = rotate_point(strand.control_point1, angle_rad) if strand.control_point1 is not None else None
+        strand.control_point2 = rotate_point(strand.control_point2, angle_rad) if strand.control_point2 is not None else None
+        
+        # Rotate control_point_center if it exists
+        if hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+            strand.control_point_center = rotate_point(strand.control_point_center, angle_rad)
+
+        # Update the strand's shape
+        strand.update_shape()
+        if hasattr(strand, 'update_side_line'):
+            strand.update_side_line()
+            
+        # Store the new angle as the last angle
+        if hasattr(strand, 'pre_rotation_points'):
+            strand.pre_rotation_points['last_angle'] = new_angle
+
+        # Update x_angle if this is the main strand
+        if strand.layer_name.endswith('_1'):
+            self.x_angle = new_angle
+            if hasattr(self, 'x_angle_input'):
+                self.x_angle_input.setText(f"{new_angle:.2f}")
+
+        # Update linked strands if needed
+        if update_linked:
+            self.update_linked_strands(current_strand=strand)
+
+        # Update the canvas
+        if self.canvas:
+            self.canvas.update()
 
     def update_linked_strands(self, current_strand=None):
-        try:
-            for row, strand in enumerate(self.group_data['strands']):
-                if strand == current_strand:
-                    continue  # Skip the current strand to avoid recursive updates
+        for row, strand in enumerate(self.group_data['strands']):
+            if strand == current_strand:
+                continue  # Skip the current strand to avoid recursive updates
 
-                x_widget = self.table.cellWidget(row, 6)
-                x_plus_180_widget = self.table.cellWidget(row, 7)
+            x_widget = self.table.cellWidget(row, 6)
+            x_plus_180_widget = self.table.cellWidget(row, 7)
 
-                # Check if widgets are None
-                if x_widget is None and x_plus_180_widget is None:
-                    continue  # Skip to the next strand
+            # Check if widgets are None
+            if x_widget is None and x_plus_180_widget is None:
+                continue  # Skip to the next strand
 
-                # Extract the QCheckBox from the QWidget
-                x_checkbox = x_widget.findChild(QCheckBox) if x_widget else None
-                x_plus_180_checkbox = x_plus_180_widget.findChild(QCheckBox) if x_plus_180_widget else None
+            # Extract the QCheckBox from the QWidget
+            x_checkbox = x_widget.findChild(QCheckBox) if x_widget else None
+            x_plus_180_checkbox = x_plus_180_widget.findChild(QCheckBox) if x_plus_180_widget else None
 
-                if x_checkbox and x_checkbox.isChecked():
-                    self.update_strand_angle(strand, self.x_angle, update_linked=False)
-                elif x_plus_180_checkbox and x_plus_180_checkbox.isChecked():
-                    # Normalize the angle to be within -180 to 180 degrees
-                    opposite_angle = (self.x_angle + 180) % 360
-                    if opposite_angle > 180:
-                        opposite_angle -= 360
-                    self.update_strand_angle(strand, opposite_angle, update_linked=False)
-        except RuntimeError:
-            pass
+            if x_checkbox and x_checkbox.isChecked():
+                self.update_strand_angle(strand, self.x_angle, update_linked=False)
+            elif x_plus_180_checkbox and x_plus_180_checkbox.isChecked():
+                # Normalize the angle to be within -180 to 180 degrees
+                opposite_angle = (self.x_angle + 180) % 360
+                if opposite_angle > 180:
+                    opposite_angle -= 360
+                self.update_strand_angle(strand, opposite_angle, update_linked=False)
 
     def create_angle_buttons(self, row):
         widget = QWidget()
@@ -6883,74 +6819,67 @@ class StrandAngleEditDialog(QDialog):
         self.adjust_angle(row, self.delta_minus_minus)
 
     def adjust_angle(self, row, delta):
-        try:
-            if hasattr(self.canvas, 'move_mode'):
-                self.canvas.move_mode.cancel_movement()
+        if hasattr(self.canvas, 'move_mode'):
+            self.canvas.move_mode.cancel_movement()
 
-            strand = self.group_data['strands'][row]
-            current_angle_item = self.table.item(row, 1)
-            if current_angle_item:
-                try:
-                    current_angle = float(current_angle_item.text())
-                except ValueError:
-                    current_angle = self.calculate_angle(strand)
-                new_angle = current_angle + delta
-                current_angle_item.setText(f"{new_angle:.2f}")
-                self.update_strand_angle(strand, new_angle)
-        except RuntimeError:
-            pass
+        strand = self.group_data['strands'][row]
+        current_angle_item = self.table.item(row, 1)
+        if current_angle_item:
+            try:
+                current_angle = float(current_angle_item.text())
+            except ValueError:
+                current_angle = self.calculate_angle(strand)
+            new_angle = current_angle + delta
+            current_angle_item.setText(f"{new_angle:.2f}")
+            self.update_strand_angle(strand, new_angle)
 
     def on_checkbox_changed(self, row, col, state):
-        try:
-            # Only cancel movement if we're not in continuous adjustment mode
-            if not getattr(self, 'is_adjusting_continuously', False):
-                if hasattr(self.canvas, 'move_mode'):
-                    self.canvas.move_mode.cancel_movement()
+        # Only cancel movement if we're not in continuous adjustment mode
+        if not getattr(self, 'is_adjusting_continuously', False):
+            if hasattr(self.canvas, 'move_mode'):
+                self.canvas.move_mode.cancel_movement()
+            
+        strand = self.group_data['strands'][row]
 
-            strand = self.group_data['strands'][row]
+        if col == 6:  # x checkbox
+            if state == Qt.Checked:
+                angle = self.x_angle  # Use x_angle
 
-            if col == 6:  # x checkbox
-                if state == Qt.Checked:
-                    angle = self.x_angle  # Use x_angle
+                # Uncheck the x_plus_180 checkbox
+                x_plus_180_widget = self.table.cellWidget(row, 7)
+                if x_plus_180_widget:
+                    x_plus_180_checkbox = x_plus_180_widget.findChild(QCheckBox)
+                    if x_plus_180_checkbox:
+                        x_plus_180_checkbox.setChecked(False)
+            else:
+                angle = self.calculate_angle(strand)
 
-                    # Uncheck the x_plus_180 checkbox
-                    x_plus_180_widget = self.table.cellWidget(row, 7)
-                    if x_plus_180_widget:
-                        x_plus_180_checkbox = x_plus_180_widget.findChild(QCheckBox)
-                        if x_plus_180_checkbox:
-                            x_plus_180_checkbox.setChecked(False)
-                else:
-                    angle = self.calculate_angle(strand)
+            self.update_strand_angle(strand, angle)
+            angle_item = self.table.item(row, 1)
+            if angle_item:
+                angle_item.setText(f"{angle:.2f}")
 
-                self.update_strand_angle(strand, angle)
-                angle_item = self.table.item(row, 1)
-                if angle_item:
-                    angle_item.setText(f"{angle:.2f}")
+        elif col == 7:  # x+180 checkbox
+            if state == Qt.Checked:
+                angle = (self.x_angle + 180) % 360  # Use x_angle + 180
+                if angle > 180:
+                    angle -= 360
 
-            elif col == 7:  # x+180 checkbox
-                if state == Qt.Checked:
-                    angle = (self.x_angle + 180) % 360  # Use x_angle + 180
-                    if angle > 180:
-                        angle -= 360
+                # Uncheck the x checkbox
+                x_widget = self.table.cellWidget(row, 6)
+                if x_widget:
+                    x_checkbox = x_widget.findChild(QCheckBox)
+                    if x_checkbox:
+                        x_checkbox.setChecked(False)
+            else:
+                angle = self.calculate_angle(strand)
 
-                    # Uncheck the x checkbox
-                    x_widget = self.table.cellWidget(row, 6)
-                    if x_widget:
-                        x_checkbox = x_widget.findChild(QCheckBox)
-                        if x_checkbox:
-                            x_checkbox.setChecked(False)
-                else:
-                    angle = self.calculate_angle(strand)
-
-                self.update_strand_angle(strand, angle)
-                angle_item = self.table.item(row, 1)
-                if angle_item:
-                    angle_item.setText(f"{angle:.2f}")
-        except RuntimeError:
-            pass
+            self.update_strand_angle(strand, angle)
+            angle_item = self.table.item(row, 1)
+            if angle_item:
+                angle_item.setText(f"{angle:.2f}")
 
     def calculate_angle(self, strand):
-        try:
             dx = strand.end.x() - strand.start.x()
             dy = strand.end.y() - strand.start.y()
 
@@ -6963,8 +6892,6 @@ class StrandAngleEditDialog(QDialog):
                 angle += 360
 
             return angle
-        except RuntimeError:
-            return 0.0
 
     def accept(self):
         # Perform any final actions before closing the dialog

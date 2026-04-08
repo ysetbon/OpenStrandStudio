@@ -536,28 +536,49 @@ class MainWindow(QMainWindow):
 
     def open_settings_dialog(self):
         """Open the settings dialog if it's not already open."""
-        if not hasattr(self, '_settings_dialog'):
-            # Create the dialog only once and store it
+        try:
+            if not hasattr(self, '_settings_dialog') or self._settings_dialog is None:
+                # Create the dialog only once and store it
+                self._settings_dialog = self.settings_dialog
+                # Remove fixed size and use expanding size policy
+                self._settings_dialog.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+                # Set initial size (optional, can be adjusted based on content)
+                self._settings_dialog.resize(800, 600)
+                # Add margins to prevent content clipping
+                dialog_layout = self._settings_dialog.layout()
+                if dialog_layout is not None:
+                    dialog_layout.setContentsMargins(10, 10, 10, 10)
+                # Set the current theme
+                self._settings_dialog.current_theme = self.current_theme
+                # Connect theme change signal
+                self._settings_dialog.theme_changed.connect(self.apply_theme)
+                # Apply current theme to dialog
+                self._settings_dialog.apply_dialog_theme(self.current_theme)
+
+            # Show the existing dialog
+            # Ensure the question mark button is removed
+            self._settings_dialog.setWindowFlags(self._settings_dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+            self._settings_dialog.show()
+            self._settings_dialog.raise_()
+            self._settings_dialog.activateWindow()
+        except RuntimeError:
+            # C++ settings dialog object was deleted — recreate it
+            from settings_dialog import SettingsDialog
+            undo_manager = self.layer_panel.undo_redo_manager if hasattr(self.layer_panel, 'undo_redo_manager') else None
+            self.settings_dialog = SettingsDialog(parent=self, canvas=self.canvas, undo_redo_manager=undo_manager, layer_panel=self.layer_panel)
             self._settings_dialog = self.settings_dialog
-            # Remove fixed size and use expanding size policy
             self._settings_dialog.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-            # Set initial size (optional, can be adjusted based on content)
             self._settings_dialog.resize(800, 600)
-            # Add margins to prevent content clipping
-            self._settings_dialog.layout().setContentsMargins(10, 10, 10, 10)
-            # Set the current theme
+            dialog_layout = self._settings_dialog.layout()
+            if dialog_layout is not None:
+                dialog_layout.setContentsMargins(10, 10, 10, 10)
             self._settings_dialog.current_theme = self.current_theme
-            # Connect theme change signal
             self._settings_dialog.theme_changed.connect(self.apply_theme)
-            # Apply current theme to dialog
             self._settings_dialog.apply_dialog_theme(self.current_theme)
-        
-        # Show the existing dialog
-        # Ensure the question mark button is removed
-        self._settings_dialog.setWindowFlags(self._settings_dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self._settings_dialog.show()
-        self._settings_dialog.raise_()
-        self._settings_dialog.activateWindow()
+            self._settings_dialog.setWindowFlags(self._settings_dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+            self._settings_dialog.show()
+            self._settings_dialog.raise_()
+            self._settings_dialog.activateWindow()
 
     def apply_theme(self, theme_name):
         # Store the current theme

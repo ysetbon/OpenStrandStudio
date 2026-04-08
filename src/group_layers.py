@@ -560,7 +560,8 @@ class CollapsibleGroupWidget(QWidget):
             if all(self.extract_main_strand(layer) != main_strand for layer in self.layers):
                 self.main_strands.remove(main_strand)
                 for i in range(self.layers_list.count()):
-                    if self.layers_list.item(i).text() == main_strand:
+                    item = self.layers_list.item(i)
+                    if item is not None and item.text() == main_strand:
                         self.layers_list.takeItem(i)
                         break
             self.update_size()
@@ -588,7 +589,7 @@ class CollapsibleGroupWidget(QWidget):
         main_strand = self.extract_main_strand(layer_name)
         for i in range(self.layers_list.count()):
             item = self.layers_list.item(i)
-            if item.text() == main_strand:
+            if item is not None and item.text() == main_strand:
                 item.setForeground(color)
                 break
 
@@ -793,21 +794,25 @@ class GroupPanel(QWidget):
 
     def eventFilter(self, watched, event):
         if watched is self.tree.viewport():
-            if event.type() == QEvent.MouseMove:
-                item = self.tree.itemAt(event.pos())
-                hovered_group_name = item.data(0, Qt.UserRole) if item and item.parent() is None else None
-                self._set_hovered_group_name(hovered_group_name)
-                cursor = Qt.PointingHandCursor if item and item.parent() is None else Qt.ArrowCursor
-                self.tree.viewport().setCursor(cursor)
-            elif event.type() == QEvent.Leave:
-                self._set_hovered_group_name(None)
-                self.tree.viewport().unsetCursor()
-            elif event.type() == QEvent.MouseButtonRelease and event.button() == Qt.LeftButton:
-                item = self.tree.itemAt(event.pos())
-                if item and item.parent() is None:
-                    item.setExpanded(not item.isExpanded())
-                    self._update_group_item_label(item)
-                    return True
+            try:
+                if event.type() == QEvent.MouseMove:
+                    item = self.tree.itemAt(event.pos())
+                    hovered_group_name = item.data(0, Qt.UserRole) if item and item.parent() is None else None
+                    self._set_hovered_group_name(hovered_group_name)
+                    cursor = Qt.PointingHandCursor if item and item.parent() is None else Qt.ArrowCursor
+                    self.tree.viewport().setCursor(cursor)
+                elif event.type() == QEvent.Leave:
+                    self._set_hovered_group_name(None)
+                    self.tree.viewport().unsetCursor()
+                elif event.type() == QEvent.MouseButtonRelease and event.button() == Qt.LeftButton:
+                    item = self.tree.itemAt(event.pos())
+                    if item and item.parent() is None:
+                        item.setExpanded(not item.isExpanded())
+                        self._update_group_item_label(item)
+                        return True
+            except RuntimeError:
+                # Qt C++ tree item was deleted during event handling
+                pass
 
         return super().eventFilter(watched, event)
     
@@ -851,10 +856,14 @@ class GroupPanel(QWidget):
         if item is None:
             return
 
-        actual_name = group_name or item.data(0, Qt.UserRole) or item.text(0)
-        item.setData(0, Qt.UserRole, actual_name)
-        arrow = "▼" if item.isExpanded() else "▶"
-        item.setText(0, f"{arrow} {actual_name}")
+        try:
+            actual_name = group_name or item.data(0, Qt.UserRole) or item.text(0)
+            item.setData(0, Qt.UserRole, actual_name)
+            arrow = "▼" if item.isExpanded() else "▶"
+            item.setText(0, f"{arrow} {actual_name}")
+        except RuntimeError:
+            # C++ tree item was deleted
+            pass
 
     def _apply_group_item_colors(self, group_item, colors):
         """Colors are now handled entirely by _GroupTreeDelegate.
@@ -871,6 +880,8 @@ class GroupPanel(QWidget):
     def _refresh_tree_item_styles(self, colors):
         for index in range(self.tree.topLevelItemCount()):
             item = self.tree.topLevelItem(index)
+            if item is None:
+                continue
             self._update_group_item_label(item)
             self._apply_group_item_colors(item, colors)
 
@@ -886,9 +897,13 @@ class GroupPanel(QWidget):
         """Remove the QTreeWidgetItem for *group_name* if it exists."""
         item = self.group_items.pop(group_name, None)
         if item is not None:
-            idx = self.tree.indexOfTopLevelItem(item)
-            if idx >= 0:
-                self.tree.takeTopLevelItem(idx)
+            try:
+                idx = self.tree.indexOfTopLevelItem(item)
+                if idx >= 0:
+                    self.tree.takeTopLevelItem(idx)
+            except RuntimeError:
+                # C++ item already deleted
+                pass
 
     def _on_tree_context_menu(self, position):
         """Show the right-click context menu for the group under the cursor."""
@@ -897,10 +912,12 @@ class GroupPanel(QWidget):
             return
 
         # Walk up to the top-level item (the group)
-        while item.parent() is not None:
-            item = item.parent()
-
-        group_name = item.data(0, Qt.UserRole) or item.text(0)
+        try:
+            while item.parent() is not None:
+                item = item.parent()
+            group_name = item.data(0, Qt.UserRole) or item.text(0)
+        except RuntimeError:
+            return
         if group_name not in self.groups:
             return
 
@@ -1048,18 +1065,21 @@ class GroupPanel(QWidget):
                     if strand:
                         group_data['strands'].append(strand)
                         # Store original positions for the new strand
-                        strand.original_start = QPointF(strand.start)
-                        strand.original_end = QPointF(strand.end)
-                        # Check for None control points (MaskedStrands have None control points)
-                        if strand.control_point1 is not None:
-                            strand.original_control_point1 = QPointF(strand.control_point1)
-                        else:
-                            strand.original_control_point1 = QPointF(strand.start)
-                        
-                        if strand.control_point2 is not None:
-                            strand.original_control_point2 = QPointF(strand.control_point2)
-                        else:
-                            strand.original_control_point2 = QPointF(strand.end)
+                        try:
+                            strand.original_start = QPointF(strand.start)
+                            strand.original_end = QPointF(strand.end)
+                            # Check for None control points (MaskedStrands have None control points)
+                            if strand.control_point1 is not None:
+                                strand.original_control_point1 = QPointF(strand.control_point1)
+                            else:
+                                strand.original_control_point1 = QPointF(strand.start)
+
+                            if strand.control_point2 is not None:
+                                strand.original_control_point2 = QPointF(strand.control_point2)
+                            else:
+                                strand.original_control_point2 = QPointF(strand.end)
+                        except (RuntimeError, TypeError):
+                            pass
                         pass
                 
                 # Update the group's visual representation
@@ -1075,9 +1095,14 @@ class GroupPanel(QWidget):
             event.acceptProposedAction()
 
     def dropEvent(self, event: QDropEvent):
-        data = eval(event.mimeData().data("application/x-strand-data").decode())
-        strand_id = data['strand_id']
-        
+        try:
+            data = json.loads(event.mimeData().data("application/x-strand-data").decode())
+        except (json.JSONDecodeError, ValueError):
+            return
+        strand_id = data.get('strand_id')
+        if not strand_id:
+            return
+
         group_name, ok = QInputDialog.getText(self, "Add to Group", "Enter group name:")
         if ok and group_name:
             self.add_layer_to_group(strand_id, group_name)
@@ -1087,6 +1112,8 @@ class GroupPanel(QWidget):
         pass
 
     def start_group_move(self, group_name):
+        if not self.canvas or not hasattr(self.canvas, 'groups'):
+            return
         # Fetch group data reliably from canvas.groups
         group_data = self.canvas.groups.get(group_name)
         if group_data:
@@ -1111,7 +1138,7 @@ class GroupPanel(QWidget):
             delta = QPointF(total_dx, total_dy)
             pass
 
-            strands_to_move = group_data.get('strands', [])
+            strands_to_move = list(group_data.get('strands', []))
             if not strands_to_move:
                 pass
                 return
@@ -1141,10 +1168,13 @@ class GroupPanel(QWidget):
                           # Attempt to set originals if missing (fallback)
                           strand.original_start = QPointF(strand.start)
                           strand.original_end = QPointF(strand.end)
-                          strand.original_control_point1 = QPointF(strand.control_point1) if hasattr(strand, 'control_point1') else QPointF(strand.start)
-                          strand.original_control_point2 = QPointF(strand.control_point2) if hasattr(strand, 'control_point2') else QPointF(strand.end)
-                          if hasattr(strand, 'control_point_center'):
-                              strand.original_control_point_center = QPointF(strand.control_point_center)
+                          cp1 = getattr(strand, 'control_point1', None)
+                          cp2 = getattr(strand, 'control_point2', None)
+                          strand.original_control_point1 = QPointF(cp1) if cp1 is not None else QPointF(strand.start)
+                          strand.original_control_point2 = QPointF(cp2) if cp2 is not None else QPointF(strand.end)
+                          cp_center = getattr(strand, 'control_point_center', None)
+                          if cp_center is not None:
+                              strand.original_control_point_center = QPointF(cp_center)
 
                       strand.start = strand.original_start + delta
                       strand.end = strand.original_end + delta
@@ -1226,13 +1256,16 @@ class GroupPanel(QWidget):
         # Build control_points dict
         control_points = {}
         for strand in strands:
-            if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
-                cp1 = strand.control_point1 if isinstance(strand.control_point1, QPointF) else QPointF(strand.start)
-                cp2 = strand.control_point2 if isinstance(strand.control_point2, QPointF) else QPointF(strand.end)
-                control_points[strand.layer_name] = {
-                    'control_point1': cp1,
-                    'control_point2': cp2
-                }
+            try:
+                if hasattr(strand, 'control_point1') and hasattr(strand, 'control_point2'):
+                    cp1 = strand.control_point1 if isinstance(strand.control_point1, QPointF) else QPointF(strand.start)
+                    cp2 = strand.control_point2 if isinstance(strand.control_point2, QPointF) else QPointF(strand.end)
+                    control_points[strand.layer_name] = {
+                        'control_point1': cp1,
+                        'control_point2': cp2
+                    }
+            except (RuntimeError, TypeError):
+                continue
 
         # Store in self.groups (no 'widget' key)
         self.groups[group_name] = {
@@ -1264,12 +1297,12 @@ class GroupPanel(QWidget):
             # (e.g. after individual strand moves in move mode)
             layers_in_group = group_data.get('layers', [])
             refreshed_strands = []
-            for strand in self.canvas.strands:
+            for strand in list(self.canvas.strands):
                 if hasattr(strand, 'layer_name') and strand.layer_name in layers_in_group:
                     if strand not in refreshed_strands:
                         refreshed_strands.append(strand)
                     if hasattr(strand, 'attached_strands'):
-                        for attached in strand.attached_strands:
+                        for attached in list(strand.attached_strands):
                             if attached not in refreshed_strands:
                                 refreshed_strands.append(attached)
             group_data['strands'] = refreshed_strands
@@ -1288,36 +1321,40 @@ class GroupPanel(QWidget):
                 self.pre_rotation_state = {}
 
                 for strand in strands_to_rotate:
-                    print(f"[DEBUG ROTATE] Processing strand: {strand.layer_name} ({strand.__class__.__name__})")
-                    # Store all current positions and angles
-                    state = {
-                        'start': QPointF(strand.start),
-                        'end': QPointF(strand.end)
-                    }
+                    try:
+                        print(f"[DEBUG ROTATE] Processing strand: {strand.layer_name} ({strand.__class__.__name__})")
+                        # Store all current positions and angles
+                        state = {
+                            'start': QPointF(strand.start),
+                            'end': QPointF(strand.end)
+                        }
 
-                    # Only store control points for regular strands, not masked strands
-                    if not isinstance(strand, MaskedStrand):
-                        state['control_point1'] = QPointF(strand.control_point1) if strand.control_point1 else QPointF(strand.start)
-                        state['control_point2'] = QPointF(strand.control_point2) if strand.control_point2 else QPointF(strand.end)
-                        # Store control_point_center if it exists
-                        if hasattr(strand, 'control_point_center') and strand.control_point_center:
-                            state['control_point_center'] = QPointF(strand.control_point_center)
-                    else:
-                        # For MaskedStrand: Store deletion rectangle corners
-                        if hasattr(strand, 'deletion_rectangles') and strand.deletion_rectangles:
-                            print(f"[DEBUG ROTATE]   Storing {len(strand.deletion_rectangles)} deletion rectangles")
-                            rect_corners = []
-                            for rect in strand.deletion_rectangles:
-                                rect_corners.append({
-                                    'top_left': QPointF(*rect['top_left']),
-                                    'top_right': QPointF(*rect['top_right']),
-                                    'bottom_left': QPointF(*rect['bottom_left']),
-                                    'bottom_right': QPointF(*rect['bottom_right'])
-                                })
-                            state['deletion_rectangles'] = rect_corners
+                        # Only store control points for regular strands, not masked strands
+                        if not isinstance(strand, MaskedStrand):
+                            state['control_point1'] = QPointF(strand.control_point1) if strand.control_point1 else QPointF(strand.start)
+                            state['control_point2'] = QPointF(strand.control_point2) if strand.control_point2 else QPointF(strand.end)
+                            # Store control_point_center if it exists
+                            if hasattr(strand, 'control_point_center') and strand.control_point_center:
+                                state['control_point_center'] = QPointF(strand.control_point_center)
+                        else:
+                            # For MaskedStrand: Store deletion rectangle corners
+                            if hasattr(strand, 'deletion_rectangles') and strand.deletion_rectangles:
+                                print(f"[DEBUG ROTATE]   Storing {len(strand.deletion_rectangles)} deletion rectangles")
+                                rect_corners = []
+                                for rect in strand.deletion_rectangles:
+                                    rect_corners.append({
+                                        'top_left': QPointF(*rect['top_left']),
+                                        'top_right': QPointF(*rect['top_right']),
+                                        'bottom_left': QPointF(*rect['bottom_left']),
+                                        'bottom_right': QPointF(*rect['bottom_right'])
+                                    })
+                                state['deletion_rectangles'] = rect_corners
 
-                    self.pre_rotation_state[strand.layer_name] = state
-                    print(f"[DEBUG ROTATE]   State stored for {strand.layer_name}")
+                        self.pre_rotation_state[strand.layer_name] = state
+                        print(f"[DEBUG ROTATE]   State stored for {strand.layer_name}")
+                    except (RuntimeError, TypeError):
+                        # Strand's C++ object was deleted — skip it
+                        continue
 
                 print("[DEBUG ROTATE] About to start canvas rotation and show dialog...")
                 self.canvas.start_group_rotation(group_name)
@@ -1348,7 +1385,7 @@ class GroupPanel(QWidget):
         group_data = self.groups[group_name]
         # Get all strands that belong to the group's layers
         updated_strands = []
-        for strand in self.canvas.strands:
+        for strand in list(self.canvas.strands):
             if strand.layer_name in group_data['layers']:
                 if strand not in updated_strands:
                     updated_strands.append(strand)
@@ -1473,11 +1510,12 @@ class GroupPanel(QWidget):
             return QPointF(new_x, new_y)
 
         # -- 2) Set rotation flag on all strands to prevent knot connection maintenance during rotation --
-        for strand in group_data.get('strands', []):
+        rotation_strands = list(group_data.get('strands', []))
+        for strand in rotation_strands:
             strand._is_being_rotated = True
 
         # -- 3) For each strand, restore from pre_rotation_state, then rotate. --
-        for strand in group_data.get('strands', []):
+        for strand in rotation_strands:
             pre_rotation_pos = self.pre_rotation_state.get(strand.layer_name)
             if not pre_rotation_pos:
                 continue
@@ -1598,7 +1636,7 @@ class GroupPanel(QWidget):
                  strand.force_shadow_update()
 
         # -- 4) Clear rotation flag after all rotations are complete --
-        for strand in group_data.get('strands', []):
+        for strand in rotation_strands:
             strand._is_being_rotated = False
 
         # -- 5) Repaint with updated geometry. --
@@ -1652,7 +1690,7 @@ class GroupPanel(QWidget):
                 # Clear rotation flag on all strands in the group
                 if group_name in self.canvas.groups:
                     group_data = self.canvas.groups[group_name]
-                    for strand in group_data.get('strands', []):
+                    for strand in list(group_data.get('strands', [])):
                         if hasattr(strand, '_is_being_rotated'):
                             strand._is_being_rotated = False
                     
@@ -1666,12 +1704,15 @@ class GroupPanel(QWidget):
                 self.canvas.update()
                 
                 # Save state once after rotation is complete
-                if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
-                    # Mark that we're saving to prevent duplicate saves BEFORE calling save_state
-                    self._rotation_save_done = True
-                    
+                try:
+                    if hasattr(self.canvas, 'layer_panel') and self.canvas.layer_panel is not None and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
+                        # Mark that we're saving to prevent duplicate saves BEFORE calling save_state
+                        self._rotation_save_done = True
+
+                        pass
+                        self.canvas.layer_panel.undo_redo_manager.save_state()
+                except RuntimeError:
                     pass
-                    self.canvas.layer_panel.undo_redo_manager.save_state()
                     
                     # Schedule cleanup of the flag after a short delay
                     from PyQt5.QtCore import QTimer
@@ -1999,7 +2040,11 @@ class GroupPanel(QWidget):
             # Ensure tree item for the new group is expanded
             item = self.group_items.get(new_group_name)
             if item:
-                item.setExpanded(True)
+                try:
+                    item.setExpanded(True)
+                except RuntimeError:
+                    # Tree item's C++ object was deleted
+                    self.group_items.pop(new_group_name, None)
                 
             
             # Update LayerStateManager - simply save the current state after all strands are created
@@ -2065,7 +2110,7 @@ class GroupPanel(QWidget):
         
         # Check all strands in canvas
         if self.canvas and hasattr(self.canvas, 'strands'):
-            for strand in self.canvas.strands:
+            for strand in list(self.canvas.strands):
                 if hasattr(strand, 'set_number') and strand.set_number:
                     highest = max(highest, strand.set_number)
         
@@ -2084,7 +2129,7 @@ class GroupPanel(QWidget):
         existing_set_numbers = set()
         
         if self.canvas and hasattr(self.canvas, 'strands'):
-            for strand in self.canvas.strands:
+            for strand in list(self.canvas.strands):
                 if (hasattr(strand, 'set_number') and 
                     strand.set_number and 
                     not isinstance(strand, MaskedStrand)):
@@ -2853,41 +2898,46 @@ class GroupPanel(QWidget):
                 self.canvas.groups = {}
                 pass
                 
-            # Get all strands for this group
-            group_strands = group_data.get('strands', [])
+            # Get all strands for this group (snapshot to avoid mutation during iteration)
+            group_strands = list(group_data.get('strands', []))
             pass
-            
+
             # Log main strands before update
             pass
-            
+
             # Create updated group data
             updated_group_data = {
-                'layers': [strand.layer_name for strand in group_strands],
+                'layers': [strand.layer_name for strand in group_strands if hasattr(strand, 'layer_name')],
                 'strands': group_strands,
                 'control_points': {},
                 'main_strands': group_data.get('main_strands', [])
             }
-            
+
             pass
             pass
-            
+
             # Update control points
             for strand in group_strands:
-                if hasattr(strand, 'layer_name'):
+                if not hasattr(strand, 'layer_name'):
+                    continue
+                try:
                     # Check if control points exist (they don't for MaskedStrand)
                     control_data = {}
                     if strand.control_point1 is not None:
                         control_data['control_point1'] = QPointF(strand.control_point1)
                     else:
                         control_data['control_point1'] = None
-                    
+
                     if strand.control_point2 is not None:
                         control_data['control_point2'] = QPointF(strand.control_point2)
                     else:
                         control_data['control_point2'] = None
-                    
+
                     updated_group_data['control_points'][strand.layer_name] = control_data
+                except RuntimeError:
+                    # Strand's C++ object was deleted
                     pass
+                pass
             
             # Update the canvas groups
             self.canvas.groups[group_name] = updated_group_data
@@ -2954,16 +3004,24 @@ class GroupPanel(QWidget):
                     pass
                     continue
 
-                group_data['control_points'][strand.layer_name] = {
-                    'control_point1': QPointF(strand.control_point1) if strand.control_point1 is not None else QPointF(strand.start),
-                    'control_point2': QPointF(strand.control_point2) if strand.control_point2 is not None else QPointF(strand.end)
-                }
+                try:
+                    group_data['control_points'][strand.layer_name] = {
+                        'control_point1': QPointF(strand.control_point1) if strand.control_point1 is not None else QPointF(strand.start),
+                        'control_point2': QPointF(strand.control_point2) if strand.control_point2 is not None else QPointF(strand.end)
+                    }
+                except (RuntimeError, TypeError):
+                    continue
             
             pass
     def is_layer_editable(self, layer_name):
         # This method should check if the layer has a green rectangle
-        layer_button = next((button for button in self.layer_panel.layer_buttons if button.text() == layer_name), None)
-        return layer_button is not None and layer_button.isEnabled()
+        if not hasattr(self, 'layer_panel') or self.layer_panel is None:
+            return False
+        try:
+            layer_button = next((button for button in self.layer_panel.layer_buttons if button.text() == layer_name), None)
+            return layer_button is not None and layer_button.isEnabled()
+        except (RuntimeError, AttributeError):
+            return False
 
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSlider, QLabel, QPushButton, QLineEdit, QGroupBox
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -2999,48 +3057,52 @@ class GroupMoveDialog(QDialog):
             pass
             return
 
-        for strand in group_data['strands']:
-            # Store original positions
-            strand.original_start = QPointF(strand.start)
-            strand.original_end = QPointF(strand.end)
+        for strand in list(group_data.get('strands', [])):
+            try:
+                # Store original positions
+                strand.original_start = QPointF(strand.start)
+                strand.original_end = QPointF(strand.end)
 
-            if isinstance(strand, MaskedStrand):
-                 # Store original center points for MaskedStrand
-                strand.calculate_center_point() # Ensure points are calculated
-                strand.original_base_center_point = QPointF(strand.base_center_point) if strand.base_center_point else None
-                strand.original_edited_center_point = QPointF(strand.edited_center_point) if strand.edited_center_point else None
-                # Also store original corners of deletion rectangles
-                if hasattr(strand, 'deletion_rectangles'):
-                    strand.original_deletion_rectangles = []
-                    for rect in strand.deletion_rectangles:
-                        strand.original_deletion_rectangles.append({
-                            'top_left': QPointF(*rect['top_left']),
-                            'top_right': QPointF(*rect['top_right']),
-                            'bottom_left': QPointF(*rect['bottom_left']),
-                            'bottom_right': QPointF(*rect['bottom_right']),
-                            # Keep original offset data if needed, though recalculation might be safer
-                            'offset_x': rect.get('offset_x'),
-                            'offset_y': rect.get('offset_y'),
-                            'x': rect.get('x'),
-                            'y': rect.get('y'),
-                            'width': rect.get('width'),
-                            'height': rect.get('height')
-                        })
-                pass
-            else:
-                # Safely store original control points for regular/attached strands
-                strand.original_control_point1 = (
-                    QPointF(strand.control_point1) if hasattr(strand, 'control_point1') and isinstance(strand.control_point1, QPointF)
-                    else QPointF(strand.start)
-                )
-                strand.original_control_point2 = (
-                    QPointF(strand.control_point2) if hasattr(strand, 'control_point2') and isinstance(strand.control_point2, QPointF)
-                    else QPointF(strand.end)
-                )
-                if hasattr(strand, 'control_point_center') and isinstance(strand.control_point_center, QPointF):
-                     strand.original_control_point_center = QPointF(strand.control_point_center)
+                if isinstance(strand, MaskedStrand):
+                     # Store original center points for MaskedStrand
+                    strand.calculate_center_point() # Ensure points are calculated
+                    strand.original_base_center_point = QPointF(strand.base_center_point) if strand.base_center_point else None
+                    strand.original_edited_center_point = QPointF(strand.edited_center_point) if strand.edited_center_point else None
+                    # Also store original corners of deletion rectangles
+                    if hasattr(strand, 'deletion_rectangles'):
+                        strand.original_deletion_rectangles = []
+                        for rect in strand.deletion_rectangles:
+                            strand.original_deletion_rectangles.append({
+                                'top_left': QPointF(*rect['top_left']),
+                                'top_right': QPointF(*rect['top_right']),
+                                'bottom_left': QPointF(*rect['bottom_left']),
+                                'bottom_right': QPointF(*rect['bottom_right']),
+                                # Keep original offset data if needed, though recalculation might be safer
+                                'offset_x': rect.get('offset_x'),
+                                'offset_y': rect.get('offset_y'),
+                                'x': rect.get('x'),
+                                'y': rect.get('y'),
+                                'width': rect.get('width'),
+                                'height': rect.get('height')
+                            })
+                    pass
+                else:
+                    # Safely store original control points for regular/attached strands
+                    strand.original_control_point1 = (
+                        QPointF(strand.control_point1) if hasattr(strand, 'control_point1') and isinstance(strand.control_point1, QPointF)
+                        else QPointF(strand.start)
+                    )
+                    strand.original_control_point2 = (
+                        QPointF(strand.control_point2) if hasattr(strand, 'control_point2') and isinstance(strand.control_point2, QPointF)
+                        else QPointF(strand.end)
+                    )
+                    if hasattr(strand, 'control_point_center') and isinstance(strand.control_point_center, QPointF):
+                         strand.original_control_point_center = QPointF(strand.control_point_center)
 
-                pass
+                    pass
+            except (RuntimeError, TypeError):
+                # Strand's C++ object was deleted or has invalid data
+                continue
 
     def setup_ui(self):
         _ = translations[self.language_code]
@@ -3192,7 +3254,7 @@ class GroupMoveDialog(QDialog):
             delta = QPointF(self.total_dx, self.total_dy)
             pass
 
-            for strand in group_data['strands']:
+            for strand in list(group_data.get('strands', [])):
                 strand.updating_position = True  # Flag to potentially optimize updates
 
                 if isinstance(strand, MaskedStrand):
@@ -3374,7 +3436,7 @@ class GroupMoveDialog(QDialog):
         """Finalize the movement by storing current positions as new originals"""
         if self.canvas and self.group_name in self.canvas.groups:
             group_data = self.canvas.groups[self.group_name]
-            for strand in group_data['strands']:
+            for strand in list(group_data.get('strands', [])):
                 # Store final positions as new originals
                 strand.original_start = QPointF(strand.start)
                 strand.original_end = QPointF(strand.end)
@@ -3526,12 +3588,16 @@ class GroupLayerManager:
         additional_strands_to_add = []  # Strands to add due to mask dependencies
         
         # First pass: collect strands that match the selected main strands
-        for strand in self.canvas.strands:
+        # Snapshot the list to avoid issues if strands change during iteration
+        strands_snapshot = list(self.canvas.strands)
+        for strand in strands_snapshot:
+            if not hasattr(strand, 'layer_name'):
+                continue
             main_layer = self.extract_main_layer(strand.layer_name)
             if main_layer in selected_main_strands:
                 selected_strands.append(strand)
                 pass
-                
+
                 # If this is a MaskedStrand, ensure its component strands are also included
                 if hasattr(strand, '__class__') and strand.__class__.__name__ == 'MaskedStrand':
                     pass
@@ -3587,7 +3653,7 @@ class GroupLayerManager:
                 if strand_id.isdigit():
                     strand_id = f"{strand_id}_1"
                 # Find the actual strand object by name
-                for strand in self.canvas.strands:
+                for strand in list(self.canvas.strands):
                     if hasattr(strand, 'layer_name') and strand.layer_name == strand_id:
                         return strand
                 pass
@@ -3617,7 +3683,7 @@ class GroupLayerManager:
         
         # Only if we still have no main strands, derive from strands (last resort)
         if not all_main_strands and self.canvas:
-            for strand in self.canvas.strands:
+            for strand in list(self.canvas.strands):
                 if hasattr(strand, 'layer_name'):
                     parts = strand.layer_name.split('_')
                     if len(parts) == 2 and parts[1] == '1':  # Only add main strands (x_1 pattern)
@@ -3639,7 +3705,7 @@ class GroupLayerManager:
             if hasattr(main_strand, 'layer_name'):
                 branch = self.extract_main_layer(main_strand.layer_name)
                 branch_strands = []
-                for strand in self.canvas.strands:
+                for strand in list(self.canvas.strands):
                     if hasattr(strand, 'layer_name') and self.extract_main_layer(strand.layer_name) == branch:
                         branch_strands.append(strand)
                         pass
@@ -3802,7 +3868,7 @@ class GroupLayerManager:
                 parent_obj = getattr(new_strand, 'parent', None)
                 parent_layer_name = getattr(parent_obj, 'layer_name', None) if parent_obj is not None else None
 
-                if parent_layer_name and any(strand.layer_name == parent_layer_name for strand in group_data['strands']):
+                if parent_layer_name and any(strand.layer_name == parent_layer_name for strand in group_data.get('strands', [])):
                     # Store the original main strands before deletion
                     original_main_strands = list(group_data.get('main_strands', []))
 
@@ -3959,7 +4025,7 @@ class GroupLayerManager:
 
         # Find all masked strands and their component strands
         masked_strand_components = {}  # Map: component_strand -> list of other components it's masked with
-        for strand in self.canvas.strands:
+        for strand in list(self.canvas.strands):
             if hasattr(strand, '__class__') and strand.__class__.__name__ == 'MaskedStrand':
                 # Extract the main strand numbers from the mask
                 layer_parts = strand.layer_name.split('_')
@@ -4136,9 +4202,15 @@ class GroupLayerManager:
         selected_main_strands = []
 
         def on_ok():
+            # Extract checked state into pure Python data BEFORE accepting
+            # so we never access Qt widgets after the dialog is torn down.
             for main_strand, checkbox in checkboxes:
-                if checkbox.isChecked():
-                    selected_main_strands.append(main_strand)
+                try:
+                    if checkbox.isChecked():
+                        selected_main_strands.append(main_strand)
+                except RuntimeError:
+                    # Widget already deleted by Qt C++ side – skip safely
+                    pass
             dialog.accept()
 
         def on_cancel():
@@ -4205,7 +4277,10 @@ class GroupLayerManager:
         
         def on_ok():
             nonlocal result_text, result_ok
-            result_text = input_field.text()
+            try:
+                result_text = input_field.text()
+            except RuntimeError:
+                result_text = ""
             result_ok = True
             dialog.accept()
         
@@ -4280,6 +4355,8 @@ class GroupLayerManager:
     # In GroupLayerManager
     def create_group(self):
         """Create a new group with selected main strands and their control points."""
+        import gc as _gc
+
         # Access the current translation dictionary
         self.language_code = self.canvas.language_code if self.canvas else 'en'
         _ = translations[self.language_code]
@@ -4288,7 +4365,7 @@ class GroupLayerManager:
         group_name, ok = self.create_custom_input_dialog(
             self.layer_panel, _['create_group'], _['enter_group_name'], _
         )
-        
+
         if not ok or not group_name:
             pass
             return
@@ -4304,12 +4381,15 @@ class GroupLayerManager:
             if not confirm:
                 pass
                 return
-            
+
             # If replacing, remove the existing group
-            if hasattr(self.group_panel, 'delete_group'):
-                self.group_panel.delete_group(group_name)
-            elif hasattr(self.group_panel, 'remove_group'):
-                self.group_panel.remove_group(group_name)
+            try:
+                if hasattr(self.group_panel, 'delete_group'):
+                    self.group_panel.delete_group(group_name)
+                elif hasattr(self.group_panel, 'remove_group'):
+                    self.group_panel.remove_group(group_name)
+            except RuntimeError:
+                pass
             if group_name in self.canvas.groups:
                 del self.canvas.groups[group_name]
             pass
@@ -4326,6 +4406,21 @@ class GroupLayerManager:
         # Convert selected_main_strands to a set
         selected_main_strands = set(selected_main_strands)
 
+        # Disable GC during group creation to prevent Qt C++ access violations
+        _gc_was_enabled = _gc.isenabled()
+        _gc.disable()
+        try:
+            self._create_group_inner(group_name, selected_main_strands)
+        except Exception as e:
+            print(f"[DEBUG] ERROR in create_group: {e}")
+            import traceback
+            traceback.print_exc()
+        finally:
+            if _gc_was_enabled:
+                _gc.enable()
+
+    def _create_group_inner(self, group_name, selected_main_strands):
+        """Inner implementation of create_group (GC-protected by caller)."""
         # Create the group in canvas.groups first
         if self.canvas:
             self.canvas.groups[group_name] = {
@@ -4341,13 +4436,44 @@ class GroupLayerManager:
         selected_strands = []
         layers_data = []
         additional_strands_to_add = []  # Strands to add due to mask dependencies
-        
+
+        # Helper to safely build strand_data dict
+        def _safe_strand_data(strand):
+            try:
+                cp1 = strand.control_point1 if isinstance(strand.control_point1, QPointF) else QPointF(strand.start)
+                cp2 = strand.control_point2 if isinstance(strand.control_point2, QPointF) else QPointF(strand.end)
+                return {
+                    'layer_name': strand.layer_name,
+                    'start': QPointF(strand.start),
+                    'end': QPointF(strand.end),
+                    'control_point1': cp1,
+                    'control_point2': cp2,
+                    'width': strand.width,
+                    'color': QColor(strand.color),
+                    'stroke_color': QColor(strand.stroke_color),
+                    'stroke_width': strand.stroke_width,
+                    'has_circles': strand.has_circles.copy() if hasattr(strand, 'has_circles') and strand.has_circles is not None else [True, True],
+                    'attached_strands': list(strand.attached_strands) if hasattr(strand, 'attached_strands') and strand.attached_strands is not None else [],
+                    'is_first_strand': getattr(strand, 'is_first_strand', False),
+                    'is_start_side': getattr(strand, 'is_start_side', True),
+                    'set_number': getattr(strand, 'set_number', 0)
+                }, cp1, cp2
+            except (RuntimeError, TypeError, AttributeError):
+                return None, None, None
+
         # First pass: collect strands that match the selected main strands
-        for strand in self.canvas.strands:
-            main_layer = self.extract_main_layer(strand.layer_name)
+        # Snapshot the list to avoid issues if strands change during iteration
+        strands_snapshot = list(self.canvas.strands)
+        for strand in strands_snapshot:
+            if not hasattr(strand, 'layer_name'):
+                continue
+            try:
+                main_layer = self.extract_main_layer(strand.layer_name)
+            except (RuntimeError, AttributeError):
+                continue
             if main_layer in selected_main_strands:
                 selected_strands.append(strand)  # Keep original strands for group panel
-                
+
                 # If this is a MaskedStrand, ensure its component strands are also included
                 if hasattr(strand, '__class__') and strand.__class__.__name__ == 'MaskedStrand':
                     pass
@@ -4359,75 +4485,36 @@ class GroupLayerManager:
                         if strand.second_selected_strand not in selected_strands:
                             additional_strands_to_add.append(strand.second_selected_strand)
                             pass
-                
-                # Safely handle control points
-                cp1 = strand.control_point1 if isinstance(strand.control_point1, QPointF) else QPointF(strand.start)
-                cp2 = strand.control_point2 if isinstance(strand.control_point2, QPointF) else QPointF(strand.end)
-                
-                # Create a deep copy of the strand data including control points
-                strand_data = {
-                    'layer_name': strand.layer_name,
-                    'start': QPointF(strand.start),
-                    'end': QPointF(strand.end),
-                    'control_point1': cp1,
-                    'control_point2': cp2,
-                    'width': strand.width,
-                    'color': QColor(strand.color),
-                    'stroke_color': QColor(strand.stroke_color),
-                    'stroke_width': strand.stroke_width,
-                    'has_circles': strand.has_circles.copy(),
-                    'attached_strands': strand.attached_strands.copy(),
-                    'is_first_strand': getattr(strand, 'is_first_strand', False),
-                    'is_start_side': strand.is_start_side,
-                    'set_number': strand.set_number
-                }
-                layers_data.append(strand_data)
 
-                # Add to canvas groups
-                if self.canvas and group_name in self.canvas.groups:
-                    self.canvas.groups[group_name]['layers'].append(strand.layer_name)
-                    self.canvas.groups[group_name]['strands'].append(strand)
-                    self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
-                        'control_point1': cp1,
-                        'control_point2': cp2
-                    }
-        
+                strand_data, cp1, cp2 = _safe_strand_data(strand)
+                if strand_data is not None:
+                    layers_data.append(strand_data)
+                    # Add to canvas groups
+                    if self.canvas and group_name in self.canvas.groups:
+                        self.canvas.groups[group_name]['layers'].append(strand.layer_name)
+                        self.canvas.groups[group_name]['strands'].append(strand)
+                        self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
+                            'control_point1': cp1,
+                            'control_point2': cp2
+                        }
+
         # Second pass: process additional strands from mask dependencies
         for strand in additional_strands_to_add:
             if strand not in selected_strands:  # Avoid duplicates
                 selected_strands.append(strand)
-                
-                # Process this strand the same way as in the first pass
-                cp1 = strand.control_point1 if isinstance(strand.control_point1, QPointF) else QPointF(strand.start)
-                cp2 = strand.control_point2 if isinstance(strand.control_point2, QPointF) else QPointF(strand.end)
-                
-                strand_data = {
-                    'layer_name': strand.layer_name,
-                    'start': QPointF(strand.start),
-                    'end': QPointF(strand.end),
-                    'control_point1': cp1,
-                    'control_point2': cp2,
-                    'width': strand.width,
-                    'color': QColor(strand.color),
-                    'stroke_color': QColor(strand.stroke_color),
-                    'stroke_width': strand.stroke_width,
-                    'has_circles': strand.has_circles.copy(),
-                    'attached_strands': strand.attached_strands.copy(),
-                    'is_first_strand': getattr(strand, 'is_first_strand', False),
-                    'is_start_side': strand.is_start_side,
-                    'set_number': strand.set_number
-                }
-                layers_data.append(strand_data)
-                
-                # Add to canvas groups
-                if self.canvas and group_name in self.canvas.groups:
-                    self.canvas.groups[group_name]['layers'].append(strand.layer_name)
-                    self.canvas.groups[group_name]['strands'].append(strand)
-                    self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
-                        'control_point1': cp1,
-                        'control_point2': cp2
-                    }
-                    
+
+                strand_data, cp1, cp2 = _safe_strand_data(strand)
+                if strand_data is not None:
+                    layers_data.append(strand_data)
+                    # Add to canvas groups
+                    if self.canvas and group_name in self.canvas.groups:
+                        self.canvas.groups[group_name]['layers'].append(strand.layer_name)
+                        self.canvas.groups[group_name]['strands'].append(strand)
+                        self.canvas.groups[group_name]['control_points'][strand.layer_name] = {
+                            'control_point1': cp1,
+                            'control_point2': cp2
+                        }
+
                 pass
 
         if not selected_strands:
@@ -4437,7 +4524,11 @@ class GroupLayerManager:
             return
 
         # Create the group in the group panel with original strand objects
-        self.group_panel.create_group(group_name, selected_strands)
+        try:
+            self.group_panel.create_group(group_name, selected_strands)
+        except RuntimeError as e:
+            print(f"[DEBUG] ERROR in group_panel.create_group: {e}")
+            return
         print("[DEBUG] Step 10: create_group returned, now updating canvas.groups...")
 
         # Update the group in canvas.groups with all data
@@ -4446,25 +4537,26 @@ class GroupLayerManager:
             try:
                 control_points_dict = {}
                 for strand in selected_strands:
-                    # Store control points - Handle MaskedStrand differently
-                    if isinstance(strand, MaskedStrand):
-                        # MaskedStrands don't have control points, so we can use start/end or None
-                        cp1 = None
-                        cp2 = None
-                        # Check if we can get proxy control points from component strands if needed
-                    else:
-                        cp1 = QPointF(strand.start) if strand.control_point1 is None else QPointF(strand.control_point1)
-                        cp2 = QPointF(strand.end) if strand.control_point2 is None else QPointF(strand.control_point2)
-                    
-                    control_points_dict[strand.layer_name] = {
-                        'control_point1': cp1,
-                        'control_point2': cp2
-                    }
+                    try:
+                        # Store control points - Handle MaskedStrand differently
+                        if isinstance(strand, MaskedStrand):
+                            cp1 = None
+                            cp2 = None
+                        else:
+                            cp1 = QPointF(strand.start) if strand.control_point1 is None else QPointF(strand.control_point1)
+                            cp2 = QPointF(strand.end) if strand.control_point2 is None else QPointF(strand.control_point2)
+
+                        control_points_dict[strand.layer_name] = {
+                            'control_point1': cp1,
+                            'control_point2': cp2
+                        }
+                    except (RuntimeError, TypeError, AttributeError):
+                        continue
                 print("[DEBUG] Step 12: control_points dict built successfully")
 
                 self.canvas.groups[group_name].update({
                     'strands': selected_strands,
-                    'layers': [strand.layer_name for strand in selected_strands],
+                    'layers': [strand.layer_name for strand in selected_strands if hasattr(strand, 'layer_name')],
                     'data': layers_data,
                     'main_strands': selected_main_strands,
                     'control_points': control_points_dict
@@ -4479,10 +4571,6 @@ class GroupLayerManager:
         if hasattr(self, 'canvas') and self.canvas:
             self.canvas.update()
         print("[DEBUG] Step 15: canvas.update() completed")
-        
-        # Update the UI
-        if hasattr(self.canvas, 'update'):
-            self.canvas.update()
     def get_main_layers(self):
         return list(set([layer.split('_')[0] for layer in self.get_all_layers()]))
 
@@ -4490,21 +4578,34 @@ class GroupLayerManager:
         return [layer for layer in self.get_all_layers() if layer.startswith(f"{main_layer}_")]
 
     def get_all_layers(self):
-        return [button.text() for button in self.layer_panel.layer_buttons]
+        if not self.layer_panel or not hasattr(self.layer_panel, 'layer_buttons'):
+            return []
+        try:
+            return [button.text() for button in self.layer_panel.layer_buttons]
+        except RuntimeError:
+            return []
 
     def get_layer_index(self, layer_name):
-        return self.layer_panel.layer_buttons.index(next(button for button in self.layer_panel.layer_buttons if button.text() == layer_name))
+        if not self.layer_panel or not hasattr(self.layer_panel, 'layer_buttons'):
+            return -1
+        try:
+            return self.layer_panel.layer_buttons.index(next(button for button in self.layer_panel.layer_buttons if button.text() == layer_name))
+        except (RuntimeError, StopIteration):
+            return -1
     def get_unique_main_strands(self):
         unique_main_strands = set()
-        for strand in self.canvas.strands:
-            main_layer = self.extract_main_layer(strand.layer_name)
-            if main_layer:
-                unique_main_strands.add(main_layer)
+        for strand in list(self.canvas.strands):
+            try:
+                main_layer = self.extract_main_layer(strand.layer_name)
+                if main_layer:
+                    unique_main_strands.add(main_layer)
+            except (RuntimeError, AttributeError):
+                continue
         return unique_main_strands
     def save(self, filename):
         data = {
             "groups": self.get_group_data(),  # Ensure group data is included
-            "strands": [self.serialize_strand(strand) for strand in self.canvas.strands]
+            "strands": [self.serialize_strand(strand) for strand in list(self.canvas.strands)]
         }
         with open(filename, 'w') as f:
             json.dump(data, f, indent=2)
@@ -4518,17 +4619,19 @@ class GroupLayerManager:
         self.apply_group_data(data["groups"])  # Ensure group data is applied
         pass
     def serialize_strand(self, strand):
+        cp1 = strand.control_point1 if strand.control_point1 is not None else strand.start
+        cp2 = strand.control_point2 if strand.control_point2 is not None else strand.end
         return {
             "layer_name": strand.layer_name,
             "start": {"x": strand.start.x(), "y": strand.start.y()},
             "end": {"x": strand.end.x(), "y": strand.end.y()},
-            "control_point1": {"x": strand.control_point1.x(), "y": strand.control_point1.y()},
-            "control_point2": {"x": strand.control_point2.x(), "y": strand.control_point2.y()},
+            "control_point1": {"x": cp1.x(), "y": cp1.y()},
+            "control_point2": {"x": cp2.x(), "y": cp2.y()},
             "width": strand.width,
             "color": self.serialize_color(strand.color),
             "is_masked": isinstance(strand, MaskedStrand),
-            "attached_strands": [self.canvas.strands.index(attached_strand) for attached_strand in strand.attached_strands],
-            "has_circles": strand.has_circles.copy()
+            "attached_strands": [self.canvas.strands.index(attached_strand) for attached_strand in strand.attached_strands if attached_strand in self.canvas.strands],
+            "has_circles": strand.has_circles.copy() if strand.has_circles is not None else [True, True]
         }
 
     def deserialize_strand(self, data):
@@ -4556,8 +4659,11 @@ class GroupLayerManager:
     def clear(self):
         self.tree.clear()
         self.group_panel.groups.clear()
-        for i in reversed(range(self.group_panel.scroll_layout.count())): 
-            self.group_panel.scroll_layout.itemAt(i).widget().setParent(None)
+        if self.group_panel.scroll_layout is not None:
+            for i in reversed(range(self.group_panel.scroll_layout.count())):
+                widget = self.group_panel.scroll_layout.itemAt(i).widget()
+                if widget is not None:
+                    widget.setParent(None)
         if self.canvas:
             self.canvas.groups.clear()
 
@@ -4659,7 +4765,7 @@ class GroupLayerManager:
             # Create QPointF for the movement delta
             delta = QPointF(dx, dy)
             
-            for strand in group_data['strands']:
+            for strand in list(group_data.get('strands', [])):
                 # Check if this is a MaskedStrand - handle differently
                 if isinstance(strand, MaskedStrand):
                     # MaskedStrands don't have control points - move start/end only
@@ -4782,12 +4888,12 @@ class GroupLayerManager:
             # (e.g. after individual strand moves in move mode)
             layers_in_group = group_data.get('layers', [])
             refreshed_strands = []
-            for strand in self.canvas.strands:
+            for strand in list(self.canvas.strands):
                 if hasattr(strand, 'layer_name') and strand.layer_name in layers_in_group:
                     if strand not in refreshed_strands:
                         refreshed_strands.append(strand)
                     if hasattr(strand, 'attached_strands'):
-                        for attached in strand.attached_strands:
+                        for attached in list(strand.attached_strands):
                             if attached not in refreshed_strands:
                                 refreshed_strands.append(attached)
             group_data['strands'] = refreshed_strands
@@ -4933,7 +5039,7 @@ class GroupLayerManager:
     def get_group_strands(self, group_name):
         group_layers = self.groups[group_name]['layers']
         strands = []
-        for strand in self.canvas.strands:
+        for strand in list(self.canvas.strands):
             if strand.layer_name in group_layers:
                 strands.append(strand)
         return strands
@@ -5064,11 +5170,11 @@ class GroupRotateDialog(QDialog):
             pre_state = {}
 
         # 4) Set rotation flag on all strands to prevent knot connection maintenance during rotation
-        for strand in group_data['strands']:
+        for strand in list(group_data.get('strands', [])):
             strand._is_being_rotated = True
 
         # 5) Rotate each strand from original positions
-        for strand in group_data['strands']:
+        for strand in list(group_data.get('strands', [])):
             layer_name = strand.layer_name
             if layer_name in pre_state:
                 original_positions = pre_state[layer_name]
@@ -5100,7 +5206,7 @@ class GroupRotateDialog(QDialog):
                     strand.update_side_line()
 
         # 6) Clear rotation flag after all rotations are complete
-        for strand in group_data['strands']:
+        for strand in list(group_data.get('strands', [])):
             strand._is_being_rotated = False
 
         # 7) Redraw the canvas

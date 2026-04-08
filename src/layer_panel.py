@@ -1179,6 +1179,11 @@ class LayerPanel(QWidget):
         # NEW: store current theme – used to style context menus dynamically
         self.current_theme = theme_name
 
+        if hasattr(self, 'group_layer_manager') and self.group_layer_manager:
+            group_panel = getattr(self.group_layer_manager, 'group_panel', None)
+            if group_panel and hasattr(group_panel, 'set_theme'):
+                group_panel.set_theme(theme_name)
+
         if theme_name == "dark":
             palette = self.palette()
             palette.setColor(QPalette.Window, QColor("#2C2C2C"))

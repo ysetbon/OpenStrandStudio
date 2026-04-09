@@ -1381,17 +1381,9 @@ class GroupPanel(QWidget):
                 'main_strands': main_strand_names.copy(),
             }
 
-        # Defer tree update to avoid access violation during repaint
+        # Update tree synchronously with brief repaint suppression.
         branch_ids = [f"{ms.split('_')[0]}_1" for ms in main_strand_names]
-        from PyQt5.QtCore import QTimer
-        QTimer.singleShot(0, lambda n=group_name, b=branch_ids: self._deferred_add_group_to_tree(n, b))
-        print(f"[GROUP CREATE]   tree update scheduled for {group_name!r}")
-
-    def _deferred_add_group_to_tree(self, group_name, branch_ids):
-        """Add tree item after current event processing is complete."""
         try:
-            # Suppress canvas repaint during tree modification to prevent
-            # access violations from concurrent paint events on Windows.
             if self.canvas:
                 self.canvas._suppress_repaint = True
             try:
@@ -1402,6 +1394,8 @@ class GroupPanel(QWidget):
             print(f"[GROUP CREATE]   tree updated for {group_name!r}")
         except Exception as e:
             print(f"[GROUP CREATE]   tree update failed for {group_name!r}: {e}")
+            if self.canvas:
+                self.canvas._suppress_repaint = False
 
     def resolve_group_data(self, group_name):
         """Rebuild full group data on-demand from main_strands by scanning canvas.strands.
@@ -1889,12 +1883,13 @@ class GroupPanel(QWidget):
 
                 # Finish rotation in canvas before wiping session state so any
                 # pending rotation_updated signals still find a valid snapshot.
+                # Suppress repaint during teardown — immediate canvas.update()
+                # after rotation finish causes access violations on Windows
+                # (same pattern as group creation crash).
+                self.canvas._suppress_repaint = True
                 print(f"[DEBUG ROTATE] Calling canvas.finish_group_rotation for {group_name!r}")
                 self.canvas.finish_group_rotation(group_name)
                 print(f"[DEBUG ROTATE] canvas.finish_group_rotation returned for {group_name!r}")
-                print(f"[DEBUG ROTATE] Calling canvas.update() during finish for {group_name!r}")
-                self.canvas.update()
-                print(f"[DEBUG ROTATE] canvas.update() returned during finish for {group_name!r}")
 
                 # Save state once after rotation is complete
                 try:
@@ -1904,9 +1899,10 @@ class GroupPanel(QWidget):
                 except RuntimeError:
                     pass
 
-                # Defer session-state teardown so any queued Qt events (repaints,
-                # rotation_updated) that fire before the next iteration of the event
-                # loop can still access pre_rotation_state and active_group_name.
+                # Defer session-state teardown and canvas repaint so Qt finishes
+                # processing the dialog close and internal widget updates before
+                # any painting occurs.  Immediate canvas.update() here causes
+                # access violations (dangling widget pointers after dialog close).
                 def _clear_rotation_session(expected_group=group_name):
                     try:
                         if self.active_group_name == expected_group:
@@ -1914,16 +1910,23 @@ class GroupPanel(QWidget):
                                 delattr(self, 'pre_rotation_state')
                             self.active_group_name = None
                             print(f"[DEBUG ROTATE] Cleared deferred rotation session for {expected_group!r}")
+                        # Now safe to repaint
+                        if self.canvas:
+                            self.canvas._suppress_repaint = False
+                            self.canvas.update()
                     except RuntimeError:
                         pass
 
-                QTimer.singleShot(0, _clear_rotation_session)
+                QTimer.singleShot(50, _clear_rotation_session)
                 print(f"[DEBUG ROTATE] Scheduled deferred rotation session clear for {group_name!r}")
 
             except Exception as e:
                 import traceback
                 print(f"[DEBUG ROTATE] _finish_group_rotation_inner failed for {group_name!r}: {e}")
                 traceback.print_exc()
+                # Ensure repaint is re-enabled on error
+                if self.canvas:
+                    self.canvas._suppress_repaint = False
         else:
             pass
 
@@ -4137,7 +4140,25 @@ class GroupLayerManager:
                         selected.add(main_strand)
                 except RuntimeError:
                     pass
-        dialog.deleteLater()
+        # NOTE: dialog.deleteLater() was removed here because it caused
+        # "Windows fatal exception: access violation" crashes.  When Qt
+        # processes the deferred delete, child widgets are destroyed while
+        # pending events (tooltips, focus, repaint) still reference them.
+        # We hide + reparent instead, and clean up old refs to limit leaks.
+        # If you see a memory leak from group dialogs, this is why.
+        print(f"[GROUP DIALOG] strand-selection dialog hidden (not deleted) to avoid access violation")
+        dialog.hide()
+        dialog.setParent(None)
+        if not hasattr(self, '_dialog_refs'):
+            self._dialog_refs = []
+        # Keep only the last few refs to limit memory growth
+        if len(self._dialog_refs) > 5:
+            old = self._dialog_refs.pop(0)
+            try:
+                old.deleteLater()
+            except RuntimeError:
+                pass
+        self._dialog_refs.append(dialog)
         return selected if selected else None
 
     def _build_strand_selection_dialog(self, main_strands, _=None):
@@ -4542,7 +4563,24 @@ class GroupLayerManager:
         result = dialog.exec_()
         text = input_field.text() if input_field else ""
         ok = (result == QDialog.Accepted)
-        dialog.deleteLater()
+        # NOTE: dialog.deleteLater() was removed here because it caused
+        # "Windows fatal exception: access violation" crashes.  When Qt
+        # processes the deferred delete, child widgets are destroyed while
+        # pending events (tooltips, focus, repaint) still reference them.
+        # We hide + reparent instead, and clean up old refs to limit leaks.
+        # If you see a memory leak from group dialogs, this is why.
+        print(f"[GROUP DIALOG] input dialog hidden (not deleted) to avoid access violation")
+        dialog.hide()
+        dialog.setParent(None)
+        if not hasattr(self, '_dialog_refs'):
+            self._dialog_refs = []
+        if len(self._dialog_refs) > 5:
+            old = self._dialog_refs.pop(0)
+            try:
+                old.deleteLater()
+            except RuntimeError:
+                pass
+        self._dialog_refs.append(dialog)
         return text, ok
 
     def _build_question_dialog(self, parent, title, message, translations):
@@ -4713,14 +4751,24 @@ class GroupLayerManager:
             print(f"[GROUP FLOW] ERROR in group_panel.create_group: {e}")
             return
 
-        if hasattr(self, 'canvas') and self.canvas:
-            self.canvas.update()
-
         print(
             f"[GROUP FLOW] _create_group_inner finish for {group_name!r}: "
             f"panel_group_exists={group_name in self.group_panel.groups if hasattr(self, 'group_panel') else 'N/A'}, "
             f"canvas_group_exists={group_name in self.canvas.groups if self.canvas else 'N/A'}"
         )
+
+        # Schedule canvas repaint after tree modifications have settled.
+        if hasattr(self, 'canvas') and self.canvas:
+            from PyQt5.QtCore import QTimer
+            QTimer.singleShot(100, self._safe_canvas_update_after_group)
+
+    def _safe_canvas_update_after_group(self):
+        """Repaint canvas after group creation settles."""
+        try:
+            if self.canvas:
+                self.canvas.update()
+        except Exception:
+            pass
     def get_main_layers(self):
         return list(set([layer.split('_')[0] for layer in self.get_all_layers()]))
 

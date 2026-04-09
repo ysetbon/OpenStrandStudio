@@ -1483,8 +1483,10 @@ class MoveMode:
             if hasattr(self.canvas, 'background_cache_valid'):
                 self.canvas.background_cache_valid = False
 
-        # Force a full redraw of the canvas
-        self.canvas.update()
+        # Force a full redraw of the canvas (skip if repaint is suppressed
+        # to avoid access violations after group creation)
+        if not getattr(self.canvas, '_suppress_repaint', False):
+            self.canvas.update()
 
     def cancel_movement(self):
         """Externally cancel any ongoing move operation."""
@@ -3963,7 +3965,9 @@ class MoveMode:
             self.canvas.background_cache_valid = False
 
         # Force a single redraw of the canvas - no additional timers to prevent infinite loops
-        self.canvas.update()
+        # Skip if repaint is suppressed to avoid access violations after group creation
+        if not getattr(self.canvas, '_suppress_repaint', False):
+            self.canvas.update()
 
     def mouseMoveEvent(self, event):
         """

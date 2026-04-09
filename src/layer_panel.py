@@ -351,12 +351,16 @@ class TooltipButton(QPushButton):
             
     def event(self, event):
         """Override event to disable hover tooltips"""
-        if event.type() == event.ToolTip:
+        if event.type() == QEvent.ToolTip:
+            QToolTip.hideText()
+            event.accept()
             return True
         try:
             return super().event(event)
-        except RuntimeError:
-            return False
+        except RuntimeError as exc:
+            if "deleted" in str(exc):
+                return False
+            raise
 
 
 class LayerPanel(QWidget):

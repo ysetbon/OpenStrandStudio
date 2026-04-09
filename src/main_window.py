@@ -2574,3 +2574,17 @@ class MainWindow(QMainWindow):
             self.layer_state_button
         ]:
             button.setEnabled(True)
+
+    def closeEvent(self, event):
+        """Clean up hidden dialog refs to prevent crash on exit."""
+        if hasattr(self, 'group_layer_manager'):
+            glm = self.group_layer_manager
+            if hasattr(glm, '_dialog_refs'):
+                for dlg in glm._dialog_refs:
+                    try:
+                        dlg.setParent(None)
+                        dlg.deleteLater()
+                    except RuntimeError:
+                        pass
+                glm._dialog_refs.clear()
+        super().closeEvent(event)

@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDi
                              QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,  QScrollArea, QMenu, QTableWidget, 
                              QTableWidgetItem, QHeaderView, QSizePolicy,  QMessageBox, QAbstractButton)
 from PyQt5.QtWidgets import QStyleOptionButton, QProxyStyle, QStyle, QStyledItemDelegate
-from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QPoint, QEvent
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QPoint, QEvent, QEventLoop
 from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon, QIntValidator, QGuiApplication, QPainter, QPen, QPainterPath
 from math import atan2, degrees, isqrt
 from translations import translations
@@ -1390,7 +1390,15 @@ class GroupPanel(QWidget):
     def _deferred_add_group_to_tree(self, group_name, branch_ids):
         """Add tree item after current event processing is complete."""
         try:
-            self._add_group_to_tree(group_name, branch_ids)
+            # Suppress canvas repaint during tree modification to prevent
+            # access violations from concurrent paint events on Windows.
+            if self.canvas:
+                self.canvas._suppress_repaint = True
+            try:
+                self._add_group_to_tree(group_name, branch_ids)
+            finally:
+                if self.canvas:
+                    self.canvas._suppress_repaint = False
             print(f"[GROUP CREATE]   tree updated for {group_name!r}")
         except Exception as e:
             print(f"[GROUP CREATE]   tree update failed for {group_name!r}: {e}")
@@ -1461,6 +1469,8 @@ class GroupPanel(QWidget):
 
     def start_group_rotation(self, group_name):
         print(f"[DEBUG ROTATE] start_group_rotation called for '{group_name}'")
+        # Reset the save-done flag so this rotation can complete properly
+        self._rotation_save_done = False
         # Resolve group data on-demand from main_strands
         group_data = self.resolve_group_data(group_name)
         if group_data:
@@ -1529,13 +1539,7 @@ class GroupPanel(QWidget):
                     )
                     self.canvas.start_group_rotation(group_name)
                     print(f"[DEBUG ROTATE] canvas.start_group_rotation returned for '{group_name}'")
-                except Exception as e:
-                    print(f"[DEBUG ROTATE] canvas.start_group_rotation failed for '{group_name}': {e}")
-                    self.canvas._suppress_repaint = False
-                    import traceback
-                    traceback.print_exc()
-                    raise
-                try:
+
                     print(f"[DEBUG ROTATE] Constructing GroupRotateDialog for '{group_name}'")
                     parent_widget = self.window() or self
                     print(
@@ -1544,33 +1548,36 @@ class GroupPanel(QWidget):
                     )
                     dialog = GroupRotateDialog(group_name, group_panel=self, parent=parent_widget)
                     print(f"[DEBUG ROTATE] GroupRotateDialog constructed for '{group_name}'")
-                except Exception as e:
-                    print(f"[DEBUG ROTATE] GroupRotateDialog construction failed for '{group_name}': {e}")
+
+                    print(f"[DEBUG ROTATE] Connecting dialog signals for '{group_name}'")
+                    dialog.rotation_updated.connect(self.update_group_rotation)
+                    dialog.rotation_finished.connect(self.finish_group_rotation)
+                    dialog.finished.connect(
+                        lambda result, name=group_name: print(
+                            f"[DEBUG ROTATE] Dialog finished for '{name}' with result={result}"
+                        )
+                    )
+                    # Keep a strong reference while the dialog is open.
+                    self._rotation_dialog_ref = dialog
+                    dialog.finished.connect(lambda *_args, owner=self: setattr(owner, '_rotation_dialog_ref', None))
+                    print("[DEBUG ROTATE] Dialog created, about to exec...")
+                    dialog.setModal(True)
+                    # Flush pending events (including any queued paint events)
+                    # while repaint is suppressed, then re-enable painting so
+                    # the rotation slider can update the canvas normally.
+                    from PyQt5.QtWidgets import QApplication
+                    QApplication.processEvents()
                     self.canvas._suppress_repaint = False
+                    dialog.exec_()
+                    print("[DEBUG ROTATE] Dialog exec completed")
+                except Exception as e:
+                    print(f"[DEBUG ROTATE] Rotation setup failed for '{group_name}': {e}")
                     import traceback
                     traceback.print_exc()
                     raise
-                print(f"[DEBUG ROTATE] Connecting dialog signals for '{group_name}'")
-                dialog.rotation_updated.connect(self.update_group_rotation)
-                dialog.rotation_finished.connect(self.finish_group_rotation)
-                dialog.finished.connect(
-                    lambda result, name=group_name: print(
-                        f"[DEBUG ROTATE] Dialog finished for '{name}' with result={result}"
-                    )
-                )
-                # Keep a strong reference while the dialog is open.
-                self._rotation_dialog_ref = dialog
-                dialog.finished.connect(lambda *_args, owner=self: setattr(owner, '_rotation_dialog_ref', None))
-                print("[DEBUG ROTATE] Dialog created, about to exec...")
-                dialog.setModal(True)
-                # Flush pending events (including any queued paint events)
-                # while repaint is suppressed, then re-enable painting so
-                # the rotation slider can update the canvas normally.
-                from PyQt5.QtWidgets import QApplication
-                QApplication.processEvents()
-                self.canvas._suppress_repaint = False
-                dialog.exec_()
-                print("[DEBUG ROTATE] Dialog exec completed")
+                finally:
+                    # Ensure repaint is always re-enabled, even on exception
+                    self.canvas._suppress_repaint = False
             else:
                 print("[DEBUG ROTATE] No canvas")
         else:
@@ -1927,6 +1934,12 @@ class GroupPanel(QWidget):
         print(f"[GROUP DELETE] GroupPanel.delete_group('{group_name}') called")
         print(f"[GROUP DELETE]   in self.groups: {group_name in self.groups}")
         print(f"[GROUP DELETE]   in canvas.groups: {self.canvas and group_name in self.canvas.groups}")
+
+        # If the deleted group was the active rotation target, clear rotation state
+        if getattr(self, 'active_group_name', None) == group_name:
+            self.active_group_name = None
+            if hasattr(self, 'pre_rotation_state'):
+                delattr(self, 'pre_rotation_state')
 
         # Always clean canvas.groups, regardless of group_panel.groups state
         if self.canvas and group_name in self.canvas.groups:
@@ -4113,9 +4126,26 @@ class GroupLayerManager:
         parts = layer_name.split('_')
         return parts[0] if parts else layer_name
     def open_main_strand_selection_dialog(self, main_strands):
-        # Access the current translation dictionary
-        self.language_code = self.canvas.language_code if self.canvas else 'en'
-        _ = translations[self.language_code]
+        """Blocking wrapper — opens strand selection and returns selected set or None."""
+        dialog, checkboxes = self._build_strand_selection_dialog(main_strands)
+        result = dialog.exec_()
+        selected = set()
+        if result == QDialog.Accepted:
+            for main_strand, checkbox in checkboxes:
+                try:
+                    if checkbox.isChecked():
+                        selected.add(main_strand)
+                except RuntimeError:
+                    pass
+        dialog.deleteLater()
+        return selected if selected else None
+
+    def _build_strand_selection_dialog(self, main_strands, _=None):
+        """Build the strand-selection dialog. Returns (dialog, checkboxes).
+        Does NOT show the dialog — caller uses dialog.open() or dialog.exec_()."""
+        if _ is None:
+            self.language_code = self.canvas.language_code if self.canvas else 'en'
+            _ = translations[self.language_code]
 
         dialog = QDialog(self.layer_panel)
         dialog.setWindowTitle(_['select_main_strands'])
@@ -4438,10 +4468,9 @@ class GroupLayerManager:
         ok_button.clicked.connect(on_ok)
         cancel_button.clicked.connect(on_cancel)
 
-        if dialog.exec_() == QDialog.Accepted:
-            return set(selected_main_strands)
-        else:
-            return None
+        # Return dialog + checkboxes for non-blocking use via dialog.open()
+        return dialog, checkboxes
+
     def extract_main_layers(self, layer_name):
         # Split the layer name by underscores and collect all numeric parts
         parts = layer_name.split('_')
@@ -4453,188 +4482,92 @@ class GroupLayerManager:
 
         return main_layers    
 
-    def create_custom_input_dialog(self, parent, title, label, translations):
-        """Create a custom input dialog with properly translated OK/Cancel buttons"""
+    def _build_input_dialog(self, parent, title, label, translations):
+        """Build a themed input dialog. Returns the QDialog (not shown yet).
+        The QLineEdit is accessible via dialog.findChild(QLineEdit)."""
         dialog = QDialog(parent)
         dialog.setWindowTitle(title)
         dialog.setModal(True)
-        
-        # Set RTL layout direction for Hebrew
+
         if self.language_code == 'he':
             dialog.setLayoutDirection(Qt.RightToLeft)
-        
-        # Apply theme-aware styling
+
         is_dark_mode = getattr(self.canvas, 'is_dark_mode', False)
         if is_dark_mode:
             dialog.setStyleSheet("""
-                QDialog {
-                    background-color: #2C2C2C;
-                    color: white;
-                }
-                QLabel {
-                    color: white;
-                }
-                QLineEdit {
-                    background-color: #2B2B2B;
-                    color: white;
-                    border: 1px solid #555555;
-                    border-radius: 4px;
-                    padding: 4px;
-                }
-                QPushButton {
-                    background-color: #252525;
-                    color: white;
-                    font-weight: bold;
-                    border: 2px solid #000000;
-                    padding: 8px 12px;
-                    border-radius: 4px;
-                    min-width: 80px;
-                }
-                QPushButton:hover {
-                    background-color: #505050;
-                    border: 2px solid #666666;
-                }
-                QPushButton:pressed {
-                    background-color: #151515;
-                    border: 2px solid #000000;
-                }
+                QDialog { background-color: #2C2C2C; color: white; }
+                QLabel { color: white; }
+                QLineEdit { background-color: #2B2B2B; color: white; border: 1px solid #555555; border-radius: 4px; padding: 4px; }
+                QPushButton { background-color: #252525; color: white; font-weight: bold; border: 2px solid #000000; padding: 8px 12px; border-radius: 4px; min-width: 80px; }
+                QPushButton:hover { background-color: #505050; border: 2px solid #666666; }
+                QPushButton:pressed { background-color: #151515; border: 2px solid #000000; }
             """)
         else:
             dialog.setStyleSheet("""
-                QDialog {
-                    background-color: #FFFFFF;
-                    color: #000000;
-                }
-                QLabel {
-                    color: #000000;
-                }
-                QLineEdit {
-                    background-color: #FFFFFF;
-                    color: #000000;
-                    border: 1px solid #CCCCCC;
-                    border-radius: 4px;
-                    padding: 4px;
-                }
-                QPushButton {
-                    background-color: #F0F0F0;
-                    color: #000000;
-                    font-weight: bold;
-                    border: 1px solid #BBBBBB;
-                    padding: 8px 12px;
-                    border-radius: 4px;
-                    min-width: 80px;
-                }
-                QPushButton:hover {
-                    background-color: #E0E0E0;
-                    border: 1px solid #999999;
-                }
-                QPushButton:pressed {
-                    background-color: #D0D0D0;
-                    border: 1px solid #888888;
-                }
+                QDialog { background-color: #FFFFFF; color: #000000; }
+                QLabel { color: #000000; }
+                QLineEdit { background-color: #FFFFFF; color: #000000; border: 1px solid #CCCCCC; border-radius: 4px; padding: 4px; }
+                QPushButton { background-color: #F0F0F0; color: #000000; font-weight: bold; border: 1px solid #BBBBBB; padding: 8px 12px; border-radius: 4px; min-width: 80px; }
+                QPushButton:hover { background-color: #E0E0E0; border: 1px solid #999999; }
+                QPushButton:pressed { background-color: #D0D0D0; border: 1px solid #888888; }
             """)
-        
+
         layout = QVBoxLayout(dialog)
-        
-        # Label
-        label_widget = QLabel(label)
-        layout.addWidget(label_widget)
-        
-        # Input field
+        layout.addWidget(QLabel(label))
         input_field = QLineEdit()
         layout.addWidget(input_field)
-        
-        # Buttons
+
         button_layout = QHBoxLayout()
         ok_button = QPushButton(translations['ok'])
         cancel_button = QPushButton(translations['cancel'])
-        
-        # Set proper button order for RTL languages
         if self.language_code == 'he':
-            # For Hebrew RTL: OK (אישור) on right, Cancel (ביטול) on left
-            button_layout.addWidget(cancel_button)  # Cancel second = appears on left
-            button_layout.addWidget(ok_button)      # OK first = appears on right
+            button_layout.addWidget(cancel_button)
+            button_layout.addWidget(ok_button)
         else:
-            # For LTR: OK on left, Cancel on right
             button_layout.addWidget(ok_button)
             button_layout.addWidget(cancel_button)
-            
         layout.addLayout(button_layout)
-        
-        # Connect buttons
-        result_text = ""
-        result_ok = False
-        
-        def on_ok():
-            nonlocal result_text, result_ok
-            try:
-                result_text = input_field.text()
-            except RuntimeError:
-                result_text = ""
-            result_ok = True
-            dialog.accept()
-        
-        def on_cancel():
-            nonlocal result_ok
-            result_ok = False
-            dialog.reject()
-        
-        ok_button.clicked.connect(on_ok)
-        cancel_button.clicked.connect(on_cancel)
-        input_field.returnPressed.connect(on_ok)  # Allow Enter key to submit
-        
-        # Execute dialog
-        dialog.exec_()
-        return result_text, result_ok
 
-    def create_custom_question_dialog(self, parent, title, message, translations):
-        """Create a custom question dialog with properly translated Yes/No buttons"""
+        ok_button.clicked.connect(dialog.accept)
+        cancel_button.clicked.connect(dialog.reject)
+        input_field.returnPressed.connect(dialog.accept)
+
+        return dialog
+
+    def create_custom_input_dialog(self, parent, title, label, translations):
+        """Blocking wrapper around _build_input_dialog for callers that
+        expect synchronous (text, ok) result. Uses exec_()."""
+        dialog = self._build_input_dialog(parent, title, label, translations)
+        input_field = dialog.findChild(QLineEdit)
+        result = dialog.exec_()
+        text = input_field.text() if input_field else ""
+        ok = (result == QDialog.Accepted)
+        dialog.deleteLater()
+        return text, ok
+
+    def _build_question_dialog(self, parent, title, message, translations):
+        """Build a themed Yes/No question dialog. Returns the QDialog (not shown yet).
+        accept = Yes, reject = No."""
         dialog = QDialog(parent)
         dialog.setWindowTitle(title)
         dialog.setModal(True)
-        
-        # Set RTL layout direction for Hebrew
+
         if self.language_code == 'he':
             dialog.setLayoutDirection(Qt.RightToLeft)
-        
-        # Apply theme-aware styling
+
         is_dark_mode = getattr(self.canvas, 'is_dark_mode', False)
         if is_dark_mode:
             dialog.setStyleSheet("""
-                QDialog {
-                    background-color: #2C2C2C;
-                    color: white;
-                }
-                QLabel {
-                    color: white;
-                }
-                QPushButton {
-                    background-color: #252525;
-                    color: white;
-                    font-weight: bold;
-                    border: 2px solid #000000;
-                    padding: 8px 12px;
-                    border-radius: 4px;
-                    min-width: 80px;
-                }
-                QPushButton:hover {
-                    background-color: #505050;
-                    border: 2px solid #666666;
-                }
-                QPushButton:pressed {
-                    background-color: #151515;
-                    border: 2px solid #000000;
-                }
+                QDialog { background-color: #2C2C2C; color: white; }
+                QLabel { color: white; }
+                QPushButton { background-color: #252525; color: white; font-weight: bold; border: 2px solid #000000; padding: 8px 12px; border-radius: 4px; min-width: 80px; }
+                QPushButton:hover { background-color: #505050; border: 2px solid #666666; }
+                QPushButton:pressed { background-color: #151515; border: 2px solid #000000; }
             """)
         else:
             dialog.setStyleSheet("""
-                QDialog {
-                    background-color: #FFFFFF;
-                    color: #000000;
-                }
-                QLabel {
-                    color: #000000;
-                }
+                QDialog { background-color: #FFFFFF; color: #000000; }
+                QLabel { color: #000000; }
                 QPushButton {
                     background-color: #F0F0F0;
                     color: #000000;
@@ -4655,48 +4588,33 @@ class GroupLayerManager:
             """)
         
         layout = QVBoxLayout(dialog)
-        
-        # Message
+
         message_label = QLabel(message)
         message_label.setWordWrap(True)
         layout.addWidget(message_label)
-        
-        # Buttons - Use 'ok' for Yes and 'cancel' for No since we don't have specific yes/no translations
+
         button_layout = QHBoxLayout()
-        yes_button = QPushButton(translations['ok'])  # Use OK as Yes
-        no_button = QPushButton(translations['cancel'])  # Use Cancel as No
-        
-        # Set proper button order for RTL languages
+        yes_button = QPushButton(translations['ok'])
+        no_button = QPushButton(translations['cancel'])
         if self.language_code == 'he':
-            # For Hebrew RTL: Yes/OK (אישור) on right, No/Cancel (ביטול) on left
-            button_layout.addWidget(yes_button)      # Yes first = appears on right
-            button_layout.addWidget(no_button)       # No second = appears on left
-        else:
-            # For LTR: Yes/OK on left, No/Cancel on right
             button_layout.addWidget(yes_button)
             button_layout.addWidget(no_button)
-            
+        else:
+            button_layout.addWidget(yes_button)
+            button_layout.addWidget(no_button)
         layout.addLayout(button_layout)
-        
-        # Connect buttons
-        result = False
-        
-        def on_yes():
-            nonlocal result
-            result = True
-            dialog.accept()
-        
-        def on_no():
-            nonlocal result
-            result = False
-            dialog.reject()
-        
-        yes_button.clicked.connect(on_yes)
-        no_button.clicked.connect(on_no)
-        
-        # Execute dialog
-        dialog.exec_()
-        return result
+
+        yes_button.clicked.connect(dialog.accept)
+        no_button.clicked.connect(dialog.reject)
+
+        return dialog
+
+    def create_custom_question_dialog(self, parent, title, message, translations):
+        """Blocking wrapper for callers that expect a synchronous bool result."""
+        dialog = self._build_question_dialog(parent, title, message, translations)
+        result = dialog.exec_()
+        dialog.deleteLater()
+        return result == QDialog.Accepted
 
     # In GroupLayerManager
     # In GroupLayerManager
@@ -4712,7 +4630,6 @@ class GroupLayerManager:
         )
 
         if not ok or not group_name:
-            pass
             return
 
         # Check if group already exists and confirm if user wants to replace it
@@ -4724,7 +4641,6 @@ class GroupLayerManager:
                 _
             )
             if not confirm:
-                pass
                 return
 
             # If replacing, remove the existing group
@@ -4737,7 +4653,6 @@ class GroupLayerManager:
                 pass
             if group_name in self.canvas.groups:
                 del self.canvas.groups[group_name]
-            pass
 
         # Get the available main strands
         main_strands = self.get_unique_main_strands()
@@ -4747,7 +4662,6 @@ class GroupLayerManager:
         selected_main_strands = self.open_main_strand_selection_dialog(main_strands)
         if not selected_main_strands:
             print(f"[GROUP FLOW] create_group aborted for {group_name!r}: no main strands selected")
-            pass
             return
 
         # Convert selected_main_strands to a set

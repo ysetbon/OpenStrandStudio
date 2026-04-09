@@ -144,6 +144,10 @@ class StrandDrawingCanvas(QWidget):
         self.rotating_group = None
         self.rotation_center = None
         self.original_strand_positions = {}
+        self.is_rotating = False
+        self.rotating_group_name = None
+        self.current_rotation_angle = 0.0
+        self.group_move_start_pos = None
         
         self.rotate_mode = RotateMode(self)
 
@@ -876,29 +880,15 @@ class StrandDrawingCanvas(QWidget):
             traceback.print_exc()
 
     def _finish_group_rotation_inner(self, group_name):
-        if hasattr(self, 'pre_rotation_main_strands'):
-            pass
-        else:
-            pass
+        if not (hasattr(self, 'rotating_group_name') and self.rotating_group_name == group_name):
+            return
 
-        if hasattr(self, 'rotating_group_name') and self.rotating_group_name == group_name:
+        try:
             if group_name in self.groups:
-                # Log group data before restoration
-                current_main_strands = self.groups[group_name].get('main_strands', [])
-                #logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Current main strands before restoration: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in current_main_strands]}")
-                
                 # Restore the original main strands
                 if hasattr(self, 'pre_rotation_main_strands'):
                     self.groups[group_name]['main_strands'] = self.pre_rotation_main_strands
-                    #logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Restored main strands for group {group_name}: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in self.pre_rotation_main_strands]}")
-                else:
-                    #logging.warning(f"[StrandDrawingCanvas.finish_group_rotation] No pre_rotation_main_strands to restore for group {group_name}")
-                    pass
-                
-                # Log final group data
-                final_main_strands = self.groups[group_name].get('main_strands', [])
-                #logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Final main strands after restoration: {[s.layer_name if hasattr(s, 'layer_name') else 'Unknown' for s in final_main_strands]}")
-                
+
                 # Clear rotation flag on all strands in the group
                 group_data = self.groups[group_name]
                 for strand in group_data.get('strands', []):
@@ -907,22 +897,22 @@ class StrandDrawingCanvas(QWidget):
                             strand._is_being_rotated = False
                     except RuntimeError:
                         continue
-            else:
-                #logging.error(f"[StrandDrawingCanvas.finish_group_rotation] Group {group_name} not found in self.groups")
-                pass
-                
-            # Cleanup
+        finally:
+            # Cleanup – clear ALL rotation state before triggering a repaint
+            # so that no stale QPointF / strand references remain accessible.
+            # This runs even if the try block raised an exception.
             self.is_rotating = False
             self.rotating_group_name = None
             self.rotation_center = None
+            self.current_rotation_angle = 0.0
             if hasattr(self, 'pre_rotation_main_strands'):
                 delattr(self, 'pre_rotation_main_strands')
-                #logging.info("[StrandDrawingCanvas.finish_group_rotation] Cleaned up pre_rotation_main_strands")
-                
-            #logging.info(f"[StrandDrawingCanvas.finish_group_rotation] Finished rotation cleanup for group '{group_name}'")
+            if hasattr(self, 'pre_rotation_state'):
+                self.pre_rotation_state.clear()
+            if hasattr(self, 'original_strand_positions'):
+                self.original_strand_positions.clear()
+
             self.update()
-        else:
-            pass
 
 
     def update_original_positions_recursively(self, strand):
@@ -1782,6 +1772,7 @@ class StrandDrawingCanvas(QWidget):
 
         if getattr(self, "_painting_in_progress", False):
             return
+
         self._painting_in_progress = True
         try:
             self._paintEventInner(event)
@@ -2773,6 +2764,13 @@ class StrandDrawingCanvas(QWidget):
             if not self.testAttribute(Qt.WA_WState_Created):
                 return
             try:
+                # Guard: after a modal dialog.exec_(), the top-level window's
+                # native handle may be temporarily invalid. Check before painting.
+                tlw = self.window()
+                if tlw is not None:
+                    wh = tlw.windowHandle()
+                    if wh is not None and not wh.isExposed():
+                        return
                 widget_painter = QPainter(self)
                 if not widget_painter.isActive():
                     return

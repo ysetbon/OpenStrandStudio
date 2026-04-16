@@ -918,7 +918,7 @@ class AttachedStrand(Strand):
                     shortened_stroke_path = highlight_stroker.createStroke(highlight_path)
                     
                     # Draw the shortened highlight
-                    highlight_pen = QPen(QColor('red'), 10)
+                    highlight_pen = QPen(self.highlight_color, 10)
                     highlight_pen.setJoinStyle(Qt.RoundJoin)
                     highlight_pen.setCapStyle(Qt.FlatCap)
                     painter.setPen(highlight_pen)
@@ -926,7 +926,7 @@ class AttachedStrand(Strand):
                     painter.drawPath(shortened_stroke_path)
             else:
                 # If path is too short, draw normal highlight
-                highlight_pen = QPen(QColor('red'), 10)
+                highlight_pen = QPen(self.highlight_color, 10)
                 highlight_pen.setJoinStyle(Qt.RoundJoin)
                 highlight_pen.setCapStyle(Qt.FlatCap)
                 
@@ -974,7 +974,7 @@ class AttachedStrand(Strand):
             end_line_end_extended = QPointF(end_center_x + dx_end_extended, end_center_y + dy_end_extended)
             
             # Create a pen for the red sideline highlight
-            highlight_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width + 10, Qt.SolidLine)
+            highlight_pen = QPen(self.highlight_color, self.stroke_width + 10, Qt.SolidLine)
             highlight_pen.setCapStyle(Qt.FlatCap)
             highlight_pen.setJoinStyle(Qt.RoundJoin)
             
@@ -1437,7 +1437,7 @@ class AttachedStrand(Strand):
                 ring_path = highlight_mask.subtracted(outer_circle)
                 
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(QColor('red'))
+                painter.setBrush(self.highlight_color)
                 painter.drawPath(ring_path)
             
             # End C-shape highlight for attached children
@@ -1467,7 +1467,7 @@ class AttachedStrand(Strand):
                 ring_path = highlight_mask.subtracted(outer)
                 
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(QColor('red'))
+                painter.setBrush(self.highlight_color)
                 painter.drawPath(ring_path)
         
         # Restore painter state
@@ -2891,7 +2891,7 @@ class AttachedStrand(Strand):
                     shortened_stroke_path = highlight_stroker.createStroke(highlight_path)
                     
                     # Draw the shortened highlight
-                    highlight_pen = QPen(QColor('red'), 10)
+                    highlight_pen = QPen(self.highlight_color, 10)
                     highlight_pen.setJoinStyle(Qt.RoundJoin)
                     highlight_pen.setCapStyle(Qt.FlatCap)
                     painter.setPen(highlight_pen)
@@ -2899,7 +2899,7 @@ class AttachedStrand(Strand):
                     painter.drawPath(shortened_stroke_path)
             else:
                 # If path is too short, draw normal highlight
-                highlight_pen = QPen(QColor('red'), 10)
+                highlight_pen = QPen(self.highlight_color, 10)
                 highlight_pen.setJoinStyle(Qt.RoundJoin)
                 highlight_pen.setCapStyle(Qt.FlatCap)
                 
@@ -2947,7 +2947,7 @@ class AttachedStrand(Strand):
             end_line_end_extended = QPointF(end_center_x + dx_end_extended, end_center_y + dy_end_extended)
             
             # Create a pen for the red sideline highlight
-            highlight_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width + 10, Qt.SolidLine)
+            highlight_pen = QPen(self.highlight_color, self.stroke_width + 10, Qt.SolidLine)
             highlight_pen.setCapStyle(Qt.FlatCap)
             highlight_pen.setJoinStyle(Qt.RoundJoin)
             
@@ -3410,7 +3410,7 @@ class AttachedStrand(Strand):
                 ring_path = highlight_mask.subtracted(outer_circle)
                 
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(QColor('red'))
+                painter.setBrush(self.highlight_color)
                 painter.drawPath(ring_path)
             
             # End C-shape highlight for attached children
@@ -3440,7 +3440,7 @@ class AttachedStrand(Strand):
                 ring_path = highlight_mask.subtracted(outer)
                 
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(QColor('red'))
+                painter.setBrush(self.highlight_color)
                 painter.drawPath(ring_path)
         
         # Restore painter state

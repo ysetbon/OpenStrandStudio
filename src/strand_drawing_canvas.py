@@ -169,7 +169,7 @@ class StrandDrawingCanvas(QWidget):
         # strand_color will be set from default_strand_color later in this method
         self.stroke_color = QColor(0, 0, 0, 255)  # Color for strand outlines
         self.stroke_width = 4  # Width of strand outlines
-        self.highlight_color = Qt.red  # Color for highlighting selected strands
+        self.highlight_color = QColor(255, 0, 0, 255)  # Color for highlighting selected strands
         self.highlight_width = 20  # Width of highlight
         self.selection_color = QColor(255, 0, 0, 255)  # Color for selection rectangle
         self.selected_strand_index = None  # Index of the currently selected strand
@@ -933,19 +933,21 @@ class StrandDrawingCanvas(QWidget):
         new_strand.curve_response_exponent = self.curve_response_exponent
         new_strand.control_point_base_fraction = self.control_point_base_fraction
         new_strand.distance_multiplier = self.distance_multiplier
+        # Set the highlight color from canvas
+        new_strand.highlight_color = QColor(self.highlight_color)
         # Set the shadow color to the default shadow color
         if hasattr(self, 'default_shadow_color') and self.default_shadow_color:
             # Create a fresh QColor instance to avoid reference issues
             new_strand.shadow_color = QColor(
                 self.default_shadow_color.red(),
-                self.default_shadow_color.green(), 
+                self.default_shadow_color.green(),
                 self.default_shadow_color.blue(),
                 self.default_shadow_color.alpha()
             )
         else:
             # Fall back to default shadow color if not set
             new_strand.shadow_color = QColor(0, 0, 0, 150)
-            
+
         self.strands.append(new_strand)
         pass
         self.strand_created.emit(new_strand)
@@ -1278,7 +1280,7 @@ class StrandDrawingCanvas(QWidget):
         self.strand_color = QColor(200, 170, 230, 255)   # Default color for strands
         self.stroke_color = QColor(0, 0, 0, 255)  # Color for strand outlines
         self.stroke_width = 4  # Width of strand outlines
-        self.highlight_color = Qt.red  # Color for highlighting selected strands
+        self.highlight_color = QColor(255, 0, 0, 255)  # Color for highlighting selected strands
         self.highlight_width = 20  # Width of highlight
         self.selection_color = QColor(255, 0, 0, 255)  # Color for selection rectangle
         self.selected_strand_index = None  # Index of the currently selected strand
@@ -2116,6 +2118,7 @@ class StrandDrawingCanvas(QWidget):
                 stroke_width=self.stroke_width
             )
             temp_strand.canvas = self
+            temp_strand.highlight_color = QColor(self.highlight_color)
             temp_strand.draw(painter, skip_painter_setup=True)
 
         # Only draw control points if they're enabled
@@ -2357,8 +2360,9 @@ class StrandDrawingCanvas(QWidget):
                             if hovered_strand is not None and hovered_side in (0, 1):
                                 hovered_point_pos = hovered_strand.start if hovered_side == 0 else hovered_strand.end
 
-                            # Default red color for non-selected rectangles
-                            red_color = QColor(255, 0, 0, 38)  # Red with 85% transparency
+                            # Default highlight color for non-selected rectangles
+                            red_color = QColor(self.highlight_color)
+                            red_color.setAlpha(38)  # 85% transparency
                             hover_color = QColor(255, 230, 160, 70)  # Yellow with transparency
                             painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
 
@@ -2860,7 +2864,8 @@ class StrandDrawingCanvas(QWidget):
                         )
                         painter.drawEllipse(start_ellipse)
                     else:
-                        circle_color = QColor(255, 0, 0, 60)  # Default red
+                        circle_color = QColor(self.highlight_color)
+                        circle_color.setAlpha(60)  # Default with transparency
                         painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
                         painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
                         circle_size = 120
@@ -3502,11 +3507,11 @@ class StrandDrawingCanvas(QWidget):
                                 painter.restore()
                                 continue
                             else:
-                                # Use solid red for normal circles
-                                painter.setBrush(QColor(255, 0, 0, 255))
+                                # Use highlight color for normal circles
+                                painter.setBrush(self.highlight_color)
                         else:
-                            # Default to solid red if properties don't exist
-                            painter.setBrush(QColor(255, 0, 0, 255))
+                            # Default to highlight color if properties don't exist
+                            painter.setBrush(self.highlight_color)
                             
                         painter.drawPath(stroke_c_shape)
                         
@@ -4125,6 +4130,7 @@ class StrandDrawingCanvas(QWidget):
                 self.current_strand.curve_response_exponent = self.curve_response_exponent
                 self.current_strand.control_point_base_fraction = self.control_point_base_fraction
                 self.current_strand.distance_multiplier = self.distance_multiplier
+                self.current_strand.highlight_color = QColor(self.highlight_color)
                 self.is_drawing_new_strand = True
                 pass
                 self.update()
@@ -4697,9 +4703,10 @@ class StrandDrawingCanvas(QWidget):
                 new_strand.curve_response_exponent = self.curve_response_exponent
                 new_strand.control_point_base_fraction = self.control_point_base_fraction
                 new_strand.distance_multiplier = self.distance_multiplier
+                new_strand.highlight_color = QColor(self.highlight_color)
                 # Set the shadow color to the default shadow color
                 new_strand.shadow_color = self.default_shadow_color
-                
+
                 self.add_strand(new_strand)
                 new_strand_index = len(self.strands) - 1
                 
@@ -5209,8 +5216,16 @@ class StrandDrawingCanvas(QWidget):
         self.strand_color = color
 
     def set_highlight_color(self, color):
-        """Set the highlight color for selected strands."""
+        """Set the highlight color for selected strands and propagate to all strands."""
         self.highlight_color = color
+        self.selection_color = QColor(color.red(), color.green(), color.blue(), 255)
+        # Propagate to all existing strands
+        for strand in self.strands:
+            strand.highlight_color = QColor(color.red(), color.green(), color.blue(), color.alpha())
+            # Also update attached strands recursively
+            if hasattr(strand, 'attached_strands'):
+                for attached in strand.attached_strands:
+                    attached.highlight_color = QColor(color.red(), color.green(), color.blue(), color.alpha())
         self.update()
 
     def toggle_snap_to_grid(self):

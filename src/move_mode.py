@@ -3811,14 +3811,16 @@ class MoveMode:
             if hasattr(strand, 'start_circle_stroke_color') and hasattr(strand, 'end_circle_stroke_color'):
                 circle_stroke_color = strand.start_circle_stroke_color if i == 0 else strand.end_circle_stroke_color
                 if circle_stroke_color and circle_stroke_color.alpha() == 0:
-                    # Use transparent red for transparent circles
-                    painter.setBrush(QColor(255, 0, 0, 0))
+                    # Use transparent highlight for transparent circles
+                    hl = QColor(self.canvas.highlight_color)
+                    hl.setAlpha(0)
+                    painter.setBrush(hl)
                 else:
-                    # Use solid red for normal circles
-                    painter.setBrush(QColor(255, 0, 0, 255))
+                    # Use highlight color for normal circles
+                    painter.setBrush(self.canvas.highlight_color)
             else:
-                # Default to solid red if properties don't exist
-                painter.setBrush(QColor(255, 0, 0, 255))
+                # Default to highlight color if properties don't exist
+                painter.setBrush(self.canvas.highlight_color)
                 
             painter.drawPath(stroke_c_shape)
             

@@ -662,7 +662,7 @@ class AngleAdjustMode:
             span_angle = ((span_angle + 360) % 360) if span_angle < 0 else (span_angle % 360)
 
             # Draw the angle arc
-            painter.setPen(QPen(QColor(255, 0, 0), 2))  # Red pen
+            painter.setPen(QPen(self.canvas.highlight_color, 2))  # Highlight color pen
             painter.drawArc(
                 QRectF(center.x() - radius, center.y() - radius, radius * 2, radius * 2),
                 int(-start_angle * 16),

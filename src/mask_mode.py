@@ -284,8 +284,8 @@ class MaskMode(QObject):
             stroke_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
             stroke_path = stroke_stroker.createStroke(path)
 
-            # Draw the highlight with transparent red filling
-            highlight_color = QColor('red')
+            # Draw the highlight with transparent filling
+            highlight_color = QColor(self.canvas.highlight_color)
             highlight_color.setAlpha(128)  # Set transparency (0-255)
             painter.setBrush(highlight_color)
 

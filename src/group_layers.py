@@ -2407,6 +2407,8 @@ class GroupPanel(QWidget):
                 layer_name=new_layer_name
             )
 
+            # Copy highlight color from original
+            new_strand.highlight_color = QColor(original_strand.highlight_color)
             # Copy all other properties
             self.copy_strand_properties(original_strand, new_strand)
 
@@ -2683,6 +2685,7 @@ class GroupPanel(QWidget):
             set_number=new_set,
             layer_name=new_layer_name,
         )
+        placeholder.highlight_color = QColor(getattr(original_strand, 'highlight_color', QColor(255, 0, 0, 255)))
 
         placeholder.is_degraded_mask = True
         placeholder.original_mask_type = 'MaskedStrand'
@@ -2736,6 +2739,7 @@ class GroupPanel(QWidget):
         
         # Copy basic visual / geometric properties that the constructor did not inherit from parent
         from PyQt5.QtGui import QColor
+        new_strand.highlight_color = QColor(original_strand.highlight_color)
         new_strand.color = QColor(original_strand.color)
         new_strand.stroke_color = QColor(original_strand.stroke_color)
         new_strand.stroke_width = original_strand.stroke_width
@@ -4843,6 +4847,8 @@ class GroupLayerManager:
         control_point2 = QPointF(data["control_point2"]["x"], data["control_point2"]["y"])
         
         strand = Strand(start, end, data["width"])
+        if hasattr(self, 'canvas') and hasattr(self.canvas, 'highlight_color'):
+            strand.highlight_color = QColor(self.canvas.highlight_color)
         strand.control_point1 = control_point1
         strand.control_point2 = control_point2
         strand.color = self.deserialize_color(data["color"])

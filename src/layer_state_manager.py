@@ -409,6 +409,9 @@ class LayerStateManager(QObject):
             end = QPointF(positions[2], positions[3])
 
             strand = Strand(start, end, self.canvas.strand_width, color, self.canvas.stroke_color, self.canvas.stroke_width)
+            if hasattr(self.canvas, 'highlight_color'):
+                from PyQt5.QtGui import QColor
+                strand.highlight_color = QColor(self.canvas.highlight_color)
             strand.layer_name = layer_name
             set_number = int(layer_name.split('_')[0])
             strand.set_number = set_number
@@ -426,6 +429,9 @@ class LayerStateManager(QObject):
                         attached = AttachedStrand(connected_strand.start, connected_strand.end, strand)
                         attached.layer_name = connected_strand.layer_name
                         attached.set_number = strand.set_number
+                        if hasattr(self, 'canvas') and hasattr(self.canvas, 'highlight_color'):
+                            from PyQt5.QtGui import QColor
+                            attached.highlight_color = QColor(self.canvas.highlight_color)
                         attached.set_color(connected_strand.color)
                         attached.parent = strand
                         

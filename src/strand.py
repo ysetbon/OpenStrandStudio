@@ -22,6 +22,7 @@ class Strand:
         self.width = width
         self.color = color
         self.shadow_color = QColor(0, 0, 0, 150)  # Semi-transparent black shadow for overlaps
+        self.highlight_color = QColor(255, 0, 0, 255)  # Default red highlight color
         self._stroke_color = stroke_color  # Use private attribute for property
         self.stroke_width = stroke_width
         self.side_line_color = QColor(0, 0, 0, 255)
@@ -2031,7 +2032,7 @@ class Strand:
                     shortened_stroke_path = highlight_stroker.createStroke(highlight_path)
                     
                     # Draw the shortened highlight
-                    highlight_pen = QPen(QColor('red'), 10)  # Fixed width instead of self.stroke_width + 8
+                    highlight_pen = QPen(self.highlight_color, 10)  # Fixed width instead of self.stroke_width + 8
                     highlight_pen.setJoinStyle(Qt.RoundJoin)
                     highlight_pen.setCapStyle(Qt.FlatCap)
                     painter.setPen(highlight_pen)
@@ -2039,7 +2040,7 @@ class Strand:
                     painter.drawPath(shortened_stroke_path)
             else:
                 # If path is too short, draw normal highlight
-                highlight_pen = QPen(QColor('red'), 10)  # Fixed width instead of self.stroke_width + 8
+                highlight_pen = QPen(self.highlight_color, 10)  # Fixed width instead of self.stroke_width + 8
                 highlight_pen.setJoinStyle(Qt.MiterJoin)
                 highlight_pen.setCapStyle(Qt.FlatCap)
                 painter.setPen(highlight_pen)
@@ -2104,7 +2105,7 @@ class Strand:
                 end_line_end_extended = QPointF(end_center_x + dx_end_extended, end_center_y + dy_end_extended)
                 
                 # Create highlight pen for side lines
-                highlight_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width + 10 , Qt.SolidLine)
+                highlight_pen = QPen(self.highlight_color, self.stroke_width + 10 , Qt.SolidLine)
                 highlight_pen.setCapStyle(Qt.FlatCap)
                 highlight_pen.setJoinStyle(Qt.MiterJoin)
                 
@@ -2898,7 +2899,7 @@ class Strand:
                     shortened_stroke_path = highlight_stroker.createStroke(highlight_path)
                     
                     # Draw the shortened highlight
-                    highlight_pen = QPen(QColor('red'), 10)  # Fixed width instead of self.stroke_width + 8
+                    highlight_pen = QPen(self.highlight_color, 10)  # Fixed width instead of self.stroke_width + 8
                     highlight_pen.setJoinStyle(Qt.RoundJoin)
                     highlight_pen.setCapStyle(Qt.FlatCap)
                     painter.setPen(highlight_pen)
@@ -2906,7 +2907,7 @@ class Strand:
                     painter.drawPath(shortened_stroke_path)
             else:
                 # If path is too short, draw normal highlight
-                highlight_pen = QPen(QColor('red'), 10)  # Fixed width instead of self.stroke_width + 8
+                highlight_pen = QPen(self.highlight_color, 10)  # Fixed width instead of self.stroke_width + 8
                 highlight_pen.setJoinStyle(Qt.MiterJoin)
                 highlight_pen.setCapStyle(Qt.FlatCap)
                 painter.setPen(highlight_pen)
@@ -2971,7 +2972,7 @@ class Strand:
                 end_line_end_extended = QPointF(end_center_x + dx_end_extended, end_center_y + dy_end_extended)
                 
                 # Create highlight pen for side lines
-                highlight_pen = QPen(QColor(255, 0, 0, 255), self.stroke_width + 10 , Qt.SolidLine)
+                highlight_pen = QPen(self.highlight_color, self.stroke_width + 10 , Qt.SolidLine)
                 highlight_pen.setCapStyle(Qt.FlatCap)
                 highlight_pen.setJoinStyle(Qt.MiterJoin)
                 

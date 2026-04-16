@@ -323,7 +323,9 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
 
         if strand_type == "Strand":
             strand = Strand(start, end, width, color, stroke_color, stroke_width, set_number, layer_name)
-        
+            if canvas and hasattr(canvas, 'highlight_color'):
+                strand.highlight_color = QColor(canvas.highlight_color)
+
         elif strand_type == "AttachedStrand":
             parent_layer_name = data.get("attached_to")
             if strand_dict is None:
@@ -334,7 +336,9 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
                 # Retrieve attachment_side
                 attachment_side = data.get("attachment_side", 0) # Default to 0 if missing
                 strand = AttachedStrand(parent_strand, end, attachment_side)
-                
+                if canvas and hasattr(canvas, 'highlight_color'):
+                    strand.highlight_color = QColor(canvas.highlight_color)
+
                 # Set properties for the attached strand
                 strand.end = end
                 strand.width = width
@@ -639,6 +643,8 @@ def load_strands(filename, canvas):
             # Retrieve attachment_side
             attachment_side = strand_data.get("attachment_side", 0) # Default to 0 if missing
             strand = AttachedStrand(parent_strand, end, attachment_side)
+            if canvas and hasattr(canvas, 'highlight_color'):
+                strand.highlight_color = QColor(canvas.highlight_color)
 
             # Set all properties
             strand.start = start

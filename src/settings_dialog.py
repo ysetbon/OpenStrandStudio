@@ -61,6 +61,10 @@ class SettingsDialog(QDialog):
         self.show_hover_highlights = True  # Default to showing hover highlights
         self.move_selected_only = getattr(canvas, 'move_selected_only', False)  # Move only selected strand in move mode
         self.show_cp_selected_only = getattr(canvas, 'show_cp_selected_only', False)  # Show CPs only for selected strand family
+        # Highlight color for selection indicators (default red)
+        self.highlight_color = getattr(canvas, 'highlight_color', QColor(255, 0, 0, 255))
+        if not isinstance(self.highlight_color, QColor):
+            self.highlight_color = QColor(255, 0, 0, 255)
         # NEW: Use extended mask option (controls extra expansion of masked areas)
         # self.use_extended_mask = False  # Default to using exact mask (small +3 offset)
         # Extension line parameters
@@ -120,6 +124,8 @@ class SettingsDialog(QDialog):
         if self.canvas:
             self.canvas.move_selected_only = self.move_selected_only
             self.canvas.show_cp_selected_only = self.show_cp_selected_only
+            # Apply highlight color
+            self.canvas.set_highlight_color(self.highlight_color)
 
         # Apply loaded extension line settings to canvas
         if self.canvas:
@@ -1294,6 +1300,12 @@ class SettingsDialog(QDialog):
                         elif line.startswith('ShowCPSelectedOnly:'):
                             value = line.split(':', 1)[1].strip().lower()
                             self.show_cp_selected_only = (value == 'true')
+                        elif line.startswith('HighlightColor:'):
+                            try:
+                                r, g, b, a = map(int, line.split(':', 1)[1].strip().split(','))
+                                self.highlight_color = QColor(r, g, b, a)
+                            except Exception as e:
+                                pass
                         # elif line.startswith('UseExtendedMask:'):
                         #     value = line.split(':', 1)[1].strip().lower()
                         #     self.use_extended_mask = (value == 'true')
@@ -2340,6 +2352,25 @@ class SettingsDialog(QDialog):
             self.show_cp_selected_only_layout.addStretch()
 
         selected_strand_layout.addLayout(self.show_cp_selected_only_layout)
+
+        # Highlight Color picker
+        self.highlight_color_layout = QHBoxLayout()
+        self.highlight_color_label = QLabel(_['highlight_color'] if 'highlight_color' in _ else "Highlight Color")
+        self.highlight_color_button = QPushButton()
+        self.highlight_color_button.setFixedSize(30, 30)
+        self.update_highlight_color_button()
+        self.highlight_color_button.clicked.connect(self.choose_highlight_color)
+
+        if self.is_rtl_language(self.current_language):
+            self.highlight_color_layout.addStretch()
+            self.highlight_color_layout.addWidget(self.highlight_color_button)
+            self.highlight_color_layout.addWidget(self.highlight_color_label)
+        else:
+            self.highlight_color_layout.addWidget(self.highlight_color_label)
+            self.highlight_color_layout.addWidget(self.highlight_color_button)
+            self.highlight_color_layout.addStretch()
+
+        selected_strand_layout.addLayout(self.highlight_color_layout)
 
         selected_strand_layout.addStretch()
         self.selected_strand_ok_button = QPushButton(_['ok'])
@@ -3634,6 +3665,8 @@ class SettingsDialog(QDialog):
         self.show_cp_selected_only = self.show_cp_selected_only_checkbox.isChecked()
         if self.canvas:
             self.canvas.show_cp_selected_only = self.show_cp_selected_only
+            # Apply Highlight Color Setting
+            self.canvas.set_highlight_color(self.highlight_color)
             self.canvas.update()
 
             # Check if the third control point setting changed
@@ -3867,6 +3900,7 @@ class SettingsDialog(QDialog):
         # Selected Strand settings labels
         self.move_selected_only_label.setText(_['move_selected_only'] if 'move_selected_only' in _ else "Move Selected Only")
         self.show_cp_selected_only_label.setText(_['show_cp_selected_only'] if 'show_cp_selected_only' in _ else "Show CP Selected Only")
+        self.highlight_color_label.setText(_['highlight_color'] if 'highlight_color' in _ else "Highlight Color")
         self.selected_strand_ok_button.setText(_['ok'])
         self.reset_curvature_button.setToolTip(_['reset_curvature_tooltip'] if 'reset_curvature_tooltip' in _ else "Reset all curvature settings to default values")
         self.apply_button.setText(_['ok'])
@@ -4321,6 +4355,7 @@ class SettingsDialog(QDialog):
                 # Save move selected only setting
                 file.write(f"MoveSelectedOnly: {str(self.move_selected_only).lower()}\n")
                 file.write(f"ShowCPSelectedOnly: {str(self.show_cp_selected_only).lower()}\n")
+                file.write(f"HighlightColor: {self.highlight_color.red()},{self.highlight_color.green()},{self.highlight_color.blue()},{self.highlight_color.alpha()}\n")
                 # Save shadow blur settings
                 file.write(f"NumSteps: {self.num_steps}\n")
                 file.write(f"MaxBlurRadius: {self.max_blur_radius:.1f}\n") # Save float with one decimal place
@@ -4473,7 +4508,13 @@ class SettingsDialog(QDialog):
                 },
                 'default_strand_width': self.default_strand_width,
                 'default_stroke_width': self.default_stroke_width,
-                'default_width_grid_units': self.default_width_grid_units
+                'default_width_grid_units': self.default_width_grid_units,
+                'highlight_color': {
+                    'r': self.highlight_color.red(),
+                    'g': self.highlight_color.green(),
+                    'b': self.highlight_color.blue(),
+                    'a': self.highlight_color.alpha()
+                }
             }
 
             # Write to JSON file
@@ -4647,6 +4688,11 @@ class SettingsDialog(QDialog):
 
             if 'default_width_grid_units' in settings:
                 self.default_width_grid_units = settings['default_width_grid_units']
+
+            if 'highlight_color' in settings:
+                hc = settings['highlight_color']
+                self.highlight_color = QColor(hc['r'], hc['g'], hc['b'], hc['a'])
+                self.update_highlight_color_button()
 
             # Show success message
             QMessageBox.information(
@@ -5506,6 +5552,38 @@ class SettingsDialog(QDialog):
             if self.canvas:
                 # Use the new set_stroke_color method to apply to all existing strands
                 self.canvas.set_stroke_color(self.default_stroke_color)
+                if hasattr(self.canvas, 'force_redraw'):
+                    self.canvas.force_redraw()
+                self.canvas.update()
+
+    def update_highlight_color_button(self):
+        """Update the highlight color button to reflect current color."""
+        pixmap = QPixmap(30, 30)
+        pixmap.fill(self.highlight_color)
+        self.highlight_color_button.setIcon(QIcon(pixmap))
+        self.highlight_color_button.setIconSize(pixmap.size())
+
+    def choose_highlight_color(self):
+        """Open a color dialog to choose a new highlight color (with alpha channel)."""
+        self.set_qt_locale()
+        _ = translations.get(self.get_language_code(), translations['en'])
+
+        color_dialog = QColorDialog(self)
+        color_dialog.setCurrentColor(self.highlight_color)
+        color_dialog.setOption(QColorDialog.ShowAlphaChannel)
+        color_dialog.setOption(QColorDialog.DontUseNativeDialog)
+
+        # Translate dialog buttons
+        self.translate_color_dialog(color_dialog, _)
+
+        if color_dialog.exec_():
+            self.highlight_color = color_dialog.currentColor()
+            self.update_highlight_color_button()
+            # Save new setting immediately
+            self.save_settings_to_file()
+            # Apply to canvas immediately
+            if self.canvas:
+                self.canvas.set_highlight_color(self.highlight_color)
                 if hasattr(self.canvas, 'force_redraw'):
                     self.canvas.force_redraw()
                 self.canvas.update()

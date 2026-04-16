@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QPointF, QTimer, pyqtSignal, QObject, QRect, QRectF, Qt
-from PyQt5.QtGui import QCursor, QPainter, QPixmap, QPainterPath
+from PyQt5.QtGui import QCursor, QPainter, QPixmap, QPainterPath, QColor
 from PyQt5.QtWidgets import QApplication
 from render_utils import RenderUtils
 import math
@@ -632,6 +632,7 @@ class AttachMode(QObject):
                 new_strand = Strand(self.start_pos, self.start_pos, self.canvas.strand_width,
                                 strand_color, self.canvas.default_stroke_color,
                                 self.canvas.stroke_width)
+                new_strand.highlight_color = QColor(self.canvas.highlight_color)
                 new_strand.set_number = current_set
                 
                 # Ensure the color is set in the canvas's color management system
@@ -1129,8 +1130,9 @@ class AttachMode(QObject):
 
             new_strand = AttachedStrand(parent_strand, attach_point, side)
             new_strand.canvas = self.canvas
-            
+
             # Set properties from parent strand
+            new_strand.highlight_color = QColor(self.canvas.highlight_color)
             new_strand.color = parent_strand.color  # Directly set color property
             new_strand.stroke_color = parent_strand.stroke_color  # Copy stroke color from parent
             new_strand.set_number = parent_strand.set_number

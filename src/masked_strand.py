@@ -694,7 +694,9 @@ class MaskedStrand(Strand):
             try:
                 mask_path = self.get_mask_path()
                 if not mask_path.isEmpty():
-                    highlight_pen = QPen(QColor(255, 0, 0, 128), 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+                    hl_color = QColor(self.canvas.highlight_color) if hasattr(self, 'canvas') and hasattr(self.canvas, 'highlight_color') else QColor(255, 0, 0, 255)
+                    hl_color.setAlpha(128)
+                    highlight_pen = QPen(hl_color, 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
                     painter.setPen(highlight_pen)
                     painter.setBrush(Qt.NoBrush)
                     painter.drawPath(mask_path)
@@ -1125,7 +1127,8 @@ class MaskedStrand(Strand):
             highlight_color.setAlpha(128)  # Set 50% transparency
             highlight_pen = QPen(highlight_color, 6, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
         else:
-            highlight_pen = QPen(QColor(255, 0, 0, 128), 6, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+            fallback_hl = QColor(255, 0, 0, 128)
+            highlight_pen = QPen(fallback_hl, 6, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
             
         painter.setPen(highlight_pen)
         painter.setBrush(Qt.NoBrush)

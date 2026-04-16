@@ -3348,11 +3348,11 @@ class StrandDrawingCanvas(QWidget):
     
                 # Draw the regular strand first (including shadow)
                 strand.draw(painter, skip_painter_setup=True)
-                
-    
-    
-                # Slightly thinner stroke for circles
-                pass
+
+                # --- Canvas-level C-shape drawing disabled ---
+                # C-shape highlights are now handled inside strand's _draw_unified_highlight
+                # as part of the unified path. Commenting out to avoid double-drawing.
+                _skip_canvas_c_shapes = True
                 for i, has_circle in enumerate(strand.has_circles):
                     # Skip drawing C-shapes when moving control points or when strand is locked
                     if has_circle:
@@ -3377,10 +3377,10 @@ class StrandDrawingCanvas(QWidget):
                             should_draw_c_shape = True
                             pass
                     
-                    if should_draw_c_shape:
+                    if should_draw_c_shape and not _skip_canvas_c_shapes:
                         # Debug logging for C-shape drawing
                         pass
-                        
+
                         # Save painter state
                         painter.save()
                         

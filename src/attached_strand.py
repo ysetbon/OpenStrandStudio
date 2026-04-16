@@ -529,7 +529,138 @@ class AttachedStrand(Strand):
                     return 0.0
 
         return math.atan2(tangent.y(), tangent.x())
-    
+
+    def _draw_unified_highlight(self, painter, path):
+        """Draw the complete highlight as a single unified filled path (body + side line + C-shapes)."""
+        # --- Build body stroke path (possibly shortened) ---
+        stroke_stroker = QPainterPathStroker()
+        stroke_stroker.setWidth(self.width + self.stroke_width * 2)
+        stroke_stroker.setJoinStyle(Qt.MiterJoin)
+        stroke_stroker.setCapStyle(Qt.FlatCap)
+        stroke_path = stroke_stroker.createStroke(path)
+
+        total_length = path.length()
+        t_start_point = 5.5 if self.start_circle_stroke_color.alpha() == 0 else 0.0
+        t_end_point = 3.5 if self.end_circle_stroke_color.alpha() == 0 else 0.0
+
+        if (self.start_circle_stroke_color.alpha() == 0 or self.end_circle_stroke_color.alpha() == 0) and total_length > 10:
+            t_start = path.percentAtLength(t_start_point)
+            t_end = path.percentAtLength(total_length - t_end_point)
+            highlight_path = QPainterPath()
+            num_samples = 100
+            for i in range(num_samples + 1):
+                t = t_start + (t_end - t_start) * (i / num_samples)
+                point = path.pointAtPercent(t)
+                if i == 0:
+                    highlight_path.moveTo(point)
+                else:
+                    highlight_path.lineTo(point)
+            body_stroker = QPainterPathStroker()
+            body_stroker.setWidth(self.width + self.stroke_width * 2)
+            body_stroker.setJoinStyle(Qt.RoundJoin)
+            body_stroker.setCapStyle(Qt.FlatCap)
+            body_stroke_path = body_stroker.createStroke(highlight_path)
+        else:
+            body_stroke_path = stroke_path
+
+        # Convert body outline to filled path (stroke of stroke)
+        outline_stroker = QPainterPathStroker()
+        outline_stroker.setWidth(10)
+        outline_stroker.setJoinStyle(Qt.RoundJoin)
+        outline_stroker.setCapStyle(Qt.FlatCap)
+        body_highlight = outline_stroker.createStroke(body_stroke_path)
+
+        # --- Build unified highlight path ---
+        combined_highlight = QPainterPath()
+        combined_highlight.setFillRule(Qt.WindingFill)
+        combined_highlight.addPath(body_highlight)
+
+        # --- End side line ---
+        if self.end_line_visible and not self.has_circles[1]:
+            highlight_pen_thickness = 10
+            black_half_width = (self.width + self.stroke_width * 2) / 2
+            highlight_half_width = black_half_width + (highlight_pen_thickness / 2)
+
+            tangent_end = self.calculate_cubic_tangent(0.9999)
+            if tangent_end.manhattanLength() == 0:
+                tangent_end = self.start - self.end
+            angle_end = math.atan2(tangent_end.y(), tangent_end.x())
+            perp_angle_end = angle_end + math.pi / 2
+
+            shift_dist = self.stroke_width / 2.0
+            shift_x_end = shift_dist * math.cos(angle_end)
+            shift_y_end = shift_dist * math.sin(angle_end)
+            end_center_x = self.end.x() + shift_x_end
+            end_center_y = self.end.y() + shift_y_end
+
+            dx = highlight_half_width * math.cos(perp_angle_end)
+            dy = highlight_half_width * math.sin(perp_angle_end)
+            line_start = QPointF(end_center_x - dx, end_center_y - dy)
+            line_end = QPointF(end_center_x + dx, end_center_y + dy)
+
+            line_path = QPainterPath()
+            line_path.moveTo(line_start)
+            line_path.lineTo(line_end)
+            line_stroker = QPainterPathStroker()
+            line_stroker.setWidth(self.stroke_width + 10)
+            line_stroker.setCapStyle(Qt.FlatCap)
+            combined_highlight.addPath(line_stroker.createStroke(line_path))
+
+        # --- Start C-shape ---
+        if self.has_circles[0] and self.start_circle_stroke_color.alpha() > 0:
+            angle = self.calculate_start_tangent()
+            total_diameter = self.width + self.stroke_width * 2
+            circle_radius = total_diameter / 2
+            highlight_radius = circle_radius + 5
+
+            mask_rect = QPainterPath()
+            rect_w = total_diameter * 2
+            rect_h = total_diameter * 2
+            mask_rect.addRect(0, -rect_h / 2, rect_w, rect_h)
+            transform = QTransform()
+            transform.translate(self.start.x(), self.start.y())
+            transform.rotate(math.degrees(angle))
+            mask_rect = transform.map(mask_rect)
+
+            outer_circle = QPainterPath()
+            outer_circle.addEllipse(self.start, circle_radius, circle_radius)
+
+            highlight_circle = QPainterPath()
+            highlight_circle.addEllipse(self.start, highlight_radius, highlight_radius)
+            ring_path = highlight_circle.subtracted(mask_rect).subtracted(outer_circle)
+            combined_highlight.addPath(ring_path)
+
+        # --- End C-shape ---
+        if (self.has_circles[1]
+            and any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands)
+            and self.end_circle_stroke_color.alpha() > 0):
+
+            tangent = self.calculate_cubic_tangent(0.9999)
+            angle_end = math.atan2(tangent.y(), tangent.x())
+            total_d = self.width + self.stroke_width * 2
+            radius = total_d / 2
+            highlight_radius = radius + 5
+
+            mask = QPainterPath()
+            rect_w = total_d * 2
+            rect_h = total_d * 2
+            mask.addRect(0, -rect_h / 2, rect_w, rect_h)
+            tr = QTransform().translate(self.end.x(), self.end.y())
+            tr.rotate(math.degrees(angle_end - math.pi))
+            mask = tr.map(mask)
+
+            outer = QPainterPath()
+            outer.addEllipse(self.end, radius, radius)
+
+            highlight_circle = QPainterPath()
+            highlight_circle.addEllipse(self.end, highlight_radius, highlight_radius)
+            ring_path = highlight_circle.subtracted(mask).subtracted(outer)
+            combined_highlight.addPath(ring_path)
+
+        # --- Draw unified highlight ---
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(self.highlight_color)
+        painter.drawPath(combined_highlight)
 
     def draw(self, painter, skip_painter_setup=False):
         """Draw the attached strand with a rounded start and squared end."""
@@ -860,135 +991,7 @@ class AttachedStrand(Strand):
         
         # Draw highlight if selected (before shadow-only check so highlights show even in shadow-only mode)
         if self.is_selected and not isinstance(self.parent, MaskedStrand):
-            
-            # We need stroke_path for highlighting, so calculate it here
-            stroke_stroker = QPainterPathStroker()
-            stroke_stroker.setWidth(self.width + self.stroke_width * 2)
-            stroke_stroker.setJoinStyle(Qt.MiterJoin)
-            stroke_stroker.setCapStyle(Qt.FlatCap)
-            # Get the path representing the strand as a cubic Bézier curve
-            path = self.get_path()
-            stroke_path = stroke_stroker.createStroke(path)
-            
-            # Create a shortened path for the highlight (10 pixels from each end)
-            # Use percentAtLength to get accurate t values for pixel offsets
-            total_length = path.length()
-                   # Create a shortened path for the highlight (10 pixels from each end)
-            # Use percentAtLength to get accurate t values for pixel offsets
-            total_length = path.length()
-            if self.start_circle_stroke_color.alpha() == 0:
-                t_start_point = 5.5
-            else:
-                t_start_point = 0.0
-            if self.end_circle_stroke_color.alpha() == 0:
-                t_end_point = 3.5
-            else:
-                t_end_point = 0.0
-            if self.start_circle_stroke_color.alpha() == 0 or self.end_circle_stroke_color.alpha() == 0:
-                if total_length > 10:  # Only shorten if path is longer than 20 pixels
-                    # Get t values at exactly 10 pixels from start and 10 pixels from end
-                    t_start = path.percentAtLength(t_start_point)
-                    t_end = path.percentAtLength(total_length - t_end_point)
-                    
-                    # Create a new path for the shortened highlight
-                    highlight_path = QPainterPath()
-                    
-                    # Sample points along the actual path using pointAtPercent
-                    # This correctly handles both 2 and 3 control point configurations
-                    num_samples = 100
-                    points = []
-                    for i in range(num_samples + 1):
-                        t = t_start + (t_end - t_start) * (i / num_samples)
-                        # Use pointAtPercent to get the actual point on the path
-                        # This works correctly for any path configuration (2 or 3 control points)
-                        point = path.pointAtPercent(t)
-                        points.append(point)
-                    
-                    # Build the shortened path
-                    if points:
-                        highlight_path.moveTo(points[0])
-                        for point in points[1:]:
-                            highlight_path.lineTo(point)
-                    
-                    # Create stroker for the shortened highlight path
-                    highlight_stroker = QPainterPathStroker()
-                    highlight_stroker.setWidth(self.width + self.stroke_width * 2)
-                    highlight_stroker.setJoinStyle(Qt.RoundJoin)
-                    highlight_stroker.setCapStyle(Qt.FlatCap)
-                    shortened_stroke_path = highlight_stroker.createStroke(highlight_path)
-                    
-                    # Draw the shortened highlight
-                    highlight_pen = QPen(self.highlight_color, 10)
-                    highlight_pen.setJoinStyle(Qt.RoundJoin)
-                    highlight_pen.setCapStyle(Qt.FlatCap)
-                    painter.setPen(highlight_pen)
-                    painter.setBrush(Qt.NoBrush)
-                    painter.drawPath(shortened_stroke_path)
-            else:
-                # If path is too short, draw normal highlight
-                highlight_pen = QPen(self.highlight_color, 10)
-                highlight_pen.setJoinStyle(Qt.RoundJoin)
-                highlight_pen.setCapStyle(Qt.FlatCap)
-                
-                painter.setPen(highlight_pen)
-                painter.setBrush(Qt.NoBrush)
-                painter.drawPath(stroke_path)
-            
-            # Draw highlight for AttachedStrand's side line
-            painter.save()
-            
-            highlight_pen_thickness = 10
-            black_half_width = (self.width + self.stroke_width * 2) / 2
-            highlight_half_width = black_half_width + (highlight_pen_thickness / 2)
-
-            # Calculate angles of tangents
-            tangent_start = self.calculate_cubic_tangent(0.0001)
-            tangent_end = self.calculate_cubic_tangent(0.9999)
-            
-            # Handle zero-length tangent vectors
-            if tangent_start.manhattanLength() == 0:
-                tangent_start = self.end - self.start
-            if tangent_end.manhattanLength() == 0:
-                tangent_end = self.start - self.end
-
-            angle_start = math.atan2(tangent_start.y(), tangent_start.x())
-            angle_end = math.atan2(tangent_end.y(), tangent_end.x())
-            
-            # Perpendicular angles at start and end
-            perp_angle_start = angle_start + math.pi / 2
-            perp_angle_end = angle_end + math.pi / 2
-            
-            # Shift side lines to be outside the path area
-            shift_dist = self.stroke_width / 2.0
-            
-            # End shift: along tangent direction (angle_end)
-            shift_x_end = shift_dist * math.cos(angle_end)
-            shift_y_end = shift_dist * math.sin(angle_end)
-            end_center_x = self.end.x() + shift_x_end
-            end_center_y = self.end.y() + shift_y_end
-
-            # Calculate extended positions for end line
-            dx_end_extended = highlight_half_width * math.cos(perp_angle_end)
-            dy_end_extended = highlight_half_width * math.sin(perp_angle_end)
-            end_line_start_extended = QPointF(end_center_x - dx_end_extended, end_center_y - dy_end_extended)
-            end_line_end_extended = QPointF(end_center_x + dx_end_extended, end_center_y + dy_end_extended)
-            
-            # Create a pen for the red sideline highlight
-            highlight_pen = QPen(self.highlight_color, self.stroke_width + 10, Qt.SolidLine)
-            highlight_pen.setCapStyle(Qt.FlatCap)
-            highlight_pen.setJoinStyle(Qt.RoundJoin)
-            
-            painter.setPen(highlight_pen)
-            painter.setBrush(Qt.NoBrush)
-            
-            # Only draw end line if there's no attached strand on the end
-            if self.end_line_visible and not self.has_circles[1]:
-                painter.drawLine(end_line_start_extended, end_line_end_extended)
-            
-            painter.restore()
-        else:
-            if hasattr(self, 'layer_name') and self.layer_name == '1_2':
-                pass
+            self._draw_unified_highlight(painter, self.get_path())
         
         
         # --- START: Skip visual rendering in shadow-only mode ---
@@ -1409,67 +1412,8 @@ class AttachedStrand(Strand):
             painter.setPen(side_pen)
             painter.drawLine(self.end_line_start, self.end_line_end)
 
-        # (start cover already merged into combined_fill_path above)
-        # Draw highlights for selected C-shapes after main drawing
-        if self.is_selected and not isinstance(self.parent, MaskedStrand):
-            # Start C-shape highlight
-            if self.has_circles[0] and self.start_circle_stroke_color.alpha() > 0:
-                angle = self.calculate_start_tangent()
-                total_diameter = self.width + self.stroke_width * 2
-                circle_radius = total_diameter / 2
-                highlight_radius = circle_radius + 5
-                
-                mask_rect = QPainterPath()
-                rect_width = total_diameter * 2
-                rect_height = total_diameter * 2
-                mask_rect.addRect(0, -rect_height / 2, rect_width, rect_height)
-                transform = QTransform()
-                transform.translate(self.start.x(), self.start.y())
-                transform.rotate(math.degrees(angle))
-                mask_rect = transform.map(mask_rect)
-                
-                outer_circle = QPainterPath()
-                outer_circle.addEllipse(self.start, circle_radius, circle_radius)
-                
-                highlight_circle = QPainterPath()
-                highlight_circle.addEllipse(self.start, highlight_radius, highlight_radius)
-                highlight_mask = highlight_circle.subtracted(mask_rect)
-                ring_path = highlight_mask.subtracted(outer_circle)
-                
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.highlight_color)
-                painter.drawPath(ring_path)
-            
-            # End C-shape highlight for attached children
-            if (self.has_circles[1] and any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands)
-                and self.end_circle_stroke_color.alpha() > 0):
-                
-                tangent = self.calculate_cubic_tangent(0.9999)
-                angle_end = math.atan2(tangent.y(), tangent.x())
-                total_d = self.width + self.stroke_width * 2
-                radius = total_d / 2
-                highlight_radius = radius + 5
-                
-                mask = QPainterPath()
-                rect_width = total_d * 2
-                rect_height = total_d * 2
-                mask.addRect(0, -rect_height / 2, rect_width, rect_height)
-                tr = QTransform().translate(self.end.x(), self.end.y())
-                tr.rotate(math.degrees(angle_end - math.pi))
-                mask = tr.map(mask)
-                
-                outer = QPainterPath()
-                outer.addEllipse(self.end, radius, radius)
-                
-                highlight_circle = QPainterPath()
-                highlight_circle.addEllipse(self.end, highlight_radius, highlight_radius)
-                highlight_mask = highlight_circle.subtracted(mask)
-                ring_path = highlight_mask.subtracted(outer)
-                
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.highlight_color)
-                painter.drawPath(ring_path)
-        
+        # (C-shape highlights now handled in _draw_unified_highlight)
+
         # Restore painter state
         painter.restore()
 
@@ -2833,135 +2777,7 @@ class AttachedStrand(Strand):
         
         # Draw highlight if selected (before shadow-only check so highlights show even in shadow-only mode)
         if self.is_selected and not isinstance(self.parent, MaskedStrand):
-            
-            # We need stroke_path for highlighting, so calculate it here
-            stroke_stroker = QPainterPathStroker()
-            stroke_stroker.setWidth(self.width + self.stroke_width * 2)
-            stroke_stroker.setJoinStyle(Qt.MiterJoin)
-            stroke_stroker.setCapStyle(Qt.FlatCap)
-            # Get the path representing the strand as a cubic Bézier curve
-            path = self.get_path()
-            stroke_path = stroke_stroker.createStroke(path)
-            
-            # Create a shortened path for the highlight (10 pixels from each end)
-            # Use percentAtLength to get accurate t values for pixel offsets
-            total_length = path.length()
-                   # Create a shortened path for the highlight (10 pixels from each end)
-            # Use percentAtLength to get accurate t values for pixel offsets
-            total_length = path.length()
-            if self.start_circle_stroke_color.alpha() == 0:
-                t_start_point = 5.5
-            else:
-                t_start_point = 0.0
-            if self.end_circle_stroke_color.alpha() == 0:
-                t_end_point = 3.5
-            else:
-                t_end_point = 0.0
-            if self.start_circle_stroke_color.alpha() == 0 or self.end_circle_stroke_color.alpha() == 0:
-                if total_length > 10:  # Only shorten if path is longer than 20 pixels
-                    # Get t values at exactly 10 pixels from start and 10 pixels from end
-                    t_start = path.percentAtLength(t_start_point)
-                    t_end = path.percentAtLength(total_length - t_end_point)
-                    
-                    # Create a new path for the shortened highlight
-                    highlight_path = QPainterPath()
-                    
-                    # Sample points along the actual path using pointAtPercent
-                    # This correctly handles both 2 and 3 control point configurations
-                    num_samples = 100
-                    points = []
-                    for i in range(num_samples + 1):
-                        t = t_start + (t_end - t_start) * (i / num_samples)
-                        # Use pointAtPercent to get the actual point on the path
-                        # This works correctly for any path configuration (2 or 3 control points)
-                        point = path.pointAtPercent(t)
-                        points.append(point)
-                    
-                    # Build the shortened path
-                    if points:
-                        highlight_path.moveTo(points[0])
-                        for point in points[1:]:
-                            highlight_path.lineTo(point)
-                    
-                    # Create stroker for the shortened highlight path
-                    highlight_stroker = QPainterPathStroker()
-                    highlight_stroker.setWidth(self.width + self.stroke_width * 2)
-                    highlight_stroker.setJoinStyle(Qt.RoundJoin)
-                    highlight_stroker.setCapStyle(Qt.FlatCap)
-                    shortened_stroke_path = highlight_stroker.createStroke(highlight_path)
-                    
-                    # Draw the shortened highlight
-                    highlight_pen = QPen(self.highlight_color, 10)
-                    highlight_pen.setJoinStyle(Qt.RoundJoin)
-                    highlight_pen.setCapStyle(Qt.FlatCap)
-                    painter.setPen(highlight_pen)
-                    painter.setBrush(Qt.NoBrush)
-                    painter.drawPath(shortened_stroke_path)
-            else:
-                # If path is too short, draw normal highlight
-                highlight_pen = QPen(self.highlight_color, 10)
-                highlight_pen.setJoinStyle(Qt.RoundJoin)
-                highlight_pen.setCapStyle(Qt.FlatCap)
-                
-                painter.setPen(highlight_pen)
-                painter.setBrush(Qt.NoBrush)
-                painter.drawPath(stroke_path)
-            
-            # Draw highlight for AttachedStrand's side line
-            painter.save()
-            
-            highlight_pen_thickness = 10
-            black_half_width = (self.width + self.stroke_width * 2) / 2
-            highlight_half_width = black_half_width + (highlight_pen_thickness / 2)
-
-            # Calculate angles of tangents
-            tangent_start = self.calculate_cubic_tangent(0.0001)
-            tangent_end = self.calculate_cubic_tangent(0.9999)
-            
-            # Handle zero-length tangent vectors
-            if tangent_start.manhattanLength() == 0:
-                tangent_start = self.end - self.start
-            if tangent_end.manhattanLength() == 0:
-                tangent_end = self.start - self.end
-
-            angle_start = math.atan2(tangent_start.y(), tangent_start.x())
-            angle_end = math.atan2(tangent_end.y(), tangent_end.x())
-            
-            # Perpendicular angles at start and end
-            perp_angle_start = angle_start + math.pi / 2
-            perp_angle_end = angle_end + math.pi / 2
-            
-            # Shift side lines to be outside the path area
-            shift_dist = self.stroke_width / 2.0
-            
-            # End shift: along tangent direction (angle_end)
-            shift_x_end = shift_dist * math.cos(angle_end)
-            shift_y_end = shift_dist * math.sin(angle_end)
-            end_center_x = self.end.x() + shift_x_end
-            end_center_y = self.end.y() + shift_y_end
-
-            # Calculate extended positions for end line
-            dx_end_extended = highlight_half_width * math.cos(perp_angle_end)
-            dy_end_extended = highlight_half_width * math.sin(perp_angle_end)
-            end_line_start_extended = QPointF(end_center_x - dx_end_extended, end_center_y - dy_end_extended)
-            end_line_end_extended = QPointF(end_center_x + dx_end_extended, end_center_y + dy_end_extended)
-            
-            # Create a pen for the red sideline highlight
-            highlight_pen = QPen(self.highlight_color, self.stroke_width + 10, Qt.SolidLine)
-            highlight_pen.setCapStyle(Qt.FlatCap)
-            highlight_pen.setJoinStyle(Qt.RoundJoin)
-            
-            painter.setPen(highlight_pen)
-            painter.setBrush(Qt.NoBrush)
-            
-            # Only draw end line if there's no attached strand on the end
-            if self.end_line_visible and not self.has_circles[1]:
-                painter.drawLine(end_line_start_extended, end_line_end_extended)
-            
-            painter.restore()
-        else:
-            if hasattr(self, 'layer_name') and self.layer_name == '1_2':
-                pass
+            self._draw_unified_highlight(painter, self.get_path())
         
         
         # --- START: Skip visual rendering in shadow-only mode ---
@@ -3382,67 +3198,8 @@ class AttachedStrand(Strand):
             painter.setPen(side_pen)
             painter.drawLine(self.end_line_start, self.end_line_end)
 
-        # (start cover already merged into combined_fill_path above)
-        # Draw highlights for selected C-shapes after main drawing
-        if self.is_selected and not isinstance(self.parent, MaskedStrand):
-            # Start C-shape highlight
-            if self.has_circles[0] and self.start_circle_stroke_color.alpha() > 0:
-                angle = self.calculate_start_tangent()
-                total_diameter = self.width + self.stroke_width * 2
-                circle_radius = total_diameter / 2
-                highlight_radius = circle_radius + 5
-                
-                mask_rect = QPainterPath()
-                rect_width = total_diameter * 2
-                rect_height = total_diameter * 2
-                mask_rect.addRect(0, -rect_height / 2, rect_width, rect_height)
-                transform = QTransform()
-                transform.translate(self.start.x(), self.start.y())
-                transform.rotate(math.degrees(angle))
-                mask_rect = transform.map(mask_rect)
-                
-                outer_circle = QPainterPath()
-                outer_circle.addEllipse(self.start, circle_radius, circle_radius)
-                
-                highlight_circle = QPainterPath()
-                highlight_circle.addEllipse(self.start, highlight_radius, highlight_radius)
-                highlight_mask = highlight_circle.subtracted(mask_rect)
-                ring_path = highlight_mask.subtracted(outer_circle)
-                
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.highlight_color)
-                painter.drawPath(ring_path)
-            
-            # End C-shape highlight for attached children
-            if (self.has_circles[1] and any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands)
-                and self.end_circle_stroke_color.alpha() > 0):
-                
-                tangent = self.calculate_cubic_tangent(0.9999)
-                angle_end = math.atan2(tangent.y(), tangent.x())
-                total_d = self.width + self.stroke_width * 2
-                radius = total_d / 2
-                highlight_radius = radius + 5
-                
-                mask = QPainterPath()
-                rect_width = total_d * 2
-                rect_height = total_d * 2
-                mask.addRect(0, -rect_height / 2, rect_width, rect_height)
-                tr = QTransform().translate(self.end.x(), self.end.y())
-                tr.rotate(math.degrees(angle_end - math.pi))
-                mask = tr.map(mask)
-                
-                outer = QPainterPath()
-                outer.addEllipse(self.end, radius, radius)
-                
-                highlight_circle = QPainterPath()
-                highlight_circle.addEllipse(self.end, highlight_radius, highlight_radius)
-                highlight_mask = highlight_circle.subtracted(mask)
-                ring_path = highlight_mask.subtracted(outer)
-                
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self.highlight_color)
-                painter.drawPath(ring_path)
-        
+        # (C-shape highlights now handled in _draw_unified_highlight)
+
         # Restore painter state
         painter.restore()
 

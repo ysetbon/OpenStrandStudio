@@ -2244,6 +2244,8 @@ class MoveMode:
         for strand in hover_candidates:
             if getattr(strand, 'deleted', False) or isinstance(strand, MaskedStrand) or getattr(strand, 'is_hidden', False):
                 continue
+            if not self._is_strand_allowed_by_selection(strand):
+                continue
             if self.lock_mode_active and strand in self.canvas.strands:
                 strand_index = self.canvas.strands.index(strand)
                 if strand_index in self.locked_layers:
@@ -2302,6 +2304,8 @@ class MoveMode:
         if self.hovered_strand is None:
             for strand in hover_candidates:
                 if getattr(strand, 'deleted', False) or isinstance(strand, MaskedStrand) or getattr(strand, 'is_hidden', False):
+                    continue
+                if not self._is_strand_allowed_by_selection(strand):
                     continue
                 if self.lock_mode_active and strand in self.canvas.strands:
                     strand_index = self.canvas.strands.index(strand)

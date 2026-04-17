@@ -163,6 +163,7 @@ class StrandDrawingCanvas(QWidget):
         self.show_control_points = True  # Initialize control points visibility
         self.move_selected_only = False  # When True, only selected strand is interactive in move mode
         self.show_cp_selected_only = False  # When True, only show control points for selected strand family
+        self.shadow_selected_only = False  # When True, only the selected strand casts shadows
         self._cp_filter_strand = None  # Fallback reference strand for CP family filter (used during attach)
         self.current_strand = None  # Currently active strand
         self.strand_width = 46  # Width of strands

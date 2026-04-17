@@ -237,6 +237,7 @@ Examples:<br>
         'selected_strand_settings': 'Selected Strand',
         'move_selected_only': 'Move Selected Only',
         'show_cp_selected_only': 'Show CP Selected Only',
+        'shadow_selected_only': 'Shadow Selected Only',
         'highlight_color': 'Highlight Color',
 
         # LayerPanel translations
@@ -678,6 +679,7 @@ Exemples :<br>
         'selected_strand_settings': 'Brin Sélectionné',
         'move_selected_only': 'Dépl. Sélect. Seul.',
         'show_cp_selected_only': 'Afficher PC Sélect. Seul.',
+        'shadow_selected_only': 'Ombre Sélect. Seul.',
         'highlight_color': 'Couleur de surbrillance',
 
         # LayerPanel translations
@@ -1218,6 +1220,7 @@ Beispiele:<br>
         'selected_strand_settings': 'Ausgewählter Strang',
         'move_selected_only': 'Nur Auswahl bewegen',
         'show_cp_selected_only': 'KP nur Auswahl zeigen',
+        'shadow_selected_only': 'Schatten nur Auswahl',
         'highlight_color': 'Hervorhebungsfarbe',
 
         # LayerPanel translations
@@ -1656,6 +1659,7 @@ Esempi:<br>
         'selected_strand_settings': 'Filo Selezionato',
         'move_selected_only': 'Muovi Solo Selez.',
         'show_cp_selected_only': 'Mostra PC Solo Selez.',
+        'shadow_selected_only': 'Ombra Solo Selez.',
         'highlight_color': 'Colore evidenziazione',
 
         # LayerPanel translations
@@ -2150,6 +2154,7 @@ Ejemplos:<br>
         'selected_strand_settings': 'Hebra Seleccionada',
         'move_selected_only': 'Mover Solo Selec.',
         'show_cp_selected_only': 'Mostrar PC Solo Selec.',
+        'shadow_selected_only': 'Sombra Solo Selec.',
         'highlight_color': 'Color de resaltado',
 
         # LayerPanel translations
@@ -2644,6 +2649,7 @@ Exemplos:<br>
         'selected_strand_settings': 'Fio Selecionado',
         'move_selected_only': 'Mover Só Selec.',
         'show_cp_selected_only': 'Mostrar PC Só Selec.',
+        'shadow_selected_only': 'Sombra Só Selec.',
         'highlight_color': 'Cor de destaque',
 
         # LayerPanel translations
@@ -3146,6 +3152,7 @@ Exemplos:<br>
         'selected_strand_settings': 'חוט נבחר',
         'move_selected_only': 'הזז נבחר בלבד',
         'show_cp_selected_only': 'הצג נק. בקרה נבחר בלבד',
+        'shadow_selected_only': 'צל נבחר בלבד',
         'highlight_color': 'צבע הדגשה',
 
         # LayerPanel translations

@@ -422,7 +422,10 @@ class MaskedStrand(Strand):
             if hasattr(self.canvas, 'shadow_enabled') and not self.canvas.shadow_enabled:
                 pass
             # Only draw shadows if this strand should draw its own shadow
-            elif not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
+            elif (not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow) and not (
+                getattr(self.canvas, 'shadow_selected_only', False) and
+                self is not getattr(self.canvas, 'selected_strand', None) and
+                self is not getattr(self.canvas, 'selected_attached_strand', None)):
                 
                 # Resolve shadow colour: canvas setting → existing strand colour fallback
                 shadow_color = None

@@ -2462,6 +2462,7 @@ class MainWindow(QMainWindow):
         self.layer_panel.set_language(language_code)
 
         if self.settings_dialog:
+            self.settings_dialog.current_language = language_code
             self.settings_dialog.language_code = language_code
 
         # Update translations in UI elements

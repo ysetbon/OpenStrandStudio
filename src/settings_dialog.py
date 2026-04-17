@@ -61,6 +61,7 @@ class SettingsDialog(QDialog):
         self.show_hover_highlights = True  # Default to showing hover highlights
         self.move_selected_only = getattr(canvas, 'move_selected_only', False)  # Move only selected strand in move mode
         self.show_cp_selected_only = getattr(canvas, 'show_cp_selected_only', False)  # Show CPs only for selected strand family
+        self.shadow_selected_only = getattr(canvas, 'shadow_selected_only', False)  # Only cast shadow for selected strand
         # Highlight color for selection indicators (default red)
         self.highlight_color = getattr(canvas, 'highlight_color', QColor(255, 0, 0, 255))
         if not isinstance(self.highlight_color, QColor):
@@ -124,6 +125,7 @@ class SettingsDialog(QDialog):
         if self.canvas:
             self.canvas.move_selected_only = self.move_selected_only
             self.canvas.show_cp_selected_only = self.show_cp_selected_only
+            self.canvas.shadow_selected_only = self.shadow_selected_only
             # Apply highlight color
             self.canvas.set_highlight_color(self.highlight_color)
 
@@ -316,7 +318,7 @@ class SettingsDialog(QDialog):
 
             # Also update direction for QHBoxLayouts within General Settings
             general_setting_layouts = [
-                'theme_layout', 'shadow_layout', 'performance_layout', 
+                'theme_layout', 'performance_layout', 
                 'third_control_layout', 'snap_to_grid_layout', 'snap_to_grid_attach_layout', 'show_highlights_layout', 'show_hover_highlights_layout', # 'extended_mask_layout', 
                 'num_steps_layout', 'blur_radius_layout',
                 'curvature_bias_layout', 'base_fraction_layout',
@@ -347,11 +349,11 @@ class SettingsDialog(QDialog):
         # Update shadow layout spacing for RTL
         if hasattr(self, 'shadow_layout'):
             if is_rtl:
-                self.shadow_layout.setSpacing(2)  # Very tight spacing for RTL
-                self.shadow_layout.setContentsMargins(-300, 0, 0, 0)  # Push button to far left
+                self.shadow_layout.setSpacing(5)
+                self.shadow_layout.setContentsMargins(0, 0, 0, 0)
             else:
-                self.shadow_layout.setSpacing(15)  # Normal spacing for LTR
-                self.shadow_layout.setContentsMargins(0, 0, 0, 0)  # Normal margins for LTR
+                self.shadow_layout.setSpacing(15)
+                self.shadow_layout.setContentsMargins(0, 0, 0, 0)
 
         if hasattr(self, 'tutorial_widget'):
             self.tutorial_widget.setLayoutDirection(direction)
@@ -377,7 +379,29 @@ class SettingsDialog(QDialog):
                     self.history_explanation_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 else:
                     self.history_explanation_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-            
+
+        # Selected Strand settings page: flip widget direction, layout direction, and label alignment for RTL
+        # (highlight_color_layout is handled separately below to match the general settings color button pattern)
+        if hasattr(self, 'selected_strand_settings_widget'):
+            self.selected_strand_settings_widget.setLayoutDirection(Qt.LeftToRight)
+            selected_strand_layouts = [
+                'move_selected_only_layout', 'show_cp_selected_only_layout',
+                'shadow_selected_only_layout',
+            ]
+            for layout_name in selected_strand_layouts:
+                if hasattr(self, layout_name):
+                    layout = getattr(self, layout_name)
+                    if isinstance(layout, QHBoxLayout):
+                        layout.setDirection(QBoxLayout.LeftToRight)
+            selected_strand_labels = [
+                'move_selected_only_label', 'show_cp_selected_only_label',
+                'shadow_selected_only_label',
+            ]
+            alignment = (Qt.AlignRight if is_rtl else Qt.AlignLeft) | Qt.AlignVCenter
+            for label_name in selected_strand_labels:
+                if hasattr(self, label_name):
+                    getattr(self, label_name).setAlignment(alignment)
+
         # Also set direction for specific sub-layouts
         if hasattr(self, 'performance_layout'):
              self.performance_layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
@@ -613,10 +637,20 @@ class SettingsDialog(QDialog):
         # Shadow layout reorganization  
         if hasattr(self, 'shadow_layout') and hasattr(self, 'shadow_color_label') and hasattr(self, 'shadow_color_button'):
             self.clear_layout(self.shadow_layout)
+            if hasattr(self, 'shadow_container'):
+                self.shadow_container.setContentsMargins(0, 0, 0, 0)
+                self.shadow_container.setLayoutDirection(Qt.LeftToRight)
+            self.shadow_layout.setDirection(QBoxLayout.LeftToRight)
+            self.shadow_layout.setContentsMargins(0, 0, 0, 0)
+            self.shadow_layout.setSpacing(5 if is_rtl else 15)
+            self.shadow_color_label.setAlignment((Qt.AlignRight if is_rtl else Qt.AlignLeft) | Qt.AlignVCenter)
+            self.shadow_color_label.setLayoutDirection(Qt.RightToLeft if is_rtl else Qt.LeftToRight)
+            self.shadow_color_label.setTextFormat(Qt.PlainText)
+            self.shadow_color_label.setWordWrap(False)
+            self.shadow_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
             if is_rtl:
-                # For RTL: Button at far left, stretch in middle, label at far right
-                self.shadow_layout.addWidget(self.shadow_color_button)
                 self.shadow_layout.addStretch()
+                self.shadow_layout.addWidget(self.shadow_color_button)
                 self.shadow_layout.addWidget(self.shadow_color_label)
             else:
                 self.shadow_layout.addWidget(self.shadow_color_label)
@@ -625,6 +659,9 @@ class SettingsDialog(QDialog):
             # Force immediate update
             self.shadow_layout.invalidate()
             self.shadow_layout.activate()
+            if hasattr(self, 'shadow_container'):
+                self.shadow_container.updateGeometry()
+                self.shadow_container.update()
                 
         # Performance layout reorganization
         if hasattr(self, 'performance_layout') and hasattr(self, 'affected_strand_label') and hasattr(self, 'affected_strand_checkbox'):
@@ -849,6 +886,37 @@ class SettingsDialog(QDialog):
             # Force immediate update
             self.reset_curvature_layout.invalidate()
             self.reset_curvature_layout.activate()
+
+        # Selected strand checkbox layout reorganization
+        selected_strand_rows = [
+            ('move_selected_only_layout', 'move_selected_only_label', 'move_selected_only_checkbox'),
+            ('show_cp_selected_only_layout', 'show_cp_selected_only_label', 'show_cp_selected_only_checkbox'),
+            ('shadow_selected_only_layout', 'shadow_selected_only_label', 'shadow_selected_only_checkbox'),
+        ]
+        for layout_name, label_name, checkbox_name in selected_strand_rows:
+            if hasattr(self, layout_name) and hasattr(self, label_name) and hasattr(self, checkbox_name):
+                layout = getattr(self, layout_name)
+                label = getattr(self, label_name)
+                checkbox = getattr(self, checkbox_name)
+                self.clear_layout(layout)
+                layout.setDirection(QBoxLayout.LeftToRight)
+                layout.setContentsMargins(0, 0, 0, 0)
+                layout.setSpacing(6)
+                label.setAlignment((Qt.AlignRight if is_rtl else Qt.AlignLeft) | Qt.AlignVCenter)
+                label.setLayoutDirection(Qt.RightToLeft if is_rtl else Qt.LeftToRight)
+                label.setTextFormat(Qt.PlainText)
+                label.setWordWrap(False)
+                label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+                if is_rtl:
+                    layout.addStretch()
+                    layout.addWidget(checkbox)
+                    layout.addWidget(label)
+                else:
+                    layout.addWidget(label)
+                    layout.addWidget(checkbox)
+                    layout.addStretch()
+                layout.invalidate()
+                layout.activate()
                 
         # Button color layout reorganization (this was missing!)
         if hasattr(self, 'button_color_container') and hasattr(self, 'button_color_label') and hasattr(self, 'default_arrow_color_button'):
@@ -876,7 +944,7 @@ class SettingsDialog(QDialog):
                 self.button_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 self.button_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
                 self.button_color_label.setStyleSheet("QLabel { margin: 0px; padding: 0px; }")
-                self.default_arrow_color_button.setStyleSheet("QPushButton { margin: 0px; padding: 0px; }")
+                self.style_color_swatch_button(self.default_arrow_color_button)
                 self.button_color_layout.addWidget(self.button_color_label)
                
                 self.button_color_layout.addWidget(self.default_arrow_color_button)
@@ -928,7 +996,7 @@ class SettingsDialog(QDialog):
                 self.default_strand_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 self.default_strand_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
                 self.default_strand_color_label.setStyleSheet("QLabel { margin: 0px; padding: 0px; }")
-                self.default_strand_color_button.setStyleSheet("QPushButton { margin: 0px; padding: 0px; }")
+                self.style_color_swatch_button(self.default_strand_color_button)
                 self.default_strand_color_layout.addWidget(self.default_strand_color_label)
                
                 self.default_strand_color_layout.addWidget(self.default_strand_color_button)
@@ -970,7 +1038,7 @@ class SettingsDialog(QDialog):
                 self.default_stroke_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 self.default_stroke_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
                 self.default_stroke_color_label.setStyleSheet("QLabel { margin: 0px; padding: 0px; }")
-                self.default_stroke_color_button.setStyleSheet("QPushButton { margin: 0px; padding: 0px; }")
+                self.style_color_swatch_button(self.default_stroke_color_button)
                 self.default_stroke_color_layout.addWidget(self.default_stroke_color_label)
                
                 self.default_stroke_color_layout.addWidget(self.default_stroke_color_button)
@@ -1148,8 +1216,45 @@ class SettingsDialog(QDialog):
             self.arrow_line_width_layout.invalidate()
             self.arrow_line_width_layout.activate()
 
+        # Highlight color button layout reorganization for language switch
+        # In Hebrew: label sits at the far right with the button immediately to its left
+        if (
+            hasattr(self, 'highlight_color_container')
+            and hasattr(self, 'highlight_color_layout')
+            and hasattr(self, 'highlight_color_label')
+            and hasattr(self, 'highlight_color_button')
+        ):
+            self.clear_layout(self.highlight_color_layout)
+            self.highlight_color_container.setContentsMargins(0, 0, 0, 0)
+            self.highlight_color_container.setLayoutDirection(Qt.LeftToRight)
+            self.highlight_color_layout.setDirection(QBoxLayout.LeftToRight)
+            self.highlight_color_layout.setContentsMargins(0, 0, 0, 0)
+            self.highlight_color_layout.setSpacing(5)
+            if is_rtl:
+                self.highlight_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                self.highlight_color_label.setLayoutDirection(Qt.RightToLeft)
+                self.highlight_color_label.setTextFormat(Qt.PlainText)
+                self.highlight_color_label.setWordWrap(False)
+                self.highlight_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+                self.highlight_color_layout.addStretch()
+                self.highlight_color_layout.addWidget(self.highlight_color_button)
+                self.highlight_color_layout.addWidget(self.highlight_color_label)
+            else:
+                self.highlight_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                self.highlight_color_label.setLayoutDirection(Qt.LeftToRight)
+                self.highlight_color_label.setTextFormat(Qt.PlainText)
+                self.highlight_color_label.setWordWrap(False)
+                self.highlight_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+                self.highlight_color_layout.addWidget(self.highlight_color_label)
+                self.highlight_color_layout.addWidget(self.highlight_color_button)
+                self.highlight_color_layout.addStretch()
+            self.highlight_color_layout.invalidate()
+            self.highlight_color_layout.activate()
+            self.highlight_color_container.updateGeometry()
+            self.highlight_color_container.update()
+
         # Force a complete visual update after all reorganizations
-        
+
         # Debug: Check actual widget order in shadow layout
         if hasattr(self, 'shadow_layout'):
             widgets_in_order = []
@@ -1180,7 +1285,7 @@ class SettingsDialog(QDialog):
             self.layer_panel_settings_widget.updateGeometry()
             self.layer_panel_settings_widget.update()
             self.layer_panel_settings_widget.repaint()
-        
+
         # Force a complete repaint of the entire dialog multiple times to ensure update
         self.updateGeometry()
         self.update()
@@ -1198,6 +1303,26 @@ class SettingsDialog(QDialog):
             child = layout.takeAt(0)
             if child.widget():
                 child.widget().setParent(None)
+
+    def style_color_swatch_button(self, button):
+        """Keep color-picker buttons compact instead of inheriting dialog button min-width."""
+        if not button:
+            return
+
+        button.setFixedSize(30, 30)
+        button.setMinimumSize(30, 30)
+        button.setMaximumSize(30, 30)
+        button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        button.setStyleSheet("""
+            QPushButton {
+                min-width: 30px;
+                max-width: 30px;
+                min-height: 30px;
+                max-height: 30px;
+                padding: 0px;
+                margin: 0px;
+            }
+        """)
 
     def set_combobox_text_alignment(self, combobox, alignment):
         """Set text alignment for combobox using editable mode with read-only line edit."""
@@ -1300,6 +1425,9 @@ class SettingsDialog(QDialog):
                         elif line.startswith('ShowCPSelectedOnly:'):
                             value = line.split(':', 1)[1].strip().lower()
                             self.show_cp_selected_only = (value == 'true')
+                        elif line.startswith('ShadowSelectedOnly:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            self.shadow_selected_only = (value == 'true')
                         elif line.startswith('HighlightColor:'):
                             try:
                                 r, g, b, a = map(int, line.split(':', 1)[1].strip().split(','))
@@ -1550,27 +1678,37 @@ class SettingsDialog(QDialog):
             self.theme_layout.addStretch()
 
         # Shadow Color Selection
-        self.shadow_layout = QHBoxLayout() # STORE AS INSTANCE ATTRIBUTE
-        self.shadow_layout.setContentsMargins(0, 0, 0, 0)  # No margins needed now that main layout is fixed
+        self.shadow_container = QWidget()
+        self.shadow_container.setContentsMargins(0, 0, 0, 0)
+        self.shadow_layout = QHBoxLayout(self.shadow_container) # STORE AS INSTANCE ATTRIBUTE
+        self.shadow_layout.setContentsMargins(0, 0, 0, 0)
         # Set spacing based on language direction - reduced for RTL
         if self.is_rtl_language(self.current_language):
-            self.shadow_layout.setSpacing(5)  # Much smaller spacing for RTL to push button further left
+            self.shadow_layout.setSpacing(5)
         else:
-            self.shadow_layout.setSpacing(15)  # Keep spacing between widgets for LTR
+            self.shadow_layout.setSpacing(15)
         self.shadow_color_label = QLabel(_['shadow_color'] if 'shadow_color' in _ else "Shadow Color")
+        self.shadow_color_label.setTextFormat(Qt.PlainText)
+        self.shadow_color_label.setWordWrap(False)
+        self.shadow_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
 
         # self.shadow_color_label.setMinimumWidth(0)  # Increased width for better RTL alignment # REMOVED
         self.shadow_color_button = QPushButton()
         self.shadow_color_button.setFixedSize(30, 30)
+        self.style_color_swatch_button(self.shadow_color_button)
         self.update_shadow_color_button()
         self.shadow_color_button.clicked.connect(self.choose_shadow_color)
         
         # Add widgets in proper order for current language
         if self.is_rtl_language(self.current_language):
-            self.shadow_layout.addWidget(self.shadow_color_button)
+            self.shadow_container.setLayoutDirection(Qt.LeftToRight)
+            self.shadow_layout.setDirection(QBoxLayout.LeftToRight)
             self.shadow_layout.addStretch()
+            self.shadow_layout.addWidget(self.shadow_color_button)
             self.shadow_layout.addWidget(self.shadow_color_label)
         else:
+            self.shadow_container.setLayoutDirection(Qt.LeftToRight)
+            self.shadow_layout.setDirection(QBoxLayout.LeftToRight)
             self.shadow_layout.addWidget(self.shadow_color_label)
             self.shadow_layout.addWidget(self.shadow_color_button)
             self.shadow_layout.addStretch()
@@ -1706,7 +1844,7 @@ class SettingsDialog(QDialog):
 
         # Add controls to general settings layout
         general_layout.addLayout(self.theme_layout)
-        general_layout.addLayout(self.shadow_layout)
+        general_layout.addWidget(self.shadow_container)
         general_layout.addLayout(self.performance_layout)
         general_layout.addLayout(self.third_control_layout)
         general_layout.addLayout(self.curvature_bias_layout)
@@ -2169,6 +2307,7 @@ class SettingsDialog(QDialog):
         self.button_color_label.adjustSize()
         self.default_arrow_color_button = QPushButton()
         self.default_arrow_color_button.setFixedSize(30, 30)
+        self.style_color_swatch_button(self.default_arrow_color_button)
         self.update_default_arrow_color_button()
         self.default_arrow_color_button.clicked.connect(self.choose_default_arrow_color)
 
@@ -2226,6 +2365,7 @@ class SettingsDialog(QDialog):
         
         self.default_strand_color_button = QPushButton()
         self.default_strand_color_button.setFixedSize(30, 30)
+        self.style_color_swatch_button(self.default_strand_color_button)
         self.update_default_strand_color_button()
         self.default_strand_color_button.clicked.connect(self.choose_default_strand_color)
 
@@ -2269,6 +2409,7 @@ class SettingsDialog(QDialog):
         
         self.default_stroke_color_button = QPushButton()
         self.default_stroke_color_button.setFixedSize(30, 30)
+        self.style_color_swatch_button(self.default_stroke_color_button)
         self.update_default_stroke_color_button()
         self.default_stroke_color_button.clicked.connect(self.choose_default_stroke_color)
 
@@ -2353,24 +2494,59 @@ class SettingsDialog(QDialog):
 
         selected_strand_layout.addLayout(self.show_cp_selected_only_layout)
 
+        # Shadow Selected Only checkbox
+        self.shadow_selected_only_layout = QHBoxLayout()
+        self.shadow_selected_only_label = QLabel(_['shadow_selected_only'] if 'shadow_selected_only' in _ else "Shadow Selected Only")
+        self.shadow_selected_only_checkbox = QCheckBox()
+        self.shadow_selected_only_checkbox.setChecked(self.shadow_selected_only)
+
+        if self.is_rtl_language(self.current_language):
+            self.shadow_selected_only_layout.addStretch()
+            self.shadow_selected_only_layout.addWidget(self.shadow_selected_only_checkbox)
+            self.shadow_selected_only_layout.addWidget(self.shadow_selected_only_label)
+        else:
+            self.shadow_selected_only_layout.addWidget(self.shadow_selected_only_label)
+            self.shadow_selected_only_layout.addWidget(self.shadow_selected_only_checkbox)
+            self.shadow_selected_only_layout.addStretch()
+
+        selected_strand_layout.addLayout(self.shadow_selected_only_layout)
+
         # Highlight Color picker
-        self.highlight_color_layout = QHBoxLayout()
+        self.highlight_color_container = QWidget()
+        self.highlight_color_layout = QHBoxLayout(self.highlight_color_container)
+        self.highlight_color_container.setContentsMargins(0, 0, 0, 0)
+        self.highlight_color_layout.setContentsMargins(0, 0, 0, 0)
+        self.highlight_color_layout.setSpacing(5)
         self.highlight_color_label = QLabel(_['highlight_color'] if 'highlight_color' in _ else "Highlight Color")
+        self.highlight_color_label.setTextFormat(Qt.PlainText)
+        self.highlight_color_label.setWordWrap(False)
+        self.highlight_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        if self.is_rtl_language(self.current_language):
+            self.highlight_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.highlight_color_label.setLayoutDirection(Qt.RightToLeft)
+        else:
+            self.highlight_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            self.highlight_color_label.setLayoutDirection(Qt.LeftToRight)
         self.highlight_color_button = QPushButton()
         self.highlight_color_button.setFixedSize(30, 30)
+        self.style_color_swatch_button(self.highlight_color_button)
         self.update_highlight_color_button()
         self.highlight_color_button.clicked.connect(self.choose_highlight_color)
 
         if self.is_rtl_language(self.current_language):
+            self.highlight_color_container.setLayoutDirection(Qt.LeftToRight)
+            self.highlight_color_layout.setDirection(QBoxLayout.LeftToRight)
             self.highlight_color_layout.addStretch()
             self.highlight_color_layout.addWidget(self.highlight_color_button)
             self.highlight_color_layout.addWidget(self.highlight_color_label)
         else:
+            self.highlight_color_container.setLayoutDirection(Qt.LeftToRight)
+            self.highlight_color_layout.setDirection(QBoxLayout.LeftToRight)
             self.highlight_color_layout.addWidget(self.highlight_color_label)
             self.highlight_color_layout.addWidget(self.highlight_color_button)
             self.highlight_color_layout.addStretch()
 
-        selected_strand_layout.addLayout(self.highlight_color_layout)
+        selected_strand_layout.addWidget(self.highlight_color_container)
 
         selected_strand_layout.addStretch()
         self.selected_strand_ok_button = QPushButton(_['ok'])
@@ -3397,6 +3573,15 @@ class SettingsDialog(QDialog):
 
         self.setStyleSheet(button_style)
         self.style_dialog_buttons()
+        for button_name in (
+            'shadow_color_button',
+            'default_arrow_color_button',
+            'default_strand_color_button',
+            'default_stroke_color_button',
+            'highlight_color_button',
+        ):
+            if hasattr(self, button_name):
+                self.style_color_swatch_button(getattr(self, button_name))
 
     def refresh_button_explanations_html(self):
         """Refresh the button explanations HTML with current theme colors"""
@@ -3665,6 +3850,11 @@ class SettingsDialog(QDialog):
         self.show_cp_selected_only = self.show_cp_selected_only_checkbox.isChecked()
         if self.canvas:
             self.canvas.show_cp_selected_only = self.show_cp_selected_only
+
+        # Apply Shadow Selected Only Setting
+        self.shadow_selected_only = self.shadow_selected_only_checkbox.isChecked()
+        if self.canvas:
+            self.canvas.shadow_selected_only = self.shadow_selected_only
             # Apply Highlight Color Setting
             self.canvas.set_highlight_color(self.highlight_color)
             self.canvas.update()
@@ -3862,6 +4052,10 @@ class SettingsDialog(QDialog):
         self.stacked_widget.setCurrentIndex(index)
 
     def update_translations(self):
+        if hasattr(self, 'parent_window') and hasattr(self.parent_window, 'language_code'):
+            self.current_language = self.parent_window.language_code
+        elif hasattr(self, 'language_code') and self.language_code:
+            self.current_language = self.language_code
         _ = translations[self.current_language]
         self.setWindowTitle(_['settings'])
         # Update category names
@@ -3900,6 +4094,7 @@ class SettingsDialog(QDialog):
         # Selected Strand settings labels
         self.move_selected_only_label.setText(_['move_selected_only'] if 'move_selected_only' in _ else "Move Selected Only")
         self.show_cp_selected_only_label.setText(_['show_cp_selected_only'] if 'show_cp_selected_only' in _ else "Show CP Selected Only")
+        self.shadow_selected_only_label.setText(_['shadow_selected_only'] if 'shadow_selected_only' in _ else "Shadow Selected Only")
         self.highlight_color_label.setText(_['highlight_color'] if 'highlight_color' in _ else "Highlight Color")
         self.selected_strand_ok_button.setText(_['ok'])
         self.reset_curvature_button.setToolTip(_['reset_curvature_tooltip'] if 'reset_curvature_tooltip' in _ else "Reset all curvature settings to default values")
@@ -4174,7 +4369,7 @@ class SettingsDialog(QDialog):
             )
         
         # Completely rebuild the language combobox to ensure proper translation
-        current_data = self.language_combobox.currentData()
+        current_data = self.current_language
         self.language_combobox.clear()
         
         # Re-add language items with properly translated names
@@ -4355,6 +4550,7 @@ class SettingsDialog(QDialog):
                 # Save move selected only setting
                 file.write(f"MoveSelectedOnly: {str(self.move_selected_only).lower()}\n")
                 file.write(f"ShowCPSelectedOnly: {str(self.show_cp_selected_only).lower()}\n")
+                file.write(f"ShadowSelectedOnly: {str(self.shadow_selected_only).lower()}\n")
                 file.write(f"HighlightColor: {self.highlight_color.red()},{self.highlight_color.green()},{self.highlight_color.blue()},{self.highlight_color.alpha()}\n")
                 # Save shadow blur settings
                 file.write(f"NumSteps: {self.num_steps}\n")

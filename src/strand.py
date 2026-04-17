@@ -2090,20 +2090,27 @@ class Strand:
 
             # Only draw shadows if this strand should draw its own shadow
             if not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
-                # Use canvas's shadow color if available
-                shadow_color = None
-                if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
-                    shadow_color = self.canvas.default_shadow_color
-                    # Ensure the strand's shadow color is also updated for future reference
-                    self.shadow_color = QColor(shadow_color)
+                # Skip shadow if shadow_selected_only is enabled and this is not the selected strand
+                _canvas = getattr(self, 'canvas', None)
+                if (_canvas and getattr(_canvas, 'shadow_selected_only', False) and
+                    self is not getattr(_canvas, 'selected_strand', None) and
+                    self is not getattr(_canvas, 'selected_attached_strand', None)):
+                    pass  # Skip shadow for non-selected strands
+                else:
+                    # Use canvas's shadow color if available
+                    shadow_color = None
+                    if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
+                        shadow_color = self.canvas.default_shadow_color
+                        # Ensure the strand's shadow color is also updated for future reference
+                        self.shadow_color = QColor(shadow_color)
 
-                draw_strand_shadow(painter, self, shadow_color,
-                                  num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
-                                  max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99)
+                    draw_strand_shadow(painter, self, shadow_color,
+                                      num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
+                                      max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99)
 
-                # Draw circle shadows if this strand has circles
-                if hasattr(self, 'has_circles') and any(self.has_circles):
-                    draw_circle_shadow(painter, self, shadow_color)
+                    # Draw circle shadows if this strand has circles
+                    if hasattr(self, 'has_circles') and any(self.has_circles):
+                        draw_circle_shadow(painter, self, shadow_color)
         except Exception as e:
             # Log the error but continue with the rendering
             pass
@@ -2820,20 +2827,27 @@ class Strand:
 
             # Only draw shadows if this strand should draw its own shadow
             if not hasattr(self, 'should_draw_shadow') or self.should_draw_shadow:
-                # Use canvas's shadow color if available
-                shadow_color = None
-                if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
-                    shadow_color = self.canvas.default_shadow_color
-                    # Ensure the strand's shadow color is also updated for future reference
-                    self.shadow_color = QColor(shadow_color)
+                # Skip shadow if shadow_selected_only is enabled and this is not the selected strand
+                _canvas = getattr(self, 'canvas', None)
+                if (_canvas and getattr(_canvas, 'shadow_selected_only', False) and
+                    self is not getattr(_canvas, 'selected_strand', None) and
+                    self is not getattr(_canvas, 'selected_attached_strand', None)):
+                    pass  # Skip shadow for non-selected strands
+                else:
+                    # Use canvas's shadow color if available
+                    shadow_color = None
+                    if hasattr(self, 'canvas') and self.canvas and hasattr(self.canvas, 'default_shadow_color'):
+                        shadow_color = self.canvas.default_shadow_color
+                        # Ensure the strand's shadow color is also updated for future reference
+                        self.shadow_color = QColor(shadow_color)
 
-                draw_strand_shadow(painter, self, shadow_color,
-                                  num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
-                                  max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99)
+                    draw_strand_shadow(painter, self, shadow_color,
+                                      num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
+                                      max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99)
 
-                # Draw circle shadows if this strand has circles
-                if hasattr(self, 'has_circles') and any(self.has_circles):
-                    draw_circle_shadow(painter, self, shadow_color)
+                    # Draw circle shadows if this strand has circles
+                    if hasattr(self, 'has_circles') and any(self.has_circles):
+                        draw_circle_shadow(painter, self, shadow_color)
         except Exception as e:
             # Log the error but continue with the rendering
             pass

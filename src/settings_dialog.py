@@ -1305,24 +1305,64 @@ class SettingsDialog(QDialog):
                 child.widget().setParent(None)
 
     def style_color_swatch_button(self, button):
-        """Keep color-picker buttons compact instead of inheriting dialog button min-width."""
+        """Keep color-picker buttons compact and visibly clickable across themes."""
         if not button:
             return
 
-        button.setFixedSize(30, 30)
-        button.setMinimumSize(30, 30)
-        button.setMaximumSize(30, 30)
+        if self.current_theme == "dark":
+            bg_color = "#3D3D3D"
+            border_color = "#505050"
+            hover_bg = "#4D4D4D"
+            hover_border = "#7A7A7A"
+            pressed_bg = "#2D2D2D"
+        elif self.current_theme == "light":
+            bg_color = "#F0F0F0"
+            border_color = "#CCCCCC"
+            hover_bg = "#E0E0E0"
+            hover_border = "#AFAFAF"
+            pressed_bg = "#D0D0D0"
+        else:
+            bg_color = "#E8E8E8"
+            border_color = "#CCCCCC"
+            hover_bg = "#DADADA"
+            hover_border = "#A8A8A8"
+            pressed_bg = "#C8C8C8"
+
+        button.setCursor(Qt.PointingHandCursor)
+        button.setFixedSize(64, 27)
+        button.setMinimumSize(64, 27)
+        button.setMaximumSize(64, 27)
         button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        button.setStyleSheet("""
-            QPushButton {
-                min-width: 30px;
-                max-width: 30px;
-                min-height: 30px;
-                max-height: 30px;
+        button.setStyleSheet(f"""
+            QPushButton {{
+                width: 64px;
+                height: 27px;
+                min-width: 64px;
+                max-width: 64px;
+                min-height: 27px;
+                max-height: 27px;
                 padding: 0px;
                 margin: 0px;
-            }
+                border: 1px solid {border_color};
+                border-radius: 3px;
+                background-color: {bg_color};
+            }}
+            QPushButton:hover {{
+                background-color: {hover_bg};
+                border-color: {hover_border};
+            }}
+            QPushButton:pressed {{
+                background-color: {pressed_bg};
+                border-color: {hover_border};
+            }}
         """)
+
+    def update_color_swatch_icon(self, button, color):
+        """Render the actual color square inside the themed swatch button frame."""
+        pixmap = QPixmap(22, 22)
+        pixmap.fill(color)
+        button.setIcon(QIcon(pixmap))
+        button.setIconSize(pixmap.size())
 
     def set_combobox_text_alignment(self, combobox, alignment):
         """Set text alignment for combobox using editable mode with read-only line edit."""
@@ -5231,10 +5271,7 @@ class SettingsDialog(QDialog):
 
     def update_shadow_color_button(self):
         """Update the shadow color button appearance to reflect the current shadow color."""
-        pixmap = QPixmap(30, 30)
-        pixmap.fill(self.shadow_color)
-        self.shadow_color_button.setIcon(QIcon(pixmap))
-        self.shadow_color_button.setIconSize(pixmap.size())
+        self.update_color_swatch_icon(self.shadow_color_button, self.shadow_color)
         
     def on_curvature_changed(self, value=None):
         """Handle immediate updates when any curvature spinbox value changes."""
@@ -5646,10 +5683,7 @@ class SettingsDialog(QDialog):
 
     def update_default_arrow_color_button(self):
         """Update the default arrow color button to reflect current color."""
-        pixmap = QPixmap(30, 30)
-        pixmap.fill(self.default_arrow_fill_color)
-        self.default_arrow_color_button.setIcon(QIcon(pixmap))
-        self.default_arrow_color_button.setIconSize(pixmap.size())
+        self.update_color_swatch_icon(self.default_arrow_color_button, self.default_arrow_fill_color)
 
     def choose_default_arrow_color(self):
         """Open a color dialog to choose a new default arrow color."""
@@ -5687,10 +5721,7 @@ class SettingsDialog(QDialog):
 
     def update_default_strand_color_button(self):
         """Update the default strand color button to reflect current color."""
-        pixmap = QPixmap(30, 30)
-        pixmap.fill(self.default_strand_color)
-        self.default_strand_color_button.setIcon(QIcon(pixmap))
-        self.default_strand_color_button.setIconSize(pixmap.size())
+        self.update_color_swatch_icon(self.default_strand_color_button, self.default_strand_color)
 
     def choose_default_strand_color(self):
         """Open a color dialog to choose a new default strand color."""
@@ -5721,10 +5752,7 @@ class SettingsDialog(QDialog):
 
     def update_default_stroke_color_button(self):
         """Update the default stroke color button to reflect current color."""
-        pixmap = QPixmap(30, 30)
-        pixmap.fill(self.default_stroke_color)
-        self.default_stroke_color_button.setIcon(QIcon(pixmap))
-        self.default_stroke_color_button.setIconSize(pixmap.size())
+        self.update_color_swatch_icon(self.default_stroke_color_button, self.default_stroke_color)
 
     def choose_default_stroke_color(self):
         """Open a color dialog to choose a new default stroke color."""
@@ -5754,10 +5782,7 @@ class SettingsDialog(QDialog):
 
     def update_highlight_color_button(self):
         """Update the highlight color button to reflect current color."""
-        pixmap = QPixmap(30, 30)
-        pixmap.fill(self.highlight_color)
-        self.highlight_color_button.setIcon(QIcon(pixmap))
-        self.highlight_color_button.setIconSize(pixmap.size())
+        self.update_color_swatch_icon(self.highlight_color_button, self.highlight_color)
 
     def choose_highlight_color(self):
         """Open a color dialog to choose a new highlight color (with alpha channel)."""

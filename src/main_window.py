@@ -448,6 +448,9 @@ class MainWindow(QMainWindow):
         
         # Force an update to ensure the sizing takes effect
         self.splitter.update()
+        if hasattr(self.layer_panel, '_apply_group_panel_alignment'):
+            QTimer.singleShot(0, self.layer_panel._apply_group_panel_alignment)
+            QTimer.singleShot(140, self.layer_panel._apply_group_panel_alignment)
         
         pass
     def setup_connections(self):

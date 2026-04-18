@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDi
                              QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,  QScrollArea, QMenu, QTableWidget, 
                              QTableWidgetItem, QHeaderView, QSizePolicy,  QMessageBox, QAbstractButton)
 from PyQt5.QtWidgets import QStyleOptionButton, QProxyStyle, QStyle, QStyledItemDelegate
-from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QPoint, QEvent, QEventLoop
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QPoint, QEvent, QEventLoop, QTimer
 from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon, QIntValidator, QGuiApplication, QPainter, QPen, QPainterPath
 from math import atan2, degrees, isqrt
 from translations import translations
@@ -721,8 +721,8 @@ class GroupPanel(QWidget):
         palette.setColor(self.backgroundRole(), palette.window().color())
         self.setPalette(palette)
 
-        self.layout.setContentsMargins(10, 5, 10, 5)
-        self.layout.setSpacing(8)
+        self.layout.setContentsMargins(0, 5, 0, 5)
+        self.layout.setSpacing(4)
         self.setAcceptDrops(True)
         self.setMinimumWidth(220)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -733,6 +733,8 @@ class GroupPanel(QWidget):
         self.tree.setObjectName("groupPanelTree")
         self.tree.setHeaderHidden(True)
         self.tree.setColumnCount(1)
+        self.tree.header().setStretchLastSection(False)
+        self.tree.header().setMinimumSectionSize(0)
         self.tree.setIndentation(16)
         self.tree.setRootIsDecorated(False)
         self.tree.setFrameShape(QFrame.NoFrame)
@@ -759,6 +761,17 @@ class GroupPanel(QWidget):
         self.scroll_area = self.tree
         self.scroll_layout = None  # Sentinel — external code should call sync_from_canvas() instead
         self._hovered_group_name = None
+        self._alignment_refresh_pending = False
+        # Watch layer_panel/left_panel resize events so the Hebrew column
+        # width can be re-clipped whenever the | wall position changes.
+        try:
+            if self.layer_panel is not None:
+                self.layer_panel.installEventFilter(self)
+                left_panel = getattr(self.layer_panel, 'left_panel', None)
+                if left_panel is not None:
+                    left_panel.installEventFilter(self)
+        except Exception:
+            pass
         self.apply_theme()
 
     def _resolve_theme_name(self):
@@ -835,6 +848,8 @@ class GroupPanel(QWidget):
         """Apply explicit theme styling so the panel follows the active app theme."""
         colors = self._get_theme_colors()
         self.current_theme = colors["name"]
+        self._apply_tree_direction()
+        item_padding = "2px 14px 2px 4px" if self._current_language_code() == 'he' else "2px 4px 2px 14px"
 
         self.setStyleSheet(f"background-color: {colors['panel_bg']};")
         self.tree.setStyleSheet(f"""
@@ -846,7 +861,7 @@ class GroupPanel(QWidget):
             }}
             QTreeWidget::item {{
                 border: none;
-                padding: 2px 4px;
+                padding: {item_padding};
             }}
             QTreeWidget::item:hover {{
                 background-color: {colors['group_hover_bg']};
@@ -867,6 +882,33 @@ class GroupPanel(QWidget):
     def set_theme(self, theme_name):
         self.current_theme = str(theme_name).lower() if theme_name else "default"
         self.apply_theme()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._update_tree_column_width()
+        self._debug_log_geometry("resizeEvent")
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._schedule_alignment_refresh()
+        # The main window applies its final splitter sizing shortly after show.
+        # Refresh once more after that pass so Hebrew rows use the real width.
+        self._schedule_alignment_refresh(140)
+
+    def _schedule_alignment_refresh(self, delay=0):
+        if self._alignment_refresh_pending:
+            return
+
+        self._alignment_refresh_pending = True
+
+        def _run_refresh():
+            self._alignment_refresh_pending = False
+            try:
+                self.refresh_group_alignment()
+            except RuntimeError:
+                pass
+
+        QTimer.singleShot(delay, _run_refresh)
 
     def eventFilter(self, watched, event):
         if watched is self.tree.viewport():
@@ -889,16 +931,248 @@ class GroupPanel(QWidget):
             except RuntimeError:
                 # Qt C++ tree item was deleted during event handling
                 pass
+        else:
+            # layer_panel / left_panel resize: re-clip the Hebrew column so the
+            # group text stays anchored to the real | wall even when the user
+            # resizes the window or toggles layer-panel widgets.
+            try:
+                if event.type() in (QEvent.Resize, QEvent.Move, QEvent.Show):
+                    layer_panel = getattr(self, 'layer_panel', None)
+                    left_panel = getattr(layer_panel, 'left_panel', None) if layer_panel else None
+                    if watched is layer_panel or watched is left_panel:
+                        self._schedule_alignment_refresh()
+            except Exception:
+                pass
 
         return super().eventFilter(watched, event)
     
     def refresh_group_alignment(self):
-        """No-op kept for backward compatibility.
+        """Refresh group-row text alignment and width after RTL/LTR changes."""
+        self._apply_tree_direction()
+        self.refresh_tree_item_alignment()
+        self._update_tree_column_width()
+        self._debug_log_geometry("after refresh_group_alignment")
 
-        The QTreeWidget view is self-managing; call sync_from_canvas() for a
-        full rebuild from the source-of-truth dict.
+    def _current_language_code(self):
+        """Best-effort lookup of the active UI language code."""
+        if hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'language_code'):
+            return self.layer_panel.language_code
+        if self.canvas and hasattr(self.canvas, 'language_code'):
+            return self.canvas.language_code
+        return getattr(self, 'language_code', 'en')
+
+    def _tree_item_alignment(self):
+        # In Hebrew the group row/number hug the right edge of the panel so the
+        # layout mirrors the LTR experience (header pinned to the leading edge).
+        if self._current_language_code() == 'he':
+            return Qt.AlignRight | Qt.AlignVCenter
+        return Qt.AlignLeft | Qt.AlignVCenter
+
+    def _format_group_display_text(self, group_name, is_expanded):
+        arrow = "▼" if is_expanded else "▶"
+        if self._current_language_code() == 'he':
+            return f"{arrow} \u202B{group_name}\u202C"
+        return f"{arrow} {group_name}"
+
+    def _apply_tree_direction(self):
+        # Keep the tree itself LTR so column 0 always starts at x=0.
+        # For Hebrew we manually clip column 0 to the `| wall` in
+        # _update_tree_column_width; we therefore need Interactive resize
+        # mode (NOT Stretch) so the setColumnWidth() value actually takes
+        # effect.  With Stretch mode Qt auto-sizes the column to the full
+        # viewport and our clipped width is ignored.
+        self.tree.setLayoutDirection(Qt.LeftToRight)
+        self.tree.viewport().setLayoutDirection(Qt.LeftToRight)
+        self.tree.setViewportMargins(0, 0, 0, 0)
+        self.tree.header().setStretchLastSection(False)
+        try:
+            from PyQt5.QtWidgets import QHeaderView
+            self.tree.header().setSectionResizeMode(0, QHeaderView.Interactive)
+        except Exception:
+            pass
+
+    def _debug_log_geometry(self, tag="geometry"):
+        """Emit a detailed log of the group/layer panel geometry.
+
+        This is intentionally verbose so we can compare where the group
+        tree's column and text actually render versus where the layer panel
+        left wall lives on the screen.
         """
-        pass
+        try:
+            from PyQt5.QtGui import QFontMetrics
+
+            def _abs_rect(widget):
+                try:
+                    top_left = widget.mapToGlobal(widget.rect().topLeft())
+                    bottom_right = widget.mapToGlobal(widget.rect().bottomRight())
+                    return (top_left.x(), top_left.y(),
+                            bottom_right.x(), bottom_right.y(),
+                            widget.width(), widget.height())
+                except Exception:
+                    return None
+
+            lang = self._current_language_code()
+            tree_abs = _abs_rect(self.tree)
+            viewport_abs = _abs_rect(self.tree.viewport())
+            group_panel_abs = _abs_rect(self)
+            col_width = self.tree.columnWidth(0) if self.tree.columnCount() > 0 else -1
+            col_viewport_x = self.tree.columnViewportPosition(0) if self.tree.columnCount() > 0 else -1
+
+            print(f"\n[GEOM {tag}] lang={lang}")
+            if tree_abs:
+                print(f"[GEOM {tag}] tree          screen L={tree_abs[0]:>4} R={tree_abs[2]:>4} width={tree_abs[4]}")
+            if viewport_abs:
+                print(f"[GEOM {tag}] tree.viewport screen L={viewport_abs[0]:>4} R={viewport_abs[2]:>4} width={viewport_abs[4]}")
+            if group_panel_abs:
+                print(f"[GEOM {tag}] group_panel   screen L={group_panel_abs[0]:>4} R={group_panel_abs[2]:>4} width={group_panel_abs[4]}")
+            print(f"[GEOM {tag}] column 0: width={col_width}  viewportX={col_viewport_x}")
+
+            layer_panel = getattr(self, 'layer_panel', None)
+            if layer_panel is not None:
+                lp_abs = _abs_rect(layer_panel)
+                if lp_abs:
+                    print(f"[GEOM {tag}] layer_panel   screen L={lp_abs[0]:>4} R={lp_abs[2]:>4} width={lp_abs[4]}")
+                for attr in ('left_panel', 'right_panel', 'splitter'):
+                    w = getattr(layer_panel, attr, None)
+                    if w is None:
+                        continue
+                    r = _abs_rect(w)
+                    if r:
+                        print(f"[GEOM {tag}] {attr:<13} screen L={r[0]:>4} R={r[2]:>4} width={r[4]}")
+
+            for i in range(self.tree.topLevelItemCount()):
+                item = self.tree.topLevelItem(i)
+                if item is None:
+                    continue
+                text = item.text(0) or ""
+                fm = QFontMetrics(item.font(0))
+                text_w = fm.horizontalAdvance(text)
+                align = int(item.textAlignment(0))
+                try:
+                    rect = self.tree.visualItemRect(item)
+                    item_tl = self.tree.viewport().mapToGlobal(rect.topLeft())
+                    item_br = self.tree.viewport().mapToGlobal(rect.bottomRight())
+                    print(
+                        f"[GEOM {tag}] group[{i}] text='{text}' "
+                        f"textWidth={text_w} align={align:#x} "
+                        f"rect screen L={item_tl.x()} R={item_br.x()} width={rect.width()}"
+                    )
+                except Exception as e:
+                    print(f"[GEOM {tag}] group[{i}] rect error: {e}")
+                for j in range(item.childCount()):
+                    child = item.child(j)
+                    if child is None:
+                        continue
+                    ctext = child.text(0) or ""
+                    try:
+                        crect = self.tree.visualItemRect(child)
+                        ctl = self.tree.viewport().mapToGlobal(crect.topLeft())
+                        cbr = self.tree.viewport().mapToGlobal(crect.bottomRight())
+                        print(
+                            f"[GEOM {tag}]   child text='{ctext}' "
+                            f"rect screen L={ctl.x()} R={cbr.x()} width={crect.width()}"
+                        )
+                    except Exception as e:
+                        print(f"[GEOM {tag}]   child rect error: {e}")
+            print("")
+        except Exception as e:
+            print(f"[GEOM {tag}] logging error: {e}")
+
+    def refresh_tree_item_alignment(self):
+        """Apply text alignment to every group and child tree item."""
+        try:
+            alignment = self._tree_item_alignment()
+            for i in range(self.tree.topLevelItemCount()):
+                item = self.tree.topLevelItem(i)
+                if item is None:
+                    continue
+                item.setTextAlignment(0, alignment)
+                for j in range(item.childCount()):
+                    child = item.child(j)
+                    if child is not None:
+                        child.setTextAlignment(0, alignment)
+            self._update_tree_column_width()
+        except RuntimeError:
+            pass
+
+    def _update_tree_column_width(self):
+        """Keep the single tree column sized to its content and anchored to the panel edge."""
+        try:
+            from PyQt5.QtGui import QFontMetrics
+            from PyQt5.QtCore import QPoint
+
+            is_rtl = self._current_language_code() == 'he'
+            # In Hebrew the inner splitter can't always honour right_panel's
+            # fixed 270 px width because left_panel's contents (icon grid +
+            # action buttons) force a wider minimum.  When that happens Qt
+            # just lets left_panel overlap right_panel on the right side,
+            # which hides any group text rendered in the overlap region.
+            #
+            # To keep the group text visible we clip the column width to the
+            # effective right edge: the left edge of left_panel (the real
+            # "| wall" the user sees) rather than the tree's own right edge.
+            if is_rtl:
+                viewport_width = self.tree.viewport().width()
+                if viewport_width <= 0:
+                    self._schedule_alignment_refresh()
+                    return
+
+                effective_width = viewport_width
+                layer_panel = getattr(self, 'layer_panel', None)
+                left_panel = getattr(layer_panel, 'left_panel', None) if layer_panel else None
+                try:
+                    if left_panel is not None and left_panel.isVisible():
+                        tree_left = self.tree.viewport().mapToGlobal(QPoint(0, 0)).x()
+                        left_panel_left = left_panel.mapToGlobal(QPoint(0, 0)).x()
+                        # Only clip when left_panel is actually to the right of
+                        # tree (i.e. Hebrew layout where it acts as the wall).
+                        if left_panel_left > tree_left:
+                            clipped = left_panel_left - tree_left
+                            if clipped > 0:
+                                effective_width = min(effective_width, clipped)
+                except Exception:
+                    pass
+
+                self.tree.setColumnWidth(0, max(1, effective_width))
+                self._debug_log_geometry("RTL after setColumnWidth")
+                return
+
+            edge_padding = 24
+            max_text_width = 0
+            for index in range(self.tree.topLevelItemCount()):
+                item = self.tree.topLevelItem(index)
+                if item is None:
+                    continue
+
+                group_metrics = QFontMetrics(item.font(0))
+                max_text_width = max(
+                    max_text_width,
+                    group_metrics.horizontalAdvance(item.text(0) or "") + edge_padding,
+                )
+
+                for child_index in range(item.childCount()):
+                    child = item.child(child_index)
+                    if child is None:
+                        continue
+                    child_metrics = QFontMetrics(child.font(0))
+                    max_text_width = max(
+                        max_text_width,
+                        child_metrics.horizontalAdvance(child.text(0) or "") + self.tree.indentation() + edge_padding,
+                    )
+
+            viewport_width = max(0, self.tree.viewport().width() - 10)
+            if viewport_width <= 0:
+                self._schedule_alignment_refresh()
+                return
+
+            if max_text_width <= 0:
+                target_width = max(100, min(140, viewport_width))
+            else:
+                target_width = min(max_text_width, viewport_width)
+
+            self.tree.setColumnWidth(0, max(80, target_width))
+        except RuntimeError:
+            pass
 
     # ------------------------------------------------------------------ #
     #  View helpers — QTreeWidget item management                         #
@@ -934,7 +1208,12 @@ class GroupPanel(QWidget):
                 group_item._child_items = child_items
 
                 group_item.setExpanded(True)
+                alignment = self._tree_item_alignment()
+                group_item.setTextAlignment(0, alignment)
+                for child in child_items:
+                    child.setTextAlignment(0, alignment)
                 self._update_group_item_label(group_item, group_name)
+                self._update_tree_column_width()
                 self._apply_group_item_colors(group_item, self._get_theme_colors())
                 self.group_items[group_name] = group_item
             finally:
@@ -949,8 +1228,7 @@ class GroupPanel(QWidget):
         try:
             actual_name = group_name or item.data(0, Qt.UserRole) or item.text(0)
             item.setData(0, Qt.UserRole, actual_name)
-            arrow = "▼" if item.isExpanded() else "▶"
-            item.setText(0, f"{arrow} {actual_name}")
+            item.setText(0, self._format_group_display_text(actual_name, item.isExpanded()))
         except RuntimeError:
             # C++ tree item was deleted
             pass
@@ -975,6 +1253,7 @@ class GroupPanel(QWidget):
                     continue
                 self._update_group_item_label(item)
                 self._apply_group_item_colors(item, colors)
+            self._update_tree_column_width()
         except RuntimeError:
             pass
 
@@ -1035,6 +1314,17 @@ class GroupPanel(QWidget):
                 lang = self.canvas.language_code
 
             t = translations.get(lang, translations.get('en', {}))
+            is_rtl = (lang == 'he')
+            menu_labels = [
+                t.get('move_group_strands', 'Move Group'),
+                t.get('rotate_group_strands', 'Rotate Group'),
+                t.get('edit_strand_angles', 'Edit Angles'),
+                t.get('edit_shadows', 'Edit Shadows'),
+                t.get('create_mask_grid', 'Create Mask Grid'),
+                t.get('duplicate_group', 'Duplicate Group'),
+                t.get('rename_group', 'Rename Group'),
+                t.get('delete_group', 'Delete Group'),
+            ]
 
             # Use the top-level window as parent instead of self (the embedded
             # GroupPanel widget).  QMenu(self) can crash on Windows when Qt's
@@ -1043,25 +1333,9 @@ class GroupPanel(QWidget):
             # self.window() always points to the stable, fully-shown top-level.
             parent_widget = self.window() or self
             menu = QMenu(parent_widget)
-            if hasattr(self.layer_panel, "get_context_menu_stylesheet"):
-                menu.setStyleSheet(self.layer_panel.get_context_menu_stylesheet())
-            else:
-                colors = self._get_theme_colors()
-                menu.setStyleSheet(f"""
-                    QMenu {{
-                        background-color: {colors['menu_bg']};
-                        color: {colors['menu_text']};
-                        border: 1px solid {colors['menu_border']};
-                        padding: 4px;
-                    }}
-                    QMenu::item {{
-                        padding: 6px 20px;
-                    }}
-                    QMenu::item:selected {{
-                        background-color: {colors['menu_selected_bg']};
-                        color: {colors['menu_selected_text']};
-                    }}
-                """)
+            menu.setLayoutDirection(Qt.RightToLeft if is_rtl else Qt.LeftToRight)
+            menu.setStyleSheet(self._group_context_menu_stylesheet(is_rtl))
+            menu.setMinimumWidth(self._group_context_menu_width(menu, menu_labels))
 
             actions = [
                 (t.get('move_group_strands', 'Move Group'), lambda: self.start_group_move(group_name)),
@@ -1098,6 +1372,38 @@ class GroupPanel(QWidget):
     def _on_context_menu_hidden(self):
         """Clear the held context-menu reference once the menu closes."""
         self._active_context_menu = None
+
+    def _group_context_menu_stylesheet(self, is_rtl):
+        colors = self._get_theme_colors()
+        item_padding = "6px 14px 6px 28px" if is_rtl else "6px 28px 6px 14px"
+        return f"""
+            QMenu {{
+                background-color: {colors['menu_bg']};
+                color: {colors['menu_text']};
+                border: 1px solid {colors['menu_border']};
+                padding: 4px;
+            }}
+            QMenu::item {{
+                background-color: transparent;
+                padding: {item_padding};
+            }}
+            QMenu::item:selected {{
+                background-color: {colors['menu_selected_bg']};
+                color: {colors['menu_selected_text']};
+            }}
+            QMenu::separator {{
+                height: 1px;
+                background-color: {colors['menu_border']};
+                margin: 4px 8px;
+            }}
+        """
+
+    def _group_context_menu_width(self, menu, labels):
+        from PyQt5.QtGui import QFontMetrics
+
+        metrics = QFontMetrics(menu.font())
+        widest_label = max((metrics.horizontalAdvance(label) for label in labels), default=100)
+        return min(360, max(150, widest_label + 48))
 
     def sync_from_canvas(self):
         """Rebuild the tree view (and self.groups) from canvas.groups.
@@ -1138,6 +1444,7 @@ class GroupPanel(QWidget):
                 finally:
                     self.tree.setUpdatesEnabled(True)
 
+            self.refresh_tree_item_alignment()
             self.update()
         except RuntimeError:
             pass
@@ -4029,12 +4336,15 @@ class GroupLayerManager:
 
         # Update button texts and any other UI elements
         self.create_group_button.setText(_['create_group'])
-        
+
         # Update translations for all existing group widgets
         for group_widget in self.group_panel.groups.values():
             if hasattr(group_widget, 'update_translations'):
                 group_widget.language_code = self.language_code
                 group_widget.update_translations()
+        # Re-align existing tree items so a language switch updates live rows.
+        if hasattr(self.group_panel, 'refresh_tree_item_alignment'):
+            self.group_panel.refresh_tree_item_alignment()
         # Update other UI elements as needed
 
     def set_canvas(self, canvas):

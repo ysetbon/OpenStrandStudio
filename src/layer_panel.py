@@ -970,26 +970,28 @@ class LayerPanel(QWidget):
 
         # Create right panel (group panel)
         self.right_panel = QWidget()
-        # Keep the group panel's internal layout LTR in every language. In Hebrew
-        # the panel as a whole moves to the left of the window via the main
-        # window's RTL flip, but its contents (create-group button, tree items)
-        # should still sit on the left edge of the panel — which visually mirrors
-        # the English arrangement rather than flipping twice.
-        self.right_panel.setLayoutDirection(Qt.LeftToRight)
+        self.right_panel.setLayoutDirection(Qt.RightToLeft if self.language_code == 'he' else Qt.LeftToRight)
         self.right_layout = QVBoxLayout(self.right_panel)
+        self.right_layout.setContentsMargins(0, 0, 0, 0)
+        self.right_layout.setSpacing(0)
 
         # Create GroupLayerManager
         self.group_layer_manager = GroupLayerManager(parent=self, layer_panel=self, canvas=self.canvas)
 
-        # Add the create_group_button and group_panel to right layout with left alignment
-        # Create a container widget for the create_group_button to position it left
-        button_container = QWidget()
-        button_layout = QHBoxLayout(button_container)
-        button_layout.setContentsMargins(5, 2, 5, 2)  # Reduce padding: left, top, right, bottom
-        button_layout.addWidget(self.group_layer_manager.create_group_button, 0, Qt.AlignLeft)  # Left align the button
-        button_layout.addStretch()  # Right spacer only
-        
-        self.right_layout.addWidget(button_container)
+        # Wrap the create-group button and the group tree so we can mirror the
+        # whole block toward the edge that touches the layer panel.
+        self.group_button_container = QWidget()
+        self.group_button_layout = QHBoxLayout(self.group_button_container)
+        self.group_button_layout.setContentsMargins(0, 2, 0, 2)
+        self.group_button_layout.setDirection(
+            QHBoxLayout.RightToLeft if self.language_code == 'he' else QHBoxLayout.LeftToRight
+        )
+        self.group_button_layout.addWidget(self.group_layer_manager.create_group_button)
+        self.group_button_layout.addStretch()
+        self.group_button_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.group_layer_manager.group_panel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        self.right_layout.addWidget(self.group_button_container)
         self.right_layout.addWidget(self.group_layer_manager.group_panel)
 
         # Remove fixed width from left panel so it can expand
@@ -1067,6 +1069,8 @@ class LayerPanel(QWidget):
         self.mask_edit_label.setStyleSheet("color: red; font-weight: bold;")
         self.left_layout.addWidget(self.mask_edit_label)
         self.mask_edit_label.hide()
+
+        self._apply_group_panel_alignment()
 
         # Initialize button texts with the correct language
         self.update_translations()
@@ -1699,6 +1703,23 @@ class LayerPanel(QWidget):
         if self.group_layer_manager:
             self.group_layer_manager.language_code = self.language_code
             self.group_layer_manager.update_translations()
+
+        self._apply_group_panel_alignment()
+
+    def _apply_group_panel_alignment(self):
+        """Anchor the group block toward the edge shared with the layer panel."""
+        is_rtl = self.language_code == 'he'
+        if not hasattr(self, 'group_button_layout'):
+            return
+
+        self.right_panel.setLayoutDirection(Qt.RightToLeft if is_rtl else Qt.LeftToRight)
+        self.group_button_container.setLayoutDirection(Qt.RightToLeft if is_rtl else Qt.LeftToRight)
+        self.group_button_layout.setDirection(
+            QHBoxLayout.RightToLeft if is_rtl else QHBoxLayout.LeftToRight
+        )
+
+        if hasattr(self.group_layer_manager, 'group_panel') and hasattr(self.group_layer_manager.group_panel, 'refresh_group_alignment'):
+            self.group_layer_manager.group_panel.refresh_group_alignment()
 
     def translate_ui(self):
         """Alias for update_translations to maintain compatibility with main window calls"""

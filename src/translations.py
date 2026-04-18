@@ -3089,7 +3089,7 @@ Exemplos:<br>
         'tutorial': 'מדריך',
         'button_explanations': 'מדריך כפתורים',
         'history': 'היסטוריה',
-        'whats_new': "?מה חדש",
+        'whats_new': "מה חדש?",
         'samples': 'דוגמאות',
         'samples_header': 'פרויקטים לדוגמה',
         'samples_sub': 'בחר דוגמה לטעינה כדי ללמוד ממנה. הדיאלוג ייסגר והדוגמה תיטען.',

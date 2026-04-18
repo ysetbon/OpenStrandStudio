@@ -232,8 +232,11 @@ class SettingsDialog(QDialog):
         is_rtl = self.is_rtl_language(self.current_language)
         direction = Qt.RightToLeft if is_rtl else Qt.LeftToRight
 
-        # Keep the main dialog layout as LTR to maintain categories on left, content on right
-        self.setLayoutDirection(Qt.LeftToRight)
+        # Main dialog follows the language direction: for Hebrew this flips the top-level
+        # QHBoxLayout so the categories list sits on the right and content on the left.
+        # Inner content widgets set their own direction explicitly below, so flipping the
+        # top level does not cascade into pages that need their own control of direction.
+        self.setLayoutDirection(direction)
         
         # Apply layout direction to content widgets only, not the main structure
         if hasattr(self, 'general_settings_widget'):

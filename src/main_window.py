@@ -2472,7 +2472,28 @@ class MainWindow(QMainWindow):
         if self.settings_dialog.isVisible():
             self.settings_dialog.update_translations()
 
+        # Mirror the whole main window for RTL languages (Hebrew) so the layer
+        # panel sits on the left, canvas on the right, and the toolbar buttons
+        # flow right-to-left. Switching back to any LTR language restores the
+        # original arrangement.
+        self.update_layout_direction()
+
         pass
+
+    def update_layout_direction(self):
+        """Flip main window layout direction based on the active language.
+
+        Hebrew -> Qt.RightToLeft: the main QSplitter reverses, putting the
+        layer_panel on the left and the canvas/toolbar on the right; the
+        toolbar QHBoxLayout and the layer_panel's inner splitter also flip
+        automatically. Canvas stays LTR so its painting coordinates and any
+        child widgets are unaffected.
+        """
+        is_rtl = (self.language_code == 'he')
+        direction = Qt.RightToLeft if is_rtl else Qt.LeftToRight
+        self.setLayoutDirection(direction)
+        if hasattr(self, 'canvas') and self.canvas is not None:
+            self.canvas.setLayoutDirection(Qt.LeftToRight)
     def translate_ui(self):
         """Update the UI texts to the selected language."""
         _ = translations[self.language_code]

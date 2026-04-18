@@ -970,6 +970,12 @@ class LayerPanel(QWidget):
 
         # Create right panel (group panel)
         self.right_panel = QWidget()
+        # Keep the group panel's internal layout LTR in every language. In Hebrew
+        # the panel as a whole moves to the left of the window via the main
+        # window's RTL flip, but its contents (create-group button, tree items)
+        # should still sit on the left edge of the panel — which visually mirrors
+        # the English arrangement rather than flipping twice.
+        self.right_panel.setLayoutDirection(Qt.LeftToRight)
         self.right_layout = QVBoxLayout(self.right_panel)
 
         # Create GroupLayerManager

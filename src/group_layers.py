@@ -16,6 +16,39 @@ from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon, QIntValidato
 from strand import Strand
 from masked_strand import MaskedStrand  # Add this import
 from numbered_layer_button import HoverLabel
+
+
+class _RtlMenuLabel(HoverLabel):
+    """HoverLabel subclass used as the default widget for RTL menu entries.
+
+    This label owns ALL of the horizontal padding for Hebrew menu items
+    (``6px 14px 6px 28px`` = 14 px on the leading/right edge, 28 px on the
+    trailing/left edge — the direct mirror of the LTR English menu's
+    ``6px 28px 6px 14px`` from
+    :meth:`GroupPanel._group_context_menu_stylesheet`).
+    ``QMenu::item`` padding is explicitly zeroed for the Hebrew menu so
+    we don't end up double-padded.  The label fills the entire item rect
+    and its background colour doubles as the hover highlight, mirroring
+    the way ``QMenu::item:selected`` fills the whole row in English.
+    """
+
+    _RTL_PADDING = "6px 24px 6px 10px"
+
+    def normal_style(self):
+        bg_color = '#333333' if self.theme == 'dark' else '#F0F0F0'
+        fg_color = '#ffffff' if self.theme == 'dark' else '#000000'
+        self.setStyleSheet(
+            f"background-color: {bg_color}; color: {fg_color}; "
+            f"padding: {self._RTL_PADDING};"
+        )
+
+    def hover_style(self):
+        bg_color = '#F0F0F0' if self.theme == 'dark' else '#333333'
+        fg_color = '#000000' if self.theme == 'dark' else '#ffffff'
+        self.setStyleSheet(
+            f"background-color: {bg_color}; color: {fg_color}; "
+            f"padding: {self._RTL_PADDING};"
+        )
 from math import atan2, degrees
 import json
 from translations import translations
@@ -1304,7 +1337,7 @@ class GroupPanel(QWidget):
     def _show_group_context_menu(self, group_name, global_pos):
         """Build and exec the context menu for *group_name*."""
         try:
-            from PyQt5.QtWidgets import QMenu, QAction
+            from PyQt5.QtWidgets import QMenu, QAction, QWidgetAction
 
             # Determine language for translations
             lang = getattr(self, 'language_code', 'en')
@@ -1337,6 +1370,10 @@ class GroupPanel(QWidget):
             menu.setStyleSheet(self._group_context_menu_stylesheet(is_rtl))
             menu.setMinimumWidth(self._group_context_menu_width(menu, menu_labels))
 
+            theme = self._get_theme_colors().get('name', 'default')
+            hover_theme = 'dark' if theme == 'dark' else 'light'
+            menu_min_width = self._group_context_menu_width(menu, menu_labels)
+
             actions = [
                 (t.get('move_group_strands', 'Move Group'), lambda: self.start_group_move(group_name)),
                 (t.get('rotate_group_strands', 'Rotate Group'), lambda: self.start_group_rotation(group_name)),
@@ -1347,11 +1384,18 @@ class GroupPanel(QWidget):
                 (t.get('rename_group', 'Rename Group'), lambda: self.rename_group(group_name)),
             ]
             for label, callback in actions:
-                act = menu.addAction(label)
+                if is_rtl:
+                    act = self._make_rtl_menu_action(menu, label, hover_theme, menu_min_width)
+                else:
+                    act = menu.addAction(label)
                 act.triggered.connect(callback)
 
             menu.addSeparator()
-            delete_act = menu.addAction(t.get('delete_group', 'Delete Group'))
+            delete_label = t.get('delete_group', 'Delete Group')
+            if is_rtl:
+                delete_act = self._make_rtl_menu_action(menu, delete_label, hover_theme, menu_min_width)
+            else:
+                delete_act = menu.addAction(delete_label)
             delete_act.triggered.connect(lambda: self.delete_group(group_name))
 
             # Use popup() instead of exec_().
@@ -1375,7 +1419,11 @@ class GroupPanel(QWidget):
 
     def _group_context_menu_stylesheet(self, is_rtl):
         colors = self._get_theme_colors()
-        item_padding = "6px 14px 6px 28px" if is_rtl else "6px 28px 6px 14px"
+        # In Hebrew each action is rendered as a QWidgetAction with
+        # `_RtlMenuLabel` providing all horizontal padding internally, so
+        # we zero out the QMenu::item padding to avoid double-padding and
+        # keep the menu the exact mirror of the English layout.
+        item_padding = "0px" if is_rtl else "6px 28px 6px 14px"
         return f"""
             QMenu {{
                 background-color: {colors['menu_bg']};
@@ -1404,6 +1452,41 @@ class GroupPanel(QWidget):
         metrics = QFontMetrics(menu.font())
         widest_label = max((metrics.horizontalAdvance(label) for label in labels), default=100)
         return min(360, max(150, widest_label + 48))
+
+    def _make_rtl_menu_action(self, menu, text, hover_theme, min_width):
+        """Create a right-aligned menu entry for Hebrew (or any RTL language).
+
+        Qt's default QMenu item renders text left-aligned regardless of the
+        menu's layoutDirection on Windows, so we wrap the entry in a
+        QWidgetAction whose default widget is an ``_RtlMenuLabel``.  The
+        label is transparent and has no padding — all horizontal spacing
+        comes from ``QMenu::item`` padding in the stylesheet (which is
+        already mirrored to ``6px 14px 6px 28px`` for RTL), so the Hebrew
+        menu has the exact same spacing as the English one, just reflected.
+
+        With ``layoutDirection=RightToLeft`` and ``Qt.AlignLeft`` (no
+        ``Qt.AlignAbsolute``) the alignment is interpreted as "align to the
+        logical start", which flips to the visual right in RTL — the
+        canonical Qt idiom and the mirror of the English leading-edge
+        layout.  The ``min_width`` arg is kept as an argument for API
+        compatibility but no longer applied to the label, because the menu
+        itself already calls ``setMinimumWidth`` on that value.
+        """
+        from PyQt5.QtWidgets import QWidgetAction
+
+        label = _RtlMenuLabel(text, self, hover_theme)
+        label.setLayoutDirection(Qt.RightToLeft)
+        label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        # Strip any default margins Qt may add to QLabel / QWidgetAction
+        # widgets — all horizontal padding for the menu text must come from
+        # the QMenu::item stylesheet so the Hebrew gap is exactly the
+        # mirror of the English one (14 px on the leading edge).
+        label.setContentsMargins(0, 0, 0, 0)
+
+        action = QWidgetAction(menu)
+        action.setDefaultWidget(label)
+        menu.addAction(action)
+        return action
 
     def sync_from_canvas(self):
         """Rebuild the tree view (and self.groups) from canvas.groups.

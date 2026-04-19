@@ -2506,6 +2506,7 @@ class SettingsDialog(QDialog):
         # Move Selected Only checkbox
         self.move_selected_only_layout = QHBoxLayout()
         self.move_selected_only_label = QLabel(_['move_selected_only'] if 'move_selected_only' in _ else "Move Selected Only")
+        self.move_selected_only_label.setWordWrap(True)
         self.move_selected_only_checkbox = QCheckBox()
         self.move_selected_only_checkbox.setChecked(self.move_selected_only)
 
@@ -2523,6 +2524,7 @@ class SettingsDialog(QDialog):
         # Show CP Selected Only checkbox
         self.show_cp_selected_only_layout = QHBoxLayout()
         self.show_cp_selected_only_label = QLabel(_['show_cp_selected_only'] if 'show_cp_selected_only' in _ else "Show CP Selected Only")
+        self.show_cp_selected_only_label.setWordWrap(True)
         self.show_cp_selected_only_checkbox = QCheckBox()
         self.show_cp_selected_only_checkbox.setChecked(self.show_cp_selected_only)
 
@@ -2540,6 +2542,7 @@ class SettingsDialog(QDialog):
         # Shadow Selected Only checkbox
         self.shadow_selected_only_layout = QHBoxLayout()
         self.shadow_selected_only_label = QLabel(_['shadow_selected_only'] if 'shadow_selected_only' in _ else "Shadow Selected Only")
+        self.shadow_selected_only_label.setWordWrap(True)
         self.shadow_selected_only_checkbox = QCheckBox()
         self.shadow_selected_only_checkbox.setChecked(self.shadow_selected_only)
 
@@ -2776,6 +2779,17 @@ class SettingsDialog(QDialog):
         elif self.current_theme == 'light':
             title_color = '#000000'  # Black for light theme
             
+        def _lp_img(fname):
+            url = QUrl.fromLocalFile(self.get_asset_path(f'layer_panel_icons/{fname}')).toString()
+            return f'<img src="{url}" width="34" height="34" style="vertical-align: middle;" />'
+        _lp_pan_icon = _lp_img('pan_open.png') + ' ' + _lp_img('pan_closed.png')
+        _lp_zoom_in_icon = _lp_img('zoom_in.png')
+        _lp_zoom_out_icon = _lp_img('zoom_out.png')
+        _lp_center_icon = _lp_img('center.png')
+        _lp_multi_icon = _lp_img('multi_select_off.png') + ' ' + _lp_img('multi_select_on.png')
+        _lp_refresh_icon = _lp_img('refresh.png')
+        _lp_home_icon = _lp_img('home.png')
+
         button_html = f'''
         <style>
             body {{ font-family: Arial, sans-serif; padding: 10px; }}
@@ -2784,22 +2798,58 @@ class SettingsDialog(QDialog):
             li {{ margin-bottom: 8px; }}
             .button-name {{ font-weight: bold; }}
         </style>
-        
+
         <h2>{_['layer_panel_buttons']}</h2>
-        <ul>
-            <li><span class="button-name">{_['draw_names_desc'].split(' - ')[0]}</span> - {_['draw_names_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['lock_layers_desc'].split(' - ')[0]}</span> - {_['lock_layers_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['add_new_strand_desc'].split(' - ')[0]}</span> - {_['add_new_strand_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['delete_strand_desc'].split(' - ')[0]}</span> - {_['delete_strand_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['deselect_all_desc'].split(' - ')[0]}</span> - {_['deselect_all_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['pan_desc'].split(' - ')[0]}</span> - {_['pan_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['zoom_in_desc'].split(' - ')[0]}</span> - {_['zoom_in_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['zoom_out_desc'].split(' - ')[0]}</span> - {_['zoom_out_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['center_strands_desc'].split(' - ')[0]}</span> - {_['center_strands_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['multi_select_desc'].split(' - ')[0]}</span> - {_['multi_select_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['refresh_desc'].split(' - ')[0]}</span> - {_['refresh_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['reset_states_desc'].split(' - ')[0]}</span> - {_['reset_states_desc'].split(' - ')[1]}</li>
-        </ul>
+        <table style="margin-bottom: 15px; border-spacing: 0;">
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;"></td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['draw_names_desc'].split(' - ', 1)[0]}</span> — {_['draw_names_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;"></td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['lock_layers_desc'].split(' - ', 1)[0]}</span> — {_['lock_layers_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;"></td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['add_new_strand_desc'].split(' - ', 1)[0]}</span> — {_['add_new_strand_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;"></td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['delete_strand_desc'].split(' - ', 1)[0]}</span> — {_['delete_strand_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;"></td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['deselect_all_desc'].split(' - ', 1)[0]}</span> — {_['deselect_all_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_pan_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['pan_desc'].split(' - ', 1)[0]}</span> — {_['pan_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_zoom_in_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['zoom_in_desc'].split(' - ', 1)[0]}</span> — {_['zoom_in_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_zoom_out_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['zoom_out_desc'].split(' - ', 1)[0]}</span> — {_['zoom_out_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_center_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['center_strands_desc'].split(' - ', 1)[0]}</span> — {_['center_strands_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_multi_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['multi_select_desc'].split(' - ', 1)[0]}</span> — {_['multi_select_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_refresh_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['refresh_desc'].split(' - ', 1)[0]}</span> — {_['refresh_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_home_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['reset_states_desc'].split(' - ', 1)[0]}</span> — {_['reset_states_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+        </table>
         <h2>{_['main_window_buttons']}</h2>
         <ul>
             <li><span class="button-name">{_['attach_mode_desc'].split(' - ')[0]}</span> - {_['attach_mode_desc'].split(' - ')[1]}</li>
@@ -3637,6 +3687,17 @@ class SettingsDialog(QDialog):
         elif self.current_theme == 'light':
             title_color = '#000000'  # Black for light theme
             
+        def _lp_img(fname):
+            url = QUrl.fromLocalFile(self.get_asset_path(f'layer_panel_icons/{fname}')).toString()
+            return f'<img src="{url}" width="34" height="34" style="vertical-align: middle;" />'
+        _lp_pan_icon = _lp_img('pan_open.png') + ' ' + _lp_img('pan_closed.png')
+        _lp_zoom_in_icon = _lp_img('zoom_in.png')
+        _lp_zoom_out_icon = _lp_img('zoom_out.png')
+        _lp_center_icon = _lp_img('center.png')
+        _lp_multi_icon = _lp_img('multi_select_off.png') + ' ' + _lp_img('multi_select_on.png')
+        _lp_refresh_icon = _lp_img('refresh.png')
+        _lp_home_icon = _lp_img('home.png')
+
         button_html = f'''
         <style>
             body {{ font-family: Arial, sans-serif; padding: 10px; }}
@@ -3645,22 +3706,58 @@ class SettingsDialog(QDialog):
             li {{ margin-bottom: 8px; }}
             .button-name {{ font-weight: bold; }}
         </style>
-        
+
         <h2>{_['layer_panel_buttons']}</h2>
-        <ul>
-            <li><span class="button-name">{_['draw_names_desc'].split(' - ')[0]}</span> - {_['draw_names_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['lock_layers_desc'].split(' - ')[0]}</span> - {_['lock_layers_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['add_new_strand_desc'].split(' - ')[0]}</span> - {_['add_new_strand_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['delete_strand_desc'].split(' - ')[0]}</span> - {_['delete_strand_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['deselect_all_desc'].split(' - ')[0]}</span> - {_['deselect_all_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['pan_desc'].split(' - ')[0]}</span> - {_['pan_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['zoom_in_desc'].split(' - ')[0]}</span> - {_['zoom_in_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['zoom_out_desc'].split(' - ')[0]}</span> - {_['zoom_out_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['center_strands_desc'].split(' - ')[0]}</span> - {_['center_strands_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['multi_select_desc'].split(' - ')[0]}</span> - {_['multi_select_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['refresh_desc'].split(' - ')[0]}</span> - {_['refresh_desc'].split(' - ')[1]}</li>
-            <li><span class="button-name">{_['reset_states_desc'].split(' - ')[0]}</span> - {_['reset_states_desc'].split(' - ')[1]}</li>
-        </ul>
+        <table style="margin-bottom: 15px; border-spacing: 0;">
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;"></td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['draw_names_desc'].split(' - ', 1)[0]}</span> — {_['draw_names_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;"></td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['lock_layers_desc'].split(' - ', 1)[0]}</span> — {_['lock_layers_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;"></td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['add_new_strand_desc'].split(' - ', 1)[0]}</span> — {_['add_new_strand_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;"></td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['delete_strand_desc'].split(' - ', 1)[0]}</span> — {_['delete_strand_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;"></td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['deselect_all_desc'].split(' - ', 1)[0]}</span> — {_['deselect_all_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_pan_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['pan_desc'].split(' - ', 1)[0]}</span> — {_['pan_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_zoom_in_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['zoom_in_desc'].split(' - ', 1)[0]}</span> — {_['zoom_in_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_zoom_out_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['zoom_out_desc'].split(' - ', 1)[0]}</span> — {_['zoom_out_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_center_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['center_strands_desc'].split(' - ', 1)[0]}</span> — {_['center_strands_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_multi_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['multi_select_desc'].split(' - ', 1)[0]}</span> — {_['multi_select_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_refresh_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['refresh_desc'].split(' - ', 1)[0]}</span> — {_['refresh_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_home_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['reset_states_desc'].split(' - ', 1)[0]}</span> — {_['reset_states_desc'].split(' - ', 1)[1]}</td>
+            </tr>
+        </table>
         
         <h2>{_['main_window_buttons']}</h2>
         <ul>
@@ -4230,6 +4327,17 @@ class SettingsDialog(QDialog):
             elif self.current_theme == 'light':
                 title_color = '#000000'  # Black for light theme
                 
+            def _lp_img(fname):
+                url = QUrl.fromLocalFile(self.get_asset_path(f'layer_panel_icons/{fname}')).toString()
+                return f'<img src="{url}" width="34" height="34" style="vertical-align: middle;" />'
+            _lp_pan_icon = _lp_img('pan_open.png') + ' ' + _lp_img('pan_closed.png')
+            _lp_zoom_in_icon = _lp_img('zoom_in.png')
+            _lp_zoom_out_icon = _lp_img('zoom_out.png')
+            _lp_center_icon = _lp_img('center.png')
+            _lp_multi_icon = _lp_img('multi_select_off.png') + ' ' + _lp_img('multi_select_on.png')
+            _lp_refresh_icon = _lp_img('refresh.png')
+            _lp_home_icon = _lp_img('home.png')
+
             button_html = f'''
             <style>
                 body {{ font-family: Arial, sans-serif; padding: 10px; }}
@@ -4238,22 +4346,58 @@ class SettingsDialog(QDialog):
                 li {{ margin-bottom: 8px; }}
                 .button-name {{ font-weight: bold; }}
             </style>
-            
+
             <h2>{_['layer_panel_buttons']}</h2>
-            <ul>
-                <li><span class="button-name">{_['draw_names_desc'].split(' - ')[0]}</span> - {_['draw_names_desc'].split(' - ')[1]}</li>
-                <li><span class="button-name">{_['lock_layers_desc'].split(' - ')[0]}</span> - {_['lock_layers_desc'].split(' - ')[1]}</li>
-                <li><span class="button-name">{_['add_new_strand_desc'].split(' - ')[0]}</span> - {_['add_new_strand_desc'].split(' - ')[1]}</li>
-                <li><span class="button-name">{_['delete_strand_desc'].split(' - ')[0]}</span> - {_['delete_strand_desc'].split(' - ')[1]}</li>
-                <li><span class="button-name">{_['deselect_all_desc'].split(' - ')[0]}</span> - {_['deselect_all_desc'].split(' - ')[1]}</li>
-                <li><span class="button-name">{_['pan_desc'].split(' - ')[0]}</span> - {_['pan_desc'].split(' - ')[1]}</li>
-                <li><span class="button-name">{_['zoom_in_desc'].split(' - ')[0]}</span> - {_['zoom_in_desc'].split(' - ')[1]}</li>
-                <li><span class="button-name">{_['zoom_out_desc'].split(' - ')[0]}</span> - {_['zoom_out_desc'].split(' - ')[1]}</li>
-                <li><span class="button-name">{_['center_strands_desc'].split(' - ')[0]}</span> - {_['center_strands_desc'].split(' - ')[1]}</li>
-                <li><span class="button-name">{_['multi_select_desc'].split(' - ')[0]}</span> - {_['multi_select_desc'].split(' - ')[1]}</li>
-                <li><span class="button-name">{_['refresh_desc'].split(' - ')[0]}</span> - {_['refresh_desc'].split(' - ')[1]}</li>
-                <li><span class="button-name">{_['reset_states_desc'].split(' - ')[0]}</span> - {_['reset_states_desc'].split(' - ')[1]}</li>
-            </ul>
+            <table style="margin-bottom: 15px; border-spacing: 0;">
+                <tr>
+                    <td style="width: 90px; padding: 6px 10px; vertical-align: middle;"></td>
+                    <td style="padding: 6px 4px;"><span class="button-name">{_['draw_names_desc'].split(' - ', 1)[0]}</span> — {_['draw_names_desc'].split(' - ', 1)[1]}</td>
+                </tr>
+                <tr>
+                    <td style="width: 90px; padding: 6px 10px; vertical-align: middle;"></td>
+                    <td style="padding: 6px 4px;"><span class="button-name">{_['lock_layers_desc'].split(' - ', 1)[0]}</span> — {_['lock_layers_desc'].split(' - ', 1)[1]}</td>
+                </tr>
+                <tr>
+                    <td style="width: 90px; padding: 6px 10px; vertical-align: middle;"></td>
+                    <td style="padding: 6px 4px;"><span class="button-name">{_['add_new_strand_desc'].split(' - ', 1)[0]}</span> — {_['add_new_strand_desc'].split(' - ', 1)[1]}</td>
+                </tr>
+                <tr>
+                    <td style="width: 90px; padding: 6px 10px; vertical-align: middle;"></td>
+                    <td style="padding: 6px 4px;"><span class="button-name">{_['delete_strand_desc'].split(' - ', 1)[0]}</span> — {_['delete_strand_desc'].split(' - ', 1)[1]}</td>
+                </tr>
+                <tr>
+                    <td style="width: 90px; padding: 6px 10px; vertical-align: middle;"></td>
+                    <td style="padding: 6px 4px;"><span class="button-name">{_['deselect_all_desc'].split(' - ', 1)[0]}</span> — {_['deselect_all_desc'].split(' - ', 1)[1]}</td>
+                </tr>
+                <tr>
+                    <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_pan_icon}</td>
+                    <td style="padding: 6px 4px;"><span class="button-name">{_['pan_desc'].split(' - ', 1)[0]}</span> — {_['pan_desc'].split(' - ', 1)[1]}</td>
+                </tr>
+                <tr>
+                    <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_zoom_in_icon}</td>
+                    <td style="padding: 6px 4px;"><span class="button-name">{_['zoom_in_desc'].split(' - ', 1)[0]}</span> — {_['zoom_in_desc'].split(' - ', 1)[1]}</td>
+                </tr>
+                <tr>
+                    <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_zoom_out_icon}</td>
+                    <td style="padding: 6px 4px;"><span class="button-name">{_['zoom_out_desc'].split(' - ', 1)[0]}</span> — {_['zoom_out_desc'].split(' - ', 1)[1]}</td>
+                </tr>
+                <tr>
+                    <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_center_icon}</td>
+                    <td style="padding: 6px 4px;"><span class="button-name">{_['center_strands_desc'].split(' - ', 1)[0]}</span> — {_['center_strands_desc'].split(' - ', 1)[1]}</td>
+                </tr>
+                <tr>
+                    <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_multi_icon}</td>
+                    <td style="padding: 6px 4px;"><span class="button-name">{_['multi_select_desc'].split(' - ', 1)[0]}</span> — {_['multi_select_desc'].split(' - ', 1)[1]}</td>
+                </tr>
+                <tr>
+                    <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_refresh_icon}</td>
+                    <td style="padding: 6px 4px;"><span class="button-name">{_['refresh_desc'].split(' - ', 1)[0]}</span> — {_['refresh_desc'].split(' - ', 1)[1]}</td>
+                </tr>
+                <tr>
+                    <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_home_icon}</td>
+                    <td style="padding: 6px 4px;"><span class="button-name">{_['reset_states_desc'].split(' - ', 1)[0]}</span> — {_['reset_states_desc'].split(' - ', 1)[1]}</td>
+                </tr>
+            </table>
             
             <h2>{_['main_window_buttons']}</h2>
             <ul>

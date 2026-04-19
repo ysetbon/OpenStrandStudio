@@ -150,7 +150,7 @@ Examples:<br>
         'alpha_channel': 'Alpha channel',
         'language_settings_info': 'Change the language of the application.',
         'tutorial_info': 'Press the "play video" button below each text\nto view the tutorial explaining:',
-        'button_guide_info': 'Learn about the different buttons and their functions in OpenStrand Studio.\n\nTip: You can click on emoji layer panel icons to see their explanations!',
+        'button_guide_info': 'Learn about the different buttons and their functions in OpenStrand Studio.\n\nTip: You can right-click layer panel icons to see their explanations!',
         'layer_panel_buttons': 'Layer Panel Buttons',
         'main_window_buttons': 'Main Window Buttons',
         'group_buttons': 'Group Buttons',
@@ -160,14 +160,14 @@ Examples:<br>
         'add_new_strand_desc': 'New Strand - Adds a new strand to your design',
         'delete_strand_desc': 'Delete Strand - Removes the selected strand',
         'deselect_all_desc': 'Deselect All - Clears all selections (or clears all locks in lock mode)',
-        # Layer panel emoji icon descriptions
-        'pan_desc': 'Pan (✋/✊) - ✋ Click to activate pan mode, ✊ Drag the canvas to move around your design',
-        'zoom_in_desc': 'Zoom In (🔍) - Zoom into your design for detailed work',
-        'zoom_out_desc': 'Zoom Out (🔎) - Zoom out to see the bigger picture',
-        'center_strands_desc': 'Center Strands (🎯) - Center all strands in the view',
-        'multi_select_desc': 'Hide Mode (🙉/🙈) - 🙉 Click to activate hide mode, 🙈 Select layers then right-click for batch hide/show operations',
-        'refresh_desc': 'Refresh (🔄) - Refresh the layer panel display',
-        'reset_states_desc': 'Reset States (🏠) - Reset all layer states to default',
+        # Layer panel icon descriptions
+        'pan_desc': 'Pan - Click to activate pan mode, then drag the canvas to move around your design',
+        'zoom_in_desc': 'Zoom In - Zoom into your design for detailed work',
+        'zoom_out_desc': 'Zoom Out - Zoom out to see the bigger picture',
+        'center_strands_desc': 'Center Strands - Center all strands in the view',
+        'multi_select_desc': 'Hide Mode - Click to activate hide mode, then select layers and right-click for batch hide/show operations',
+        'refresh_desc': 'Refresh - Refresh the layer panel display',
+        'reset_states_desc': 'Reset States - Reset all layer states to default',
         # Main window button descriptions
         'attach_mode_desc': 'Attach Mode - Connect strands together at their endpoints',
         'move_mode_desc': 'Move Mode - Move strands and control points around the canvas',
@@ -224,21 +224,25 @@ Examples:<br>
         'curve_shape_full_desc': 'Curve Shape - Controls the mathematical curve type (1.0=sharp angles, 2.0=smooth curves, 3.0=very smooth)',
         'reset_curvature_full_desc': 'Reset Curvature Settings - Restores Control Influence, Distance Boost, and Curve Shape to defaults',
         'whats_new_info': '''
-        <h2>What's New in Version 1.106</h2>
+        <h2>What's New in Version 1.107</h2>
 
-            <li style="font-size:18px;"><b>Hover Highlight in Select and Mask Modes:</b> Strands now highlight when hovering over them in Select mode and Mask mode, providing better visual feedback for strand selection.</li>
-            <li style="font-size:18px;"><b>Main Buttons Responsiveness:</b> Fixed main window buttons (at the top of the canvas) to display correctly on any screen size and aspect ratio.</li>
+            <li style="font-size:18px;"><b>Group Shadow Editor:</b> Shadows can now be edited for entire groups, giving you full control over how group strands cast shadows on the canvas.</li>
+            <li style="font-size:18px;"><b>Shadow Editor Fixes & Masked Strand Support:</b> Shadow subtraction logic is unified between the main renderer and the shadow preview, and masked strands can now be edited through the shadow editor dialog with smart defaults.</li>
+            <li style="font-size:18px;"><b>Selected Strand Settings:</b> A new Selected Strand category in Settings gathers options that apply only to the currently selected strand — move-only, control-points-only, shadow-only, and a customizable selection highlight color.</li>
+            <li style="font-size:18px;"><b>Group Creation Stability:</b> Fixed unexpected crashes caused by orphan hidden group dialogs when creating groups or exiting the application.</li>
+            <li style="font-size:18px;"><b>Hebrew Right-to-Left Alignment:</b> The main window, settings dialog, group context menu, and group panel are now mirrored right-to-left in Hebrew for a natural reading order.</li>
+            <li style="font-size:18px;"><b>View Button:</b> New View button in the main window that hides all mode indicators (Move, Attach, etc.) so you can see your design clearly without any UI overlays.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.106</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.107</p>
         ''',
 
 
         # Selected Strand settings
         'selected_strand_settings': 'Selected Strand',
-        'move_selected_only': 'Move Selected Only',
-        'show_cp_selected_only': 'Show CP Selected Only',
-        'shadow_selected_only': 'Shadow Selected Only',
-        'highlight_color': 'Highlight Color',
+        'move_selected_only': 'In move mode, allow only to move the selected strand',
+        'show_cp_selected_only': 'Show control points only for the selected strand',
+        'shadow_selected_only': 'Cast shadow only for the selected strand',
+        'highlight_color': 'Selection highlight color',
 
         # LayerPanel translations
         'layer_panel_title': 'Layer Panel',
@@ -488,7 +492,7 @@ Examples:<br>
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
         <p style="font-size:18px;">
-            © 2025 OpenStrand Studio
+            © 2026 OpenStrand Studio
         </p>
         ''',
         'width_preview_label': 'Total: {total}px | Color: {color}px | Stroke: {stroke}px each side',
@@ -647,7 +651,7 @@ Exemples :<br>
         'alpha_channel': 'Canal alpha',
         'language_settings_info': 'Changer la langue de l\'application.',
         'tutorial_info': 'Appuyez sur le bouton "lire la vidéo" sous chaque texte\npour voir le tutoriel explicatif :',
-        'button_guide_info': 'Découvrez les différents boutons et leurs fonctions dans OpenStrand Studio.\n\nAstuce : Vous pouvez cliquer sur les icônes emoji du panneau des calques pour voir leurs explications !',
+        'button_guide_info': 'Découvrez les différents boutons et leurs fonctions dans OpenStrand Studio.\n\nAstuce : Faites un clic droit sur les icônes du panneau des calques pour voir leurs explications !',
         'layer_panel_buttons': 'Boutons du Panneau de Calques',
         'main_window_buttons': 'Boutons de la Fenêtre Principale',
         # General Settings descriptions for button guide
@@ -666,21 +670,25 @@ Exemples :<br>
         'curve_shape_full_desc': 'Forme de Courbe - Contrôle le type de courbe mathématique (1.0=angles aigus, 2.0=courbes lisses, 3.0=très lisse)',
         'reset_curvature_full_desc': "Réinitialiser les Paramètres de Courbure - Restaure l'Influence, l'Amplification et la Forme aux valeurs par défaut",
         'whats_new_info': '''
-        <h2>Nouveautés de la version 1.106</h2>
+        <h2>Nouveautés de la version 1.107</h2>
 
-            <li style="font-size:18px;"><b>Surbrillance au survol dans les modes Sélection et Masque :</b> Les brins sont maintenant mis en surbrillance lorsque vous passez la souris dessus en mode Sélection et en mode Masque, offrant un meilleur retour visuel pour la sélection des brins.</li>
-            <li style="font-size:18px;"><b>Réactivité des boutons principaux :</b> Correction des boutons de la fenêtre principale (en haut du canevas) pour qu'ils s'affichent correctement sur toute taille d'écran et tout rapport d'aspect.</li>
+            <li style="font-size:18px;"><b>Éditeur d'ombres de groupe :</b> Les ombres peuvent désormais être modifiées pour des groupes entiers, vous offrant un contrôle total sur la façon dont les brins d'un groupe projettent leurs ombres sur le canevas.</li>
+            <li style="font-size:18px;"><b>Corrections de l'éditeur d'ombres et prise en charge des brins masqués :</b> La logique de soustraction des ombres est unifiée entre le rendu principal et l'aperçu des ombres, et les brins masqués peuvent maintenant être modifiés via la boîte de dialogue de l'éditeur d'ombres avec des valeurs par défaut intelligentes.</li>
+            <li style="font-size:18px;"><b>Paramètres du brin sélectionné :</b> Une nouvelle catégorie « Brin Sélectionné » dans les paramètres regroupe des options qui ne s'appliquent qu'au brin actuellement sélectionné — déplacement seul, points de contrôle seuls, ombre seule, et une couleur de surbrillance de sélection personnalisable.</li>
+            <li style="font-size:18px;"><b>Stabilité de la création de groupes :</b> Correction des plantages inattendus causés par des boîtes de dialogue de groupe cachées orphelines lors de la création de groupes ou de la fermeture de l'application.</li>
+            <li style="font-size:18px;"><b>Alignement de droite à gauche pour l'hébreu :</b> La fenêtre principale, la boîte de dialogue des paramètres, le menu contextuel de groupe et le panneau de groupe sont désormais mis en miroir de droite à gauche en hébreu pour un ordre de lecture naturel.</li>
+            <li style="font-size:18px;"><b>Bouton Vue :</b> Nouveau bouton Vue dans la fenêtre principale qui masque tous les indicateurs de mode (Bouger, Lier, etc.) pour que vous puissiez voir votre conception clairement, sans aucune superposition d'interface.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.106</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.107</p>
         ''',
 
 
         # Selected Strand settings
         'selected_strand_settings': 'Brin Sélectionné',
-        'move_selected_only': 'Dépl. Sélect. Seul.',
-        'show_cp_selected_only': 'Afficher PC Sélect. Seul.',
-        'shadow_selected_only': 'Ombre Sélect. Seul.',
-        'highlight_color': 'Couleur de surbrillance',
+        'move_selected_only': 'En mode déplacement, déplacer uniquement le brin sélectionné',
+        'show_cp_selected_only': 'Afficher les points de contrôle uniquement pour le brin sélectionné',
+        'shadow_selected_only': 'Projeter l\'ombre uniquement pour le brin sélectionné',
+        'highlight_color': 'Couleur de surbrillance de la sélection',
 
         # LayerPanel translations
         'layer_panel_title': 'Panneau des Couches',
@@ -884,14 +892,14 @@ Exemples :<br>
         'add_new_strand_desc': 'Nouveau Brin - Ajoute un nouveau brin à votre design',
         'delete_strand_desc': 'Supprimer Brin - Supprime le brin sélectionné',
         'deselect_all_desc': 'Tout Désélectionner - Efface toutes les sélections (ou efface tous les verrous en mode verrouillage)',
-        # Layer panel emoji icon descriptions
-        'pan_desc': 'Panoramique (✋/✊) - ✋ Cliquez pour activer le mode panoramique, ✊ Faites glisser le canevas pour vous déplacer dans votre design',
-        'zoom_in_desc': 'Zoom Avant (🔍) - Zoomez dans votre design pour un travail détaillé',
-        'zoom_out_desc': 'Zoom Arrière (🔎) - Zoomez en arrière pour voir l\'ensemble',
-        'center_strands_desc': 'Centrer Brins (🎯) - Centre tous les brins dans la vue',
-        'multi_select_desc': 'Mode Masquer (🙉/🙈) - 🙉 Cliquez pour activer le mode masquer, 🙈 Sélectionnez les calques puis clic droit pour les opérations de masquage/affichage par lot',
-        'refresh_desc': 'Actualiser (🔄) - Actualise l\'affichage du panneau des calques',
-        'reset_states_desc': 'Réinitialiser États (🏠) - Remet tous les états des calques par défaut',
+        # Layer panel icon descriptions
+        'pan_desc': 'Panoramique - Cliquez pour activer le mode panoramique, puis faites glisser le canevas pour vous déplacer dans votre design',
+        'zoom_in_desc': 'Zoom Avant - Zoomez dans votre design pour un travail détaillé',
+        'zoom_out_desc': 'Zoom Arrière - Zoomez en arrière pour voir l\'ensemble',
+        'center_strands_desc': 'Centrer Brins - Centre tous les brins dans la vue',
+        'multi_select_desc': 'Mode Masquer - Cliquez pour activer le mode masquer, puis sélectionnez les calques et faites un clic droit pour les opérations de masquage/affichage par lot',
+        'refresh_desc': 'Actualiser - Actualise l\'affichage du panneau des calques',
+        'reset_states_desc': 'Réinitialiser États - Remet tous les états des calques par défaut',
         # Main window button descriptions
         'attach_mode_desc': 'Mode Attacher - Connecte les brins ensemble à leurs extrémités',
         'move_mode_desc': 'Mode Déplacer - Déplace les brins et points de contrôle sur le canevas',
@@ -932,7 +940,7 @@ Exemples :<br>
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
         <p style="font-size:18px;">
-            © 2025 OpenStrand Studio
+            © 2026 OpenStrand Studio
         </p>
         ''' ,
         
@@ -1140,7 +1148,7 @@ Beispiele:<br>
         'alpha_channel': 'Alphakanal',
         'language_settings_info': 'Ändern Sie die Sprache der Anwendung.',
         'tutorial_info': 'Drücken Sie die Taste "Video abspielen" unter jedem Text,\num das erklärende Tutorial anzusehen:',
-        'button_guide_info': 'Erfahren Sie mehr über die verschiedenen Schaltflächen und ihre Funktionen in OpenStrand Studio.\n\nTipp: Sie können auf Emoji-Symbole im Ebenenpanel klicken, um ihre Erklärungen zu sehen!',
+        'button_guide_info': 'Erfahren Sie mehr über die verschiedenen Schaltflächen und ihre Funktionen in OpenStrand Studio.\n\nTipp: Klicken Sie mit der rechten Maustaste auf Symbole im Ebenenpanel, um ihre Erklärungen zu sehen!',
         'layer_panel_buttons': 'Ebenenpanel-Schaltflächen',
         'main_window_buttons': 'Hauptfenster-Schaltflächen',
         'group_buttons': 'Gruppenschaltflächen',
@@ -1165,14 +1173,14 @@ Beispiele:<br>
         'add_new_strand_desc': 'Neuer Strang - Fügt Ihrem Design einen neuen Strang hinzu',
         'delete_strand_desc': 'Strang löschen - Entfernt den ausgewählten Strang',
         'deselect_all_desc': 'Alle abwählen - Hebt alle Auswahlen auf (oder entfernt alle Sperren im Sperrmodus)',
-        # Layer panel emoji icon descriptions
-        'pan_desc': 'Verschieben (✋/✊) - ✋ Klicken, um den Verschiebemodus zu aktivieren, ✊ Leinwand ziehen, um sich zu bewegen',
-        'zoom_in_desc': 'Heranzoomen (🔍) - In Ihr Design hineinzoomen für Detailarbeit',
-        'zoom_out_desc': 'Herauszoomen (🔎) - Herauszoomen, um den Überblick zu sehen',
-        'center_strands_desc': 'Stränge zentrieren (🎯) - Zentriert alle Stränge in der Ansicht',
-        'multi_select_desc': 'Versteckmodus (🙉/🙈) - 🙉 Aktivieren, 🙈 Ebenen wählen, dann Rechtsklick für Sammel Ein-/Ausblendung',
-        'refresh_desc': 'Aktualisieren (🔄) - Aktualisiert die Anzeige des Ebenenpanels',
-        'reset_states_desc': 'Zustände zurücksetzen (🏠) - Setzt alle Ebenenzustände auf Standard zurück',
+        # Layer panel icon descriptions
+        'pan_desc': 'Verschieben - Klicken, um den Verschiebemodus zu aktivieren, dann Leinwand ziehen, um sich zu bewegen',
+        'zoom_in_desc': 'Heranzoomen - In Ihr Design hineinzoomen für Detailarbeit',
+        'zoom_out_desc': 'Herauszoomen - Herauszoomen, um den Überblick zu sehen',
+        'center_strands_desc': 'Stränge zentrieren - Zentriert alle Stränge in der Ansicht',
+        'multi_select_desc': 'Versteckmodus - Klicken zum Aktivieren, dann Ebenen wählen und Rechtsklick für Sammel Ein-/Ausblendung',
+        'refresh_desc': 'Aktualisieren - Aktualisiert die Anzeige des Ebenenpanels',
+        'reset_states_desc': 'Zustände zurücksetzen - Setzt alle Ebenenzustände auf Standard zurück',
         # Main window button descriptions
         'attach_mode_desc': 'Verbinden-Modus - Verbindet Stränge an ihren Endpunkten',
         'move_mode_desc': 'Bewegen-Modus - Bewegt Stränge und Kontrollpunkte auf der Leinwand',
@@ -1189,12 +1197,16 @@ Beispiele:<br>
         'toggle_shadow_desc': 'Schatten ein/aus - Zeigt/verbirgt Schatten auf Strängen',
         'layer_state_desc': 'Layer-Status - Zeigt Debug-Informationen zu Ebenen',
         'whats_new_info': '''
-        <h2>Neu in Version 1.106</h2>
+        <h2>Neu in Version 1.107</h2>
 
-            <li style="font-size:18px;"><b>Hervorhebung beim Überfahren in Auswahl- und Maskenmodi:</b> Stränge werden jetzt hervorgehoben, wenn Sie mit der Maus darüber fahren, im Auswahlmodus und im Maskenmodus, für besseres visuelles Feedback bei der Strangauswahl.</li>
-            <li style="font-size:18px;"><b>Reaktionsfähigkeit der Hauptschaltflächen:</b> Die Schaltflächen im Hauptfenster (oben auf der Leinwand) werden jetzt auf jeder Bildschirmgröße und jedem Seitenverhältnis korrekt angezeigt.</li>
+            <li style="font-size:18px;"><b>Gruppen-Schatten-Editor:</b> Schatten können jetzt für ganze Gruppen bearbeitet werden, was Ihnen die volle Kontrolle darüber gibt, wie die Stränge einer Gruppe ihre Schatten auf der Leinwand werfen.</li>
+            <li style="font-size:18px;"><b>Schatten-Editor-Korrekturen & Unterstützung für maskierte Stränge:</b> Die Logik zur Schattensubtraktion ist zwischen dem Hauptrenderer und der Schattenvorschau vereinheitlicht, und maskierte Stränge können jetzt über den Schatten-Editor-Dialog mit intelligenten Standardwerten bearbeitet werden.</li>
+            <li style="font-size:18px;"><b>Einstellungen für ausgewählten Strang:</b> Eine neue Kategorie „Ausgewählter Strang" in den Einstellungen bündelt Optionen, die nur auf den aktuell ausgewählten Strang wirken — nur Bewegung, nur Kontrollpunkte, nur Schatten und eine anpassbare Auswahl-Hervorhebungsfarbe.</li>
+            <li style="font-size:18px;"><b>Stabilität bei der Gruppenerstellung:</b> Unerwartete Abstürze durch verwaiste, ausgeblendete Gruppendialoge beim Erstellen von Gruppen oder beim Beenden der Anwendung wurden behoben.</li>
+            <li style="font-size:18px;"><b>Rechts-nach-links-Ausrichtung für Hebräisch:</b> Hauptfenster, Einstellungsdialog, Gruppen-Kontextmenü und Gruppenpanel sind für Hebräisch nun von rechts nach links gespiegelt, um eine natürliche Leserichtung zu gewährleisten.</li>
+            <li style="font-size:18px;"><b>Ansichtsschaltfläche:</b> Neue Ansichtsschaltfläche im Hauptfenster, die alle Modusanzeigen (Bewegen, Anfügen usw.) ausblendet, damit Sie Ihr Design ohne störende UI-Elemente klar sehen können.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.106</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.107</p>
         ''',
         # About translations
         'about_info': '''
@@ -1211,17 +1223,17 @@ Beispiele:<br>
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
         <p style="font-size:18px;">
-            © 2025 OpenStrand Studio
+            © 2026 OpenStrand Studio
         </p>
         ''',
 
 
         # Selected Strand settings
         'selected_strand_settings': 'Ausgewählter Strang',
-        'move_selected_only': 'Nur Auswahl bewegen',
-        'show_cp_selected_only': 'KP nur Auswahl zeigen',
-        'shadow_selected_only': 'Schatten nur Auswahl',
-        'highlight_color': 'Hervorhebungsfarbe',
+        'move_selected_only': 'Im Bewegungsmodus nur den ausgewählten Strang bewegen',
+        'show_cp_selected_only': 'Kontrollpunkte nur für den ausgewählten Strang anzeigen',
+        'shadow_selected_only': 'Schatten nur für den ausgewählten Strang werfen',
+        'highlight_color': 'Auswahl-Hervorhebungsfarbe',
 
         # LayerPanel translations
         'layer_panel_title': 'Ebenenpanel',
@@ -1627,7 +1639,7 @@ Esempi:<br>
         'alpha_channel': 'Canale alfa',
         'language_settings_info': 'Cambia la lingua dell\'applicazione.',
         'tutorial_info': 'Premi il pulsante "riproduci video" sotto ogni testo\nper visualizzare il tutorial che spiega:',
-        'button_guide_info': 'Scopri i diversi pulsanti e le loro funzioni in OpenStrand Studio.\n\nSuggerimento: Puoi cliccare sulle icone emoji del pannello dei livelli per vedere le loro spiegazioni!',
+        'button_guide_info': 'Scopri i diversi pulsanti e le loro funzioni in OpenStrand Studio.\n\nSuggerimento: Fai clic destro sulle icone del pannello dei livelli per vedere le loro spiegazioni!',
         'layer_panel_buttons': 'Pulsanti del Pannello Livelli',
         'main_window_buttons': 'Pulsanti della Finestra Principale',
         # General Settings descriptions for button guide
@@ -1646,21 +1658,25 @@ Esempi:<br>
         'curve_shape_full_desc': 'Forma Curva - Controlla il tipo di curva matematica (1.0=angoli acuti, 2.0=curve lisce, 3.0=molto liscio)',
         'reset_curvature_full_desc': 'Ripristina Impostazioni Curvatura - Ripristina Influenza, Amplificazione e Forma ai valori predefiniti',
         'whats_new_info': '''
-        <h2>Novità della versione 1.106</h2>
+        <h2>Novità della versione 1.107</h2>
 
-            <li style="font-size:18px;"><b>Evidenziazione al passaggio del mouse nei modi Selezione e Maschera:</b> I trefoli ora si evidenziano quando si passa il mouse sopra di essi in modalità Selezione e in modalità Maschera, fornendo un miglior feedback visivo per la selezione dei trefoli.</li>
-            <li style="font-size:18px;"><b>Reattività dei pulsanti principali:</b> Corretti i pulsanti della finestra principale (in alto sulla tela) per visualizzarsi correttamente su qualsiasi dimensione dello schermo e rapporto d'aspetto.</li>
+            <li style="font-size:18px;"><b>Editor delle ombre di gruppo:</b> Le ombre ora possono essere modificate per interi gruppi, offrendoti il pieno controllo sul modo in cui i fili di un gruppo proiettano le loro ombre sulla tela.</li>
+            <li style="font-size:18px;"><b>Correzioni dell'editor delle ombre e supporto per fili mascherati:</b> La logica di sottrazione delle ombre è unificata tra il renderer principale e l'anteprima delle ombre, e i fili mascherati possono ora essere modificati tramite la finestra di dialogo dell'editor delle ombre con impostazioni predefinite intelligenti.</li>
+            <li style="font-size:18px;"><b>Impostazioni del filo selezionato:</b> Una nuova categoria "Filo Selezionato" nelle Impostazioni raggruppa opzioni che si applicano solo al filo attualmente selezionato — solo movimento, solo punti di controllo, sola ombra e un colore di evidenziazione della selezione personalizzabile.</li>
+            <li style="font-size:18px;"><b>Stabilità nella creazione dei gruppi:</b> Corretti gli arresti anomali inattesi causati da finestre di dialogo di gruppo nascoste orfane durante la creazione di gruppi o la chiusura dell'applicazione.</li>
+            <li style="font-size:18px;"><b>Allineamento da destra a sinistra per l'ebraico:</b> La finestra principale, la finestra delle impostazioni, il menu contestuale del gruppo e il pannello dei gruppi sono ora rispecchiati da destra a sinistra in ebraico per un ordine di lettura naturale.</li>
+            <li style="font-size:18px;"><b>Pulsante Vista:</b> Nuovo pulsante Vista nella finestra principale che nasconde tutti gli indicatori di modalità (Muovi, Collega, ecc.) in modo da poter vedere chiaramente il tuo progetto senza sovrapposizioni dell'interfaccia.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio - Versione 1.106</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio - Versione 1.107</p>
         ''',
 
 
         # Selected Strand settings
         'selected_strand_settings': 'Filo Selezionato',
-        'move_selected_only': 'Muovi Solo Selez.',
-        'show_cp_selected_only': 'Mostra PC Solo Selez.',
-        'shadow_selected_only': 'Ombra Solo Selez.',
-        'highlight_color': 'Colore evidenziazione',
+        'move_selected_only': 'In modalità movimento, muovi solo il filo selezionato',
+        'show_cp_selected_only': 'Mostra i punti di controllo solo per il filo selezionato',
+        'shadow_selected_only': 'Proietta l\'ombra solo per il filo selezionato',
+        'highlight_color': 'Colore di evidenziazione della selezione',
 
         # LayerPanel translations
         'layer_panel_title': 'Pannello Livelli',
@@ -1865,14 +1881,14 @@ Esempi:<br>
         'add_new_strand_desc': 'Nuovo Filo - Aggiunge un nuovo filo al tuo design',
         'delete_strand_desc': 'Elimina Filo - Rimuove il filo selezionato',
         'deselect_all_desc': 'Deseleziona Tutto - Cancella tutte le selezioni (o cancella tutti i blocchi in modalità blocco)',
-        # Layer panel emoji icon descriptions
-        'pan_desc': 'Panoramica (✋/✊) - ✋ Clicca per attivare la modalità panoramica, ✊ Trascina il canvas per muoverti nel tuo design',
-        'zoom_in_desc': 'Zoom Avanti (🔍) - Ingrandisci il tuo design per lavori dettagliati',
-        'zoom_out_desc': 'Zoom Indietro (🔎) - Rimpicciolisci per vedere il quadro generale',
-        'center_strands_desc': 'Centra Fili (🎯) - Centra tutti i fili nella vista',
-        'multi_select_desc': 'Modalità Nascondi (🙉/🙈) - 🙉 Clicca per attivare la modalità nascondi, 🙈 Seleziona i livelli poi click destro per operazioni di nascondi/mostra in batch',
-        'refresh_desc': 'Aggiorna (🔄) - Aggiorna la visualizzazione del pannello livelli',
-        'reset_states_desc': 'Ripristina Stati (🏠) - Ripristina tutti gli stati dei livelli al default',
+        # Layer panel icon descriptions
+        'pan_desc': 'Panoramica - Clicca per attivare la modalità panoramica, poi trascina il canvas per muoverti nel tuo design',
+        'zoom_in_desc': 'Zoom Avanti - Ingrandisci il tuo design per lavori dettagliati',
+        'zoom_out_desc': 'Zoom Indietro - Rimpicciolisci per vedere il quadro generale',
+        'center_strands_desc': 'Centra Fili - Centra tutti i fili nella vista',
+        'multi_select_desc': 'Modalità Nascondi - Clicca per attivare la modalità nascondi, poi seleziona i livelli e click destro per operazioni di nascondi/mostra in batch',
+        'refresh_desc': 'Aggiorna - Aggiorna la visualizzazione del pannello livelli',
+        'reset_states_desc': 'Ripristina Stati - Ripristina tutti gli stati dei livelli al default',
         # Main window button descriptions
         'attach_mode_desc': 'Modalità Collega - Collega i fili insieme alle loro estremità',
         'move_mode_desc': 'Modalità Sposta - Sposta fili e punti di controllo sul canvas',
@@ -1913,7 +1929,7 @@ Esempi:<br>
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
         <p style="font-size:18px;">
-            © 2025 OpenStrand Studio
+            © 2026 OpenStrand Studio
         </p>
         ''' ,
         
@@ -2122,7 +2138,7 @@ Ejemplos:<br>
         'alpha_channel': 'Canal alfa',
         'language_settings_info': 'Cambiar el idioma de la aplicación.',
         'tutorial_info': 'Presiona el botón "reproducir vídeo" debajo de cada texto\npara ver el tutorial que explica:',
-        'button_guide_info': 'Aprende sobre los diferentes botones y sus funciones en OpenStrand Studio.\n\n¡Consejo: Puedes hacer clic en los iconos emoji del panel de capas para ver sus explicaciones!',
+        'button_guide_info': 'Aprende sobre los diferentes botones y sus funciones en OpenStrand Studio.\n\n¡Consejo: Haz clic derecho en los iconos del panel de capas para ver sus explicaciones!',
         'layer_panel_buttons': 'Botones del Panel de Capas',
         'main_window_buttons': 'Botones de la Ventana Principal',
         # General Settings descriptions for button guide
@@ -2141,21 +2157,25 @@ Ejemplos:<br>
         'curve_shape_full_desc': 'Forma de Curva - Controla el tipo de curva matemática (1.0=ángulos agudos, 2.0=curvas suaves, 3.0=muy suave)',
         'reset_curvature_full_desc': 'Restablecer Configuración de Curvatura - Restaura Influencia, Amplificación y Forma a valores predeterminados',
         'whats_new_info': '''
-        <h2>Novedades de la versión 1.106</h2>
+        <h2>Novedades de la versión 1.107</h2>
 
-            <li style="font-size:18px;"><b>Resaltado al pasar el cursor en modos Selección y Máscara:</b> Las hebras ahora se resaltan al pasar el cursor sobre ellas en modo Selección y en modo Máscara, proporcionando mejor retroalimentación visual para la selección de hebras.</li>
-            <li style="font-size:18px;"><b>Reactividad de los botones principales:</b> Corregidos los botones de la ventana principal (en la parte superior del lienzo) para que se muestren correctamente en cualquier tamaño de pantalla y relación de aspecto.</li>
+            <li style="font-size:18px;"><b>Editor de sombras de grupo:</b> Ahora se pueden editar las sombras de grupos completos, ofreciéndote control total sobre cómo las hebras de un grupo proyectan sus sombras en el lienzo.</li>
+            <li style="font-size:18px;"><b>Correcciones del editor de sombras y soporte para hebras enmascaradas:</b> La lógica de sustracción de sombras se ha unificado entre el renderizador principal y la vista previa de sombras, y las hebras enmascaradas ahora pueden editarse a través del diálogo del editor de sombras con valores predeterminados inteligentes.</li>
+            <li style="font-size:18px;"><b>Ajustes de hebra seleccionada:</b> Una nueva categoría "Hebra Seleccionada" en Ajustes reúne opciones que solo se aplican a la hebra actualmente seleccionada — solo mover, solo puntos de control, solo sombra y un color de resaltado de selección personalizable.</li>
+            <li style="font-size:18px;"><b>Estabilidad en la creación de grupos:</b> Corregidos los cierres inesperados causados por diálogos de grupo ocultos huérfanos al crear grupos o al cerrar la aplicación.</li>
+            <li style="font-size:18px;"><b>Alineación de derecha a izquierda para el hebreo:</b> La ventana principal, el diálogo de ajustes, el menú contextual de grupo y el panel de grupos ahora se reflejan de derecha a izquierda en hebreo para un orden de lectura natural.</li>
+            <li style="font-size:18px;"><b>Botón Ver:</b> Nuevo botón Ver en la ventana principal que oculta todos los indicadores de modo (Mover, Adjuntar, etc.) para que puedas ver tu diseño claramente sin superposiciones de interfaz.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio - Versión 1.106</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio - Versión 1.107</p>
         ''',
  
 
         # Selected Strand settings
         'selected_strand_settings': 'Hebra Seleccionada',
-        'move_selected_only': 'Mover Solo Selec.',
-        'show_cp_selected_only': 'Mostrar PC Solo Selec.',
-        'shadow_selected_only': 'Sombra Solo Selec.',
-        'highlight_color': 'Color de resaltado',
+        'move_selected_only': 'En modo mover, mover solo la hebra seleccionada',
+        'show_cp_selected_only': 'Mostrar puntos de control solo para la hebra seleccionada',
+        'shadow_selected_only': 'Proyectar sombra solo para la hebra seleccionada',
+        'highlight_color': 'Color de resaltado de selección',
 
         # LayerPanel translations
         'layer_panel_title': 'Panel de Capas',
@@ -2360,14 +2380,14 @@ Ejemplos:<br>
         'add_new_strand_desc': 'Nuevo Cordón - Agrega un nuevo cordón a tu diseño',
         'delete_strand_desc': 'Eliminar Cordón - Elimina el cordón seleccionado',
         'deselect_all_desc': 'Deseleccionar Todo - Borra todas las selecciones (o borra todos los bloqueos en modo bloqueo)',
-        # Layer panel emoji icon descriptions
-        'pan_desc': 'Panorámica (✋/✊) - ✋ Haga clic para activar el modo panorámica, ✊ Arrastre el lienzo para moverse por su diseño',
-        'zoom_in_desc': 'Acercar (🔍) - Acérquese a su diseño para trabajo detallado',
-        'zoom_out_desc': 'Alejar (🔎) - Aléjese para ver el panorama general',
-        'center_strands_desc': 'Centrar Cordones (🎯) - Centra todos los cordones en la vista',
-        'multi_select_desc': 'Modo Ocultar (🙉/🙈) - 🙉 Haga clic para activar el modo ocultar, 🙈 Seleccione capas luego clic derecho para operaciones de ocultar/mostrar por lotes',
-        'refresh_desc': 'Actualizar (🔄) - Actualiza la visualización del panel de capas',
-        'reset_states_desc': 'Reiniciar Estados (🏠) - Reinicia todos los estados de las capas al predeterminado',
+        # Layer panel icon descriptions
+        'pan_desc': 'Panorámica - Haga clic para activar el modo panorámica, luego arrastre el lienzo para moverse por su diseño',
+        'zoom_in_desc': 'Acercar - Acérquese a su diseño para trabajo detallado',
+        'zoom_out_desc': 'Alejar - Aléjese para ver el panorama general',
+        'center_strands_desc': 'Centrar Cordones - Centra todos los cordones en la vista',
+        'multi_select_desc': 'Modo Ocultar - Haga clic para activar el modo ocultar, luego seleccione capas y clic derecho para operaciones de ocultar/mostrar por lotes',
+        'refresh_desc': 'Actualizar - Actualiza la visualización del panel de capas',
+        'reset_states_desc': 'Reiniciar Estados - Reinicia todos los estados de las capas al predeterminado',
         # Main window button descriptions
         'attach_mode_desc': 'Modo Conectar - Conecta cordones juntos en sus extremos',
         'move_mode_desc': 'Modo Mover - Mueve cordones y puntos de control en el lienzo',
@@ -2408,7 +2428,7 @@ Ejemplos:<br>
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
         <p style="font-size:18px;">
-            © 2025 OpenStrand Studio
+            © 2026 OpenStrand Studio
         </p>
         ''' ,
         
@@ -2617,7 +2637,7 @@ Exemplos:<br>
         'alpha_channel': 'Canal alfa',
         'language_settings_info': 'Mudar o idioma da aplicação.',
         'tutorial_info': 'Pressione o botão "reproduzir vídeo" abaixo de cada texto\npara visualizar o tutorial explicando:',
-        'button_guide_info': 'Aprenda sobre os diferentes botões e suas funções no OpenStrand Studio.\n\nDica: Você pode clicar nos ícones emoji do painel de camadas para ver suas explicações!',
+        'button_guide_info': 'Aprenda sobre os diferentes botões e suas funções no OpenStrand Studio.\n\nDica: Clique com o botão direito nos ícones do painel de camadas para ver suas explicações!',
         'layer_panel_buttons': 'Botões do Painel de Camadas',
         'main_window_buttons': 'Botões da Janela Principal',
         # General Settings descriptions for button guide
@@ -2636,21 +2656,25 @@ Exemplos:<br>
         'curve_shape_full_desc': 'Forma da Curva - Controla o tipo de curva matemática (1.0=ângulos agudos, 2.0=curvas suaves, 3.0=muito suave)',
         'reset_curvature_full_desc': 'Redefinir Configurações de Curvatura - Restaura Influência, Amplificação e Forma aos padrões',
         'whats_new_info': '''
-        <h2>Novidades da versão 1.106</h2>
+        <h2>Novidades da versão 1.107</h2>
 
-            <li style="font-size:18px;"><b>Destaque ao passar o cursor nos modos Seleção e Máscara:</b> As mechas agora são destacadas ao passar o cursor sobre elas no modo Seleção e no modo Máscara, fornecendo melhor feedback visual para a seleção de mechas.</li>
-            <li style="font-size:18px;"><b>Responsividade dos botões principais:</b> Corrigidos os botões da janela principal (no topo da tela) para serem exibidos corretamente em qualquer tamanho de tela e proporção de aspecto.</li>
+            <li style="font-size:18px;"><b>Editor de sombras de grupo:</b> As sombras agora podem ser editadas para grupos inteiros, dando a você controle total sobre como as mechas de um grupo projetam suas sombras na tela.</li>
+            <li style="font-size:18px;"><b>Correções do editor de sombras e suporte a mechas mascaradas:</b> A lógica de subtração de sombras foi unificada entre o renderizador principal e a pré-visualização de sombras, e as mechas mascaradas agora podem ser editadas através da caixa de diálogo do editor de sombras com valores padrão inteligentes.</li>
+            <li style="font-size:18px;"><b>Configurações de mecha selecionada:</b> Uma nova categoria "Fio Selecionado" em Configurações reúne opções que se aplicam apenas à mecha atualmente selecionada — apenas mover, apenas pontos de controle, apenas sombra e uma cor de destaque da seleção personalizável.</li>
+            <li style="font-size:18px;"><b>Estabilidade na criação de grupos:</b> Corrigidas as falhas inesperadas causadas por caixas de diálogo de grupo ocultas órfãs ao criar grupos ou ao fechar o aplicativo.</li>
+            <li style="font-size:18px;"><b>Alinhamento da direita para a esquerda para hebraico:</b> A janela principal, a caixa de diálogo de configurações, o menu de contexto do grupo e o painel de grupos agora são espelhados da direita para a esquerda em hebraico para uma ordem de leitura natural.</li>
+            <li style="font-size:18px;"><b>Botão Ver:</b> Novo botão Ver na janela principal que oculta todos os indicadores de modo (Mover, Anexar, etc.) para que você possa ver seu design claramente sem sobreposições de interface.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio – Versão 1.106</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio – Versão 1.107</p>
         ''',
 
 
         # Selected Strand settings
         'selected_strand_settings': 'Fio Selecionado',
-        'move_selected_only': 'Mover Só Selec.',
-        'show_cp_selected_only': 'Mostrar PC Só Selec.',
-        'shadow_selected_only': 'Sombra Só Selec.',
-        'highlight_color': 'Cor de destaque',
+        'move_selected_only': 'No modo mover, mover apenas a mecha selecionada',
+        'show_cp_selected_only': 'Mostrar pontos de controle apenas para a mecha selecionada',
+        'shadow_selected_only': 'Projetar sombra apenas para a mecha selecionada',
+        'highlight_color': 'Cor de destaque da seleção',
 
         # LayerPanel translations
         'layer_panel_title': 'Painel de Camadas',
@@ -2854,14 +2878,14 @@ Exemplos:<br>
         'add_new_strand_desc': 'Nova Mecha - Adiciona uma nova mecha ao seu design',
         'delete_strand_desc': 'Excluir Mecha - Remove a mecha selecionada',
         'deselect_all_desc': 'Desselecionar Tudo - Limpa todas as seleções (ou limpa todos os bloqueios no modo de bloqueio)',
-        # Layer panel emoji icon descriptions
-        'pan_desc': 'Panorâmica (✋/✊) - ✋ Clique para ativar o modo panorâmica, ✊ Arraste a tela para se mover pelo seu design',
-        'zoom_in_desc': 'Aproximar (🔍) - Aproxime-se do seu design para trabalho detalhado',
-        'zoom_out_desc': 'Afastar (🔎) - Afaste-se para ver o quadro geral',
-        'center_strands_desc': 'Centralizar Mechas (🎯) - Centraliza todas as mechas na vista',
-        'multi_select_desc': 'Modo Ocultar (🙉/🙈) - 🙉 Clique para ativar o modo ocultar, 🙈 Selecione camadas então clique direito para operações de ocultar/mostrar em lote',
-        'refresh_desc': 'Atualizar (🔄) - Atualiza a exibição do painel de camadas',
-        'reset_states_desc': 'Redefinir Estados (🏠) - Redefine todos os estados das camadas para o padrão',
+        # Layer panel icon descriptions
+        'pan_desc': 'Panorâmica - Clique para ativar o modo panorâmica, depois arraste a tela para se mover pelo seu design',
+        'zoom_in_desc': 'Aproximar - Aproxime-se do seu design para trabalho detalhado',
+        'zoom_out_desc': 'Afastar - Afaste-se para ver o quadro geral',
+        'center_strands_desc': 'Centralizar Mechas - Centraliza todas as mechas na vista',
+        'multi_select_desc': 'Modo Ocultar - Clique para ativar o modo ocultar, depois selecione camadas e clique direito para operações de ocultar/mostrar em lote',
+        'refresh_desc': 'Atualizar - Atualiza a exibição do painel de camadas',
+        'reset_states_desc': 'Redefinir Estados - Redefine todos os estados das camadas para o padrão',
         # Main window button descriptions
         'attach_mode_desc': 'Modo Anexar - Conecta mechas juntas em suas extremidades',
         'move_mode_desc': 'Modo Mover - Move mechas e pontos de controle na tela',
@@ -2902,7 +2926,7 @@ Exemplos:<br>
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
         <p style="font-size:18px;">
-            © 2025 OpenStrand Studio
+            © 2026 OpenStrand Studio
         </p>
         ''' ,
         
@@ -3118,7 +3142,7 @@ Exemplos:<br>
         'alpha_channel': 'ערוץ שקיפות',
         'language_settings_info': 'שנה את שפת האפליקציה.',
         'tutorial_info': 'לחץ על כפתור "הפעל וידאו" מתחת לכל טקסט\nכדי לראות את המדריך המסביר:',
-        'button_guide_info': 'למד על הכפתורים השונים והפונקציות שלהם ב-OpenStrand Studio.\n\nטיפ: אתה יכול ללחוץ על אייקוני האימוג׳י בפאנל השכבות כדי לראות הסברים!',
+        'button_guide_info': 'למד על הכפתורים השונים והפונקציות שלהם ב-OpenStrand Studio.\n\nטיפ: לחץ לחיצה ימנית על אייקוני פאנל השכבות כדי לראות הסברים!',
         'layer_panel_buttons': 'כפתורי פאנל השכבות',
         'main_window_buttons': 'כפתורי החלון הראשי',
         # General Settings descriptions for button guide
@@ -3138,22 +3162,26 @@ Exemplos:<br>
         'reset_curvature_full_desc': 'אפס הגדרות עקמומיות - מחזיר השפעה, הגברה וצורה לברירת המחדל',
         'whats_new_info': '''
         <div dir="rtl" style="text-align: right;">
-        <h2>מה חדש בגרסה 1.106</h2>
+        <h2>מה חדש בגרסה 1.107</h2>
 
-            <li style="font-size:18px;"><b>הדגשה בריחוף במצבי בחירה ומסכה:</b> חוטים מודגשים כעת בריחוף מעליהם במצב בחירה ובמצב מסכה, מספקים משוב חזותי טוב יותר לבחירת חוטים.</li>
-            <li style="font-size:18px;"><b>תגובתיות כפתורים ראשיים:</b> תוקנו כפתורי החלון הראשי (בחלק העליון של הקנבס) להצגה נכונה בכל גודל מסך ויחס גובה-רוחב.</li>
+            <li style="font-size:18px;"><b>עורך צללים לקבוצה:</b> ניתן כעת לערוך צללים עבור קבוצות שלמות, ומעניק לך שליטה מלאה על האופן שבו חוטי הקבוצה מטילים צללים על הקנבס.</li>
+            <li style="font-size:18px;"><b>תיקונים בעורך הצללים ותמיכה בחוטים ממוסכים:</b> לוגיקת חיסור הצללים אוחדה בין המעבד הראשי לבין תצוגת הצללים, וכעת ניתן לערוך חוטים ממוסכים דרך חלון עורך הצללים עם ברירות מחדל חכמות.</li>
+            <li style="font-size:18px;"><b>הגדרות חוט נבחר:</b> קטגוריה חדשה "חוט נבחר" בהגדרות מאגדת אפשרויות שחלות רק על החוט הנבחר כעת — הזזה בלבד, נקודות בקרה בלבד, צל בלבד וצבע הדגשה מותאם אישית לבחירה.</li>
+            <li style="font-size:18px;"><b>יציבות ביצירת קבוצות:</b> תוקנו קריסות לא צפויות הנגרמות על ידי חלונות קבוצה מוסתרים יתומים בעת יצירת קבוצות או יציאה מהיישום.</li>
+            <li style="font-size:18px;"><b>יישור מימין לשמאל בעברית:</b> החלון הראשי, חלון ההגדרות, תפריט ההקשר של קבוצות וחלונית הקבוצות ממוסכים כעת מימין לשמאל בעברית לסדר קריאה טבעי.</li>
+            <li style="font-size:18px;"><b>כפתור תצוגה:</b> כפתור תצוגה חדש בחלון הראשי שמסתיר את כל מחווני המצב (הזז, חבר וכו') כך שתוכל לראות את העיצוב שלך בבירור ללא שכבות ממשק נוספות.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio - גרסה 1.106</p>
+        <p style="font-size:16px;">© 2026 OpenStrand Studio - גרסה 1.107</p>
         </div>
         ''',
 
 
         # Selected Strand settings
         'selected_strand_settings': 'חוט נבחר',
-        'move_selected_only': 'הזז נבחר בלבד',
-        'show_cp_selected_only': 'הצג נק. בקרה נבחר בלבד',
-        'shadow_selected_only': 'צל נבחר בלבד',
-        'highlight_color': 'צבע הדגשה',
+        'move_selected_only': 'במצב הזזה, הזז רק את החוט הנבחר',
+        'show_cp_selected_only': 'הצג נקודות בקרה רק עבור החוט הנבחר',
+        'shadow_selected_only': 'הטל צל רק עבור החוט הנבחר',
+        'highlight_color': 'צבע הדגשת בחירה',
 
         # LayerPanel translations
         'layer_panel_title': 'חלונית השכבות',
@@ -3359,7 +3387,7 @@ Exemplos:<br>
             אתם מוזמנים לפנות אליי בכתובת <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> או להתחבר איתי ב־<a href="https://www.instagram.com/ysetbon/">Instagram</a> או ב־<a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
         <p style="font-size:18px;">
-            © 2025 OpenStrand Studio
+            © 2026 OpenStrand Studio
         </p>
         ''',
         # Button descriptions for settings dialog
@@ -3369,14 +3397,14 @@ Exemplos:<br>
         'add_new_strand_desc': 'חוט חדש - מוסיף חוט חדש לעיצוב שלך',
         'delete_strand_desc': 'מחק חוט - מסיר את החוט הנבחר',
         'deselect_all_desc': 'בטל בחירה - מוחק את כל הבחירות (או מוחק את כל הנעילות במצב נעילה)',
-        # Layer panel emoji icon descriptions
-        'pan_desc': 'גרירה (✋/✊) - ✋ לחץ להפעלת מצב גרירה, ✊ גרור את הקנווס להזזה בעיצוב שלך',
-        'zoom_in_desc': 'הגדל (🔍) - הגדל את העיצוב שלך לעבודה מפורטת',
-        'zoom_out_desc': 'הקטן (🔎) - הקטן כדי לראות את התמונה הכללית',
-        'center_strands_desc': 'מרכז חוטים (🎯) - ממרכז את כל החוטים בתצוגה',
-        'multi_select_desc': 'מצב הסתרה (🙉/🙈) - 🙉 לחץ להפעלת מצב הסתרה, 🙈 בחר שכבות ואז לחץ ימני לפעולות הסתרה/הצגה קבוצתיות',
-        'refresh_desc': 'רענן (🔄) - מרענן את תצוגת פאנל השכבות',
-        'reset_states_desc': 'איפוס מצבים (🏠) - מאפס את כל מצבי השכבות לברירת מחדל',
+        # Layer panel icon descriptions
+        'pan_desc': 'גרירה - לחץ להפעלת מצב גרירה, ואז גרור את הקנבס להזזה בעיצוב שלך',
+        'zoom_in_desc': 'הגדל - הגדל את העיצוב שלך לעבודה מפורטת',
+        'zoom_out_desc': 'הקטן - הקטן כדי לראות את התמונה הכללית',
+        'center_strands_desc': 'מרכז חוטים - ממרכז את כל החוטים בתצוגה',
+        'multi_select_desc': 'מצב הסתרה - לחץ להפעלת מצב הסתרה, ואז בחר שכבות ולחץ ימני לפעולות הסתרה/הצגה קבוצתיות',
+        'refresh_desc': 'רענן - מרענן את תצוגת פאנל השכבות',
+        'reset_states_desc': 'איפוס מצבים - מאפס את כל מצבי השכבות לברירת מחדל',
         # Main window button descriptions
         'attach_mode_desc': 'מצב חיבור - מחבר חוטים יחד בקצותיהם',
         'move_mode_desc': 'מצב הזזה - מזיז חוטים ונקודות בקרה על הקנווס',

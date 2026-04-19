@@ -1051,27 +1051,32 @@ class GroupPanel(QWidget):
             col_width = self.tree.columnWidth(0) if self.tree.columnCount() > 0 else -1
             col_viewport_x = self.tree.columnViewportPosition(0) if self.tree.columnCount() > 0 else -1
 
-            print(f"\n[GEOM {tag}] lang={lang}")
+            # print(f"\n[GEOM {tag}] lang={lang}")
             if tree_abs:
-                print(f"[GEOM {tag}] tree          screen L={tree_abs[0]:>4} R={tree_abs[2]:>4} width={tree_abs[4]}")
+                # print(f"[GEOM {tag}] tree          screen L={tree_abs[0]:>4} R={tree_abs[2]:>4} width={tree_abs[4]}")
+                pass
             if viewport_abs:
-                print(f"[GEOM {tag}] tree.viewport screen L={viewport_abs[0]:>4} R={viewport_abs[2]:>4} width={viewport_abs[4]}")
+                # print(f"[GEOM {tag}] tree.viewport screen L={viewport_abs[0]:>4} R={viewport_abs[2]:>4} width={viewport_abs[4]}")
+                pass
             if group_panel_abs:
-                print(f"[GEOM {tag}] group_panel   screen L={group_panel_abs[0]:>4} R={group_panel_abs[2]:>4} width={group_panel_abs[4]}")
-            print(f"[GEOM {tag}] column 0: width={col_width}  viewportX={col_viewport_x}")
+                # print(f"[GEOM {tag}] group_panel   screen L={group_panel_abs[0]:>4} R={group_panel_abs[2]:>4} width={group_panel_abs[4]}")
+                pass
+            # print(f"[GEOM {tag}] column 0: width={col_width}  viewportX={col_viewport_x}")
 
             layer_panel = getattr(self, 'layer_panel', None)
             if layer_panel is not None:
                 lp_abs = _abs_rect(layer_panel)
                 if lp_abs:
-                    print(f"[GEOM {tag}] layer_panel   screen L={lp_abs[0]:>4} R={lp_abs[2]:>4} width={lp_abs[4]}")
+                    # print(f"[GEOM {tag}] layer_panel   screen L={lp_abs[0]:>4} R={lp_abs[2]:>4} width={lp_abs[4]}")
+                    pass
                 for attr in ('left_panel', 'right_panel', 'splitter'):
                     w = getattr(layer_panel, attr, None)
                     if w is None:
                         continue
                     r = _abs_rect(w)
                     if r:
-                        print(f"[GEOM {tag}] {attr:<13} screen L={r[0]:>4} R={r[2]:>4} width={r[4]}")
+                        # print(f"[GEOM {tag}] {attr:<13} screen L={r[0]:>4} R={r[2]:>4} width={r[4]}")
+                        pass
 
             for i in range(self.tree.topLevelItemCount()):
                 item = self.tree.topLevelItem(i)
@@ -1085,13 +1090,14 @@ class GroupPanel(QWidget):
                     rect = self.tree.visualItemRect(item)
                     item_tl = self.tree.viewport().mapToGlobal(rect.topLeft())
                     item_br = self.tree.viewport().mapToGlobal(rect.bottomRight())
-                    print(
-                        f"[GEOM {tag}] group[{i}] text='{text}' "
-                        f"textWidth={text_w} align={align:#x} "
-                        f"rect screen L={item_tl.x()} R={item_br.x()} width={rect.width()}"
-                    )
+                    # print(
+                    #     f"[GEOM {tag}] group[{i}] text='{text}' "
+                    #     f"textWidth={text_w} align={align:#x} "
+                    #     f"rect screen L={item_tl.x()} R={item_br.x()} width={rect.width()}"
+                    # )
                 except Exception as e:
-                    print(f"[GEOM {tag}] group[{i}] rect error: {e}")
+                    # print(f"[GEOM {tag}] group[{i}] rect error: {e}")
+                    pass
                 for j in range(item.childCount()):
                     child = item.child(j)
                     if child is None:
@@ -1101,15 +1107,17 @@ class GroupPanel(QWidget):
                         crect = self.tree.visualItemRect(child)
                         ctl = self.tree.viewport().mapToGlobal(crect.topLeft())
                         cbr = self.tree.viewport().mapToGlobal(crect.bottomRight())
-                        print(
-                            f"[GEOM {tag}]   child text='{ctext}' "
-                            f"rect screen L={ctl.x()} R={cbr.x()} width={crect.width()}"
-                        )
+                        # print(
+                        #     f"[GEOM {tag}]   child text='{ctext}' "
+                        #     f"rect screen L={ctl.x()} R={cbr.x()} width={crect.width()}"
+                        # )
                     except Exception as e:
-                        print(f"[GEOM {tag}]   child rect error: {e}")
-            print("")
+                        # print(f"[GEOM {tag}]   child rect error: {e}")
+                        pass
+            # print("")
         except Exception as e:
-            print(f"[GEOM {tag}] logging error: {e}")
+            # print(f"[GEOM {tag}] logging error: {e}")
+            pass
 
     def refresh_tree_item_alignment(self):
         """Apply text alignment to every group and child tree item."""

@@ -23,12 +23,14 @@ class ViewMode(QObject):
 
     def deactivate(self):
         """Called when view mode is deactivated."""
-        # Stop any active view mode panning when leaving view mode
-        if hasattr(self.canvas, 'view_mode_panning') and self.canvas.view_mode_panning:
-            self.canvas.view_mode_panning = False
+        # Stop any active right-click panning when leaving view mode
+        if hasattr(self.canvas, 'right_button_panning') and self.canvas.right_button_panning:
+            self.canvas.right_button_panning = False
             self.canvas.pan_start_pos = None
             self.canvas.pan_start_offset = None
-            self.canvas._update_pan_button_for_view_mode(False)
+            # Discard saved cursor — the next mode's activate() will set its own
+            self.canvas._pre_right_pan_cursor = None
+            self.canvas._update_pan_button_icon(False)
 
     def mousePressEvent(self, event):
         """Handle mouse press - right-click panning is handled by canvas."""

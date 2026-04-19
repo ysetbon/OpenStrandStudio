@@ -200,7 +200,8 @@ class StrandDrawingCanvas(QWidget):
         self.pan_offset_y = 0  # Current pan offset in Y direction
         self.pan_start_pos = None  # Mouse position when pan starts
         self.pan_start_offset = None  # Pan offset when drag starts
-        self.view_mode_panning = False  # Whether view mode right-click panning is active
+        self.right_button_panning = False  # Whether right-click drag panning is active (any mode)
+        self._pre_right_pan_cursor = None  # Cursor captured before right-click pan starts, restored on release
 
         # Canvas boundary tracking (based on zoom history)
         self.min_zoom_achieved = 1.0  # Tracks the minimum zoom level achieved
@@ -1689,8 +1690,8 @@ class StrandDrawingCanvas(QWidget):
             else:
                 pass
 
-    def _update_pan_button_for_view_mode(self, is_panning):
-        """Update the pan button state in layer panel for view mode panning."""
+    def _update_pan_button_icon(self, is_panning):
+        """Update the pan button icon/state in layer panel during right-click panning."""
         layer_panel = None
 
         # Method 1: Direct reference
@@ -4083,14 +4084,15 @@ class StrandDrawingCanvas(QWidget):
             event.accept()
             return
 
-        # Handle view mode right-click panning
-        if self.current_mode == self.view_mode and event.button() == Qt.RightButton:
-            self.view_mode_panning = True
+        # Handle right-click drag panning (works in any mode)
+        if event.button() == Qt.RightButton:
+            self.right_button_panning = True
             self.pan_start_pos = event.pos()
             self.pan_start_offset = QPointF(self.pan_offset_x, self.pan_offset_y)
+            self._pre_right_pan_cursor = self.cursor()
             self.setCursor(Qt.ClosedHandCursor)
             # Update the pan button in layer panel
-            self._update_pan_button_for_view_mode(True)
+            self._update_pan_button_icon(True)
             event.accept()
             return
 
@@ -4288,8 +4290,8 @@ class StrandDrawingCanvas(QWidget):
             event.accept()
             return
 
-        # Handle view mode right-click panning
-        if self.view_mode_panning and event.buttons() & Qt.RightButton and self.pan_start_pos:
+        # Handle right-click drag panning (any mode)
+        if self.right_button_panning and event.buttons() & Qt.RightButton and self.pan_start_pos:
             delta = event.pos() - self.pan_start_pos
             self.pan_offset_x = self.pan_start_offset.x() + delta.x()
             self.pan_offset_y = self.pan_start_offset.y() + delta.y()
@@ -4359,13 +4361,17 @@ class StrandDrawingCanvas(QWidget):
             event.accept()
             return
 
-        # Handle view mode right-click panning release
-        if self.view_mode_panning and event.button() == Qt.RightButton:
-            self.view_mode_panning = False
+        # Handle right-click drag panning release (any mode)
+        if self.right_button_panning and event.button() == Qt.RightButton:
+            self.right_button_panning = False
             self.pan_start_pos = None
             self.pan_start_offset = None
-            self.setCursor(Qt.OpenHandCursor)
-            self._update_pan_button_for_view_mode(False)
+            if self._pre_right_pan_cursor is not None:
+                self.setCursor(self._pre_right_pan_cursor)
+                self._pre_right_pan_cursor = None
+            else:
+                self.unsetCursor()
+            self._update_pan_button_icon(False)
             event.accept()
             return
 

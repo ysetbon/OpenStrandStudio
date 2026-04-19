@@ -1170,40 +1170,18 @@ class GroupPanel(QWidget):
                 self._debug_log_geometry("RTL after setColumnWidth")
                 return
 
-            edge_padding = 24
-            max_text_width = 0
-            for index in range(self.tree.topLevelItemCount()):
-                item = self.tree.topLevelItem(index)
-                if item is None:
-                    continue
-
-                group_metrics = QFontMetrics(item.font(0))
-                max_text_width = max(
-                    max_text_width,
-                    group_metrics.horizontalAdvance(item.text(0) or "") + edge_padding,
-                )
-
-                for child_index in range(item.childCount()):
-                    child = item.child(child_index)
-                    if child is None:
-                        continue
-                    child_metrics = QFontMetrics(child.font(0))
-                    max_text_width = max(
-                        max_text_width,
-                        child_metrics.horizontalAdvance(child.text(0) or "") + self.tree.indentation() + edge_padding,
-                    )
-
-            viewport_width = max(0, self.tree.viewport().width() - 10)
+            # LTR: mirror the RTL behaviour so the hover highlight spans the
+            # full group panel width.  In Hebrew the column hugs the right
+            # edge of the panel; in English/LTR we want the column (and thus
+            # the hover/selection background) to reach the right edge of the
+            # viewport, matching the layout visually.
+            viewport_width = self.tree.viewport().width()
             if viewport_width <= 0:
                 self._schedule_alignment_refresh()
                 return
 
-            if max_text_width <= 0:
-                target_width = max(100, min(140, viewport_width))
-            else:
-                target_width = min(max_text_width, viewport_width)
-
-            self.tree.setColumnWidth(0, max(80, target_width))
+            self.tree.setColumnWidth(0, max(1, viewport_width))
+            self._debug_log_geometry("LTR after setColumnWidth")
         except RuntimeError:
             pass
 

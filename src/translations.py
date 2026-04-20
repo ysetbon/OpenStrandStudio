@@ -875,7 +875,8 @@ Exemples :<br>
         'history_cleared_title': 'Historique Effacé',
         'history_cleared_text': 'Toutes les sessions d\'historique passées ont été effacées.',
         'no_history_found': 'Aucune session d\'historique passée trouvée.',
-        'history_explanation': 'Sélectionnez une session passée et cliquez sur "Charger Sélection" pour restaurer son état final.\\nAttention : Le chargement de l\'historique effacera vos étapes annuler/rétablir actuelles.',
+        'history_explanation': 'Sélectionnez une session passée et cliquez sur "Charger Sélection" pour restaurer son état final.\nAttention : Le chargement de l\'historique effacera vos étapes annuler/rétablir actuelles.',
+   
         'history_list_tooltip': 'Sélectionnez une session à charger dans son état final',
         'history_state_label': 'État',  # For history list display
         'extension_dash_gap_length': 'Longueur de l\'espace entre l\'extrémité du brin et le début des tirets',

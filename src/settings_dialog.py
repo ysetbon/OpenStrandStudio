@@ -3900,6 +3900,14 @@ class SettingsDialog(QDialog):
         
         self.button_explanations_text_browser.setHtml(button_html)
     def apply_all_settings(self):
+        # Hide immediately so the user doesn't see the dialog retranslate/restyle itself
+        # before closing. The actual work runs on the next event-loop tick, after the
+        # window has been taken off screen, but still updates widget state so the next
+        # show() already reflects the new language/theme.
+        self.hide()
+        QTimer.singleShot(0, self._perform_apply_settings)
+
+    def _perform_apply_settings(self):
         # Capture previous extended mask setting to detect changes
         # previous_use_extended_mask = self.use_extended_mask
         # Apply Theme Settings
@@ -4130,9 +4138,8 @@ class SettingsDialog(QDialog):
         # Save all settings to file (after updating all values including extended mask)
         self.save_settings_to_file()
 
-        # Apply the theme to the dialog before hiding
+        # Re-apply the theme to the (already hidden) dialog so the next show() is correct
         self.apply_dialog_theme(self.current_theme)
-        self.hide()
 
         # If extended mask setting changed, force redraw of masked strands
         # if previous_use_extended_mask != self.use_extended_mask:

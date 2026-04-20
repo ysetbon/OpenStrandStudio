@@ -632,8 +632,11 @@ class AttachedStrand(Strand):
 
         # --- End C-shape ---
         if (self.has_circles[1]
-            and any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands)
-            and self.end_circle_stroke_color.alpha() > 0):
+            and self.end_circle_stroke_color.alpha() > 0
+            and (
+                any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands)
+                or (getattr(self, 'closed_connections', None) and self.closed_connections[1])
+            )):
 
             tangent = self.calculate_cubic_tangent(0.9999)
             angle_end = math.atan2(tangent.y(), tangent.x())

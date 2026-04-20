@@ -1772,7 +1772,10 @@ class Strand:
         # --- Start C-shape ---
         if (self.has_circles[0]
             and self.start_circle_stroke_color.alpha() > 0
-            and any(isinstance(child, AttachedStrand) and child.start == self.start for child in self.attached_strands)):
+            and (
+                any(isinstance(child, AttachedStrand) and child.start == self.start for child in self.attached_strands)
+                or (getattr(self, 'closed_connections', None) and self.closed_connections[0])
+            )):
 
             tangent = self.calculate_cubic_tangent(0.0001)
             if tangent.manhattanLength() == 0:
@@ -1802,7 +1805,10 @@ class Strand:
         # --- End C-shape ---
         if (self.has_circles[1]
             and self.end_circle_stroke_color.alpha() > 0
-            and any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands)):
+            and (
+                any(isinstance(child, AttachedStrand) and child.start == self.end for child in self.attached_strands)
+                or (getattr(self, 'closed_connections', None) and self.closed_connections[1])
+            )):
 
             tangent = self.calculate_cubic_tangent(0.9999)
             if tangent.manhattanLength() == 0:

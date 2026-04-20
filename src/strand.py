@@ -234,6 +234,14 @@ class Strand:
         else:
             pass
             self._start_circle_stroke_color = value
+
+        # Keep the attached-strand transparent-start render state aligned
+        # when this value is restored from JSON or copied programmatically.
+        if hasattr(self, 'is_setting_staring_circle'):
+            self.is_setting_staring_circle = (
+                self._start_circle_stroke_color is not None
+                and self._start_circle_stroke_color.alpha() == 0
+            )
         
         self._setting_circle_transparency = False
 

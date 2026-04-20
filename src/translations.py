@@ -226,14 +226,14 @@ Examples:<br>
         'whats_new_info': '''
         <h2>What's New in Version 1.107</h2>
 
-            <li style="font-size:18px;"><b>Group Shadow Editor:</b> Shadows can now be edited for entire groups, giving you full control over how group strands cast shadows on the canvas.</li>
-            <li style="font-size:18px;"><b>Shadow Editor Fixes & Masked Strand Support:</b> Shadow subtraction logic is unified between the main renderer and the shadow preview, and masked strands can now be edited through the shadow editor dialog with smart defaults.</li>
-            <li style="font-size:18px;"><b>Selected Strand Settings:</b> A new Selected Strand category in Settings gathers options that apply only to the currently selected strand — move-only, control-points-only, shadow-only, and a customizable selection highlight color.</li>
-            <li style="font-size:18px;"><b>Group Creation Stability:</b> Fixed unexpected crashes caused by orphan hidden group dialogs when creating groups or exiting the application.</li>
-            <li style="font-size:18px;"><b>Hebrew Right-to-Left Alignment:</b> The main window, settings dialog, group context menu, and group panel are now mirrored right-to-left in Hebrew for a natural reading order.</li>
-            <li style="font-size:18px;"><b>View Button:</b> New View button in the main window that hides all mode indicators (Move, Attach, etc.) so you can see your design clearly without any UI overlays.</li>
+            <li style="font-size:14px;"><b>Group Shadow Editor:</b> Shadows can now be edited for entire groups, giving you full control over how group strands cast shadows on the canvas.</li>
+            <li style="font-size:14px;"><b>Shadow Editor Fixes & Masked Strand Support:</b> Shadow subtraction logic is unified between the main renderer and the shadow preview, and masked strands can now be edited through the shadow editor dialog with smart defaults.</li>
+            <li style="font-size:14px;"><b>Selected Strand Settings:</b> A new Selected Strand category in Settings gathers options that apply only to the currently selected strand — move-only, control-points-only, shadow-only, and a customizable selection highlight color.</li>
+            <li style="font-size:14px;"><b>Group Creation Stability:</b> Fixed unexpected crashes caused by orphan hidden group dialogs when creating groups or exiting the application.</li>
+            <li style="font-size:14px;"><b>Hebrew Right-to-Left Alignment:</b> The main window, settings dialog, group context menu, and group panel are now mirrored right-to-left in Hebrew for a natural reading order.</li>
+            <li style="font-size:14px;"><b>View Button:</b> New View button in the main window that hides all mode indicators (Move, Attach, etc.) so you can see your design clearly without any UI overlays.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.107</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.107</p>
         ''',
 
 
@@ -480,18 +480,18 @@ Examples:<br>
         'about': 'About',
         'about_info': '''
         <h2>About OpenStrand Studio</h2>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             OpenStrand Studio was developed by Yonatan Setbon. The software is designed to create any knot in a diagrammatic way by using layers for each section of a strand and incorporating masked layers that allow for an "over-under effect."
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             Yonatan runs a YouTube channel dedicated to lanyards called <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, where many tutorials feature diagrams of knots. This software was created to facilitate designing any knot, in order to demonstrate and explain how to make complex tutorials involving knot tying.
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             Feel free to contact me at <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> or connect with me on
             <a href="https://www.instagram.com/ysetbon/">Instagram</a> or
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             © 2026 OpenStrand Studio
         </p>
         ''',
@@ -672,14 +672,14 @@ Exemples :<br>
         'whats_new_info': '''
         <h2>Nouveautés de la version 1.107</h2>
 
-            <li style="font-size:18px;"><b>Éditeur d'ombres de groupe :</b> Les ombres peuvent désormais être modifiées pour des groupes entiers, vous offrant un contrôle total sur la façon dont les brins d'un groupe projettent leurs ombres sur le canevas.</li>
-            <li style="font-size:18px;"><b>Corrections de l'éditeur d'ombres et prise en charge des brins masqués :</b> La logique de soustraction des ombres est unifiée entre le rendu principal et l'aperçu des ombres, et les brins masqués peuvent maintenant être modifiés via la boîte de dialogue de l'éditeur d'ombres avec des valeurs par défaut intelligentes.</li>
-            <li style="font-size:18px;"><b>Paramètres du brin sélectionné :</b> Une nouvelle catégorie « Brin Sélectionné » dans les paramètres regroupe des options qui ne s'appliquent qu'au brin actuellement sélectionné — déplacement seul, points de contrôle seuls, ombre seule, et une couleur de surbrillance de sélection personnalisable.</li>
-            <li style="font-size:18px;"><b>Stabilité de la création de groupes :</b> Correction des plantages inattendus causés par des boîtes de dialogue de groupe cachées orphelines lors de la création de groupes ou de la fermeture de l'application.</li>
-            <li style="font-size:18px;"><b>Alignement de droite à gauche pour l'hébreu :</b> La fenêtre principale, la boîte de dialogue des paramètres, le menu contextuel de groupe et le panneau de groupe sont désormais mis en miroir de droite à gauche en hébreu pour un ordre de lecture naturel.</li>
-            <li style="font-size:18px;"><b>Bouton Vue :</b> Nouveau bouton Vue dans la fenêtre principale qui masque tous les indicateurs de mode (Bouger, Lier, etc.) pour que vous puissiez voir votre conception clairement, sans aucune superposition d'interface.</li>
+            <li style="font-size:14px;"><b>Éditeur d'ombres de groupe :</b> Les ombres peuvent désormais être modifiées pour des groupes entiers, vous offrant un contrôle total sur la façon dont les brins d'un groupe projettent leurs ombres sur le canevas.</li>
+            <li style="font-size:14px;"><b>Corrections de l'éditeur d'ombres et prise en charge des brins masqués :</b> La logique de soustraction des ombres est unifiée entre le rendu principal et l'aperçu des ombres, et les brins masqués peuvent maintenant être modifiés via la boîte de dialogue de l'éditeur d'ombres avec des valeurs par défaut intelligentes.</li>
+            <li style="font-size:14px;"><b>Paramètres du brin sélectionné :</b> Une nouvelle catégorie « Brin Sélectionné » dans les paramètres regroupe des options qui ne s'appliquent qu'au brin actuellement sélectionné — déplacement seul, points de contrôle seuls, ombre seule, et une couleur de surbrillance de sélection personnalisable.</li>
+            <li style="font-size:14px;"><b>Stabilité de la création de groupes :</b> Correction des plantages inattendus causés par des boîtes de dialogue de groupe cachées orphelines lors de la création de groupes ou de la fermeture de l'application.</li>
+            <li style="font-size:14px;"><b>Alignement de droite à gauche pour l'hébreu :</b> La fenêtre principale, la boîte de dialogue des paramètres, le menu contextuel de groupe et le panneau de groupe sont désormais mis en miroir de droite à gauche en hébreu pour un ordre de lecture naturel.</li>
+            <li style="font-size:14px;"><b>Bouton Vue :</b> Nouveau bouton Vue dans la fenêtre principale qui masque tous les indicateurs de mode (Bouger, Lier, etc.) pour que vous puissiez voir votre conception clairement, sans aucune superposition d'interface.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.107</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.107</p>
         ''',
 
 
@@ -928,18 +928,18 @@ Exemples :<br>
         # About translations
         'about_info': '''
         <h2>À propos d'OpenStrand Studio</h2>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             OpenStrand Studio a été développé par Yonatan Setbon. Ce logiciel a été conçu pour créer n'importe quel nœud de manière schématique en utilisant des calques pour chaque section d'un brin et en incorporant des calques masqués qui permettent un effet "dessus-dessous".
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             Yonatan anime une chaîne YouTube dédiée aux bracelets appelée <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, où de nombreux tutoriels présentent des diagrammes de nœuds. Ce logiciel a été créé pour faciliter la conception de tout nœud, afin de démontrer et d'expliquer comment réaliser des tutoriels de nouage complexes.
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             N'hésitez pas à me contacter à <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> ou à me suivre sur
             <a href="https://www.instagram.com/ysetbon/">Instagram</a> ou
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             © 2026 OpenStrand Studio
         </p>
         ''' ,
@@ -1199,30 +1199,30 @@ Beispiele:<br>
         'whats_new_info': '''
         <h2>Neu in Version 1.107</h2>
 
-            <li style="font-size:18px;"><b>Gruppen-Schatten-Editor:</b> Schatten können jetzt für ganze Gruppen bearbeitet werden, was Ihnen die volle Kontrolle darüber gibt, wie die Stränge einer Gruppe ihre Schatten auf der Leinwand werfen.</li>
-            <li style="font-size:18px;"><b>Schatten-Editor-Korrekturen & Unterstützung für maskierte Stränge:</b> Die Logik zur Schattensubtraktion ist zwischen dem Hauptrenderer und der Schattenvorschau vereinheitlicht, und maskierte Stränge können jetzt über den Schatten-Editor-Dialog mit intelligenten Standardwerten bearbeitet werden.</li>
-            <li style="font-size:18px;"><b>Einstellungen für ausgewählten Strang:</b> Eine neue Kategorie „Ausgewählter Strang" in den Einstellungen bündelt Optionen, die nur auf den aktuell ausgewählten Strang wirken — nur Bewegung, nur Kontrollpunkte, nur Schatten und eine anpassbare Auswahl-Hervorhebungsfarbe.</li>
-            <li style="font-size:18px;"><b>Stabilität bei der Gruppenerstellung:</b> Unerwartete Abstürze durch verwaiste, ausgeblendete Gruppendialoge beim Erstellen von Gruppen oder beim Beenden der Anwendung wurden behoben.</li>
-            <li style="font-size:18px;"><b>Rechts-nach-links-Ausrichtung für Hebräisch:</b> Hauptfenster, Einstellungsdialog, Gruppen-Kontextmenü und Gruppenpanel sind für Hebräisch nun von rechts nach links gespiegelt, um eine natürliche Leserichtung zu gewährleisten.</li>
-            <li style="font-size:18px;"><b>Ansichtsschaltfläche:</b> Neue Ansichtsschaltfläche im Hauptfenster, die alle Modusanzeigen (Bewegen, Anfügen usw.) ausblendet, damit Sie Ihr Design ohne störende UI-Elemente klar sehen können.</li>
+            <li style="font-size:14px;"><b>Gruppen-Schatten-Editor:</b> Schatten können jetzt für ganze Gruppen bearbeitet werden, was Ihnen die volle Kontrolle darüber gibt, wie die Stränge einer Gruppe ihre Schatten auf der Leinwand werfen.</li>
+            <li style="font-size:14px;"><b>Schatten-Editor-Korrekturen & Unterstützung für maskierte Stränge:</b> Die Logik zur Schattensubtraktion ist zwischen dem Hauptrenderer und der Schattenvorschau vereinheitlicht, und maskierte Stränge können jetzt über den Schatten-Editor-Dialog mit intelligenten Standardwerten bearbeitet werden.</li>
+            <li style="font-size:14px;"><b>Einstellungen für ausgewählten Strang:</b> Eine neue Kategorie „Ausgewählter Strang" in den Einstellungen bündelt Optionen, die nur auf den aktuell ausgewählten Strang wirken — nur Bewegung, nur Kontrollpunkte, nur Schatten und eine anpassbare Auswahl-Hervorhebungsfarbe.</li>
+            <li style="font-size:14px;"><b>Stabilität bei der Gruppenerstellung:</b> Unerwartete Abstürze durch verwaiste, ausgeblendete Gruppendialoge beim Erstellen von Gruppen oder beim Beenden der Anwendung wurden behoben.</li>
+            <li style="font-size:14px;"><b>Rechts-nach-links-Ausrichtung für Hebräisch:</b> Hauptfenster, Einstellungsdialog, Gruppen-Kontextmenü und Gruppenpanel sind für Hebräisch nun von rechts nach links gespiegelt, um eine natürliche Leserichtung zu gewährleisten.</li>
+            <li style="font-size:14px;"><b>Ansichtsschaltfläche:</b> Neue Ansichtsschaltfläche im Hauptfenster, die alle Modusanzeigen (Bewegen, Anfügen usw.) ausblendet, damit Sie Ihr Design ohne störende UI-Elemente klar sehen können.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio - Version 1.107</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.107</p>
         ''',
         # About translations
         'about_info': '''
         <h2>Über OpenStrand Studio</h2>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             OpenStrand Studio wurde von Yonatan Setbon entwickelt. Die Software ist dafür gedacht, beliebige Knoten schematisch zu erstellen, indem Ebenen für jeden Abschnitt eines Strangs verwendet werden und maskierte Ebenen ein "Über-Unter-Effekt" ermöglichen.
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             Yonatan betreibt einen YouTube-Kanal zum Thema Lanyards namens <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, in dem viele Tutorials Knotendiagramme zeigen. Diese Software wurde entwickelt, um das Entwerfen beliebiger Knoten zu erleichtern, um zu demonstrieren und zu erklären, wie man komplexe Knotentutorials erstellt.
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             Kontakt: <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> oder folgen Sie mir auf
             <a href="https://www.instagram.com/ysetbon/">Instagram</a> oder
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             © 2026 OpenStrand Studio
         </p>
         ''',
@@ -1660,14 +1660,14 @@ Esempi:<br>
         'whats_new_info': '''
         <h2>Novità della versione 1.107</h2>
 
-            <li style="font-size:18px;"><b>Editor delle ombre di gruppo:</b> Le ombre ora possono essere modificate per interi gruppi, offrendoti il pieno controllo sul modo in cui i fili di un gruppo proiettano le loro ombre sulla tela.</li>
-            <li style="font-size:18px;"><b>Correzioni dell'editor delle ombre e supporto per fili mascherati:</b> La logica di sottrazione delle ombre è unificata tra il renderer principale e l'anteprima delle ombre, e i fili mascherati possono ora essere modificati tramite la finestra di dialogo dell'editor delle ombre con impostazioni predefinite intelligenti.</li>
-            <li style="font-size:18px;"><b>Impostazioni del filo selezionato:</b> Una nuova categoria "Filo Selezionato" nelle Impostazioni raggruppa opzioni che si applicano solo al filo attualmente selezionato — solo movimento, solo punti di controllo, sola ombra e un colore di evidenziazione della selezione personalizzabile.</li>
-            <li style="font-size:18px;"><b>Stabilità nella creazione dei gruppi:</b> Corretti gli arresti anomali inattesi causati da finestre di dialogo di gruppo nascoste orfane durante la creazione di gruppi o la chiusura dell'applicazione.</li>
-            <li style="font-size:18px;"><b>Allineamento da destra a sinistra per l'ebraico:</b> La finestra principale, la finestra delle impostazioni, il menu contestuale del gruppo e il pannello dei gruppi sono ora rispecchiati da destra a sinistra in ebraico per un ordine di lettura naturale.</li>
-            <li style="font-size:18px;"><b>Pulsante Vista:</b> Nuovo pulsante Vista nella finestra principale che nasconde tutti gli indicatori di modalità (Muovi, Collega, ecc.) in modo da poter vedere chiaramente il tuo progetto senza sovrapposizioni dell'interfaccia.</li>
+            <li style="font-size:14px;"><b>Editor delle ombre di gruppo:</b> Le ombre ora possono essere modificate per interi gruppi, offrendoti il pieno controllo sul modo in cui i fili di un gruppo proiettano le loro ombre sulla tela.</li>
+            <li style="font-size:14px;"><b>Correzioni dell'editor delle ombre e supporto per fili mascherati:</b> La logica di sottrazione delle ombre è unificata tra il renderer principale e l'anteprima delle ombre, e i fili mascherati possono ora essere modificati tramite la finestra di dialogo dell'editor delle ombre con impostazioni predefinite intelligenti.</li>
+            <li style="font-size:14px;"><b>Impostazioni del filo selezionato:</b> Una nuova categoria "Filo Selezionato" nelle Impostazioni raggruppa opzioni che si applicano solo al filo attualmente selezionato — solo movimento, solo punti di controllo, sola ombra e un colore di evidenziazione della selezione personalizzabile.</li>
+            <li style="font-size:14px;"><b>Stabilità nella creazione dei gruppi:</b> Corretti gli arresti anomali inattesi causati da finestre di dialogo di gruppo nascoste orfane durante la creazione di gruppi o la chiusura dell'applicazione.</li>
+            <li style="font-size:14px;"><b>Allineamento da destra a sinistra per l'ebraico:</b> La finestra principale, la finestra delle impostazioni, il menu contestuale del gruppo e il pannello dei gruppi sono ora rispecchiati da destra a sinistra in ebraico per un ordine di lettura naturale.</li>
+            <li style="font-size:14px;"><b>Pulsante Vista:</b> Nuovo pulsante Vista nella finestra principale che nasconde tutti gli indicatori di modalità (Muovi, Collega, ecc.) in modo da poter vedere chiaramente il tuo progetto senza sovrapposizioni dell'interfaccia.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio - Versione 1.107</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Versione 1.107</p>
         ''',
 
 
@@ -1917,18 +1917,18 @@ Esempi:<br>
         # About translations
         'about_info': '''
         <h2>Informazioni su OpenStrand Studio</h2>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             OpenStrand Studio è stato sviluppato da Yonatan Setbon. Il software è stato progettato per creare qualsiasi nodo in modo schematico utilizzando strati per ogni sezione di un filo e incorporando strati mascherati che consentono un effetto "sopra-sotto".
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             Yonatan gestisce un canale YouTube dedicato ai nastro di sicurezza chiamato <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, dove molti tutorial presentano diagrammi di nodi. Questo software è stato creato per facilitare la progettazione di qualsiasi nodo, al fine di dimostrare e spiegare come realizzare tutorial di nuovo nodo complessi.
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             Sentitevi liberi di contattarmi a <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> o di seguirmi su
             <a href="https://www.instagram.com/ysetbon/">Instagram</a> o
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             © 2026 OpenStrand Studio
         </p>
         ''' ,
@@ -2159,14 +2159,14 @@ Ejemplos:<br>
         'whats_new_info': '''
         <h2>Novedades de la versión 1.107</h2>
 
-            <li style="font-size:18px;"><b>Editor de sombras de grupo:</b> Ahora se pueden editar las sombras de grupos completos, ofreciéndote control total sobre cómo las hebras de un grupo proyectan sus sombras en el lienzo.</li>
-            <li style="font-size:18px;"><b>Correcciones del editor de sombras y soporte para hebras enmascaradas:</b> La lógica de sustracción de sombras se ha unificado entre el renderizador principal y la vista previa de sombras, y las hebras enmascaradas ahora pueden editarse a través del diálogo del editor de sombras con valores predeterminados inteligentes.</li>
-            <li style="font-size:18px;"><b>Ajustes de hebra seleccionada:</b> Una nueva categoría "Hebra Seleccionada" en Ajustes reúne opciones que solo se aplican a la hebra actualmente seleccionada — solo mover, solo puntos de control, solo sombra y un color de resaltado de selección personalizable.</li>
-            <li style="font-size:18px;"><b>Estabilidad en la creación de grupos:</b> Corregidos los cierres inesperados causados por diálogos de grupo ocultos huérfanos al crear grupos o al cerrar la aplicación.</li>
-            <li style="font-size:18px;"><b>Alineación de derecha a izquierda para el hebreo:</b> La ventana principal, el diálogo de ajustes, el menú contextual de grupo y el panel de grupos ahora se reflejan de derecha a izquierda en hebreo para un orden de lectura natural.</li>
-            <li style="font-size:18px;"><b>Botón Ver:</b> Nuevo botón Ver en la ventana principal que oculta todos los indicadores de modo (Mover, Adjuntar, etc.) para que puedas ver tu diseño claramente sin superposiciones de interfaz.</li>
+            <li style="font-size:14px;"><b>Editor de sombras de grupo:</b> Ahora se pueden editar las sombras de grupos completos, ofreciéndote control total sobre cómo las hebras de un grupo proyectan sus sombras en el lienzo.</li>
+            <li style="font-size:14px;"><b>Correcciones del editor de sombras y soporte para hebras enmascaradas:</b> La lógica de sustracción de sombras se ha unificado entre el renderizador principal y la vista previa de sombras, y las hebras enmascaradas ahora pueden editarse a través del diálogo del editor de sombras con valores predeterminados inteligentes.</li>
+            <li style="font-size:14px;"><b>Ajustes de hebra seleccionada:</b> Una nueva categoría "Hebra Seleccionada" en Ajustes reúne opciones que solo se aplican a la hebra actualmente seleccionada — solo mover, solo puntos de control, solo sombra y un color de resaltado de selección personalizable.</li>
+            <li style="font-size:14px;"><b>Estabilidad en la creación de grupos:</b> Corregidos los cierres inesperados causados por diálogos de grupo ocultos huérfanos al crear grupos o al cerrar la aplicación.</li>
+            <li style="font-size:14px;"><b>Alineación de derecha a izquierda para el hebreo:</b> La ventana principal, el diálogo de ajustes, el menú contextual de grupo y el panel de grupos ahora se reflejan de derecha a izquierda en hebreo para un orden de lectura natural.</li>
+            <li style="font-size:14px;"><b>Botón Ver:</b> Nuevo botón Ver en la ventana principal que oculta todos los indicadores de modo (Mover, Adjuntar, etc.) para que puedas ver tu diseño claramente sin superposiciones de interfaz.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio - Versión 1.107</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Versión 1.107</p>
         ''',
  
 
@@ -2416,18 +2416,18 @@ Ejemplos:<br>
         # About translations
         'about_info': '''
         <h2>Acerca de OpenStrand Studio</h2>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             OpenStrand Studio fue desarrollado por Yonatan Setbon. El software está diseñado para crear cualquier nudo de manera esquemática utilizando capas para cada sección de un cordón y utilizando capas enmascaradas que permiten un efecto "sobre-debajo".
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             Yonatan mantiene un canal de YouTube dedicado a los nudos de lazo llamado <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, donde muchos tutoriales muestran diagramas de nudos. Este software fue creado para facilitar el diseño de cualquier nudo, con el fin de demostrar y explicar cómo realizar tutoriales de nudo complejos.
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             Siéntase libre de contactarme a <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> o seguirme en
             <a href="https://www.instagram.com/ysetbon/">Instagram</a> o
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             © 2026 OpenStrand Studio
         </p>
         ''' ,
@@ -2658,14 +2658,14 @@ Exemplos:<br>
         'whats_new_info': '''
         <h2>Novidades da versão 1.107</h2>
 
-            <li style="font-size:18px;"><b>Editor de sombras de grupo:</b> As sombras agora podem ser editadas para grupos inteiros, dando a você controle total sobre como as mechas de um grupo projetam suas sombras na tela.</li>
-            <li style="font-size:18px;"><b>Correções do editor de sombras e suporte a mechas mascaradas:</b> A lógica de subtração de sombras foi unificada entre o renderizador principal e a pré-visualização de sombras, e as mechas mascaradas agora podem ser editadas através da caixa de diálogo do editor de sombras com valores padrão inteligentes.</li>
-            <li style="font-size:18px;"><b>Configurações de mecha selecionada:</b> Uma nova categoria "Fio Selecionado" em Configurações reúne opções que se aplicam apenas à mecha atualmente selecionada — apenas mover, apenas pontos de controle, apenas sombra e uma cor de destaque da seleção personalizável.</li>
-            <li style="font-size:18px;"><b>Estabilidade na criação de grupos:</b> Corrigidas as falhas inesperadas causadas por caixas de diálogo de grupo ocultas órfãs ao criar grupos ou ao fechar o aplicativo.</li>
-            <li style="font-size:18px;"><b>Alinhamento da direita para a esquerda para hebraico:</b> A janela principal, a caixa de diálogo de configurações, o menu de contexto do grupo e o painel de grupos agora são espelhados da direita para a esquerda em hebraico para uma ordem de leitura natural.</li>
-            <li style="font-size:18px;"><b>Botão Ver:</b> Novo botão Ver na janela principal que oculta todos os indicadores de modo (Mover, Anexar, etc.) para que você possa ver seu design claramente sem sobreposições de interface.</li>
+            <li style="font-size:14px;"><b>Editor de sombras de grupo:</b> As sombras agora podem ser editadas para grupos inteiros, dando a você controle total sobre como as mechas de um grupo projetam suas sombras na tela.</li>
+            <li style="font-size:14px;"><b>Correções do editor de sombras e suporte a mechas mascaradas:</b> A lógica de subtração de sombras foi unificada entre o renderizador principal e a pré-visualização de sombras, e as mechas mascaradas agora podem ser editadas através da caixa de diálogo do editor de sombras com valores padrão inteligentes.</li>
+            <li style="font-size:14px;"><b>Configurações de mecha selecionada:</b> Uma nova categoria "Fio Selecionado" em Configurações reúne opções que se aplicam apenas à mecha atualmente selecionada — apenas mover, apenas pontos de controle, apenas sombra e uma cor de destaque da seleção personalizável.</li>
+            <li style="font-size:14px;"><b>Estabilidade na criação de grupos:</b> Corrigidas as falhas inesperadas causadas por caixas de diálogo de grupo ocultas órfãs ao criar grupos ou ao fechar o aplicativo.</li>
+            <li style="font-size:14px;"><b>Alinhamento da direita para a esquerda para hebraico:</b> A janela principal, a caixa de diálogo de configurações, o menu de contexto do grupo e o painel de grupos agora são espelhados da direita para a esquerda em hebraico para uma ordem de leitura natural.</li>
+            <li style="font-size:14px;"><b>Botão Ver:</b> Novo botão Ver na janela principal que oculta todos os indicadores de modo (Mover, Anexar, etc.) para que você possa ver seu design claramente sem sobreposições de interface.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio – Versão 1.107</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio – Versão 1.107</p>
         ''',
 
 
@@ -2914,18 +2914,18 @@ Exemplos:<br>
         # About translations
         'about_info': '''
         <h2>Sobre OpenStrand Studio</h2>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             OpenStrand Studio foi desenvolvido por Yonatan Setbon. O software foi projetado para criar qualquer nó de forma esquemática usando camadas para cada seção de um fio e incorporando camadas mascaradas que permitem um efeito "sobre-sobre".
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             Yonatan mantém um canal do YouTube dedicado a cordões de segurança chamado <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, onde vários tutoriais apresentam diagramas de nós. Este software foi criado para facilitar o design de qualquer nó, com o objetivo de demonstrar e explicar como realizar tutoriais de nó complexo.
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             Sinta-se à vontade para me contatar em <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> ou me seguir no
             <a href="https://www.instagram.com/ysetbon/">Instagram</a> ou
             <a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             © 2026 OpenStrand Studio
         </p>
         ''' ,
@@ -3164,14 +3164,14 @@ Exemplos:<br>
         <div dir="rtl" style="text-align: right;">
         <h2>מה חדש בגרסה 1.107</h2>
 
-            <li style="font-size:18px;"><b>עורך צללים לקבוצה:</b> ניתן כעת לערוך צללים עבור קבוצות שלמות, ומעניק לך שליטה מלאה על האופן שבו חוטי הקבוצה מטילים צללים על הקנבס.</li>
-            <li style="font-size:18px;"><b>תיקונים בעורך הצללים ותמיכה בחוטים ממוסכים:</b> לוגיקת חיסור הצללים אוחדה בין המעבד הראשי לבין תצוגת הצללים, וכעת ניתן לערוך חוטים ממוסכים דרך חלון עורך הצללים עם ברירות מחדל חכמות.</li>
-            <li style="font-size:18px;"><b>הגדרות חוט נבחר:</b> קטגוריה חדשה "חוט נבחר" בהגדרות מאגדת אפשרויות שחלות רק על החוט הנבחר כעת — הזזה בלבד, נקודות בקרה בלבד, צל בלבד וצבע הדגשה מותאם אישית לבחירה.</li>
-            <li style="font-size:18px;"><b>יציבות ביצירת קבוצות:</b> תוקנו קריסות לא צפויות הנגרמות על ידי חלונות קבוצה מוסתרים יתומים בעת יצירת קבוצות או יציאה מהיישום.</li>
-            <li style="font-size:18px;"><b>יישור מימין לשמאל בעברית:</b> החלון הראשי, חלון ההגדרות, תפריט ההקשר של קבוצות וחלונית הקבוצות ממוסכים כעת מימין לשמאל בעברית לסדר קריאה טבעי.</li>
-            <li style="font-size:18px;"><b>כפתור תצוגה:</b> כפתור תצוגה חדש בחלון הראשי שמסתיר את כל מחווני המצב (הזז, חבר וכו') כך שתוכל לראות את העיצוב שלך בבירור ללא שכבות ממשק נוספות.</li>
+            <li style="font-size:14px;"><b>עורך צללים לקבוצה:</b> ניתן כעת לערוך צללים עבור קבוצות שלמות, ומעניק לך שליטה מלאה על האופן שבו חוטי הקבוצה מטילים צללים על הקנבס.</li>
+            <li style="font-size:14px;"><b>תיקונים בעורך הצללים ותמיכה בחוטים ממוסכים:</b> לוגיקת חיסור הצללים אוחדה בין המעבד הראשי לבין תצוגת הצללים, וכעת ניתן לערוך חוטים ממוסכים דרך חלון עורך הצללים עם ברירות מחדל חכמות.</li>
+            <li style="font-size:14px;"><b>הגדרות חוט נבחר:</b> קטגוריה חדשה "חוט נבחר" בהגדרות מאגדת אפשרויות שחלות רק על החוט הנבחר כעת — הזזה בלבד, נקודות בקרה בלבד, צל בלבד וצבע הדגשה מותאם אישית לבחירה.</li>
+            <li style="font-size:14px;"><b>יציבות ביצירת קבוצות:</b> תוקנו קריסות לא צפויות הנגרמות על ידי חלונות קבוצה מוסתרים יתומים בעת יצירת קבוצות או יציאה מהיישום.</li>
+            <li style="font-size:14px;"><b>יישור מימין לשמאל בעברית:</b> החלון הראשי, חלון ההגדרות, תפריט ההקשר של קבוצות וחלונית הקבוצות ממוסכים כעת מימין לשמאל בעברית לסדר קריאה טבעי.</li>
+            <li style="font-size:14px;"><b>כפתור תצוגה:</b> כפתור תצוגה חדש בחלון הראשי שמסתיר את כל מחווני המצב (הזז, חבר וכו') כך שתוכל לראות את העיצוב שלך בבירור ללא שכבות ממשק נוספות.</li>
 
-        <p style="font-size:16px;">© 2026 OpenStrand Studio - גרסה 1.107</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - גרסה 1.107</p>
         </div>
         ''',
 
@@ -3377,16 +3377,16 @@ Exemplos:<br>
         'about': 'אודות',
         'about_info': '''
         <h2>אודות OpenStrand Studio</h2>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             OpenStrand Studio פותחה על ידי יהונתן סטבון. התוכנה מיועדת ליצירת כל קשר באופן סכמטי על ידי שימוש בשכבות לכל קטע של חוט ושילוב שכבות עם מסכות המאפשרות אפקט "מעל-מתחת".
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             יהונתן מפעיל ערוץ YouTube ייעודי לרצועות בשם <b><a href="https://www.youtube.com/@1anya7d">LanYarD</a></b>, בו מדריכים רבים מציגים דיאגרמות של קשרים. תוכנה זו נוצרה כדי להקל על עיצוב כל קשר, במטרה להדגים ולהסביר כיצד להכין מדריכים מורכבים הכוללים קשירת קשרים.
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             אתם מוזמנים לפנות אליי בכתובת <a href="mailto:ysetbon@gmail.com">ysetbon@gmail.com</a> או להתחבר איתי ב־<a href="https://www.instagram.com/ysetbon/">Instagram</a> או ב־<a href="https://www.linkedin.com/in/yonatan-setbon-4a980986/">LinkedIn</a>.
         </p>
-        <p style="font-size:18px;">
+        <p style="font-size:14px;">
             © 2026 OpenStrand Studio
         </p>
         ''',

@@ -81,6 +81,20 @@ def deserialize_color(data):
     color = QColor(data["r"], data["g"], data["b"], data["a"])
     return color
 
+
+def restore_attached_strand_geometry_state(strand, data):
+    """Restore saved angle/length state for attached strands after geometry is loaded."""
+    if not isinstance(strand, AttachedStrand):
+        return
+
+    if data.get("angle") is not None:
+        strand.angle = data["angle"]
+
+    if data.get("length") is not None:
+        strand.length = data["length"]
+    elif hasattr(strand, 'update_angle_length_from_geometry'):
+        strand.update_angle_length_from_geometry()
+
 def serialize_point(point):
     """Serialize a point to a dictionary format."""
     # Handle None case
@@ -347,6 +361,7 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
                 strand.stroke_width = stroke_width
                 strand.set_number = set_number
                 strand.layer_name = layer_name
+                restore_attached_strand_geometry_state(strand, data)
                 
                 # Don't manually update connections - let LayerStateManager handle it
                 # The connections will be properly calculated when save_current_state() is called
@@ -655,6 +670,7 @@ def load_strands(filename, canvas):
             strand.stroke_width = strand_data["stroke_width"]
             strand.layer_name = strand_data["layer_name"]
             strand.set_number = strand_data["set_number"]
+            restore_attached_strand_geometry_state(strand, strand_data)
             strand.has_circles = strand_data["has_circles"]
             strand.is_start_side = strand_data["is_start_side"]
             strand.is_hidden = strand_data.get("is_hidden", False)
@@ -1304,6 +1320,4 @@ def update_attached_strand_position(parent_strand, attached_strand):
     if hasattr(attached_strand, 'attached_strands'):
         for child_strand in attached_strand.attached_strands:
             update_attached_strand_position(attached_strand, child_strand)
-
-
 

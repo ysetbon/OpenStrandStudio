@@ -927,4 +927,31 @@ if __name__ == '__main__':
     except Exception:
         pass
 
-    sys.exit(exit_code)
+    # --- Hard-exit to silence teardown crashes -------------------------
+    #
+    # Historically the packaged macOS build shows an
+    # "OpenStrandStudio quit unexpectedly" dialog *after* the user has
+    # already closed the window.  The Python / Qt graceful shutdown that
+    # runs once ``app.exec_()`` returns tears down the QApplication,
+    # paint engines, OpenGL contexts, font cache, PyInstaller bootstrap
+    # and the Python interpreter itself.  Any of those can dereference
+    # an already-destroyed Qt object (EXC_BAD_ACCESS at a small offset
+    # such as 0x20) and macOS's crash reporter treats it as a real
+    # crash even though the user already intended to quit.
+    #
+    # To guarantee no such dialog appears we flush our crash log, then
+    # call os._exit(), which exits the process immediately via the OS
+    # syscall.  No further destructors, atexit hooks or GC run — so
+    # there is simply no code path left that could fault.  User state
+    # is already persisted by MainWindow.closeEvent /
+    # _graceful_shutdown before we get here, so hard-exiting is safe.
+    try:
+        if _CRASH_LOG_HANDLE is not None:
+            try:
+                _CRASH_LOG_HANDLE.flush()
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    os._exit(exit_code if isinstance(exit_code, int) else 0)

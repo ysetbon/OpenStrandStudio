@@ -17,7 +17,7 @@ Before starting, ensure you have the following installed:
 Install all required Python packages:
 
 ```bash
-pip3 install PyQt5==5.15.4 Pillow numpy pyinstaller
+pip3 install PyQt5==5.15.4 Pillow pyinstaller
 ```
 
 ## Step 2: Build the Application

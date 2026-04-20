@@ -2356,30 +2356,94 @@ class GroupPanel(QWidget):
         # Access the current translation dictionary
         self.language_code = self.canvas.language_code if self.canvas else 'en'
         _ = translations[self.language_code]
-        
-        # Prompt the user to enter a new group name
-        new_group_name, ok = QInputDialog.getText(
-            self, _['rename_group'], _['enter_group_name']
-        )
-        
-        if not ok or not new_group_name:
+
+        # Shared theme stylesheet so rename prompt + error box match the rest
+        # of the group dialogs (hover, pressed, colors).
+        is_dark_mode = getattr(self.canvas, 'is_dark_mode', False)
+        if is_dark_mode:
+            dialog_stylesheet = """
+                QDialog { background-color: #2C2C2C; color: white; }
+                QLabel { color: white; }
+                QLineEdit { background-color: #2B2B2B; color: white; border: 1px solid #555555; border-radius: 4px; padding: 4px; }
+                QPushButton { background-color: #252525; color: white; font-weight: bold; border: 2px solid #000000; padding: 8px 12px; border-radius: 4px; min-width: 80px; }
+                QPushButton:hover { background-color: #505050; border: 2px solid #666666; }
+                QPushButton:pressed { background-color: #151515; border: 2px solid #000000; }
+            """
+        else:
+            dialog_stylesheet = """
+                QDialog { background-color: #FFFFFF; color: #000000; }
+                QLabel { color: #000000; }
+                QLineEdit { background-color: #FFFFFF; color: #000000; border: 1px solid #CCCCCC; border-radius: 4px; padding: 4px; }
+                QPushButton { background-color: #F0F0F0; color: #000000; font-weight: bold; border: 1px solid #BBBBBB; padding: 8px 12px; border-radius: 4px; min-width: 80px; }
+                QPushButton:hover { background-color: #E0E0E0; border: 1px solid #999999; }
+                QPushButton:pressed { background-color: #D0D0D0; border: 1px solid #888888; }
+            """
+
+        # Build a fully custom themed dialog so the OK/Cancel buttons honor
+        # hover/pressed states (QInputDialog's internal button box often
+        # ignores dialog-level QSS on Windows).
+        from PyQt5.QtWidgets import QLineEdit
+        dialog = QDialog(self)
+        dialog.setWindowTitle(_['rename_group'])
+        dialog.setModal(True)
+        dialog.setStyleSheet(dialog_stylesheet)
+        if self.language_code == 'he':
+            dialog.setLayoutDirection(Qt.RightToLeft)
+
+        d_layout = QVBoxLayout(dialog)
+        d_layout.addWidget(QLabel(_['enter_group_name']))
+        input_field = QLineEdit()
+        d_layout.addWidget(input_field)
+
+        btn_layout = QHBoxLayout()
+        ok_button = QPushButton(_['ok'])
+        cancel_button = QPushButton(_['cancel'])
+        if self.language_code == 'he':
+            btn_layout.addWidget(cancel_button)
+            btn_layout.addWidget(ok_button)
+        else:
+            btn_layout.addWidget(ok_button)
+            btn_layout.addWidget(cancel_button)
+        d_layout.addLayout(btn_layout)
+
+        ok_button.clicked.connect(dialog.accept)
+        cancel_button.clicked.connect(dialog.reject)
+        input_field.returnPressed.connect(dialog.accept)
+
+        accepted = (dialog.exec_() == QDialog.Accepted)
+        new_group_name = input_field.text() if accepted else ''
+
+        if not accepted or not new_group_name:
             pass
             return
-        
+
         # Check if the new name is the same as the old name
         if new_group_name == old_group_name:
             pass
             return
-        
+
         # Check if the new group name already exists
         if new_group_name in self.groups:
-            # Show error message using QMessageBox for simplicity
-            from PyQt5.QtWidgets import QMessageBox
-            msg = QMessageBox(self)
-            msg.setWindowTitle(_['error'] if 'error' in _ else 'Error')
-            msg.setText(_['group_exists'] if 'group_exists' in _ else 'Group already exists')
-            msg.setStandardButtons(QMessageBox.Ok)
-            msg.exec_()
+            err_dialog = QDialog(self)
+            err_dialog.setWindowTitle(_['error'])
+            err_dialog.setModal(True)
+            err_dialog.setStyleSheet(dialog_stylesheet)
+            if self.language_code == 'he':
+                err_dialog.setLayoutDirection(Qt.RightToLeft)
+
+            err_layout = QVBoxLayout(err_dialog)
+            err_label = QLabel(_['group_exists'])
+            err_label.setWordWrap(True)
+            err_layout.addWidget(err_label)
+
+            err_btn_layout = QHBoxLayout()
+            err_ok = QPushButton(_['ok'])
+            err_btn_layout.addStretch(1)
+            err_btn_layout.addWidget(err_ok)
+            err_layout.addLayout(err_btn_layout)
+            err_ok.clicked.connect(err_dialog.accept)
+
+            err_dialog.exec_()
             return
         
         # Rename the group in self.groups

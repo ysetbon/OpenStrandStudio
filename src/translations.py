@@ -463,6 +463,7 @@ Examples:<br>
         # Group-related translations
         'group_exists': 'Group Exists',
         'group_replace_confirm': 'A group named "{}" already exists. Do you want to replace it?',
+        'error': 'Error',
         # History translations
         'load_selected_history': 'Load Selected',
         'clear_all_history': 'Clear All History',
@@ -865,6 +866,7 @@ Exemples :<br>
         # Group-related translations
         'group_exists': 'Groupe Existant',
         'group_replace_confirm': 'Un groupe nommé "{}" existe déjà. Voulez-vous le remplacer?',
+        'error': 'Erreur',
         # History translations (French)
         'load_selected_history': 'Charger Sélection',
         'clear_all_history': 'Effacer Tout l\'Historique',
@@ -1292,6 +1294,8 @@ Beispiele:<br>
         'duplicate_group': 'Gruppe duplizieren',
         'rename_group': 'Gruppe umbenennen',
         'delete_group': 'Gruppe löschen',
+        'group_exists': 'Gruppe existiert bereits',
+        'error': 'Fehler',
         'gif_explanation_1': 'Themen und Sprache einstellen.',
         'gif_explanation_2': 'Rechtsklick auf Schaltflächen im Ebenenpanel-Bereich zeigt\nderen Beschreibungen.',
         'gif_explanation_3': 'Versteckmodus aktivieren, um Ebenen auszuwählen und\nin Gruppen ein-/auszublenden.',
@@ -1855,6 +1859,7 @@ Esempi:<br>
         # Group-related translations
         'group_exists': 'Gruppo Esistente',
         'group_replace_confirm': 'Un gruppo chiamato "{}" esiste già. Vuoi sostituirlo?',
+        'error': 'Errore',
         # History translations
         'load_selected_history': 'Carica Selezionato',
         'clear_all_history': 'Cancella Tutta la Cronologia',
@@ -2354,6 +2359,7 @@ Ejemplos:<br>
         # Group-related translations
         'group_exists': 'Grupo Existente',
         'group_replace_confirm': 'Ya existe un grupo llamado "{}". ¿Deseas reemplazarlo?',
+        'error': 'Error',
         # History translations
         'load_selected_history': 'Cargar Seleccionado',
         'clear_all_history': 'Borrar Todo el Historial',
@@ -2852,6 +2858,7 @@ Exemplos:<br>
         # Group-related translations
         'group_exists': 'Grupo Existente',
         'group_replace_confirm': 'Um grupo chamado "{}" já existe. Deseja substituí-lo?',
+        'error': 'Erro',
         # History translations
         'load_selected_history': 'Carregar Selecionado',
         'clear_all_history': 'Limpar Todo o Histórico',
@@ -3360,6 +3367,7 @@ Exemplos:<br>
         # Group-related translations
         'group_exists': 'קבוצה קיימת',
         'group_replace_confirm': 'קבוצה בשם "{}" כבר קיימת. האם ברצונך להחליף אותה?',
+        'error': 'שגיאה',
         # History translations
         'load_selected_history': 'טען נבחר',
         'clear_all_history': 'נקה את כל ההיסטוריה',

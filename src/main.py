@@ -1,5 +1,17 @@
 import sys
 import os
+
+# PyInstaller --windowed on Windows leaves sys.stdout/stderr as None, which
+# breaks any print() or library that writes to them (e.g. warnings emitted
+# during third-party imports). Bind them to a no-op sink BEFORE any other
+# import runs; setup_crash_logging() will later replace the sink with the
+# real crash log file once the settings directory exists.
+_STD_STREAMS_WERE_NONE = sys.stdout is None or sys.stderr is None
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, "w", encoding="utf-8")
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, "w", encoding="utf-8")
+
 import traceback
 import logging
 import faulthandler
@@ -44,18 +56,23 @@ def setup_crash_logging():
     os.makedirs(settings_dir, exist_ok=True)
     log_path = os.path.join(settings_dir, "crash.log")
 
+    handlers = [logging.FileHandler(log_path, encoding="utf-8")]
+    if sys.stderr is not None:
+        handlers.append(logging.StreamHandler())
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        handlers=[
-            logging.FileHandler(log_path, encoding="utf-8"),
-            logging.StreamHandler(),
-        ],
+        handlers=handlers,
     )
 
     _CRASH_LOG_HANDLE = open(log_path, "a", encoding="utf-8")
     faulthandler.enable(_CRASH_LOG_HANDLE, all_threads=True)
-    # Also enable faulthandler on stderr so native crashes print to console
+    # If the early bootstrap above replaced None streams with os.devnull, swap
+    # them for the crash log now so debug prints are actually captured.
+    if _STD_STREAMS_WERE_NONE:
+        sys.stdout = _CRASH_LOG_HANDLE
+        sys.stderr = _CRASH_LOG_HANDLE
     faulthandler.enable(sys.stderr, all_threads=True)
 
     def _excepthook(exc_type, exc, tb):
@@ -850,7 +867,64 @@ if __name__ == '__main__':
         current_shadow = window.canvas.default_shadow_color
         
 
-    # Watchdog: dump all thread stacks 1 second after a crash-inducing hang
-    # This auto-cancels on clean exit.
-    faulthandler.dump_traceback_later(timeout=120, repeat=True, file=sys.stderr)
-    sys.exit(app.exec_())
+    # Watchdog: dump all thread stacks periodically so a hang leaves a trace.
+    # Falls back to the crash log when stderr is missing (PyInstaller --windowed on Windows).
+    _watchdog_target = sys.stderr if sys.stderr is not None else _CRASH_LOG_HANDLE
+    if _watchdog_target is not None:
+        faulthandler.dump_traceback_later(timeout=120, repeat=True, file=_watchdog_target)
+
+    def _graceful_shutdown():
+        """Run right before QApplication is destroyed.
+
+        Cancels the watchdog timer so it cannot fire into a closed file
+        during interpreter teardown, and forcibly closes any orphaned
+        top-level widgets that group dialogs may have left behind
+        (see MainWindow.closeEvent for background).  This is the last
+        line of defence against the "OpenStrandStudio quit unexpectedly"
+        crash dialog that can appear on macOS after creating a group
+        and then exiting the app.
+        """
+        try:
+            faulthandler.cancel_dump_traceback_later()
+        except Exception:
+            pass
+
+        try:
+            if hasattr(window, '_cleanup_before_exit'):
+                window._cleanup_before_exit()
+        except Exception:
+            pass
+
+        try:
+            for w in list(QApplication.topLevelWidgets()):
+                if w is window:
+                    continue
+                try:
+                    w.blockSignals(True)
+                    w.hide()
+                    w.setParent(None)
+                    w.deleteLater()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        try:
+            QApplication.sendPostedEvents(None, 0)
+            QApplication.processEvents()
+        except Exception:
+            pass
+
+    app.aboutToQuit.connect(_graceful_shutdown)
+
+    exit_code = app.exec_()
+
+    # Final belt-and-braces: make sure no faulthandler timer survives
+    # past exec_() into interpreter shutdown, where it would race with
+    # Python closing the crash-log file handle.
+    try:
+        faulthandler.cancel_dump_traceback_later()
+    except Exception:
+        pass
+
+    sys.exit(exit_code)

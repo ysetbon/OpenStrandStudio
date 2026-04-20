@@ -1,8 +1,8 @@
 @echo off
 echo Creating virtual environment for clean build...
 
-REM Create a new virtual environment
-python -m venv build_env
+REM Create a new virtual environment (--clear rebuilds stale launchers if folder was moved)
+python -m venv --clear build_env
 
 REM Activate it
 call build_env\Scripts\activate.bat

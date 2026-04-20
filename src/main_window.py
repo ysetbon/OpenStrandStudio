@@ -2601,15 +2601,109 @@ class MainWindow(QMainWindow):
             button.setEnabled(True)
 
     def closeEvent(self, event):
-        """Clean up hidden dialog refs to prevent crash on exit."""
-        if hasattr(self, 'group_layer_manager'):
-            glm = self.group_layer_manager
-            if hasattr(glm, '_dialog_refs'):
-                for dlg in glm._dialog_refs:
-                    try:
-                        dlg.setParent(None)
-                        dlg.deleteLater()
-                    except RuntimeError:
-                        pass
-                glm._dialog_refs.clear()
+        """Clean up hidden dialog refs and orphaned top-level widgets to
+        prevent crashes ("OpenStrandStudio quit unexpectedly" on macOS /
+        access violation on Windows) during application shutdown.
+
+        Background: group_layers.create_group(...) intentionally does NOT
+        call deleteLater() on its strand-selection / name-input dialogs
+        (see the comments there about Windows access violations while
+        pending events still reference the dialog's children).  Instead
+        the dialogs are hidden, reparented to None (making them orphaned
+        top-level widgets owned by QApplication) and kept alive in
+        ``group_layer_manager._dialog_refs``.  If those dialogs survive
+        until QApplication shutdown, Qt may destroy them in an order
+        that interleaves with Python garbage collection, producing a
+        hard crash on exit.  We therefore destroy them deterministically
+        while a clean event loop is still available.
+        """
+        try:
+            self._cleanup_before_exit()
+        except Exception:
+            # Never let cleanup raise during shutdown.
+            pass
         super().closeEvent(event)
+
+    def _cleanup_before_exit(self):
+        """Best-effort teardown of transient widgets and timers."""
+        from PyQt5.QtWidgets import QApplication
+
+        glm = getattr(self, 'group_layer_manager', None)
+        if glm is not None:
+            # Non-modal group shadow editor (created by open_group_shadow_editor).
+            shadow_dlg = getattr(glm, '_group_shadow_dialog', None)
+            if shadow_dlg is not None:
+                # Drop the Python reference first so any late signal
+                # delivery cannot find the slot target.
+                glm._group_shadow_dialog = None
+                self._destroy_dialog_safely(shadow_dlg)
+
+            # Cached strand-selection / naming dialogs kept alive by
+            # group_layers to avoid premature deletion while pending
+            # tooltip/focus/repaint events still reference them.
+            dialog_refs = getattr(glm, '_dialog_refs', None)
+            if dialog_refs:
+                for dlg in list(dialog_refs):
+                    self._destroy_dialog_safely(dlg)
+                dialog_refs.clear()
+
+        # Stop the periodic watchdog so its timer thread can't fire
+        # after stdout/stderr are closed during interpreter teardown.
+        try:
+            import faulthandler
+            faulthandler.cancel_dump_traceback_later()
+        except Exception:
+            pass
+
+        # Drain any deleteLater() calls we just queued so the widgets
+        # are actually gone before Qt starts shutting the app down.
+        try:
+            QApplication.sendPostedEvents(None, 0)
+            QApplication.processEvents()
+        except Exception:
+            pass
+
+    def _destroy_dialog_safely(self, dlg):
+        """Disconnect signals, hide, and delete a dialog without risking
+        a crash if its underlying C++ object is already gone."""
+        if dlg is None:
+            return
+        try:
+            # Block signals so any pending queued slot invocations
+            # (e.g. canvas.language_changed -> dialog.update_translations)
+            # are dropped instead of dispatched on a partly-destroyed
+            # widget.
+            dlg.blockSignals(True)
+        except RuntimeError:
+            return
+        except Exception:
+            pass
+
+        # Explicitly sever the known connection between the canvas and
+        # GroupShadowEditorDialog so the canvas can't call into a dead
+        # dialog later.
+        canvas = getattr(self, 'canvas', None)
+        if canvas is not None and hasattr(canvas, 'language_changed'):
+            try:
+                canvas.language_changed.disconnect(dlg.update_translations)
+            except (TypeError, RuntimeError, AttributeError):
+                pass
+
+        try:
+            dlg.hide()
+        except RuntimeError:
+            return
+        except Exception:
+            pass
+
+        try:
+            dlg.setParent(None)
+        except Exception:
+            pass
+
+        try:
+            dlg.deleteLater()
+        except RuntimeError:
+            pass
+        except Exception:
+            pass

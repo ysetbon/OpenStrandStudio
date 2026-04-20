@@ -2,7 +2,7 @@
 
 ################################################################################
 # OpenStrand Studio macOS PKG Installer Builder TEMPLATE
-# Date: Created November 15, 2025
+# Date: Created April 20, 2026
 #
 # LOGIC EXPLANATION:
 # ==================
@@ -236,7 +236,7 @@ cat > "$RESOURCES_DIR/license.html" << EOF
 <html>
 <body>
     <h2>License Agreement</h2>
-    <p>Copyright (c) 2025 $PUBLISHER</p>
+    <p>Copyright (c) 2026 $PUBLISHER</p>
     <p>By installing this software, you agree to the terms and conditions.</p>
 </body>
 </html>
@@ -254,7 +254,7 @@ cat > "$RESOURCES_DIR/fr.lproj/license.html" << 'EOF'
 <html>
 <body>
     <h2>Accord de licence</h2>
-    <p>Droit d'auteur (c) 2025 Yonatan Setbon</p>
+    <p>Droit d'auteur (c) 2026 Yonatan Setbon</p>
     <p>En installant ce logiciel, vous acceptez les termes et conditions.</p>
 </body>
 </html>
@@ -267,7 +267,7 @@ cat > "$RESOURCES_DIR/it.lproj/license.html" << 'EOF'
 <html>
 <body>
     <h2>Contratto di licenza</h2>
-    <p>Copyright (c) 2025 Yonatan Setbon</p>
+    <p>Copyright (c) 2026 Yonatan Setbon</p>
     <p>Installando questo software, accetti i termini e le condizioni.</p>
 </body>
 </html>
@@ -280,7 +280,7 @@ cat > "$RESOURCES_DIR/es.lproj/license.html" << 'EOF'
 <html>
 <body>
     <h2>Acuerdo de licencia</h2>
-    <p>Derechos de autor (c) 2025 Yonatan Setbon</p>
+    <p>Derechos de autor (c) 2026 Yonatan Setbon</p>
     <p>Al instalar este software, usted acepta los términos y condiciones.</p>
 </body>
 </html>
@@ -293,7 +293,7 @@ cat > "$RESOURCES_DIR/pt.lproj/license.html" << 'EOF'
 <html>
 <body>
     <h2>Acordo de licença</h2>
-    <p>Direitos autorais (c) 2025 Yonatan Setbon</p>
+    <p>Direitos autorais (c) 2026 Yonatan Setbon</p>
     <p>Ao instalar este software, você concorda com os termos e condições.</p>
 </body>
 </html>
@@ -306,7 +306,7 @@ cat > "$RESOURCES_DIR/de.lproj/license.html" << 'EOF'
 <html>
 <body>
     <h2>Lizenzvereinbarung</h2>
-    <p>Urheberrecht (c) 2025 Yonatan Setbon</p>
+    <p>Urheberrecht (c) 2026 Yonatan Setbon</p>
     <p>Mit der Installation dieser Software stimmen Sie den Bedingungen zu.</p>
 </body>
 </html>
@@ -319,7 +319,7 @@ cat > "$RESOURCES_DIR/he.lproj/license.html" << 'EOF'
 <html dir="rtl">
 <body>
     <h2>&#x05D4;&#x05E1;&#x05E7;&#x05DD; &#x05E8;&#x05D9;&#x05E9;&#x05D9;&#x05D5;&#x05DF;</h2>
-    <p>&#x05D6;&#x05DB;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05E6;&#x05E8;&#x05D9;&#x05DD; (c) 2025 Yonatan Setbon</p>
+    <p>&#x05D6;&#x05DB;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05E6;&#x05E8;&#x05D9;&#x05DD; (c) 2026 Yonatan Setbon</p>
     <p>&#x05D1;&#x05D4;&#x05EA;&#x05E7;&#x05E0;&#x05D4; &#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D4; &#x05D6;&#x05D5;&#x05D4;, &#x05D0;&#x05EA;&#x05D4; &#x05DE;&#x05E1;&#x05DB;&#x05D9;&#x05DD; &#x05DC;&#x05EA;&#x05E0;&#x05D0;&#x05D9;&#x05DD; &#x05D5;&#x05DC;&#x05D4;&#x05D2;&#x05D1;&#x05D5;&#x05EA;.</p>
 </body>
 </html>

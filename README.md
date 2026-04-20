@@ -1,29 +1,25 @@
-# OpenStrand Studio - Version 1.105
+# OpenStrand Studio - Version 1.107
 
 An advanced diagramming tool for creating tutorials involving strand manipulation (knots, hitches, etc.)
 with dynamic masking that automatically adjusts the over-under effects between strands,
 making complex patterns clear and easy to understand.
 
-## What's New in Version 1.105
+## What's New in Version 1.107
 
 ### ✨ New Features
 
-- **Mask Grid**: Quickly create multiple strand masks using a visual N×N grid interface in group functionalities.
+- **Group Shadow Editor**: Shadows can now be edited for entire groups, giving you full control over how group strands cast shadows on the canvas.
 
-- **Keyboard Shortcuts**: New shortcuts for faster workflow:
-  - **Space**: Hold to quickly pan/unpan the canvas
-  - **Z**: Undo your last action
-  - **X**: Redo what you just undid
-  - **N**: New Strand
-  - **1**: Draw Names
-  - **L**: Lock Layers
-  - **D**: Delete Strand
-  - **A**: Deselect All
+- **Selected Strand Settings**: A new "Selected Strand" category in Settings gathers options that apply only to the currently selected strand — move-only, control-points-only, shadow-only, and a customizable selection highlight color.
+
+- **View Button**: New View button in the main window that hides all mode indicators (Move, Attach, etc.) so you can see your design clearly without any UI overlays.
+
+- **Hebrew Right-to-Left Alignment**: The main window, settings dialog, group context menu, and group panel are now mirrored right-to-left in Hebrew for a natural reading order.
 
 ### 🐛 Bug Fixes & Improvements
 
-- **Fixed Selection & Zoom**: Selection in move, select, and attach modes now remains accurate at all zoom levels.
-- **Smoother Knot Connections**: Fixed a rendering issue where "closed knots" (loops) would sometimes show visible seams or gaps at the connection point. Strands now merge seamlessly for a cleaner look.
+- **Shadow Editor Fixes & Masked Strand Support**: Shadow subtraction logic is unified between the main renderer and the shadow preview, and masked strands can now be edited through the shadow editor dialog with smart defaults.
+- **Group Creation Stability**: Fixed unexpected crashes caused by orphan hidden group dialogs when creating groups or exiting the application.
 
 ## Features
 
@@ -80,4 +76,4 @@ Created by Yonatan Setbon
 
 ---
 
-© 2025 OpenStrand Studio - Version 1.105
+© 2026 OpenStrand Studio - Version 1.107

@@ -559,6 +559,31 @@ These updates focus on performance improvements and visual enhancements to provi
    - Fixed main window buttons (at the top of the canvas) to display correctly on any screen size and aspect ratio
    - Improved button layout for better compatibility across different displays
 
+------
+
+## Version 1.107 (Released: 20/04/2026)
+
+### New Features and Improvements:
+
+1. **Group Shadow Editor:**
+   - Shadows can now be edited for entire groups, giving you full control over how group strands cast shadows on the canvas.
+
+2. **Shadow Editor Fixes & Masked Strand Support:**
+   - Shadow subtraction logic is unified between the main renderer and the shadow preview.
+   - Masked strands can now be edited through the shadow editor dialog with smart defaults.
+
+3. **Selected Strand Settings:**
+   - New "Selected Strand" category in Settings gathers options that apply only to the currently selected strand — move-only, control-points-only, shadow-only, and a customizable selection highlight color.
+
+4. **Group Creation Stability:**
+   - Fixed unexpected crashes caused by orphan hidden group dialogs when creating groups or exiting the application.
+
+5. **Hebrew Right-to-Left Alignment:**
+   - The main window, settings dialog, group context menu, and group panel are now mirrored right-to-left in Hebrew for a natural reading order.
+
+6. **View Button:**
+   - New View button in the main window that hides all mode indicators (Move, Attach, etc.) so you can see your design clearly without any UI overlays.
+
 ------------------------------------------------------------------------------------------
 # OpenStrand Studio - Français
 
@@ -1120,5 +1145,30 @@ Ces mises à jour se concentrent sur les améliorations de performance et les am
 2. **Réactivité des boutons principaux :**
    - Correction des boutons de la fenêtre principale (en haut du canevas) pour qu'ils s'affichent correctement sur toute taille d'écran et tout rapport d'aspect
    - Amélioration de la disposition des boutons pour une meilleure compatibilité avec différents écrans
+
+------
+
+## Version 1.107 (Sortie : 20/04/2026)
+
+### Nouvelles Fonctionnalités et Améliorations :
+
+1. **Éditeur d'ombres de groupe :**
+   - Les ombres peuvent désormais être modifiées pour des groupes entiers, vous offrant un contrôle total sur la façon dont les brins d'un groupe projettent leurs ombres sur le canevas.
+
+2. **Corrections de l'éditeur d'ombres et prise en charge des brins masqués :**
+   - La logique de soustraction des ombres est unifiée entre le rendu principal et l'aperçu des ombres.
+   - Les brins masqués peuvent maintenant être modifiés via la boîte de dialogue de l'éditeur d'ombres avec des valeurs par défaut intelligentes.
+
+3. **Paramètres du brin sélectionné :**
+   - Une nouvelle catégorie « Brin Sélectionné » dans les paramètres regroupe des options qui ne s'appliquent qu'au brin actuellement sélectionné — déplacement seul, points de contrôle seuls, ombre seule, et une couleur de surbrillance de sélection personnalisable.
+
+4. **Stabilité de la création de groupes :**
+   - Correction des plantages inattendus causés par des boîtes de dialogue de groupe cachées orphelines lors de la création de groupes ou de la fermeture de l'application.
+
+5. **Alignement de droite à gauche pour l'hébreu :**
+   - La fenêtre principale, la boîte de dialogue des paramètres, le menu contextuel de groupe et le panneau de groupe sont désormais mis en miroir de droite à gauche en hébreu pour un ordre de lecture naturel.
+
+6. **Bouton Vue :**
+   - Nouveau bouton Vue dans la fenêtre principale qui masque tous les indicateurs de mode (Bouger, Lier, etc.) pour que vous puissiez voir votre conception clairement, sans aucune superposition d'interface.
 
 ------

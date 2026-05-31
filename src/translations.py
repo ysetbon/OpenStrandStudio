@@ -250,6 +250,8 @@ Examples:<br>
         'move_selected_only': 'In move mode, allow only to move the selected strand',
         'show_cp_selected_only': 'Show control points only for the selected strand',
         'shadow_selected_only': 'Cast shadow only for the selected strand',
+        'view_hide_highlight': 'In view mode, hide the selection highlight',
+        'view_hide_control_points': 'In view mode, hide the control points',
         'highlight_color': 'Selection highlight color',
 
         # LayerPanel translations
@@ -705,6 +707,8 @@ Exemples :<br>
         'move_selected_only': 'En mode déplacement, déplacer uniquement le brin sélectionné',
         'show_cp_selected_only': 'Afficher les points de contrôle uniquement pour le brin sélectionné',
         'shadow_selected_only': 'Projeter l\'ombre uniquement pour le brin sélectionné',
+        'view_hide_highlight': 'En mode vue, masquer la surbrillance de sélection',
+        'view_hide_control_points': 'En mode vue, masquer les points de contrôle',
         'highlight_color': 'Couleur de surbrillance de la sélection',
 
         # LayerPanel translations
@@ -1260,6 +1264,8 @@ Beispiele:<br>
         'move_selected_only': 'Im Bewegungsmodus nur den ausgewählten Strang bewegen',
         'show_cp_selected_only': 'Kontrollpunkte nur für den ausgewählten Strang anzeigen',
         'shadow_selected_only': 'Schatten nur für den ausgewählten Strang werfen',
+        'view_hide_highlight': 'Im Ansichtsmodus die Auswahl-Hervorhebung ausblenden',
+        'view_hide_control_points': 'Im Ansichtsmodus die Kontrollpunkte ausblenden',
         'highlight_color': 'Auswahl-Hervorhebungsfarbe',
 
         # LayerPanel translations
@@ -1713,6 +1719,8 @@ Esempi:<br>
         'move_selected_only': 'In modalità movimento, muovi solo il filo selezionato',
         'show_cp_selected_only': 'Mostra i punti di controllo solo per il filo selezionato',
         'shadow_selected_only': 'Proietta l\'ombra solo per il filo selezionato',
+        'view_hide_highlight': 'In modalità visualizzazione, nascondi l\'evidenziazione della selezione',
+        'view_hide_control_points': 'In modalità visualizzazione, nascondi i punti di controllo',
         'highlight_color': 'Colore di evidenziazione della selezione',
 
         # LayerPanel translations
@@ -2221,6 +2229,8 @@ Ejemplos:<br>
         'move_selected_only': 'En modo mover, mover solo la hebra seleccionada',
         'show_cp_selected_only': 'Mostrar puntos de control solo para la hebra seleccionada',
         'shadow_selected_only': 'Proyectar sombra solo para la hebra seleccionada',
+        'view_hide_highlight': 'En modo vista, ocultar el resaltado de selección',
+        'view_hide_control_points': 'En modo vista, ocultar los puntos de control',
         'highlight_color': 'Color de resaltado de selección',
 
         # LayerPanel translations
@@ -2729,6 +2739,8 @@ Exemplos:<br>
         'move_selected_only': 'No modo mover, mover apenas a mecha selecionada',
         'show_cp_selected_only': 'Mostrar pontos de controle apenas para a mecha selecionada',
         'shadow_selected_only': 'Projetar sombra apenas para a mecha selecionada',
+        'view_hide_highlight': 'No modo visualização, ocultar o destaque de seleção',
+        'view_hide_control_points': 'No modo visualização, ocultar os pontos de controle',
         'highlight_color': 'Cor de destaque da seleção',
 
         # LayerPanel translations
@@ -3245,6 +3257,8 @@ Exemplos:<br>
         'move_selected_only': 'במצב הזזה, הזז רק את החוט הנבחר',
         'show_cp_selected_only': 'הצג נקודות בקרה רק עבור החוט הנבחר',
         'shadow_selected_only': 'הטל צל רק עבור החוט הנבחר',
+        'view_hide_highlight': 'במצב תצוגה, הסתר את הדגשת הבחירה',
+        'view_hide_control_points': 'במצב תצוגה, הסתר את נקודות הבקרה',
         'highlight_color': 'צבע הדגשת בחירה',
 
         # LayerPanel translations

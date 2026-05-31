@@ -164,6 +164,8 @@ class StrandDrawingCanvas(QWidget):
         self.move_selected_only = False  # When True, only selected strand is interactive in move mode
         self.show_cp_selected_only = False  # When True, only show control points for selected strand family
         self.shadow_selected_only = False  # When True, only the selected strand casts shadows
+        self.view_hide_highlight = False  # When True, suppress selection highlight while in view mode
+        self.view_hide_control_points = False  # When True, suppress control points while in view mode
         self._cp_filter_strand = None  # Fallback reference strand for CP family filter (used during attach)
         self.current_strand = None  # Currently active strand
         self.strand_width = 46  # Width of strands
@@ -1981,7 +1983,9 @@ class StrandDrawingCanvas(QWidget):
                                             pass
 
                             # Draw the parent with appropriate highlighting
-                            if (parent_is_selected or parent_should_force) and not isinstance(self.current_mode, MaskMode) and not parent_should_suppress:
+                            # In view mode, optionally suppress the selection highlight (presentation/capture)
+                            suppress_view_highlight = (isinstance(self.current_mode, ViewMode) and getattr(self, 'view_hide_highlight', False))
+                            if (parent_is_selected or parent_should_force) and not isinstance(self.current_mode, MaskMode) and not parent_should_suppress and not suppress_view_highlight:
                                 self.draw_highlighted_strand(painter, parent)
                             else:
                                 parent.draw(painter, skip_painter_setup=True)
@@ -2013,9 +2017,12 @@ class StrandDrawingCanvas(QWidget):
                                     self._logged_force_highlight = True
                                     pass
 
+                    # In view mode, optionally suppress the selection highlight (presentation/capture)
+                    suppress_view_highlight = (isinstance(self.current_mode, ViewMode) and getattr(self, 'view_hide_highlight', False))
+
                     # highlight selected strand if we're not suppressed
                     # Also force highlight if should_force_highlight is True (when toggle is off and strand is moving)
-                    if (is_selected_for_highlight or should_force_highlight) and not should_suppress_highlight:
+                    if (is_selected_for_highlight or should_force_highlight) and not should_suppress_highlight and not suppress_view_highlight:
                         # Reduced high-frequency logging for performance
                         # logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
                         self.draw_highlighted_strand(painter, strand)
@@ -5905,6 +5912,10 @@ class StrandDrawingCanvas(QWidget):
         """
         # If control points are not enabled, don't draw anything
         if not self.show_control_points:
+            return
+
+        # In view mode, optionally suppress control points (presentation/capture)
+        if isinstance(self.current_mode, ViewMode) and getattr(self, 'view_hide_control_points', False):
             return
 
         if getattr(self, 'use_supersampling', False):

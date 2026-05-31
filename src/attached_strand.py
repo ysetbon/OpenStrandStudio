@@ -1007,7 +1007,7 @@ class AttachedStrand(Strand):
             painter.restore()  # Restore painter state after shadow drawing
         
         # Draw highlight if selected (before shadow-only check so highlights show even in shadow-only mode)
-        if self.is_selected and not isinstance(self.parent, MaskedStrand):
+        if self.is_selected and not isinstance(self.parent, MaskedStrand) and not self._suppress_highlight_in_view():
             self._draw_unified_highlight(painter, self.get_path())
         
         
@@ -2807,7 +2807,7 @@ class AttachedStrand(Strand):
             painter.restore()  # Restore painter state after shadow drawing
         
         # Draw highlight if selected (before shadow-only check so highlights show even in shadow-only mode)
-        if self.is_selected and not isinstance(self.parent, MaskedStrand):
+        if self.is_selected and not isinstance(self.parent, MaskedStrand) and not self._suppress_highlight_in_view():
             self._draw_unified_highlight(painter, self.get_path())
         
         

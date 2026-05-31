@@ -1674,6 +1674,18 @@ class Strand:
 
         return math.atan2(tangent.y(), tangent.x())
 
+    def _suppress_highlight_in_view(self):
+        """In view mode, optionally suppress the selection highlight (presentation/capture).
+
+        The selection state itself is untouched; this only skips painting the
+        highlight while the canvas is in View mode and the setting is enabled.
+        """
+        canvas = getattr(self, 'canvas', None)
+        if canvas is None or not getattr(canvas, 'view_hide_highlight', False):
+            return False
+        current_mode = getattr(canvas, 'current_mode', None)
+        return current_mode is not None and current_mode.__class__.__name__ == 'ViewMode'
+
     def _draw_unified_highlight(self, painter, path, stroke_path):
         """Draw the complete highlight as a single unified filled path (body + side lines)."""
         from attached_strand import AttachedStrand
@@ -2166,7 +2178,7 @@ class Strand:
         painter.restore()
 
         # Draw unified highlight if this is not a MaskedStrand
-        if self.is_selected and not isinstance(self, MaskedStrand):
+        if self.is_selected and not isinstance(self, MaskedStrand) and not self._suppress_highlight_in_view():
             self._draw_unified_highlight(painter, path, stroke_path)
 
         # Create a stroker for the fill path with squared ends
@@ -2903,7 +2915,7 @@ class Strand:
         painter.restore()
 
         # Draw unified highlight if this is not a MaskedStrand
-        if self.is_selected and not isinstance(self, MaskedStrand):
+        if self.is_selected and not isinstance(self, MaskedStrand) and not self._suppress_highlight_in_view():
             self._draw_unified_highlight(painter, path, stroke_path)
 
         # Create a stroker for the fill path with squared ends

@@ -693,7 +693,7 @@ class MaskedStrand(Strand):
             pass
 
         # Handle selection highlights
-        if self.is_selected:
+        if self.is_selected and not self._suppress_highlight_in_view():
             try:
                 mask_path = self.get_mask_path()
                 if not mask_path.isEmpty():

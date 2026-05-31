@@ -62,6 +62,8 @@ class SettingsDialog(QDialog):
         self.move_selected_only = getattr(canvas, 'move_selected_only', False)  # Move only selected strand in move mode
         self.show_cp_selected_only = getattr(canvas, 'show_cp_selected_only', False)  # Show CPs only for selected strand family
         self.shadow_selected_only = getattr(canvas, 'shadow_selected_only', False)  # Only cast shadow for selected strand
+        self.view_hide_highlight = getattr(canvas, 'view_hide_highlight', False)  # In view mode, hide selection highlight
+        self.view_hide_control_points = getattr(canvas, 'view_hide_control_points', False)  # In view mode, hide control points
         # Highlight color for selection indicators (default red)
         self.highlight_color = getattr(canvas, 'highlight_color', QColor(255, 0, 0, 255))
         if not isinstance(self.highlight_color, QColor):
@@ -126,6 +128,8 @@ class SettingsDialog(QDialog):
             self.canvas.move_selected_only = self.move_selected_only
             self.canvas.show_cp_selected_only = self.show_cp_selected_only
             self.canvas.shadow_selected_only = self.shadow_selected_only
+            self.canvas.view_hide_highlight = self.view_hide_highlight
+            self.canvas.view_hide_control_points = self.view_hide_control_points
             # Apply highlight color
             self.canvas.set_highlight_color(self.highlight_color)
 
@@ -389,7 +393,7 @@ class SettingsDialog(QDialog):
             self.selected_strand_settings_widget.setLayoutDirection(Qt.LeftToRight)
             selected_strand_layouts = [
                 'move_selected_only_layout', 'show_cp_selected_only_layout',
-                'shadow_selected_only_layout',
+                'shadow_selected_only_layout', 'view_hide_highlight_layout',
             ]
             for layout_name in selected_strand_layouts:
                 if hasattr(self, layout_name):
@@ -398,7 +402,7 @@ class SettingsDialog(QDialog):
                         layout.setDirection(QBoxLayout.LeftToRight)
             selected_strand_labels = [
                 'move_selected_only_label', 'show_cp_selected_only_label',
-                'shadow_selected_only_label',
+                'shadow_selected_only_label', 'view_hide_highlight_label',
             ]
             alignment = (Qt.AlignRight if is_rtl else Qt.AlignLeft) | Qt.AlignVCenter
             for label_name in selected_strand_labels:
@@ -895,6 +899,7 @@ class SettingsDialog(QDialog):
             ('move_selected_only_layout', 'move_selected_only_label', 'move_selected_only_checkbox'),
             ('show_cp_selected_only_layout', 'show_cp_selected_only_label', 'show_cp_selected_only_checkbox'),
             ('shadow_selected_only_layout', 'shadow_selected_only_label', 'shadow_selected_only_checkbox'),
+            ('view_hide_highlight_layout', 'view_hide_highlight_label', 'view_hide_highlight_checkbox'),
         ]
         for layout_name, label_name, checkbox_name in selected_strand_rows:
             if hasattr(self, layout_name) and hasattr(self, label_name) and hasattr(self, checkbox_name):
@@ -1471,6 +1476,12 @@ class SettingsDialog(QDialog):
                         elif line.startswith('ShadowSelectedOnly:'):
                             value = line.split(':', 1)[1].strip().lower()
                             self.shadow_selected_only = (value == 'true')
+                        elif line.startswith('ViewHideHighlight:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            self.view_hide_highlight = (value == 'true')
+                        elif line.startswith('ViewHideControlPoints:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            self.view_hide_control_points = (value == 'true')
                         elif line.startswith('HighlightColor:'):
                             try:
                                 r, g, b, a = map(int, line.split(':', 1)[1].strip().split(','))
@@ -2492,6 +2503,25 @@ class SettingsDialog(QDialog):
         
         # Add the vertical layout containing checkbox, button label, and button to the main layer panel layout
         layer_panel_layout.addLayout(default_arrow_container_layout)
+
+        # View Mode: Hide Control Points checkbox
+        self.view_hide_control_points_layout = QHBoxLayout()
+        self.layer_panel_rows.append(self.view_hide_control_points_layout)
+        self.view_hide_control_points_label = QLabel(_['view_hide_control_points'] if 'view_hide_control_points' in _ else "In view mode, hide the control points")
+        self.view_hide_control_points_label.setWordWrap(True)
+        self.view_hide_control_points_checkbox = QCheckBox()
+        self.view_hide_control_points_checkbox.setChecked(self.view_hide_control_points)
+
+        if self.is_rtl_language(self.current_language):
+            self.view_hide_control_points_layout.addStretch()
+            self.view_hide_control_points_layout.addWidget(self.view_hide_control_points_checkbox)
+            self.view_hide_control_points_layout.addWidget(self.view_hide_control_points_label)
+        else:
+            self.view_hide_control_points_layout.addWidget(self.view_hide_control_points_label)
+            self.view_hide_control_points_layout.addWidget(self.view_hide_control_points_checkbox)
+            self.view_hide_control_points_layout.addStretch()
+
+        layer_panel_layout.addLayout(self.view_hide_control_points_layout)
         # OK button for layer panel settings
         self.layer_panel_ok_button = QPushButton(_['ok'])
         self.layer_panel_ok_button.clicked.connect(self.apply_all_settings)
@@ -2556,6 +2586,24 @@ class SettingsDialog(QDialog):
             self.shadow_selected_only_layout.addStretch()
 
         selected_strand_layout.addLayout(self.shadow_selected_only_layout)
+
+        # View Mode: Hide Selection Highlight checkbox
+        self.view_hide_highlight_layout = QHBoxLayout()
+        self.view_hide_highlight_label = QLabel(_['view_hide_highlight'] if 'view_hide_highlight' in _ else "In view mode, hide the selection highlight")
+        self.view_hide_highlight_label.setWordWrap(True)
+        self.view_hide_highlight_checkbox = QCheckBox()
+        self.view_hide_highlight_checkbox.setChecked(self.view_hide_highlight)
+
+        if self.is_rtl_language(self.current_language):
+            self.view_hide_highlight_layout.addStretch()
+            self.view_hide_highlight_layout.addWidget(self.view_hide_highlight_checkbox)
+            self.view_hide_highlight_layout.addWidget(self.view_hide_highlight_label)
+        else:
+            self.view_hide_highlight_layout.addWidget(self.view_hide_highlight_label)
+            self.view_hide_highlight_layout.addWidget(self.view_hide_highlight_checkbox)
+            self.view_hide_highlight_layout.addStretch()
+
+        selected_strand_layout.addLayout(self.view_hide_highlight_layout)
 
         # Highlight Color picker
         self.highlight_color_container = QWidget()
@@ -4003,6 +4051,18 @@ class SettingsDialog(QDialog):
         self.shadow_selected_only = self.shadow_selected_only_checkbox.isChecked()
         if self.canvas:
             self.canvas.shadow_selected_only = self.shadow_selected_only
+
+        # Apply View Mode Hide Highlight Setting (Selected Strand page)
+        if hasattr(self, 'view_hide_highlight_checkbox'):
+            self.view_hide_highlight = self.view_hide_highlight_checkbox.isChecked()
+        if self.canvas:
+            self.canvas.view_hide_highlight = self.view_hide_highlight
+
+        # Apply View Mode Hide Control Points Setting (Layer Panel page)
+        if hasattr(self, 'view_hide_control_points_checkbox'):
+            self.view_hide_control_points = self.view_hide_control_points_checkbox.isChecked()
+        if self.canvas:
+            self.canvas.view_hide_control_points = self.view_hide_control_points
             # Apply Highlight Color Setting
             self.canvas.set_highlight_color(self.highlight_color)
             self.canvas.update()
@@ -4242,6 +4302,8 @@ class SettingsDialog(QDialog):
         self.move_selected_only_label.setText(_['move_selected_only'] if 'move_selected_only' in _ else "Move Selected Only")
         self.show_cp_selected_only_label.setText(_['show_cp_selected_only'] if 'show_cp_selected_only' in _ else "Show CP Selected Only")
         self.shadow_selected_only_label.setText(_['shadow_selected_only'] if 'shadow_selected_only' in _ else "Shadow Selected Only")
+        if hasattr(self, 'view_hide_highlight_label'):
+            self.view_hide_highlight_label.setText(_['view_hide_highlight'] if 'view_hide_highlight' in _ else "In view mode, hide the selection highlight")
         self.highlight_color_label.setText(_['highlight_color'] if 'highlight_color' in _ else "Highlight Color")
         self.selected_strand_ok_button.setText(_['ok'])
         self.reset_curvature_button.setToolTip(_['reset_curvature_tooltip'] if 'reset_curvature_tooltip' in _ else "Reset all curvature settings to default values")
@@ -4264,6 +4326,8 @@ class SettingsDialog(QDialog):
         self.arrow_gap_length_label.setText(_['arrow_gap_length'] if 'arrow_gap_length' in _ else "Arrow Gap Length")
         self.arrow_line_length_label.setText(_['arrow_line_length'] if 'arrow_line_length' in _ else "Arrow Line Length")
         self.arrow_line_width_label.setText(_['arrow_line_width'] if 'arrow_line_width' in _ else "Arrow Line Width")
+        if hasattr(self, 'view_hide_control_points_label'):
+            self.view_hide_control_points_label.setText(_['view_hide_control_points'] if 'view_hide_control_points' in _ else "In view mode, hide the control points")
         # Update default arrow color label text
         if hasattr(self, 'default_arrow_color_label'):
             self.default_arrow_color_label.setText(_['use_default_arrow_color'] if 'use_default_arrow_color' in _ else "Use Default Arrow Color")
@@ -4745,6 +4809,8 @@ class SettingsDialog(QDialog):
                 file.write(f"MoveSelectedOnly: {str(self.move_selected_only).lower()}\n")
                 file.write(f"ShowCPSelectedOnly: {str(self.show_cp_selected_only).lower()}\n")
                 file.write(f"ShadowSelectedOnly: {str(self.shadow_selected_only).lower()}\n")
+                file.write(f"ViewHideHighlight: {str(self.view_hide_highlight).lower()}\n")
+                file.write(f"ViewHideControlPoints: {str(self.view_hide_control_points).lower()}\n")
                 file.write(f"HighlightColor: {self.highlight_color.red()},{self.highlight_color.green()},{self.highlight_color.blue()},{self.highlight_color.alpha()}\n")
                 # Save shadow blur settings
                 file.write(f"NumSteps: {self.num_steps}\n")

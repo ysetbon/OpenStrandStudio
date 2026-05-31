@@ -53,6 +53,33 @@ def theme_colors(name):
     return THEMES.get(name, THEMES['default'])
 
 
+def snap_target_style(theme_name, active=False):
+    """Theme-specific colors for magnet snap target pills."""
+    if theme_name == 'dark':
+        return {
+            'shadow': QColor(0, 0, 0, 105 if active else 82),
+            'glow': QColor(255, 255, 255, 42 if active else 30),
+            'fill': QColor(255, 255, 255, 34 if active else 24),
+            'outer': QColor(235, 235, 235, 175 if active else 142),
+            'inner': QColor(235, 235, 235, 152 if active else 122),
+        }
+    if theme_name == 'light':
+        return {
+            'shadow': QColor(0, 0, 0, 42 if active else 32),
+            'glow': QColor(255, 255, 255, 88 if active else 68),
+            'fill': QColor(255, 255, 255, 118 if active else 92),
+            'outer': QColor(154, 154, 154, 186 if active else 150),
+            'inner': QColor(152, 152, 152, 158 if active else 126),
+        }
+    return {
+        'shadow': QColor(0, 0, 0, 36 if active else 27),
+        'glow': QColor(255, 255, 255, 82 if active else 62),
+        'fill': QColor(255, 255, 255, 108 if active else 82),
+        'outer': QColor(198, 198, 198, 186 if active else 150),
+        'inner': QColor(190, 190, 190, 164 if active else 130),
+    }
+
+
 class IconButton(QWidget):
     """Small painted icon button (duplicate / close / plus). Themed pen color."""
 
@@ -145,6 +172,13 @@ class DirtyDot(QWidget):
         p.end()
 
 
+TAB_EDGE_HEIGHT = 53
+TAB_CHIP_HEIGHT = 40
+TAB_WIDTH_SCALE = 1.1
+TAB_EDGE_VERTICAL_MARGIN = 6
+TAB_CHIP_VERTICAL_MARGIN = 3
+
+
 class TabChip(QWidget):
     """A single tab: title (+ dirty dot), duplicate icon, close X."""
 
@@ -158,14 +192,14 @@ class TabChip(QWidget):
         self.active = active
         self.theme_name = theme_name
         self.setCursor(Qt.PointingHandCursor)
-        self.setFixedHeight(30)
+        self.setFixedHeight(TAB_CHIP_HEIGHT)
 
         layout = QHBoxLayout(self)
         # Mirror the inner padding so the icons hug the trailing edge in RTL.
         if rtl:
-            layout.setContentsMargins(7, 2, 11, 2)
+            layout.setContentsMargins(7, TAB_CHIP_VERTICAL_MARGIN, 11, TAB_CHIP_VERTICAL_MARGIN)
         else:
-            layout.setContentsMargins(11, 2, 7, 2)
+            layout.setContentsMargins(11, TAB_CHIP_VERTICAL_MARGIN, 7, TAB_CHIP_VERTICAL_MARGIN)
         layout.setSpacing(7)
 
         colors = theme_colors(theme_name)
@@ -176,11 +210,20 @@ class TabChip(QWidget):
 
         self.label = QLabel(title, self)
         self.label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.label.setLayoutDirection(Qt.RightToLeft if rtl else Qt.LeftToRight)
+        self.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         font = QFont()
         font.setPointSize(9)
         font.setBold(active)
         self.label.setFont(font)
-        self.label.setAlignment(Qt.AlignRight | Qt.AlignVCenter if rtl else Qt.AlignLeft | Qt.AlignVCenter)
+        # AlignAbsolute is required in the RTL branch: the label's layout
+        # direction is RightToLeft (for correct Hebrew BiDi shaping), and under
+        # an RTL layout direction a plain Qt.AlignRight is resolved *relative to*
+        # that direction and flips to the visual left. AlignAbsolute pins it to
+        # the real right edge so the text hugs the right side of the tab.
+        self.label.setAlignment(
+            Qt.AlignRight | Qt.AlignAbsolute | Qt.AlignVCenter if rtl
+            else Qt.AlignLeft | Qt.AlignVCenter)
         self.label.setStyleSheet(
             "color: rgba(%d,%d,%d,%d); background: transparent;" % (
                 text_color.red(), text_color.green(), text_color.blue(), text_color.alpha()))
@@ -198,13 +241,13 @@ class TabChip(QWidget):
         if rtl:
             layout.addWidget(self.close_btn)
             layout.addWidget(self.dup_btn)
-            layout.addWidget(self.label)
+            layout.addWidget(self.label, 1)
             if self.dirty_dot is not None:
                 layout.addWidget(self.dirty_dot)
         else:
             if self.dirty_dot is not None:
                 layout.addWidget(self.dirty_dot)
-            layout.addWidget(self.label)
+            layout.addWidget(self.label, 1)
             layout.addWidget(self.dup_btn)
             layout.addWidget(self.close_btn)
 
@@ -217,6 +260,12 @@ class TabChip(QWidget):
         # Consume so a click on the chip selects it instead of starting a drag.
         event.accept()
 
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        layout = self.layout()
+        if layout is not None:
+            layout.setGeometry(self.rect())
+
     def paintEvent(self, event):
         colors = theme_colors(self.theme_name)
         bg = colors['active_bg'] if self.active else colors['inactive_bg']
@@ -225,7 +274,7 @@ class TabChip(QWidget):
         p.setPen(Qt.NoPen)
         p.setBrush(QBrush(bg))
         rect = QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5)
-        p.drawRoundedRect(rect, 7, 7)
+        p.drawRoundedRect(rect, 9, 9)
         p.end()
 
 
@@ -234,6 +283,8 @@ ANCHOR_NAMES = ("top_left", "top_center", "top_right",
                 "bottom_left", "bottom_center", "bottom_right")
 ANCHOR_MARGIN = 24      # px gap from the canvas edges at an anchor
 SNAP_THRESHOLD = 75     # px: how close the edge must get before the magnet grabs
+SNAP_MARKER_WIDTH = 128.0
+SNAP_MARKER_HEIGHT = 38.0
 
 
 class SnapOverlay(QWidget):
@@ -257,45 +308,69 @@ class SnapOverlay(QWidget):
         self._theme = theme
         self.update()
 
+    def _draw_snap_target(self, painter, rect, active):
+        style = snap_target_style(self._theme, active)
+        radius = min(12.0, rect.height() / 2.0)
+
+        painter.setPen(Qt.NoPen)
+        shadow_layers = (
+            (-4.0, -4.0, 4.0, 4.0, 0.34),
+            (-2.6, -2.6, 2.6, 2.6, 0.52),
+            (-1.2, -1.2, 1.2, 1.2, 0.68),
+        )
+        for left, top, right, bottom, alpha_scale in shadow_layers:
+            shadow = QColor(style['shadow'])
+            shadow.setAlpha(int(shadow.alpha() * alpha_scale))
+            shadow_rect = rect.adjusted(left, top, right, bottom)
+            painter.setBrush(shadow)
+            painter.drawRoundedRect(shadow_rect, radius + max(abs(left), abs(right)),
+                                    radius + max(abs(top), abs(bottom)))
+
+        glow = QColor(style['glow'])
+        glow_rect = rect.adjusted(-2.0, -2.0, 2.0, 2.0)
+        painter.setBrush(glow)
+        painter.drawRoundedRect(glow_rect, radius + 2.0, radius + 2.0)
+
+        painter.setBrush(style['fill'])
+        painter.drawRoundedRect(rect, radius, radius)
+
+        outer_width = 3.0 if active else 2.4
+        outer_pen = QPen(style['outer'])
+        outer_pen.setWidthF(outer_width)
+        outer_pen.setCapStyle(Qt.RoundCap)
+        outer_pen.setJoinStyle(Qt.RoundJoin)
+        painter.setBrush(Qt.NoBrush)
+        painter.setPen(outer_pen)
+        outer_rect = rect.adjusted(outer_width / 2.0, outer_width / 2.0,
+                                   -outer_width / 2.0, -outer_width / 2.0)
+        painter.drawRoundedRect(outer_rect, max(1.0, radius - outer_width / 2.0),
+                                max(1.0, radius - outer_width / 2.0))
+
+        inset = 7.0
+        inner_rect = rect.adjusted(inset, inset, -inset, -inset)
+        if inner_rect.width() > 0 and inner_rect.height() > 0:
+            dash_pen = QPen(style['inner'])
+            dash_pen.setWidthF(1.7 if active else 1.45)
+            dash_pen.setCapStyle(Qt.RoundCap)
+            dash_pen.setJoinStyle(Qt.RoundJoin)
+            dash_pen.setDashPattern([4.0, 5.0])
+            painter.setPen(dash_pen)
+            inner_radius = max(1.0, inner_rect.height() / 2.0)
+            painter.drawRoundedRect(inner_rect, inner_radius, inner_radius)
+
     def paintEvent(self, event):
         if not self._targets:
             return
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing, True)
-        # Theme-driven neutral accent: light gray on dark/default, dark gray on
-        # light. Stays non-yellow and keeps good contrast on each canvas.
-        accent = theme_colors(self._theme).get('snap', QColor(225, 225, 225))
         for name, (x, y, w, h) in self._targets.items():
             cx = x + w / 2.0
             cy = y + h / 2.0
-            if name == self._active:
-                # Full-size ghost of where the edge will dock, highlighted.
-                rect = QRectF(x + 1, y + 1, w - 2, h - 2)
-                fill = QColor(accent)
-                fill.setAlpha(70)
-                p.setBrush(fill)
-                pen = QPen(QColor(accent))
-                pen.setWidthF(2.4)
-                p.setPen(pen)
-                p.drawRoundedRect(rect, 10, 10)
-                # Magnet "lock" dot in the center.
-                p.setPen(Qt.NoPen)
-                p.setBrush(QColor(accent))
-                p.drawEllipse(QRectF(cx - 3.5, cy - 3.5, 7, 7))
-            else:
-                # Dock marker sized like a single tab so the six spots are easy
-                # to see and aim at (centered on the anchor).
-                mw, mh = 150.0, 30.0
-                marker = QRectF(cx - mw / 2.0, cy - mh / 2.0, mw, mh)
-                fill = QColor(accent)
-                fill.setAlpha(55)
-                p.setBrush(fill)
-                pen_col = QColor(accent)
-                pen_col.setAlpha(170)
-                pen = QPen(pen_col)
-                pen.setWidthF(1.6)
-                p.setPen(pen)
-                p.drawRoundedRect(marker, 7, 7)
+            # Dock marker sized like a single tab so all targets keep the same
+            # footprint before and during the snap lock.
+            mw, mh = SNAP_MARKER_WIDTH, SNAP_MARKER_HEIGHT
+            marker = QRectF(cx - mw / 2.0, cy - mh / 2.0, mw, mh)
+            self._draw_snap_target(p, marker, name == self._active)
         p.end()
 
 
@@ -320,13 +395,14 @@ class DraggableTabEdge(QWidget):
         self._snap_target = None  # anchor the magnet is grabbing during a drag
 
         self.setAttribute(Qt.WA_TranslucentBackground, True)
-        self.setFixedHeight(40)
+        self.setFixedHeight(TAB_EDGE_HEIGHT)
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         # Track hover (no button pressed) so we can show the move cursor on grip.
         self.setMouseTracking(True)
 
         self._layout = QHBoxLayout(self)
-        self._layout.setContentsMargins(self.GRIP_WIDTH, 5, 12, 5)
+        self._layout.setContentsMargins(self.GRIP_WIDTH, TAB_EDGE_VERTICAL_MARGIN,
+                                        12, TAB_EDGE_VERTICAL_MARGIN)
         self._layout.setSpacing(8)
 
         self.plus_btn = IconButton('plus', self)
@@ -369,9 +445,11 @@ class DraggableTabEdge(QWidget):
         self._rtl = rtl
         # Reserve the grip strip on the trailing side: left for LTR, right for RTL.
         if rtl:
-            self._layout.setContentsMargins(12, 5, self.GRIP_WIDTH, 5)
+            self._layout.setContentsMargins(12, TAB_EDGE_VERTICAL_MARGIN,
+                                            self.GRIP_WIDTH, TAB_EDGE_VERTICAL_MARGIN)
         else:
-            self._layout.setContentsMargins(self.GRIP_WIDTH, 5, 12, 5)
+            self._layout.setContentsMargins(self.GRIP_WIDTH, TAB_EDGE_VERTICAL_MARGIN,
+                                            12, TAB_EDGE_VERTICAL_MARGIN)
 
         chips = []
         for session in self.tab_manager.tabs:
@@ -401,10 +479,20 @@ class DraggableTabEdge(QWidget):
 
         self._layout.invalidate()
         self._layout.activate()
-        w = self._layout.sizeHint().width()
+        base_w = self._layout.sizeHint().width()
+
+        for chip in chips:
+            chip.setMinimumWidth(round(chip.sizeHint().width() * TAB_WIDTH_SCALE))
+
+        self._layout.invalidate()
+        self._layout.activate()
+        w = max(round(base_w * TAB_WIDTH_SCALE), self._layout.sizeHint().width())
         max_w = max(120, self.canvas.width() - 20)
         w = min(w, max_w)
-        self.resize(w, 40)
+        self.resize(w, TAB_EDGE_HEIGHT)
+        self._layout.setGeometry(self.rect())
+        for chip in chips:
+            chip.layout().setGeometry(chip.rect())
         if self.isVisible():
             self.reposition()
         self.update()
@@ -606,7 +694,7 @@ class DraggableTabEdge(QWidget):
 
         rect = QRectF(self.rect()).adjusted(1.0, 1.0, -1.0, -1.0)
         path = QPainterPath()
-        path.addRoundedRect(rect, 10, 10)
+        path.addRoundedRect(rect, 13, 13)
 
         # Panel background.
         p.setPen(Qt.NoPen)
@@ -627,7 +715,7 @@ class DraggableTabEdge(QWidget):
         p.setBrush(dot)
         gx = (self.width() - 18) if self._rtl else 11
         cy = self.height() // 2
-        for row in (-7, 0, 7):
+        for row in (-9, 0, 9):
             for col in (0, 5):
                 p.drawEllipse(gx + col, cy + row - 1, 2, 2)
         p.end()

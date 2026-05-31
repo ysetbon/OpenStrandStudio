@@ -2,7 +2,7 @@ import os
 import sys
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
-    QSplitter, QFileDialog, QScrollArea
+    QSplitter, QFileDialog, QScrollArea, QMessageBox
 )
 from PyQt5.QtCore import Qt, QSize, pyqtSlot, pyqtSignal, QTimer, QEvent
 from PyQt5.QtGui import QIcon, QFont, QImage, QPainter, QColor
@@ -72,6 +72,9 @@ class MainWindow(QMainWindow):
         # Proceed with the rest of your setup
         self.setup_ui()
         self.setup_connections()
+        # Tabs feature: create the manager + floating edge now that the canvas
+        # and layer panel exist (must be before load_settings_from_file -> apply_theme).
+        self.setup_tabs_feature()
         self.current_mode = None
         self.previous_mode = None
         self.set_attach_mode()
@@ -169,6 +172,9 @@ class MainWindow(QMainWindow):
         self.layer_state_button.setText(_['layer_state'])
         self.toggle_control_points_button.setText(_['toggle_control_points'])
         self.toggle_shadow_button.setText(_['toggle_shadow'])
+        if hasattr(self, 'tabs_button'):
+            self.tabs_button.setText(_['tabs'])
+            self.tabs_button.setToolTip(_['tabs'])
 
         # Update settings button tooltip or text
         self.settings_button.setToolTip(_['settings'])
@@ -206,6 +212,7 @@ class MainWindow(QMainWindow):
 
         theme_name = 'default'
         language_code = 'en'
+        tab_edge_position = None
         # Note: Shadow color is now handled in main.py, not here
 
         if os.path.exists(file_path):
@@ -216,6 +223,8 @@ class MainWindow(QMainWindow):
                             theme_name = line.strip().split(':', 1)[1].strip()
                         elif line.startswith('Language:'):
                             language_code = line.strip().split(':', 1)[1].strip()
+                        elif line.startswith('TabEdgePosition:'):
+                            tab_edge_position = line.strip().split(':', 1)[1].strip()
                         # Note: ShadowColor handling removed from here
             except Exception as e:
                 pass
@@ -225,6 +234,10 @@ class MainWindow(QMainWindow):
         # Apply the theme and language
         self.apply_theme(theme_name)
         self.set_language(language_code)
+
+        # Restore the tab edge position saved on last exit (default bottom-center).
+        if tab_edge_position and hasattr(self, 'tab_edge'):
+            self.tab_edge.apply_position_setting(tab_edge_position)
         
         # Note: Shadow color application removed from here
 
@@ -324,7 +337,17 @@ class MainWindow(QMainWindow):
         self.toggle_shadow_button.setToolTip("Enable/disable shadow effects for overlapping strands")
         self.toggle_shadow_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.toggle_shadow_button.setMaximumWidth(90)
-        
+
+        # Create the Tabs button (visibility toggle for the floating tab edge).
+        # It is NOT a drawing mode and is not part of mode switching.
+        self.tabs_button = QPushButton("Tabs")
+        self.tabs_button.setCheckable(True)
+        self.tabs_button.setChecked(False)
+        self.tabs_button.setToolTip("Show/hide tabs")
+        self.tabs_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.tabs_button.setMaximumWidth(90)
+        self.tabs_button.setFixedHeight(32)
+
         # Add buttons without stretch factor to prevent large gaps
         button_layout.addWidget(self.view_button)
         button_layout.addWidget(self.mask_button)
@@ -339,6 +362,7 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(self.save_image_button)
         button_layout.addWidget(self.toggle_control_points_button)
         button_layout.addWidget(self.toggle_shadow_button)
+        button_layout.addWidget(self.tabs_button)
 
         # Add stretch to separate main buttons from right-side buttons
         button_layout.addStretch()
@@ -428,7 +452,75 @@ class MainWindow(QMainWindow):
         
         # Apply button styles
         self.setup_button_styles()
+        self.apply_tabs_button_style()
         pass
+
+    def apply_tabs_button_style(self):
+        """Style the Tabs toolbar button (#a34d92). Black bold text, same shape
+        as the other checkable toolbar buttons. Never uses yellow."""
+        tabs_button_style = """
+            QPushButton {{
+                background-color: {bg_color};
+                color: black;
+                font-weight: bold;
+                font-size: 14px;
+                border: 0px solid black;
+                border-radius: 6px;
+                height: 35px;
+                padding: 0px 4px;
+            }}
+            QPushButton:hover {{
+                background-color: {hover_color};
+            }}
+            QPushButton:pressed {{
+                background-color: {pressed_color};
+                margin: 1px 1px;
+            }}
+            QPushButton:checked {{
+                background-color: {hover_color};
+                border: 4px solid black;
+                border-radius: 6px;
+                padding: 0px 4px;
+            }}
+            QPushButton:checked:pressed {{
+                background-color: {pressed_color};
+                padding: 0px 4px;
+                margin: 2px 2px;
+                border: 4px solid #2C2C2C;
+            }}
+        """
+        self.tabs_button.setStyleSheet(tabs_button_style.format(
+            bg_color="#a34d92",
+            hover_color="#b85baa",
+            pressed_color="#833a75",
+        ))
+
+    def setup_tabs_feature(self):
+        """Create the TabManager and the floating DraggableTabEdge over the canvas."""
+        from tab_manager import TabManager
+        from tab_bar_widget import DraggableTabEdge
+
+        self.tab_manager = TabManager(self)
+        self.tab_edge = DraggableTabEdge(self.canvas, self.tab_manager)
+        self.tab_edge.hide()
+
+        # Dirty tracking: any saved undo state on the live canvas marks the
+        # active tab dirty (ignored internally while switching/restoring tabs).
+        undo_mgr = getattr(self.layer_panel, 'undo_redo_manager', None)
+        if undo_mgr is not None:
+            undo_mgr.state_saved.connect(self.tab_manager.mark_active_dirty)
+
+    def toggle_tabs_edge(self):
+        """Show/hide the floating tab edge. Pure visibility toggle (not a mode)."""
+        if not hasattr(self, 'tab_edge'):
+            return
+        if self.tab_edge.isVisible():
+            self.tab_edge.hide()
+            self.tabs_button.setChecked(False)
+        else:
+            self.tab_edge.show_edge()
+            self.tabs_button.setChecked(True)
+
     def set_initial_splitter_sizes(self):
         """
         Set the initial sizes of the splitter to make the layer panel narrower.
@@ -525,9 +617,12 @@ class MainWindow(QMainWindow):
         self.toggle_shadow_button.clicked.connect(self.canvas.toggle_shadow)
         self.toggle_shadow_button.setChecked(False)  # Start with shadows disabled
 
+        # Connect the Tabs button (visibility toggle for the floating tab edge)
+        self.tabs_button.clicked.connect(self.toggle_tabs_edge)
+
         # Connect mask edit mode signals
         self.canvas.mask_edit_exited.connect(self.layer_panel.exit_mask_edit_mode)
-        
+
         # Make sure the canvas has focus policy set
         self.canvas.setFocusPolicy(Qt.StrongFocus)
 
@@ -1067,7 +1162,13 @@ class MainWindow(QMainWindow):
     
         # Update the canvas dark mode flag
         self.canvas.is_dark_mode = theme_name == "dark"
-    
+
+        # Update the floating tab edge theme and re-apply the Tabs button style.
+        if hasattr(self, 'tab_edge'):
+            self.tab_edge.set_theme(theme_name)
+        if hasattr(self, 'tabs_button'):
+            self.apply_tabs_button_style()
+
         # If settings dialog exists, update its theme
         if hasattr(self, '_settings_dialog'):
             self._settings_dialog.current_theme = theme_name
@@ -1424,9 +1525,12 @@ class MainWindow(QMainWindow):
         self.toggle_shadow_button.clicked.connect(self.canvas.toggle_shadow)
         self.toggle_shadow_button.setChecked(False)  # Start with shadows disabled
 
+        # Connect the Tabs button (visibility toggle for the floating tab edge)
+        self.tabs_button.clicked.connect(self.toggle_tabs_edge)
+
         # Connect mask edit mode signals
         self.canvas.mask_edit_exited.connect(self.layer_panel.exit_mask_edit_mode)
-        
+
         # Make sure the canvas has focus policy set
         self.canvas.setFocusPolicy(Qt.StrongFocus)
 
@@ -1437,6 +1541,36 @@ class MainWindow(QMainWindow):
             pass
 
     def load_project(self):
+        # Tabs feature: Load replaces the active tab's content. If it has unsaved
+        # changes, prompt before discarding them.
+        if hasattr(self, 'tab_manager'):
+            active = self.tab_manager.get_active()
+            if active is not None and active.dirty:
+                _ = translations[self.language_code]
+                title = self.tab_manager.title_for(active)
+                box = QMessageBox(self)
+                box.setIcon(QMessageBox.Warning)
+                box.setWindowTitle(_['unsaved_tab_title'])
+                box.setText("%s\n\n%s" % (title, _['unsaved_tab_title']))
+                # App-translated buttons; roles drive order + Esc->Cancel.
+                save_btn = box.addButton(_['save'], QMessageBox.AcceptRole)
+                discard_btn = box.addButton(_['discard'], QMessageBox.DestructiveRole)
+                cancel_btn = box.addButton(_['cancel'], QMessageBox.RejectRole)
+                box.setDefaultButton(save_btn)
+                box.setEscapeButton(cancel_btn)
+                if self.language_code == 'he':
+                    box.setLayoutDirection(Qt.RightToLeft)
+                box.exec_()
+                clicked = box.clickedButton()
+                if clicked is save_btn:
+                    # Abort the load if the save was canceled/failed, otherwise
+                    # we would overwrite the unsaved work the user chose to keep.
+                    if not self.save_project():
+                        return
+                elif clicked is not discard_btn:
+                    # Cancel or dialog dismissed -> keep current tab, abort load.
+                    return
+
         filename, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "JSON Files (*.json)")
         if not filename:
             return
@@ -1461,6 +1595,8 @@ class MainWindow(QMainWindow):
             if hasattr(self.canvas, 'layer_panel'):
                 self.canvas.layer_panel.refresh()
             self.canvas.update()
+            if hasattr(self, 'tab_manager'):
+                self.tab_manager.mark_active_saved(filename)
             return
 
         # --- Fallback: load as simple snapshot (previous behaviour) ---
@@ -1511,6 +1647,10 @@ class MainWindow(QMainWindow):
 
             # Save initial state after loading
             self.layer_state_manager.save_initial_state()
+
+            # Tabs feature: the active tab now mirrors the loaded file (clean).
+            if hasattr(self, 'tab_manager'):
+                self.tab_manager.mark_active_saved(filename)
 
         except Exception as e:
             pass
@@ -2407,20 +2547,34 @@ class MainWindow(QMainWindow):
 
 
     def save_project(self):
+        """Save the active project. Returns True only when a file was actually
+        written; False if the user canceled the dialog or the write failed.
+        Callers (e.g. close/load prompts) rely on this to avoid discarding work
+        when a save is canceled."""
         filename, _ = QFileDialog.getSaveFileName(self, "Save Project", "", "JSON Files (*.json)")
-        if filename:
-            # Attempt to export the full undo/redo history so that it can be
-            # restored on load.  If that fails for any reason we fall back to
-            # saving just the current canvas state (previous behaviour).
-            undo_mgr = getattr(self.layer_panel, 'undo_redo_manager', None)
-            if undo_mgr and undo_mgr.export_history(filename):
-                pass
-            else:
-                # Fallback: save only the current snapshot
+        if not filename:
+            return False
+
+        # Attempt to export the full undo/redo history so that it can be
+        # restored on load.  If that fails for any reason we fall back to
+        # saving just the current canvas state (previous behaviour).
+        undo_mgr = getattr(self.layer_panel, 'undo_redo_manager', None)
+        saved = False
+        if undo_mgr and undo_mgr.export_history(filename):
+            saved = True
+        else:
+            # Fallback: save only the current snapshot
+            try:
                 groups = self.group_layer_manager.get_group_data()
-                pass
                 save_strands(self.canvas.strands, groups, filename, self.canvas)
-                pass
+                saved = True
+            except Exception:
+                saved = False
+
+        # Tabs feature: the active tab is now saved (clean) and titled after the file.
+        if saved and hasattr(self, 'tab_manager'):
+            self.tab_manager.mark_active_saved(filename)
+        return saved
     def edit_group_angles(self, group_name):
         group_data = self.canvas._resolve_group_strands(group_name)
         if group_data:
@@ -2481,6 +2635,11 @@ class MainWindow(QMainWindow):
         # original arrangement.
         self.update_layout_direction()
 
+        # Tabs feature: refresh "Untitled N" titles and re-layout the tab edge
+        # for the new language (RTL grip/+/tab ordering for Hebrew).
+        if hasattr(self, 'tab_manager'):
+            self.tab_manager.retranslate()
+
         pass
 
     def update_layout_direction(self):
@@ -2520,6 +2679,9 @@ class MainWindow(QMainWindow):
         self.layer_state_button.setText(_['layer_state'])
         self.toggle_control_points_button.setText(_['toggle_control_points'])
         self.toggle_shadow_button.setText(_['toggle_shadow'])
+        if hasattr(self, 'tabs_button'):
+            self.tabs_button.setText(_['tabs'])
+            self.tabs_button.setToolTip(_['tabs'])
 
         # Update settings button tooltip or text
         self.settings_button.setToolTip(_['settings'])
@@ -2618,11 +2780,51 @@ class MainWindow(QMainWindow):
         while a clean event loop is still available.
         """
         try:
+            self._save_tab_edge_position()
+        except Exception:
+            pass
+        try:
             self._cleanup_before_exit()
         except Exception:
             # Never let cleanup raise during shutdown.
             pass
         super().closeEvent(event)
+
+    def _save_tab_edge_position(self):
+        """Persist the tab edge position into user_settings.txt on exit.
+
+        Uses a read-modify-write so all other settings lines are preserved
+        (the settings dialog owns the rest of the file)."""
+        if not hasattr(self, 'tab_edge'):
+            return
+        value = self.tab_edge.get_position_setting()
+
+        app_name = "OpenStrandStudio"
+        if sys.platform.startswith('darwin'):
+            program_data_dir = os.path.expanduser('~/Library/Application Support')
+        else:
+            program_data_dir = os.environ.get('APPDATA', '')
+        settings_dir = os.path.join(program_data_dir, app_name)
+        try:
+            os.makedirs(settings_dir, exist_ok=True)
+        except Exception:
+            return
+        file_path = os.path.join(settings_dir, 'user_settings.txt')
+
+        lines = []
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    lines = [ln.rstrip('\n') for ln in f
+                             if not ln.startswith('TabEdgePosition:')]
+            except Exception:
+                lines = []
+        lines.append("TabEdgePosition: %s" % value)
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write("\n".join(lines) + "\n")
+        except Exception:
+            pass
 
     def _cleanup_before_exit(self):
         """Best-effort teardown of transient widgets and timers."""

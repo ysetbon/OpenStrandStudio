@@ -270,9 +270,15 @@ def serialize_strand(strand, canvas, index=None):
 
     return data
 
-def save_strands(strands, groups, filename, canvas):
+def serialize_project_state(strands, groups, canvas):
+    """Build the in-memory project-state dict (the same structure save_strands
+    writes to disk) without touching the filesystem.
+
+    This is shared by save_strands (file path) and the tabs feature, which keeps
+    each tab's project state in memory.
+    """
     selected_strand_name = canvas.selected_strand.layer_name if canvas.selected_strand else None
-    
+
     # Get locked layers from layer panel if available
     locked_layers = set()
     lock_mode = False
@@ -287,7 +293,7 @@ def save_strands(strands, groups, filename, canvas):
             pass
     else:
         pass
-    
+
     # Serialize strands with better error handling
     serialized_strands = []
     for i, strand in enumerate(strands):
@@ -297,7 +303,11 @@ def save_strands(strands, groups, filename, canvas):
         except Exception as e:
             # Skip this strand if it can't be serialized
             continue
-    
+
+    shadow_overrides = {}
+    if hasattr(canvas, 'layer_state_manager') and getattr(canvas, 'layer_state_manager', None):
+        shadow_overrides = getattr(canvas.layer_state_manager, 'layer_state', {}).get('shadow_overrides', {})
+
     data = {
         "strands": serialized_strands,
         "groups": serialize_groups(groups),
@@ -306,9 +316,14 @@ def save_strands(strands, groups, filename, canvas):
         "lock_mode": lock_mode,  # Add lock mode state
         "shadow_enabled": getattr(canvas, 'shadow_enabled', True),  # Add shadow button state
         "show_control_points": getattr(canvas, 'show_control_points', False),  # Add control points button state
-        "shadow_overrides": getattr(canvas.layer_state_manager, 'layer_state', {}).get('shadow_overrides', {}),  # Add shadow override settings
+        "shadow_overrides": shadow_overrides,  # Add shadow override settings
     }
-    
+    return data
+
+
+def save_strands(strands, groups, filename, canvas):
+    data = serialize_project_state(strands, groups, canvas)
+
     try:
         with open(filename, 'w') as f:
             json.dump(data, f, indent=2, cls=SafeJSONEncoder)
@@ -615,7 +630,15 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
 def load_strands(filename, canvas):
     with open(filename, 'r') as f:
         data = json.load(f)
+    return load_strands_from_data(data, canvas)
 
+
+def load_strands_from_data(data, canvas):
+    """Parse an already-loaded project-state dict into strands/groups/metadata.
+
+    This is the body of load_strands split out so callers (e.g. the tabs feature)
+    can apply an in-memory state dict without writing a temp file first.
+    """
     selected_strand_name = data.get("selected_strand_name", None) # Get selected strand name
 
     # Initialize collections
@@ -1056,6 +1079,46 @@ def load_strands(filename, canvas):
     show_control_points = data.get("show_control_points", False)  # Get control points button state from saved data
     shadow_overrides = data.get("shadow_overrides", {})  # Get shadow override settings from saved data
     return strands, data.get("groups", {}), selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points, shadow_overrides # Return selected strand name, locked layers, lock mode, button states, and shadow overrides
+
+
+def apply_project_state(canvas, state):
+    """Apply an in-memory project-state dict to the canvas without a temp file.
+
+    Mirrors the snapshot branch of MainWindow.load_project: clears the canvas,
+    parses the dict, applies strands/groups, and returns the loaded metadata so
+    the caller can sync button states. Used by the tabs feature when restoring a
+    tab that only has a project_state snapshot (no undo/redo history payload).
+    """
+    strands, groups, selected_strand_name, locked_layers, lock_mode, \
+        shadow_enabled, show_control_points, shadow_overrides = load_strands_from_data(state, canvas)
+
+    # Clear existing canvas state
+    canvas.strands = []
+    canvas.groups = {}
+
+    # Set canvas shadow state BEFORE applying loaded strands
+    canvas.shadow_enabled = shadow_enabled
+
+    # Clear the group panel's visual elements and internal state for a clean reload
+    if hasattr(canvas, 'group_layer_manager') and hasattr(canvas.group_layer_manager, 'group_panel'):
+        group_panel = canvas.group_layer_manager.group_panel
+        group_panel.clear_all()
+        group_panel.groups_loaded_from_json = False
+
+    apply_loaded_strands(canvas, strands, groups, shadow_overrides)
+
+    canvas.show_control_points = show_control_points
+    for strand in canvas.strands:
+        strand.should_draw_shadow = shadow_enabled
+
+    return {
+        "selected_strand_name": selected_strand_name,
+        "locked_layers": locked_layers,
+        "lock_mode": lock_mode,
+        "shadow_enabled": shadow_enabled,
+        "show_control_points": show_control_points,
+        "shadow_overrides": shadow_overrides,
+    }
 
 
 def apply_loaded_strands(canvas, strands, groups, shadow_overrides=None):

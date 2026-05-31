@@ -2842,6 +2842,24 @@ class UndoRedoManager(QObject):
         later via `import_history()`.  This allows a project to be saved and,
         when re-opened, have the full undo/redo stack available.
         """
+        payload = self.export_history_payload()
+        if payload is None:
+            return False
+        try:
+            # Finally write the consolidated history file.
+            with open(filepath, "w", encoding="utf-8") as out_f:
+                json.dump(payload, out_f, indent=2)
+            return True
+        except Exception as e:
+            return False
+
+    def export_history_payload(self):
+        """Build the in-memory history payload (the same structure export_history
+        writes to disk) without touching the filesystem.
+
+        Returns the payload dict, or None on failure. Used by the tabs feature to
+        snapshot a tab's full undo/redo stack into memory.
+        """
         try:
             # Always make sure the current canvas state is captured first.
             # This guarantees that any changes since the last automatic save
@@ -2869,15 +2887,11 @@ class UndoRedoManager(QObject):
                         "data": state_data
                     })
                 except Exception as e:
-                    return False
+                    return None
 
-            # Finally write the consolidated history file.
-            with open(filepath, "w", encoding="utf-8") as out_f:
-                json.dump(history_payload, out_f, indent=2)
-
-            return True
+            return history_payload
         except Exception as e:
-            return False
+            return None
 
     def import_history(self, filepath):
         """Import a history JSON previously produced by `export_history()`.
@@ -2890,7 +2904,17 @@ class UndoRedoManager(QObject):
             # Read the history file
             with open(filepath, "r", encoding="utf-8") as f:
                 history_payload = json.load(f)
+        except Exception as e:
+            return False
+        return self.import_history_payload(history_payload)
 
+    def import_history_payload(self, history_payload):
+        """Rebuild the undo/redo stack from an in-memory history payload (the same
+        structure import_history reads from disk) and load the current state.
+
+        Used by the tabs feature to restore a tab's full history without a file.
+        """
+        try:
             if not isinstance(history_payload, dict) or "states" not in history_payload:
                 return False
 

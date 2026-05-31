@@ -1625,6 +1625,61 @@ class StrandDrawingCanvas(QWidget):
         pass
         pass
 
+    def reset_for_new_tab(self):
+        """Reset the canvas to a clean, empty state for a new/blank tab.
+
+        Clears strands and groups AND every transient interaction/selection
+        reference so a fresh tab cannot inherit dangling pointers to a previous
+        tab's strands (which would otherwise cause stale rendering or errors on
+        the next interaction). Zoom/pan and persistent preferences are kept.
+        """
+        self.strands = []
+        self.groups = {}
+
+        # Selection / active references.
+        self.selected_strand = None
+        self.selected_strand_index = None
+        self.last_selected_strand_index = None
+        self.selected_attached_strand = None
+        self.current_strand = None
+        self.newest_strand = None
+        self._cp_filter_strand = None
+
+        # New-strand drawing state.
+        self.is_drawing_new_strand = False
+        self.new_strand_set_number = None
+        self.new_strand_start_point = None
+        self.new_strand_end_point = None
+
+        # Group move / rotate transient state.
+        self.moving_group = False
+        self.move_group_name = None
+        self.move_group_layers = None
+        self.move_start_pos = None
+        self.group_move_start_pos = None
+        self.rotating_group = None
+        self.rotating_group_name = None
+        self.rotation_center = None
+        self.original_strand_positions = {}
+        self.is_rotating = False
+        self.current_rotation_angle = 0.0
+        self.pre_rotation_state = {}
+
+        # Angle-adjust / mask transient state.
+        self.is_angle_adjusting = False
+        self.mask_mode_active = False
+        self.mask_selected_strands = []
+
+        # Reset move-mode internals if present.
+        move_mode = getattr(self, 'move_mode', None)
+        if move_mode is not None and hasattr(move_mode, 'reset_movement_state'):
+            try:
+                move_mode.reset_movement_state()
+            except Exception:
+                pass
+
+        self.update()
+
     def reset_zoom(self):
         """Reset zoom to 100% and center the view."""
         import traceback

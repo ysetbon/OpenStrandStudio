@@ -303,20 +303,30 @@ class TabManager(QObject):
         self.changed.emit()
 
     def switch_to_tab(self, tab_id):
+        """Make ``tab_id`` the live tab. Returns True on success, False if the
+        switch was refused (unknown tab, or capturing the current tab failed and
+        the user was warned). Callers that go on to save/close rely on this."""
         if tab_id == self.active_tab_id:
-            return
+            return True
         if self.find(tab_id) is None:
-            return
+            return False
         if not self._capture_or_warn():
-            return
+            return False
         self.active_tab_id = tab_id
         self.restore_session(tab_id)
         self.changed.emit()
+        return True
 
     def close_tab(self, tab_id):
         session = self.find(tab_id)
         if session is None:
             return
+
+        # The tab the user is actually working on. Preserved across a save-switch
+        # so closing a *background* tab returns them here instead of stranding
+        # them on a neighbor of the closed tab.
+        original_active_id = self.active_tab_id
+        closing_active = (tab_id == original_active_id)
 
         if session.dirty:
             box = QMessageBox(self.main_window)
@@ -338,9 +348,14 @@ class TabManager(QObject):
             box.exec_()
             clicked = box.clickedButton()
             if clicked is save_btn:
-                # Make sure the tab being saved is the live one, then save.
+                # Make the tab being saved the live one, then save. If capturing
+                # the current tab fails, switch_to_tab aborts (and warned the
+                # user); we must NOT fall through to save_project(), which would
+                # save the wrong (still-live) tab and then discard this tab's
+                # unsaved work below.
                 if tab_id != self.active_tab_id:
-                    self.switch_to_tab(tab_id)
+                    if not self.switch_to_tab(tab_id):
+                        return
                 saved = False
                 if hasattr(self.main_window, 'save_project'):
                     saved = self.main_window.save_project()
@@ -352,7 +367,6 @@ class TabManager(QObject):
                 return
 
         idx = self.tabs.index(session)
-        was_active = (tab_id == self.active_tab_id)
         self.tabs.remove(session)
 
         if not self.tabs:
@@ -361,10 +375,16 @@ class TabManager(QObject):
             self.tabs.append(fresh)
             self.active_tab_id = fresh.id
             self._load_empty_workspace()
-        elif was_active:
+        elif closing_active:
+            # Closed the tab that was live: fall back to a neighbor.
             neighbor = self.tabs[min(idx, len(self.tabs) - 1)]
             self.active_tab_id = neighbor.id
             self.restore_session(neighbor.id)
+        elif self.active_tab_id != original_active_id:
+            # Closed a *background* tab, but a save-switch moved the live tab to
+            # it; return the user to the tab they were originally working on.
+            self.active_tab_id = original_active_id
+            self.restore_session(original_active_id)
 
         self.changed.emit()
 

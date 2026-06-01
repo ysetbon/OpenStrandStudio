@@ -2779,6 +2779,11 @@ class MainWindow(QMainWindow):
         hard crash on exit.  We therefore destroy them deterministically
         while a clean event loop is still available.
         """
+        # Tabs are in-memory sessions, so quitting drops every dirty tab's work.
+        # Warn (block + confirm) before that happens.
+        if not self._confirm_close_with_dirty_tabs():
+            event.ignore()
+            return
         try:
             self._save_tab_edge_position()
         except Exception:
@@ -2789,6 +2794,38 @@ class MainWindow(QMainWindow):
             # Never let cleanup raise during shutdown.
             pass
         super().closeEvent(event)
+
+    def _confirm_close_with_dirty_tabs(self):
+        """If any tab has unsaved in-memory changes, warn before quitting.
+
+        Returns True to proceed with the close, False to cancel it. The active
+        tab's dirty flag is kept current live (undo manager -> mark_active_dirty),
+        so the flags are an accurate source of truth without re-capturing."""
+        tm = getattr(self, 'tab_manager', None)
+        if tm is None:
+            return True
+        if not any(getattr(t, 'dirty', False) for t in tm.tabs):
+            return True
+        _ = translations[self.language_code]
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Warning)
+        box.setWindowTitle(_['unsaved_tab_title'])
+        box.setText(_['unsaved_tabs_on_exit'])
+        quit_btn = box.addButton(_['quit_anyway'], QMessageBox.DestructiveRole)
+        cancel_btn = box.addButton(_['cancel'], QMessageBox.RejectRole)
+        box.setDefaultButton(cancel_btn)
+        box.setEscapeButton(cancel_btn)
+        if self.language_code == 'he':
+            box.setLayoutDirection(Qt.RightToLeft)
+            # RTL mirrors the (only two) buttons hard against the left edge with
+            # no margin, leaving them stranded in this wide dialog. Centering the
+            # button row keeps the correct mirrored order while looking balanced.
+            from PyQt5.QtWidgets import QDialogButtonBox
+            button_box = box.findChild(QDialogButtonBox)
+            if button_box is not None:
+                button_box.setCenterButtons(True)
+        box.exec_()
+        return box.clickedButton() is quit_btn
 
     def _save_tab_edge_position(self):
         """Persist the tab edge position into user_settings.txt on exit.

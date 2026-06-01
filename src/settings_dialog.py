@@ -4785,10 +4785,25 @@ class SettingsDialog(QDialog):
 
         file_path = os.path.join(settings_dir, 'user_settings.txt')
         # Full settings file path: {file_path}
-        
+
+        # Preserve settings owned by other components across this full rewrite.
+        # MainWindow writes TabEdgePosition on exit; without re-emitting it here,
+        # saving from the settings dialog would wipe it from disk.
+        preserved_lines = []
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as existing:
+                    for ln in existing:
+                        if ln.startswith('TabEdgePosition:'):
+                            preserved_lines.append(ln.rstrip('\n'))
+            except Exception:
+                preserved_lines = []
+
         # Write the settings to the file with error handling
         try:
             with open(file_path, 'w', encoding='utf-8') as file:
+                for ln in preserved_lines:
+                    file.write(ln + "\n")
                 file.write(f"Theme: {self.current_theme}\n")
                 file.write(f"Language: {self.current_language}\n")
                 # Save shadow color in RGBA format

@@ -1,10 +1,30 @@
+; ============================================================================
+; OpenStrand Studio - Inno Setup TEMPLATE (Windows installer)
+; Based on the 1.107 installer (the most up-to-date version at time of writing).
+;
+; TEMPLATE USAGE:
+; ---------------
+; To create a new version installer:
+;   1. Copy this file to "OpenStrand StudioX_XXX.iss" (e.g. OpenStrand Studio1_108.iss).
+;   2. Set MyAppVersion, MyAppDate, and the "_X_XXX" suffix in OutputBaseFilename.
+;   3. Confirm SourcePath / ExePath / OutputDir match this machine's checkout
+;      (currently C:\Users\YonatanSetbon\projects\OpenStrandStudio\src).
+;   4. Search for "#todo" and replace every placeholder in [CustomMessages] with
+;      the real "What's New" feature text for each of the 7 languages.
+;   5. Build the exe first (build_windows.bat -> pyinstaller OpenStrandStudio.spec),
+;      then compile this script with the Inno Setup Compiler (ISCC.exe or the IDE).
+;
+; The compiled installer lands in <OutputDir>\OutputBaseFilename.exe.
+; See docs/CREATING_INSTALLERS.md for the full release walkthrough.
+; ============================================================================
+
 #define MyAppName "OpenStrand Studio"
-#define MyAppVersion "1.106"
+#define MyAppVersion "X.XXX"
 #define MyAppPublisher "Yonatan Setbon"
 #define MyAppExeName "OpenStrandStudio.exe"
-#define MyAppDate "04_Jan_2026"
-#define SourcePath "C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src"
-#define ExePath "C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\dist"
+#define MyAppDate "DD_Mon_YYYY"
+#define SourcePath "C:\Users\YonatanSetbon\projects\OpenStrandStudio\src"
+#define ExePath "C:\Users\YonatanSetbon\projects\OpenStrandStudio\src\dist"
 
 [Setup]
 AppName={#MyAppName}
@@ -13,8 +33,8 @@ AppPublisher={#MyAppPublisher}
 AppContact=ysetbon@gmail.com
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
-OutputDir=C:\Users\YonatanSetbon\.vscode\OpenStrandStudio\src\dist
-OutputBaseFilename=OpenStrandStudioSetup_{#MyAppDate}_1_106
+OutputDir=C:\Users\YonatanSetbon\projects\OpenStrandStudio\src\dist
+OutputBaseFilename=OpenStrandStudioSetup_{#MyAppDate}_X_XXX
 Compression=lzma2/ultra64
 InternalCompressLevel=max
 CompressionThreads=auto
@@ -70,23 +90,28 @@ Type: filesandordirs; Name: "{userappdata}\OpenStrandStudio"
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchAfterInstall}"; Flags: nowait postinstall skipifsilent
 
 [CustomMessages]
-english.WelcomeLabel2=This will install [name/ver] on your computer.%n%nWhat's New in Version 1.106:%n%n• Hover Highlight in Select and Mask Modes: Strands now highlight when hovering over them in Select mode and Mask mode, providing better visual feedback for strand selection.%n• Main Buttons Responsiveness: Fixed main window buttons (at the top of the canvas) to display correctly on any screen size and aspect ratio.%n%nThe program is brought to you by Yonatan Setbon. You can contact me at ysetbon@gmail.com.%n%nIt is recommended that you close all other applications before continuing.
+; ---------------------------------------------------------------------------
+; Replace every "#todo" below. Use %n for line breaks and "&&" for a literal &.
+; Format each feature as:  • Feature Title: short description.
+; Keep the intro ("What's New in Version X.XXX") and the closing paragraph.
+; ---------------------------------------------------------------------------
+english.WelcomeLabel2=This will install [name/ver] on your computer.%n%nWhat's New in Version X.XXX:%n%n• #todo feature title: #todo feature description.%n• #todo feature title: #todo feature description.%n%nThe program is brought to you by Yonatan Setbon. You can contact me at ysetbon@gmail.com.%n%nIt is recommended that you close all other applications before continuing.
 english.LaunchAfterInstall=Launch {#MyAppName} after installation
 
-french.WelcomeLabel2=Ceci va installer [name/ver] sur votre ordinateur.%n%nNouveautés de la version 1.106:%n%n• Surbrillance au survol dans les modes Sélection et Masque: Les brins sont maintenant mis en surbrillance lorsque vous passez la souris dessus en mode Sélection et en mode Masque, offrant un meilleur retour visuel pour la sélection des brins.%n• Réactivité des boutons principaux: Correction des boutons de la fenêtre principale (en haut du canevas) pour qu'ils s'affichent correctement sur toute taille d'écran et tout rapport d'aspect.%n%nLe programme vous est proposé par Yonatan Setbon. Vous pouvez me contacter à ysetbon@gmail.com.%n%nIl est recommandé de fermer toutes les autres applications avant de continuer.
+french.WelcomeLabel2=Ceci va installer [name/ver] sur votre ordinateur.%n%nNouveautés de la version X.XXX:%n%n• #todo titre: #todo description.%n• #todo titre: #todo description.%n%nLe programme vous est proposé par Yonatan Setbon. Vous pouvez me contacter à ysetbon@gmail.com.%n%nIl est recommandé de fermer toutes les autres applications avant de continuer.
 french.LaunchAfterInstall=Lancer {#MyAppName} après l'installation
 
-german.WelcomeLabel2=Dies installiert [name/ver] auf Ihrem Computer.%n%nNeu in Version 1.106:%n%n• Hervorhebung beim Überfahren in Auswahl- und Maskenmodi: Stränge werden jetzt hervorgehoben, wenn Sie mit der Maus darüber fahren, im Auswahlmodus und im Maskenmodus, für besseres visuelles Feedback bei der Strangauswahl.%n• Reaktionsfähigkeit der Hauptschaltflächen: Die Schaltflächen im Hauptfenster (oben auf der Leinwand) werden jetzt auf jeder Bildschirmgröße und jedem Seitenverhältnis korrekt angezeigt.%n%nDas Programm wird bereitgestellt von Yonatan Setbon. Kontakt: ysetbon@gmail.com.%n%nEs wird empfohlen, alle anderen Anwendungen zu schließen, bevor Sie fortfahren.
+german.WelcomeLabel2=Dies installiert [name/ver] auf Ihrem Computer.%n%nNeu in Version X.XXX:%n%n• #todo Titel: #todo Beschreibung.%n• #todo Titel: #todo Beschreibung.%n%nDas Programm wird bereitgestellt von Yonatan Setbon. Kontakt: ysetbon@gmail.com.%n%nEs wird empfohlen, alle anderen Anwendungen zu schließen, bevor Sie fortfahren.
 german.LaunchAfterInstall={#MyAppName} nach der Installation starten
 
-italian.WelcomeLabel2=Questo installerà [name/ver] sul tuo computer.%n%nNovità della versione 1.106:%n%n• Evidenziazione al passaggio del mouse nei modi Selezione e Maschera: I trefoli ora si evidenziano quando si passa il mouse sopra di essi in modalità Selezione e in modalità Maschera, fornendo un miglior feedback visivo per la selezione dei trefoli.%n• Reattività dei pulsanti principali: Corretti i pulsanti della finestra principale (in alto sulla tela) per visualizzarsi correttamente su qualsiasi dimensione dello schermo e rapporto d'aspetto.%n%nIl programma è offerto da Yonatan Setbon. Puoi contattarmi a ysetbon@gmail.com.%n%nSi raccomanda di chiudere tutte le altre applicazioni prima di continuare.
+italian.WelcomeLabel2=Questo installerà [name/ver] sul tuo computer.%n%nNovità della versione X.XXX:%n%n• #todo titolo: #todo descrizione.%n• #todo titolo: #todo descrizione.%n%nIl programma è offerto da Yonatan Setbon. Puoi contattarmi a ysetbon@gmail.com.%n%nSi raccomanda di chiudere tutte le altre applicazioni prima di continuare.
 italian.LaunchAfterInstall=Avvia {#MyAppName} dopo l'installazione
 
-spanish.WelcomeLabel2=Esto instalará [name/ver] en su computadora.%n%nNovedades de la versión 1.106:%n%n• Resaltado al pasar el cursor en modos Selección y Máscara: Las hebras ahora se resaltan al pasar el cursor sobre ellas en modo Selección y en modo Máscara, proporcionando mejor retroalimentación visual para la selección de hebras.%n• Reactividad de los botones principales: Corregidos los botones de la ventana principal (en la parte superior del lienzo) para que se muestren correctamente en cualquier tamaño de pantalla y relación de aspecto.%n%nEl programa es presentado por Yonatan Setbon. Puede contactarme en ysetbon@gmail.com.%n%nSe recomienda que cierre todas las demás aplicaciones antes de continuar.
+spanish.WelcomeLabel2=Esto instalará [name/ver] en su computadora.%n%nNovedades de la versión X.XXX:%n%n• #todo título: #todo descripción.%n• #todo título: #todo descripción.%n%nEl programa es presentado por Yonatan Setbon. Puede contactarme en ysetbon@gmail.com.%n%nSe recomienda que cierre todas las demás aplicaciones antes de continuar.
 spanish.LaunchAfterInstall=Iniciar {#MyAppName} después de la instalación
 
-portuguese.WelcomeLabel2=Isto instalará [name/ver] no seu computador.%n%nNovidades da versão 1.106:%n%n• Destaque ao passar o cursor nos modos Seleção e Máscara: As mechas agora são destacadas ao passar o cursor sobre elas no modo Seleção e no modo Máscara, fornecendo melhor feedback visual para a seleção de mechas.%n• Responsividade dos botões principais: Corrigidos os botões da janela principal (no topo da tela) para serem exibidos corretamente em qualquer tamanho de tela e proporção de aspecto.%n%nO programa é oferecido por Yonatan Setbon. Você pode me contatar em ysetbon@gmail.com.%n%nRecomenda-se que você feche todos os outros aplicativos antes de continuar.
+portuguese.WelcomeLabel2=Isto instalará [name/ver] no seu computador.%n%nNovidades da versão X.XXX:%n%n• #todo título: #todo descrição.%n• #todo título: #todo descrição.%n%nO programa é oferecido por Yonatan Setbon. Você pode me contatar em ysetbon@gmail.com.%n%nRecomenda-se que você feche todos os outros aplicativos antes de continuar.
 portuguese.LaunchAfterInstall=Iniciar {#MyAppName} após a instalação
 
-hebrew.WelcomeLabel2=פעולה זו תתקין את [name/ver] על המחשב שלך.%n%nמה חדש בגרסה 1.106:%n%n• הדגשה בריחוף במצבי בחירה ומסכה: חוטים מודגשים כעת בריחוף מעליהם במצב בחירה ובמצב מסכה, מספקים משוב חזותי טוב יותר לבחירת חוטים.%n• תגובתיות כפתורים ראשיים: תוקנו כפתורי החלון הראשי (בחלק העליון של הקנבס) להצגה נכונה בכל גודל מסך ויחס גובה-רוחב.%n%nהתוכנית מובאת אליכם על ידי יהונתן סטבון. ניתן ליצור איתי קשר בכתובת ysetbon@gmail.com.%n%nמומלץ לסגור את כל היישומים האחרים לפני שתמשיך.
+hebrew.WelcomeLabel2=פעולה זו תתקין את [name/ver] על המחשב שלך.%n%nמה חדש בגרסה X.XXX:%n%n• #todo כותרת: #todo תיאור.%n• #todo כותרת: #todo תיאור.%n%nהתוכנית מובאת אליכם על ידי יהונתן סטבון. ניתן ליצור איתי קשר בכתובת ysetbon@gmail.com.%n%nמומלץ לסגור את כל היישומים האחרים לפני שתמשיך.
 hebrew.LaunchAfterInstall=הפעל את {#MyAppName} לאחר ההתקנה

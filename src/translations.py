@@ -254,6 +254,7 @@ Examples:<br>
         'shadow_selected_only': 'Cast shadow only for the selected strand',
         'view_hide_highlight': 'In view mode, hide the selection highlight',
         'view_hide_control_points': 'In view mode, hide the control points',
+        'default_transparent_start_circle': 'Folded-over start edge by default',
         'highlight_color': 'Selection highlight color',
 
         # LayerPanel translations
@@ -390,7 +391,7 @@ Examples:<br>
         'mask_edit_mode_exited': 'Mask Edit Mode\nExited',
         'edit_mask': 'Edit Mask',
         'reset_mask': 'Reset Mask',
-        'transparent_stroke': 'Transparent Starting Edge',
+        'transparent_stroke': 'Folded-Over Start Edge',
         'transparent_closing_knot_side': 'Transparent Closing Knot Side',
         'restore_default_stroke': 'Restore Default Stroke',
         'restore_default_closing_knot_stroke': 'Restore Default Closing Knot Stroke',
@@ -713,6 +714,7 @@ Exemples :<br>
         'shadow_selected_only': 'Projeter l\'ombre uniquement pour le brin sélectionné',
         'view_hide_highlight': 'En mode vue, masquer la surbrillance de sélection',
         'view_hide_control_points': 'En mode vue, masquer les points de contrôle',
+        'default_transparent_start_circle': 'Bord de départ replié par défaut',
         'highlight_color': 'Couleur de surbrillance de la sélection',
 
         # LayerPanel translations
@@ -812,7 +814,7 @@ Exemples :<br>
         'mask_edit_mode_exited': 'Mode Édition\nMasque Terminé',
         'edit_mask': 'Éditer Masque',
         'reset_mask': 'Réinit Masque',
-        'transparent_stroke': 'Bord de Départ Transparent',
+        'transparent_stroke': 'Bord de Départ Replié',
         'transparent_closing_knot_side': 'Côté Transparent du Nœud Fermé',
         'restore_default_closing_knot_stroke': 'Restaurer le Trait du Nœud Fermé par Défaut',
         'restore_default_stroke': 'Restaurer Tracé Par Défaut',
@@ -1272,6 +1274,7 @@ Beispiele:<br>
         'shadow_selected_only': 'Schatten nur für den ausgewählten Strang werfen',
         'view_hide_highlight': 'Im Ansichtsmodus die Auswahl-Hervorhebung ausblenden',
         'view_hide_control_points': 'Im Ansichtsmodus die Kontrollpunkte ausblenden',
+        'default_transparent_start_circle': 'Umgefaltete Startkante als Standard',
         'highlight_color': 'Auswahl-Hervorhebungsfarbe',
 
         # LayerPanel translations
@@ -1377,7 +1380,7 @@ Beispiele:<br>
         'mask_edit_mode_exited': 'Maskenmodus\nBeendet',
         'edit_mask': 'Maske bearbeiten',
         'reset_mask': 'Maske zurücksetzen',
-        'transparent_stroke': 'Transparente Startkante',
+        'transparent_stroke': 'Umgefaltete Startkante',
         'transparent_closing_knot_side': 'Transparente Seite des geschlossenen Knotens',
         'restore_default_stroke': 'Standardkontur wiederherstellen',
         'restore_default_closing_knot_stroke': 'Standardkontur (geschl. Knoten) wiederherstellen',
@@ -1729,6 +1732,7 @@ Esempi:<br>
         'shadow_selected_only': 'Proietta l\'ombra solo per il filo selezionato',
         'view_hide_highlight': 'In modalità visualizzazione, nascondi l\'evidenziazione della selezione',
         'view_hide_control_points': 'In modalità visualizzazione, nascondi i punti di controllo',
+        'default_transparent_start_circle': 'Bordo iniziale ripiegato come predefinito',
         'highlight_color': 'Colore di evidenziazione della selezione',
 
         # LayerPanel translations
@@ -1828,7 +1832,7 @@ Esempi:<br>
         'mask_edit_mode_exited': 'Modalità Mask\nTerminata',
         'edit_mask': 'Modifica Maschera',
         'reset_mask': 'Reimposta Maschera',
-        'transparent_stroke': 'Bordo di Partenza Trasparente',
+        'transparent_stroke': 'Bordo Iniziale Ripiegato',
         'transparent_closing_knot_side': 'Lato Trasparente del Nodo Chiuso',
         'restore_default_closing_knot_stroke': 'Ripristina Bordo del Nodo Chiuso Predefinito',
         'restore_default_stroke': 'Ripristina Traccia Predefinita',
@@ -2241,6 +2245,7 @@ Ejemplos:<br>
         'shadow_selected_only': 'Proyectar sombra solo para la hebra seleccionada',
         'view_hide_highlight': 'En modo vista, ocultar el resaltado de selección',
         'view_hide_control_points': 'En modo vista, ocultar los puntos de control',
+        'default_transparent_start_circle': 'Borde inicial replegado por defecto',
         'highlight_color': 'Color de resaltado de selección',
 
         # LayerPanel translations
@@ -2340,7 +2345,7 @@ Ejemplos:<br>
         'mask_edit_mode_exited': 'Modo Máscara\nFinalizado',
         'edit_mask': 'Editar Máscara',
         'reset_mask': 'Restablecer Máscara',
-        'transparent_stroke': 'Borde de Inicio Transparente',
+        'transparent_stroke': 'Borde Inicial Replegado',
         'transparent_closing_knot_side': 'Lado Transparente del Nudo Cerrado',
         'restore_default_closing_knot_stroke': 'Restaurar Borde del Nudo Cerrado Predeterminado',
         'restore_default_stroke': 'Restaurar Trazo Predeterminado',
@@ -2753,6 +2758,7 @@ Exemplos:<br>
         'shadow_selected_only': 'Projetar sombra apenas para a mecha selecionada',
         'view_hide_highlight': 'No modo visualização, ocultar o destaque de seleção',
         'view_hide_control_points': 'No modo visualização, ocultar os pontos de controle',
+        'default_transparent_start_circle': 'Borda inicial dobrada por padrão',
         'highlight_color': 'Cor de destaque da seleção',
 
         # LayerPanel translations
@@ -2852,7 +2858,7 @@ Exemplos:<br>
         'mask_edit_mode_exited': 'Modo Máscara\nEncerrado',
         'edit_mask': 'Editar Máscara',
         'reset_mask': 'Redefinir Máscara',
-        'transparent_stroke': 'Borda Inicial Transparente',
+        'transparent_stroke': 'Borda Inicial Dobrada',
         'transparent_closing_knot_side': 'Lado Transparente do Nó Fechado',
         'restore_default_closing_knot_stroke': 'Restaurar Borda do Nó Fechado Padrão',
         'restore_default_stroke': 'Restaurar Traço Padrão',
@@ -3273,6 +3279,7 @@ Exemplos:<br>
         'shadow_selected_only': 'הטל צל רק עבור החוט הנבחר',
         'view_hide_highlight': 'במצב תצוגה, הסתר את הדגשת הבחירה',
         'view_hide_control_points': 'במצב תצוגה, הסתר את נקודות הבקרה',
+        'default_transparent_start_circle': 'קצה התחלה מקופל כברירת מחדל',
         'highlight_color': 'צבע הדגשת בחירה',
 
         # LayerPanel translations
@@ -3373,7 +3380,7 @@ Exemplos:<br>
         'mask_edit_mode_exited': 'מצב מסכה\nהסתיים',
         'edit_mask': 'ערוך מסכה',
         'reset_mask': 'אפס מסכה',
-        'transparent_stroke': 'קצה התחלתי שקוף',
+        'transparent_stroke': 'קצה התחלה מקופל',
         'transparent_closing_knot_side': 'צד שקוף של קשר סגור',
         'restore_default_closing_knot_stroke': 'שחזר קו קשר סגור ברירת מחדל',
         'restore_default_stroke': 'שחזר קו ברירת מחדל',

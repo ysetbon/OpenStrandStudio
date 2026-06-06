@@ -64,6 +64,7 @@ class SettingsDialog(QDialog):
         self.shadow_selected_only = getattr(canvas, 'shadow_selected_only', False)  # Only cast shadow for selected strand
         self.view_hide_highlight = getattr(canvas, 'view_hide_highlight', False)  # In view mode, hide selection highlight
         self.view_hide_control_points = getattr(canvas, 'view_hide_control_points', False)  # In view mode, hide control points
+        self.default_transparent_start_circle = getattr(canvas, 'default_transparent_start_circle', False)  # New strands start with transparent outline
         # Highlight color for selection indicators (default red)
         self.highlight_color = getattr(canvas, 'highlight_color', QColor(255, 0, 0, 255))
         if not isinstance(self.highlight_color, QColor):
@@ -130,6 +131,7 @@ class SettingsDialog(QDialog):
             self.canvas.shadow_selected_only = self.shadow_selected_only
             self.canvas.view_hide_highlight = self.view_hide_highlight
             self.canvas.view_hide_control_points = self.view_hide_control_points
+            self.canvas.default_transparent_start_circle = self.default_transparent_start_circle
             # Apply highlight color
             self.canvas.set_highlight_color(self.highlight_color)
 
@@ -582,7 +584,29 @@ class SettingsDialog(QDialog):
                     if is_rtl:
                         for child in row.findChildren(QLabel):
                             child.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-                            
+
+            # Explicitly align every Layer Panel label for the current direction.
+            # This mirrors the General Settings handling above so that single-line
+            # labels sit flush against the correct side and multi-line (word-wrapped)
+            # labels wrap with their extra lines aligned to that side too, instead of
+            # defaulting to the left in RTL.
+            layer_panel_labels = [
+                'extension_length_label', 'extension_dash_count_label',
+                'extension_dash_width_label', 'extension_dash_gap_length_label',
+                'arrow_head_length_label', 'arrow_head_width_label',
+                'arrow_head_stroke_width_label', 'arrow_gap_length_label',
+                'arrow_line_length_label', 'arrow_line_width_label',
+                'default_arrow_color_label', 'button_color_label',
+                'default_strand_color_label', 'default_stroke_color_label',
+                'view_hide_control_points_label', 'default_transparent_start_circle_label',
+            ]
+            label_alignment = (Qt.AlignRight if is_rtl else Qt.AlignLeft) | Qt.AlignVCenter
+            for label_name in layer_panel_labels:
+                label = getattr(self, label_name, None)
+                if label is not None:
+                    label.setAlignment(label_alignment)
+                    label.setLayoutDirection(direction)
+
         # Special handling for default arrow color checkbox
         if is_rtl:
             if hasattr(self, 'default_arrow_color_checkbox'):
@@ -773,7 +797,37 @@ class SettingsDialog(QDialog):
             # Force immediate update
             self.checkbox_layout.invalidate()
             self.checkbox_layout.activate()
-                
+
+        # View Mode hide control points checkbox layout reorganization
+        if hasattr(self, 'view_hide_control_points_layout') and hasattr(self, 'view_hide_control_points_label') and hasattr(self, 'view_hide_control_points_checkbox'):
+            self.clear_layout(self.view_hide_control_points_layout)
+            if is_rtl:
+                self.view_hide_control_points_layout.addStretch()
+                self.view_hide_control_points_layout.addWidget(self.view_hide_control_points_checkbox)
+                self.view_hide_control_points_layout.addWidget(self.view_hide_control_points_label)
+            else:
+                self.view_hide_control_points_layout.addWidget(self.view_hide_control_points_label)
+                self.view_hide_control_points_layout.addWidget(self.view_hide_control_points_checkbox)
+                self.view_hide_control_points_layout.addStretch()
+            # Force immediate update
+            self.view_hide_control_points_layout.invalidate()
+            self.view_hide_control_points_layout.activate()
+
+        # Folded-over start edge default checkbox layout reorganization
+        if hasattr(self, 'default_transparent_start_circle_layout') and hasattr(self, 'default_transparent_start_circle_label') and hasattr(self, 'default_transparent_start_circle_checkbox'):
+            self.clear_layout(self.default_transparent_start_circle_layout)
+            if is_rtl:
+                self.default_transparent_start_circle_layout.addStretch()
+                self.default_transparent_start_circle_layout.addWidget(self.default_transparent_start_circle_checkbox)
+                self.default_transparent_start_circle_layout.addWidget(self.default_transparent_start_circle_label)
+            else:
+                self.default_transparent_start_circle_layout.addWidget(self.default_transparent_start_circle_label)
+                self.default_transparent_start_circle_layout.addWidget(self.default_transparent_start_circle_checkbox)
+                self.default_transparent_start_circle_layout.addStretch()
+            # Force immediate update
+            self.default_transparent_start_circle_layout.invalidate()
+            self.default_transparent_start_circle_layout.activate()
+
         # Extended mask layout reorganization
         # if hasattr(self, 'extended_mask_layout') and hasattr(self, 'extended_mask_label') and hasattr(self, 'extended_mask_checkbox'):
         #     self.clear_layout(self.extended_mask_layout)
@@ -935,13 +989,13 @@ class SettingsDialog(QDialog):
                 self.button_color_layout.addStretch()
                 self.button_color_container.setLayoutDirection(Qt.LeftToRight)
                 self.button_color_layout.setDirection(QBoxLayout.LeftToRight)
-                self.button_color_layout.setContentsMargins(105, 0, 0, 0)
-                self.button_color_layout.setSpacing(5)  # Add some spacing between widgets
+                self.button_color_layout.setContentsMargins(0, 0, 0, 0)
+                self.button_color_layout.setSpacing(5)  # Match shadow-color spacing
                 self.button_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 self.button_color_label.setLayoutDirection(Qt.RightToLeft)
                 self.button_color_label.setTextFormat(Qt.PlainText)
-                self.button_color_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-                 # Add spacer at the beginning to shift everything right
+                self.button_color_label.setWordWrap(False)
+                self.button_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
                 self.button_color_layout.addWidget(self.default_arrow_color_button)
                 self.button_color_layout.addWidget(self.button_color_label)
             else:
@@ -988,13 +1042,13 @@ class SettingsDialog(QDialog):
                 self.default_strand_color_layout.addStretch()
                 self.default_strand_color_container.setLayoutDirection(Qt.LeftToRight)
                 self.default_strand_color_layout.setDirection(QBoxLayout.LeftToRight)
-                self.default_strand_color_layout.setContentsMargins(258, 0, 0, 0)
-                self.default_strand_color_layout.setSpacing(10)  # Add some spacing between widgets
+                self.default_strand_color_layout.setContentsMargins(0, 0, 0, 0)
+                self.default_strand_color_layout.setSpacing(5)  # Match shadow-color spacing
                 self.default_strand_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 self.default_strand_color_label.setLayoutDirection(Qt.RightToLeft)
                 self.default_strand_color_label.setTextFormat(Qt.PlainText)
-                self.default_strand_color_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-                 # Add spacer at the beginning to shift everything right
+                self.default_strand_color_label.setWordWrap(False)
+                self.default_strand_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
                 self.default_strand_color_layout.addWidget(self.default_strand_color_button)
                 self.default_strand_color_layout.addWidget(self.default_strand_color_label)
             else:
@@ -1031,12 +1085,13 @@ class SettingsDialog(QDialog):
                 self.default_stroke_color_layout.addStretch()
                 self.default_stroke_color_container.setLayoutDirection(Qt.LeftToRight)
                 self.default_stroke_color_layout.setDirection(QBoxLayout.LeftToRight)
-                self.default_stroke_color_layout.setContentsMargins(308, 0, 0, 0) 
+                self.default_stroke_color_layout.setContentsMargins(0, 0, 0, 0)
+                self.default_stroke_color_layout.setSpacing(5)  # Match shadow-color spacing
                 self.default_stroke_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 self.default_stroke_color_label.setLayoutDirection(Qt.RightToLeft)
                 self.default_stroke_color_label.setTextFormat(Qt.PlainText)
-                self.default_stroke_color_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-                 # Add spacer at the beginning to shift everything right
+                self.default_stroke_color_label.setWordWrap(False)
+                self.default_stroke_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
                 self.default_stroke_color_layout.addWidget(self.default_stroke_color_button)
                 self.default_stroke_color_layout.addWidget(self.default_stroke_color_label)
             else:
@@ -1482,6 +1537,9 @@ class SettingsDialog(QDialog):
                         elif line.startswith('ViewHideControlPoints:'):
                             value = line.split(':', 1)[1].strip().lower()
                             self.view_hide_control_points = (value == 'true')
+                        elif line.startswith('DefaultTransparentStartCircle:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            self.default_transparent_start_circle = (value == 'true')
                         elif line.startswith('HighlightColor:'):
                             try:
                                 r, g, b, a = map(int, line.split(':', 1)[1].strip().split(','))
@@ -2508,7 +2566,7 @@ class SettingsDialog(QDialog):
         self.view_hide_control_points_layout = QHBoxLayout()
         self.layer_panel_rows.append(self.view_hide_control_points_layout)
         self.view_hide_control_points_label = QLabel(_['view_hide_control_points'] if 'view_hide_control_points' in _ else "In view mode, hide the control points")
-        self.view_hide_control_points_label.setWordWrap(True)
+        self.view_hide_control_points_label.setWordWrap(False)
         self.view_hide_control_points_checkbox = QCheckBox()
         self.view_hide_control_points_checkbox.setChecked(self.view_hide_control_points)
 
@@ -2522,6 +2580,28 @@ class SettingsDialog(QDialog):
             self.view_hide_control_points_layout.addStretch()
 
         layer_panel_layout.addLayout(self.view_hide_control_points_layout)
+
+        # Transparent Start Outline by default checkbox
+        # When enabled, newly created attached strands get a transparent start
+        # outline automatically (same effect as the "Transparent Start Outline"
+        # entry in a layer button's right-click menu).
+        self.default_transparent_start_circle_layout = QHBoxLayout()
+        self.layer_panel_rows.append(self.default_transparent_start_circle_layout)
+        self.default_transparent_start_circle_label = QLabel(_['default_transparent_start_circle'] if 'default_transparent_start_circle' in _ else "Folded-over start edge by default")
+        self.default_transparent_start_circle_label.setWordWrap(False)
+        self.default_transparent_start_circle_checkbox = QCheckBox()
+        self.default_transparent_start_circle_checkbox.setChecked(self.default_transparent_start_circle)
+
+        if self.is_rtl_language(self.current_language):
+            self.default_transparent_start_circle_layout.addStretch()
+            self.default_transparent_start_circle_layout.addWidget(self.default_transparent_start_circle_checkbox)
+            self.default_transparent_start_circle_layout.addWidget(self.default_transparent_start_circle_label)
+        else:
+            self.default_transparent_start_circle_layout.addWidget(self.default_transparent_start_circle_label)
+            self.default_transparent_start_circle_layout.addWidget(self.default_transparent_start_circle_checkbox)
+            self.default_transparent_start_circle_layout.addStretch()
+
+        layer_panel_layout.addLayout(self.default_transparent_start_circle_layout)
         # OK button for layer panel settings
         self.layer_panel_ok_button = QPushButton(_['ok'])
         self.layer_panel_ok_button.clicked.connect(self.apply_all_settings)
@@ -4063,6 +4143,12 @@ class SettingsDialog(QDialog):
             self.view_hide_control_points = self.view_hide_control_points_checkbox.isChecked()
         if self.canvas:
             self.canvas.view_hide_control_points = self.view_hide_control_points
+
+        # Apply Transparent Start Outline default Setting (Layer Panel page)
+        if hasattr(self, 'default_transparent_start_circle_checkbox'):
+            self.default_transparent_start_circle = self.default_transparent_start_circle_checkbox.isChecked()
+        if self.canvas:
+            self.canvas.default_transparent_start_circle = self.default_transparent_start_circle
             # Apply Highlight Color Setting
             self.canvas.set_highlight_color(self.highlight_color)
             self.canvas.update()
@@ -4328,6 +4414,8 @@ class SettingsDialog(QDialog):
         self.arrow_line_width_label.setText(_['arrow_line_width'] if 'arrow_line_width' in _ else "Arrow Line Width")
         if hasattr(self, 'view_hide_control_points_label'):
             self.view_hide_control_points_label.setText(_['view_hide_control_points'] if 'view_hide_control_points' in _ else "In view mode, hide the control points")
+        if hasattr(self, 'default_transparent_start_circle_label'):
+            self.default_transparent_start_circle_label.setText(_['default_transparent_start_circle'] if 'default_transparent_start_circle' in _ else "Folded-over start edge by default")
         # Update default arrow color label text
         if hasattr(self, 'default_arrow_color_label'):
             self.default_arrow_color_label.setText(_['use_default_arrow_color'] if 'use_default_arrow_color' in _ else "Use Default Arrow Color")
@@ -4826,6 +4914,7 @@ class SettingsDialog(QDialog):
                 file.write(f"ShadowSelectedOnly: {str(self.shadow_selected_only).lower()}\n")
                 file.write(f"ViewHideHighlight: {str(self.view_hide_highlight).lower()}\n")
                 file.write(f"ViewHideControlPoints: {str(self.view_hide_control_points).lower()}\n")
+                file.write(f"DefaultTransparentStartCircle: {str(self.default_transparent_start_circle).lower()}\n")
                 file.write(f"HighlightColor: {self.highlight_color.red()},{self.highlight_color.green()},{self.highlight_color.blue()},{self.highlight_color.alpha()}\n")
                 # Save shadow blur settings
                 file.write(f"NumSteps: {self.num_steps}\n")

@@ -134,6 +134,15 @@ class AttachedStrand(Strand):
             pass
         # --------------------------------------------------------------------
 
+        # Apply the canvas-wide default: make the start outline transparent for
+        # newly created attached strands (as if "Transparent Start Outline" was
+        # chosen in the layer button menu). When loading from JSON this also runs,
+        # but the loader explicitly re-applies the saved start_circle_stroke_color
+        # afterwards, so restored strands keep their saved appearance.
+        if (hasattr(parent, 'canvas') and parent.canvas
+                and getattr(parent.canvas, 'default_transparent_start_circle', False)):
+            self.start_circle_stroke_color = QColor(0, 0, 0, 0)  # Transparent start outline
+
     @property
     def start(self):
         """Getter for the start point."""

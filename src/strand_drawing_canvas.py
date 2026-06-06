@@ -230,7 +230,9 @@ class StrandDrawingCanvas(QWidget):
         # Default colors that can be changed in settings
         self.default_strand_color = QColor(200, 170, 230, 255)  # Default strand color
         self.default_stroke_color = QColor(0, 0, 0, 255)  # Default stroke color
-        
+        # When True, newly created strands get a transparent start outline automatically
+        self.default_transparent_start_circle = False
+
         # Use the default colors for the current colors initially
         self.strand_color = self.default_strand_color
         self.stroke_color = self.default_stroke_color
@@ -1347,7 +1349,9 @@ class StrandDrawingCanvas(QWidget):
         # Default colors that can be changed in settings
         self.default_strand_color = QColor(200, 170, 230, 255)  # Default strand color
         self.default_stroke_color = QColor(0, 0, 0, 255)  # Default stroke color
-        
+        # When True, newly created strands get a transparent start outline automatically
+        self.default_transparent_start_circle = False
+
         # Use the default colors for the current colors initially
         self.strand_color = self.default_strand_color
         self.stroke_color = self.default_stroke_color

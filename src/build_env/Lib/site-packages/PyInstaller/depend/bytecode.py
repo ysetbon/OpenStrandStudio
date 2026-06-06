@@ -135,9 +135,18 @@ else:
     # PRECALL is no longer a valid key
     _OPCODES_EXTENDED_ARG = rb"`EXTENDED_ARG`"
     _OPCODES_EXTENDED_ARG2 = _OPCODES_EXTENDED_ARG
-    _OPCODES_FUNCTION_GLOBAL = rb"`LOAD_NAME`|`LOAD_GLOBAL`|`LOAD_FAST`"
+    if compat.is_py314:
+        # Python 3.14.0a7 added LOAD_FAST_BORROW.
+        _OPCODES_FUNCTION_GLOBAL = rb"`LOAD_NAME`|`LOAD_GLOBAL`|`LOAD_FAST`|`LOAD_FAST_BORROW`"
+    else:
+        _OPCODES_FUNCTION_GLOBAL = rb"`LOAD_NAME`|`LOAD_GLOBAL`|`LOAD_FAST`"
     _OPCODES_FUNCTION_LOAD = rb"`LOAD_ATTR`"
-    _OPCODES_FUNCTION_ARGS = rb"`LOAD_CONST`"
+    if compat.is_py314:
+        # Python 3.14.0a2 split LOAD_CONST into LOAD_CONST, LOAD_IMMORTAL_CONST, and LOAD_SMALL_INT.
+        # https://github.com/python/cpython/commit/faa3272fb8d63d481a136cc0467a0cba6ed7b264
+        _OPCODES_FUNCTION_ARGS = rb"`LOAD_CONST`|`LOAD_SMALL_INT`|`LOAD_CONST_IMMORTAL`"
+    else:
+        _OPCODES_FUNCTION_ARGS = rb"`LOAD_CONST`"
     _OPCODES_FUNCTION_CALL = rb"`CALL`|`CALL_FUNCTION_EX`"
 
     # In Python 3.13, PUSH_NULL opcode is emitted after the LOAD_NAME (and after LOAD_ATTR opcode(s), if applicable).
@@ -245,6 +254,17 @@ def load(raw: bytes, code: CodeType) -> str:
     if compat.is_py312 and raw[-2] == opmap["LOAD_ATTR"]:
         # In python 3.12, namei>>1 is pushed on stack...
         return code.co_names[index >> 1]
+    if compat.is_py314 and raw[-2] == opmap["LOAD_SMALL_INT"]:
+        # python 3.14 introduced LOAD_SMALL_INT, which pushes its argument (int value < 256) on the stack
+        return index
+    if compat.is_py314 and raw[-2] == opmap["LOAD_CONST_IMMORTAL"]:
+        # python 3.14 introduced LOAD_CONST_IMMORTAL, which pushes co_consts[consti] on the stack. This is intended to
+        # be a variant of LOAD_CONST for constants that are known to be immortal.
+        return code.co_consts[index]
+    if compat.is_py314 and raw[-2] == opmap["LOAD_FAST_BORROW"]:
+        # python 3.14 introduced LOAD_FAST_BORROW, which pushes a borrowed reference to the local co_varnames[var_num]
+        # onto the stack.
+        return code.co_varnames[index]
 
     return code.co_names[index]
 

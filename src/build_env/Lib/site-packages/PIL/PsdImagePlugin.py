@@ -61,6 +61,7 @@ class PsdImageFile(ImageFile.ImageFile):
     _close_exclusive_fp_after_loading = False
 
     def _open(self) -> None:
+        assert self.fp is not None
         read = self.fp.read
 
         #
@@ -174,6 +175,9 @@ class PsdImageFile(ImageFile.ImageFile):
             raise self._fp.ex
 
         # seek to given layer (1..max)
+        if layer > len(self.layers):
+            msg = "no more images in PSD file"
+            raise EOFError(msg)
         _, mode, _, tile = self.layers[layer - 1]
         self._mode = mode
         self.tile = tile

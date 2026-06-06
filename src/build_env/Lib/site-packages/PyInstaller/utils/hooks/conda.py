@@ -112,7 +112,7 @@ class Distribution:
         """
         dependencies = []
         # For each dependency:
-        for dependency in self.raw["depends"]:
+        for dependency in self.raw.get("depends", []):
             # ``dependency`` is a string of the form: "[name] [version constraints]"
             name, *version_constraints = dependency.split(maxsplit=1)
             dependencies.append(name)

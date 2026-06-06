@@ -21,12 +21,12 @@ import shutil
 import struct
 import subprocess
 import sys
+import types
 import zipfile
 
 from PyInstaller import compat
 from PyInstaller import log as logging
-from PyInstaller.compat import EXTENSION_SUFFIXES, is_aix, is_darwin, is_win, is_linux
-from PyInstaller.config import CONF
+from PyInstaller.compat import is_aix, is_darwin, is_win, is_linux
 from PyInstaller.exceptions import InvalidSrcDestTupleError
 from PyInstaller.utils import misc
 
@@ -77,31 +77,31 @@ def _check_guts_toc(attr_name, old_toc, new_toc, last_build):
         _check_guts_toc_mtime(attr_name, old_toc, new_toc, last_build)
 
 
-def add_suffix_to_extension(dest_name, src_name, typecode):
+def destination_name_for_extension(module_name, src_name, typecode):
     """
-    Take a TOC entry (dest_name, src_name, typecode) and adjust the dest_name for EXTENSION to include the full library
-    suffix.
+    Take a TOC entry (dest_name, src_name, typecode) and determine the full destination name for the extension.
     """
-    # No-op for non-extension
-    if typecode != 'EXTENSION':
-        return dest_name, src_name, typecode
 
-    # If dest_name completely fits into end of the src_name, it has already been processed.
-    if src_name.endswith(dest_name):
-        return dest_name, src_name, typecode
+    assert typecode == 'EXTENSION'
 
-    # Change the dotted name into a relative path. This places C extensions in the Python-standard location.
-    dest_name = dest_name.replace('.', os.sep)
-    # In some rare cases extension might already contain a suffix. Skip it in this case.
-    if os.path.splitext(dest_name)[1] not in EXTENSION_SUFFIXES:
-        # Determine the base name of the file.
-        base_name = os.path.basename(dest_name)
-        assert '.' not in base_name
-        # Use this file's existing extension. For extensions such as ``libzmq.cp36-win_amd64.pyd``, we cannot use
-        # ``os.path.splitext``, which would give only the ```.pyd`` part of the extension.
-        dest_name = dest_name + os.path.basename(src_name)[len(base_name):]
+    # The `module_name` should be the extension's importable module name, such as `psutil._psutil_linux` or
+    # `numpy._core._multiarray_umath`. Reconstruct the directory structure from parent package name(s), if any.
+    dest_elements = module_name.split('.')
 
-    return dest_name, src_name, typecode
+    # We have the base name of the extension file (the last element in the module name), but we do not know the
+    # full extension suffix. We can take that from source name; for simplicity, replace the whole base name part.
+    src_path = pathlib.Path(src_name)
+    dest_elements[-1] = src_path.name
+
+    # Extensions that originate from python's python3.x/lib-dynload directory should be diverted into
+    # python3.x/lib-dynload destination directory instead of being collected into top-level application directory.
+    # See #5604 for original motivation (using just lib-dynload), and #9204 for extension (using python3.x/lib-dynload).
+    if src_path.parent.name == 'lib-dynload':
+        python_dir = f'python{sys.version_info.major}.{sys.version_info.minor}'
+        if src_path.parent.parent.name == python_dir:
+            dest_elements = [python_dir, 'lib-dynload', *dest_elements]
+
+    return os.path.join(*dest_elements)
 
 
 def process_collected_binary(
@@ -560,73 +560,57 @@ def get_code_object(modname, filename, optimize):
     This is a simplifed non-performant version which circumvents __pycache__.
     """
 
-    if filename in ('-', None):
-        # This is a NamespacePackage, modulegraph marks them by using the filename '-'. (But wants to use None, so
-        # check for None, too, to be forward-compatible.)
-        logger.debug('Compiling namespace package %s', modname)
-        txt = '#\n'
-        code_object = compile(txt, filename, 'exec', optimize=optimize)
+    # Once upon a time, we compiled dummy code objects for PEP-420 namespace packages. We do not do that anymore.
+    assert filename not in {'-', None}, "Called with PEP-420 namespace package!"
+
+    _, ext = os.path.splitext(filename)
+    ext = ext.lower()
+
+    if ext == '.pyc':
+        # The module is available in binary-only form. Read the contents of .pyc file using helper function, which
+        # supports reading from either stand-alone or archive-embedded .pyc files.
+        logger.debug('Reading code object from .pyc file %s', filename)
+        pyc_data = _read_pyc_data(filename)
+        code_object = marshal.loads(pyc_data[16:])
     else:
+        # Assume this is a source .py file, but allow an arbitrary extension (other than .pyc, which is taken in
+        # the above branch). This allows entry-point scripts to have an arbitrary (or no) extension, as tested by
+        # the `test_arbitrary_ext` in `test_basic.py`.
+        logger.debug('Compiling python script/module file %s', filename)
+
+        with open(filename, 'rb') as f:
+            source = f.read()
+
+        # If entry-point script has no suffix, append .py when compiling the source. In POSIX builds, the executable
+        # has no suffix either; this causes issues with `traceback` module, as it tries to read the executable file
+        # when trying to look up the code for the entry-point script (when current working directory contains the
+        # executable).
         _, ext = os.path.splitext(filename)
-        ext = ext.lower()
+        if not ext:
+            logger.debug("Appending .py to compiled entry-point name...")
+            filename += '.py'
 
-        if ext == '.pyc':
-            # The module is available in binary-only form. Read the contents of .pyc file using helper function, which
-            # supports reading from either stand-alone or archive-embedded .pyc files.
-            logger.debug('Reading code object from .pyc file %s', filename)
-            pyc_data = _read_pyc_data(filename)
-            code_object = marshal.loads(pyc_data[16:])
-        else:
-            # Assume this is a source .py file, but allow an arbitrary extension (other than .pyc, which is taken in
-            # the above branch). This allows entry-point scripts to have an arbitrary (or no) extension, as tested by
-            # the `test_arbitrary_ext` in `test_basic.py`.
-            logger.debug('Compiling python script/module file %s', filename)
-
-            with open(filename, 'rb') as f:
-                source = f.read()
-
-            # If entry-point script has no suffix, append .py when compiling the source. In POSIX builds, the executable
-            # has no suffix either; this causes issues with `traceback` module, as it tries to read the executable file
-            # when trying to look up the code for the entry-point script (when current working directory contains the
-            # executable).
-            _, ext = os.path.splitext(filename)
-            if not ext:
-                logger.debug("Appending .py to compiled entry-point name...")
-                filename += '.py'
-
-            try:
-                code_object = compile(source, filename, 'exec', optimize=optimize)
-            except SyntaxError:
-                logger.warning("Sytnax error while compiling %s", filename)
-                raise
+        try:
+            code_object = compile(source, filename, 'exec', optimize=optimize)
+        except SyntaxError:
+            logger.warning("Sytnax error while compiling %s", filename)
+            raise
 
     return code_object
 
 
-def strip_paths_in_code(co, new_filename=None):
-    # Paths to remove from filenames embedded in code objects
-    replace_paths = sys.path + CONF['pathex']
-    # Make sure paths end with os.sep and the longest paths are first
-    replace_paths = sorted((os.path.join(f, '') for f in replace_paths), key=len, reverse=True)
-
-    if new_filename is None:
-        original_filename = os.path.normpath(co.co_filename)
-        for f in replace_paths:
-            if original_filename.startswith(f):
-                new_filename = original_filename[len(f):]
-                break
-
-        else:
-            return co
-
-    code_func = type(co)
+def replace_filename_in_code_object(code_object, filename):
+    """
+    Recursively replace the `co_filename` in the given code object and code objects stored in its `co_consts` entries.
+    Primarily used to anonymize collected code objects, i.e., by removing the build environment's paths from them.
+    """
 
     consts = tuple(
-        strip_paths_in_code(const_co, new_filename) if isinstance(const_co, code_func) else const_co
-        for const_co in co.co_consts
+        replace_filename_in_code_object(const_co, filename) if isinstance(const_co, types.CodeType) else const_co
+        for const_co in code_object.co_consts
     )
 
-    return co.replace(co_consts=consts, co_filename=new_filename)
+    return code_object.replace(co_consts=consts, co_filename=filename)
 
 
 def _should_include_system_binary(binary_tuple, exceptions):
@@ -638,7 +622,7 @@ def _should_include_system_binary(binary_tuple, exceptions):
     exclude_system_libraries method.
     """
     dest = binary_tuple[0]
-    if dest.startswith('lib-dynload'):
+    if dest.startswith(f'python{sys.version_info.major}.{sys.version_info.minor}/lib-dynload'):
         return True
     src = binary_tuple[1]
     if fnmatch.fnmatch(src, '*python*'):
@@ -705,8 +689,10 @@ def compile_pymodule(name, src_path, workpath, optimize, code_cache=None):
         else:
             raise ValueError(f"Invalid python module file {src_path}; unhandled extension {ext}!")
 
-    # Strip code paths from the code object
-    code_object = strip_paths_in_code(code_object)
+    # Replace co_filename in code object with anonymized filename that does not contain full path. Construct the
+    # relative filename from module name, similar how we earlier constructed the `pyc_path`.
+    co_filename = os.path.join(*parent_dirs, mod_basename + '.py')
+    code_object = replace_filename_in_code_object(code_object, co_filename)
 
     # Write complete .pyc module to in-memory stream. Then, check if .pyc file already exists, compare contents, and
     # (re)write it only if different. This avoids unnecessary (re)writing of the file, and in turn also avoids
@@ -847,12 +833,13 @@ def create_base_library_zip(filename, modules_toc, code_cache=None):
             if basename == '__init__':
                 dest_name += os.sep + '__init__'
             dest_name += '.pyc'  # Always .pyc, regardless of optimization level.
+            # Replace full-path co_filename in code object with `dest_name` (and shorten suffix from .pyc to .py).
+            code = replace_filename_in_code_object(code, dest_name[:-1])
             # Write the .pyc module
             with io.BytesIO() as fc:
                 fc.write(compat.BYTECODE_MAGIC)
                 fc.write(struct.pack('<I', 0b01))  # PEP-552: hash-based pyc, check_source=False
                 fc.write(b'\00' * 8)  # Match behavior of `building.utils.compile_pymodule`
-                code = strip_paths_in_code(code)  # Strip paths
                 marshal.dump(code, fc)
                 # Use a ZipInfo to set timestamp for deterministic build.
                 info = zipfile.ZipInfo(dest_name)

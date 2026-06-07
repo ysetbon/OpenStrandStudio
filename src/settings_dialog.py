@@ -3059,6 +3059,51 @@ class SettingsDialog(QDialog):
                 <td style="padding: 6px 4px;"><span class="button-name">{_['reset_states_desc'].split(' - ', 1)[0]}</span> — {_['reset_states_desc'].split(' - ', 1)[1]}</td>
             </tr>
         </table>
+        <h2>{_['layer_context_menu_title']}</h2>
+        <p>{_['layer_context_menu_info']}</p>
+
+        <h3 style="margin-top: 12px;">{_['main_strand_menu_title']}</h3>
+        <ul>
+            <li><span class="button-name">{_['hide_layer']} / {_['show_layer']}</span> - {_['ctx_hide_show_desc']}</li>
+            <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
+            <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
+            <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
+            <li><span class="button-name">{_['change_stroke_color']}</span> - {_['ctx_change_stroke_color_desc']}</li>
+            <li><span class="button-name">{_['change_width']}</span> - {_['ctx_change_width_desc']}</li>
+            <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
+            <li><span class="button-name">{_['line']}</span> - {_['ctx_line_desc']}</li>
+            <li><span class="button-name">{_['arrow']}</span> - {_['ctx_arrow_desc']}</li>
+            <li><span class="button-name">{_['show_full_arrow']}</span> - {_['ctx_full_arrow_desc']}</li>
+            <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
+            <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
+            <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
+            <li><span class="button-name">{_['circle']}</span> - {_['ctx_circle_desc']}</li>
+        </ul>
+        <h3 style="margin-top: 12px;">{_['attached_strand_menu_title']}</h3>
+        <ul>
+            <li><span class="button-name">{_['hide_layer']} / {_['show_layer']}</span> - {_['ctx_hide_show_desc']}</li>
+            <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
+            <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
+            <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
+            <li><span class="button-name">{_['change_stroke_color']}</span> - {_['ctx_change_stroke_color_desc']}</li>
+            <li><span class="button-name">{_['change_width']}</span> - {_['ctx_change_width_desc']}</li>
+            <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
+            <li><span class="button-name">{_['line']}</span> - {_['ctx_line_desc']}</li>
+            <li><span class="button-name">{_['arrow']}</span> - {_['ctx_arrow_desc']}</li>
+            <li><span class="button-name">{_['show_full_arrow']}</span> - {_['ctx_full_arrow_desc']}</li>
+            <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
+            <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
+            <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
+            <li><span class="button-name">{_['circle']}</span> - {_['ctx_circle_desc']}</li>
+        </ul>
+        <h3 style="margin-top: 12px;">{_['mask_strand_menu_title']}</h3>
+        <ul>
+            <li><span class="button-name">{_['hide_layer']} / {_['show_layer']}</span> - {_['ctx_hide_show_desc']}</li>
+            <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
+            <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
+            <li><span class="button-name">{_['edit_mask']}</span> - {_['ctx_edit_mask_desc']}</li>
+            <li><span class="button-name">{_['reset_mask']}</span> - {_['ctx_reset_mask_desc']}</li>
+        </ul>
         <h2>{_['main_window_buttons']}</h2>
         <ul>
             <li><span class="button-name">{_['attach_mode_desc'].split(' - ')[0]}</span> - {_['attach_mode_desc'].split(' - ')[1]}</li>
@@ -3189,6 +3234,7 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['snap_to_grid_attach_desc'].split(' - ')[0]}</span> - {_['snap_to_grid_attach_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['snap_to_grid_attach_desc'].split(' - ')[0]}</span> - {_['snap_to_grid_attach_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['show_move_highlights_desc'].split(' - ')[0]}</span> - {_['show_move_highlights_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['folded_start_edge_desc'].split(' - ')[0]}</span> - {_['folded_start_edge_desc'].split(' - ', 1)[1]}</li>
             <li><span class="button-name">{_['shadow_blur_steps_desc'].split(' - ')[0]}</span> - {_['shadow_blur_steps_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['shadow_blur_radius_desc'].split(' - ')[0]}</span> - {_['shadow_blur_radius_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['control_point_influence_desc'].split(' - ')[0]}</span> - {_['control_point_influence_desc'].split(' - ')[1]}</li>
@@ -3968,6 +4014,51 @@ class SettingsDialog(QDialog):
             </tr>
         </table>
         
+        <h2>{_['layer_context_menu_title']}</h2>
+        <p>{_['layer_context_menu_info']}</p>
+
+        <h3 style="margin-top: 12px;">{_['main_strand_menu_title']}</h3>
+        <ul>
+            <li><span class="button-name">{_['hide_layer']} / {_['show_layer']}</span> - {_['ctx_hide_show_desc']}</li>
+            <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
+            <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
+            <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
+            <li><span class="button-name">{_['change_stroke_color']}</span> - {_['ctx_change_stroke_color_desc']}</li>
+            <li><span class="button-name">{_['change_width']}</span> - {_['ctx_change_width_desc']}</li>
+            <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
+            <li><span class="button-name">{_['line']}</span> - {_['ctx_line_desc']}</li>
+            <li><span class="button-name">{_['arrow']}</span> - {_['ctx_arrow_desc']}</li>
+            <li><span class="button-name">{_['show_full_arrow']}</span> - {_['ctx_full_arrow_desc']}</li>
+            <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
+            <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
+            <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
+            <li><span class="button-name">{_['circle']}</span> - {_['ctx_circle_desc']}</li>
+        </ul>
+        <h3 style="margin-top: 12px;">{_['attached_strand_menu_title']}</h3>
+        <ul>
+            <li><span class="button-name">{_['hide_layer']} / {_['show_layer']}</span> - {_['ctx_hide_show_desc']}</li>
+            <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
+            <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
+            <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
+            <li><span class="button-name">{_['change_stroke_color']}</span> - {_['ctx_change_stroke_color_desc']}</li>
+            <li><span class="button-name">{_['change_width']}</span> - {_['ctx_change_width_desc']}</li>
+            <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
+            <li><span class="button-name">{_['line']}</span> - {_['ctx_line_desc']}</li>
+            <li><span class="button-name">{_['arrow']}</span> - {_['ctx_arrow_desc']}</li>
+            <li><span class="button-name">{_['show_full_arrow']}</span> - {_['ctx_full_arrow_desc']}</li>
+            <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
+            <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
+            <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
+            <li><span class="button-name">{_['circle']}</span> - {_['ctx_circle_desc']}</li>
+        </ul>
+        <h3 style="margin-top: 12px;">{_['mask_strand_menu_title']}</h3>
+        <ul>
+            <li><span class="button-name">{_['hide_layer']} / {_['show_layer']}</span> - {_['ctx_hide_show_desc']}</li>
+            <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
+            <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
+            <li><span class="button-name">{_['edit_mask']}</span> - {_['ctx_edit_mask_desc']}</li>
+            <li><span class="button-name">{_['reset_mask']}</span> - {_['ctx_reset_mask_desc']}</li>
+        </ul>
         <h2>{_['main_window_buttons']}</h2>
         <ul>
             <li><span class="button-name">{_['attach_mode_desc'].split(' - ')[0]}</span> - {_['attach_mode_desc'].split(' - ')[1]}</li>
@@ -4096,6 +4187,7 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['enable_curvature_bias_desc'].split(' - ')[0]}</span> - {_['enable_curvature_bias_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['enable_snap_desc'].split(' - ')[0]}</span> - {_['enable_snap_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['show_move_highlights_desc'].split(' - ')[0]}</span> - {_['show_move_highlights_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['folded_start_edge_desc'].split(' - ')[0]}</span> - {_['folded_start_edge_desc'].split(' - ', 1)[1]}</li>
             <li><span class="button-name">{_['shadow_blur_steps_desc'].split(' - ')[0]}</span> - {_['shadow_blur_steps_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['shadow_blur_radius_desc'].split(' - ')[0]}</span> - {_['shadow_blur_radius_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['control_point_influence_desc'].split(' - ')[0]}</span> - {_['control_point_influence_desc'].split(' - ')[1]}</li>
@@ -4652,6 +4744,51 @@ class SettingsDialog(QDialog):
                 </tr>
             </table>
             
+            <h2>{_['layer_context_menu_title']}</h2>
+            <p>{_['layer_context_menu_info']}</p>
+
+            <h3 style="margin-top: 12px;">{_['main_strand_menu_title']}</h3>
+            <ul>
+                <li><span class="button-name">{_['hide_layer']} / {_['show_layer']}</span> - {_['ctx_hide_show_desc']}</li>
+                <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
+                <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
+                <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
+                <li><span class="button-name">{_['change_stroke_color']}</span> - {_['ctx_change_stroke_color_desc']}</li>
+                <li><span class="button-name">{_['change_width']}</span> - {_['ctx_change_width_desc']}</li>
+                <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
+                <li><span class="button-name">{_['line']}</span> - {_['ctx_line_desc']}</li>
+                <li><span class="button-name">{_['arrow']}</span> - {_['ctx_arrow_desc']}</li>
+                <li><span class="button-name">{_['show_full_arrow']}</span> - {_['ctx_full_arrow_desc']}</li>
+                <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
+                <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
+                <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
+                <li><span class="button-name">{_['circle']}</span> - {_['ctx_circle_desc']}</li>
+            </ul>
+            <h3 style="margin-top: 12px;">{_['attached_strand_menu_title']}</h3>
+            <ul>
+                <li><span class="button-name">{_['hide_layer']} / {_['show_layer']}</span> - {_['ctx_hide_show_desc']}</li>
+                <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
+                <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
+                <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
+                <li><span class="button-name">{_['change_stroke_color']}</span> - {_['ctx_change_stroke_color_desc']}</li>
+                <li><span class="button-name">{_['change_width']}</span> - {_['ctx_change_width_desc']}</li>
+                <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
+                <li><span class="button-name">{_['line']}</span> - {_['ctx_line_desc']}</li>
+                <li><span class="button-name">{_['arrow']}</span> - {_['ctx_arrow_desc']}</li>
+                <li><span class="button-name">{_['show_full_arrow']}</span> - {_['ctx_full_arrow_desc']}</li>
+                <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
+                <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
+                <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
+                <li><span class="button-name">{_['circle']}</span> - {_['ctx_circle_desc']}</li>
+            </ul>
+            <h3 style="margin-top: 12px;">{_['mask_strand_menu_title']}</h3>
+            <ul>
+                <li><span class="button-name">{_['hide_layer']} / {_['show_layer']}</span> - {_['ctx_hide_show_desc']}</li>
+                <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
+                <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
+                <li><span class="button-name">{_['edit_mask']}</span> - {_['ctx_edit_mask_desc']}</li>
+                <li><span class="button-name">{_['reset_mask']}</span> - {_['ctx_reset_mask_desc']}</li>
+            </ul>
             <h2>{_['main_window_buttons']}</h2>
             <ul>
                 <li><span class="button-name">{_['attach_mode_desc'].split(' - ')[0]}</span> - {_['attach_mode_desc'].split(' - ')[1]}</li>
@@ -4756,6 +4893,7 @@ class SettingsDialog(QDialog):
                 <li><span class="button-name">{_['enable_snap_desc'].split(' - ')[0]}</span> - {_['enable_snap_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['snap_to_grid_attach_desc'].split(' - ')[0]}</span> - {_['snap_to_grid_attach_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['show_move_highlights_desc'].split(' - ')[0]}</span> - {_['show_move_highlights_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">{_['folded_start_edge_desc'].split(' - ')[0]}</span> - {_['folded_start_edge_desc'].split(' - ', 1)[1]}</li>
                 <li><span class="button-name">{_['shadow_blur_steps_desc'].split(' - ')[0]}</span> - {_['shadow_blur_steps_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['shadow_blur_radius_desc'].split(' - ')[0]}</span> - {_['shadow_blur_radius_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['control_point_influence_desc'].split(' - ')[0]}</span> - {_['control_point_influence_desc'].split(' - ')[1]}</li>

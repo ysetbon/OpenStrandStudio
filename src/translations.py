@@ -164,6 +164,28 @@ Examples:<br>
         'tutorial_info': 'Press the "play video" button below each text\nto view the tutorial explaining:',
         'button_guide_info': 'Learn about the different buttons and their functions in OpenStrand Studio.\n\nTip: You can right-click layer panel icons to see their explanations!',
         'layer_panel_buttons': 'Layer Panel Buttons',
+        # Layer right-click context menu (button guide)
+        'layer_context_menu_title': 'Layer Right-Click Menu',
+        'layer_context_menu_info': 'Right-click a layer button in the Layer Panel to open a menu. The available options depend on the type of layer.',
+        'main_strand_menu_title': 'Main Strand (name ends with _1)',
+        'attached_strand_menu_title': 'Attached Strand',
+        'mask_strand_menu_title': 'Mask Strand',
+        'ctx_edit_mask_desc': 'Manually edit the masked (hidden) region of this mask layer.',
+        'ctx_reset_mask_desc': 'Reset the mask back to its automatically computed overlap region.',
+        'ctx_hide_show_desc': 'Hide or show this layer on the canvas.',
+        'ctx_shadow_only_desc': "Show only the strand's shadow while hiding the strand itself.",
+        'ctx_edit_shadows_desc': 'Open the shadow editor to adjust how this layer casts and receives shadows.',
+        'ctx_change_color_desc': 'Change the fill color of the strand.',
+        'ctx_change_stroke_color_desc': 'Change the outline (stroke) color of the strand.',
+        'ctx_change_width_desc': 'Change the thickness of the strand.',
+        'ctx_stroke_transparency_desc': 'Make the circle stroke transparent, or restore the default stroke when it is already transparent.',
+        'ctx_line_desc': "Show or hide the straight line at the strand's start and/or end.",
+        'ctx_arrow_desc': "Show or hide a directional arrow at the strand's start and/or end.",
+        'ctx_full_arrow_desc': 'Show or hide a full arrow over the strand; when shown, you can customize its color, transparency, texture, shaft style, head, and shadow.',
+        'ctx_close_knot_desc': "Close the strand's free end into a knot connection (shown only when the strand has exactly one free end).",
+        'ctx_closing_knot_desc': 'Make the closing-knot edge transparent, or restore its default stroke (shown only for closed connections).',
+        'ctx_dash_desc': "Show or hide a dashed extension line beyond the strand's start and/or end.",
+        'ctx_circle_desc': "Show or hide the connection circle at the strand's start and/or end.",
         'main_window_buttons': 'Main Window Buttons',
         'group_buttons': 'Group Buttons',
         'general_settings_buttons': 'General Settings',
@@ -236,16 +258,13 @@ Examples:<br>
         'curve_shape_full_desc': 'Curve Shape - Controls the mathematical curve type (1.0=sharp angles, 2.0=smooth curves, 3.0=very smooth)',
         'reset_curvature_full_desc': 'Reset Curvature Settings - Restores Control Influence, Distance Boost, and Curve Shape to defaults',
         'whats_new_info': '''
-        <h2>What's New in Version 1.107</h2>
+        <h2>What's New in Version 1.108</h2>
 
-            <li style="font-size:14px;"><b>Group Shadow Editor:</b> Shadows can now be edited for entire groups, giving you full control over how group strands cast shadows on the canvas.</li>
-            <li style="font-size:14px;"><b>Shadow Editor Fixes & Masked Strand Support:</b> Shadow subtraction logic is unified between the main renderer and the shadow preview, and masked strands can now be edited through the shadow editor dialog with smart defaults.</li>
-            <li style="font-size:14px;"><b>Selected Strand Settings:</b> A new Selected Strand category in Settings gathers options that apply only to the currently selected strand — move-only, control-points-only, shadow-only, and a customizable selection highlight color.</li>
-            <li style="font-size:14px;"><b>Group Creation Stability:</b> Fixed unexpected crashes caused by orphan hidden group dialogs when creating groups or exiting the application.</li>
-            <li style="font-size:14px;"><b>Hebrew Right-to-Left Alignment:</b> The main window, settings dialog, group context menu, and group panel are now mirrored right-to-left in Hebrew for a natural reading order.</li>
-            <li style="font-size:14px;"><b>View Button:</b> New View button in the main window that hides all mode indicators (Move, Attach, etc.) so you can see your design clearly without any UI overlays.</li>
+            <li style="font-size:14px;"><b>Multi-Tab Workspace:</b> A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.</li>
+            <li style="font-size:14px;"><b>View Mode Toggles:</b> New settings let you hide the selection highlight and hide the control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.</li>
+            <li style="font-size:14px;"><b>Folded-Over Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button's right-click menu.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.107</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.108</p>
         ''',
 
 
@@ -394,6 +413,7 @@ Examples:<br>
         'edit_mask': 'Edit Mask',
         'reset_mask': 'Reset Mask',
         'transparent_stroke': 'Folded-Over Start Edge',
+        'folded_start_edge_desc': "Folded-Over Start Edge - Hides the outline on an attached strand's starting half-circle so its beginning blends into the parent strand, creating a folded-over look. Set it per strand from the layer button's right-click menu, or enable \"Folded-over start edge by default\" in the Layer Panel settings to apply it to every new strand.",
         'transparent_closing_knot_side': 'Transparent Closing Knot Side',
         'restore_default_stroke': 'Restore Default Stroke',
         'restore_default_closing_knot_stroke': 'Restore Default Closing Knot Stroke',
@@ -681,6 +701,28 @@ Exemples :<br>
         'tutorial_info': 'Appuyez sur le bouton "lire la vidéo" sous chaque texte\npour voir le tutoriel explicatif :',
         'button_guide_info': 'Découvrez les différents boutons et leurs fonctions dans OpenStrand Studio.\n\nAstuce : Faites un clic droit sur les icônes du panneau des calques pour voir leurs explications !',
         'layer_panel_buttons': 'Boutons du Panneau de Calques',
+        # Layer right-click context menu (button guide)
+        'layer_context_menu_title': 'Menu clic droit du calque',
+        'layer_context_menu_info': "Faites un clic droit sur un bouton de calque dans le panneau des calques pour ouvrir un menu. Les options disponibles dépendent du type de calque.",
+        'main_strand_menu_title': 'Brin principal (le nom se termine par _1)',
+        'attached_strand_menu_title': 'Brin attaché',
+        'mask_strand_menu_title': 'Brin de masque',
+        'ctx_edit_mask_desc': "Modifier manuellement la zone masquée (cachée) de ce calque de masque.",
+        'ctx_reset_mask_desc': "Réinitialiser le masque à sa zone de chevauchement calculée automatiquement.",
+        'ctx_hide_show_desc': 'Masquer ou afficher ce calque sur le canevas.',
+        'ctx_shadow_only_desc': "Afficher uniquement l'ombre du brin en masquant le brin lui-même.",
+        'ctx_edit_shadows_desc': "Ouvrir l'éditeur d'ombres pour régler la façon dont ce calque projette et reçoit les ombres.",
+        'ctx_change_color_desc': 'Changer la couleur de remplissage du brin.',
+        'ctx_change_stroke_color_desc': 'Changer la couleur du contour du brin.',
+        'ctx_change_width_desc': "Changer l'épaisseur du brin.",
+        'ctx_stroke_transparency_desc': "Rendre le contour du cercle transparent, ou restaurer le contour par défaut lorsqu'il est déjà transparent.",
+        'ctx_line_desc': "Afficher ou masquer la ligne droite au début et/ou à la fin du brin.",
+        'ctx_arrow_desc': "Afficher ou masquer une flèche directionnelle au début et/ou à la fin du brin.",
+        'ctx_full_arrow_desc': "Afficher ou masquer une flèche complète sur le brin ; lorsqu'elle est affichée, vous pouvez personnaliser sa couleur, sa transparence, sa texture, le style de la hampe, la pointe et l'ombre.",
+        'ctx_close_knot_desc': "Fermer l'extrémité libre du brin en une connexion de nœud (affiché uniquement lorsque le brin a exactement une extrémité libre).",
+        'ctx_closing_knot_desc': "Rendre le bord du nœud de fermeture transparent, ou restaurer son contour par défaut (affiché uniquement pour les connexions fermées).",
+        'ctx_dash_desc': "Afficher ou masquer une ligne d'extension en pointillés au-delà du début et/ou de la fin du brin.",
+        'ctx_circle_desc': "Afficher ou masquer le cercle de connexion au début et/ou à la fin du brin.",
         'main_window_buttons': 'Boutons de la Fenêtre Principale',
         # General Settings descriptions for button guide
         'general_settings_header': 'Paramètres Généraux',
@@ -698,16 +740,13 @@ Exemples :<br>
         'curve_shape_full_desc': 'Forme de Courbe - Contrôle le type de courbe mathématique (1.0=angles aigus, 2.0=courbes lisses, 3.0=très lisse)',
         'reset_curvature_full_desc': "Réinitialiser les Paramètres de Courbure - Restaure l'Influence, l'Amplification et la Forme aux valeurs par défaut",
         'whats_new_info': '''
-        <h2>Nouveautés de la version 1.107</h2>
+        <h2>Nouveautés de la version 1.108</h2>
 
-            <li style="font-size:14px;"><b>Éditeur d'ombres de groupe :</b> Les ombres peuvent désormais être modifiées pour des groupes entiers, vous offrant un contrôle total sur la façon dont les brins d'un groupe projettent leurs ombres sur le canevas.</li>
-            <li style="font-size:14px;"><b>Corrections de l'éditeur d'ombres et prise en charge des brins masqués :</b> La logique de soustraction des ombres est unifiée entre le rendu principal et l'aperçu des ombres, et les brins masqués peuvent maintenant être modifiés via la boîte de dialogue de l'éditeur d'ombres avec des valeurs par défaut intelligentes.</li>
-            <li style="font-size:14px;"><b>Paramètres du brin sélectionné :</b> Une nouvelle catégorie « Brin Sélectionné » dans les paramètres regroupe des options qui ne s'appliquent qu'au brin actuellement sélectionné — déplacement seul, points de contrôle seuls, ombre seule, et une couleur de surbrillance de sélection personnalisable.</li>
-            <li style="font-size:14px;"><b>Stabilité de la création de groupes :</b> Correction des plantages inattendus causés par des boîtes de dialogue de groupe cachées orphelines lors de la création de groupes ou de la fermeture de l'application.</li>
-            <li style="font-size:14px;"><b>Alignement de droite à gauche pour l'hébreu :</b> La fenêtre principale, la boîte de dialogue des paramètres, le menu contextuel de groupe et le panneau de groupe sont désormais mis en miroir de droite à gauche en hébreu pour un ordre de lecture naturel.</li>
-            <li style="font-size:14px;"><b>Bouton Vue :</b> Nouveau bouton Vue dans la fenêtre principale qui masque tous les indicateurs de mode (Bouger, Lier, etc.) pour que vous puissiez voir votre conception clairement, sans aucune superposition d'interface.</li>
+            <li style="font-size:14px;"><b>Espace de travail multi-onglets :</b> Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas. Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement, et vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.</li>
+            <li style="font-size:14px;"><b>Options du mode Vue :</b> De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue, vous offrant un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.</li>
+            <li style="font-size:14px;"><b>Bord de départ replié par défaut :</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent), sans avoir à le définir brin par brin depuis le menu contextuel du bouton de calque.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.107</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.108</p>
         ''',
 
 
@@ -819,6 +858,7 @@ Exemples :<br>
         'edit_mask': 'Éditer Masque',
         'reset_mask': 'Réinit Masque',
         'transparent_stroke': 'Bord de Départ Replié',
+        'folded_start_edge_desc': "Bord de Départ Replié - Masque le contour du demi-cercle de départ d'un brin attaché afin que son début se fonde dans le brin parent, créant un aspect replié. Définissez-le brin par brin depuis le menu contextuel du bouton de calque, ou activez « Bord de départ replié par défaut » dans les paramètres du panneau des calques pour l'appliquer à chaque nouveau brin.",
         'transparent_closing_knot_side': 'Côté Transparent du Nœud Fermé',
         'restore_default_closing_knot_stroke': 'Restaurer le Trait du Nœud Fermé par Défaut',
         'restore_default_stroke': 'Restaurer Tracé Par Défaut',
@@ -1195,6 +1235,28 @@ Beispiele:<br>
         'tutorial_info': 'Drücken Sie die Taste "Video abspielen" unter jedem Text,\num das erklärende Tutorial anzusehen:',
         'button_guide_info': 'Erfahren Sie mehr über die verschiedenen Schaltflächen und ihre Funktionen in OpenStrand Studio.\n\nTipp: Klicken Sie mit der rechten Maustaste auf Symbole im Ebenenpanel, um ihre Erklärungen zu sehen!',
         'layer_panel_buttons': 'Ebenenpanel-Schaltflächen',
+        # Layer right-click context menu (button guide)
+        'layer_context_menu_title': 'Ebenen-Rechtsklickmenü',
+        'layer_context_menu_info': 'Klicken Sie mit der rechten Maustaste auf eine Ebenen-Schaltfläche im Ebenenpanel, um ein Menü zu öffnen. Die verfügbaren Optionen hängen vom Ebenentyp ab.',
+        'main_strand_menu_title': 'Hauptstrang (Name endet mit _1)',
+        'attached_strand_menu_title': 'Angehängter Strang',
+        'mask_strand_menu_title': 'Maskenstrang',
+        'ctx_edit_mask_desc': 'Den maskierten (verborgenen) Bereich dieser Maskenebene manuell bearbeiten.',
+        'ctx_reset_mask_desc': 'Die Maske auf ihren automatisch berechneten Überlappungsbereich zurücksetzen.',
+        'ctx_hide_show_desc': 'Diese Ebene auf der Leinwand aus- oder einblenden.',
+        'ctx_shadow_only_desc': 'Nur den Schatten des Strangs anzeigen und den Strang selbst ausblenden.',
+        'ctx_edit_shadows_desc': 'Den Schatten-Editor öffnen, um einzustellen, wie diese Ebene Schatten wirft und empfängt.',
+        'ctx_change_color_desc': 'Die Füllfarbe des Strangs ändern.',
+        'ctx_change_stroke_color_desc': 'Die Umrissfarbe (Kontur) des Strangs ändern.',
+        'ctx_change_width_desc': 'Die Dicke des Strangs ändern.',
+        'ctx_stroke_transparency_desc': 'Die Kreiskontur transparent machen oder die Standardkontur wiederherstellen, wenn sie bereits transparent ist.',
+        'ctx_line_desc': 'Die gerade Linie am Anfang und/oder Ende des Strangs ein- oder ausblenden.',
+        'ctx_arrow_desc': 'Einen Richtungspfeil am Anfang und/oder Ende des Strangs ein- oder ausblenden.',
+        'ctx_full_arrow_desc': 'Einen vollständigen Pfeil über dem Strang ein- oder ausblenden; wenn angezeigt, können Sie Farbe, Transparenz, Textur, Schaftstil, Spitze und Schatten anpassen.',
+        'ctx_close_knot_desc': 'Das freie Ende des Strangs zu einer Knotenverbindung schließen (nur angezeigt, wenn der Strang genau ein freies Ende hat).',
+        'ctx_closing_knot_desc': 'Die Kante des schließenden Knotens transparent machen oder ihre Standardkontur wiederherstellen (nur bei geschlossenen Verbindungen angezeigt).',
+        'ctx_dash_desc': 'Eine gestrichelte Verlängerungslinie über den Anfang und/oder das Ende des Strangs hinaus ein- oder ausblenden.',
+        'ctx_circle_desc': 'Den Verbindungskreis am Anfang und/oder Ende des Strangs ein- oder ausblenden.',
         'main_window_buttons': 'Hauptfenster-Schaltflächen',
         'group_buttons': 'Gruppenschaltflächen',
         # General Settings descriptions for button guide
@@ -1242,16 +1304,13 @@ Beispiele:<br>
         'toggle_shadow_desc': 'Schatten ein/aus - Zeigt/verbirgt Schatten auf Strängen',
         'layer_state_desc': 'Layer-Status - Zeigt Debug-Informationen zu Ebenen',
         'whats_new_info': '''
-        <h2>Neu in Version 1.107</h2>
+        <h2>Neu in Version 1.108</h2>
 
-            <li style="font-size:14px;"><b>Gruppen-Schatten-Editor:</b> Schatten können jetzt für ganze Gruppen bearbeitet werden, was Ihnen die volle Kontrolle darüber gibt, wie die Stränge einer Gruppe ihre Schatten auf der Leinwand werfen.</li>
-            <li style="font-size:14px;"><b>Schatten-Editor-Korrekturen & Unterstützung für maskierte Stränge:</b> Die Logik zur Schattensubtraktion ist zwischen dem Hauptrenderer und der Schattenvorschau vereinheitlicht, und maskierte Stränge können jetzt über den Schatten-Editor-Dialog mit intelligenten Standardwerten bearbeitet werden.</li>
-            <li style="font-size:14px;"><b>Einstellungen für ausgewählten Strang:</b> Eine neue Kategorie „Ausgewählter Strang" in den Einstellungen bündelt Optionen, die nur auf den aktuell ausgewählten Strang wirken — nur Bewegung, nur Kontrollpunkte, nur Schatten und eine anpassbare Auswahl-Hervorhebungsfarbe.</li>
-            <li style="font-size:14px;"><b>Stabilität bei der Gruppenerstellung:</b> Unerwartete Abstürze durch verwaiste, ausgeblendete Gruppendialoge beim Erstellen von Gruppen oder beim Beenden der Anwendung wurden behoben.</li>
-            <li style="font-size:14px;"><b>Rechts-nach-links-Ausrichtung für Hebräisch:</b> Hauptfenster, Einstellungsdialog, Gruppen-Kontextmenü und Gruppenpanel sind für Hebräisch nun von rechts nach links gespiegelt, um eine natürliche Leserichtung zu gewährleisten.</li>
-            <li style="font-size:14px;"><b>Ansichtsschaltfläche:</b> Neue Ansichtsschaltfläche im Hauptfenster, die alle Modusanzeigen (Bewegen, Anfügen usw.) ausblendet, damit Sie Ihr Design ohne störende UI-Elemente klar sehen können.</li>
+            <li style="font-size:14px;"><b>Multi-Tab-Arbeitsbereich:</b> Eine neue Schaltfläche „Tabs" öffnet eine verschiebbare Tab-Leiste, die magnetisch an der Seite der Leinwand einrastet. Jeder Tab ist eine eigenständige Sitzung mit eigenen Strängen, Gruppen und Rückgängig-/Wiederherstellen-Verlauf, und Sie werden vor dem Beenden gewarnt, wenn ein Tab noch nicht gespeicherte Änderungen enthält.</li>
+            <li style="font-size:14px;"><b>Ansichtsmodus-Optionen:</b> Neue Einstellungen blenden die Auswahl-Hervorhebung und die Kontrollpunkte im Ansichtsmodus aus und sorgen für eine aufgeräumte, aufnahmebereite Leinwand, ohne Ihre tatsächliche Auswahl zu ändern.</li>
+            <li style="font-size:14px;"><b>Umgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer umgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Kontextmenü der Ebenen-Schaltfläche festlegen müssen.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.107</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.108</p>
         ''',
         # About translations
         'about_info': '''
@@ -1387,6 +1446,7 @@ Beispiele:<br>
         'edit_mask': 'Maske bearbeiten',
         'reset_mask': 'Maske zurücksetzen',
         'transparent_stroke': 'Umgefaltete Startkante',
+        'folded_start_edge_desc': "Umgefaltete Startkante - Blendet den Umriss des Start-Halbkreises eines angehängten Strangs aus, sodass sein Anfang in den übergeordneten Strang übergeht und umgefaltet wirkt. Legen Sie dies pro Strang über das Kontextmenü der Ebenen-Schaltfläche fest oder aktivieren Sie \"Umgefaltete Startkante als Standard\" in den Einstellungen des Ebenenbereichs, um es auf jeden neuen Strang anzuwenden.",
         'transparent_closing_knot_side': 'Transparente Seite des geschlossenen Knotens',
         'restore_default_stroke': 'Standardkontur wiederherstellen',
         'restore_default_closing_knot_stroke': 'Standardkontur (geschl. Knoten) wiederherstellen',
@@ -1703,6 +1763,28 @@ Esempi:<br>
         'tutorial_info': 'Premi il pulsante "riproduci video" sotto ogni testo\nper visualizzare il tutorial che spiega:',
         'button_guide_info': 'Scopri i diversi pulsanti e le loro funzioni in OpenStrand Studio.\n\nSuggerimento: Fai clic destro sulle icone del pannello dei livelli per vedere le loro spiegazioni!',
         'layer_panel_buttons': 'Pulsanti del Pannello Livelli',
+        # Layer right-click context menu (button guide)
+        'layer_context_menu_title': 'Menu clic destro del livello',
+        'layer_context_menu_info': 'Fai clic destro su un pulsante di livello nel pannello dei livelli per aprire un menu. Le opzioni disponibili dipendono dal tipo di livello.',
+        'main_strand_menu_title': 'Trefolo principale (il nome termina con _1)',
+        'attached_strand_menu_title': 'Trefolo collegato',
+        'mask_strand_menu_title': 'Trefolo maschera',
+        'ctx_edit_mask_desc': 'Modifica manualmente la regione mascherata (nascosta) di questo livello maschera.',
+        'ctx_reset_mask_desc': 'Reimposta la maschera alla sua regione di sovrapposizione calcolata automaticamente.',
+        'ctx_hide_show_desc': 'Nascondi o mostra questo livello sulla tela.',
+        'ctx_shadow_only_desc': "Mostra solo l'ombra del trefolo nascondendo il trefolo stesso.",
+        'ctx_edit_shadows_desc': "Apri l'editor delle ombre per regolare come questo livello proietta e riceve le ombre.",
+        'ctx_change_color_desc': 'Cambia il colore di riempimento del trefolo.',
+        'ctx_change_stroke_color_desc': 'Cambia il colore del contorno del trefolo.',
+        'ctx_change_width_desc': 'Cambia lo spessore del trefolo.',
+        'ctx_stroke_transparency_desc': 'Rendi trasparente il contorno del cerchio o ripristina il contorno predefinito quando è già trasparente.',
+        'ctx_line_desc': "Mostra o nascondi la linea retta all'inizio e/o alla fine del trefolo.",
+        'ctx_arrow_desc': "Mostra o nascondi una freccia direzionale all'inizio e/o alla fine del trefolo.",
+        'ctx_full_arrow_desc': "Mostra o nascondi una freccia completa sul trefolo; quando è visibile, puoi personalizzarne colore, trasparenza, texture, stile dell'asta, punta e ombra.",
+        'ctx_close_knot_desc': "Chiudi l'estremità libera del trefolo in una connessione a nodo (mostrato solo quando il trefolo ha esattamente un'estremità libera).",
+        'ctx_closing_knot_desc': 'Rendi trasparente il bordo del nodo di chiusura o ripristina il suo contorno predefinito (mostrato solo per le connessioni chiuse).',
+        'ctx_dash_desc': "Mostra o nascondi una linea di estensione tratteggiata oltre l'inizio e/o la fine del trefolo.",
+        'ctx_circle_desc': "Mostra o nascondi il cerchio di connessione all'inizio e/o alla fine del trefolo.",
         'main_window_buttons': 'Pulsanti della Finestra Principale',
         # General Settings descriptions for button guide
         'general_settings_header': 'Impostazioni Generali',
@@ -1720,16 +1802,13 @@ Esempi:<br>
         'curve_shape_full_desc': 'Forma Curva - Controlla il tipo di curva matematica (1.0=angoli acuti, 2.0=curve lisce, 3.0=molto liscio)',
         'reset_curvature_full_desc': 'Ripristina Impostazioni Curvatura - Ripristina Influenza, Amplificazione e Forma ai valori predefiniti',
         'whats_new_info': '''
-        <h2>Novità della versione 1.107</h2>
+        <h2>Novità della versione 1.108</h2>
 
-            <li style="font-size:14px;"><b>Editor delle ombre di gruppo:</b> Le ombre ora possono essere modificate per interi gruppi, offrendoti il pieno controllo sul modo in cui i fili di un gruppo proiettano le loro ombre sulla tela.</li>
-            <li style="font-size:14px;"><b>Correzioni dell'editor delle ombre e supporto per fili mascherati:</b> La logica di sottrazione delle ombre è unificata tra il renderer principale e l'anteprima delle ombre, e i fili mascherati possono ora essere modificati tramite la finestra di dialogo dell'editor delle ombre con impostazioni predefinite intelligenti.</li>
-            <li style="font-size:14px;"><b>Impostazioni del filo selezionato:</b> Una nuova categoria "Filo Selezionato" nelle Impostazioni raggruppa opzioni che si applicano solo al filo attualmente selezionato — solo movimento, solo punti di controllo, sola ombra e un colore di evidenziazione della selezione personalizzabile.</li>
-            <li style="font-size:14px;"><b>Stabilità nella creazione dei gruppi:</b> Corretti gli arresti anomali inattesi causati da finestre di dialogo di gruppo nascoste orfane durante la creazione di gruppi o la chiusura dell'applicazione.</li>
-            <li style="font-size:14px;"><b>Allineamento da destra a sinistra per l'ebraico:</b> La finestra principale, la finestra delle impostazioni, il menu contestuale del gruppo e il pannello dei gruppi sono ora rispecchiati da destra a sinistra in ebraico per un ordine di lettura naturale.</li>
-            <li style="font-size:14px;"><b>Pulsante Vista:</b> Nuovo pulsante Vista nella finestra principale che nasconde tutti gli indicatori di modalità (Muovi, Collega, ecc.) in modo da poter vedere chiaramente il tuo progetto senza sovrapposizioni dell'interfaccia.</li>
+            <li style="font-size:14px;"><b>Area di lavoro multi-scheda:</b> Un nuovo pulsante Schede apre un bordo di schede trascinabile che si aggancia magneticamente al lato della tela. Ogni scheda è una sessione indipendente con i propri fili, gruppi e cronologia di annullamento/ripristino, e vieni avvisato prima di uscire quando una scheda contiene ancora modifiche non salvate.</li>
+            <li style="font-size:14px;"><b>Opzioni della modalità Vista:</b> Nuove impostazioni consentono di nascondere l'evidenziazione della selezione e i punti di controllo in modalità Vista, offrendoti una tela pulita e pronta per l'acquisizione senza modificare la selezione effettiva.</li>
+            <li style="font-size:14px;"><b>Bordo iniziale ripiegato come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale ripiegato (trasparente), così non devi più impostarlo filo per filo dal menu contestuale del pulsante del livello.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - Versione 1.107</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Versione 1.108</p>
         ''',
 
 
@@ -1841,6 +1920,7 @@ Esempi:<br>
         'edit_mask': 'Modifica Maschera',
         'reset_mask': 'Reimposta Maschera',
         'transparent_stroke': 'Bordo Iniziale Ripiegato',
+        'folded_start_edge_desc': "Bordo Iniziale Ripiegato - Nasconde il contorno del semicerchio iniziale di un filo collegato in modo che il suo inizio si fonda con il filo principale, creando un aspetto ripiegato. Impostalo filo per filo dal menu contestuale del pulsante del livello, oppure attiva \"Bordo iniziale ripiegato come predefinito\" nelle impostazioni del pannello dei livelli per applicarlo a ogni nuovo filo.",
         'transparent_closing_knot_side': 'Lato Trasparente del Nodo Chiuso',
         'restore_default_closing_knot_stroke': 'Ripristina Bordo del Nodo Chiuso Predefinito',
         'restore_default_stroke': 'Ripristina Traccia Predefinita',
@@ -2218,6 +2298,28 @@ Ejemplos:<br>
         'tutorial_info': 'Presiona el botón "reproducir vídeo" debajo de cada texto\npara ver el tutorial que explica:',
         'button_guide_info': 'Aprende sobre los diferentes botones y sus funciones en OpenStrand Studio.\n\n¡Consejo: Haz clic derecho en los iconos del panel de capas para ver sus explicaciones!',
         'layer_panel_buttons': 'Botones del Panel de Capas',
+        # Layer right-click context menu (button guide)
+        'layer_context_menu_title': 'Menú clic derecho de la capa',
+        'layer_context_menu_info': 'Haz clic derecho en un botón de capa en el panel de capas para abrir un menú. Las opciones disponibles dependen del tipo de capa.',
+        'main_strand_menu_title': 'Hebra principal (el nombre termina en _1)',
+        'attached_strand_menu_title': 'Hebra adjunta',
+        'mask_strand_menu_title': 'Hebra de máscara',
+        'ctx_edit_mask_desc': 'Editar manualmente la región enmascarada (oculta) de esta capa de máscara.',
+        'ctx_reset_mask_desc': 'Restablecer la máscara a su región de superposición calculada automáticamente.',
+        'ctx_hide_show_desc': 'Ocultar o mostrar esta capa en el lienzo.',
+        'ctx_shadow_only_desc': 'Mostrar solo la sombra de la hebra ocultando la hebra en sí.',
+        'ctx_edit_shadows_desc': 'Abrir el editor de sombras para ajustar cómo esta capa proyecta y recibe sombras.',
+        'ctx_change_color_desc': 'Cambiar el color de relleno de la hebra.',
+        'ctx_change_stroke_color_desc': 'Cambiar el color del contorno de la hebra.',
+        'ctx_change_width_desc': 'Cambiar el grosor de la hebra.',
+        'ctx_stroke_transparency_desc': 'Hacer transparente el contorno del círculo, o restaurar el contorno predeterminado cuando ya es transparente.',
+        'ctx_line_desc': 'Mostrar u ocultar la línea recta al inicio y/o al final de la hebra.',
+        'ctx_arrow_desc': 'Mostrar u ocultar una flecha direccional al inicio y/o al final de la hebra.',
+        'ctx_full_arrow_desc': 'Mostrar u ocultar una flecha completa sobre la hebra; cuando se muestra, puedes personalizar su color, transparencia, textura, estilo del asta, punta y sombra.',
+        'ctx_close_knot_desc': 'Cerrar el extremo libre de la hebra en una conexión de nudo (se muestra solo cuando la hebra tiene exactamente un extremo libre).',
+        'ctx_closing_knot_desc': 'Hacer transparente el borde del nudo de cierre, o restaurar su contorno predeterminado (se muestra solo para conexiones cerradas).',
+        'ctx_dash_desc': 'Mostrar u ocultar una línea de extensión discontinua más allá del inicio y/o el final de la hebra.',
+        'ctx_circle_desc': 'Mostrar u ocultar el círculo de conexión al inicio y/o al final de la hebra.',
         'main_window_buttons': 'Botones de la Ventana Principal',
         # General Settings descriptions for button guide
         'general_settings_header': 'Configuración General',
@@ -2235,16 +2337,13 @@ Ejemplos:<br>
         'curve_shape_full_desc': 'Forma de Curva - Controla el tipo de curva matemática (1.0=ángulos agudos, 2.0=curvas suaves, 3.0=muy suave)',
         'reset_curvature_full_desc': 'Restablecer Configuración de Curvatura - Restaura Influencia, Amplificación y Forma a valores predeterminados',
         'whats_new_info': '''
-        <h2>Novedades de la versión 1.107</h2>
+        <h2>Novedades de la versión 1.108</h2>
 
-            <li style="font-size:14px;"><b>Editor de sombras de grupo:</b> Ahora se pueden editar las sombras de grupos completos, ofreciéndote control total sobre cómo las hebras de un grupo proyectan sus sombras en el lienzo.</li>
-            <li style="font-size:14px;"><b>Correcciones del editor de sombras y soporte para hebras enmascaradas:</b> La lógica de sustracción de sombras se ha unificado entre el renderizador principal y la vista previa de sombras, y las hebras enmascaradas ahora pueden editarse a través del diálogo del editor de sombras con valores predeterminados inteligentes.</li>
-            <li style="font-size:14px;"><b>Ajustes de hebra seleccionada:</b> Una nueva categoría "Hebra Seleccionada" en Ajustes reúne opciones que solo se aplican a la hebra actualmente seleccionada — solo mover, solo puntos de control, solo sombra y un color de resaltado de selección personalizable.</li>
-            <li style="font-size:14px;"><b>Estabilidad en la creación de grupos:</b> Corregidos los cierres inesperados causados por diálogos de grupo ocultos huérfanos al crear grupos o al cerrar la aplicación.</li>
-            <li style="font-size:14px;"><b>Alineación de derecha a izquierda para el hebreo:</b> La ventana principal, el diálogo de ajustes, el menú contextual de grupo y el panel de grupos ahora se reflejan de derecha a izquierda en hebreo para un orden de lectura natural.</li>
-            <li style="font-size:14px;"><b>Botón Ver:</b> Nuevo botón Ver en la ventana principal que oculta todos los indicadores de modo (Mover, Adjuntar, etc.) para que puedas ver tu diseño claramente sin superposiciones de interfaz.</li>
+            <li style="font-size:14px;"><b>Espacio de trabajo con pestañas:</b> Un nuevo botón Pestañas abre un borde de pestañas arrastrable que se acopla magnéticamente al lado del lienzo. Cada pestaña es una sesión independiente con sus propias hebras, grupos e historial de deshacer/rehacer, y se te avisa antes de salir cuando una pestaña todavía tiene cambios sin guardar.</li>
+            <li style="font-size:14px;"><b>Opciones del modo Ver:</b> Nuevos ajustes permiten ocultar el resaltado de selección y los puntos de control en modo Ver, ofreciéndote un lienzo limpio y listo para capturar sin cambiar tu selección real.</li>
+            <li style="font-size:14px;"><b>Borde inicial replegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial replegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú contextual del botón de capa.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - Versión 1.107</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Versión 1.108</p>
         ''',
  
 
@@ -2356,6 +2455,7 @@ Ejemplos:<br>
         'edit_mask': 'Editar Máscara',
         'reset_mask': 'Restablecer Máscara',
         'transparent_stroke': 'Borde Inicial Replegado',
+        'folded_start_edge_desc': "Borde Inicial Replegado - Oculta el contorno del semicírculo inicial de una hebra adjunta para que su comienzo se funda con la hebra principal, creando un aspecto replegado. Configúralo hebra por hebra desde el menú contextual del botón de capa, o activa \"Borde inicial replegado por defecto\" en los ajustes del panel de capas para aplicarlo a cada nueva hebra.",
         'transparent_closing_knot_side': 'Lado Transparente del Nudo Cerrado',
         'restore_default_closing_knot_stroke': 'Restaurar Borde del Nudo Cerrado Predeterminado',
         'restore_default_stroke': 'Restaurar Trazo Predeterminado',
@@ -2733,6 +2833,28 @@ Exemplos:<br>
         'tutorial_info': 'Pressione o botão "reproduzir vídeo" abaixo de cada texto\npara visualizar o tutorial explicando:',
         'button_guide_info': 'Aprenda sobre os diferentes botões e suas funções no OpenStrand Studio.\n\nDica: Clique com o botão direito nos ícones do painel de camadas para ver suas explicações!',
         'layer_panel_buttons': 'Botões do Painel de Camadas',
+        # Layer right-click context menu (button guide)
+        'layer_context_menu_title': 'Menu de clique direito da camada',
+        'layer_context_menu_info': 'Clique com o botão direito em um botão de camada no painel de camadas para abrir um menu. As opções disponíveis dependem do tipo de camada.',
+        'main_strand_menu_title': 'Fio principal (o nome termina com _1)',
+        'attached_strand_menu_title': 'Fio anexado',
+        'mask_strand_menu_title': 'Fio de máscara',
+        'ctx_edit_mask_desc': 'Editar manualmente a região mascarada (oculta) desta camada de máscara.',
+        'ctx_reset_mask_desc': 'Redefinir a máscara para sua região de sobreposição calculada automaticamente.',
+        'ctx_hide_show_desc': 'Ocultar ou mostrar esta camada na tela.',
+        'ctx_shadow_only_desc': 'Mostrar apenas a sombra do fio, ocultando o próprio fio.',
+        'ctx_edit_shadows_desc': 'Abrir o editor de sombras para ajustar como esta camada projeta e recebe sombras.',
+        'ctx_change_color_desc': 'Alterar a cor de preenchimento do fio.',
+        'ctx_change_stroke_color_desc': 'Alterar a cor do contorno do fio.',
+        'ctx_change_width_desc': 'Alterar a espessura do fio.',
+        'ctx_stroke_transparency_desc': 'Tornar o contorno do círculo transparente ou restaurar o contorno padrão quando já estiver transparente.',
+        'ctx_line_desc': 'Mostrar ou ocultar a linha reta no início e/ou no fim do fio.',
+        'ctx_arrow_desc': 'Mostrar ou ocultar uma seta direcional no início e/ou no fim do fio.',
+        'ctx_full_arrow_desc': 'Mostrar ou ocultar uma seta completa sobre o fio; quando exibida, você pode personalizar sua cor, transparência, textura, estilo da haste, ponta e sombra.',
+        'ctx_close_knot_desc': 'Fechar a extremidade livre do fio em uma conexão de nó (exibido apenas quando o fio tem exatamente uma extremidade livre).',
+        'ctx_closing_knot_desc': 'Tornar a borda do nó de fechamento transparente ou restaurar seu contorno padrão (exibido apenas para conexões fechadas).',
+        'ctx_dash_desc': 'Mostrar ou ocultar uma linha de extensão tracejada além do início e/ou do fim do fio.',
+        'ctx_circle_desc': 'Mostrar ou ocultar o círculo de conexão no início e/ou no fim do fio.',
         'main_window_buttons': 'Botões da Janela Principal',
         # General Settings descriptions for button guide
         'general_settings_header': 'Configurações Gerais',
@@ -2750,16 +2872,13 @@ Exemplos:<br>
         'curve_shape_full_desc': 'Forma da Curva - Controla o tipo de curva matemática (1.0=ângulos agudos, 2.0=curvas suaves, 3.0=muito suave)',
         'reset_curvature_full_desc': 'Redefinir Configurações de Curvatura - Restaura Influência, Amplificação e Forma aos padrões',
         'whats_new_info': '''
-        <h2>Novidades da versão 1.107</h2>
+        <h2>Novidades da versão 1.108</h2>
 
-            <li style="font-size:14px;"><b>Editor de sombras de grupo:</b> As sombras agora podem ser editadas para grupos inteiros, dando a você controle total sobre como as mechas de um grupo projetam suas sombras na tela.</li>
-            <li style="font-size:14px;"><b>Correções do editor de sombras e suporte a mechas mascaradas:</b> A lógica de subtração de sombras foi unificada entre o renderizador principal e a pré-visualização de sombras, e as mechas mascaradas agora podem ser editadas através da caixa de diálogo do editor de sombras com valores padrão inteligentes.</li>
-            <li style="font-size:14px;"><b>Configurações de mecha selecionada:</b> Uma nova categoria "Fio Selecionado" em Configurações reúne opções que se aplicam apenas à mecha atualmente selecionada — apenas mover, apenas pontos de controle, apenas sombra e uma cor de destaque da seleção personalizável.</li>
-            <li style="font-size:14px;"><b>Estabilidade na criação de grupos:</b> Corrigidas as falhas inesperadas causadas por caixas de diálogo de grupo ocultas órfãs ao criar grupos ou ao fechar o aplicativo.</li>
-            <li style="font-size:14px;"><b>Alinhamento da direita para a esquerda para hebraico:</b> A janela principal, a caixa de diálogo de configurações, o menu de contexto do grupo e o painel de grupos agora são espelhados da direita para a esquerda em hebraico para uma ordem de leitura natural.</li>
-            <li style="font-size:14px;"><b>Botão Ver:</b> Novo botão Ver na janela principal que oculta todos os indicadores de modo (Mover, Anexar, etc.) para que você possa ver seu design claramente sem sobreposições de interface.</li>
+            <li style="font-size:14px;"><b>Espaço de trabalho com abas:</b> Um novo botão Abas abre uma borda de abas arrastável que se encaixa magneticamente na lateral da tela. Cada aba é uma sessão independente com seus próprios fios, grupos e histórico de desfazer/refazer, e você é avisado antes de sair quando uma aba ainda tem alterações não salvas.</li>
+            <li style="font-size:14px;"><b>Opções do modo Visualização:</b> Novas configurações permitem ocultar o destaque de seleção e os pontos de controle no modo Visualização, oferecendo uma tela limpa e pronta para captura sem alterar sua seleção real.</li>
+            <li style="font-size:14px;"><b>Borda inicial dobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial dobrada (transparente), para que você não precise mais defini-la fio por fio no menu de contexto do botão de camada.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio – Versão 1.107</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio – Versão 1.108</p>
         ''',
 
 
@@ -2871,6 +2990,7 @@ Exemplos:<br>
         'edit_mask': 'Editar Máscara',
         'reset_mask': 'Redefinir Máscara',
         'transparent_stroke': 'Borda Inicial Dobrada',
+        'folded_start_edge_desc': "Borda Inicial Dobrada - Oculta o contorno do semicírculo inicial de um fio anexado para que seu início se funda ao fio principal, criando um aspecto dobrado. Defina-o fio por fio no menu de contexto do botão de camada, ou ative \"Borda inicial dobrada por padrão\" nas configurações do painel de camadas para aplicá-lo a cada novo fio.",
         'transparent_closing_knot_side': 'Lado Transparente do Nó Fechado',
         'restore_default_closing_knot_stroke': 'Restaurar Borda do Nó Fechado Padrão',
         'restore_default_stroke': 'Restaurar Traço Padrão',
@@ -3254,6 +3374,28 @@ Exemplos:<br>
         'tutorial_info': 'לחץ על כפתור "הפעל וידאו" מתחת לכל טקסט\nכדי לראות את המדריך המסביר:',
         'button_guide_info': 'למד על הכפתורים השונים והפונקציות שלהם ב-OpenStrand Studio.\n\nטיפ: לחץ לחיצה ימנית על אייקוני פאנל השכבות כדי לראות הסברים!',
         'layer_panel_buttons': 'כפתורי פאנל השכבות',
+        # Layer right-click context menu (button guide)
+        'layer_context_menu_title': 'תפריט קליק ימני של השכבה',
+        'layer_context_menu_info': 'לחץ לחיצה ימנית על כפתור שכבה בפאנל השכבות כדי לפתוח תפריט. האפשרויות הזמינות תלויות בסוג השכבה.',
+        'main_strand_menu_title': 'גדיל ראשי (השם מסתיים ב-_1)',
+        'attached_strand_menu_title': 'גדיל מחובר',
+        'mask_strand_menu_title': 'גדיל מסכה',
+        'ctx_edit_mask_desc': 'ערוך ידנית את האזור הממוסך (המוסתר) של שכבת מסכה זו.',
+        'ctx_reset_mask_desc': 'אפס את המסכה לאזור החפיפה המחושב אוטומטית שלה.',
+        'ctx_hide_show_desc': 'הסתר או הצג שכבה זו על הקנבס.',
+        'ctx_shadow_only_desc': 'הצג רק את צל הגדיל תוך הסתרת הגדיל עצמו.',
+        'ctx_edit_shadows_desc': 'פתח את עורך הצללים כדי לכוון כיצד שכבה זו מטילה ומקבלת צללים.',
+        'ctx_change_color_desc': 'שנה את צבע המילוי של הגדיל.',
+        'ctx_change_stroke_color_desc': 'שנה את צבע המתאר של הגדיל.',
+        'ctx_change_width_desc': 'שנה את עובי הגדיל.',
+        'ctx_stroke_transparency_desc': 'הפוך את מתאר העיגול לשקוף, או שחזר את מתאר ברירת המחדל כאשר הוא כבר שקוף.',
+        'ctx_line_desc': 'הצג או הסתר את הקו הישר בתחילת ו/או בסוף הגדיל.',
+        'ctx_arrow_desc': 'הצג או הסתר חץ כיווני בתחילת ו/או בסוף הגדיל.',
+        'ctx_full_arrow_desc': 'הצג או הסתר חץ מלא על הגדיל; כאשר הוא מוצג, ניתן להתאים אישית את צבעו, השקיפות, המרקם, סגנון הגוף, הראש והצל.',
+        'ctx_close_knot_desc': 'סגור את הקצה החופשי של הגדיל לחיבור קשר (מוצג רק כאשר לגדיל יש בדיוק קצה חופשי אחד).',
+        'ctx_closing_knot_desc': 'הפוך את קצה קשר הסגירה לשקוף, או שחזר את מתאר ברירת המחדל שלו (מוצג רק עבור חיבורים סגורים).',
+        'ctx_dash_desc': 'הצג או הסתר קו הארכה מקווקו מעבר לתחילת ו/או לסוף הגדיל.',
+        'ctx_circle_desc': 'הצג או הסתר את עיגול החיבור בתחילת ו/או בסוף הגדיל.',
         'main_window_buttons': 'כפתורי החלון הראשי',
         # General Settings descriptions for button guide
         'general_settings_header': 'הגדרות כלליות',
@@ -3272,16 +3414,13 @@ Exemplos:<br>
         'reset_curvature_full_desc': 'אפס הגדרות עקמומיות - מחזיר השפעה, הגברה וצורה לברירת המחדל',
         'whats_new_info': '''
         <div dir="rtl" style="text-align: right;">
-        <h2>מה חדש בגרסה 1.107</h2>
+        <h2>מה חדש בגרסה 1.108</h2>
 
-            <li style="font-size:14px;"><b>עורך צללים לקבוצה:</b> ניתן כעת לערוך צללים עבור קבוצות שלמות, ומעניק לך שליטה מלאה על האופן שבו חוטי הקבוצה מטילים צללים על הקנבס.</li>
-            <li style="font-size:14px;"><b>תיקונים בעורך הצללים ותמיכה בחוטים ממוסכים:</b> לוגיקת חיסור הצללים אוחדה בין המעבד הראשי לבין תצוגת הצללים, וכעת ניתן לערוך חוטים ממוסכים דרך חלון עורך הצללים עם ברירות מחדל חכמות.</li>
-            <li style="font-size:14px;"><b>הגדרות חוט נבחר:</b> קטגוריה חדשה "חוט נבחר" בהגדרות מאגדת אפשרויות שחלות רק על החוט הנבחר כעת — הזזה בלבד, נקודות בקרה בלבד, צל בלבד וצבע הדגשה מותאם אישית לבחירה.</li>
-            <li style="font-size:14px;"><b>יציבות ביצירת קבוצות:</b> תוקנו קריסות לא צפויות הנגרמות על ידי חלונות קבוצה מוסתרים יתומים בעת יצירת קבוצות או יציאה מהיישום.</li>
-            <li style="font-size:14px;"><b>יישור מימין לשמאל בעברית:</b> החלון הראשי, חלון ההגדרות, תפריט ההקשר של קבוצות וחלונית הקבוצות ממוסכים כעת מימין לשמאל בעברית לסדר קריאה טבעי.</li>
-            <li style="font-size:14px;"><b>כפתור תצוגה:</b> כפתור תצוגה חדש בחלון הראשי שמסתיר את כל מחווני המצב (הזז, חבר וכו') כך שתוכל לראות את העיצוב שלך בבירור ללא שכבות ממשק נוספות.</li>
+            <li style="font-size:14px;"><b>כרטיסיות מרובות:</b> כפתור "כרטיסיות" חדש פותח קצה כרטיסיות נגרר שנצמד מגנטית לצד הקנבס. כל כרטיסייה היא הפעלה עצמאית עם החוטים, הקבוצות והיסטוריית הביטול/ביצוע מחדש שלה, ותקבלו אזהרה לפני יציאה כאשר בכרטיסייה עדיין יש שינויים שלא נשמרו.</li>
+            <li style="font-size:14px;"><b>אפשרויות מצב תצוגה:</b> הגדרות חדשות מאפשרות להסתיר את הדגשת הבחירה ואת נקודות הבקרה במצב תצוגה, ומעניקות לכם קנבס נקי ומוכן לצילום מבלי לשנות את הבחירה בפועל.</li>
+            <li style="font-size:14px;"><b>קצה התחלה מקופל כברירת מחדל:</b> הגדרה חדשה בלוח השכבות גורמת לכל חוט מחובר חדש להתחיל אוטומטית עם קצה התחלה מקופל (שקוף), כך שאין צורך להגדיר זאת לכל חוט בנפרד מתפריט ההקשר של כפתור השכבה.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - גרסה 1.107</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - גרסה 1.108</p>
         </div>
         ''',
 
@@ -3395,6 +3534,7 @@ Exemplos:<br>
         'edit_mask': 'ערוך מסכה',
         'reset_mask': 'אפס מסכה',
         'transparent_stroke': 'קצה התחלה מקופל',
+        'folded_start_edge_desc': "קצה התחלה מקופל - מסתיר את קו המתאר של חצי-העיגול בתחילת חוט מחובר כך שתחילתו מתמזגת עם חוט האב ויוצרת מראה מקופל. ניתן להגדיר זאת לכל חוט בנפרד מתפריט ההקשר של כפתור השכבה, או להפעיל \"קצה התחלה מקופל כברירת מחדל\" בהגדרות לוח השכבות כדי להחיל זאת על כל חוט חדש.",
         'transparent_closing_knot_side': 'צד שקוף של קשר סגור',
         'restore_default_closing_knot_stroke': 'שחזר קו קשר סגור ברירת מחדל',
         'restore_default_stroke': 'שחזר קו ברירת מחדל',

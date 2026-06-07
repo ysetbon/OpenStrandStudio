@@ -2806,6 +2806,10 @@ class MainWindow(QMainWindow):
             return True
         if not any(getattr(t, 'dirty', False) for t in tm.tabs):
             return True
+        # The user can opt out of the quit-time "unsaved changes" prompt in
+        # Settings; when enabled, quitting proceeds without warning.
+        if getattr(getattr(self, 'canvas', None), 'skip_quit_warning', False):
+            return True
         _ = translations[self.language_code]
         box = QMessageBox(self)
         box.setIcon(QMessageBox.Warning)

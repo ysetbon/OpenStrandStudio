@@ -65,6 +65,8 @@ class SettingsDialog(QDialog):
         self.view_hide_highlight = getattr(canvas, 'view_hide_highlight', False)  # In view mode, hide selection highlight
         self.view_hide_control_points = getattr(canvas, 'view_hide_control_points', False)  # In view mode, hide control points
         self.default_transparent_start_circle = getattr(canvas, 'default_transparent_start_circle', False)  # New strands start with transparent outline
+        self.skip_close_tab_warning = getattr(canvas, 'skip_close_tab_warning', False)  # Skip per-tab unsaved-changes prompt
+        self.skip_quit_warning = getattr(canvas, 'skip_quit_warning', False)  # Skip quit-time unsaved-changes prompt
         # Highlight color for selection indicators (default red)
         self.highlight_color = getattr(canvas, 'highlight_color', QColor(255, 0, 0, 255))
         if not isinstance(self.highlight_color, QColor):
@@ -132,6 +134,8 @@ class SettingsDialog(QDialog):
             self.canvas.view_hide_highlight = self.view_hide_highlight
             self.canvas.view_hide_control_points = self.view_hide_control_points
             self.canvas.default_transparent_start_circle = self.default_transparent_start_circle
+            self.canvas.skip_close_tab_warning = self.skip_close_tab_warning
+            self.canvas.skip_quit_warning = self.skip_quit_warning
             # Apply highlight color
             self.canvas.set_highlight_color(self.highlight_color)
 
@@ -272,6 +276,10 @@ class SettingsDialog(QDialog):
                     self.snap_to_grid_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 if hasattr(self, 'snap_to_grid_attach_label'):
                     self.snap_to_grid_attach_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if hasattr(self, 'skip_close_tab_warning_label'):
+                    self.skip_close_tab_warning_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if hasattr(self, 'skip_quit_warning_label'):
+                    self.skip_quit_warning_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 if hasattr(self, 'default_arrow_color_label'):
                     self.default_arrow_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 if hasattr(self, 'extended_mask_label'):
@@ -306,6 +314,10 @@ class SettingsDialog(QDialog):
                     self.snap_to_grid_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 if hasattr(self, 'snap_to_grid_attach_label'):
                     self.snap_to_grid_attach_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                if hasattr(self, 'skip_close_tab_warning_label'):
+                    self.skip_close_tab_warning_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                if hasattr(self, 'skip_quit_warning_label'):
+                    self.skip_quit_warning_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 if hasattr(self, 'default_arrow_color_label'):
                     self.default_arrow_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 if hasattr(self, 'extended_mask_label'):
@@ -328,7 +340,8 @@ class SettingsDialog(QDialog):
             # Also update direction for QHBoxLayouts within General Settings
             general_setting_layouts = [
                 'theme_layout', 'performance_layout', 
-                'third_control_layout', 'snap_to_grid_layout', 'snap_to_grid_attach_layout', 'show_highlights_layout', 'show_hover_highlights_layout', # 'extended_mask_layout', 
+                'third_control_layout', 'snap_to_grid_layout', 'snap_to_grid_attach_layout', 'show_highlights_layout', 'show_hover_highlights_layout', # 'extended_mask_layout',
+                'skip_close_tab_warning_layout', 'skip_quit_warning_layout',
                 'num_steps_layout', 'blur_radius_layout',
                 'curvature_bias_layout', 'base_fraction_layout',
                 'distance_mult_layout', 'curve_response_layout',
@@ -752,6 +765,34 @@ class SettingsDialog(QDialog):
                 self.snap_to_grid_attach_layout.addStretch()
             self.snap_to_grid_attach_layout.invalidate()
             self.snap_to_grid_attach_layout.activate()
+
+        # Skip close-tab warning checkbox layout reorganization
+        if hasattr(self, 'skip_close_tab_warning_layout') and hasattr(self, 'skip_close_tab_warning_label') and hasattr(self, 'skip_close_tab_warning_checkbox'):
+            self.clear_layout(self.skip_close_tab_warning_layout)
+            if is_rtl:
+                self.skip_close_tab_warning_layout.addStretch()
+                self.skip_close_tab_warning_layout.addWidget(self.skip_close_tab_warning_checkbox)
+                self.skip_close_tab_warning_layout.addWidget(self.skip_close_tab_warning_label)
+            else:
+                self.skip_close_tab_warning_layout.addWidget(self.skip_close_tab_warning_label)
+                self.skip_close_tab_warning_layout.addWidget(self.skip_close_tab_warning_checkbox)
+                self.skip_close_tab_warning_layout.addStretch()
+            self.skip_close_tab_warning_layout.invalidate()
+            self.skip_close_tab_warning_layout.activate()
+
+        # Skip quit warning checkbox layout reorganization
+        if hasattr(self, 'skip_quit_warning_layout') and hasattr(self, 'skip_quit_warning_label') and hasattr(self, 'skip_quit_warning_checkbox'):
+            self.clear_layout(self.skip_quit_warning_layout)
+            if is_rtl:
+                self.skip_quit_warning_layout.addStretch()
+                self.skip_quit_warning_layout.addWidget(self.skip_quit_warning_checkbox)
+                self.skip_quit_warning_layout.addWidget(self.skip_quit_warning_label)
+            else:
+                self.skip_quit_warning_layout.addWidget(self.skip_quit_warning_label)
+                self.skip_quit_warning_layout.addWidget(self.skip_quit_warning_checkbox)
+                self.skip_quit_warning_layout.addStretch()
+            self.skip_quit_warning_layout.invalidate()
+            self.skip_quit_warning_layout.activate()
         
         # Show highlights layout reorganization (for move/attach mode indicator)
         if hasattr(self, 'show_highlights_layout') and hasattr(self, 'show_highlights_label') and hasattr(self, 'show_highlights_checkbox'):
@@ -1540,6 +1581,12 @@ class SettingsDialog(QDialog):
                         elif line.startswith('DefaultTransparentStartCircle:'):
                             value = line.split(':', 1)[1].strip().lower()
                             self.default_transparent_start_circle = (value == 'true')
+                        elif line.startswith('SkipCloseTabWarning:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            self.skip_close_tab_warning = (value == 'true')
+                        elif line.startswith('SkipQuitWarning:'):
+                            value = line.split(':', 1)[1].strip().lower()
+                            self.skip_quit_warning = (value == 'true')
                         elif line.startswith('HighlightColor:'):
                             try:
                                 r, g, b, a = map(int, line.split(':', 1)[1].strip().split(','))
@@ -2001,6 +2048,40 @@ class SettingsDialog(QDialog):
 
         general_layout.addLayout(self.show_hover_highlights_layout)
         # general_layout.addLayout(self.extended_mask_layout)
+
+        # Skip "unsaved changes" prompt when closing a single tab
+        if not hasattr(self, 'skip_close_tab_warning_layout'):
+            self.skip_close_tab_warning_layout = QHBoxLayout()
+        self.skip_close_tab_warning_label = QLabel(_['skip_close_tab_warning'] if 'skip_close_tab_warning' in _ else "Don't ask to save when closing a tab")
+        self.skip_close_tab_warning_label.setWordWrap(False)
+        self.skip_close_tab_warning_checkbox = QCheckBox()
+        self.skip_close_tab_warning_checkbox.setChecked(self.skip_close_tab_warning)
+        if self.is_rtl_language(self.current_language):
+            self.skip_close_tab_warning_layout.addStretch()
+            self.skip_close_tab_warning_layout.addWidget(self.skip_close_tab_warning_checkbox)
+            self.skip_close_tab_warning_layout.addWidget(self.skip_close_tab_warning_label)
+        else:
+            self.skip_close_tab_warning_layout.addWidget(self.skip_close_tab_warning_label)
+            self.skip_close_tab_warning_layout.addWidget(self.skip_close_tab_warning_checkbox)
+            self.skip_close_tab_warning_layout.addStretch()
+        general_layout.addLayout(self.skip_close_tab_warning_layout)
+
+        # Skip "unsaved changes" prompt when quitting the app
+        if not hasattr(self, 'skip_quit_warning_layout'):
+            self.skip_quit_warning_layout = QHBoxLayout()
+        self.skip_quit_warning_label = QLabel(_['skip_quit_warning'] if 'skip_quit_warning' in _ else "Don't ask to save when quitting")
+        self.skip_quit_warning_label.setWordWrap(False)
+        self.skip_quit_warning_checkbox = QCheckBox()
+        self.skip_quit_warning_checkbox.setChecked(self.skip_quit_warning)
+        if self.is_rtl_language(self.current_language):
+            self.skip_quit_warning_layout.addStretch()
+            self.skip_quit_warning_layout.addWidget(self.skip_quit_warning_checkbox)
+            self.skip_quit_warning_layout.addWidget(self.skip_quit_warning_label)
+        else:
+            self.skip_quit_warning_layout.addWidget(self.skip_quit_warning_label)
+            self.skip_quit_warning_layout.addWidget(self.skip_quit_warning_checkbox)
+            self.skip_quit_warning_layout.addStretch()
+        general_layout.addLayout(self.skip_quit_warning_layout)
 
         # Add Shadow Blur Steps
         self.num_steps_layout = QHBoxLayout() # STORE AS INSTANCE ATTRIBUTE
@@ -4097,11 +4178,20 @@ class SettingsDialog(QDialog):
         # Apply Snap to Grid Setting
         self.snap_to_grid_enabled = self.snap_to_grid_checkbox.isChecked()
         self.snap_to_grid_attach_enabled = self.snap_to_grid_attach_checkbox.isChecked()
-        
+
         if self.canvas:
             # Set the new value in canvas
             self.canvas.snap_to_grid_enabled = self.snap_to_grid_enabled
             self.canvas.snap_to_grid_attach_enabled = self.snap_to_grid_attach_enabled
+
+        # Apply "skip unsaved-changes prompt" Settings
+        if hasattr(self, 'skip_close_tab_warning_checkbox'):
+            self.skip_close_tab_warning = self.skip_close_tab_warning_checkbox.isChecked()
+        if hasattr(self, 'skip_quit_warning_checkbox'):
+            self.skip_quit_warning = self.skip_quit_warning_checkbox.isChecked()
+        if self.canvas:
+            self.canvas.skip_close_tab_warning = self.skip_close_tab_warning
+            self.canvas.skip_quit_warning = self.skip_quit_warning
         
         # Apply Show Move Highlights Setting
         self.show_move_highlights = self.show_highlights_checkbox.isChecked()
@@ -4371,6 +4461,10 @@ class SettingsDialog(QDialog):
         self.third_control_label.setText(_['enable_third_control_point'] if 'enable_third_control_point' in _ else "Enable third control point at center")
         self.curvature_bias_label.setText(_['enable_curvature_bias_control'] if 'enable_curvature_bias_control' in _ else "Enable curvature bias controls")
         self.snap_to_grid_label.setText(_['enable_snap_to_grid'] if 'enable_snap_to_grid' in _ else "Enable snap to grid")
+        if hasattr(self, 'skip_close_tab_warning_label'):
+            self.skip_close_tab_warning_label.setText(_['skip_close_tab_warning'] if 'skip_close_tab_warning' in _ else "Don't ask to save when closing a tab")
+        if hasattr(self, 'skip_quit_warning_label'):
+            self.skip_quit_warning_label.setText(_['skip_quit_warning'] if 'skip_quit_warning' in _ else "Don't ask to save when quitting")
         if hasattr(self, 'snap_to_grid_attach_label'):
             self.snap_to_grid_attach_label.setText(_['enable_snap_to_grid_attach'] if 'enable_snap_to_grid_attach' in _ else "Enable snap to grid for attach/create mode")
         self.show_highlights_label.setText(_['show_move_highlights'] if 'show_move_highlights' in _ else "Show highlights in move modes")
@@ -4915,6 +5009,8 @@ class SettingsDialog(QDialog):
                 file.write(f"ViewHideHighlight: {str(self.view_hide_highlight).lower()}\n")
                 file.write(f"ViewHideControlPoints: {str(self.view_hide_control_points).lower()}\n")
                 file.write(f"DefaultTransparentStartCircle: {str(self.default_transparent_start_circle).lower()}\n")
+                file.write(f"SkipCloseTabWarning: {str(self.skip_close_tab_warning).lower()}\n")
+                file.write(f"SkipQuitWarning: {str(self.skip_quit_warning).lower()}\n")
                 file.write(f"HighlightColor: {self.highlight_color.red()},{self.highlight_color.green()},{self.highlight_color.blue()},{self.highlight_color.alpha()}\n")
                 # Save shadow blur settings
                 file.write(f"NumSteps: {self.num_steps}\n")

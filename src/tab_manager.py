@@ -328,7 +328,11 @@ class TabManager(QObject):
         original_active_id = self.active_tab_id
         closing_active = (tab_id == original_active_id)
 
-        if session.dirty:
+        # The user can opt out of the per-tab "unsaved changes" prompt in
+        # Settings; when enabled, closing a dirty tab just discards it silently.
+        skip_close_warning = getattr(self.canvas, 'skip_close_tab_warning', False)
+
+        if session.dirty and not skip_close_warning:
             box = QMessageBox(self.main_window)
             box.setIcon(QMessageBox.Warning)
             box.setWindowTitle(self._tr('unsaved_tab_title', 'Unsaved changes'))

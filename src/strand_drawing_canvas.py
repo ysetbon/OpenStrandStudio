@@ -1335,6 +1335,9 @@ class StrandDrawingCanvas(QWidget):
         # Initialize snap to grid settings
         self.snap_to_grid_enabled = True  # Default to enabled for move mode
         self.snap_to_grid_attach_enabled = True  # Default to enabled for attach/create mode
+        # When True, skip the "unsaved changes" confirmation dialogs on close
+        self.skip_close_tab_warning = False  # Closing a single dirty tab
+        self.skip_quit_warning = False  # Quitting the app with dirty tabs
         # Default extension line settings
         self.extension_length = 100.0
         self.extension_dash_count = 10

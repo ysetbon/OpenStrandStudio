@@ -141,6 +141,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab Workspace:</b> A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.</li>
         <li><b>View Mode Toggles in Settings:</b> New settings let you hide the selection highlight and hide control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.</li>
+        <li><b>Folded-Over Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
     </ul>
     <hr>
     <!-- German -->
@@ -150,6 +151,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab-Arbeitsbereich:</b> Eine neue Schaltfläche „Tabs“ öffnet eine verschiebbare Tab-Leiste, die magnetisch an der Seite der Leinwand einrastet. Jeder Tab ist eine eigenständige Sitzung mit eigenen Strängen, Gruppen und Rückgängig-/Wiederherstellen-Verlauf, und Sie werden vor dem Beenden gewarnt, wenn ein Tab noch nicht gespeicherte Änderungen enthält.</li>
         <li><b>Ansichtsmodus-Optionen in den Einstellungen:</b> Neue Einstellungen blenden die Auswahl-Hervorhebung und die Kontrollpunkte im Ansichtsmodus aus und sorgen für eine aufgeräumte, aufnahmebereite Leinwand, ohne Ihre tatsächliche Auswahl zu ändern.</li>
+        <li><b>Umgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer umgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -159,6 +161,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <ul>
         <li><b>Espace de travail multi-onglets:</b> Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas. Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement, et vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.</li>
         <li><b>Options du mode Vue dans les Paramètres:</b> De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue, vous offrant un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.</li>
+        <li><b>Bord de départ replié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
     </ul>
     <hr>
     <!-- Italian -->
@@ -168,6 +171,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <ul>
         <li><b>Area di lavoro multi-scheda:</b> Un nuovo pulsante Schede apre un bordo di schede trascinabile che si aggancia magneticamente al lato della tela. Ogni scheda è una sessione indipendente con i propri fili, gruppi e cronologia di annullamento/ripristino, e vieni avvisato prima di uscire quando una scheda contiene ancora modifiche non salvate.</li>
         <li><b>Opzioni della modalità Vista nelle Impostazioni:</b> Nuove impostazioni consentono di nascondere l'evidenziazione della selezione e i punti di controllo in modalità Vista, offrendoti una tela pulita e pronta per l'acquisizione senza modificare la selezione effettiva.</li>
+        <li><b>Bordo iniziale ripiegato come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale ripiegato (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -177,6 +181,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <ul>
         <li><b>Espacio de trabajo con pestañas:</b> Un nuevo botón Pestañas abre un borde de pestañas arrastrable que se acopla magnéticamente al lado del lienzo. Cada pestaña es una sesión independiente con sus propias hebras, grupos e historial de deshacer/rehacer, y se te avisa antes de salir cuando una pestaña todavía tiene cambios sin guardar.</li>
         <li><b>Opciones del modo Ver en Ajustes:</b> Nuevos ajustes permiten ocultar el resaltado de selección y los puntos de control en modo Ver, ofreciéndote un lienzo limpio y listo para capturar sin cambiar tu selección real.</li>
+        <li><b>Borde inicial replegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial replegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
@@ -186,6 +191,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <ul>
         <li><b>Espaço de trabalho com abas:</b> Um novo botão Abas abre uma borda de abas arrastável que se encaixa magneticamente na lateral da tela. Cada aba é uma sessão independente com seus próprios fios, grupos e histórico de desfazer/refazer, e você é avisado antes de sair quando uma aba ainda tem alterações não salvas.</li>
         <li><b>Opções do modo Visualização nas Configurações:</b> Novas configurações permitem ocultar o destaque de seleção e os pontos de controle no modo Visualização, oferecendo uma tela limpa e pronta para captura sem alterar sua seleção real.</li>
+        <li><b>Borda inicial dobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial dobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -196,6 +202,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <ul>
         <li><b>&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D5;&#x05D1;&#x05D5;&#x05EA;:</b> &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; "&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA;" &#x05D7;&#x05D3;&#x05E9; &#x05E4;&#x05D5;&#x05EA;&#x05D7; &#x05E7;&#x05E6;&#x05D4; &#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA; &#x05E0;&#x05D2;&#x05E8;&#x05E8; &#x05E9;&#x05E0;&#x05E6;&#x05DE;&#x05D3; &#x05DE;&#x05D2;&#x05E0;&#x05D8;&#x05D9;&#x05EA; &#x05DC;&#x05E6;&#x05D3; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1;. &#x05DB;&#x05DC; &#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D9;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D4; &#x05E2;&#x05E6;&#x05DE;&#x05D0;&#x05D9;&#x05EA; &#x05E2;&#x05DD; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D4;&#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05D5;&#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D9;&#x05EA; &#x05D4;&#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05D1;&#x05D9;&#x05E6;&#x05D5;&#x05E2; &#x05DE;&#x05D7;&#x05D3;&#x05E9; &#x05E9;&#x05DC;&#x05D4;, &#x05D5;&#x05EA;&#x05E7;&#x05D1;&#x05DC;&#x05D5; &#x05D0;&#x05D6;&#x05D4;&#x05E8;&#x05D4; &#x05DC;&#x05E4;&#x05E0;&#x05D9; &#x05D9;&#x05E6;&#x05D9;&#x05D0;&#x05D4; &#x05DB;&#x05D0;&#x05E9;&#x05E8; &#x05D1;&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D9;&#x05D4; &#x05E2;&#x05D3;&#x05D9;&#x05D9;&#x05DF; &#x05D9;&#x05E9; &#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9;&#x05D9;&#x05DD; &#x05E9;&#x05DC;&#x05D0; &#x05E0;&#x05E9;&#x05DE;&#x05E8;&#x05D5;.</li>
         <li><b>&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05DE;&#x05E6;&#x05D1; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA;:</b> &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05D7;&#x05D3;&#x05E9;&#x05D5;&#x05EA; &#x05DE;&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05EA; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05D9;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05D3;&#x05D2;&#x05E9;&#x05EA; &#x05D4;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05D0;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D4;&#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D1;&#x05DE;&#x05E6;&#x05D1; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4;, &#x05D5;&#x05DE;&#x05E2;&#x05E0;&#x05D9;&#x05E7;&#x05D5;&#x05EA; &#x05DC;&#x05DB;&#x05DD; &#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E0;&#x05E7;&#x05D9; &#x05D5;&#x05DE;&#x05D5;&#x05DB;&#x05DF; &#x05DC;&#x05E6;&#x05D9;&#x05DC;&#x05D5;&#x05DD; &#x05DE;&#x05D1;&#x05DC;&#x05D9; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D1;&#x05E4;&#x05D5;&#x05E2;&#x05DC;.</li>
+        <li><b>&#x05E7;&#x05E6;&#x05D4; &#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05D4; &#x05DE;&#x05E7;&#x05D5;&#x05E4;&#x05DC; &#x05DB;&#x05D1;&#x05E8;&#x05D9;&#x05E8;&#x05EA; &#x05DE;&#x05D7;&#x05D3;&#x05DC;:</b> &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05D1;&#x05DC;&#x05D5;&#x05D7; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05D2;&#x05D5;&#x05E8;&#x05DE;&#x05EA; &#x05DC;&#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05DE;&#x05D7;&#x05D5;&#x05D1;&#x05E8; &#x05D7;&#x05D3;&#x05E9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05D4; &#x05DE;&#x05E7;&#x05D5;&#x05E4;&#x05DC; (&#x05E9;&#x05E7;&#x05D5;&#x05E3;), &#x05DB;&#x05DA; &#x05E9;&#x05D0;&#x05D9;&#x05DF; &#x05E6;&#x05D5;&#x05E8;&#x05DA; &#x05DC;&#x05D4;&#x05D2;&#x05D3;&#x05D9;&#x05E8; &#x05D6;&#x05D0;&#x05EA; &#x05DC;&#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3; &#x05DE;&#x05EA;&#x05E4;&#x05E8;&#x05D9;&#x05D8; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D4;.</li>
     </ul>
     </div>
 </body>
@@ -342,6 +349,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espace de travail multi-onglets:</b> Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas. Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement, et vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.</li>
         <li><b>Options du mode Vue dans les Paramètres:</b> De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue, vous offrant un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.</li>
+        <li><b>Bord de départ replié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
     </ul>
     <hr>
     <!-- English -->
@@ -351,6 +359,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab Workspace:</b> A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.</li>
         <li><b>View Mode Toggles in Settings:</b> New settings let you hide the selection highlight and hide control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.</li>
+        <li><b>Folded-Over Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
     </ul>
     <hr>
     <!-- German -->
@@ -360,6 +369,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab-Arbeitsbereich:</b> Eine neue Schaltfläche „Tabs“ öffnet eine verschiebbare Tab-Leiste, die magnetisch an der Seite der Leinwand einrastet. Jeder Tab ist eine eigenständige Sitzung mit eigenen Strängen, Gruppen und Rückgängig-/Wiederherstellen-Verlauf, und Sie werden vor dem Beenden gewarnt, wenn ein Tab noch nicht gespeicherte Änderungen enthält.</li>
         <li><b>Ansichtsmodus-Optionen in den Einstellungen:</b> Neue Einstellungen blenden die Auswahl-Hervorhebung und die Kontrollpunkte im Ansichtsmodus aus und sorgen für eine aufgeräumte, aufnahmebereite Leinwand, ohne Ihre tatsächliche Auswahl zu ändern.</li>
+        <li><b>Umgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer umgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
     </ul>
     <hr>
     <!-- Italian -->
@@ -369,6 +379,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Area di lavoro multi-scheda:</b> Un nuovo pulsante Schede apre un bordo di schede trascinabile che si aggancia magneticamente al lato della tela. Ogni scheda è una sessione indipendente con i propri fili, gruppi e cronologia di annullamento/ripristino, e vieni avvisato prima di uscire quando una scheda contiene ancora modifiche non salvate.</li>
         <li><b>Opzioni della modalità Vista nelle Impostazioni:</b> Nuove impostazioni consentono di nascondere l'evidenziazione della selezione e i punti di controllo in modalità Vista, offrendoti una tela pulita e pronta per l'acquisizione senza modificare la selezione effettiva.</li>
+        <li><b>Bordo iniziale ripiegato come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale ripiegato (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -378,6 +389,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espacio de trabajo con pestañas:</b> Un nuevo botón Pestañas abre un borde de pestañas arrastrable que se acopla magnéticamente al lado del lienzo. Cada pestaña es una sesión independiente con sus propias hebras, grupos e historial de deshacer/rehacer, y se te avisa antes de salir cuando una pestaña todavía tiene cambios sin guardar.</li>
         <li><b>Opciones del modo Ver en Ajustes:</b> Nuevos ajustes permiten ocultar el resaltado de selección y los puntos de control en modo Ver, ofreciéndote un lienzo limpio y listo para capturar sin cambiar tu selección real.</li>
+        <li><b>Borde inicial replegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial replegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
@@ -387,6 +399,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espaço de trabalho com abas:</b> Um novo botão Abas abre uma borda de abas arrastável que se encaixa magneticamente na lateral da tela. Cada aba é uma sessão independente com seus próprios fios, grupos e histórico de desfazer/refazer, e você é avisado antes de sair quando uma aba ainda tem alterações não salvas.</li>
         <li><b>Opções do modo Visualização nas Configurações:</b> Novas configurações permitem ocultar o destaque de seleção e os pontos de controle no modo Visualização, oferecendo uma tela limpa e pronta para captura sem alterar sua seleção real.</li>
+        <li><b>Borda inicial dobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial dobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -397,6 +410,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D5;&#x05D1;&#x05D5;&#x05EA;:</b> &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; "&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA;" &#x05D7;&#x05D3;&#x05E9; &#x05E4;&#x05D5;&#x05EA;&#x05D7; &#x05E7;&#x05E6;&#x05D4; &#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA; &#x05E0;&#x05D2;&#x05E8;&#x05E8; &#x05E9;&#x05E0;&#x05E6;&#x05DE;&#x05D3; &#x05DE;&#x05D2;&#x05E0;&#x05D8;&#x05D9;&#x05EA; &#x05DC;&#x05E6;&#x05D3; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1;. &#x05DB;&#x05DC; &#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D9;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D4; &#x05E2;&#x05E6;&#x05DE;&#x05D0;&#x05D9;&#x05EA; &#x05E2;&#x05DD; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D4;&#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05D5;&#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D9;&#x05EA; &#x05D4;&#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05D1;&#x05D9;&#x05E6;&#x05D5;&#x05E2; &#x05DE;&#x05D7;&#x05D3;&#x05E9; &#x05E9;&#x05DC;&#x05D4;, &#x05D5;&#x05EA;&#x05E7;&#x05D1;&#x05DC;&#x05D5; &#x05D0;&#x05D6;&#x05D4;&#x05E8;&#x05D4; &#x05DC;&#x05E4;&#x05E0;&#x05D9; &#x05D9;&#x05E6;&#x05D9;&#x05D0;&#x05D4; &#x05DB;&#x05D0;&#x05E9;&#x05E8; &#x05D1;&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D9;&#x05D4; &#x05E2;&#x05D3;&#x05D9;&#x05D9;&#x05DF; &#x05D9;&#x05E9; &#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9;&#x05D9;&#x05DD; &#x05E9;&#x05DC;&#x05D0; &#x05E0;&#x05E9;&#x05DE;&#x05E8;&#x05D5;.</li>
         <li><b>&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05DE;&#x05E6;&#x05D1; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA;:</b> &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05D7;&#x05D3;&#x05E9;&#x05D5;&#x05EA; &#x05DE;&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05EA; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05D9;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05D3;&#x05D2;&#x05E9;&#x05EA; &#x05D4;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05D0;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D4;&#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D1;&#x05DE;&#x05E6;&#x05D1; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4;, &#x05D5;&#x05DE;&#x05E2;&#x05E0;&#x05D9;&#x05E7;&#x05D5;&#x05EA; &#x05DC;&#x05DB;&#x05DD; &#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E0;&#x05E7;&#x05D9; &#x05D5;&#x05DE;&#x05D5;&#x05DB;&#x05DF; &#x05DC;&#x05E6;&#x05D9;&#x05DC;&#x05D5;&#x05DD; &#x05DE;&#x05D1;&#x05DC;&#x05D9; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D1;&#x05E4;&#x05D5;&#x05E2;&#x05DC;.</li>
+        <li><b>&#x05E7;&#x05E6;&#x05D4; &#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05D4; &#x05DE;&#x05E7;&#x05D5;&#x05E4;&#x05DC; &#x05DB;&#x05D1;&#x05E8;&#x05D9;&#x05E8;&#x05EA; &#x05DE;&#x05D7;&#x05D3;&#x05DC;:</b> &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05D1;&#x05DC;&#x05D5;&#x05D7; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05D2;&#x05D5;&#x05E8;&#x05DE;&#x05EA; &#x05DC;&#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05DE;&#x05D7;&#x05D5;&#x05D1;&#x05E8; &#x05D7;&#x05D3;&#x05E9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05D4; &#x05DE;&#x05E7;&#x05D5;&#x05E4;&#x05DC; (&#x05E9;&#x05E7;&#x05D5;&#x05E3;), &#x05DB;&#x05DA; &#x05E9;&#x05D0;&#x05D9;&#x05DF; &#x05E6;&#x05D5;&#x05E8;&#x05DA; &#x05DC;&#x05D4;&#x05D2;&#x05D3;&#x05D9;&#x05E8; &#x05D6;&#x05D0;&#x05EA; &#x05DC;&#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3; &#x05DE;&#x05EA;&#x05E4;&#x05E8;&#x05D9;&#x05D8; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D4;.</li>
     </ul>
     </div>
 </body>
@@ -418,6 +432,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab-Arbeitsbereich:</b> Eine neue Schaltfläche „Tabs“ öffnet eine verschiebbare Tab-Leiste, die magnetisch an der Seite der Leinwand einrastet. Jeder Tab ist eine eigenständige Sitzung mit eigenen Strängen, Gruppen und Rückgängig-/Wiederherstellen-Verlauf, und Sie werden vor dem Beenden gewarnt, wenn ein Tab noch nicht gespeicherte Änderungen enthält.</li>
         <li><b>Ansichtsmodus-Optionen in den Einstellungen:</b> Neue Einstellungen blenden die Auswahl-Hervorhebung und die Kontrollpunkte im Ansichtsmodus aus und sorgen für eine aufgeräumte, aufnahmebereite Leinwand, ohne Ihre tatsächliche Auswahl zu ändern.</li>
+        <li><b>Umgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer umgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
     </ul>
     <hr>
     <!-- English -->
@@ -427,6 +442,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab Workspace:</b> A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.</li>
         <li><b>View Mode Toggles in Settings:</b> New settings let you hide the selection highlight and hide control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.</li>
+        <li><b>Folded-Over Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -436,6 +452,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espace de travail multi-onglets:</b> Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas. Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement, et vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.</li>
         <li><b>Options du mode Vue dans les Paramètres:</b> De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue, vous offrant un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.</li>
+        <li><b>Bord de départ replié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
     </ul>
     <hr>
     <!-- Italian -->
@@ -445,6 +462,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Area di lavoro multi-scheda:</b> Un nuovo pulsante Schede apre un bordo di schede trascinabile che si aggancia magneticamente al lato della tela. Ogni scheda è una sessione indipendente con i propri fili, gruppi e cronologia di annullamento/ripristino, e vieni avvisato prima di uscire quando una scheda contiene ancora modifiche non salvate.</li>
         <li><b>Opzioni della modalità Vista nelle Impostazioni:</b> Nuove impostazioni consentono di nascondere l'evidenziazione della selezione e i punti di controllo in modalità Vista, offrendoti una tela pulita e pronta per l'acquisizione senza modificare la selezione effettiva.</li>
+        <li><b>Bordo iniziale ripiegato come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale ripiegato (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -454,6 +472,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espacio de trabajo con pestañas:</b> Un nuevo botón Pestañas abre un borde de pestañas arrastrable que se acopla magnéticamente al lado del lienzo. Cada pestaña es una sesión independiente con sus propias hebras, grupos e historial de deshacer/rehacer, y se te avisa antes de salir cuando una pestaña todavía tiene cambios sin guardar.</li>
         <li><b>Opciones del modo Ver en Ajustes:</b> Nuevos ajustes permiten ocultar el resaltado de selección y los puntos de control en modo Ver, ofreciéndote un lienzo limpio y listo para capturar sin cambiar tu selección real.</li>
+        <li><b>Borde inicial replegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial replegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
@@ -463,6 +482,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espaço de trabalho com abas:</b> Um novo botão Abas abre uma borda de abas arrastável que se encaixa magneticamente na lateral da tela. Cada aba é uma sessão independente com seus próprios fios, grupos e histórico de desfazer/refazer, e você é avisado antes de sair quando uma aba ainda tem alterações não salvas.</li>
         <li><b>Opções do modo Visualização nas Configurações:</b> Novas configurações permitem ocultar o destaque de seleção e os pontos de controle no modo Visualização, oferecendo uma tela limpa e pronta para captura sem alterar sua seleção real.</li>
+        <li><b>Borda inicial dobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial dobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -473,6 +493,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D5;&#x05D1;&#x05D5;&#x05EA;:</b> &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; "&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA;" &#x05D7;&#x05D3;&#x05E9; &#x05E4;&#x05D5;&#x05EA;&#x05D7; &#x05E7;&#x05E6;&#x05D4; &#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA; &#x05E0;&#x05D2;&#x05E8;&#x05E8; &#x05E9;&#x05E0;&#x05E6;&#x05DE;&#x05D3; &#x05DE;&#x05D2;&#x05E0;&#x05D8;&#x05D9;&#x05EA; &#x05DC;&#x05E6;&#x05D3; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1;. &#x05DB;&#x05DC; &#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D9;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D4; &#x05E2;&#x05E6;&#x05DE;&#x05D0;&#x05D9;&#x05EA; &#x05E2;&#x05DD; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D4;&#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05D5;&#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D9;&#x05EA; &#x05D4;&#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05D1;&#x05D9;&#x05E6;&#x05D5;&#x05E2; &#x05DE;&#x05D7;&#x05D3;&#x05E9; &#x05E9;&#x05DC;&#x05D4;, &#x05D5;&#x05EA;&#x05E7;&#x05D1;&#x05DC;&#x05D5; &#x05D0;&#x05D6;&#x05D4;&#x05E8;&#x05D4; &#x05DC;&#x05E4;&#x05E0;&#x05D9; &#x05D9;&#x05E6;&#x05D9;&#x05D0;&#x05D4; &#x05DB;&#x05D0;&#x05E9;&#x05E8; &#x05D1;&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D9;&#x05D4; &#x05E2;&#x05D3;&#x05D9;&#x05D9;&#x05DF; &#x05D9;&#x05E9; &#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9;&#x05D9;&#x05DD; &#x05E9;&#x05DC;&#x05D0; &#x05E0;&#x05E9;&#x05DE;&#x05E8;&#x05D5;.</li>
         <li><b>&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05DE;&#x05E6;&#x05D1; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA;:</b> &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05D7;&#x05D3;&#x05E9;&#x05D5;&#x05EA; &#x05DE;&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05EA; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05D9;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05D3;&#x05D2;&#x05E9;&#x05EA; &#x05D4;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05D0;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D4;&#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D1;&#x05DE;&#x05E6;&#x05D1; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4;, &#x05D5;&#x05DE;&#x05E2;&#x05E0;&#x05D9;&#x05E7;&#x05D5;&#x05EA; &#x05DC;&#x05DB;&#x05DD; &#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E0;&#x05E7;&#x05D9; &#x05D5;&#x05DE;&#x05D5;&#x05DB;&#x05DF; &#x05DC;&#x05E6;&#x05D9;&#x05DC;&#x05D5;&#x05DD; &#x05DE;&#x05D1;&#x05DC;&#x05D9; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D1;&#x05E4;&#x05D5;&#x05E2;&#x05DC;.</li>
+        <li><b>&#x05E7;&#x05E6;&#x05D4; &#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05D4; &#x05DE;&#x05E7;&#x05D5;&#x05E4;&#x05DC; &#x05DB;&#x05D1;&#x05E8;&#x05D9;&#x05E8;&#x05EA; &#x05DE;&#x05D7;&#x05D3;&#x05DC;:</b> &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05D1;&#x05DC;&#x05D5;&#x05D7; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05D2;&#x05D5;&#x05E8;&#x05DE;&#x05EA; &#x05DC;&#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05DE;&#x05D7;&#x05D5;&#x05D1;&#x05E8; &#x05D7;&#x05D3;&#x05E9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05D4; &#x05DE;&#x05E7;&#x05D5;&#x05E4;&#x05DC; (&#x05E9;&#x05E7;&#x05D5;&#x05E3;), &#x05DB;&#x05DA; &#x05E9;&#x05D0;&#x05D9;&#x05DF; &#x05E6;&#x05D5;&#x05E8;&#x05DA; &#x05DC;&#x05D4;&#x05D2;&#x05D3;&#x05D9;&#x05E8; &#x05D6;&#x05D0;&#x05EA; &#x05DC;&#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3; &#x05DE;&#x05EA;&#x05E4;&#x05E8;&#x05D9;&#x05D8; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D4;.</li>
     </ul>
     </div>
 </body>
@@ -494,6 +515,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Area di lavoro multi-scheda:</b> Un nuovo pulsante Schede apre un bordo di schede trascinabile che si aggancia magneticamente al lato della tela. Ogni scheda è una sessione indipendente con i propri fili, gruppi e cronologia di annullamento/ripristino, e vieni avvisato prima di uscire quando una scheda contiene ancora modifiche non salvate.</li>
         <li><b>Opzioni della modalità Vista nelle Impostazioni:</b> Nuove impostazioni consentono di nascondere l'evidenziazione della selezione e i punti di controllo in modalità Vista, offrendoti una tela pulita e pronta per l'acquisizione senza modificare la selezione effettiva.</li>
+        <li><b>Bordo iniziale ripiegato come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale ripiegato (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
     </ul>
     <hr>
     <!-- English -->
@@ -503,6 +525,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab Workspace:</b> A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.</li>
         <li><b>View Mode Toggles in Settings:</b> New settings let you hide the selection highlight and hide control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.</li>
+        <li><b>Folded-Over Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
     </ul>
     <hr>
     <!-- German -->
@@ -512,6 +535,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab-Arbeitsbereich:</b> Eine neue Schaltfläche „Tabs“ öffnet eine verschiebbare Tab-Leiste, die magnetisch an der Seite der Leinwand einrastet. Jeder Tab ist eine eigenständige Sitzung mit eigenen Strängen, Gruppen und Rückgängig-/Wiederherstellen-Verlauf, und Sie werden vor dem Beenden gewarnt, wenn ein Tab noch nicht gespeicherte Änderungen enthält.</li>
         <li><b>Ansichtsmodus-Optionen in den Einstellungen:</b> Neue Einstellungen blenden die Auswahl-Hervorhebung und die Kontrollpunkte im Ansichtsmodus aus und sorgen für eine aufgeräumte, aufnahmebereite Leinwand, ohne Ihre tatsächliche Auswahl zu ändern.</li>
+        <li><b>Umgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer umgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -521,6 +545,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espace de travail multi-onglets:</b> Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas. Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement, et vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.</li>
         <li><b>Options du mode Vue dans les Paramètres:</b> De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue, vous offrant un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.</li>
+        <li><b>Bord de départ replié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -530,6 +555,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espacio de trabajo con pestañas:</b> Un nuevo botón Pestañas abre un borde de pestañas arrastrable que se acopla magnéticamente al lado del lienzo. Cada pestaña es una sesión independiente con sus propias hebras, grupos e historial de deshacer/rehacer, y se te avisa antes de salir cuando una pestaña todavía tiene cambios sin guardar.</li>
         <li><b>Opciones del modo Ver en Ajustes:</b> Nuevos ajustes permiten ocultar el resaltado de selección y los puntos de control en modo Ver, ofreciéndote un lienzo limpio y listo para capturar sin cambiar tu selección real.</li>
+        <li><b>Borde inicial replegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial replegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
@@ -539,6 +565,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espaço de trabalho com abas:</b> Um novo botão Abas abre uma borda de abas arrastável que se encaixa magneticamente na lateral da tela. Cada aba é uma sessão independente com seus próprios fios, grupos e histórico de desfazer/refazer, e você é avisado antes de sair quando uma aba ainda tem alterações não salvas.</li>
         <li><b>Opções do modo Visualização nas Configurações:</b> Novas configurações permitem ocultar o destaque de seleção e os pontos de controle no modo Visualização, oferecendo uma tela limpa e pronta para captura sem alterar sua seleção real.</li>
+        <li><b>Borda inicial dobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial dobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -549,6 +576,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D5;&#x05D1;&#x05D5;&#x05EA;:</b> &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; "&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA;" &#x05D7;&#x05D3;&#x05E9; &#x05E4;&#x05D5;&#x05EA;&#x05D7; &#x05E7;&#x05E6;&#x05D4; &#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA; &#x05E0;&#x05D2;&#x05E8;&#x05E8; &#x05E9;&#x05E0;&#x05E6;&#x05DE;&#x05D3; &#x05DE;&#x05D2;&#x05E0;&#x05D8;&#x05D9;&#x05EA; &#x05DC;&#x05E6;&#x05D3; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1;. &#x05DB;&#x05DC; &#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D9;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D4; &#x05E2;&#x05E6;&#x05DE;&#x05D0;&#x05D9;&#x05EA; &#x05E2;&#x05DD; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D4;&#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05D5;&#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D9;&#x05EA; &#x05D4;&#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05D1;&#x05D9;&#x05E6;&#x05D5;&#x05E2; &#x05DE;&#x05D7;&#x05D3;&#x05E9; &#x05E9;&#x05DC;&#x05D4;, &#x05D5;&#x05EA;&#x05E7;&#x05D1;&#x05DC;&#x05D5; &#x05D0;&#x05D6;&#x05D4;&#x05E8;&#x05D4; &#x05DC;&#x05E4;&#x05E0;&#x05D9; &#x05D9;&#x05E6;&#x05D9;&#x05D0;&#x05D4; &#x05DB;&#x05D0;&#x05E9;&#x05E8; &#x05D1;&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D9;&#x05D4; &#x05E2;&#x05D3;&#x05D9;&#x05D9;&#x05DF; &#x05D9;&#x05E9; &#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9;&#x05D9;&#x05DD; &#x05E9;&#x05DC;&#x05D0; &#x05E0;&#x05E9;&#x05DE;&#x05E8;&#x05D5;.</li>
         <li><b>&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05DE;&#x05E6;&#x05D1; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA;:</b> &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05D7;&#x05D3;&#x05E9;&#x05D5;&#x05EA; &#x05DE;&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05EA; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05D9;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05D3;&#x05D2;&#x05E9;&#x05EA; &#x05D4;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05D0;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D4;&#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D1;&#x05DE;&#x05E6;&#x05D1; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4;, &#x05D5;&#x05DE;&#x05E2;&#x05E0;&#x05D9;&#x05E7;&#x05D5;&#x05EA; &#x05DC;&#x05DB;&#x05DD; &#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E0;&#x05E7;&#x05D9; &#x05D5;&#x05DE;&#x05D5;&#x05DB;&#x05DF; &#x05DC;&#x05E6;&#x05D9;&#x05DC;&#x05D5;&#x05DD; &#x05DE;&#x05D1;&#x05DC;&#x05D9; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D1;&#x05E4;&#x05D5;&#x05E2;&#x05DC;.</li>
+        <li><b>&#x05E7;&#x05E6;&#x05D4; &#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05D4; &#x05DE;&#x05E7;&#x05D5;&#x05E4;&#x05DC; &#x05DB;&#x05D1;&#x05E8;&#x05D9;&#x05E8;&#x05EA; &#x05DE;&#x05D7;&#x05D3;&#x05DC;:</b> &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05D1;&#x05DC;&#x05D5;&#x05D7; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05D2;&#x05D5;&#x05E8;&#x05DE;&#x05EA; &#x05DC;&#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05DE;&#x05D7;&#x05D5;&#x05D1;&#x05E8; &#x05D7;&#x05D3;&#x05E9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05D4; &#x05DE;&#x05E7;&#x05D5;&#x05E4;&#x05DC; (&#x05E9;&#x05E7;&#x05D5;&#x05E3;), &#x05DB;&#x05DA; &#x05E9;&#x05D0;&#x05D9;&#x05DF; &#x05E6;&#x05D5;&#x05E8;&#x05DA; &#x05DC;&#x05D4;&#x05D2;&#x05D3;&#x05D9;&#x05E8; &#x05D6;&#x05D0;&#x05EA; &#x05DC;&#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3; &#x05DE;&#x05EA;&#x05E4;&#x05E8;&#x05D9;&#x05D8; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D4;.</li>
     </ul>
     </div>
 </body>
@@ -570,6 +598,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espacio de trabajo con pestañas:</b> Un nuevo botón Pestañas abre un borde de pestañas arrastrable que se acopla magnéticamente al lado del lienzo. Cada pestaña es una sesión independiente con sus propias hebras, grupos e historial de deshacer/rehacer, y se te avisa antes de salir cuando una pestaña todavía tiene cambios sin guardar.</li>
         <li><b>Opciones del modo Ver en Ajustes:</b> Nuevos ajustes permiten ocultar el resaltado de selección y los puntos de control en modo Ver, ofreciéndote un lienzo limpio y listo para capturar sin cambiar tu selección real.</li>
+        <li><b>Borde inicial replegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial replegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
     </ul>
     <hr>
     <!-- English -->
@@ -579,6 +608,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab Workspace:</b> A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.</li>
         <li><b>View Mode Toggles in Settings:</b> New settings let you hide the selection highlight and hide control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.</li>
+        <li><b>Folded-Over Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -588,6 +618,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espace de travail multi-onglets:</b> Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas. Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement, et vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.</li>
         <li><b>Options du mode Vue dans les Paramètres:</b> De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue, vous offrant un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.</li>
+        <li><b>Bord de départ replié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
     </ul>
     <hr>
     <!-- German -->
@@ -597,6 +628,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab-Arbeitsbereich:</b> Eine neue Schaltfläche „Tabs“ öffnet eine verschiebbare Tab-Leiste, die magnetisch an der Seite der Leinwand einrastet. Jeder Tab ist eine eigenständige Sitzung mit eigenen Strängen, Gruppen und Rückgängig-/Wiederherstellen-Verlauf, und Sie werden vor dem Beenden gewarnt, wenn ein Tab noch nicht gespeicherte Änderungen enthält.</li>
         <li><b>Ansichtsmodus-Optionen in den Einstellungen:</b> Neue Einstellungen blenden die Auswahl-Hervorhebung und die Kontrollpunkte im Ansichtsmodus aus und sorgen für eine aufgeräumte, aufnahmebereite Leinwand, ohne Ihre tatsächliche Auswahl zu ändern.</li>
+        <li><b>Umgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer umgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
     </ul>
     <hr>
     <!-- Italian -->
@@ -606,6 +638,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Area di lavoro multi-scheda:</b> Un nuovo pulsante Schede apre un bordo di schede trascinabile che si aggancia magneticamente al lato della tela. Ogni scheda è una sessione indipendente con i propri fili, gruppi e cronologia di annullamento/ripristino, e vieni avvisato prima di uscire quando una scheda contiene ancora modifiche non salvate.</li>
         <li><b>Opzioni della modalità Vista nelle Impostazioni:</b> Nuove impostazioni consentono di nascondere l'evidenziazione della selezione e i punti di controllo in modalità Vista, offrendoti una tela pulita e pronta per l'acquisizione senza modificare la selezione effettiva.</li>
+        <li><b>Bordo iniziale ripiegato come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale ripiegato (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
@@ -615,6 +648,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espaço de trabalho com abas:</b> Um novo botão Abas abre uma borda de abas arrastável que se encaixa magneticamente na lateral da tela. Cada aba é uma sessão independente com seus próprios fios, grupos e histórico de desfazer/refazer, e você é avisado antes de sair quando uma aba ainda tem alterações não salvas.</li>
         <li><b>Opções do modo Visualização nas Configurações:</b> Novas configurações permitem ocultar o destaque de seleção e os pontos de controle no modo Visualização, oferecendo uma tela limpa e pronta para captura sem alterar sua seleção real.</li>
+        <li><b>Borda inicial dobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial dobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -625,6 +659,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D5;&#x05D1;&#x05D5;&#x05EA;:</b> &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; "&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA;" &#x05D7;&#x05D3;&#x05E9; &#x05E4;&#x05D5;&#x05EA;&#x05D7; &#x05E7;&#x05E6;&#x05D4; &#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA; &#x05E0;&#x05D2;&#x05E8;&#x05E8; &#x05E9;&#x05E0;&#x05E6;&#x05DE;&#x05D3; &#x05DE;&#x05D2;&#x05E0;&#x05D8;&#x05D9;&#x05EA; &#x05DC;&#x05E6;&#x05D3; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1;. &#x05DB;&#x05DC; &#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D9;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D4; &#x05E2;&#x05E6;&#x05DE;&#x05D0;&#x05D9;&#x05EA; &#x05E2;&#x05DD; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D4;&#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05D5;&#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D9;&#x05EA; &#x05D4;&#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05D1;&#x05D9;&#x05E6;&#x05D5;&#x05E2; &#x05DE;&#x05D7;&#x05D3;&#x05E9; &#x05E9;&#x05DC;&#x05D4;, &#x05D5;&#x05EA;&#x05E7;&#x05D1;&#x05DC;&#x05D5; &#x05D0;&#x05D6;&#x05D4;&#x05E8;&#x05D4; &#x05DC;&#x05E4;&#x05E0;&#x05D9; &#x05D9;&#x05E6;&#x05D9;&#x05D0;&#x05D4; &#x05DB;&#x05D0;&#x05E9;&#x05E8; &#x05D1;&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D9;&#x05D4; &#x05E2;&#x05D3;&#x05D9;&#x05D9;&#x05DF; &#x05D9;&#x05E9; &#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9;&#x05D9;&#x05DD; &#x05E9;&#x05DC;&#x05D0; &#x05E0;&#x05E9;&#x05DE;&#x05E8;&#x05D5;.</li>
         <li><b>&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05DE;&#x05E6;&#x05D1; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA;:</b> &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05D7;&#x05D3;&#x05E9;&#x05D5;&#x05EA; &#x05DE;&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05EA; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05D9;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05D3;&#x05D2;&#x05E9;&#x05EA; &#x05D4;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05D0;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D4;&#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D1;&#x05DE;&#x05E6;&#x05D1; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4;, &#x05D5;&#x05DE;&#x05E2;&#x05E0;&#x05D9;&#x05E7;&#x05D5;&#x05EA; &#x05DC;&#x05DB;&#x05DD; &#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E0;&#x05E7;&#x05D9; &#x05D5;&#x05DE;&#x05D5;&#x05DB;&#x05DF; &#x05DC;&#x05E6;&#x05D9;&#x05DC;&#x05D5;&#x05DD; &#x05DE;&#x05D1;&#x05DC;&#x05D9; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D1;&#x05E4;&#x05D5;&#x05E2;&#x05DC;.</li>
+        <li><b>&#x05E7;&#x05E6;&#x05D4; &#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05D4; &#x05DE;&#x05E7;&#x05D5;&#x05E4;&#x05DC; &#x05DB;&#x05D1;&#x05E8;&#x05D9;&#x05E8;&#x05EA; &#x05DE;&#x05D7;&#x05D3;&#x05DC;:</b> &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05D1;&#x05DC;&#x05D5;&#x05D7; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05D2;&#x05D5;&#x05E8;&#x05DE;&#x05EA; &#x05DC;&#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05DE;&#x05D7;&#x05D5;&#x05D1;&#x05E8; &#x05D7;&#x05D3;&#x05E9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05D4; &#x05DE;&#x05E7;&#x05D5;&#x05E4;&#x05DC; (&#x05E9;&#x05E7;&#x05D5;&#x05E3;), &#x05DB;&#x05DA; &#x05E9;&#x05D0;&#x05D9;&#x05DF; &#x05E6;&#x05D5;&#x05E8;&#x05DA; &#x05DC;&#x05D4;&#x05D2;&#x05D3;&#x05D9;&#x05E8; &#x05D6;&#x05D0;&#x05EA; &#x05DC;&#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3; &#x05DE;&#x05EA;&#x05E4;&#x05E8;&#x05D9;&#x05D8; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D4;.</li>
     </ul>
     </div>
 </body>
@@ -646,6 +681,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espaço de trabalho com abas:</b> Um novo botão Abas abre uma borda de abas arrastável que se encaixa magneticamente na lateral da tela. Cada aba é uma sessão independente com seus próprios fios, grupos e histórico de desfazer/refazer, e você é avisado antes de sair quando uma aba ainda tem alterações não salvas.</li>
         <li><b>Opções do modo Visualização nas Configurações:</b> Novas configurações permitem ocultar o destaque de seleção e os pontos de controle no modo Visualização, oferecendo uma tela limpa e pronta para captura sem alterar sua seleção real.</li>
+        <li><b>Borda inicial dobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial dobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
     </ul>
     <hr>
     <!-- English -->
@@ -655,6 +691,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab Workspace:</b> A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.</li>
         <li><b>View Mode Toggles in Settings:</b> New settings let you hide the selection highlight and hide control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.</li>
+        <li><b>Folded-Over Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -664,6 +701,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espace de travail multi-onglets:</b> Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas. Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement, et vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.</li>
         <li><b>Options du mode Vue dans les Paramètres:</b> De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue, vous offrant un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.</li>
+        <li><b>Bord de départ replié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
     </ul>
     <hr>
     <!-- German -->
@@ -673,6 +711,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab-Arbeitsbereich:</b> Eine neue Schaltfläche „Tabs“ öffnet eine verschiebbare Tab-Leiste, die magnetisch an der Seite der Leinwand einrastet. Jeder Tab ist eine eigenständige Sitzung mit eigenen Strängen, Gruppen und Rückgängig-/Wiederherstellen-Verlauf, und Sie werden vor dem Beenden gewarnt, wenn ein Tab noch nicht gespeicherte Änderungen enthält.</li>
         <li><b>Ansichtsmodus-Optionen in den Einstellungen:</b> Neue Einstellungen blenden die Auswahl-Hervorhebung und die Kontrollpunkte im Ansichtsmodus aus und sorgen für eine aufgeräumte, aufnahmebereite Leinwand, ohne Ihre tatsächliche Auswahl zu ändern.</li>
+        <li><b>Umgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer umgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
     </ul>
     <hr>
     <!-- Italian -->
@@ -682,6 +721,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Area di lavoro multi-scheda:</b> Un nuovo pulsante Schede apre un bordo di schede trascinabile che si aggancia magneticamente al lato della tela. Ogni scheda è una sessione indipendente con i propri fili, gruppi e cronologia di annullamento/ripristino, e vieni avvisato prima di uscire quando una scheda contiene ancora modifiche non salvate.</li>
         <li><b>Opzioni della modalità Vista nelle Impostazioni:</b> Nuove impostazioni consentono di nascondere l'evidenziazione della selezione e i punti di controllo in modalità Vista, offrendoti una tela pulita e pronta per l'acquisizione senza modificare la selezione effettiva.</li>
+        <li><b>Bordo iniziale ripiegato come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale ripiegato (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -691,6 +731,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espacio de trabajo con pestañas:</b> Un nuevo botón Pestañas abre un borde de pestañas arrastrable que se acopla magnéticamente al lado del lienzo. Cada pestaña es una sesión independiente con sus propias hebras, grupos e historial de deshacer/rehacer, y se te avisa antes de salir cuando una pestaña todavía tiene cambios sin guardar.</li>
         <li><b>Opciones del modo Ver en Ajustes:</b> Nuevos ajustes permiten ocultar el resaltado de selección y los puntos de control en modo Ver, ofreciéndote un lienzo limpio y listo para capturar sin cambiar tu selección real.</li>
+        <li><b>Borde inicial replegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial replegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
     </ul>
     <hr>
     <!-- Hebrew -->
@@ -701,6 +742,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D5;&#x05D1;&#x05D5;&#x05EA;:</b> &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; "&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA;" &#x05D7;&#x05D3;&#x05E9; &#x05E4;&#x05D5;&#x05EA;&#x05D7; &#x05E7;&#x05E6;&#x05D4; &#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA; &#x05E0;&#x05D2;&#x05E8;&#x05E8; &#x05E9;&#x05E0;&#x05E6;&#x05DE;&#x05D3; &#x05DE;&#x05D2;&#x05E0;&#x05D8;&#x05D9;&#x05EA; &#x05DC;&#x05E6;&#x05D3; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1;. &#x05DB;&#x05DC; &#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D9;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D4; &#x05E2;&#x05E6;&#x05DE;&#x05D0;&#x05D9;&#x05EA; &#x05E2;&#x05DD; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D4;&#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05D5;&#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D9;&#x05EA; &#x05D4;&#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05D1;&#x05D9;&#x05E6;&#x05D5;&#x05E2; &#x05DE;&#x05D7;&#x05D3;&#x05E9; &#x05E9;&#x05DC;&#x05D4;, &#x05D5;&#x05EA;&#x05E7;&#x05D1;&#x05DC;&#x05D5; &#x05D0;&#x05D6;&#x05D4;&#x05E8;&#x05D4; &#x05DC;&#x05E4;&#x05E0;&#x05D9; &#x05D9;&#x05E6;&#x05D9;&#x05D0;&#x05D4; &#x05DB;&#x05D0;&#x05E9;&#x05E8; &#x05D1;&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D9;&#x05D4; &#x05E2;&#x05D3;&#x05D9;&#x05D9;&#x05DF; &#x05D9;&#x05E9; &#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9;&#x05D9;&#x05DD; &#x05E9;&#x05DC;&#x05D0; &#x05E0;&#x05E9;&#x05DE;&#x05E8;&#x05D5;.</li>
         <li><b>&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05DE;&#x05E6;&#x05D1; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA;:</b> &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05D7;&#x05D3;&#x05E9;&#x05D5;&#x05EA; &#x05DE;&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05EA; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05D9;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05D3;&#x05D2;&#x05E9;&#x05EA; &#x05D4;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05D0;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D4;&#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D1;&#x05DE;&#x05E6;&#x05D1; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4;, &#x05D5;&#x05DE;&#x05E2;&#x05E0;&#x05D9;&#x05E7;&#x05D5;&#x05EA; &#x05DC;&#x05DB;&#x05DD; &#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E0;&#x05E7;&#x05D9; &#x05D5;&#x05DE;&#x05D5;&#x05DB;&#x05DF; &#x05DC;&#x05E6;&#x05D9;&#x05DC;&#x05D5;&#x05DD; &#x05DE;&#x05D1;&#x05DC;&#x05D9; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D1;&#x05E4;&#x05D5;&#x05E2;&#x05DC;.</li>
+        <li><b>&#x05E7;&#x05E6;&#x05D4; &#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05D4; &#x05DE;&#x05E7;&#x05D5;&#x05E4;&#x05DC; &#x05DB;&#x05D1;&#x05E8;&#x05D9;&#x05E8;&#x05EA; &#x05DE;&#x05D7;&#x05D3;&#x05DC;:</b> &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05D1;&#x05DC;&#x05D5;&#x05D7; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05D2;&#x05D5;&#x05E8;&#x05DE;&#x05EA; &#x05DC;&#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05DE;&#x05D7;&#x05D5;&#x05D1;&#x05E8; &#x05D7;&#x05D3;&#x05E9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05D4; &#x05DE;&#x05E7;&#x05D5;&#x05E4;&#x05DC; (&#x05E9;&#x05E7;&#x05D5;&#x05E3;), &#x05DB;&#x05DA; &#x05E9;&#x05D0;&#x05D9;&#x05DF; &#x05E6;&#x05D5;&#x05E8;&#x05DA; &#x05DC;&#x05D4;&#x05D2;&#x05D3;&#x05D9;&#x05E8; &#x05D6;&#x05D0;&#x05EA; &#x05DC;&#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3; &#x05DE;&#x05EA;&#x05E4;&#x05E8;&#x05D9;&#x05D8; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D4;.</li>
     </ul>
     </div>
 </body>
@@ -723,6 +765,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D5;&#x05D1;&#x05D5;&#x05EA;:</b> &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; "&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA;" &#x05D7;&#x05D3;&#x05E9; &#x05E4;&#x05D5;&#x05EA;&#x05D7; &#x05E7;&#x05E6;&#x05D4; &#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D5;&#x05EA; &#x05E0;&#x05D2;&#x05E8;&#x05E8; &#x05E9;&#x05E0;&#x05E6;&#x05DE;&#x05D3; &#x05DE;&#x05D2;&#x05E0;&#x05D8;&#x05D9;&#x05EA; &#x05DC;&#x05E6;&#x05D3; &#x05D4;&#x05E7;&#x05E0;&#x05D1;&#x05E1;. &#x05DB;&#x05DC; &#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D9;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05D4;&#x05E4;&#x05E2;&#x05DC;&#x05D4; &#x05E2;&#x05E6;&#x05DE;&#x05D0;&#x05D9;&#x05EA; &#x05E2;&#x05DD; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D4;&#x05E7;&#x05D1;&#x05D5;&#x05E6;&#x05D5;&#x05EA; &#x05D5;&#x05D4;&#x05D9;&#x05E1;&#x05D8;&#x05D5;&#x05E8;&#x05D9;&#x05D9;&#x05EA; &#x05D4;&#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC;/&#x05D1;&#x05D9;&#x05E6;&#x05D5;&#x05E2; &#x05DE;&#x05D7;&#x05D3;&#x05E9; &#x05E9;&#x05DC;&#x05D4;, &#x05D5;&#x05EA;&#x05E7;&#x05D1;&#x05DC;&#x05D5; &#x05D0;&#x05D6;&#x05D4;&#x05E8;&#x05D4; &#x05DC;&#x05E4;&#x05E0;&#x05D9; &#x05D9;&#x05E6;&#x05D9;&#x05D0;&#x05D4; &#x05DB;&#x05D0;&#x05E9;&#x05E8; &#x05D1;&#x05DB;&#x05E8;&#x05D8;&#x05D9;&#x05E1;&#x05D9;&#x05D9;&#x05D4; &#x05E2;&#x05D3;&#x05D9;&#x05D9;&#x05DF; &#x05D9;&#x05E9; &#x05E9;&#x05D9;&#x05E0;&#x05D5;&#x05D9;&#x05D9;&#x05DD; &#x05E9;&#x05DC;&#x05D0; &#x05E0;&#x05E9;&#x05DE;&#x05E8;&#x05D5;.</li>
         <li><b>&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05DE;&#x05E6;&#x05D1; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4; &#x05D1;&#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA;:</b> &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D5;&#x05EA; &#x05D7;&#x05D3;&#x05E9;&#x05D5;&#x05EA; &#x05DE;&#x05D0;&#x05E4;&#x05E9;&#x05E8;&#x05D5;&#x05EA; &#x05DC;&#x05D4;&#x05E1;&#x05EA;&#x05D9;&#x05E8; &#x05D0;&#x05EA; &#x05D4;&#x05D3;&#x05D2;&#x05E9;&#x05EA; &#x05D4;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05D0;&#x05EA; &#x05E0;&#x05E7;&#x05D5;&#x05D3;&#x05D5;&#x05EA; &#x05D4;&#x05D1;&#x05E7;&#x05E8;&#x05D4; &#x05D1;&#x05DE;&#x05E6;&#x05D1; &#x05EA;&#x05E6;&#x05D5;&#x05D2;&#x05D4;, &#x05D5;&#x05DE;&#x05E2;&#x05E0;&#x05D9;&#x05E7;&#x05D5;&#x05EA; &#x05DC;&#x05DB;&#x05DD; &#x05E7;&#x05E0;&#x05D1;&#x05E1; &#x05E0;&#x05E7;&#x05D9; &#x05D5;&#x05DE;&#x05D5;&#x05DB;&#x05DF; &#x05DC;&#x05E6;&#x05D9;&#x05DC;&#x05D5;&#x05DD; &#x05DE;&#x05D1;&#x05DC;&#x05D9; &#x05DC;&#x05E9;&#x05E0;&#x05D5;&#x05EA; &#x05D0;&#x05EA; &#x05D4;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D1;&#x05E4;&#x05D5;&#x05E2;&#x05DC;.</li>
+        <li><b>&#x05E7;&#x05E6;&#x05D4; &#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05D4; &#x05DE;&#x05E7;&#x05D5;&#x05E4;&#x05DC; &#x05DB;&#x05D1;&#x05E8;&#x05D9;&#x05E8;&#x05EA; &#x05DE;&#x05D7;&#x05D3;&#x05DC;:</b> &#x05D4;&#x05D2;&#x05D3;&#x05E8;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05D1;&#x05DC;&#x05D5;&#x05D7; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05D2;&#x05D5;&#x05E8;&#x05DE;&#x05EA; &#x05DC;&#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05DE;&#x05D7;&#x05D5;&#x05D1;&#x05E8; &#x05D7;&#x05D3;&#x05E9; &#x05DC;&#x05D4;&#x05EA;&#x05D7;&#x05D9;&#x05DC; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA; &#x05E2;&#x05DD; &#x05E7;&#x05E6;&#x05D4; &#x05D4;&#x05EA;&#x05D7;&#x05DC;&#x05D4; &#x05DE;&#x05E7;&#x05D5;&#x05E4;&#x05DC; (&#x05E9;&#x05E7;&#x05D5;&#x05E3;), &#x05DB;&#x05DA; &#x05E9;&#x05D0;&#x05D9;&#x05DF; &#x05E6;&#x05D5;&#x05E8;&#x05DA; &#x05DC;&#x05D4;&#x05D2;&#x05D3;&#x05D9;&#x05E8; &#x05D6;&#x05D0;&#x05EA; &#x05DC;&#x05DB;&#x05DC; &#x05D7;&#x05D5;&#x05D8; &#x05D1;&#x05E0;&#x05E4;&#x05E8;&#x05D3; &#x05DE;&#x05EA;&#x05E4;&#x05E8;&#x05D9;&#x05D8; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D4;.</li>
     </ul>
     </div>
     <hr>
@@ -733,6 +776,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <ul dir="ltr">
         <li><b>Multi-Tab Workspace:</b> A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.</li>
         <li><b>View Mode Toggles in Settings:</b> New settings let you hide the selection highlight and hide control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.</li>
+        <li><b>Folded-Over Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
     </ul>
     <hr>
     <!-- French -->
@@ -742,6 +786,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <ul dir="ltr">
         <li><b>Espace de travail multi-onglets:</b> Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas. Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement, et vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.</li>
         <li><b>Options du mode Vue dans les Paramètres:</b> De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue, vous offrant un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.</li>
+        <li><b>Bord de départ replié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
     </ul>
     <hr>
     <!-- German -->
@@ -751,6 +796,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <ul dir="ltr">
         <li><b>Multi-Tab-Arbeitsbereich:</b> Eine neue Schaltfläche „Tabs“ öffnet eine verschiebbare Tab-Leiste, die magnetisch an der Seite der Leinwand einrastet. Jeder Tab ist eine eigenständige Sitzung mit eigenen Strängen, Gruppen und Rückgängig-/Wiederherstellen-Verlauf, und Sie werden vor dem Beenden gewarnt, wenn ein Tab noch nicht gespeicherte Änderungen enthält.</li>
         <li><b>Ansichtsmodus-Optionen in den Einstellungen:</b> Neue Einstellungen blenden die Auswahl-Hervorhebung und die Kontrollpunkte im Ansichtsmodus aus und sorgen für eine aufgeräumte, aufnahmebereite Leinwand, ohne Ihre tatsächliche Auswahl zu ändern.</li>
+        <li><b>Umgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer umgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
     </ul>
     <hr>
     <!-- Italian -->
@@ -760,6 +806,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <ul dir="ltr">
         <li><b>Area di lavoro multi-scheda:</b> Un nuovo pulsante Schede apre un bordo di schede trascinabile che si aggancia magneticamente al lato della tela. Ogni scheda è una sessione indipendente con i propri fili, gruppi e cronologia di annullamento/ripristino, e vieni avvisato prima di uscire quando una scheda contiene ancora modifiche non salvate.</li>
         <li><b>Opzioni della modalità Vista nelle Impostazioni:</b> Nuove impostazioni consentono di nascondere l'evidenziazione della selezione e i punti di controllo in modalità Vista, offrendoti una tela pulita e pronta per l'acquisizione senza modificare la selezione effettiva.</li>
+        <li><b>Bordo iniziale ripiegato come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale ripiegato (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
     </ul>
     <hr>
     <!-- Spanish -->
@@ -769,6 +816,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <ul dir="ltr">
         <li><b>Espacio de trabajo con pestañas:</b> Un nuevo botón Pestañas abre un borde de pestañas arrastrable que se acopla magnéticamente al lado del lienzo. Cada pestaña es una sesión independiente con sus propias hebras, grupos e historial de deshacer/rehacer, y se te avisa antes de salir cuando una pestaña todavía tiene cambios sin guardar.</li>
         <li><b>Opciones del modo Ver en Ajustes:</b> Nuevos ajustes permiten ocultar el resaltado de selección y los puntos de control en modo Ver, ofreciéndote un lienzo limpio y listo para capturar sin cambiar tu selección real.</li>
+        <li><b>Borde inicial replegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial replegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
     </ul>
     <hr>
     <!-- Portuguese -->
@@ -778,6 +826,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <ul dir="ltr">
         <li><b>Espaço de trabalho com abas:</b> Um novo botão Abas abre uma borda de abas arrastável que se encaixa magneticamente na lateral da tela. Cada aba é uma sessão independente com seus próprios fios, grupos e histórico de desfazer/refazer, e você é avisado antes de sair quando uma aba ainda tem alterações não salvas.</li>
         <li><b>Opções do modo Visualização nas Configurações:</b> Novas configurações permitem ocultar o destaque de seleção e os pontos de controle no modo Visualização, oferecendo uma tela limpa e pronta para captura sem alterar sua seleção real.</li>
+        <li><b>Borda inicial dobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial dobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
     </ul>
 </body>
 </html>

@@ -3489,6 +3489,22 @@ class StrandDrawingCanvas(QWidget):
                             continue # Skip drawing C-shape for this point
                         # --- END NEW CHECK ---
     
+                        # If this end has an elliptical cap, stretch the (circular)
+                        # highlight rings along the strand tangent so the selection
+                        # highlight matches the body cap ellipse.
+                        _ell_pt = strand._partner_cap_dims(i)[0] if hasattr(strand, '_partner_cap_dims') else None
+                        if _ell_pt:
+                            _ell_this = strand.width + strand.stroke_width * 2
+                            if _ell_this > 0:
+                                _ell_k = _ell_pt / _ell_this
+                                _ell_t = strand.calculate_cubic_tangent(0.0001 if i == 0 else 0.9999)
+                                _ell_a = math.atan2(_ell_t.y(), _ell_t.x())
+                                painter.translate(center.x(), center.y())
+                                painter.rotate(math.degrees(_ell_a))
+                                painter.scale(_ell_k, 1.0)
+                                painter.rotate(-math.degrees(_ell_a))
+                                painter.translate(-center.x(), -center.y())
+
                         # Calculate the proper radius for the highlight
                         # The highlighted strand outline uses: QPen(QColor('red'), self.stroke_width + 8)
                         # This pen is drawn around the stroke path, so the outer edge is at:

@@ -121,6 +121,8 @@ def serialize_strand(strand, canvas, index=None):
         "color": serialize_color(strand.color),
         "stroke_color": serialize_color(strand.stroke_color),
         "stroke_width": strand.stroke_width,
+        "width_in_grid_units": getattr(strand, 'width_in_grid_units', None),
+        "elliptical_end_caps": getattr(strand, 'elliptical_end_caps', False),
         "has_circles": strand.has_circles,
         "layer_name": strand.layer_name,
         "set_number": strand.set_number,
@@ -354,6 +356,10 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
             strand = Strand(start, end, width, color, stroke_color, stroke_width, set_number, layer_name)
             if canvas and hasattr(canvas, 'highlight_color'):
                 strand.highlight_color = QColor(canvas.highlight_color)
+            if data.get("width_in_grid_units"):
+                strand.width_in_grid_units = data["width_in_grid_units"]
+            if data.get("elliptical_end_caps"):
+                strand.elliptical_end_caps = True
 
         elif strand_type == "AttachedStrand":
             parent_layer_name = data.get("attached_to")
@@ -371,6 +377,10 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
                 # Set properties for the attached strand
                 strand.end = end
                 strand.width = width
+                if data.get("width_in_grid_units"):
+                    strand.width_in_grid_units = data["width_in_grid_units"]
+                if data.get("elliptical_end_caps"):
+                    strand.elliptical_end_caps = True
                 strand.color = color
                 strand.stroke_color = stroke_color
                 strand.stroke_width = stroke_width
@@ -406,6 +416,8 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
                     if first_strand and second_strand:
                         strand = MaskedStrand(first_strand, second_strand)
                         strand.width = width
+                        if data.get("width_in_grid_units"):
+                            strand.width_in_grid_units = data["width_in_grid_units"]
                         strand.color = color
                         strand.stroke_color = stroke_color
                         strand.stroke_width = stroke_width
@@ -688,6 +700,10 @@ def load_strands_from_data(data, canvas):
             strand.start = start
             strand.end = end
             strand.width = strand_data["width"]
+            if strand_data.get("width_in_grid_units"):
+                strand.width_in_grid_units = strand_data["width_in_grid_units"]
+            if strand_data.get("elliptical_end_caps"):
+                strand.elliptical_end_caps = True
             strand.color = deserialize_color(strand_data["color"])
             strand.stroke_color = deserialize_color(strand_data["stroke_color"])
             strand.stroke_width = strand_data["stroke_width"]
@@ -858,6 +874,8 @@ def load_strands_from_data(data, canvas):
                 strand.start = deserialize_point(masked_data["start"])
                 strand.end = deserialize_point(masked_data["end"])
                 strand.width = masked_data["width"]
+                if masked_data.get("width_in_grid_units"):
+                    strand.width_in_grid_units = masked_data["width_in_grid_units"]
                 strand.color = deserialize_color(masked_data["color"])
                 strand.stroke_color = deserialize_color(masked_data["stroke_color"])
                 strand.stroke_width = masked_data["stroke_width"]

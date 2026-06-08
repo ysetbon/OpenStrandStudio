@@ -631,11 +631,15 @@ class AttachedStrand(Strand):
             transform.rotate(math.degrees(angle))
             mask_rect = transform.map(mask_rect)
 
-            outer_circle = QPainterPath()
-            outer_circle.addEllipse(self.start, circle_radius, circle_radius)
-
-            highlight_circle = QPainterPath()
-            highlight_circle.addEllipse(self.start, highlight_radius, highlight_radius)
+            _pt0 = self._partner_cap_dims(0)[0]
+            if _pt0 is None:
+                outer_circle = QPainterPath()
+                outer_circle.addEllipse(self.start, circle_radius, circle_radius)
+                highlight_circle = QPainterPath()
+                highlight_circle.addEllipse(self.start, highlight_radius, highlight_radius)
+            else:
+                outer_circle = self._rotated_ellipse(self.start, angle, _pt0 / 2.0, circle_radius)
+                highlight_circle = self._rotated_ellipse(self.start, angle, _pt0 / 2.0 + 5, highlight_radius)
             ring_path = highlight_circle.subtracted(mask_rect).subtracted(outer_circle)
             combined_highlight.addPath(ring_path)
 
@@ -661,11 +665,15 @@ class AttachedStrand(Strand):
             tr.rotate(math.degrees(angle_end - math.pi))
             mask = tr.map(mask)
 
-            outer = QPainterPath()
-            outer.addEllipse(self.end, radius, radius)
-
-            highlight_circle = QPainterPath()
-            highlight_circle.addEllipse(self.end, highlight_radius, highlight_radius)
+            _pt1 = self._partner_cap_dims(1)[0]
+            if _pt1 is None:
+                outer = QPainterPath()
+                outer.addEllipse(self.end, radius, radius)
+                highlight_circle = QPainterPath()
+                highlight_circle.addEllipse(self.end, highlight_radius, highlight_radius)
+            else:
+                outer = self._rotated_ellipse(self.end, angle_end, _pt1 / 2.0, radius)
+                highlight_circle = self._rotated_ellipse(self.end, angle_end, _pt1 / 2.0 + 5, highlight_radius)
             ring_path = highlight_circle.subtracted(mask).subtracted(outer)
             combined_highlight.addPath(ring_path)
 
@@ -1205,8 +1213,7 @@ class AttachedStrand(Strand):
             transform.translate(self.start.x(), self.start.y())
             transform.rotate(math.degrees(angle))  # Rotate based on tangent angle
             mask_rect = transform.map(mask_rect)
-            outer_circle = QPainterPath()
-            outer_circle.addEllipse(self.start, circle_radius, circle_radius)
+            outer_circle = self._make_cap_ellipse(self.start, angle, 0, self._partner_cap_dims(0)[0])
             outer_mask = outer_circle.subtracted(mask_rect)
             outer_mask.setFillRule(Qt.WindingFill)  # Set fill rule after subtraction
 
@@ -1214,8 +1221,7 @@ class AttachedStrand(Strand):
             combined_stroke_path.addPath(outer_mask)
 
             # Add inner circle to combined fill path
-            inner = QPainterPath()
-            inner.addEllipse(self.start, self.width * 0.5 , self.width * 0.5)
+            inner = self._make_cap_inner(self.start, angle, self._partner_cap_dims(0)[1])
             combined_fill_path.addPath(inner)
             
             # Add side line to combined fill path (only when stroke is visible)
@@ -1245,16 +1251,14 @@ class AttachedStrand(Strand):
             tr = QTransform().translate(self.end.x(), self.end.y())
             tr.rotate(math.degrees(angle_end - math.pi))
             mask = tr.map(mask)
-            outer = QPainterPath()
-            outer.addEllipse(self.end, radius, radius)
+            outer = self._make_cap_ellipse(self.end, angle_end, 1, self._partner_cap_dims(1)[0])
             clip = outer.subtracted(mask)
             # Add to combined stroke path - use end_circle_stroke_color for consistency
             combined_stroke_path.addPath(clip)
 
 
             # Add the inner circle (fill) to combined fill path
-            inner = QPainterPath()
-            inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+            inner = self._make_cap_inner(self.end, angle_end, self._partner_cap_dims(1)[1])
             combined_fill_path.addPath(inner)
 
             # Add side line to combined fill path (only when stroke is visible)
@@ -1314,8 +1318,7 @@ class AttachedStrand(Strand):
 
             # NOTE: using addPath keeps sub-paths separate and avoids boolean simplification issues.
                         # Add inner circle to combined fill path at start
-            inner_circle_start = QPainterPath()
-            inner_circle_start.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+            inner_circle_start = self._make_cap_inner(self.start, angle_start, self._partner_cap_dims(0)[1])
             combined_fill_path.addPath(inner_circle_start)
             combined_fill_path.setFillRule(Qt.WindingFill)  # Ensure fill rule persists after adding path
 
@@ -3005,8 +3008,7 @@ class AttachedStrand(Strand):
             transform.translate(self.start.x(), self.start.y())
             transform.rotate(math.degrees(angle))  # Rotate based on tangent angle
             mask_rect = transform.map(mask_rect)
-            outer_circle = QPainterPath()
-            outer_circle.addEllipse(self.start, circle_radius, circle_radius)
+            outer_circle = self._make_cap_ellipse(self.start, angle, 0, self._partner_cap_dims(0)[0])
             outer_mask = outer_circle.subtracted(mask_rect)
             outer_mask.setFillRule(Qt.WindingFill)  # Set fill rule after subtraction
 
@@ -3014,8 +3016,7 @@ class AttachedStrand(Strand):
             combined_stroke_path.addPath(outer_mask)
 
             # Add inner circle to combined fill path
-            inner = QPainterPath()
-            inner.addEllipse(self.start, self.width * 0.5 , self.width * 0.5)
+            inner = self._make_cap_inner(self.start, angle, self._partner_cap_dims(0)[1])
             combined_fill_path.addPath(inner)
             
             # Add side line to combined fill path (only when stroke is visible)
@@ -3045,16 +3046,14 @@ class AttachedStrand(Strand):
             tr = QTransform().translate(self.end.x(), self.end.y())
             tr.rotate(math.degrees(angle_end - math.pi))
             mask = tr.map(mask)
-            outer = QPainterPath()
-            outer.addEllipse(self.end, radius, radius)
+            outer = self._make_cap_ellipse(self.end, angle_end, 1, self._partner_cap_dims(1)[0])
             clip = outer.subtracted(mask)
             # Add to combined stroke path - use end_circle_stroke_color for consistency
             combined_stroke_path.addPath(clip)
 
 
             # Add the inner circle (fill) to combined fill path
-            inner = QPainterPath()
-            inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+            inner = self._make_cap_inner(self.end, angle_end, self._partner_cap_dims(1)[1])
             combined_fill_path.addPath(inner)
 
             # Add side line to combined fill path (only when stroke is visible)
@@ -3114,8 +3113,7 @@ class AttachedStrand(Strand):
 
             # NOTE: using addPath keeps sub-paths separate and avoids boolean simplification issues.
                         # Add inner circle to combined fill path at start
-            inner_circle_start = QPainterPath()
-            inner_circle_start.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+            inner_circle_start = self._make_cap_inner(self.start, angle_start, self._partner_cap_dims(0)[1])
             combined_fill_path.addPath(inner_circle_start)
             combined_fill_path.setFillRule(Qt.WindingFill)  # Ensure fill rule persists after adding path
 

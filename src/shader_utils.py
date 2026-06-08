@@ -1700,7 +1700,14 @@ def build_rendered_geometry(strand):
                                     angle = math.atan2(tangent.y(), tangent.x())
                                 else:
                                     angle = 0
-                            
+
+                            # If this end has an elliptical cap, use the same ellipse
+                            # shape so the receiving/blocking geometry matches the
+                            # drawn cap (the mask below still halves it).
+                            _cap_pt = strand._partner_cap_dims(idx)[0] if hasattr(strand, '_partner_cap_dims') else None
+                            if _cap_pt:
+                                full_circle = strand._make_cap_ellipse(centre, angle, idx, _cap_pt)
+
                             # Create masking rectangle for half circle
                             mask_rect = QPainterPath()
                             rect_width = radius * 4
@@ -1720,9 +1727,16 @@ def build_rendered_geometry(strand):
                             half_circle = QPainterPath(full_circle).subtracted(mask_rect)
                             result_path.addPath(half_circle)
                         else:
-                            # Regular full circle for non-AttachedStrand
-                            circle_path = QPainterPath()
-                            circle_path.addEllipse(centre, radius, radius)
+                            # Use the elliptical cap when this end has one, else a
+                            # regular full circle for non-AttachedStrand.
+                            _cap_pt = strand._partner_cap_dims(idx)[0] if hasattr(strand, '_partner_cap_dims') else None
+                            if _cap_pt:
+                                _t = strand.calculate_cubic_tangent(0.0001 if idx == 0 else 0.9999)
+                                _a = math.atan2(_t.y(), _t.x())
+                                circle_path = strand._make_cap_ellipse(centre, _a, idx, _cap_pt)
+                            else:
+                                circle_path = QPainterPath()
+                                circle_path.addEllipse(centre, radius, radius)
                             result_path.addPath(circle_path)
 
         # Unite arrow path with result if we have one (for visible strands)
@@ -1822,11 +1836,23 @@ def build_shadow_circle_geometry(strand, fixed_shadow_extension=30.0):
             if is_attached_strand and idx == 0:
                 # Get the angle of the attached strand
                 angle = strand.angle if hasattr(strand, 'angle') else 0
-                
 
-                # Regular full circle for other cases
-                single_circle = QPainterPath()
-                single_circle.addEllipse(centre, radius, radius)
+                # If this end has an elliptical cap, the cast shadow must be an
+                # ellipse too (across = this strand, depth = partner width), otherwise
+                # a deep cap would protrude beyond its (circular) shadow.
+                _cap_pt = strand._partner_cap_dims(idx)[0] if hasattr(strand, '_partner_cap_dims') else None
+                if _cap_pt:
+                    across_semi = radius                 # (this_total / 2 + 2)
+                    depth_semi = _cap_pt / 2.0 + 2       # partner depth + same margin
+                    tangent = strand.calculate_cubic_tangent(0.0001)
+                    ang = math.atan2(tangent.y(), tangent.x())
+                    single_circle = QPainterPath()
+                    single_circle.addEllipse(QPointF(0, 0), depth_semi, across_semi)
+                    single_circle = QTransform().translate(centre.x(), centre.y()).rotate(math.degrees(ang)).map(single_circle)
+                else:
+                    # Regular full circle for other cases
+                    single_circle = QPainterPath()
+                    single_circle.addEllipse(centre, radius, radius)
                 circle_path.addPath(single_circle)
             
         return circle_path

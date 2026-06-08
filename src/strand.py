@@ -28,6 +28,10 @@ class Strand:
         self.side_line_color = QColor(0, 0, 0, 255)
         self.attached_strands = []  # List to store attached strands
         self.has_circles = [False, False]  # Flags for circles at start and end
+        # When True, connected end-caps are drawn as half-ellipses whose depth (along
+        # the strand direction) matches the connected partner strand's width, instead
+        # of plain half-circles. Applies independently to each connected end.
+        self.elliptical_end_caps = False
         self.is_start_side = True
         self._is_selected = False  # Indicates if the strand is selected (use private attribute for property)
         self.is_hidden = False # Indicates if the strand is hidden
@@ -119,6 +123,142 @@ class Strand:
         self.update_attachable()
         self.update_shape()
         self.attachable = True  # Initialize as True, will be updated based on has_circles
+
+    def _partner_strand_for_end(self, end_index):
+        """Return the strand object connected at the given end (0=start, 1=end), or
+        None if that end is free.
+
+        This resolves connections from LIVE object relationships (parent,
+        attached_strands, knot_connections) rather than the LayerStateManager's
+        name/position lookup. That matters during a move-mode drag: positions are
+        mid-flight (so position-based matching transiently fails) and the LSM may
+        freeze or recompute connections, which previously made the cap flicker back
+        to a circle. Object references stay valid throughout a drag.
+        """
+        # An AttachedStrand always connects to its parent at its own start (end 0).
+        if end_index == 0 and getattr(self, 'parent', None) is not None:
+            return self.parent
+        # A child attached to this strand at this end (attachment_side == end_index).
+        for child in (getattr(self, 'attached_strands', None) or []):
+            if getattr(child, 'attachment_side', None) == end_index:
+                return child
+        # End-to-end knot connections.
+        kc = getattr(self, 'knot_connections', None)
+        if kc:
+            info = kc.get('start' if end_index == 0 else 'end')
+            if info and info.get('connected_strand') is not None:
+                return info['connected_strand']
+        return None
+
+    def _is_canvas_moving(self):
+        """True while a move-mode drag is in progress on this strand's canvas."""
+        c = getattr(self, 'canvas', None)
+        if c is None:
+            return False
+        if getattr(c, 'truly_moving_strands', None):
+            return True
+        mode = getattr(c, 'current_mode', None)
+        return bool(getattr(mode, 'is_moving', False))
+
+    def _partner_cap_dims(self, end_index):
+        """Return (partner_total, partner_width) for the strand connected at the given
+        end (0=start, 1=end), or (None, None) when the end is free or neither side of
+        the junction has the elliptical option enabled.
+
+        The junction is drawn elliptical if EITHER strand sharing it opted in, so the
+        strand whose width was changed AND its paired strand both get an ellipse. Each
+        side uses its OWN width as the across-axis and the partner's width as the depth,
+        which makes the two caps mirror each other across the connection.
+
+        The last successful resolution is cached per end. During an active drag, if a
+        stray frame fails to resolve the partner, the cached dims are reused instead of
+        falling back to (None, None) -- otherwise the cap would flip to a circle for one
+        frame and the ellipse would flicker (a circle is rotation-symmetric so the same
+        stray frame is invisible for non-elliptical strands).
+
+        partner_total = partner.width + 2*partner.stroke_width (outer/stroke size)
+        partner_width = partner.width                          (inner/fill size)
+        """
+        try:
+            partner = self._partner_strand_for_end(end_index)
+            if partner is not None and (getattr(self, 'elliptical_end_caps', False)
+                                        or getattr(partner, 'elliptical_end_caps', False)):
+                dims = (partner.width + partner.stroke_width * 2, partner.width)
+                if not hasattr(self, '_cap_dims_cache'):
+                    self._cap_dims_cache = {}
+                self._cap_dims_cache[end_index] = dims
+                return dims
+            # Resolution failed. While dragging, reuse the last good dims so the cap
+            # can't flicker between ellipse and circle for a stray frame. This only
+            # applies when THIS strand still has the option on -- if the toggle is off
+            # (and the partner isn't elliptical) we must fall through to a plain circle,
+            # never reuse stale cached dims.
+            if (getattr(self, 'elliptical_end_caps', False)
+                    and self._is_canvas_moving()):
+                cache = getattr(self, '_cap_dims_cache', None)
+                if cache and end_index in cache:
+                    return cache[end_index]
+            return (None, None)
+        except Exception:
+            return (None, None)
+
+    def _make_cap_ellipse(self, center, angle, side, partner_total):
+        """Build the outer (stroke) end-cap path centered at `center`.
+
+        Returns a FULL circle/ellipse (NOT pre-halved); the caller halves it with its
+        own rotated mask via `clip = outer.subtracted(mask)`, exactly like the original
+        circular-cap code. Using that single boolean subtraction (instead of an extra
+        internal mask here) keeps the antialiased seam stable while the strand rotates
+        during a drag — a double subtraction made the black cap stroke flicker.
+
+        partner_total is None -> full circle of this strand's total width.
+        partner_total given   -> full ellipse, across-axis (perpendicular to the strand)
+            = this strand's total width, depth-axis (along the strand) = partner total.
+        The `side` argument is unused (kept for call-site symmetry); the caller's mask
+        already encodes which half to keep.
+        """
+        across_total = self.width + self.stroke_width * 2
+        if partner_total is None:
+            path = QPainterPath()
+            path.addEllipse(center, across_total / 2.0, across_total / 2.0)
+            return path
+        rx = partner_total / 2.0      # depth, along the strand tangent (x in rotated frame)
+        ry = across_total / 2.0       # across, perpendicular to the strand (y)
+        ell = QPainterPath()
+        ell.addEllipse(QPointF(0, 0), rx, ry)
+        tr = QTransform().translate(center.x(), center.y()).rotate(math.degrees(angle))
+        return tr.map(ell)
+
+    def _make_cap_inner(self, center, angle, partner_width):
+        """Build the inner (fill) end-cap path centered at `center`.
+
+        partner_width is None -> full circle of radius width/2 (previous behavior).
+        Otherwise             -> full ellipse, across = this strand's width,
+            depth = partner width, aligned to the strand tangent.
+        """
+        across_w = self.width
+        if partner_width is None:
+            path = QPainterPath()
+            path.addEllipse(center, across_w * 0.5, across_w * 0.5)
+            return path
+        rx = partner_width / 2.0
+        ry = across_w / 2.0
+        ell = QPainterPath()
+        ell.addEllipse(QPointF(0, 0), rx, ry)
+        tr = QTransform().translate(center.x(), center.y()).rotate(math.degrees(angle))
+        return tr.map(ell)
+
+    def _rotated_ellipse(self, center, angle, rx, ry):
+        """Return a full ellipse path centered at `center`, rotated to `angle`.
+
+        rx is the semi-axis along the strand tangent (depth); ry is the semi-axis
+        perpendicular to the strand (across). Used by the highlight C-shape so the
+        ring follows an elliptical end-cap.
+        """
+        ell = QPainterPath()
+        ell.addEllipse(QPointF(0, 0), rx, ry)
+        tr = QTransform().translate(center.x(), center.y()).rotate(math.degrees(angle))
+        return tr.map(ell)
 
     @property
     def canvas(self):
@@ -1806,11 +1946,15 @@ class Strand:
             transform.rotate(math.degrees(angle))
             mask_rect = transform.map(mask_rect)
 
-            outer_circle = QPainterPath()
-            outer_circle.addEllipse(self.start, circle_radius, circle_radius)
-
-            highlight_circle = QPainterPath()
-            highlight_circle.addEllipse(self.start, highlight_radius, highlight_radius)
+            _pt0 = self._partner_cap_dims(0)[0]
+            if _pt0 is None:
+                outer_circle = QPainterPath()
+                outer_circle.addEllipse(self.start, circle_radius, circle_radius)
+                highlight_circle = QPainterPath()
+                highlight_circle.addEllipse(self.start, highlight_radius, highlight_radius)
+            else:
+                outer_circle = self._rotated_ellipse(self.start, angle, _pt0 / 2.0, circle_radius)
+                highlight_circle = self._rotated_ellipse(self.start, angle, _pt0 / 2.0 + 5, highlight_radius)
             ring_path = highlight_circle.subtracted(mask_rect).subtracted(outer_circle)
             combined_highlight.addPath(ring_path)
 
@@ -1838,11 +1982,15 @@ class Strand:
             tr.rotate(math.degrees(angle_end - math.pi))
             mask = tr.map(mask)
 
-            outer = QPainterPath()
-            outer.addEllipse(self.end, radius, radius)
-
-            highlight_circle = QPainterPath()
-            highlight_circle.addEllipse(self.end, highlight_radius, highlight_radius)
+            _pt1 = self._partner_cap_dims(1)[0]
+            if _pt1 is None:
+                outer = QPainterPath()
+                outer.addEllipse(self.end, radius, radius)
+                highlight_circle = QPainterPath()
+                highlight_circle.addEllipse(self.end, highlight_radius, highlight_radius)
+            else:
+                outer = self._rotated_ellipse(self.end, angle_end, _pt1 / 2.0, radius)
+                highlight_circle = self._rotated_ellipse(self.end, angle_end, _pt1 / 2.0 + 5, highlight_radius)
             ring_path = highlight_circle.subtracted(mask).subtracted(outer)
             combined_highlight.addPath(ring_path)
 
@@ -2218,14 +2366,12 @@ class Strand:
             tr = QTransform().translate(self.start.x(), self.start.y())
             tr.rotate(math.degrees(angle))
             mask = tr.map(mask)
-            outer = QPainterPath()
-            outer.addEllipse(self.start, radius, radius)
+            outer = self._make_cap_ellipse(self.start, angle, 0, self._partner_cap_dims(0)[0])
             clip = outer.subtracted(mask)
             combined_stroke_path.addPath(clip)
 
             # Add inner circle to combined_fill_path
-            inner = QPainterPath()
-            inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+            inner = self._make_cap_inner(self.start, angle, self._partner_cap_dims(0)[1])
             combined_fill_path.addPath(inner)
 
             # Add side line rectangle to combined_fill_path
@@ -2253,14 +2399,12 @@ class Strand:
             tr = QTransform().translate(self.end.x(), self.end.y())
             tr.rotate(math.degrees(angle))
             mask = tr.map(mask)
-            outer = QPainterPath()
-            outer.addEllipse(self.end, radius, radius)
+            outer = self._make_cap_ellipse(self.end, angle, 1, self._partner_cap_dims(1)[0])
             clip = outer.subtracted(mask)
             combined_stroke_path.addPath(clip)
 
             # Add inner circle to combined_fill_path
-            inner = QPainterPath()
-            inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+            inner = self._make_cap_inner(self.end, angle, self._partner_cap_dims(1)[1])
             combined_fill_path.addPath(inner)
 
             # Add side line rectangle to combined_fill_path
@@ -2288,14 +2432,12 @@ class Strand:
             tr.rotate(math.degrees(angle))
             mask = tr.map(mask)
 
-            outer = QPainterPath()
-            outer.addEllipse(self.start, radius, radius)
+            outer = self._make_cap_ellipse(self.start, angle, 0, self._partner_cap_dims(0)[0])
             clip = outer.subtracted(mask)
             combined_stroke_path.addPath(clip)
 
             # Add inner circle to combined_fill_path
-            inner = QPainterPath()
-            inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+            inner = self._make_cap_inner(self.start, angle, self._partner_cap_dims(0)[1])
             combined_fill_path.addPath(inner)
 
             # Add side line rectangle to combined_fill_path
@@ -2323,14 +2465,12 @@ class Strand:
             tr.rotate(math.degrees(angle))
             mask = tr.map(mask)
 
-            outer = QPainterPath()
-            outer.addEllipse(self.end, radius, radius)
+            outer = self._make_cap_ellipse(self.end, angle, 1, self._partner_cap_dims(1)[0])
             clip = outer.subtracted(mask)
             combined_stroke_path.addPath(clip)
 
             # Add inner circle to combined_fill_path
-            inner = QPainterPath()
-            inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+            inner = self._make_cap_inner(self.end, angle, self._partner_cap_dims(1)[1])
             combined_fill_path.addPath(inner)
 
             # Add side line rectangle to combined_fill_path
@@ -2955,14 +3095,12 @@ class Strand:
             tr = QTransform().translate(self.start.x(), self.start.y())
             tr.rotate(math.degrees(angle))
             mask = tr.map(mask)
-            outer = QPainterPath()
-            outer.addEllipse(self.start, radius, radius)
+            outer = self._make_cap_ellipse(self.start, angle, 0, self._partner_cap_dims(0)[0])
             clip = outer.subtracted(mask)
             combined_stroke_path.addPath(clip)
 
             # Add inner circle to combined_fill_path
-            inner = QPainterPath()
-            inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+            inner = self._make_cap_inner(self.start, angle, self._partner_cap_dims(0)[1])
             combined_fill_path.addPath(inner)
 
             # Add side line rectangle to combined_fill_path
@@ -2990,14 +3128,12 @@ class Strand:
             tr = QTransform().translate(self.end.x(), self.end.y())
             tr.rotate(math.degrees(angle))
             mask = tr.map(mask)
-            outer = QPainterPath()
-            outer.addEllipse(self.end, radius, radius)
+            outer = self._make_cap_ellipse(self.end, angle, 1, self._partner_cap_dims(1)[0])
             clip = outer.subtracted(mask)
             combined_stroke_path.addPath(clip)
 
             # Add inner circle to combined_fill_path
-            inner = QPainterPath()
-            inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+            inner = self._make_cap_inner(self.end, angle, self._partner_cap_dims(1)[1])
             combined_fill_path.addPath(inner)
 
             # Add side line rectangle to combined_fill_path
@@ -3025,14 +3161,12 @@ class Strand:
             tr.rotate(math.degrees(angle))
             mask = tr.map(mask)
 
-            outer = QPainterPath()
-            outer.addEllipse(self.start, radius, radius)
+            outer = self._make_cap_ellipse(self.start, angle, 0, self._partner_cap_dims(0)[0])
             clip = outer.subtracted(mask)
             combined_stroke_path.addPath(clip)
 
             # Add inner circle to combined_fill_path
-            inner = QPainterPath()
-            inner.addEllipse(self.start, self.width * 0.5, self.width * 0.5)
+            inner = self._make_cap_inner(self.start, angle, self._partner_cap_dims(0)[1])
             combined_fill_path.addPath(inner)
 
             # Add side line rectangle to combined_fill_path
@@ -3060,14 +3194,12 @@ class Strand:
             tr.rotate(math.degrees(angle))
             mask = tr.map(mask)
 
-            outer = QPainterPath()
-            outer.addEllipse(self.end, radius, radius)
+            outer = self._make_cap_ellipse(self.end, angle, 1, self._partner_cap_dims(1)[0])
             clip = outer.subtracted(mask)
             combined_stroke_path.addPath(clip)
 
             # Add inner circle to combined_fill_path
-            inner = QPainterPath()
-            inner.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+            inner = self._make_cap_inner(self.end, angle, self._partner_cap_dims(1)[1])
             combined_fill_path.addPath(inner)
 
             # Add side line rectangle to combined_fill_path

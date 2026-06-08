@@ -3070,6 +3070,7 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
             <li><span class="button-name">{_['change_stroke_color']}</span> - {_['ctx_change_stroke_color_desc']}</li>
             <li><span class="button-name">{_['change_width']}</span> - {_['ctx_change_width_desc']}</li>
+            <li><span class="button-name">{_['change_layer_width']}</span> - {_['ctx_change_layer_width_desc']}</li>
             <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
             <li><span class="button-name">{_['line']}</span> - {_['ctx_line_desc']}</li>
             <li><span class="button-name">{_['arrow']}</span> - {_['ctx_arrow_desc']}</li>
@@ -3087,6 +3088,7 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
             <li><span class="button-name">{_['change_stroke_color']}</span> - {_['ctx_change_stroke_color_desc']}</li>
             <li><span class="button-name">{_['change_width']}</span> - {_['ctx_change_width_desc']}</li>
+            <li><span class="button-name">{_['change_layer_width']}</span> - {_['ctx_change_layer_width_desc']}</li>
             <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
             <li><span class="button-name">{_['line']}</span> - {_['ctx_line_desc']}</li>
             <li><span class="button-name">{_['arrow']}</span> - {_['ctx_arrow_desc']}</li>
@@ -4025,6 +4027,7 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
             <li><span class="button-name">{_['change_stroke_color']}</span> - {_['ctx_change_stroke_color_desc']}</li>
             <li><span class="button-name">{_['change_width']}</span> - {_['ctx_change_width_desc']}</li>
+            <li><span class="button-name">{_['change_layer_width']}</span> - {_['ctx_change_layer_width_desc']}</li>
             <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
             <li><span class="button-name">{_['line']}</span> - {_['ctx_line_desc']}</li>
             <li><span class="button-name">{_['arrow']}</span> - {_['ctx_arrow_desc']}</li>
@@ -4042,6 +4045,7 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
             <li><span class="button-name">{_['change_stroke_color']}</span> - {_['ctx_change_stroke_color_desc']}</li>
             <li><span class="button-name">{_['change_width']}</span> - {_['ctx_change_width_desc']}</li>
+            <li><span class="button-name">{_['change_layer_width']}</span> - {_['ctx_change_layer_width_desc']}</li>
             <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
             <li><span class="button-name">{_['line']}</span> - {_['ctx_line_desc']}</li>
             <li><span class="button-name">{_['arrow']}</span> - {_['ctx_arrow_desc']}</li>
@@ -4755,6 +4759,7 @@ class SettingsDialog(QDialog):
                 <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
                 <li><span class="button-name">{_['change_stroke_color']}</span> - {_['ctx_change_stroke_color_desc']}</li>
                 <li><span class="button-name">{_['change_width']}</span> - {_['ctx_change_width_desc']}</li>
+                <li><span class="button-name">{_['change_layer_width']}</span> - {_['ctx_change_layer_width_desc']}</li>
                 <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
                 <li><span class="button-name">{_['line']}</span> - {_['ctx_line_desc']}</li>
                 <li><span class="button-name">{_['arrow']}</span> - {_['ctx_arrow_desc']}</li>
@@ -4772,6 +4777,7 @@ class SettingsDialog(QDialog):
                 <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
                 <li><span class="button-name">{_['change_stroke_color']}</span> - {_['ctx_change_stroke_color_desc']}</li>
                 <li><span class="button-name">{_['change_width']}</span> - {_['ctx_change_width_desc']}</li>
+                <li><span class="button-name">{_['change_layer_width']}</span> - {_['ctx_change_layer_width_desc']}</li>
                 <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
                 <li><span class="button-name">{_['line']}</span> - {_['ctx_line_desc']}</li>
                 <li><span class="button-name">{_['arrow']}</span> - {_['ctx_arrow_desc']}</li>

@@ -1,25 +1,24 @@
-# OpenStrand Studio - Version 1.107
+# OpenStrand Studio - Version 1.108
 
 An advanced diagramming tool for creating tutorials involving strand manipulation (knots, hitches, etc.)
 with dynamic masking that automatically adjusts the over-under effects between strands,
 making complex patterns clear and easy to understand.
 
-## What's New in Version 1.107
+## What's New in Version 1.108
 
 ### ✨ New Features
 
-- **Group Shadow Editor**: Shadows can now be edited for entire groups, giving you full control over how group strands cast shadows on the canvas.
+- **Multi-Tab Workspace**: A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.
 
-- **Selected Strand Settings**: A new "Selected Strand" category in Settings gathers options that apply only to the currently selected strand — move-only, control-points-only, shadow-only, and a customizable selection highlight color.
+- **View Mode Toggles in Settings**: New settings let you hide the selection highlight and hide control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.
 
-- **View Button**: New View button in the main window that hides all mode indicators (Move, Attach, etc.) so you can see your design clearly without any UI overlays.
+- **Folded-Over Start Edge by Default**: A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.
 
-- **Hebrew Right-to-Left Alignment**: The main window, settings dialog, group context menu, and group panel are now mirrored right-to-left in Hebrew for a natural reading order.
+- **Per-Layer Width Control**: A new "Change Width (This Layer Only)" option in the layer button menu resizes a single strand independently of its set, sets the stroke thickness directly in pixels, supports fractional grid sizes, and offers a match-connected-strand elliptical end-cap.
 
 ### 🐛 Bug Fixes & Improvements
 
-- **Shadow Editor Fixes & Masked Strand Support**: Shadow subtraction logic is unified between the main renderer and the shadow preview, and masked strands can now be edited through the shadow editor dialog with smart defaults.
-- **Group Creation Stability**: Fixed unexpected crashes caused by orphan hidden group dialogs when creating groups or exiting the application.
+- **Elliptical End-Cap Rendering**: Fixed the closed-knot and attached-strand end caps so a widened strand with the elliptical option renders a flat ellipse instead of a protruding semicircle, including inside masked strands and shadows.
 
 ## Features
 
@@ -76,4 +75,4 @@ Created by Yonatan Setbon
 
 ---
 
-© 2026 OpenStrand Studio - Version 1.107
+© 2026 OpenStrand Studio - Version 1.108

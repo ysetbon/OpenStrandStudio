@@ -62,7 +62,11 @@ IDENTIFIER="com.yonatan.openstrandstudio"
 WORKING_DIR="$(mktemp -d)"
 SCRIPTS_DIR="$WORKING_DIR/scripts"
 RESOURCES_DIR="$WORKING_DIR/resources"
-PKG_PATH="/Users/yonatan/Documents/GitHub/OpenStrandStudio/src/installer_output/${APP_NAME}_${VERSION}.pkg"
+# Use underscores instead of dots in the output filename (1.108 -> 1_108) so the
+# version dot is never mistaken for a file extension. VERSION itself stays dotted
+# for the installer title and pkg metadata.
+VERSION_FILE="${VERSION//./_}"
+PKG_PATH="/Users/yonatan/Documents/GitHub/OpenStrandStudio/src/installer_output/${APP_NAME}_${VERSION_FILE}.pkg"
 
 mkdir -p "$SCRIPTS_DIR" "$RESOURCES_DIR"
 

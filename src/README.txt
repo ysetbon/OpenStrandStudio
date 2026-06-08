@@ -24,6 +24,32 @@ The masked layer feature is essential for creating intricate, overlapping design
 
 ------
 
+## Version 1.108 (Released: 08/06/2026)
+
+### New Features and Improvements:
+
+1. **Multi-Tab Workspace:**
+   - A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas.
+   - Each tab is an independent session with its own strands, groups, and undo/redo history.
+   - You are warned before quitting when a tab still has unsaved changes.
+
+2. **View Mode Toggles in Settings:**
+   - New settings let you hide the selection highlight and hide control points while in View mode.
+   - Gives you a clean, capture-ready canvas without changing your actual selection.
+
+3. **Folded-Over Start Edge by Default:**
+   - A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically.
+   - You no longer have to set it strand by strand from the layer button menu.
+
+4. **Per-Layer Width Control:**
+   - A new "Change Width (This Layer Only)" option in the layer button menu resizes a single strand independently of its set.
+   - Sets the stroke thickness directly in pixels, supports fractional grid sizes, and offers a match-connected-strand elliptical end-cap.
+
+5. **Elliptical End-Cap Fix:**
+   - Fixed the closed-knot and attached-strand end caps so a widened strand with the elliptical option renders a flat ellipse instead of a protruding semicircle, including inside masked strands and shadows.
+
+------
+
 ## Version 1.107 (Released: 20/04/2026)
 
 ### New Features and Improvements:
@@ -609,6 +635,32 @@ Pour utiliser cette fonctionnalité :
 3. Relâchez la touche Contrôle pour créer le calque masqué
 
 La fonctionnalité de calque masqué est essentielle pour créer des designs complexes et superposés et c'est l'un des outils les plus puissants d'OpenStrand Studio. Assurez-vous d'expérimenter avec cette fonctionnalité pour libérer tout le potentiel de vos designs de brins !
+
+------
+
+## Version 1.108 (Sortie : 08/06/2026)
+
+### Nouvelles Fonctionnalités et Améliorations :
+
+1. **Espace de travail multi-onglets :**
+   - Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas.
+   - Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement.
+   - Vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.
+
+2. **Options du mode Vue dans les Paramètres :**
+   - De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue.
+   - Vous offre un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.
+
+3. **Bord de départ replié par défaut :**
+   - Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent).
+   - Vous n'avez plus besoin de le définir brin par brin depuis le menu du bouton de calque.
+
+4. **Contrôle de largeur par calque :**
+   - Une nouvelle option « Modifier la largeur (ce calque uniquement) » dans le menu du bouton de calque redimensionne un seul brin indépendamment de son ensemble.
+   - Définit l'épaisseur du contour directement en pixels, prend en charge des tailles de grille fractionnaires et propose une extrémité elliptique « adapter au brin connecté ».
+
+5. **Correction des extrémités elliptiques :**
+   - Correction des extrémités de nœud fermé et de brin attaché afin qu'un brin élargi avec l'option elliptique affiche une ellipse plate au lieu d'un demi-cercle saillant, y compris dans les brins masqués et les ombres.
 
 ------
 

@@ -264,6 +264,7 @@ Examples:<br>
             <li style="font-size:14px;"><b>Multi-Tab Workspace:</b> A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.</li>
             <li style="font-size:14px;"><b>View Mode Toggles:</b> New settings let you hide the selection highlight and hide the control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.</li>
             <li style="font-size:14px;"><b>Folded-Over Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button's right-click menu.</li>
+            <li style="font-size:14px;"><b>Per-Layer Width Control:</b> A new Change Width (This Layer Only) option in the layer button's right-click menu resizes a single strand independently of its set. The redesigned dialog sets the stroke thickness directly in pixels, supports fractional grid sizes, and offers a match-connected-strand elliptical end-cap.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.108</p>
         ''',
@@ -750,6 +751,7 @@ Exemples :<br>
             <li style="font-size:14px;"><b>Espace de travail multi-onglets :</b> Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas. Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement, et vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.</li>
             <li style="font-size:14px;"><b>Options du mode Vue :</b> De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue, vous offrant un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.</li>
             <li style="font-size:14px;"><b>Bord de départ replié par défaut :</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent), sans avoir à le définir brin par brin depuis le menu contextuel du bouton de calque.</li>
+            <li style="font-size:14px;"><b>Contrôle de largeur par calque :</b> Une nouvelle option Modifier la largeur (ce calque uniquement) dans le menu contextuel du bouton de calque redimensionne un seul brin indépendamment de son ensemble. La boîte de dialogue redessinée définit l'épaisseur du contour directement en pixels, prend en charge des tailles de grille fractionnaires et propose une extrémité elliptique « adapter au brin connecté ».</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.108</p>
         ''',
@@ -1318,6 +1320,7 @@ Beispiele:<br>
             <li style="font-size:14px;"><b>Multi-Tab-Arbeitsbereich:</b> Eine neue Schaltfläche „Tabs" öffnet eine verschiebbare Tab-Leiste, die magnetisch an der Seite der Leinwand einrastet. Jeder Tab ist eine eigenständige Sitzung mit eigenen Strängen, Gruppen und Rückgängig-/Wiederherstellen-Verlauf, und Sie werden vor dem Beenden gewarnt, wenn ein Tab noch nicht gespeicherte Änderungen enthält.</li>
             <li style="font-size:14px;"><b>Ansichtsmodus-Optionen:</b> Neue Einstellungen blenden die Auswahl-Hervorhebung und die Kontrollpunkte im Ansichtsmodus aus und sorgen für eine aufgeräumte, aufnahmebereite Leinwand, ohne Ihre tatsächliche Auswahl zu ändern.</li>
             <li style="font-size:14px;"><b>Umgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer umgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Kontextmenü der Ebenen-Schaltfläche festlegen müssen.</li>
+            <li style="font-size:14px;"><b>Breitensteuerung pro Ebene:</b> Eine neue Option „Breite ändern (nur diese Ebene)" im Kontextmenü der Ebenen-Schaltfläche ändert die Größe eines einzelnen Strangs unabhängig von seinem Satz. Der überarbeitete Dialog stellt die Konturbreite direkt in Pixeln ein, unterstützt gebrochene Rastergrößen und bietet eine elliptische Endkappe „An verbundenen Strang anpassen".</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.108</p>
         ''',
@@ -1820,6 +1823,7 @@ Esempi:<br>
             <li style="font-size:14px;"><b>Area di lavoro multi-scheda:</b> Un nuovo pulsante Schede apre un bordo di schede trascinabile che si aggancia magneticamente al lato della tela. Ogni scheda è una sessione indipendente con i propri fili, gruppi e cronologia di annullamento/ripristino, e vieni avvisato prima di uscire quando una scheda contiene ancora modifiche non salvate.</li>
             <li style="font-size:14px;"><b>Opzioni della modalità Vista:</b> Nuove impostazioni consentono di nascondere l'evidenziazione della selezione e i punti di controllo in modalità Vista, offrendoti una tela pulita e pronta per l'acquisizione senza modificare la selezione effettiva.</li>
             <li style="font-size:14px;"><b>Bordo iniziale ripiegato come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale ripiegato (trasparente), così non devi più impostarlo filo per filo dal menu contestuale del pulsante del livello.</li>
+            <li style="font-size:14px;"><b>Controllo larghezza per livello:</b> Una nuova opzione Modifica larghezza (solo questo livello) nel menu contestuale del pulsante del livello ridimensiona un singolo filo indipendentemente dal suo set. La finestra ridisegnata imposta lo spessore del contorno direttamente in pixel, supporta dimensioni della griglia frazionarie e offre un'estremità ellittica «adatta al filo connesso».</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Versione 1.108</p>
         ''',
@@ -2359,6 +2363,7 @@ Ejemplos:<br>
             <li style="font-size:14px;"><b>Espacio de trabajo con pestañas:</b> Un nuevo botón Pestañas abre un borde de pestañas arrastrable que se acopla magnéticamente al lado del lienzo. Cada pestaña es una sesión independiente con sus propias hebras, grupos e historial de deshacer/rehacer, y se te avisa antes de salir cuando una pestaña todavía tiene cambios sin guardar.</li>
             <li style="font-size:14px;"><b>Opciones del modo Ver:</b> Nuevos ajustes permiten ocultar el resaltado de selección y los puntos de control en modo Ver, ofreciéndote un lienzo limpio y listo para capturar sin cambiar tu selección real.</li>
             <li style="font-size:14px;"><b>Borde inicial replegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial replegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú contextual del botón de capa.</li>
+            <li style="font-size:14px;"><b>Control de ancho por capa:</b> Una nueva opción Cambiar ancho (solo esta capa) en el menú contextual del botón de capa cambia el tamaño de una sola hebra independientemente de su conjunto. El cuadro de diálogo rediseñado establece el grosor del contorno directamente en píxeles, admite tamaños de cuadrícula fraccionarios y ofrece un extremo elíptico «ajustar a la hebra conectada».</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Versión 1.108</p>
         ''',
@@ -2898,6 +2903,7 @@ Exemplos:<br>
             <li style="font-size:14px;"><b>Espaço de trabalho com abas:</b> Um novo botão Abas abre uma borda de abas arrastável que se encaixa magneticamente na lateral da tela. Cada aba é uma sessão independente com seus próprios fios, grupos e histórico de desfazer/refazer, e você é avisado antes de sair quando uma aba ainda tem alterações não salvas.</li>
             <li style="font-size:14px;"><b>Opções do modo Visualização:</b> Novas configurações permitem ocultar o destaque de seleção e os pontos de controle no modo Visualização, oferecendo uma tela limpa e pronta para captura sem alterar sua seleção real.</li>
             <li style="font-size:14px;"><b>Borda inicial dobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial dobrada (transparente), para que você não precise mais defini-la fio por fio no menu de contexto do botão de camada.</li>
+            <li style="font-size:14px;"><b>Controle de largura por camada:</b> Uma nova opção Alterar largura (apenas esta camada) no menu de contexto do botão de camada redimensiona um único fio independentemente do seu conjunto. A caixa de diálogo redesenhada define a espessura do contorno diretamente em pixels, suporta tamanhos de grade fracionários e oferece uma extremidade elíptica «ajustar ao fio conectado».</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio – Versão 1.108</p>
         ''',
@@ -3445,6 +3451,7 @@ Exemplos:<br>
             <li style="font-size:14px;"><b>כרטיסיות מרובות:</b> כפתור "כרטיסיות" חדש פותח קצה כרטיסיות נגרר שנצמד מגנטית לצד הקנבס. כל כרטיסייה היא הפעלה עצמאית עם החוטים, הקבוצות והיסטוריית הביטול/ביצוע מחדש שלה, ותקבלו אזהרה לפני יציאה כאשר בכרטיסייה עדיין יש שינויים שלא נשמרו.</li>
             <li style="font-size:14px;"><b>אפשרויות מצב תצוגה:</b> הגדרות חדשות מאפשרות להסתיר את הדגשת הבחירה ואת נקודות הבקרה במצב תצוגה, ומעניקות לכם קנבס נקי ומוכן לצילום מבלי לשנות את הבחירה בפועל.</li>
             <li style="font-size:14px;"><b>קצה התחלה מקופל כברירת מחדל:</b> הגדרה חדשה בלוח השכבות גורמת לכל חוט מחובר חדש להתחיל אוטומטית עם קצה התחלה מקופל (שקוף), כך שאין צורך להגדיר זאת לכל חוט בנפרד מתפריט ההקשר של כפתור השכבה.</li>
+            <li style="font-size:14px;"><b>בקרת רוחב לכל שכבה:</b> אפשרות חדשה "שינוי רוחב (שכבה זו בלבד)" בתפריט ההקשר של כפתור השכבה משנה את גודלו של חוט בודד ללא תלות בקבוצה. תיבת הדו-שיח המעוצבת מחדש מגדירה את עובי הקו ישירות בפיקסלים, תומכת בגדלי רשת שבריים, ומציעה קצה אליפטי "התאם לגדיל המחובר".</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - גרסה 1.108</p>
         </div>

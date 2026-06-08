@@ -3256,7 +3256,6 @@ class WidthConfigDialog(QDialog):
             QCheckBox {{
                 color: {text_color};
                 spacing: 8px;
-                font-size: 11pt;
                 background-color: transparent;
             }}
             QCheckBox::indicator {{

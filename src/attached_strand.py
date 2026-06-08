@@ -1352,9 +1352,12 @@ class AttachedStrand(Strand):
             end_side_line_path.lineTo(end_corner4)
             end_side_line_path.closeSubpath()
 
-            # Add inner circle to combined fill path
-            inner_circle_end = QPainterPath()
-            inner_circle_end.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+            # Add inner circle to combined fill path.
+            # Use the shared cap builder so the end fill follows the elliptical
+            # end-cap shape (full circle when no partner, ellipse otherwise) -- a plain
+            # full circle here would bulge past the stroke ellipse and render as a
+            # semicircle at the end, mirroring the already-elliptical start fill above.
+            inner_circle_end = self._make_cap_inner(self.end, angle_end, self._partner_cap_dims(1)[1])
             combined_fill_path.addPath(inner_circle_end)
 
             combined_fill_path.addPath(end_side_line_path)
@@ -1399,17 +1402,18 @@ class AttachedStrand(Strand):
                 transform_end_knot.rotate(math.degrees(angle_end_knot))
                 mask_rect_end_knot = transform_end_knot.map(mask_rect_end_knot)
 
-                # Create outer semi-circle and add to stroke path
-                outer_circle_end_knot = QPainterPath()
-                outer_circle_end_knot.addEllipse(self.end, circle_radius, circle_radius)
+                # Create outer semi-circle and add to stroke path.
+                # Use the shared cap builder so a closed knot honors the elliptical
+                # end-cap option (full circle when no partner cap, ellipse otherwise).
+                outer_circle_end_knot = self._make_cap_ellipse(self.end, angle_end_knot, 1, self._partner_cap_dims(1)[0])
                 outer_mask_end_knot = outer_circle_end_knot.subtracted(mask_rect_end_knot)
                 
                 if self.end_circle_stroke_color.alpha() > 0:
                     combined_stroke_path.addPath(outer_mask_end_knot)
 
-                # Create inner circle and add to fill path
-                inner_circle_end_knot = QPainterPath()
-                inner_circle_end_knot.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+                # Create inner circle and add to fill path.
+                # Match the elliptical end-cap shape so the knot fill follows the stroke.
+                inner_circle_end_knot = self._make_cap_inner(self.end, angle_end_knot, self._partner_cap_dims(1)[1])
                 combined_fill_path.addPath(inner_circle_end_knot)
 
                 # Add side line to fill path (only when stroke is visible)
@@ -3147,9 +3151,12 @@ class AttachedStrand(Strand):
             end_side_line_path.lineTo(end_corner4)
             end_side_line_path.closeSubpath()
 
-            # Add inner circle to combined fill path
-            inner_circle_end = QPainterPath()
-            inner_circle_end.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+            # Add inner circle to combined fill path.
+            # Use the shared cap builder so the end fill follows the elliptical
+            # end-cap shape (full circle when no partner, ellipse otherwise) -- a plain
+            # full circle here would bulge past the stroke ellipse and render as a
+            # semicircle at the end, mirroring the already-elliptical start fill above.
+            inner_circle_end = self._make_cap_inner(self.end, angle_end, self._partner_cap_dims(1)[1])
             combined_fill_path.addPath(inner_circle_end)
 
             combined_fill_path.addPath(end_side_line_path)
@@ -3194,17 +3201,18 @@ class AttachedStrand(Strand):
                 transform_end_knot.rotate(math.degrees(angle_end_knot))
                 mask_rect_end_knot = transform_end_knot.map(mask_rect_end_knot)
 
-                # Create outer semi-circle and add to stroke path
-                outer_circle_end_knot = QPainterPath()
-                outer_circle_end_knot.addEllipse(self.end, circle_radius, circle_radius)
+                # Create outer semi-circle and add to stroke path.
+                # Use the shared cap builder so a closed knot honors the elliptical
+                # end-cap option (full circle when no partner cap, ellipse otherwise).
+                outer_circle_end_knot = self._make_cap_ellipse(self.end, angle_end_knot, 1, self._partner_cap_dims(1)[0])
                 outer_mask_end_knot = outer_circle_end_knot.subtracted(mask_rect_end_knot)
                 
                 if self.end_circle_stroke_color.alpha() > 0:
                     combined_stroke_path.addPath(outer_mask_end_knot)
 
-                # Create inner circle and add to fill path
-                inner_circle_end_knot = QPainterPath()
-                inner_circle_end_knot.addEllipse(self.end, self.width * 0.5, self.width * 0.5)
+                # Create inner circle and add to fill path.
+                # Match the elliptical end-cap shape so the knot fill follows the stroke.
+                inner_circle_end_knot = self._make_cap_inner(self.end, angle_end_knot, self._partner_cap_dims(1)[1])
                 combined_fill_path.addPath(inner_circle_end_knot)
 
                 # Add side line to fill path (only when stroke is visible)

@@ -291,12 +291,61 @@ class MaskedStrand(Strand):
         if hasattr(strand, 'start_circle_stroke_color') and strand.start_circle_stroke_color.alpha() <= 0:
             return QPainterPath()
 
+        # When the start end is drawn as an elliptical cap, the matching ellipse
+        # is added separately by _elliptical_caps_path. A full circle here would
+        # bulge past that ellipse and make the mask render a plain semicircle
+        # instead of the ellipse, so skip the circle for elliptical start caps.
+        try:
+            if strand._partner_cap_dims(0)[0] is not None:
+                return QPainterPath()
+        except Exception:
+            pass
+
         # Build a full ellipse at the start point – the half that overlaps
         # the strand body is already covered by the stroked path, so unioning
         # a full ellipse effectively adds only the visible half-circle.
         circle = QPainterPath()
         circle.addEllipse(strand.start, radius, radius)
         return circle
+
+    def _elliptical_caps_path(self, strand, use_inner):
+        """Union of the elliptical end-cap shapes for a component strand.
+
+        When a component strand has the elliptical end-cap option enabled, its
+        drawn body bulges past the flat-capped rectangle at the connected end(s)
+        by a half-ellipse whose depth matches the partner strand. The mask
+        intersection is otherwise computed from the plain stroked rectangle, so
+        without this the mask still assumes a semicircle/flat cap and ignores the
+        ellipse. We add the full cap ellipse at each elliptical end so the mask
+        follows the actual drawn shape.
+
+        use_inner selects the fill-size ellipse (this strand's width) vs the
+        stroke-size ellipse (width + 2*stroke). Returns an empty path when the
+        strand has no elliptical caps.
+        """
+        caps = QPainterPath()
+        if not hasattr(strand, '_partner_cap_dims'):
+            return caps
+        for end_index in (0, 1):
+            try:
+                partner_total, partner_width = strand._partner_cap_dims(end_index)
+            except Exception:
+                partner_total, partner_width = None, None
+            if partner_total is None:
+                continue
+            center = strand.start if end_index == 0 else strand.end
+            t = 0.0001 if end_index == 0 else 0.9999
+            try:
+                tangent = strand.calculate_cubic_tangent(t)
+                angle = math.atan2(tangent.y(), tangent.x())
+            except Exception:
+                continue
+            if use_inner:
+                cap = strand._make_cap_inner(center, angle, partner_width)
+            else:
+                cap = strand._make_cap_ellipse(center, angle, end_index, partner_total)
+            caps = cap if caps.isEmpty() else caps.united(cap)
+        return caps
 
     def get_path_for_strand(self, strand):
         """Helper method to get the stroked path for a strand."""
@@ -310,6 +359,10 @@ class MaskedStrand(Strand):
         circle = self._get_strand_start_circle_path(strand, strand.width / 2)
         if not circle.isEmpty():
             stroked = stroked.united(circle)
+        # Include elliptical end-cap bulges so the mask follows the drawn shape
+        caps = self._elliptical_caps_path(strand, use_inner=True)
+        if not caps.isEmpty():
+            stroked = stroked.united(caps)
         return stroked
     def get_stroked_path_for_strand(self, strand):
         """Helper method to get the stroked path for a strand."""
@@ -323,6 +376,10 @@ class MaskedStrand(Strand):
         circle = self._get_strand_start_circle_path(strand, (strand.width + strand.stroke_width * 2) / 2)
         if not circle.isEmpty():
             stroked = stroked.united(circle)
+        # Include elliptical end-cap bulges so the mask follows the drawn shape
+        caps = self._elliptical_caps_path(strand, use_inner=False)
+        if not caps.isEmpty():
+            stroked = stroked.united(caps)
         return stroked
     def get_stroked_path_for_strand_extended(self, strand):
         """Helper method to get the stroked path for a strand."""
@@ -336,7 +393,11 @@ class MaskedStrand(Strand):
         circle = self._get_strand_start_circle_path(strand, (strand.width + strand.stroke_width * 2 + 4) / 2)
         if not circle.isEmpty():
             stroked = stroked.united(circle)
-        return stroked    
+        # Include elliptical end-cap bulges so the mask follows the drawn shape
+        caps = self._elliptical_caps_path(strand, use_inner=False)
+        if not caps.isEmpty():
+            stroked = stroked.united(caps)
+        return stroked
     def get_stroked_path_for_strand_with_shadow(self, strand):
         """Helper method to get the stroked path for a strand."""
         path = strand.get_path()
@@ -350,6 +411,10 @@ class MaskedStrand(Strand):
         circle = self._get_strand_start_circle_path(strand, shadow_width / 2)
         if not circle.isEmpty():
             stroked = stroked.united(circle)
+        # Include elliptical end-cap bulges so the shadow follows the drawn shape
+        caps = self._elliptical_caps_path(strand, use_inner=False)
+        if not caps.isEmpty():
+            stroked = stroked.united(caps)
         return stroked
 
     def get_stroked_path_for_strand_with_shadow_extended(self, strand):
@@ -365,7 +430,11 @@ class MaskedStrand(Strand):
         circle = self._get_strand_start_circle_path(strand, shadow_width / 2)
         if not circle.isEmpty():
             stroked = stroked.united(circle)
-        return stroked    
+        # Include elliptical end-cap bulges so the shadow follows the drawn shape
+        caps = self._elliptical_caps_path(strand, use_inner=False)
+        if not caps.isEmpty():
+            stroked = stroked.united(caps)
+        return stroked
     def draw(self, painter, skip_painter_setup=False):
         """Draw the masked strand and apply corner-based deletion rectangles."""
         if hasattr(self, 'deletion_rectangles'):

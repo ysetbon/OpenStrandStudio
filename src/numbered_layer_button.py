@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QSlider, QDialogButtonBox, QComboBox, QPushButton as QPB, QCheckBox, QDialogButtonBox
+from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QDoubleSpinBox, QSlider, QDialogButtonBox, QComboBox, QPushButton as QPB, QCheckBox, QDialogButtonBox, QStyleOptionButton
 from PyQt5.QtCore import Qt, pyqtSignal, QRect, QMimeData, QTimer, QPoint, QPointF, QLocale
 from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag, QGuiApplication
 from render_utils import RenderUtils
@@ -381,7 +381,18 @@ class NumberedLayerButton(QPushButton):
             change_width_action.setDefaultWidget(change_width_label)
             change_width_action.triggered.connect(lambda: self.change_width(strand, layer_panel))
             context_menu.addAction(change_width_action)
-            
+
+            # Add Change Width (this layer only) option
+            change_layer_width_text = _['change_layer_width'] if 'change_layer_width' in _ else "Change Width (This Layer Only)"
+            change_layer_width_label = HoverLabel(change_layer_width_text, self, theme)
+            if is_hebrew:
+                change_layer_width_label.setLayoutDirection(Qt.RightToLeft)
+                change_layer_width_label.setAlignment(Qt.AlignLeft)
+            change_layer_width_action = QWidgetAction(self)
+            change_layer_width_action.setDefaultWidget(change_layer_width_label)
+            change_layer_width_action.triggered.connect(lambda: self.change_layer_width(strand, layer_panel))
+            context_menu.addAction(change_layer_width_action)
+
             context_menu.addSeparator()
             # Check if the strand has the necessary attribute before adding stroke actions
             if hasattr(strand, 'circle_stroke_color'):
@@ -2747,6 +2758,68 @@ class NumberedLayerButton(QPushButton):
                     else:
                         pass
 
+    def change_layer_width(self, strand, layer_panel):
+        """Open a width configuration dialog to change the width of ONLY this strand layer.
+
+        Unlike change_width(), this does NOT propagate the new width to the rest of
+        the set. It applies only to the clicked strand, then refreshes any masked
+        strands that use it as a component so their geometry recalculates.
+        """
+        dialog = WidthConfigDialog(strand, layer_panel, self, show_elliptical=True)
+        if dialog.exec_() == QDialog.Accepted:
+            new_width, new_stroke_width = dialog.get_values()
+
+            # Apply changes to this strand only
+            strand.width = new_width
+            strand.stroke_width = new_stroke_width
+            # Save the grid units value from the dialog
+            strand.width_in_grid_units = dialog.thickness_spinbox.value()
+
+            # Apply the elliptical end-cap toggle to this strand only
+            if hasattr(dialog, 'elliptical_checkbox'):
+                strand.elliptical_end_caps = dialog.elliptical_checkbox.isChecked()
+                # Drop any cached cap dims so a turned-off toggle can't reuse stale
+                # elliptical dimensions during a later drag.
+                strand._cap_dims_cache = {}
+
+            # Update strand shape to recalculate side lines with new stroke width
+            if hasattr(strand, 'update_shape'):
+                strand.update_shape()
+
+            # Refresh any masked strands that depend on this strand's width
+            self._refresh_dependent_masks(strand, layer_panel)
+
+            # Force a complete canvas repaint
+            if layer_panel and hasattr(layer_panel, 'canvas'):
+                layer_panel.canvas.update()
+                QTimer.singleShot(0, layer_panel.canvas.update)
+                # Save state for undo/redo
+                if hasattr(layer_panel.canvas, 'undo_redo_manager'):
+                    layer_panel.canvas.undo_redo_manager._last_save_time = 0
+                    layer_panel.canvas.undo_redo_manager.save_state()
+
+    def _refresh_dependent_masks(self, strand, layer_panel):
+        """Recalculate any MaskedStrand that uses `strand` as a component.
+
+        A mask's intersection geometry is derived from each component strand's own
+        width (see MaskedStrand.get_mask_path), so changing one component's width
+        requires clearing the mask's cached paths. When `strand` is the mask's first
+        component, also sync the mask's own width/stroke_width (used for its selection
+        radius and shadow), which is otherwise copied from the first component only at
+        creation time.
+        """
+        if not (layer_panel and hasattr(layer_panel, 'canvas')):
+            return
+        for masked in layer_panel.canvas.strands:
+            if not isinstance(masked, MaskedStrand):
+                continue
+            if strand is masked.first_selected_strand or strand is masked.second_selected_strand:
+                if strand is masked.first_selected_strand:
+                    masked.width = strand.width
+                    masked.stroke_width = strand.stroke_width
+                if hasattr(masked, 'force_shadow_update'):
+                    masked.force_shadow_update()
+
     # --- Arrow Customization Methods ---
     def choose_arrow_color(self, strand, color_btn, layer_panel):
         """Opens a color dialog to choose arrow color."""
@@ -2829,14 +2902,23 @@ class NumberedLayerButton(QPushButton):
 class WidthConfigDialog(QDialog):
     """Dialog for configuring strand width and stroke width."""
     
-    def __init__(self, strand, layer_panel, parent=None):
+    def __init__(self, strand, layer_panel, parent=None, show_elliptical=False):
         super().__init__(parent)
         self.strand = strand
         self.layer_panel = layer_panel
+        # The "match connected strand" elliptical end-cap toggle is per-layer
+        # only, so it is shown for "Change Width (This Layer Only)" but not for
+        # the set-wide "Change Width" dialog.
+        self.show_elliptical = show_elliptical
         
         # Get translations
         _ = translations.get(layer_panel.language_code, translations['en'])
-        
+
+        # Right-to-left languages (Hebrew) align all labels, slider readouts and
+        # the checkbox/toggle to the right edge of the dialog.
+        if getattr(layer_panel, 'language_code', 'en') == 'he':
+            self.setLayoutDirection(Qt.RightToLeft)
+
         self.setWindowTitle(_['change_width'] if 'change_width' in _ else "Change Width")
         self.setModal(True)
         self.setMinimumSize(400, 220)
@@ -2846,7 +2928,11 @@ class WidthConfigDialog(QDialog):
         main_window = parent
         while main_window and not hasattr(main_window, 'current_theme'):
             main_window = main_window.parent()
-        
+
+        # Remember the resolved theme so widgets styled later (e.g. the
+        # "match connected strand" toggle) can match the dialog theme.
+        self.dialog_theme = main_window.current_theme if (main_window and hasattr(main_window, 'current_theme')) else 'light'
+
                 # Apply theme styling to dialog if main window found
         if main_window and hasattr(main_window, 'current_theme'):
             theme = main_window.current_theme
@@ -2859,14 +2945,14 @@ class WidthConfigDialog(QDialog):
                     QLabel {
                         color: white;
                     }
-                    QSpinBox, QSlider {
+                    QSpinBox, QDoubleSpinBox, QSlider {
                         background-color: #3D3D3D;
                         color: white;
                         border: 1px solid #555;
                         border-radius: 3px;
                         padding: 2px;
                     }
-                    QSpinBox:hover, QSlider:hover {
+                    QSpinBox:hover, QDoubleSpinBox:hover, QSlider:hover {
                         border: 1px solid #777;
                     }
                     QPushButton, QDialogButtonBox QPushButton {
@@ -2898,14 +2984,14 @@ class WidthConfigDialog(QDialog):
                     QLabel {
                         color: black;
                     }
-                    QSpinBox, QSlider {
+                    QSpinBox, QDoubleSpinBox, QSlider {
                         background-color: white;
                         color: black;
                         border: 1px solid #CCC;
                         border-radius: 3px;
                         padding: 2px;
                     }
-                    QSpinBox:hover, QSlider:hover {
+                    QSpinBox:hover, QDoubleSpinBox:hover, QSlider:hover {
                         border: 1px solid #999;
                     }
                     QPushButton, QDialogButtonBox QPushButton {
@@ -2937,14 +3023,14 @@ class WidthConfigDialog(QDialog):
                     QLabel {
                         color: black;
                     }
-                    QSpinBox, QSlider {
+                    QSpinBox, QDoubleSpinBox, QSlider {
                         background-color: white;
                         color: black;
                         border: 1px solid #CCC;
                         border-radius: 3px;
                         padding: 2px;
                     }
-                    QSpinBox:hover, QSlider:hover {
+                    QSpinBox:hover, QDoubleSpinBox:hover, QSlider:hover {
                         border: 1px solid #999;
                     }
                     QPushButton, QDialogButtonBox QPushButton {
@@ -2976,14 +3062,14 @@ class WidthConfigDialog(QDialog):
                 QLabel {
                     color: black;
                 }
-                QSpinBox, QSlider {
+                QSpinBox, QDoubleSpinBox, QSlider {
                     background-color: white;
                     color: black;
                     border: 1px solid #CCC;
                     border-radius: 3px;
                     padding: 2px;
                 }
-                QSpinBox:hover, QSlider:hover {
+                QSpinBox:hover, QDoubleSpinBox:hover, QSlider:hover {
                     border: 1px solid #999;
                 }
                 QPushButton, QDialogButtonBox QPushButton {
@@ -3006,8 +3092,10 @@ class WidthConfigDialog(QDialog):
                 }
             """)
         
-        # Calculate grid unit (assuming 23 pixels per grid square)
-        self.grid_unit = 23
+        # Pixels per "grid square" for the thickness control. Chosen as 27 so
+        # the default strand (46px color + 2x4px stroke = 54px total) maps to a
+        # clean 2 squares (54 / 27 = 2). 4 squares = 108px, etc.
+        self.grid_unit = 27
         
         # Get default values from main window's settings
         default_strand_width = 46
@@ -3022,18 +3110,16 @@ class WidthConfigDialog(QDialog):
         if hasattr(strand, 'width_in_grid_units') and strand.width_in_grid_units:
             current_total_squares = strand.width_in_grid_units
         else:
-            # Calculate from current widths or use defaults
+            # Calculate from current widths or use defaults (keep fractional value)
             if strand.width > 0:
-                current_total_squares = round((strand.width + 2 * strand.stroke_width) / self.grid_unit)
+                current_total_squares = round((strand.width + 2 * strand.stroke_width) / self.grid_unit, 1)
             else:
                 # Use defaults
-                current_total_squares = round((default_strand_width + 2 * default_stroke_width) / self.grid_unit)
-        
-        # Ensure it's even and at least 2
-        if current_total_squares < 2:
-            current_total_squares = 2
-        elif current_total_squares % 2 != 0:
-            current_total_squares += 1
+                current_total_squares = round((default_strand_width + 2 * default_stroke_width) / self.grid_unit, 1)
+
+        # Ensure it's at least the minimum (any fractional grid size allowed)
+        if current_total_squares < 0.5:
+            current_total_squares = 0.5
             
         current_stroke_pixels = strand.stroke_width if strand.stroke_width > 0 else default_stroke_width
         
@@ -3047,44 +3133,42 @@ class WidthConfigDialog(QDialog):
         # Total thickness in grid squares
         thickness_layout = QHBoxLayout()
         thickness_layout.addWidget(QLabel(_['total_thickness_label'] if 'total_thickness_label' in _ else "Total Thickness (grid squares):"))
-        self.thickness_spinbox = QSpinBox()
-        self.thickness_spinbox.setRange(2, 20)  # Even numbers from 2 to 20
-        self.thickness_spinbox.setSingleStep(2)  # Only even numbers
-        self.thickness_spinbox.setValue(current_total_squares if current_total_squares % 2 == 0 else current_total_squares + 1)
+        self.thickness_spinbox = QDoubleSpinBox()
+        self.thickness_spinbox.setRange(0.5, 100.0)  # Any grid size, fractional allowed
+        self.thickness_spinbox.setDecimals(1)        # Whole steps, but allow 3.5 etc.
+        self.thickness_spinbox.setSingleStep(1.0)    # Arrows step by whole squares (2, 3, 4 ...)
+        self.thickness_spinbox.setValue(current_total_squares)
         thickness_layout.addWidget(self.thickness_spinbox)
         thickness_layout.addWidget(QLabel(_['grid_squares'] if 'grid_squares' in _ else "squares"))
         layout.addLayout(thickness_layout)
         
-        # Color width percentage (slider)
+        # Stroke width (slider). The slider sets the stroke (border) width per
+        # side directly in pixels: from 1px up to total/2, at which point the
+        # color width becomes 0 (stroke is 100% of the total thickness).
         color_layout = QVBoxLayout()
         color_layout.addWidget(QLabel(_['color_vs_stroke_label'] if 'color_vs_stroke_label' in _ else "Color vs Stroke Distribution (total thickness fixed):"))
-        
+
         self.color_slider = QSlider(Qt.Horizontal)
-        self.color_slider.setRange(10, 90)  # 10% to 90% of available color space
-        
-        # Calculate current color percentage based on total width
-        if strand.width > 0:
-            current_total_width = strand.width + 2 * strand.stroke_width
-            current_percentage = int((strand.width / current_total_width) * 100)
-        else:
-            # Use defaults
-            current_total_width = default_strand_width + 2 * default_stroke_width
-            current_percentage = int((default_strand_width / current_total_width) * 100) if current_total_width > 0 else 50
-        self.color_slider.setValue(max(10, min(90, current_percentage)))
-        
+        # Range depends on the current total thickness; it is recalculated
+        # whenever the total thickness spinbox changes (see update_slider_range).
+        total_grid_width = current_total_squares * self.grid_unit
+        max_stroke = max(1, int(total_grid_width // 2))
+        self.color_slider.setRange(1, max_stroke)
+        self.color_slider.setValue(max(1, min(max_stroke, int(round(current_stroke_pixels)))))
+
         color_layout.addWidget(self.color_slider)
-        
-        # Slider labels
+
+        # Slider value label (stroke width in pixels, per side)
         slider_labels = QHBoxLayout()
         slider_labels.addStretch()
-        percent_text = _['percent_available_color'] if 'percent_available_color' in _ else "% of Available Color Space"
-        self.percentage_label = QLabel(f"{self.color_slider.value()}{percent_text}")
+        px_text = _['stroke_pixels_label'] if 'stroke_pixels_label' in _ else "px stroke (each side)"
+        self.percentage_label = QLabel(f"{self.color_slider.value()} {px_text}")
         slider_labels.addWidget(self.percentage_label)
         slider_labels.addStretch()
         color_layout.addLayout(slider_labels)
-        
+
         layout.addLayout(color_layout)
-        
+
         # Connect slider to update label
         self.color_slider.valueChanged.connect(self.update_percentage_label)
         
@@ -3096,8 +3180,21 @@ class WidthConfigDialog(QDialog):
         self.update_preview()
         preview_layout.addWidget(self.preview_label)
         layout.addLayout(preview_layout)
-        
+
+        # Elliptical end-cap option: draw connected end-caps as half-ellipses whose
+        # depth matches the connected partner strand's width (per-layer only).
+        # Styled with the large blue checkbox indicator used in the Edit Shadow dialog.
+        # Only shown for the per-layer dialog ("Change Width (This Layer Only)").
+        if self.show_elliptical:
+            elliptical_text = _['make_elliptical_end'] if 'make_elliptical_end' in _ else "Match connected strand (elliptical end-cap)"
+            self.elliptical_checkbox = QCheckBox(elliptical_text)
+            self.elliptical_checkbox.setChecked(bool(getattr(strand, 'elliptical_end_caps', False)))
+            self._style_shadow_checkbox(self.elliptical_checkbox)
+            self._setup_checkmark(self.elliptical_checkbox)
+            layout.addWidget(self.elliptical_checkbox)
+
         # Connect changes to update preview
+        self.thickness_spinbox.valueChanged.connect(self.update_slider_range)
         self.thickness_spinbox.valueChanged.connect(self.update_preview)
         self.color_slider.valueChanged.connect(self.update_preview)
         
@@ -3124,7 +3221,111 @@ class WidthConfigDialog(QDialog):
         # Connect to language change signal if available
         if hasattr(layer_panel, 'canvas') and hasattr(layer_panel.canvas, 'language_changed'):
             layer_panel.canvas.language_changed.connect(self.update_translations)
-    
+
+    def _style_shadow_checkbox(self, checkbox, is_enabled=None):
+        """Apply the large blue-indicator checkbox styling from the Edit Shadow dialog."""
+        if is_enabled is None:
+            is_enabled = checkbox.isEnabled()
+
+        if self.dialog_theme == 'dark':
+            text_color = "#FFFFFF" if is_enabled else "#808080"
+            indicator_border = "#666666"
+            indicator_background = "#2A2A2A"
+            hover_border = "#888888"
+            hover_background = "#454545"
+            checked_background = "#4A6FA5"
+            checked_border = "#6A9FD5"
+            checked_hover_background = "#5A7FB5"
+            checked_hover_border = "#7AAFF5"
+            disabled_indicator = "#1F1F1F"
+            disabled_border = "#444444"
+        else:
+            text_color = "#000000" if is_enabled else "#AAAAAA"
+            indicator_border = "#AAAAAA"
+            indicator_background = "#FFFFFF"
+            hover_border = "#888888"
+            hover_background = "#F8F8F8"
+            checked_background = "#A0C0E0"
+            checked_border = "#7090C0"
+            checked_hover_background = "#B0D0F0"
+            checked_hover_border = "#8AA0D0"
+            disabled_indicator = "#F0F0F0"
+            disabled_border = "#BBBBBB"
+
+        checkbox.setStyleSheet(f"""
+            QCheckBox {{
+                color: {text_color};
+                spacing: 8px;
+                font-size: 11pt;
+                background-color: transparent;
+            }}
+            QCheckBox::indicator {{
+                width: 20px;
+                height: 20px;
+                min-width: 20px;
+                min-height: 20px;
+                border: 2px solid {indicator_border};
+                border-radius: 4px;
+                background-color: {indicator_background};
+            }}
+            QCheckBox::indicator:hover {{
+                border: 2px solid {hover_border};
+                background-color: {hover_background};
+            }}
+            QCheckBox::indicator:checked {{
+                background-color: {checked_background};
+                border: 2px solid {checked_border};
+            }}
+            QCheckBox::indicator:checked:hover {{
+                background-color: {checked_hover_background};
+                border: 2px solid {checked_hover_border};
+            }}
+            QCheckBox::indicator:disabled {{
+                background-color: {disabled_indicator};
+                border: 2px solid {disabled_border};
+            }}
+        """)
+
+    def _setup_checkmark(self, checkbox):
+        """Draw a white V checkmark over the styled indicator when checked.
+
+        A stylesheet-styled ::indicator loses Qt's native checkmark, so we paint
+        one ourselves (same approach as the Settings dialog checkboxes).
+        """
+        original_paint_event = checkbox.paintEvent
+
+        def custom_paint_event(event):
+            original_paint_event(event)
+            if not checkbox.isChecked():
+                return
+            painter = QPainter(checkbox)
+            painter.setRenderHint(QPainter.Antialiasing)
+
+            # Ask Qt's style for the actual indicator rectangle (handles RTL/layout).
+            style_option = QStyleOptionButton()
+            checkbox.initStyleOption(style_option)
+            style = checkbox.style()
+            indicator_rect = style.subElementRect(
+                style.SE_CheckBoxIndicator, style_option, checkbox
+            )
+
+            pen = QPen(QColor(255, 255, 255), 2.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+            painter.setPen(pen)
+
+            center_x = indicator_rect.x() + indicator_rect.width() // 2
+            center_y = indicator_rect.y() + indicator_rect.height() // 2
+            checkmark_size = int(min(indicator_rect.width(), indicator_rect.height()) * 0.24)
+
+            # Left (short) stroke then right (long) stroke of the V.
+            x1, y1 = center_x - checkmark_size + 1, center_y - 1
+            x2, y2 = center_x - 1, center_y + checkmark_size - 1
+            x3, y3 = center_x + checkmark_size, center_y - checkmark_size + 1
+            painter.drawLine(x1, y1, x2, y2)
+            painter.drawLine(x2, y2, x3, y3)
+            painter.end()
+
+        checkbox.paintEvent = custom_paint_event
+
     def update_translations(self):
         """Update all text elements when language changes."""
         # Get new translations
@@ -3144,23 +3345,38 @@ class WidthConfigDialog(QDialog):
         self.update_preview()
     
     def update_percentage_label(self):
-        """Update the percentage label when slider changes."""
+        """Update the stroke-width (pixels) label when the slider changes."""
         slider_value = self.color_slider.value()
         # Get translations
         _ = translations.get(self.layer_panel.language_code, translations['en'])
-        percent_text = _['percent_available_color'] if 'percent_available_color' in _ else "% of Available Color Space"
-        self.percentage_label.setText(f"{slider_value}{percent_text}")
+        px_text = _['stroke_pixels_label'] if 'stroke_pixels_label' in _ else "px stroke (each side)"
+        self.percentage_label.setText(f"{slider_value} {px_text}")
+
+    def update_slider_range(self):
+        """Recalculate the stroke slider's range when total thickness changes.
+
+        The stroke (per side) can range from 1px up to total/2 px, at which
+        point the color width is 0 (stroke is 100% of the total thickness).
+        """
+        total_grid_width = self.thickness_spinbox.value() * self.grid_unit
+        max_stroke = max(1, int(total_grid_width // 2))
+        current_value = self.color_slider.value()
+        # Avoid emitting extra valueChanged signals while reconfiguring; the
+        # preview is refreshed separately by the spinbox's own connection.
+        self.color_slider.blockSignals(True)
+        self.color_slider.setRange(1, max_stroke)
+        self.color_slider.setValue(max(1, min(max_stroke, current_value)))
+        self.color_slider.blockSignals(False)
+        self.update_percentage_label()
     
     def update_preview(self):
         """Update the preview display keeping total thickness fixed."""
         total_grid_squares = self.thickness_spinbox.value()
         total_grid_width = total_grid_squares * self.grid_unit
-        color_percentage = self.color_slider.value() / 100.0
 
-
-        # Compute widths
-        color_width = total_grid_width * color_percentage
-        stroke_width = (total_grid_width - color_width) / 2
+        # The slider sets the stroke width (per side) directly in pixels.
+        stroke_width = self.color_slider.value()
+        color_width = max(0, total_grid_width - 2 * stroke_width)
 
 
         # Get translations
@@ -3173,10 +3389,9 @@ class WidthConfigDialog(QDialog):
     def get_values(self):
         """Return new color and stroke width ensuring total thickness remains fixed."""
         total_grid_width = self.thickness_spinbox.value() * self.grid_unit
-        color_percentage = self.color_slider.value() / 100.0
 
-        color_width = total_grid_width * color_percentage
-        stroke_width = (total_grid_width - color_width) / 2
-
+        # The slider sets the stroke width (per side) directly in pixels.
+        stroke_width = self.color_slider.value()
+        color_width = max(0, total_grid_width - 2 * stroke_width)
 
         return int(color_width), int(stroke_width)

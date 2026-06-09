@@ -12,7 +12,7 @@ making complex patterns clear and easy to understand.
 
 - **View Mode Toggles in Settings**: New settings let you hide the selection highlight and hide control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.
 
-- **Folded-Over Start Edge by Default**: A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.
+- **Unfolded Start Edge by Default**: A new Layer Panel setting makes every newly attached strand begin with an unfolded (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.
 
 - **Per-Layer Width Control**: A new "Change Width (This Layer Only)" option in the layer button menu resizes a single strand independently of its set, sets the stroke thickness directly in pixels, supports fractional grid sizes, and offers a match-connected-strand elliptical end-cap.
 

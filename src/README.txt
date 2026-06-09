@@ -24,7 +24,7 @@ The masked layer feature is essential for creating intricate, overlapping design
 
 ------
 
-## Version 1.108 (Released: 08/06/2026)
+## Version 1.108 (Released: 09/06/2026)
 
 ### New Features and Improvements:
 
@@ -37,8 +37,8 @@ The masked layer feature is essential for creating intricate, overlapping design
    - New settings let you hide the selection highlight and hide control points while in View mode.
    - Gives you a clean, capture-ready canvas without changing your actual selection.
 
-3. **Folded-Over Start Edge by Default:**
-   - A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically.
+3. **Unfolded Start Edge by Default:**
+   - A new Layer Panel setting makes every newly attached strand begin with an unfolded (transparent) start edge automatically.
    - You no longer have to set it strand by strand from the layer button menu.
 
 4. **Per-Layer Width Control:**
@@ -651,8 +651,8 @@ La fonctionnalité de calque masqué est essentielle pour créer des designs com
    - De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue.
    - Vous offre un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.
 
-3. **Bord de départ replié par défaut :**
-   - Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent).
+3. **Bord de départ déplié par défaut :**
+   - Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ déplié (transparent).
    - Vous n'avez plus besoin de le définir brin par brin depuis le menu du bouton de calque.
 
 4. **Contrôle de largeur par calque :**

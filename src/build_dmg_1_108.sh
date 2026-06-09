@@ -2,7 +2,7 @@
 
 ################################################################################
 # OpenStrand Studio macOS DMG Builder TEMPLATE
-# Date: Created November 24, 2025
+# Date: Created June 9, 2026
 #
 # LOGIC EXPLANATION:
 # ==================
@@ -54,7 +54,7 @@
 # Set variables
 APP_NAME="OpenStrandStudio"
 VERSION="1.108"
-APP_DATE="08_June_2026"
+APP_DATE="09_June_2026"
 PUBLISHER="Yonatan Setbon"
 IDENTIFIER="com.yonatan.openstrandstudio"
 
@@ -145,7 +145,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab Workspace:</b> A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.</li>
         <li><b>View Mode Toggles in Settings:</b> New settings let you hide the selection highlight and hide control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.</li>
-        <li><b>Folded-Over Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
+        <li><b>Unfolded Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with an unfolded (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
         <li><b>Per-Layer Width Control:</b> A new Change Width (This Layer Only) option in the layer button menu resizes a single strand independently of its set. The redesigned dialog sets the stroke thickness directly in pixels, supports fractional grid sizes, and offers a match-connected-strand elliptical end-cap.</li>
     </ul>
     <hr>
@@ -156,7 +156,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab-Arbeitsbereich:</b> Eine neue Schaltfläche „Tabs“ öffnet eine verschiebbare Tab-Leiste, die magnetisch an der Seite der Leinwand einrastet. Jeder Tab ist eine eigenständige Sitzung mit eigenen Strängen, Gruppen und Rückgängig-/Wiederherstellen-Verlauf, und Sie werden vor dem Beenden gewarnt, wenn ein Tab noch nicht gespeicherte Änderungen enthält.</li>
         <li><b>Ansichtsmodus-Optionen in den Einstellungen:</b> Neue Einstellungen blenden die Auswahl-Hervorhebung und die Kontrollpunkte im Ansichtsmodus aus und sorgen für eine aufgeräumte, aufnahmebereite Leinwand, ohne Ihre tatsächliche Auswahl zu ändern.</li>
-        <li><b>Umgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer umgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
+        <li><b>Aufgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer aufgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
         <li><b>Breitensteuerung pro Ebene:</b> Eine neue Option „Breite ändern (nur diese Ebene)" im Ebenen-Schaltflächenmenü ändert die Größe eines einzelnen Strangs unabhängig von seinem Satz. Der überarbeitete Dialog stellt die Konturbreite direkt in Pixeln ein, unterstützt gebrochene Rastergrößen und bietet eine elliptische Endkappe „An verbundenen Strang anpassen".</li>
     </ul>
     <hr>
@@ -167,7 +167,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <ul>
         <li><b>Espace de travail multi-onglets:</b> Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas. Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement, et vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.</li>
         <li><b>Options du mode Vue dans les Paramètres:</b> De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue, vous offrant un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.</li>
-        <li><b>Bord de départ replié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
+        <li><b>Bord de départ déplié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ déplié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
         <li><b>Contrôle de largeur par calque :</b> Une nouvelle option Modifier la largeur (ce calque uniquement) dans le menu du bouton de calque redimensionne un seul brin indépendamment de son ensemble. La boîte de dialogue redessinée définit l'épaisseur du contour directement en pixels, prend en charge des tailles de grille fractionnaires et propose une extrémité elliptique « adapter au brin connecté ».</li>
     </ul>
     <hr>
@@ -178,7 +178,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <ul>
         <li><b>Area di lavoro multi-scheda:</b> Un nuovo pulsante Schede apre un bordo di schede trascinabile che si aggancia magneticamente al lato della tela. Ogni scheda è una sessione indipendente con i propri fili, gruppi e cronologia di annullamento/ripristino, e vieni avvisato prima di uscire quando una scheda contiene ancora modifiche non salvate.</li>
         <li><b>Opzioni della modalità Vista nelle Impostazioni:</b> Nuove impostazioni consentono di nascondere l'evidenziazione della selezione e i punti di controllo in modalità Vista, offrendoti una tela pulita e pronta per l'acquisizione senza modificare la selezione effettiva.</li>
-        <li><b>Bordo iniziale ripiegato come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale ripiegato (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
+        <li><b>Bordo iniziale disteso come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale disteso (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
         <li><b>Controllo larghezza per livello:</b> Una nuova opzione Modifica larghezza (solo questo livello) nel menu del pulsante del livello ridimensiona un singolo filo indipendentemente dal suo set. La finestra ridisegnata imposta lo spessore del contorno direttamente in pixel, supporta dimensioni della griglia frazionarie e offre un'estremità ellittica «adatta al filo connesso».</li>
     </ul>
     <hr>
@@ -189,7 +189,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <ul>
         <li><b>Espacio de trabajo con pestañas:</b> Un nuevo botón Pestañas abre un borde de pestañas arrastrable que se acopla magnéticamente al lado del lienzo. Cada pestaña es una sesión independiente con sus propias hebras, grupos e historial de deshacer/rehacer, y se te avisa antes de salir cuando una pestaña todavía tiene cambios sin guardar.</li>
         <li><b>Opciones del modo Ver en Ajustes:</b> Nuevos ajustes permiten ocultar el resaltado de selección y los puntos de control en modo Ver, ofreciéndote un lienzo limpio y listo para capturar sin cambiar tu selección real.</li>
-        <li><b>Borde inicial replegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial replegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
+        <li><b>Borde inicial desplegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial desplegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
         <li><b>Control de ancho por capa:</b> Una nueva opción Cambiar ancho (solo esta capa) en el menú del botón de capa cambia el tamaño de una sola hebra independientemente de su conjunto. El cuadro de diálogo rediseñado establece el grosor del contorno directamente en píxeles, admite tamaños de cuadrícula fraccionarios y ofrece un extremo elíptico «ajustar a la hebra conectada».</li>
     </ul>
     <hr>
@@ -200,7 +200,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <ul>
         <li><b>Espaço de trabalho com abas:</b> Um novo botão Abas abre uma borda de abas arrastável que se encaixa magneticamente na lateral da tela. Cada aba é uma sessão independente com seus próprios fios, grupos e histórico de desfazer/refazer, e você é avisado antes de sair quando uma aba ainda tem alterações não salvas.</li>
         <li><b>Opções do modo Visualização nas Configurações:</b> Novas configurações permitem ocultar o destaque de seleção e os pontos de controle no modo Visualização, oferecendo uma tela limpa e pronta para captura sem alterar sua seleção real.</li>
-        <li><b>Borda inicial dobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial dobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
+        <li><b>Borda inicial desdobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial desdobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
         <li><b>Controle de largura por camada:</b> Uma nova opção Alterar largura (apenas esta camada) no menu do botão de camada redimensiona um único fio independentemente do seu conjunto. A caixa de diálogo redesenhada define a espessura do contorno diretamente em pixels, suporta tamanhos de grade fracionários e oferece uma extremidade elíptica «ajustar ao fio conectado».</li>
     </ul>
     <hr>
@@ -226,7 +226,7 @@ cat > "$RESOURCES_DIR/license.html" << EOF
 <html>
 <body>
     <h2>License Agreement</h2>
-    <p>Copyright (c) 2025 $PUBLISHER</p>
+    <p>Copyright (c) 2026 $PUBLISHER</p>
     <p>By installing this software, you agree to the terms and conditions.</p>
 </body>
 </html>
@@ -244,7 +244,7 @@ cat > "$RESOURCES_DIR/fr.lproj/license.html" << 'EOF'
 <html>
 <body>
     <h2>Accord de licence</h2>
-    <p>Droit d'auteur (c) 2025 Yonatan Setbon</p>
+    <p>Droit d'auteur (c) 2026 Yonatan Setbon</p>
     <p>En installant ce logiciel, vous acceptez les termes et conditions.</p>
 </body>
 </html>
@@ -257,7 +257,7 @@ cat > "$RESOURCES_DIR/it.lproj/license.html" << 'EOF'
 <html>
 <body>
     <h2>Contratto di licenza</h2>
-    <p>Copyright (c) 2025 Yonatan Setbon</p>
+    <p>Copyright (c) 2026 Yonatan Setbon</p>
     <p>Installando questo software, accetti i termini e le condizioni.</p>
 </body>
 </html>
@@ -270,7 +270,7 @@ cat > "$RESOURCES_DIR/es.lproj/license.html" << 'EOF'
 <html>
 <body>
     <h2>Acuerdo de licencia</h2>
-    <p>Derechos de autor (c) 2025 Yonatan Setbon</p>
+    <p>Derechos de autor (c) 2026 Yonatan Setbon</p>
     <p>Al instalar este software, usted acepta los términos y condiciones.</p>
 </body>
 </html>
@@ -283,7 +283,7 @@ cat > "$RESOURCES_DIR/pt.lproj/license.html" << 'EOF'
 <html>
 <body>
     <h2>Acordo de licença</h2>
-    <p>Direitos autorais (c) 2025 Yonatan Setbon</p>
+    <p>Direitos autorais (c) 2026 Yonatan Setbon</p>
     <p>Ao instalar este software, você concorda com os termos e condições.</p>
 </body>
 </html>
@@ -296,7 +296,7 @@ cat > "$RESOURCES_DIR/de.lproj/license.html" << 'EOF'
 <html>
 <body>
     <h2>Lizenzvereinbarung</h2>
-    <p>Urheberrecht (c) 2025 Yonatan Setbon</p>
+    <p>Urheberrecht (c) 2026 Yonatan Setbon</p>
     <p>Mit der Installation dieser Software stimmen Sie den Bedingungen zu.</p>
 </body>
 </html>
@@ -309,7 +309,7 @@ cat > "$RESOURCES_DIR/he.lproj/license.html" << 'EOF'
 <html dir="rtl">
 <body>
     <h2>&#x05D4;&#x05E1;&#x05E7;&#x05DD; &#x05E8;&#x05D9;&#x05E9;&#x05D9;&#x05D5;&#x05DF;</h2>
-    <p>&#x05D6;&#x05DB;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05E6;&#x05E8;&#x05D9;&#x05DD; (c) 2025 Yonatan Setbon</p>
+    <p>&#x05D6;&#x05DB;&#x05D5;&#x05D9;&#x05D5;&#x05EA; &#x05D9;&#x05D5;&#x05E6;&#x05E8;&#x05D9;&#x05DD; (c) 2026 Yonatan Setbon</p>
     <p>&#x05D1;&#x05D4;&#x05EA;&#x05E7;&#x05E0;&#x05D4; &#x05EA;&#x05D5;&#x05DB;&#x05E0;&#x05D4; &#x05D6;&#x05D5;&#x05D4;, &#x05D0;&#x05EA;&#x05D4; &#x05DE;&#x05E1;&#x05DB;&#x05D9;&#x05DD; &#x05DC;&#x05EA;&#x05E0;&#x05D0;&#x05D9;&#x05DD; &#x05D5;&#x05DC;&#x05D4;&#x05D2;&#x05D1;&#x05D5;&#x05EA;.</p>
 </body>
 </html>
@@ -360,7 +360,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espace de travail multi-onglets:</b> Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas. Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement, et vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.</li>
         <li><b>Options du mode Vue dans les Paramètres:</b> De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue, vous offrant un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.</li>
-        <li><b>Bord de départ replié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
+        <li><b>Bord de départ déplié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ déplié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
         <li><b>Contrôle de largeur par calque :</b> Une nouvelle option Modifier la largeur (ce calque uniquement) dans le menu du bouton de calque redimensionne un seul brin indépendamment de son ensemble. La boîte de dialogue redessinée définit l'épaisseur du contour directement en pixels, prend en charge des tailles de grille fractionnaires et propose une extrémité elliptique « adapter au brin connecté ».</li>
     </ul>
     <hr>
@@ -371,7 +371,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab Workspace:</b> A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.</li>
         <li><b>View Mode Toggles in Settings:</b> New settings let you hide the selection highlight and hide control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.</li>
-        <li><b>Folded-Over Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
+        <li><b>Unfolded Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with an unfolded (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
         <li><b>Per-Layer Width Control:</b> A new Change Width (This Layer Only) option in the layer button menu resizes a single strand independently of its set. The redesigned dialog sets the stroke thickness directly in pixels, supports fractional grid sizes, and offers a match-connected-strand elliptical end-cap.</li>
     </ul>
     <hr>
@@ -382,7 +382,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab-Arbeitsbereich:</b> Eine neue Schaltfläche „Tabs“ öffnet eine verschiebbare Tab-Leiste, die magnetisch an der Seite der Leinwand einrastet. Jeder Tab ist eine eigenständige Sitzung mit eigenen Strängen, Gruppen und Rückgängig-/Wiederherstellen-Verlauf, und Sie werden vor dem Beenden gewarnt, wenn ein Tab noch nicht gespeicherte Änderungen enthält.</li>
         <li><b>Ansichtsmodus-Optionen in den Einstellungen:</b> Neue Einstellungen blenden die Auswahl-Hervorhebung und die Kontrollpunkte im Ansichtsmodus aus und sorgen für eine aufgeräumte, aufnahmebereite Leinwand, ohne Ihre tatsächliche Auswahl zu ändern.</li>
-        <li><b>Umgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer umgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
+        <li><b>Aufgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer aufgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
         <li><b>Breitensteuerung pro Ebene:</b> Eine neue Option „Breite ändern (nur diese Ebene)" im Ebenen-Schaltflächenmenü ändert die Größe eines einzelnen Strangs unabhängig von seinem Satz. Der überarbeitete Dialog stellt die Konturbreite direkt in Pixeln ein, unterstützt gebrochene Rastergrößen und bietet eine elliptische Endkappe „An verbundenen Strang anpassen".</li>
     </ul>
     <hr>
@@ -393,7 +393,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Area di lavoro multi-scheda:</b> Un nuovo pulsante Schede apre un bordo di schede trascinabile che si aggancia magneticamente al lato della tela. Ogni scheda è una sessione indipendente con i propri fili, gruppi e cronologia di annullamento/ripristino, e vieni avvisato prima di uscire quando una scheda contiene ancora modifiche non salvate.</li>
         <li><b>Opzioni della modalità Vista nelle Impostazioni:</b> Nuove impostazioni consentono di nascondere l'evidenziazione della selezione e i punti di controllo in modalità Vista, offrendoti una tela pulita e pronta per l'acquisizione senza modificare la selezione effettiva.</li>
-        <li><b>Bordo iniziale ripiegato come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale ripiegato (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
+        <li><b>Bordo iniziale disteso come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale disteso (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
         <li><b>Controllo larghezza per livello:</b> Una nuova opzione Modifica larghezza (solo questo livello) nel menu del pulsante del livello ridimensiona un singolo filo indipendentemente dal suo set. La finestra ridisegnata imposta lo spessore del contorno direttamente in pixel, supporta dimensioni della griglia frazionarie e offre un'estremità ellittica «adatta al filo connesso».</li>
     </ul>
     <hr>
@@ -404,7 +404,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espacio de trabajo con pestañas:</b> Un nuevo botón Pestañas abre un borde de pestañas arrastrable que se acopla magnéticamente al lado del lienzo. Cada pestaña es una sesión independiente con sus propias hebras, grupos e historial de deshacer/rehacer, y se te avisa antes de salir cuando una pestaña todavía tiene cambios sin guardar.</li>
         <li><b>Opciones del modo Ver en Ajustes:</b> Nuevos ajustes permiten ocultar el resaltado de selección y los puntos de control en modo Ver, ofreciéndote un lienzo limpio y listo para capturar sin cambiar tu selección real.</li>
-        <li><b>Borde inicial replegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial replegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
+        <li><b>Borde inicial desplegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial desplegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
         <li><b>Control de ancho por capa:</b> Una nueva opción Cambiar ancho (solo esta capa) en el menú del botón de capa cambia el tamaño de una sola hebra independientemente de su conjunto. El cuadro de diálogo rediseñado establece el grosor del contorno directamente en píxeles, admite tamaños de cuadrícula fraccionarios y ofrece un extremo elíptico «ajustar a la hebra conectada».</li>
     </ul>
     <hr>
@@ -415,7 +415,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espaço de trabalho com abas:</b> Um novo botão Abas abre uma borda de abas arrastável que se encaixa magneticamente na lateral da tela. Cada aba é uma sessão independente com seus próprios fios, grupos e histórico de desfazer/refazer, e você é avisado antes de sair quando uma aba ainda tem alterações não salvas.</li>
         <li><b>Opções do modo Visualização nas Configurações:</b> Novas configurações permitem ocultar o destaque de seleção e os pontos de controle no modo Visualização, oferecendo uma tela limpa e pronta para captura sem alterar sua seleção real.</li>
-        <li><b>Borda inicial dobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial dobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
+        <li><b>Borda inicial desdobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial desdobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
         <li><b>Controle de largura por camada:</b> Uma nova opção Alterar largura (apenas esta camada) no menu do botão de camada redimensiona um único fio independentemente do seu conjunto. A caixa de diálogo redesenhada define a espessura do contorno diretamente em pixels, suporta tamanhos de grade fracionários e oferece uma extremidade elíptica «ajustar ao fio conectado».</li>
     </ul>
     <hr>
@@ -450,7 +450,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab-Arbeitsbereich:</b> Eine neue Schaltfläche „Tabs“ öffnet eine verschiebbare Tab-Leiste, die magnetisch an der Seite der Leinwand einrastet. Jeder Tab ist eine eigenständige Sitzung mit eigenen Strängen, Gruppen und Rückgängig-/Wiederherstellen-Verlauf, und Sie werden vor dem Beenden gewarnt, wenn ein Tab noch nicht gespeicherte Änderungen enthält.</li>
         <li><b>Ansichtsmodus-Optionen in den Einstellungen:</b> Neue Einstellungen blenden die Auswahl-Hervorhebung und die Kontrollpunkte im Ansichtsmodus aus und sorgen für eine aufgeräumte, aufnahmebereite Leinwand, ohne Ihre tatsächliche Auswahl zu ändern.</li>
-        <li><b>Umgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer umgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
+        <li><b>Aufgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer aufgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
         <li><b>Breitensteuerung pro Ebene:</b> Eine neue Option „Breite ändern (nur diese Ebene)" im Ebenen-Schaltflächenmenü ändert die Größe eines einzelnen Strangs unabhängig von seinem Satz. Der überarbeitete Dialog stellt die Konturbreite direkt in Pixeln ein, unterstützt gebrochene Rastergrößen und bietet eine elliptische Endkappe „An verbundenen Strang anpassen".</li>
     </ul>
     <hr>
@@ -461,7 +461,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab Workspace:</b> A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.</li>
         <li><b>View Mode Toggles in Settings:</b> New settings let you hide the selection highlight and hide control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.</li>
-        <li><b>Folded-Over Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
+        <li><b>Unfolded Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with an unfolded (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
         <li><b>Per-Layer Width Control:</b> A new Change Width (This Layer Only) option in the layer button menu resizes a single strand independently of its set. The redesigned dialog sets the stroke thickness directly in pixels, supports fractional grid sizes, and offers a match-connected-strand elliptical end-cap.</li>
     </ul>
     <hr>
@@ -472,7 +472,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espace de travail multi-onglets:</b> Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas. Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement, et vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.</li>
         <li><b>Options du mode Vue dans les Paramètres:</b> De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue, vous offrant un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.</li>
-        <li><b>Bord de départ replié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
+        <li><b>Bord de départ déplié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ déplié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
         <li><b>Contrôle de largeur par calque :</b> Une nouvelle option Modifier la largeur (ce calque uniquement) dans le menu du bouton de calque redimensionne un seul brin indépendamment de son ensemble. La boîte de dialogue redessinée définit l'épaisseur du contour directement en pixels, prend en charge des tailles de grille fractionnaires et propose une extrémité elliptique « adapter au brin connecté ».</li>
     </ul>
     <hr>
@@ -483,7 +483,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Area di lavoro multi-scheda:</b> Un nuovo pulsante Schede apre un bordo di schede trascinabile che si aggancia magneticamente al lato della tela. Ogni scheda è una sessione indipendente con i propri fili, gruppi e cronologia di annullamento/ripristino, e vieni avvisato prima di uscire quando una scheda contiene ancora modifiche non salvate.</li>
         <li><b>Opzioni della modalità Vista nelle Impostazioni:</b> Nuove impostazioni consentono di nascondere l'evidenziazione della selezione e i punti di controllo in modalità Vista, offrendoti una tela pulita e pronta per l'acquisizione senza modificare la selezione effettiva.</li>
-        <li><b>Bordo iniziale ripiegato come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale ripiegato (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
+        <li><b>Bordo iniziale disteso come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale disteso (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
         <li><b>Controllo larghezza per livello:</b> Una nuova opzione Modifica larghezza (solo questo livello) nel menu del pulsante del livello ridimensiona un singolo filo indipendentemente dal suo set. La finestra ridisegnata imposta lo spessore del contorno direttamente in pixel, supporta dimensioni della griglia frazionarie e offre un'estremità ellittica «adatta al filo connesso».</li>
     </ul>
     <hr>
@@ -494,7 +494,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espacio de trabajo con pestañas:</b> Un nuevo botón Pestañas abre un borde de pestañas arrastrable que se acopla magnéticamente al lado del lienzo. Cada pestaña es una sesión independiente con sus propias hebras, grupos e historial de deshacer/rehacer, y se te avisa antes de salir cuando una pestaña todavía tiene cambios sin guardar.</li>
         <li><b>Opciones del modo Ver en Ajustes:</b> Nuevos ajustes permiten ocultar el resaltado de selección y los puntos de control en modo Ver, ofreciéndote un lienzo limpio y listo para capturar sin cambiar tu selección real.</li>
-        <li><b>Borde inicial replegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial replegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
+        <li><b>Borde inicial desplegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial desplegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
         <li><b>Control de ancho por capa:</b> Una nueva opción Cambiar ancho (solo esta capa) en el menú del botón de capa cambia el tamaño de una sola hebra independientemente de su conjunto. El cuadro de diálogo rediseñado establece el grosor del contorno directamente en píxeles, admite tamaños de cuadrícula fraccionarios y ofrece un extremo elíptico «ajustar a la hebra conectada».</li>
     </ul>
     <hr>
@@ -505,7 +505,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espaço de trabalho com abas:</b> Um novo botão Abas abre uma borda de abas arrastável que se encaixa magneticamente na lateral da tela. Cada aba é uma sessão independente com seus próprios fios, grupos e histórico de desfazer/refazer, e você é avisado antes de sair quando uma aba ainda tem alterações não salvas.</li>
         <li><b>Opções do modo Visualização nas Configurações:</b> Novas configurações permitem ocultar o destaque de seleção e os pontos de controle no modo Visualização, oferecendo uma tela limpa e pronta para captura sem alterar sua seleção real.</li>
-        <li><b>Borda inicial dobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial dobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
+        <li><b>Borda inicial desdobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial desdobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
         <li><b>Controle de largura por camada:</b> Uma nova opção Alterar largura (apenas esta camada) no menu do botão de camada redimensiona um único fio independentemente do seu conjunto. A caixa de diálogo redesenhada define a espessura do contorno diretamente em pixels, suporta tamanhos de grade fracionários e oferece uma extremidade elíptica «ajustar ao fio conectado».</li>
     </ul>
     <hr>
@@ -540,7 +540,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Area di lavoro multi-scheda:</b> Un nuovo pulsante Schede apre un bordo di schede trascinabile che si aggancia magneticamente al lato della tela. Ogni scheda è una sessione indipendente con i propri fili, gruppi e cronologia di annullamento/ripristino, e vieni avvisato prima di uscire quando una scheda contiene ancora modifiche non salvate.</li>
         <li><b>Opzioni della modalità Vista nelle Impostazioni:</b> Nuove impostazioni consentono di nascondere l'evidenziazione della selezione e i punti di controllo in modalità Vista, offrendoti una tela pulita e pronta per l'acquisizione senza modificare la selezione effettiva.</li>
-        <li><b>Bordo iniziale ripiegato come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale ripiegato (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
+        <li><b>Bordo iniziale disteso come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale disteso (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
         <li><b>Controllo larghezza per livello:</b> Una nuova opzione Modifica larghezza (solo questo livello) nel menu del pulsante del livello ridimensiona un singolo filo indipendentemente dal suo set. La finestra ridisegnata imposta lo spessore del contorno direttamente in pixel, supporta dimensioni della griglia frazionarie e offre un'estremità ellittica «adatta al filo connesso».</li>
     </ul>
     <hr>
@@ -551,7 +551,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab Workspace:</b> A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.</li>
         <li><b>View Mode Toggles in Settings:</b> New settings let you hide the selection highlight and hide control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.</li>
-        <li><b>Folded-Over Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
+        <li><b>Unfolded Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with an unfolded (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
         <li><b>Per-Layer Width Control:</b> A new Change Width (This Layer Only) option in the layer button menu resizes a single strand independently of its set. The redesigned dialog sets the stroke thickness directly in pixels, supports fractional grid sizes, and offers a match-connected-strand elliptical end-cap.</li>
     </ul>
     <hr>
@@ -562,7 +562,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab-Arbeitsbereich:</b> Eine neue Schaltfläche „Tabs“ öffnet eine verschiebbare Tab-Leiste, die magnetisch an der Seite der Leinwand einrastet. Jeder Tab ist eine eigenständige Sitzung mit eigenen Strängen, Gruppen und Rückgängig-/Wiederherstellen-Verlauf, und Sie werden vor dem Beenden gewarnt, wenn ein Tab noch nicht gespeicherte Änderungen enthält.</li>
         <li><b>Ansichtsmodus-Optionen in den Einstellungen:</b> Neue Einstellungen blenden die Auswahl-Hervorhebung und die Kontrollpunkte im Ansichtsmodus aus und sorgen für eine aufgeräumte, aufnahmebereite Leinwand, ohne Ihre tatsächliche Auswahl zu ändern.</li>
-        <li><b>Umgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer umgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
+        <li><b>Aufgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer aufgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
         <li><b>Breitensteuerung pro Ebene:</b> Eine neue Option „Breite ändern (nur diese Ebene)" im Ebenen-Schaltflächenmenü ändert die Größe eines einzelnen Strangs unabhängig von seinem Satz. Der überarbeitete Dialog stellt die Konturbreite direkt in Pixeln ein, unterstützt gebrochene Rastergrößen und bietet eine elliptische Endkappe „An verbundenen Strang anpassen".</li>
     </ul>
     <hr>
@@ -573,7 +573,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espace de travail multi-onglets:</b> Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas. Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement, et vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.</li>
         <li><b>Options du mode Vue dans les Paramètres:</b> De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue, vous offrant un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.</li>
-        <li><b>Bord de départ replié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
+        <li><b>Bord de départ déplié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ déplié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
         <li><b>Contrôle de largeur par calque :</b> Une nouvelle option Modifier la largeur (ce calque uniquement) dans le menu du bouton de calque redimensionne un seul brin indépendamment de son ensemble. La boîte de dialogue redessinée définit l'épaisseur du contour directement en pixels, prend en charge des tailles de grille fractionnaires et propose une extrémité elliptique « adapter au brin connecté ».</li>
     </ul>
     <hr>
@@ -584,7 +584,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espacio de trabajo con pestañas:</b> Un nuevo botón Pestañas abre un borde de pestañas arrastrable que se acopla magnéticamente al lado del lienzo. Cada pestaña es una sesión independiente con sus propias hebras, grupos e historial de deshacer/rehacer, y se te avisa antes de salir cuando una pestaña todavía tiene cambios sin guardar.</li>
         <li><b>Opciones del modo Ver en Ajustes:</b> Nuevos ajustes permiten ocultar el resaltado de selección y los puntos de control en modo Ver, ofreciéndote un lienzo limpio y listo para capturar sin cambiar tu selección real.</li>
-        <li><b>Borde inicial replegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial replegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
+        <li><b>Borde inicial desplegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial desplegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
         <li><b>Control de ancho por capa:</b> Una nueva opción Cambiar ancho (solo esta capa) en el menú del botón de capa cambia el tamaño de una sola hebra independientemente de su conjunto. El cuadro de diálogo rediseñado establece el grosor del contorno directamente en píxeles, admite tamaños de cuadrícula fraccionarios y ofrece un extremo elíptico «ajustar a la hebra conectada».</li>
     </ul>
     <hr>
@@ -595,7 +595,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espaço de trabalho com abas:</b> Um novo botão Abas abre uma borda de abas arrastável que se encaixa magneticamente na lateral da tela. Cada aba é uma sessão independente com seus próprios fios, grupos e histórico de desfazer/refazer, e você é avisado antes de sair quando uma aba ainda tem alterações não salvas.</li>
         <li><b>Opções do modo Visualização nas Configurações:</b> Novas configurações permitem ocultar o destaque de seleção e os pontos de controle no modo Visualização, oferecendo uma tela limpa e pronta para captura sem alterar sua seleção real.</li>
-        <li><b>Borda inicial dobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial dobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
+        <li><b>Borda inicial desdobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial desdobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
         <li><b>Controle de largura por camada:</b> Uma nova opção Alterar largura (apenas esta camada) no menu do botão de camada redimensiona um único fio independentemente do seu conjunto. A caixa de diálogo redesenhada define a espessura do contorno diretamente em pixels, suporta tamanhos de grade fracionários e oferece uma extremidade elíptica «ajustar ao fio conectado».</li>
     </ul>
     <hr>
@@ -630,7 +630,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espacio de trabajo con pestañas:</b> Un nuevo botón Pestañas abre un borde de pestañas arrastrable que se acopla magnéticamente al lado del lienzo. Cada pestaña es una sesión independiente con sus propias hebras, grupos e historial de deshacer/rehacer, y se te avisa antes de salir cuando una pestaña todavía tiene cambios sin guardar.</li>
         <li><b>Opciones del modo Ver en Ajustes:</b> Nuevos ajustes permiten ocultar el resaltado de selección y los puntos de control en modo Ver, ofreciéndote un lienzo limpio y listo para capturar sin cambiar tu selección real.</li>
-        <li><b>Borde inicial replegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial replegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
+        <li><b>Borde inicial desplegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial desplegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
         <li><b>Control de ancho por capa:</b> Una nueva opción Cambiar ancho (solo esta capa) en el menú del botón de capa cambia el tamaño de una sola hebra independientemente de su conjunto. El cuadro de diálogo rediseñado establece el grosor del contorno directamente en píxeles, admite tamaños de cuadrícula fraccionarios y ofrece un extremo elíptico «ajustar a la hebra conectada».</li>
     </ul>
     <hr>
@@ -641,7 +641,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab Workspace:</b> A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.</li>
         <li><b>View Mode Toggles in Settings:</b> New settings let you hide the selection highlight and hide control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.</li>
-        <li><b>Folded-Over Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
+        <li><b>Unfolded Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with an unfolded (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
         <li><b>Per-Layer Width Control:</b> A new Change Width (This Layer Only) option in the layer button menu resizes a single strand independently of its set. The redesigned dialog sets the stroke thickness directly in pixels, supports fractional grid sizes, and offers a match-connected-strand elliptical end-cap.</li>
     </ul>
     <hr>
@@ -652,7 +652,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espace de travail multi-onglets:</b> Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas. Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement, et vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.</li>
         <li><b>Options du mode Vue dans les Paramètres:</b> De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue, vous offrant un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.</li>
-        <li><b>Bord de départ replié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
+        <li><b>Bord de départ déplié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ déplié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
         <li><b>Contrôle de largeur par calque :</b> Une nouvelle option Modifier la largeur (ce calque uniquement) dans le menu du bouton de calque redimensionne un seul brin indépendamment de son ensemble. La boîte de dialogue redessinée définit l'épaisseur du contour directement en pixels, prend en charge des tailles de grille fractionnaires et propose une extrémité elliptique « adapter au brin connecté ».</li>
     </ul>
     <hr>
@@ -663,7 +663,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab-Arbeitsbereich:</b> Eine neue Schaltfläche „Tabs“ öffnet eine verschiebbare Tab-Leiste, die magnetisch an der Seite der Leinwand einrastet. Jeder Tab ist eine eigenständige Sitzung mit eigenen Strängen, Gruppen und Rückgängig-/Wiederherstellen-Verlauf, und Sie werden vor dem Beenden gewarnt, wenn ein Tab noch nicht gespeicherte Änderungen enthält.</li>
         <li><b>Ansichtsmodus-Optionen in den Einstellungen:</b> Neue Einstellungen blenden die Auswahl-Hervorhebung und die Kontrollpunkte im Ansichtsmodus aus und sorgen für eine aufgeräumte, aufnahmebereite Leinwand, ohne Ihre tatsächliche Auswahl zu ändern.</li>
-        <li><b>Umgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer umgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
+        <li><b>Aufgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer aufgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
         <li><b>Breitensteuerung pro Ebene:</b> Eine neue Option „Breite ändern (nur diese Ebene)" im Ebenen-Schaltflächenmenü ändert die Größe eines einzelnen Strangs unabhängig von seinem Satz. Der überarbeitete Dialog stellt die Konturbreite direkt in Pixeln ein, unterstützt gebrochene Rastergrößen und bietet eine elliptische Endkappe „An verbundenen Strang anpassen".</li>
     </ul>
     <hr>
@@ -674,7 +674,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Area di lavoro multi-scheda:</b> Un nuovo pulsante Schede apre un bordo di schede trascinabile che si aggancia magneticamente al lato della tela. Ogni scheda è una sessione indipendente con i propri fili, gruppi e cronologia di annullamento/ripristino, e vieni avvisato prima di uscire quando una scheda contiene ancora modifiche non salvate.</li>
         <li><b>Opzioni della modalità Vista nelle Impostazioni:</b> Nuove impostazioni consentono di nascondere l'evidenziazione della selezione e i punti di controllo in modalità Vista, offrendoti una tela pulita e pronta per l'acquisizione senza modificare la selezione effettiva.</li>
-        <li><b>Bordo iniziale ripiegato come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale ripiegato (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
+        <li><b>Bordo iniziale disteso come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale disteso (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
         <li><b>Controllo larghezza per livello:</b> Una nuova opzione Modifica larghezza (solo questo livello) nel menu del pulsante del livello ridimensiona un singolo filo indipendentemente dal suo set. La finestra ridisegnata imposta lo spessore del contorno direttamente in pixel, supporta dimensioni della griglia frazionarie e offre un'estremità ellittica «adatta al filo connesso».</li>
     </ul>
     <hr>
@@ -685,7 +685,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espaço de trabalho com abas:</b> Um novo botão Abas abre uma borda de abas arrastável que se encaixa magneticamente na lateral da tela. Cada aba é uma sessão independente com seus próprios fios, grupos e histórico de desfazer/refazer, e você é avisado antes de sair quando uma aba ainda tem alterações não salvas.</li>
         <li><b>Opções do modo Visualização nas Configurações:</b> Novas configurações permitem ocultar o destaque de seleção e os pontos de controle no modo Visualização, oferecendo uma tela limpa e pronta para captura sem alterar sua seleção real.</li>
-        <li><b>Borda inicial dobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial dobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
+        <li><b>Borda inicial desdobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial desdobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
         <li><b>Controle de largura por camada:</b> Uma nova opção Alterar largura (apenas esta camada) no menu do botão de camada redimensiona um único fio independentemente do seu conjunto. A caixa de diálogo redesenhada define a espessura do contorno diretamente em pixels, suporta tamanhos de grade fracionários e oferece uma extremidade elíptica «ajustar ao fio conectado».</li>
     </ul>
     <hr>
@@ -720,7 +720,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espaço de trabalho com abas:</b> Um novo botão Abas abre uma borda de abas arrastável que se encaixa magneticamente na lateral da tela. Cada aba é uma sessão independente com seus próprios fios, grupos e histórico de desfazer/refazer, e você é avisado antes de sair quando uma aba ainda tem alterações não salvas.</li>
         <li><b>Opções do modo Visualização nas Configurações:</b> Novas configurações permitem ocultar o destaque de seleção e os pontos de controle no modo Visualização, oferecendo uma tela limpa e pronta para captura sem alterar sua seleção real.</li>
-        <li><b>Borda inicial dobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial dobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
+        <li><b>Borda inicial desdobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial desdobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
         <li><b>Controle de largura por camada:</b> Uma nova opção Alterar largura (apenas esta camada) no menu do botão de camada redimensiona um único fio independentemente do seu conjunto. A caixa de diálogo redesenhada define a espessura do contorno diretamente em pixels, suporta tamanhos de grade fracionários e oferece uma extremidade elíptica «ajustar ao fio conectado».</li>
     </ul>
     <hr>
@@ -731,7 +731,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab Workspace:</b> A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.</li>
         <li><b>View Mode Toggles in Settings:</b> New settings let you hide the selection highlight and hide control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.</li>
-        <li><b>Folded-Over Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
+        <li><b>Unfolded Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with an unfolded (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
         <li><b>Per-Layer Width Control:</b> A new Change Width (This Layer Only) option in the layer button menu resizes a single strand independently of its set. The redesigned dialog sets the stroke thickness directly in pixels, supports fractional grid sizes, and offers a match-connected-strand elliptical end-cap.</li>
     </ul>
     <hr>
@@ -742,7 +742,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espace de travail multi-onglets:</b> Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas. Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement, et vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.</li>
         <li><b>Options du mode Vue dans les Paramètres:</b> De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue, vous offrant un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.</li>
-        <li><b>Bord de départ replié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
+        <li><b>Bord de départ déplié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ déplié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
         <li><b>Contrôle de largeur par calque :</b> Une nouvelle option Modifier la largeur (ce calque uniquement) dans le menu du bouton de calque redimensionne un seul brin indépendamment de son ensemble. La boîte de dialogue redessinée définit l'épaisseur du contour directement en pixels, prend en charge des tailles de grille fractionnaires et propose une extrémité elliptique « adapter au brin connecté ».</li>
     </ul>
     <hr>
@@ -753,7 +753,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Multi-Tab-Arbeitsbereich:</b> Eine neue Schaltfläche „Tabs“ öffnet eine verschiebbare Tab-Leiste, die magnetisch an der Seite der Leinwand einrastet. Jeder Tab ist eine eigenständige Sitzung mit eigenen Strängen, Gruppen und Rückgängig-/Wiederherstellen-Verlauf, und Sie werden vor dem Beenden gewarnt, wenn ein Tab noch nicht gespeicherte Änderungen enthält.</li>
         <li><b>Ansichtsmodus-Optionen in den Einstellungen:</b> Neue Einstellungen blenden die Auswahl-Hervorhebung und die Kontrollpunkte im Ansichtsmodus aus und sorgen für eine aufgeräumte, aufnahmebereite Leinwand, ohne Ihre tatsächliche Auswahl zu ändern.</li>
-        <li><b>Umgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer umgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
+        <li><b>Aufgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer aufgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
         <li><b>Breitensteuerung pro Ebene:</b> Eine neue Option „Breite ändern (nur diese Ebene)" im Ebenen-Schaltflächenmenü ändert die Größe eines einzelnen Strangs unabhängig von seinem Satz. Der überarbeitete Dialog stellt die Konturbreite direkt in Pixeln ein, unterstützt gebrochene Rastergrößen und bietet eine elliptische Endkappe „An verbundenen Strang anpassen".</li>
     </ul>
     <hr>
@@ -764,7 +764,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Area di lavoro multi-scheda:</b> Un nuovo pulsante Schede apre un bordo di schede trascinabile che si aggancia magneticamente al lato della tela. Ogni scheda è una sessione indipendente con i propri fili, gruppi e cronologia di annullamento/ripristino, e vieni avvisato prima di uscire quando una scheda contiene ancora modifiche non salvate.</li>
         <li><b>Opzioni della modalità Vista nelle Impostazioni:</b> Nuove impostazioni consentono di nascondere l'evidenziazione della selezione e i punti di controllo in modalità Vista, offrendoti una tela pulita e pronta per l'acquisizione senza modificare la selezione effettiva.</li>
-        <li><b>Bordo iniziale ripiegato come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale ripiegato (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
+        <li><b>Bordo iniziale disteso come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale disteso (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
         <li><b>Controllo larghezza per livello:</b> Una nuova opzione Modifica larghezza (solo questo livello) nel menu del pulsante del livello ridimensiona un singolo filo indipendentemente dal suo set. La finestra ridisegnata imposta lo spessore del contorno direttamente in pixel, supporta dimensioni della griglia frazionarie e offre un'estremità ellittica «adatta al filo connesso».</li>
     </ul>
     <hr>
@@ -775,7 +775,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <ul>
         <li><b>Espacio de trabajo con pestañas:</b> Un nuevo botón Pestañas abre un borde de pestañas arrastrable que se acopla magnéticamente al lado del lienzo. Cada pestaña es una sesión independiente con sus propias hebras, grupos e historial de deshacer/rehacer, y se te avisa antes de salir cuando una pestaña todavía tiene cambios sin guardar.</li>
         <li><b>Opciones del modo Ver en Ajustes:</b> Nuevos ajustes permiten ocultar el resaltado de selección y los puntos de control en modo Ver, ofreciéndote un lienzo limpio y listo para capturar sin cambiar tu selección real.</li>
-        <li><b>Borde inicial replegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial replegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
+        <li><b>Borde inicial desplegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial desplegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
         <li><b>Control de ancho por capa:</b> Una nueva opción Cambiar ancho (solo esta capa) en el menú del botón de capa cambia el tamaño de una sola hebra independientemente de su conjunto. El cuadro de diálogo rediseñado establece el grosor del contorno directamente en píxeles, admite tamaños de cuadrícula fraccionarios y ofrece un extremo elíptico «ajustar a la hebra conectada».</li>
     </ul>
     <hr>
@@ -823,7 +823,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <ul dir="ltr">
         <li><b>Multi-Tab Workspace:</b> A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.</li>
         <li><b>View Mode Toggles in Settings:</b> New settings let you hide the selection highlight and hide control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.</li>
-        <li><b>Folded-Over Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
+        <li><b>Unfolded Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with an unfolded (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.</li>
         <li><b>Per-Layer Width Control:</b> A new Change Width (This Layer Only) option in the layer button menu resizes a single strand independently of its set. The redesigned dialog sets the stroke thickness directly in pixels, supports fractional grid sizes, and offers a match-connected-strand elliptical end-cap.</li>
     </ul>
     <hr>
@@ -834,7 +834,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <ul dir="ltr">
         <li><b>Espace de travail multi-onglets:</b> Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas. Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement, et vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.</li>
         <li><b>Options du mode Vue dans les Paramètres:</b> De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue, vous offrant un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.</li>
-        <li><b>Bord de départ replié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
+        <li><b>Bord de départ déplié par défaut:</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ déplié (transparent), sans avoir à le définir brin par brin depuis le menu du bouton de calque.</li>
         <li><b>Contrôle de largeur par calque :</b> Une nouvelle option Modifier la largeur (ce calque uniquement) dans le menu du bouton de calque redimensionne un seul brin indépendamment de son ensemble. La boîte de dialogue redessinée définit l'épaisseur du contour directement en pixels, prend en charge des tailles de grille fractionnaires et propose une extrémité elliptique « adapter au brin connecté ».</li>
     </ul>
     <hr>
@@ -845,7 +845,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <ul dir="ltr">
         <li><b>Multi-Tab-Arbeitsbereich:</b> Eine neue Schaltfläche „Tabs“ öffnet eine verschiebbare Tab-Leiste, die magnetisch an der Seite der Leinwand einrastet. Jeder Tab ist eine eigenständige Sitzung mit eigenen Strängen, Gruppen und Rückgängig-/Wiederherstellen-Verlauf, und Sie werden vor dem Beenden gewarnt, wenn ein Tab noch nicht gespeicherte Änderungen enthält.</li>
         <li><b>Ansichtsmodus-Optionen in den Einstellungen:</b> Neue Einstellungen blenden die Auswahl-Hervorhebung und die Kontrollpunkte im Ansichtsmodus aus und sorgen für eine aufgeräumte, aufnahmebereite Leinwand, ohne Ihre tatsächliche Auswahl zu ändern.</li>
-        <li><b>Umgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer umgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
+        <li><b>Aufgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer aufgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Ebenen-Schaltflächenmenü festlegen müssen.</li>
         <li><b>Breitensteuerung pro Ebene:</b> Eine neue Option „Breite ändern (nur diese Ebene)" im Ebenen-Schaltflächenmenü ändert die Größe eines einzelnen Strangs unabhängig von seinem Satz. Der überarbeitete Dialog stellt die Konturbreite direkt in Pixeln ein, unterstützt gebrochene Rastergrößen und bietet eine elliptische Endkappe „An verbundenen Strang anpassen".</li>
     </ul>
     <hr>
@@ -856,7 +856,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <ul dir="ltr">
         <li><b>Area di lavoro multi-scheda:</b> Un nuovo pulsante Schede apre un bordo di schede trascinabile che si aggancia magneticamente al lato della tela. Ogni scheda è una sessione indipendente con i propri fili, gruppi e cronologia di annullamento/ripristino, e vieni avvisato prima di uscire quando una scheda contiene ancora modifiche non salvate.</li>
         <li><b>Opzioni della modalità Vista nelle Impostazioni:</b> Nuove impostazioni consentono di nascondere l'evidenziazione della selezione e i punti di controllo in modalità Vista, offrendoti una tela pulita e pronta per l'acquisizione senza modificare la selezione effettiva.</li>
-        <li><b>Bordo iniziale ripiegato come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale ripiegato (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
+        <li><b>Bordo iniziale disteso come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale disteso (trasparente), così non devi più impostarlo filo per filo dal menu del pulsante del livello.</li>
         <li><b>Controllo larghezza per livello:</b> Una nuova opzione Modifica larghezza (solo questo livello) nel menu del pulsante del livello ridimensiona un singolo filo indipendentemente dal suo set. La finestra ridisegnata imposta lo spessore del contorno direttamente in pixel, supporta dimensioni della griglia frazionarie e offre un'estremità ellittica «adatta al filo connesso».</li>
     </ul>
     <hr>
@@ -867,7 +867,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <ul dir="ltr">
         <li><b>Espacio de trabajo con pestañas:</b> Un nuevo botón Pestañas abre un borde de pestañas arrastrable que se acopla magnéticamente al lado del lienzo. Cada pestaña es una sesión independiente con sus propias hebras, grupos e historial de deshacer/rehacer, y se te avisa antes de salir cuando una pestaña todavía tiene cambios sin guardar.</li>
         <li><b>Opciones del modo Ver en Ajustes:</b> Nuevos ajustes permiten ocultar el resaltado de selección y los puntos de control en modo Ver, ofreciéndote un lienzo limpio y listo para capturar sin cambiar tu selección real.</li>
-        <li><b>Borde inicial replegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial replegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
+        <li><b>Borde inicial desplegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial desplegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú del botón de capa.</li>
         <li><b>Control de ancho por capa:</b> Una nueva opción Cambiar ancho (solo esta capa) en el menú del botón de capa cambia el tamaño de una sola hebra independientemente de su conjunto. El cuadro de diálogo rediseñado establece el grosor del contorno directamente en píxeles, admite tamaños de cuadrícula fraccionarios y ofrece un extremo elíptico «ajustar a la hebra conectada».</li>
     </ul>
     <hr>
@@ -878,7 +878,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <ul dir="ltr">
         <li><b>Espaço de trabalho com abas:</b> Um novo botão Abas abre uma borda de abas arrastável que se encaixa magneticamente na lateral da tela. Cada aba é uma sessão independente com seus próprios fios, grupos e histórico de desfazer/refazer, e você é avisado antes de sair quando uma aba ainda tem alterações não salvas.</li>
         <li><b>Opções do modo Visualização nas Configurações:</b> Novas configurações permitem ocultar o destaque de seleção e os pontos de controle no modo Visualização, oferecendo uma tela limpa e pronta para captura sem alterar sua seleção real.</li>
-        <li><b>Borda inicial dobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial dobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
+        <li><b>Borda inicial desdobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial desdobrada (transparente), para que você não precise mais defini-la fio por fio no menu do botão de camada.</li>
         <li><b>Controle de largura por camada:</b> Uma nova opção Alterar largura (apenas esta camada) no menu do botão de camada redimensiona um único fio independentemente do seu conjunto. A caixa de diálogo redesenhada define a espessura do contorno diretamente em pixels, suporta tamanhos de grade fracionários e oferece uma extremidade elíptica «ajustar ao fio conectado».</li>
     </ul>
 </body>

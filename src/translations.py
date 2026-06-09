@@ -263,7 +263,7 @@ Examples:<br>
 
             <li style="font-size:14px;"><b>Multi-Tab Workspace:</b> A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.</li>
             <li style="font-size:14px;"><b>View Mode Toggles:</b> New settings let you hide the selection highlight and hide the control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.</li>
-            <li style="font-size:14px;"><b>Folded-Over Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with a folded-over (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button's right-click menu.</li>
+            <li style="font-size:14px;"><b>Unfolded Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with an unfolded (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button's right-click menu.</li>
             <li style="font-size:14px;"><b>Per-Layer Width Control:</b> A new Change Width (This Layer Only) option in the layer button's right-click menu resizes a single strand independently of its set. The redesigned dialog sets the stroke thickness directly in pixels, supports fractional grid sizes, and offers a match-connected-strand elliptical end-cap.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.108</p>
@@ -277,7 +277,7 @@ Examples:<br>
         'shadow_selected_only': 'Cast shadow only for the selected strand',
         'view_hide_highlight': 'In view mode, hide the selection highlight',
         'view_hide_control_points': 'In view mode, hide the control points',
-        'default_transparent_start_circle': 'Folded-over start edge by default',
+        'default_transparent_start_circle': 'Unfolded start edge by default',
         'highlight_color': 'Selection highlight color',
 
         # LayerPanel translations
@@ -414,10 +414,10 @@ Examples:<br>
         'mask_edit_mode_exited': 'Mask Edit Mode\nExited',
         'edit_mask': 'Edit Mask',
         'reset_mask': 'Reset Mask',
-        'transparent_stroke': 'Folded-Over Start Edge',
-        'folded_start_edge_desc': "Folded-Over Start Edge - Hides the outline on an attached strand's starting half-circle so its beginning blends into the parent strand, creating a folded-over look. Set it per strand from the layer button's right-click menu, or enable \"Folded-over start edge by default\" in the Layer Panel settings to apply it to every new strand.",
+        'transparent_stroke': 'Unfold Start Edge',
+        'folded_start_edge_desc': "Unfolded Start Edge - Hides the outline on an attached strand's starting half-circle so its beginning blends into the parent strand, creating an unfolded look. Set it per strand from the layer button's right-click menu, or enable \"Unfolded start edge by default\" in the Layer Panel settings to apply it to every new strand.",
         'transparent_closing_knot_side': 'Transparent Closing Knot Side',
-        'restore_default_stroke': 'Restore Default Stroke',
+        'restore_default_stroke': 'Fold Over Start Edge',
         'restore_default_closing_knot_stroke': 'Restore Default Closing Knot Stroke',
         'change_color': 'Change Color',
         'change_stroke_color': 'Change Stroke Color',
@@ -750,7 +750,7 @@ Exemples :<br>
 
             <li style="font-size:14px;"><b>Espace de travail multi-onglets :</b> Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas. Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement, et vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.</li>
             <li style="font-size:14px;"><b>Options du mode Vue :</b> De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue, vous offrant un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.</li>
-            <li style="font-size:14px;"><b>Bord de départ replié par défaut :</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ replié (transparent), sans avoir à le définir brin par brin depuis le menu contextuel du bouton de calque.</li>
+            <li style="font-size:14px;"><b>Bord de départ déplié par défaut :</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ déplié (transparent), sans avoir à le définir brin par brin depuis le menu contextuel du bouton de calque.</li>
             <li style="font-size:14px;"><b>Contrôle de largeur par calque :</b> Une nouvelle option Modifier la largeur (ce calque uniquement) dans le menu contextuel du bouton de calque redimensionne un seul brin indépendamment de son ensemble. La boîte de dialogue redessinée définit l'épaisseur du contour directement en pixels, prend en charge des tailles de grille fractionnaires et propose une extrémité elliptique « adapter au brin connecté ».</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.108</p>
@@ -764,7 +764,7 @@ Exemples :<br>
         'shadow_selected_only': 'Projeter l\'ombre uniquement pour le brin sélectionné',
         'view_hide_highlight': 'En mode vue, masquer la surbrillance de sélection',
         'view_hide_control_points': 'En mode vue, masquer les points de contrôle',
-        'default_transparent_start_circle': 'Bord de départ replié par défaut',
+        'default_transparent_start_circle': 'Bord de départ déplié par défaut',
         'highlight_color': 'Couleur de surbrillance de la sélection',
 
         # LayerPanel translations
@@ -864,11 +864,11 @@ Exemples :<br>
         'mask_edit_mode_exited': 'Mode Édition\nMasque Terminé',
         'edit_mask': 'Éditer Masque',
         'reset_mask': 'Réinit Masque',
-        'transparent_stroke': 'Bord de Départ Replié',
-        'folded_start_edge_desc': "Bord de Départ Replié - Masque le contour du demi-cercle de départ d'un brin attaché afin que son début se fonde dans le brin parent, créant un aspect replié. Définissez-le brin par brin depuis le menu contextuel du bouton de calque, ou activez « Bord de départ replié par défaut » dans les paramètres du panneau des calques pour l'appliquer à chaque nouveau brin.",
+        'transparent_stroke': 'Déplier le Bord de Départ',
+        'folded_start_edge_desc': "Bord de Départ Déplié - Masque le contour du demi-cercle de départ d'un brin attaché afin que son début se fonde dans le brin parent, créant un aspect déplié. Définissez-le brin par brin depuis le menu contextuel du bouton de calque, ou activez « Bord de départ déplié par défaut » dans les paramètres du panneau des calques pour l'appliquer à chaque nouveau brin.",
         'transparent_closing_knot_side': 'Côté Transparent du Nœud Fermé',
         'restore_default_closing_knot_stroke': 'Restaurer le Trait du Nœud Fermé par Défaut',
-        'restore_default_stroke': 'Restaurer Tracé Par Défaut',
+        'restore_default_stroke': 'Replier le Bord de Départ',
         'change_color': 'Changer la couleur',
         'change_stroke_color': 'Changer la couleur du trait',
         'change_width': 'Changer largeur',
@@ -1319,7 +1319,7 @@ Beispiele:<br>
 
             <li style="font-size:14px;"><b>Multi-Tab-Arbeitsbereich:</b> Eine neue Schaltfläche „Tabs" öffnet eine verschiebbare Tab-Leiste, die magnetisch an der Seite der Leinwand einrastet. Jeder Tab ist eine eigenständige Sitzung mit eigenen Strängen, Gruppen und Rückgängig-/Wiederherstellen-Verlauf, und Sie werden vor dem Beenden gewarnt, wenn ein Tab noch nicht gespeicherte Änderungen enthält.</li>
             <li style="font-size:14px;"><b>Ansichtsmodus-Optionen:</b> Neue Einstellungen blenden die Auswahl-Hervorhebung und die Kontrollpunkte im Ansichtsmodus aus und sorgen für eine aufgeräumte, aufnahmebereite Leinwand, ohne Ihre tatsächliche Auswahl zu ändern.</li>
-            <li style="font-size:14px;"><b>Umgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer umgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Kontextmenü der Ebenen-Schaltfläche festlegen müssen.</li>
+            <li style="font-size:14px;"><b>Aufgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer aufgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Kontextmenü der Ebenen-Schaltfläche festlegen müssen.</li>
             <li style="font-size:14px;"><b>Breitensteuerung pro Ebene:</b> Eine neue Option „Breite ändern (nur diese Ebene)" im Kontextmenü der Ebenen-Schaltfläche ändert die Größe eines einzelnen Strangs unabhängig von seinem Satz. Der überarbeitete Dialog stellt die Konturbreite direkt in Pixeln ein, unterstützt gebrochene Rastergrößen und bietet eine elliptische Endkappe „An verbundenen Strang anpassen".</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.108</p>
@@ -1351,7 +1351,7 @@ Beispiele:<br>
         'shadow_selected_only': 'Schatten nur für den ausgewählten Strang werfen',
         'view_hide_highlight': 'Im Ansichtsmodus die Auswahl-Hervorhebung ausblenden',
         'view_hide_control_points': 'Im Ansichtsmodus die Kontrollpunkte ausblenden',
-        'default_transparent_start_circle': 'Umgefaltete Startkante als Standard',
+        'default_transparent_start_circle': 'Aufgefaltete Startkante als Standard',
         'highlight_color': 'Auswahl-Hervorhebungsfarbe',
 
         # LayerPanel translations
@@ -1457,10 +1457,10 @@ Beispiele:<br>
         'mask_edit_mode_exited': 'Maskenmodus\nBeendet',
         'edit_mask': 'Maske bearbeiten',
         'reset_mask': 'Maske zurücksetzen',
-        'transparent_stroke': 'Umgefaltete Startkante',
-        'folded_start_edge_desc': "Umgefaltete Startkante - Blendet den Umriss des Start-Halbkreises eines angehängten Strangs aus, sodass sein Anfang in den übergeordneten Strang übergeht und umgefaltet wirkt. Legen Sie dies pro Strang über das Kontextmenü der Ebenen-Schaltfläche fest oder aktivieren Sie \"Umgefaltete Startkante als Standard\" in den Einstellungen des Ebenenbereichs, um es auf jeden neuen Strang anzuwenden.",
+        'transparent_stroke': 'Startkante auffalten',
+        'folded_start_edge_desc': "Aufgefaltete Startkante - Blendet den Umriss des Start-Halbkreises eines angehängten Strangs aus, sodass sein Anfang in den übergeordneten Strang übergeht und aufgefaltet wirkt. Legen Sie dies pro Strang über das Kontextmenü der Ebenen-Schaltfläche fest oder aktivieren Sie \"Aufgefaltete Startkante als Standard\" in den Einstellungen des Ebenenbereichs, um es auf jeden neuen Strang anzuwenden.",
         'transparent_closing_knot_side': 'Transparente Seite des geschlossenen Knotens',
-        'restore_default_stroke': 'Standardkontur wiederherstellen',
+        'restore_default_stroke': 'Startkante umfalten',
         'restore_default_closing_knot_stroke': 'Standardkontur (geschl. Knoten) wiederherstellen',
         'change_color': 'Farbe ändern',
         'change_stroke_color': 'Konturfarbe ändern',
@@ -1822,7 +1822,7 @@ Esempi:<br>
 
             <li style="font-size:14px;"><b>Area di lavoro multi-scheda:</b> Un nuovo pulsante Schede apre un bordo di schede trascinabile che si aggancia magneticamente al lato della tela. Ogni scheda è una sessione indipendente con i propri fili, gruppi e cronologia di annullamento/ripristino, e vieni avvisato prima di uscire quando una scheda contiene ancora modifiche non salvate.</li>
             <li style="font-size:14px;"><b>Opzioni della modalità Vista:</b> Nuove impostazioni consentono di nascondere l'evidenziazione della selezione e i punti di controllo in modalità Vista, offrendoti una tela pulita e pronta per l'acquisizione senza modificare la selezione effettiva.</li>
-            <li style="font-size:14px;"><b>Bordo iniziale ripiegato come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale ripiegato (trasparente), così non devi più impostarlo filo per filo dal menu contestuale del pulsante del livello.</li>
+            <li style="font-size:14px;"><b>Bordo iniziale disteso come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale disteso (trasparente), così non devi più impostarlo filo per filo dal menu contestuale del pulsante del livello.</li>
             <li style="font-size:14px;"><b>Controllo larghezza per livello:</b> Una nuova opzione Modifica larghezza (solo questo livello) nel menu contestuale del pulsante del livello ridimensiona un singolo filo indipendentemente dal suo set. La finestra ridisegnata imposta lo spessore del contorno direttamente in pixel, supporta dimensioni della griglia frazionarie e offre un'estremità ellittica «adatta al filo connesso».</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Versione 1.108</p>
@@ -1836,7 +1836,7 @@ Esempi:<br>
         'shadow_selected_only': 'Proietta l\'ombra solo per il filo selezionato',
         'view_hide_highlight': 'In modalità visualizzazione, nascondi l\'evidenziazione della selezione',
         'view_hide_control_points': 'In modalità visualizzazione, nascondi i punti di controllo',
-        'default_transparent_start_circle': 'Bordo iniziale ripiegato come predefinito',
+        'default_transparent_start_circle': 'Bordo iniziale disteso come predefinito',
         'highlight_color': 'Colore di evidenziazione della selezione',
 
         # LayerPanel translations
@@ -1936,11 +1936,11 @@ Esempi:<br>
         'mask_edit_mode_exited': 'Modalità Mask\nTerminata',
         'edit_mask': 'Modifica Maschera',
         'reset_mask': 'Reimposta Maschera',
-        'transparent_stroke': 'Bordo Iniziale Ripiegato',
-        'folded_start_edge_desc': "Bordo Iniziale Ripiegato - Nasconde il contorno del semicerchio iniziale di un filo collegato in modo che il suo inizio si fonda con il filo principale, creando un aspetto ripiegato. Impostalo filo per filo dal menu contestuale del pulsante del livello, oppure attiva \"Bordo iniziale ripiegato come predefinito\" nelle impostazioni del pannello dei livelli per applicarlo a ogni nuovo filo.",
+        'transparent_stroke': 'Distendi Bordo Iniziale',
+        'folded_start_edge_desc': "Bordo Iniziale Disteso - Nasconde il contorno del semicerchio iniziale di un filo collegato in modo che il suo inizio si fonda con il filo principale, creando un aspetto disteso. Impostalo filo per filo dal menu contestuale del pulsante del livello, oppure attiva \"Bordo iniziale disteso come predefinito\" nelle impostazioni del pannello dei livelli per applicarlo a ogni nuovo filo.",
         'transparent_closing_knot_side': 'Lato Trasparente del Nodo Chiuso',
         'restore_default_closing_knot_stroke': 'Ripristina Bordo del Nodo Chiuso Predefinito',
-        'restore_default_stroke': 'Ripristina Traccia Predefinita',
+        'restore_default_stroke': 'Ripiega Bordo Iniziale',
         'change_color': 'Cambia colore',
         'change_stroke_color': 'Cambia colore del tratto',
         'change_width': 'Cambia larghezza',
@@ -2362,7 +2362,7 @@ Ejemplos:<br>
 
             <li style="font-size:14px;"><b>Espacio de trabajo con pestañas:</b> Un nuevo botón Pestañas abre un borde de pestañas arrastrable que se acopla magnéticamente al lado del lienzo. Cada pestaña es una sesión independiente con sus propias hebras, grupos e historial de deshacer/rehacer, y se te avisa antes de salir cuando una pestaña todavía tiene cambios sin guardar.</li>
             <li style="font-size:14px;"><b>Opciones del modo Ver:</b> Nuevos ajustes permiten ocultar el resaltado de selección y los puntos de control en modo Ver, ofreciéndote un lienzo limpio y listo para capturar sin cambiar tu selección real.</li>
-            <li style="font-size:14px;"><b>Borde inicial replegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial replegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú contextual del botón de capa.</li>
+            <li style="font-size:14px;"><b>Borde inicial desplegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial desplegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú contextual del botón de capa.</li>
             <li style="font-size:14px;"><b>Control de ancho por capa:</b> Una nueva opción Cambiar ancho (solo esta capa) en el menú contextual del botón de capa cambia el tamaño de una sola hebra independientemente de su conjunto. El cuadro de diálogo rediseñado establece el grosor del contorno directamente en píxeles, admite tamaños de cuadrícula fraccionarios y ofrece un extremo elíptico «ajustar a la hebra conectada».</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Versión 1.108</p>
@@ -2376,7 +2376,7 @@ Ejemplos:<br>
         'shadow_selected_only': 'Proyectar sombra solo para la hebra seleccionada',
         'view_hide_highlight': 'En modo vista, ocultar el resaltado de selección',
         'view_hide_control_points': 'En modo vista, ocultar los puntos de control',
-        'default_transparent_start_circle': 'Borde inicial replegado por defecto',
+        'default_transparent_start_circle': 'Borde inicial desplegado por defecto',
         'highlight_color': 'Color de resaltado de selección',
 
         # LayerPanel translations
@@ -2476,11 +2476,11 @@ Ejemplos:<br>
         'mask_edit_mode_exited': 'Modo Máscara\nFinalizado',
         'edit_mask': 'Editar Máscara',
         'reset_mask': 'Restablecer Máscara',
-        'transparent_stroke': 'Borde Inicial Replegado',
-        'folded_start_edge_desc': "Borde Inicial Replegado - Oculta el contorno del semicírculo inicial de una hebra adjunta para que su comienzo se funda con la hebra principal, creando un aspecto replegado. Configúralo hebra por hebra desde el menú contextual del botón de capa, o activa \"Borde inicial replegado por defecto\" en los ajustes del panel de capas para aplicarlo a cada nueva hebra.",
+        'transparent_stroke': 'Desplegar Borde Inicial',
+        'folded_start_edge_desc': "Borde Inicial Desplegado - Oculta el contorno del semicírculo inicial de una hebra adjunta para que su comienzo se funda con la hebra principal, creando un aspecto desplegado. Configúralo hebra por hebra desde el menú contextual del botón de capa, o activa \"Borde inicial desplegado por defecto\" en los ajustes del panel de capas para aplicarlo a cada nueva hebra.",
         'transparent_closing_knot_side': 'Lado Transparente del Nudo Cerrado',
         'restore_default_closing_knot_stroke': 'Restaurar Borde del Nudo Cerrado Predeterminado',
-        'restore_default_stroke': 'Restaurar Trazo Predeterminado',
+        'restore_default_stroke': 'Replegar Borde Inicial',
         'change_color': 'Cambiar color',
         'change_stroke_color': 'Cambiar color del trazo',
         'change_width': 'Cambiar ancho',
@@ -2902,7 +2902,7 @@ Exemplos:<br>
 
             <li style="font-size:14px;"><b>Espaço de trabalho com abas:</b> Um novo botão Abas abre uma borda de abas arrastável que se encaixa magneticamente na lateral da tela. Cada aba é uma sessão independente com seus próprios fios, grupos e histórico de desfazer/refazer, e você é avisado antes de sair quando uma aba ainda tem alterações não salvas.</li>
             <li style="font-size:14px;"><b>Opções do modo Visualização:</b> Novas configurações permitem ocultar o destaque de seleção e os pontos de controle no modo Visualização, oferecendo uma tela limpa e pronta para captura sem alterar sua seleção real.</li>
-            <li style="font-size:14px;"><b>Borda inicial dobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial dobrada (transparente), para que você não precise mais defini-la fio por fio no menu de contexto do botão de camada.</li>
+            <li style="font-size:14px;"><b>Borda inicial desdobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial desdobrada (transparente), para que você não precise mais defini-la fio por fio no menu de contexto do botão de camada.</li>
             <li style="font-size:14px;"><b>Controle de largura por camada:</b> Uma nova opção Alterar largura (apenas esta camada) no menu de contexto do botão de camada redimensiona um único fio independentemente do seu conjunto. A caixa de diálogo redesenhada define a espessura do contorno diretamente em pixels, suporta tamanhos de grade fracionários e oferece uma extremidade elíptica «ajustar ao fio conectado».</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio – Versão 1.108</p>
@@ -2916,7 +2916,7 @@ Exemplos:<br>
         'shadow_selected_only': 'Projetar sombra apenas para a mecha selecionada',
         'view_hide_highlight': 'No modo visualização, ocultar o destaque de seleção',
         'view_hide_control_points': 'No modo visualização, ocultar os pontos de controle',
-        'default_transparent_start_circle': 'Borda inicial dobrada por padrão',
+        'default_transparent_start_circle': 'Borda inicial desdobrada por padrão',
         'highlight_color': 'Cor de destaque da seleção',
 
         # LayerPanel translations
@@ -3016,11 +3016,11 @@ Exemplos:<br>
         'mask_edit_mode_exited': 'Modo Máscara\nEncerrado',
         'edit_mask': 'Editar Máscara',
         'reset_mask': 'Redefinir Máscara',
-        'transparent_stroke': 'Borda Inicial Dobrada',
-        'folded_start_edge_desc': "Borda Inicial Dobrada - Oculta o contorno do semicírculo inicial de um fio anexado para que seu início se funda ao fio principal, criando um aspecto dobrado. Defina-o fio por fio no menu de contexto do botão de camada, ou ative \"Borda inicial dobrada por padrão\" nas configurações do painel de camadas para aplicá-lo a cada novo fio.",
+        'transparent_stroke': 'Desdobrar Borda Inicial',
+        'folded_start_edge_desc': "Borda Inicial Desdobrada - Oculta o contorno do semicírculo inicial de um fio anexado para que seu início se funda ao fio principal, criando um aspecto desdobrado. Defina-o fio por fio no menu de contexto do botão de camada, ou ative \"Borda inicial desdobrada por padrão\" nas configurações do painel de camadas para aplicá-lo a cada novo fio.",
         'transparent_closing_knot_side': 'Lado Transparente do Nó Fechado',
         'restore_default_closing_knot_stroke': 'Restaurar Borda do Nó Fechado Padrão',
-        'restore_default_stroke': 'Restaurar Traço Padrão',
+        'restore_default_stroke': 'Dobrar Borda Inicial',
         'change_color': 'Mudar cor',
         'change_stroke_color': 'Mudar cor do traço',
         'change_width': 'Mudar largura',
@@ -3450,7 +3450,7 @@ Exemplos:<br>
 
             <li style="font-size:14px;"><b>כרטיסיות מרובות:</b> כפתור "כרטיסיות" חדש פותח קצה כרטיסיות נגרר שנצמד מגנטית לצד הקנבס. כל כרטיסייה היא הפעלה עצמאית עם החוטים, הקבוצות והיסטוריית הביטול/ביצוע מחדש שלה, ותקבלו אזהרה לפני יציאה כאשר בכרטיסייה עדיין יש שינויים שלא נשמרו.</li>
             <li style="font-size:14px;"><b>אפשרויות מצב תצוגה:</b> הגדרות חדשות מאפשרות להסתיר את הדגשת הבחירה ואת נקודות הבקרה במצב תצוגה, ומעניקות לכם קנבס נקי ומוכן לצילום מבלי לשנות את הבחירה בפועל.</li>
-            <li style="font-size:14px;"><b>קצה התחלה מקופל כברירת מחדל:</b> הגדרה חדשה בלוח השכבות גורמת לכל חוט מחובר חדש להתחיל אוטומטית עם קצה התחלה מקופל (שקוף), כך שאין צורך להגדיר זאת לכל חוט בנפרד מתפריט ההקשר של כפתור השכבה.</li>
+            <li style="font-size:14px;"><b>קצה התחלה לא מקופל כברירת מחדל:</b> הגדרה חדשה בלוח השכבות גורמת לכל חוט מחובר חדש להתחיל אוטומטית עם קצה התחלה לא מקופל (שקוף), כך שאין צורך להגדיר זאת לכל חוט בנפרד מתפריט ההקשר של כפתור השכבה.</li>
             <li style="font-size:14px;"><b>בקרת רוחב לכל שכבה:</b> אפשרות חדשה "שינוי רוחב (שכבה זו בלבד)" בתפריט ההקשר של כפתור השכבה משנה את גודלו של חוט בודד ללא תלות בקבוצה. תיבת הדו-שיח המעוצבת מחדש מגדירה את עובי הקו ישירות בפיקסלים, תומכת בגדלי רשת שבריים, ומציעה קצה אליפטי "התאם לגדיל המחובר".</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - גרסה 1.108</p>
@@ -3465,7 +3465,7 @@ Exemplos:<br>
         'shadow_selected_only': 'הטל צל רק עבור החוט הנבחר',
         'view_hide_highlight': 'במצב תצוגה, הסתר את הדגשת הבחירה',
         'view_hide_control_points': 'במצב תצוגה, הסתר את נקודות הבקרה',
-        'default_transparent_start_circle': 'קצה התחלה מקופל כברירת מחדל',
+        'default_transparent_start_circle': 'קצה התחלה לא מקופל כברירת מחדל',
         'highlight_color': 'צבע הדגשת בחירה',
 
         # LayerPanel translations
@@ -3566,11 +3566,11 @@ Exemplos:<br>
         'mask_edit_mode_exited': 'מצב מסכה\nהסתיים',
         'edit_mask': 'ערוך מסכה',
         'reset_mask': 'אפס מסכה',
-        'transparent_stroke': 'קצה התחלה מקופל',
-        'folded_start_edge_desc': "קצה התחלה מקופל - מסתיר את קו המתאר של חצי-העיגול בתחילת חוט מחובר כך שתחילתו מתמזגת עם חוט האב ויוצרת מראה מקופל. ניתן להגדיר זאת לכל חוט בנפרד מתפריט ההקשר של כפתור השכבה, או להפעיל \"קצה התחלה מקופל כברירת מחדל\" בהגדרות לוח השכבות כדי להחיל זאת על כל חוט חדש.",
+        'transparent_stroke': 'בטל קיפול קצה התחלה',
+        'folded_start_edge_desc': "קצה התחלה לא מקופל - מסתיר את קו המתאר של חצי-העיגול בתחילת חוט מחובר כך שתחילתו מתמזגת עם חוט האב ויוצרת מראה לא מקופל. ניתן להגדיר זאת לכל חוט בנפרד מתפריט ההקשר של כפתור השכבה, או להפעיל \"קצה התחלה לא מקופל כברירת מחדל\" בהגדרות לוח השכבות כדי להחיל זאת על כל חוט חדש.",
         'transparent_closing_knot_side': 'צד שקוף של קשר סגור',
         'restore_default_closing_knot_stroke': 'שחזר קו קשר סגור ברירת מחדל',
-        'restore_default_stroke': 'שחזר קו ברירת מחדל',
+        'restore_default_stroke': 'קפל קצה התחלה',
         'change_color': 'שנה צבע',
         'change_stroke_color': 'שנה צבע קו',
         'change_width': 'שנה רוחב',

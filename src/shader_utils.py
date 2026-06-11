@@ -725,28 +725,11 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                 # logging.error(f"Error getting mask path from MaskedStrand {other_layer}: {e}")
                                 pass
                         
-                        # ---------------------------------------------------------
-                        # NEW LOGIC: Include visible circle geometry from the underlying
-                        # strand into its stroke path so that circle areas also receive
-                        # shadow from the current strand's circles.
-                        # ---------------------------------------------------------
-                        if hasattr(other_strand, 'has_circles') and any(other_strand.has_circles):
-                            try:
-                                base_circle_radius_o = other_strand.width + other_strand.stroke_width * 2
-                                for oc_idx, oc_flag in enumerate(other_strand.has_circles):
-                                    if not oc_flag:
-                                        continue
-                                    if hasattr(other_strand, 'circle_stroke_color'):
-                                        oc_color = other_strand.circle_stroke_color
-                                        if oc_color and oc_color.alpha() == 0:
-                                            continue  # Transparent circle, ignore
-                                    oc_center = other_strand.start if oc_idx == 0 else other_strand.end
-                                    oc_path_tmp = QPainterPath()
-                                    oc_path_tmp.addEllipse(oc_center, (base_circle_radius_o / 2) , (base_circle_radius_o / 2) )
-                                    other_stroke_path.addPath(oc_path_tmp)
-                            except Exception as oc_e:
-                                # logging.error(f"Error adding circle geometry from {other_layer} to stroke path for circle-shadow calculation: {oc_e}")
-                                pass
+                        # build_rendered_geometry() already includes the receiving
+                        # strand's visible end-cap geometry, including elliptical
+                        # match-connected caps. Re-adding circular caps here makes the
+                        # clip path larger than the drawn strand and lets shadows appear
+                        # over empty canvas at width-changed junctions.
 
                         # Calculate intersection
                         intersection = QPainterPath(shadow_path)
@@ -1136,27 +1119,9 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                         # logging.error(f"Error getting mask path for {other_layer}: {ee}")
                         pass
 
-                # ---------------------------------------------------------
-                # NEW LOGIC: Include visible circle geometry from the underlying
-                # strand into its stroke path so that circle areas also receive
-                # shadow from the current strand's circles.
-                # ---------------------------------------------------------
-                if hasattr(other_strand, 'has_circles') and any(other_strand.has_circles):
-                    try:
-                        base_circle_radius_o = other_strand.width + other_strand.stroke_width * 2
-                        for oc_idx, oc_flag in enumerate(other_strand.has_circles):
-                            if not oc_flag:
-                                continue
-                            if hasattr(other_strand, 'circle_stroke_color'):
-                                oc_color = other_strand.circle_stroke_color
-                                if oc_color and oc_color.alpha() == 0:
-                                    continue  # Transparent circle, ignore
-                            oc_center = other_strand.start if oc_idx == 0 else other_strand.end
-                            oc_path_tmp = QPainterPath()
-                            oc_path_tmp.addEllipse(oc_center, (base_circle_radius_o / 2) - 1, (base_circle_radius_o / 2) - 1)
-                            other_stroke_path.addPath(oc_path_tmp)
-                    except Exception as oc_e:
-                        pass
+                # build_rendered_geometry() already includes cap geometry. Keep this
+                # legacy circle-shadow branch from adding stale circular receiver caps
+                # if it is re-enabled later.
             except Exception as e:
                 # logging.error(f"Could not create stroke path for other strand {other_layer}: {e}")
                 pass

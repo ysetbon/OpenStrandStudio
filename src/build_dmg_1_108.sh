@@ -2,7 +2,7 @@
 
 ################################################################################
 # OpenStrand Studio macOS DMG Builder TEMPLATE
-# Date: Created June 9, 2026
+# Date: Created June 11, 2026
 #
 # LOGIC EXPLANATION:
 # ==================
@@ -54,7 +54,7 @@
 # Set variables
 APP_NAME="OpenStrandStudio"
 VERSION="1.108"
-APP_DATE="09_June_2026"
+APP_DATE="11_June_2026"
 PUBLISHER="Yonatan Setbon"
 IDENTIFIER="com.yonatan.openstrandstudio"
 

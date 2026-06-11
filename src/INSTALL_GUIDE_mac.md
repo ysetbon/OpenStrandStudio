@@ -1,6 +1,6 @@
 # OpenStrand Studio - macOS Installation Guide
 
-## Version 1.108 - June 8, 2026
+## Version 1.108 - June 11, 2026
 
 This guide explains how to build and package OpenStrand Studio for macOS.
 

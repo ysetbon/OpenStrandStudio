@@ -24,7 +24,7 @@ The masked layer feature is essential for creating intricate, overlapping design
 
 ------
 
-## Version 1.108 (Released: 09/06/2026)
+## Version 1.108 (Released: 11/06/2026)
 
 ### New Features and Improvements:
 
@@ -638,7 +638,7 @@ La fonctionnalité de calque masqué est essentielle pour créer des designs com
 
 ------
 
-## Version 1.108 (Sortie : 08/06/2026)
+## Version 1.108 (Sortie : 11/06/2026)
 
 ### Nouvelles Fonctionnalités et Améliorations :
 

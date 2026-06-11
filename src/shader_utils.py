@@ -1807,14 +1807,12 @@ def build_shadow_circle_geometry(strand, fixed_shadow_extension=30.0):
             
         # Circle radius includes the fixed shadow extension
         radius = (strand.width + strand.stroke_width * 2) / 2.0 + 2
-        
-        # Check if this is an AttachedStrand (by checking class name)
-        is_attached_strand = strand.__class__.__name__ == 'AttachedStrand'
-        
+        depth_margin = 2
+
         for idx, enabled in enumerate(strand.has_circles):
             if not enabled:
                 continue
-            
+
             # Check if this specific circle is transparent
             is_circle_transparent = False
             if idx == 0:  # Start circle
@@ -1825,36 +1823,19 @@ def build_shadow_circle_geometry(strand, fixed_shadow_extension=30.0):
                 end_color = strand.end_circle_stroke_color
                 if end_color and end_color.alpha() == 0:
                     is_circle_transparent = True
-            
+
             # Skip shadow generation for transparent circles
             if is_circle_transparent:
                 continue
-                
-            centre = strand.start if idx == 0 else strand.end
-            
-            # For AttachedStrand starting circles, create a half-circle shadow
-            if is_attached_strand and idx == 0:
-                # Get the angle of the attached strand
-                angle = strand.angle if hasattr(strand, 'angle') else 0
 
-                # If this end has an elliptical cap, the cast shadow must be an
-                # ellipse too (across = this strand, depth = partner width), otherwise
-                # a deep cap would protrude beyond its (circular) shadow.
-                _cap_pt = strand._partner_cap_dims(idx)[0] if hasattr(strand, '_partner_cap_dims') else None
-                if _cap_pt:
-                    across_semi = radius                 # (this_total / 2 + 2)
-                    depth_semi = _cap_pt / 2.0 + 2       # partner depth + same margin
-                    tangent = strand.calculate_cubic_tangent(0.0001)
-                    ang = math.atan2(tangent.y(), tangent.x())
-                    single_circle = QPainterPath()
-                    single_circle.addEllipse(QPointF(0, 0), depth_semi, across_semi)
-                    single_circle = QTransform().translate(centre.x(), centre.y()).rotate(math.degrees(ang)).map(single_circle)
-                else:
-                    # Regular full circle for other cases
-                    single_circle = QPainterPath()
-                    single_circle.addEllipse(centre, radius, radius)
-                circle_path.addPath(single_circle)
-            
+            if hasattr(strand, '_cap_shadow_path'):
+                single_circle = strand._cap_shadow_path(idx, radius, depth_margin)
+            else:
+                centre = strand.start if idx == 0 else strand.end
+                single_circle = QPainterPath()
+                single_circle.addEllipse(centre, radius, radius)
+            circle_path.addPath(single_circle)
+
         return circle_path
     except Exception as e:
         pass
@@ -1909,9 +1890,14 @@ def build_shadow_geometry(strand, fixed_shadow_extension=30.0, include_circles=T
                 for idx, enabled in enumerate(strand.has_circles):
                     if not enabled:
                         continue
-                    centre = strand.start if idx == 0 else strand.end
-                    circle_path = QPainterPath()
-                    circle_path.addEllipse(centre, radius, radius)
+                    if hasattr(strand, '_cap_shadow_path'):
+                        circle_path = strand._cap_shadow_path(
+                            idx, radius, depth_margin=fixed_shadow_extension
+                        )
+                    else:
+                        centre = strand.start if idx == 0 else strand.end
+                        circle_path = QPainterPath()
+                        circle_path.addEllipse(centre, radius, radius)
                     result_path.addPath(circle_path)
 
         return result_path

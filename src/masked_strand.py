@@ -313,11 +313,12 @@ class MaskedStrand(Strand):
 
         When a component strand has the elliptical end-cap option enabled, its
         drawn body bulges past the flat-capped rectangle at the connected end(s)
-        by a half-ellipse whose depth matches the partner strand. The mask
-        intersection is otherwise computed from the plain stroked rectangle, so
-        without this the mask still assumes a semicircle/flat cap and ignores the
-        ellipse. We add the full cap ellipse at each elliptical end so the mask
-        follows the actual drawn shape.
+        by a half-ellipse whose depth matches the partner strand (angle-scaled only
+        on the unfolded attached child via `_partner_cap_dims`). The mask intersection
+        is otherwise computed from the plain stroked rectangle, so without this the
+        mask still assumes a semicircle/flat cap and ignores the ellipse. We add the
+        full cap ellipse at each elliptical end so the mask follows the actual drawn
+        shape.
 
         use_inner selects the fill-size ellipse (this strand's width) vs the
         stroke-size ellipse (width + 2*stroke). Returns an empty path when the
@@ -334,10 +335,8 @@ class MaskedStrand(Strand):
             if partner_total is None:
                 continue
             center = strand.start if end_index == 0 else strand.end
-            t = 0.0001 if end_index == 0 else 0.9999
             try:
-                tangent = strand.calculate_cubic_tangent(t)
-                angle = math.atan2(tangent.y(), tangent.x())
+                angle = strand._junction_tangent_angle(end_index)
             except Exception:
                 continue
             if use_inner:

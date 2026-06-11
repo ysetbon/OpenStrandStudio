@@ -150,6 +150,135 @@ class Strand:
                 return info['connected_strand']
         return None
 
+    def _partner_connecting_end(self, end_index, partner):
+        """Return 0 or 1: which end of `partner` joins `self` at `end_index`."""
+        if partner is getattr(self, 'parent', None):
+            return getattr(self, 'attachment_side', 1)
+        for child in (getattr(self, 'attached_strands', None) or []):
+            if child is partner and getattr(child, 'attachment_side', None) == end_index:
+                return 0
+        kc = getattr(self, 'knot_connections', None) or {}
+        key = 'start' if end_index == 0 else 'end'
+        info = kc.get(key)
+        if info and info.get('connected_strand') is partner:
+            connected_end = info.get('connected_end', 'start')
+            return 0 if connected_end == 'start' else 1
+        pkc = getattr(partner, 'knot_connections', None) or {}
+        for p_key, p_info in pkc.items():
+            if not p_info or p_info.get('connected_strand') is not self:
+                continue
+            partner_end = 0 if p_key == 'start' else 1
+            connected_end = p_info.get('connected_end', 'start')
+            our_end = 0 if connected_end == 'start' else 1
+            if our_end == end_index:
+                return partner_end
+        my_point = self.start if end_index == 0 else self.end
+        if my_point is not None:
+            if partner.start is not None and (partner.start - my_point).manhattanLength() < 1.0:
+                return 0
+            if partner.end is not None and (partner.end - my_point).manhattanLength() < 1.0:
+                return 1
+        return 0
+
+    def _junction_tangent_angle(self, end_index):
+        """Return the strand tangent angle (radians) at the given end."""
+        t = 0.0001 if end_index == 0 else 0.9999
+        tangent = self.calculate_cubic_tangent(t)
+        if tangent.manhattanLength() == 0 and self.start is not None and self.end is not None:
+            tangent = self.end - self.start
+        if tangent.manhattanLength() == 0:
+            return 0.0
+        return math.atan2(tangent.y(), tangent.x())
+
+    def _junction_connection_angle_rad(self, end_index, partner):
+        """Return the angle (radians, 0..pi) between tangents at a junction."""
+        self_angle = self._junction_tangent_angle(end_index)
+        partner_end = self._partner_connecting_end(end_index, partner)
+        t = 0.0001 if partner_end == 0 else 0.9999
+        tangent = partner.calculate_cubic_tangent(t)
+        if tangent.manhattanLength() == 0 and partner.start is not None and partner.end is not None:
+            tangent = partner.end - partner.start
+        if tangent.manhattanLength() == 0:
+            return math.pi / 2.0
+        partner_angle = math.atan2(tangent.y(), tangent.x())
+        return abs((partner_angle - self_angle + math.pi) % (2 * math.pi) - math.pi)
+
+    def _should_scale_cap_depth_by_angle(self, end_index, partner):
+        """True only for an attached child strand at its start junction.
+
+        The parent strand keeps full partner width as elliptical depth; only the
+        attached child at end 0 is angle-scaled (folded vs unfolded curves differ).
+        """
+        return (
+            end_index == 0
+            and partner is not None
+            and partner is getattr(self, 'parent', None)
+        )
+
+    def _is_start_unfolded(self):
+        """True when the attached start edge is unfolded (transparent start stroke)."""
+        color = getattr(self, 'start_circle_stroke_color', None)
+        if color is not None:
+            return color.alpha() == 0
+        return bool(getattr(self, 'is_setting_staring_circle', False))
+
+    def _unfolded_start_cap_dims(self, end_index, partner, partner_total, partner_width,
+                                 self_total, angle_deg):
+        """Unfolded start: 0°/180° → half other inner, 45°/135° → exact other inner, 90° → partner."""
+        half_inner = self.width / 2.0
+        half_total = self_total / 2.0
+
+        if angle_deg <= 45.0:
+            t = angle_deg / 45.0
+            depth_width = half_inner + (self.width - half_inner) * t
+            depth_total = half_total + (self_total - half_total) * t
+        elif angle_deg <= 90.0:
+            t = (angle_deg - 45.0) / 45.0
+            depth_width = self.width + (partner_width - self.width) * t
+            depth_total = self_total + (partner_total - self_total) * t
+        elif angle_deg <= 135.0:
+            t = (angle_deg - 90.0) / 45.0
+            depth_width = partner_width + (self.width - partner_width) * t
+            depth_total = partner_total + (self_total - partner_total) * t
+        else:
+            t = (angle_deg - 135.0) / 45.0
+            depth_width = self.width + (half_inner - self.width) * t
+            depth_total = self_total + (half_total - self_total) * t
+
+        return (depth_total, depth_width)
+
+    def _folded_start_cap_dims(self, end_index, partner, partner_total, partner_width,
+                               self_total, angle_deg):
+        """Folded start: 0°/180° → exact other inner depth, 90° → full partner width."""
+        if angle_deg <= 90.0:
+            t = angle_deg / 90.0
+            depth_width = self.width + (partner_width - self.width) * t
+            depth_total = self_total + (partner_total - self_total) * t
+        else:
+            t = (angle_deg - 90.0) / 90.0
+            depth_width = partner_width + (self.width - partner_width) * t
+            depth_total = partner_total + (self_total - partner_total) * t
+
+        return (depth_total, depth_width)
+
+    def _attached_child_cap_dims(self, end_index, partner):
+        """Return angle-scaled cap depth for an attached child at its start junction."""
+        partner_total = partner.width + partner.stroke_width * 2
+        partner_width = partner.width
+        if not self._should_scale_cap_depth_by_angle(end_index, partner):
+            return (partner_total, partner_width)
+
+        self_total = self.width + self.stroke_width * 2
+        angle_deg = math.degrees(self._junction_connection_angle_rad(end_index, partner))
+
+        if self._is_start_unfolded():
+            return self._unfolded_start_cap_dims(
+                end_index, partner, partner_total, partner_width, self_total, angle_deg
+            )
+        return self._folded_start_cap_dims(
+            end_index, partner, partner_total, partner_width, self_total, angle_deg
+        )
+
     def _is_canvas_moving(self):
         """True while a move-mode drag is in progress on this strand's canvas."""
         c = getattr(self, 'canvas', None)
@@ -168,7 +297,12 @@ class Strand:
         The junction is drawn elliptical if EITHER strand sharing it opted in, so the
         strand whose width was changed AND its paired strand both get an ellipse. Each
         side uses its OWN width as the across-axis and the partner's width as the depth,
-        which makes the two caps mirror each other across the connection.
+        which makes the two caps mirror each other across the connection. Only the
+        attached child strand at its start junction scales depth by bend angle.
+        Unfolded start (transparent stroke): 0°/180° → half other inner depth,
+        45°/135° → exact other inner depth, 90° → full partner width.
+        Folded start (visible stroke): 0°/180° → exact other inner depth,
+        90° → full partner width. The parent side keeps full partner depth unchanged.
 
         The last successful resolution is cached per end. During an active drag, if a
         stray frame fails to resolve the partner, the cached dims are reused instead of
@@ -183,7 +317,7 @@ class Strand:
             partner = self._partner_strand_for_end(end_index)
             if partner is not None and (getattr(self, 'elliptical_end_caps', False)
                                         or getattr(partner, 'elliptical_end_caps', False)):
-                dims = (partner.width + partner.stroke_width * 2, partner.width)
+                dims = self._attached_child_cap_dims(end_index, partner)
                 if not hasattr(self, '_cap_dims_cache'):
                     self._cap_dims_cache = {}
                 self._cap_dims_cache[end_index] = dims
@@ -246,6 +380,25 @@ class Strand:
         ell = QPainterPath()
         ell.addEllipse(QPointF(0, 0), rx, ry)
         tr = QTransform().translate(center.x(), center.y()).rotate(math.degrees(angle))
+        return tr.map(ell)
+
+    def _cap_shadow_path(self, end_index, across_radius, depth_margin=0):
+        """Build cast-shadow geometry for one end cap.
+
+        Uses a circle when the end is free, otherwise an ellipse whose depth
+        comes from `_partner_cap_dims` (angle-scaled only on the unfolded child).
+        """
+        centre = self.start if end_index == 0 else self.end
+        cap_total = self._partner_cap_dims(end_index)[0]
+        if cap_total is None:
+            path = QPainterPath()
+            path.addEllipse(centre, across_radius, across_radius)
+            return path
+        angle = self._junction_tangent_angle(end_index)
+        depth_semi = cap_total / 2.0 + depth_margin
+        ell = QPainterPath()
+        ell.addEllipse(QPointF(0, 0), depth_semi, across_radius)
+        tr = QTransform().translate(centre.x(), centre.y()).rotate(math.degrees(angle))
         return tr.map(ell)
 
     def _rotated_ellipse(self, center, angle, rx, ry):

@@ -1151,7 +1151,13 @@ class LayerPanel(QWidget):
         )
         button.clicked.connect(partial(self.select_layer, index))
         button.color_changed.connect(self.on_color_changed)
-        
+        button.lock_toggled.connect(partial(self.toggle_layer_lock, index))
+
+        # Keep the lock-mode UI consistent for buttons created while lock mode is on
+        if getattr(self, 'lock_mode', False):
+            button.set_selectable(True)
+            button.set_locked(index in self.locked_layers)
+
         # Add right-click context menu for multi-selection
         button.setContextMenuPolicy(Qt.CustomContextMenu)
         button.customContextMenuRequested.connect(partial(self.show_multi_select_context_menu, index))
@@ -2246,9 +2252,10 @@ class LayerPanel(QWidget):
             self.notification_label.setText(_['select_layers_to_lock'])
             self.locked_layers = self.previously_locked_layers.copy()
             self.deselect_all_button.setText(_['clear_all_locks'])
-            # Disable new strand and delete strand buttons in lock mode
-            self.add_new_strand_button.setEnabled(False)
-            self.delete_strand_button.setEnabled(False)
+            # Creating and deleting strands stay allowed in lock mode
+            # (deleting is blocked only for locked layers, evaluated below)
+            self.add_new_strand_button.setEnabled(True)
+            self.update_delete_button_state()
         else:
             self.lock_layers_button.setText(_['lock_layers'])
             self.notification_label.setText(_['exited_lock_mode'])
@@ -2286,6 +2293,37 @@ class LayerPanel(QWidget):
                 else:
                     button.set_attachable(False)
 
+    def toggle_layer_lock(self, index):
+        """
+        Toggle the locked state of a single layer. Triggered by the small
+        padlock button shown on each layer button while lock mode is active.
+        Locking does not change the current selection.
+        """
+        if not self.lock_mode:
+            return
+
+        if index in self.locked_layers:
+            self.locked_layers.remove(index)
+        else:
+            self.locked_layers.add(index)
+
+        self.update_layer_buttons_lock_state()
+        self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
+
+        # Locking/unlocking the selected layer changes whether it can be deleted
+        self.update_delete_button_state()
+
+        # Save state for undo/redo
+        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            # Force save by temporarily clearing the last save time to bypass timing check
+            old_last_save_time = getattr(self.undo_redo_manager, '_last_save_time', 0)
+            self.undo_redo_manager._last_save_time = 0
+            self.undo_redo_manager.save_state()
+            # Restore the last save time
+            self.undo_redo_manager._last_save_time = old_last_save_time
+
+        self.canvas.update()
+
     def select_layer(self, index, emit_signal=True):
         """
         Handle layer selection based on current mode (normal, masked, multi-select, or lock).
@@ -2314,11 +2352,6 @@ class LayerPanel(QWidget):
             self.show_notification("Please exit mask edit mode first (Press ESC)")
             return
 
-        # In lock mode, preserve the currently selected strand before deselecting all
-        previously_selected_index = None
-        if self.lock_mode and self.canvas.selected_strand_index is not None:
-            previously_selected_index = self.canvas.selected_strand_index
-
         # Deselect all strands first
         for strand in self.canvas.strands:
             strand.is_selected = False
@@ -2329,78 +2362,10 @@ class LayerPanel(QWidget):
 
         if self.masked_mode:
             self.handle_masked_layer_selection(index)
-        elif self.lock_mode:
-            # In lock mode, always handle locking/unlocking regardless of current mode
-            if index in self.locked_layers:
-                self.locked_layers.remove(index)
-                # When unlocking, also deselect and unhighlight the strand
-                if 0 <= index < len(self.canvas.strands):
-                    strand = self.canvas.strands[index]
-                    strand.is_selected = False
-                # Clear canvas selection if this was the selected strand
-                if self.canvas.selected_strand_index == index:
-                    self.canvas.selected_strand = None
-                    self.canvas.selected_strand_index = None
-                    self.canvas.selected_attached_strand = None
-                # Uncheck the layer button
-                if 0 <= index < len(self.layer_buttons):
-                    self.layer_buttons[index].setChecked(False)
-                # Update canvas to reflect deselection and unhighlighting
-                self.canvas.update()
-                self.update_layer_buttons_lock_state()
-                self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
-                # Save state for undo/redo
-                if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-                    # Force save by temporarily clearing the last save time to bypass timing check
-                    old_last_save_time = getattr(self.undo_redo_manager, '_last_save_time', 0)
-                    self.undo_redo_manager._last_save_time = 0
-                    self.undo_redo_manager.save_state()
-                    # Restore the last save time
-                    self.undo_redo_manager._last_save_time = old_last_save_time
-                # Restore previous selection if it wasn't the unlocked strand
-                if previously_selected_index is not None and previously_selected_index != index:
-                    if 0 <= previously_selected_index < len(self.canvas.strands) and previously_selected_index not in self.locked_layers:
-                        self.canvas.strands[previously_selected_index].is_selected = True
-                        self.canvas.selected_strand = self.canvas.strands[previously_selected_index]
-                        self.canvas.selected_strand_index = previously_selected_index
-                        if 0 <= previously_selected_index < len(self.layer_buttons):
-                            self.layer_buttons[previously_selected_index].setChecked(True)
-
-                # Don't re-select the strand after unlocking
-                return
-            else:
-                self.locked_layers.add(index)
-                # When locking, also deselect and unhighlight the strand if it's currently selected
-                if 0 <= index < len(self.canvas.strands):
-                    strand = self.canvas.strands[index]
-                    strand.is_selected = False
-                # Clear canvas selection if this was the selected strand
-                if self.canvas.selected_strand_index == index:
-                    self.canvas.selected_strand = None
-                    self.canvas.selected_strand_index = None
-                    self.canvas.selected_attached_strand = None
-                # Uncheck the layer button
-                if 0 <= index < len(self.layer_buttons):
-                    self.layer_buttons[index].setChecked(False)
-                # Update canvas to reflect deselection
-                self.canvas.update()
-                self.update_layer_buttons_lock_state()
-                self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
-                # Save state for undo/redo
-                if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-                    self.undo_redo_manager.save_state()
-                # Restore previous selection if it wasn't the locked strand
-                if previously_selected_index is not None and previously_selected_index != index:
-                    if 0 <= previously_selected_index < len(self.canvas.strands) and previously_selected_index not in self.locked_layers:
-                        self.canvas.strands[previously_selected_index].is_selected = True
-                        self.canvas.selected_strand = self.canvas.strands[previously_selected_index]
-                        self.canvas.selected_strand_index = previously_selected_index
-                        if 0 <= previously_selected_index < len(self.layer_buttons):
-                            self.layer_buttons[previously_selected_index].setChecked(True)
-
-                # Don't re-select the strand after locking
-                return
         else:
+            # Normal selection – also used in lock mode, where clicking the layer
+            # selects it and the small padlock toggle (see toggle_layer_lock)
+            # handles locking/unlocking.
             for i, button in enumerate(self.layer_buttons):
                 button.setChecked(i == index)
             # Set the selected strand's is_selected to True
@@ -2519,6 +2484,12 @@ class LayerPanel(QWidget):
         button.set_border_color(self.layer_buttons[layer2].color)
         button.clicked.connect(partial(self.select_layer, len(self.layer_buttons)))
         button.color_changed.connect(self.on_color_changed)
+        button.lock_toggled.connect(partial(self.toggle_layer_lock, len(self.layer_buttons)))
+
+        # Keep the lock-mode UI consistent for buttons created while lock mode is on
+        if getattr(self, 'lock_mode', False):
+            button.set_selectable(True)
+            button.set_locked(len(self.layer_buttons) in self.locked_layers)
         
         # Store current scroll position
         scrollbar = self.scroll_area.verticalScrollBar()
@@ -2671,8 +2642,8 @@ class LayerPanel(QWidget):
                         all_deletable = False
                         break
 
-            # Enable delete button only if all selected layers are deletable and not in lock mode
-            if self.lock_mode:
+            # Enable delete only if all selected layers are deletable; locked layers stay protected
+            if self.lock_mode and any(i in self.locked_layers for i in self.multi_selected_layers):
                 self.delete_strand_button.setEnabled(False)
             else:
                 self.delete_strand_button.setEnabled(all_deletable)
@@ -2688,15 +2659,15 @@ class LayerPanel(QWidget):
             # Use the improved deletability check that considers knot connections
             is_deletable = self.is_strand_deletable(selected_strand)
 
-            # Keep delete button disabled if in lock mode
-            if self.lock_mode:
+            # Locked layers stay protected from deletion; others follow deletability
+            if self.lock_mode and selected_index in self.locked_layers:
                 self.delete_strand_button.setEnabled(False)
             else:
                 self.delete_strand_button.setEnabled(is_deletable)
             # Force visual update of the button
             self.delete_strand_button.update()
         else:
-            # No strand selected, disable delete button (also keep disabled in lock mode)
+            # No strand selected, disable delete button
             self.delete_strand_button.setEnabled(False)
             self.delete_strand_button.update()
 
@@ -2804,6 +2775,23 @@ class LayerPanel(QWidget):
             self.scroll_layout.removeWidget(button)
 
     def update_after_deletion(self, deleted_set_number, strands_removed, is_main_strand, renumber=False):
+
+        # Remap locked-layer indices so locks stay on the same strands after deletion
+        if self.locked_layers or self.previously_locked_layers:
+            removed = sorted(set(strands_removed))
+
+            def _remap_locked(indices):
+                remapped = set()
+                for idx in indices:
+                    if idx in removed:
+                        continue
+                    remapped.add(idx - sum(1 for r in removed if r < idx))
+                return remapped
+
+            self.locked_layers = _remap_locked(self.locked_layers)
+            self.previously_locked_layers = _remap_locked(self.previously_locked_layers)
+            if self.lock_mode:
+                self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
 
         # Clear selection first to avoid any index issues during deletion
         selected_layer = self.get_selected_layer()
@@ -3540,7 +3528,13 @@ class LayerPanel(QWidget):
                 btn.layer_name = strand.layer_name          # reliable lookup
                 btn.clicked.connect(partial(self.select_layer, i))
                 btn.color_changed.connect(self.on_color_changed)
-                
+                btn.lock_toggled.connect(partial(self.toggle_layer_lock, i))
+
+                # Keep the lock-mode UI consistent when rebuilding while lock mode is on
+                if getattr(self, 'lock_mode', False):
+                    btn.set_selectable(True)
+                    btn.set_locked(i in self.locked_layers)
+
                 # Add right-click context menu for multi-selection
                 btn.setContextMenuPolicy(Qt.CustomContextMenu)
                 btn.customContextMenuRequested.connect(partial(self.show_multi_select_context_menu, i))
@@ -3745,20 +3739,17 @@ class LayerPanel(QWidget):
             selected_strand = self.canvas.strands[selected_index]
             # Use the improved deletability check that considers knot connections
             is_deletable = self.is_strand_deletable(selected_strand)
-            
-            # Keep delete button disabled if in lock mode
-            if self.lock_mode:
+
+            # Locked layers stay protected from deletion; others follow deletability
+            if self.lock_mode and selected_index in self.locked_layers:
                 self.delete_strand_button.setEnabled(False)
             else:
                 self.delete_strand_button.setEnabled(is_deletable)
             # Force visual update of the button
             self.delete_strand_button.update()
         else:
-            # No valid strand selected – keep delete disabled in lock mode
-            if self.lock_mode:
-                self.delete_strand_button.setEnabled(False)
-            else:
-                self.delete_strand_button.setEnabled(False)
+            # No valid strand selected
+            self.delete_strand_button.setEnabled(False)
             self.delete_strand_button.update()
         # Force canvas update instead of refresh
         self.canvas.update()

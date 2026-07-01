@@ -2330,6 +2330,11 @@ class StrandDrawingCanvas(QWidget):
                         if getattr(strand, 'is_hidden', False):
                             continue
 
+                        # Locked layers cannot be moved or attached to, so don't
+                        # draw their interaction squares (even when selected)
+                        if self._is_layer_locked(strand):
+                            continue
+
                         # Family filter: hide selection areas for non-family strands
                         if getattr(self, 'move_selected_only', False) or getattr(self, 'show_cp_selected_only', False):
                             if not self.is_strand_in_selected_family(strand):
@@ -2887,6 +2892,10 @@ class StrandDrawingCanvas(QWidget):
 
                 # Skip hidden strands - they should not show attachment areas
                 if getattr(strand, 'is_hidden', False):
+                    continue
+
+                # Locked layers cannot receive attachments - no attach circles
+                if self._is_layer_locked(strand):
                     continue
 
                 # If a circle is pressed/selected, skip all other strands
@@ -3935,6 +3944,16 @@ class StrandDrawingCanvas(QWidget):
 
 
 
+    def _is_layer_locked(self, strand):
+        """Whether the strand's layer is locked in the layer panel's lock mode."""
+        layer_panel = getattr(self, 'layer_panel', None)
+        if not layer_panel or not getattr(layer_panel, 'lock_mode', False):
+            return False
+        try:
+            return self.strands.index(strand) in layer_panel.locked_layers
+        except (ValueError, RuntimeError):
+            return False
+
     def select_strand(self, index, update_layer_panel=True):
         """Select a strand by index."""
         pass
@@ -3998,9 +4017,13 @@ class StrandDrawingCanvas(QWidget):
             if update_layer_panel and self.layer_panel and self.layer_panel.get_selected_layer() != index:
                 self.layer_panel.select_layer(index, emit_signal=False)
 
-            self.current_mode = self.attach_mode
-            self.current_mode.is_attaching = False
-            self.current_strand = None
+            # Preserve the active mode while the layer panel is in lock mode:
+            # selecting a layer there must not silently switch the canvas to
+            # attach mode (locked strands would become attachable/movable).
+            if not (self.layer_panel and getattr(self.layer_panel, 'lock_mode', False)):
+                self.current_mode = self.attach_mode
+                self.current_mode.is_attaching = False
+                self.current_strand = None
 
             # Update delete button state based on strand type and deletability
             if self.layer_panel:
@@ -6001,6 +6024,10 @@ class StrandDrawingCanvas(QWidget):
 
             # Skip hidden strands - they should not show control points
             if getattr(strand, 'is_hidden', False):
+                continue
+
+            # Locked layers cannot be manipulated - hide their control handles
+            if self._is_layer_locked(strand):
                 continue
 
             # Family filter: hide CPs for non-family strands when either toggle is active

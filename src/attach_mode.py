@@ -744,6 +744,8 @@ class AttachMode(QObject):
                     continue
                 if getattr(strand, 'is_hidden', False):
                     continue
+                if self._is_strand_locked(strand):
+                    continue
 
                 # Check start point (if no circle attached)
                 if not strand.has_circles[0]:
@@ -999,6 +1001,20 @@ class AttachMode(QObject):
         except RuntimeError:
             return
 
+    def _is_strand_locked(self, strand):
+        """Whether the strand is locked in the layer panel's lock mode.
+
+        Queried live (instead of caching a locked set) so it stays correct
+        across mode switches and undo/redo.
+        """
+        layer_panel = getattr(self.canvas, 'layer_panel', None)
+        if not layer_panel or not getattr(layer_panel, 'lock_mode', False):
+            return False
+        try:
+            return self.canvas.strands.index(strand) in layer_panel.locked_layers
+        except (ValueError, RuntimeError):
+            return False
+
     def has_free_side(self, strand):
         """Check if the strand has any free sides for attachment.
 
@@ -1049,6 +1065,10 @@ class AttachMode(QObject):
     def try_attach_to_strand(self, strand, pos, circle_radius):
         """Try to attach a new strand to either end of an existing strand."""
         try:
+            # Locked strands cannot receive new attachments
+            if self._is_strand_locked(strand):
+                return False
+
             # Get attachment areas for both ends
             start_area = self.get_attachment_area(strand, 0)
             end_area = self.get_attachment_area(strand, 1)

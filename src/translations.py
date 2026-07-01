@@ -297,7 +297,7 @@ Examples:<br>
         'extension_dash_gap_length_tooltip': 'Gap between the strand end and the start of the dashes',
         'exit_lock_mode': 'Exit Lock',
         'clear_all_locks': 'Clear Locks', 
-        'select_layers_to_lock': 'Select layers to lock/unlock',
+        'select_layers_to_lock': 'Click a padlock to lock/unlock a layer; click a layer to select it',
         'exited_lock_mode': 'Exited lock mode',
         # Button tooltips
         'reset_tooltip': 'Reset:\nKeep only current state\nas first state',
@@ -914,7 +914,7 @@ Exemples :<br>
         'extension_dash_gap_length_tooltip': "Espace entre l'extrémité du brin et le début des tirets",
         'exit_lock_mode': 'Quitter',
         'clear_all_locks': 'Effacer',
-        'select_layers_to_lock': 'Sélectionner les calques à verrouiller/déverrouiller',
+        'select_layers_to_lock': 'Cliquez sur un cadenas pour verrouiller/déverrouiller un calque ; cliquez sur un calque pour le sélectionner',
         'exited_lock_mode': 'Mode verrouillage quitté',
         # Button tooltips
         'reset_tooltip': 'Réinitialiser :\nGarder uniquement l\'état\nactuel comme premier état',
@@ -1360,7 +1360,7 @@ Beispiele:<br>
         'lock_layers': 'Sperrmodus',
         'exit_lock_mode': 'Beenden',
         'clear_all_locks': 'Sperren aus',
-        'select_layers_to_lock': 'Ebenen zum Sperren/Entsperren auswählen',
+        'select_layers_to_lock': 'Klicken Sie auf ein Schloss, um eine Ebene zu sperren/entsperren; klicken Sie auf eine Ebene, um sie auszuwählen',
         'exited_lock_mode': 'Sperrmodus beendet',
         'add_new_strand': 'Neuer Strang',
         'delete_strand': 'Strang entf.',
@@ -1986,7 +1986,7 @@ Esempi:<br>
         'extension_dash_gap_length_tooltip': 'Spazio tra la fine del filo e l\'inizio dei trattini',
         'exit_lock_mode': 'Esci',
         'clear_all_locks': 'Cancella',
-        'select_layers_to_lock': 'Seleziona livelli da bloccare/sbloccare',
+        'select_layers_to_lock': 'Clicca sul lucchetto per bloccare/sbloccare un livello; clicca su un livello per selezionarlo',
         'exited_lock_mode': 'Uscito dalla modalità blocco',
         # Button tooltips
         'reset_tooltip': 'Ripristina:\nMantieni solo lo stato\ncorrente come primo stato',
@@ -2526,7 +2526,7 @@ Ejemplos:<br>
         'extension_dash_gap_length_tooltip': 'Espacio entre el extremo del cordón y el inicio de los guiones',
         'exit_lock_mode': 'Salir',
         'clear_all_locks': 'Limpiar',
-        'select_layers_to_lock': 'Seleccionar capas para bloquear/desbloquear',
+        'select_layers_to_lock': 'Haz clic en un candado para bloquear/desbloquear una capa; haz clic en una capa para seleccionarla',
         'exited_lock_mode': 'Salió del modo bloqueo',
         # Button tooltips
         'reset_tooltip': 'Restablecer:\nMantener solo el estado\nactual como primer estado',
@@ -3066,7 +3066,7 @@ Exemplos:<br>
         'extension_dash_gap_length_tooltip': 'Espaço entre a extremidade da mecha e o início dos traços',
         'exit_lock_mode': 'Sair',
         'clear_all_locks': 'Limpar',
-        'select_layers_to_lock': 'Selecionar camadas para bloquear/desbloquear',
+        'select_layers_to_lock': 'Clique num cadeado para bloquear/desbloquear uma camada; clique numa camada para selecioná-la',
         'exited_lock_mode': 'Saiu do modo bloqueio',
         # Button tooltips
         'reset_tooltip': 'Redefinir:\nManter apenas o estado\natual como primeiro estado',
@@ -3587,7 +3587,7 @@ Exemplos:<br>
         'extension_dash_gap_length_tooltip': 'מרווח בין החוט לתחילת המקפים',
         'exit_lock_mode': 'יציאה',
         'clear_all_locks': 'נקה',
-        'select_layers_to_lock': 'בחר שכבות לנעילה/שחרור',
+        'select_layers_to_lock': 'לחץ על מנעול כדי לנעול/לשחרר שכבה; לחץ על שכבה כדי לבחור בה',
         'exited_lock_mode': 'יצא ממצב נעילה',
         # Button tooltips
         'reset_tooltip': 'איפוס:\nשמור רק את המצב\nהנוכחי כמצב ראשון',

@@ -1,12 +1,32 @@
 from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QDoubleSpinBox, QSlider, QDialogButtonBox, QComboBox, QPushButton as QPB, QCheckBox, QDialogButtonBox, QStyleOptionButton
 from PyQt5.QtCore import Qt, pyqtSignal, QRect, QMimeData, QTimer, QPoint, QPointF, QLocale
-from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag, QGuiApplication
+from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag, QGuiApplication, QPixmap
 from render_utils import RenderUtils
 from translations import translations
 from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
+import os  # Add os for icon path resolution
 import sys  # Add sys for platform detection
 import math  # Add math for angle calculations
+
+# Cache for the lock-mode padlock icons (loaded once per state)
+_lock_icon_pixmaps = {}
+
+
+def get_lock_icon_pixmap(closed):
+    """Load (and cache) the open/closed padlock icon used by the lock toggle."""
+    key = 'closed' if closed else 'open'
+    if key not in _lock_icon_pixmaps:
+        if getattr(sys, 'frozen', False):
+            if sys.platform.startswith('darwin'):
+                base_path = os.path.join(os.path.dirname(sys.executable), '..', 'Resources')
+            else:
+                base_path = sys._MEIPASS
+        else:
+            base_path = os.path.dirname(os.path.abspath(__file__))
+        path = os.path.join(base_path, 'layer_panel_icons', f'lock_{key}.png')
+        _lock_icon_pixmaps[key] = QPixmap(path)
+    return _lock_icon_pixmaps[key]
 
 # Create a custom hover-aware label class
 class HoverLabel(QLabel):
@@ -41,6 +61,8 @@ class NumberedLayerButton(QPushButton):
     # Signal emitted when the button's color is changed
     color_changed = pyqtSignal(int, QColor)
     attachable_changed = pyqtSignal(int, bool)
+    # Signal emitted when the small padlock toggle is clicked in lock mode
+    lock_toggled = pyqtSignal()
 
     def __init__(self, text, count, color=QColor('purple'), parent=None, layer_context=None):
         """
@@ -69,6 +91,8 @@ class NumberedLayerButton(QPushButton):
         self.layer_context = layer_context
         self.is_hidden = False # New state for visibility
         self.shadow_only = False # New state for shadow-only mode
+        self.lock_hovered = False  # Hover state of the padlock toggle (lock mode)
+        self.setMouseTracking(True)  # Needed to track hover over the padlock toggle
         self.set_color(color)
         self.customContextMenuRequested.connect(self.show_context_menu)  # Connect the signal
         self._drag_start_position = None # To store mouse press position
@@ -1072,6 +1096,25 @@ class NumberedLayerButton(QPushButton):
         self.locked = locked
         self.update()
 
+    def _is_rtl(self):
+        """Whether the layer panel is displayed right-to-left (Hebrew)."""
+        layer_panel = self._find_layer_panel()
+        return bool(layer_panel) and getattr(layer_panel, 'language_code', 'en') == 'he'
+
+    def lock_button_rect(self):
+        """
+        Rect of the small padlock toggle shown in lock mode: vertically centered
+        on the side opposite the green attachable strip (left for LTR, right for RTL).
+        """
+        diameter = 26
+        # Keep the toggle close to the edge so long (masked) layer names
+        # like "1_1_2_3" don't crowd it
+        margin = 3
+        y = (self.height() - diameter) // 2
+        if self._is_rtl():
+            return QRect(self.width() - margin - diameter, y, diameter, diameter)
+        return QRect(margin, y, diameter, diameter)
+
     def set_selectable(self, selectable):
         """
         Set the selectable state of the button.
@@ -1193,8 +1236,10 @@ class NumberedLayerButton(QPushButton):
                 }}
             """
         if self.selectable and not self.is_hidden and not self.shadow_only: # Don't show selection border when hidden or shadow-only
+            # In lock mode only the currently selected layer gets the blue border;
+            # clicking a layer selects it, the padlock toggle handles locking.
             style += """
-                QPushButton {
+                QPushButton:checked {
                     border: 2px solid blue;
                 }
             """
@@ -1228,6 +1273,7 @@ class NumberedLayerButton(QPushButton):
             painter.setFont(font)
 
             rect = self.rect()
+            is_rtl = self._is_rtl()
 
             temp_path = QPainterPath()
             temp_path.addText(0, 0, font, self._text)
@@ -1235,6 +1281,22 @@ class NumberedLayerButton(QPushButton):
 
             x = (rect.width() - text_bounds.width()) / 2 - text_bounds.x()
             y = (rect.height() - text_bounds.height()) / 2 - text_bounds.y() + 1
+
+            # When the padlock toggle is visible, center the text in the free
+            # span between the padlock and the green strip so long (masked)
+            # names don't run into either
+            if self.selectable or self.locked:
+                lock_rect = self.lock_button_rect()
+                pad = 4
+                strip = 9 if self.attachable else 0
+                if is_rtl:
+                    free_left = strip + 2
+                    free_right = lock_rect.left() - pad
+                else:
+                    free_left = lock_rect.right() + pad
+                    free_right = rect.width() - strip - 2
+                x = free_left + (free_right - free_left - text_bounds.width()) / 2 - text_bounds.x()
+                x = max(x, free_left - text_bounds.x())
 
             path = QPainterPath()
             path.addText(x, y, font, self._text)
@@ -1247,29 +1309,49 @@ class NumberedLayerButton(QPushButton):
             painter.setBrush(Qt.white)
             painter.drawPath(path)
 
-            if self.locked:
-                lock_icon = QIcon.fromTheme("lock")
-                if not lock_icon.isNull():
-                    painter.save()
-                    painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-                    painter.fillRect(rect.adjusted(5, 5, -5, -5), QColor(255, 165, 0, 200))
-                    lock_icon.paint(painter, rect.adjusted(5, 5, -5, -5))
-                    painter.restore()
-                else:
-                    painter.setPen(QColor(255, 165, 0))
-                    painter.drawText(rect, Qt.AlignCenter, "🔒")
-
             if self.attachable:
                 green_color = QColor("#3BA424")
                 black_color = QColor(Qt.black)
 
+                # Green strip on the right for LTR, mirrored to the left for RTL
+                if is_rtl:
+                    outer_rect = QRect(0, 0, 9, rect.height())
+                    inner_rect = QRect(1, 1, 7, rect.height() - 2)
+                else:
+                    outer_rect = QRect(rect.width() - 9, 0, 9, rect.height())
+                    inner_rect = QRect(rect.width() - 8, 1, 7, rect.height() - 2)
+
                 painter.setPen(QPen(black_color, 2))
                 painter.setBrush(Qt.NoBrush)
-                painter.drawRect(QRect(rect.width() - 9, 0, 9, rect.height()))
+                painter.drawRect(outer_rect)
 
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(green_color)
-                painter.drawRect(QRect(rect.width() - 8, 1, 7, rect.height() - 2))
+                painter.drawRect(inner_rect)
+
+            # Small padlock toggle: shown in lock mode (selectable) on the side
+            # opposite the green strip; open = unlocked, closed = locked.
+            if self.selectable or self.locked:
+                lock_rect = self.lock_button_rect()
+                painter.setPen(QPen(QColor(30, 30, 30, 170), 1))
+                if self.locked:
+                    painter.setBrush(QColor(255, 220, 160, 235))
+                else:
+                    painter.setBrush(QColor(255, 255, 255, 210))
+                painter.drawEllipse(lock_rect)
+
+                lock_pixmap = get_lock_icon_pixmap(self.locked)
+                if not lock_pixmap.isNull():
+                    painter.drawPixmap(lock_rect.adjusted(3, 3, -3, -3), lock_pixmap)
+                else:
+                    painter.setPen(QColor(60, 60, 60))
+                    painter.drawText(lock_rect, Qt.AlignCenter, "🔒" if self.locked else "🔓")
+
+                if self.lock_hovered:
+                    # Hover feedback: translucent tint over the same icon
+                    painter.setPen(Qt.NoPen)
+                    painter.setBrush(QColor(0, 120, 215, 70))
+                    painter.drawEllipse(lock_rect)
 
             if self.is_hidden:
                 painter.save()
@@ -2250,12 +2332,25 @@ class NumberedLayerButton(QPushButton):
     # --- Drag and Drop Logic ---
     def mousePressEvent(self, event):
         """Store the starting position for a potential drag."""
+        if (event.button() == Qt.LeftButton and self.selectable
+                and self.lock_button_rect().contains(event.pos())):
+            # Click on the padlock toggle: lock/unlock without selecting the layer
+            self._drag_start_position = None
+            self.lock_toggled.emit()
+            event.accept()
+            return
         if event.button() == Qt.LeftButton:
             self._drag_start_position = event.pos()
         super().mousePressEvent(event) # Call base class implementation
 
     def mouseMoveEvent(self, event):
-        """Initiate drag if the mouse moves significantly."""
+        """Track padlock hover and initiate drag if the mouse moves significantly."""
+        hovering = self.selectable and self.lock_button_rect().contains(event.pos())
+        if hovering != self.lock_hovered:
+            self.lock_hovered = hovering
+            self.setCursor(Qt.PointingHandCursor if hovering else Qt.ArrowCursor)
+            self.update()
+
         if not (event.buttons() & Qt.LeftButton):
             return
         if not self._drag_start_position:
@@ -2297,6 +2392,14 @@ class NumberedLayerButton(QPushButton):
         # Reset drag start position after drag finishes
         self._drag_start_position = None
         # super().mouseMoveEvent(event) # Don't call super if we started a drag
+
+    def leaveEvent(self, event):
+        """Clear padlock hover feedback when the mouse leaves the button."""
+        if self.lock_hovered:
+            self.lock_hovered = False
+            self.setCursor(Qt.ArrowCursor)
+            self.update()
+        super().leaveEvent(event)
 
     def _find_layer_panel(self):
         """Helper to find the LayerPanel parent."""

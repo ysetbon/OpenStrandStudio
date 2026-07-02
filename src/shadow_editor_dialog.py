@@ -45,9 +45,11 @@ class ShadowListItem(QWidget):
     subtracted_layers_changed = pyqtSignal(str, list)  # Signal when subtracted layers are changed (receiving_layer, list of subtracted_layers)
     size_changed = pyqtSignal()  # Signal when widget size needs to be updated
 
-    def __init__(self, receiving_layer_name, receiving_layer_color, is_visible=True, allow_full_shadow=False, available_layers=None, subtracted_layers=None, language_code='en', parent=None):
+    def __init__(self, receiving_layer_name, receiving_layer_color, is_visible=True, allow_full_shadow=False, available_layers=None, subtracted_layers=None, language_code='en', parent=None, casting_layer_name=None, display_text=None):
         super().__init__(parent)
         self.receiving_layer_name = receiving_layer_name
+        # Caster this row edits; mask-proxy rows carry the mask's name here.
+        self.casting_layer_name = casting_layer_name
         self.is_shadow_visible = False
         self.subtract_checkboxes = {}  # Dictionary to track checkboxes by layer name
         self.language_code = language_code
@@ -76,11 +78,12 @@ class ShadowListItem(QWidget):
         self.color_indicator.setStyleSheet(f"background-color: {receiving_layer_color}; border: 1px solid #888; border-radius: 3px;")
         layout.addWidget(self.color_indicator)
 
-        self.name_label = QLabel(receiving_layer_name)
+        label_text = display_text or receiving_layer_name
+        self.name_label = QLabel(label_text)
         self.name_label.setMinimumWidth(10)
         self.name_label.setWordWrap(False)
         self.name_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.name_label.setToolTip(receiving_layer_name)
+        self.name_label.setToolTip(label_text)
         layout.addWidget(self.name_label)
 
         # Visibility checkbox
@@ -951,26 +954,37 @@ class ShadowEditorDialog(QDialog):
             item.is_shadow_visible = checked
             item.show_shadow_button.blockSignals(False)
 
+            caster = item.casting_layer_name or self.casting_layer
             if checked:
                 if hasattr(self.canvas, 'add_visible_shadow_path'):
-                    self.canvas.add_visible_shadow_path(self.casting_layer, item.receiving_layer_name)
+                    self.canvas.add_visible_shadow_path(caster, item.receiving_layer_name)
                 elif hasattr(self.canvas, 'set_visible_shadow_path'):
                     self.shadow_visible_layer = item.receiving_layer_name
-                    self.canvas.set_visible_shadow_path(self.casting_layer, item.receiving_layer_name)
+                    self.canvas.set_visible_shadow_path(caster, item.receiving_layer_name)
             else:
                 if hasattr(self.canvas, 'remove_visible_shadow_path'):
-                    self.canvas.remove_visible_shadow_path(self.casting_layer, item.receiving_layer_name)
+                    self.canvas.remove_visible_shadow_path(caster, item.receiving_layer_name)
                 elif hasattr(self.canvas, 'set_visible_shadow_path'):
                     self.shadow_visible_layer = None
                     self.canvas.set_visible_shadow_path(None, None)
 
         self.canvas.update()
 
+    def _tr(self, key):
+        """Translate with English fallback so missing keys can't raise."""
+        fallback = translations['en'].get(key, key)
+        return translations.get(self.language_code, {}).get(key, fallback)
+
+    def _via_mask_text(self, mask_name, receiving_layer):
+        """Row label for a shadow the strand casts through one of its masks."""
+        return self._tr('shadow_via_mask').format(mask_name, receiving_layer)
+
     def _populate_shadow_list(self):
         """Populate the list with layers that receive shadows from this strand."""
         self.shadows_list_widget.clear()
         self.widget_to_item.clear()
         self.shadow_items = []
+        self.static_labels = {}
 
         # Get layer order from canvas
         if not hasattr(self.canvas, 'layer_state_manager'):
@@ -1005,40 +1019,100 @@ class ShadowEditorDialog(QDialog):
 
         # Create list items for each receiving layer
         for layer_name, strand in receiving_layers:
-            # Get shadow override if exists
-            override = self.canvas.layer_state_manager.get_shadow_override(self.casting_layer, layer_name)
-            is_visible = self.canvas.layer_state_manager.get_shadow_visibility(self.casting_layer, layer_name)
-            allow_full_shadow = override.get('allow_full_shadow', False) if override else False
+            self._add_shadow_row(self.casting_layer, layer_name, strand, available_layers)
 
-            # Get subtracted layers
-            subtracted_layers = self.canvas.layer_state_manager.get_subtracted_layers(self.casting_layer, layer_name)
+        # Masks whose over-strand is this layer own the shadow drawn at each
+        # crossing, so surface their rows here as well. These rows read and
+        # write the overrides keyed under the mask's layer name — the same
+        # settings the mask's own dialog edits.
+        mask_rows = self._collect_mask_proxy_rows(layer_order)
+        if mask_rows:
+            self._add_static_row('via_mask_section', self._tr('shadow_via_mask_section'), bold=True)
+            for mask_name, layer_name, strand in mask_rows:
+                self._add_shadow_row(mask_name, layer_name, strand, available_layers,
+                                     display_text=self._via_mask_text(mask_name, layer_name))
 
-            # Create custom widget - exclude the receiving layer from available layers
-            available_for_this_shadow = [l for l in available_layers if l != layer_name]
-            item_widget = ShadowListItem(layer_name, strand.color.name(), is_visible, allow_full_shadow,
-                                        available_for_this_shadow, subtracted_layers, self.language_code)
-            item_widget.set_theme(self.theme)
+        if not self.shadow_items:
+            self._add_static_row('no_casters', self._tr('shadow_no_casters'), italic=True)
 
-            # Connect signals
-            item_widget.visibility_changed.connect(self._on_visibility_changed)
-            item_widget.allow_full_shadow_changed.connect(self._on_allow_full_shadow_changed)
-            item_widget.show_shadow_requested.connect(self._on_show_shadow_requested)
-            item_widget.subtracted_layers_changed.connect(self._on_subtracted_layers_changed)
-            item_widget.size_changed.connect(lambda w=item_widget: self._on_item_size_changed(w))
+    def _collect_mask_proxy_rows(self, layer_order):
+        """Collect (mask_name, receiving_layer, strand) rows for masks whose
+        over-strand is this dialog's strand."""
+        rows = []
+        for mask in self.canvas.strands:
+            over_strand = getattr(mask, 'first_selected_strand', None)
+            if over_strand is None or getattr(over_strand, 'layer_name', None) != self.casting_layer:
+                continue
+            if getattr(mask, 'is_hidden', False):
+                continue
+            mask_name = mask.layer_name
+            if mask_name not in layer_order:
+                continue
+            for layer_name in layer_order[:layer_order.index(mask_name)]:
+                # The over-strand shadowing itself is noise in this view.
+                if layer_name == self.casting_layer:
+                    continue
+                strand = self._find_strand_by_name(layer_name)
+                if strand and not getattr(strand, 'is_hidden', False):
+                    rows.append((mask_name, layer_name, strand))
+        return rows
 
-            # Add to list
-            list_item = QListWidgetItem(self.shadows_list_widget)
-            # Ensure proper size for the item
-            size_hint = item_widget.sizeHint()
-            if size_hint.height() < 50:
-                size_hint.setHeight(50)
-            list_item.setSizeHint(size_hint)
-            self.shadows_list_widget.addItem(list_item)
-            self.shadows_list_widget.setItemWidget(list_item, item_widget)
+    def _add_shadow_row(self, casting_layer, layer_name, strand, available_layers, display_text=None):
+        """Create one editable row for the (casting_layer -> layer_name) shadow."""
+        override = self.canvas.layer_state_manager.get_shadow_override(casting_layer, layer_name)
+        is_visible = self.canvas.layer_state_manager.get_shadow_visibility(casting_layer, layer_name)
+        allow_full_shadow = override.get('allow_full_shadow', False) if override else False
+        subtracted_layers = self.canvas.layer_state_manager.get_subtracted_layers(casting_layer, layer_name)
 
-            # Store widget to item mapping
-            self.widget_to_item[item_widget] = list_item
-            self.shadow_items.append(item_widget)
+        # Exclude the receiving layer from the subtractable layers
+        available_for_this_shadow = [l for l in available_layers if l != layer_name]
+        item_widget = ShadowListItem(layer_name, strand.color.name(), is_visible, allow_full_shadow,
+                                    available_for_this_shadow, subtracted_layers, self.language_code,
+                                    casting_layer_name=casting_layer, display_text=display_text)
+        item_widget.set_theme(self.theme)
+
+        # Connect signals, binding this row's caster (mask-proxy rows differ)
+        item_widget.visibility_changed.connect(
+            lambda recv, vis, caster=casting_layer: self._on_visibility_changed(caster, recv, vis))
+        item_widget.allow_full_shadow_changed.connect(
+            lambda recv, allow, caster=casting_layer: self._on_allow_full_shadow_changed(caster, recv, allow))
+        item_widget.show_shadow_requested.connect(
+            lambda recv, enabled, caster=casting_layer: self._on_show_shadow_requested(caster, recv, enabled))
+        item_widget.subtracted_layers_changed.connect(
+            lambda recv, layers, caster=casting_layer: self._on_subtracted_layers_changed(caster, recv, layers))
+        item_widget.size_changed.connect(lambda w=item_widget: self._on_item_size_changed(w))
+
+        # Add to list
+        list_item = QListWidgetItem(self.shadows_list_widget)
+        # Ensure proper size for the item
+        size_hint = item_widget.sizeHint()
+        if size_hint.height() < 50:
+            size_hint.setHeight(50)
+        list_item.setSizeHint(size_hint)
+        self.shadows_list_widget.addItem(list_item)
+        self.shadows_list_widget.setItemWidget(list_item, item_widget)
+
+        # Store widget to item mapping
+        self.widget_to_item[item_widget] = list_item
+        self.shadow_items.append(item_widget)
+
+    def _add_static_row(self, key, text, bold=False, italic=False):
+        """Add a non-interactive text row (section header / empty state)."""
+        list_item = QListWidgetItem(self.shadows_list_widget)
+        list_item.setFlags(Qt.NoItemFlags)
+        label = QLabel(text)
+        label.setWordWrap(True)
+        color = '#AAAAAA' if self.theme == 'dark' else '#666666'
+        weight = 'bold' if bold else 'normal'
+        style = 'italic' if italic else 'normal'
+        label.setStyleSheet(f"color: {color}; font-weight: {weight}; font-style: {style}; "
+                            "background-color: transparent; padding: 4px;")
+        size_hint = label.sizeHint()
+        if size_hint.height() < 30:
+            size_hint.setHeight(30)
+        list_item.setSizeHint(size_hint)
+        self.shadows_list_widget.setItemWidget(list_item, label)
+        self.static_labels[key] = label
 
     def _on_item_size_changed(self, widget):
         """Handle when an item widget's size changes (e.g., expand/collapse)."""
@@ -1066,16 +1140,17 @@ class ShadowEditorDialog(QDialog):
         """Handle selection change in the list - highlight shadow on canvas."""
         if current:
             widget = self.shadows_list_widget.itemWidget(current)
-            if widget:
+            if widget and isinstance(widget, ShadowListItem):
+                caster = widget.casting_layer_name or self.casting_layer
                 receiving_layer = widget.receiving_layer_name
                 # Emit signal to canvas to highlight this shadow
                 if hasattr(self.canvas, 'set_highlighted_shadow'):
-                    self.canvas.set_highlighted_shadow(self.casting_layer, receiving_layer)
+                    self.canvas.set_highlighted_shadow(caster, receiving_layer)
 
-    def _on_visibility_changed(self, receiving_layer, is_visible):
+    def _on_visibility_changed(self, casting_layer, receiving_layer, is_visible):
         """Handle visibility change."""
         # Update shadow override
-        override = self.canvas.layer_state_manager.get_shadow_override(self.casting_layer, receiving_layer)
+        override = self.canvas.layer_state_manager.get_shadow_override(casting_layer, receiving_layer)
         if not override:
             override = {'visibility': is_visible}
         else:
@@ -1087,51 +1162,51 @@ class ShadowEditorDialog(QDialog):
         if override.pop('auto', None) and is_visible:
             override['pinned'] = True
 
-        self.canvas.layer_state_manager.set_shadow_override(self.casting_layer, receiving_layer, override)
+        self.canvas.layer_state_manager.set_shadow_override(casting_layer, receiving_layer, override)
 
         # Refresh canvas
         self.canvas.update()
 
-    def _on_allow_full_shadow_changed(self, receiving_layer, allow_full):
+    def _on_allow_full_shadow_changed(self, casting_layer, receiving_layer, allow_full):
         """Handle allow full shadow change."""
         # Update shadow override
-        override = self.canvas.layer_state_manager.get_shadow_override(self.casting_layer, receiving_layer)
+        override = self.canvas.layer_state_manager.get_shadow_override(casting_layer, receiving_layer)
         if not override:
             override = {
                 'visibility': self.canvas.layer_state_manager.get_shadow_visibility(
-                    self.casting_layer, receiving_layer
+                    casting_layer, receiving_layer
                 ),
                 'allow_full_shadow': allow_full
             }
         else:
             override['allow_full_shadow'] = allow_full
 
-        self.canvas.layer_state_manager.set_shadow_override(self.casting_layer, receiving_layer, override)
+        self.canvas.layer_state_manager.set_shadow_override(casting_layer, receiving_layer, override)
 
         # Refresh canvas
         self.canvas.update()
 
-    def _on_subtracted_layers_changed(self, receiving_layer, subtracted_layers):
+    def _on_subtracted_layers_changed(self, casting_layer, receiving_layer, subtracted_layers):
         """Handle subtracted layers change."""
         # Update subtracted layers in layer_state_manager
         self.canvas.layer_state_manager.set_subtracted_layers(
-            self.casting_layer, receiving_layer, subtracted_layers
+            casting_layer, receiving_layer, subtracted_layers
         )
 
         # Refresh canvas to show updated shadow
         self.canvas.update()
 
-    def _on_show_shadow_requested(self, receiving_layer, enabled):
+    def _on_show_shadow_requested(self, casting_layer, receiving_layer, enabled):
         """Handle show shadow request."""
         if enabled:
             if hasattr(self.canvas, 'add_visible_shadow_path'):
-                self.canvas.add_visible_shadow_path(self.casting_layer, receiving_layer)
+                self.canvas.add_visible_shadow_path(casting_layer, receiving_layer)
             elif hasattr(self.canvas, 'set_visible_shadow_path'):
                 self.shadow_visible_layer = receiving_layer
-                self.canvas.set_visible_shadow_path(self.casting_layer, receiving_layer)
+                self.canvas.set_visible_shadow_path(casting_layer, receiving_layer)
         else:
             if hasattr(self.canvas, 'remove_visible_shadow_path'):
-                self.canvas.remove_visible_shadow_path(self.casting_layer, receiving_layer)
+                self.canvas.remove_visible_shadow_path(casting_layer, receiving_layer)
             elif hasattr(self.canvas, 'set_visible_shadow_path'):
                 self.shadow_visible_layer = None
                 self.canvas.set_visible_shadow_path(None, None)
@@ -1189,6 +1264,17 @@ class ShadowEditorDialog(QDialog):
             if widget and isinstance(widget, ShadowListItem):
                 widget.update_translations(self.language_code)
 
+        # Update static rows and mask-proxy row labels
+        if 'via_mask_section' in self.static_labels:
+            self.static_labels['via_mask_section'].setText(self._tr('shadow_via_mask_section'))
+        if 'no_casters' in self.static_labels:
+            self.static_labels['no_casters'].setText(self._tr('shadow_no_casters'))
+        for widget in self.shadow_items:
+            if widget.casting_layer_name and widget.casting_layer_name != self.casting_layer:
+                new_text = self._via_mask_text(widget.casting_layer_name, widget.receiving_layer_name)
+                widget.name_label.setText(new_text)
+                widget.name_label.setToolTip(new_text)
+
         QTimer.singleShot(0, self._sync_column_widths)
 
     def _update_toggle_labels(self, btn, on_text, off_text):
@@ -1200,7 +1286,8 @@ class ShadowEditorDialog(QDialog):
         """Handle dialog close - clean up visualizations."""
         for item in self.shadow_items:
             if hasattr(self.canvas, 'remove_visible_shadow_path'):
-                self.canvas.remove_visible_shadow_path(self.casting_layer, item.receiving_layer_name)
+                caster = item.casting_layer_name or self.casting_layer
+                self.canvas.remove_visible_shadow_path(caster, item.receiving_layer_name)
 
         if self.shadow_visible_layer and hasattr(self.canvas, 'set_visible_shadow_path'):
             self.canvas.set_visible_shadow_path(None, None)

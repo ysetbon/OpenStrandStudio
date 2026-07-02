@@ -434,6 +434,20 @@ class MaskedStrand(Strand):
         if not caps.isEmpty():
             stroked = stroked.united(caps)
         return stroked
+
+    def _intersection_shadow_visible(self):
+        """Whether the mask's internal intersection shading should be drawn.
+
+        The shading is the over-strand's shadow on the under-strand, so it is
+        keyed as (mask -> under-strand) in the shadow overrides — the same key
+        the shadow editor's mask rows toggle.
+        """
+        if not (self.canvas and hasattr(self.canvas, 'layer_state_manager')
+                and self.second_selected_strand):
+            return True
+        return self.canvas.layer_state_manager.get_shadow_visibility(
+            self.layer_name, self.second_selected_strand.layer_name)
+
     def draw(self, painter, skip_painter_setup=False):
         """Draw the masked strand and apply corner-based deletion rectangles."""
         if hasattr(self, 'deletion_rectangles'):
@@ -537,19 +551,20 @@ class MaskedStrand(Strand):
            
                 
                 # Draw shadow and apply deletion rectangles at intersection stage
-                draw_mask_strand_shadow(
-                    painter,
-                    strand1_path,
-                    strand2_path,
-                    self.first_selected_strand.get_path(),
-                    self.first_selected_strand.width,
-                    self.first_selected_strand.stroke_width,
-                    first_strand=self.first_selected_strand,
-                    deletion_rects=self.deletion_rectangles if hasattr(self, 'deletion_rectangles') else None,
-                    shadow_color=shadow_color,
-                    num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
-                    max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99,
-                )
+                if self._intersection_shadow_visible():
+                    draw_mask_strand_shadow(
+                        painter,
+                        strand1_path,
+                        strand2_path,
+                        self.first_selected_strand.get_path(),
+                        self.first_selected_strand.width,
+                        self.first_selected_strand.stroke_width,
+                        first_strand=self.first_selected_strand,
+                        deletion_rects=self.deletion_rectangles if hasattr(self, 'deletion_rectangles') else None,
+                        shadow_color=shadow_color,
+                        num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
+                        max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99,
+                    )
 
         except Exception as e:
             # Attempt to refresh even if there was an error
@@ -702,19 +717,20 @@ class MaskedStrand(Strand):
                 # Save painter state before shadow drawing
                 painter.save()
                 # Draw shadow and apply deletion rectangles at intersection stage
-                draw_mask_strand_shadow(
-                    painter,
-                    strand1_shadow_path,
-                    strand2_path,
-                    self.first_selected_strand.get_path(),
-                    self.first_selected_strand.width,
-                    self.first_selected_strand.stroke_width,
-                    first_strand=self.first_selected_strand,
-                    deletion_rects=self.deletion_rectangles if hasattr(self, 'deletion_rectangles') else None,
-                    shadow_color=shadow_color,
-                    num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
-                    max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99,
-                )
+                if self._intersection_shadow_visible():
+                    draw_mask_strand_shadow(
+                        painter,
+                        strand1_shadow_path,
+                        strand2_path,
+                        self.first_selected_strand.get_path(),
+                        self.first_selected_strand.width,
+                        self.first_selected_strand.stroke_width,
+                        first_strand=self.first_selected_strand,
+                        deletion_rects=self.deletion_rectangles if hasattr(self, 'deletion_rectangles') else None,
+                        shadow_color=shadow_color,
+                        num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
+                        max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99,
+                    )
                 painter.restore()
 
         except Exception as e:

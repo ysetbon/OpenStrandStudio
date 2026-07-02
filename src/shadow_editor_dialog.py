@@ -1081,6 +1081,12 @@ class ShadowEditorDialog(QDialog):
         else:
             override['visibility'] = is_visible
 
+        # If this pair was auto-hidden (masked-weave automation), the user is
+        # overruling it: drop the 'auto' tag so recomputes keep hands off, and
+        # 'pin' a re-enable so the pair is never auto-hidden again.
+        if override.pop('auto', None) and is_visible:
+            override['pinned'] = True
+
         self.canvas.layer_state_manager.set_shadow_override(self.casting_layer, receiving_layer, override)
 
         # Refresh canvas

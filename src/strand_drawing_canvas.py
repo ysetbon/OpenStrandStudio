@@ -3209,6 +3209,12 @@ class StrandDrawingCanvas(QWidget):
         self.update()
         self.masked_layer_created.emit(masked_strand)
 
+        # The weave changed: refresh the auto-managed shadow overrides so the
+        # masked-under strand stops casting residue shadows onto the fabric.
+        # Runs AFTER the emit so layer_state_manager's order includes the mask.
+        from auto_shadow import recompute_auto_shadow_overrides
+        recompute_auto_shadow_overrides(self)
+
         # Emit a signal if needed (e.g., to update other parts of the UI)
         # self.mask_created.emit(masked_strand)  # Uncomment if you have this signal
         
@@ -5534,9 +5540,14 @@ class StrandDrawingCanvas(QWidget):
 
         # Skip geometry refresh during deletion - let suppression mechanism handle it
         # self.refresh_geometry_based_attachments()
-        
+
         # Don't force update of attachment statuses here - let the suppression mechanism handle it
         # self.update_attachment_statuses()
+
+        # Masks and layer names may have changed: refresh auto shadow overrides
+        # (also prunes entries referencing the deleted/renamed layers).
+        from auto_shadow import recompute_auto_shadow_overrides
+        recompute_auto_shadow_overrides(self)
 
         # Force a complete redraw of the canvas
         self.update()
@@ -7098,7 +7109,11 @@ class StrandDrawingCanvas(QWidget):
             # Clear selection if the deleted masked strand was selected
             if self.selected_strand == masked_strand:
                 self.clear_selection()
-            
+
+            # The weave changed: drop auto overrides this mask justified.
+            from auto_shadow import recompute_auto_shadow_overrides
+            recompute_auto_shadow_overrides(self)
+
             # Force a redraw of the canvas
             self.update()
             

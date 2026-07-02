@@ -1222,7 +1222,7 @@ class MoveMode:
         control_point_moved = False
         for strand in self.canvas.strands:
             if not getattr(strand, 'deleted', False) and not getattr(strand, 'is_hidden', False):
-                if not self._is_strand_allowed_by_selection(strand):
+                if not self._is_strand_allowed_by_selection(strand, for_control_points=True):
                     continue
                 if self.try_move_control_points(strand, pos, event):
                     control_point_moved = True
@@ -1794,11 +1794,17 @@ class MoveMode:
             # If we've reached the target, stop the timer
             self.move_timer.stop()
 
-    def _is_strand_allowed_by_selection(self, strand):
-        """When move_selected_only or show_cp_selected_only is on, only allow the selected strand and its relatives."""
-        if not getattr(self.canvas, 'move_selected_only', False) and not getattr(self.canvas, 'show_cp_selected_only', False):
-            return True
-        return self.canvas.is_strand_in_selected_family(strand)
+    def _is_strand_allowed_by_selection(self, strand, for_control_points=False):
+        """Family gating for the 'selected only' settings.
+
+        move_selected_only restricts all move-mode interaction to the selected
+        strand. show_cp_selected_only only restricts control points: other
+        strands keep their start/end squares and stay movable."""
+        if getattr(self.canvas, 'move_selected_only', False):
+            return self.canvas.is_strand_in_selected_family(strand)
+        if for_control_points and getattr(self.canvas, 'show_cp_selected_only', False):
+            return self.canvas.is_strand_in_selected_family(strand)
+        return True
 
     def handle_strand_movement(self, pos, event=None):
         """
@@ -1814,7 +1820,7 @@ class MoveMode:
         # First pass: Check all control points for all strands (excluding masked strands and hidden strands)
         for strand in self.canvas.strands:
             if not getattr(strand, 'deleted', False) and not isinstance(strand, MaskedStrand) and not getattr(strand, 'is_hidden', False):
-                if not self._is_strand_allowed_by_selection(strand):
+                if not self._is_strand_allowed_by_selection(strand, for_control_points=True):
                     continue
                 if self.try_move_control_points(strand, pos, event):
                     return
@@ -1913,7 +1919,7 @@ class MoveMode:
         """
         for attached_strand in attached_strands:
             if not getattr(attached_strand, 'deleted', False) and not getattr(attached_strand, 'is_hidden', False):
-                if not self._is_strand_allowed_by_selection(attached_strand):
+                if not self._is_strand_allowed_by_selection(attached_strand, for_control_points=True):
                     continue
                 if self.try_move_control_points(attached_strand, pos):
                     return True
@@ -2244,7 +2250,7 @@ class MoveMode:
         for strand in hover_candidates:
             if getattr(strand, 'deleted', False) or isinstance(strand, MaskedStrand) or getattr(strand, 'is_hidden', False):
                 continue
-            if not self._is_strand_allowed_by_selection(strand):
+            if not self._is_strand_allowed_by_selection(strand, for_control_points=True):
                 continue
             if self.lock_mode_active and strand in self.canvas.strands:
                 strand_index = self.canvas.strands.index(strand)

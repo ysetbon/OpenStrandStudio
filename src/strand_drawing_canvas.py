@@ -2335,8 +2335,10 @@ class StrandDrawingCanvas(QWidget):
                         if self._is_layer_locked(strand):
                             continue
 
-                        # Family filter: hide selection areas for non-family strands
-                        if getattr(self, 'move_selected_only', False) or getattr(self, 'show_cp_selected_only', False):
+                        # Family filter: move_selected_only hides all selection areas for
+                        # non-family strands. show_cp_selected_only only hides their control
+                        # point squares (filtered below), keeping start/end squares visible.
+                        if getattr(self, 'move_selected_only', False):
                             if not self.is_strand_in_selected_family(strand):
                                 continue
 
@@ -2472,8 +2474,12 @@ class StrandDrawingCanvas(QWidget):
                                         painter.drawRect(end_rect)
                                         drawn_rectangle_positions.append(QPointF(strand.end))
 
-                            # Draw squares around control points if present (and not MaskedStrand)
-                            if not isinstance(strand, MaskedStrand):
+                            # Draw squares around control points if present (and not MaskedStrand).
+                            # show_cp_selected_only hides only these CP squares for non-family
+                            # strands; their start/end squares above still draw.
+                            hide_cp_squares = (getattr(self, 'show_cp_selected_only', False)
+                                               and not self.is_strand_in_selected_family(strand))
+                            if not isinstance(strand, MaskedStrand) and not hide_cp_squares:
                                 # Skip drawing only the exact selected control point
                                 skip_cp1 = (strand == selected_strand and selected_side == 'control_point1')
                                 skip_cp2 = (strand == selected_strand and selected_side == 'control_point2')

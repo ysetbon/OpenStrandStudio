@@ -203,10 +203,8 @@ class TabManager(QObject):
         lp = getattr(mw, 'layer_panel', None)
         if lp is not None:
             try:
-                lp.lock_mode = meta.get("lock_mode", False)
-                lp.locked_layers = set(meta.get("locked_layers", []) or [])
-                if hasattr(lp, 'update_layer_buttons_lock_state'):
-                    lp.update_layer_buttons_lock_state()
+                lp.apply_lock_state(meta.get("locked_layers", []) or [],
+                                    meta.get("lock_mode", False))
             except Exception:
                 pass
         if hasattr(self.canvas, 'layer_panel') and self.canvas.layer_panel:

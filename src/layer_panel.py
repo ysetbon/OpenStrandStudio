@@ -2307,6 +2307,32 @@ class LayerPanel(QWidget):
             # Restore the last save time
             self.undo_redo_manager._last_save_time = old_last_save_time
 
+    def apply_lock_state(self, locked_layers, lock_mode):
+        """
+        Apply a lock state restored from a save file or undo/redo history.
+
+        Unlike toggle_lock_mode, this does not save an undo/redo state and does
+        not swap locked_layers with previously_locked_layers; it simply makes
+        the panel UI and the canvas modes reflect the given state.
+        """
+        self.lock_mode = bool(lock_mode)
+        self.locked_layers = set(locked_layers)
+
+        _ = translations[self.language_code]
+        if hasattr(self, 'lock_layers_button'):
+            self.lock_layers_button.setChecked(self.lock_mode)
+            self.lock_layers_button.setText(_['exit_lock_mode'] if self.lock_mode else _['lock_layers'])
+        if hasattr(self, 'notification_label'):
+            self.notification_label.setText(_['select_layers_to_lock'] if self.lock_mode else "")
+        if hasattr(self, 'deselect_all_button'):
+            self.deselect_all_button.setText(_['clear_all_locks'] if self.lock_mode else _['deselect_all'])
+
+        self.update_layer_buttons_lock_state()
+        self.update_delete_button_state()
+        # Propagate to move mode (and anything else listening) even when the
+        # canvas is currently in a different mode.
+        self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
+
     def update_layer_buttons_lock_state(self):
         """Update the lock state and attachability of all layer buttons."""
         for i, button in enumerate(self.layer_buttons):

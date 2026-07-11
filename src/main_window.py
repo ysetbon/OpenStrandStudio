@@ -1636,6 +1636,12 @@ class MainWindow(QMainWindow):
             if hasattr(self.canvas, 'layer_panel'):
                 self.canvas.layer_panel.refresh()
 
+            # Restore lock mode and locked layers from the saved file.
+            # Must happen before clear_history(save_current=True) so the new
+            # undo baseline records the lock state instead of discarding it.
+            if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'apply_lock_state'):
+                self.canvas.layer_panel.apply_lock_state(locked_layers, lock_mode)
+
             # Force a canvas redraw
             self.canvas.update()
 

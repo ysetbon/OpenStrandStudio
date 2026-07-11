@@ -2145,48 +2145,11 @@ class UndoRedoManager(QObject):
             # --- END NEW --- 
             
             # --- Step 3: Restore locked layers and lock mode BEFORE UI refresh ---
-            # Restore lock mode state first
-            if hasattr(self.layer_panel, 'lock_mode'):
-                self.layer_panel.lock_mode = lock_mode
-                if hasattr(self.layer_panel, 'lock_layers_button'):
-                    self.layer_panel.lock_layers_button.setChecked(lock_mode)
-                    # Get current language translations
-                    from translations import translations
-                    language_code = self.canvas.language_code if hasattr(self.canvas, 'language_code') else 'en'
-                    _ = translations[language_code]
-                    if lock_mode:
-                        self.layer_panel.lock_layers_button.setText(_['exit_lock_mode'])
-                        if hasattr(self.layer_panel, 'notification_label'):
-                            self.layer_panel.notification_label.setText(_['select_layers_to_lock'] if 'select_layers_to_lock' in _ else "")
-                        if hasattr(self.layer_panel, 'deselect_all_button'):
-                            self.layer_panel.deselect_all_button.setText(_['clear_all_locks'])
-                    else:
-                        self.layer_panel.lock_layers_button.setText(_['lock_layers'])
-                        if hasattr(self.layer_panel, 'notification_label'):
-                            self.layer_panel.notification_label.setText("")
-                        if hasattr(self.layer_panel, 'deselect_all_button'):
-                            self.layer_panel.deselect_all_button.setText(_['deselect_all'])
-            
-            # Restore locked layers state after lock mode is set
-            if hasattr(self.layer_panel, 'locked_layers'):
-                self.layer_panel.locked_layers = locked_layers.copy()
-                
-                # Log current button count for debugging
-                button_count = len(getattr(self.layer_panel, 'layer_buttons', []))
-                
-                # Always call update_layer_buttons_lock_state to apply the visual state
-                if hasattr(self.layer_panel, 'update_layer_buttons_lock_state'):
-                    self.layer_panel.update_layer_buttons_lock_state()
-                
-                # Also update MoveMode's locked_layers if it exists
-                if hasattr(self.canvas, 'current_mode') and self.canvas.current_mode.__class__.__name__ == 'MoveMode':
-                    move_mode = self.canvas.current_mode
-                    if hasattr(move_mode, 'set_locked_layers'):
-                        move_mode.set_locked_layers(locked_layers.copy(), lock_mode)
-                    else:
-                        # Fallback - set directly if set_locked_layers doesn't exist
-                        move_mode.locked_layers = locked_layers.copy()
-                        move_mode.lock_mode_active = lock_mode
+            # apply_lock_state updates the panel state, the lock button UI, and
+            # emits lock_layers_changed so canvas.move_mode stays in sync even
+            # when the canvas is currently in a different mode.
+            if hasattr(self.layer_panel, 'apply_lock_state'):
+                self.layer_panel.apply_lock_state(locked_layers, lock_mode)
 
             # Restore shadow overrides
             if hasattr(self.canvas, 'layer_state_manager') and shadow_overrides is not None:
@@ -2428,33 +2391,10 @@ class UndoRedoManager(QObject):
                 if hasattr(self.layer_panel, 'refresh'):
                     self.layer_panel.refresh()
                 
-                # Restore locked layers
-                if hasattr(self.layer_panel, 'locked_layers') and locked_layers:
-                    self.layer_panel.locked_layers = locked_layers.copy()
-                    if hasattr(self.layer_panel, 'update_layer_buttons_lock_state'):
-                        self.layer_panel.update_layer_buttons_lock_state()
-                
-                # Restore lock mode state
-                if hasattr(self.layer_panel, 'lock_mode'):
-                    self.layer_panel.lock_mode = lock_mode
-                    if hasattr(self.layer_panel, 'lock_layers_button'):
-                        self.layer_panel.lock_layers_button.setChecked(lock_mode)
-                        # Get current language translations
-                        from translations import translations
-                        language_code = self.canvas.language_code if hasattr(self.canvas, 'language_code') else 'en'
-                        _ = translations[language_code]
-                        if lock_mode:
-                            self.layer_panel.lock_layers_button.setText(_['exit_lock_mode'])
-                            if hasattr(self.layer_panel, 'notification_label'):
-                                self.layer_panel.notification_label.setText(_['select_layers_to_lock'] if 'select_layers_to_lock' in _ else "")
-                            if hasattr(self.layer_panel, 'deselect_all_button'):
-                                self.layer_panel.deselect_all_button.setText(_['clear_all_locks'])
-                        else:
-                            self.layer_panel.lock_layers_button.setText(_['lock_layers'])
-                            if hasattr(self.layer_panel, 'notification_label'):
-                                self.layer_panel.notification_label.setText("")
-                            if hasattr(self.layer_panel, 'deselect_all_button'):
-                                self.layer_panel.deselect_all_button.setText(_['deselect_all'])
+                # Restore locked layers and lock mode (also clears stale locks
+                # when the loaded state has none, and syncs move mode)
+                if hasattr(self.layer_panel, 'apply_lock_state'):
+                    self.layer_panel.apply_lock_state(locked_layers, lock_mode)
 
                 # Restore shadow overrides
                 if hasattr(self.canvas, 'layer_state_manager') and shadow_overrides is not None:

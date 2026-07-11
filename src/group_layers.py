@@ -3035,6 +3035,8 @@ class GroupPanel(QWidget):
                 new_strand.is_hidden = original_strand.is_hidden
             if hasattr(original_strand, 'shadow_only'):
                 new_strand.shadow_only = original_strand.shadow_only
+            if hasattr(original_strand, 'hide_shadow'):
+                new_strand.hide_shadow = original_strand.hide_shadow
             if hasattr(original_strand, 'shadow_color'):
                 new_strand.shadow_color = QColor(original_strand.shadow_color)
             
@@ -3239,6 +3241,8 @@ class GroupPanel(QWidget):
                 new_strand.is_hidden = original.is_hidden
             if hasattr(original, 'shadow_only'):
                 new_strand.shadow_only = original.shadow_only
+            if hasattr(original, 'hide_shadow'):
+                new_strand.hide_shadow = original.hide_shadow
             if hasattr(original, 'start_line_visible'):
                 new_strand.start_line_visible = original.start_line_visible
             if hasattr(original, 'end_line_visible'):

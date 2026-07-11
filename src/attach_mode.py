@@ -314,6 +314,12 @@ class AttachMode(QObject):
                     # Normal clipping when not zoomed and not panned
                     painter.setClipRect(update_rect)
             except RuntimeError:
+                if painter is not None:
+                    try:
+                        if painter.isActive():
+                            painter.end()
+                    except RuntimeError:
+                        pass
                 return
             
             try:

@@ -1357,11 +1357,13 @@ class NumberedLayerButton(QPushButton):
 
             if self.is_hidden:
                 painter.save()
-                pen = QPen(QColor(160, 160, 160), 2, Qt.DashLine)
-                painter.setPen(pen)
-                for i in range(-rect.height(), rect.width(), 10):
-                    painter.drawLine(i, rect.height(), i + rect.height(), 0)
-                painter.restore()
+                try:
+                    pen = QPen(QColor(160, 160, 160), 2, Qt.DashLine)
+                    painter.setPen(pen)
+                    for i in range(-rect.height(), rect.width(), 10):
+                        painter.drawLine(i, rect.height(), i + rect.height(), 0)
+                finally:
+                    painter.restore()
         except Exception:
             import traceback
             traceback.print_exc()

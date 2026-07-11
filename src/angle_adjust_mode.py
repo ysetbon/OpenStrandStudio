@@ -642,9 +642,11 @@ class AngleAdjustMode:
         if self.active_strand:
             # Draw the original strand in a faded color
             painter.save()
-            painter.setOpacity(0.5)
-            self.active_strand.draw(painter)
-            painter.restore()
+            try:
+                painter.setOpacity(0.5)
+                self.active_strand.draw(painter)
+            finally:
+                painter.restore()
 
             # Draw the angle arc
             center = self.active_strand.start

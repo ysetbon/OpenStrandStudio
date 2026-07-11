@@ -203,174 +203,176 @@ def draw_mask_strand_shadow(
             return
 
     painter.save()
-    # ------------------------------------------------------------------
-    # Determine the region that should receive the shadow – this is the
-    # intersection of the two supplied paths.
-    # ------------------------------------------------------------------
-    if first_path.isEmpty() or second_path.isEmpty():
-        # logging.warning("draw_mask_strand_shadow: both paths empty - nothing to draw")
-        painter.restore()  # Restore before returning
-        return
-
     try:
-        # Compute intersection of component paths
-        intersection_path = QPainterPath(first_path).intersected(second_path)
-    except Exception:
-        painter.restore()
-        return
+        # ------------------------------------------------------------------
+        # Determine the region that should receive the shadow – this is the
+        # intersection of the two supplied paths.
+        # ------------------------------------------------------------------
+        if first_path.isEmpty() or second_path.isEmpty():
+            # logging.warning("draw_mask_strand_shadow: both paths empty - nothing to draw")
+            return
 
-    # Apply deletion rectangles to intersection_path if provided
-    try:
-        intersection_path = _apply_deletion_rects(intersection_path, deletion_rects)
-    except Exception:
-        pass # If deletion fails, just use the base intersection
+        try:
+            # Compute intersection of component paths
+            intersection_path = QPainterPath(first_path).intersected(second_path)
+        except Exception:
+            return
 
-    # ------------------------------------------------------------------
-    # Resolve shadow colour – mirror the logic from ``draw_strand_shadow``.
-    # Priority:
-    #   1. Explicit *shadow_color* argument supplied by caller
-    #   2. ``first_strand.shadow_color`` if available
-    #   3. Default semi-transparent black
-    # ------------------------------------------------------------------
-    if shadow_color is not None:
-        # Caller has provided an explicit colour (may be a tuple, Qt.GlobalColor, …)
-        color_to_use = QColor(shadow_color) if not isinstance(shadow_color, QColor) else QColor(shadow_color)
-    elif first_strand and hasattr(first_strand, "shadow_color") and first_strand.shadow_color:
-        color_to_use = QColor(first_strand.shadow_color)
-    else:
-        color_to_use = QColor(0, 0, 0, 150)  # ~59 % opacity
-    # Ensure we have an *independent* QColor instance so that we can safely
-    # tweak its alpha value later.
-    base_color = QColor(color_to_use)
-    base_alpha = base_color.alpha()
+        # Apply deletion rectangles to intersection_path if provided
+        try:
+            intersection_path = _apply_deletion_rects(intersection_path, deletion_rects)
+        except Exception:
+            pass # If deletion fails, just use the base intersection
 
-    # ------------------------------------------------------------------
-    # Prepare painter state.
-    # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # Resolve shadow colour – mirror the logic from ``draw_strand_shadow``.
+        # Priority:
+        #   1. Explicit *shadow_color* argument supplied by caller
+        #   2. ``first_strand.shadow_color`` if available
+        #   3. Default semi-transparent black
+        # ------------------------------------------------------------------
+        if shadow_color is not None:
+            # Caller has provided an explicit colour (may be a tuple, Qt.GlobalColor, …)
+            color_to_use = QColor(shadow_color) if not isinstance(shadow_color, QColor) else QColor(shadow_color)
+        elif first_strand and hasattr(first_strand, "shadow_color") and first_strand.shadow_color:
+            color_to_use = QColor(first_strand.shadow_color)
+        else:
+            color_to_use = QColor(0, 0, 0, 150)  # ~59 % opacity
+        # Ensure we have an *independent* QColor instance so that we can safely
+        # tweak its alpha value later.
+        base_color = QColor(color_to_use)
+        base_alpha = base_color.alpha()
+
+        # ------------------------------------------------------------------
+        # Prepare painter state.
+        # ------------------------------------------------------------------
 
     
-    # ------------------------------------------------------------------
-    # 1) Fill the solid shadow core.
-    # ------------------------------------------------------------------
-    # (Solid fill moved below – we now draw it *after* establishing the
-    # clipping region so that the fill is restricted in exactly the same
-    # way as the subsequent blur strokes.)
+        # ------------------------------------------------------------------
+        # 1) Fill the solid shadow core.
+        # ------------------------------------------------------------------
+        # (Solid fill moved below – we now draw it *after* establishing the
+        # clipping region so that the fill is restricted in exactly the same
+        # way as the subsequent blur strokes.)
 
-    # ------------------------------------------------------------------
-    # 2) Add a blurred / faded edge by repeatedly stroking the path with
-    #    increasing width and decreasing alpha.
-    # ------------------------------------------------------------------
-    # We allow the blurred edge to extend anywhere the ORIGINAL component
-    # paths exist (their union) so that the blur is not clipped too early.
+        # ------------------------------------------------------------------
+        # 2) Add a blurred / faded edge by repeatedly stroking the path with
+        #    increasing width and decreasing alpha.
+        # ------------------------------------------------------------------
+        # We allow the blurred edge to extend anywhere the ORIGINAL component
+        # paths exist (their union) so that the blur is not clipped too early.
  
 
-    # ------------------------------------------------------------------
-    # Restrict the blurred stroke so that it can expand inside the
-    # *receiving* strand (``second_path``) but never draws over the
-    # *casting* strand (``first_strand``).
-    #
-    # We therefore construct a clipping path that equals the second
-    # strand **minus** the first strand and apply that as the painter's
-    # clipping region.  QPainter::setClipPath replaces the previous
-    # clip region by default, so we build the final region explicitly
-    # and set it only once.
-    # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # Restrict the blurred stroke so that it can expand inside the
+        # *receiving* strand (``second_path``) but never draws over the
+        # *casting* strand (``first_strand``).
+        #
+        # We therefore construct a clipping path that equals the second
+        # strand **minus** the first strand and apply that as the painter's
+        # clipping region.  QPainter::setClipPath replaces the previous
+        # clip region by default, so we build the final region explicitly
+        # and set it only once.
+        # ------------------------------------------------------------------
 
-    # ------------------------------------------------------------------
-    # Force a WINDING fill rule and simplify the geometry to merge any
-    # overlapping sub-paths.  This avoids small voids that could appear
-    # in the centre of complex intersections (visually manifesting as
-    # the "striped" gaps you reported).
-    # ------------------------------------------------------------------
-    intersection_path.setFillRule(Qt.WindingFill)
-    intersection_path = QPainterPath(intersection_path).simplified()
-    # ------------------------------------------------------------------
-    # Build the precise *inner-core* geometry that should receive the
-    # actual shadow.  We create a thinner stroke around the centre line
-    # of the first strand and intersect it with the full path of the
-    # second strand.  This reproduces exactly the area shown in the
-    # previously highlighted block and re-uses it for the main blur loop
-    # and the solid core fill that follows.
-    # ------------------------------------------------------------------
-    try:
-        # Do not use stroker_inner; just use the first_strand_center_path directly
-        shading_path = QPainterPath(first_strand_center_path).intersected(second_path)
+        # ------------------------------------------------------------------
+        # Force a WINDING fill rule and simplify the geometry to merge any
+        # overlapping sub-paths.  This avoids small voids that could appear
+        # in the centre of complex intersections (visually manifesting as
+        # the "striped" gaps you reported).
+        # ------------------------------------------------------------------
+        intersection_path.setFillRule(Qt.WindingFill)
+        intersection_path = QPainterPath(intersection_path).simplified()
+        # ------------------------------------------------------------------
+        # Build the precise *inner-core* geometry that should receive the
+        # actual shadow.  We create a thinner stroke around the centre line
+        # of the first strand and intersect it with the full path of the
+        # second strand.  This reproduces exactly the area shown in the
+        # previously highlighted block and re-uses it for the main blur loop
+        # and the solid core fill that follows.
+        # ------------------------------------------------------------------
+        try:
+            # Do not use stroker_inner; just use the first_strand_center_path directly
+            shading_path = QPainterPath(first_strand_center_path).intersected(second_path)
 
-        # Respect deletion rectangles so the shading honours user erasures
+            # Respect deletion rectangles so the shading honours user erasures
+            shading_path = _apply_deletion_rects(shading_path, deletion_rects)
+
+            # Fallback: if anything goes wrong or the path is empty, revert to the
+            # broader intersection so something still renders.
+            if shading_path.isEmpty():
+                shading_path = intersection_path
+        except Exception as _inner_err:
+            pass
+            shading_path = intersection_path
+
+        # Follow the EXACT same pattern as draw_strand_shadow for consistent layering
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setBrush(Qt.NoBrush)  # We are stroking, not filling
+        painter.setPen(Qt.NoPen)  # We are stroking, not filling
+
+        # Apply clipping so the shadow cannot appear where no underlying strand exists
+        painter.setClipPath(second_path)
+        shading_path = QPainterPath(second_path).intersected(first_path)
         shading_path = _apply_deletion_rects(shading_path, deletion_rects)
 
-        # Fallback: if anything goes wrong or the path is empty, revert to the
-        # broader intersection so something still renders.
-        if shading_path.isEmpty():
-            shading_path = intersection_path
-    except Exception as _inner_err:
-        pass
-        shading_path = intersection_path
+        # --- 2) Draw faded strokes (exactly like draw_strand_shadow) ---
+        for i in range(num_steps):
+            # Use EXACT same alpha calculation as draw_strand_shadow
+            progress = (float(num_steps - i) / num_steps)
+            current_alpha = base_alpha * progress * (1.0 / num_steps) * 2.0
+            current_width = max_blur_radius * (float(i + 1) / num_steps)
 
-    # Follow the EXACT same pattern as draw_strand_shadow for consistent layering
-    painter.setRenderHint(QPainter.Antialiasing, True)
-    painter.setBrush(Qt.NoBrush)  # We are stroking, not filling
-    painter.setPen(Qt.NoPen)  # We are stroking, not filling
+            pen_color = QColor(base_color.red(), base_color.green(), base_color.blue(), max(0, min(255, int(current_alpha))))
+            pen = QPen(pen_color)
+            pen.setWidthF(current_width)
+            pen.setCapStyle(Qt.FlatCap)  # Keep ends squared off
+            pen.setJoinStyle(Qt.RoundJoin)
 
-    # Apply clipping so the shadow cannot appear where no underlying strand exists
-    painter.setClipPath(second_path)
-    shading_path = QPainterPath(second_path).intersected(first_path)
-    shading_path = _apply_deletion_rects(shading_path, deletion_rects)
+            painter.setPen(pen)
+            painter.strokePath(shading_path, pen)
 
-    # --- 2) Draw faded strokes (exactly like draw_strand_shadow) ---
-    for i in range(num_steps):
-        # Use EXACT same alpha calculation as draw_strand_shadow
-        progress = (float(num_steps - i) / num_steps)
-        current_alpha = base_alpha * progress * (1.0 / num_steps) * 2.0
-        current_width = max_blur_radius * (float(i + 1) / num_steps)
+        # Define core_color for the additional layers you added back
+        core_color = QColor(base_color)
 
-        pen_color = QColor(base_color.red(), base_color.green(), base_color.blue(), max(0, min(255, int(current_alpha))))
-        pen = QPen(pen_color)
-        pen.setWidthF(current_width)
-        pen.setCapStyle(Qt.FlatCap)  # Keep ends squared off
-        pen.setJoinStyle(Qt.RoundJoin)
+        # --- 3) Draw a final, darker "inner core" shadow ---
+        # This adds extra depth by taking a thinner version of the casting
+        # path (first_path), intersecting it with the receiving path
+        # (second_path), and filling that smaller area with the darkest shade.
+        try:
+            # Create a stroker with half the width of the first strand.
+            stroker = QPainterPathStroker()
+            stroker.setWidth(first_strand_width + first_strand_stroke_width * 2)
+            stroker.setJoinStyle(Qt.RoundJoin)
+            stroker.setCapStyle(Qt.FlatCap)
 
-        painter.setPen(pen)
-        painter.strokePath(shading_path, pen)
+            # Create the thinner stroke from the original center-line path.
+            thinner_stroke = stroker.createStroke(first_strand_center_path)
 
-    # Define core_color for the additional layers you added back
-    core_color = QColor(base_color)
+            # Intersect this with the second strand's full path.
+            inner_core_path = QPainterPath(thinner_stroke).intersected(second_path)
 
-    # --- 3) Draw a final, darker "inner core" shadow ---
-    # This adds extra depth by taking a thinner version of the casting
-    # path (first_path), intersecting it with the receiving path
-    # (second_path), and filling that smaller area with the darkest shade.
-    try:
-        # Create a stroker with half the width of the first strand.
-        stroker = QPainterPathStroker()
-        stroker.setWidth(first_strand_width + first_strand_stroke_width * 2)
-        stroker.setJoinStyle(Qt.RoundJoin)
-        stroker.setCapStyle(Qt.FlatCap)
+            # Also apply deletion rectangles to the inner core.
+            inner_core_path = _apply_deletion_rects(inner_core_path, deletion_rects)
 
-        # Create the thinner stroke from the original center-line path.
-        thinner_stroke = stroker.createStroke(first_strand_center_path)
+            if not inner_core_path.isEmpty():
+                # Use the same colour and opacity as the centre layer of the strand shadow
+                inner_core_color = QColor(core_color)
 
-        # Intersect this with the second strand's full path.
-        inner_core_path = QPainterPath(thinner_stroke).intersected(second_path)
+                painter.save()
+                try:
+                    painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+                    painter.setPen(Qt.NoPen)
+                    painter.setBrush(QBrush(inner_core_color))
+                    painter.drawPath(inner_core_path)
+                finally:
+                    painter.restore()
 
-        # Also apply deletion rectangles to the inner core.
-        inner_core_path = _apply_deletion_rects(inner_core_path, deletion_rects)
+        except Exception as e:
+            pass
 
-        if not inner_core_path.isEmpty():
-            # Use the same colour and opacity as the centre layer of the strand shadow
-            inner_core_color = QColor(core_color)
-
-            painter.save()
-            painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(QBrush(inner_core_color))
-            painter.drawPath(inner_core_path)
-            painter.restore()
-
-    except Exception as e:
-        pass
-
-    painter.restore()
+    finally:
+        painter.restore()
 
 def draw_circle_shadow(painter, strand, shadow_color=None):
     """
@@ -1018,15 +1020,17 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
             combined_shadow_path.setFillRule(Qt.WindingFill)
             
             # Draw shadow (uncommented to actually render the solid shadow core)
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(QBrush(color_to_use))
-            
-            # IMPORTANT: Use SourceOver composition mode to prevent shadow darkening
-            old_composition = painter.compositionMode()
-            painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-            # Uncommented to fix the missing shadow rendering
-            painter.drawPath(combined_shadow_path)
-            painter.setCompositionMode(old_composition)
+            painter.save()
+            try:
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QBrush(color_to_use))
+
+                # IMPORTANT: Use SourceOver composition mode to prevent shadow darkening
+                painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+                # Uncommented to fix the missing shadow rendering
+                painter.drawPath(combined_shadow_path)
+            finally:
+                painter.restore()
             
             # Initialize shadow_paths and all_shadow_paths
             all_shadow_paths = [combined_shadow_path]
@@ -1353,7 +1357,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         else:
              # This means all_shadow_paths was empty, log and return
              # logging.warning(f"No shadow paths in all_shadow_paths for strand {strand.layer_name}, skipping draw.")
-             # NOTE: No painter.restore() needed here because painter.save() happens AFTER this check at line 1145
+             # NOTE: No painter.restore() needed here because painter.save() happens after this check
              return # Nothing to draw
 
         # Only add circle shadows if not using arrow shadow
@@ -1371,64 +1375,66 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
 
         # Prepare painter with clipping so the shadow cannot appear where no underlying strand exists
         painter.save()
-        painter.setRenderHint(QPainter.Antialiasing, True)
-        painter.setBrush(Qt.NoBrush)  # We are stroking, not filling
+        try:
+            painter.setRenderHint(QPainter.Antialiasing, True)
+            painter.setBrush(Qt.NoBrush)  # We are stroking, not filling
 
-        # --- Add Logging --- 
-        current_comp_mode = painter.compositionMode()
-        # logging.info(f"DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty={total_shadow_path.isEmpty()}, bounds={total_shadow_path.boundingRect()}")
-        # logging.info(f"DrawMaskShadow - Before Clip/Stroke: clip_path empty={clip_path.isEmpty()}, bounds={clip_path.boundingRect()}")
-        # logging.info(f"DrawMaskShadow - Before Clip/Stroke: Painter composition mode={current_comp_mode}")
-        # --- End Logging ---
+            # --- Add Logging --- 
+            current_comp_mode = painter.compositionMode()
+            # logging.info(f"DrawMaskShadow - Before Clip/Stroke: total_shadow_path empty={total_shadow_path.isEmpty()}, bounds={total_shadow_path.boundingRect()}")
+            # logging.info(f"DrawMaskShadow - Before Clip/Stroke: clip_path empty={clip_path.isEmpty()}, bounds={clip_path.boundingRect()}")
+            # logging.info(f"DrawMaskShadow - Before Clip/Stroke: Painter composition mode={current_comp_mode}")
+            # --- End Logging ---
 
-        # --- Explicitly set composition mode before stroking --- 
-        painter.setCompositionMode(QPainter.CompositionMode_SourceOver)  # Ensure correct blending
+            # --- Explicitly set composition mode before stroking --- 
+            painter.setCompositionMode(QPainter.CompositionMode_SourceOver)  # Ensure correct blending
 
-        # Apply clipping – use the collected clip_path, or fallback to the shadow path itself
-        if not clip_path.isEmpty():
-            painter.setClipPath(clip_path)
+            # Apply clipping – use the collected clip_path, or fallback to the shadow path itself
+            if not clip_path.isEmpty():
+                painter.setClipPath(clip_path)
 
-        # Check if path is valid before attempting to stroke
-        if not total_shadow_path.isEmpty():
-            # ------------------------------------------------------------------
-            # NEW: Paint a solid fill for the shadow core so the centre area is
-            #      not left transparent.  This guarantees the interior of the
-            #      shadow uses the same colour/opacity before we add the blurred
-            #      outline.
-            # ------------------------------------------------------------------
+            # Check if path is valid before attempting to stroke
+            if not total_shadow_path.isEmpty():
+                # ------------------------------------------------------------------
+                # NEW: Paint a solid fill for the shadow core so the centre area is
+                #      not left transparent.  This guarantees the interior of the
+                #      shadow uses the same colour/opacity before we add the blurred
+                #      outline.
+                # ------------------------------------------------------------------
             
    
-            # --- Wrap stroking in try...except ---
-            try:
-                for i in range(num_steps):
-                    # Alpha fades from base_alpha down towards zero
-                    # Distribute alpha across steps for smoother look
-                    # Adjusted alpha calculation slightly for potentially better distribution
-                    progress = (float(num_steps - i) / num_steps)
-                    current_alpha = base_alpha * progress * (1.0 / num_steps) * 2.0 # Exponential decay, adjust multiplier
+                # --- Wrap stroking in try...except ---
+                try:
+                    for i in range(num_steps):
+                        # Alpha fades from base_alpha down towards zero
+                        # Distribute alpha across steps for smoother look
+                        # Adjusted alpha calculation slightly for potentially better distribution
+                        progress = (float(num_steps - i) / num_steps)
+                        current_alpha = base_alpha * progress * (1.0 / num_steps) * 2.0 # Exponential decay, adjust multiplier
 
-                    # Width increases
-                    current_width = max_blur_radius * (float(i + 1) / num_steps)
+                        # Width increases
+                        current_width = max_blur_radius * (float(i + 1) / num_steps)
 
-                    pen_color = QColor(base_color.red(), base_color.green(), base_color.blue(), max(0, min(255, int(current_alpha))))
-                    pen = QPen(pen_color)
-                    pen.setWidthF(current_width)
-                    pen.setCapStyle(Qt.FlatCap)  # Keep ends squared off
-                    pen.setJoinStyle(Qt.RoundJoin)
+                        pen_color = QColor(base_color.red(), base_color.green(), base_color.blue(), max(0, min(255, int(current_alpha))))
+                        pen = QPen(pen_color)
+                        pen.setWidthF(current_width)
+                        pen.setCapStyle(Qt.FlatCap)  # Keep ends squared off
+                        pen.setJoinStyle(Qt.RoundJoin)
 
-                    painter.setPen(pen)
-                    painter.strokePath(total_shadow_path, pen)  # <-- actual drawing: main shadow strokes for normal strands
-            except Exception as stroke_error:
-                # logging.error(f"DrawMaskShadow - Error during shadow stroking loop: {stroke_error}")
-                pass
-            # --- End try...except ---
+                        painter.setPen(pen)
+                        painter.strokePath(total_shadow_path, pen)  # <-- actual drawing: main shadow strokes for normal strands
+                except Exception as stroke_error:
+                    # logging.error(f"DrawMaskShadow - Error during shadow stroking loop: {stroke_error}")
+                    pass
+                # --- End try...except ---
 
-            # logging.info(f"Drew faded shadow stroke path with {num_steps} steps for strand {strand.layer_name} bounds {total_shadow_path.boundingRect()}")
-        else:
-             # logging.warning(f"Total shadow path became empty unexpectedly for strand {strand.layer_name}, cannot draw faded shadow.")
-             pass
+                # logging.info(f"Drew faded shadow stroke path with {num_steps} steps for strand {strand.layer_name} bounds {total_shadow_path.boundingRect()}")
+            else:
+                 # logging.warning(f"Total shadow path became empty unexpectedly for strand {strand.layer_name}, cannot draw faded shadow.")
+                 pass
 
-        painter.restore() # Restore painter state (render hints, brush, composition mode)
+        finally:
+            painter.restore() # Restore painter state (render hints, brush, composition mode)
 
     else:
         # ADDED: Create a fallback shadow path when no paths are found

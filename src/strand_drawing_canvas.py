@@ -1897,930 +1897,934 @@ class StrandDrawingCanvas(QWidget):
         
         # Apply zoom and pan transformation
         painter.save()
-        canvas_center = QPointF(self.width() / 2, self.height() / 2)
-        painter.translate(canvas_center)
-        painter.translate(self.pan_offset_x, self.pan_offset_y)  # Apply pan offset
-        painter.scale(self.zoom_factor, self.zoom_factor)
-        painter.translate(-canvas_center)
+        try:
+            canvas_center = QPointF(self.width() / 2, self.height() / 2)
+            painter.translate(canvas_center)
+            painter.translate(self.pan_offset_x, self.pan_offset_y)  # Apply pan offset
+            painter.scale(self.zoom_factor, self.zoom_factor)
+            painter.translate(-canvas_center)
         
-        # When zoomed out or panning, disable clipping to allow more drawing area
-        if (hasattr(self, 'zoom_factor') and self.zoom_factor != 1.0) or \
-           (hasattr(self, 'pan_offset_x') and (self.pan_offset_x != 0 or self.pan_offset_y != 0)):
-            painter.setClipping(False)
+            # When zoomed out or panning, disable clipping to allow more drawing area
+            if (hasattr(self, 'zoom_factor') and self.zoom_factor != 1.0) or \
+               (hasattr(self, 'pan_offset_x') and (self.pan_offset_x != 0 or self.pan_offset_y != 0)):
+                painter.setClipping(False)
 
-        # Draw the grid, if applicable
-        if self.show_grid:
-            self.draw_grid(painter)
+            # Draw the grid, if applicable
+            if self.show_grid:
+                self.draw_grid(painter)
 
-        # Reduced high-frequency logging for performance
-        # logging.info(f"Painting {len(self.strands)} strands")
+            # Reduced high-frequency logging for performance
+            # logging.info(f"Painting {len(self.strands)} strands")
 
-        # Check if we're in a mode that supports draw_only_affected_strand
-        draw_all_strands = True
+            # Check if we're in a mode that supports draw_only_affected_strand
+            draw_all_strands = True
         
-        # Check MoveMode
-        if isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving and self.current_mode.draw_only_affected_strand:
-            draw_all_strands = False
-            pass
-        
-        
-        # Check RotateMode
-        elif hasattr(self, 'rotate_mode') and self.current_mode == self.rotate_mode and hasattr(self.rotate_mode, 'draw_only_affected_strand'):
-            if self.rotate_mode.draw_only_affected_strand and self.rotate_mode.is_rotating:
+            # Check MoveMode
+            if isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving and self.current_mode.draw_only_affected_strand:
                 draw_all_strands = False
                 pass
         
-        # Check AngleAdjustMode
-        elif hasattr(self, 'angle_adjust_mode') and self.is_angle_adjusting and hasattr(self.angle_adjust_mode, 'draw_only_affected_strand'):
-            if self.angle_adjust_mode.draw_only_affected_strand and self.angle_adjust_mode.active_strand and self.angle_adjust_mode.dialog_is_open:
-                draw_all_strands = False
-                pass
+        
+            # Check RotateMode
+            elif hasattr(self, 'rotate_mode') and self.current_mode == self.rotate_mode and hasattr(self.rotate_mode, 'draw_only_affected_strand'):
+                if self.rotate_mode.draw_only_affected_strand and self.rotate_mode.is_rotating:
+                    draw_all_strands = False
+                    pass
+        
+            # Check AngleAdjustMode
+            elif hasattr(self, 'angle_adjust_mode') and self.is_angle_adjusting and hasattr(self.angle_adjust_mode, 'draw_only_affected_strand'):
+                if self.angle_adjust_mode.draw_only_affected_strand and self.angle_adjust_mode.active_strand and self.angle_adjust_mode.dialog_is_open:
+                    draw_all_strands = False
+                    pass
 
-        # Draw ALL existing strands first (background)
-        if draw_all_strands:
-            # Debug: log all strands that should be drawn
-            if hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving:
-                if not hasattr(self, '_logged_strands_list'):
-                    self._logged_strands_list = True
-                    pass
-                    pass
-                    pass
+            # Draw ALL existing strands first (background)
+            if draw_all_strands:
+                # Debug: log all strands that should be drawn
+                if hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving:
+                    if not hasattr(self, '_logged_strands_list'):
+                        self._logged_strands_list = True
+                        pass
+                        pass
+                        pass
                     
-                    # Also log which strands have parent_strand
-                    for s in self.strands:
-                        if hasattr(s, 'parent_strand') and s.parent_strand:
-                            pass
+                        # Also log which strands have parent_strand
+                        for s in self.strands:
+                            if hasattr(s, 'parent_strand') and s.parent_strand:
+                                pass
                     
-            for strand in self.strands:
-                try:
-                    # Reduced high-frequency logging for performance
-                    # logging.info(f"Drawing strand '{strand.layer_name}'")
-                    if not hasattr(strand, 'canvas'):
-                        strand.canvas = self  # Ensure all strands have canvas reference
-
-                    # Also draw parent strands that might not be in self.strands
-                    # Check if this is an attached strand with a parent
-                    if isinstance(strand, AttachedStrand) and hasattr(strand, 'parent_strand') and strand.parent_strand:
-                        parent = strand.parent_strand
-                        if not hasattr(parent, '_already_drawn_this_frame'):
-                            parent._already_drawn_this_frame = True
-                            # Draw the parent strand first
-                            if not hasattr(parent, 'canvas'):
-                                parent.canvas = self
-
-                            # Apply the same highlighting logic to parent strand
-                            parent_is_selected = (parent == self.selected_strand or parent == self.selected_attached_strand or getattr(parent, 'is_selected', False))
-                            parent_should_suppress = False
-                            parent_should_force = False
-
-                            if (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and
-                                (getattr(self.current_mode, 'is_moving_strand_point', False) or getattr(self.current_mode, 'is_moving_control_point', False))):
-                                truly_moving_strands = getattr(self, 'truly_moving_strands', [])
-                                parent_should_be_highlighted = (parent in truly_moving_strands or
-                                                              (hasattr(parent, 'is_selected') and parent.is_selected))
-
-                                if hasattr(self.current_mode, 'draw_only_affected_strand') and self.current_mode.draw_only_affected_strand:
-                                    if not parent_should_be_highlighted:
-                                        parent_should_suppress = True
-                                else:
-                                    if parent_should_be_highlighted:
-                                        parent_should_force = True
-                                        if not hasattr(self, '_logged_parent_force_highlight'):
-                                            self._logged_parent_force_highlight = True
-                                            pass
-
-                            # Draw the parent with appropriate highlighting
-                            # In view mode, optionally suppress the selection highlight (presentation/capture)
-                            suppress_view_highlight = (isinstance(self.current_mode, ViewMode) and getattr(self, 'view_hide_highlight', False))
-                            if (parent_is_selected or parent_should_force) and not isinstance(self.current_mode, MaskMode) and not parent_should_suppress and not suppress_view_highlight:
-                                self.draw_highlighted_strand(painter, parent)
-                            else:
-                                parent.draw(painter, skip_painter_setup=True)
-                    # --- MODIFIED: Check both selected_strand and selected_attached_strand, plus is_selected property ---
-                    is_selected_for_highlight = (strand == self.selected_strand or strand == self.selected_attached_strand or getattr(strand, 'is_selected', False))
-
-                    # Check if we should suppress highlighting due to "drag only affected strand" setting
-                    should_suppress_highlight = False
-                    should_force_highlight = False  # New flag to force highlighting when toggle is off
-
-                    if (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and
-                        (getattr(self.current_mode, 'is_moving_strand_point', False) or getattr(self.current_mode, 'is_moving_control_point', False))):
-                        truly_moving_strands = getattr(self, 'truly_moving_strands', [])
-
-                        # Also check if this strand is set to be selected by the move mode
-                        # This handles the case where paintEvent runs before truly_moving_strands is fully populated
-                        strand_should_be_highlighted = (strand in truly_moving_strands or
-                                                       (hasattr(strand, 'is_selected') and strand.is_selected))
-
-                        if hasattr(self.current_mode, 'draw_only_affected_strand') and self.current_mode.draw_only_affected_strand:
-                            # When toggle is ON: suppress non-moving strands
-                            if not strand_should_be_highlighted:
-                                should_suppress_highlight = True
-                        else:
-                            # When toggle is OFF: force highlight for all strands that should be highlighted
-                            if strand_should_be_highlighted:
-                                should_force_highlight = True
-                                if not hasattr(self, '_logged_force_highlight'):
-                                    self._logged_force_highlight = True
-                                    pass
-
-                    # In view mode, optionally suppress the selection highlight (presentation/capture)
-                    suppress_view_highlight = (isinstance(self.current_mode, ViewMode) and getattr(self, 'view_hide_highlight', False))
-
-                    # highlight selected strand if we're not suppressed
-                    # Also force highlight if should_force_highlight is True (when toggle is off and strand is moving)
-                    if (is_selected_for_highlight or should_force_highlight) and not should_suppress_highlight and not suppress_view_highlight:
+                for strand in self.strands:
+                    try:
                         # Reduced high-frequency logging for performance
-                        # logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
-                        self.draw_highlighted_strand(painter, strand)
-                    else:
-                        # Skip painter setup since it's already configured for the main canvas drawing
-                        strand.draw(painter, skip_painter_setup=True)
-                        # Reduced high-frequency logging for performance
-                        # logging.info(f"Drawing strand: {strand.layer_name}")
-                except Exception as strand_draw_error:
-                    import traceback
-                    print(f"[CRASH] Error drawing strand {getattr(strand, 'layer_name', 'unknown')}: {strand_draw_error}")
-                    traceback.print_exc()
-        else:
-            # When optimizing, we only draw the affected strand and connected strands
-            affected_strand = None
-            connected_strands = []
-            
-            # Handle different modes
-            if isinstance(self.current_mode, MoveMode):
-                # --- MODIFIED: Use truly_moving_strands for consistent highlighting ---
-                truly_moving_strands = getattr(self, 'truly_moving_strands', [])
-                pass
-                
-                if truly_moving_strands:
-                    # Use the first strand as the affected strand
-                    affected_strand = truly_moving_strands[0]
-                    # All other strands in the list are connected strands
-                    connected_strands = truly_moving_strands[1:]
-                    pass
-                    
-                    # Ensure all truly moving strands have is_selected=True
-                    for strand in truly_moving_strands:
-                        strand.is_selected = True
-                else:
-                    # Fallback to the old logic if truly_moving_strands is not available
-                    affected_strand = self.current_mode.affected_strand
-                    
-                    # If we're moving an attached strand, handle it differently
-                    if hasattr(self.current_mode, 'temp_selected_strand') and self.current_mode.temp_selected_strand:
-                        affected_strand = self.current_mode.temp_selected_strand
-                    
-                    # If we're explicitly moving a strand that's not the selected one
-                    if affected_strand is None and self.current_mode.is_moving:
-                        # Try to get the strand from originally_selected_strand
-                        affected_strand = self.current_mode.originally_selected_strand
-                    
-                    # Final fallback to the selected strand if no other strand is being moved
-                    if affected_strand is None:
-                        # --- MODIFIED: Check both selected_strand and selected_attached_strand for fallback ---
-                        affected_strand = self.selected_strand or self.selected_attached_strand
-                    
-                    # Get any connected/attached strands that are also being affected
-                    # Try to get attached strands from the current move operation
-                    if affected_strand and self.current_mode.moving_side is not None:
-                        # Find connected strands at the moving point
-                        moving_point = affected_strand.start if self.current_mode.moving_side == 0 else affected_strand.end
-                        for strand in self.strands:
-                            if strand != affected_strand:
-                                # Only use state manager connections, never proximity detection
-                                # Check if this strand is actually connected in the state manager
-                                connections = self.layer_state_manager.getConnections()
-                                # Connections format: [start_connection(end_point), end_connection(end_point)]
-                                affected_connections = connections.get(affected_strand.layer_name, ['null', 'null'])
-                                strand_connections = connections.get(strand.layer_name, ['null', 'null'])
-                                
-                                # Check if strand appears in affected_strand's connections
-                                is_connected = False
-                                for conn in affected_connections:
-                                    if conn != 'null' and strand.layer_name in conn:
-                                        is_connected = True
-                                        break
-                                if not is_connected:
-                                    # Check if affected_strand appears in strand's connections
-                                    for conn in strand_connections:
-                                        if conn != 'null' and affected_strand.layer_name in conn:
-                                            is_connected = True
-                                            break
-                                
-                                if is_connected:
-                                    # If draw_only_affected_strand is enabled, verify connection at moving point
-                                    if getattr(self.current_mode, 'draw_only_affected_strand', False):
-                                        at_moving_point = (self.current_mode.points_are_close(strand.start, moving_point) or
-                                                         self.current_mode.points_are_close(strand.end, moving_point))
-                                        if at_moving_point:
-                                            connected_strands.append(strand)
+                        # logging.info(f"Drawing strand '{strand.layer_name}'")
+                        if not hasattr(strand, 'canvas'):
+                            strand.canvas = self  # Ensure all strands have canvas reference
+
+                        # Also draw parent strands that might not be in self.strands
+                        # Check if this is an attached strand with a parent
+                        if isinstance(strand, AttachedStrand) and hasattr(strand, 'parent_strand') and strand.parent_strand:
+                            parent = strand.parent_strand
+                            if not hasattr(parent, '_already_drawn_this_frame'):
+                                parent._already_drawn_this_frame = True
+                                # Draw the parent strand first
+                                if not hasattr(parent, 'canvas'):
+                                    parent.canvas = self
+
+                                # Apply the same highlighting logic to parent strand
+                                parent_is_selected = (parent == self.selected_strand or parent == self.selected_attached_strand or getattr(parent, 'is_selected', False))
+                                parent_should_suppress = False
+                                parent_should_force = False
+
+                                if (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and
+                                    (getattr(self.current_mode, 'is_moving_strand_point', False) or getattr(self.current_mode, 'is_moving_control_point', False))):
+                                    truly_moving_strands = getattr(self, 'truly_moving_strands', [])
+                                    parent_should_be_highlighted = (parent in truly_moving_strands or
+                                                                  (hasattr(parent, 'is_selected') and parent.is_selected))
+
+                                    if hasattr(self.current_mode, 'draw_only_affected_strand') and self.current_mode.draw_only_affected_strand:
+                                        if not parent_should_be_highlighted:
+                                            parent_should_suppress = True
                                     else:
-                                        # Setting is off, show all connected strands
-                                        connected_strands.append(strand)
-            
-            
-            # Handle RotateMode
-            elif hasattr(self, 'rotate_mode') and self.current_mode == self.rotate_mode:
-                affected_strand = self.rotate_mode.affected_strand
-                # Get attached strands that are connected to the rotating point
-                if affected_strand and hasattr(affected_strand, 'attached_strands'):
-                    connected_strands.extend(affected_strand.attached_strands)
-            
-            # Handle AngleAdjustMode
-            elif hasattr(self, 'angle_adjust_mode') and self.is_angle_adjusting:
-                affected_strand = self.angle_adjust_mode.active_strand
-                # Get attached strands
-                if affected_strand and hasattr(affected_strand, 'attached_strands'):
-                    connected_strands.extend(affected_strand.attached_strands)
-            
-            # Draw the affected strand if available
-            if affected_strand:
-                pass
-                # --- REVISED: Handle highlighting based on movement type ---
-                is_actively_moving = isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving
-                is_moving_control_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_control_point', False)
-                is_selected_for_highlight = (affected_strand == self.selected_strand or affected_strand == self.selected_attached_strand or getattr(affected_strand, 'is_selected', False))
-                
-                if is_selected_for_highlight and not isinstance(self.current_mode, MaskMode) and not is_moving_control_point:
-                    # Draw with highlight if selected and NOT moving control points (to prevent flickering for strand movement)
-                    self.draw_highlighted_strand(painter, affected_strand)
-                else:
-                    # Draw without highlight if not selected OR if moving control points
-                    self.draw_moving_strand(painter, affected_strand)
-                
-                # Draw any connected strands (check if they should be highlighted)
-                for strand in connected_strands:
-                    pass
-                    # Check if strand is valid (not deleted)
-                    if strand in self.strands:
-                        # Check if this connected strand should be highlighted
-                        is_connected_selected = (strand == self.selected_strand or strand == self.selected_attached_strand or getattr(strand, 'is_selected', False))
-                        if is_connected_selected and not isinstance(self.current_mode, MaskMode) and not is_moving_control_point:
+                                        if parent_should_be_highlighted:
+                                            parent_should_force = True
+                                            if not hasattr(self, '_logged_parent_force_highlight'):
+                                                self._logged_parent_force_highlight = True
+                                                pass
+
+                                # Draw the parent with appropriate highlighting
+                                # In view mode, optionally suppress the selection highlight (presentation/capture)
+                                suppress_view_highlight = (isinstance(self.current_mode, ViewMode) and getattr(self, 'view_hide_highlight', False))
+                                if (parent_is_selected or parent_should_force) and not isinstance(self.current_mode, MaskMode) and not parent_should_suppress and not suppress_view_highlight:
+                                    self.draw_highlighted_strand(painter, parent)
+                                else:
+                                    parent.draw(painter, skip_painter_setup=True)
+                        # --- MODIFIED: Check both selected_strand and selected_attached_strand, plus is_selected property ---
+                        is_selected_for_highlight = (strand == self.selected_strand or strand == self.selected_attached_strand or getattr(strand, 'is_selected', False))
+
+                        # Check if we should suppress highlighting due to "drag only affected strand" setting
+                        should_suppress_highlight = False
+                        should_force_highlight = False  # New flag to force highlighting when toggle is off
+
+                        if (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and
+                            (getattr(self.current_mode, 'is_moving_strand_point', False) or getattr(self.current_mode, 'is_moving_control_point', False))):
+                            truly_moving_strands = getattr(self, 'truly_moving_strands', [])
+
+                            # Also check if this strand is set to be selected by the move mode
+                            # This handles the case where paintEvent runs before truly_moving_strands is fully populated
+                            strand_should_be_highlighted = (strand in truly_moving_strands or
+                                                           (hasattr(strand, 'is_selected') and strand.is_selected))
+
+                            if hasattr(self.current_mode, 'draw_only_affected_strand') and self.current_mode.draw_only_affected_strand:
+                                # When toggle is ON: suppress non-moving strands
+                                if not strand_should_be_highlighted:
+                                    should_suppress_highlight = True
+                            else:
+                                # When toggle is OFF: force highlight for all strands that should be highlighted
+                                if strand_should_be_highlighted:
+                                    should_force_highlight = True
+                                    if not hasattr(self, '_logged_force_highlight'):
+                                        self._logged_force_highlight = True
+                                        pass
+
+                        # In view mode, optionally suppress the selection highlight (presentation/capture)
+                        suppress_view_highlight = (isinstance(self.current_mode, ViewMode) and getattr(self, 'view_hide_highlight', False))
+
+                        # highlight selected strand if we're not suppressed
+                        # Also force highlight if should_force_highlight is True (when toggle is off and strand is moving)
+                        if (is_selected_for_highlight or should_force_highlight) and not should_suppress_highlight and not suppress_view_highlight:
+                            # Reduced high-frequency logging for performance
+                            # logging.info(f"Drawing highlighted selected strand: {strand.layer_name}")
                             self.draw_highlighted_strand(painter, strand)
                         else:
-                            self.draw_moving_strand(painter, strand)
-
-        # Draw the temporary strand (whether it's a new strand or an attached strand)
-        if self.current_strand:
-            if not hasattr(self.current_strand, 'canvas'):
-                self.current_strand.canvas = self
-            # Log for debugging zoom-out issues
-            if hasattr(self, 'zoom_factor') and self.zoom_factor < 1.0:
-                pass
-            pass
-            pass
-            pass
-            # Skip painter setup since it's already configured in the main painting loop
-            self.current_strand.draw(painter, skip_painter_setup=True)
-        elif self.is_drawing_new_strand and self.new_strand_start_point and self.new_strand_end_point:
-            if self.new_strand_set_number in self.strand_colors:
-                strand_color = self.strand_colors[self.new_strand_set_number]
-                pass
+                            # Skip painter setup since it's already configured for the main canvas drawing
+                            strand.draw(painter, skip_painter_setup=True)
+                            # Reduced high-frequency logging for performance
+                            # logging.info(f"Drawing strand: {strand.layer_name}")
+                    except Exception as strand_draw_error:
+                        import traceback
+                        print(f"[CRASH] Error drawing strand {getattr(strand, 'layer_name', 'unknown')}: {strand_draw_error}")
+                        traceback.print_exc()
             else:
-                strand_color = self.default_strand_color
-                pass
-            temp_strand = Strand(
-                self.new_strand_start_point,
-                self.new_strand_end_point,
-                self.strand_width,
-                color=strand_color,
-                stroke_color=self.default_stroke_color,
-                stroke_width=self.stroke_width
-            )
-            temp_strand.canvas = self
-            temp_strand.highlight_color = QColor(self.highlight_color)
-            temp_strand.draw(painter, skip_painter_setup=True)
-
-        # Only draw control points if they're enabled
-        if self.show_control_points:
-            self.draw_control_points(painter)
-
-        # Draw strand labels if enabled
-        if self.should_draw_names:
-            for strand in self.strands:
-                self.draw_strand_label(painter, strand)
-
-        # Draw current mode's custom visualizations (including selected attached strand)
-        if hasattr(self.current_mode, 'draw'):
-            self.current_mode.draw(painter)
-
-        # Initialize yellow_rectangle before MoveMode block so it's available for eraser overlap check
-        yellow_rectangle = None
-
-        # Draw selection area if in MoveMode - MOVED AFTER current_mode.draw to ensure squares are painted after selected attached strand
-        if isinstance(self.current_mode, MoveMode):  # Removed the selected_rectangle check
-            painter.save()
-
-            # Get the selected rectangle if it exists
-            selected_rect = None
-            selected_strand = None
-            selected_side = None
-            # Store the yellow rectangle for overlap checking
-            yellow_rectangle = None
+                # When optimizing, we only draw the affected strand and connected strands
+                affected_strand = None
+                connected_strands = []
             
-            if self.current_mode.selected_rectangle and self.current_mode.affected_strand and self.current_mode.moving_side is not None:
-                selected_strand = self.current_mode.affected_strand
-                selected_side = self.current_mode.moving_side
-                triangle_has_moved = getattr(selected_strand, 'triangle_has_moved', False)
+                # Handle different modes
+                if isinstance(self.current_mode, MoveMode):
+                    # --- MODIFIED: Use truly_moving_strands for consistent highlighting ---
+                    truly_moving_strands = getattr(self, 'truly_moving_strands', [])
+                    pass
                 
-                # Create the yellow rectangle with the consistent size for overlap checking
-                yellow_square_size = 120  # Size for the yellow selection square
-                half_yellow_size = yellow_square_size / 2
-                square_control_size = 50  # Size for control points
-                half_control_size = square_control_size / 2
-                
-                if selected_side == 0:  # Start point
-                    yellow_rectangle = QRectF(
-                        selected_strand.start.x() - half_yellow_size,
-                        selected_strand.start.y() - half_yellow_size,
-                        yellow_square_size,
-                        yellow_square_size
-                    )
-                elif selected_side == 1:  # End point
-                    yellow_rectangle = QRectF(
-                        selected_strand.end.x() - half_yellow_size,
-                        selected_strand.end.y() - half_yellow_size,
-                        yellow_square_size,
-                        yellow_square_size
-                    )
-                elif selected_side == 'control_point1' and hasattr(selected_strand, 'control_point1'):
-                    # Use control point size for control points
-                    yellow_rectangle = QRectF(
-                        selected_strand.control_point1.x() - half_control_size,
-                        selected_strand.control_point1.y() - half_control_size,
-                        square_control_size,
-                        square_control_size
-                    )
-                elif selected_side == 'control_point2' and hasattr(selected_strand, 'control_point2'):
-                    # Use control point size for control points
-                    yellow_rectangle = QRectF(
-                        selected_strand.control_point2.x() - half_control_size,
-                        selected_strand.control_point2.y() - half_control_size,
-                        square_control_size,
-                        square_control_size
-                    )
-                elif (selected_side == 'control_point_center' and triangle_has_moved
-                      and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point
-                      and hasattr(selected_strand, 'control_point_center')):
-                    # Use control point size for control points
-                    yellow_rectangle = QRectF(
-                        selected_strand.control_point_center.x() - half_control_size,
-                        selected_strand.control_point_center.y() - half_control_size, 
-                        square_control_size,
-                        square_control_size
-                    )
+                    if truly_moving_strands:
+                        # Use the first strand as the affected strand
+                        affected_strand = truly_moving_strands[0]
+                        # All other strands in the list are connected strands
+                        connected_strands = truly_moving_strands[1:]
+                        pass
                     
-                # Bias control yellow highlight when moving them
-                elif (selected_side == 'bias_triangle' and triangle_has_moved
-                      and hasattr(selected_strand, 'bias_control') and selected_strand.bias_control):
-                    bias_square_size = 50  # Same size as regular control points
-                    bias_half_size = bias_square_size / 2
-                    tp, cp = selected_strand.bias_control.get_bias_control_positions(selected_strand)
-                    if tp:
-                        yellow_rectangle = QRectF(
-                            tp.x() - bias_half_size,
-                            tp.y() - bias_half_size,
-                            bias_square_size,
-                            bias_square_size
-                        )
-                elif (selected_side == 'bias_circle' and triangle_has_moved
-                      and hasattr(selected_strand, 'bias_control') and selected_strand.bias_control):
-                    bias_square_size = 50  # Same size as regular control points
-                    bias_half_size = bias_square_size / 2
-                    tp, cp = selected_strand.bias_control.get_bias_control_positions(selected_strand)
-                    if cp:
-                        yellow_rectangle = QRectF(
-                            cp.x() - bias_half_size,
-                            cp.y() - bias_half_size,
-                            bias_square_size,
-                            bias_square_size
-                        )
-
-            elif isinstance(self.current_mode, MoveMode) and self.current_mode.selected_rectangle:
-                # Fall back to using MoveMode's selected rectangle if needed
-                yellow_rectangle = self.current_mode.selected_rectangle
-
-            # Track positions where rectangles have been drawn to avoid duplicates
-            drawn_rectangle_positions = []
-
-            hovered_strand = None
-            hovered_side = None
-            if getattr(self, 'show_hover_highlights', True):
-                hovered_strand = getattr(self.current_mode, 'hovered_strand', None)
-                hovered_side = getattr(self.current_mode, 'hovered_side', None)
-
-            # Skip drawing all rectangles if in optimized drawing mode or if highlights are disabled
-            if isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving and self.current_mode.draw_only_affected_strand:
-                # When draw_only_affected_strand is enabled, don't draw any control point rectangles
-                pass
-            # Skip drawing if show_move_highlights is disabled
-            elif hasattr(self, 'show_move_highlights') and not self.show_move_highlights:
-                pass
-            # Draw squares around each strand's start/end
-            else:
-                overlay_strands = list(self.strands)
-                for extra_strand in (selected_strand, hovered_strand):
-                    if isinstance(extra_strand, AttachedStrand) and extra_strand not in overlay_strands:
-                        overlay_strands.append(extra_strand)
-
-                for strand in overlay_strands:
-                    if not isinstance(strand, MaskedStrand):
-                        # Skip hidden strands - they should not show moving areas
-                        if getattr(strand, 'is_hidden', False):
-                            continue
-
-                        # Locked layers cannot be moved or attached to, so don't
-                        # draw their interaction squares (even when selected)
-                        if self._is_layer_locked(strand):
-                            continue
-
-                        # Family filter: move_selected_only hides all selection areas for
-                        # non-family strands. show_cp_selected_only only hides their control
-                        # point squares (filtered below), keeping start/end squares visible.
-                        if getattr(self, 'move_selected_only', False):
-                            if not self.is_strand_in_selected_family(strand):
-                                continue
-
-                        if hasattr(strand, 'start') and hasattr(strand, 'end'):
-                            # Check if a control point or strand point is being moved
-                            is_moving_control_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_control_point', False)
-                            is_moving_strand_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_strand_point', False)
-                            affected_strand = getattr(self.current_mode, 'affected_strand', None) if isinstance(self.current_mode, MoveMode) else None
-                            strand_name = getattr(strand, 'layer_name', None) or getattr(strand, 'set_number', None) or getattr(strand, 'layer', None)
-                            should_log_selection = (is_moving_control_point or is_moving_strand_point)
-                            if should_log_selection:
-                                _write_selection_debug(
-                                    self.selection_debug_log_path,
-                                    self.selection_debug_logging_enabled,
-                                    (
-                                        f"Loop strand={strand_name or 'unknown'} id={hex(id(strand))} "
-                                        f"affected={getattr(affected_strand, 'layer_name', None) or 'None'} "
-                                        f"affected_id={(hex(id(affected_strand)) if affected_strand else 'None')} "
-                                        f"is_moving_control_point={is_moving_control_point} "
-                                        f"is_moving_strand_point={is_moving_strand_point} "
-                                        f"moving_side={getattr(self.current_mode, 'moving_side', None)} "
-                                        f"selected_side={selected_side}"
-                                    )
-                                )
-                            
-                            # If a control point or strand point is being moved, only draw for the affected strand
-                            if (is_moving_control_point or is_moving_strand_point) and strand != affected_strand:
-                                if should_log_selection:
-                                    _write_selection_debug(
-                                        self.selection_debug_log_path,
-                                        self.selection_debug_logging_enabled,
-                                        (
-                                            f"Skipping strand={strand_name or 'unknown'} because it is not the affected strand "
-                                            f"(affected={getattr(affected_strand, 'layer_name', None) or 'None'})"
-                                        )
-                                    )
-                                continue
+                        # Ensure all truly moving strands have is_selected=True
+                        for strand in truly_moving_strands:
+                            strand.is_selected = True
+                    else:
+                        # Fallback to the old logic if truly_moving_strands is not available
+                        affected_strand = self.current_mode.affected_strand
+                    
+                        # If we're moving an attached strand, handle it differently
+                        if hasattr(self.current_mode, 'temp_selected_strand') and self.current_mode.temp_selected_strand:
+                            affected_strand = self.current_mode.temp_selected_strand
+                    
+                        # If we're explicitly moving a strand that's not the selected one
+                        if affected_strand is None and self.current_mode.is_moving:
+                            # Try to get the strand from originally_selected_strand
+                            affected_strand = self.current_mode.originally_selected_strand
+                    
+                        # Final fallback to the selected strand if no other strand is being moved
+                        if affected_strand is None:
+                            # --- MODIFIED: Check both selected_strand and selected_attached_strand for fallback ---
+                            affected_strand = self.selected_strand or self.selected_attached_strand
+                    
+                        # Get any connected/attached strands that are also being affected
+                        # Try to get attached strands from the current move operation
+                        if affected_strand and self.current_mode.moving_side is not None:
+                            # Find connected strands at the moving point
+                            moving_point = affected_strand.start if self.current_mode.moving_side == 0 else affected_strand.end
+                            for strand in self.strands:
+                                if strand != affected_strand:
+                                    # Only use state manager connections, never proximity detection
+                                    # Check if this strand is actually connected in the state manager
+                                    connections = self.layer_state_manager.getConnections()
+                                    # Connections format: [start_connection(end_point), end_connection(end_point)]
+                                    affected_connections = connections.get(affected_strand.layer_name, ['null', 'null'])
+                                    strand_connections = connections.get(strand.layer_name, ['null', 'null'])
                                 
-                            # Increased square size for better visibility
-                            square_size = 120
-                            half_size = square_size / 2
-                            square_control_size = 50
-                            half_control_size = square_control_size / 2
-                            yellow_square_size = 120  # Size for the yellow selection square
-                            half_yellow_size = yellow_square_size / 2
-                            
-                            # Skip drawing only the exact selected point, not any overlapping rectangles
-                            skip_start = (strand == selected_strand and selected_side == 0)
-                            skip_end = (strand == selected_strand and selected_side == 1)
-                            
-                            # Create rectangles for checking overlap
-                            start_rect = QRectF(
-                                strand.start.x() - half_size,
-                                strand.start.y() - half_size,
-                                square_size,
-                                square_size
-                            )
-                            
-                            end_rect = QRectF(
-                                strand.end.x() - half_size,
-                                strand.end.y() - half_size,
-                                square_size,
-                                square_size
-                            )
-                            
-                            # Check if rectangles overlap with yellow rectangle
-                            start_overlaps_yellow = yellow_rectangle and self.rectangles_overlap(start_rect, yellow_rectangle)
-                            end_overlaps_yellow = yellow_rectangle and self.rectangles_overlap(end_rect, yellow_rectangle)
-                            
-                            # Check if rectangles already drawn at these positions (to avoid duplicates at connections)
-                            start_already_drawn = False
-                            end_already_drawn = False
-                            
-                            for pos in drawn_rectangle_positions:
-                                # Always skip proximity detection in move mode to prevent unwanted connections
-                                if not (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode)):
-                                    if self.points_are_close(strand.start, pos):
-                                        start_already_drawn = True
-                                    if self.points_are_close(strand.end, pos):
-                                        end_already_drawn = True
-                            
-                            draw_start = not skip_start and not start_overlaps_yellow and not start_already_drawn
-                            draw_end = not skip_end and not end_overlaps_yellow and not end_already_drawn
-                            if should_log_selection:
-                                _write_selection_debug(
-                                    self.selection_debug_log_path,
-                                    self.selection_debug_logging_enabled,
-                                    (
-                                        f"Decision strand={strand_name or 'unknown'} "
-                                        f"draw_start={draw_start} (skip={skip_start}, overlap={start_overlaps_yellow}, already={start_already_drawn}) "
-                                        f"draw_end={draw_end} (skip={skip_end}, overlap={end_overlaps_yellow}, already={end_already_drawn})"
-                                    )
-                                )
-                            
-                            # Get hovered point position to skip red rectangles at same location
-                            hovered_point_pos = None
-                            if hovered_strand is not None and hovered_side in (0, 1):
-                                hovered_point_pos = hovered_strand.start if hovered_side == 0 else hovered_strand.end
-
-                            # Default highlight color for non-selected rectangles
-                            red_color = QColor(self.highlight_color)
-                            red_color.setAlpha(38)  # 85% transparency
-                            hover_color = QColor(255, 230, 160, 70)  # Yellow with transparency
-                            painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
-
-                            # Draw square around start point if not selected, not overlapping with yellow, and not already drawn
-                            if draw_start:
-                                # Check if this start point is being hovered
-                                if strand == hovered_strand and hovered_side == 0:
-                                    painter.setBrush(QBrush(hover_color))
-                                    painter.drawRect(start_rect)
-                                    drawn_rectangle_positions.append(QPointF(strand.start))
-                                else:
-                                    # Skip red rectangle if another strand at this position is being hovered
-                                    skip_for_hover = hovered_point_pos and self.points_are_close(strand.start, hovered_point_pos)
-                                    if not skip_for_hover:
-                                        painter.setBrush(QBrush(red_color))
-                                        painter.drawRect(start_rect)
-                                        drawn_rectangle_positions.append(QPointF(strand.start))
-
-                            # Draw square around end point if not selected, not overlapping with yellow, and not already drawn
-                            if draw_end:
-                                # Check if this end point is being hovered
-                                if strand == hovered_strand and hovered_side == 1:
-                                    painter.setBrush(QBrush(hover_color))
-                                    painter.drawRect(end_rect)
-                                    drawn_rectangle_positions.append(QPointF(strand.end))
-                                else:
-                                    # Skip red rectangle if another strand at this position is being hovered
-                                    skip_for_hover = hovered_point_pos and self.points_are_close(strand.end, hovered_point_pos)
-                                    if not skip_for_hover:
-                                        painter.setBrush(QBrush(red_color))
-                                        painter.drawRect(end_rect)
-                                        drawn_rectangle_positions.append(QPointF(strand.end))
-
-                            # Draw squares around control points if present (and not MaskedStrand).
-                            # show_cp_selected_only hides only these CP squares for non-family
-                            # strands; their start/end squares above still draw.
-                            hide_cp_squares = (getattr(self, 'show_cp_selected_only', False)
-                                               and not self.is_strand_in_selected_family(strand))
-                            if not isinstance(strand, MaskedStrand) and not hide_cp_squares:
-                                # Skip drawing only the exact selected control point
-                                skip_cp1 = (strand == selected_strand and selected_side == 'control_point1')
-                                skip_cp2 = (strand == selected_strand and selected_side == 'control_point2')
-                                skip_cp3 = (strand == selected_strand and selected_side == 'control_point_center')
-                                # Check if a control point is being moved
-                                is_moving_control_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_control_point', False)
+                                    # Check if strand appears in affected_strand's connections
+                                    is_connected = False
+                                    for conn in affected_connections:
+                                        if conn != 'null' and strand.layer_name in conn:
+                                            is_connected = True
+                                            break
+                                    if not is_connected:
+                                        # Check if affected_strand appears in strand's connections
+                                        for conn in strand_connections:
+                                            if conn != 'null' and affected_strand.layer_name in conn:
+                                                is_connected = True
+                                                break
                                 
-                                # If moving a control point, only draw it for the current strand
-                                if is_moving_control_point and strand != affected_strand:
+                                    if is_connected:
+                                        # If draw_only_affected_strand is enabled, verify connection at moving point
+                                        if getattr(self.current_mode, 'draw_only_affected_strand', False):
+                                            at_moving_point = (self.current_mode.points_are_close(strand.start, moving_point) or
+                                                             self.current_mode.points_are_close(strand.end, moving_point))
+                                            if at_moving_point:
+                                                connected_strands.append(strand)
+                                        else:
+                                            # Setting is off, show all connected strands
+                                            connected_strands.append(strand)
+            
+            
+                # Handle RotateMode
+                elif hasattr(self, 'rotate_mode') and self.current_mode == self.rotate_mode:
+                    affected_strand = self.rotate_mode.affected_strand
+                    # Get attached strands that are connected to the rotating point
+                    if affected_strand and hasattr(affected_strand, 'attached_strands'):
+                        connected_strands.extend(affected_strand.attached_strands)
+            
+                # Handle AngleAdjustMode
+                elif hasattr(self, 'angle_adjust_mode') and self.is_angle_adjusting:
+                    affected_strand = self.angle_adjust_mode.active_strand
+                    # Get attached strands
+                    if affected_strand and hasattr(affected_strand, 'attached_strands'):
+                        connected_strands.extend(affected_strand.attached_strands)
+            
+                # Draw the affected strand if available
+                if affected_strand:
+                    pass
+                    # --- REVISED: Handle highlighting based on movement type ---
+                    is_actively_moving = isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving
+                    is_moving_control_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_control_point', False)
+                    is_selected_for_highlight = (affected_strand == self.selected_strand or affected_strand == self.selected_attached_strand or getattr(affected_strand, 'is_selected', False))
+                
+                    if is_selected_for_highlight and not isinstance(self.current_mode, MaskMode) and not is_moving_control_point:
+                        # Draw with highlight if selected and NOT moving control points (to prevent flickering for strand movement)
+                        self.draw_highlighted_strand(painter, affected_strand)
+                    else:
+                        # Draw without highlight if not selected OR if moving control points
+                        self.draw_moving_strand(painter, affected_strand)
+                
+                    # Draw any connected strands (check if they should be highlighted)
+                    for strand in connected_strands:
+                        pass
+                        # Check if strand is valid (not deleted)
+                        if strand in self.strands:
+                            # Check if this connected strand should be highlighted
+                            is_connected_selected = (strand == self.selected_strand or strand == self.selected_attached_strand or getattr(strand, 'is_selected', False))
+                            if is_connected_selected and not isinstance(self.current_mode, MaskMode) and not is_moving_control_point:
+                                self.draw_highlighted_strand(painter, strand)
+                            else:
+                                self.draw_moving_strand(painter, strand)
+
+            # Draw the temporary strand (whether it's a new strand or an attached strand)
+            if self.current_strand:
+                if not hasattr(self.current_strand, 'canvas'):
+                    self.current_strand.canvas = self
+                # Log for debugging zoom-out issues
+                if hasattr(self, 'zoom_factor') and self.zoom_factor < 1.0:
+                    pass
+                pass
+                pass
+                pass
+                # Skip painter setup since it's already configured in the main painting loop
+                self.current_strand.draw(painter, skip_painter_setup=True)
+            elif self.is_drawing_new_strand and self.new_strand_start_point and self.new_strand_end_point:
+                if self.new_strand_set_number in self.strand_colors:
+                    strand_color = self.strand_colors[self.new_strand_set_number]
+                    pass
+                else:
+                    strand_color = self.default_strand_color
+                    pass
+                temp_strand = Strand(
+                    self.new_strand_start_point,
+                    self.new_strand_end_point,
+                    self.strand_width,
+                    color=strand_color,
+                    stroke_color=self.default_stroke_color,
+                    stroke_width=self.stroke_width
+                )
+                temp_strand.canvas = self
+                temp_strand.highlight_color = QColor(self.highlight_color)
+                temp_strand.draw(painter, skip_painter_setup=True)
+
+            # Only draw control points if they're enabled
+            if self.show_control_points:
+                self.draw_control_points(painter)
+
+            # Draw strand labels if enabled
+            if self.should_draw_names:
+                for strand in self.strands:
+                    self.draw_strand_label(painter, strand)
+
+            # Draw current mode's custom visualizations (including selected attached strand)
+            if hasattr(self.current_mode, 'draw'):
+                self.current_mode.draw(painter)
+
+            # Initialize yellow_rectangle before MoveMode block so it's available for eraser overlap check
+            yellow_rectangle = None
+
+            # Draw selection area if in MoveMode - MOVED AFTER current_mode.draw to ensure squares are painted after selected attached strand
+            if isinstance(self.current_mode, MoveMode):  # Removed the selected_rectangle check
+                painter.save()
+                try:
+
+                    # Get the selected rectangle if it exists
+                    selected_rect = None
+                    selected_strand = None
+                    selected_side = None
+                    # Store the yellow rectangle for overlap checking
+                    yellow_rectangle = None
+            
+                    if self.current_mode.selected_rectangle and self.current_mode.affected_strand and self.current_mode.moving_side is not None:
+                        selected_strand = self.current_mode.affected_strand
+                        selected_side = self.current_mode.moving_side
+                        triangle_has_moved = getattr(selected_strand, 'triangle_has_moved', False)
+                
+                        # Create the yellow rectangle with the consistent size for overlap checking
+                        yellow_square_size = 120  # Size for the yellow selection square
+                        half_yellow_size = yellow_square_size / 2
+                        square_control_size = 50  # Size for control points
+                        half_control_size = square_control_size / 2
+                
+                        if selected_side == 0:  # Start point
+                            yellow_rectangle = QRectF(
+                                selected_strand.start.x() - half_yellow_size,
+                                selected_strand.start.y() - half_yellow_size,
+                                yellow_square_size,
+                                yellow_square_size
+                            )
+                        elif selected_side == 1:  # End point
+                            yellow_rectangle = QRectF(
+                                selected_strand.end.x() - half_yellow_size,
+                                selected_strand.end.y() - half_yellow_size,
+                                yellow_square_size,
+                                yellow_square_size
+                            )
+                        elif selected_side == 'control_point1' and hasattr(selected_strand, 'control_point1'):
+                            # Use control point size for control points
+                            yellow_rectangle = QRectF(
+                                selected_strand.control_point1.x() - half_control_size,
+                                selected_strand.control_point1.y() - half_control_size,
+                                square_control_size,
+                                square_control_size
+                            )
+                        elif selected_side == 'control_point2' and hasattr(selected_strand, 'control_point2'):
+                            # Use control point size for control points
+                            yellow_rectangle = QRectF(
+                                selected_strand.control_point2.x() - half_control_size,
+                                selected_strand.control_point2.y() - half_control_size,
+                                square_control_size,
+                                square_control_size
+                            )
+                        elif (selected_side == 'control_point_center' and triangle_has_moved
+                              and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point
+                              and hasattr(selected_strand, 'control_point_center')):
+                            # Use control point size for control points
+                            yellow_rectangle = QRectF(
+                                selected_strand.control_point_center.x() - half_control_size,
+                                selected_strand.control_point_center.y() - half_control_size, 
+                                square_control_size,
+                                square_control_size
+                            )
+                    
+                        # Bias control yellow highlight when moving them
+                        elif (selected_side == 'bias_triangle' and triangle_has_moved
+                              and hasattr(selected_strand, 'bias_control') and selected_strand.bias_control):
+                            bias_square_size = 50  # Same size as regular control points
+                            bias_half_size = bias_square_size / 2
+                            tp, cp = selected_strand.bias_control.get_bias_control_positions(selected_strand)
+                            if tp:
+                                yellow_rectangle = QRectF(
+                                    tp.x() - bias_half_size,
+                                    tp.y() - bias_half_size,
+                                    bias_square_size,
+                                    bias_square_size
+                                )
+                        elif (selected_side == 'bias_circle' and triangle_has_moved
+                              and hasattr(selected_strand, 'bias_control') and selected_strand.bias_control):
+                            bias_square_size = 50  # Same size as regular control points
+                            bias_half_size = bias_square_size / 2
+                            tp, cp = selected_strand.bias_control.get_bias_control_positions(selected_strand)
+                            if cp:
+                                yellow_rectangle = QRectF(
+                                    cp.x() - bias_half_size,
+                                    cp.y() - bias_half_size,
+                                    bias_square_size,
+                                    bias_square_size
+                                )
+
+                    elif isinstance(self.current_mode, MoveMode) and self.current_mode.selected_rectangle:
+                        # Fall back to using MoveMode's selected rectangle if needed
+                        yellow_rectangle = self.current_mode.selected_rectangle
+
+                    # Track positions where rectangles have been drawn to avoid duplicates
+                    drawn_rectangle_positions = []
+
+                    hovered_strand = None
+                    hovered_side = None
+                    if getattr(self, 'show_hover_highlights', True):
+                        hovered_strand = getattr(self.current_mode, 'hovered_strand', None)
+                        hovered_side = getattr(self.current_mode, 'hovered_side', None)
+
+                    # Skip drawing all rectangles if in optimized drawing mode or if highlights are disabled
+                    if isinstance(self.current_mode, MoveMode) and self.current_mode.is_moving and self.current_mode.draw_only_affected_strand:
+                        # When draw_only_affected_strand is enabled, don't draw any control point rectangles
+                        pass
+                    # Skip drawing if show_move_highlights is disabled
+                    elif hasattr(self, 'show_move_highlights') and not self.show_move_highlights:
+                        pass
+                    # Draw squares around each strand's start/end
+                    else:
+                        overlay_strands = list(self.strands)
+                        for extra_strand in (selected_strand, hovered_strand):
+                            if isinstance(extra_strand, AttachedStrand) and extra_strand not in overlay_strands:
+                                overlay_strands.append(extra_strand)
+
+                        for strand in overlay_strands:
+                            if not isinstance(strand, MaskedStrand):
+                                # Skip hidden strands - they should not show moving areas
+                                if getattr(strand, 'is_hidden', False):
+                                    continue
+
+                                # Locked layers cannot be moved or attached to, so don't
+                                # draw their interaction squares (even when selected)
+                                if self._is_layer_locked(strand):
+                                    continue
+
+                                # Family filter: move_selected_only hides all selection areas for
+                                # non-family strands. show_cp_selected_only only hides their control
+                                # point squares (filtered below), keeping start/end squares visible.
+                                if getattr(self, 'move_selected_only', False):
+                                    if not self.is_strand_in_selected_family(strand):
+                                        continue
+
+                                if hasattr(strand, 'start') and hasattr(strand, 'end'):
+                                    # Check if a control point or strand point is being moved
+                                    is_moving_control_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_control_point', False)
+                                    is_moving_strand_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_strand_point', False)
+                                    affected_strand = getattr(self.current_mode, 'affected_strand', None) if isinstance(self.current_mode, MoveMode) else None
+                                    strand_name = getattr(strand, 'layer_name', None) or getattr(strand, 'set_number', None) or getattr(strand, 'layer', None)
+                                    should_log_selection = (is_moving_control_point or is_moving_strand_point)
                                     if should_log_selection:
                                         _write_selection_debug(
                                             self.selection_debug_log_path,
                                             self.selection_debug_logging_enabled,
                                             (
-                                                f"Skipping control points for strand={strand_name or 'unknown'} "
-                                                f"because it is not the affected strand "
-                                                f"(affected={getattr(affected_strand, 'layer_name', None) or 'None'})"
+                                                f"Loop strand={strand_name or 'unknown'} id={hex(id(strand))} "
+                                                f"affected={getattr(affected_strand, 'layer_name', None) or 'None'} "
+                                                f"affected_id={(hex(id(affected_strand)) if affected_strand else 'None')} "
+                                                f"is_moving_control_point={is_moving_control_point} "
+                                                f"is_moving_strand_point={is_moving_strand_point} "
+                                                f"moving_side={getattr(self.current_mode, 'moving_side', None)} "
+                                                f"selected_side={selected_side}"
                                             )
                                         )
-                                    continue
+                            
+                                    # If a control point or strand point is being moved, only draw for the affected strand
+                                    if (is_moving_control_point or is_moving_strand_point) and strand != affected_strand:
+                                        if should_log_selection:
+                                            _write_selection_debug(
+                                                self.selection_debug_log_path,
+                                                self.selection_debug_logging_enabled,
+                                                (
+                                                    f"Skipping strand={strand_name or 'unknown'} because it is not the affected strand "
+                                                    f"(affected={getattr(affected_strand, 'layer_name', None) or 'None'})"
+                                                )
+                                            )
+                                        continue
+                                
+                                    # Increased square size for better visibility
+                                    square_size = 120
+                                    half_size = square_size / 2
+                                    square_control_size = 50
+                                    half_control_size = square_control_size / 2
+                                    yellow_square_size = 120  # Size for the yellow selection square
+                                    half_yellow_size = yellow_square_size / 2
+                            
+                                    # Skip drawing only the exact selected point, not any overlapping rectangles
+                                    skip_start = (strand == selected_strand and selected_side == 0)
+                                    skip_end = (strand == selected_strand and selected_side == 1)
+                            
+                                    # Create rectangles for checking overlap
+                                    start_rect = QRectF(
+                                        strand.start.x() - half_size,
+                                        strand.start.y() - half_size,
+                                        square_size,
+                                        square_size
+                                    )
+                            
+                                    end_rect = QRectF(
+                                        strand.end.x() - half_size,
+                                        strand.end.y() - half_size,
+                                        square_size,
+                                        square_size
+                                    )
+                            
+                                    # Check if rectangles overlap with yellow rectangle
+                                    start_overlaps_yellow = yellow_rectangle and self.rectangles_overlap(start_rect, yellow_rectangle)
+                                    end_overlaps_yellow = yellow_rectangle and self.rectangles_overlap(end_rect, yellow_rectangle)
+                            
+                                    # Check if rectangles already drawn at these positions (to avoid duplicates at connections)
+                                    start_already_drawn = False
+                                    end_already_drawn = False
+                            
+                                    for pos in drawn_rectangle_positions:
+                                        # Always skip proximity detection in move mode to prevent unwanted connections
+                                        if not (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode)):
+                                            if self.points_are_close(strand.start, pos):
+                                                start_already_drawn = True
+                                            if self.points_are_close(strand.end, pos):
+                                                end_already_drawn = True
+                            
+                                    draw_start = not skip_start and not start_overlaps_yellow and not start_already_drawn
+                                    draw_end = not skip_end and not end_overlaps_yellow and not end_already_drawn
+                                    if should_log_selection:
+                                        _write_selection_debug(
+                                            self.selection_debug_log_path,
+                                            self.selection_debug_logging_enabled,
+                                            (
+                                                f"Decision strand={strand_name or 'unknown'} "
+                                                f"draw_start={draw_start} (skip={skip_start}, overlap={start_overlaps_yellow}, already={start_already_drawn}) "
+                                                f"draw_end={draw_end} (skip={skip_end}, overlap={end_overlaps_yellow}, already={end_already_drawn})"
+                                            )
+                                        )
+                            
+                                    # Get hovered point position to skip red rectangles at same location
+                                    hovered_point_pos = None
+                                    if hovered_strand is not None and hovered_side in (0, 1):
+                                        hovered_point_pos = hovered_strand.start if hovered_side == 0 else hovered_strand.end
+
+                                    # Default highlight color for non-selected rectangles
+                                    red_color = QColor(self.highlight_color)
+                                    red_color.setAlpha(38)  # 85% transparency
+                                    hover_color = QColor(255, 230, 160, 70)  # Yellow with transparency
+                                    painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
+
+                                    # Draw square around start point if not selected, not overlapping with yellow, and not already drawn
+                                    if draw_start:
+                                        # Check if this start point is being hovered
+                                        if strand == hovered_strand and hovered_side == 0:
+                                            painter.setBrush(QBrush(hover_color))
+                                            painter.drawRect(start_rect)
+                                            drawn_rectangle_positions.append(QPointF(strand.start))
+                                        else:
+                                            # Skip red rectangle if another strand at this position is being hovered
+                                            skip_for_hover = hovered_point_pos and self.points_are_close(strand.start, hovered_point_pos)
+                                            if not skip_for_hover:
+                                                painter.setBrush(QBrush(red_color))
+                                                painter.drawRect(start_rect)
+                                                drawn_rectangle_positions.append(QPointF(strand.start))
+
+                                    # Draw square around end point if not selected, not overlapping with yellow, and not already drawn
+                                    if draw_end:
+                                        # Check if this end point is being hovered
+                                        if strand == hovered_strand and hovered_side == 1:
+                                            painter.setBrush(QBrush(hover_color))
+                                            painter.drawRect(end_rect)
+                                            drawn_rectangle_positions.append(QPointF(strand.end))
+                                        else:
+                                            # Skip red rectangle if another strand at this position is being hovered
+                                            skip_for_hover = hovered_point_pos and self.points_are_close(strand.end, hovered_point_pos)
+                                            if not skip_for_hover:
+                                                painter.setBrush(QBrush(red_color))
+                                                painter.drawRect(end_rect)
+                                                drawn_rectangle_positions.append(QPointF(strand.end))
+
+                                    # Draw squares around control points if present (and not MaskedStrand).
+                                    # show_cp_selected_only hides only these CP squares for non-family
+                                    # strands; their start/end squares above still draw.
+                                    hide_cp_squares = (getattr(self, 'show_cp_selected_only', False)
+                                                       and not self.is_strand_in_selected_family(strand))
+                                    if not isinstance(strand, MaskedStrand) and not hide_cp_squares:
+                                        # Skip drawing only the exact selected control point
+                                        skip_cp1 = (strand == selected_strand and selected_side == 'control_point1')
+                                        skip_cp2 = (strand == selected_strand and selected_side == 'control_point2')
+                                        skip_cp3 = (strand == selected_strand and selected_side == 'control_point_center')
+                                        # Check if a control point is being moved
+                                        is_moving_control_point = isinstance(self.current_mode, MoveMode) and getattr(self.current_mode, 'is_moving_control_point', False)
+                                
+                                        # If moving a control point, only draw it for the current strand
+                                        if is_moving_control_point and strand != affected_strand:
+                                            if should_log_selection:
+                                                _write_selection_debug(
+                                                    self.selection_debug_log_path,
+                                                    self.selection_debug_logging_enabled,
+                                                    (
+                                                        f"Skipping control points for strand={strand_name or 'unknown'} "
+                                                        f"because it is not the affected strand "
+                                                        f"(affected={getattr(affected_strand, 'layer_name', None) or 'None'})"
+                                                    )
+                                                )
+                                            continue
                                     
-                                # Create control point rectangles for overlap checking
-                                cp1_rect = None
-                                cp2_rect = None
+                                        # Create control point rectangles for overlap checking
+                                        cp1_rect = None
+                                        cp2_rect = None
                                 
-                                if hasattr(strand, 'control_point1') and strand.control_point1 is not None:
-                                    cp1_rect = QRectF(
-                                        strand.control_point1.x() - half_control_size,
-                                        strand.control_point1.y() - half_control_size,
-                                        square_control_size,
-                                        square_control_size
-                                    )
+                                        if hasattr(strand, 'control_point1') and strand.control_point1 is not None:
+                                            cp1_rect = QRectF(
+                                                strand.control_point1.x() - half_control_size,
+                                                strand.control_point1.y() - half_control_size,
+                                                square_control_size,
+                                                square_control_size
+                                            )
                                 
-                                if hasattr(strand, 'control_point2') and strand.control_point2 is not None:
-                                    cp2_rect = QRectF(
-                                        strand.control_point2.x() - half_control_size,
-                                        strand.control_point2.y() - half_control_size,
-                                        square_control_size,
-                                        square_control_size
-                                    )
-                                if hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
-                                    cp3_rect = QRectF(
-                                        strand.control_point_center.x() - half_control_size,
-                                        strand.control_point_center.y() - half_control_size,
-                                        square_control_size,
-                                        square_control_size
-                                    )
-                                else:
-                                    cp3_rect = None
-                                triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
-                                cp1_drawn = False
-                                cp2_drawn = False
-                                cp3_drawn = False
-                                bias_triangle_drawn = False
-                                bias_circle_drawn = False
-                                # Check if control points overlap with yellow rectangle
-                                cp1_overlaps_yellow = yellow_rectangle and cp1_rect and self.rectangles_overlap(cp1_rect, yellow_rectangle)
-                                cp2_overlaps_yellow = yellow_rectangle and cp2_rect and self.rectangles_overlap(cp2_rect, yellow_rectangle)
-                                cp3_overlaps_yellow = yellow_rectangle and cp3_rect and self.rectangles_overlap(cp3_rect, yellow_rectangle)
-                                # Colors for control points
-                                green_color = QColor(0, 100, 0, 38)  # Green with 85% transparency
-                                # hover_color already defined above
-                                painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
+                                        if hasattr(strand, 'control_point2') and strand.control_point2 is not None:
+                                            cp2_rect = QRectF(
+                                                strand.control_point2.x() - half_control_size,
+                                                strand.control_point2.y() - half_control_size,
+                                                square_control_size,
+                                                square_control_size
+                                            )
+                                        if hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+                                            cp3_rect = QRectF(
+                                                strand.control_point_center.x() - half_control_size,
+                                                strand.control_point_center.y() - half_control_size,
+                                                square_control_size,
+                                                square_control_size
+                                            )
+                                        else:
+                                            cp3_rect = None
+                                        triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
+                                        cp1_drawn = False
+                                        cp2_drawn = False
+                                        cp3_drawn = False
+                                        bias_triangle_drawn = False
+                                        bias_circle_drawn = False
+                                        # Check if control points overlap with yellow rectangle
+                                        cp1_overlaps_yellow = yellow_rectangle and cp1_rect and self.rectangles_overlap(cp1_rect, yellow_rectangle)
+                                        cp2_overlaps_yellow = yellow_rectangle and cp2_rect and self.rectangles_overlap(cp2_rect, yellow_rectangle)
+                                        cp3_overlaps_yellow = yellow_rectangle and cp3_rect and self.rectangles_overlap(cp3_rect, yellow_rectangle)
+                                        # Colors for control points
+                                        green_color = QColor(0, 100, 0, 38)  # Green with 85% transparency
+                                        # hover_color already defined above
+                                        painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
 
-                                # Get hovered control point position to skip green rectangles at same location
-                                hovered_cp_pos = None
-                                if hovered_strand is not None and hovered_side in ('control_point1', 'control_point2', 'control_point_center'):
-                                    if hovered_side == 'control_point1' and hasattr(hovered_strand, 'control_point1'):
-                                        hovered_cp_pos = hovered_strand.control_point1
-                                    elif hovered_side == 'control_point2' and hasattr(hovered_strand, 'control_point2'):
-                                        hovered_cp_pos = hovered_strand.control_point2
-                                    elif hovered_side == 'control_point_center' and hasattr(hovered_strand, 'control_point_center'):
-                                        hovered_cp_pos = hovered_strand.control_point_center
+                                        # Get hovered control point position to skip green rectangles at same location
+                                        hovered_cp_pos = None
+                                        if hovered_strand is not None and hovered_side in ('control_point1', 'control_point2', 'control_point_center'):
+                                            if hovered_side == 'control_point1' and hasattr(hovered_strand, 'control_point1'):
+                                                hovered_cp_pos = hovered_strand.control_point1
+                                            elif hovered_side == 'control_point2' and hasattr(hovered_strand, 'control_point2'):
+                                                hovered_cp_pos = hovered_strand.control_point2
+                                            elif hovered_side == 'control_point_center' and hasattr(hovered_strand, 'control_point_center'):
+                                                hovered_cp_pos = hovered_strand.control_point_center
 
-                                # If moving a control point, only draw the specific control point being moved
-                                if is_moving_control_point:
-                                    if selected_side == 'control_point1' and cp1_rect and not skip_cp1 and not cp1_overlaps_yellow:
-                                        if strand == hovered_strand and hovered_side == 'control_point1':
-                                            painter.setBrush(QBrush(hover_color))
-                                            painter.drawRect(cp1_rect)
-                                            cp1_drawn = True
-                                        else:
-                                            # Skip green if another control point at this position is hovered
-                                            skip_green = hovered_cp_pos and hasattr(strand, 'control_point1') and self.points_are_close(strand.control_point1, hovered_cp_pos)
-                                            if not skip_green:
-                                                painter.setBrush(QBrush(green_color))
-                                                painter.drawRect(cp1_rect)
-                                                cp1_drawn = True
-                                    elif selected_side == 'control_point2' and cp2_rect and not skip_cp2 and not cp2_overlaps_yellow:
-                                        if strand == hovered_strand and hovered_side == 'control_point2':
-                                            painter.setBrush(QBrush(hover_color))
-                                            painter.drawRect(cp2_rect)
-                                            cp2_drawn = True
-                                        else:
-                                            skip_green = hovered_cp_pos and hasattr(strand, 'control_point2') and self.points_are_close(strand.control_point2, hovered_cp_pos)
-                                            if not skip_green:
-                                                painter.setBrush(QBrush(green_color))
-                                                painter.drawRect(cp2_rect)
-                                                cp2_drawn = True
-                                    elif (selected_side == 'control_point_center' and triangle_has_moved and cp3_rect
-                                          and not skip_cp3 and not cp3_overlaps_yellow
-                                          and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point):
-                                        if strand == hovered_strand and hovered_side == 'control_point_center':
-                                            painter.setBrush(QBrush(hover_color))
-                                            painter.drawRect(cp3_rect)
-                                            cp3_drawn = True
-                                        else:
-                                            skip_green = hovered_cp_pos and hasattr(strand, 'control_point_center') and self.points_are_close(strand.control_point_center, hovered_cp_pos)
-                                            if not skip_green:
-                                                painter.setBrush(QBrush(green_color))
-                                                painter.drawRect(cp3_rect)
-                                                cp3_drawn = True
-                                    # Bias controls when moving them
-                                    elif (selected_side == 'bias_triangle' and triangle_has_moved
-                                          and hasattr(strand, 'bias_control') and strand.bias_control
-                                          and hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control):
-                                        tp, cp = strand.bias_control.get_bias_control_positions(strand)
-                                        if tp:
-                                            bias_square_size = 50  # Same size as regular control points
-                                            bias_half_size = bias_square_size / 2
-                                            bt_rect = QRectF(tp.x() - bias_half_size, tp.y() - bias_half_size, bias_square_size, bias_square_size)
-                                            painter.drawRect(bt_rect)
-                                            bias_triangle_drawn = True
-                                    elif (selected_side == 'bias_circle' and triangle_has_moved
-                                          and hasattr(strand, 'bias_control') and strand.bias_control
-                                          and hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control):
-                                        tp, cp = strand.bias_control.get_bias_control_positions(strand)
-                                        if cp:
-                                            bias_square_size = 50  # Same size as regular control points
-                                            bias_half_size = bias_square_size / 2
-                                            bc_rect = QRectF(cp.x() - bias_half_size, cp.y() - bias_half_size, bias_square_size, bias_square_size)
-                                            painter.drawRect(bc_rect)
-                                            bias_circle_drawn = True
-                                else:
-                                    # Normal drawing when not moving a control point
-                                    if cp1_rect and not skip_cp1 and not cp1_overlaps_yellow:
-                                        if strand == hovered_strand and hovered_side == 'control_point1':
-                                            painter.setBrush(QBrush(hover_color))
-                                            painter.drawRect(cp1_rect)
-                                            cp1_drawn = True
-                                        else:
-                                            # Skip green if another control point at this position is hovered
-                                            skip_green = hovered_cp_pos and hasattr(strand, 'control_point1') and self.points_are_close(strand.control_point1, hovered_cp_pos)
-                                            if not skip_green:
-                                                painter.setBrush(QBrush(green_color))
-                                                painter.drawRect(cp1_rect)
-                                                cp1_drawn = True
-
-                                    # Only draw control_point2 moving area if it's shown
-                                    # control_point2_shown becomes True when control_point1 is moved
-                                    # This makes control_point2 visible and clickable
-                                    if cp2_rect and not skip_cp2 and not cp2_overlaps_yellow:
-                                        if hasattr(strand, 'control_point2_shown') and strand.control_point2_shown:
-                                            if strand == hovered_strand and hovered_side == 'control_point2':
-                                                painter.setBrush(QBrush(hover_color))
-                                                painter.drawRect(cp2_rect)
-                                                cp2_drawn = True
-                                            else:
-                                                # Skip green if another control point at this position is hovered
-                                                skip_green = hovered_cp_pos and hasattr(strand, 'control_point2') and self.points_are_close(strand.control_point2, hovered_cp_pos)
-                                                if not skip_green:
-                                                    painter.setBrush(QBrush(green_color))
+                                        # If moving a control point, only draw the specific control point being moved
+                                        if is_moving_control_point:
+                                            if selected_side == 'control_point1' and cp1_rect and not skip_cp1 and not cp1_overlaps_yellow:
+                                                if strand == hovered_strand and hovered_side == 'control_point1':
+                                                    painter.setBrush(QBrush(hover_color))
+                                                    painter.drawRect(cp1_rect)
+                                                    cp1_drawn = True
+                                                else:
+                                                    # Skip green if another control point at this position is hovered
+                                                    skip_green = hovered_cp_pos and hasattr(strand, 'control_point1') and self.points_are_close(strand.control_point1, hovered_cp_pos)
+                                                    if not skip_green:
+                                                        painter.setBrush(QBrush(green_color))
+                                                        painter.drawRect(cp1_rect)
+                                                        cp1_drawn = True
+                                            elif selected_side == 'control_point2' and cp2_rect and not skip_cp2 and not cp2_overlaps_yellow:
+                                                if strand == hovered_strand and hovered_side == 'control_point2':
+                                                    painter.setBrush(QBrush(hover_color))
                                                     painter.drawRect(cp2_rect)
                                                     cp2_drawn = True
-                                    if (triangle_has_moved and cp3_rect and not skip_cp3 and not cp3_overlaps_yellow
-                                            and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point):
-                                        if strand == hovered_strand and hovered_side == 'control_point_center':
-                                            painter.setBrush(QBrush(hover_color))
-                                            painter.drawRect(cp3_rect)
-                                            cp3_drawn = True
+                                                else:
+                                                    skip_green = hovered_cp_pos and hasattr(strand, 'control_point2') and self.points_are_close(strand.control_point2, hovered_cp_pos)
+                                                    if not skip_green:
+                                                        painter.setBrush(QBrush(green_color))
+                                                        painter.drawRect(cp2_rect)
+                                                        cp2_drawn = True
+                                            elif (selected_side == 'control_point_center' and triangle_has_moved and cp3_rect
+                                                  and not skip_cp3 and not cp3_overlaps_yellow
+                                                  and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point):
+                                                if strand == hovered_strand and hovered_side == 'control_point_center':
+                                                    painter.setBrush(QBrush(hover_color))
+                                                    painter.drawRect(cp3_rect)
+                                                    cp3_drawn = True
+                                                else:
+                                                    skip_green = hovered_cp_pos and hasattr(strand, 'control_point_center') and self.points_are_close(strand.control_point_center, hovered_cp_pos)
+                                                    if not skip_green:
+                                                        painter.setBrush(QBrush(green_color))
+                                                        painter.drawRect(cp3_rect)
+                                                        cp3_drawn = True
+                                            # Bias controls when moving them
+                                            elif (selected_side == 'bias_triangle' and triangle_has_moved
+                                                  and hasattr(strand, 'bias_control') and strand.bias_control
+                                                  and hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control):
+                                                tp, cp = strand.bias_control.get_bias_control_positions(strand)
+                                                if tp:
+                                                    bias_square_size = 50  # Same size as regular control points
+                                                    bias_half_size = bias_square_size / 2
+                                                    bt_rect = QRectF(tp.x() - bias_half_size, tp.y() - bias_half_size, bias_square_size, bias_square_size)
+                                                    painter.drawRect(bt_rect)
+                                                    bias_triangle_drawn = True
+                                            elif (selected_side == 'bias_circle' and triangle_has_moved
+                                                  and hasattr(strand, 'bias_control') and strand.bias_control
+                                                  and hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control):
+                                                tp, cp = strand.bias_control.get_bias_control_positions(strand)
+                                                if cp:
+                                                    bias_square_size = 50  # Same size as regular control points
+                                                    bias_half_size = bias_square_size / 2
+                                                    bc_rect = QRectF(cp.x() - bias_half_size, cp.y() - bias_half_size, bias_square_size, bias_square_size)
+                                                    painter.drawRect(bc_rect)
+                                                    bias_circle_drawn = True
                                         else:
-                                            # Skip green if another control point at this position is hovered
-                                            skip_green = hovered_cp_pos and hasattr(strand, 'control_point_center') and self.points_are_close(strand.control_point_center, hovered_cp_pos)
-                                            if not skip_green:
-                                                painter.setBrush(QBrush(green_color))
-                                                painter.drawRect(cp3_rect)
-                                                cp3_drawn = True
-                                    # Also draw bias control rectangles (transparent green baseline)
-                                    if (triangle_has_moved and hasattr(self, 'enable_curvature_bias_control')
-                                            and self.enable_curvature_bias_control
-                                            and hasattr(strand, 'bias_control') and strand.bias_control):
-                                        tp, cp_pos = strand.bias_control.get_bias_control_positions(strand)
-                                        if tp:
-                                            bias_square_size = 50  # Same size as regular control points
-                                            bias_half_size = bias_square_size / 2
-                                            bt_rect = QRectF(tp.x() - bias_half_size, tp.y() - bias_half_size, bias_square_size, bias_square_size)
-                                            if strand == hovered_strand and hovered_side == 'bias_triangle':
-                                                painter.setBrush(QBrush(hover_color))
-                                                painter.drawRect(bt_rect)
-                                                bias_triangle_drawn = True
-                                            else:
-                                                # Skip green if bias control at this position is hovered
-                                                # (bias controls don't typically overlap, but consistent behavior)
-                                                painter.setBrush(QBrush(green_color))
-                                                painter.drawRect(bt_rect)
-                                                bias_triangle_drawn = True
-                                        if cp_pos:
-                                            bias_square_size = 50  # Same size as regular control points
-                                            bias_half_size = bias_square_size / 2
-                                            bc_rect = QRectF(cp_pos.x() - bias_half_size, cp_pos.y() - bias_half_size, bias_square_size, bias_square_size)
-                                            if strand == hovered_strand and hovered_side == 'bias_circle':
-                                                painter.setBrush(QBrush(hover_color))
-                                                painter.drawRect(bc_rect)
-                                                bias_circle_drawn = True
-                                            else:
-                                                # Skip green if bias control at this position is hovered
-                                                painter.setBrush(QBrush(green_color))
-                                                painter.drawRect(bc_rect)
-                                                bias_circle_drawn = True
+                                            # Normal drawing when not moving a control point
+                                            if cp1_rect and not skip_cp1 and not cp1_overlaps_yellow:
+                                                if strand == hovered_strand and hovered_side == 'control_point1':
+                                                    painter.setBrush(QBrush(hover_color))
+                                                    painter.drawRect(cp1_rect)
+                                                    cp1_drawn = True
+                                                else:
+                                                    # Skip green if another control point at this position is hovered
+                                                    skip_green = hovered_cp_pos and hasattr(strand, 'control_point1') and self.points_are_close(strand.control_point1, hovered_cp_pos)
+                                                    if not skip_green:
+                                                        painter.setBrush(QBrush(green_color))
+                                                        painter.drawRect(cp1_rect)
+                                                        cp1_drawn = True
+
+                                            # Only draw control_point2 moving area if it's shown
+                                            # control_point2_shown becomes True when control_point1 is moved
+                                            # This makes control_point2 visible and clickable
+                                            if cp2_rect and not skip_cp2 and not cp2_overlaps_yellow:
+                                                if hasattr(strand, 'control_point2_shown') and strand.control_point2_shown:
+                                                    if strand == hovered_strand and hovered_side == 'control_point2':
+                                                        painter.setBrush(QBrush(hover_color))
+                                                        painter.drawRect(cp2_rect)
+                                                        cp2_drawn = True
+                                                    else:
+                                                        # Skip green if another control point at this position is hovered
+                                                        skip_green = hovered_cp_pos and hasattr(strand, 'control_point2') and self.points_are_close(strand.control_point2, hovered_cp_pos)
+                                                        if not skip_green:
+                                                            painter.setBrush(QBrush(green_color))
+                                                            painter.drawRect(cp2_rect)
+                                                            cp2_drawn = True
+                                            if (triangle_has_moved and cp3_rect and not skip_cp3 and not cp3_overlaps_yellow
+                                                    and hasattr(self, 'enable_third_control_point') and self.enable_third_control_point):
+                                                if strand == hovered_strand and hovered_side == 'control_point_center':
+                                                    painter.setBrush(QBrush(hover_color))
+                                                    painter.drawRect(cp3_rect)
+                                                    cp3_drawn = True
+                                                else:
+                                                    # Skip green if another control point at this position is hovered
+                                                    skip_green = hovered_cp_pos and hasattr(strand, 'control_point_center') and self.points_are_close(strand.control_point_center, hovered_cp_pos)
+                                                    if not skip_green:
+                                                        painter.setBrush(QBrush(green_color))
+                                                        painter.drawRect(cp3_rect)
+                                                        cp3_drawn = True
+                                            # Also draw bias control rectangles (transparent green baseline)
+                                            if (triangle_has_moved and hasattr(self, 'enable_curvature_bias_control')
+                                                    and self.enable_curvature_bias_control
+                                                    and hasattr(strand, 'bias_control') and strand.bias_control):
+                                                tp, cp_pos = strand.bias_control.get_bias_control_positions(strand)
+                                                if tp:
+                                                    bias_square_size = 50  # Same size as regular control points
+                                                    bias_half_size = bias_square_size / 2
+                                                    bt_rect = QRectF(tp.x() - bias_half_size, tp.y() - bias_half_size, bias_square_size, bias_square_size)
+                                                    if strand == hovered_strand and hovered_side == 'bias_triangle':
+                                                        painter.setBrush(QBrush(hover_color))
+                                                        painter.drawRect(bt_rect)
+                                                        bias_triangle_drawn = True
+                                                    else:
+                                                        # Skip green if bias control at this position is hovered
+                                                        # (bias controls don't typically overlap, but consistent behavior)
+                                                        painter.setBrush(QBrush(green_color))
+                                                        painter.drawRect(bt_rect)
+                                                        bias_triangle_drawn = True
+                                                if cp_pos:
+                                                    bias_square_size = 50  # Same size as regular control points
+                                                    bias_half_size = bias_square_size / 2
+                                                    bc_rect = QRectF(cp_pos.x() - bias_half_size, cp_pos.y() - bias_half_size, bias_square_size, bias_square_size)
+                                                    if strand == hovered_strand and hovered_side == 'bias_circle':
+                                                        painter.setBrush(QBrush(hover_color))
+                                                        painter.drawRect(bc_rect)
+                                                        bias_circle_drawn = True
+                                                    else:
+                                                        # Skip green if bias control at this position is hovered
+                                                        painter.setBrush(QBrush(green_color))
+                                                        painter.drawRect(bc_rect)
+                                                        bias_circle_drawn = True
                                 
-                                if should_log_selection:
-                                    _write_selection_debug(
-                                        self.selection_debug_log_path,
-                                        self.selection_debug_logging_enabled,
-                                        (
-                                            f"Control point rectangles for strand={strand_name or 'unknown'} "
-                                            f"cp1_drawn={cp1_drawn} cp2_drawn={cp2_drawn} cp3_drawn={cp3_drawn} "
-                                            f"bias_triangle_drawn={bias_triangle_drawn} bias_circle_drawn={bias_circle_drawn}"
-                                        )
-                                    )
-            # Draw the selected rectangle with yellow color (if highlights are enabled)
-            if self.current_mode.selected_rectangle and (not hasattr(self, 'show_move_highlights') or self.show_move_highlights):
-                # Set up semi-transparent yellow color
-                square_color = QColor(255, 230, 160, 70)  # Yellow with transparency
-                painter.setBrush(QBrush(square_color))
-                painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
+                                        if should_log_selection:
+                                            _write_selection_debug(
+                                                self.selection_debug_log_path,
+                                                self.selection_debug_logging_enabled,
+                                                (
+                                                    f"Control point rectangles for strand={strand_name or 'unknown'} "
+                                                    f"cp1_drawn={cp1_drawn} cp2_drawn={cp2_drawn} cp3_drawn={cp3_drawn} "
+                                                    f"bias_triangle_drawn={bias_triangle_drawn} bias_circle_drawn={bias_circle_drawn}"
+                                                )
+                                            )
+                    # Draw the selected rectangle with yellow color (if highlights are enabled)
+                    if self.current_mode.selected_rectangle and (not hasattr(self, 'show_move_highlights') or self.show_move_highlights):
+                        # Set up semi-transparent yellow color
+                        square_color = QColor(255, 230, 160, 70)  # Yellow with transparency
+                        painter.setBrush(QBrush(square_color))
+                        painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))  # Solid line for better visibility
                 
-                # If we have a selected strand and side, create the yellow square directly
-                if self.current_mode.affected_strand and self.current_mode.moving_side is not None:
-                    affected_strand = self.current_mode.affected_strand
-                    moving_side = self.current_mode.moving_side
+                        # If we have a selected strand and side, create the yellow square directly
+                        if self.current_mode.affected_strand and self.current_mode.moving_side is not None:
+                            affected_strand = self.current_mode.affected_strand
+                            moving_side = self.current_mode.moving_side
                     
-                    # Create a yellow square of the defined size
-                    if moving_side == 0:  # Start point
-                        yellow_rect = QRectF(
-                            affected_strand.start.x() - half_yellow_size,
-                            affected_strand.start.y() - half_yellow_size,
-                            yellow_square_size,
-                            yellow_square_size
-                        )
-                        painter.drawRect(yellow_rect)
-                    elif moving_side == 1:  # End point
-                        yellow_rect = QRectF(
-                            affected_strand.end.x() - half_yellow_size,
-                            affected_strand.end.y() - half_yellow_size,
-                            yellow_square_size,
-                            yellow_square_size
-                        )
-                        painter.drawRect(yellow_rect)
-                    elif moving_side == 'control_point1' and hasattr(affected_strand, 'control_point1'):
-                        # Use control point size for control points
-                        yellow_rect = QRectF(
-                            affected_strand.control_point1.x() - half_control_size,
-                            affected_strand.control_point1.y() - half_control_size,
-                            square_control_size,
-                            square_control_size
-                        )
-                        painter.drawRect(yellow_rect)
-                    elif moving_side == 'control_point2' and hasattr(affected_strand, 'control_point2'):
-                        # Use control point size for control points
-                        yellow_rect = QRectF(
-                            affected_strand.control_point2.x() - half_control_size,
-                            affected_strand.control_point2.y() - half_control_size,
-                            square_control_size,
-                            square_control_size
-                        )
-                        painter.drawRect(yellow_rect)
-                    elif moving_side == 'control_point_center' and hasattr(affected_strand, 'control_point_center'):
-                        # Use control point size for control points
-                        yellow_rect = QRectF(
-                            affected_strand.control_point_center.x() - half_control_size,
-                            affected_strand.control_point_center.y() - half_control_size,
-                            square_control_size,
-                            square_control_size
-                        )
-                        painter.drawRect(yellow_rect)
+                            # Create a yellow square of the defined size
+                            if moving_side == 0:  # Start point
+                                yellow_rect = QRectF(
+                                    affected_strand.start.x() - half_yellow_size,
+                                    affected_strand.start.y() - half_yellow_size,
+                                    yellow_square_size,
+                                    yellow_square_size
+                                )
+                                painter.drawRect(yellow_rect)
+                            elif moving_side == 1:  # End point
+                                yellow_rect = QRectF(
+                                    affected_strand.end.x() - half_yellow_size,
+                                    affected_strand.end.y() - half_yellow_size,
+                                    yellow_square_size,
+                                    yellow_square_size
+                                )
+                                painter.drawRect(yellow_rect)
+                            elif moving_side == 'control_point1' and hasattr(affected_strand, 'control_point1'):
+                                # Use control point size for control points
+                                yellow_rect = QRectF(
+                                    affected_strand.control_point1.x() - half_control_size,
+                                    affected_strand.control_point1.y() - half_control_size,
+                                    square_control_size,
+                                    square_control_size
+                                )
+                                painter.drawRect(yellow_rect)
+                            elif moving_side == 'control_point2' and hasattr(affected_strand, 'control_point2'):
+                                # Use control point size for control points
+                                yellow_rect = QRectF(
+                                    affected_strand.control_point2.x() - half_control_size,
+                                    affected_strand.control_point2.y() - half_control_size,
+                                    square_control_size,
+                                    square_control_size
+                                )
+                                painter.drawRect(yellow_rect)
+                            elif moving_side == 'control_point_center' and hasattr(affected_strand, 'control_point_center'):
+                                # Use control point size for control points
+                                yellow_rect = QRectF(
+                                    affected_strand.control_point_center.x() - half_control_size,
+                                    affected_strand.control_point_center.y() - half_control_size,
+                                    square_control_size,
+                                    square_control_size
+                                )
+                                painter.drawRect(yellow_rect)
                         
-                # Fall back to using the selected_rectangle from MoveMode if direct creation not possible
-                elif isinstance(self.current_mode.selected_rectangle, QPainterPath):
-                    painter.drawPath(self.current_mode.selected_rectangle)
-                elif isinstance(self.current_mode.selected_rectangle, QRectF):
-                    painter.drawRect(self.current_mode.selected_rectangle)
+                        # Fall back to using the selected_rectangle from MoveMode if direct creation not possible
+                        elif isinstance(self.current_mode.selected_rectangle, QPainterPath):
+                            painter.drawPath(self.current_mode.selected_rectangle)
+                        elif isinstance(self.current_mode.selected_rectangle, QRectF):
+                            painter.drawRect(self.current_mode.selected_rectangle)
 
-            painter.restore()
+                finally:
+                    painter.restore()
 
-        # Draw the angle adjustment visualization if in angle adjust mode
-        if self.is_angle_adjusting and self.angle_adjust_mode and self.angle_adjust_mode.active_strand:
-            self.angle_adjust_mode.draw(painter)
+            # Draw the angle adjustment visualization if in angle adjust mode
+            if self.is_angle_adjusting and self.angle_adjust_mode and self.angle_adjust_mode.active_strand:
+                self.angle_adjust_mode.draw(painter)
 
-        # Draw mask editing interface
-        if self.mask_edit_mode and self.editing_masked_strand:
-            # Draw the current mask path with semi-transparency
-            painter.setBrush(QColor(255, 0, 0, 0))  # Semi-transparent red
-            painter.setPen(Qt.NoPen)
-            painter.drawPath(self.mask_edit_path)
+            # Draw mask editing interface
+            if self.mask_edit_mode and self.editing_masked_strand:
+                # Draw the current mask path with semi-transparency
+                painter.setBrush(QColor(255, 0, 0, 0))  # Semi-transparent red
+                painter.setPen(Qt.NoPen)
+                painter.drawPath(self.mask_edit_path)
             
-            # Draw the current erase rectangle if it exists
-            if self.current_erase_rect:
-                painter.setBrush(QColor(255, 255, 255, 128))  # Semi-transparent white
-                painter.setPen(QPen(Qt.white, 1, Qt.DashLine))
-                painter.drawRect(self.current_erase_rect)
+                # Draw the current erase rectangle if it exists
+                if self.current_erase_rect:
+                    painter.setBrush(QColor(255, 255, 255, 128))  # Semi-transparent white
+                    painter.setPen(QPen(Qt.white, 1, Qt.DashLine))
+                    painter.drawRect(self.current_erase_rect)
 
-        # Draw visible shadow path(s) if requested
-        # Collect all shadow pairs to draw
-        shadow_pairs_to_draw = set()
-        if self.visible_shadow_casting and self.visible_shadow_receiving:
-            shadow_pairs_to_draw.add((self.visible_shadow_casting, self.visible_shadow_receiving))
-        shadow_pairs_to_draw.update(self.visible_shadow_paths)
+            # Draw visible shadow path(s) if requested
+            # Collect all shadow pairs to draw
+            shadow_pairs_to_draw = set()
+            if self.visible_shadow_casting and self.visible_shadow_receiving:
+                shadow_pairs_to_draw.add((self.visible_shadow_casting, self.visible_shadow_receiving))
+            shadow_pairs_to_draw.update(self.visible_shadow_paths)
 
-        if shadow_pairs_to_draw:
-            from shader_utils import calculate_shadow_for_layer_pair
+            if shadow_pairs_to_draw:
+                from shader_utils import calculate_shadow_for_layer_pair
 
-            # Build a lookup of strands by layer name
-            strand_lookup = {s.layer_name: s for s in self.strands}
+                # Build a lookup of strands by layer name
+                strand_lookup = {s.layer_name: s for s in self.strands}
 
-            for cast_layer, recv_layer in shadow_pairs_to_draw:
-                casting_strand = strand_lookup.get(cast_layer)
-                receiving_strand = strand_lookup.get(recv_layer)
+                for cast_layer, recv_layer in shadow_pairs_to_draw:
+                    casting_strand = strand_lookup.get(cast_layer)
+                    receiving_strand = strand_lookup.get(recv_layer)
 
-                if casting_strand and receiving_strand:
-                    shadow_path = calculate_shadow_for_layer_pair(
-                        self,
-                        casting_strand,
-                        receiving_strand,
-                        cast_layer,
-                        recv_layer
-                    )
+                    if casting_strand and receiving_strand:
+                        shadow_path = calculate_shadow_for_layer_pair(
+                            self,
+                            casting_strand,
+                            receiving_strand,
+                            cast_layer,
+                            recv_layer
+                        )
 
-                    if shadow_path and not shadow_path.isEmpty():
-                        painter.setBrush(QColor(0, 120, 255, 100))
-                        painter.setPen(QPen(QColor(0, 120, 255, 200), 2, Qt.SolidLine))
-                        painter.drawPath(shadow_path)
+                        if shadow_path and not shadow_path.isEmpty():
+                            painter.setBrush(QColor(0, 120, 255, 100))
+                            painter.setPen(QPen(QColor(0, 120, 255, 200), 2, Qt.SolidLine))
+                            painter.drawPath(shadow_path)
 
-        # Reduced high-frequency logging for performance during moves
-        # logging.info(
-        #     f"Paint event completed. Selected strand: "
-        #     f"{self.selected_strand.layer_name if self.selected_strand and hasattr(self.selected_strand, 'layer_name') else 'None'}"
-        # )
+            # Reduced high-frequency logging for performance during moves
+            # logging.info(
+            #     f"Paint event completed. Selected strand: "
+            #     f"{self.selected_strand.layer_name if self.selected_strand and hasattr(self.selected_strand, 'layer_name') else 'None'}"
+            # )
 
-        # Restore painter state before ending (to undo zoom transformation)
-        painter.restore()
+            # Restore painter state before ending (to undo zoom transformation)
+        finally:
+            painter.restore()
         
         # Handle overlay painting (attach mode circles, etc.)
         self._draw_overlays(painter)
@@ -2873,146 +2877,150 @@ class StrandDrawingCanvas(QWidget):
         
         # Apply zoom transformation for overlays
         painter.save()
-        canvas_center = QPointF(self.width() / 2, self.height() / 2)
-        painter.translate(canvas_center)
-        painter.translate(self.pan_offset_x, self.pan_offset_y)  # Apply pan offset
-        painter.scale(self.zoom_factor, self.zoom_factor)
-        painter.translate(-canvas_center)
+        try:
+            canvas_center = QPointF(self.width() / 2, self.height() / 2)
+            painter.translate(canvas_center)
+            painter.translate(self.pan_offset_x, self.pan_offset_y)  # Apply pan offset
+            painter.scale(self.zoom_factor, self.zoom_factor)
+            painter.translate(-canvas_center)
         
-        # When zoomed out or panning, disable clipping for overlay painter
-        if (hasattr(self, 'zoom_factor') and self.zoom_factor != 1.0) or \
-           (hasattr(self, 'pan_offset_x') and (self.pan_offset_x != 0 or self.pan_offset_y != 0)):
-            painter.setClipping(False)
+            # When zoomed out or panning, disable clipping for overlay painter
+            if (hasattr(self, 'zoom_factor') and self.zoom_factor != 1.0) or \
+               (hasattr(self, 'pan_offset_x') and (self.pan_offset_x != 0 or self.pan_offset_y != 0)):
+                painter.setClipping(False)
 
-        # Draw attach-mode circles on top (if highlights are enabled)
-        if isinstance(self.current_mode, AttachMode) and (not hasattr(self, 'show_move_highlights') or self.show_move_highlights):
-            painter.save()
+            # Draw attach-mode circles on top (if highlights are enabled)
+            if isinstance(self.current_mode, AttachMode) and (not hasattr(self, 'show_move_highlights') or self.show_move_highlights):
+                painter.save()
+                try:
 
-            # Get affected state - if a circle is pressed/selected, only draw that one
-            affected_strand = getattr(self.current_mode, 'affected_strand', None)
-            affected_point = getattr(self.current_mode, 'affected_point', None)
+                    # Get affected state - if a circle is pressed/selected, only draw that one
+                    affected_strand = getattr(self.current_mode, 'affected_strand', None)
+                    affected_point = getattr(self.current_mode, 'affected_point', None)
 
-            for strand in self.strands:
-                if isinstance(strand, MaskedStrand):
-                    continue
+                    for strand in self.strands:
+                        if isinstance(strand, MaskedStrand):
+                            continue
 
-                # Skip hidden strands - they should not show attachment areas
-                if getattr(strand, 'is_hidden', False):
-                    continue
+                        # Skip hidden strands - they should not show attachment areas
+                        if getattr(strand, 'is_hidden', False):
+                            continue
 
-                # Locked layers cannot receive attachments - no attach circles
-                if self._is_layer_locked(strand):
-                    continue
+                        # Locked layers cannot receive attachments - no attach circles
+                        if self._is_layer_locked(strand):
+                            continue
 
-                # If a circle is pressed/selected, skip all other strands
-                if affected_strand is not None and strand != affected_strand:
-                    continue
+                        # If a circle is pressed/selected, skip all other strands
+                        if affected_strand is not None and strand != affected_strand:
+                            continue
 
-                # Get hover state from AttachMode (only if hover highlights are enabled)
-                hovered_strand = None
-                hovered_point = None
-                if getattr(self, 'show_hover_highlights', True):
-                    hovered_strand = getattr(self.current_mode, 'hovered_strand', None)
-                    hovered_point = getattr(self.current_mode, 'hovered_point', None)
-                hover_color = QColor(255, 230, 160, 140)  # Yellow for hover (same as selected)
+                        # Get hover state from AttachMode (only if hover highlights are enabled)
+                        hovered_strand = None
+                        hovered_point = None
+                        if getattr(self, 'show_hover_highlights', True):
+                            hovered_strand = getattr(self.current_mode, 'hovered_strand', None)
+                            hovered_point = getattr(self.current_mode, 'hovered_point', None)
+                        hover_color = QColor(255, 230, 160, 140)  # Yellow for hover (same as selected)
 
-                # Draw circles regardless of proximity to other points
-                # Start circle - check has_circles[0] instead of start_attached
-                if not strand.has_circles[0]:  # Show circle if no attachment at start
-                    # Skip if another point on this strand is affected
-                    if affected_strand == strand and affected_point != 0:
-                        pass  # Don't draw start circle if end is affected
-                    # Highlight if currently affected
-                    elif (affected_strand == strand and affected_point == 0):
-                        circle_color = QColor(255, 230, 160, 140)  # Yellow with transparency (selected)
-                        painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
-                        painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
-                        circle_size = 120
-                        radius = circle_size / 2
-                        start_ellipse = QRectF(
-                            strand.start.x() - radius,
-                            strand.start.y() - radius,
-                            circle_size,
-                            circle_size
-                        )
-                        painter.drawEllipse(start_ellipse)
-                    elif strand == hovered_strand and hovered_point == 0:
-                        circle_color = hover_color  # Yellow for hover
-                        painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
-                        painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
-                        circle_size = 120
-                        radius = circle_size / 2
-                        start_ellipse = QRectF(
-                            strand.start.x() - radius,
-                            strand.start.y() - radius,
-                            circle_size,
-                            circle_size
-                        )
-                        painter.drawEllipse(start_ellipse)
-                    else:
-                        circle_color = QColor(self.highlight_color)
-                        circle_color.setAlpha(60)  # Default with transparency
-                        painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
-                        painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
-                        circle_size = 120
-                        radius = circle_size / 2
-                        start_ellipse = QRectF(
-                            strand.start.x() - radius,
-                            strand.start.y() - radius,
-                            circle_size,
-                            circle_size
-                        )
-                        painter.drawEllipse(start_ellipse)
+                        # Draw circles regardless of proximity to other points
+                        # Start circle - check has_circles[0] instead of start_attached
+                        if not strand.has_circles[0]:  # Show circle if no attachment at start
+                            # Skip if another point on this strand is affected
+                            if affected_strand == strand and affected_point != 0:
+                                pass  # Don't draw start circle if end is affected
+                            # Highlight if currently affected
+                            elif (affected_strand == strand and affected_point == 0):
+                                circle_color = QColor(255, 230, 160, 140)  # Yellow with transparency (selected)
+                                painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
+                                painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
+                                circle_size = 120
+                                radius = circle_size / 2
+                                start_ellipse = QRectF(
+                                    strand.start.x() - radius,
+                                    strand.start.y() - radius,
+                                    circle_size,
+                                    circle_size
+                                )
+                                painter.drawEllipse(start_ellipse)
+                            elif strand == hovered_strand and hovered_point == 0:
+                                circle_color = hover_color  # Yellow for hover
+                                painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
+                                painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
+                                circle_size = 120
+                                radius = circle_size / 2
+                                start_ellipse = QRectF(
+                                    strand.start.x() - radius,
+                                    strand.start.y() - radius,
+                                    circle_size,
+                                    circle_size
+                                )
+                                painter.drawEllipse(start_ellipse)
+                            else:
+                                circle_color = QColor(self.highlight_color)
+                                circle_color.setAlpha(60)  # Default with transparency
+                                painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
+                                painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
+                                circle_size = 120
+                                radius = circle_size / 2
+                                start_ellipse = QRectF(
+                                    strand.start.x() - radius,
+                                    strand.start.y() - radius,
+                                    circle_size,
+                                    circle_size
+                                )
+                                painter.drawEllipse(start_ellipse)
 
-                # End circle - check has_circles[1] instead of end_attached
-                if not strand.has_circles[1]:  # Show circle if no attachment at end
-                    # Skip if another point on this strand is affected
-                    if affected_strand == strand and affected_point != 1:
-                        pass  # Don't draw end circle if start is affected
-                    # Highlight if currently affected
-                    elif (affected_strand == strand and affected_point == 1):
-                        circle_color = QColor(255, 230, 160, 140)  # Yellow with transparency (selected)
-                        painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
-                        painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
-                        circle_size = 120
-                        radius = circle_size / 2
-                        end_ellipse = QRectF(
-                            strand.end.x() - radius,
-                            strand.end.y() - radius,
-                            circle_size,
-                            circle_size
-                        )
-                        painter.drawEllipse(end_ellipse)
-                    elif strand == hovered_strand and hovered_point == 1:
-                        circle_color = hover_color  # Yellow for hover
-                        painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
-                        painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
-                        circle_size = 120
-                        radius = circle_size / 2
-                        end_ellipse = QRectF(
-                            strand.end.x() - radius,
-                            strand.end.y() - radius,
-                            circle_size,
-                            circle_size
-                        )
-                        painter.drawEllipse(end_ellipse)
-                    else:
-                        circle_color = QColor(0, 0, 255, 60)  # Default blue
-                        painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
-                        painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
-                        circle_size = 120
-                        radius = circle_size / 2
-                        end_ellipse = QRectF(
-                            strand.end.x() - radius,
-                            strand.end.y() - radius,
-                            circle_size,
-                            circle_size
-                        )
-                        painter.drawEllipse(end_ellipse)
+                        # End circle - check has_circles[1] instead of end_attached
+                        if not strand.has_circles[1]:  # Show circle if no attachment at end
+                            # Skip if another point on this strand is affected
+                            if affected_strand == strand and affected_point != 1:
+                                pass  # Don't draw end circle if start is affected
+                            # Highlight if currently affected
+                            elif (affected_strand == strand and affected_point == 1):
+                                circle_color = QColor(255, 230, 160, 140)  # Yellow with transparency (selected)
+                                painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
+                                painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
+                                circle_size = 120
+                                radius = circle_size / 2
+                                end_ellipse = QRectF(
+                                    strand.end.x() - radius,
+                                    strand.end.y() - radius,
+                                    circle_size,
+                                    circle_size
+                                )
+                                painter.drawEllipse(end_ellipse)
+                            elif strand == hovered_strand and hovered_point == 1:
+                                circle_color = hover_color  # Yellow for hover
+                                painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
+                                painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
+                                circle_size = 120
+                                radius = circle_size / 2
+                                end_ellipse = QRectF(
+                                    strand.end.x() - radius,
+                                    strand.end.y() - radius,
+                                    circle_size,
+                                    circle_size
+                                )
+                                painter.drawEllipse(end_ellipse)
+                            else:
+                                circle_color = QColor(0, 0, 255, 60)  # Default blue
+                                painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
+                                painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
+                                circle_size = 120
+                                radius = circle_size / 2
+                                end_ellipse = QRectF(
+                                    strand.end.x() - radius,
+                                    strand.end.y() - radius,
+                                    circle_size,
+                                    circle_size
+                                )
+                                painter.drawEllipse(end_ellipse)
 
-            painter.restore()
-        # ---------------------------------------------------------
-        painter.restore()  # Restore zoom transformation
+                finally:
+                    painter.restore()
+            # ---------------------------------------------------------
+        finally:
+            painter.restore()  # Restore zoom transformation
         # ---------------------------------------------------------
     
     def toggle_supersampling(self):
@@ -3475,160 +3483,160 @@ class StrandDrawingCanvas(QWidget):
 
                         # Save painter state
                         painter.save()
+                        try:
                         
-                        center = strand.start if i == 0 else strand.end
+                            center = strand.start if i == 0 else strand.end
                         
-                        # --- NEW: Check for hidden attached strands at this connection point --- 
-                        skip_c_shape = False
+                            # --- NEW: Check for hidden attached strands at this connection point --- 
+                            skip_c_shape = False
                         
-                        # First check if the selected strand itself is a hidden attached strand connecting here
-                        if (self.selected_attached_strand and 
-                            isinstance(self.selected_attached_strand, AttachedStrand) and 
-                            hasattr(self.selected_attached_strand, 'is_hidden') and 
-                            self.selected_attached_strand.is_hidden and
-                            (not (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
-                                  getattr(self.current_mode, 'draw_only_affected_strand', False)) and
-                             (self.points_are_close(self.selected_attached_strand.start, center) or 
-                              self.points_are_close(self.selected_attached_strand.end, center)))):
-                            skip_c_shape = True
-                            pass
+                            # First check if the selected strand itself is a hidden attached strand connecting here
+                            if (self.selected_attached_strand and 
+                                isinstance(self.selected_attached_strand, AttachedStrand) and 
+                                hasattr(self.selected_attached_strand, 'is_hidden') and 
+                                self.selected_attached_strand.is_hidden and
+                                (not (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
+                                      getattr(self.current_mode, 'draw_only_affected_strand', False)) and
+                                 (self.points_are_close(self.selected_attached_strand.start, center) or 
+                                  self.points_are_close(self.selected_attached_strand.end, center)))):
+                                skip_c_shape = True
+                                pass
                         
-                        # Also check other hidden attached strands
-                        if not skip_c_shape:
-                            for other_strand in self.strands:
-                                if isinstance(other_strand, AttachedStrand) and other_strand.is_hidden:
-                                    # Check if the hidden attached strand connects to the current center point AND is the selected strand
-                                    if (not (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
-                                            getattr(self.current_mode, 'draw_only_affected_strand', False)) and
-                                        (self.points_are_close(other_strand.start, center) or self.points_are_close(other_strand.end, center)) and other_strand == self.selected_strand):
-                                        skip_c_shape = True
-                                        pass
-                                        break # Found the selected hidden attached strand, no need to check further
+                            # Also check other hidden attached strands
+                            if not skip_c_shape:
+                                for other_strand in self.strands:
+                                    if isinstance(other_strand, AttachedStrand) and other_strand.is_hidden:
+                                        # Check if the hidden attached strand connects to the current center point AND is the selected strand
+                                        if (not (hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode) and 
+                                                getattr(self.current_mode, 'draw_only_affected_strand', False)) and
+                                            (self.points_are_close(other_strand.start, center) or self.points_are_close(other_strand.end, center)) and other_strand == self.selected_strand):
+                                            skip_c_shape = True
+                                            pass
+                                            break # Found the selected hidden attached strand, no need to check further
                                     
-                        if skip_c_shape:
-                            painter.restore() # Restore painter state
-                            continue # Skip drawing C-shape for this point
-                        # --- END NEW CHECK ---
+                            if skip_c_shape:
+                                continue # Skip drawing C-shape for this point
+                            # --- END NEW CHECK ---
     
-                        # If this end has an elliptical cap, stretch the (circular)
-                        # highlight rings along the strand tangent so the selection
-                        # highlight matches the body cap ellipse.
-                        _ell_pt = strand._partner_cap_dims(i)[0] if hasattr(strand, '_partner_cap_dims') else None
-                        if _ell_pt:
-                            _ell_this = strand.width + strand.stroke_width * 2
-                            if _ell_this > 0:
-                                _ell_k = _ell_pt / _ell_this
-                                _ell_t = strand.calculate_cubic_tangent(0.0001 if i == 0 else 0.9999)
-                                _ell_a = math.atan2(_ell_t.y(), _ell_t.x())
-                                painter.translate(center.x(), center.y())
-                                painter.rotate(math.degrees(_ell_a))
-                                painter.scale(_ell_k, 1.0)
-                                painter.rotate(-math.degrees(_ell_a))
-                                painter.translate(-center.x(), -center.y())
+                            # If this end has an elliptical cap, stretch the (circular)
+                            # highlight rings along the strand tangent so the selection
+                            # highlight matches the body cap ellipse.
+                            _ell_pt = strand._partner_cap_dims(i)[0] if hasattr(strand, '_partner_cap_dims') else None
+                            if _ell_pt:
+                                _ell_this = strand.width + strand.stroke_width * 2
+                                if _ell_this > 0:
+                                    _ell_k = _ell_pt / _ell_this
+                                    _ell_t = strand.calculate_cubic_tangent(0.0001 if i == 0 else 0.9999)
+                                    _ell_a = math.atan2(_ell_t.y(), _ell_t.x())
+                                    painter.translate(center.x(), center.y())
+                                    painter.rotate(math.degrees(_ell_a))
+                                    painter.scale(_ell_k, 1.0)
+                                    painter.rotate(-math.degrees(_ell_a))
+                                    painter.translate(-center.x(), -center.y())
 
-                        # Calculate the proper radius for the highlight
-                        # The highlighted strand outline uses: QPen(QColor('red'), self.stroke_width + 8)
-                        # This pen is drawn around the stroke path, so the outer edge is at:
-                        highlight_pen_thickness = 10  # Fixed thickness instead of stroke_width + 8
-                        stroke_path_radius = (strand.width + strand.stroke_width * 2) / 2
-                        outer_radius = stroke_path_radius + highlight_pen_thickness / 2
-                        inner_radius = strand.width / 2 + 6
+                            # Calculate the proper radius for the highlight
+                            # The highlighted strand outline uses: QPen(QColor('red'), self.stroke_width + 8)
+                            # This pen is drawn around the stroke path, so the outer edge is at:
+                            highlight_pen_thickness = 10  # Fixed thickness instead of stroke_width + 8
+                            stroke_path_radius = (strand.width + strand.stroke_width * 2) / 2
+                            outer_radius = stroke_path_radius + highlight_pen_thickness / 2
+                            inner_radius = strand.width / 2 + 6
                         
-                        # Create a full circle path for the outer circle
-                        outer_circle = QPainterPath()
-                        outer_circle.addEllipse(center, outer_radius, outer_radius)
+                            # Create a full circle path for the outer circle
+                            outer_circle = QPainterPath()
+                            outer_circle.addEllipse(center, outer_radius, outer_radius)
                         
-                        # Create a path for the inner circle
-                        inner_circle = QPainterPath()
-                        inner_circle.addEllipse(center, inner_radius, inner_radius)
+                            # Create a path for the inner circle
+                            inner_circle = QPainterPath()
+                            inner_circle.addEllipse(center, inner_radius, inner_radius)
                         
-                        # Create a ring path by subtracting the inner circle from the outer circle
-                        ring_path = outer_circle.subtracted(inner_circle)
+                            # Create a ring path by subtracting the inner circle from the outer circle
+                            ring_path = outer_circle.subtracted(inner_circle)
                         
-                        # Calculate angle based on curve tangent
-                        # For ending point, use t=0.99 to get the curve's actual direction near the end
-                        angle = 0.0 # Default angle
-                        tangent = strand.calculate_cubic_tangent(0.0 if i == 0 else 0.99)
-                        if tangent.manhattanLength() > 1e-6:
-                            angle = math.atan2(tangent.y(), tangent.x())
-                        else:
-                            # Fallback: use direction from start to end if tangent is zero
-                            direction_vector = strand.end - strand.start
-                            if direction_vector.manhattanLength() > 1e-6:
-                                angle = math.atan2(direction_vector.y(), direction_vector.x())
-    
-                        # Create a masking rectangle to create a C-shape
-                        # Create a masking rectangle to create a C-shape
-                        mask_rect = QPainterPath()
-                        rect_width = (outer_radius) * 2  # Make it slightly larger to ensure clean cut
-                        rect_height = (outer_radius) * 2
-                        # Place the masking rectangle in local (0,0) space; it will be positioned via the
-                        # transform.  This keeps the rectangle logic consistent with the working addRect(0 …)
-                        # approach you provided.
-                        mask_rect.addRect(0, -rect_height / 2, rect_width, rect_height)
-                        
-                        # Apply rotation transform to the masking rectangle
-                        transform = QTransform()
-                        transform.translate(center.x(), center.y())
-                        # Adjust angle based on whether it's start or end point
-                        if i == 0:
-                            transform.rotate(math.degrees(angle))
-                        else:
-                            transform.rotate(math.degrees(angle - math.pi))
-                        
-                        mask_rect = transform.map(mask_rect)
-                        
-                        # Create the C-shaped highlight
-                        c_shape_path = ring_path.subtracted(mask_rect)
-                        
-                        # Now create the stroke and color parts within the C-shape
-                        # Outer part (stroke area) - from outer_radius to stroke boundary
-                        stroke_outer_radius = outer_radius
-                        stroke_inner_radius = strand.width / 2 + strand.stroke_width
-                        
-                        stroke_outer_circle = QPainterPath()
-                        stroke_outer_circle.addEllipse(center, stroke_outer_radius, stroke_outer_radius)
-                        stroke_inner_circle = QPainterPath()
-                        stroke_inner_circle.addEllipse(center, stroke_inner_radius, stroke_inner_radius)
-                        stroke_ring = stroke_outer_circle.subtracted(stroke_inner_circle)
-                        stroke_c_shape = stroke_ring.subtracted(mask_rect)
-                        
-                        # Inner part (color area) - from stroke boundary to inner_radius
-                        color_outer_radius = strand.width / 2 + strand.stroke_width
-                        color_inner_radius = inner_radius
-                        
-                        color_outer_circle = QPainterPath()
-                        color_outer_circle.addEllipse(center, color_outer_radius, color_outer_radius)
-                        color_inner_circle = QPainterPath()
-                        color_inner_circle.addEllipse(center, color_inner_radius, color_inner_radius)
-                        color_ring = color_outer_circle.subtracted(color_inner_circle)
-                        color_c_shape = color_ring.subtracted(mask_rect)
-                        
-                        # Draw the stroke part in red (or transparent red if circle stroke is transparent)
-                        painter.setPen(Qt.NoPen)
-                        
-                        # Check if this circle has transparent stroke - skip drawing if transparent
-                        if hasattr(strand, 'start_circle_stroke_color') and hasattr(strand, 'end_circle_stroke_color'):
-                            circle_stroke_color = strand.start_circle_stroke_color if i == 0 else strand.end_circle_stroke_color
-                            if circle_stroke_color and circle_stroke_color.alpha() == 0:
-                                # Skip drawing C-shape for transparent circles
-                                painter.restore()
-                                continue
+                            # Calculate angle based on curve tangent
+                            # For ending point, use t=0.99 to get the curve's actual direction near the end
+                            angle = 0.0 # Default angle
+                            tangent = strand.calculate_cubic_tangent(0.0 if i == 0 else 0.99)
+                            if tangent.manhattanLength() > 1e-6:
+                                angle = math.atan2(tangent.y(), tangent.x())
                             else:
-                                # Use highlight color for normal circles
+                                # Fallback: use direction from start to end if tangent is zero
+                                direction_vector = strand.end - strand.start
+                                if direction_vector.manhattanLength() > 1e-6:
+                                    angle = math.atan2(direction_vector.y(), direction_vector.x())
+    
+                            # Create a masking rectangle to create a C-shape
+                            # Create a masking rectangle to create a C-shape
+                            mask_rect = QPainterPath()
+                            rect_width = (outer_radius) * 2  # Make it slightly larger to ensure clean cut
+                            rect_height = (outer_radius) * 2
+                            # Place the masking rectangle in local (0,0) space; it will be positioned via the
+                            # transform.  This keeps the rectangle logic consistent with the working addRect(0 …)
+                            # approach you provided.
+                            mask_rect.addRect(0, -rect_height / 2, rect_width, rect_height)
+                        
+                            # Apply rotation transform to the masking rectangle
+                            transform = QTransform()
+                            transform.translate(center.x(), center.y())
+                            # Adjust angle based on whether it's start or end point
+                            if i == 0:
+                                transform.rotate(math.degrees(angle))
+                            else:
+                                transform.rotate(math.degrees(angle - math.pi))
+                        
+                            mask_rect = transform.map(mask_rect)
+                        
+                            # Create the C-shaped highlight
+                            c_shape_path = ring_path.subtracted(mask_rect)
+                        
+                            # Now create the stroke and color parts within the C-shape
+                            # Outer part (stroke area) - from outer_radius to stroke boundary
+                            stroke_outer_radius = outer_radius
+                            stroke_inner_radius = strand.width / 2 + strand.stroke_width
+                        
+                            stroke_outer_circle = QPainterPath()
+                            stroke_outer_circle.addEllipse(center, stroke_outer_radius, stroke_outer_radius)
+                            stroke_inner_circle = QPainterPath()
+                            stroke_inner_circle.addEllipse(center, stroke_inner_radius, stroke_inner_radius)
+                            stroke_ring = stroke_outer_circle.subtracted(stroke_inner_circle)
+                            stroke_c_shape = stroke_ring.subtracted(mask_rect)
+                        
+                            # Inner part (color area) - from stroke boundary to inner_radius
+                            color_outer_radius = strand.width / 2 + strand.stroke_width
+                            color_inner_radius = inner_radius
+                        
+                            color_outer_circle = QPainterPath()
+                            color_outer_circle.addEllipse(center, color_outer_radius, color_outer_radius)
+                            color_inner_circle = QPainterPath()
+                            color_inner_circle.addEllipse(center, color_inner_radius, color_inner_radius)
+                            color_ring = color_outer_circle.subtracted(color_inner_circle)
+                            color_c_shape = color_ring.subtracted(mask_rect)
+                        
+                            # Draw the stroke part in red (or transparent red if circle stroke is transparent)
+                            painter.setPen(Qt.NoPen)
+                        
+                            # Check if this circle has transparent stroke - skip drawing if transparent
+                            if hasattr(strand, 'start_circle_stroke_color') and hasattr(strand, 'end_circle_stroke_color'):
+                                circle_stroke_color = strand.start_circle_stroke_color if i == 0 else strand.end_circle_stroke_color
+                                if circle_stroke_color and circle_stroke_color.alpha() == 0:
+                                    # Skip drawing C-shape for transparent circles
+                                    continue
+                                else:
+                                    # Use highlight color for normal circles
+                                    painter.setBrush(self.highlight_color)
+                            else:
+                                # Default to highlight color if properties don't exist
                                 painter.setBrush(self.highlight_color)
-                        else:
-                            # Default to highlight color if properties don't exist
-                            painter.setBrush(self.highlight_color)
                             
-                        painter.drawPath(stroke_c_shape)
+                            painter.drawPath(stroke_c_shape)
                         
-                        # Draw the color part in transparent 
-                        painter.setBrush(QColor(0, 0, 0, 0))
-                        painter.drawPath(color_c_shape)
+                            # Draw the color part in transparent 
+                            painter.setBrush(QColor(0, 0, 0, 0))
+                            painter.drawPath(color_c_shape)
                         
-                        # Restore painter state
-                        painter.restore()
+                            # Restore painter state
+                        finally:
+                            painter.restore()
                         
                         # Debug logging for C-shape completion
                         pass
@@ -3646,82 +3654,84 @@ class StrandDrawingCanvas(QWidget):
                 # For masked strands, just draw normally
                 masked_strand = strand
                 painter.save()
-                painter.setRenderHint(QPainter.Antialiasing)
-                
-                # Draw the regular masked strand
-                # Skip painter setup since it's already configured in the main painting loop
-                masked_strand.draw(painter, skip_painter_setup=True)
-                
-                painter.restore()
+                try:
+                    painter.setRenderHint(QPainter.Antialiasing)
+
+                    # Draw the regular masked strand
+                    # Skip painter setup since it's already configured in the main painting loop
+                    masked_strand.draw(painter, skip_painter_setup=True)
+                finally:
+                    painter.restore()
             else:
                 # For regular strands, draw normally without modifying is_selected state
                 painter.save()
-                
-                # Draw the strand without changing its selection state to prevent flickering
-                # Skip painter setup since it's already configured in the main painting loop
-                strand.draw(painter, skip_painter_setup=True)
-                
-                painter.restore()
+                try:
+                    # Draw the strand without changing its selection state to prevent flickering
+                    # Skip painter setup since it's already configured in the main painting loop
+                    strand.draw(painter, skip_painter_setup=True)
+                finally:
+                    painter.restore()
         except RuntimeError as e:
             print(f"[StrandDrawingCanvas] RuntimeError in draw_moving_strand: {e}")
             return
 
     def draw_highlighted_masked_strand(self, painter, masked_strand):
         painter.save()
-        painter.setRenderHint(QPainter.Antialiasing)
+        try:
+            painter.setRenderHint(QPainter.Antialiasing)
 
-        # Check if component strands exist before accessing them
-        if not masked_strand.first_selected_strand or not masked_strand.second_selected_strand:
-            painter.restore()
-            return
+            # Check if component strands exist before accessing them
+            if not masked_strand.first_selected_strand or not masked_strand.second_selected_strand:
+                return
 
-        # First check if there's an actual intersection between the strands
-        path1 = masked_strand.get_stroked_path_for_strand(masked_strand.first_selected_strand)
-        path2 = masked_strand.get_stroked_path_for_strand(masked_strand.second_selected_strand)
-        intersection_path = path1.intersected(path2)
+            # First check if there's an actual intersection between the strands
+            path1 = masked_strand.get_stroked_path_for_strand(masked_strand.first_selected_strand)
+            path2 = masked_strand.get_stroked_path_for_strand(masked_strand.second_selected_strand)
+            intersection_path = path1.intersected(path2)
         
-        # Initialize shadow path data to prevent 'all_shadow_paths' errors
-        if hasattr(masked_strand, 'initialize_shadow_path'):
-            masked_strand.initialize_shadow_path()
+            # Initialize shadow path data to prevent 'all_shadow_paths' errors
+            if hasattr(masked_strand, 'initialize_shadow_path'):
+                masked_strand.initialize_shadow_path()
         
-        # Log the selection state for debugging
-        pass
+            # Log the selection state for debugging
+            pass
         
-        # Only proceed with drawing if there's an actual intersection
-        if not intersection_path.isEmpty():
-            # Always draw the masked strand normally first
-            # Skip painter setup since it's already configured in the main drawing loop
-            masked_strand.draw(painter, skip_painter_setup=True)
+            # Only proceed with drawing if there's an actual intersection
+            if not intersection_path.isEmpty():
+                # Always draw the masked strand normally first
+                # Skip painter setup since it's already configured in the main drawing loop
+                masked_strand.draw(painter, skip_painter_setup=True)
             
-            # Determine if we should draw highlight
-            should_draw_highlight = masked_strand.is_selected
+                # Determine if we should draw highlight
+                should_draw_highlight = masked_strand.is_selected
             
-            # Check if we're in active movement (any type)
-            if hasattr(self, 'current_mode') and self.current_mode.__class__.__name__ == 'MoveMode':
-                move_mode = self.current_mode
+                # Check if we're in active movement (any type)
+                if hasattr(self, 'current_mode') and self.current_mode.__class__.__name__ == 'MoveMode':
+                    move_mode = self.current_mode
                 
-                # Only skip highlight during active movement, not after movement is complete
-                if move_mode.is_moving and move_mode.affected_strand == masked_strand:
-                    pass
-                    # Even during movement, highlight if this strand is selected
-                    # This ensures proper visual feedback during movement
-                    if masked_strand.is_selected:
+                    # Only skip highlight during active movement, not after movement is complete
+                    if move_mode.is_moving and move_mode.affected_strand == masked_strand:
                         pass
-                        should_draw_highlight = True
-                    else:
-                        pass
-                        should_draw_highlight = False
+                        # Even during movement, highlight if this strand is selected
+                        # This ensures proper visual feedback during movement
+                        if masked_strand.is_selected:
+                            pass
+                            should_draw_highlight = True
+                        else:
+                            pass
+                            should_draw_highlight = False
             
-            # Draw highlight if appropriate
-            if should_draw_highlight:
-                pass
-                masked_strand.draw_highlight(painter)
+                # Draw highlight if appropriate
+                if should_draw_highlight:
+                    pass
+                    masked_strand.draw_highlight(painter)
+                else:
+                    pass
             else:
                 pass
-        else:
-            pass
 
-        painter.restore()
+        finally:
+            painter.restore()
 
     def set_layer_panel(self, layer_panel):
         """Set the layer panel and connect signals."""
@@ -5931,9 +5941,11 @@ class StrandDrawingCanvas(QWidget):
         buffer_painter.end()
 
         painter.save()
-        painter.resetTransform()
-        painter.drawImage(self.rect(), buffer, buffer.rect())
-        painter.restore()
+        try:
+            painter.resetTransform()
+            painter.drawImage(self.rect(), buffer, buffer.rect())
+        finally:
+            painter.restore()
 
     def is_strand_in_selected_family(self, strand):
         """Centralized family check for move_selected_only and show_cp_selected_only.
@@ -5998,131 +6010,283 @@ class StrandDrawingCanvas(QWidget):
             painter (QPainter): The painter used for drawing.
         """
         painter.save()
-        painter.setRenderHint(QPainter.Antialiasing)
-        control_point_radius = 11 * 1.333  # Scaled by 1.333 to enlarge control point shapes
+        try:
+            painter.setRenderHint(QPainter.Antialiasing)
+            control_point_radius = 11 * 1.333  # Scaled by 1.333 to enlarge control point shapes
 
-        stroke_color = QColor('black')
+            stroke_color = QColor('black')
 
-        # Check MoveMode state and settings
-        in_move_mode = hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode)
-        moving_control_point = in_move_mode and getattr(self.current_mode, 'is_moving_control_point', False)
-        moving_strand_point = in_move_mode and getattr(self.current_mode, 'is_moving_strand_point', False) # Keep this check
-        affected_strand = getattr(self.current_mode, 'affected_strand', None) if in_move_mode else None
-        moving_side = getattr(self.current_mode, 'moving_side', None) if in_move_mode else None # Added to access moving_side
+            # Check MoveMode state and settings
+            in_move_mode = hasattr(self, 'current_mode') and isinstance(self.current_mode, MoveMode)
+            moving_control_point = in_move_mode and getattr(self.current_mode, 'is_moving_control_point', False)
+            moving_strand_point = in_move_mode and getattr(self.current_mode, 'is_moving_strand_point', False) # Keep this check
+            affected_strand = getattr(self.current_mode, 'affected_strand', None) if in_move_mode else None
+            moving_side = getattr(self.current_mode, 'moving_side', None) if in_move_mode else None # Added to access moving_side
 
-        draw_only_setting_on = False
-        if in_move_mode and hasattr(self.current_mode, 'draw_only_affected_strand'):
-            draw_only_setting_on = self.current_mode.draw_only_affected_strand
+            draw_only_setting_on = False
+            if in_move_mode and hasattr(self.current_mode, 'draw_only_affected_strand'):
+                draw_only_setting_on = self.current_mode.draw_only_affected_strand
 
-        # Get the list of truly moving strands (includes main strand + attached strands)
-        truly_moving_strands = getattr(self, 'truly_moving_strands', []) if in_move_mode else []
+            # Get the list of truly moving strands (includes main strand + attached strands)
+            truly_moving_strands = getattr(self, 'truly_moving_strands', []) if in_move_mode else []
         
-        # Fallback to affected_strand if truly_moving_strands is empty
-        if draw_only_setting_on and not truly_moving_strands and affected_strand:
-            truly_moving_strands = [affected_strand]
+            # Fallback to affected_strand if truly_moving_strands is empty
+            if draw_only_setting_on and not truly_moving_strands and affected_strand:
+                truly_moving_strands = [affected_strand]
 
-        # --- Find connected strands if moving an endpoint with Draw Only ON ---
-        connected_strands_at_moving_point = set()
-        if draw_only_setting_on and moving_strand_point and affected_strand:
-            # When "drag only affected strand" is enabled, we should NOT show control points
-            # for strands that are just nearby. Only show for truly connected strands.
-            # For now, don't add any strands to connected_strands_at_moving_point
-            # This will only show control points for the affected strand itself
-            pass
-        # --- End finding connected strands ---
+            # --- Find connected strands if moving an endpoint with Draw Only ON ---
+            connected_strands_at_moving_point = set()
+            if draw_only_setting_on and moving_strand_point and affected_strand:
+                # When "drag only affected strand" is enabled, we should NOT show control points
+                # for strands that are just nearby. Only show for truly connected strands.
+                # For now, don't add any strands to connected_strands_at_moving_point
+                # This will only show control points for the affected strand itself
+                pass
+            # --- End finding connected strands ---
 
-        # Iterate through all strands
-        for strand in self.strands:
-            # Skip masked strands and strands without control points
-            if isinstance(strand, MaskedStrand) or not hasattr(strand, 'control_point1') or not hasattr(strand, 'control_point2'):
-                continue
-            if strand.control_point1 is None or strand.control_point2 is None:
-                continue
-
-            # Skip hidden strands - they should not show control points
-            if getattr(strand, 'is_hidden', False):
-                continue
-
-            # Locked layers cannot be manipulated - hide their control handles
-            if self._is_layer_locked(strand):
-                continue
-
-            # Family filter: hide CPs for non-family strands when either toggle is active
-            if getattr(self, 'show_cp_selected_only', False) or (getattr(self, 'move_selected_only', False) and in_move_mode):
-                if not self.is_strand_in_selected_family(strand):
+            # Iterate through all strands
+            for strand in self.strands:
+                # Skip masked strands and strands without control points
+                if isinstance(strand, MaskedStrand) or not hasattr(strand, 'control_point1') or not hasattr(strand, 'control_point2'):
+                    continue
+                if strand.control_point1 is None or strand.control_point2 is None:
                     continue
 
-            # --- Determine if we should skip drawing CPs for this strand ---
-            should_skip = False
-            if moving_control_point or moving_strand_point:
-                is_affected = strand == affected_strand
-                allowed_by_draw_only = draw_only_setting_on and strand in truly_moving_strands
-                should_skip = not (is_affected or allowed_by_draw_only)
-            strand_name = getattr(strand, 'layer_name', None) or getattr(strand, 'set_number', None) or getattr(strand, 'layer', None)
-            if moving_control_point or moving_strand_point:
-                _write_selection_debug(
-                    self.selection_debug_log_path,
-                    self.selection_debug_logging_enabled,
-                    (
-                        f"draw_control_points loop strand={strand_name or 'unknown'} "
-                        f"moving_control_point={moving_control_point} moving_strand_point={moving_strand_point} "
-                        f"draw_only_setting_on={draw_only_setting_on} should_skip={should_skip} "
-                        f"is_affected={strand == affected_strand} moving_side={moving_side}"
-                    )
-                )
+                # Skip hidden strands - they should not show control points
+                if getattr(strand, 'is_hidden', False):
+                    continue
 
-            if should_skip:
+                # Locked layers cannot be manipulated - hide their control handles
+                if self._is_layer_locked(strand):
+                    continue
+
+                # Family filter: hide CPs for non-family strands when either toggle is active
+                if getattr(self, 'show_cp_selected_only', False) or (getattr(self, 'move_selected_only', False) and in_move_mode):
+                    if not self.is_strand_in_selected_family(strand):
+                        continue
+
+                # --- Determine if we should skip drawing CPs for this strand ---
+                should_skip = False
+                if moving_control_point or moving_strand_point:
+                    is_affected = strand == affected_strand
+                    allowed_by_draw_only = draw_only_setting_on and strand in truly_moving_strands
+                    should_skip = not (is_affected or allowed_by_draw_only)
+                strand_name = getattr(strand, 'layer_name', None) or getattr(strand, 'set_number', None) or getattr(strand, 'layer', None)
                 if moving_control_point or moving_strand_point:
                     _write_selection_debug(
                         self.selection_debug_log_path,
                         self.selection_debug_logging_enabled,
-                        f"Skipping control point draw for strand={strand_name or 'unknown'} because should_skip=True"
+                        (
+                            f"draw_control_points loop strand={strand_name or 'unknown'} "
+                            f"moving_control_point={moving_control_point} moving_strand_point={moving_strand_point} "
+                            f"draw_only_setting_on={draw_only_setting_on} should_skip={should_skip} "
+                            f"is_affected={strand == affected_strand} moving_side={moving_side}"
+                        )
                     )
-                continue
-            # --- End skip logic ---
 
-            # Draw All Points for Affected Strand (when moving CP with Draw Only ON)
-            if draw_only_setting_on and moving_control_point and strand == affected_strand:
-                if moving_control_point:
+                if should_skip:
+                    if moving_control_point or moving_strand_point:
+                        _write_selection_debug(
+                            self.selection_debug_log_path,
+                            self.selection_debug_logging_enabled,
+                            f"Skipping control point draw for strand={strand_name or 'unknown'} because should_skip=True"
+                        )
+                    continue
+                # --- End skip logic ---
+
+                # Draw All Points for Affected Strand (when moving CP with Draw Only ON)
+                if draw_only_setting_on and moving_control_point and strand == affected_strand:
+                    if moving_control_point:
+                        _write_selection_debug(
+                            self.selection_debug_log_path,
+                            self.selection_debug_logging_enabled,
+                            (
+                                f"Drawing full control point set for affected strand={strand_name or 'unknown'} "
+                                f"with draw_only_setting_on=True"
+                            )
+                        )
+                    # --- Start Replacement: Draw ALL control points/lines for the affected strand ---
+                    # Check if small control points should be visible
+                    center_is_locked = getattr(strand, 'control_point_center_locked', False)
+                    third_cp_enabled = getattr(self, 'enable_third_control_point', False)
+                    triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
+                
+                    control_line_pen = self._create_control_line_pen()
+                    painter.setPen(control_line_pen)
+                
+                    # Draw lines to small control points (only after triangle has moved)
+                    if triangle_has_moved and (third_cp_enabled or center_is_locked):
+                        painter.drawLine(strand.start, strand.control_point1)
+                        # Use points_are_close for robustness
+                        if self.points_are_close(strand.control_point2, strand.start, tolerance=0.1):
+                             painter.drawLine(strand.start, strand.control_point2)
+                        else:
+                             painter.drawLine(strand.end, strand.control_point2)
+
+                        # Draw center control point lines if enabled and triangle has moved
+                        if triangle_has_moved and self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+                            painter.drawLine(strand.control_point_center, strand.control_point1)
+                            painter.drawLine(strand.control_point_center, strand.control_point2)
+
+                    # Draw control points with stroke
+                    stroke_pen = QPen(stroke_color, 5)
+                    control_point_pen = QPen(QColor('green'), 1)
+                    painter.setBrush(QBrush(QColor('green')))
+                
+                    # Only draw small control points when:
+                    # - Third control point is enabled AND center has been manually moved (locked), OR
+                    # - Third control point is disabled AND small control points are not both at the start
+                    center_is_locked = getattr(strand, 'control_point_center_locked', False)
+                    third_cp_enabled = getattr(self, 'enable_third_control_point', False)
+                    cp1_at_start = (abs(strand.control_point1.x() - strand.start.x()) < 1.0 and 
+                                    abs(strand.control_point1.y() - strand.start.y()) < 1.0)
+                    cp2_at_start = (abs(strand.control_point2.x() - strand.start.x()) < 1.0 and 
+                                    abs(strand.control_point2.y() - strand.start.y()) < 1.0)
+                    # Allow Shift to force show small control points even when both are at start
+                    try:
+                        from PyQt5.QtWidgets import QApplication
+                        shift_held = QApplication.keyboardModifiers() & Qt.ShiftModifier
+                    except Exception:
+                        shift_held = False
+
+                    show_small_cps = (
+                        third_cp_enabled or  # Always show small control points when third CP is enabled
+                        (not third_cp_enabled and (shift_held or not (cp1_at_start and cp2_at_start)))
+                    )
+                
+                    # Initially only show the triangle, show other control points after triangle moves
+                    show_circle_cp = triangle_has_moved and show_small_cps
+                    show_triangle_cp = True  # Always show triangle when control points are enabled
+
+                    # Draw control_point2 (circle) - only after triangle has moved
+                    if show_circle_cp:
+
+                        painter.setPen(stroke_pen)
+                        painter.setBrush(Qt.NoBrush)
+                        painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
+                        painter.setPen(control_point_pen)
+                        painter.setBrush(QBrush(QColor('green')))
+                        painter.drawEllipse(strand.control_point2, control_point_radius - 1, control_point_radius - 1)
+                        # Draw inner circle with strand's color
+                        inner_radius = (control_point_radius - 1) * 0.5
+                        painter.setPen(Qt.NoPen)
+                        painter.setBrush(QBrush(strand.color))
+                        painter.drawEllipse(strand.control_point2, inner_radius, inner_radius)
+
+                    # Draw control_point1 (triangle) - always visible initially
+                    if show_triangle_cp:
+
+                        triangle = QPolygonF()
+                        center_x = strand.control_point1.x()
+                        # Adjust y slightly for better visual centering of triangle
+                        center_y = strand.control_point1.y() + 1.06 * 1.333
+
+                        # Create triangle vertices
+                        angle1 = math.radians(270)
+                        triangle.append(QPointF(
+                            center_x + control_point_radius*1.06 * math.cos(angle1),
+                            center_y + control_point_radius*1.06  * math.sin(angle1)
+                        ))
+                        angle2 = math.radians(30)
+                        triangle.append(QPointF(
+                            center_x + control_point_radius*1.06  * math.cos(angle2),
+                            center_y + control_point_radius*1.06  * math.sin(angle2)
+                        ))
+                        angle3 = math.radians(150)
+                        triangle.append(QPointF(
+                            center_x + control_point_radius*1.06  * math.cos(angle3),
+                            center_y + control_point_radius*1.06  * math.sin(angle3)
+                        ))
+
+                        # Draw stroke
+                        painter.setPen(stroke_pen)
+                        painter.setBrush(Qt.NoBrush)
+                        painter.drawPolygon(triangle)
+
+                        # Draw fill
+                        painter.setPen(control_point_pen)
+                        painter.setBrush(QBrush(QColor('green')))
+
+                        # Create smaller triangle for fill
+                        filled_triangle = QPolygonF()
+                        scale_factor = (control_point_radius  - 1.06 ) / (control_point_radius* 1.06)
+                        for point in triangle:
+                            vec_x = point.x() - center_x
+                            vec_y = point.y() - center_y
+                            filled_triangle.append(QPointF(
+                                center_x + vec_x * scale_factor,
+                                center_y + vec_y * scale_factor
+                            ))
+                        painter.drawPolygon(filled_triangle)
+                        # Draw inner triangle with strand's color
+                        inner_triangle = QPolygonF()
+                        for pt in filled_triangle:
+                            dx = pt.x() - center_x
+                            dy = pt.y() - center_y
+                            inner_triangle.append(QPointF(center_x + dx * 0.5, center_y + dy * 0.5))
+                        painter.setPen(Qt.NoPen)
+                        painter.setBrush(QBrush(strand.color))
+                        painter.drawPolygon(inner_triangle)
+
+                    # Draw control_point_center (square) if enabled and triangle has moved
+                    if triangle_has_moved and self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+                        # Draw stroke square
+                        painter.setPen(stroke_pen)
+                        painter.setBrush(Qt.NoBrush)
+                        square_size = control_point_radius * 2 * 0.7
+                        square_rect = QRectF(
+                            strand.control_point_center.x() - (control_point_radius * 0.7),
+                            strand.control_point_center.y() - (control_point_radius * 0.7),
+                            square_size,
+                            square_size
+                        )
+                        painter.drawRect(square_rect)
+                        # Draw fill
+                        painter.setPen(control_point_pen)
+                        painter.setBrush(QBrush(QColor('green')))
+                        inner_size = square_size - 2
+                        inner_rect = QRectF(
+                            strand.control_point_center.x() - ((control_point_radius * 0.7) - 1),
+                            strand.control_point_center.y() - ((control_point_radius * 0.7) - 1),
+                            inner_size,
+                            inner_size
+                        )
+                        painter.drawRect(inner_rect)
+                        # Draw inner square with strand's color
+                        inner_square_size = inner_size * 0.5
+                        inner_square_rect = QRectF(
+                            strand.control_point_center.x() - inner_square_size / 2,
+                            strand.control_point_center.y() - inner_square_size / 2,
+                            inner_square_size,
+                            inner_square_size
+                        )
+                        painter.setPen(Qt.NoPen)
+                        painter.setBrush(QBrush(strand.color))
+                        painter.drawRect(inner_square_rect)
+                    # --- End Replacement ---
+                
+                    # Draw curvature bias controls if enabled (for affected strand)
+                    if (hasattr(strand, 'bias_control') and strand.bias_control and 
+                        hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control):
+                        strand.bias_control.draw_bias_controls(painter, strand)
+
+                    continue # Move to the next strand after drawing the points for the affected strand
+
+                # --- Normal Drawing Logic ---
+                # Executed when:
+                # 1. "Draw only" is OFF, regardless of movement.
+                # 2. "Draw only" is ON, but we are NOT moving.
+                # 3. "Draw only" is ON, we ARE moving a strand point, and this IS the affected strand OR a connected strand.
+                if moving_control_point or moving_strand_point:
                     _write_selection_debug(
                         self.selection_debug_log_path,
                         self.selection_debug_logging_enabled,
                         (
-                            f"Drawing full control point set for affected strand={strand_name or 'unknown'} "
-                            f"with draw_only_setting_on=True"
+                            f"Drawing normal control points for strand={strand_name or 'unknown'} "
+                            f"(draw_only_setting_on={draw_only_setting_on})"
                         )
                     )
-                # --- Start Replacement: Draw ALL control points/lines for the affected strand ---
                 # Check if small control points should be visible
-                center_is_locked = getattr(strand, 'control_point_center_locked', False)
-                third_cp_enabled = getattr(self, 'enable_third_control_point', False)
-                triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
-                
-                control_line_pen = self._create_control_line_pen()
-                painter.setPen(control_line_pen)
-                
-                # Draw lines to small control points (only after triangle has moved)
-                if triangle_has_moved and (third_cp_enabled or center_is_locked):
-                    painter.drawLine(strand.start, strand.control_point1)
-                    # Use points_are_close for robustness
-                    if self.points_are_close(strand.control_point2, strand.start, tolerance=0.1):
-                         painter.drawLine(strand.start, strand.control_point2)
-                    else:
-                         painter.drawLine(strand.end, strand.control_point2)
-
-                    # Draw center control point lines if enabled and triangle has moved
-                    if triangle_has_moved and self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
-                        painter.drawLine(strand.control_point_center, strand.control_point1)
-                        painter.drawLine(strand.control_point_center, strand.control_point2)
-
-                # Draw control points with stroke
-                stroke_pen = QPen(stroke_color, 5)
-                control_point_pen = QPen(QColor('green'), 1)
-                painter.setBrush(QBrush(QColor('green')))
-                
-                # Only draw small control points when:
-                # - Third control point is enabled AND center has been manually moved (locked), OR
-                # - Third control point is disabled AND small control points are not both at the start
                 center_is_locked = getattr(strand, 'control_point_center_locked', False)
                 third_cp_enabled = getattr(self, 'enable_third_control_point', False)
                 cp1_at_start = (abs(strand.control_point1.x() - strand.start.x()) < 1.0 and 
@@ -6136,14 +6300,47 @@ class StrandDrawingCanvas(QWidget):
                 except Exception:
                     shift_held = False
 
+                # Check if the triangle has been moved from initial position
+                triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
+            
                 show_small_cps = (
                     third_cp_enabled or  # Always show small control points when third CP is enabled
                     (not third_cp_enabled and (shift_held or not (cp1_at_start and cp2_at_start)))
                 )
-                
+            
                 # Initially only show the triangle, show other control points after triangle moves
                 show_circle_cp = triangle_has_moved and show_small_cps
                 show_triangle_cp = True  # Always show triangle when control points are enabled
+            
+                # Check if the triangle has been moved from initial position
+                triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
+            
+                # Initially only show the triangle, show other control points after triangle moves
+                show_circle_cp = triangle_has_moved and show_small_cps
+                show_triangle_cp = True  # Always show triangle when control points are enabled
+            
+                # Draw control point lines - only after triangle has moved
+                control_line_pen = self._create_control_line_pen()
+                painter.setPen(control_line_pen)
+            
+                if triangle_has_moved and show_small_cps:
+                    painter.drawLine(strand.start, strand.control_point1)
+                    if self.points_are_close(strand.control_point2, strand.start, tolerance=0.1):
+                        # print("control_point2 is close to start") # Keep debug print?
+                        painter.drawLine(strand.start, strand.control_point2)
+                    else:
+                        # print("control_point2 is not close to start") # Keep debug print?
+                        painter.drawLine(strand.end, strand.control_point2)
+
+                    # Draw center control point lines if enabled and triangle has moved
+                    if triangle_has_moved and self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
+                        painter.drawLine(strand.control_point_center, strand.control_point1)
+                        painter.drawLine(strand.control_point_center, strand.control_point2)
+
+                # Draw control points with stroke
+                stroke_pen = QPen(stroke_color, 5)
+                control_point_pen = QPen(QColor('green'), 1)
+                painter.setBrush(QBrush(QColor('green')))
 
                 # Draw control_point2 (circle) - only after triangle has moved
                 if show_circle_cp:
@@ -6151,6 +6348,7 @@ class StrandDrawingCanvas(QWidget):
                     painter.setPen(stroke_pen)
                     painter.setBrush(Qt.NoBrush)
                     painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
+
                     painter.setPen(control_point_pen)
                     painter.setBrush(QBrush(QColor('green')))
                     painter.drawEllipse(strand.control_point2, control_point_radius - 1, control_point_radius - 1)
@@ -6165,8 +6363,7 @@ class StrandDrawingCanvas(QWidget):
 
                     triangle = QPolygonF()
                     center_x = strand.control_point1.x()
-                    # Adjust y slightly for better visual centering of triangle
-                    center_y = strand.control_point1.y() + 1.06 * 1.333
+                    center_y = strand.control_point1.y()+1.06
 
                     # Create triangle vertices
                     angle1 = math.radians(270)
@@ -6220,7 +6417,7 @@ class StrandDrawingCanvas(QWidget):
                     # Draw stroke square
                     painter.setPen(stroke_pen)
                     painter.setBrush(Qt.NoBrush)
-                    square_size = control_point_radius * 2 * 0.7
+                    square_size = control_point_radius * 2 * 0.7  # Made 0.618 times smaller
                     square_rect = QRectF(
                         strand.control_point_center.x() - (control_point_radius * 0.7),
                         strand.control_point_center.y() - (control_point_radius * 0.7),
@@ -6228,7 +6425,8 @@ class StrandDrawingCanvas(QWidget):
                         square_size
                     )
                     painter.drawRect(square_rect)
-                    # Draw fill
+
+                    # Draw fill with slightly smaller square
                     painter.setPen(control_point_pen)
                     painter.setBrush(QBrush(QColor('green')))
                     inner_size = square_size - 2
@@ -6250,198 +6448,14 @@ class StrandDrawingCanvas(QWidget):
                     painter.setPen(Qt.NoPen)
                     painter.setBrush(QBrush(strand.color))
                     painter.drawRect(inner_square_rect)
-                # --- End Replacement ---
-                
-                # Draw curvature bias controls if enabled (for affected strand)
+            
+                # Draw curvature bias controls if enabled
                 if (hasattr(strand, 'bias_control') and strand.bias_control and 
                     hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control):
                     strand.bias_control.draw_bias_controls(painter, strand)
 
-                continue # Move to the next strand after drawing the points for the affected strand
-
-            # --- Normal Drawing Logic ---
-            # Executed when:
-            # 1. "Draw only" is OFF, regardless of movement.
-            # 2. "Draw only" is ON, but we are NOT moving.
-            # 3. "Draw only" is ON, we ARE moving a strand point, and this IS the affected strand OR a connected strand.
-            if moving_control_point or moving_strand_point:
-                _write_selection_debug(
-                    self.selection_debug_log_path,
-                    self.selection_debug_logging_enabled,
-                    (
-                        f"Drawing normal control points for strand={strand_name or 'unknown'} "
-                        f"(draw_only_setting_on={draw_only_setting_on})"
-                    )
-                )
-            # Check if small control points should be visible
-            center_is_locked = getattr(strand, 'control_point_center_locked', False)
-            third_cp_enabled = getattr(self, 'enable_third_control_point', False)
-            cp1_at_start = (abs(strand.control_point1.x() - strand.start.x()) < 1.0 and 
-                            abs(strand.control_point1.y() - strand.start.y()) < 1.0)
-            cp2_at_start = (abs(strand.control_point2.x() - strand.start.x()) < 1.0 and 
-                            abs(strand.control_point2.y() - strand.start.y()) < 1.0)
-            # Allow Shift to force show small control points even when both are at start
-            try:
-                from PyQt5.QtWidgets import QApplication
-                shift_held = QApplication.keyboardModifiers() & Qt.ShiftModifier
-            except Exception:
-                shift_held = False
-
-            # Check if the triangle has been moved from initial position
-            triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
-            
-            show_small_cps = (
-                third_cp_enabled or  # Always show small control points when third CP is enabled
-                (not third_cp_enabled and (shift_held or not (cp1_at_start and cp2_at_start)))
-            )
-            
-            # Initially only show the triangle, show other control points after triangle moves
-            show_circle_cp = triangle_has_moved and show_small_cps
-            show_triangle_cp = True  # Always show triangle when control points are enabled
-            
-            # Check if the triangle has been moved from initial position
-            triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
-            
-            # Initially only show the triangle, show other control points after triangle moves
-            show_circle_cp = triangle_has_moved and show_small_cps
-            show_triangle_cp = True  # Always show triangle when control points are enabled
-            
-            # Draw control point lines - only after triangle has moved
-            control_line_pen = self._create_control_line_pen()
-            painter.setPen(control_line_pen)
-            
-            if triangle_has_moved and show_small_cps:
-                painter.drawLine(strand.start, strand.control_point1)
-                if self.points_are_close(strand.control_point2, strand.start, tolerance=0.1):
-                    # print("control_point2 is close to start") # Keep debug print?
-                    painter.drawLine(strand.start, strand.control_point2)
-                else:
-                    # print("control_point2 is not close to start") # Keep debug print?
-                    painter.drawLine(strand.end, strand.control_point2)
-
-                # Draw center control point lines if enabled and triangle has moved
-                if triangle_has_moved and self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
-                    painter.drawLine(strand.control_point_center, strand.control_point1)
-                    painter.drawLine(strand.control_point_center, strand.control_point2)
-
-            # Draw control points with stroke
-            stroke_pen = QPen(stroke_color, 5)
-            control_point_pen = QPen(QColor('green'), 1)
-            painter.setBrush(QBrush(QColor('green')))
-
-            # Draw control_point2 (circle) - only after triangle has moved
-            if show_circle_cp:
-
-                painter.setPen(stroke_pen)
-                painter.setBrush(Qt.NoBrush)
-                painter.drawEllipse(strand.control_point2, control_point_radius, control_point_radius)
-
-                painter.setPen(control_point_pen)
-                painter.setBrush(QBrush(QColor('green')))
-                painter.drawEllipse(strand.control_point2, control_point_radius - 1, control_point_radius - 1)
-                # Draw inner circle with strand's color
-                inner_radius = (control_point_radius - 1) * 0.5
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(QBrush(strand.color))
-                painter.drawEllipse(strand.control_point2, inner_radius, inner_radius)
-
-            # Draw control_point1 (triangle) - always visible initially
-            if show_triangle_cp:
-
-                triangle = QPolygonF()
-                center_x = strand.control_point1.x()
-                center_y = strand.control_point1.y()+1.06
-
-                # Create triangle vertices
-                angle1 = math.radians(270)
-                triangle.append(QPointF(
-                    center_x + control_point_radius*1.06 * math.cos(angle1),
-                    center_y + control_point_radius*1.06  * math.sin(angle1)
-                ))
-                angle2 = math.radians(30)
-                triangle.append(QPointF(
-                    center_x + control_point_radius*1.06  * math.cos(angle2),
-                    center_y + control_point_radius*1.06  * math.sin(angle2)
-                ))
-                angle3 = math.radians(150)
-                triangle.append(QPointF(
-                    center_x + control_point_radius*1.06  * math.cos(angle3),
-                    center_y + control_point_radius*1.06  * math.sin(angle3)
-                ))
-
-                # Draw stroke
-                painter.setPen(stroke_pen)
-                painter.setBrush(Qt.NoBrush)
-                painter.drawPolygon(triangle)
-
-                # Draw fill
-                painter.setPen(control_point_pen)
-                painter.setBrush(QBrush(QColor('green')))
-
-                # Create smaller triangle for fill
-                filled_triangle = QPolygonF()
-                scale_factor = (control_point_radius  - 1.06 ) / (control_point_radius* 1.06)
-                for point in triangle:
-                    vec_x = point.x() - center_x
-                    vec_y = point.y() - center_y
-                    filled_triangle.append(QPointF(
-                        center_x + vec_x * scale_factor,
-                        center_y + vec_y * scale_factor
-                    ))
-                painter.drawPolygon(filled_triangle)
-                # Draw inner triangle with strand's color
-                inner_triangle = QPolygonF()
-                for pt in filled_triangle:
-                    dx = pt.x() - center_x
-                    dy = pt.y() - center_y
-                    inner_triangle.append(QPointF(center_x + dx * 0.5, center_y + dy * 0.5))
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(QBrush(strand.color))
-                painter.drawPolygon(inner_triangle)
-
-            # Draw control_point_center (square) if enabled and triangle has moved
-            if triangle_has_moved and self.enable_third_control_point and hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
-                # Draw stroke square
-                painter.setPen(stroke_pen)
-                painter.setBrush(Qt.NoBrush)
-                square_size = control_point_radius * 2 * 0.7  # Made 0.618 times smaller
-                square_rect = QRectF(
-                    strand.control_point_center.x() - (control_point_radius * 0.7),
-                    strand.control_point_center.y() - (control_point_radius * 0.7),
-                    square_size,
-                    square_size
-                )
-                painter.drawRect(square_rect)
-
-                # Draw fill with slightly smaller square
-                painter.setPen(control_point_pen)
-                painter.setBrush(QBrush(QColor('green')))
-                inner_size = square_size - 2
-                inner_rect = QRectF(
-                    strand.control_point_center.x() - ((control_point_radius * 0.7) - 1),
-                    strand.control_point_center.y() - ((control_point_radius * 0.7) - 1),
-                    inner_size,
-                    inner_size
-                )
-                painter.drawRect(inner_rect)
-                # Draw inner square with strand's color
-                inner_square_size = inner_size * 0.5
-                inner_square_rect = QRectF(
-                    strand.control_point_center.x() - inner_square_size / 2,
-                    strand.control_point_center.y() - inner_square_size / 2,
-                    inner_square_size,
-                    inner_square_size
-                )
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(QBrush(strand.color))
-                painter.drawRect(inner_square_rect)
-            
-            # Draw curvature bias controls if enabled
-            if (hasattr(strand, 'bias_control') and strand.bias_control and 
-                hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control):
-                strand.bias_control.draw_bias_controls(painter, strand)
-
-        painter.restore()
+        finally:
+            painter.restore()
 
     # Add a setter for enable_third_control_point to handle resetting control points
     @property

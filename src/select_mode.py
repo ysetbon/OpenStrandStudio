@@ -105,37 +105,39 @@ class SelectMode(QObject):
             return
         if self.hovered_strand:
             painter.save()
-            RenderUtils.setup_painter(painter, enable_high_quality=True)
+            try:
+                RenderUtils.setup_painter(painter, enable_high_quality=True)
 
-            strand = self.hovered_strand
+                strand = self.hovered_strand
 
-            # For MaskedStrand, use the actual mask path
-            if isinstance(strand, MaskedStrand):
-                # get_mask_path() returns the actual visible mask shape
-                highlight_path = strand.get_mask_path()
-            else:
-                # For regular strands, create a stroked path
-                path = strand.get_path()
-                stroke_stroker = QPainterPathStroker()
-                stroke_stroker.setWidth(strand.width + strand.stroke_width * 2)
-                stroke_stroker.setJoinStyle(Qt.MiterJoin)
-                stroke_stroker.setCapStyle(Qt.FlatCap)
-                highlight_path = stroke_stroker.createStroke(path)
+                # For MaskedStrand, use the actual mask path
+                if isinstance(strand, MaskedStrand):
+                    # get_mask_path() returns the actual visible mask shape
+                    highlight_path = strand.get_mask_path()
+                else:
+                    # For regular strands, create a stroked path
+                    path = strand.get_path()
+                    stroke_stroker = QPainterPathStroker()
+                    stroke_stroker.setWidth(strand.width + strand.stroke_width * 2)
+                    stroke_stroker.setJoinStyle(Qt.MiterJoin)
+                    stroke_stroker.setCapStyle(Qt.FlatCap)
+                    highlight_path = stroke_stroker.createStroke(path)
 
-            # Yellow hover highlight (same as mask mode)
-            hover_color = QColor(255, 230, 160, 170)
-            painter.setBrush(hover_color)
+                # Yellow hover highlight (same as mask mode)
+                hover_color = QColor(255, 230, 160, 170)
+                painter.setBrush(hover_color)
 
-            # Black border for visibility
-            hover_pen = QPen(Qt.black, 2, Qt.SolidLine)
-            hover_pen.setJoinStyle(Qt.MiterJoin)
-            hover_pen.setCapStyle(Qt.FlatCap)
-            painter.setPen(hover_pen)
+                # Black border for visibility
+                hover_pen = QPen(Qt.black, 2, Qt.SolidLine)
+                hover_pen.setJoinStyle(Qt.MiterJoin)
+                hover_pen.setCapStyle(Qt.FlatCap)
+                painter.setPen(hover_pen)
 
-            # Draw the filled hover highlight path
-            painter.drawPath(highlight_path)
+                # Draw the filled hover highlight path
+                painter.drawPath(highlight_path)
 
-            painter.restore()
+            finally:
+                painter.restore()
 
     def deselect_strand_recursively(self, strand):
         """Recursively deselect strand and its attached strands."""

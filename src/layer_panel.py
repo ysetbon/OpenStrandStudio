@@ -1580,7 +1580,35 @@ class LayerPanel(QWidget):
 
         else:
             pass
-    
+
+
+    def toggle_layer_hide_shadow(self, strand_index):
+        """Toggles whether the strand at the given index casts a shadow."""
+        if 0 <= strand_index < len(self.canvas.strands):
+            strand = self.canvas.strands[strand_index]
+            # Toggle hide-shadow mode
+            strand.hide_shadow = not getattr(strand, 'hide_shadow', False)
+
+            # Redraw canvas to reflect the change
+            self.canvas.update()
+
+            # Save the current state to persist hide-shadow changes
+            if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+                self.canvas.layer_state_manager.save_current_state()
+            else:
+                pass
+
+            # Save state for undo/redo functionality
+            if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
+                # Force save by resetting timing check to ensure hide-shadow changes are captured
+                self.canvas.undo_redo_manager._last_save_time = 0
+                self.canvas.undo_redo_manager.save_state()
+            else:
+                pass
+
+        else:
+            pass
+
 
     def set_button_tooltip(self, button, tooltip_text):
         """Set tooltip for custom TooltipButton with center alignment"""

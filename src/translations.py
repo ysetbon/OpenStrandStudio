@@ -453,6 +453,7 @@ Examples:<br>
         'extension': 'Dash',
         'circle': 'Circle',
         'shadow_only': 'Shadow Only',
+        'hide_shadow': 'Hide Shadow',
         # Layer panel extension and arrow settings translations
         'extension_length': 'Extension Length',
         'extension_length_tooltip': 'Length of extension lines',
@@ -903,6 +904,7 @@ Exemples :<br>
         'extension': 'Tiret',
         'circle': 'Cercle',
         'shadow_only': 'Ombre Seulement',
+        'hide_shadow': "Masquer l'Ombre",
         # Layer panel extension and arrow settings translations
         'extension_length': "Longueur de l'Extension",
         'extension_length_tooltip': "Longueur des lignes d'extension",
@@ -1496,6 +1498,7 @@ Beispiele:<br>
         'extension': 'Strich',
         'circle': 'Kreis',
         'shadow_only': 'Nur Schatten',
+        'hide_shadow': 'Schatten ausblenden',
         # Layer panel extension and arrow settings translations
         'extension_length': 'Länge der Erweiterung',
         'extension_length_tooltip': 'Länge der Erweiterungslinien',
@@ -1975,6 +1978,7 @@ Esempi:<br>
         'extension': 'Trattino',
         'circle': 'Cerchio',
         'shadow_only': 'Solo Ombra',
+        'hide_shadow': 'Nascondi Ombra',
         # Layer panel extension and arrow settings translations
         'extension_length': 'Lunghezza estensione',
         'extension_length_tooltip': 'Lunghezza della linea di estensione',
@@ -2515,6 +2519,7 @@ Ejemplos:<br>
         'extension': 'Guión',
         'circle': 'Círculo',
         'shadow_only': 'Solo Sombra',
+        'hide_shadow': 'Ocultar Sombra',
         # Layer panel extension and arrow settings translations
         'extension_length': 'Longitud de la extensión',
         'extension_length_tooltip': 'Longitud de la línea de extensión',
@@ -3055,6 +3060,7 @@ Exemplos:<br>
         'extension': 'Travessão',
         'circle': 'Círculo',
         'shadow_only': 'Apenas Sombra',
+        'hide_shadow': 'Ocultar Sombra',
         # Layer panel extension and arrow settings translations
         'extension_length': 'Comprimento da extensão',
         'extension_length_tooltip': 'Comprimento da linha de extensão',
@@ -3639,6 +3645,7 @@ Exemplos:<br>
         'hide_end_extension': 'הסתר מקף סופי',
         'show_end_extension': 'הצג מקף סופי',
         'shadow_only': 'צל בלבד',
+        'hide_shadow': 'הסתר צל',
         'line': 'קו',
         'arrow': 'חץ',
         'extension': 'מקף',

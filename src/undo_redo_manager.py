@@ -1385,6 +1385,12 @@ class UndoRedoManager(QObject):
                                 break
                             # --- END NEW ---
 
+                            # --- NEW: Check hide-shadow mode ---
+                            if getattr(new_strand, 'hide_shadow', False) != getattr(original_strand, 'hide_shadow', False):
+                                has_visual_difference = True
+                                break
+                            # --- END NEW ---
+
                             # --- NEW: Check extension visibility ---
                             if hasattr(new_strand, 'start_extension_visible') and hasattr(original_strand, 'start_extension_visible'):
                                 if new_strand.start_extension_visible != original_strand.start_extension_visible:
@@ -1837,6 +1843,12 @@ class UndoRedoManager(QObject):
                                     has_visual_difference = True
                                     break
                             elif hasattr(new_strand, 'shadow_only') != hasattr(original_strand, 'shadow_only'):
+                                has_visual_difference = True
+                                break
+                            # --- END NEW ---
+
+                            # --- NEW: Check hide-shadow mode ---
+                            if getattr(new_strand, 'hide_shadow', False) != getattr(original_strand, 'hide_shadow', False):
                                 has_visual_difference = True
                                 break
                             # --- END NEW ---

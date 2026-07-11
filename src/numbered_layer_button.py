@@ -1304,7 +1304,9 @@ class NumberedLayerButton(QPushButton):
             if self.selectable or self.locked:
                 lock_rect = self.lock_button_rect()
                 pad = 4
-                strip = 9 if self.attachable else 0
+                # Always reserve the green-strip width so text lines up
+                # across attachable and non-attachable layers
+                strip = 9
                 if is_rtl:
                     free_left = strip + 2
                     free_right = lock_rect.left() - pad
@@ -1371,11 +1373,13 @@ class NumberedLayerButton(QPushButton):
 
             if self.is_hidden:
                 painter.save()
-                pen = QPen(QColor(160, 160, 160), 2, Qt.DashLine)
-                painter.setPen(pen)
-                for i in range(-rect.height(), rect.width(), 10):
-                    painter.drawLine(i, rect.height(), i + rect.height(), 0)
-                painter.restore()
+                try:
+                    pen = QPen(QColor(160, 160, 160), 2, Qt.DashLine)
+                    painter.setPen(pen)
+                    for i in range(-rect.height(), rect.width(), 10):
+                        painter.drawLine(i, rect.height(), i + rect.height(), 0)
+                finally:
+                    painter.restore()
         except Exception:
             import traceback
             traceback.print_exc()

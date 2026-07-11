@@ -3061,6 +3061,10 @@ def connect_to_move_mode(canvas, undo_redo_manager):
             
             # Now, save state only if a move actually happened during the drag
             if was_moving:
+                # Geometry changed: refresh auto shadow overrides for masked weaves
+                # BEFORE saving so the undo snapshot carries the updated overrides.
+                from auto_shadow import recompute_auto_shadow_overrides
+                recompute_auto_shadow_overrides(canvas)
                 # If a control point was being moved (including bias controls), reset the last save time to force a new state
                 if was_moving_control_point or was_moving_bias_control:
                     undo_redo_manager._last_save_time = 0

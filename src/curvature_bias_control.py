@@ -109,19 +109,21 @@ class CurvatureBiasControl:
             
         # Save painter state
         painter.save()
+        try:
         
-        # Draw triangle bias control
-        self.draw_control_square(painter, triangle_pos, True, self.triangle_bias, strand.color if hasattr(strand, 'color') else QColor(50, 50, 50))
+            # Draw triangle bias control
+            self.draw_control_square(painter, triangle_pos, True, self.triangle_bias, strand.color if hasattr(strand, 'color') else QColor(50, 50, 50))
         
-        # Draw circle bias control
-        self.draw_control_square(painter, circle_pos, False, self.circle_bias, strand.color if hasattr(strand, 'color') else QColor(50, 50, 50))
+            # Draw circle bias control
+            self.draw_control_square(painter, circle_pos, False, self.circle_bias, strand.color if hasattr(strand, 'color') else QColor(50, 50, 50))
         
-        # Draw connection lines to show bias influence
-        if self.triangle_bias != 0.5 or self.circle_bias != 0.5:
-            self.draw_bias_influence_lines(painter, strand, triangle_pos, circle_pos)
+            # Draw connection lines to show bias influence
+            if self.triangle_bias != 0.5 or self.circle_bias != 0.5:
+                self.draw_bias_influence_lines(painter, strand, triangle_pos, circle_pos)
         
-        # Restore painter state
-        painter.restore()
+            # Restore painter state
+        finally:
+            painter.restore()
         
     def draw_control_square(self, painter, pos, is_triangle, bias_value, strand_color):
         """

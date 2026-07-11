@@ -714,29 +714,30 @@ class MoveMode:
 
                             # Mirror the exact transform order used in StrandDrawingCanvas.paintEvent
                             bg_painter.save()
-                            canvas_center = QPointF(self_canvas.width() / 2, self_canvas.height() / 2)
-                            bg_painter.translate(canvas_center)
-                            bg_painter.translate(self_canvas.pan_offset_x, self_canvas.pan_offset_y)
-                            bg_painter.scale(self_canvas.zoom_factor, self_canvas.zoom_factor)
-                            bg_painter.translate(-canvas_center)
+                            try:
+                                canvas_center = QPointF(self_canvas.width() / 2, self_canvas.height() / 2)
+                                bg_painter.translate(canvas_center)
+                                bg_painter.translate(self_canvas.pan_offset_x, self_canvas.pan_offset_y)
+                                bg_painter.scale(self_canvas.zoom_factor, self_canvas.zoom_factor)
+                                bg_painter.translate(-canvas_center)
 
-                            # Draw in the exact same sequence as the normal paint path
-                            if hasattr(self_canvas, 'draw_background'):
-                                self_canvas.draw_background(bg_painter)
-                            if hasattr(self_canvas, 'show_grid') and self_canvas.show_grid and hasattr(self_canvas, 'draw_grid'):
-                                # Ensure grid uses the full strand list, just like normal paint
-                                previous_strands = self_canvas.strands
-                                try:
-                                    self_canvas.strands = original_strands
-                                    self_canvas.draw_grid(bg_painter)
-                                finally:
-                                    self_canvas.strands = previous_strands
-                            for strand in static_strands:
-                                if hasattr(strand, 'draw'):
-                                    strand.draw(bg_painter, skip_painter_setup=True)
-
-                            bg_painter.restore()
-                            bg_painter.end()
+                                # Draw in the exact same sequence as the normal paint path
+                                if hasattr(self_canvas, 'draw_background'):
+                                    self_canvas.draw_background(bg_painter)
+                                if hasattr(self_canvas, 'show_grid') and self_canvas.show_grid and hasattr(self_canvas, 'draw_grid'):
+                                    # Ensure grid uses the full strand list, just like normal paint
+                                    previous_strands = self_canvas.strands
+                                    try:
+                                        self_canvas.strands = original_strands
+                                        self_canvas.draw_grid(bg_painter)
+                                    finally:
+                                        self_canvas.strands = previous_strands
+                                for strand in static_strands:
+                                    if hasattr(strand, 'draw'):
+                                        strand.draw(bg_painter, skip_painter_setup=True)
+                            finally:
+                                bg_painter.restore()
+                                bg_painter.end()
                         
                         paint_to_cache(cache_event)
                     
@@ -757,21 +758,23 @@ class MoveMode:
             
             # Apply the same zoom transformation as regular paintEvent
             painter.save()
-            canvas_center = QPointF(self_canvas.width() / 2, self_canvas.height() / 2)
-            painter.translate(canvas_center)
-            painter.translate(self_canvas.pan_offset_x, self_canvas.pan_offset_y)
-            painter.scale(self_canvas.zoom_factor, self_canvas.zoom_factor)
-            painter.translate(-canvas_center)
-
             try:
+                canvas_center = QPointF(self_canvas.width() / 2, self_canvas.height() / 2)
+                painter.translate(canvas_center)
+                painter.translate(self_canvas.pan_offset_x, self_canvas.pan_offset_y)
+                painter.scale(self_canvas.zoom_factor, self_canvas.zoom_factor)
+                painter.translate(-canvas_center)
+
                 if hasattr(self_canvas, 'background_cache'):
                     if not perf_logger.suppress_move_logging:
                         pass
                     # Background cache already contains the transformed content; draw it 1:1
                     painter.save()
-                    painter.resetTransform()
-                    painter.drawPixmap(0, 0, self_canvas.background_cache)
-                    painter.restore()
+                    try:
+                        painter.resetTransform()
+                        painter.drawPixmap(0, 0, self_canvas.background_cache)
+                    finally:
+                        painter.restore()
                 else:
                     pass
 
@@ -1222,7 +1225,7 @@ class MoveMode:
         control_point_moved = False
         for strand in self.canvas.strands:
             if not getattr(strand, 'deleted', False) and not getattr(strand, 'is_hidden', False):
-                if not self._is_strand_allowed_by_selection(strand):
+                if not self._is_strand_allowed_by_selection(strand, for_control_points=True):
                     continue
                 if self.try_move_control_points(strand, pos, event):
                     control_point_moved = True
@@ -1794,11 +1797,17 @@ class MoveMode:
             # If we've reached the target, stop the timer
             self.move_timer.stop()
 
-    def _is_strand_allowed_by_selection(self, strand):
-        """When move_selected_only or show_cp_selected_only is on, only allow the selected strand and its relatives."""
-        if not getattr(self.canvas, 'move_selected_only', False) and not getattr(self.canvas, 'show_cp_selected_only', False):
-            return True
-        return self.canvas.is_strand_in_selected_family(strand)
+    def _is_strand_allowed_by_selection(self, strand, for_control_points=False):
+        """Family gating for the 'selected only' settings.
+
+        move_selected_only restricts all move-mode interaction to the selected
+        strand. show_cp_selected_only only restricts control points: other
+        strands keep their start/end squares and stay movable."""
+        if getattr(self.canvas, 'move_selected_only', False):
+            return self.canvas.is_strand_in_selected_family(strand)
+        if for_control_points and getattr(self.canvas, 'show_cp_selected_only', False):
+            return self.canvas.is_strand_in_selected_family(strand)
+        return True
 
     def handle_strand_movement(self, pos, event=None):
         """
@@ -1814,7 +1823,7 @@ class MoveMode:
         # First pass: Check all control points for all strands (excluding masked strands and hidden strands)
         for strand in self.canvas.strands:
             if not getattr(strand, 'deleted', False) and not isinstance(strand, MaskedStrand) and not getattr(strand, 'is_hidden', False):
-                if not self._is_strand_allowed_by_selection(strand):
+                if not self._is_strand_allowed_by_selection(strand, for_control_points=True):
                     continue
                 if self.try_move_control_points(strand, pos, event):
                     return
@@ -1913,7 +1922,7 @@ class MoveMode:
         """
         for attached_strand in attached_strands:
             if not getattr(attached_strand, 'deleted', False) and not getattr(attached_strand, 'is_hidden', False):
-                if not self._is_strand_allowed_by_selection(attached_strand):
+                if not self._is_strand_allowed_by_selection(attached_strand, for_control_points=True):
                     continue
                 if self.try_move_control_points(attached_strand, pos):
                     return True
@@ -2244,7 +2253,7 @@ class MoveMode:
         for strand in hover_candidates:
             if getattr(strand, 'deleted', False) or isinstance(strand, MaskedStrand) or getattr(strand, 'is_hidden', False):
                 continue
-            if not self._is_strand_allowed_by_selection(strand):
+            if not self._is_strand_allowed_by_selection(strand, for_control_points=True):
                 continue
             if self.lock_mode_active and strand in self.canvas.strands:
                 strand_index = self.canvas.strands.index(strand)
@@ -3719,143 +3728,147 @@ class MoveMode:
         # (previously had: if self.is_moving_control_point or ... : return)
 
         painter.save()  # Outer save for C-shape drawing
+        try:
 
-        # Draw the circles at connection points
-        for i, has_circle in enumerate(strand.has_circles):
-            # --- REPLACE WITH THIS SIMPLE CHECK ---
-            # Only draw if this end should have a circle and the strand is currently selected OR in truly_moving_strands
-            truly_moving_strands = getattr(self.canvas, 'truly_moving_strands', [])
-            if not has_circle or (not strand.is_selected and strand not in truly_moving_strands):
-                continue
+            # Draw the circles at connection points
+            for i, has_circle in enumerate(strand.has_circles):
+                # --- REPLACE WITH THIS SIMPLE CHECK ---
+                # Only draw if this end should have a circle and the strand is currently selected OR in truly_moving_strands
+                truly_moving_strands = getattr(self.canvas, 'truly_moving_strands', [])
+                if not has_circle or (not strand.is_selected and strand not in truly_moving_strands):
+                    continue
             
-            # Debug logging for highlighting fix
-            if strand in truly_moving_strands and not strand.is_selected:
-                pass
-            # --- END REPLACE ---
+                # Debug logging for highlighting fix
+                if strand in truly_moving_strands and not strand.is_selected:
+                    pass
+                # --- END REPLACE ---
             
-            # Save painter state (Original line)
-            painter.save()
+                # Save painter state (Original line)
+                painter.save()
+                try:
 
-            center = strand.start if i == 0 else strand.end
+                    center = strand.start if i == 0 else strand.end
 
-            # If this end has an elliptical cap, stretch the (circular) highlight rings
-            # along the strand tangent so the move-time highlight matches the body cap.
-            _ell_pt = strand._partner_cap_dims(i)[0] if hasattr(strand, '_partner_cap_dims') else None
-            if _ell_pt:
-                _ell_this = strand.width + strand.stroke_width * 2
-                if _ell_this > 0:
-                    _ell_k = _ell_pt / _ell_this
-                    _ell_t = strand.calculate_cubic_tangent(0.0001 if i == 0 else 0.9999)
-                    _ell_a = math.atan2(_ell_t.y(), _ell_t.x())
-                    painter.translate(center.x(), center.y())
-                    painter.rotate(math.degrees(_ell_a))
-                    painter.scale(_ell_k, 1.0)
-                    painter.rotate(-math.degrees(_ell_a))
-                    painter.translate(-center.x(), -center.y())
+                    # If this end has an elliptical cap, stretch the (circular) highlight rings
+                    # along the strand tangent so the move-time highlight matches the body cap.
+                    _ell_pt = strand._partner_cap_dims(i)[0] if hasattr(strand, '_partner_cap_dims') else None
+                    if _ell_pt:
+                        _ell_this = strand.width + strand.stroke_width * 2
+                        if _ell_this > 0:
+                            _ell_k = _ell_pt / _ell_this
+                            _ell_t = strand.calculate_cubic_tangent(0.0001 if i == 0 else 0.9999)
+                            _ell_a = math.atan2(_ell_t.y(), _ell_t.x())
+                            painter.translate(center.x(), center.y())
+                            painter.rotate(math.degrees(_ell_a))
+                            painter.scale(_ell_k, 1.0)
+                            painter.rotate(-math.degrees(_ell_a))
+                            painter.translate(-center.x(), -center.y())
 
-            # Calculate the proper radius for the highlight
-            # The highlighted strand outline uses: QPen(QColor('red'), self.stroke_width + 8)
-            # This pen is drawn around the stroke path, so the outer edge is at:
-            highlight_pen_thickness = 10  # Fixed thickness instead of strand.stroke_width + 8
-            stroke_path_radius = (strand.width + strand.stroke_width * 2) / 2
-            outer_radius = stroke_path_radius + highlight_pen_thickness / 2
-            inner_radius = strand.width / 2 + 6
+                    # Calculate the proper radius for the highlight
+                    # The highlighted strand outline uses: QPen(QColor('red'), self.stroke_width + 8)
+                    # This pen is drawn around the stroke path, so the outer edge is at:
+                    highlight_pen_thickness = 10  # Fixed thickness instead of strand.stroke_width + 8
+                    stroke_path_radius = (strand.width + strand.stroke_width * 2) / 2
+                    outer_radius = stroke_path_radius + highlight_pen_thickness / 2
+                    inner_radius = strand.width / 2 + 6
             
-            # Create a full circle path for the outer circle
-            outer_circle = QPainterPath()
-            outer_circle.addEllipse(center, outer_radius, outer_radius)
+                    # Create a full circle path for the outer circle
+                    outer_circle = QPainterPath()
+                    outer_circle.addEllipse(center, outer_radius, outer_radius)
             
-            # Create a path for the inner circle
-            inner_circle = QPainterPath()
-            inner_circle.addEllipse(center, inner_radius, inner_radius)
+                    # Create a path for the inner circle
+                    inner_circle = QPainterPath()
+                    inner_circle.addEllipse(center, inner_radius, inner_radius)
             
-            # Create a ring path by subtracting the inner circle from the outer circle
-            ring_path = outer_circle.subtracted(inner_circle)
+                    # Create a ring path by subtracting the inner circle from the outer circle
+                    ring_path = outer_circle.subtracted(inner_circle)
             
-            # Get the tangent angle at the connection point
-            # Use t=0.0001 for start and t=0.9999 for end to get proper tangents
-            # even when control points coincide with endpoints
-            tangent = strand.calculate_cubic_tangent(0.0001 if i == 0 else 0.9999)
-            angle = math.atan2(tangent.y(), tangent.x())
+                    # Get the tangent angle at the connection point
+                    # Use t=0.0001 for start and t=0.9999 for end to get proper tangents
+                    # even when control points coincide with endpoints
+                    tangent = strand.calculate_cubic_tangent(0.0001 if i == 0 else 0.9999)
+                    angle = math.atan2(tangent.y(), tangent.x())
             
-            # Create a masking rectangle to create a C-shape
-            mask_rect = QPainterPath()
-            rect_width = (outer_radius + 5) * 2  # Make it slightly larger to ensure clean cut
-            rect_height = (outer_radius + 5) * 2
-            rect_x = center.x() - rect_width / 2
-            rect_y = center.y()
-            mask_rect.addRect(rect_x, rect_y, rect_width, rect_height)
+                    # Create a masking rectangle to create a C-shape
+                    mask_rect = QPainterPath()
+                    rect_width = (outer_radius + 5) * 2  # Make it slightly larger to ensure clean cut
+                    rect_height = (outer_radius + 5) * 2
+                    rect_x = center.x() - rect_width / 2
+                    rect_y = center.y()
+                    mask_rect.addRect(rect_x, rect_y, rect_width, rect_height)
             
-            # Apply rotation transform to the masking rectangle
-            transform = QTransform()
-            transform.translate(center.x(), center.y())
-            # Adjust angle based on whether it's start or end point
-            if i == 0:
-                transform.rotate(math.degrees(angle - math.pi / 2))
-            else:
-                transform.rotate(math.degrees(angle - math.pi / 2) + 180)
-            transform.translate(-center.x(), -center.y())
-            mask_rect = transform.map(mask_rect)
+                    # Apply rotation transform to the masking rectangle
+                    transform = QTransform()
+                    transform.translate(center.x(), center.y())
+                    # Adjust angle based on whether it's start or end point
+                    if i == 0:
+                        transform.rotate(math.degrees(angle - math.pi / 2))
+                    else:
+                        transform.rotate(math.degrees(angle - math.pi / 2) + 180)
+                    transform.translate(-center.x(), -center.y())
+                    mask_rect = transform.map(mask_rect)
             
-            # Create the C-shaped highlight by subtracting the mask from the ring
-            c_shape_path = ring_path.subtracted(mask_rect)
+                    # Create the C-shaped highlight by subtracting the mask from the ring
+                    c_shape_path = ring_path.subtracted(mask_rect)
             
-            # Now create the stroke and color parts within the C-shape
-            # Outer part (stroke area) - from outer_radius to stroke boundary
-            stroke_outer_radius = outer_radius
-            stroke_inner_radius = strand.width / 2 + strand.stroke_width
+                    # Now create the stroke and color parts within the C-shape
+                    # Outer part (stroke area) - from outer_radius to stroke boundary
+                    stroke_outer_radius = outer_radius
+                    stroke_inner_radius = strand.width / 2 + strand.stroke_width
             
-            stroke_outer_circle = QPainterPath()
-            stroke_outer_circle.addEllipse(center, stroke_outer_radius, stroke_outer_radius)
-            stroke_inner_circle = QPainterPath()
-            stroke_inner_circle.addEllipse(center, stroke_inner_radius, stroke_inner_radius)
-            stroke_ring = stroke_outer_circle.subtracted(stroke_inner_circle)
-            stroke_c_shape = stroke_ring.subtracted(mask_rect)
+                    stroke_outer_circle = QPainterPath()
+                    stroke_outer_circle.addEllipse(center, stroke_outer_radius, stroke_outer_radius)
+                    stroke_inner_circle = QPainterPath()
+                    stroke_inner_circle.addEllipse(center, stroke_inner_radius, stroke_inner_radius)
+                    stroke_ring = stroke_outer_circle.subtracted(stroke_inner_circle)
+                    stroke_c_shape = stroke_ring.subtracted(mask_rect)
             
-            # Inner part (color area) - from stroke boundary to inner_radius
-            color_outer_radius = strand.width / 2 + strand.stroke_width
-            color_inner_radius = inner_radius
+                    # Inner part (color area) - from stroke boundary to inner_radius
+                    color_outer_radius = strand.width / 2 + strand.stroke_width
+                    color_inner_radius = inner_radius
             
-            color_outer_circle = QPainterPath()
-            color_outer_circle.addEllipse(center, color_outer_radius, color_outer_radius)
-            color_inner_circle = QPainterPath()
-            color_inner_circle.addEllipse(center, color_inner_radius, color_inner_radius)
-            color_ring = color_outer_circle.subtracted(color_inner_circle)
-            color_c_shape = color_ring.subtracted(mask_rect)
+                    color_outer_circle = QPainterPath()
+                    color_outer_circle.addEllipse(center, color_outer_radius, color_outer_radius)
+                    color_inner_circle = QPainterPath()
+                    color_inner_circle.addEllipse(center, color_inner_radius, color_inner_radius)
+                    color_ring = color_outer_circle.subtracted(color_inner_circle)
+                    color_c_shape = color_ring.subtracted(mask_rect)
             
-            # Draw the stroke part in red (or transparent red if circle stroke is transparent)
-            painter.setPen(Qt.NoPen)
+                    # Draw the stroke part in red (or transparent red if circle stroke is transparent)
+                    painter.setPen(Qt.NoPen)
             
-            # Check if this circle has transparent stroke
-            if hasattr(strand, 'start_circle_stroke_color') and hasattr(strand, 'end_circle_stroke_color'):
-                circle_stroke_color = strand.start_circle_stroke_color if i == 0 else strand.end_circle_stroke_color
-                if circle_stroke_color and circle_stroke_color.alpha() == 0:
-                    # Use transparent highlight for transparent circles
-                    hl = QColor(self.canvas.highlight_color)
-                    hl.setAlpha(0)
-                    painter.setBrush(hl)
-                else:
-                    # Use highlight color for normal circles
-                    painter.setBrush(self.canvas.highlight_color)
-            else:
-                # Default to highlight color if properties don't exist
-                painter.setBrush(self.canvas.highlight_color)
+                    # Check if this circle has transparent stroke
+                    if hasattr(strand, 'start_circle_stroke_color') and hasattr(strand, 'end_circle_stroke_color'):
+                        circle_stroke_color = strand.start_circle_stroke_color if i == 0 else strand.end_circle_stroke_color
+                        if circle_stroke_color and circle_stroke_color.alpha() == 0:
+                            # Use transparent highlight for transparent circles
+                            hl = QColor(self.canvas.highlight_color)
+                            hl.setAlpha(0)
+                            painter.setBrush(hl)
+                        else:
+                            # Use highlight color for normal circles
+                            painter.setBrush(self.canvas.highlight_color)
+                    else:
+                        # Default to highlight color if properties don't exist
+                        painter.setBrush(self.canvas.highlight_color)
                 
-            painter.drawPath(stroke_c_shape)
+                    painter.drawPath(stroke_c_shape)
             
-            # Draw the color part using the strand's fill color to avoid black artifacts
-            try:
-                strand_fill = QColor(strand.color) if hasattr(strand, 'color') and strand.color is not None else QColor(0, 0, 0, 0)
-                painter.setBrush(strand_fill)
-                #painter.drawPath(color_c_shape)
-            except Exception:
-                # Fallback: don't draw the color segment if color is unavailable
-                pass
+                    # Draw the color part using the strand's fill color to avoid black artifacts
+                    try:
+                        strand_fill = QColor(strand.color) if hasattr(strand, 'color') and strand.color is not None else QColor(0, 0, 0, 0)
+                        painter.setBrush(strand_fill)
+                        #painter.drawPath(color_c_shape)
+                    except Exception:
+                        # Fallback: don't draw the color segment if color is unavailable
+                        pass
             
-            # Restore painter state (inner restore)
-            painter.restore()
+                    # Restore painter state (inner restore)
+                finally:
+                    painter.restore()
 
-        painter.restore()  # Outer restore for C-shape drawing
+        finally:
+            painter.restore()  # Outer restore for C-shape drawing
 
     def build_connection_cache(self):
         """Build a cache of connection relationships for performance optimization."""

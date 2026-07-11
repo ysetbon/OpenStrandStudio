@@ -461,6 +461,10 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         if not (getattr(strand, 'full_arrow_visible', False) and getattr(strand, 'arrow_casts_shadow', False)):
             pass
             return
+
+    # Per-layer "Hide Shadow" option - the strand casts no shadow at all
+    if getattr(strand, 'hide_shadow', False):
+        return
     
     # Auto-calculate blur radius based on strand thickness if not provided
     if max_blur_radius is None:

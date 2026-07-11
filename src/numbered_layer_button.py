@@ -319,6 +319,22 @@ class NumberedLayerButton(QPushButton):
             shadow_only_label.setText(shadow_only_text)
         context_menu.addAction(shadow_only_action)
 
+        # Add Hide Shadow option (suppresses the shadow this layer casts)
+        hide_shadow_text = _['hide_shadow'] if 'hide_shadow' in _ else "Hide Shadow"
+        hide_shadow_label = HoverLabel(hide_shadow_text, self, theme)
+        hide_shadow_label.setMinimumHeight(35)
+        if is_hebrew:
+            hide_shadow_label.setLayoutDirection(Qt.RightToLeft)
+            hide_shadow_label.setAlignment(Qt.AlignLeft)
+        hide_shadow_action = QWidgetAction(self)
+        hide_shadow_action.setDefaultWidget(hide_shadow_label)
+        hide_shadow_action.triggered.connect(lambda: layer_panel.toggle_layer_hide_shadow(index))
+        # Add checkmark if hide_shadow is enabled
+        if getattr(strand, 'hide_shadow', False):
+            hide_shadow_text = f"✓ {hide_shadow_text}"
+            hide_shadow_label.setText(hide_shadow_text)
+        context_menu.addAction(hide_shadow_action)
+
         # Add Edit Shadows option for all layer types, including masks.
         edit_shadows_text = _['edit_shadows']
         edit_shadows_label = HoverLabel(edit_shadows_text, self, theme)

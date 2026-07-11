@@ -39,6 +39,8 @@ class AttachedStrand(Strand):
         self.shadow_color = parent.shadow_color
         # Initialize shadow_only property
         self.shadow_only = False
+        # When True, this strand casts no shadow onto other strands
+        self.hide_shadow = False
         
         # Inherit curvature parameters from parent
         self.control_point_base_fraction = getattr(parent, 'control_point_base_fraction', 0.4)

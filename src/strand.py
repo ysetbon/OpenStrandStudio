@@ -36,6 +36,7 @@ class Strand:
         self._is_selected = False  # Indicates if the strand is selected (use private attribute for property)
         self.is_hidden = False # Indicates if the strand is hidden
         self.shadow_only = False # Indicates if the strand is in shadow-only mode
+        self.hide_shadow = False # When True, this strand casts no shadow onto other strands
         # Control point influence parameters - will be overridden by canvas settings if available
         self.curve_response_exponent = 1.5  # Default: Exponential response (1.0=linear, 1.5=mild quadratic, 2.0=quadratic)
         self.control_point_base_fraction = 0.4  # Default: Base fraction for control point influence

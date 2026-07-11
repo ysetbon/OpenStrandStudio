@@ -138,6 +138,7 @@ def serialize_strand(strand, canvas, index=None):
         "end_arrow_visible": getattr(strand, 'end_arrow_visible', False),
         "full_arrow_visible": getattr(strand, 'full_arrow_visible', False),
         "shadow_only": getattr(strand, 'shadow_only', False),
+        "hide_shadow": getattr(strand, 'hide_shadow', False),
         "closed_connections": getattr(strand, 'closed_connections', [False, False]),
         # Arrow customization properties
         "arrow_color": serialize_color(getattr(strand, 'arrow_color', None)) if hasattr(strand, 'arrow_color') and strand.arrow_color else None,
@@ -452,6 +453,7 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
         strand.end_line_visible = data.get("end_line_visible", True)
         strand.is_hidden = data.get("is_hidden", False)
         strand.shadow_only = data.get("shadow_only", False)
+        strand.hide_shadow = data.get("hide_shadow", False)
         strand.closed_connections = data.get("closed_connections", [False, False])
 
         # NEW: Extension & Arrow visibility flags
@@ -714,6 +716,7 @@ def load_strands_from_data(data, canvas):
             strand.is_start_side = strand_data["is_start_side"]
             strand.is_hidden = strand_data.get("is_hidden", False)
             strand.shadow_only = strand_data.get("shadow_only", False)
+            strand.hide_shadow = strand_data.get("hide_shadow", False)
             strand.closed_connections = strand_data.get("closed_connections", [False, False])
 
             # Visibility flags
@@ -885,6 +888,7 @@ def load_strands_from_data(data, canvas):
                 strand.is_start_side = masked_data["is_start_side"]
                 strand.is_hidden = masked_data.get("is_hidden", False)
                 strand.shadow_only = masked_data.get("shadow_only", False)
+                strand.hide_shadow = masked_data.get("hide_shadow", False)
                 strand.closed_connections = masked_data.get("closed_connections", [False, False])
                 
                 # Load visibility flags

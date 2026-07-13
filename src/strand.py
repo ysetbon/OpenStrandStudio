@@ -581,31 +581,98 @@ class Strand:
             painter.restore()
 
 
+    def _end_circle_visible(self, side):
+        """Whether draw() renders an end-cap circle at the given end (0=start, 1=end).
+
+        Mirrors the draw() conditions: the flag must be set, the circle stroke
+        must not be fully transparent, and the end must actually be a junction
+        (an attached child starts there, or the connection is closed)."""
+        if not (self.has_circles and len(self.has_circles) > side and self.has_circles[side]):
+            return False
+        color = self.start_circle_stroke_color if side == 0 else self.end_circle_stroke_color
+        if color is not None and color.alpha() <= 0:
+            return False
+        from attached_strand import AttachedStrand
+        point = self.start if side == 0 else self.end
+        if any(isinstance(child, AttachedStrand) and child.start == point
+               and not getattr(child, 'shadow_only', False)
+               for child in getattr(self, 'attached_strands', [])):
+            return True
+        closed = getattr(self, 'closed_connections', None)
+        return bool(closed and len(closed) > side and closed[side])
+
+    def _end_side_line_visible(self, side):
+        """Whether draw() renders a side line at the given end (0=start, 1=end)."""
+        has_circle = bool(self.has_circles and len(self.has_circles) > side and self.has_circles[side])
+        if side == 0:
+            return bool(self.start_line_visible and not has_circle)
+        return bool(self.end_line_visible and not has_circle)
+
+    def _cap_tangent_angle(self, side):
+        """Tangent angle at an end, with the same fallbacks draw() uses."""
+        tangent = self.calculate_cubic_tangent(0.0001 if side == 0 else 0.9999)
+        if tangent.manhattanLength() == 0:
+            tangent = self.end - self.start
+        if tangent.manhattanLength() == 0:
+            return 0.0
+        return math.atan2(tangent.y(), tangent.x())
+
+    def get_end_decoration_path(self, side):
+        """Rendered decoration at an end: the cap circle when drawn, else the
+        side-line band, else an empty path.
+
+        The cap uses the same geometry as draw() (_make_cap_ellipse with the
+        partner dims, so elliptical end-caps match too); the forward half of the
+        full ellipse lies under the strand body, so the union stays exact. The
+        side line matches the drawn line: stroke_width thick, spanning the full
+        visible width just past the flat cap."""
+        if self._end_circle_visible(side):
+            point = self.start if side == 0 else self.end
+            angle = self._cap_tangent_angle(side)
+            return self._make_cap_ellipse(point, angle, side, self._partner_cap_dims(side)[0])
+        if self._end_side_line_visible(side):
+            a = getattr(self, 'start_line_start' if side == 0 else 'end_line_start', None)
+            b = getattr(self, 'start_line_end' if side == 0 else 'end_line_end', None)
+            if a is None or b is None:
+                return QPainterPath()
+            line = QPainterPath()
+            line.moveTo(a)
+            line.lineTo(b)
+            stroker = QPainterPathStroker()
+            stroker.setWidth(self.stroke_width)
+            stroker.setCapStyle(Qt.FlatCap)
+            return stroker.createStroke(line)
+        return QPainterPath()
+
     def get_start_selection_path(self):
-        """Get a selection path for the exact start point of the strand."""
-        # Create a small circle at the start point that matches the strand's start
+        """Get a selection path for the start point matching the rendered geometry.
+
+        The radius covers the full visible thickness (width plus stroke on both
+        sides), so it stays correct when the strand's width or stroke width is
+        changed. When no start circle is drawn, the zone is clipped to the
+        rendered footprint so it cannot extend past the visible cap."""
+        radius = (self.width + self.stroke_width * 2) / 2
         start_path = QPainterPath()
-
-        # Base radius using strand width - no zoom adjustment needed since we test in canvas coordinates
-        base_radius = max(self.width / 2, 15)  # Minimum radius for clickability
-        radius = base_radius
-
         start_path.addEllipse(self.start, radius, radius)
+        if not self._end_circle_visible(0):
+            start_path = start_path.intersected(self.get_selection_path())
         return start_path
     def draw_path(self, painter):
         """Draw the path of the strand without filling."""
         path = self.get_path()
         painter.drawPath(path)
     def get_end_selection_path(self):
-        """Get a selection path for the exact end point of the strand."""
-        # Create a small circle at the end point that matches the strand's end
+        """Get a selection path for the end point matching the rendered geometry.
+
+        The radius covers the full visible thickness (width plus stroke on both
+        sides), so it stays correct when the strand's width or stroke width is
+        changed. When no end circle is drawn, the zone is clipped to the strand
+        body so it cannot extend past the visible cap."""
+        radius = (self.width + self.stroke_width * 2) / 2
         end_path = QPainterPath()
-
-        # Base radius using strand width - no zoom adjustment needed since we test in canvas coordinates
-        base_radius = max(self.width / 2, 15)  # Minimum radius for clickability
-        radius = base_radius
-
         end_path.addEllipse(self.end, radius, radius)
+        if not self._end_circle_visible(1):
+            end_path = end_path.intersected(self.get_selection_path())
         return end_path
  
 
@@ -1628,12 +1695,22 @@ class Strand:
         return path
 
     def get_selection_path(self):
-        """Get the selection path for the entire strand body."""
-        # Use a wider path for easier selection - no zoom adjustment needed since we test in canvas coordinates
-        base_width = max(self.width, 20)  # Minimum width for clickability
-        selection_width = base_width
+        """Get the selection path for the entire rendered strand.
 
-        return self.get_stroked_path(selection_width)
+        Matches the exact drawn footprint: the body stroked to the full visible
+        thickness (fill plus stroke on both sides, FlatCap like draw()), united
+        with whatever is rendered at each end - the cap circle or the side line.
+        All widths are read live, so per-strand width/stroke changes apply."""
+        body_stroker = QPainterPathStroker()
+        body_stroker.setWidth(self.width + self.stroke_width * 2)
+        body_stroker.setJoinStyle(Qt.MiterJoin)
+        body_stroker.setCapStyle(Qt.FlatCap)
+        path = body_stroker.createStroke(self.get_path())
+        for side in (0, 1):
+            decoration = self.get_end_decoration_path(side)
+            if not decoration.isEmpty():
+                path = path.united(decoration)
+        return path
 
     def get_stroked_path(self, width: float) -> QPainterPath:
         """

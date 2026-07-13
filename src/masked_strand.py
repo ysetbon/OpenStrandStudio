@@ -277,6 +277,15 @@ class MaskedStrand(Strand):
                 mask_path = mask_path.subtracted(deletion_path)
         # Return fresh mask including deletions
         return mask_path
+
+    def get_selection_path(self):
+        """Get the exact rendered footprint of the mask for hit-testing.
+
+        The mask is drawn as the stroke-layer intersection (get_mask_path_stroke)
+        with the fill intersection (get_mask_path) on top, so the clickable area
+        is the union of both — including the visible stroke edge."""
+        return self.get_mask_path_stroke().united(self.get_mask_path())
+
     def _get_strand_start_circle_path(self, strand, radius):
         """Build the half-circle path at a strand's start point if the circle is visible.
         Returns an empty QPainterPath when the circle should not be included."""

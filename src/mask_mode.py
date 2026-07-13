@@ -3,6 +3,7 @@ from PyQt5.QtGui import QColor, QPainter, QPainterPathStroker, QPen, QPainterPat
 from PyQt5.QtWidgets import QApplication
 from masked_strand import MaskedStrand
 from render_utils import RenderUtils
+from selection_utils import find_strands_at_point
 
 class MaskMode(QObject):
     mask_created = pyqtSignal(object, object)  # Signal emitted when a mask is created
@@ -33,27 +34,19 @@ class MaskMode(QObject):
         pos = event.pos()
         strands_at_point = self.find_strands_at_point(pos)
 
-        if len(strands_at_point) == 1:
+        if strands_at_point:
+            # Topmost strand wins, exactly like select mode - overlapping
+            # strands no longer cancel the click.
             selected_strand, selection_type = strands_at_point[0]
             self.handle_strand_selection(selected_strand)
         else:
             self.clear_selection()
 
     def find_strands_at_point(self, pos):
-        results = []
-        for strand in self.canvas.strands:
-            # Skip masked strands entirely - we never want to select or hover them in mask mode
-            if isinstance(strand, MaskedStrand):
-                continue
-            contains_start = strand.get_start_selection_path().contains(pos)
-            contains_end = strand.get_end_selection_path().contains(pos)
-            if contains_start:
-                results.append((strand, 'start'))
-            elif contains_end:
-                results.append((strand, 'end'))
-            elif strand.get_selection_path().contains(pos):
-                results.append((strand, 'strand'))
-        return results
+        """Same hit-test as select mode (exact rendered geometry, topmost
+        strand first, hidden strands skipped), except masked strands are
+        excluded - they can't be components of a new mask."""
+        return find_strands_at_point(self.canvas.strands, pos, include_masked=False)
 
     def handle_strand_selection(self, strand):
         if strand not in self.selected_strands:
@@ -244,15 +237,9 @@ class MaskMode(QObject):
                 RenderUtils.setup_painter(painter, enable_high_quality=True)
 
                 strand = self.hovered_strand
-                # Get the path representing the strand
-                path = strand.get_path()
-
-                # Create a stroker for the highlight with squared ends
-                stroke_stroker = QPainterPathStroker()
-                stroke_stroker.setWidth(strand.width + strand.stroke_width * 2)
-                stroke_stroker.setJoinStyle(Qt.MiterJoin)
-                stroke_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
-                stroke_path = stroke_stroker.createStroke(path)
+                # Exact rendered footprint, same path used for hit-testing
+                # (body + end circles / side lines)
+                stroke_path = strand.get_selection_path()
 
                 # Draw the hover highlight with semi-transparent yellow (similar to selection rectangle style)
                 # Using QColor(255, 230, 160) like the control point selection boxes, but less transparent
@@ -277,15 +264,9 @@ class MaskMode(QObject):
             try:
                 RenderUtils.setup_painter(painter, enable_high_quality=True)
 
-                # Get the path representing the strand
-                path = strand.get_path()
-
-                # Create a stroker for the highlight with squared ends
-                stroke_stroker = QPainterPathStroker()
-                stroke_stroker.setWidth(strand.width + strand.stroke_width * 2)
-                stroke_stroker.setJoinStyle(Qt.MiterJoin)
-                stroke_stroker.setCapStyle(Qt.FlatCap)  # Use FlatCap for squared ends
-                stroke_path = stroke_stroker.createStroke(path)
+                # Exact rendered footprint, same path used for hit-testing
+                # (body + end circles / side lines)
+                stroke_path = strand.get_selection_path()
 
                 # Draw the highlight with transparent filling
                 highlight_color = QColor(self.canvas.highlight_color)

@@ -1,7 +1,7 @@
 from PyQt5.QtCore import QObject, pyqtSignal, QPointF, Qt
-from PyQt5.QtGui import QColor, QPainterPathStroker, QPen
+from PyQt5.QtGui import QColor, QPen
 from render_utils import RenderUtils
-from masked_strand import MaskedStrand
+from selection_utils import find_strands_at_point
 
 class SelectMode(QObject):
     strand_selected = pyqtSignal(int)
@@ -70,33 +70,10 @@ class SelectMode(QObject):
     def find_strands_at_point(self, pos):
         """Find strands at position - includes masked strands.
 
-        Checks strands in reverse order so topmost strands (drawn last) are found first.
-        Skips hidden strands.
+        Uses the shared hit-test (selection_utils) so the areas match the exact
+        rendered geometry, topmost strand first. Skips hidden strands.
         """
-        results = []
-        # Reverse order so topmost strands are checked first
-        for strand in reversed(self.canvas.strands):
-            # Skip hidden strands
-            if getattr(strand, 'is_hidden', False):
-                continue
-
-            # For MaskedStrand, check the actual mask path
-            if isinstance(strand, MaskedStrand):
-                # Use get_mask_path() which returns the actual visible mask shape
-                mask_path = strand.get_mask_path()
-                if mask_path.contains(pos):
-                    results.append((strand, 'strand'))
-            else:
-                # Regular strand detection
-                contains_start = strand.get_start_selection_path().contains(pos)
-                contains_end = strand.get_end_selection_path().contains(pos)
-                if contains_start:
-                    results.append((strand, 'start'))
-                elif contains_end:
-                    results.append((strand, 'end'))
-                elif strand.get_selection_path().contains(pos):
-                    results.append((strand, 'strand'))
-        return results
+        return find_strands_at_point(self.canvas.strands, pos, include_masked=True)
 
     def draw(self, painter):
         """Draw hover highlight for hovered strand."""
@@ -110,18 +87,10 @@ class SelectMode(QObject):
 
                 strand = self.hovered_strand
 
-                # For MaskedStrand, use the actual mask path
-                if isinstance(strand, MaskedStrand):
-                    # get_mask_path() returns the actual visible mask shape
-                    highlight_path = strand.get_mask_path()
-                else:
-                    # For regular strands, create a stroked path
-                    path = strand.get_path()
-                    stroke_stroker = QPainterPathStroker()
-                    stroke_stroker.setWidth(strand.width + strand.stroke_width * 2)
-                    stroke_stroker.setJoinStyle(Qt.MiterJoin)
-                    stroke_stroker.setCapStyle(Qt.FlatCap)
-                    highlight_path = stroke_stroker.createStroke(path)
+                # Exact rendered footprint, same path used for hit-testing:
+                # body + end circles / side lines for regular strands, and the
+                # stroke+fill mask footprint for masked strands.
+                highlight_path = strand.get_selection_path()
 
                 # Yellow hover highlight (same as mask mode)
                 hover_color = QColor(255, 230, 160, 170)

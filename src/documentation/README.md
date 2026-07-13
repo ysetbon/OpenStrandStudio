@@ -21,7 +21,7 @@ This folder contains the complete user documentation for OpenStrand Studio versi
 - **`Project_Overview_v3.md`** - Development guide and advanced features
 
 ### ⚙️ Conversion Tools
-- **`convert_to_pdf.py`** - Advanced PDF conversion script (requires additional packages)
+- **`scripts/md_to_pdf.py`** (repo root) - Converts any markdown doc to PDF using PyQt5 (no extra packages): `python scripts\md_to_pdf.py src\documentation\<file>.md`
 - **`simple_convert.py`** - Simple HTML conversion script
 
 ## 🚀 Quick Start for Users

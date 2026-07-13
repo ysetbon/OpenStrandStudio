@@ -6310,14 +6310,9 @@ class StrandDrawingCanvas(QWidget):
             
                 # Initially only show the triangle, show other control points after triangle moves
                 show_circle_cp = triangle_has_moved and show_small_cps
-                show_triangle_cp = True  # Always show triangle when control points are enabled
-            
-                # Check if the triangle has been moved from initial position
-                triangle_has_moved = getattr(strand, 'triangle_has_moved', False)
-            
-                # Initially only show the triangle, show other control points after triangle moves
-                show_circle_cp = triangle_has_moved and show_small_cps
-                show_triangle_cp = True  # Always show triangle when control points are enabled
+                # Hide a never-moved triangle while an endpoint is being dragged: it would
+                # only appear because the drag made this strand "selected" (move_mode.py:1417)
+                show_triangle_cp = not (moving_strand_point and not triangle_has_moved)
             
                 # Draw control point lines - only after triangle has moved
                 control_line_pen = self._create_control_line_pen()

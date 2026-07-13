@@ -170,41 +170,35 @@ class AttachedStrand(Strand):
         super(AttachedStrand, self.__class__).end.fset(self, value)
         self.update_shape()
 
-    def get_start_selection_path(self):
-        """Get the selection path for the starting point, excluding the inner area for control point selection."""
-        path = QPainterPath()
+    # Start/end selection paths are inherited from Strand and match the exact
+    # rendered geometry (width + stroke), so hit-testing follows the visible
+    # strand instead of an oversized invisible square around the start point.
 
-        # Base size for selection area - no zoom adjustment needed since we test in canvas coordinates
-        base_size = 120  # Base size of the selection square for the start edge
-        outer_size = base_size
+    def _end_circle_visible(self, side):
+        """Attached strands draw their start circle whenever the flag is set and
+        the stroke isn't transparent - no junction check like the base class."""
+        if side == 0:
+            return bool(self.has_circles and self.has_circles[0]
+                        and self.start_circle_stroke_color.alpha() > 0)
+        return super()._end_circle_visible(side)
 
-        half_outer_size = outer_size / 2
-        outer_rect = QRectF(
-            self.start.x() - half_outer_size,
-            self.start.y() - half_outer_size,
-            outer_size,
-            outer_size
-        )
+    def _end_side_line_visible(self, side):
+        """Attached strands never draw a start side line (the start is the
+        attachment point on the parent)."""
+        if side == 0:
+            return False
+        return super()._end_side_line_visible(side)
 
-        # Create the selection path by subtracting the inner rectangle from the outer rectangle
-        path.addRect(outer_rect)
-
-        return path
-
-    def get_end_selection_path(self):
-        """Get a selection path for the exact end point of the strand."""
-        # Create a small circle at the end point that matches the strand's end
-        end_path = QPainterPath()
-
-        # Base radius using strand width - no zoom adjustment needed since we test in canvas coordinates
-        base_radius = max(self.width / 2, 15)  # Minimum radius for clickability
-        radius = base_radius
-
-        end_path.addEllipse(self.end, radius, radius)
-        return end_path
- 
-
-
+    def get_end_decoration_path(self, side):
+        """Unfolded start edge: the circle stroke is transparent but draw()
+        still renders the inner fill circle (no stroke) so the start blends
+        into the parent - that fill circle is part of the footprint too."""
+        if (side == 0 and self.has_circles and self.has_circles[0]
+                and getattr(self, 'is_setting_staring_circle', False)
+                and self.start_circle_stroke_color.alpha() == 0):
+            angle = self._cap_tangent_angle(0)
+            return self._make_cap_inner(self.start, angle, self._partner_cap_dims(0)[1])
+        return super().get_end_decoration_path(side)
 
 
 

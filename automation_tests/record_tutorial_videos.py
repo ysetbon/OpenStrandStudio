@@ -6,11 +6,14 @@ knot), and records every frame with a visible animated mouse cursor + numbered
 step captions, then encodes the frames to mp4/mov with ffmpeg.
 
 Usage:
+    python automation_tests\record_tutorial_videos.py --scenario settings
+    python automation_tests\record_tutorial_videos.py --scenario buttons
     python automation_tests\record_tutorial_videos.py --scenario mask
     python automation_tests\record_tutorial_videos.py --scenario knot
     python automation_tests\record_tutorial_videos.py --scenario mask --test
         (--test stops after the first two steps: quick clip to check the look)
 
+Scenario -> tutorial mapping: settings=1, buttons=2, mask=3, knot=4.
 Output goes to automation_tests\recordings\<scenario>\ (frames + .mp4).
 """
 import os
@@ -32,6 +35,15 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 # The offscreen platform ships no fonts; use the Windows font directory so
 # UI labels and captions render.
 os.environ.setdefault("QT_QPA_FONTDIR", r"C:\Windows\Fonts")
+
+# Sandbox APPDATA: recordings start from clean default settings (English,
+# default theme), and the settings tutorial's OK button cannot overwrite the
+# user's real OpenStrandStudio settings.
+_APPDATA_SANDBOX = os.path.join(os.environ.get("TEMP", "."),
+                                "oss_tutorial_recording_appdata")
+shutil.rmtree(_APPDATA_SANDBOX, ignore_errors=True)
+os.makedirs(_APPDATA_SANDBOX, exist_ok=True)
+os.environ["APPDATA"] = _APPDATA_SANDBOX
 
 from test_menu_strand_flow import _bootstrap_real_app, _strand_by_name
 
@@ -104,7 +116,8 @@ class Recorder:
         for w in QApplication.topLevelWidgets():
             if w is self.window or not w.isVisible():
                 continue
-            if isinstance(w, (QMenu, QDialog)) or bool(w.windowFlags() & Qt.Popup):
+            if isinstance(w, (QMenu, QDialog)) or \
+                    w.windowType() in (Qt.Popup, Qt.ToolTip, Qt.Tool, Qt.Sheet):
                 try:
                     off = w.mapToGlobal(QPoint(0, 0)) - win_origin
                     painter.drawPixmap(off, w.grab())
@@ -200,8 +213,11 @@ class Mouse:
         QTest.qWait(int(ms))
 
     def _widget_to_window(self, widget, pos):
+        # Map via global coordinates: works for widgets in other top-level
+        # windows (dialogs, popups), which mapTo() cannot handle.
         from PyQt5.QtCore import QPoint
-        return widget.mapTo(self.window, QPoint(int(pos[0]), int(pos[1])))
+        gp = widget.mapToGlobal(QPoint(int(pos[0]), int(pos[1])))
+        return gp - self.window.mapToGlobal(QPoint(0, 0))
 
     def glide_to_window_pos(self, wx, wy, dur_ms=650):
         """Animate the drawn cursor to a window-coordinate position."""
@@ -324,6 +340,157 @@ def _attach_strand(window, mouse, rec, from_xy, to_xy, step_label,
         _hold(400)
     mouse.canvas_drag(window.canvas, from_xy, to_xy)
     _hold(600)
+
+
+def _combo_select(window, mouse, rec, combo, match_data):
+    """Glide to a QComboBox and switch it to the matching item.
+
+    The selection itself is programmatic: on the offscreen platform the
+    popup list is clamped to a tiny virtual screen and closes when moved,
+    so clicking it is unreliable. The viewer sees the cursor click the
+    dropdown and the value change."""
+    idx = None
+    for i in range(combo.count()):
+        if str(combo.itemData(i)).lower() == match_data.lower():
+            idx = i
+            break
+    if idx is None:
+        for i in range(combo.count()):
+            if match_data.lower() in combo.itemText(i).lower():
+                idx = i
+                break
+    assert idx is not None, f"combo item matching {match_data!r} not found"
+    mouse.glide_to_widget(combo)
+    _hold(250)
+    rec.click_effect()
+    _hold(350)
+    combo.hidePopup()
+    combo.setCurrentIndex(idx)
+    _hold(800)
+
+
+def _click_list_row(window, mouse, rec, list_widget, row):
+    """Glide to and click a QListWidget row (real viewport click)."""
+    item = list_widget.item(row)
+    r = list_widget.visualItemRect(item)
+    mouse.click_widget(list_widget.viewport(), pos=(r.center().x(),
+                                                    r.center().y()))
+
+
+def _right_click_hold(mouse, rec, widget, hold_ms=2000):
+    """Press-and-hold right-click on a widget (tooltips show while held)."""
+    from PyQt5.QtCore import QPoint, Qt
+    from PyQt5.QtTest import QTest
+    c = widget.rect().center()
+    mouse.glide_to_widget(widget)
+    _hold(200)
+    rec.click_effect()
+    QTest.mousePress(widget, Qt.RightButton, pos=QPoint(c.x(), c.y()))
+    _hold(hold_ms)
+    QTest.mouseRelease(widget, Qt.RightButton, pos=QPoint(c.x(), c.y()))
+    _hold(400)
+
+
+# ---------------------------------------------------------------------------
+# Scenario: tutorial_1 — settings: themes and language
+# ---------------------------------------------------------------------------
+
+def _open_settings(window, mouse, rec):
+    """Click the gear button and center the (non-modal) settings dialog."""
+    from PyQt5.QtCore import QPoint
+    mouse.click_widget(window.settings_button)
+    _hold(700)
+    dlg = window._settings_dialog
+    assert dlg is not None and dlg.isVisible(), "settings dialog not shown"
+    # Center the dialog over the main window (offscreen placement puts it at
+    # the tiny virtual screen's origin otherwise).
+    wc = window.mapToGlobal(QPoint(window.width() // 2, window.height() // 2))
+    dlg.move(wc.x() - dlg.width() // 2, wc.y() - dlg.height() // 2)
+    _hold(700)
+    return dlg
+
+
+def scenario_settings(window, app, rec, mouse, test_only=False):
+    rec.caption("Tutorial: themes and language")
+    _hold(2200)
+
+    # Step 1: open the settings dialog with the gear button
+    rec.caption("1. Click the Settings (gear) button")
+    dlg = _open_settings(window, mouse, rec)
+    _hold(400)
+
+    # Step 2: pick the dark theme
+    rec.caption("2. Open the theme dropdown and pick 'Dark'")
+    _combo_select(window, mouse, rec, dlg.theme_combobox, "dark")
+    _hold(400)
+
+    if test_only:
+        rec.caption("Test clip: cursor + captions check")
+        _hold(1500)
+        return
+
+    # Step 3: apply — OK closes the dialog and the whole app switches theme
+    rec.caption("3. Click OK - the whole app switches theme")
+    mouse.click_widget(dlg.apply_button)
+    _hold(2000)
+
+    # Step 4: reopen settings, go to the language category (row 3)
+    rec.caption("4. Open Settings again and pick 'Change Language'")
+    dlg = _open_settings(window, mouse, rec)
+    _click_list_row(window, mouse, rec, dlg.categories_list, 3)
+    _hold(800)
+
+    # Step 5: switch to French and apply
+    rec.caption("5. Pick a language, then OK - the interface updates")
+    _combo_select(window, mouse, rec, dlg.language_combobox, "fr")
+    mouse.click_widget(dlg.language_ok_button)
+    _hold(2400)
+
+    # Step 6: switch back to English the same way
+    rec.caption("6. Switch back anytime - settings are saved automatically")
+    dlg = _open_settings(window, mouse, rec)
+    _combo_select(window, mouse, rec, dlg.language_combobox, "en")
+    mouse.click_widget(dlg.language_ok_button)
+    _hold(1600)
+
+    rec.caption("That's it - make OpenStrand Studio yours!")
+    _hold(2200)
+
+
+# ---------------------------------------------------------------------------
+# Scenario: tutorial_2 — right-click layer panel buttons for descriptions
+# ---------------------------------------------------------------------------
+
+def scenario_buttons(window, app, rec, mouse, test_only=False):
+    panel = window.layer_panel
+
+    rec.caption("Tutorial: what do the layer panel buttons do?")
+    _hold(2200)
+
+    rec.caption("1. Hold right-click on any button to see its description")
+    _right_click_hold(mouse, rec, panel.reset_states_button, hold_ms=2400)
+
+    rec.caption("2. Release to hide it - try the zoom buttons too")
+    _right_click_hold(mouse, rec, panel.zoom_in_button, hold_ms=2200)
+
+    if test_only:
+        rec.caption("Test clip: cursor + captions check")
+        _hold(1500)
+        return
+
+    _right_click_hold(mouse, rec, panel.zoom_out_button, hold_ms=2000)
+
+    rec.caption("3. The hand button pans the canvas view")
+    _right_click_hold(mouse, rec, panel.pan_button, hold_ms=2200)
+
+    rec.caption("4. Refresh redraws all the layers")
+    _right_click_hold(mouse, rec, panel.refresh_button, hold_ms=2200)
+
+    rec.caption("5. The target button centers your strands")
+    _right_click_hold(mouse, rec, panel.center_strands_button, hold_ms=2200)
+
+    rec.caption("Right-click any button you are unsure about - done!")
+    _hold(2400)
 
 
 # ---------------------------------------------------------------------------
@@ -530,7 +697,8 @@ def encode(frames_dir, n_frames, elapsed_s, out_base):
 # Main
 # ---------------------------------------------------------------------------
 
-SCENARIOS = {"mask": scenario_mask, "knot": scenario_knot}
+SCENARIOS = {"settings": scenario_settings, "buttons": scenario_buttons,
+             "mask": scenario_mask, "knot": scenario_knot}
 
 
 def main():

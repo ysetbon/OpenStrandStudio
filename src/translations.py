@@ -262,14 +262,18 @@ Examples:<br>
         'curve_shape_full_desc': 'Curve Shape - Controls the mathematical curve type (1.0=sharp angles, 2.0=smooth curves, 3.0=very smooth)',
         'reset_curvature_full_desc': 'Reset Curvature Settings - Restores Control Influence, Distance Boost, and Curve Shape to defaults',
         'whats_new_info': '''
-        <h2>What's New in Version 1.108</h2>
+        <h2>What's New in Version 1.109</h2>
 
-            <li style="font-size:14px;"><b>Multi-Tab Workspace:</b> A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.</li>
-            <li style="font-size:14px;"><b>View Mode Toggles:</b> New settings let you hide the selection highlight and hide the control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.</li>
-            <li style="font-size:14px;"><b>Unfolded Start Edge by Default:</b> A new Layer Panel setting makes every newly attached strand begin with an unfolded (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button's right-click menu.</li>
-            <li style="font-size:14px;"><b>Per-Layer Width Control:</b> A new Change Width (This Layer Only) option in the layer button's right-click menu resizes a single strand independently of its set. The redesigned dialog sets the stroke thickness directly in pixels, supports fractional grid sizes, and offers a match-connected-strand elliptical end-cap.</li>
+            <li style="font-size:14px;"><b>Lock Mode Redesigned:</b> Each layer button now shows a small padlock in lock mode. Click the padlock to lock/unlock; clicking the layer simply selects it. Locked strands can be selected but not moved or attached to, and New Strand / Delete Strand remain available (delete is blocked only for locked layers). The lock state is also remembered through undo/redo, save/load, and tab switching.</li>
+            <li style="font-size:14px;"><b>Per-Layer Hide Shadow Option:</b> Right-click a layer to stop it from casting shadow onto other strands. The setting is saved with your project and survives undo/redo and group operations.</li>
+            <li style="font-size:14px;"><b>Automatic Shadow Correction for Woven Masks:</b> Incorrect shadow marks at mask crossings are now hidden automatically; your manual Shadow Editor settings are always respected.</li>
+            <li style="font-size:14px;"><b>Mask Shadows in the Shadow Editor:</b> Shadows cast through a mask now appear in the over-strand's Shadow Editor, so you can turn them on or off like any other shadow.</li>
+            <li style="font-size:14px;"><b>More Accurate Strand Selection:</b> Clicking now selects exactly what you see: strand edges, end caps, and mask outlines are all clickable, the topmost strand is always picked, and the hover highlight always matches what a click will select.</li>
+            <li style="font-size:14px;"><b>Control Point Visibility Fix:</b> "Show control points only for the selected strand" now hides only control points; other strands keep their endpoint squares and remain movable. Dragging an endpoint no longer makes an untouched control point appear.</li>
+            <li style="font-size:14px;"><b>Shadow Settings Preserved:</b> A layer's hidden-shadow state is no longer reset by group move or duplicate operations.</li>
+            <li style="font-size:14px;"><b>Improved Drawing Stability:</b> Fixed internal painting issues that could corrupt the canvas after a drawing error.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.108</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.109</p>
         ''',
 
 
@@ -753,14 +757,18 @@ Exemples :<br>
         'curve_shape_full_desc': 'Forme de Courbe - Contrôle le type de courbe mathématique (1.0=angles aigus, 2.0=courbes lisses, 3.0=très lisse)',
         'reset_curvature_full_desc': "Réinitialiser les Paramètres de Courbure - Restaure l'Influence, l'Amplification et la Forme aux valeurs par défaut",
         'whats_new_info': '''
-        <h2>Nouveautés de la version 1.108</h2>
+        <h2>Nouveautés de la version 1.109</h2>
 
-            <li style="font-size:14px;"><b>Espace de travail multi-onglets :</b> Un nouveau bouton Onglets ouvre un bord d'onglets déplaçable qui s'aimante sur le côté du canevas. Chaque onglet est une session indépendante avec ses propres brins, groupes et historique d'annulation/rétablissement, et vous êtes averti avant de quitter lorsqu'un onglet contient encore des modifications non enregistrées.</li>
-            <li style="font-size:14px;"><b>Options du mode Vue :</b> De nouveaux paramètres permettent de masquer la surbrillance de sélection et de masquer les points de contrôle en mode Vue, vous offrant un canevas épuré et prêt pour la capture sans modifier votre sélection réelle.</li>
-            <li style="font-size:14px;"><b>Bord de départ déplié par défaut :</b> Un nouveau paramètre du panneau des calques fait commencer automatiquement chaque nouveau brin attaché avec un bord de départ déplié (transparent), sans avoir à le définir brin par brin depuis le menu contextuel du bouton de calque.</li>
-            <li style="font-size:14px;"><b>Contrôle de largeur par calque :</b> Une nouvelle option Modifier la largeur (ce calque uniquement) dans le menu contextuel du bouton de calque redimensionne un seul brin indépendamment de son ensemble. La boîte de dialogue redessinée définit l'épaisseur du contour directement en pixels, prend en charge des tailles de grille fractionnaires et propose une extrémité elliptique « adapter au brin connecté ».</li>
+            <li style="font-size:14px;"><b>Mode verrouillage repensé:</b> Chaque bouton de calque affiche désormais un petit cadenas en mode verrouillage. Cliquez sur le cadenas pour verrouiller/déverrouiller ; cliquer sur le calque le sélectionne simplement. Les brins verrouillés peuvent être sélectionnés mais ni déplacés ni utilisés pour l'attache, et Nouveau brin / Supprimer le brin restent disponibles (la suppression n'est bloquée que pour les calques verrouillés). L'état de verrouillage est également conservé lors des annulations/rétablissements, de l'enregistrement/du chargement et du changement d'onglet.</li>
+            <li style="font-size:14px;"><b>Option Masquer l'ombre par calque:</b> Faites un clic droit sur un calque pour l'empêcher de projeter une ombre sur les autres brins. Le réglage est enregistré avec votre projet et survit aux annulations/rétablissements et aux opérations de groupe.</li>
+            <li style="font-size:14px;"><b>Correction automatique des ombres pour les masques tissés:</b> Les marques d'ombre incorrectes aux croisements des masques sont désormais masquées automatiquement ; vos réglages manuels dans l'éditeur d'ombres sont toujours respectés.</li>
+            <li style="font-size:14px;"><b>Ombres de masque dans l'éditeur d'ombres:</b> Les ombres projetées à travers un masque apparaissent désormais dans l'éditeur d'ombres du brin supérieur, vous pouvez donc les activer ou les désactiver comme n'importe quelle autre ombre.</li>
+            <li style="font-size:14px;"><b>Sélection de brins plus précise:</b> Un clic sélectionne désormais exactement ce que vous voyez : les bords des brins, les extrémités et les contours des masques sont tous cliquables, le brin le plus haut est toujours choisi, et la surbrillance au survol correspond toujours à ce qu'un clic sélectionnera.</li>
+            <li style="font-size:14px;"><b>Correction de l'affichage des points de contrôle:</b> « Afficher les points de contrôle uniquement pour le brin sélectionné » ne masque plus que les points de contrôle ; les autres brins conservent leurs carrés d'extrémité et restent déplaçables. Faire glisser une extrémité ne fait plus apparaître un point de contrôle jamais utilisé.</li>
+            <li style="font-size:14px;"><b>Réglages d'ombre préservés:</b> L'état « ombre masquée » d'un calque n'est plus réinitialisé par un déplacement ou une duplication de groupe.</li>
+            <li style="font-size:14px;"><b>Stabilité de dessin améliorée:</b> Correction de problèmes internes de rendu qui pouvaient corrompre le canevas après une erreur de dessin.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.108</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.109</p>
         ''',
 
 
@@ -1326,14 +1334,18 @@ Beispiele:<br>
         'toggle_shadow_desc': 'Schatten ein/aus - Zeigt/verbirgt Schatten auf Strängen',
         'layer_state_desc': 'Layer-Status - Zeigt Debug-Informationen zu Ebenen',
         'whats_new_info': '''
-        <h2>Neu in Version 1.108</h2>
+        <h2>Neu in Version 1.109</h2>
 
-            <li style="font-size:14px;"><b>Multi-Tab-Arbeitsbereich:</b> Eine neue Schaltfläche „Tabs" öffnet eine verschiebbare Tab-Leiste, die magnetisch an der Seite der Leinwand einrastet. Jeder Tab ist eine eigenständige Sitzung mit eigenen Strängen, Gruppen und Rückgängig-/Wiederherstellen-Verlauf, und Sie werden vor dem Beenden gewarnt, wenn ein Tab noch nicht gespeicherte Änderungen enthält.</li>
-            <li style="font-size:14px;"><b>Ansichtsmodus-Optionen:</b> Neue Einstellungen blenden die Auswahl-Hervorhebung und die Kontrollpunkte im Ansichtsmodus aus und sorgen für eine aufgeräumte, aufnahmebereite Leinwand, ohne Ihre tatsächliche Auswahl zu ändern.</li>
-            <li style="font-size:14px;"><b>Aufgefaltete Startkante als Standard:</b> Eine neue Einstellung im Ebenenbereich lässt jeden neu angehängten Strang automatisch mit einer aufgefalteten (transparenten) Startkante beginnen, sodass Sie dies nicht mehr für jeden Strang einzeln über das Kontextmenü der Ebenen-Schaltfläche festlegen müssen.</li>
-            <li style="font-size:14px;"><b>Breitensteuerung pro Ebene:</b> Eine neue Option „Breite ändern (nur diese Ebene)" im Kontextmenü der Ebenen-Schaltfläche ändert die Größe eines einzelnen Strangs unabhängig von seinem Satz. Der überarbeitete Dialog stellt die Konturbreite direkt in Pixeln ein, unterstützt gebrochene Rastergrößen und bietet eine elliptische Endkappe „An verbundenen Strang anpassen".</li>
+            <li style="font-size:14px;"><b>Sperrmodus überarbeitet:</b> Jede Ebenen-Schaltfläche zeigt im Sperrmodus jetzt ein kleines Vorhängeschloss. Klicken Sie auf das Schloss zum Sperren/Entsperren; ein Klick auf die Ebene wählt sie einfach aus. Gesperrte Stränge können ausgewählt, aber nicht bewegt oder als Ansatzpunkt verwendet werden, und Neuer Strang / Strang löschen bleiben verfügbar (Löschen ist nur für gesperrte Ebenen blockiert). Der Sperrzustand bleibt auch bei Rückgängig/Wiederherstellen, Speichern/Laden und Tab-Wechsel erhalten.</li>
+            <li style="font-size:14px;"><b>Option „Schatten ausblenden“ pro Ebene:</b> Klicken Sie mit der rechten Maustaste auf eine Ebene, damit sie keinen Schatten mehr auf andere Stränge wirft. Die Einstellung wird mit dem Projekt gespeichert und übersteht Rückgängig/Wiederherstellen sowie Gruppenoperationen.</li>
+            <li style="font-size:14px;"><b>Automatische Schattenkorrektur für gewebte Masken:</b> Falsche Schattenspuren an Maskenkreuzungen werden jetzt automatisch ausgeblendet; Ihre manuellen Einstellungen im Schatten-Editor werden immer respektiert.</li>
+            <li style="font-size:14px;"><b>Maskenschatten im Schatten-Editor:</b> Schatten, die durch eine Maske geworfen werden, erscheinen jetzt im Schatten-Editor des oberen Strangs und lassen sich wie jeder andere Schatten ein- oder ausschalten.</li>
+            <li style="font-size:14px;"><b>Präzisere Strangauswahl:</b> Ein Klick wählt jetzt genau das aus, was Sie sehen: Strangränder, Endkappen und Maskenumrisse sind alle anklickbar, der oberste Strang wird immer gewählt, und die Hervorhebung beim Überfahren entspricht immer dem, was ein Klick auswählen würde.</li>
+            <li style="font-size:14px;"><b>Kontrollpunkt-Anzeige korrigiert:</b> „Kontrollpunkte nur für den ausgewählten Strang anzeigen“ blendet jetzt nur noch Kontrollpunkte aus; andere Stränge behalten ihre Endpunkt-Quadrate und bleiben beweglich. Das Ziehen eines Endpunkts lässt keinen unbenutzten Kontrollpunkt mehr erscheinen.</li>
+            <li style="font-size:14px;"><b>Schatteneinstellungen bleiben erhalten:</b> Der Zustand „Schatten ausgeblendet“ einer Ebene wird durch Gruppenverschiebung oder -duplizierung nicht mehr zurückgesetzt.</li>
+            <li style="font-size:14px;"><b>Verbesserte Zeichenstabilität:</b> Interne Renderprobleme behoben, die nach einem Zeichenfehler die Leinwand beschädigen konnten.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.108</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.109</p>
         ''',
         # About translations
         'about_info': '''
@@ -1833,14 +1845,18 @@ Esempi:<br>
         'curve_shape_full_desc': 'Forma Curva - Controlla il tipo di curva matematica (1.0=angoli acuti, 2.0=curve lisce, 3.0=molto liscio)',
         'reset_curvature_full_desc': 'Ripristina Impostazioni Curvatura - Ripristina Influenza, Amplificazione e Forma ai valori predefiniti',
         'whats_new_info': '''
-        <h2>Novità della versione 1.108</h2>
+        <h2>Novità della versione 1.109</h2>
 
-            <li style="font-size:14px;"><b>Area di lavoro multi-scheda:</b> Un nuovo pulsante Schede apre un bordo di schede trascinabile che si aggancia magneticamente al lato della tela. Ogni scheda è una sessione indipendente con i propri fili, gruppi e cronologia di annullamento/ripristino, e vieni avvisato prima di uscire quando una scheda contiene ancora modifiche non salvate.</li>
-            <li style="font-size:14px;"><b>Opzioni della modalità Vista:</b> Nuove impostazioni consentono di nascondere l'evidenziazione della selezione e i punti di controllo in modalità Vista, offrendoti una tela pulita e pronta per l'acquisizione senza modificare la selezione effettiva.</li>
-            <li style="font-size:14px;"><b>Bordo iniziale disteso come predefinito:</b> Una nuova impostazione nel pannello dei livelli fa iniziare automaticamente ogni nuovo filo collegato con un bordo iniziale disteso (trasparente), così non devi più impostarlo filo per filo dal menu contestuale del pulsante del livello.</li>
-            <li style="font-size:14px;"><b>Controllo larghezza per livello:</b> Una nuova opzione Modifica larghezza (solo questo livello) nel menu contestuale del pulsante del livello ridimensiona un singolo filo indipendentemente dal suo set. La finestra ridisegnata imposta lo spessore del contorno direttamente in pixel, supporta dimensioni della griglia frazionarie e offre un'estremità ellittica «adatta al filo connesso».</li>
+            <li style="font-size:14px;"><b>Modalità blocco ridisegnata:</b> Ogni pulsante di livello ora mostra un piccolo lucchetto in modalità blocco. Fai clic sul lucchetto per bloccare/sbloccare; fare clic sul livello lo seleziona semplicemente. I fili bloccati possono essere selezionati ma non spostati né usati per l'attacco, e Nuovo filo / Elimina filo restano disponibili (l'eliminazione è bloccata solo per i livelli bloccati). Lo stato di blocco viene inoltre ricordato tra annulla/ripristina, salvataggio/caricamento e cambio di scheda.</li>
+            <li style="font-size:14px;"><b>Opzione Nascondi ombra per livello:</b> Fai clic destro su un livello per impedirgli di proiettare ombra sugli altri fili. L'impostazione viene salvata con il progetto e sopravvive ad annulla/ripristina e alle operazioni di gruppo.</li>
+            <li style="font-size:14px;"><b>Correzione automatica delle ombre per maschere intrecciate:</b> I segni d'ombra errati agli incroci delle maschere ora vengono nascosti automaticamente; le tue impostazioni manuali nell'editor ombre vengono sempre rispettate.</li>
+            <li style="font-size:14px;"><b>Ombre delle maschere nell'editor ombre:</b> Le ombre proiettate attraverso una maschera ora appaiono nell'editor ombre del filo superiore, così puoi attivarle o disattivarle come qualsiasi altra ombra.</li>
+            <li style="font-size:14px;"><b>Selezione dei fili più precisa:</b> Un clic ora seleziona esattamente ciò che vedi: i bordi dei fili, le estremità e i contorni delle maschere sono tutti cliccabili, viene sempre scelto il filo più in alto e l'evidenziazione al passaggio del mouse corrisponde sempre a ciò che un clic selezionerà.</li>
+            <li style="font-size:14px;"><b>Correzione della visibilità dei punti di controllo:</b> «Mostra i punti di controllo solo per il filo selezionato» ora nasconde solo i punti di controllo; gli altri fili mantengono i loro quadrati alle estremità e restano spostabili. Trascinare un'estremità non fa più apparire un punto di controllo mai utilizzato.</li>
+            <li style="font-size:14px;"><b>Impostazioni ombra preservate:</b> Lo stato «ombra nascosta» di un livello non viene più azzerato da spostamenti o duplicazioni di gruppo.</li>
+            <li style="font-size:14px;"><b>Maggiore stabilità di disegno:</b> Risolti problemi interni di rendering che potevano corrompere la tela dopo un errore di disegno.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - Versione 1.108</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Versione 1.109</p>
         ''',
 
 
@@ -2377,14 +2393,18 @@ Ejemplos:<br>
         'curve_shape_full_desc': 'Forma de Curva - Controla el tipo de curva matemática (1.0=ángulos agudos, 2.0=curvas suaves, 3.0=muy suave)',
         'reset_curvature_full_desc': 'Restablecer Configuración de Curvatura - Restaura Influencia, Amplificación y Forma a valores predeterminados',
         'whats_new_info': '''
-        <h2>Novedades de la versión 1.108</h2>
+        <h2>Novedades de la versión 1.109</h2>
 
-            <li style="font-size:14px;"><b>Espacio de trabajo con pestañas:</b> Un nuevo botón Pestañas abre un borde de pestañas arrastrable que se acopla magnéticamente al lado del lienzo. Cada pestaña es una sesión independiente con sus propias hebras, grupos e historial de deshacer/rehacer, y se te avisa antes de salir cuando una pestaña todavía tiene cambios sin guardar.</li>
-            <li style="font-size:14px;"><b>Opciones del modo Ver:</b> Nuevos ajustes permiten ocultar el resaltado de selección y los puntos de control en modo Ver, ofreciéndote un lienzo limpio y listo para capturar sin cambiar tu selección real.</li>
-            <li style="font-size:14px;"><b>Borde inicial desplegado por defecto:</b> Un nuevo ajuste en el panel de capas hace que cada nueva hebra adjunta comience automáticamente con un borde inicial desplegado (transparente), por lo que ya no tienes que configurarlo hebra por hebra desde el menú contextual del botón de capa.</li>
-            <li style="font-size:14px;"><b>Control de ancho por capa:</b> Una nueva opción Cambiar ancho (solo esta capa) en el menú contextual del botón de capa cambia el tamaño de una sola hebra independientemente de su conjunto. El cuadro de diálogo rediseñado establece el grosor del contorno directamente en píxeles, admite tamaños de cuadrícula fraccionarios y ofrece un extremo elíptico «ajustar a la hebra conectada».</li>
+            <li style="font-size:14px;"><b>Modo de bloqueo rediseñado:</b> Cada botón de capa ahora muestra un pequeño candado en modo de bloqueo. Haz clic en el candado para bloquear/desbloquear; hacer clic en la capa simplemente la selecciona. Las hebras bloqueadas pueden seleccionarse pero no moverse ni usarse para adjuntar, y Nueva hebra / Eliminar hebra siguen disponibles (la eliminación solo se bloquea para capas bloqueadas). El estado de bloqueo también se recuerda al deshacer/rehacer, guardar/cargar y cambiar de pestaña.</li>
+            <li style="font-size:14px;"><b>Opción Ocultar sombra por capa:</b> Haz clic derecho en una capa para impedir que proyecte sombra sobre otras hebras. El ajuste se guarda con tu proyecto y sobrevive a deshacer/rehacer y a las operaciones de grupo.</li>
+            <li style="font-size:14px;"><b>Corrección automática de sombras para máscaras tejidas:</b> Las marcas de sombra incorrectas en los cruces de máscaras ahora se ocultan automáticamente; tus ajustes manuales del editor de sombras siempre se respetan.</li>
+            <li style="font-size:14px;"><b>Sombras de máscara en el editor de sombras:</b> Las sombras proyectadas a través de una máscara ahora aparecen en el editor de sombras de la hebra superior, para que puedas activarlas o desactivarlas como cualquier otra sombra.</li>
+            <li style="font-size:14px;"><b>Selección de hebras más precisa:</b> Un clic ahora selecciona exactamente lo que ves: los bordes de las hebras, los extremos y los contornos de las máscaras son todos clicables, siempre se elige la hebra superior, y el resaltado al pasar el cursor siempre coincide con lo que un clic seleccionará.</li>
+            <li style="font-size:14px;"><b>Corrección de la visibilidad de puntos de control:</b> «Mostrar puntos de control solo para la hebra seleccionada» ahora oculta solo los puntos de control; las demás hebras conservan sus cuadrados de extremo y siguen siendo movibles. Arrastrar un extremo ya no hace aparecer un punto de control sin usar.</li>
+            <li style="font-size:14px;"><b>Ajustes de sombra preservados:</b> El estado de «sombra oculta» de una capa ya no se restablece al mover o duplicar grupos.</li>
+            <li style="font-size:14px;"><b>Mayor estabilidad de dibujo:</b> Se corrigieron problemas internos de renderizado que podían corromper el lienzo tras un error de dibujo.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - Versión 1.108</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Versión 1.109</p>
         ''',
  
 
@@ -2921,14 +2941,18 @@ Exemplos:<br>
         'curve_shape_full_desc': 'Forma da Curva - Controla o tipo de curva matemática (1.0=ângulos agudos, 2.0=curvas suaves, 3.0=muito suave)',
         'reset_curvature_full_desc': 'Redefinir Configurações de Curvatura - Restaura Influência, Amplificação e Forma aos padrões',
         'whats_new_info': '''
-        <h2>Novidades da versão 1.108</h2>
+        <h2>Novidades da versão 1.109</h2>
 
-            <li style="font-size:14px;"><b>Espaço de trabalho com abas:</b> Um novo botão Abas abre uma borda de abas arrastável que se encaixa magneticamente na lateral da tela. Cada aba é uma sessão independente com seus próprios fios, grupos e histórico de desfazer/refazer, e você é avisado antes de sair quando uma aba ainda tem alterações não salvas.</li>
-            <li style="font-size:14px;"><b>Opções do modo Visualização:</b> Novas configurações permitem ocultar o destaque de seleção e os pontos de controle no modo Visualização, oferecendo uma tela limpa e pronta para captura sem alterar sua seleção real.</li>
-            <li style="font-size:14px;"><b>Borda inicial desdobrada por padrão:</b> Uma nova configuração no painel de camadas faz cada novo fio anexado começar automaticamente com uma borda inicial desdobrada (transparente), para que você não precise mais defini-la fio por fio no menu de contexto do botão de camada.</li>
-            <li style="font-size:14px;"><b>Controle de largura por camada:</b> Uma nova opção Alterar largura (apenas esta camada) no menu de contexto do botão de camada redimensiona um único fio independentemente do seu conjunto. A caixa de diálogo redesenhada define a espessura do contorno diretamente em pixels, suporta tamanhos de grade fracionários e oferece uma extremidade elíptica «ajustar ao fio conectado».</li>
+            <li style="font-size:14px;"><b>Modo de bloqueio redesenhado:</b> Cada botão de camada agora mostra um pequeno cadeado no modo de bloqueio. Clique no cadeado para bloquear/desbloquear; clicar na camada simplesmente a seleciona. Fios bloqueados podem ser selecionados, mas não movidos nem usados para anexar, e Novo fio / Excluir fio continuam disponíveis (a exclusão só é bloqueada para camadas bloqueadas). O estado de bloqueio também é lembrado ao desfazer/refazer, salvar/carregar e trocar de aba.</li>
+            <li style="font-size:14px;"><b>Opção Ocultar sombra por camada:</b> Clique com o botão direito em uma camada para impedi-la de projetar sombra sobre outros fios. A configuração é salva com o projeto e sobrevive a desfazer/refazer e às operações de grupo.</li>
+            <li style="font-size:14px;"><b>Correção automática de sombras para máscaras entrelaçadas:</b> Marcas de sombra incorretas nos cruzamentos de máscaras agora são ocultadas automaticamente; suas configurações manuais no editor de sombras são sempre respeitadas.</li>
+            <li style="font-size:14px;"><b>Sombras de máscara no editor de sombras:</b> Sombras projetadas através de uma máscara agora aparecem no editor de sombras do fio superior, para que você possa ativá-las ou desativá-las como qualquer outra sombra.</li>
+            <li style="font-size:14px;"><b>Seleção de fios mais precisa:</b> Um clique agora seleciona exatamente o que você vê: bordas dos fios, extremidades e contornos das máscaras são todos clicáveis, o fio mais acima é sempre escolhido, e o destaque ao passar o mouse sempre corresponde ao que um clique selecionará.</li>
+            <li style="font-size:14px;"><b>Correção da visibilidade dos pontos de controle:</b> «Mostrar pontos de controle apenas para o fio selecionado» agora oculta apenas os pontos de controle; os outros fios mantêm seus quadrados de extremidade e continuam móveis. Arrastar uma extremidade não faz mais aparecer um ponto de controle nunca usado.</li>
+            <li style="font-size:14px;"><b>Configurações de sombra preservadas:</b> O estado de «sombra oculta» de uma camada não é mais redefinido ao mover ou duplicar grupos.</li>
+            <li style="font-size:14px;"><b>Maior estabilidade de desenho:</b> Corrigidos problemas internos de renderização que podiam corromper a tela após um erro de desenho.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio – Versão 1.108</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio – Versão 1.109</p>
         ''',
 
 
@@ -3473,14 +3497,18 @@ Exemplos:<br>
         'reset_curvature_full_desc': 'אפס הגדרות עקמומיות - מחזיר השפעה, הגברה וצורה לברירת המחדל',
         'whats_new_info': '''
         <div dir="rtl" style="text-align: right;">
-        <h2>מה חדש בגרסה 1.108</h2>
+        <h2>מה חדש בגרסה 1.109</h2>
 
-            <li style="font-size:14px;"><b>כרטיסיות מרובות:</b> כפתור "כרטיסיות" חדש פותח קצה כרטיסיות נגרר שנצמד מגנטית לצד הקנבס. כל כרטיסייה היא הפעלה עצמאית עם החוטים, הקבוצות והיסטוריית הביטול/ביצוע מחדש שלה, ותקבלו אזהרה לפני יציאה כאשר בכרטיסייה עדיין יש שינויים שלא נשמרו.</li>
-            <li style="font-size:14px;"><b>אפשרויות מצב תצוגה:</b> הגדרות חדשות מאפשרות להסתיר את הדגשת הבחירה ואת נקודות הבקרה במצב תצוגה, ומעניקות לכם קנבס נקי ומוכן לצילום מבלי לשנות את הבחירה בפועל.</li>
-            <li style="font-size:14px;"><b>קצה התחלה לא מקופל כברירת מחדל:</b> הגדרה חדשה בלוח השכבות גורמת לכל חוט מחובר חדש להתחיל אוטומטית עם קצה התחלה לא מקופל (שקוף), כך שאין צורך להגדיר זאת לכל חוט בנפרד מתפריט ההקשר של כפתור השכבה.</li>
-            <li style="font-size:14px;"><b>בקרת רוחב לכל שכבה:</b> אפשרות חדשה "שינוי רוחב (שכבה זו בלבד)" בתפריט ההקשר של כפתור השכבה משנה את גודלו של חוט בודד ללא תלות בקבוצה. תיבת הדו-שיח המעוצבת מחדש מגדירה את עובי הקו ישירות בפיקסלים, תומכת בגדלי רשת שבריים, ומציעה קצה אליפטי "התאם לגדיל המחובר".</li>
+            <li style="font-size:14px;"><b>מצב נעילה בעיצוב חדש:</b> כל כפתור שכבה מציג כעת מנעול קטן במצב נעילה. לחיצה על המנעול נועלת/משחררת; לחיצה על השכבה פשוט בוחרת אותה. חוטים נעולים ניתנים לבחירה אך לא להזזה או לחיבור, וכפתורי חוט חדש / מחיקת חוט נשארים זמינים (מחיקה חסומה רק לשכבות נעולות). מצב הנעילה נשמר גם בביטול/ביצוע מחדש, בשמירה/טעינה ובמעבר בין כרטיסיות.</li>
+            <li style="font-size:14px;"><b>אפשרות הסתרת צל לכל שכבה:</b> לחצו לחיצה ימנית על שכבה כדי למנוע ממנה להטיל צל על חוטים אחרים. ההגדרה נשמרת עם הפרויקט ושורדת ביטול/ביצוע מחדש ופעולות קבוצה.</li>
+            <li style="font-size:14px;"><b>תיקון צללים אוטומטי למסכות שזורות:</b> סימני צל שגויים בהצטלבויות מסכות מוסתרים כעת אוטומטית; ההגדרות הידניות שלכם בעורך הצללים תמיד נשמרות.</li>
+            <li style="font-size:14px;"><b>צללי מסכה בעורך הצללים:</b> צללים המוטלים דרך מסכה מופיעים כעת בעורך הצללים של החוט העליון, כך שניתן להפעיל או לכבות אותם כמו כל צל אחר.</li>
+            <li style="font-size:14px;"><b>בחירת חוטים מדויקת יותר:</b> לחיצה בוחרת כעת בדיוק את מה שרואים: קצוות החוטים, כיפות הקצה וקווי המתאר של המסכות ניתנים כולם ללחיצה, החוט העליון ביותר נבחר תמיד, וההדגשה בריחוף תמיד תואמת את מה שלחיצה תבחר.</li>
+            <li style="font-size:14px;"><b>תיקון תצוגת נקודות בקרה:</b> "הצג נקודות בקרה רק עבור החוט הנבחר" מסתיר כעת רק נקודות בקרה; שאר החוטים שומרים על ריבועי הקצה שלהם וניתנים להזזה. גרירת קצה אינה גורמת עוד להופעת נקודת בקרה שמעולם לא הוזזה.</li>
+            <li style="font-size:14px;"><b>הגדרות צל נשמרות:</b> מצב "צל מוסתר" של שכבה אינו מתאפס עוד בעת הזזה או שכפול של קבוצה.</li>
+            <li style="font-size:14px;"><b>יציבות ציור משופרת:</b> תוקנו בעיות רינדור פנימיות שעלולות היו לפגוע בקנבס לאחר שגיאת ציור.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - גרסה 1.108</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - גרסה 1.109</p>
         </div>
         ''',
 

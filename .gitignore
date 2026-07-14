@@ -27,3 +27,6 @@ LPT9
 __pycache__/
 cad_mxn/
 *.log
+
+# Tutorial video recording output (frames + encoded clips)
+automation_tests/recordings/

@@ -41,11 +41,36 @@ for p in (SRC_DIR, os.path.dirname(os.path.abspath(__file__))):
 # Sandbox APPDATA: recordings start from clean default settings (English,
 # default theme), and the settings tutorial's OK button cannot overwrite the
 # user's real OpenStrandStudio settings.
-_APPDATA_SANDBOX = os.path.join(os.environ.get("TEMP", "."),
-                                "oss_tutorial_recording_appdata")
+_APPDATA_SANDBOX = os.path.join(ROOT_DIR, "automation_tests", "recordings",
+                                "clean_profile")
 shutil.rmtree(_APPDATA_SANDBOX, ignore_errors=True)
 os.makedirs(_APPDATA_SANDBOX, exist_ok=True)
 os.environ["APPDATA"] = _APPDATA_SANDBOX
+
+
+def _install_clean_profile():
+    """Route every writable app-data lookup to the tutorial sandbox.
+
+    ``main.load_user_settings`` honours APPDATA, but several canvas/layer
+    components use QStandardPaths.AppDataLocation instead. Qt obtains that
+    location from the Windows shell and therefore ignores an APPDATA override.
+    Patch just that one writable-location category before MainWindow is
+    constructed so a reference run and a recording both start from the same
+    genuinely clean profile without reading or writing the user's profile.
+    """
+    from PyQt5.QtCore import QStandardPaths
+
+    if getattr(QStandardPaths, "_tutorial_profile_installed", False):
+        return
+    original = QStandardPaths.writableLocation
+
+    def writable_location(location):
+        if location == QStandardPaths.AppDataLocation:
+            return _APPDATA_SANDBOX
+        return original(location)
+
+    QStandardPaths.writableLocation = staticmethod(writable_location)
+    QStandardPaths._tutorial_profile_installed = True
 
 from test_menu_strand_flow import _bootstrap_real_app, _strand_by_name
 
@@ -53,6 +78,113 @@ OUT_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "recordings"
 
 FPS = 30
 WINDOW_W, WINDOW_H = 1920, 1080
+MAIN_TITLE_H = 31
+PLAYBACK_SPEED = 1.25
+# Durations of the four shipped tutorials immediately before the requested
+# speed-up. Full renders target exactly 80% of these durations, independent of
+# capture-machine performance; short --test clips still use captured time.
+BASELINE_DURATION_S = {
+    "settings": 41.393741,
+    "buttons": 28.649706,
+    "mask": 49.193405,
+    "knot": 39.443388,
+}
+
+_native_titlebar_cache = {}
+
+
+def _native_titlebar(widget, outer_width, maximized=False, active=True):
+    """Ask Windows to paint the real non-client title bar off-screen.
+
+    WA_DontShowOnScreen intentionally removes native non-client chrome.  A
+    short-lived helper window, mapped completely beyond the desktop, lets DWM
+    paint the exact current Windows title bar (icon, font and caption buttons)
+    without displaying anything to the user.  Only that native strip is kept;
+    the real app/dialog client pixels are composited beneath it.
+    """
+    from PyQt5.QtCore import QRect, Qt
+    from PyQt5.QtGui import QImage, QPixmap
+    from PyQt5.QtWidgets import QApplication, QDialog, QMainWindow
+    import ctypes
+    import win32con
+    import win32gui
+    import win32ui
+
+    is_dialog = isinstance(widget, QDialog)
+    key = ("dialog" if is_dialog else "main", widget.windowTitle(),
+           int(outer_width), bool(maximized), bool(active),
+           int(widget.windowFlags()))
+    cached = _native_titlebar_cache.get(key)
+    if cached is not None:
+        return cached
+
+    helper_cls = QDialog if is_dialog else QMainWindow
+    helper = helper_cls(None, widget.windowFlags())
+    helper.setProperty("_tutorial_native_template", True)
+    helper.setAttribute(Qt.WA_ShowWithoutActivating, True)
+    helper.setWindowTitle(widget.windowTitle())
+    helper.setWindowIcon(widget.windowIcon())
+
+    # First mapping establishes the system's current frame margins.  Fixed
+    # dialogs match Settings' close-only caption; the main helper remains
+    # resizable and receives the native restore button when maximized=True.
+    if is_dialog:
+        helper.setFixedSize(max(1, outer_width - 2), 100)
+    else:
+        helper.resize(max(1, outer_width - 16), 100)
+    screen = QApplication.primaryScreen().geometry()
+    helper.move(screen.x() + screen.width() + 100, screen.y() + 80)
+    helper.show()
+    hwnd = int(helper.winId())
+    win32gui.UpdateWindow(hwnd)
+
+    if maximized:
+        style = win32gui.GetWindowLong(hwnd, win32con.GWL_STYLE)
+        win32gui.SetWindowLong(hwnd, win32con.GWL_STYLE,
+                              style | win32con.WS_MAXIMIZE)
+        win32gui.SetWindowPos(
+            hwnd, 0, screen.x() + screen.width() + 100, screen.y() + 80,
+            outer_width, 160,
+            win32con.SWP_NOZORDER | win32con.SWP_NOACTIVATE |
+            win32con.SWP_FRAMECHANGED)
+
+    # Paint active/inactive caption state without moving keyboard focus.
+    win32gui.SendMessage(hwnd, 0x0086, int(active), 0)  # WM_NCACTIVATE
+    win32gui.UpdateWindow(hwnd)
+    left, top, right, bottom = win32gui.GetWindowRect(hwnd)
+    frame_w, frame_h = right - left, bottom - top
+    title_h = max(1, helper.windowHandle().frameMargins().top())
+
+    window_dc = win32gui.GetWindowDC(hwnd)
+    source_dc = win32ui.CreateDCFromHandle(window_dc)
+    memory_dc = source_dc.CreateCompatibleDC()
+    bitmap = win32ui.CreateBitmap()
+    bitmap.CreateCompatibleBitmap(source_dc, frame_w, frame_h)
+    memory_dc.SelectObject(bitmap)
+    ok = ctypes.windll.user32.PrintWindow(hwnd, memory_dc.GetSafeHdc(), 2)
+    if not ok:
+        raise RuntimeError("Windows PrintWindow failed for tutorial title bar")
+    bits = bitmap.GetBitmapBits(True)
+    image = QImage(bits, frame_w, frame_h, frame_w * 4,
+                   QImage.Format_RGB32).copy()
+    pixmap = QPixmap.fromImage(image).copy(QRect(0, 0, frame_w, title_h))
+
+    win32gui.DeleteObject(bitmap.GetHandle())
+    memory_dc.DeleteDC()
+    source_dc.DeleteDC()
+    win32gui.ReleaseDC(hwnd, window_dc)
+    helper.close()
+    helper.deleteLater()
+
+    # DWM resize margins can make a helper a few pixels wider than requested.
+    # Scale only the uniform caption width; its native 31 px height and every
+    # font/control metric remain untouched.
+    if pixmap.width() != outer_width:
+        pixmap = pixmap.scaled(outer_width, title_h, Qt.IgnoreAspectRatio,
+                               Qt.SmoothTransformation)
+    result = (pixmap, title_h)
+    _native_titlebar_cache[key] = result
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -69,14 +201,41 @@ def _install_headless_filter(app):
     platform window is mapped."""
     global _headless_filter
     from PyQt5.QtCore import QObject, QEvent, Qt
-    from PyQt5.QtWidgets import QWidget
+    from PyQt5.QtWidgets import QApplication, QDialog, QWidget
 
     class HeadlessFilter(QObject):
         def eventFilter(self, obj, ev):
             if ev.type() in (QEvent.Polish, QEvent.WinIdChange, QEvent.Show) \
                     and isinstance(obj, QWidget) \
+                    and not bool(obj.property("_tutorial_native_template")) \
                     and not obj.testAttribute(Qt.WA_DontShowOnScreen):
                 obj.setAttribute(Qt.WA_DontShowOnScreen, True)
+            if ev.type() == QEvent.Show and isinstance(obj, QWidget) \
+                    and obj.isWindow() \
+                    and not bool(obj.property("_tutorial_native_template")):
+                # Place transient windows before their very first paint. If
+                # this happened after a recorder wait, viewers would see the
+                # window appear at Qt's never-mapped fallback position and
+                # then jump to its final Windows position.
+                if isinstance(obj, QDialog):
+                    main_window = next(
+                        (w for w in QApplication.topLevelWidgets()
+                         if type(w).__name__ == "MainWindow"), None)
+                    if main_window is not None:
+                        g = main_window.geometry()
+                        obj.setGeometry(
+                            g.x() + (g.width() - obj.width()) // 2,
+                            g.y() + (g.height() - obj.height()) // 2,
+                            obj.width(), obj.height())
+                elif obj.windowType() in (Qt.Popup, Qt.ToolTip, Qt.Tool):
+                    screen = QApplication.primaryScreen().geometry()
+                    g = obj.geometry()
+                    x = min(max(g.x(), screen.x()),
+                            screen.x() + screen.width() - g.width())
+                    y = min(max(g.y(), screen.y()),
+                            screen.y() + screen.height() - g.height())
+                    if (x, y) != (g.x(), g.y()):
+                        obj.move(x, y)
             return False
 
     _headless_filter = HeadlessFilter()
@@ -84,7 +243,7 @@ def _install_headless_filter(app):
 
 
 def _place_window(window):
-    """Give the window the exact footprint of a 1920x1080 screen.
+    """Give the complete window (native title + client) a 1920x1080 footprint.
 
     The window is anchored to the screen's bottom-right corner so that
     Qt's popup clamping (menus, dropdowns) against the real screen edges
@@ -95,9 +254,10 @@ def _place_window(window):
     # setGeometry pins the CLIENT rect (frame-independent), so a real
     # (framed) window and a headless (never-mapped, frameless) window put
     # their content at exactly the same global position.
+    client_h = WINDOW_H - MAIN_TITLE_H
     window.setGeometry(geo.x() + geo.width() - WINDOW_W,
-                       geo.y() + geo.height() - WINDOW_H,
-                       WINDOW_W, WINDOW_H)
+                       geo.y() + geo.height() - client_h,
+                       WINDOW_W, client_h)
 
 
 def _sync_native(w):
@@ -135,26 +295,81 @@ def _normalize_popup(w):
     _sync_native(w)
 
 
-def _composite_frame(window):
-    """Grab the window plus every visible popup window (menus, dialogs,
-    dropdowns, tooltips) composited at their real on-screen offsets."""
+def _composite_frame(window, use_backing_store=False):
+    """Capture complete Windows chrome plus every visible client/popup."""
     from PyQt5.QtCore import QPoint, Qt
-    from PyQt5.QtGui import QPainter
+    from PyQt5.QtGui import QPainter, QPixmap
     from PyQt5.QtWidgets import QApplication, QMenu, QDialog
 
-    pm = window.grab()
+    def render_widget(widget):
+        if use_backing_store:
+            # The visible main.py verification run deliberately reads the
+            # actual Windows/Qt backing store. Headless recordings cannot rely
+            # on that store because their windows are never mapped.
+            return widget.grab()
+        # QWidget.grab() normally reads Qt's backing store. While a QMenu is
+        # running its nested modal event loop, a never-mapped Windows backing
+        # store can briefly be invalid and return large black regions on
+        # alternating frames. Render the widget tree directly instead: this is
+        # the same client-area paint path, but has no native backing-store race.
+        rendered = QPixmap(widget.size())
+        rendered.fill(Qt.transparent)
+        widget.render(rendered)
+        return rendered
+
+    # Build a 1080p screen-recording frame: native Windows caption first, then
+    # the real app client immediately below it.  The main helper uses the
+    # restore glyph because main.py normally runs maximized.
+    main_active = not any(isinstance(w, QDialog) and w.isVisible()
+                          for w in QApplication.topLevelWidgets())
+    main_bar, main_title_h = _native_titlebar(
+        window, WINDOW_W, maximized=True, active=main_active)
+    pm = QPixmap(WINDOW_W, WINDOW_H)
+    pm.fill(Qt.black)
     painter = QPainter(pm)
+    painter.drawPixmap(QPoint(0, 0), main_bar)
+    painter.drawPixmap(QPoint(0, main_title_h), render_widget(window))
     win_origin = window.mapToGlobal(QPoint(0, 0))
+    overlays = []
     for w in QApplication.topLevelWidgets():
         if w is window or not w.isVisible():
             continue
         if isinstance(w, (QMenu, QDialog)) or \
                 w.windowType() in (Qt.Popup, Qt.ToolTip, Qt.Tool, Qt.Sheet):
-            try:
-                off = w.mapToGlobal(QPoint(0, 0)) - win_origin
-                painter.drawPixmap(off, w.grab())
-            except Exception:
-                pass
+            # QApplication.topLevelWidgets() does not promise stacking order.
+            # Draw owned dialogs first and transient popups/tooltips last, as
+            # the Windows compositor does. Without this, a combo popup can be
+            # hidden behind its dialog in an otherwise pixel-identical grab.
+            if isinstance(w, QDialog):
+                priority = 0
+            elif w.windowType() in (Qt.Popup, Qt.ToolTip) or \
+                    isinstance(w, QMenu):
+                priority = 2
+            else:
+                priority = 1
+            overlays.append((priority, w))
+    for _priority, w in sorted(overlays, key=lambda item: item[0]):
+        try:
+            client_off = w.mapToGlobal(QPoint(0, 0)) - win_origin + \
+                QPoint(0, main_title_h)
+            if isinstance(w, QDialog):
+                dialog_bar, dialog_title_h = _native_titlebar(
+                    w, w.width() + 2, maximized=False, active=True)
+                outer_off = client_off - QPoint(1, dialog_title_h)
+                painter.drawPixmap(outer_off, dialog_bar)
+                # Preserve the native one-pixel left/right frame beneath the
+                # title bar while drawing the dialog's actual client pixels.
+                painter.fillRect(outer_off.x(), client_off.y(), 1, w.height(),
+                                 dialog_bar.toImage().pixelColor(0,
+                                                                 dialog_title_h - 1))
+                painter.fillRect(client_off.x() + w.width(), client_off.y(),
+                                 1, w.height(),
+                                 dialog_bar.toImage().pixelColor(
+                                     dialog_bar.width() - 1,
+                                     dialog_title_h - 1))
+            painter.drawPixmap(client_off, render_widget(w))
+        except Exception:
+            pass
     painter.end()
     return pm
 
@@ -244,7 +459,9 @@ class Recorder:
         from PyQt5.QtCore import QPointF
         from PyQt5.QtGui import QPolygonF, QPen, QColor, QBrush
 
-        x, y = self.cursor.x(), self.cursor.y()
+        # Cursor positions are tracked in main-client coordinates; the video
+        # frame also contains the native Windows title bar above that client.
+        x, y = self.cursor.x(), self.cursor.y() + MAIN_TITLE_H
 
         # Click ripple (behind the arrow)
         if self.click_frames_left > 0:
@@ -292,10 +509,86 @@ class Recorder:
 # Virtual mouse: animates the drawn cursor and sends real Qt mouse events
 # ---------------------------------------------------------------------------
 
+def _set_widget_hover(widget, pos, previous_pos=None):
+    """Apply the same Qt hover state a native mouse move gives a widget.
+
+    DontShowOnScreen windows cannot receive Windows hit-test/mouse messages,
+    so QCursor movement alone never sets WA_UnderMouse. Send the corresponding
+    enter, hover and mouse-move events in-process; Qt's normal stylesheets and
+    widget handlers then render their real hover state.
+    """
+    from PyQt5.QtCore import QEvent, QPointF, Qt
+    from PyQt5.QtGui import QHoverEvent, QMouseEvent
+    from PyQt5.QtWidgets import QApplication
+
+    if hasattr(pos, "x"):
+        px, py = pos.x(), pos.y()
+    else:
+        px, py = pos[0], pos[1]
+    p = QPointF(float(px), float(py))
+    entering = previous_pos is None
+    if entering:
+        widget.setAttribute(Qt.WA_UnderMouse, True)
+        QApplication.sendEvent(widget, QEvent(QEvent.Enter))
+        if widget.testAttribute(Qt.WA_Hover):
+            QApplication.sendEvent(
+                widget, QHoverEvent(QEvent.HoverEnter, p, QPointF(-1, -1)))
+        old_p = QPointF(-1, -1)
+    elif hasattr(previous_pos, "x"):
+        old_p = QPointF(previous_pos)
+    else:
+        old_p = QPointF(float(previous_pos[0]), float(previous_pos[1]))
+    QApplication.sendEvent(
+        widget, QMouseEvent(QEvent.MouseMove, p, Qt.NoButton, Qt.NoButton,
+                            Qt.NoModifier))
+    if widget.testAttribute(Qt.WA_Hover):
+        QApplication.sendEvent(widget, QHoverEvent(QEvent.HoverMove, p, old_p))
+    widget.update()
+
+
+def _clear_widget_hover(widget, pos=None):
+    if widget is None:
+        return
+    from PyQt5.QtCore import QEvent, QPointF, Qt
+    from PyQt5.QtGui import QHoverEvent
+    from PyQt5.QtWidgets import QApplication
+
+    if pos is None:
+        pos = widget.rect().center()
+        p = QPointF(pos)
+    elif hasattr(pos, "x"):
+        p = QPointF(pos)
+    else:
+        p = QPointF(float(pos[0]), float(pos[1]))
+    if widget.testAttribute(Qt.WA_Hover):
+        QApplication.sendEvent(
+            widget, QHoverEvent(QEvent.HoverLeave, QPointF(-1, -1), p))
+    widget.setAttribute(Qt.WA_UnderMouse, False)
+    QApplication.sendEvent(widget, QEvent(QEvent.Leave))
+    widget.update()
+
+
+def _combo_arrow_pos(combo):
+    """Return the center of the combobox's real styled arrow subcontrol."""
+    from PyQt5.QtWidgets import QStyle, QStyleOptionComboBox
+
+    option = QStyleOptionComboBox()
+    option.initFrom(combo)
+    option.editable = combo.isEditable()
+    option.frame = combo.hasFrame()
+    option.currentText = combo.currentText()
+    option.currentIcon = combo.itemIcon(combo.currentIndex())
+    option.iconSize = combo.iconSize()
+    rect = combo.style().subControlRect(
+        QStyle.CC_ComboBox, option, QStyle.SC_ComboBoxArrow, combo)
+    return rect.center()
+
 class Mouse:
     def __init__(self, recorder, window):
         self.rec = recorder
         self.window = window
+        self._hovered_widget = None
+        self._hovered_pos = None
 
     def _wait(self, ms):
         from PyQt5.QtTest import QTest
@@ -308,8 +601,79 @@ class Mouse:
         gp = widget.mapToGlobal(QPoint(int(pos[0]), int(pos[1])))
         return gp - self.window.mapToGlobal(QPoint(0, 0))
 
-    def glide_to_window_pos(self, wx, wy, dur_ms=650):
-        """Animate the drawn cursor to a window-coordinate position."""
+    def _clear_hover(self):
+        _clear_widget_hover(self._hovered_widget, self._hovered_pos)
+        self._hovered_widget = None
+        self._hovered_pos = None
+
+    def _widget_at_window_pos(self, wx, wy):
+        """Return the real topmost Qt hover receiver under a virtual cursor.
+
+        Native Windows hit testing cannot see WA_DontShowOnScreen widgets, so
+        reproduce it from each visible top-level widget's global geometry.
+        Popups/menus win over dialogs, which win over the main client.  The
+        returned local point is suitable for the widget's real mouseMoveEvent.
+        """
+        from PyQt5.QtCore import QPoint, Qt
+        from PyQt5.QtWidgets import (QAbstractButton, QAbstractItemView,
+                                     QApplication, QComboBox, QDialog, QMenu)
+
+        global_pos = self.window.mapToGlobal(QPoint(int(wx), int(wy)))
+        candidates = []
+        for top in QApplication.topLevelWidgets():
+            if not top.isVisible() or \
+                    bool(top.property("_tutorial_native_template")) or \
+                    top.testAttribute(Qt.WA_TransparentForMouseEvents):
+                continue
+            if top is self.window:
+                priority = 0
+            elif isinstance(top, QMenu) or top.windowType() in \
+                    (Qt.Popup, Qt.ToolTip):
+                priority = 3
+            elif isinstance(top, QDialog):
+                priority = 2
+            else:
+                priority = 1
+            local = top.mapFromGlobal(global_pos)
+            if top.rect().contains(local):
+                candidates.append((priority, top, local))
+
+        if not candidates:
+            return None, None
+        _priority, top, top_pos = max(candidates, key=lambda item: item[0])
+        if isinstance(top, QMenu):
+            return top, top_pos
+
+        target = top.childAt(top_pos) or top
+        current = target
+        while current is not None:
+            if isinstance(current, (QAbstractButton, QComboBox)):
+                target = current
+                break
+            if isinstance(current, QAbstractItemView):
+                target = current.viewport()
+                break
+            if current is top:
+                break
+            current = current.parentWidget()
+        return target, target.mapFromGlobal(global_pos)
+
+    def _update_hover_at_window_pos(self, wx, wy):
+        target, pos = self._widget_at_window_pos(wx, wy)
+        if target is self._hovered_widget:
+            if target is not None:
+                _set_widget_hover(target, pos, self._hovered_pos)
+                self._hovered_pos = (pos.x(), pos.y())
+            return
+        self._clear_hover()
+        if target is not None:
+            local = (pos.x(), pos.y())
+            _set_widget_hover(target, local)
+            self._hovered_widget = target
+            self._hovered_pos = local
+
+    def glide_to_window_pos(self, wx, wy, dur_ms=650, clear_hover=True):
+        """Animate the cursor and update hover at the exact boundary crossing."""
         from PyQt5.QtCore import QPoint
         start = QPoint(self.rec.cursor)
         steps = max(2, int(dur_ms / (1000 / self.rec.fps)))
@@ -319,14 +683,19 @@ class Mouse:
             x = start.x() + (wx - start.x()) * e
             y = start.y() + (wy - start.y()) * e
             self.rec.set_cursor(x, y)
+            self._update_hover_at_window_pos(x, y)
             self._wait(1000 / self.rec.fps)
 
     def glide_to_widget(self, widget, pos=None, dur_ms=650):
         if pos is None:
             c = widget.rect().center()
             pos = (c.x(), c.y())
+        elif hasattr(pos, "x"):
+            pos = (pos.x(), pos.y())
         wp = self._widget_to_window(widget, pos)
-        self.glide_to_window_pos(wp.x(), wp.y(), dur_ms)
+        self.glide_to_window_pos(wp.x(), wp.y(), dur_ms, clear_hover=False)
+        self._update_hover_at_window_pos(wp.x(), wp.y())
+        self._wait(1000 / self.rec.fps)
         return pos
 
     def click_widget(self, widget, pos=None, dur_ms=650):
@@ -343,8 +712,7 @@ class Mouse:
     def canvas_press(self, canvas, x, y):
         from PyQt5.QtCore import QPoint, Qt
         from PyQt5.QtTest import QTest
-        wp = self._widget_to_window(canvas, (x, y))
-        self.glide_to_window_pos(wp.x(), wp.y())
+        self.glide_to_widget(canvas, (x, y))
         self._wait(150)
         self.rec.click_effect()
         QTest.mousePress(canvas, Qt.LeftButton, pos=QPoint(int(x), int(y)))
@@ -381,8 +749,7 @@ class Mouse:
     def canvas_click(self, canvas, x, y):
         from PyQt5.QtCore import QPoint, Qt
         from PyQt5.QtTest import QTest
-        wp = self._widget_to_window(canvas, (x, y))
-        self.glide_to_window_pos(wp.x(), wp.y())
+        self.glide_to_widget(canvas, (x, y))
         self._wait(150)
         self.rec.click_effect()
         QTest.mouseClick(canvas, Qt.LeftButton, pos=QPoint(int(x), int(y)))
@@ -410,6 +777,21 @@ def _point_along(strand, t):
 def _hold(ms):
     from PyQt5.QtTest import QTest
     QTest.qWait(int(ms))
+
+
+def _settle_without_capture(rec, action, settle_ms):
+    """Run a transient-window transition without recording an invalid paint."""
+    started = time.time()
+    was_recording = rec.timer.isActive()
+    if was_recording:
+        rec.timer.stop()
+    try:
+        action()
+        _hold(settle_ms)
+    finally:
+        if was_recording:
+            rec.t0 += time.time() - started
+            rec.timer.start()
 
 
 def _draw_first_strand(window, mouse, rec, start, end, step_label):
@@ -448,14 +830,21 @@ def _combo_select(window, mouse, rec, combo, match_data):
                 break
     assert idx is not None, f"combo item matching {match_data!r} not found"
 
-    # A QTest press+release on an unmapped combo can land the release on a
-    # popup item and select it instantly; open the popup the way the click
-    # handler would instead, so the dropdown stays visibly open.
-    mouse.glide_to_widget(combo)
+    # The app deliberately places its dropdown subcontrol on the left. Move to
+    # the styled subcontrol itself, not the combobox center, and keep its real
+    # hover feedback visible before the list opens.
+    arrow = _combo_arrow_pos(combo)
+    mouse.glide_to_widget(combo, pos=arrow, dur_ms=700)
     _hold(150)
     rec.click_effect()
-    _hold(250)
-    combo.showPopup()
+    _hold(180)
+
+    # Opening a never-mapped native popup enters Qt's nested popup event loop.
+    # A capture timer firing inside that transition can observe a partially
+    # painted widget tree (large black backing-store holes). Preserve the
+    # visible hover and click-ripple frames, but omit only the unpainted
+    # transition and resume with the list already in its final position.
+    _settle_without_capture(rec, combo.showPopup, 220)
     _hold(700)
     view = combo.view()
     popup = view.window()
@@ -464,12 +853,15 @@ def _combo_select(window, mouse, rec, combo, match_data):
     view.scrollTo(mi)
     _hold(200)
     r = view.visualRect(mi)
-    gp = view.viewport().mapToGlobal(r.center()) \
-        - window.mapToGlobal(QPoint(0, 0))
-    mouse.glide_to_window_pos(gp.x(), gp.y(), dur_ms=700)
+    mouse.glide_to_widget(view.viewport(), pos=r.center(), dur_ms=700)
     _hold(300)
     rec.click_effect()
-    QTest.mouseClick(view.viewport(), Qt.LeftButton, pos=r.center())
+    _hold(120)
+    _settle_without_capture(
+        rec,
+        lambda: QTest.mouseClick(view.viewport(), Qt.LeftButton,
+                                 pos=r.center()),
+        220)
     _hold(500)
     if combo.currentIndex() != idx:  # safety net, should not trigger
         print(f"[record] WARNING: popup click missed, selecting {idx} "
@@ -508,13 +900,37 @@ def _right_click_hold(mouse, rec, widget, hold_ms=2000):
 def _open_settings(window, mouse, rec):
     """Click the gear button and center the dialog over the window (same
     place Qt's own parent-centering puts it, but frame-independent)."""
+    import time
+    from PyQt5.QtCore import QPoint, Qt
+    from PyQt5.QtTest import QTest
     from PyQt5.QtWidgets import QApplication
-    mouse.click_widget(window.settings_button)
+
+    # Settings' layout briefly reports its large minimum-size hint before its
+    # stacked page settles to the final dialog size.  A screen recorder would
+    # otherwise catch the dialog at that fallback position and then see it
+    # jump.  Keep the click/ripple, pause only frame capture while Qt settles,
+    # and resume with the first dialog frame already in its final location.
+    pos = mouse.glide_to_widget(window.settings_button, dur_ms=650)
+    _hold(150)
+    rec.click_effect()
+    _hold(120)
+    was_recording = rec.timer.isActive()
+    settle_started = time.time()
+    if was_recording:
+        rec.timer.stop()
+    QTest.mouseClick(window.settings_button, Qt.LeftButton,
+                     pos=QPoint(int(pos[0]), int(pos[1])))
     _hold(900)
     dlg = window._settings_dialog
     assert dlg is not None and dlg.isVisible(), "settings dialog not shown"
     _center_dialog(window, dlg)
     QApplication.setActiveWindow(dlg)
+    _hold(150)
+    if was_recording:
+        # Exclude the intentionally unrecorded settle interval from the
+        # encoded timeline so the rest of the tutorial retains real speed.
+        rec.t0 += time.time() - settle_started
+        rec.timer.start()
     _hold(300)
     return dlg
 
@@ -744,8 +1160,7 @@ def scenario_knot(window, app, rec, mouse, test_only=False):
             menu.close()
             return
         r = menu.actionGeometry(target)
-        wp = menu.mapToGlobal(r.center()) - window.mapToGlobal(QPoint(0, 0))
-        mouse.glide_to_window_pos(wp.x(), wp.y(), dur_ms=800)
+        mouse.glide_to_widget(menu, pos=r.center(), dur_ms=800)
         _hold(500)
         rec.click_effect()
         # Menu items are QWidgetActions whose labels swallow mouse events, so
@@ -767,8 +1182,8 @@ def scenario_knot(window, app, rec, mouse, test_only=False):
 
     rec.caption("5. The free ends snap together - you made a closed knot!")
     s12 = _strand_by_name(canvas, "1_2")
-    wp = mouse._widget_to_window(canvas, (int(s12.end.x()), int(s12.end.y())))
-    mouse.glide_to_window_pos(wp.x(), wp.y(), dur_ms=900)
+    mouse.glide_to_widget(canvas, pos=(int(s12.end.x()), int(s12.end.y())),
+                          dur_ms=900)
     _hold(2600)
 
 
@@ -776,9 +1191,14 @@ def scenario_knot(window, app, rec, mouse, test_only=False):
 # Encoding
 # ---------------------------------------------------------------------------
 
-def encode(frames_dir, n_frames, elapsed_s, out_base):
-    """Encode captured frames to H.264 mp4 (+ mov) at the real average fps."""
-    fps = max(5.0, n_frames / max(elapsed_s, 0.001))
+def encode(frames_dir, n_frames, elapsed_s, out_base, scenario=None):
+    """Encode H.264 MP4/MOV at the requested tutorial playback speed."""
+    real_fps = max(5.0, n_frames / max(elapsed_s, 0.001))
+    if scenario in BASELINE_DURATION_S:
+        target_duration = BASELINE_DURATION_S[scenario] / PLAYBACK_SPEED
+        fps = n_frames / target_duration
+    else:
+        fps = real_fps * PLAYBACK_SPEED
     for ext in (".mp4", ".mov"):
         out = out_base + ext
         cmd = ["ffmpeg", "-y", "-framerate", f"{fps:.3f}",
@@ -790,7 +1210,8 @@ def encode(frames_dir, n_frames, elapsed_s, out_base):
             print(res.stderr[-2000:], flush=True)
             raise RuntimeError(f"ffmpeg failed for {out}")
         print(f"[record] wrote {out} ({os.path.getsize(out)} bytes, "
-              f"{n_frames} frames @ {fps:.1f} fps)", flush=True)
+              f"{n_frames} frames @ {fps:.1f} fps, "
+              f"{PLAYBACK_SPEED:.2f}x playback)", flush=True)
 
 
 # ---------------------------------------------------------------------------
@@ -799,12 +1220,27 @@ def encode(frames_dir, n_frames, elapsed_s, out_base):
 
 SCENARIOS = {"settings": scenario_settings, "buttons": scenario_buttons,
              "mask": scenario_mask, "knot": scenario_knot}
+TUTORIAL_NUMBERS = {"settings": 1, "buttons": 2, "mask": 3, "knot": 4}
+
+
+def _publish_tutorial(out_base, scenario):
+    """Copy a completed recording into the app's shipped media folders."""
+    number = TUTORIAL_NUMBERS[scenario]
+    for ext in ("mp4", "mov"):
+        source = out_base + "." + ext
+        target_dir = os.path.join(SRC_DIR, ext)
+        os.makedirs(target_dir, exist_ok=True)
+        target = os.path.join(target_dir, f"tutorial_{number}.{ext}")
+        shutil.copy2(source, target)
+        print(f"[record] published {target} ({os.path.getsize(target)} bytes)",
+              flush=True)
 
 
 def _launch(headless):
     """Bootstrap the real app exactly like src/main.py and show it as a
     1920x1080 window. With headless=True nothing appears on the desktop."""
     faulthandler.enable(all_threads=True)
+    _install_clean_profile()
     app, window = _bootstrap_real_app()
     if headless:
         _install_headless_filter(app)
@@ -852,17 +1288,20 @@ def _launch(headless):
 VERIFY_ROOT = os.path.join(OUT_ROOT, "verify")
 
 
-def _verify_states(window, app, out_dir):
+def _verify_states(window, app, out_dir, compensate_headless=False):
     """Walk the app through reference states (dialog, dropdown, context
     menu, tooltip) and save a composite screenshot of each."""
     from PyQt5.QtCore import QPoint, Qt, QTimer
     from PyQt5.QtTest import QTest
+    if os.path.isdir(out_dir):
+        shutil.rmtree(out_dir)
     os.makedirs(out_dir, exist_ok=True)
     canvas = window.canvas
 
     def shot(name):
         from PyQt5.QtWidgets import QApplication
-        _composite_frame(window).save(os.path.join(out_dir, name + ".png"))
+        _composite_frame(window, use_backing_store=not compensate_headless) \
+            .save(os.path.join(out_dir, name + ".png"))
         tops = []
         for w in QApplication.topLevelWidgets():
             if w is not window and w.isVisible():
@@ -908,15 +1347,23 @@ def _verify_states(window, app, out_dir):
     QTest.qWait(900)
     dlg = window._settings_dialog
     assert dlg is not None and dlg.isVisible(), "verify: settings not shown"
-    _center_dialog(window, dlg)
-    from PyQt5.QtWidgets import QApplication
-    QApplication.setActiveWindow(dlg)
+    if compensate_headless:
+        _center_dialog(window, dlg)
+        from PyQt5.QtWidgets import QApplication
+        QApplication.setActiveWindow(dlg)
     QTest.qWait(400)
     shot("03_settings_dialog")
 
     # Theme dropdown open
-    QTest.mouseClick(dlg.theme_combobox, Qt.LeftButton)
+    if compensate_headless:
+        from PyQt5.QtWidgets import QApplication
+        QApplication.setActiveWindow(dlg)
+    dlg.theme_combobox.setFocus(Qt.MouseFocusReason)
+    dlg.theme_combobox.showPopup()
     QTest.qWait(800)
+    if compensate_headless:
+        _normalize_popup(dlg.theme_combobox.view().window())
+        QTest.qWait(200)
     shot("04_theme_dropdown")
     dlg.theme_combobox.hidePopup()
     QTest.qWait(300)
@@ -927,8 +1374,12 @@ def _verify_states(window, app, out_dir):
     QTest.mouseClick(dlg.categories_list.viewport(), Qt.LeftButton,
                      pos=r.center())
     QTest.qWait(500)
-    QTest.mouseClick(dlg.language_combobox, Qt.LeftButton)
+    dlg.language_combobox.setFocus(Qt.MouseFocusReason)
+    dlg.language_combobox.showPopup()
     QTest.qWait(800)
+    if compensate_headless:
+        _normalize_popup(dlg.language_combobox.view().window())
+        QTest.qWait(200)
     shot("05_language_dropdown")
     dlg.language_combobox.hidePopup()
     QTest.qWait(300)
@@ -946,7 +1397,8 @@ def _verify_states(window, app, out_dir):
         if menu is None:
             print("[verify] WARNING: menu not open", flush=True)
             return
-        _normalize_popup(menu)
+        if compensate_headless:
+            _normalize_popup(menu)
         QTest.qWait(300)
         shot("06_context_menu")
         menu.close()
@@ -964,22 +1416,58 @@ def _verify_states(window, app, out_dir):
     QTest.mouseRelease(tb, Qt.RightButton, pos=QPoint(c.x(), c.y()))
     QTest.qWait(300)
 
+    # Native hover on a styled layer-panel button. A real main.py window gets
+    # this from Windows mouse tracking; the headless recorder must reproduce
+    # the same Qt state with in-process enter/move events.
+    hover_button = window.layer_panel.zoom_in_button
+    hover_pos = hover_button.rect().center()
+    _set_widget_hover(hover_button, hover_pos)
+    QTest.qWait(500)
+    shot("08_button_hover")
+    _clear_widget_hover(hover_button, hover_pos)
+
+    # Hover the app's left-side combobox arrow, then a non-current popup row.
+    # These states protect both cursor targeting and QSS subcontrol/item hover.
+    QTest.mouseClick(window.settings_button, Qt.LeftButton)
+    QTest.qWait(900)
+    dlg = window._settings_dialog
+    assert dlg is not None and dlg.isVisible(), "verify: settings not shown"
+    if compensate_headless:
+        _center_dialog(window, dlg)
+        QApplication.setActiveWindow(dlg)
+    dlg.categories_list.setCurrentRow(0)
+    QTest.qWait(300)
+    arrow_pos = _combo_arrow_pos(dlg.theme_combobox)
+    _set_widget_hover(dlg.theme_combobox, arrow_pos)
+    QTest.qWait(500)
+    shot("09_combo_arrow_hover")
+    _clear_widget_hover(dlg.theme_combobox, arrow_pos)
+
+    dlg.theme_combobox.showPopup()
+    QTest.qWait(600)
+    view = dlg.theme_combobox.view()
+    if compensate_headless:
+        _normalize_popup(view.window())
+    row = view.visualRect(view.model().index(1, 0)).center()
+    _set_widget_hover(view.viewport(), row)
+    QTest.qWait(500)
+    shot("10_combo_item_hover")
+    _clear_widget_hover(view.viewport(), row)
+    dlg.theme_combobox.hidePopup()
+    dlg.close()
+    QTest.qWait(300)
+
 
 def _run_verify_capture(mode):
-    """Subprocess body: capture all reference states in one mode."""
-    headless = (mode == "headless")
-    app, window = _launch(headless)
+    """Subprocess body for the recorder's headless reference states."""
+    assert mode == "headless"
+    app, window = _launch(headless=True)
     out_dir = os.path.join(VERIFY_ROOT, mode)
     from PyQt5.QtCore import QTimer
 
     def run():
         try:
-            if not headless:
-                from PyQt5.QtGui import QCursor
-                # Park the real cursor off the window so no hover styling
-                # sneaks into the reference screenshots.
-                QCursor.setPos(10, 540)
-            _verify_states(window, app, out_dir)
+            _verify_states(window, app, out_dir, compensate_headless=True)
             print("[verify] capture complete", flush=True)
         except Exception:
             import traceback
@@ -993,9 +1481,72 @@ def _run_verify_capture(mode):
     os._exit(0)
 
 
+def _run_main_reference_capture():
+    """Execute src/main.py itself and capture the canonical UI states.
+
+    This deliberately does not use ``_bootstrap_real_app`` or any recorder
+    dialog/popup compensation. The only intervention after normal startup is
+    the acceptance-test setup action: put the real client in a normal
+    1920x1080 geometry and reset the splitter for that size.
+    """
+    import runpy
+    from PyQt5.QtCore import QTimer, Qt
+    from PyQt5.QtGui import QCursor
+    from PyQt5.QtWidgets import QApplication
+
+    _install_clean_profile()
+    original_exec = QApplication.exec_
+
+    def reference_exec(app):
+        def capture():
+            try:
+                window = next(
+                    (w for w in QApplication.topLevelWidgets()
+                     if type(w).__name__ == "MainWindow"), None)
+                assert window is not None, "main.py did not create MainWindow"
+
+                # Equivalent to a user restoring the real window and sizing
+                # its client to the canonical tutorial capture dimensions.
+                window.setWindowState(Qt.WindowNoState)
+                window.showNormal()
+                window._initial_show_completed = True
+                _place_window(window)
+                app.processEvents()
+                _place_window(window)
+                if hasattr(window, "set_initial_splitter_sizes"):
+                    window.set_initial_splitter_sizes()
+                window.raise_()
+                window.activateWindow()
+                QCursor.setPos(10, 540)
+                from PyQt5.QtTest import QTest
+                QTest.qWait(500)
+                print(f"[verify] main.py reference window "
+                      f"{window.width()}x{window.height()} "
+                      f"at {window.x()},{window.y()}", flush=True)
+                _verify_states(window, app,
+                               os.path.join(VERIFY_ROOT, "main"),
+                               compensate_headless=False)
+                print("[verify] capture complete", flush=True)
+            except Exception:
+                import traceback
+                traceback.print_exc()
+            finally:
+                faulthandler.cancel_dump_traceback_later()
+                QTimer.singleShot(0, app.quit)
+
+        # main.py has startup placement timers through 500 ms. Run only
+        # after those settle so the capture represents its normal end state.
+        QTimer.singleShot(1400, capture)
+        return original_exec()
+
+    QApplication.exec_ = reference_exec
+    sys.argv = [os.path.join(SRC_DIR, "main.py")]
+    runpy.run_path(sys.argv[0], run_name="__main__")
+
+
 def _compare_verify_runs():
-    """Spawn a visible (real) run and a headless run, then pixel-diff."""
-    for mode in ("visible", "headless"):
+    """Pixel-diff a real src/main.py run against the headless recorder."""
+    for mode in ("main", "headless"):
         print(f"[verify] running {mode} capture...", flush=True)
         res = subprocess.run([sys.executable, os.path.abspath(__file__),
                               "--verify-run", mode],
@@ -1007,9 +1558,15 @@ def _compare_verify_runs():
             raise RuntimeError(f"{mode} capture failed")
 
     from PIL import Image, ImageChops
-    vis_dir = os.path.join(VERIFY_ROOT, "visible")
+    vis_dir = os.path.join(VERIFY_ROOT, "main")
     hl_dir = os.path.join(VERIFY_ROOT, "headless")
     names = sorted(f for f in os.listdir(vis_dir) if f.endswith(".png"))
+    headless_names = sorted(f for f in os.listdir(hl_dir)
+                            if f.endswith(".png"))
+    if names != headless_names:
+        print(f"[verify] CAPTURE SET MISMATCH: {names} vs {headless_names}",
+              flush=True)
+        return False
     all_ok = True
     for name in names:
         a = Image.open(os.path.join(vis_dir, name)).convert("RGB")
@@ -1024,9 +1581,11 @@ def _compare_verify_runs():
         if bbox is None:
             print(f"[verify] {name}: identical (diff=0)", flush=True)
         else:
-            hist = diff.convert("L").histogram()
-            n_diff = sum(hist[1:])
-            print(f"[verify] {name}: DIFFERS - {n_diff} px, bbox={bbox}",
+            n_diff = sum(pixel != (0, 0, 0) for pixel in diff.getdata())
+            extrema = diff.getextrema()
+            max_delta = max(high for _low, high in extrema)
+            print(f"[verify] {name}: DIFFERS - {n_diff} px, "
+                  f"max_delta={max_delta}, bbox={bbox}",
                   flush=True)
             diff.save(os.path.join(VERIFY_ROOT, "diff_" + name))
             all_ok = False
@@ -1041,14 +1600,17 @@ def main():
     parser.add_argument("--test", action="store_true",
                         help="record only the first two steps (style check)")
     parser.add_argument("--verify", action="store_true",
-                        help="compare a real (visible) run against the "
-                             "headless run pixel by pixel")
-    parser.add_argument("--verify-run", choices=("visible", "headless"),
+                        help="compare src/main.py against the headless "
+                             "recorder pixel by pixel")
+    parser.add_argument("--verify-run", choices=("main", "headless"),
                         help=argparse.SUPPRESS)
     args = parser.parse_args()
 
     if args.verify_run:
-        _run_verify_capture(args.verify_run)
+        if args.verify_run == "main":
+            _run_main_reference_capture()
+        else:
+            _run_verify_capture(args.verify_run)
         return
     if args.verify:
         ok = _compare_verify_runs()
@@ -1077,8 +1639,12 @@ def main():
             faulthandler.cancel_dump_traceback_later()
             try:
                 if rec.n > 0:
+                    out_base = os.path.join(out_dir, args.scenario)
                     encode(rec.frames_dir, rec.n, rec.elapsed,
-                           os.path.join(out_dir, args.scenario))
+                           out_base,
+                           scenario=None if args.test else args.scenario)
+                    if not args.test:
+                        _publish_tutorial(out_base, args.scenario)
             except Exception:
                 import traceback
                 traceback.print_exc()

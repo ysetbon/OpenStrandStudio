@@ -1,7 +1,7 @@
 from PyQt5.QtCore import QObject, pyqtSignal, QPointF, Qt
-from PyQt5.QtGui import QColor, QPen
+from PyQt5.QtGui import QColor
 from render_utils import RenderUtils
-from selection_utils import find_strands_at_point
+from selection_utils import draw_selection_overlay, find_strands_at_point
 
 class SelectMode(QObject):
     strand_selected = pyqtSignal(int)
@@ -94,16 +94,12 @@ class SelectMode(QObject):
 
                 # Yellow hover highlight (same as mask mode)
                 hover_color = QColor(255, 230, 160, 170)
-                painter.setBrush(hover_color)
-
-                # Black border for visibility
-                hover_pen = QPen(Qt.black, 2, Qt.SolidLine)
-                hover_pen.setJoinStyle(Qt.MiterJoin)
-                hover_pen.setCapStyle(Qt.FlatCap)
-                painter.setPen(hover_pen)
-
-                # Draw the filled hover highlight path
-                painter.drawPath(highlight_path)
+                # Draw one border around the complete silhouette.  Applying a
+                # pen to the composite path would also outline the overlapping
+                # body/end-cap components and create black lines inside it.
+                draw_selection_overlay(
+                    painter, highlight_path, hover_color,
+                    border_color=QColor(Qt.black), border_width=2)
 
             finally:
                 painter.restore()

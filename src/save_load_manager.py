@@ -956,11 +956,16 @@ def load_strands_from_data(data, canvas):
                         if attached.start == strand.end and getattr(attached, 'attachment_side', 0) == 1:
                             end_has_attachment = True
                 
-                # Always keep start circle for AttachedStrand
-                strand.has_circles[0] = True
-                
-                # Update end circle based on attachments, unless manually overridden
                 manual_override = getattr(strand, 'manual_circle_visibility', [None, None])
+
+                # Attached strands normally keep the circle at their attachment
+                # point, but an explicit layer-menu choice must survive reload.
+                if manual_override[0] is None:
+                    strand.has_circles[0] = True
+                else:
+                    strand.has_circles[0] = manual_override[0]
+
+                # Update end circle based on attachments, unless manually overridden
                 if manual_override[1] is None: # No manual override for end circle
                     strand.has_circles[1] = end_has_attachment
                 else: # Manual override exists, respect it
@@ -1405,4 +1410,3 @@ def update_attached_strand_position(parent_strand, attached_strand):
     if hasattr(attached_strand, 'attached_strands'):
         for child_strand in attached_strand.attached_strands:
             update_attached_strand_position(attached_strand, child_strand)
-

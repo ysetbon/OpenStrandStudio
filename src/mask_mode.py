@@ -1,9 +1,9 @@
 from PyQt5.QtCore import QObject, pyqtSignal, Qt
-from PyQt5.QtGui import QColor, QPainter, QPainterPathStroker, QPen, QPainterPath
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QApplication
 from masked_strand import MaskedStrand
 from render_utils import RenderUtils
-from selection_utils import find_strands_at_point
+from selection_utils import draw_selection_overlay, find_strands_at_point
 
 class MaskMode(QObject):
     mask_created = pyqtSignal(object, object)  # Signal emitted when a mask is created
@@ -244,16 +244,9 @@ class MaskMode(QObject):
                 # Draw the hover highlight with semi-transparent yellow (similar to selection rectangle style)
                 # Using QColor(255, 230, 160) like the control point selection boxes, but less transparent
                 hover_color = QColor(255, 230, 160, 170)  # Yellow with less transparency
-                painter.setBrush(hover_color)
-
-                # Set the pen with black border for visibility
-                hover_pen = QPen(Qt.black, 2, Qt.SolidLine)
-                hover_pen.setJoinStyle(Qt.MiterJoin)
-                hover_pen.setCapStyle(Qt.FlatCap)
-                painter.setPen(hover_pen)
-
-                # Draw the filled hover highlight path
-                painter.drawPath(stroke_path)
+                draw_selection_overlay(
+                    painter, stroke_path, hover_color,
+                    border_color=QColor(Qt.black), border_width=2)
 
             finally:
                 painter.restore()
@@ -271,27 +264,12 @@ class MaskMode(QObject):
                 # Draw the highlight with transparent filling
                 highlight_color = QColor(self.canvas.highlight_color)
                 highlight_color.setAlpha(128)  # Set transparency (0-255)
-                painter.setBrush(highlight_color)
-
-                # Set the pen with the same transparency as the fill
-                highlight_pen = QPen(highlight_color, strand.stroke_width * 2)
-                highlight_pen.setJoinStyle(Qt.MiterJoin)
-                highlight_pen.setCapStyle(Qt.FlatCap)
-                painter.setPen(highlight_pen)
-
-                # Draw the filled highlight path
-                painter.drawPath(stroke_path)
-
-                # Set up the stroke for the highlight
                 highlight_stroke_color = QColor('black')
                 highlight_stroke_color.setAlpha(128)  # Set transparency (0-255)
-                highlight_stroke_pen = QPen(highlight_stroke_color, strand.stroke_width * 2)
-                highlight_stroke_pen.setJoinStyle(Qt.MiterJoin)
-                highlight_stroke_pen.setCapStyle(Qt.FlatCap)
-                painter.setPen(highlight_stroke_pen)
-
-                # Draw the stroke around the highlight path
-                painter.drawPath(stroke_path)
+                draw_selection_overlay(
+                    painter, stroke_path, highlight_color,
+                    border_color=highlight_stroke_color,
+                    border_width=strand.stroke_width * 2)
 
             finally:
                 painter.restore()

@@ -1698,19 +1698,35 @@ class Strand:
         """Get the selection path for the entire rendered strand.
 
         Matches the exact drawn footprint: the body stroked to the full visible
-        thickness (fill plus stroke on both sides, FlatCap like draw()), united
-        with whatever is rendered at each end - the cap circle or the side line.
-        All widths are read live, so per-strand width/stroke changes apply."""
+        thickness (fill plus stroke on both sides, FlatCap like draw()), plus
+        whatever is rendered at each end - the cap circle or the side line.
+
+        Components are appended with WindingFill instead of combined with
+        QPainterPath.united(). Qt's Boolean union can discard the body when an
+        angled side-line touches its boundary exactly. All widths are read live,
+        so per-strand width/stroke changes apply."""
+        path = QPainterPath()
+        path.setFillRule(Qt.WindingFill)
+        for component in self.get_selection_paths():
+            if not component.isEmpty():
+                path.addPath(component)
+        return path
+
+    def get_body_selection_path(self):
+        """Return the stroked body footprint without endpoint decorations."""
         body_stroker = QPainterPathStroker()
         body_stroker.setWidth(self.width + self.stroke_width * 2)
         body_stroker.setJoinStyle(Qt.MiterJoin)
         body_stroker.setCapStyle(Qt.FlatCap)
-        path = body_stroker.createStroke(self.get_path())
-        for side in (0, 1):
-            decoration = self.get_end_decoration_path(side)
-            if not decoration.isEmpty():
-                path = path.united(decoration)
-        return path
+        return body_stroker.createStroke(self.get_path())
+
+    def get_selection_paths(self):
+        """Return independently usable body/start/end selection footprints."""
+        return (
+            self.get_body_selection_path(),
+            self.get_end_decoration_path(0),
+            self.get_end_decoration_path(1),
+        )
 
     def get_stroked_path(self, width: float) -> QPainterPath:
         """

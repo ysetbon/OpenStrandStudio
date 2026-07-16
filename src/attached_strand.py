@@ -190,15 +190,31 @@ class AttachedStrand(Strand):
         return super()._end_side_line_visible(side)
 
     def get_end_decoration_path(self, side):
-        """Unfolded start edge: the circle stroke is transparent but draw()
-        still renders the inner fill circle (no stroke) so the start blends
-        into the parent - that fill circle is part of the footprint too."""
+        """Return the endpoint geometry actually painted by ``draw()``.
+
+        An unfolded start keeps its inner fill circle when the outline is
+        transparent.  Attached-strand ends likewise add their inner cap fill
+        whenever ``has_circles[1]`` is set, even when no outer outline is
+        painted.  Both visible fills must remain selectable and highlighted.
+        """
         if (side == 0 and self.has_circles and self.has_circles[0]
                 and getattr(self, 'is_setting_staring_circle', False)
                 and self.start_circle_stroke_color.alpha() == 0):
             angle = self._cap_tangent_angle(0)
             return self._make_cap_inner(self.start, angle, self._partner_cap_dims(0)[1])
-        return super().get_end_decoration_path(side)
+
+        decoration = super().get_end_decoration_path(side)
+        if not decoration.isEmpty():
+            return decoration
+
+        # draw() always adds this inner end-cap fill for an attached strand
+        # whose end circle is enabled.  It is especially noticeable when the
+        # end-circle outline is transparent.
+        if side == 1 and self.has_circles and self.has_circles[1]:
+            angle = self._cap_tangent_angle(1)
+            return self._make_cap_inner(self.end, angle, self._partner_cap_dims(1)[1])
+
+        return decoration
 
 
 

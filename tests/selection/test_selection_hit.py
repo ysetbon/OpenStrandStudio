@@ -24,13 +24,14 @@ _SRC = os.path.normpath(
 sys.path.insert(0, _SRC)
 
 from PyQt5.QtCore import QPointF
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QPainterPath
 
 from strand import Strand
 from attached_strand import AttachedStrand
 from masked_strand import MaskedStrand
 from select_mode import SelectMode
 from mask_mode import MaskMode
+from selection_utils import selection_outline_path
 
 # --------------------------------------------------------------------------- io
 _PASS = 0
@@ -74,6 +75,62 @@ def make_strand(start, end, set_number, layer_name, width=46, stroke_width=4):
     s.update_shape()
     s.update_side_line()
     return s
+
+
+def make_loaded_straight_strand(start, end, set_number, layer_name,
+                                parent=None, attachment_side=1,
+                                has_circles=None):
+    """Recreate the straight-line geometry stored in the reported JSON.
+
+    Its saved control points both coincide with the start. This is visually a
+    straight strand, but it takes a different path-building branch than the
+    simple horizontal/vertical fixtures above.
+    """
+    if parent is None:
+        strand = Strand(
+            QPointF(*start), QPointF(*end), 46,
+            color=QColor(200, 170, 230, 255),
+            stroke_color=QColor(0, 0, 0, 255),
+            stroke_width=4, set_number=set_number, layer_name=layer_name,
+        )
+    else:
+        strand = AttachedStrand(parent, QPointF(*end), attachment_side)
+        strand.start = QPointF(*start)
+        strand.end = QPointF(*end)
+        strand.width = 46
+        strand.stroke_width = 4
+        strand.set_number = set_number
+        strand.layer_name = layer_name
+        parent.attached_strands.append(strand)
+
+    strand.has_circles = list(has_circles or (False, False))
+    strand.control_point1 = QPointF(*start)
+    strand.control_point2 = QPointF(*start)
+    strand.update_control_points(reset_control_points=False)
+    strand.update_shape()
+    strand.update_side_line()
+    return strand
+
+
+def make_mask_bug_fixture():
+    """Minimal in-repo fixture matching masknotworkingexample.json."""
+    s11 = make_loaded_straight_strand(
+        (1316, 224), (1512, 420), 1, "1_1", has_circles=(False, True))
+    s12 = make_loaded_straight_strand(
+        (1512, 420), (1092, 560), 1, "1_2", parent=s11,
+        has_circles=(True, True))
+    s21 = make_loaded_straight_strand(
+        (1260, 700), (1344, 476), 2, "2_1", has_circles=(False, True))
+    s22 = make_loaded_straight_strand(
+        (1344, 476), (896, 280), 2, "2_2", parent=s21,
+        has_circles=(True, False))
+    s13 = make_loaded_straight_strand(
+        (1092, 560), (1120, 196), 1, "1_3", parent=s12,
+        has_circles=(True, True))
+    s14 = make_loaded_straight_strand(
+        (1120, 196), (1512, 532), 1, "1_4", parent=s13,
+        has_circles=(True, False))
+    return [s11, s12, s21, s22, s13, s14]
 
 
 def hits(strands, point):
@@ -140,6 +197,29 @@ def test_top_strand_stroke_edge_wins_over_lower_body():
     check("point only on bottom strand selects it",
           top_hit([a, b], (200, -20)) is a,
           "bottom strand not selectable")
+
+
+def test_angled_touching_decorations_do_not_destroy_body_hits():
+    """Regression for masknotworkingexample.json's angled side-lines."""
+    strands = make_mask_bug_fixture()
+    by_name = {strand.layer_name: strand for strand in strands}
+
+    for layer_name, point in (
+            ("1_1", (1414, 322)),
+            ("2_1", (1302, 588)),
+            ("1_4", (1316, 364))):
+        strand = by_name[layer_name]
+        check("angled %s body midpoint is selectable" % layer_name,
+              top_hit(strands, point) is strand,
+              "hits: %s" % names(hits(strands, point)))
+        check("angled %s composite highlight retains its body" % layer_name,
+              strand.get_selection_path().contains(QPointF(*point)),
+              "non-Boolean composite lost its body")
+
+    shared = (by_name["2_1"].end.x(), by_name["2_1"].end.y())
+    check("shared 2_1/2_2 endpoint still selects topmost 2_2",
+          top_hit(strands, shared) is by_name["2_2"],
+          "hits: %s" % names(hits(strands, shared)))
 
 
 # ------------------------------------------------------------------- case #1:
@@ -372,6 +452,18 @@ def test_attached_strand_footprint_cases():
           "unfolded footprint still includes the hidden stroke ring")
     attached.start_circle_stroke_color = QColor(0, 0, 0, 255)
 
+    # Attached draw() keeps the inner end-cap fill whenever the end circle is
+    # enabled, even if that circle's outline is transparent.  The selection
+    # overlay must cover that visible fill instead of stopping at the flat body.
+    attached.has_circles[1] = True
+    attached.end_circle_stroke_color = QColor(0, 0, 0, 0)
+    check("attached transparent end: inner fill circle is a hit (20px, r=23)",
+          attached.get_selection_path().contains(QPointF(200, 320)),
+          "transparent end fill is missing from the footprint")
+    check("attached transparent end: hidden stroke ring is excluded (25px)",
+          not attached.get_selection_path().contains(QPointF(200, 325)),
+          "transparent end footprint includes the hidden stroke ring")
+
 
 def test_hover_covers_decorations():
     """Hover (select mode) must trigger on decorations, and the yellow
@@ -404,6 +496,23 @@ def test_hover_covers_decorations():
     mode.mouseMoveEvent(FakeMove(250, 200))  # empty area
     check("hover on empty area clears the highlight",
           mode.hovered_strand is None, "hover not cleared")
+
+
+def test_composite_highlight_border_has_no_internal_seams():
+    """The overlay border follows the union silhouette, not each component."""
+    footprint = QPainterPath()
+    footprint.addRect(20, 20, 100, 20)
+    cap = QPainterPath()
+    cap.addEllipse(QPointF(20, 30), 10, 10)
+    footprint.addPath(cap)
+
+    outline = selection_outline_path(footprint, 2)
+    check("highlight border includes the outside silhouette",
+          outline.contains(QPointF(9, 30)),
+          "outside edge is missing")
+    check("highlight border excludes the internal cap seam",
+          not outline.contains(QPointF(30, 30)),
+          "overlapping cap edge was outlined inside the body")
 
 
 # ------------------------------------------------------------------ mask mode
@@ -486,6 +595,7 @@ def test_mask_mode_matches_select_mode():
 def main():
     test_body_matches_rendered_thickness()
     test_top_strand_stroke_edge_wins_over_lower_body()
+    test_angled_touching_decorations_do_not_destroy_body_hits()
     test_attached_strand_has_no_invisible_square()
     test_mask_stroke_edge_is_clickable()
     test_hidden_strands_are_skipped()
@@ -494,6 +604,7 @@ def main():
     test_end_circle_footprint_cases()
     test_attached_strand_footprint_cases()
     test_hover_covers_decorations()
+    test_composite_highlight_border_has_no_internal_seams()
     test_mask_mode_overlap_selects_topmost()
     test_mask_mode_matches_select_mode()
 

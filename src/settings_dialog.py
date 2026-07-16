@@ -2998,6 +2998,7 @@ class SettingsDialog(QDialog):
         _lp_multi_icon = _lp_img('multi_select_off.png') + ' ' + _lp_img('multi_select_on.png')
         _lp_refresh_icon = _lp_img('refresh.png')
         _lp_home_icon = _lp_img('home.png')
+        _lp_lock_icon = _lp_img('lock_open.png') + ' ' + _lp_img('lock_closed.png')
 
         button_html = f'''
         <style>
@@ -3015,7 +3016,7 @@ class SettingsDialog(QDialog):
                 <td style="padding: 6px 4px;"><span class="button-name">{_['draw_names_desc'].split(' - ', 1)[0]}</span> — {_['draw_names_desc'].split(' - ', 1)[1]}</td>
             </tr>
             <tr>
-                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;"></td>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_lock_icon}</td>
                 <td style="padding: 6px 4px;"><span class="button-name">{_['lock_layers_desc'].split(' - ', 1)[0]}</span> — {_['lock_layers_desc'].split(' - ', 1)[1]}</td>
             </tr>
             <tr>
@@ -3954,6 +3955,7 @@ class SettingsDialog(QDialog):
         _lp_multi_icon = _lp_img('multi_select_off.png') + ' ' + _lp_img('multi_select_on.png')
         _lp_refresh_icon = _lp_img('refresh.png')
         _lp_home_icon = _lp_img('home.png')
+        _lp_lock_icon = _lp_img('lock_open.png') + ' ' + _lp_img('lock_closed.png')
 
         button_html = f'''
         <style>
@@ -3971,7 +3973,7 @@ class SettingsDialog(QDialog):
                 <td style="padding: 6px 4px;"><span class="button-name">{_['draw_names_desc'].split(' - ', 1)[0]}</span> — {_['draw_names_desc'].split(' - ', 1)[1]}</td>
             </tr>
             <tr>
-                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;"></td>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_lock_icon}</td>
                 <td style="padding: 6px 4px;"><span class="button-name">{_['lock_layers_desc'].split(' - ', 1)[0]}</span> — {_['lock_layers_desc'].split(' - ', 1)[1]}</td>
             </tr>
             <tr>
@@ -4686,6 +4688,7 @@ class SettingsDialog(QDialog):
             _lp_multi_icon = _lp_img('multi_select_off.png') + ' ' + _lp_img('multi_select_on.png')
             _lp_refresh_icon = _lp_img('refresh.png')
             _lp_home_icon = _lp_img('home.png')
+            _lp_lock_icon = _lp_img('lock_open.png') + ' ' + _lp_img('lock_closed.png')
 
             button_html = f'''
             <style>
@@ -4703,7 +4706,7 @@ class SettingsDialog(QDialog):
                     <td style="padding: 6px 4px;"><span class="button-name">{_['draw_names_desc'].split(' - ', 1)[0]}</span> — {_['draw_names_desc'].split(' - ', 1)[1]}</td>
                 </tr>
                 <tr>
-                    <td style="width: 90px; padding: 6px 10px; vertical-align: middle;"></td>
+                    <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_lock_icon}</td>
                     <td style="padding: 6px 4px;"><span class="button-name">{_['lock_layers_desc'].split(' - ', 1)[0]}</span> — {_['lock_layers_desc'].split(' - ', 1)[1]}</td>
                 </tr>
                 <tr>

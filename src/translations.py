@@ -194,7 +194,7 @@ Examples:<br>
         'group_buttons': 'Group Buttons',
         'general_settings_buttons': 'General Settings',
         'draw_names_desc': 'Draw Names - Shows/hides strand names on the canvas',
-        'lock_layers_desc': 'Lock Layers - Enters lock mode to lock/unlock strands from editing',
+        'lock_layers_desc': 'Lock Layers - Enters lock mode. Each layer shows a padlock: click the padlock to lock/unlock that layer; click the layer to select it. Locked strands can be selected but not moved or attached to. New Strand and Delete Strand stay available (delete is blocked only for locked layers). Press again to exit lock mode.',
         'add_new_strand_desc': 'New Strand - Adds a new strand to your design',
         'delete_strand_desc': 'Delete Strand - Removes the selected strand',
         'deselect_all_desc': 'Deselect All - Clears all selections (or clears all locks in lock mode)',
@@ -987,7 +987,7 @@ Exemples :<br>
         # Button descriptions for settings dialog
         'group_buttons': 'Boutons de Groupe',
         'draw_names_desc': 'Dessiner Noms - Affiche/masque les noms des brins sur le canevas',
-        'lock_layers_desc': 'Verrouiller Calques - Active le mode verrouillage pour verrouiller/déverrouiller les brins',
+        'lock_layers_desc': 'Verrouiller Calques - Active le mode verrouillage. Chaque calque affiche un cadenas : cliquez sur le cadenas pour verrouiller/déverrouiller ce calque ; cliquez sur le calque pour le sélectionner. Les brins verrouillés peuvent être sélectionnés mais pas déplacés ni utilisés pour une attache. Nouveau Brin et Supprimer Brin restent disponibles (la suppression est bloquée uniquement pour les calques verrouillés). Cliquez à nouveau pour quitter le mode verrouillage.',
         'add_new_strand_desc': 'Nouveau Brin - Ajoute un nouveau brin à votre design',
         'delete_strand_desc': 'Supprimer Brin - Supprime le brin sélectionné',
         'deselect_all_desc': 'Tout Désélectionner - Efface toutes les sélections (ou efface tous les verrous en mode verrouillage)',
@@ -1306,7 +1306,7 @@ Beispiele:<br>
         'reset_curvature_full_desc': 'Krümmungseinstellungen Zurücksetzen - Stellt Einfluss, Verstärkung und Form auf Standard zurück',
         # Button descriptions for settings dialog
         'draw_names_desc': 'Namen zeichnen - Zeigt/verbirgt Strangnamen auf der Leinwand',
-        'lock_layers_desc': 'Ebenen sperren - Wechselt in den Sperrmodus zum Sperren/Entsperren gegen Bearbeitung',
+        'lock_layers_desc': 'Ebenen sperren - Wechselt in den Sperrmodus. Jede Ebene zeigt ein Vorhängeschloss: Klicken Sie auf das Schloss, um die Ebene zu sperren/entsperren; klicken Sie auf die Ebene, um sie auszuwählen. Gesperrte Stränge können ausgewählt, aber nicht bewegt oder als Ansatzpunkt verwendet werden. Neuer Strang und Strang löschen bleiben verfügbar (Löschen ist nur für gesperrte Ebenen blockiert). Klicken Sie erneut, um den Sperrmodus zu beenden.',
         'add_new_strand_desc': 'Neuer Strang - Fügt Ihrem Design einen neuen Strang hinzu',
         'delete_strand_desc': 'Strang löschen - Entfernt den ausgewählten Strang',
         'deselect_all_desc': 'Alle abwählen - Hebt alle Auswahlen auf (oder entfernt alle Sperren im Sperrmodus)',
@@ -2075,7 +2075,7 @@ Esempi:<br>
         # Button descriptions for settings dialog
         'group_buttons': 'Pulsanti Gruppo',
         'draw_names_desc': 'Disegna Nomi - Mostra/nasconde i nomi dei fili sul canvas',
-        'lock_layers_desc': 'Blocca Livelli - Attiva la modalità blocco per bloccare/sbloccare i fili dalla modifica',
+        'lock_layers_desc': 'Blocca Livelli - Attiva la modalità blocco. Ogni livello mostra un lucchetto: clicca sul lucchetto per bloccare/sbloccare quel livello; clicca sul livello per selezionarlo. I fili bloccati possono essere selezionati ma non spostati né usati per attacco. Nuovo Filo e Elimina Filo restano disponibili (eliminazione bloccata solo per i livelli bloccati). Premi di nuovo per uscire dalla modalità blocco.',
         'add_new_strand_desc': 'Nuovo Filo - Aggiunge un nuovo filo al tuo design',
         'delete_strand_desc': 'Elimina Filo - Rimuove il filo selezionato',
         'deselect_all_desc': 'Deseleziona Tutto - Cancella tutte le selezioni (o cancella tutti i blocchi in modalità blocco)',
@@ -2623,7 +2623,7 @@ Ejemplos:<br>
         # Button descriptions for settings dialog
         'group_buttons': 'Botones de Grupo',
         'draw_names_desc': 'Dibujar Nombres - Muestra/oculta los nombres de los cordones en el lienzo',
-        'lock_layers_desc': 'Bloquear Capas - Activa el modo bloqueo para bloquear/desbloquear cordones de la edición',
+        'lock_layers_desc': 'Bloquear Capas - Activa el modo bloqueo. Cada capa muestra un candado: haz clic en el candado para bloquear/desbloquear esa capa; haz clic en la capa para seleccionarla. Los cordones bloqueados se pueden seleccionar pero no mover ni usar para unir. Nuevo Cordón y Eliminar Cordón siguen disponibles (eliminar se bloquea solo para capas bloqueadas). Pulsa de nuevo para salir del modo bloqueo.',
         'add_new_strand_desc': 'Nuevo Cordón - Agrega un nuevo cordón a tu diseño',
         'delete_strand_desc': 'Eliminar Cordón - Elimina el cordón seleccionado',
         'deselect_all_desc': 'Deseleccionar Todo - Borra todas las selecciones (o borra todos los bloqueos en modo bloqueo)',
@@ -3170,7 +3170,7 @@ Exemplos:<br>
         # Button descriptions for settings dialog
         'group_buttons': 'Botões de Grupo',
         'draw_names_desc': 'Desenhar Nomes - Mostra/oculta os nomes das mechas na tela',
-        'lock_layers_desc': 'Bloquear Camadas - Ativa o modo de bloqueio para bloquear/desbloquear mechas da edição',
+        'lock_layers_desc': 'Bloquear Camadas - Ativa o modo de bloqueio. Cada camada mostra um cadeado: clique no cadeado para bloquear/desbloquear essa camada; clique na camada para selecioná-la. Mechas bloqueadas podem ser selecionadas, mas não movidas nem usadas para anexar. Nova Mecha e Eliminar Mecha continuam disponíveis (eliminar fica bloqueado apenas para camadas bloqueadas). Clique novamente para sair do modo de bloqueio.',
         'add_new_strand_desc': 'Nova Mecha - Adiciona uma nova mecha ao seu design',
         'delete_strand_desc': 'Excluir Mecha - Remove a mecha selecionada',
         'deselect_all_desc': 'Desselecionar Tudo - Limpa todas as seleções (ou limpa todos os bloqueios no modo de bloqueio)',
@@ -3738,7 +3738,7 @@ Exemplos:<br>
         # Button descriptions for settings dialog
         'group_buttons': 'כפתורי קבוצה',
         'draw_names_desc': 'הצג שמות - מציג/מסתיר שמות חוטים על הקנווס',
-        'lock_layers_desc': 'נעל שכבות - מפעיל מצב נעילה לנעילת/שחרור חוטים מעריכה',
+        'lock_layers_desc': 'נעל שכבות - מפעיל מצב נעילה. בכל שכבה מופיע מנעול: לחץ על המנעול כדי לנעול/לשחרר את השכבה; לחץ על השכבה כדי לבחור בה. שכבות נעולות ניתנות לבחירה אך לא להזזה או לחיבור. כפתורי חוט חדש ומחיקת חוט נשארים זמינים (מחיקה חסומה רק לשכבות נעולות). לחץ שוב כדי לצאת ממצב נעילה.',
         'add_new_strand_desc': 'חוט חדש - מוסיף חוט חדש לעיצוב שלך',
         'delete_strand_desc': 'מחק חוט - מסיר את החוט הנבחר',
         'deselect_all_desc': 'בטל בחירה - מוחק את כל הבחירות (או מוחק את כל הנעילות במצב נעילה)',

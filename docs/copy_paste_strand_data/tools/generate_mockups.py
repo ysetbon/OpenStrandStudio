@@ -23,6 +23,26 @@ OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
 OUT = os.path.abspath(OUT)
 os.makedirs(OUT, exist_ok=True)
 
+# Pixel-exact UI pieces rendered from the app's real widgets by
+# render_ui_qt.py (run that script first).
+QT = os.path.join(OUT, "qt")
+
+import matplotlib.pyplot as plt
+
+
+def place_png(ax, name, x, y, height):
+    """Place a Qt-rendered PNG at (x, y) with the given height in inches;
+    returns (w, h) in axis units. Adds a soft drop shadow."""
+    img = plt.imread(os.path.join(QT, name))
+    h_px, w_px = img.shape[0], img.shape[1]
+    width = height * w_px / h_px
+    from mockup_common import rounded_box
+    rounded_box(ax, x + 0.05, y + 0.06, width, height, "#00000022", "none",
+                r=0.02, z=3)
+    ax.imshow(img, extent=(x, x + width, y + height, y), zorder=4,
+              interpolation="lanczos")
+    return width, height
+
 
 # ==========================================================================
 # 1. Strand anatomy — every property the copy panel can pick up
@@ -99,7 +119,7 @@ TOGGLES = [
 ]
 
 
-def draw_toggle_panel(ax, x, y, w):
+def _unused_draw_toggle_panel(ax, x, y, w):
     n_rows = sum(1 for t in TOGGLES if t[0] == "row")
     n_groups = sum(1 for t in TOGGLES if t[0] == "group")
     ROW, GRP = 0.315, 0.30
@@ -150,42 +170,51 @@ def draw_toggle_panel(ax, x, y, w):
 
 
 def img_copy_menu():
-    fig, ax = new_fig(12.4, 10.4)
+    W, H = 15.6, 10.6
+    fig, ax = new_fig(W, H)
     text(ax, 0.45, 0.42, "Copying — right-click the numbered layer button",
          size=FS + 3, weight="bold")
+    text(ax, 0.45, 0.80,
+         "All menus below are rendered from the app's real widgets "
+         "(tools/render_ui_qt.py) — the actual context menu code path.",
+         size=FS - 1, color=MENU_DIM)
 
-    # layer panel strip
-    rounded_box(ax, 0.45, 0.85, 1.5, 9.1, "#e6e6ea", "#b5b5b5", lw=1.1, z=1)
-    text(ax, 1.2, 1.15, "Layer Panel", size=FS - 2, color=MENU_DIM,
-         ha="center", weight="bold")
-    names = [("1_1", "#7e57c2", False, False), ("1_2", "#7e57c2", True, False),
-             ("1_3", "#7e57c2", False, False), ("2_1", "#66a05b", False, False),
-             ("1_2_2_1", "#555555", False, True)]
-    for i, (nm, col, sel, masked) in enumerate(names):
-        layer_button(ax, 0.72, 1.45 + i * 0.62, nm, selected=sel,
-                     masked=masked, fill=col)
+    # real layer-panel buttons (NumberedLayerButton widgets)
+    bw, bh = place_png(ax, "layer_buttons.png", 0.45, 1.55, 3.4)
+    text(ax, 0.45 + bw / 2, 1.35, "Layer Panel (real buttons)", size=FS - 2,
+         color=MENU_DIM, ha="center", weight="bold")
 
-    # context menu of button 1_2 (existing items + new Copy entry)
-    m = Menu(ax, 2.35, 1.55, 3.35)
-    m.item("Hide Layer")
-    m.item("Shadow Only")
-    m.item("Hide Shadow")
-    m.item("Edit Shadows")
-    m.sep()
-    m.item("Change Color", swatch="#c8aae6")
-    m.item("Change Stroke Color", swatch="#000000")
-    m.item("Change Width")
-    m.sep()
-    m.item("Line / Arrow options …", dim=True)
-    m.sep()
-    m.item("Copy Strand Data", hilite=True, arrow=True, badge="NEW")
-    m.draw()
+    # the current menu, exactly as the app builds it today
+    cw, ch = place_png(ax, "current_context_menu.png", 3.4, 1.55, 4.7)
+    text(ax, 3.4 + cw / 2, 1.35, "Context menu of 1_2 — TODAY", size=FS - 1,
+         ha="center", weight="bold", color="#333333")
 
-    # connector from menu row to the flyout panel
-    ax.annotate("", xy=(6.45, 5.30), xytext=(5.72, 5.30),
-                arrowprops=dict(arrowstyle="-|>", color="#666666", lw=1.3))
+    # the same real menu with the proposed entry + options panel injected
+    px = 3.4 + cw + 1.75
+    pw, ph = place_png(ax, "copy_menu_with_panel.png", px, 1.55, 8.7)
+    text(ax, px + pw / 2, 1.35, "PROPOSED — same menu + Copy Strand Data",
+         size=FS - 1, ha="center", weight="bold", color="#1a7f37")
+    ax.annotate("", xy=(px - 0.12, 4.0), xytext=(3.4 + cw + 0.16, 4.0),
+                arrowprops=dict(arrowstyle="-|>", color="#666666", lw=1.6))
 
-    draw_toggle_panel(ax, 6.5, 0.95, 5.35)
+    # callouts on the proposed menu (fractions of the menu image height)
+    def callout(frac, s, color="#444444"):
+        yy = 1.55 + ph * frac
+        ax.annotate(s, xy=(px + pw, yy), xytext=(px + pw + 0.28, yy),
+                    fontsize=FS - 1, color=color, va="center",
+                    arrowprops=dict(arrowstyle="-|>", color=color, lw=1.1))
+
+    callout(0.128, "existing items — unchanged")
+    callout(0.372, "new entry — a HoverLabel row,\nlike every other menu item",
+            "#1a7f37")
+    callout(0.435, "Select All — tri-state master toggle", "#1a7f37")
+    callout(0.60, "one checkbox per property, grouped,\ncheckbox on the right "
+                  "(same embedded-\nwidget layout as Arrow Customization)",
+            "#1a7f37")
+    callout(0.965, "copies the checked values", "#1a7f37")
+
+    ax.set_xlim(0, W)
+    ax.set_ylim(H, 0)
     save(fig, os.path.join(OUT, "02_copy_menu_toggles.png"))
 
 
@@ -220,31 +249,31 @@ def img_paste_menu():
          color="#3c6b33", weight="bold")
     cursor(ax, 4.55, 2.05)
 
-    # context menu on the target strand
-    m = Menu(ax, 5.1, 2.6, 3.2, title="strand 2_1")
-    m.item("Paste Copied Data", hilite=True, arrow=True, badge="NEW")
-    m.sep()
-    m.item("Clipboard: 12 properties from 1_2", dim=True)
-    m.draw()
-
-    # submenu: anchor choice
-    m2 = Menu(ax, 8.5, 2.95, 3.4)
-    m2.item("Angle from Start Point", hilite=True)
-    m2.item("Angle from End Point")
-    m2.sep()
-    m2.item("Geometry re-anchored at the", dim=True)
-    m2.item("chosen point, rotated to the", dim=True)
-    m2.item("target's own angle there", dim=True)
-    m2.draw()
-    ax.annotate("", xy=(8.45, 3.15), xytext=(8.05, 3.02),
-                arrowprops=dict(arrowstyle="-|>", color="#666666", lw=1.3))
-
-    # masked strands: option disabled
-    m3 = Menu(ax, 8.5, 5.35, 3.4, title="masked layer 1_2_2_1")
-    m3.item("Paste Copied Data  (unavailable)", dim=True)
-    m3.draw()
-    text(ax, 8.5, 6.55, "Masked layers never offer the paste entry.",
+    # proposed paste menu on the target strand (real HoverLabel widgets,
+    # exact menu stylesheet from show_context_menu)
+    mw, mh = place_png(ax, "paste_menu.png", 4.95, 2.45, 0.95)
+    text(ax, 4.95 + 0.1, 2.45 + mh + 0.22, "right-click on 2_1",
          size=FS - 2, color=MENU_DIM)
+
+    # its submenu with the two anchor choices
+    sx = 4.95 + mw + 0.55
+    sw, sh = place_png(ax, "paste_angle_submenu.png", sx, 2.62, 0.92)
+    ax.annotate("", xy=(sx - 0.06, 2.78), xytext=(4.95 + mw + 0.06, 2.78),
+                arrowprops=dict(arrowstyle="-|>", color="#666666", lw=1.4))
+    text(ax, sx, 2.42, "choose the anchor", size=FS - 2, color=MENU_DIM)
+
+    # the real masked-layer menu of today: paste is simply never added there
+    kx, ky = 8.3, 4.35
+    kw, kh = place_png(ax, "masked_context_menu.png", kx, ky, 2.15)
+    text(ax, kx, ky - 0.18,
+         "Masked layer (1_2_2_1) — its real menu today:", size=FS - 2,
+         color=MENU_DIM)
+    text(ax, kx, ky + kh + 0.24,
+         "no Paste entry is ever added for masks.", size=FS - 2,
+         color="#c0392b")
+
+    ax.set_xlim(0, 12.4)
+    ax.set_ylim(7.0, 0)
     save(fig, os.path.join(OUT, "03_paste_context_menu.png"))
 
 

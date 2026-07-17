@@ -195,28 +195,15 @@ def make_strand(layer_name="1_2"):
 # QWidget + QVBoxLayout(10,5,10,5, spacing 5), label left / control right,
 # labels styled "color:#000000; padding:5px;", panel bg #F0F0F0 radius 5px.
 # ----------------------------------------------------------------------
+# v1 keeps the panel to the six essentials; the rest is a possible
+# "Advanced…" follow-up (concept doc section 7).
 COPY_ROWS = [
-    ("header", "Geometry"),
     ("row", "Start Point", True),
     ("row", "End Point", True),
-    ("header", "Curve Shape"),
-    ("row", "Control Point 1 (Start)", True),
-    ("row", "Control Point Center (Middle)", True),
-    ("row", "Control Point 2 (End)", True),
-    ("row", "Bias Control Points", True),
-    ("row", "Curve Tuning", False),
-    ("header", "Size"),
+    ("row", "Control Points", True),
     ("row", "Width", True),
-    ("row", "Stroke Width", True),
-    ("header", "Colors"),
     ("row", "Strand Color", True),
     ("row", "Stroke Color", True),
-    ("row", "Circle Stroke Colors", False),
-    ("row", "Shadow Color", False),
-    ("header", "Extras"),
-    ("row", "Arrow Settings", False),
-    ("row", "Line & Dash Visibility", False),
-    ("row", "Circles (End Caps)", False),
 ]
 
 
@@ -237,7 +224,7 @@ def build_copy_panel():
     sel_count.setStyleSheet("color: #808080; padding: 5px;")
     sel_cb = QCheckBox()
     sel_cb.setTristate(True)
-    sel_cb.setCheckState(Qt.PartiallyChecked)
+    sel_cb.setCheckState(Qt.Checked if n_on == n_all else Qt.PartiallyChecked)
     sel_row.addWidget(sel_label)
     sel_row.addStretch()
     sel_row.addWidget(sel_count)
@@ -277,7 +264,8 @@ def build_copy_panel():
 
 def inject_copy_entry(menu, expanded=True):
     menu.addSeparator()
-    label = HoverLabel("Copy Strand Data", menu, THEME)
+    arrow = "▴" if expanded else "▾"  # ▴ expanded / ▾ collapsed
+    label = HoverLabel(f"Copy Strand Data  {arrow}", menu, THEME)
     label.setMinimumHeight(35)
     label.hover_style()  # show it highlighted, as under the cursor
     act = QWidgetAction(menu)
@@ -287,6 +275,124 @@ def inject_copy_entry(menu, expanded=True):
         panel_action = QWidgetAction(menu)
         panel_action.setDefaultWidget(build_copy_panel())
         menu.addAction(panel_action)
+
+
+def inject_copy_entry_collapsed(menu):
+    inject_copy_entry(menu, expanded=False)
+
+
+def inject_paste_entry(menu, expanded=True):
+    """The proposed Paste row — appended to the target layer's normal menu.
+
+    A dropdown like the copy row: collapsed it is a single row; expanded it
+    shows the dimmed clipboard hint plus the two anchor choices inline.
+    Clicking a choice applies the paste and closes the menu.
+    """
+    menu.addSeparator()
+    arrow = "▴" if expanded else "▾"
+    label = HoverLabel(f"Paste Copied Data  {arrow}", menu, THEME)
+    label.setMinimumHeight(35)
+    label.hover_style()  # show it highlighted, as under the cursor
+    act = QWidgetAction(menu)
+    act.setDefaultWidget(label)
+    menu.addAction(act)
+    if expanded:
+        hint = HoverLabel("6 properties from 1_2", menu, THEME)
+        hint.setStyleSheet(
+            "background-color: #F0F0F0; color: #909090;"
+            " padding: 5px 25px 5px 15px;")
+        hint_act = QWidgetAction(menu)
+        hint_act.setDefaultWidget(hint)
+        menu.addAction(hint_act)
+        for choice in ("Angle from Start Point", "Angle from End Point"):
+            lab = HoverLabel("      " + choice, menu, THEME)
+            lab.setMinimumHeight(35)
+            cact = QWidgetAction(menu)
+            cact.setDefaultWidget(lab)
+            menu.addAction(cact)
+
+
+def inject_paste_entry_collapsed(menu):
+    inject_paste_entry(menu, expanded=False)
+
+
+def build_ms_menu(state):
+    """The multi-select context menu with the proposed rows appended.
+
+    The app ALREADY shows this small batch menu on right-click in
+    multi-select mode — Hide Selected Layers + Shadow Only Selected
+    (show_multi_select_context_menu, src/layer_panel.py:1914). The
+    proposal appends two dropdown rows after those existing entries:
+    Copy Strand Data (dropdown) and Paste Copied Data (dropdown).
+
+    state: 'copy_collapsed' | 'copy_expanded' (clipboard empty, paste dimmed)
+           'paste_collapsed' | 'paste_expanded' (clipboard holds 1_2's data)
+
+    Built directly as a menu-styled frame (same look rehost_menu produces) —
+    a real QMenu this tall reflows into columns on the tiny offscreen screen.
+    """
+    frame = QFrame()
+    frame.setObjectName("msMenu")
+    frame.setStyleSheet(
+        "#msMenu { background-color: #F0F0F0; border: 1px solid #ABABAB; }")
+    v = QVBoxLayout(frame)
+    v.setContentsMargins(1, 3, 1, 3)
+    v.setSpacing(0)
+
+    def add_row(text_, hover=False, dim=False, indent=False):
+        lab = HoverLabel(text_, frame, THEME)
+        lab.setMinimumHeight(35)
+        if hover:
+            lab.hover_style()
+        if dim:
+            pad_left = 15 if indent else 5
+            lab.setStyleSheet(
+                "background-color: #F0F0F0; color: #909090;"
+                f" padding: 5px 25px 5px {pad_left}px;")
+        v.addWidget(lab)
+        return lab
+
+    def add_sep():
+        line = QFrame()
+        line.setFixedHeight(1)
+        line.setStyleSheet(
+            "background-color: #C6C6C6; border: none; margin: 0px 4px;")
+        v.addSpacing(2)
+        v.addWidget(line)
+        v.addSpacing(2)
+
+    # the REAL existing batch entries (show_multi_select_context_menu)
+    add_row(_["hide_selected_layers"])
+    add_sep()
+    add_row(_["enable_shadow_only_selected"])
+    add_sep()
+
+    copying = state.startswith("copy")
+    add_row("Copy Strand Data  " + ("▴" if state == "copy_expanded" else "▾"),
+            hover=copying)
+    if state == "copy_expanded":
+        v.addWidget(build_copy_panel())
+    add_sep()
+    if copying:
+        add_row("Paste Copied Data", dim=True)   # nothing copied yet
+    else:
+        add_row("Paste Copied Data  "
+                + ("▴" if state == "paste_expanded" else "▾"), hover=True)
+        if state == "paste_expanded":
+            add_row("6 properties from 1_2", dim=True, indent=True)
+            add_row("      Angle from Start Point")
+            add_row("      Angle from End Point")
+
+    # same dynamic width the app computes for its menus
+    wpanel = LayerPanel()
+    wbtn = NumberedLayerButton("1_2", 1, QColor("purple"), parent=wpanel)
+    frame.setFixedWidth(wbtn.calculate_menu_width(
+        [_["hide_selected_layers"], _["enable_shadow_only_selected"],
+         "Copy Strand Data  ▾", "Paste Copied Data  ▾",
+         "      Angle from Start Point"]) + 30)
+    frame.adjustSize()
+    frame.setFixedHeight(frame.sizeHint().height())
+    return frame
 
 
 def hover_label_menu(rows, hover_index=None):
@@ -333,38 +439,25 @@ def layer_button_strip():
 
 
 def main():
-    # 1) The current context menu, exactly as the app builds it today
+    # 1) The current normal-mode context menu — stays completely UNCHANGED
     menu_now, btn_now = capture_context_menu(make_strand("1_2"))
     grab(rehost_menu(menu_now, btn_now), "current_context_menu.png")
 
-    # 2) Same real menu with the proposed Copy entry + options panel injected
-    menu_new, btn_new = capture_context_menu(make_strand("1_2"),
-                                             inject=inject_copy_entry)
-    grab(rehost_menu(menu_new, btn_new), "copy_menu_with_panel.png")
-
-    # 3) The real masked-layer menu (shows why paste/copy are absent there)
+    # 2) The real masked-layer menu (masks are skipped by copy/paste)
     s1, s2 = make_strand("1_2"), make_strand("2_1")
     s2.set_number = 2
     masked = MaskedStrand(s1, s2)
     menu_masked, btn_masked = capture_context_menu(masked)
     grab(rehost_menu(menu_masked, btn_masked), "masked_context_menu.png")
 
-    # 4) Proposed paste menu on the target strand
-    paste_menu = hover_label_menu(
-        [("Paste Copied Data", False),
-         (None, None),
-         ("12 properties from 1_2", True)],
-        hover_index=0)
-    grab(paste_menu, "paste_menu.png")
+    # 3) The proposed MULTI-SELECT context menu (today: no menu at all there).
+    # These are small enough to grab as real shown QMenus — the QWidgetAction
+    # widgets only get realized when the menu is actually shown.
+    for state in ("copy_collapsed", "copy_expanded",
+                  "paste_collapsed", "paste_expanded"):
+        grab(build_ms_menu(state), f"ms_menu_{state}.png")
 
-    # 5) Its submenu with the two anchor choices
-    angle_menu = hover_label_menu(
-        [("Angle from Start Point", False),
-         ("Angle from End Point", False)],
-        hover_index=0)
-    grab(angle_menu, "paste_angle_submenu.png")
-
-    # 6) Real layer-panel buttons
+    # 4) Real layer-panel buttons
     grab(layer_button_strip(), "layer_buttons.png")
 
 

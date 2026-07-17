@@ -44,6 +44,70 @@ def place_png(ax, name, x, y, height):
     return width, height
 
 
+ACCENT = "#7c4dbe"
+
+# The app's real layer-panel icons (multi_select_on/off.png live here)
+ICONS = os.path.abspath(os.path.join(
+    os.path.dirname(__file__), "..", "..", "..", "src", "layer_panel_icons"))
+
+
+def ms_button(ax, cx, cy, d=0.62, checked=True):
+    """The REAL Multi-Layer Select button: a 40x40 circular button
+    (border-radius 20, tan when off / dark brown when checked —
+    src/layer_panel.py:700-744) with the real multi_select_*.png icon."""
+    from matplotlib.patches import Circle
+    ax.add_patch(Circle((cx, cy), d / 2,
+                        facecolor="#654321" if checked else "#D2B48C",
+                        edgecolor="#A0522D", lw=1.8, zorder=15))
+    name = "multi_select_on.png" if checked else "multi_select_off.png"
+    icon = plt.imread(os.path.join(ICONS, name))
+    s = d * 0.66  # same icon_scale the app uses
+    ax.imshow(icon, extent=(cx - s / 2, cx + s / 2, cy + s / 2, cy - s / 2),
+              zorder=16, interpolation="lanczos")
+
+
+def msel_border(ax, fx, fy, idx):
+    """Multi-selection highlight exactly as the app draws it: a 3px gold
+    #FFD700 border around the selected button
+    (update_layer_button_multi_select_display, src/layer_panel.py:1887)."""
+    rounded_box(ax, fx(14), fy(14 + 92 * idx), fx(318) - fx(14),
+                fy(106) - fy(14), "none", "#FFD700", lw=3.2, r=0.04, z=18)
+
+
+def paste_chip(ax, x, y, w, h, kind):
+    """One Option A hover paste chip: ⇤ (from start) or ⇥ (from end)."""
+    rounded_box(ax, x, y, w, h, "white", ACCENT, lw=1.5, r=0.05, z=20)
+    ym = y + h / 2
+    pad = w * 0.22
+    if kind == "start":       # arrow into a left bar
+        ax.plot([x + pad, x + pad], [ym - h * 0.28, ym + h * 0.28],
+                color=ACCENT, lw=2.2, zorder=21)
+        ax.annotate("", xy=(x + pad + w * 0.06, ym),
+                    xytext=(x + w - pad * 0.6, ym),
+                    arrowprops=dict(arrowstyle="-|>", color=ACCENT, lw=1.8),
+                    zorder=21)
+    else:                     # arrow into a right bar
+        ax.plot([x + w - pad, x + w - pad], [ym - h * 0.28, ym + h * 0.28],
+                color=ACCENT, lw=2.2, zorder=21)
+        ax.annotate("", xy=(x + w - pad - w * 0.06, ym),
+                    xytext=(x + pad * 0.6, ym),
+                    arrowprops=dict(arrowstyle="-|>", color=ACCENT, lw=1.8),
+                    zorder=21)
+
+
+def copy_badge(ax, x, y, s):
+    """Option A's copy badge (two overlapping squares) at (x, y), size s."""
+    from matplotlib.patches import Rectangle
+    rounded_box(ax, x, y, s, s, "white", ACCENT, lw=1.6, r=0.05, z=20)
+    q = s * 0.42
+    ax.add_patch(Rectangle((x + s * 0.32, y + s * 0.14), q, q,
+                           facecolor="white", edgecolor=ACCENT, lw=1.3,
+                           zorder=21))
+    ax.add_patch(Rectangle((x + s * 0.16, y + s * 0.36), q, q,
+                           facecolor="white", edgecolor=ACCENT, lw=1.3,
+                           zorder=22))
+
+
 # ==========================================================================
 # 1. Strand anatomy — every property the copy panel can pick up
 # ==========================================================================
@@ -170,48 +234,97 @@ def _unused_draw_toggle_panel(ax, x, y, w):
 
 
 def img_copy_menu():
-    W, H = 15.6, 10.6
+    W, H = 15.4, 11.2
     fig, ax = new_fig(W, H)
-    text(ax, 0.45, 0.42, "Copying — right-click the numbered layer button",
+    text(ax, 0.45, 0.42, "Copying — the multi-select context menu",
          size=FS + 3, weight="bold")
     text(ax, 0.45, 0.80,
-         "All menus below are rendered from the app's real widgets "
-         "(tools/render_ui_qt.py) — the actual context menu code path.",
+         "right-clicking in multi-select mode already shows the small batch menu "
+         "— Hide Selected Layers / Shadow Only Selected (show_multi_select_"
+         "context_menu,\nsrc/layer_panel.py:1914) — the proposal appends the "
+         "Copy / Paste rows to it; the normal menu is untouched.",
          size=FS - 1, color=MENU_DIM)
 
-    # real layer-panel buttons (NumberedLayerButton widgets)
-    bw, bh = place_png(ax, "layer_buttons.png", 0.45, 1.55, 3.4)
-    text(ax, 0.45 + bw / 2, 1.35, "Layer Panel (real buttons)", size=FS - 2,
-         color=MENU_DIM, ha="center", weight="bold")
+    # layer panel in multi-select mode; right-click the ticked source layer
+    bx, by = 0.45, 2.25
+    bw, bh = place_png(ax, "layer_buttons.png", bx, by, 4.4)
+    ms_button(ax, bx + 0.34, by - 0.46, checked=True)
+    text(ax, bx + 0.78, by - 0.56,
+         "the round Multi-Layer Select\nbutton — pressed (mode ON)",
+         size=FS - 2, color="#654321", weight="bold")
 
-    # the current menu, exactly as the app builds it today
-    cw, ch = place_png(ax, "current_context_menu.png", 3.4, 1.55, 4.7)
-    text(ax, 3.4 + cw / 2, 1.35, "Context menu of 1_2 — TODAY", size=FS - 1,
-         ha="center", weight="bold", color="#333333")
+    def fx(p):
+        return bx + p / 332.0 * bw
 
-    # the same real menu with the proposed entry + options panel injected
-    px = 3.4 + cw + 1.75
-    pw, ph = place_png(ax, "copy_menu_with_panel.png", px, 1.55, 8.7)
-    text(ax, px + pw / 2, 1.35, "PROPOSED — same menu + Copy Strand Data",
+    def fy(p):
+        return by + p / 488.0 * bh
+
+    msel_border(ax, fx, fy, 1)
+    cursor(ax, fx(190), fy(138))
+    text(ax, bx, by + bh + 0.32,
+         "tick + right-click the source layer 1_2\n(gold border = multi-selected)",
+         size=FS - 2, color="#5b3f8f", weight="bold")
+
+    # the NEW small menu — opens collapsed; paste dimmed (nothing copied yet)
+    col_h, col_w = plt.imread(
+        os.path.join(QT, "ms_menu_copy_collapsed.png")).shape[:2]
+    exp_h = plt.imread(os.path.join(QT, "ms_menu_copy_expanded.png")).shape[0]
+    qw_t = 2.6                       # target width; heights follow px scale
+    qx = bx + bw + 1.05
+    qw, qh = place_png(ax, "ms_menu_copy_collapsed.png", qx, by,
+                       qw_t * col_h / col_w)
+    text(ax, qx + qw / 2, by - 0.20, "the batch menu + NEW rows — collapsed",
          size=FS - 1, ha="center", weight="bold", color="#1a7f37")
-    ax.annotate("", xy=(px - 0.12, 4.0), xytext=(3.4 + cw + 0.16, 4.0),
-                arrowprops=dict(arrowstyle="-|>", color="#666666", lw=1.6))
+    ax.annotate("", xy=(qx - 0.10, by + qh * 0.40),
+                xytext=(fx(220) + 0.15, fy(140)),
+                arrowprops=dict(arrowstyle="-|>", color="#666666", lw=1.5))
+    ax.annotate("Paste is dimmed —\nnothing copied yet",
+                xy=(qx + qw * 0.5, by + qh * 0.99),
+                xytext=(qx - 0.25, by + qh + 0.80),
+                fontsize=FS - 2, color="#888888", va="center",
+                arrowprops=dict(arrowstyle="-|>", color="#888888", lw=1.0))
 
-    # callouts on the proposed menu (fractions of the menu image height)
-    def callout(frac, s, color="#444444"):
-        yy = 1.55 + ph * frac
+    # press ▾ -> the six-essential toggle panel expands inline
+    px = qx + qw + 1.7
+    pw, ph = place_png(ax, "ms_menu_copy_expanded.png", px, by,
+                       (qw_t * col_h / col_w) * exp_h / col_h)
+    text(ax, px + pw / 2, by - 0.20, "after pressing ▾ — EXPANDED",
+         size=FS - 1, ha="center", weight="bold", color="#1a7f37")
+    ax.annotate("press ▾", xy=(px - 0.12, by + qh * 0.35),
+                xytext=(qx + qw + 0.18, by + qh * 0.35),
+                fontsize=FS - 1, color="#1a7f37", weight="bold", va="bottom",
+                arrowprops=dict(arrowstyle="-|>", color="#1a7f37", lw=1.6))
+
+    def callout(frac, s, color="#1a7f37"):
+        yy = by + ph * frac
         ax.annotate(s, xy=(px + pw, yy), xytext=(px + pw + 0.28, yy),
                     fontsize=FS - 1, color=color, va="center",
                     arrowprops=dict(arrowstyle="-|>", color=color, lw=1.1))
 
-    callout(0.128, "existing items — unchanged")
-    callout(0.372, "new entry — a HoverLabel row,\nlike every other menu item",
-            "#1a7f37")
-    callout(0.435, "Select All — tri-state master toggle", "#1a7f37")
-    callout(0.60, "one checkbox per property, grouped,\ncheckbox on the right "
-                  "(same embedded-\nwidget layout as Arrow Customization)",
-            "#1a7f37")
-    callout(0.965, "copies the checked values", "#1a7f37")
+    # collapsed menu = 4 rows: Hide / Shadow Only (existing) + Copy + Paste
+    row_h = col_h / 4.0
+    panel_h = exp_h - col_h          # injected toggle panel, capture pixels
+    callout(1.0 * row_h / exp_h,
+            "the existing batch entries —\nHide Selected Layers /\n"
+            "Shadow Only Selected — unchanged", "#444444")
+    callout(2.5 * row_h / exp_h, "Copy Strand Data — expanded (▴)")
+    callout((2.9 * row_h + panel_h * 0.06) / exp_h,
+            "Select All — tri-state master toggle")
+    callout((2.9 * row_h + panel_h * 0.52) / exp_h,
+            "the six essentials — start / end /\ncontrol points / width /\n"
+            "strand color / stroke color")
+    callout((2.9 * row_h + panel_h * 0.94) / exp_h,
+            "Copy (6) — snapshots & closes")
+    callout((exp_h - 0.5 * row_h) / exp_h,
+            "Paste — dimmed until Copy is pressed", "#888888")
+
+    # reference: the normal-mode menu stays exactly as it is today
+    ny = by + max(bh, ph) + 0.85
+    nw, nh = place_png(ax, "current_context_menu.png", 0.45, ny, 2.5)
+    text(ax, 0.45 + nw + 0.40, ny + nh * 0.45,
+         "normal mode (multi-select OFF): the usual right-click menu,\n"
+         "exactly as today — Copy / Paste Strand Data is NOT added here.",
+         size=FS - 1, color=MENU_DIM)
 
     ax.set_xlim(0, W)
     ax.set_ylim(H, 0)
@@ -230,51 +343,206 @@ def cursor(ax, x, y, z=40):
 
 
 def img_paste_menu():
-    fig, ax = new_fig(12.4, 7.0)
+    W, H = 15.4, 8.6
+    fig, ax = new_fig(W, H)
     text(ax, 0.45, 0.42,
-         "Pasting — right-click another strand (strand or attached strand, not masked)",
+         "Pasting — tick target layers in multi-select, right-click, paste onto ALL of them",
          size=FS + 3, weight="bold")
+    text(ax, 0.45, 0.80,
+         "the clipboard holds 1_2's six properties; masked or locked layers in "
+         "the selection are simply skipped. The normal menu stays unchanged.",
+         size=FS - 1, color=MENU_DIM)
 
-    canvas_panel(ax, 0.45, 0.95, 7.1, 5.6)
+    # layer panel in multi-select mode: source badge + two ticked targets
+    bx, by = 0.45, 2.25
+    bw, bh = place_png(ax, "layer_buttons.png", bx, by, 4.4)
+    ms_button(ax, bx + 0.34, by - 0.46, checked=True)
+    text(ax, bx + 0.78, by - 0.56,
+         "Multi-Layer Select button\n— pressed (mode ON)",
+         size=FS - 2, color="#654321", weight="bold")
 
-    # source strand (copied) — purple
-    draw_strand(ax, (1.1, 5.5), (2.0, 3.4), (3.4, 5.6), (4.3, 3.6), width=14)
-    text(ax, 1.05, 5.95, "1_2  — data copied ✓", size=FS - 1,
-         color="#5b3f8f", weight="bold")
+    def fx(p):
+        return bx + p / 332.0 * bw
 
-    # target strand — green, straight-ish
-    tgt = draw_strand(ax, (2.1, 2.0), (3.2, 1.7), (4.6, 1.9), (6.3, 2.5),
-                      width=14, fill=STRAND_FILL2)
-    text(ax, 1.85, 1.5, "2_1  — paste target", size=FS - 1,
-         color="#3c6b33", weight="bold")
-    cursor(ax, 4.55, 2.05)
+    def fy(p):
+        return by + p / 488.0 * bh
 
-    # proposed paste menu on the target strand (real HoverLabel widgets,
-    # exact menu stylesheet from show_context_menu)
-    mw, mh = place_png(ax, "paste_menu.png", 4.95, 2.45, 0.95)
-    text(ax, 4.95 + 0.1, 2.45 + mh + 0.22, "right-click on 2_1",
-         size=FS - 2, color=MENU_DIM)
+    copy_badge(ax, fx(278), fy(114), fx(310) - fx(278))   # source 1_2
+    msel_border(ax, fx, fy, 2)                            # target 1_3
+    msel_border(ax, fx, fy, 3)                            # target 2_1
+    text(ax, bx, by + bh + 0.32,
+         "source 1_2 (badge) · targets 1_3 + 2_1 multi-selected\n"
+         "(gold border) — right-click either of them",
+         size=FS - 2, color="#3c6b33", weight="bold")
 
-    # its submenu with the two anchor choices
-    sx = 4.95 + mw + 0.55
-    sw, sh = place_png(ax, "paste_angle_submenu.png", sx, 2.62, 0.92)
-    ax.annotate("", xy=(sx - 0.06, 2.78), xytext=(4.95 + mw + 0.06, 2.78),
-                arrowprops=dict(arrowstyle="-|>", color="#666666", lw=1.4))
-    text(ax, sx, 2.42, "choose the anchor", size=FS - 2, color=MENU_DIM)
+    # WAY 2 — the Option A hover chips, right on the hovered target button
+    cw_ = fx(268) - fx(238)
+    ch_ = fy(356) - fy(316)
+    paste_chip(ax, fx(234), fy(316), cw_, ch_, "start")
+    paste_chip(ax, fx(270), fy(316), cw_, ch_, "end")
+    cursor(ax, fx(286), fy(338))
+    ax.annotate("WAY 2 — one-click chips (Option A): hover a target →\n"
+                "⇤ pastes with Angle from Start, ⇥ with Angle from End;\n"
+                "with layers ticked, one chip click pastes onto them all",
+                xy=(fx(232), fy(336)), xytext=(bx, by + bh + 1.10),
+                fontsize=FS - 2, color=ACCENT, weight="bold", va="top",
+                arrowprops=dict(arrowstyle="-|>", color=ACCENT, lw=1.2))
 
-    # the real masked-layer menu of today: paste is simply never added there
-    kx, ky = 8.3, 4.35
-    kw, kh = place_png(ax, "masked_context_menu.png", kx, ky, 2.15)
-    text(ax, kx, ky - 0.18,
-         "Masked layer (1_2_2_1) — its real menu today:", size=FS - 2,
-         color=MENU_DIM)
-    text(ax, kx, ky + kh + 0.24,
-         "no Paste entry is ever added for masks.", size=FS - 2,
-         color="#c0392b")
+    # the same small multi-select menu — Paste now active, opens collapsed
+    col_h, col_w = plt.imread(
+        os.path.join(QT, "ms_menu_paste_collapsed.png")).shape[:2]
+    exp_h = plt.imread(os.path.join(QT, "ms_menu_paste_expanded.png")).shape[0]
+    qw_t = 2.6
+    qx = bx + bw + 1.05
+    qw, qh = place_png(ax, "ms_menu_paste_collapsed.png", qx, by,
+                       qw_t * col_h / col_w)
+    text(ax, qx + qw / 2, by - 0.20, "WAY 1 — the batch menu, Paste active",
+         size=FS - 1, ha="center", weight="bold", color="#1a7f37")
+    ax.annotate("", xy=(qx - 0.10, by + qh * 0.40),
+                xytext=(fx(320), fy(250)),
+                arrowprops=dict(arrowstyle="-|>", color="#666666", lw=1.5))
 
-    ax.set_xlim(0, 12.4)
-    ax.set_ylim(7.0, 0)
+    # press ▾ -> clipboard hint + the two anchor choices inline
+    px = qx + qw + 1.7
+    pw, ph = place_png(ax, "ms_menu_paste_expanded.png", px, by,
+                       (qw_t * col_h / col_w) * exp_h / col_h)
+    text(ax, px + pw / 2, by - 0.20, "after pressing ▾ — choose & it pastes",
+         size=FS - 1, ha="center", weight="bold", color="#1a7f37")
+    ax.annotate("press ▾", xy=(px - 0.12, by + qh * 0.75),
+                xytext=(qx + qw + 0.18, by + qh * 0.75),
+                fontsize=FS - 1, color="#1a7f37", weight="bold", va="bottom",
+                arrowprops=dict(arrowstyle="-|>", color="#1a7f37", lw=1.6))
+
+    body_h = exp_h - col_h            # hint + two anchor rows, capture pixels
+    ax.annotate("what's in the clipboard",
+                xy=(px + pw, by + ph * (col_h + body_h * 0.15) / exp_h),
+                xytext=(px + pw + 0.28,
+                        by + ph * (col_h + body_h * 0.15) / exp_h),
+                fontsize=FS - 2, color="#444444", va="center",
+                arrowprops=dict(arrowstyle="-|>", color="#444444", lw=1.1))
+    ax.annotate("click a choice → pastes onto ALL\nticked layers (1_3 & 2_1) in one\n"
+                "undo step; the menu closes",
+                xy=(px + pw, by + ph * (col_h + body_h * 0.65) / exp_h),
+                xytext=(px + pw + 0.28,
+                        by + ph * (col_h + body_h * 0.65) / exp_h),
+                fontsize=FS - 2, color="#1a7f37", weight="bold", va="center",
+                arrowprops=dict(arrowstyle="-|>", color="#1a7f37", lw=1.1))
+    text(ax, qx, by + max(qh, ph) + 0.55,
+         "the clipboard is NOT consumed — tick other layers and paste again and "
+         "again;\nClear ✕ on the source badge (Option A indicators) ends the copy.",
+         size=FS - 2, color="#1a7f37")
+
+    ax.set_xlim(0, W)
+    ax.set_ylim(H, 0)
     save(fig, os.path.join(OUT, "03_paste_context_menu.png"))
+
+
+# ==========================================================================
+# 3b. Chosen indicator design — Option A: badge + hover paste icons
+# ==========================================================================
+def img_indicators():
+    """Option A drawn over the real layer-button strip: a copy badge on the
+    source (top-right corner, clear of the left-side padlock), and two
+    hover-only one-click paste chips on eligible targets."""
+    W, H = 14.6, 8.0
+    fig, ax = new_fig(W, H)
+    text(ax, 0.45, 0.42,
+         "Layer-panel indicators — CHOSEN: Option A (corner badge + hover paste icons)",
+         size=FS + 3, weight="bold")
+    text(ax, 0.45, 0.80,
+         "drawn over the real layer buttons — the lock-mode padlock lives on the "
+         "LEFT side, so the badge (top-right) never clashes with it.",
+         size=FS - 1, color=MENU_DIM)
+
+    bx, by = 0.7, 1.55
+    bw, bh = place_png(ax, "layer_buttons.png", bx, by, 4.6)
+    text(ax, bx + bw / 2, by - 0.14, "Layer Panel", size=FS - 2,
+         color=MENU_DIM, ha="center", weight="bold")
+
+    # px->axes helpers for the 332x488 strip (buttons: y = 20 + 92*i, h=80)
+    def fx(p):
+        return bx + p / 332.0 * bw
+
+    def fy(p):
+        return by + p / 488.0 * bh
+
+    ACC = "#7c4dbe"
+
+    # --- copy badge on the source button 1_2 (index 1), top-right corner ---
+    bx0, by0, bs = fx(278), fy(114), fx(310) - fx(278)
+    rounded_box(ax, bx0, by0, bs, bs, "white", ACC, lw=1.6, r=0.05, z=20)
+    # classic "copy" glyph: two overlapping little squares
+    from matplotlib.patches import Rectangle
+    s = bs * 0.42
+    ax.add_patch(Rectangle((bx0 + bs * 0.32, by0 + bs * 0.14), s, s,
+                           facecolor="white", edgecolor=ACC, lw=1.3, zorder=21))
+    ax.add_patch(Rectangle((bx0 + bs * 0.16, by0 + bs * 0.36), s, s,
+                           facecolor="white", edgecolor=ACC, lw=1.3, zorder=22))
+
+    # its popup: click the badge -> clear
+    pxp, pyp, pw_, ph_ = fx(332) + 0.45, fy(96), 3.45, 0.62
+    shadow_box(ax, pxp, pyp, pw_, ph_, r=0.08)
+    rounded_box(ax, pxp, pyp, pw_, ph_, "white", MENU_BORDER, lw=1.1, r=0.08,
+                z=20)
+    text(ax, pxp + 0.18, pyp + ph_ / 2 + 0.045, "6 properties from 1_2",
+         size=FS - 1, z=21)
+    text(ax, pxp + pw_ - 0.18, pyp + ph_ / 2 + 0.045, "Clear ✕",
+         size=FS - 1, color="#c0392b", weight="bold", ha="right", z=21)
+    ax.annotate("", xy=(pxp - 0.04, pyp + ph_ / 2),
+                xytext=(fx(312) + 0.04, by0 + bs / 2),
+                arrowprops=dict(arrowstyle="-|>", color="#666666", lw=1.2))
+
+    # --- hover paste chips on the target button 2_1 (index 3) ---
+    def chip(px_left, kind):
+        cx, cy = fx(px_left), fy(316)
+        cw_, ch_ = fx(px_left + 30) - fx(px_left), fy(356) - fy(316)
+        rounded_box(ax, cx, cy, cw_, ch_, "white", ACC, lw=1.5, r=0.05, z=20)
+        ym = cy + ch_ / 2
+        pad = cw_ * 0.22
+        if kind == "start":       # ⇤  arrow into a left bar
+            ax.plot([cx + pad, cx + pad], [ym - ch_ * 0.28, ym + ch_ * 0.28],
+                    color=ACC, lw=2.2, zorder=21)
+            ax.annotate("", xy=(cx + pad + cw_ * 0.06, ym),
+                        xytext=(cx + cw_ - pad * 0.6, ym),
+                        arrowprops=dict(arrowstyle="-|>", color=ACC, lw=1.8),
+                        zorder=21)
+        else:                     # ⇥  arrow into a right bar
+            ax.plot([cx + cw_ - pad, cx + cw_ - pad],
+                    [ym - ch_ * 0.28, ym + ch_ * 0.28],
+                    color=ACC, lw=2.2, zorder=21)
+            ax.annotate("", xy=(cx + cw_ - pad - cw_ * 0.06, ym),
+                        xytext=(cx + pad * 0.6, ym),
+                        arrowprops=dict(arrowstyle="-|>", color=ACC, lw=1.8),
+                        zorder=21)
+        return cx, cy, cw_, ch_
+
+    c1 = chip(238, "start")
+    c2 = chip(274, "end")
+    cursor(ax, c2[0] + c2[2] * 0.55, c2[1] + c2[3] * 0.55)
+
+    # --- callouts ---
+    ax.annotate("source 1_2 — the copy badge, top-right corner\n"
+                "(the padlock toggle is on the LEFT, no clash);\n"
+                "click it → the popup — Clear ✕ ENDS the copy",
+                xy=(bx0 + bs / 2, by0 - 0.04), xytext=(fx(332) + 0.45, fy(30)),
+                fontsize=FS - 1, color=ACC, va="center",
+                arrowprops=dict(arrowstyle="-|>", color=ACC, lw=1.2))
+    ax.annotate("hover an eligible layer → two one-click paste chips:\n"
+                "⇤ Angle from Start Point   ·   ⇥ Angle from End Point\n"
+                "(hover-only; never on masked or locked layers)",
+                xy=(c1[0] - 0.05, c1[1] + c1[3] / 2),
+                xytext=(fx(332) + 0.45, fy(336)),
+                fontsize=FS - 1, color="#1a7f37", va="center",
+                arrowprops=dict(arrowstyle="-|>", color="#1a7f37", lw=1.2))
+    ms_button(ax, 0.95, by + bh + 0.62, d=0.5, checked=True)
+    text(ax, 1.35, by + bh + 0.42,
+         "Badge and chips exist only while the clipboard is non-empty. The "
+         "Copy / Paste rows live in the multi-select batch menu\n(the round "
+         "Multi-Layer Select button turns the mode on); the chips give "
+         "one-click pasting without opening it, and act on the\nwhole "
+         "selection when several layers are ticked. Clear ✕ ends the copy.",
+         size=FS - 1, color=MENU_DIM)
+    save(fig, os.path.join(OUT, "06_panel_indicators.png"))
 
 
 # ==========================================================================
@@ -377,11 +645,11 @@ def img_paste_geometry():
 def img_workflow():
     fig, ax = new_fig(12.4, 3.4)
     steps = [
-        ("1", "Right-click the numbered\nlayer button of the\nsource strand"),
-        ("2", "Toggle the properties to\ncopy (or Select All),\npress  Copy"),
-        ("3", "Right-click the target\nstrand — strand or\nattached, never masked"),
-        ("4", "Paste Copied Data ▸\nAngle from Start Point /\nAngle from End Point"),
-        ("✓", "Selected data applied,\nre-anchored & rotated;\none undo step"),
+        ("1", "Press the round Multi-\nLayer Select button —\nmulti-select mode ON"),
+        ("2", "Right-click the source\nlayer → Copy Strand Data ▾\ntoggle & press  Copy (6)"),
+        ("3", "Tick the target layer(s)\n— any number of them\n(or use the hover ⇤ / ⇥)"),
+        ("4", "Right-click → Paste ▾ →\nAngle from Start / End —\npastes onto ALL ticked"),
+        ("✓", "One undo step; clipboard\nstays — Clear ✕ on the\nsource badge ends the copy"),
     ]
     x, w, h, y = 0.45, 2.14, 1.9, 0.85
     for i, (num, s) in enumerate(steps):
@@ -410,6 +678,7 @@ if __name__ == "__main__":
     img_anatomy()
     img_copy_menu()
     img_paste_menu()
+    img_indicators()
     img_paste_geometry()
     img_workflow()
     print("done ->", OUT)

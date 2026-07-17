@@ -1,3 +1,5 @@
+> **OLD VERSION** — kept for reference. The current doc is [README.md](README.md) (adds: Option A indicators chosen, multi-select copy/paste). The mockup images are shared with the new doc and show the latest state.
+
 # Copy / Paste Strand Data — Product Concept
 
 > Status: **concept only** — no application code has been changed. This folder contains the
@@ -12,33 +14,28 @@
 
 ## Summary
 
-Copy/paste strand data lives in the layer panel's **multi-select mode** (entered with
-the round **Multi-Layer Select** button). Right-clicking a ticked layer there already
-shows the small **batch menu** — *Hide Selected Layers* / *Shadow Only Selected* — and
-the proposal appends two dropdown rows to it: **Copy Strand Data ▾** and
-**Paste Copied Data ▾**. The normal-mode right-click menu is completely untouched.
+A new **Copy Strand Data** option on the numbered layer button lets the user pick exactly
+*which* pieces of a strand to copy — geometry (start/end points, the three control points,
+bias control points), sizes (width, stroke width), colors (strand color, stroke color, …)
+and extras. The menu shows only a single **Copy Strand Data ▾** row; pressing its dropdown
+arrow expands the panel of toggles (with a **Select All** master toggle) inline in the
+menu, in the same style as the existing Arrow Customization panel. Until the dropdown is
+pressed, none of the detail toggles are visible.
 
-**Copy Strand Data ▾** lets the user pick exactly *which* pieces of the right-clicked
-strand to copy — kept deliberately to the **six essentials**: Start Point, End Point,
-Control Points (curve shape incl. bias), Width (incl. stroke width), Strand Color and
-Stroke Color. Pressing the dropdown arrow expands the panel of toggles (with a
-**Select All** master toggle) inline in the menu, in the same style as the existing
-Arrow Customization panel; until then no detail toggles are visible.
-
-After copying, **tick any number of target layers** (regular or attached strands —
-masked layers are skipped), right-click one of them and expand **Paste Copied Data ▾**.
-It reveals two placement choices — clicking one pastes onto **all ticked layers at
-once** (a single undo step) and closes the menu, and the clipboard survives for further
-pastes until the next Copy:
+After copying, right-clicking **another layer's numbered button in the layer panel** (a
+regular strand or an attached strand — never a masked layer) shows that layer's normal
+context menu plus a new **Paste Copied Data ▾** dropdown row. Expanding it reveals two
+placement choices — clicking one pastes immediately and closes the menu, and the
+clipboard survives for further pastes until the next Copy:
 
 - **Angle from Start Point** — the copied geometry is re-anchored at the target's start
   point and rotated to the target's own baseline angle measured from its start.
 - **Angle from End Point** — same, but anchored and angle-matched at the target's end point.
 
 Non-geometric properties (colors, widths…) are simply applied as-is. While a copy is
-active, the layer panel shows it (chosen design **Option A**, end of section 3): a copy
-badge on the source layer's button, hover ⇤ / ⇥ one-click paste chips on eligible
-layers, and **Clear ✕** on the badge to finish the copy.
+active, the layer panel itself can also show it — a badge on the source layer, quick
+⇤ / ⇥ paste controls on eligible layers, and an explicit way to finish the copy; three
+candidate designs are compared at the end of section 3.
 
 ![Workflow](mockups/05_workflow.png)
 
@@ -81,38 +78,39 @@ anchor + rotation mapping (section 4); everything else is assigned directly.
 
 ---
 
-## 2. Copying — the multi-select context menu
+## 2. Copying — the layer-number-button menu
 
-Copy/paste lives in the layer panel's **multi-select mode**, entered by pressing the
-round **Multi-Layer Select** button (the circular tan/brown 40×40 button above the
-layer list — `src/layer_panel.py:700-744`, icons `multi_select_on/off.png`).
+Right-click the numbered layer button of the source strand. The menu for a regular
+strand today contains, in order (all rows are `HoverLabel` widget-actions or embedded
+label+button rows, 8pt font, 35px min row height, light theme `#F0F0F0`/`#000000` with
+inverted hover, dark theme mirrored — `src/numbered_layer_button.py:243-286`):
 
-Right-clicking a ticked layer in this mode **already shows a small batch menu** with
-two entries — *Hide Selected Layers* and *Shadow Only Selected*
-(`show_multi_select_context_menu`, `src/layer_panel.py:1914`). The proposal **appends
-two dropdown rows** after them:
+1. `Hide Layer` / `Show Layer`
+2. `Shadow Only`  ·  3. `Hide Shadow`  ·  4. `Edit Shadows`
+5. `Change Color` · `Change Stroke Color` · `Change Width` · `Change Width (This Layer Only)`
+6. `Unfold Start Edge` / `Fold Over Start Edge` (circle-stroke transparency toggle)
+7. `Line` row (`Hide/Show Start Line`, `Hide/Show End Line`)
+8. `Arrow` row (`Show/Hide Start Arrow`, `Show/Hide End Arrow`)
+9. `Show Full Arrow` / `Hide Full Arrow` (+ the Arrow Customization block when the full
+   arrow is on)
+10. `Dash` row (`Show/Hide Start Dash`, `Show/Hide End Dash`)
+11. situational: `Circle` row, `Close the Knot`, closing-knot stroke entries
 
-1. **Copy Strand Data ▾** — a dropdown row, collapsed by default
-2. **Paste Copied Data ▾** — dimmed while the clipboard is empty (section 3)
-
-The **normal-mode menu is completely untouched** — Copy/Paste Strand Data is *not*
-added to the regular right-click menu of a layer button (which multi-select mode
-suppresses anyway, `src/numbered_layer_button.py:202`).
-
-The flow: press the Multi-Layer Select button, tick and right-click the source layer,
-press the ▾ — the six-essential toggle panel expands inline (embedded exactly like the
-Arrow Customization block); pressing again collapses it back to the single row. The
-mockup shows the round button ON, the batch menu as it **opens — collapsed**, the same
-menu **after pressing ▾** — expanded, and (below) today's normal-mode menu, unchanged,
-for reference:
+The proposal appends one separator + a single **Copy Strand Data ▾** row. The row is
+**collapsed by default** — the toggle panel is not visible when the menu opens. Pressing
+the row's dropdown arrow expands the panel inline (embedded exactly like the Arrow
+Customization block); pressing it again collapses it back to the single row. The mockup
+shows all three states: the real menu as the app builds it today (left), the proposed
+menu as it **opens — collapsed**, with only the `Copy Strand Data ▾` row added (middle),
+and the same menu **after pressing the ▾ dropdown** — expanded (right):
 
 ![Copy menu](mockups/02_copy_menu_toggles.png)
 
 Behavior details:
 
-- **Collapsed by default**: opening the menu shows the `Copy Strand Data ▾` row
-  collapsed (a `HoverLabel` row with a dropdown arrow on its trailing side).
-  Clicking the row toggles the panel open/closed — the same
+- **Collapsed by default**: opening the context menu shows only the `Copy Strand Data ▾`
+  row (a `HoverLabel` row like every other entry, with a dropdown arrow on its
+  trailing side). Clicking the row toggles the panel open/closed — the same
   expand-inside-the-menu behavior the Arrow Customization block uses when
   `Show Full Arrow` is enabled. The menu stays open while expanding/collapsing.
 - The expanded/collapsed state resets to **collapsed** every time the menu is opened.
@@ -128,12 +126,10 @@ Behavior details:
 - The **Copy (N)** button sits at the bottom of the expanded panel; it snapshots the
   selected values into an in-memory clipboard and closes the menu. The button is
   disabled when nothing is selected.
-- **Copy always takes from the layer you right-clicked**, even when several layers are
-  ticked — the tick marks matter for pasting (section 3), not for copying.
 - Copy is offered on **regular strands and attached strands**. For masked layers the
-  copy row is dimmed in v1 (same `isinstance(strand, MaskedStrand)` gate the normal
-  menu already uses — they have no control points and their geometry is derived from
-  the two masked layers, `src/masked_strand.py`).
+  entry is not added in v1 (same `isinstance(strand, MaskedStrand)` branch that already
+  gives masks their reduced menu — they have no control points and their geometry is
+  derived from the two masked layers, `src/masked_strand.py`).
 
 ### Clipboard model
 
@@ -149,70 +145,121 @@ Behavior details:
 
 ---
 
-## 3. Pasting — tick targets in multi-select, paste onto all of them
+## 3. Pasting — right-click on the target layer in the layer panel
 
-With something in the clipboard there are **two ways to paste**, both acting on the
-**ticked (gold-bordered) layers**:
+With something in the clipboard, right-clicking **another layer's numbered button in the
+layer panel** shows that layer's **normal context menu — every existing entry unchanged —**
+plus one new row appended at the bottom: **Paste Copied Data ▾**.
 
-**Way 1 — the batch menu.** Tick any number of target layers, right-click one of them,
-and press the ▾ on the now-active **Paste Copied Data ▾** row — it expands inline to
-show the dimmed clipboard hint ("6 properties from 1_2") and the two anchor choices —
-**Angle from Start Point** / **Angle from End Point**. Clicking a choice **pastes onto
-every ticked eligible layer at once — a single undo step — and closes the menu**.
-
-**Way 2 — the one-click ⇤ / ⇥ chips** (part of the Option A indicators below):
-hovering an eligible layer shows two small chips on the button itself — **⇤** pastes
-with Angle from Start Point, **⇥** with Angle from End Point — one click, no menu.
-With layers ticked, one chip click pastes onto all of them; on an unticked layer it
-pastes onto that layer alone.
+Like the copy row, it is a **dropdown**: collapsed when the menu opens, and pressing it
+expands inline to show the dimmed clipboard hint ("6 properties from 1_2") and the two
+anchor choices — **Angle from Start Point** / **Angle from End Point**. Clicking a choice
+**applies the paste immediately and closes the menu**:
 
 ![Paste context menu](mockups/03_paste_context_menu.png)
 
-- The paste targets are the **ticked layers** — one tick = a single-layer paste, many
-  ticks = a batch paste, same gesture. The layer you happened to right-click is not
-  special.
-- The menu rows use the app's `HoverLabel` + exact menu stylesheet; the dimmed
+- The paste menu rows use the app's `HoverLabel` + exact menu stylesheet; the dimmed
   clipboard hint row is a non-interactive label, like the disabled-look rows elsewhere.
-- **Eligible targets:** `Strand` and `AttachedStrand`. **Masked and locked layers in
-  the selection are simply skipped** (same `isinstance(strand, MaskedStrand)` gate the
-  normal menu uses at `src/numbered_layer_button.py:217`, and the usual locked-layer
-  rule).
-- The menu lives **only in the layer panel's multi-select mode**: the normal-mode
-  right-click menu and the canvas are both unchanged.
-- The paste row is dimmed when the clipboard is empty. Ticking the source layer itself
-  is allowed (pasting onto the source is harmless — it re-applies the data).
-- **Pasting does not consume the clipboard.** After one paste you can tick other
-  layers and paste again — as many rounds as you like, mixing the two anchor choices
-  freely. The snapshot is replaced only when you press **Copy** again on some strand
-  (there is exactly one clipboard slot, section 2).
+- **Eligible targets:** `Strand` and `AttachedStrand`. **`MaskedStrand` never shows the
+  entry** (same `isinstance(strand, MaskedStrand)` gate the menu already uses at
+  `src/numbered_layer_button.py:217`). The mockup shows the masked layer's real menu of
+  today (Hide Layer / Shadow Only / Hide Shadow / Edit Shadows / Edit Mask / Reset Mask)
+  — the paste entry simply never joins it.
+- The entry lives **only in the layer panel**: it is added to the numbered layer
+  button's existing context menu (same menu the copy entry lives in). There is **no
+  canvas context menu** — right-clicking a strand on the canvas is unchanged.
+- The entry is disabled/hidden when the clipboard is empty, and on the source strand
+  itself it is allowed (pasting onto the source is harmless — it re-applies the data).
+- A dimmed line under the entry shows what is in the clipboard
+  ("Clipboard: 6 properties from 1_2").
+- **Pasting does not consume the clipboard.** After one paste you can right-click the
+  next layer and paste again — onto as many layers as you like, mixing the two anchor
+  choices freely. The snapshot is replaced only when you press **Copy** again on some
+  strand (there is exactly one clipboard slot, section 2).
 
-### Layer-panel indicators & ending a copy — chosen: Option A
+### Layer-panel indicators & ending a copy — three UI options (open decision)
 
-**Decision: Option A — corner badge + hover paste chips.** While the clipboard is
-non-empty, the layer panel shows it directly on the buttons:
+While a copy is active the layer panel itself should show it: the source layer is
+visibly "the copied one", eligible targets offer one-click pasting, and there is an
+explicit way to **finish** the copy. Three candidate designs — v1 picks one:
 
-![Panel indicators](mockups/06_panel_indicators.png)
+#### Option A — corner badge + hover paste icons (lightest)
 
-- The source layer carries a small **copy badge** in its **top-right corner**. The
-  lock-mode padlock is vertically centred on the **left** (`lock_button_rect`,
-  `src/numbered_layer_button.py:1120`), so badge and padlock never clash — lock mode
-  and copy state can show at the same time.
-- Clicking the badge opens a tiny popup — "6 properties from 1_2 · **Clear ✕**".
-  **Clear ✕ is how a copy is finished**: it empties the clipboard slot and removes the
-  badge and every paste chip.
-- The hover **⇤ / ⇥ paste chips** are **paste way 2, described above** — hover-only,
-  never on masked or locked layers, and acting on the whole tick selection.
-- Badge, popup and chips exist only while the clipboard is non-empty; both paste ways
-  keep working side by side.
+```
+ source (1_2)                             eligible target (2_1, on hover)
+┌───────────────────────────┐            ┌───────────────────────────┐
+│ (🔒)          1_2    [📋] │            │ (🔒)        2_1   [⇤] [⇥] │
+└───────────────────────────┘            └───────────────────────────┘
+  copy badge, top-right corner             two paste icons appear on
+  (the padlock toggle sits                 hover only:  ⇤ = Angle from
+  vertically centred on the                Start,  ⇥ = Angle from End
+  LEFT, so no clash)                       — one click pastes instantly
+```
 
-#### Considered alternatives (not chosen)
+- The badge sits in the top corner on the side **opposite the padlock toggle** (the
+  padlock is vertically centred on the left in LTR — `lock_button_rect`,
+  `src/numbered_layer_button.py:1120`), so lock mode and the copy badge can show at
+  the same time without interfering.
+- Clicking the badge opens a tiny popup: "6 properties copied · **Clear ✕**" —
+  clearing **ends the copy**: the badge and every paste icon disappear.
+- The ⇤ / ⇥ icons appear only on hover, and never on masked or locked layers.
+- Pros: no new chrome, everything happens right on the buttons. Cons: hover-only
+  icons are less discoverable; small click targets.
 
-- **Option B — "Paste mode"**: a lock-mode-style panel mode with a "Pasting from 1_2 —
-  Done" banner and big ⇤ / ⇥ half-buttons on every eligible layer. Most discoverable,
-  but modal — the buttons' normal actions would be unavailable until Done.
-- **Option C — clipboard bar**: a bar docked in the multi-select strip with batch
-  ⇤ / ⇥ Paste buttons and a ✕. Its batch-pasting benefit is kept anyway — the
-  multi-select right-click paste above covers it — without adding a new bar.
+#### Option B — "Paste mode", the Lock-mode pattern (most guided)
+
+```
+┌─ Layer Panel ─────────────────────────────────┐
+│ 📋 Pasting from 1_2 (6 properties)     [Done] │  ← mode banner
+├───────────────────────────────────────────────┤
+│  1_1      [ ⇤ from start ] [ ⇥ from end ]     │
+│  1_2      ◾ source — tinted + 📋 overlay      │
+│  1_3      [ ⇤ from start ] [ ⇥ from end ]     │
+│  2_1      [ ⇤ from start ] [ ⇥ from end ]     │
+│  1_2_2_1  (masked — no paste controls)        │
+└───────────────────────────────────────────────┘
+```
+
+- Pressing **Copy** flips the panel into a dedicated **paste mode** — the same
+  pattern lock mode already uses (a panel-wide mode that changes what the buttons
+  show and do; users know it from the Button Guide's mode icons).
+- Every click on ⇤ / ⇥ pastes onto that layer, repeatably. **Done** (or `Esc`, or
+  starting a new copy) leaves the mode; the clipboard itself survives, so the
+  context-menu paste keeps working afterwards.
+- Pros: most discoverable, explicit finish button, big click targets. Cons: modal —
+  the buttons' normal actions are unavailable until Done.
+
+#### Option C — clipboard bar in the multi-select area (most powerful)
+
+```
+┌─ Layer Panel ──────────────────────────────────┐
+│ [multi-select strip]                           │
+│ 📋 1_2 · 6 properties   [⇤ Paste] [⇥ Paste] ✕  │  ← clipboard bar docks here
+├────────────────────────────────────────────────┤
+│  layer buttons stay completely clean           │
+└────────────────────────────────────────────────┘
+```
+
+- No icons on the buttons at all. While the clipboard is non-empty, a **clipboard
+  bar** docks into the panel's multi-select area, naming the source and the property
+  count.
+- **⇤ Paste / ⇥ Paste** apply to the **currently selected layer(s)** — with
+  multi-select on, one click pastes onto *all* selected layers at once, which
+  delivers the "paste onto multiple strands" future idea (section 7) for free.
+- **✕** clears the clipboard — that *is* the "finish copy" action; the bar
+  disappears.
+- Pros: batch paste, zero clutter on the buttons, reuses the multi-select area.
+  Cons: indirect (select first, then paste); the source layer itself carries no
+  mark — the bar names it instead.
+
+Rules shared by all three: indicators exist only while the clipboard is non-empty;
+"finishing" a copy simply clears the single clipboard slot; and the context-menu
+paste (above) keeps working regardless of which option ships.
+
+**Recommendation:** Option C fits the panel best and matches the multi-select idea —
+and it scales to many layers. If per-layer one-click pasting matters more than batch
+pasting, Option B's explicit mode is the more discoverable choice; Option A is the
+minimal fallback.
 
 ---
 
@@ -276,9 +323,8 @@ recomputes `end` from them, `src/attached_strand.py:34-35, 310-313`), so:
 ### Undo / redo
 
 One paste = **one undo step** (a single state snapshot through the existing
-undo/redo manager), regardless of how many properties were applied. A multi-select
-paste onto N layers is likewise a single undo step. Copying is not an undoable action
-(it changes no document state).
+undo/redo manager), regardless of how many properties were applied. Copying is not an
+undoable action (it changes no document state).
 
 ---
 
@@ -308,9 +354,9 @@ paste onto N layers is likewise a single undo step. Copying is not an undoable a
 New strings needed (added to `src/translations.py`, which already has `select_all` /
 `deselect_all` entries): "Copy Strand Data", "Paste Copied Data", "Angle from Start
 Point", "Angle from End Point", "Select All", the six toggle labels, and the clipboard
-hint ("N properties from X") — plus the Option A indicator strings: "Clear" for the
-badge popup (the ⇤ / ⇥ chip tooltips reuse the two anchor strings). RTL layouts follow
-the existing menu handling.
+hint ("N properties from X") — plus, once an indicator option is chosen (section 3),
+its strings ("Pasting from…", "Done", "Clear", "Paste"). RTL layouts follow the
+existing menu handling.
 
 ---
 
@@ -318,15 +364,13 @@ the existing menu handling.
 
 1. **Fit mode**: an optional scaling variant that also scales copied offsets so the free
    end lands exactly on the target's old end (shape adapts to the target's length).
-2. **Persist the clipboard** in the project JSON so copy/paste survives restarts.
-3. **Named presets**: save a toggle combination ("colors only", "shape only") for reuse.
-4. **Copy from masked layers** (styles only — colors/widths — since geometry is derived).
-5. **Advanced… expander**: a second, collapsed "Advanced" section in the panel exposing
+2. **Paste onto multiple selected strands** in one action.
+3. **Persist the clipboard** in the project JSON so copy/paste survives restarts.
+4. **Named presets**: save a toggle combination ("colors only", "shape only") for reuse.
+5. **Copy from masked layers** (styles only — colors/widths — since geometry is derived).
+6. **Advanced… expander**: a second, collapsed "Advanced" section in the panel exposing
    the rest of the serializable attributes — shadow color, circle stroke colors, arrow
    settings, line & dash visibility, end caps, curve tuning.
-
-(Pasting onto multiple selected strands, previously listed here, is now part of v1 via
-the multi-select paste in section 3.)
 
 ---
 
@@ -334,15 +378,14 @@ the multi-select paste in section 3.)
 
 | Concern | Existing precedent |
 |---|---|
-| Multi-select batch menu (the new home of copy/paste) | `show_multi_select_context_menu` (`src/layer_panel.py:1914`) — the existing Hide/Shadow-Only menu the rows are appended to; the round Multi-Layer Select button (`src/layer_panel.py:700-744`) |
-| Menu rows + embedded toggle panel | `HoverLabel` rows + menu stylesheet (`src/numbered_layer_button.py:243-286`); Arrow Customization `QWidgetAction` panel (`:617+`) with `QComboBox`/`QCheckBox` |
+| Menu entry + embedded toggle panel | `NumberedLayerButton.show_context_menu` (`src/numbered_layer_button.py:175`); Arrow Customization `QWidgetAction` panel (`:617+`) with `QComboBox`/`QCheckBox` |
 | Masked-layer gating | `isinstance(strand, MaskedStrand)` branch (`src/numbered_layer_button.py:217, 350, 386`) |
 | Select-All master toggle | `GroupShadowEditorDialog._toggle_all_*` (`src/group_shadow_editor_dialog.py:283-398`) |
 | Property snapshot / apply without `deepcopy` | `GroupPanel.copy_strand_properties` (`src/group_layers.py:3217-3359`) — builds fresh `QPointF`/`QColor` |
 | Canonical field list | `serialize_strand` (`src/save_load_manager.py:109-268`) |
 | Angle math & point rotation | `AngleAdjustMode.calculate_angle` (`src/angle_adjust_mode.py:632`), `rotate_point_around_pivot` (`:402`), `rotate_attached_strand` (`:494`) |
 | Attached-strand angle/length refresh | `src/attached_strand.py:310-313, 328-330` |
-| Layer-panel indicators (Option A badge + hover chips) | lock-mode padlock toggle & its placement/hit-testing (`lock_button_rect`, `src/numbered_layer_button.py:1120`); `multi_select_mode` on the layer panel; icon PNGs go in `src/layer_panel_icons/` (packaging convention) |
+| Layer-panel indicators (badge / paste mode / clipboard bar) | lock-mode padlock toggle & its placement (`lock_button_rect`, `src/numbered_layer_button.py:1120`); panel-wide mode + `multi_select_mode` on the layer panel; Button Guide mode icons (`src/layer_panel_icons/`) |
 
 ---
 

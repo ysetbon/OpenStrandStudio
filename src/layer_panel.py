@@ -38,6 +38,7 @@ from PyQt5.QtWidgets import QStyleOption
 
 # Import StrokeTextButton from undo_redo_manager instead of dedicated file
 from undo_redo_manager import StrokeTextButton, setup_undo_redo
+from strand_data_menu import StrandDataClipboardMixin
 import os # Import os for path manipulation
 import sys # Import sys for platform check
 
@@ -363,7 +364,7 @@ class TooltipButton(QPushButton):
             raise
 
 
-class LayerPanel(QWidget):
+class LayerPanel(StrandDataClipboardMixin, QWidget):
     # Custom signals for various events
     new_strand_requested = pyqtSignal(int, QColor)  # Signal when a new strand is requested
     strand_selected = pyqtSignal(int)  # Signal when a strand is selected
@@ -1033,6 +1034,7 @@ class LayerPanel(QWidget):
         # Multi-selection state
         self.multi_select_mode = False  # Whether multi-select mode is active
         self.multi_selected_layers = set()  # Set of selected layer indices
+        self._initialize_strand_data_clipboard()
         # Use canvas default strand color if available, otherwise fallback to purple
         default_color = QColor(200, 170, 230, 255)  # Fallback
         if canvas and hasattr(canvas, 'default_strand_color'):
@@ -1950,7 +1952,7 @@ class LayerPanel(QWidget):
             shadow_callback = self.enable_shadow_only_selected_layers
         
         # Collect all menu texts for width calculation
-        menu_texts = [toggle_text, shadow_text]
+        menu_texts = [toggle_text, shadow_text] + self.strand_data_menu_texts(_)
         
         # Create context menu with proper theming
         context_menu = QMenu(self)
@@ -1986,6 +1988,9 @@ class LayerPanel(QWidget):
         shadow_action.setDefaultWidget(shadow_label)
         shadow_action.triggered.connect(shadow_callback)
         context_menu.addAction(shadow_action)
+
+        context_menu.addSeparator()
+        self.add_strand_data_menu_actions(context_menu, index, _, theme)
         
         # Show the menu at the cursor position
         button = self.layer_buttons[index]

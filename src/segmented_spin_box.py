@@ -50,11 +50,12 @@ _THEME_COLORS = {
     },
 }
 
-# Geometry matched to the approved HTML mockup:
-# [ 30px button | ~66px value | 30px button ] inside a 1px border, 28px tall.
+# Geometry based on the approved HTML mockup, with the whitespace between
+# the value and the buttons halved per user feedback:
+# [ 30px button | ~48px value | 30px button ] inside a 1px border, 28px tall.
 _BUTTON_WIDTH = 30
 _FIXED_HEIGHT = 28
-_FIXED_WIDTH = 128
+_FIXED_WIDTH = 110
 
 
 def upgrade_spinbox(spinbox):

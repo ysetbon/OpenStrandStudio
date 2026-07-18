@@ -396,7 +396,7 @@ class NumberedLayerButton(QPushButton):
         if is_hebrew:
             change_hide.setLayoutDirection(Qt.RightToLeft)
             change_hide.setAlignment(Qt.AlignLeft)
-        change_hide_action = QWidgetAction(self)
+        change_hide_action = QWidgetAction(context_menu)
         change_hide_action.setDefaultWidget(change_hide)
         change_hide_action.triggered.connect(lambda: layer_panel.toggle_layer_visibility(index))
         context_menu.addAction(change_hide_action)
@@ -408,7 +408,7 @@ class NumberedLayerButton(QPushButton):
         if is_hebrew:
             shadow_only_label.setLayoutDirection(Qt.RightToLeft)
             shadow_only_label.setAlignment(Qt.AlignLeft)
-        shadow_only_action = QWidgetAction(self)
+        shadow_only_action = QWidgetAction(context_menu)
         shadow_only_action.setDefaultWidget(shadow_only_label)
         shadow_only_action.triggered.connect(lambda: layer_panel.toggle_layer_shadow_only(index))
         # Add checkmark if shadow_only is enabled
@@ -424,7 +424,7 @@ class NumberedLayerButton(QPushButton):
         if is_hebrew:
             hide_shadow_label.setLayoutDirection(Qt.RightToLeft)
             hide_shadow_label.setAlignment(Qt.AlignLeft)
-        hide_shadow_action = QWidgetAction(self)
+        hide_shadow_action = QWidgetAction(context_menu)
         hide_shadow_action.setDefaultWidget(hide_shadow_label)
         hide_shadow_action.triggered.connect(lambda: layer_panel.toggle_layer_hide_shadow(index))
         # Add checkmark if hide_shadow is enabled
@@ -440,7 +440,7 @@ class NumberedLayerButton(QPushButton):
         if is_hebrew:
             edit_shadows_label.setLayoutDirection(Qt.RightToLeft)
             edit_shadows_label.setAlignment(Qt.AlignLeft)
-        edit_shadows_action = QWidgetAction(self)
+        edit_shadows_action = QWidgetAction(context_menu)
         edit_shadows_action.setDefaultWidget(edit_shadows_label)
         edit_shadows_action.triggered.connect(lambda: self.open_shadow_editor(layer_panel, index))
         context_menu.addAction(edit_shadows_action)
@@ -454,7 +454,7 @@ class NumberedLayerButton(QPushButton):
             if is_hebrew:
                 edit_label.setLayoutDirection(Qt.RightToLeft)
                 edit_label.setAlignment(Qt.AlignLeft)
-            edit_action = QWidgetAction(self)
+            edit_action = QWidgetAction(context_menu)
             edit_action.setDefaultWidget(edit_label)
             edit_action.triggered.connect(
                 lambda: layer_panel.on_edit_mask_click(context_menu, index)
@@ -466,7 +466,7 @@ class NumberedLayerButton(QPushButton):
             if is_hebrew:
                 reset_label.setLayoutDirection(Qt.RightToLeft)
                 reset_label.setAlignment(Qt.AlignLeft)
-            reset_action = QWidgetAction(self)
+            reset_action = QWidgetAction(context_menu)
             reset_action.setDefaultWidget(reset_label)
             reset_action.triggered.connect(
                 lambda: (
@@ -493,7 +493,7 @@ class NumberedLayerButton(QPushButton):
                 change_color_label.setLayoutDirection(Qt.RightToLeft)
                 change_color_label.setAlignment(Qt.AlignLeft)
 
-            change_action_color = QWidgetAction(self)
+            change_action_color = QWidgetAction(context_menu)
             change_action_color.setDefaultWidget(change_color_label)
             change_action_color.triggered.connect(self.change_color)
             context_menu.addAction(change_action_color)
@@ -504,7 +504,7 @@ class NumberedLayerButton(QPushButton):
             if is_hebrew:
                 change_stroke_label.setLayoutDirection(Qt.RightToLeft)
                 change_stroke_label.setAlignment(Qt.AlignLeft)
-            change_stroke_action = QWidgetAction(self)
+            change_stroke_action = QWidgetAction(context_menu)
             change_stroke_action.setDefaultWidget(change_stroke_label)
             change_stroke_action.triggered.connect(lambda: self.change_stroke_color(strand, layer_panel))
             context_menu.addAction(change_stroke_action)
@@ -515,7 +515,7 @@ class NumberedLayerButton(QPushButton):
             if is_hebrew:
                 change_width_label.setLayoutDirection(Qt.RightToLeft)
                 change_width_label.setAlignment(Qt.AlignLeft)
-            change_width_action = QWidgetAction(self)
+            change_width_action = QWidgetAction(context_menu)
             change_width_action.setDefaultWidget(change_width_label)
             change_width_action.triggered.connect(lambda: self.change_width(strand, layer_panel))
             context_menu.addAction(change_width_action)
@@ -526,7 +526,7 @@ class NumberedLayerButton(QPushButton):
             if is_hebrew:
                 change_layer_width_label.setLayoutDirection(Qt.RightToLeft)
                 change_layer_width_label.setAlignment(Qt.AlignLeft)
-            change_layer_width_action = QWidgetAction(self)
+            change_layer_width_action = QWidgetAction(context_menu)
             change_layer_width_action.setDefaultWidget(change_layer_width_label)
             change_layer_width_action.triggered.connect(lambda: self.change_layer_width(strand, layer_panel))
             context_menu.addAction(change_layer_width_action)
@@ -543,7 +543,7 @@ class NumberedLayerButton(QPushButton):
                     if is_hebrew:
                         reset_label.setLayoutDirection(Qt.RightToLeft)
                         reset_label.setAlignment(Qt.AlignLeft)
-                    reset_action_stroke = QWidgetAction(self)
+                    reset_action_stroke = QWidgetAction(context_menu)
                     reset_action_stroke.setDefaultWidget(reset_label)
                     reset_action_stroke.triggered.connect(self.reset_default_circle_stroke)
                     context_menu.addAction(reset_action_stroke)
@@ -555,7 +555,7 @@ class NumberedLayerButton(QPushButton):
                     if is_hebrew:
                         transparent_label.setLayoutDirection(Qt.RightToLeft)
                         transparent_label.setAlignment(Qt.AlignLeft)
-                    transparent_action = QWidgetAction(self)
+                    transparent_action = QWidgetAction(context_menu)
                     transparent_action.setDefaultWidget(transparent_label)
                     transparent_action.triggered.connect(self.set_transparent_circle_stroke)
                     context_menu.addAction(transparent_action)
@@ -606,7 +606,7 @@ class NumberedLayerButton(QPushButton):
                     line_layout.addWidget(end_line_btn)
 
                 # Embed widget in menu
-                line_action = QWidgetAction(self)
+                line_action = QWidgetAction(context_menu)
                 line_action.setDefaultWidget(line_widget)
                 context_menu.addAction(line_action)
 
@@ -675,7 +675,7 @@ class NumberedLayerButton(QPushButton):
                     )
                     arrow_layout.addWidget(end_arrow_btn)
 
-                arrow_action = QWidgetAction(self)
+                arrow_action = QWidgetAction(context_menu)
                 arrow_action.setDefaultWidget(arrow_widget)
                 context_menu.addAction(arrow_action)
 
@@ -702,7 +702,7 @@ class NumberedLayerButton(QPushButton):
             if is_hebrew:
                 full_arrow_label.setLayoutDirection(Qt.RightToLeft)
                 full_arrow_label.setAlignment(Qt.AlignLeft)
-            full_arrow_action = QWidgetAction(self)
+            full_arrow_action = QWidgetAction(context_menu)
             full_arrow_action.setDefaultWidget(full_arrow_label)
             full_arrow_action.triggered.connect(
                 lambda: (
@@ -862,7 +862,7 @@ class NumberedLayerButton(QPushButton):
                 arrow_custom_widget.setStyleSheet(f"background-color: {'#333333' if theme == 'dark' else '#F0F0F0'}; border-radius: 5px;")
 
                 # Add the widget to the context menu
-                arrow_custom_action = QWidgetAction(self)
+                arrow_custom_action = QWidgetAction(context_menu)
                 arrow_custom_action.setDefaultWidget(arrow_custom_widget)
                 context_menu.addAction(arrow_custom_action)
             # --- END Arrow Customization ---
@@ -901,7 +901,7 @@ class NumberedLayerButton(QPushButton):
                 if is_hebrew:
                     close_knot_label.setLayoutDirection(Qt.RightToLeft)
                     close_knot_label.setAlignment(Qt.AlignLeft)
-                close_knot_action = QWidgetAction(self)
+                close_knot_action = QWidgetAction(context_menu)
                 close_knot_action.setDefaultWidget(close_knot_label)
                 close_knot_action.triggered.connect(
                     lambda: self.close_the_knot(strand, free_end_type, layer_panel)
@@ -937,7 +937,7 @@ class NumberedLayerButton(QPushButton):
                     if is_hebrew:
                         restore_closing_knot_label.setLayoutDirection(Qt.RightToLeft)
                         restore_closing_knot_label.setAlignment(Qt.AlignLeft)
-                    restore_closing_knot_action = QWidgetAction(self)
+                    restore_closing_knot_action = QWidgetAction(context_menu)
                     restore_closing_knot_action.setDefaultWidget(restore_closing_knot_label)
                     restore_closing_knot_action.triggered.connect(self.reset_default_ending_stroke)
                     context_menu.addAction(restore_closing_knot_action)
@@ -948,7 +948,7 @@ class NumberedLayerButton(QPushButton):
                     if is_hebrew:
                         transparent_closing_knot_label.setLayoutDirection(Qt.RightToLeft)
                         transparent_closing_knot_label.setAlignment(Qt.AlignLeft)
-                    transparent_closing_knot_action = QWidgetAction(self)
+                    transparent_closing_knot_action = QWidgetAction(context_menu)
                     transparent_closing_knot_action.setDefaultWidget(transparent_closing_knot_label)
                     transparent_closing_knot_action.triggered.connect(self.set_transparent_ending_edge)
                     context_menu.addAction(transparent_closing_knot_action)
@@ -987,7 +987,7 @@ class NumberedLayerButton(QPushButton):
                 end_ext_btn.clicked.connect(lambda: (self.toggle_strand_extension_visibility(strand, 'end', layer_panel), context_menu.close()))
                 layout.addWidget(end_ext_btn)
                 # Embed the widget into the menu
-                ext_action = QWidgetAction(self)
+                ext_action = QWidgetAction(context_menu)
                 ext_action.setDefaultWidget(ext_widget)
                 context_menu.addAction(ext_action)
 
@@ -1078,7 +1078,7 @@ class NumberedLayerButton(QPushButton):
                     circle_layout.addWidget(end_circle_btn)
 
                 # Embed widget in menu
-                circle_action = QWidgetAction(self)
+                circle_action = QWidgetAction(context_menu)
                 circle_action.setDefaultWidget(circle_widget)
                 context_menu.addAction(circle_action)
 
@@ -1126,6 +1126,12 @@ class NumberedLayerButton(QPushButton):
         # Fix multi-monitor positioning by getting screen-aware global position
         global_pos = self.get_screen_aware_global_pos(pos)
         context_menu.exec_(global_pos)
+
+        # Dispose of the menu together with its QWidgetActions and embedded
+        # widgets. Without this, every right-click leaked the whole menu graph
+        # as children of the button; the accumulated stale actions eventually
+        # produced a native access violation when the next QMenu was created.
+        context_menu.deleteLater()
 
         # After menu closes, check if arrow state changed and save if needed
         if hasattr(strand, 'full_arrow_visible'):

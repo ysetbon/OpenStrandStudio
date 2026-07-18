@@ -194,6 +194,156 @@ def build_menu_stylesheet(theme):
     return base_style
 
 
+def style_menu_combobox(combo, theme, is_rtl=False):
+    """Theme-aware styling for QComboBox widgets embedded in layer context menus.
+
+    Replaces the native (unthemed) combo chrome with the same language as the
+    rest of the menu: rounded 4px border, themed popup list and a flat
+    triangle drop-down arrow, mirrored for RTL.
+    """
+    if theme == 'dark':
+        bg, fg, border = '#3D3D3D', '#FFFFFF', '#666666'
+        hover_border, arrow_icon = '#999999', 'combo_arrow_light.png'
+        popup_bg, popup_fg = '#333333', '#FFFFFF'
+        sel_bg, sel_fg = '#4A6FA5', '#FFFFFF'
+    else:
+        bg, fg, border = '#FFFFFF', '#000000', '#AAAAAA'
+        hover_border, arrow_icon = '#777777', 'combo_arrow_dark.png'
+        popup_bg, popup_fg = '#FFFFFF', '#000000'
+        sel_bg, sel_fg = '#A0C0E0', '#000000'
+
+    # Qt stylesheets can't draw CSS border-triangles; use the packaged PNGs.
+    arrow_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              'layer_panel_icons', arrow_icon).replace('\\', '/')
+    drop_side = 'left' if is_rtl else 'right'
+    padding = '4px 8px 4px 24px' if is_rtl else '4px 24px 4px 8px'
+    arrow_margin = 'margin-left: 6px;' if is_rtl else 'margin-right: 6px;'
+    combo.setStyleSheet(f"""
+        QComboBox {{
+            background-color: {bg};
+            color: {fg};
+            border: 1px solid {border};
+            border-radius: 4px;
+            padding: {padding};
+            min-height: 20px;
+        }}
+        QComboBox:hover {{
+            border: 1px solid {hover_border};
+        }}
+        QComboBox::drop-down {{
+            subcontrol-origin: padding;
+            subcontrol-position: {drop_side} center;
+            width: 22px;
+            border: none;
+        }}
+        QComboBox::down-arrow {{
+            image: url({arrow_path});
+            width: 10px;
+            height: 6px;
+            {arrow_margin}
+        }}
+        QComboBox QAbstractItemView {{
+            background-color: {popup_bg};
+            color: {popup_fg};
+            border: 1px solid {border};
+            selection-background-color: {sel_bg};
+            selection-color: {sel_fg};
+            outline: none;
+            padding: 2px;
+        }}
+        QComboBox QAbstractItemView::item {{
+            min-height: 24px;
+            padding: 2px 6px;
+        }}
+    """)
+
+
+def style_menu_checkbox(checkbox, theme):
+    """Large themed checkbox for layer context menus.
+
+    20px indicator (50% larger than the native ~13px one) with the same
+    blue-accent palette as the Edit Shadow dialog checkboxes; combine with
+    setup_menu_checkmark() so the checked state shows a white V.
+    """
+    if theme == 'dark':
+        indicator_border, indicator_bg = '#666666', '#2A2A2A'
+        hover_border, hover_bg = '#888888', '#454545'
+        checked_bg, checked_border = '#4A6FA5', '#6A9FD5'
+        checked_hover_bg, checked_hover_border = '#5A7FB5', '#7AAFF5'
+    else:
+        indicator_border, indicator_bg = '#AAAAAA', '#FFFFFF'
+        hover_border, hover_bg = '#888888', '#F8F8F8'
+        checked_bg, checked_border = '#A0C0E0', '#7090C0'
+        checked_hover_bg, checked_hover_border = '#B0D0F0', '#8AA0D0'
+
+    checkbox.setStyleSheet(f"""
+        QCheckBox {{
+            background-color: transparent;
+            spacing: 0px;
+        }}
+        QCheckBox::indicator {{
+            width: 20px;
+            height: 20px;
+            border: 2px solid {indicator_border};
+            border-radius: 4px;
+            background-color: {indicator_bg};
+        }}
+        QCheckBox::indicator:hover {{
+            border: 2px solid {hover_border};
+            background-color: {hover_bg};
+        }}
+        QCheckBox::indicator:checked {{
+            background-color: {checked_bg};
+            border: 2px solid {checked_border};
+        }}
+        QCheckBox::indicator:checked:hover {{
+            background-color: {checked_hover_bg};
+            border: 2px solid {checked_hover_border};
+        }}
+    """)
+
+
+def setup_menu_checkmark(checkbox):
+    """Draw a white V over the styled indicator when checked.
+
+    A stylesheet-styled ::indicator loses Qt's native checkmark, so paint one
+    manually (same approach as the Edit Shadow dialog checkboxes).
+    """
+    original_paint_event = checkbox.paintEvent
+
+    def custom_paint_event(event):
+        original_paint_event(event)
+        if not checkbox.isChecked():
+            return
+        painter = QPainter(checkbox)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Ask Qt's style for the actual indicator rectangle (handles RTL/layout).
+        style_option = QStyleOptionButton()
+        checkbox.initStyleOption(style_option)
+        style = checkbox.style()
+        indicator_rect = style.subElementRect(
+            style.SE_CheckBoxIndicator, style_option, checkbox
+        )
+
+        pen = QPen(QColor(255, 255, 255), 2.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        painter.setPen(pen)
+
+        center_x = indicator_rect.x() + indicator_rect.width() // 2
+        center_y = indicator_rect.y() + indicator_rect.height() // 2
+        checkmark_size = int(min(indicator_rect.width(), indicator_rect.height()) * 0.24)
+
+        # Left (short) stroke then right (long) stroke of the V.
+        x1, y1 = center_x - checkmark_size + 1, center_y - 1
+        x2, y2 = center_x - 1, center_y + checkmark_size - 1
+        x3, y3 = center_x + checkmark_size, center_y - checkmark_size + 1
+        painter.drawLine(x1, y1, x2, y2)
+        painter.drawLine(x2, y2, x3, y3)
+        painter.end()
+
+    checkbox.paintEvent = custom_paint_event
+
+
 class NumberedLayerButton(QPushButton):
     # Signal emitted when the button's color is changed
     color_changed = pyqtSignal(int, QColor)
@@ -777,7 +927,8 @@ class NumberedLayerButton(QPushButton):
 
                 texture_combo = QComboBox()
                 texture_combo.addItems([_['texture_none'], _['texture_stripes'], _['texture_dots'], _['texture_crosshatch']])
-                texture_combo.setMaximumWidth(100)
+                texture_combo.setMaximumWidth(115)
+                style_menu_combobox(texture_combo, theme, is_hebrew)
 
                 # Set current texture
                 current_texture = getattr(strand, 'arrow_texture', 'none')
@@ -805,7 +956,8 @@ class NumberedLayerButton(QPushButton):
                     _['shaft_stripes'],
                     _['shaft_dots']
                 ])
-                shaft_combo.setMaximumWidth(100)
+                shaft_combo.setMaximumWidth(115)
+                style_menu_combobox(shaft_combo, theme, is_hebrew)
 
                 # Set current shaft style
                 current_shaft = getattr(strand, 'arrow_shaft_style', 'solid')
@@ -828,6 +980,8 @@ class NumberedLayerButton(QPushButton):
 
                 head_checkbox = QCheckBox()
                 head_checkbox.setChecked(getattr(strand, 'arrow_head_visible', True))
+                style_menu_checkbox(head_checkbox, theme)
+                setup_menu_checkmark(head_checkbox)
                 head_checkbox.toggled.connect(lambda checked: self.set_arrow_head_visible(strand, checked, layer_panel))
 
                 head_layout.addWidget(head_label)
@@ -844,6 +998,8 @@ class NumberedLayerButton(QPushButton):
 
                 shadow_checkbox = QCheckBox()
                 shadow_checkbox.setChecked(getattr(strand, 'arrow_casts_shadow', True))
+                style_menu_checkbox(shadow_checkbox, theme)
+                setup_menu_checkmark(shadow_checkbox)
                 shadow_checkbox.toggled.connect(lambda checked: self.set_arrow_casts_shadow(strand, checked, layer_panel))
 
                 shadow_layout.addWidget(shadow_label)

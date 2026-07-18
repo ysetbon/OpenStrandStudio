@@ -38,29 +38,17 @@ def _point_close(first, second, tolerance=0.5):
     return math.hypot(first.x() - second.x(), first.y() - second.y()) <= tolerance
 
 
-def _baseline_angle(start, end, anchor):
-    """Return the outward baseline angle at *anchor*, or None if degenerate."""
-    if anchor == "end":
-        dx = start.x() - end.x()
-        dy = start.y() - end.y()
-    else:
-        dx = end.x() - start.x()
-        dy = end.y() - start.y()
-    if math.hypot(dx, dy) < 1e-9:
-        return None
-    return math.atan2(dy, dx)
+def _map_point(point, source_anchor, target_anchor):
+    """Re-anchor a copied point: same offset (angle + length), new origin.
 
-
-def _map_point(point, source_anchor, target_anchor, angle_delta):
+    The copied deltas are part of the data — pasting never rotates them, it
+    only moves the whole shape so the source anchor lands on the target anchor.
+    """
     if point is None:
         return None
-    dx = point.x() - source_anchor.x()
-    dy = point.y() - source_anchor.y()
-    cosine = math.cos(angle_delta)
-    sine = math.sin(angle_delta)
     return QPointF(
-        target_anchor.x() + dx * cosine - dy * sine,
-        target_anchor.y() + dx * sine + dy * cosine,
+        target_anchor.x() + point.x() - source_anchor.x(),
+        target_anchor.y() + point.y() - source_anchor.y(),
     )
 
 
@@ -174,9 +162,13 @@ def _move_attached_children(parent, old_start, old_end):
 def apply_strand_data(snapshot, strand, anchor="start"):
     """Apply a clipboard snapshot to one strand.
 
-    Geometry is translated and rotated into the target's start- or end-based
-    frame without scaling.  Returns ``True`` when data was applied and ``False``
-    for an unsupported masked target.
+    The copied geometry keeps its own angles and lengths — the deltas relative
+    to the copied strand's anchor are part of the data. Pasting re-anchors the
+    whole shape so the source's start (or end) lands on the target's start (or
+    end); nothing is rotated or scaled.  Returns ``True`` when data was applied
+    and ``False`` for an unsupported masked target or when nothing applies
+    (e.g. only the Start Point was copied onto an attached strand, whose start
+    is pinned to its parent).
     """
     if not snapshot or isinstance(strand, MaskedStrand):
         return False
@@ -191,21 +183,18 @@ def apply_strand_data(snapshot, strand, anchor="start"):
     source_anchor = source_end if anchor == "end" else source_start
     target_anchor = old_end if anchor == "end" else old_start
 
-    source_angle = _baseline_angle(source_start, source_end, anchor)
-    target_angle = _baseline_angle(old_start, old_end, anchor)
-    angle_delta = 0.0 if source_angle is None or target_angle is None else target_angle - source_angle
-
     def mapped(value):
-        return _map_point(value, source_anchor, target_anchor, angle_delta)
+        return _map_point(value, source_anchor, target_anchor)
 
+    applied = False
     geometry_changed = False
     endpoint_changed = False
     if "start_point" in selected and not isinstance(strand, AttachedStrand):
         strand.start = mapped(snapshot["start_point"])
-        geometry_changed = endpoint_changed = True
+        applied = geometry_changed = endpoint_changed = True
     if "end_point" in selected:
         strand.end = mapped(snapshot["end_point"])
-        geometry_changed = endpoint_changed = True
+        applied = geometry_changed = endpoint_changed = True
 
     controls = snapshot.get("control_points") if "control_points" in selected else None
     if controls is not None:
@@ -228,17 +217,23 @@ def apply_strand_data(snapshot, strand, anchor="start"):
             bias.circle_bias = bias_data["circle_bias"]
             bias.triangle_position = mapped(bias_data.get("triangle_position"))
             bias.circle_position = mapped(bias_data.get("circle_position"))
-        geometry_changed = True
+        applied = geometry_changed = True
     elif endpoint_changed and hasattr(strand, "update_control_points_from_geometry"):
         strand.update_control_points_from_geometry()
 
     if "width" in selected:
         strand.width = snapshot["width"]
         strand.stroke_width = snapshot["stroke_width"]
+        applied = True
     if "strand_color" in selected:
         strand.color = _color(snapshot["strand_color"])
+        applied = True
     if "stroke_color" in selected:
         strand.stroke_color = _color(snapshot["stroke_color"])
+        applied = True
+
+    if not applied:
+        return False
 
     if isinstance(strand, AttachedStrand):
         # Its start remains attached to its parent even when Start Point was copied.

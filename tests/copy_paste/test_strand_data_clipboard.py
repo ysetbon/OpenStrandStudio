@@ -50,7 +50,7 @@ def test_snapshot_is_detached_and_selective():
     assert "end_point" not in clipboard
 
 
-def test_start_anchor_rotates_full_shape_without_scaling():
+def test_start_anchor_re_anchors_exact_copy_at_target_start():
     source = make_strand()
     source.control_point1 = QPointF(20, 30)
     source.control_point2 = QPointF(80, 30)
@@ -60,13 +60,15 @@ def test_start_anchor_rotates_full_shape_without_scaling():
 
     apply_strand_data(snapshot_strand_data(source), target, "start")
 
+    # The copied deltas ride along unchanged: target becomes an exact copy of
+    # the source planted at the target's own start point.
     assert xy(target.start) == pytest.approx((10, 20))
-    assert xy(target.end) == pytest.approx((10, 120))
-    assert xy(target.control_point1) == pytest.approx((-20, 40))
-    assert xy(target.control_point_center) == pytest.approx((-40, 70))
+    assert xy(target.end) == pytest.approx((110, 20))
+    assert xy(target.control_point1) == pytest.approx((30, 50))
+    assert xy(target.control_point_center) == pytest.approx((60, 70))
 
 
-def test_end_anchor_keeps_target_end_fixed():
+def test_end_anchor_re_anchors_exact_copy_at_target_end():
     source = make_strand()
     target = make_strand((200, 100), (200, 250), "2_1")
 
@@ -77,7 +79,7 @@ def test_end_anchor_keeps_target_end_fixed():
     )
 
     assert xy(target.end) == pytest.approx((200, 250))
-    assert xy(target.start) == pytest.approx((200, 150))
+    assert xy(target.start) == pytest.approx((100, 250))
 
 
 def test_style_only_paste_does_not_change_geometry():
@@ -106,10 +108,40 @@ def test_attached_target_ignores_copied_start_and_refreshes_polar_geometry():
 
     apply_strand_data(snapshot_strand_data(source), attached, "start")
 
+    # Start stays glued to the parent; the copied delta (100 to the right)
+    # is applied from there and the polar bookkeeping refreshed.
     assert xy(attached.start) == pytest.approx((50, 0))
-    assert xy(attached.end) == pytest.approx((50, 100))
+    assert xy(attached.end) == pytest.approx((150, 0))
     assert attached.length == pytest.approx(100)
-    assert attached.angle == pytest.approx(90)
+    assert attached.angle == pytest.approx(0)
+
+
+def test_start_point_only_onto_attached_is_a_noop():
+    parent = make_strand((0, 0), (50, 0))
+    attached = AttachedStrand(parent, QPointF(parent.end), 1)
+    attached.end = QPointF(50, 80)
+    source = make_strand((10, 10), (110, 10), "2_1")
+
+    applied = apply_strand_data(
+        snapshot_strand_data(source, ("start_point",)), attached, "start"
+    )
+
+    assert applied is False
+    assert xy(attached.start) == pytest.approx((50, 0))
+    assert xy(attached.end) == pytest.approx((50, 80))
+
+
+def test_zero_length_source_pastes_its_zero_delta():
+    source = make_strand((10, 10), (10, 10), "2_1")  # start == end
+    target = make_strand((100, 200), (250, 200))
+
+    applied = apply_strand_data(
+        snapshot_strand_data(source, ("end_point",)), target, "start"
+    )
+
+    assert applied is True
+    # The copied end sits on the source start, so it lands on the target start
+    assert xy(target.end) == pytest.approx((100, 200))
 
 
 def test_masked_strands_are_rejected():

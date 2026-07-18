@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QDoubleSpinBox, QSlider, QDialogButtonBox, QComboBox, QPushButton as QPB, QCheckBox, QDialogButtonBox, QStyleOptionButton
-from PyQt5.QtCore import Qt, pyqtSignal, QRect, QMimeData, QTimer, QPoint, QPointF, QLocale
-from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag, QGuiApplication, QPixmap
+from PyQt5.QtCore import Qt, pyqtSignal, QRect, QRectF, QMimeData, QTimer, QPoint, QPointF, QLocale
+from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag, QGuiApplication, QPixmap, QImage
 from render_utils import RenderUtils
 from translations import translations
 from masked_strand import MaskedStrand
@@ -28,6 +28,96 @@ def get_lock_icon_pixmap(closed):
         _lock_icon_pixmaps[key] = QPixmap(path)
     return _lock_icon_pixmaps[key]
 
+
+_indicator_icon_cache = {}
+
+def get_indicator_icon(name, device_size=None):
+    """Load (and cache) a copy/paste indicator icon from layer_panel_icons.
+
+    With ``device_size`` the icon is pre-scaled once with smooth
+    transformation to exactly that many device pixels — a single
+    high-quality downscale keeps the small icons crisp, unlike scaling the
+    full-size PNG on every paint.
+    """
+    raw_key = (name, None)
+    if raw_key not in _indicator_icon_cache:
+        if getattr(sys, 'frozen', False):
+            if sys.platform.startswith('darwin'):
+                base_path = os.path.join(os.path.dirname(sys.executable), '..', 'Resources')
+            else:
+                base_path = sys._MEIPASS
+        else:
+            base_path = os.path.dirname(os.path.abspath(__file__))
+        path = os.path.join(base_path, 'layer_panel_icons', f'{name}.png')
+        _indicator_icon_cache[raw_key] = QPixmap(path)
+    if device_size is None:
+        return _indicator_icon_cache[raw_key]
+
+    key = (name, device_size)
+    if key not in _indicator_icon_cache:
+        raw = _indicator_icon_cache[raw_key]
+        _indicator_icon_cache[key] = (
+            raw if raw.isNull()
+            else raw.scaled(device_size, device_size,
+                            Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        )
+    return _indicator_icon_cache[key]
+
+
+# Disc design: 20px logical circle; (background alpha, icon inset in logical px)
+_INDICATOR_DISC_SPECS = {
+    'copy_badge': (220, 3.0),
+    'chip_start': (210, 5.0),
+    'chip_end': (210, 5.0),
+}
+
+
+def get_indicator_disc(name, device_size, hovered=False):
+    """Complete indicator disc (circle + fill + icon [+ hover tint]).
+
+    Composited at 8x resolution and smooth-downscaled once, so the circle
+    outline is as clean as the icon at any size and DPI.
+    """
+    key = ('disc', name, device_size, hovered)
+    if key not in _indicator_icon_cache:
+        canvas = 160
+        logical = 20.0
+        scale = canvas / logical
+        bg_alpha, icon_inset = _INDICATOR_DISC_SPECS[name]
+
+        image = QImage(canvas, canvas, QImage.Format_ARGB32_Premultiplied)
+        image.fill(Qt.transparent)
+        disc_painter = QPainter(image)
+        disc_painter.setRenderHint(QPainter.Antialiasing, True)
+        disc_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+
+        pen_width = 1.0 * scale
+        half = pen_width / 2.0
+        circle = QRectF(half, half, canvas - pen_width, canvas - pen_width)
+        disc_painter.setPen(QPen(QColor(30, 30, 30, 170), pen_width))
+        disc_painter.setBrush(QColor(255, 255, 255, bg_alpha))
+        disc_painter.drawEllipse(circle)
+
+        icon = get_indicator_icon(name)
+        if not icon.isNull():
+            margin = icon_inset * scale
+            disc_painter.drawPixmap(
+                QRectF(margin, margin,
+                       canvas - 2 * margin, canvas - 2 * margin).toRect(),
+                icon,
+            )
+
+        if hovered:
+            disc_painter.setPen(Qt.NoPen)
+            disc_painter.setBrush(QColor(0, 120, 215, 70))
+            disc_painter.drawEllipse(circle)
+        disc_painter.end()
+
+        _indicator_icon_cache[key] = QPixmap.fromImage(image).scaled(
+            device_size, device_size, Qt.KeepAspectRatio, Qt.SmoothTransformation
+        )
+    return _indicator_icon_cache[key]
+
 # Create a custom hover-aware label class
 class HoverLabel(QLabel):
     def __init__(self, text, parent=None, theme="light"):
@@ -38,11 +128,15 @@ class HoverLabel(QLabel):
         self.normal_style()
         
     def enterEvent(self, event):
-        self.hover_style()
+        # Disabled rows keep their dimmed style: Qt still delivers enter/leave
+        # events to disabled widgets, and restyling would make them look active.
+        if self.isEnabled():
+            self.hover_style()
         super().enterEvent(event)
-        
+
     def leaveEvent(self, event):
-        self.normal_style()
+        if self.isEnabled():
+            self.normal_style()
         super().leaveEvent(event)
         
     def normal_style(self):
@@ -56,6 +150,49 @@ class HoverLabel(QLabel):
         fg_color = '#000000' if self.theme == 'dark' else '#ffffff'
         # Use 20px extra padding on right side only, minimal left padding
         self.setStyleSheet(f"background-color: {bg_color}; color: {fg_color}; padding: 5px 25px 5px 5px;")
+
+def build_menu_stylesheet(theme):
+    """The context-menu stylesheet used by the layer button's dropdown.
+
+    Shared so every other layer-panel dropdown (e.g. the multi-select batch
+    menu) renders with the exact same chrome in light, dark and default themes.
+    """
+    base_style = """
+        QMenu {{
+            background-color: {{bg}};
+            color: {{fg}};
+            font-size: 8pt;
+        }}
+        /* Default item state */
+        QMenu::item {{
+            background-color: transparent; /* Ensure default is transparent */
+            color: {{fg}};
+        }}
+        /* Style for the item container on hover/select */
+        QMenu::item:selected, QMenu::item:hover {{
+            background-color: {{sel_bg}};
+            color: {{sel_fg}}; /* Set default text color for the item state */
+        }}
+        /* Style the QWidget inside hovered/selected items */
+        QMenu::item:selected QWidget,
+        QMenu::item:hover QWidget {{
+             background-color: {{sel_bg}}; /* Make the inner widget background match */
+        }}
+         /* Style the QLabel text color inside hovered/selected items */
+        QMenu::item:selected QLabel,
+        QMenu::item:hover QLabel {{
+             color: {{sel_fg}}; /* Make the label text match */
+             background-color: transparent; /* Label itself is transparent, showing widget background */
+        }}
+    """.format(
+        bg=('#333333' if theme == 'dark' else '#F0F0F0'),
+        fg=('#ffffff' if theme == 'dark' else '#000000'), # Explicit hex for clarity
+        sel_bg=('#F0F0F0' if theme == 'dark' else '#333333'),
+        sel_fg=('#000000' if theme == 'dark' else '#ffffff')  # Explicit hex for clarity
+    )
+    base_style += "QMenu::item { padding:3px 30px 3px 3px; min-height: 35px; }"
+    return base_style
+
 
 class NumberedLayerButton(QPushButton):
     # Signal emitted when the button's color is changed
@@ -92,6 +229,8 @@ class NumberedLayerButton(QPushButton):
         self.is_hidden = False # New state for visibility
         self.shadow_only = False # New state for shadow-only mode
         self.lock_hovered = False  # Hover state of the padlock toggle (lock mode)
+        self.strand_chip_hover = None  # Hovered paste chip: None, 'start' or 'end'
+        self.strand_badge_hover = False  # Hover state of the copy badge
         self.setMouseTracking(True)  # Needed to track hover over the padlock toggle
         self.set_color(color)
         self.customContextMenuRequested.connect(self.show_context_menu)  # Connect the signal
@@ -240,50 +379,9 @@ class NumberedLayerButton(QPushButton):
         theme = self.get_parent_theme()
         # ─── inside show_context_menu ──────────────────────────────────────────
 
-        base_style = """
-            QMenu {{
-                background-color: {{bg}};
-                color: {{fg}};
-                font-size: 8pt;
-            }}
-            /* Default item state */
-            QMenu::item {{
-                background-color: transparent; /* Ensure default is transparent */
-                color: {{fg}};
-            }}
-            /* Style for the item container on hover/select */
-            QMenu::item:selected, QMenu::item:hover {{
-                background-color: {{sel_bg}};
-                color: {{sel_fg}}; /* Set default text color for the item state */
-            }}
-            /* Style the QWidget inside hovered/selected items */
-            QMenu::item:selected QWidget,
-            QMenu::item:hover QWidget {{
-                 background-color: {{sel_bg}}; /* Make the inner widget background match */
-            }}
-             /* Style the QLabel text color inside hovered/selected items */
-            QMenu::item:selected QLabel,
-            QMenu::item:hover QLabel {{
-                 color: {{sel_fg}}; /* Make the label text match */
-                 background-color: transparent; /* Label itself is transparent, showing widget background */
-            }}
-        """.format(
-            bg=('#333333' if theme == 'dark' else '#F0F0F0'),
-            fg=('#ffffff' if theme == 'dark' else '#000000'), # Explicit hex for clarity
-            sel_bg=('#F0F0F0' if theme == 'dark' else '#333333'),
-            sel_fg=('#000000' if theme == 'dark' else '#ffffff')  # Explicit hex for clarity
-        )
-
         if is_hebrew:
             context_menu.setLayoutDirection(Qt.RightToLeft)
-            base_style += "QMenu::item { padding:3px 30px 3px 3px; min-height: 35px; }"        
-        else:
-            base_style += "QMenu::item { padding:3px 30px 3px 3px; min-height: 35px; }"
-
-
-
- 
-        context_menu.setStyleSheet(base_style)
+        context_menu.setStyleSheet(build_menu_stylesheet(theme))
         # ───────────────────────────────────────────────────────────────────────
 
 
@@ -1131,6 +1229,76 @@ class NumberedLayerButton(QPushButton):
             return QRect(self.width() - margin - diameter, y, diameter, diameter)
         return QRect(margin, y, diameter, diameter)
 
+    def _strand_clipboard_state(self):
+        """(panel, index, is_source, chips) for the strand-data clipboard.
+
+        ``is_source`` marks the layer whose data was copied (shows the badge);
+        ``chips`` marks layers that can receive a one-click chip paste.
+        Everything is derived live from the panel so the indicators survive
+        layer-button rebuilds. Copy/paste lives in multi-select mode only, so
+        outside it there are no indicators at all.
+        """
+        panel = self._find_layer_panel()
+        if (panel is None
+                or not getattr(panel, 'multi_select_mode', False)
+                or getattr(panel.canvas, 'strand_clipboard', None) is None):
+            return None, -1, False, False
+        try:
+            index = panel.layer_buttons.index(self)
+        except ValueError:
+            return None, -1, False, False
+        is_source = panel.is_strand_data_copy_source(self)
+        # The source layer never shows paste chips: right after a copy both
+        # anchors are exact no-ops on it, and the badge marks it instead. The
+        # right-click menu can still paste onto the source when it is ticked.
+        chips = (not is_source) and panel.is_strand_data_paste_target(index)
+        return panel, index, is_source, chips
+
+    def copy_badge_rect(self):
+        """Rect of the copy badge: same size and spot as the ■ end chip.
+
+        Badge and chips never coexist on one button, so the badge takes the
+        end chip's place — vertically centered on the trailing side.
+        """
+        return self.paste_chip_rects()[1]
+
+    def paste_chip_rects(self):
+        """(start_rect, end_rect) of the hover-only ▲ / ■ paste chips."""
+        diameter, gap = 20, 2
+        y = (self.height() - diameter) // 2
+        # Keep clear of the green attachable strip (9 px) on the trailing side
+        strip = 13
+        if self._is_rtl():
+            left = strip
+            return (
+                QRect(left, y, diameter, diameter),
+                QRect(left + diameter + gap, y, diameter, diameter),
+            )
+        right = self.width() - strip
+        return (
+            QRect(right - 2 * diameter - gap, y, diameter, diameter),
+            QRect(right - diameter, y, diameter, diameter),
+        )
+
+    def strand_indicator_tooltip_at(self, pos):
+        """Explanation text for the badge / chip under ``pos``, or None.
+
+        Shown on right-click only — hover tooltips proved too chatty.
+        """
+        panel, _, is_copy_source, chips_enabled = self._strand_clipboard_state()
+        if panel is None:
+            return None
+        _t = translations.get(getattr(panel, 'language_code', 'en'), translations['en'])
+        if is_copy_source and self.copy_badge_rect().contains(pos):
+            return panel._strand_data_clipboard_hint_text(_t)
+        if chips_enabled:
+            start_rect, end_rect = self.paste_chip_rects()
+            if start_rect.contains(pos):
+                return _t.get('angle_from_start_point', 'Angle from Start Point')
+            if end_rect.contains(pos):
+                return _t.get('angle_from_end_point', 'Angle from End Point')
+        return None
+
     def set_selectable(self, selectable):
         """
         Set the selectable state of the button.
@@ -1370,6 +1538,32 @@ class NumberedLayerButton(QPushButton):
                     painter.setPen(Qt.NoPen)
                     painter.setBrush(QColor(0, 120, 215, 70))
                     painter.drawEllipse(lock_rect)
+
+            # Strand-data clipboard indicators: copy badge on the source layer,
+            # hover-only ⇤ / ⇥ paste chips on eligible target layers.
+            _, _, is_copy_source, chips_enabled = self._strand_clipboard_state()
+            device_ratio = self.devicePixelRatioF()
+
+            if is_copy_source:
+                badge_rect = self.copy_badge_rect()
+                disc = get_indicator_disc(
+                    'copy_badge',
+                    max(1, round(badge_rect.width() * device_ratio)),
+                    hovered=self.strand_badge_hover,
+                )
+                painter.drawPixmap(badge_rect, disc)
+
+            if chips_enabled and self.underMouse():
+                for chip_rect, key in zip(
+                    self.paste_chip_rects(),
+                    ("start", "end"),
+                ):
+                    disc = get_indicator_disc(
+                        f'chip_{key}',
+                        max(1, round(chip_rect.width() * device_ratio)),
+                        hovered=self.strand_chip_hover == key,
+                    )
+                    painter.drawPixmap(chip_rect, disc)
 
             if self.is_hidden:
                 painter.save()
@@ -2360,6 +2554,30 @@ class NumberedLayerButton(QPushButton):
             event.accept()
             return
         if event.button() == Qt.LeftButton:
+            panel, index, is_copy_source, chips_enabled = self._strand_clipboard_state()
+            if is_copy_source and self.copy_badge_rect().contains(event.pos()):
+                # Click on the copy badge: show the clipboard hint / Clear popup.
+                # Deferred so the press/release finishes first — opening a modal
+                # menu while this button holds the implicit mouse grab makes the
+                # popup swallow its first click (Clear would silently no-op).
+                self._drag_start_position = None
+                global_pos = self.mapToGlobal(event.pos())
+                QTimer.singleShot(
+                    0, lambda: panel.show_strand_data_badge_popup(self, global_pos)
+                )
+                event.accept()
+                return
+            if chips_enabled:
+                start_rect, end_rect = self.paste_chip_rects()
+                anchor = ('start' if start_rect.contains(event.pos())
+                          else 'end' if end_rect.contains(event.pos()) else None)
+                if anchor:
+                    # Click on a paste chip: one-click paste, no menu
+                    self._drag_start_position = None
+                    panel.paste_strand_data_via_chip(index, anchor)
+                    event.accept()
+                    return
+        if event.button() == Qt.LeftButton:
             self._drag_start_position = event.pos()
         super().mousePressEvent(event) # Call base class implementation
 
@@ -2368,8 +2586,11 @@ class NumberedLayerButton(QPushButton):
         hovering = self.selectable and self.lock_button_rect().contains(event.pos())
         if hovering != self.lock_hovered:
             self.lock_hovered = hovering
-            self.setCursor(Qt.PointingHandCursor if hovering else Qt.ArrowCursor)
             self.update()
+
+        self._update_strand_indicator_hover(event.pos())
+        any_hover = self.lock_hovered or self.strand_badge_hover or bool(self.strand_chip_hover)
+        self.setCursor(Qt.PointingHandCursor if any_hover else Qt.ArrowCursor)
 
         if not (event.buttons() & Qt.LeftButton):
             return
@@ -2413,10 +2634,42 @@ class NumberedLayerButton(QPushButton):
         self._drag_start_position = None
         # super().mouseMoveEvent(event) # Don't call super if we started a drag
 
+    def _update_strand_indicator_hover(self, pos):
+        """Track hover over the copy badge and paste chips (visual tint only)."""
+        _, _, is_copy_source, chips_enabled = self._strand_clipboard_state()
+        badge_hover = (is_copy_source
+                       and self.copy_badge_rect().contains(pos))
+        chip_hover = None
+        if chips_enabled:
+            start_rect, end_rect = self.paste_chip_rects()
+            if start_rect.contains(pos):
+                chip_hover = 'start'
+            elif end_rect.contains(pos):
+                chip_hover = 'end'
+
+        if badge_hover == self.strand_badge_hover and chip_hover == self.strand_chip_hover:
+            return
+        self.strand_badge_hover = badge_hover
+        self.strand_chip_hover = chip_hover
+        self.update()
+
+    def enterEvent(self, event):
+        """Repaint on hover so the paste chips appear."""
+        _, _, _, chips_enabled = self._strand_clipboard_state()
+        if chips_enabled:
+            self.update()
+        super().enterEvent(event)
+
     def leaveEvent(self, event):
-        """Clear padlock hover feedback when the mouse leaves the button."""
+        """Clear padlock/indicator hover feedback when the mouse leaves the button."""
+        needs_update = (self.lock_hovered or self.strand_badge_hover
+                        or bool(self.strand_chip_hover))
+        _, _, _, chips_enabled = self._strand_clipboard_state()
         if self.lock_hovered:
             self.lock_hovered = False
+        self.strand_badge_hover = False
+        self.strand_chip_hover = None
+        if needs_update or chips_enabled:
             self.setCursor(Qt.ArrowCursor)
             self.update()
         super().leaveEvent(event)

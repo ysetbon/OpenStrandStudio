@@ -218,13 +218,14 @@ once</b> (a single undo step) and closes the menu, and the clipboard survives fo
 pastes until the next Copy:</p>
 <ul>
   <li><b>Angle from Start Point</b> — the copied geometry is re-anchored at the target's start
-  point and rotated to the target's own baseline angle measured from its start.</li>
-  <li><b>Angle from End Point</b> — same, but anchored and angle-matched at the target's end point.</li>
+  point; every copied angle and length rides along unchanged, so the target takes the
+  exact copied shape planted at its own start.</li>
+  <li><b>Angle from End Point</b> — same, but re-anchored at the target's end point.</li>
 </ul>
 <p>Non-geometric properties (colors, widths…) are simply applied as-is. While a copy is
 active, the layer panel shows it (chosen design <a href="#indicators"><b>Option A</b></a>):
 a copy badge on the source layer's button, hover ⇤ / ⇥ one-click paste chips on eligible
-layers, and <b>Clear ✕</b> on the badge to finish the copy.</p>
+layers, and <b>Clear</b> on the badge to finish the copy.</p>
 
 <figure>
   <img src="mockups/05_workflow.png" alt="End-to-end workflow: enable multi-select, copy from the source layer, tick targets, paste onto all of them">
@@ -386,16 +387,18 @@ non-empty, the layer panel shows it directly on the buttons:</p>
 
 <figure>
   <img src="mockups/06_panel_indicators.png" alt="Option A: copy badge on the source layer's top-right corner, popup with Clear, and hover paste chips on an eligible layer">
-  <figcaption><b>Chosen indicators</b> — the copy badge (top-right, clear of the left-side padlock), its popup with <b>Clear ✕</b> to finish the copy, and the hover ⇤ / ⇥ one-click paste chips.</figcaption>
+  <figcaption><b>Chosen indicators</b> — the copy badge (top-right, clear of the left-side padlock), its popup with <b>Clear</b> to finish the copy, and the hover ⇤ / ⇥ one-click paste chips.</figcaption>
 </figure>
 
 <ul>
-  <li>The source layer carries a small <b>copy badge</b> in its <b>top-right corner</b>. The
+  <li>The source layer carries a small <b>copy badge</b> — a circle the same size and
+  spot as the ■ end chip (vertically centred on the trailing side; the source shows no
+  chips, so they never clash). The
   lock-mode padlock is vertically centred on the <b>left</b> (<code>lock_button_rect</code>,
   <code>src/numbered_layer_button.py:1120</code>), so badge and padlock never clash — lock
   mode and copy state can show at the same time.</li>
-  <li>Clicking the badge opens a tiny popup — "6 properties from 1_2 · <b>Clear ✕</b>".
-  <b>Clear ✕ is how a copy is finished</b>: it empties the clipboard slot and removes the
+  <li>Clicking the badge opens a tiny popup — "6 properties from 1_2 · <b>Clear</b>".
+  <b>Clear is how a copy is finished</b>: it empties the clipboard slot and removes the
   badge and every paste chip.</li>
   <li>The hover <b>⇤ / ⇥ paste chips</b> are <b>paste way 2, described above</b> —
   hover-only, never on masked or locked layers, and acting on the whole tick
@@ -424,27 +427,24 @@ mapped through the chosen <b>anchor</b>:</p>
   <figcaption><b>Anchor semantics</b> — the copied shape is translated to the target's anchor and rotated by the difference between the two baseline angles. No scaling.</figcaption>
 </figure>
 
-<p>Definition (rotation + translation, <b>no scaling</b> — copied distances are preserved):</p>
-<pre>source frame:  origin  A_s = source.start          (or source.end for "from end")
-               angle   θ_s = atan2(other_end − A_s)     # source baseline angle
-target frame:  origin  A_t = target.start          (or target.end)
-               angle   θ_t = atan2(other_end − A_t)     # target baseline angle
-Δθ = θ_t − θ_s
+<p>Definition (pure re-anchoring, <b>no rotation, no scaling</b> — the copied angles and
+lengths are part of the data and ride along unchanged):</p>
+<pre>source anchor:  A_s = source.start          (or source.end for "from end")
+target anchor:  A_t = target.start          (or target.end)
 
-pasted(P) = A_t + R(Δθ) · (P − A_s)      for every copied geometric point P</pre>
+pasted(P) = A_t + (P − A_s)      for every copied geometric point P</pre>
 
-<p><code>R(Δθ)</code> is the 2-D rotation matrix; the angle math is the same
-<code>math.degrees(math.atan2(dy, dx))</code> used by <code>AngleAdjustMode.calculate_angle</code>
-(<code>src/angle_adjust_mode.py:632-635</code>), and the point rotation is the same operation as
-<code>rotate_point_around_pivot</code> (<code>src/angle_adjust_mode.py:402</code>).</p>
+<p>Every copied point keeps its delta — its angle and length — relative to the copied
+strand's anchor; pasting only moves the whole shape so the source anchor lands on the
+target anchor.</p>
 
 <p>Consequences the user should expect:</p>
 <ul>
   <li>The <b>anchor point stays put</b> (star in the mockup). The strand's other end moves to
-  wherever the copied shape puts it — if the source was longer, the target becomes longer.</li>
-  <li>The copied curve keeps its shape but is rotated so it "flows" along the target's own
-  direction at the anchor.</li>
-  <li>Pasting with <b>Angle from End Point</b> mirrors the flow: offsets are measured from the
+  wherever the copied deltas put it — if the source was longer, the target becomes longer.</li>
+  <li>The target becomes an <b>exact copy of the source's shape</b> — same angles, same
+  lengths, same curve — planted at the target's anchor point.</li>
+  <li>Pasting with <b>Angle from End Point</b> mirrors this: deltas are measured from the
   source's end and re-applied from the target's end.</li>
 </ul>
 
@@ -454,8 +454,8 @@ pasted(P) = A_t + R(Δθ) · (P − A_s)      for every copied geometric point P
   <thead><tr><th>Clipboard contents</th><th>Effect on target</th></tr></thead>
   <tbody>
     <tr><td>Both endpoints + control points</td><td>Full shape replacement, anchored &amp; rotated as above.</td></tr>
-    <tr><td>Control points only (endpoints not copied)</td><td>Target keeps both of its endpoints; the copied control-point <i>offsets</i> (from the source anchor, rotated by Δθ) are applied, reshaping the curve between the existing endpoints.</td></tr>
-    <tr><td>Endpoints only</td><td>Target becomes the copied baseline (anchored/rotated); its control points are re-derived the way the app does for a fresh strand.</td></tr>
+    <tr><td>Control points only (endpoints not copied)</td><td>Target keeps both of its endpoints; the copied control-point <i>offsets</i> (from the source anchor) are applied, reshaping the curve between the existing endpoints.</td></tr>
+    <tr><td>Endpoints only</td><td>Target becomes the copied baseline (re-anchored); its control points are re-derived the way the app does for a fresh strand.</td></tr>
     <tr><td>Control Points — bias parts</td><td>Bias <i>values</i> (<code>triangle_bias</code>, <code>circle_bias</code>) copy as-is; bias <i>positions</i> go through the anchor mapping like any other point.</td></tr>
     <tr><td>Only non-geometric toggles</td><td>Anchor choice is irrelevant; both choices apply the same result (the expanded dropdown may then show a single "Paste" action instead of two).</td></tr>
   </tbody>
@@ -489,8 +489,8 @@ changes no document state).</p>
   <li><b>Hidden / locked layers</b>: copying from a hidden strand is allowed (data is data);
   pasting onto a locked layer is blocked with the usual locked-layer feedback.</li>
   <li><b>Empty clipboard</b>: paste entries are hidden (or shown disabled with a hint).</li>
-  <li><b>Degenerate baseline</b>: if a strand's start and end coincide, its baseline angle is
-  undefined — fall back to Δθ = 0 (translation only) and log it.</li>
+  <li><b>Zero-length source</b> (start == end): needs no special case — the copied deltas
+  are plain offsets from the anchor, so they re-apply cleanly.</li>
   <li><b><code>control_point2_shown</code> / <code>control_point2_activated</code> / <code>triangle_has_moved</code></b> travel
   with the Control Points toggle so the pasted curve renders exactly like the
   source (these flags gate how the app draws/uses the points).</li>

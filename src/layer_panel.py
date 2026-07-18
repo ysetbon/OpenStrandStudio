@@ -24,7 +24,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor
 from functools import partial
 from splitter_handle import SplitterHandle
-from numbered_layer_button import NumberedLayerButton, HoverLabel
+from numbered_layer_button import NumberedLayerButton, HoverLabel, build_menu_stylesheet
 from group_layers import GroupPanel, GroupLayerManager
 from PyQt5.QtWidgets import QWidget, QPushButton  # Example widget imports
 from PyQt5.QtGui import QPalette, QColor  # Added QPalette and QColor imports
@@ -1861,6 +1861,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             fallback_text="📚" if self.multi_select_mode else "📄",
         )
 
+        # Copy/paste indicators (badge + paste chips) exist only in
+        # multi-select mode — repaint so they appear/disappear immediately
+        self._refresh_strand_data_indicators()
+
     def update_layer_button_multi_select_display(self):
         """Update the visual display of layer buttons to show multi-selection state"""
         # Find the currently selected strand
@@ -1889,11 +1893,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 button.setStyleSheet(current_style + """
                     QPushButton[multi_selected="true"] {
                         border: 3px solid #FFD700 !important;
-                        box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
                     }
                     QPushButton[multi_selected="true"]:checked {
                         border: 3px solid #0066FF !important;
-                        box-shadow: 0 0 10px rgba(0, 102, 255, 0.8) !important;
                     }
                 """)
             else:
@@ -1918,7 +1920,17 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # Only show context menu if we're in multi-select mode
         if not self.multi_select_mode:
             return
-            
+
+        # Right-click on a copy badge / paste chip explains it instead of
+        # opening the batch menu (hover tooltips were dropped as too chatty)
+        if index < len(self.layer_buttons):
+            button = self.layer_buttons[index]
+            if hasattr(button, 'strand_indicator_tooltip_at'):
+                tooltip = button.strand_indicator_tooltip_at(position)
+                if tooltip:
+                    QToolTip.showText(button.mapToGlobal(position), tooltip, button)
+                    return
+
         # If the clicked layer is not in the selection, add it
         if index not in self.multi_selected_layers:
             self.multi_selected_layers.add(index)
@@ -1951,20 +1963,18 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             shadow_text = _['enable_shadow_only_selected']
             shadow_callback = self.enable_shadow_only_selected_layers
         
-        # Collect all menu texts for width calculation
-        menu_texts = [toggle_text, shadow_text] + self.strand_data_menu_texts(_)
-        
         # Create context menu with proper theming
         context_menu = QMenu(self)
-        
+
         # Apply RTL layout direction for Hebrew
         if self.language_code == 'he':
             context_menu.setLayoutDirection(Qt.RightToLeft)
-        
-        self._apply_menu_theme(context_menu, menu_texts)
-        
+
         # Get theme for HoverLabel
         theme = self.current_theme if hasattr(self, 'current_theme') else 'light'
+
+        # Use the exact same menu chrome as the layer button's normal dropdown
+        context_menu.setStyleSheet(build_menu_stylesheet(theme))
         
         # Add single hide/show toggle action with translations using HoverLabel
         toggle_label = HoverLabel(toggle_text, self, theme)
@@ -1995,78 +2005,6 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # Show the menu at the cursor position
         button = self.layer_buttons[index]
         context_menu.exec_(button.mapToGlobal(position))
-
-    def _apply_menu_theme(self, menu, menu_texts=None):
-        """Apply the current theme to a context menu"""
-        # Calculate dynamic width if menu texts are provided
-        dynamic_width = ""
-        if menu_texts:
-            width = self.calculate_menu_width(menu_texts)
-            dynamic_width = f"min-width: {width}px;"
-            
-        # Determine if we're using RTL for Hebrew
-        is_hebrew = self.language_code == 'he'
-        # Use different padding for RTL vs LTR
-        item_padding = "padding: 6px 20px 6px 6px;" if is_hebrew else "padding: 6px 20px;"
-        
-        if hasattr(self, 'current_theme') and self.current_theme == 'dark':
-            # Dark theme styling for menu
-            menu.setStyleSheet(f"""
-                QMenu {{
-                    background-color: #3C3C3C;
-                    color: white;
-                    border: 1px solid #555555;
-                    border-radius: 4px;
-                    padding: 4px;
-                    {dynamic_width}
-                }}
-                QMenu::item {{
-                    background-color: transparent;
-                    {item_padding}
-                    border-radius: 3px;
-                }}
-                QMenu::item:selected {{
-                    background-color: #555555;
-                    color: white;
-                }}
-                QMenu::item:pressed {{
-                    background-color: #666666;
-                }}
-                QMenu::separator {{
-                    height: 1px;
-                    background-color: #555555;
-                    margin: 4px 0px;
-                }}
-            """)
-        else:
-            # Light theme styling for menu
-            menu.setStyleSheet(f"""
-                QMenu {{
-                    background-color: white;
-                    color: black;
-                    border: 1px solid #CCCCCC;
-                    border-radius: 4px;
-                    padding: 4px;
-                    {dynamic_width}
-                }}
-                QMenu::item {{
-                    background-color: transparent;
-                    {item_padding}
-                    border-radius: 3px;
-                }}
-                QMenu::item:selected {{
-                    background-color: #E0E0E0;
-                    color: black;
-                }}
-                QMenu::item:pressed {{
-                    background-color: #D0D0D0;
-                }}
-                QMenu::separator {{
-                    height: 1px;
-                    background-color: #CCCCCC;
-                    margin: 4px 0px;
-                }}
-            """)
 
     def hide_selected_layers(self):
         """Hide all selected layers in multi-select mode"""

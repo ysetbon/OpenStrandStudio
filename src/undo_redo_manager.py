@@ -2075,6 +2075,12 @@ class UndoRedoManager(QObject):
             # Preserve current shadow state - undo/redo should not affect shadow toggle
             current_shadow_enabled = getattr(self.canvas, 'shadow_enabled', True)
 
+            # Preserve the current selection: selection is not a save trigger,
+            # so older states can carry a stale selected_strand_name. Undo/redo
+            # should not move the user's selection while the strand still exists.
+            current_selection_name = getattr(
+                getattr(self.canvas, 'selected_strand', None), 'layer_name', None)
+
             # Load the data using the normal method
             # --- MODIFIED: Receive selected_strand_name, button states, and shadow_overrides ---
             loaded_strands, loaded_groups_data, selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points, shadow_overrides = load_strands(filename, self.canvas)
@@ -2122,7 +2128,13 @@ class UndoRedoManager(QObject):
                 # Set shadow state based on current (preserved) value - undo/redo should not affect shadow
                 strand.should_draw_shadow = current_shadow_enabled
                  
-            # --- NEW: Restore selection AFTER applying strands --- 
+            # --- NEW: Restore selection AFTER applying strands ---
+            # Keep the user's current selection when that strand still exists in
+            # the restored state; only fall back to the state's stored selection.
+            restored_names = {s.layer_name for s in self.canvas.strands
+                              if hasattr(s, 'layer_name')}
+            if current_selection_name and current_selection_name in restored_names:
+                selected_strand_name = current_selection_name
             if selected_strand_name:
                 found_selected_strand = None
                 found_selected_index = -1

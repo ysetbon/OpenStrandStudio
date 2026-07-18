@@ -37,7 +37,12 @@ def _keep_menu_on_screen(menu):
         menu.move(x, y)
 
 from masked_strand import MaskedStrand
-from numbered_layer_button import HoverLabel, build_menu_stylesheet
+from numbered_layer_button import (
+    HoverLabel,
+    build_menu_stylesheet,
+    setup_menu_checkmark,
+    style_menu_checkbox,
+)
 from strand_data_clipboard import (
     COPY_PROPERTIES,
     apply_strand_data,
@@ -193,6 +198,8 @@ class StrandDataClipboardMixin:
                 label.setAlignment(Qt.AlignRight)
             label.setStyleSheet(f"color: {foreground}; padding: 5px;")
             checkbox = QCheckBox()
+            style_menu_checkbox(checkbox, theme)
+            setup_menu_checkmark(checkbox)
             row.addWidget(label)
             row.addStretch()
             row.addWidget(checkbox)

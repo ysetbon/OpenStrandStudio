@@ -347,11 +347,19 @@ def style_menu_checkbox(checkbox, theme):
             background-color: {checked_hover_bg};
             border: 2px solid {checked_hover_border};
         }}
+        QCheckBox::indicator:indeterminate {{
+            background-color: {checked_bg};
+            border: 2px solid {checked_border};
+        }}
+        QCheckBox::indicator:indeterminate:hover {{
+            background-color: {checked_hover_bg};
+            border: 2px solid {checked_hover_border};
+        }}
     """)
 
 
 def setup_menu_checkmark(checkbox):
-    """Draw a white V over the styled indicator when checked.
+    """Draw a white V (or dash when tristate-partial) over the styled indicator.
 
     A stylesheet-styled ::indicator loses Qt's native checkmark, so paint one
     manually (same approach as the Edit Shadow dialog checkboxes).
@@ -360,7 +368,8 @@ def setup_menu_checkmark(checkbox):
 
     def custom_paint_event(event):
         original_paint_event(event)
-        if not checkbox.isChecked():
+        state = checkbox.checkState()
+        if state == Qt.Unchecked:
             return
         painter = QPainter(checkbox)
         painter.setRenderHint(QPainter.Antialiasing)
@@ -380,12 +389,18 @@ def setup_menu_checkmark(checkbox):
         center_y = indicator_rect.y() + indicator_rect.height() // 2
         checkmark_size = int(min(indicator_rect.width(), indicator_rect.height()) * 0.24)
 
-        # Left (short) stroke then right (long) stroke of the V.
-        x1, y1 = center_x - checkmark_size + 1, center_y - 1
-        x2, y2 = center_x - 1, center_y + checkmark_size - 1
-        x3, y3 = center_x + checkmark_size, center_y - checkmark_size + 1
-        painter.drawLine(x1, y1, x2, y2)
-        painter.drawLine(x2, y2, x3, y3)
+        if state == Qt.PartiallyChecked:
+            painter.drawLine(
+                center_x - checkmark_size, center_y,
+                center_x + checkmark_size, center_y,
+            )
+        else:
+            # Left (short) stroke then right (long) stroke of the V.
+            x1, y1 = center_x - checkmark_size + 1, center_y - 1
+            x2, y2 = center_x - 1, center_y + checkmark_size - 1
+            x3, y3 = center_x + checkmark_size, center_y - checkmark_size + 1
+            painter.drawLine(x1, y1, x2, y2)
+            painter.drawLine(x2, y2, x3, y3)
         painter.end()
 
     checkbox.paintEvent = custom_paint_event

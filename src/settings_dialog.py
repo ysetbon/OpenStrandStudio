@@ -3007,6 +3007,9 @@ class SettingsDialog(QDialog):
         _lp_refresh_icon = _lp_img('refresh.png')
         _lp_home_icon = _lp_img('home.png')
         _lp_lock_icon = _lp_img('lock_open.png') + ' ' + _lp_img('lock_closed.png')
+        _lp_copy_badge_icon = _lp_img('copy_badge.png')
+        _lp_chip_start_icon = _lp_img('chip_start.png')
+        _lp_chip_end_icon = _lp_img('chip_end.png')
 
         button_html = f'''
         <style>
@@ -3083,7 +3086,17 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
             <li><span class="button-name">{_['line']}</span> - {_['ctx_line_desc']}</li>
             <li><span class="button-name">{_['arrow']}</span> - {_['ctx_arrow_desc']}</li>
-            <li><span class="button-name">{_['show_full_arrow']}</span> - {_['ctx_full_arrow_desc']}</li>
+            <li><span class="button-name">{_['show_full_arrow']}</span> - {_['ctx_full_arrow_desc']}
+                <ul style="margin-top: 6px;">
+                    <li><span class="button-name">{_['arrow_color']}</span> - {_['ctx_arrow_color_desc']}</li>
+                    <li><span class="button-name">{_['arrow_transparency']}</span> - {_['ctx_arrow_transparency_desc']}</li>
+                    <li><span class="button-name">{_['arrow_texture']}</span> - {_['ctx_arrow_texture_desc']} ({_['texture_none']}, {_['texture_stripes']}, {_['texture_dots']}, {_['texture_crosshatch']})</li>
+                    <li><span class="button-name">{_['arrow_shaft_style']}</span> - {_['ctx_arrow_shaft_desc']} ({_['shaft_solid']}, {_['shaft_tiles']}, {_['shaft_stripes']}, {_['shaft_dots']})</li>
+                    <li><span class="button-name">{_['show_arrow_head']}</span> - {_['ctx_arrow_head_desc']}</li>
+                    <li><span class="button-name">{_['arrow_casts_shadow']}</span> - {_['ctx_arrow_shadow_desc']}</li>
+                    <li><span class="button-name">{_['arrow_sizes']}</span> - {_['ctx_arrow_sizes_desc']} ({_['arrow_head_length']}, {_['arrow_head_width']}, {_['arrow_head_stroke_width']}, {_['arrow_gap_length']}, {_['arrow_line_length']}, {_['arrow_line_width']})</li>
+                </ul>
+            </li>
             <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
             <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
             <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
@@ -3101,7 +3114,17 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
             <li><span class="button-name">{_['line']}</span> - {_['ctx_line_desc']}</li>
             <li><span class="button-name">{_['arrow']}</span> - {_['ctx_arrow_desc']}</li>
-            <li><span class="button-name">{_['show_full_arrow']}</span> - {_['ctx_full_arrow_desc']}</li>
+            <li><span class="button-name">{_['show_full_arrow']}</span> - {_['ctx_full_arrow_desc']}
+                <ul style="margin-top: 6px;">
+                    <li><span class="button-name">{_['arrow_color']}</span> - {_['ctx_arrow_color_desc']}</li>
+                    <li><span class="button-name">{_['arrow_transparency']}</span> - {_['ctx_arrow_transparency_desc']}</li>
+                    <li><span class="button-name">{_['arrow_texture']}</span> - {_['ctx_arrow_texture_desc']} ({_['texture_none']}, {_['texture_stripes']}, {_['texture_dots']}, {_['texture_crosshatch']})</li>
+                    <li><span class="button-name">{_['arrow_shaft_style']}</span> - {_['ctx_arrow_shaft_desc']} ({_['shaft_solid']}, {_['shaft_tiles']}, {_['shaft_stripes']}, {_['shaft_dots']})</li>
+                    <li><span class="button-name">{_['show_arrow_head']}</span> - {_['ctx_arrow_head_desc']}</li>
+                    <li><span class="button-name">{_['arrow_casts_shadow']}</span> - {_['ctx_arrow_shadow_desc']}</li>
+                    <li><span class="button-name">{_['arrow_sizes']}</span> - {_['ctx_arrow_sizes_desc']} ({_['arrow_head_length']}, {_['arrow_head_width']}, {_['arrow_head_stroke_width']}, {_['arrow_gap_length']}, {_['arrow_line_length']}, {_['arrow_line_width']})</li>
+                </ul>
+            </li>
             <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
             <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
             <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
@@ -3115,6 +3138,30 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['edit_mask']}</span> - {_['ctx_edit_mask_desc']}</li>
             <li><span class="button-name">{_['reset_mask']}</span> - {_['ctx_reset_mask_desc']}</li>
         </ul>
+
+        <h2>{_['multi_select_menu_title']}</h2>
+        <p>{_lp_multi_icon} {_['multi_select_menu_info']}</p>
+        <ul>
+            <li><span class="button-name">{_['hide_selected_layers']} / {_['show_selected_layers']}</span> - {_['ctx_batch_hide_show_desc']}</li>
+            <li><span class="button-name">{_['enable_shadow_only_selected']} / {_['disable_shadow_only_selected']}</span> - {_['ctx_batch_shadow_only_desc']}</li>
+            <li><span class="button-name">{_['copy_strand_data']}</span> - {_['ctx_copy_strand_data_desc']} ({_['strand_data_start_point']}, {_['strand_data_end_point']}, {_['strand_data_control_points']}, {_['strand_data_width']}, {_['strand_data_strand_color']}, {_['strand_data_stroke_color']})</li>
+            <li><span class="button-name">{_['paste_copied_data']}</span> - {_['ctx_paste_copied_data_desc']}</li>
+        </ul>
+        <table style="margin-bottom: 15px; border-spacing: 0;">
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_copy_badge_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['copy_badge_name']}</span> — {_['ctx_copy_badge_desc']}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_chip_start_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['paste_chip_start_name']} ({_['angle_from_start_point']})</span> — {_['ctx_chip_start_desc']}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_chip_end_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['paste_chip_end_name']} ({_['angle_from_end_point']})</span> — {_['ctx_chip_end_desc']}</td>
+            </tr>
+        </table>
+
         <h2>{_['main_window_buttons']}</h2>
         <ul>
             <li><span class="button-name">{_['attach_mode_desc'].split(' - ')[0]}</span> - {_['attach_mode_desc'].split(' - ')[1]}</li>
@@ -3968,6 +4015,9 @@ class SettingsDialog(QDialog):
         _lp_refresh_icon = _lp_img('refresh.png')
         _lp_home_icon = _lp_img('home.png')
         _lp_lock_icon = _lp_img('lock_open.png') + ' ' + _lp_img('lock_closed.png')
+        _lp_copy_badge_icon = _lp_img('copy_badge.png')
+        _lp_chip_start_icon = _lp_img('chip_start.png')
+        _lp_chip_end_icon = _lp_img('chip_end.png')
 
         button_html = f'''
         <style>
@@ -4045,7 +4095,17 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
             <li><span class="button-name">{_['line']}</span> - {_['ctx_line_desc']}</li>
             <li><span class="button-name">{_['arrow']}</span> - {_['ctx_arrow_desc']}</li>
-            <li><span class="button-name">{_['show_full_arrow']}</span> - {_['ctx_full_arrow_desc']}</li>
+            <li><span class="button-name">{_['show_full_arrow']}</span> - {_['ctx_full_arrow_desc']}
+                <ul style="margin-top: 6px;">
+                    <li><span class="button-name">{_['arrow_color']}</span> - {_['ctx_arrow_color_desc']}</li>
+                    <li><span class="button-name">{_['arrow_transparency']}</span> - {_['ctx_arrow_transparency_desc']}</li>
+                    <li><span class="button-name">{_['arrow_texture']}</span> - {_['ctx_arrow_texture_desc']} ({_['texture_none']}, {_['texture_stripes']}, {_['texture_dots']}, {_['texture_crosshatch']})</li>
+                    <li><span class="button-name">{_['arrow_shaft_style']}</span> - {_['ctx_arrow_shaft_desc']} ({_['shaft_solid']}, {_['shaft_tiles']}, {_['shaft_stripes']}, {_['shaft_dots']})</li>
+                    <li><span class="button-name">{_['show_arrow_head']}</span> - {_['ctx_arrow_head_desc']}</li>
+                    <li><span class="button-name">{_['arrow_casts_shadow']}</span> - {_['ctx_arrow_shadow_desc']}</li>
+                    <li><span class="button-name">{_['arrow_sizes']}</span> - {_['ctx_arrow_sizes_desc']} ({_['arrow_head_length']}, {_['arrow_head_width']}, {_['arrow_head_stroke_width']}, {_['arrow_gap_length']}, {_['arrow_line_length']}, {_['arrow_line_width']})</li>
+                </ul>
+            </li>
             <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
             <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
             <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
@@ -4063,7 +4123,17 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
             <li><span class="button-name">{_['line']}</span> - {_['ctx_line_desc']}</li>
             <li><span class="button-name">{_['arrow']}</span> - {_['ctx_arrow_desc']}</li>
-            <li><span class="button-name">{_['show_full_arrow']}</span> - {_['ctx_full_arrow_desc']}</li>
+            <li><span class="button-name">{_['show_full_arrow']}</span> - {_['ctx_full_arrow_desc']}
+                <ul style="margin-top: 6px;">
+                    <li><span class="button-name">{_['arrow_color']}</span> - {_['ctx_arrow_color_desc']}</li>
+                    <li><span class="button-name">{_['arrow_transparency']}</span> - {_['ctx_arrow_transparency_desc']}</li>
+                    <li><span class="button-name">{_['arrow_texture']}</span> - {_['ctx_arrow_texture_desc']} ({_['texture_none']}, {_['texture_stripes']}, {_['texture_dots']}, {_['texture_crosshatch']})</li>
+                    <li><span class="button-name">{_['arrow_shaft_style']}</span> - {_['ctx_arrow_shaft_desc']} ({_['shaft_solid']}, {_['shaft_tiles']}, {_['shaft_stripes']}, {_['shaft_dots']})</li>
+                    <li><span class="button-name">{_['show_arrow_head']}</span> - {_['ctx_arrow_head_desc']}</li>
+                    <li><span class="button-name">{_['arrow_casts_shadow']}</span> - {_['ctx_arrow_shadow_desc']}</li>
+                    <li><span class="button-name">{_['arrow_sizes']}</span> - {_['ctx_arrow_sizes_desc']} ({_['arrow_head_length']}, {_['arrow_head_width']}, {_['arrow_head_stroke_width']}, {_['arrow_gap_length']}, {_['arrow_line_length']}, {_['arrow_line_width']})</li>
+                </ul>
+            </li>
             <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
             <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
             <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
@@ -4077,6 +4147,30 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['edit_mask']}</span> - {_['ctx_edit_mask_desc']}</li>
             <li><span class="button-name">{_['reset_mask']}</span> - {_['ctx_reset_mask_desc']}</li>
         </ul>
+
+        <h2>{_['multi_select_menu_title']}</h2>
+        <p>{_lp_multi_icon} {_['multi_select_menu_info']}</p>
+        <ul>
+            <li><span class="button-name">{_['hide_selected_layers']} / {_['show_selected_layers']}</span> - {_['ctx_batch_hide_show_desc']}</li>
+            <li><span class="button-name">{_['enable_shadow_only_selected']} / {_['disable_shadow_only_selected']}</span> - {_['ctx_batch_shadow_only_desc']}</li>
+            <li><span class="button-name">{_['copy_strand_data']}</span> - {_['ctx_copy_strand_data_desc']} ({_['strand_data_start_point']}, {_['strand_data_end_point']}, {_['strand_data_control_points']}, {_['strand_data_width']}, {_['strand_data_strand_color']}, {_['strand_data_stroke_color']})</li>
+            <li><span class="button-name">{_['paste_copied_data']}</span> - {_['ctx_paste_copied_data_desc']}</li>
+        </ul>
+        <table style="margin-bottom: 15px; border-spacing: 0;">
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_copy_badge_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['copy_badge_name']}</span> — {_['ctx_copy_badge_desc']}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_chip_start_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['paste_chip_start_name']} ({_['angle_from_start_point']})</span> — {_['ctx_chip_start_desc']}</td>
+            </tr>
+            <tr>
+                <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_chip_end_icon}</td>
+                <td style="padding: 6px 4px;"><span class="button-name">{_['paste_chip_end_name']} ({_['angle_from_end_point']})</span> — {_['ctx_chip_end_desc']}</td>
+            </tr>
+        </table>
+
         <h2>{_['main_window_buttons']}</h2>
         <ul>
             <li><span class="button-name">{_['attach_mode_desc'].split(' - ')[0]}</span> - {_['attach_mode_desc'].split(' - ')[1]}</li>
@@ -4701,6 +4795,9 @@ class SettingsDialog(QDialog):
             _lp_refresh_icon = _lp_img('refresh.png')
             _lp_home_icon = _lp_img('home.png')
             _lp_lock_icon = _lp_img('lock_open.png') + ' ' + _lp_img('lock_closed.png')
+            _lp_copy_badge_icon = _lp_img('copy_badge.png')
+            _lp_chip_start_icon = _lp_img('chip_start.png')
+            _lp_chip_end_icon = _lp_img('chip_end.png')
 
             button_html = f'''
             <style>
@@ -4778,7 +4875,17 @@ class SettingsDialog(QDialog):
                 <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
                 <li><span class="button-name">{_['line']}</span> - {_['ctx_line_desc']}</li>
                 <li><span class="button-name">{_['arrow']}</span> - {_['ctx_arrow_desc']}</li>
-                <li><span class="button-name">{_['show_full_arrow']}</span> - {_['ctx_full_arrow_desc']}</li>
+                <li><span class="button-name">{_['show_full_arrow']}</span> - {_['ctx_full_arrow_desc']}
+                <ul style="margin-top: 6px;">
+                    <li><span class="button-name">{_['arrow_color']}</span> - {_['ctx_arrow_color_desc']}</li>
+                    <li><span class="button-name">{_['arrow_transparency']}</span> - {_['ctx_arrow_transparency_desc']}</li>
+                    <li><span class="button-name">{_['arrow_texture']}</span> - {_['ctx_arrow_texture_desc']} ({_['texture_none']}, {_['texture_stripes']}, {_['texture_dots']}, {_['texture_crosshatch']})</li>
+                    <li><span class="button-name">{_['arrow_shaft_style']}</span> - {_['ctx_arrow_shaft_desc']} ({_['shaft_solid']}, {_['shaft_tiles']}, {_['shaft_stripes']}, {_['shaft_dots']})</li>
+                    <li><span class="button-name">{_['show_arrow_head']}</span> - {_['ctx_arrow_head_desc']}</li>
+                    <li><span class="button-name">{_['arrow_casts_shadow']}</span> - {_['ctx_arrow_shadow_desc']}</li>
+                    <li><span class="button-name">{_['arrow_sizes']}</span> - {_['ctx_arrow_sizes_desc']} ({_['arrow_head_length']}, {_['arrow_head_width']}, {_['arrow_head_stroke_width']}, {_['arrow_gap_length']}, {_['arrow_line_length']}, {_['arrow_line_width']})</li>
+                </ul>
+            </li>
                 <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
                 <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
                 <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
@@ -4796,7 +4903,17 @@ class SettingsDialog(QDialog):
                 <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
                 <li><span class="button-name">{_['line']}</span> - {_['ctx_line_desc']}</li>
                 <li><span class="button-name">{_['arrow']}</span> - {_['ctx_arrow_desc']}</li>
-                <li><span class="button-name">{_['show_full_arrow']}</span> - {_['ctx_full_arrow_desc']}</li>
+                <li><span class="button-name">{_['show_full_arrow']}</span> - {_['ctx_full_arrow_desc']}
+                <ul style="margin-top: 6px;">
+                    <li><span class="button-name">{_['arrow_color']}</span> - {_['ctx_arrow_color_desc']}</li>
+                    <li><span class="button-name">{_['arrow_transparency']}</span> - {_['ctx_arrow_transparency_desc']}</li>
+                    <li><span class="button-name">{_['arrow_texture']}</span> - {_['ctx_arrow_texture_desc']} ({_['texture_none']}, {_['texture_stripes']}, {_['texture_dots']}, {_['texture_crosshatch']})</li>
+                    <li><span class="button-name">{_['arrow_shaft_style']}</span> - {_['ctx_arrow_shaft_desc']} ({_['shaft_solid']}, {_['shaft_tiles']}, {_['shaft_stripes']}, {_['shaft_dots']})</li>
+                    <li><span class="button-name">{_['show_arrow_head']}</span> - {_['ctx_arrow_head_desc']}</li>
+                    <li><span class="button-name">{_['arrow_casts_shadow']}</span> - {_['ctx_arrow_shadow_desc']}</li>
+                    <li><span class="button-name">{_['arrow_sizes']}</span> - {_['ctx_arrow_sizes_desc']} ({_['arrow_head_length']}, {_['arrow_head_width']}, {_['arrow_head_stroke_width']}, {_['arrow_gap_length']}, {_['arrow_line_length']}, {_['arrow_line_width']})</li>
+                </ul>
+            </li>
                 <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
                 <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
                 <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
@@ -4810,6 +4927,30 @@ class SettingsDialog(QDialog):
                 <li><span class="button-name">{_['edit_mask']}</span> - {_['ctx_edit_mask_desc']}</li>
                 <li><span class="button-name">{_['reset_mask']}</span> - {_['ctx_reset_mask_desc']}</li>
             </ul>
+
+            <h2>{_['multi_select_menu_title']}</h2>
+            <p>{_lp_multi_icon} {_['multi_select_menu_info']}</p>
+            <ul>
+                <li><span class="button-name">{_['hide_selected_layers']} / {_['show_selected_layers']}</span> - {_['ctx_batch_hide_show_desc']}</li>
+                <li><span class="button-name">{_['enable_shadow_only_selected']} / {_['disable_shadow_only_selected']}</span> - {_['ctx_batch_shadow_only_desc']}</li>
+                <li><span class="button-name">{_['copy_strand_data']}</span> - {_['ctx_copy_strand_data_desc']} ({_['strand_data_start_point']}, {_['strand_data_end_point']}, {_['strand_data_control_points']}, {_['strand_data_width']}, {_['strand_data_strand_color']}, {_['strand_data_stroke_color']})</li>
+                <li><span class="button-name">{_['paste_copied_data']}</span> - {_['ctx_paste_copied_data_desc']}</li>
+            </ul>
+            <table style="margin-bottom: 15px; border-spacing: 0;">
+                <tr>
+                    <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_copy_badge_icon}</td>
+                    <td style="padding: 6px 4px;"><span class="button-name">{_['copy_badge_name']}</span> — {_['ctx_copy_badge_desc']}</td>
+                </tr>
+                <tr>
+                    <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_chip_start_icon}</td>
+                    <td style="padding: 6px 4px;"><span class="button-name">{_['paste_chip_start_name']} ({_['angle_from_start_point']})</span> — {_['ctx_chip_start_desc']}</td>
+                </tr>
+                <tr>
+                    <td style="width: 90px; padding: 6px 10px; vertical-align: middle;">{_lp_chip_end_icon}</td>
+                    <td style="padding: 6px 4px;"><span class="button-name">{_['paste_chip_end_name']} ({_['angle_from_end_point']})</span> — {_['ctx_chip_end_desc']}</td>
+                </tr>
+            </table>
+
             <h2>{_['main_window_buttons']}</h2>
             <ul>
                 <li><span class="button-name">{_['attach_mode_desc'].split(' - ')[0]}</span> - {_['attach_mode_desc'].split(' - ')[1]}</li>

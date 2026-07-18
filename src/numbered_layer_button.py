@@ -1,8 +1,9 @@
-from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QDoubleSpinBox, QSlider, QDialogButtonBox, QComboBox, QPushButton as QPB, QCheckBox, QDialogButtonBox, QStyleOptionButton
+from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QDoubleSpinBox, QSlider, QDialogButtonBox, QComboBox, QPushButton as QPB, QCheckBox, QDialogButtonBox, QStyleOptionButton, QToolButton
 from PyQt5.QtCore import Qt, pyqtSignal, QRect, QRectF, QMimeData, QTimer, QPoint, QPointF, QLocale
 from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag, QGuiApplication, QPixmap, QImage
 from render_utils import RenderUtils
 from translations import translations
+from segmented_spin_box import upgrade_spinbox, style_segmented_spinbox
 from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
 import os  # Add os for icon path resolution
@@ -192,6 +193,202 @@ def build_menu_stylesheet(theme):
     )
     base_style += "QMenu::item { padding:3px 30px 3px 3px; min-height: 35px; }"
     return base_style
+
+
+def style_menu_combobox(combo, theme, is_rtl=False):
+    """Theme-aware styling for QComboBox widgets embedded in layer context menus.
+
+    Replaces the native (unthemed) combo chrome with the same language as the
+    rest of the menu: rounded 4px border, themed popup list and a flat
+    triangle drop-down arrow, mirrored for RTL.
+    """
+    if theme == 'dark':
+        bg, fg, border = '#3D3D3D', '#FFFFFF', '#666666'
+        hover_border, arrow_icon = '#999999', 'combo_arrow_light.png'
+        popup_bg, popup_fg = '#333333', '#FFFFFF'
+        sel_bg, sel_fg = '#4A6FA5', '#FFFFFF'
+    else:
+        bg, fg, border = '#FFFFFF', '#000000', '#AAAAAA'
+        hover_border, arrow_icon = '#777777', 'combo_arrow_dark.png'
+        popup_bg, popup_fg = '#FFFFFF', '#000000'
+        sel_bg, sel_fg = '#A0C0E0', '#000000'
+
+    # Qt stylesheets can't draw CSS border-triangles; use the packaged PNGs.
+    arrow_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              'layer_panel_icons', arrow_icon).replace('\\', '/')
+    drop_side = 'left' if is_rtl else 'right'
+    padding = '4px 8px 4px 24px' if is_rtl else '4px 24px 4px 8px'
+    arrow_margin = 'margin-left: 6px;' if is_rtl else 'margin-right: 6px;'
+    combo.setStyleSheet(f"""
+        QComboBox {{
+            background-color: {bg};
+            color: {fg};
+            border: 1px solid {border};
+            border-radius: 4px;
+            padding: {padding};
+            min-height: 20px;
+        }}
+        QComboBox:hover {{
+            border: 1px solid {hover_border};
+        }}
+        QComboBox::drop-down {{
+            subcontrol-origin: padding;
+            subcontrol-position: {drop_side} center;
+            width: 22px;
+            border: none;
+        }}
+        QComboBox::down-arrow {{
+            image: url({arrow_path});
+            width: 10px;
+            height: 6px;
+            {arrow_margin}
+        }}
+        QComboBox QAbstractItemView {{
+            background-color: {popup_bg};
+            color: {popup_fg};
+            border: 1px solid {border};
+            selection-background-color: {sel_bg};
+            selection-color: {sel_fg};
+            outline: none;
+            padding: 2px;
+        }}
+        QComboBox QAbstractItemView::item {{
+            min-height: 24px;
+            padding: 2px 6px;
+        }}
+    """)
+
+
+def style_menu_dropdown_button(button, theme, is_rtl=False):
+    """Combo-look styling for a QToolButton that opens a dropdown panel.
+
+    Matches style_menu_combobox() chrome so the button reads as another
+    dropdown in the same menu section.
+    """
+    if theme == 'dark':
+        bg, fg, border = '#3D3D3D', '#FFFFFF', '#666666'
+        hover_border, arrow_icon = '#999999', 'combo_arrow_light.png'
+        pressed_bg = '#2E2E2E'
+    else:
+        bg, fg, border = '#FFFFFF', '#000000', '#AAAAAA'
+        hover_border, arrow_icon = '#777777', 'combo_arrow_dark.png'
+        pressed_bg = '#E8E8E8'
+
+    arrow_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              'layer_panel_icons', arrow_icon).replace('\\', '/')
+    drop_side = 'left' if is_rtl else 'right'
+    padding = '4px 8px 4px 24px' if is_rtl else '4px 24px 4px 8px'
+    arrow_margin = 'margin-left: 6px;' if is_rtl else 'margin-right: 6px;'
+    button.setStyleSheet(f"""
+        QToolButton {{
+            background-color: {bg};
+            color: {fg};
+            border: 1px solid {border};
+            border-radius: 4px;
+            padding: {padding};
+            min-height: 20px;
+        }}
+        QToolButton:hover {{
+            border: 1px solid {hover_border};
+        }}
+        QToolButton:pressed {{
+            background-color: {pressed_bg};
+        }}
+        QToolButton::menu-indicator {{
+            image: url({arrow_path});
+            width: 10px;
+            height: 6px;
+            subcontrol-origin: padding;
+            subcontrol-position: {drop_side} center;
+            {arrow_margin}
+        }}
+    """)
+
+
+def style_menu_checkbox(checkbox, theme):
+    """Large themed checkbox for layer context menus.
+
+    20px indicator (50% larger than the native ~13px one) with the same
+    blue-accent palette as the Edit Shadow dialog checkboxes; combine with
+    setup_menu_checkmark() so the checked state shows a white V.
+    """
+    if theme == 'dark':
+        indicator_border, indicator_bg = '#666666', '#2A2A2A'
+        hover_border, hover_bg = '#888888', '#454545'
+        checked_bg, checked_border = '#4A6FA5', '#6A9FD5'
+        checked_hover_bg, checked_hover_border = '#5A7FB5', '#7AAFF5'
+    else:
+        indicator_border, indicator_bg = '#AAAAAA', '#FFFFFF'
+        hover_border, hover_bg = '#888888', '#F8F8F8'
+        checked_bg, checked_border = '#A0C0E0', '#7090C0'
+        checked_hover_bg, checked_hover_border = '#B0D0F0', '#8AA0D0'
+
+    checkbox.setStyleSheet(f"""
+        QCheckBox {{
+            background-color: transparent;
+            spacing: 0px;
+        }}
+        QCheckBox::indicator {{
+            width: 20px;
+            height: 20px;
+            border: 2px solid {indicator_border};
+            border-radius: 4px;
+            background-color: {indicator_bg};
+        }}
+        QCheckBox::indicator:hover {{
+            border: 2px solid {hover_border};
+            background-color: {hover_bg};
+        }}
+        QCheckBox::indicator:checked {{
+            background-color: {checked_bg};
+            border: 2px solid {checked_border};
+        }}
+        QCheckBox::indicator:checked:hover {{
+            background-color: {checked_hover_bg};
+            border: 2px solid {checked_hover_border};
+        }}
+    """)
+
+
+def setup_menu_checkmark(checkbox):
+    """Draw a white V over the styled indicator when checked.
+
+    A stylesheet-styled ::indicator loses Qt's native checkmark, so paint one
+    manually (same approach as the Edit Shadow dialog checkboxes).
+    """
+    original_paint_event = checkbox.paintEvent
+
+    def custom_paint_event(event):
+        original_paint_event(event)
+        if not checkbox.isChecked():
+            return
+        painter = QPainter(checkbox)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Ask Qt's style for the actual indicator rectangle (handles RTL/layout).
+        style_option = QStyleOptionButton()
+        checkbox.initStyleOption(style_option)
+        style = checkbox.style()
+        indicator_rect = style.subElementRect(
+            style.SE_CheckBoxIndicator, style_option, checkbox
+        )
+
+        pen = QPen(QColor(255, 255, 255), 2.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        painter.setPen(pen)
+
+        center_x = indicator_rect.x() + indicator_rect.width() // 2
+        center_y = indicator_rect.y() + indicator_rect.height() // 2
+        checkmark_size = int(min(indicator_rect.width(), indicator_rect.height()) * 0.24)
+
+        # Left (short) stroke then right (long) stroke of the V.
+        x1, y1 = center_x - checkmark_size + 1, center_y - 1
+        x2, y2 = center_x - 1, center_y + checkmark_size - 1
+        x3, y3 = center_x + checkmark_size, center_y - checkmark_size + 1
+        painter.drawLine(x1, y1, x2, y2)
+        painter.drawLine(x2, y2, x3, y3)
+        painter.end()
+
+    checkbox.paintEvent = custom_paint_event
 
 
 class NumberedLayerButton(QPushButton):
@@ -396,7 +593,7 @@ class NumberedLayerButton(QPushButton):
         if is_hebrew:
             change_hide.setLayoutDirection(Qt.RightToLeft)
             change_hide.setAlignment(Qt.AlignLeft)
-        change_hide_action = QWidgetAction(self)
+        change_hide_action = QWidgetAction(context_menu)
         change_hide_action.setDefaultWidget(change_hide)
         change_hide_action.triggered.connect(lambda: layer_panel.toggle_layer_visibility(index))
         context_menu.addAction(change_hide_action)
@@ -408,7 +605,7 @@ class NumberedLayerButton(QPushButton):
         if is_hebrew:
             shadow_only_label.setLayoutDirection(Qt.RightToLeft)
             shadow_only_label.setAlignment(Qt.AlignLeft)
-        shadow_only_action = QWidgetAction(self)
+        shadow_only_action = QWidgetAction(context_menu)
         shadow_only_action.setDefaultWidget(shadow_only_label)
         shadow_only_action.triggered.connect(lambda: layer_panel.toggle_layer_shadow_only(index))
         # Add checkmark if shadow_only is enabled
@@ -424,7 +621,7 @@ class NumberedLayerButton(QPushButton):
         if is_hebrew:
             hide_shadow_label.setLayoutDirection(Qt.RightToLeft)
             hide_shadow_label.setAlignment(Qt.AlignLeft)
-        hide_shadow_action = QWidgetAction(self)
+        hide_shadow_action = QWidgetAction(context_menu)
         hide_shadow_action.setDefaultWidget(hide_shadow_label)
         hide_shadow_action.triggered.connect(lambda: layer_panel.toggle_layer_hide_shadow(index))
         # Add checkmark if hide_shadow is enabled
@@ -440,7 +637,7 @@ class NumberedLayerButton(QPushButton):
         if is_hebrew:
             edit_shadows_label.setLayoutDirection(Qt.RightToLeft)
             edit_shadows_label.setAlignment(Qt.AlignLeft)
-        edit_shadows_action = QWidgetAction(self)
+        edit_shadows_action = QWidgetAction(context_menu)
         edit_shadows_action.setDefaultWidget(edit_shadows_label)
         edit_shadows_action.triggered.connect(lambda: self.open_shadow_editor(layer_panel, index))
         context_menu.addAction(edit_shadows_action)
@@ -454,7 +651,7 @@ class NumberedLayerButton(QPushButton):
             if is_hebrew:
                 edit_label.setLayoutDirection(Qt.RightToLeft)
                 edit_label.setAlignment(Qt.AlignLeft)
-            edit_action = QWidgetAction(self)
+            edit_action = QWidgetAction(context_menu)
             edit_action.setDefaultWidget(edit_label)
             edit_action.triggered.connect(
                 lambda: layer_panel.on_edit_mask_click(context_menu, index)
@@ -466,7 +663,7 @@ class NumberedLayerButton(QPushButton):
             if is_hebrew:
                 reset_label.setLayoutDirection(Qt.RightToLeft)
                 reset_label.setAlignment(Qt.AlignLeft)
-            reset_action = QWidgetAction(self)
+            reset_action = QWidgetAction(context_menu)
             reset_action.setDefaultWidget(reset_label)
             reset_action.triggered.connect(
                 lambda: (
@@ -493,7 +690,7 @@ class NumberedLayerButton(QPushButton):
                 change_color_label.setLayoutDirection(Qt.RightToLeft)
                 change_color_label.setAlignment(Qt.AlignLeft)
 
-            change_action_color = QWidgetAction(self)
+            change_action_color = QWidgetAction(context_menu)
             change_action_color.setDefaultWidget(change_color_label)
             change_action_color.triggered.connect(self.change_color)
             context_menu.addAction(change_action_color)
@@ -504,7 +701,7 @@ class NumberedLayerButton(QPushButton):
             if is_hebrew:
                 change_stroke_label.setLayoutDirection(Qt.RightToLeft)
                 change_stroke_label.setAlignment(Qt.AlignLeft)
-            change_stroke_action = QWidgetAction(self)
+            change_stroke_action = QWidgetAction(context_menu)
             change_stroke_action.setDefaultWidget(change_stroke_label)
             change_stroke_action.triggered.connect(lambda: self.change_stroke_color(strand, layer_panel))
             context_menu.addAction(change_stroke_action)
@@ -515,7 +712,7 @@ class NumberedLayerButton(QPushButton):
             if is_hebrew:
                 change_width_label.setLayoutDirection(Qt.RightToLeft)
                 change_width_label.setAlignment(Qt.AlignLeft)
-            change_width_action = QWidgetAction(self)
+            change_width_action = QWidgetAction(context_menu)
             change_width_action.setDefaultWidget(change_width_label)
             change_width_action.triggered.connect(lambda: self.change_width(strand, layer_panel))
             context_menu.addAction(change_width_action)
@@ -526,7 +723,7 @@ class NumberedLayerButton(QPushButton):
             if is_hebrew:
                 change_layer_width_label.setLayoutDirection(Qt.RightToLeft)
                 change_layer_width_label.setAlignment(Qt.AlignLeft)
-            change_layer_width_action = QWidgetAction(self)
+            change_layer_width_action = QWidgetAction(context_menu)
             change_layer_width_action.setDefaultWidget(change_layer_width_label)
             change_layer_width_action.triggered.connect(lambda: self.change_layer_width(strand, layer_panel))
             context_menu.addAction(change_layer_width_action)
@@ -543,7 +740,7 @@ class NumberedLayerButton(QPushButton):
                     if is_hebrew:
                         reset_label.setLayoutDirection(Qt.RightToLeft)
                         reset_label.setAlignment(Qt.AlignLeft)
-                    reset_action_stroke = QWidgetAction(self)
+                    reset_action_stroke = QWidgetAction(context_menu)
                     reset_action_stroke.setDefaultWidget(reset_label)
                     reset_action_stroke.triggered.connect(self.reset_default_circle_stroke)
                     context_menu.addAction(reset_action_stroke)
@@ -555,7 +752,7 @@ class NumberedLayerButton(QPushButton):
                     if is_hebrew:
                         transparent_label.setLayoutDirection(Qt.RightToLeft)
                         transparent_label.setAlignment(Qt.AlignLeft)
-                    transparent_action = QWidgetAction(self)
+                    transparent_action = QWidgetAction(context_menu)
                     transparent_action.setDefaultWidget(transparent_label)
                     transparent_action.triggered.connect(self.set_transparent_circle_stroke)
                     context_menu.addAction(transparent_action)
@@ -606,7 +803,7 @@ class NumberedLayerButton(QPushButton):
                     line_layout.addWidget(end_line_btn)
 
                 # Embed widget in menu
-                line_action = QWidgetAction(self)
+                line_action = QWidgetAction(context_menu)
                 line_action.setDefaultWidget(line_widget)
                 context_menu.addAction(line_action)
 
@@ -675,7 +872,7 @@ class NumberedLayerButton(QPushButton):
                     )
                     arrow_layout.addWidget(end_arrow_btn)
 
-                arrow_action = QWidgetAction(self)
+                arrow_action = QWidgetAction(context_menu)
                 arrow_action.setDefaultWidget(arrow_widget)
                 context_menu.addAction(arrow_action)
 
@@ -702,7 +899,7 @@ class NumberedLayerButton(QPushButton):
             if is_hebrew:
                 full_arrow_label.setLayoutDirection(Qt.RightToLeft)
                 full_arrow_label.setAlignment(Qt.AlignLeft)
-            full_arrow_action = QWidgetAction(self)
+            full_arrow_action = QWidgetAction(context_menu)
             full_arrow_action.setDefaultWidget(full_arrow_label)
             full_arrow_action.triggered.connect(
                 lambda: (
@@ -777,7 +974,8 @@ class NumberedLayerButton(QPushButton):
 
                 texture_combo = QComboBox()
                 texture_combo.addItems([_['texture_none'], _['texture_stripes'], _['texture_dots'], _['texture_crosshatch']])
-                texture_combo.setMaximumWidth(100)
+                texture_combo.setMaximumWidth(115)
+                style_menu_combobox(texture_combo, theme, is_hebrew)
 
                 # Set current texture
                 current_texture = getattr(strand, 'arrow_texture', 'none')
@@ -805,7 +1003,8 @@ class NumberedLayerButton(QPushButton):
                     _['shaft_stripes'],
                     _['shaft_dots']
                 ])
-                shaft_combo.setMaximumWidth(100)
+                shaft_combo.setMaximumWidth(115)
+                style_menu_combobox(shaft_combo, theme, is_hebrew)
 
                 # Set current shaft style
                 current_shaft = getattr(strand, 'arrow_shaft_style', 'solid')
@@ -828,6 +1027,8 @@ class NumberedLayerButton(QPushButton):
 
                 head_checkbox = QCheckBox()
                 head_checkbox.setChecked(getattr(strand, 'arrow_head_visible', True))
+                style_menu_checkbox(head_checkbox, theme)
+                setup_menu_checkmark(head_checkbox)
                 head_checkbox.toggled.connect(lambda checked: self.set_arrow_head_visible(strand, checked, layer_panel))
 
                 head_layout.addWidget(head_label)
@@ -844,11 +1045,129 @@ class NumberedLayerButton(QPushButton):
 
                 shadow_checkbox = QCheckBox()
                 shadow_checkbox.setChecked(getattr(strand, 'arrow_casts_shadow', True))
+                style_menu_checkbox(shadow_checkbox, theme)
+                setup_menu_checkmark(shadow_checkbox)
                 shadow_checkbox.toggled.connect(lambda checked: self.set_arrow_casts_shadow(strand, checked, layer_panel))
 
                 shadow_layout.addWidget(shadow_label)
                 shadow_layout.addStretch()
                 shadow_layout.addWidget(shadow_checkbox)
+
+                # Arrow Sizes dropdown: all the numeric arrow settings from the
+                # settings dialog, editable in place with the same segmented
+                # [ - | value | + ] spin boxes.
+                sizes_layout = QHBoxLayout()
+                sizes_label = QLabel(_['arrow_sizes'] if 'arrow_sizes' in _ else 'Arrow Sizes')
+                if is_hebrew:
+                    sizes_label.setLayoutDirection(Qt.RightToLeft)
+                    sizes_label.setAlignment(Qt.AlignRight)
+                sizes_label.setStyleSheet(f"color: {'#ffffff' if theme == 'dark' else '#000000'}; padding: 5px;")
+
+                sizes_button = QToolButton()
+                sizes_button.setText(_['adjust'] if 'adjust' in _ else 'Adjust')
+                sizes_button.setPopupMode(QToolButton.InstantPopup)
+                style_menu_dropdown_button(sizes_button, theme, is_hebrew)
+
+                sizes_menu = QMenu(sizes_button)
+                sizes_menu.setStyleSheet(build_menu_stylesheet(theme))
+                sizes_panel = QWidget()
+                sizes_panel.setStyleSheet(
+                    f"background-color: {'#333333' if theme == 'dark' else '#F0F0F0'}; border-radius: 5px;")
+                sizes_panel_layout = QVBoxLayout(sizes_panel)
+                sizes_panel_layout.setContentsMargins(10, 8, 10, 8)
+                sizes_panel_layout.setSpacing(6)
+
+                # (attr, label, is_int, min, max, default) — mirrors settings_dialog.py
+                arrow_size_settings = [
+                    ('arrow_head_length',
+                     _['arrow_head_length'] if 'arrow_head_length' in _ else 'Arrow Head Length',
+                     False, 0.0, 500.0, 20.0),
+                    ('arrow_head_width',
+                     _['arrow_head_width'] if 'arrow_head_width' in _ else 'Arrow Head Width',
+                     False, 0.0, 500.0, 10.0),
+                    ('arrow_head_stroke_width',
+                     _['arrow_head_stroke_width'] if 'arrow_head_stroke_width' in _ else 'Arrow Head Stroke Width',
+                     True, 1, 30, 4),
+                    ('arrow_gap_length',
+                     _['arrow_gap_length'] if 'arrow_gap_length' in _ else 'Arrow Gap Length',
+                     False, 0.0, 1000.0, 10.0),
+                    ('arrow_line_length',
+                     _['arrow_line_length'] if 'arrow_line_length' in _ else 'Arrow Line Length',
+                     False, 0.0, 1000.0, 20.0),
+                    ('arrow_line_width',
+                     _['arrow_line_width'] if 'arrow_line_width' in _ else 'Arrow Line Width',
+                     False, 0.1, 100.0, 10.0),
+                ]
+
+                arrow_sizes_pending_save = {'dialog': None}
+
+                def _find_settings_dialog():
+                    widget = layer_panel
+                    while widget is not None:
+                        dialog = getattr(widget, 'settings_dialog', None)
+                        if dialog is not None:
+                            return dialog
+                        widget = widget.parent()
+                    return None
+
+                def _apply_arrow_size(attr, value):
+                    canvas = layer_panel.canvas
+                    setattr(canvas, attr, value)
+                    canvas.update()
+                    # Mirror into the settings dialog so its spin boxes and the
+                    # saved settings stay in sync with the menu edits.
+                    dialog = _find_settings_dialog()
+                    if dialog is not None:
+                        setattr(dialog, attr, value)
+                        dialog_spin = getattr(dialog, attr + '_spinbox', None)
+                        if dialog_spin is not None:
+                            dialog_spin.blockSignals(True)
+                            dialog_spin.setValue(value)
+                            dialog_spin.blockSignals(False)
+                        arrow_sizes_pending_save['dialog'] = dialog
+
+                for attr, size_label_text, is_int, min_v, max_v, default in arrow_size_settings:
+                    size_row = QHBoxLayout()
+                    size_row_label = QLabel(size_label_text)
+                    size_row_label.setStyleSheet(
+                        f"color: {'#ffffff' if theme == 'dark' else '#000000'}; padding: 2px; background: transparent;")
+                    size_spin = QSpinBox() if is_int else QDoubleSpinBox()
+                    size_spin.setRange(min_v, max_v)
+                    size_spin.setValue(getattr(layer_panel.canvas, attr, default))
+                    size_spin.valueChanged.connect(lambda value, a=attr: _apply_arrow_size(a, value))
+                    upgrade_spinbox(size_spin)
+                    style_segmented_spinbox(size_spin, theme, is_hebrew)
+                    if is_hebrew:
+                        size_row_label.setLayoutDirection(Qt.RightToLeft)
+                        size_row_label.setAlignment(Qt.AlignRight)
+                        size_row.addWidget(size_spin)
+                        size_row.addStretch()
+                        size_row.addWidget(size_row_label)
+                    else:
+                        size_row.addWidget(size_row_label)
+                        size_row.addStretch()
+                        size_row.addWidget(size_spin)
+                    sizes_panel_layout.addLayout(size_row)
+
+                sizes_widget_action = QWidgetAction(sizes_menu)
+                sizes_widget_action.setDefaultWidget(sizes_panel)
+                sizes_menu.addAction(sizes_widget_action)
+                sizes_button.setMenu(sizes_menu)
+
+                def _persist_arrow_sizes():
+                    dialog = arrow_sizes_pending_save.get('dialog')
+                    if dialog is not None:
+                        arrow_sizes_pending_save['dialog'] = None
+                        try:
+                            dialog.save_settings_to_file()
+                        except Exception:
+                            pass
+
+                sizes_menu.aboutToHide.connect(_persist_arrow_sizes)
+
+                sizes_layout.addWidget(sizes_label)
+                sizes_layout.addStretch()
+                sizes_layout.addWidget(sizes_button)
 
                 # Add all layouts to the main layout
                 arrow_custom_layout.addLayout(color_layout)
@@ -857,12 +1176,13 @@ class NumberedLayerButton(QPushButton):
                 arrow_custom_layout.addLayout(shaft_layout)
                 arrow_custom_layout.addLayout(head_layout)
                 arrow_custom_layout.addLayout(shadow_layout)
+                arrow_custom_layout.addLayout(sizes_layout)
 
                 arrow_custom_widget.setLayout(arrow_custom_layout)
                 arrow_custom_widget.setStyleSheet(f"background-color: {'#333333' if theme == 'dark' else '#F0F0F0'}; border-radius: 5px;")
 
                 # Add the widget to the context menu
-                arrow_custom_action = QWidgetAction(self)
+                arrow_custom_action = QWidgetAction(context_menu)
                 arrow_custom_action.setDefaultWidget(arrow_custom_widget)
                 context_menu.addAction(arrow_custom_action)
             # --- END Arrow Customization ---
@@ -901,7 +1221,7 @@ class NumberedLayerButton(QPushButton):
                 if is_hebrew:
                     close_knot_label.setLayoutDirection(Qt.RightToLeft)
                     close_knot_label.setAlignment(Qt.AlignLeft)
-                close_knot_action = QWidgetAction(self)
+                close_knot_action = QWidgetAction(context_menu)
                 close_knot_action.setDefaultWidget(close_knot_label)
                 close_knot_action.triggered.connect(
                     lambda: self.close_the_knot(strand, free_end_type, layer_panel)
@@ -937,7 +1257,7 @@ class NumberedLayerButton(QPushButton):
                     if is_hebrew:
                         restore_closing_knot_label.setLayoutDirection(Qt.RightToLeft)
                         restore_closing_knot_label.setAlignment(Qt.AlignLeft)
-                    restore_closing_knot_action = QWidgetAction(self)
+                    restore_closing_knot_action = QWidgetAction(context_menu)
                     restore_closing_knot_action.setDefaultWidget(restore_closing_knot_label)
                     restore_closing_knot_action.triggered.connect(self.reset_default_ending_stroke)
                     context_menu.addAction(restore_closing_knot_action)
@@ -948,7 +1268,7 @@ class NumberedLayerButton(QPushButton):
                     if is_hebrew:
                         transparent_closing_knot_label.setLayoutDirection(Qt.RightToLeft)
                         transparent_closing_knot_label.setAlignment(Qt.AlignLeft)
-                    transparent_closing_knot_action = QWidgetAction(self)
+                    transparent_closing_knot_action = QWidgetAction(context_menu)
                     transparent_closing_knot_action.setDefaultWidget(transparent_closing_knot_label)
                     transparent_closing_knot_action.triggered.connect(self.set_transparent_ending_edge)
                     context_menu.addAction(transparent_closing_knot_action)
@@ -987,7 +1307,7 @@ class NumberedLayerButton(QPushButton):
                 end_ext_btn.clicked.connect(lambda: (self.toggle_strand_extension_visibility(strand, 'end', layer_panel), context_menu.close()))
                 layout.addWidget(end_ext_btn)
                 # Embed the widget into the menu
-                ext_action = QWidgetAction(self)
+                ext_action = QWidgetAction(context_menu)
                 ext_action.setDefaultWidget(ext_widget)
                 context_menu.addAction(ext_action)
 
@@ -1078,7 +1398,7 @@ class NumberedLayerButton(QPushButton):
                     circle_layout.addWidget(end_circle_btn)
 
                 # Embed widget in menu
-                circle_action = QWidgetAction(self)
+                circle_action = QWidgetAction(context_menu)
                 circle_action.setDefaultWidget(circle_widget)
                 context_menu.addAction(circle_action)
 
@@ -1126,6 +1446,12 @@ class NumberedLayerButton(QPushButton):
         # Fix multi-monitor positioning by getting screen-aware global position
         global_pos = self.get_screen_aware_global_pos(pos)
         context_menu.exec_(global_pos)
+
+        # Dispose of the menu together with its QWidgetActions and embedded
+        # widgets. Without this, every right-click leaked the whole menu graph
+        # as children of the button; the accumulated stale actions eventually
+        # produced a native access violation when the next QMenu was created.
+        context_menu.deleteLater()
 
         # After menu closes, check if arrow state changed and save if needed
         if hasattr(strand, 'full_arrow_visible'):

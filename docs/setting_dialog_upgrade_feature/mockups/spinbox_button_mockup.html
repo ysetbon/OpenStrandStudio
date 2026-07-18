@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenStrand Studio — Settings Spinbox +/− Mockups (v1.109)</title>
+<style>
+  :root {
+    --page-bg: #ECECEC;
+    --page-fg: #1a1a1a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: var(--page-bg);
+    color: var(--page-fg);
+    padding: 24px;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .subtitle { color: #555; margin-bottom: 20px; font-size: 13px; }
+
+  .option-block { margin-bottom: 36px; }
+  .option-title {
+    font-size: 17px; font-weight: 600; margin-bottom: 2px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .option-tag {
+    font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
+    background: #4a6fa5; color: #fff; letter-spacing: .5px;
+  }
+  .option-desc { font-size: 13px; color: #555; margin-bottom: 12px; }
+
+  .theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 14px;
+  }
+
+  /* ============ dialog panels (mimic the Qt settings dialog) ============ */
+  .panel {
+    border-radius: 8px;
+    padding: 14px 16px 16px;
+    border: 1px solid rgba(0,0,0,.15);
+    box-shadow: 0 1px 4px rgba(0,0,0,.12);
+  }
+  .panel-caption {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .8px; opacity: .6; margin-bottom: 10px;
+  }
+  .row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+    font-size: 13px;
+  }
+  .row:last-child { margin-bottom: 0; }
+  .row .lbl { min-width: 130px; }
+  .panel[dir="rtl"] .row .lbl { min-width: 120px; text-align: right; }
+
+  /* theme: default (system-like light gray) */
+  .theme-default { background: #F0F0F0; color: #000; }
+  .theme-default .field { background: #FFFFFF; color: #000; border-color: #ADADAD; }
+  /* theme: light */
+  .theme-light { background: #FAFAFA; color: #000; }
+  .theme-light .field { background: #FFFFFF; color: #000; border-color: #CCCCCC; }
+  /* theme: dark */
+  .theme-dark { background: #2C2C2C; color: #FFF; border-color: #1e1e1e; }
+  .theme-dark .field { background: #3D3D3D; color: #FFF; border-color: #505050; }
+
+  /* ============ shared value field ============ */
+  .field {
+    border: 1px solid; border-radius: 4px;
+    font-size: 13px; text-align: center;
+    height: 28px; width: 74px;
+    outline: none;
+    font-family: inherit;
+  }
+
+  /* =====================================================================
+     OPTION A — "Angle dialog twins": separate flat − / + square buttons
+     (exact style of the Edit Strand Angles dialog buttons)
+     ===================================================================== */
+  .stepA { display: inline-flex; align-items: center; gap: 5px; }
+  .btnA {
+    min-width: 30px; height: 28px; padding: 0 6px;
+    border-radius: 3px; border: 1px solid;
+    font-size: 16px; font-weight: 600; line-height: 1;
+    cursor: pointer; user-select: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: inherit;
+  }
+  .theme-default .btnA,
+  .theme-light .btnA { background: #F0F0F0; color: #000; border-color: #BBBBBB; }
+  .theme-default .btnA:hover,
+  .theme-light .btnA:hover { background: #E0E0E0; border-color: #AAAAAA; }
+  .theme-default .btnA:active,
+  .theme-light .btnA:active { background: #D0D0D0; border-color: #999999; }
+  .theme-dark .btnA { background: #2B2B2B; color: #FFF; border-color: #777777; }
+  .theme-dark .btnA:hover { background: #3C3C3C; border-color: #999999; }
+  .theme-dark .btnA:active { background: #1C1C1C; border-color: #AAAAAA; }
+
+  /* =====================================================================
+     OPTION B — Segmented stepper: one rounded container [ − | value | + ]
+     ===================================================================== */
+  .stepB {
+    display: inline-flex; align-items: stretch;
+    border: 1px solid; border-radius: 5px; overflow: hidden;
+    height: 28px;
+  }
+  .theme-default .stepB { border-color: #ADADAD; background: #FFFFFF; }
+  .theme-light   .stepB { border-color: #CCCCCC; background: #FFFFFF; }
+  .theme-dark    .stepB { border-color: #505050; background: #3D3D3D; }
+  .stepB .field {
+    border: none; border-radius: 0; height: auto; width: 66px;
+    background: transparent; color: inherit;
+  }
+  .theme-dark .stepB .field { color: #fff; }
+  .btnB {
+    width: 30px; border: none; cursor: pointer; user-select: none;
+    font-size: 15px; font-weight: 600; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: inherit; background: transparent; color: inherit;
+  }
+  .stepB .sep { width: 1px; align-self: stretch; }
+  .theme-default .sep, .theme-light .sep { background: #D5D5D5; }
+  .theme-dark .sep { background: #505050; }
+  .theme-default .btnB { background: #F5F5F5; color: #000; }
+  .theme-light   .btnB { background: #F5F5F5; color: #000; }
+  .theme-dark    .btnB { background: #333333; color: #FFF; }
+  .theme-default .btnB:hover, .theme-light .btnB:hover { background: #E4E4E4; }
+  .theme-default .btnB:active, .theme-light .btnB:active { background: #D0D0D0; }
+  .theme-dark .btnB:hover { background: #454545; }
+  .theme-dark .btnB:active { background: #222222; }
+
+  /* =====================================================================
+     OPTION C — Compact trailing pair: field + two small +/− buttons
+     stacked vertically at the trailing edge (same footprint as QSpinBox,
+     but with clear +/− glyphs instead of tiny arrows)
+     ===================================================================== */
+  .stepC {
+    display: inline-flex; align-items: stretch; height: 28px;
+    border: 1px solid; border-radius: 4px; overflow: hidden;
+  }
+  .theme-default .stepC { border-color: #ADADAD; background: #FFF; }
+  .theme-light   .stepC { border-color: #CCCCCC; background: #FFF; }
+  .theme-dark    .stepC { border-color: #505050; background: #3D3D3D; }
+  .stepC .field {
+    border: none; border-radius: 0; height: auto; width: 66px;
+    background: transparent; color: inherit;
+  }
+  .colC { display: flex; flex-direction: column; width: 24px; }
+  [dir="ltr"] .colC { border-left: 1px solid; }
+  [dir="rtl"] .colC { border-right: 1px solid; }
+  .theme-default .colC, .theme-light .colC { border-color: #D5D5D5; }
+  .theme-dark .colC { border-color: #505050; }
+  .btnC {
+    flex: 1; border: none; cursor: pointer; user-select: none;
+    font-size: 11px; font-weight: 700; line-height: 1; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: inherit;
+  }
+  .btnC + .btnC { border-top: 1px solid; }
+  .theme-default .btnC + .btnC, .theme-light .btnC + .btnC { border-color: #D5D5D5; }
+  .theme-dark .btnC + .btnC { border-color: #505050; }
+  .theme-default .btnC, .theme-light .btnC { background: #F5F5F5; color: #000; }
+  .theme-dark .btnC { background: #333; color: #FFF; }
+  .theme-default .btnC:hover, .theme-light .btnC:hover { background: #E4E4E4; }
+  .theme-default .btnC:active, .theme-light .btnC:active { background: #D0D0D0; }
+  .theme-dark .btnC:hover { background: #454545; }
+  .theme-dark .btnC:active { background: #222; }
+
+  .note {
+    margin-top: 24px; padding: 12px 14px; background: #fff;
+    border: 1px solid #ddd; border-radius: 6px; font-size: 13px; color: #444;
+  }
+  .note b { color: #222; }
+
+  /* =====================================================================
+     SHIPPED EXTRA — "Arrow Sizes" dropdown (layer context menu)
+     ===================================================================== */
+  .dd { position: relative; display: inline-block; }
+  .dd-btn {
+    min-width: 96px; padding: 5px 26px 5px 10px;
+    border: 1px solid; border-radius: 4px;
+    font-size: 13px; text-align: left; cursor: pointer;
+    font-family: inherit; position: relative;
+  }
+  .dd-btn::after {
+    content: ""; position: absolute; right: 8px; top: 50%;
+    transform: translateY(-40%);
+    border-left: 5px solid transparent; border-right: 5px solid transparent;
+    border-top: 6px solid;
+  }
+  .theme-default .dd-btn, .theme-light .dd-btn {
+    background: #FFFFFF; color: #000; border-color: #AAAAAA;
+  }
+  .theme-default .dd-btn::after, .theme-light .dd-btn::after { border-top-color: #444; }
+  .theme-default .dd-btn:hover, .theme-light .dd-btn:hover { border-color: #777; }
+  .theme-dark .dd-btn { background: #3D3D3D; color: #FFF; border-color: #666666; }
+  .theme-dark .dd-btn::after { border-top-color: #CCC; }
+  .theme-dark .dd-btn:hover { border-color: #999; }
+  [dir="rtl"] .dd-btn { padding: 5px 10px 5px 26px; text-align: right; }
+  [dir="rtl"] .dd-btn::after { right: auto; left: 8px; }
+
+  .dd-pop {
+    display: none; position: absolute; top: calc(100% + 3px); z-index: 20;
+    border: 1px solid; border-radius: 5px; padding: 10px; min-width: 320px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  }
+  .dd.open .dd-pop { display: block; }
+  [dir="ltr"] .dd-pop { right: 0; }
+  [dir="rtl"] .dd-pop { left: 0; }
+  .theme-default .dd-pop, .theme-light .dd-pop { background: #F0F0F0; border-color: #AAAAAA; }
+  .theme-dark .dd-pop { background: #333333; border-color: #666666; }
+  .sizes-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 3px 2px; font-size: 13px;
+  }
+  .sizes-row .lbl { flex: 1; min-width: 150px; }
+  .theme-dark .sizes-row { color: #fff; }
+</style>
+</head>
+<body>
+
+<h1>Settings Dialog — Spinbox +/− Button Upgrade (v1.109)</h1>
+<div class="subtitle">
+  Three proposals for replacing the native Qt spinbox arrows across the whole settings dialog.
+  Every option is shown in the three app themes and in LTR + RTL (Hebrew).
+  Buttons are live — click or press-and-hold to repeat (same behavior as the Edit Strand Angles dialog).
+</div>
+
+<!-- ================= OPTION A ================= -->
+<div class="option-block">
+  <div class="option-title"><span class="option-tag">OPTION A</span> Angle-dialog twins — separate flat − / + buttons</div>
+  <div class="option-desc">
+    Exact visual language of the existing Edit Strand Angles buttons (flat, 3px radius, same colors/hover/pressed).
+    Buttons flank the value field: <b>[−] [value] [+]</b>, mirrored in RTL. Most consistent with what users already know.
+  </div>
+  <div class="theme-grid" data-option="A"></div>
+</div>
+
+<!-- ================= OPTION B ================= -->
+<div class="option-block">
+  <div class="option-title"><span class="option-tag">OPTION B</span> Segmented stepper — one joined control</div>
+  <div class="option-desc">
+    A single rounded container <b>[ − | value | + ]</b> with hairline separators. Reads as one control,
+    modern look, smallest visual noise. Matches the 4–5px radius of other settings controls.
+  </div>
+  <div class="theme-grid" data-option="B"></div>
+</div>
+
+<!-- ================= OPTION C ================= -->
+<div class="option-block">
+  <div class="option-title"><span class="option-tag">OPTION C</span> Compact trailing pair — stacked + / − at the field edge</div>
+  <div class="option-desc">
+    Keeps the exact footprint of today's QSpinBox (buttons at the trailing edge, mirrored to the left side in RTL),
+    but with clear <b>+</b> on top and <b>−</b> below instead of the tiny native arrows. Least layout change.
+  </div>
+  <div class="theme-grid" data-option="C"></div>
+</div>
+
+<!-- ================= SHIPPED EXTRA: ARROW SIZES DROPDOWN ================= -->
+<div class="option-block">
+  <div class="option-title"><span class="option-tag" style="background:#3e8e5a;">SHIPPED</span> Arrow Sizes dropdown — layer context menu</div>
+  <div class="option-desc">
+    Added to the arrow section of the layer right-click menu: a combo-styled <b>Arrow Sizes → Adjust</b>
+    dropdown exposing all six settings-dialog arrow numbers with the chosen Option B steppers.
+    Click <b>Adjust</b> to open the panel — values step live in the app and persist to the settings file.
+  </div>
+  <div class="theme-grid" data-option="D"></div>
+</div>
+
+<div class="note">
+  <b>Implementation note:</b> all three options can be done purely with Qt stylesheets + a small
+  <code>ThemedSpinBox</code> helper applied dialog-wide (Options A/B wrap the spinbox in a tiny widget;
+  Option C is stylesheet-only on <code>QSpinBox::up-button/down-button</code>).
+  Press-and-hold auto-repeat is native QSpinBox behavior and is kept in every option.
+  <br><b>Shipped:</b> Option B was implemented (110px control, halved value gap), plus the Arrow Sizes
+  dropdown above in the layer context menu.
+</div>
+
+<script>
+const THEMES = [
+  { cls: 'theme-default', name: 'Default theme' },
+  { cls: 'theme-light',   name: 'Light theme'   },
+  { cls: 'theme-dark',    name: 'Dark theme'    },
+];
+const ROWS_LTR = [
+  { label: 'Shadow Blur Steps:',   value: 3,     step: 1,    dec: 0 },
+  { label: 'Shadow Blur Radius:',  value: 29.99, step: 0.01, dec: 2 },
+  { label: 'Control Point Influence:', value: 1.00, step: 0.05, dec: 2 },
+];
+const ROWS_RTL = [
+  { label: 'שלבי טשטוש צל:',      value: 3,     step: 1,    dec: 0 },
+  { label: 'רדיוס טשטוש צל:',     value: 29.99, step: 0.01, dec: 2 },
+  { label: 'השפעת נקודת בקרה:',  value: 1.00,  step: 0.05, dec: 2 },
+];
+
+function makeStepper(option, row) {
+  const wrap = document.createElement('span');
+  const field = document.createElement('input');
+  field.className = 'field';
+  field.value = row.value.toFixed(row.dec);
+  let val = row.value;
+
+  const set = d => {
+    val = Math.max(0, val + d * row.step);
+    field.value = val.toFixed(row.dec);
+  };
+  const mkBtn = (cls, txt, d) => {
+    const b = document.createElement('button');
+    b.className = cls; b.textContent = txt; b.type = 'button';
+    let t=null, iv=null;
+    const start = () => { set(d); t = setTimeout(() => iv = setInterval(() => set(d), 60), 400); };
+    const stop  = () => { clearTimeout(t); clearInterval(iv); t=iv=null; };
+    b.addEventListener('mousedown', start);
+    ['mouseup','mouseleave','blur'].forEach(e => b.addEventListener(e, stop));
+    return b;
+  };
+
+  if (option === 'A') {
+    wrap.className = 'stepA';
+    wrap.append(mkBtn('btnA','−',-1), field, mkBtn('btnA','+',+1));
+  } else if (option === 'B') {
+    wrap.className = 'stepB';
+    const s1 = document.createElement('span'); s1.className = 'sep';
+    const s2 = document.createElement('span'); s2.className = 'sep';
+    wrap.append(mkBtn('btnB','−',-1), s1, field, s2, mkBtn('btnB','+',+1));
+  } else {
+    wrap.className = 'stepC';
+    const col = document.createElement('span'); col.className = 'colC';
+    col.append(mkBtn('btnC','+',+1), mkBtn('btnC','−',-1));
+    wrap.append(field, col);
+  }
+  return wrap;
+}
+
+function makePanel(option, theme, rtl) {
+  const p = document.createElement('div');
+  p.className = 'panel ' + theme.cls;
+  p.dir = rtl ? 'rtl' : 'ltr';
+  const cap = document.createElement('div');
+  cap.className = 'panel-caption';
+  cap.textContent = theme.name + (rtl ? ' · RTL (עברית)' : ' · LTR');
+  p.append(cap);
+  (rtl ? ROWS_RTL : ROWS_LTR).forEach(row => {
+    const r = document.createElement('div'); r.className = 'row';
+    const l = document.createElement('span'); l.className = 'lbl'; l.textContent = row.label;
+    r.append(l, makeStepper(option, row));
+    p.append(r);
+  });
+  return p;
+}
+
+// --- Shipped extra: Arrow Sizes dropdown (layer context menu) ---
+const SIZES_LTR = {
+  row: 'Arrow Sizes', btn: 'Adjust',
+  items: [
+    ['Arrow Head Length', 20.00, 2], ['Arrow Head Width', 10.00, 2],
+    ['Arrow Head Stroke Width', 4, 0], ['Arrow Gap Length', 10.00, 2],
+    ['Arrow Line Length', 20.00, 2], ['Arrow Line Width', 10.00, 2],
+  ],
+};
+const SIZES_RTL = {
+  row: 'גדלי החץ', btn: 'התאמה',
+  items: [
+    ['אורך ראש החץ', 20.00, 2], ['רוחב ראש החץ', 10.00, 2],
+    ['עובי קו ראש החץ', 4, 0], ['אורך הרווח', 10.00, 2],
+    ['אורך גוף החץ', 20.00, 2], ['עובי גוף החץ', 10.00, 2],
+  ],
+};
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.dd'))
+    document.querySelectorAll('.dd.open').forEach(d => d.classList.remove('open'));
+});
+
+function makeSizesPanel(theme, rtl) {
+  const t = rtl ? SIZES_RTL : SIZES_LTR;
+  const p = document.createElement('div');
+  p.className = 'panel ' + theme.cls;
+  p.dir = rtl ? 'rtl' : 'ltr';
+  const cap = document.createElement('div');
+  cap.className = 'panel-caption';
+  cap.textContent = theme.name + (rtl ? ' · RTL (עברית)' : ' · LTR');
+  p.append(cap);
+
+  const row = document.createElement('div');
+  row.className = 'row';
+  const lbl = document.createElement('span');
+  lbl.className = 'lbl';
+  lbl.textContent = t.row;
+
+  const dd = document.createElement('span');
+  dd.className = 'dd';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'dd-btn';
+  btn.textContent = t.btn;
+  const pop = document.createElement('div');
+  pop.className = 'dd-pop';
+  t.items.forEach(([label, value, dec]) => {
+    const r = document.createElement('div');
+    r.className = 'sizes-row';
+    const l = document.createElement('span');
+    l.className = 'lbl';
+    l.textContent = label;
+    r.append(l, makeStepper('B', {value: value, step: 1, dec: dec}));
+    pop.append(r);
+  });
+  pop.onclick = e => e.stopPropagation();
+  btn.onclick = e => {
+    e.stopPropagation();
+    document.querySelectorAll('.dd.open').forEach(d => { if (d !== dd) d.classList.remove('open'); });
+    dd.classList.toggle('open');
+  };
+  dd.append(btn, pop);
+
+  row.append(lbl, dd);
+  p.append(row);
+  return p;
+}
+
+document.querySelectorAll('.theme-grid').forEach(grid => {
+  const opt = grid.dataset.option;
+  THEMES.forEach(theme => {
+    if (opt === 'D') {
+      grid.append(makeSizesPanel(theme, false));
+      grid.append(makeSizesPanel(theme, true));
+    } else {
+      grid.append(makePanel(opt, theme, false));
+      grid.append(makePanel(opt, theme, true));
+    }
+  });
+});
+</script>
+</body>
+</html>

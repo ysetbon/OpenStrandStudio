@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copy / Paste Strand Data — Product Concept (OLD)</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1c1e21;
+    --muted: #5c6370;
+    --accent: #7c4dbe;
+    --accent-soft: #f3edfb;
+    --border: #e3e0ea;
+    --card: #faf9fc;
+    --code-bg: #f4f2f8;
+    --table-head: #f3edfb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17161b;
+      --fg: #e8e6ee;
+      --muted: #a29fb0;
+      --accent: #b18ae8;
+      --accent-soft: #2a2434;
+      --border: #322e3d;
+      --card: #201d27;
+      --code-bg: #262230;
+      --table-head: #2a2434;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.65;
+    font-size: 16px;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+
+  header.hero {
+    border-bottom: 3px solid var(--accent);
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+  }
+  h1 { font-size: 2.1rem; margin: 0 0 .5rem; line-height: 1.2; }
+  .status-badge {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 600;
+    padding: .2rem .8rem;
+    margin-bottom: .8rem;
+  }
+  .hero p.lede { color: var(--muted); margin: .3rem 0 0; }
+
+  h2 {
+    font-size: 1.45rem;
+    margin: 3rem 0 1rem;
+    padding-bottom: .35rem;
+    border-bottom: 1px solid var(--border);
+  }
+  h2 .num { color: var(--accent); margin-right: .4rem; }
+  h3 { font-size: 1.1rem; margin: 2rem 0 .8rem; }
+
+  p code, li code, td code, th code {
+    background: var(--code-bg);
+    border-radius: 4px;
+    padding: .1em .35em;
+    font-family: Consolas, "Cascadia Code", monospace;
+    font-size: .88em;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    font-family: Consolas, "Cascadia Code", monospace;
+    font-size: .85rem;
+    line-height: 1.55;
+  }
+
+  figure {
+    margin: 1.6rem 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+  }
+  figure img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+  }
+  figcaption {
+    margin-top: .7rem;
+    font-size: .85rem;
+    color: var(--muted);
+  }
+  figcaption b { color: var(--fg); }
+
+  .tablebox { overflow-x: auto; margin: 1.2rem 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: .9rem;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: .5rem .7rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: var(--table-head); }
+  tbody tr:nth-child(even) { background: var(--card); }
+
+  ul, ol { padding-left: 1.4rem; }
+  li { margin: .35rem 0; }
+
+  .callout {
+    background: var(--accent-soft);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: .9rem 1.2rem;
+    margin: 1.2rem 0;
+  }
+  .callout p { margin: .4rem 0; }
+
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin: 1.4rem 0;
+  }
+  .gallery figure { margin: 0; }
+
+  .toc {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.4rem;
+    margin: 1.5rem 0 0;
+  }
+  .toc strong { display: block; margin-bottom: .4rem; }
+  .toc ol { margin: 0; columns: 2; column-gap: 2rem; }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  @media (max-width: 640px) { .toc ol { columns: 1; } }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: .85rem;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="status-badge">OLD VERSION — superseded by copy_paste_strand_data.html (Option A + multi-select)</div>
+  <h1>Copy / Paste Strand Data</h1>
+  <p class="lede">Product concept for OpenStrand Studio — a selective copy dropdown on the numbered
+  layer button, and an angle-aware paste onto other layers via the layer panel.</p>
+  <div class="callout">
+    <p><b>The UI in the mockups is the app's real UI</b>: <code>tools/render_ui_qt.py</code> runs the
+    actual <code>NumberedLayerButton.show_context_menu</code> code path offscreen with real
+    <code>Strand</code>&nbsp;/&nbsp;<code>MaskedStrand</code> objects and screenshots the menus it builds;
+    the proposed additions are built from the app's own <code>HoverLabel</code> class, exact menu
+    stylesheet, and the same embedded-widget pattern as the existing Arrow Customization block.
+    The raw UI captures live in <code>mockups/qt/</code> (gallery at the bottom of this page).</p>
+  </div>
+  <nav class="toc">
+    <strong>Contents</strong>
+    <ol>
+      <li><a href="#summary">Summary</a></li>
+      <li><a href="#what-can-be-copied">What can be copied</a></li>
+      <li><a href="#copying">Copying — the layer-button menu</a></li>
+      <li><a href="#pasting">Pasting — via the layer panel</a></li>
+      <li><a href="#indicators">Indicators &amp; ending a copy — 3 options</a></li>
+      <li><a href="#semantics">Paste semantics (anchor &amp; angle)</a></li>
+      <li><a href="#edge-cases">Edge cases &amp; rules</a></li>
+      <li><a href="#translations">Translations</a></li>
+      <li><a href="#future">Open questions / future ideas</a></li>
+      <li><a href="#pointers">Implementation pointers</a></li>
+      <li><a href="#qt-gallery">Raw UI captures (mockups/qt)</a></li>
+    </ol>
+  </nav>
+</header>
+
+<h2 id="summary">Summary</h2>
+<p>A new <b>Copy Strand Data</b> option on the numbered layer button lets the user pick exactly
+<i>which</i> pieces of a strand to copy — kept deliberately to the <b>six essentials</b>:
+Start Point, End Point, Control Points (curve shape incl. bias), Width (incl. stroke
+width), Strand Color, and Stroke Color. The menu shows only a single
+<b>Copy Strand Data ▾</b> row; pressing its dropdown arrow expands the panel of toggles
+(with a <b>Select All</b> master toggle) inline in the menu, in the same style as the
+existing Arrow Customization panel. Until the dropdown is pressed, none of the detail
+toggles are visible.</p>
+
+<p>After copying, right-clicking <b>another layer's numbered button in the layer panel</b> (a
+regular strand or an attached strand — never a masked layer) shows that layer's normal
+context menu plus a new <b>Paste Copied Data ▾</b> dropdown row. Expanding it reveals two
+placement choices — clicking one pastes immediately and closes the menu, and the clipboard
+survives for further pastes until the next Copy:</p>
+<ul>
+  <li><b>Angle from Start Point</b> — the copied geometry is re-anchored at the target's start
+  point and rotated to the target's own baseline angle measured from its start.</li>
+  <li><b>Angle from End Point</b> — same, but anchored and angle-matched at the target's end point.</li>
+</ul>
+<p>Non-geometric properties (colors, widths…) are simply applied as-is. While a copy is
+active, the layer panel itself can also show it — a badge on the source layer, quick
+⇤ / ⇥ paste controls on eligible layers, and an explicit way to finish the copy; three
+candidate designs are compared in <a href="#indicators">the indicators section</a>.</p>
+
+<figure>
+  <img src="mockups/05_workflow.png" alt="End-to-end workflow: copy from the source layer's button, paste via the target layer's button in the layer panel">
+  <figcaption><b>Workflow overview</b> — expand <code>Copy Strand Data ▾</code> on the source layer's button, then right-click target layers in the layer panel and paste with an anchor choice; the clipboard survives for repeated pastes.</figcaption>
+</figure>
+
+<h2 id="what-can-be-copied"><span class="num">1.</span>What can be copied</h2>
+<p>The panel deliberately stays short — <b>just the six essentials</b>, the things you reach
+for when making one strand look like another. Every toggle maps to real strand attributes
+(<code>src/strand.py</code>), and the set mirrors what the app already saves to JSON
+(<code>serialize_strand</code>, <code>src/save_load_manager.py:109</code>) and what group duplication
+already copies in memory (<code>GroupPanel.copy_strand_properties</code>, <code>src/group_layers.py:3217</code>).</p>
+
+<figure>
+  <img src="mockups/01_strand_anatomy.png" alt="Anatomy of a strand: endpoints, control points, bias controls, widths and colors">
+  <figcaption><b>Strand anatomy</b> — the copyable pieces of a strand.</figcaption>
+</figure>
+
+<div class="tablebox">
+<table>
+  <thead><tr><th>Toggle (panel label)</th><th>Strand attributes</th><th>Geometric?</th></tr></thead>
+  <tbody>
+    <tr><td>Start Point</td><td><code>start</code></td><td>yes</td></tr>
+    <tr><td>End Point</td><td><code>end</code></td><td>yes</td></tr>
+    <tr><td>Control Points</td><td><code>control_point1</code>, <code>control_point_center</code> (+ <code>control_point_center_locked</code>, <code>triangle_has_moved</code>), <code>control_point2</code> (+ <code>control_point2_shown</code>, <code>control_point2_activated</code>), <code>bias_control.triangle_bias</code>, <code>.circle_bias</code>, <code>.triangle_position</code>, <code>.circle_position</code></td><td>points yes, bias values no</td></tr>
+    <tr><td>Width</td><td><code>width</code>, <code>stroke_width</code></td><td>no</td></tr>
+    <tr><td>Strand Color</td><td><code>color</code></td><td>no</td></tr>
+    <tr><td>Stroke Color</td><td><code>stroke_color</code></td><td>no</td></tr>
+  </tbody>
+</table>
+</div>
+
+<ul>
+  <li><b>Angle needs no toggle</b> — a strand's baseline angle is defined by its endpoints,
+  and pasting re-applies it through the anchor choice (section 4). Copying Start/End
+  carries the angle with it.</li>
+  <li><b>Control Points is one toggle</b> covering all three control points <i>and</i> the bias
+  controls — users think "the curve's shape", not five separate handles.</li>
+  <li>All six toggles are <b>on by default</b>; the last-used state is remembered for the session.</li>
+  <li>Everything else the app can serialize (shadow color, circle stroke colors, arrow
+  settings, line &amp; dash visibility, end caps, curve tuning) is deliberately <b>not</b> in
+  the v1 panel — see section 7 for a possible "Advanced…" expansion.</li>
+</ul>
+
+<p>The "Geometric?" column matters at paste time: only geometric values go through the
+anchor + rotation mapping (section 4); everything else is assigned directly.</p>
+
+<h2 id="copying"><span class="num">2.</span>Copying — the layer-number-button menu</h2>
+<p>Right-click the numbered layer button of the source strand. The menu for a regular
+strand today contains, in order (all rows are <code>HoverLabel</code> widget-actions or embedded
+label+button rows, 8pt font, 35px min row height, light theme <code>#F0F0F0</code>/<code>#000000</code> with
+inverted hover, dark theme mirrored — <code>src/numbered_layer_button.py:243-286</code>):</p>
+<ol>
+  <li><code>Hide Layer</code> / <code>Show Layer</code></li>
+  <li><code>Shadow Only</code> &nbsp;·&nbsp; 3. <code>Hide Shadow</code> &nbsp;·&nbsp; 4. <code>Edit Shadows</code></li>
+  <li value="5"><code>Change Color</code> · <code>Change Stroke Color</code> · <code>Change Width</code> · <code>Change Width (This Layer Only)</code></li>
+  <li><code>Unfold Start Edge</code> / <code>Fold Over Start Edge</code> (circle-stroke transparency toggle)</li>
+  <li><code>Line</code> row (<code>Hide/Show Start Line</code>, <code>Hide/Show End Line</code>)</li>
+  <li><code>Arrow</code> row (<code>Show/Hide Start Arrow</code>, <code>Show/Hide End Arrow</code>)</li>
+  <li><code>Show Full Arrow</code> / <code>Hide Full Arrow</code> (+ the Arrow Customization block when the full arrow is on)</li>
+  <li><code>Dash</code> row (<code>Show/Hide Start Dash</code>, <code>Show/Hide End Dash</code>)</li>
+  <li>situational: <code>Circle</code> row, <code>Close the Knot</code>, closing-knot stroke entries</li>
+</ol>
+<p>The proposal appends one separator + a single <b>Copy Strand Data ▾</b> row. The row is
+<b>collapsed by default</b> — the toggle panel is not visible when the menu opens. Pressing
+the row's dropdown arrow expands the panel inline (embedded exactly like the Arrow
+Customization block); pressing it again collapses it back to the single row. The mockup
+shows all three states: the real menu as the app builds it today (left), the proposed
+menu as it <b>opens — collapsed</b>, with only the <code>Copy Strand Data ▾</code> row added
+(middle), and the same menu <b>after pressing the ▾ dropdown</b> — expanded (right):</p>
+
+<figure>
+  <img src="mockups/02_copy_menu_toggles.png" alt="Today's menu, the proposed collapsed Copy Strand Data row, and the expanded toggle panel after pressing the dropdown">
+  <figcaption><b>Copy menu</b> — today's real menu (left) → opens with just the collapsed <code>Copy Strand Data ▾</code> row (middle) → the toggle panel after pressing the ▾ dropdown (right).</figcaption>
+</figure>
+
+<h3>Behavior details</h3>
+<ul>
+  <li><b>Collapsed by default</b>: opening the context menu shows only the <code>Copy Strand Data ▾</code>
+  row (a <code>HoverLabel</code> row like every other entry, with a dropdown arrow on its
+  trailing side). Clicking the row toggles the panel open/closed — the same
+  expand-inside-the-menu behavior the Arrow Customization block uses when
+  <code>Show Full Arrow</code> is enabled. The menu stays open while expanding/collapsing.</li>
+  <li>The expanded/collapsed state resets to <b>collapsed</b> every time the menu is opened.</li>
+  <li><b>Select All</b> is a tri-state master toggle, exactly like the global-toggle rows already
+  used in the Group Shadow editor (<code>src/group_shadow_editor_dialog.py:283-298</code>):
+  clicking it while mixed selects everything; clicking again clears everything; it shows
+  the indeterminate mark while only some toggles are on.</li>
+  <li>The panel is embedded in the context menu the same way the existing <b>Arrow
+  Customization</b> block is (a <code>QWidgetAction</code> holding a <code>QWidget</code> with a <code>QVBoxLayout</code>
+  of label-left / control-right rows, panel background <code>#F0F0F0</code> light / <code>#333333</code> dark,
+  <code>border-radius: 5px</code> — <code>src/numbered_layer_button.py:617-769</code>), so it inherits the
+  app's menu look-and-feel, theming, and Hebrew RTL handling for free.</li>
+  <li>The <b>Copy (N)</b> button sits at the bottom of the expanded panel; it snapshots the
+  selected values into an in-memory clipboard and closes the menu. The button is
+  disabled when nothing is selected.</li>
+  <li>Copy is offered on <b>regular strands and attached strands</b>. For masked layers the
+  entry is not added in v1 (same <code>isinstance(strand, MaskedStrand)</code> branch that already
+  gives masks their reduced menu — they have no control points and their geometry is
+  derived from the two masked layers, <code>src/masked_strand.py</code>).</li>
+</ul>
+
+<h3>Clipboard model</h3>
+<ul>
+  <li>One application-level clipboard slot (e.g. <code>canvas.strand_clipboard</code>), overwritten by
+  the next copy. It stores plain data — fresh <code>QPointF</code> / <code>QColor</code> copies plus floats and
+  bools, never live object references (the same rule <code>copy_strand_properties</code> follows;
+  Qt objects must not be <code>deepcopy</code>-ed).</li>
+  <li>The snapshot also records the source's <code>layer_name</code> (for the "Clipboard: N properties
+  from 1_2" hint) and the source's start→end baseline angles needed for pasting.</li>
+  <li>Because it is a snapshot, deleting or editing the source strand afterwards does not
+  affect what will be pasted. The clipboard lives for the session; persisting it into the
+  saved project file is a possible follow-up (section 7).</li>
+</ul>
+
+<h2 id="pasting"><span class="num">3.</span>Pasting — right-click the target layer in the layer panel</h2>
+<p>With something in the clipboard, right-clicking <b>another layer's numbered button in the
+layer panel</b> shows that layer's <b>normal context menu — every existing entry unchanged —</b>
+plus one new row appended at the bottom: <b>Paste Copied Data ▾</b>.</p>
+<p>Like the copy row, it is a <b>dropdown</b>: collapsed when the menu opens, and pressing it
+expands inline to show the dimmed clipboard hint ("6 properties from 1_2") and the two
+anchor choices — <b>Angle from Start Point</b> / <b>Angle from End Point</b>. Clicking a
+choice <b>applies the paste immediately and closes the menu</b>:</p>
+
+<figure>
+  <img src="mockups/03_paste_context_menu.png" alt="Paste Copied Data context menu with the two anchor options and the clipboard hint">
+  <figcaption><b>Paste via the layer panel</b> — the target layer's full normal menu gains a collapsed <code>Paste Copied Data ▾</code> row; pressing ▾ reveals the clipboard hint and the two anchor choices, and clicking one pastes and closes the menu. Masked layers keep their reduced menu, without a paste entry.</figcaption>
+</figure>
+
+<ul>
+  <li>The paste menu rows use the app's <code>HoverLabel</code> + exact menu stylesheet; the dimmed
+  clipboard hint row is a non-interactive label, like the disabled-look rows elsewhere.</li>
+  <li><b>Eligible targets:</b> <code>Strand</code> and <code>AttachedStrand</code>. <b><code>MaskedStrand</code> never shows the
+  entry</b> (same <code>isinstance(strand, MaskedStrand)</code> gate the menu already uses at
+  <code>src/numbered_layer_button.py:217</code>). The mockup shows the masked layer's real menu of
+  today (Hide Layer / Shadow Only / Hide Shadow / Edit Shadows / Edit Mask / Reset Mask)
+  — the paste entry simply never joins it.</li>
+  <li>The entry lives <b>only in the layer panel</b>: it is added to the numbered layer
+  button's existing context menu (same menu the copy entry lives in). There is <b>no
+  canvas context menu</b> — right-clicking a strand on the canvas is unchanged.</li>
+  <li>The entry is disabled/hidden when the clipboard is empty, and on the source strand
+  itself it is allowed (pasting onto the source is harmless — it re-applies the data).</li>
+  <li>A dimmed line under the entry shows what is in the clipboard
+  ("Clipboard: 6 properties from 1_2").</li>
+  <li><b>Pasting does not consume the clipboard.</b> After one paste you can right-click the
+  next layer and paste again — onto as many layers as you like, mixing the two anchor
+  choices freely. The snapshot is replaced only when you press <b>Copy</b> again on some
+  strand (there is exactly one clipboard slot, section 2).</li>
+</ul>
+
+<h3 id="indicators">Layer-panel indicators &amp; ending a copy — three UI options (open decision)</h3>
+<p>While a copy is active the layer panel itself should show it: the source layer is
+visibly "the copied one", eligible targets offer one-click pasting, and there is an
+explicit way to <b>finish</b> the copy. Three candidate designs — v1 picks one:</p>
+
+<h4>Option A — corner badge + hover paste icons (lightest)</h4>
+<pre>
+ source (1_2)                             eligible target (2_1, on hover)
+┌───────────────────────────┐            ┌───────────────────────────┐
+│ (🔒)          1_2    [📋] │            │ (🔒)        2_1   [⇤] [⇥] │
+└───────────────────────────┘            └───────────────────────────┘
+  copy badge, top-right corner             two paste icons appear on
+  (the padlock toggle sits                 hover only:  ⇤ = Angle from
+  vertically centred on the                Start,  ⇥ = Angle from End
+  LEFT, so no clash)                       — one click pastes instantly
+</pre>
+<ul>
+  <li>The badge sits in the top corner on the side <b>opposite the padlock toggle</b> (the
+  padlock is vertically centred on the left in LTR — <code>lock_button_rect</code>,
+  <code>src/numbered_layer_button.py:1120</code>), so lock mode and the copy badge can show
+  at the same time without interfering.</li>
+  <li>Clicking the badge opens a tiny popup: "6 properties copied · <b>Clear ✕</b>" —
+  clearing <b>ends the copy</b>: the badge and every paste icon disappear.</li>
+  <li>The ⇤ / ⇥ icons appear only on hover, and never on masked or locked layers.</li>
+  <li>Pros: no new chrome, everything happens right on the buttons. Cons: hover-only
+  icons are less discoverable; small click targets.</li>
+</ul>
+
+<h4>Option B — "Paste mode", the Lock-mode pattern (most guided)</h4>
+<pre>
+┌─ Layer Panel ─────────────────────────────────┐
+│ 📋 Pasting from 1_2 (6 properties)     [Done] │  ← mode banner
+├───────────────────────────────────────────────┤
+│  1_1      [ ⇤ from start ] [ ⇥ from end ]     │
+│  1_2      ◾ source — tinted + 📋 overlay      │
+│  1_3      [ ⇤ from start ] [ ⇥ from end ]     │
+│  2_1      [ ⇤ from start ] [ ⇥ from end ]     │
+│  1_2_2_1  (masked — no paste controls)        │
+└───────────────────────────────────────────────┘
+</pre>
+<ul>
+  <li>Pressing <b>Copy</b> flips the panel into a dedicated <b>paste mode</b> — the same
+  pattern lock mode already uses (a panel-wide mode that changes what the buttons show
+  and do; users know it from the Button Guide's mode icons).</li>
+  <li>Every click on ⇤ / ⇥ pastes onto that layer, repeatably. <b>Done</b> (or <code>Esc</code>,
+  or starting a new copy) leaves the mode; the clipboard itself survives, so the
+  context-menu paste keeps working afterwards.</li>
+  <li>Pros: most discoverable, explicit finish button, big click targets. Cons: modal —
+  the buttons' normal actions are unavailable until Done.</li>
+</ul>
+
+<h4>Option C — clipboard bar in the multi-select area (most powerful)</h4>
+<pre>
+┌─ Layer Panel ──────────────────────────────────┐
+│ [multi-select strip]                           │
+│ 📋 1_2 · 6 properties   [⇤ Paste] [⇥ Paste] ✕  │  ← clipboard bar docks here
+├────────────────────────────────────────────────┤
+│  layer buttons stay completely clean           │
+└────────────────────────────────────────────────┘
+</pre>
+<ul>
+  <li>No icons on the buttons at all. While the clipboard is non-empty, a <b>clipboard
+  bar</b> docks into the panel's multi-select area, naming the source and the property
+  count.</li>
+  <li><b>⇤ Paste / ⇥ Paste</b> apply to the <b>currently selected layer(s)</b> — with
+  multi-select on, one click pastes onto <i>all</i> selected layers at once, which
+  delivers the "paste onto multiple strands" future idea (section 7) for free.</li>
+  <li><b>✕</b> clears the clipboard — that <i>is</i> the "finish copy" action; the bar
+  disappears.</li>
+  <li>Pros: batch paste, zero clutter on the buttons, reuses the multi-select area.
+  Cons: indirect (select first, then paste); the source layer itself carries no mark —
+  the bar names it instead.</li>
+</ul>
+
+<p>Rules shared by all three: indicators exist only while the clipboard is non-empty;
+"finishing" a copy simply clears the single clipboard slot; and the context-menu paste
+(above) keeps working regardless of which option ships.</p>
+<p><b>Recommendation:</b> Option C fits the panel best and matches the multi-select idea —
+and it scales to many layers. If per-layer one-click pasting matters more than batch
+pasting, Option B's explicit mode is the more discoverable choice; Option A is the
+minimal fallback.</p>
+
+<h2 id="semantics"><span class="num">4.</span>Paste semantics — "angle from start" vs "angle from end"</h2>
+<p>Style properties (widths, colors, arrows, visibility…) are assigned directly. Geometry is
+mapped through the chosen <b>anchor</b>:</p>
+
+<figure>
+  <img src="mockups/04_paste_anchor_semantics.png" alt="Diagram of the anchor plus rotation mapping for both anchor choices">
+  <figcaption><b>Anchor semantics</b> — the copied shape is translated to the target's anchor and rotated by the difference between the two baseline angles. No scaling.</figcaption>
+</figure>
+
+<p>Definition (rotation + translation, <b>no scaling</b> — copied distances are preserved):</p>
+<pre>source frame:  origin  A_s = source.start          (or source.end for "from end")
+               angle   θ_s = atan2(other_end − A_s)     # source baseline angle
+target frame:  origin  A_t = target.start          (or target.end)
+               angle   θ_t = atan2(other_end − A_t)     # target baseline angle
+Δθ = θ_t − θ_s
+
+pasted(P) = A_t + R(Δθ) · (P − A_s)      for every copied geometric point P</pre>
+
+<p><code>R(Δθ)</code> is the 2-D rotation matrix; the angle math is the same
+<code>math.degrees(math.atan2(dy, dx))</code> used by <code>AngleAdjustMode.calculate_angle</code>
+(<code>src/angle_adjust_mode.py:632-635</code>), and the point rotation is the same operation as
+<code>rotate_point_around_pivot</code> (<code>src/angle_adjust_mode.py:402</code>).</p>
+
+<p>Consequences the user should expect:</p>
+<ul>
+  <li>The <b>anchor point stays put</b> (star in the mockup). The strand's other end moves to
+  wherever the copied shape puts it — if the source was longer, the target becomes longer.</li>
+  <li>The copied curve keeps its shape but is rotated so it "flows" along the target's own
+  direction at the anchor.</li>
+  <li>Pasting with <b>Angle from End Point</b> mirrors the flow: offsets are measured from the
+  source's end and re-applied from the target's end.</li>
+</ul>
+
+<h3>Interaction between toggles at paste time</h3>
+<div class="tablebox">
+<table>
+  <thead><tr><th>Clipboard contents</th><th>Effect on target</th></tr></thead>
+  <tbody>
+    <tr><td>Both endpoints + control points</td><td>Full shape replacement, anchored &amp; rotated as above.</td></tr>
+    <tr><td>Control points only (endpoints not copied)</td><td>Target keeps both of its endpoints; the copied control-point <i>offsets</i> (from the source anchor, rotated by Δθ) are applied, reshaping the curve between the existing endpoints.</td></tr>
+    <tr><td>Endpoints only</td><td>Target becomes the copied baseline (anchored/rotated); its control points are re-derived the way the app does for a fresh strand.</td></tr>
+    <tr><td>Control Points — bias parts</td><td>Bias <i>values</i> (<code>triangle_bias</code>, <code>circle_bias</code>) copy as-is; bias <i>positions</i> go through the anchor mapping like any other point.</td></tr>
+    <tr><td>Only non-geometric toggles</td><td>Anchor choice is irrelevant; both choices apply the same result (the expanded dropdown may then show a single "Paste" action instead of two).</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Attached-strand targets</h3>
+<p>An <code>AttachedStrand</code>'s start is glued to its parent (it stores <code>angle</code> + <code>length</code> and
+recomputes <code>end</code> from them, <code>src/attached_strand.py:34-35, 310-313</code>), so:</p>
+<ul>
+  <li>The <b>Start Point toggle is ignored</b> for attached targets — the start cannot leave the
+  parent. "Angle from Start Point" therefore behaves most naturally for them.</li>
+  <li>After pasting, the attached strand's <code>angle</code> / <code>length</code> are recomputed from the new
+  geometry (<code>atan2</code>, as in <code>src/attached_strand.py:328-330</code>) so later parent moves keep
+  working correctly.</li>
+  <li>Strands attached <b>to the target</b> stay attached: after the paste the usual
+  attachment/knot update path runs so children follow the moved end, exactly as they do
+  after an angle-adjust rotation (<code>rotate_attached_strand</code>, <code>src/angle_adjust_mode.py:494</code>).</li>
+</ul>
+
+<h3>Undo / redo</h3>
+<p>One paste = <b>one undo step</b> (a single state snapshot through the existing
+undo/redo manager), regardless of how many properties were applied. Copying is not an
+undoable action (it changes no document state).</p>
+
+<h2 id="edge-cases"><span class="num">5.</span>Edge cases &amp; rules</h2>
+<ul>
+  <li><b>Masked layers</b> (<code>MaskedStrand</code>): no copy entry, no paste entry (v1). Their geometry
+  is derived from the two strands they mask and they have no control points.</li>
+  <li><b>Hidden / locked layers</b>: copying from a hidden strand is allowed (data is data);
+  pasting onto a locked layer is blocked with the usual locked-layer feedback.</li>
+  <li><b>Empty clipboard</b>: paste entries are hidden (or shown disabled with a hint).</li>
+  <li><b>Degenerate baseline</b>: if a strand's start and end coincide, its baseline angle is
+  undefined — fall back to Δθ = 0 (translation only) and log it.</li>
+  <li><b><code>control_point2_shown</code> / <code>control_point2_activated</code> / <code>triangle_has_moved</code></b> travel
+  with the Control Points toggle so the pasted curve renders exactly like the
+  source (these flags gate how the app draws/uses the points).</li>
+  <li><b>Bias positions of <code>None</code></b> (never dragged): copy the <code>None</code>; the app will lay the
+  bias controls out on the new curve as it does for a fresh strand.</li>
+  <li><b>Knot/attachment bookkeeping is never copied</b>: <code>layer_name</code>, <code>set_number</code>,
+  <code>attached_strands</code>, <code>knot_connections</code>, <code>attachment_side</code>, parent references stay
+  untouched — pasting restyles/reshapes the target, it never rewires the diagram
+  (the same exclusions <code>copy_strand_properties</code> and <code>serialize_strand</code> make).</li>
+</ul>
+
+<h2 id="translations"><span class="num">6.</span>Translations</h2>
+<p>New strings needed (added to <code>src/translations.py</code>, which already has <code>select_all</code> /
+<code>deselect_all</code> entries): "Copy Strand Data", "Paste Copied Data", "Angle from Start
+Point", "Angle from End Point", "Select All", the six toggle labels, and the clipboard
+hint ("N properties from X") — plus, once an indicator option is chosen (see the
+indicators section), its strings ("Pasting from…", "Done", "Clear", "Paste"). RTL
+layouts follow the existing menu handling.</p>
+
+<h2 id="future"><span class="num">7.</span>Open questions / future ideas (not in v1)</h2>
+<ol>
+  <li><b>Fit mode</b>: an optional scaling variant that also scales copied offsets so the free
+  end lands exactly on the target's old end (shape adapts to the target's length).</li>
+  <li><b>Paste onto multiple selected strands</b> in one action.</li>
+  <li><b>Persist the clipboard</b> in the project JSON so copy/paste survives restarts.</li>
+  <li><b>Named presets</b>: save a toggle combination ("colors only", "shape only") for reuse.</li>
+  <li><b>Copy from masked layers</b> (styles only — colors/widths — since geometry is derived).</li>
+  <li><b>Advanced… expander</b>: a second, collapsed "Advanced" section in the panel exposing
+  the rest of the serializable attributes — shadow color, circle stroke colors, arrow
+  settings, line &amp; dash visibility, end caps, curve tuning.</li>
+</ol>
+
+<h2 id="pointers"><span class="num">8.</span>Implementation pointers (for the eventual code change)</h2>
+<div class="tablebox">
+<table>
+  <thead><tr><th>Concern</th><th>Existing precedent</th></tr></thead>
+  <tbody>
+    <tr><td>Menu entry + embedded toggle panel</td><td><code>NumberedLayerButton.show_context_menu</code> (<code>src/numbered_layer_button.py:175</code>); Arrow Customization <code>QWidgetAction</code> panel (<code>:617+</code>) with <code>QComboBox</code>/<code>QCheckBox</code></td></tr>
+    <tr><td>Masked-layer gating</td><td><code>isinstance(strand, MaskedStrand)</code> branch (<code>src/numbered_layer_button.py:217, 350, 386</code>)</td></tr>
+    <tr><td>Select-All master toggle</td><td><code>GroupShadowEditorDialog._toggle_all_*</code> (<code>src/group_shadow_editor_dialog.py:283-398</code>)</td></tr>
+    <tr><td>Property snapshot / apply without <code>deepcopy</code></td><td><code>GroupPanel.copy_strand_properties</code> (<code>src/group_layers.py:3217-3359</code>) — builds fresh <code>QPointF</code>/<code>QColor</code></td></tr>
+    <tr><td>Canonical field list</td><td><code>serialize_strand</code> (<code>src/save_load_manager.py:109-268</code>)</td></tr>
+    <tr><td>Angle math &amp; point rotation</td><td><code>AngleAdjustMode.calculate_angle</code> (<code>src/angle_adjust_mode.py:632</code>), <code>rotate_point_around_pivot</code> (<code>:402</code>), <code>rotate_attached_strand</code> (<code>:494</code>)</td></tr>
+    <tr><td>Attached-strand angle/length refresh</td><td><code>src/attached_strand.py:310-313, 328-330</code></td></tr>
+    <tr><td>Layer-panel indicators (badge / paste mode / clipboard bar)</td><td>lock-mode padlock toggle &amp; its placement (<code>lock_button_rect</code>, <code>src/numbered_layer_button.py:1120</code>); panel-wide mode + <code>multi_select_mode</code> on the layer panel; Button Guide mode icons (<code>src/layer_panel_icons/</code>)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="qt-gallery">Raw UI captures (mockups/qt)</h2>
+<p>These are the untouched screenshots taken by <code>tools/render_ui_qt.py</code> from the app's real
+widgets — the building blocks the annotated figures above are composited from.</p>
+<div class="gallery">
+  <figure>
+    <img src="mockups/qt/current_context_menu.png" alt="The current real context menu of a regular strand">
+    <figcaption><b>current_context_menu.png</b> — today's real menu for a regular strand.</figcaption>
+  </figure>
+  <figure>
+    <img src="mockups/qt/copy_menu_collapsed.png" alt="The context menu with the collapsed Copy Strand Data row — the default state">
+    <figcaption><b>copy_menu_collapsed.png</b> — proposed menu as it opens: just the <code>Copy Strand Data ▾</code> row, collapsed.</figcaption>
+  </figure>
+  <figure>
+    <img src="mockups/qt/copy_menu_with_panel.png" alt="The context menu with the Copy Strand Data toggle panel expanded">
+    <figcaption><b>copy_menu_with_panel.png</b> — the same menu after pressing the ▾ dropdown: panel expanded.</figcaption>
+  </figure>
+  <figure>
+    <img src="mockups/qt/paste_menu_collapsed.png" alt="The target layer's full menu with the collapsed Paste Copied Data row">
+    <figcaption><b>paste_menu_collapsed.png</b> — the target layer's normal menu + the collapsed <code>Paste Copied Data ▾</code> row.</figcaption>
+  </figure>
+  <figure>
+    <img src="mockups/qt/paste_menu_expanded.png" alt="The same menu with the Paste dropdown expanded, showing the clipboard hint and the two anchor choices">
+    <figcaption><b>paste_menu_expanded.png</b> — after pressing ▾: clipboard hint + the two anchor choices inline.</figcaption>
+  </figure>
+  <figure>
+    <img src="mockups/qt/masked_context_menu.png" alt="A masked layer's reduced menu, without a paste entry">
+    <figcaption><b>masked_context_menu.png</b> — masked layer's reduced menu (no paste entry).</figcaption>
+  </figure>
+  <figure>
+    <img src="mockups/qt/layer_buttons.png" alt="The numbered layer buttons">
+    <figcaption><b>layer_buttons.png</b> — the real numbered layer buttons.</figcaption>
+  </figure>
+</div>
+
+<h2>Regenerating the mockups</h2>
+<pre>pip install matplotlib PyQt5
+cd docs/copy_paste_strand_data/tools
+QT_QPA_PLATFORM=offscreen python3 render_ui_qt.py   # real-widget UI captures -&gt; ../mockups/qt/*.png
+python3 generate_mockups.py                         # composite figures -&gt; ../mockups/*.png</pre>
+<ul>
+  <li><code>tools/render_ui_qt.py</code> — drives the app's real <code>NumberedLayerButton.show_context_menu</code>
+  offscreen (with real <code>Strand</code>/<code>MaskedStrand</code> objects) and screenshots the resulting
+  menus, the real layer buttons, and the proposed entries built from the app's own
+  <code>HoverLabel</code>/stylesheet. Because the offscreen platform's virtual screen is tiny,
+  QMenu popups reflow into columns, so the captured rows are re-hosted one-to-one in a
+  menu-styled frame before grabbing.</li>
+  <li><code>tools/generate_mockups.py</code> + <code>tools/mockup_common.py</code> — composite those captures into
+  the annotated figures and draw the geometry diagrams.</li>
+</ul>
+
+<footer>
+  Generated from <code>docs/copy_paste_strand_data/README.md</code> on the
+  <code>claude/strand-copy-paste-feature-j73h0n</code> branch · OpenStrand Studio.
+</footer>
+
+</div>
+</body>
+</html>

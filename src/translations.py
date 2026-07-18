@@ -127,7 +127,7 @@ Examples:<br>
         # SettingsDialog translations
         'general_settings': 'General Settings',
         'change_language': 'Change Language',
-        'save_load_settings_title': 'Save/Load Settings',
+        'save_load_settings_title': 'Save/Load',
         'save_settings_button': 'Save Settings',
         'load_settings_button': 'Load Settings',
         'save_settings_success': 'Settings saved successfully',
@@ -717,7 +717,7 @@ Exemples :<br>
         # SettingsDialog translations
         'general_settings': 'Paramètres généraux',
         'change_language': 'Changer la langue',
-        'save_load_settings_title': 'Enregistrer/Charger les paramètres',
+        'save_load_settings_title': 'Enregistrer/Charger',
         'save_settings_button': 'Enregistrer les paramètres',
         'load_settings_button': 'Charger les paramètres',
         'save_settings_success': 'Paramètres enregistrés avec succès',
@@ -1304,7 +1304,7 @@ Beispiele:<br>
         # SettingsDialog translations
         'general_settings': 'Einstellungen',
         'change_language': 'Sprache ändern',
-        'save_load_settings_title': 'Einstellungen speichern/laden',
+        'save_load_settings_title': 'Speichern/Laden',
         'save_settings_button': 'Einstellungen speichern',
         'load_settings_button': 'Einstellungen laden',
         'save_settings_success': 'Einstellungen erfolgreich gespeichert',
@@ -1885,7 +1885,7 @@ Esempi:<br>
         # SettingsDialog translations
         'general_settings': 'Impostazioni Generali',
         'change_language': 'Cambia Lingua',
-        'save_load_settings_title': 'Salva/Carica Impostazioni',
+        'save_load_settings_title': 'Salva/Carica',
         'save_settings_button': 'Salva Impostazioni',
         'load_settings_button': 'Carica Impostazioni',
         'save_settings_success': 'Impostazioni salvate con successo',
@@ -2473,7 +2473,7 @@ Ejemplos:<br>
         # SettingsDialog translations
         'general_settings': 'Configuración General',
         'change_language': 'Cambiar Idioma',
-        'save_load_settings_title': 'Guardar/Cargar Configuración',
+        'save_load_settings_title': 'Guardar/Cargar',
         'save_settings_button': 'Guardar Configuración',
         'load_settings_button': 'Cargar Configuración',
         'save_settings_success': 'Configuración guardada con éxito',
@@ -3061,7 +3061,7 @@ Exemplos:<br>
         # SettingsDialog translations
         'general_settings': 'Configurações Gerais',
         'change_language': 'Mudar Idioma',
-        'save_load_settings_title': 'Guardar/Carregar Configurações',
+        'save_load_settings_title': 'Guardar/Carregar',
         'save_settings_button': 'Guardar Configurações',
         'load_settings_button': 'Carregar Configurações',
         'save_settings_success': 'Configurações guardadas com sucesso',
@@ -3656,7 +3656,7 @@ Exemplos:<br>
         # SettingsDialog translations
         'general_settings': 'הגדרות כלליות',
         'change_language': 'שינוי שפה',
-        'save_load_settings_title': 'שמירה/טעינת הגדרות',
+        'save_load_settings_title': 'שמירה/טעינה',
         'save_settings_button': 'שמור הגדרות',
         'load_settings_button': 'טען הגדרות',
         'save_settings_success': 'ההגדרות נשמרו בהצלחה',

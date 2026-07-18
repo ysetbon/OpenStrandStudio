@@ -3518,6 +3518,10 @@ class SettingsDialog(QDialog):
         if not layout:
             return
 
+        # Re-measure the category column with the current font/translations so
+        # long names (e.g. "Save/Load") never show elided as "Save/Loa..."
+        self.update_category_panel_width()
+
         left_margin, _, right_margin, _ = layout.getContentsMargins()
         spacing = layout.spacing()
 

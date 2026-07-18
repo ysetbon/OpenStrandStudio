@@ -2996,9 +2996,9 @@ class SettingsDialog(QDialog):
         elif self.current_theme == 'light':
             title_color = '#000000'  # Black for light theme
             
-        def _lp_img(fname):
+        def _lp_img(fname, size=34):
             url = QUrl.fromLocalFile(self.get_asset_path(f'layer_panel_icons/{fname}')).toString()
-            return f'<img src="{url}" width="34" height="34" style="vertical-align: middle;" />'
+            return f'<img src="{url}" width="{size}" height="{size}" style="vertical-align: middle;" />'
         _lp_pan_icon = _lp_img('pan_open.png') + ' ' + _lp_img('pan_closed.png')
         _lp_zoom_in_icon = _lp_img('zoom_in.png')
         _lp_zoom_out_icon = _lp_img('zoom_out.png')
@@ -3007,9 +3007,26 @@ class SettingsDialog(QDialog):
         _lp_refresh_icon = _lp_img('refresh.png')
         _lp_home_icon = _lp_img('home.png')
         _lp_lock_icon = _lp_img('lock_open.png') + ' ' + _lp_img('lock_closed.png')
-        _lp_copy_badge_icon = _lp_img('copy_badge.png')
-        _lp_chip_start_icon = _lp_img('chip_start.png')
-        _lp_chip_end_icon = _lp_img('chip_end.png')
+        _lp_copy_badge_icon = _lp_img('copy_badge.png', 24)
+        _lp_chip_start_icon = _lp_img('chip_start.png', 24)
+        _lp_chip_end_icon = _lp_img('chip_end.png', 24)
+
+        # Selection indicator icons: exact colors/alphas the canvas uses in
+        # move and attach modes, rendered with the same 2px black outline.
+        # Control point squares are drawn smaller, like on canvas (50 vs 120).
+        def _sel_icon(shape, base_color, alpha, size=29):
+            color = QColor(base_color)
+            color.setAlpha(alpha)
+            url = self.indicator_icon_data_url(shape, color, size)
+            return f'<img src="{url}" width="{size}" height="{size}" style="vertical-align: middle;" />'
+        _sel_highlight = getattr(self, 'highlight_color', None) or QColor(255, 0, 0)
+        _sel_red_circle_icon = _sel_icon('circle', _sel_highlight, 60)
+        _sel_blue_circle_icon = _sel_icon('circle', QColor(0, 0, 255), 60)
+        _sel_yellow_circle_icon = _sel_icon('circle', QColor(255, 230, 160), 140)
+        _sel_red_square_icon = _sel_icon('square', _sel_highlight, 38)
+        _sel_yellow_square_icon = _sel_icon('square', QColor(255, 230, 160), 70)
+        _sel_green_square_icon = _sel_icon('square', QColor(0, 100, 0), 38, 20)
+        _sel_yellow_square_small_icon = _sel_icon('square', QColor(255, 230, 160), 70, 20)
 
         button_html = f'''
         <style>
@@ -3246,24 +3263,24 @@ class SettingsDialog(QDialog):
         <h3 style="margin-top: 12px;">{_['selection_indicators_title']}</h3>
         <ul>
             <li style="margin-bottom: 12px;">
-                <span style="color: #FF0000; font-size: 18px; font-weight: bold;">●</span>
+                {_sel_red_circle_icon}
                 <span class="button-name">{_['red_circle_name']}</span> - {_['red_circle_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: #0000FF; font-size: 18px; font-weight: bold;">●</span>
+                {_sel_blue_circle_icon}
                 <span class="button-name">{_['blue_circle_name']}</span> - {_['blue_circle_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: rgba(255, 0, 0, 1); font-size: 18px; font-weight: bold;">■</span>
-                <span class="button-name">{_['red_square_name']}</span> - {_['red_square_desc']}
+                {_sel_yellow_circle_icon}
+                <span class="button-name">{_['yellow_circle_name']}</span> - {_['yellow_circle_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: rgba(34 ,139,34, 1); font-size: 18px; font-weight: bold;">■</span>
-                <span class="button-name">{_['green_square_name']}</span> - {_['green_square_desc']}
+                {_sel_red_square_icon} {_sel_yellow_square_icon}
+                <span class="button-name">{_['start_end_squares_name']}</span> - {_['start_end_squares_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: rgba(255, 222, 23, 1); font-size: 18px; font-weight: bold;">■</span>
-                <span class="button-name">{_['yellow_square_name']}</span> - {_['yellow_square_desc']}
+                {_sel_green_square_icon} {_sel_yellow_square_small_icon}
+                <span class="button-name">{_['control_point_squares_name']}</span> - {_['control_point_squares_desc']}
             </li>
         </ul>
 
@@ -4004,9 +4021,9 @@ class SettingsDialog(QDialog):
         elif self.current_theme == 'light':
             title_color = '#000000'  # Black for light theme
             
-        def _lp_img(fname):
+        def _lp_img(fname, size=34):
             url = QUrl.fromLocalFile(self.get_asset_path(f'layer_panel_icons/{fname}')).toString()
-            return f'<img src="{url}" width="34" height="34" style="vertical-align: middle;" />'
+            return f'<img src="{url}" width="{size}" height="{size}" style="vertical-align: middle;" />'
         _lp_pan_icon = _lp_img('pan_open.png') + ' ' + _lp_img('pan_closed.png')
         _lp_zoom_in_icon = _lp_img('zoom_in.png')
         _lp_zoom_out_icon = _lp_img('zoom_out.png')
@@ -4015,9 +4032,26 @@ class SettingsDialog(QDialog):
         _lp_refresh_icon = _lp_img('refresh.png')
         _lp_home_icon = _lp_img('home.png')
         _lp_lock_icon = _lp_img('lock_open.png') + ' ' + _lp_img('lock_closed.png')
-        _lp_copy_badge_icon = _lp_img('copy_badge.png')
-        _lp_chip_start_icon = _lp_img('chip_start.png')
-        _lp_chip_end_icon = _lp_img('chip_end.png')
+        _lp_copy_badge_icon = _lp_img('copy_badge.png', 24)
+        _lp_chip_start_icon = _lp_img('chip_start.png', 24)
+        _lp_chip_end_icon = _lp_img('chip_end.png', 24)
+
+        # Selection indicator icons: exact colors/alphas the canvas uses in
+        # move and attach modes, rendered with the same 2px black outline.
+        # Control point squares are drawn smaller, like on canvas (50 vs 120).
+        def _sel_icon(shape, base_color, alpha, size=29):
+            color = QColor(base_color)
+            color.setAlpha(alpha)
+            url = self.indicator_icon_data_url(shape, color, size)
+            return f'<img src="{url}" width="{size}" height="{size}" style="vertical-align: middle;" />'
+        _sel_highlight = getattr(self, 'highlight_color', None) or QColor(255, 0, 0)
+        _sel_red_circle_icon = _sel_icon('circle', _sel_highlight, 60)
+        _sel_blue_circle_icon = _sel_icon('circle', QColor(0, 0, 255), 60)
+        _sel_yellow_circle_icon = _sel_icon('circle', QColor(255, 230, 160), 140)
+        _sel_red_square_icon = _sel_icon('square', _sel_highlight, 38)
+        _sel_yellow_square_icon = _sel_icon('square', QColor(255, 230, 160), 70)
+        _sel_green_square_icon = _sel_icon('square', QColor(0, 100, 0), 38, 20)
+        _sel_yellow_square_small_icon = _sel_icon('square', QColor(255, 230, 160), 70, 20)
 
         button_html = f'''
         <style>
@@ -4255,24 +4289,24 @@ class SettingsDialog(QDialog):
         <h3 style="margin-top: 12px;">{_['selection_indicators_title']}</h3>
         <ul>
             <li style="margin-bottom: 12px;">
-                <span style="color: #FF0000; font-size: 18px; font-weight: bold;">●</span>
+                {_sel_red_circle_icon}
                 <span class="button-name">{_['red_circle_name']}</span> - {_['red_circle_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: #0000FF; font-size: 18px; font-weight: bold;">●</span>
+                {_sel_blue_circle_icon}
                 <span class="button-name">{_['blue_circle_name']}</span> - {_['blue_circle_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: rgba(255, 0, 0, 1); font-size: 18px; font-weight: bold;">■</span>
-                <span class="button-name">{_['red_square_name']}</span> - {_['red_square_desc']}
+                {_sel_yellow_circle_icon}
+                <span class="button-name">{_['yellow_circle_name']}</span> - {_['yellow_circle_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: rgba(34 ,139,34, 1); font-size: 18px; font-weight: bold;">■</span>
-                <span class="button-name">{_['green_square_name']}</span> - {_['green_square_desc']}
+                {_sel_red_square_icon} {_sel_yellow_square_icon}
+                <span class="button-name">{_['start_end_squares_name']}</span> - {_['start_end_squares_desc']}
             </li>
             <li style="margin-bottom: 12px;">
-                <span style="color: rgba(255, 222, 23, 1); font-size: 18px; font-weight: bold;">■</span>
-                <span class="button-name">{_['yellow_square_name']}</span> - {_['yellow_square_desc']}
+                {_sel_green_square_icon} {_sel_yellow_square_small_icon}
+                <span class="button-name">{_['control_point_squares_name']}</span> - {_['control_point_squares_desc']}
             </li>
         </ul>
 
@@ -4784,9 +4818,9 @@ class SettingsDialog(QDialog):
             elif self.current_theme == 'light':
                 title_color = '#000000'  # Black for light theme
                 
-            def _lp_img(fname):
+            def _lp_img(fname, size=34):
                 url = QUrl.fromLocalFile(self.get_asset_path(f'layer_panel_icons/{fname}')).toString()
-                return f'<img src="{url}" width="34" height="34" style="vertical-align: middle;" />'
+                return f'<img src="{url}" width="{size}" height="{size}" style="vertical-align: middle;" />'
             _lp_pan_icon = _lp_img('pan_open.png') + ' ' + _lp_img('pan_closed.png')
             _lp_zoom_in_icon = _lp_img('zoom_in.png')
             _lp_zoom_out_icon = _lp_img('zoom_out.png')
@@ -4795,9 +4829,26 @@ class SettingsDialog(QDialog):
             _lp_refresh_icon = _lp_img('refresh.png')
             _lp_home_icon = _lp_img('home.png')
             _lp_lock_icon = _lp_img('lock_open.png') + ' ' + _lp_img('lock_closed.png')
-            _lp_copy_badge_icon = _lp_img('copy_badge.png')
-            _lp_chip_start_icon = _lp_img('chip_start.png')
-            _lp_chip_end_icon = _lp_img('chip_end.png')
+            _lp_copy_badge_icon = _lp_img('copy_badge.png', 24)
+            _lp_chip_start_icon = _lp_img('chip_start.png', 24)
+            _lp_chip_end_icon = _lp_img('chip_end.png', 24)
+
+            # Selection indicator icons: exact colors/alphas the canvas uses in
+            # move and attach modes, rendered with the same 2px black outline.
+            # Control point squares are drawn smaller, like on canvas (50 vs 120).
+            def _sel_icon(shape, base_color, alpha, size=29):
+                color = QColor(base_color)
+                color.setAlpha(alpha)
+                url = self.indicator_icon_data_url(shape, color, size)
+                return f'<img src="{url}" width="{size}" height="{size}" style="vertical-align: middle;" />'
+            _sel_highlight = getattr(self, 'highlight_color', None) or QColor(255, 0, 0)
+            _sel_red_circle_icon = _sel_icon('circle', _sel_highlight, 60)
+            _sel_blue_circle_icon = _sel_icon('circle', QColor(0, 0, 255), 60)
+            _sel_yellow_circle_icon = _sel_icon('circle', QColor(255, 230, 160), 140)
+            _sel_red_square_icon = _sel_icon('square', _sel_highlight, 38)
+            _sel_yellow_square_icon = _sel_icon('square', QColor(255, 230, 160), 70)
+            _sel_green_square_icon = _sel_icon('square', QColor(0, 100, 0), 38, 20)
+            _sel_yellow_square_small_icon = _sel_icon('square', QColor(255, 230, 160), 70, 20)
 
             button_html = f'''
             <style>
@@ -5010,24 +5061,24 @@ class SettingsDialog(QDialog):
             <h3 style="margin-top: 12px;">{_['selection_indicators_title']}</h3>
             <ul>
                 <li style="margin-bottom: 12px;">
-                    <span style="color: #FF0000; font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">●</span>
+                    {_sel_red_circle_icon}
                     <span class="button-name">{_['red_circle_name']}</span> - {_['red_circle_desc']}
                 </li>
                 <li style="margin-bottom: 12px;">
-                    <span style="color: #0000FF; font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">●</span>
+                    {_sel_blue_circle_icon}
                     <span class="button-name">{_['blue_circle_name']}</span> - {_['blue_circle_desc']}
                 </li>
                 <li style="margin-bottom: 12px;">
-                    <span style="color: rgba(255, 0, 0, 1); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">■</span>
-                    <span class="button-name">{_['red_square_name']}</span> - {_['red_square_desc']}
+                    {_sel_yellow_circle_icon}
+                    <span class="button-name">{_['yellow_circle_name']}</span> - {_['yellow_circle_desc']}
                 </li>
                 <li style="margin-bottom: 12px;">
-                    <span style="color: rgba(34 ,139,34, 1); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">■</span>
-                    <span class="button-name">{_['green_square_name']}</span> - {_['green_square_desc']}
+                    {_sel_red_square_icon} {_sel_yellow_square_icon}
+                    <span class="button-name">{_['start_end_squares_name']}</span> - {_['start_end_squares_desc']}
                 </li>
                 <li style="margin-bottom: 12px;">
-                    <span style="color: rgba(255, 222, 23, 1); font-size: 18px; font-weight: bold; vertical-align: middle; margin-right: 8px;">■</span>
-                    <span class="button-name">{_['yellow_square_name']}</span> - {_['yellow_square_desc']}
+                    {_sel_green_square_icon} {_sel_yellow_square_small_icon}
+                    <span class="button-name">{_['control_point_squares_name']}</span> - {_['control_point_squares_desc']}
                 </li>
             </ul>
 
@@ -5841,7 +5892,30 @@ class SettingsDialog(QDialog):
             return f'data:image/png;base64,{b64}'
         except Exception:
             return ''
-    
+
+    def indicator_icon_data_url(self, shape, color, size=36):
+        """Render a canvas-style selection indicator (translucent fill, 2px black
+        outline) to a PNG data URL so the guide shows exactly what the canvas draws."""
+        try:
+            pixmap = QPixmap(size, size)
+            pixmap.fill(Qt.transparent)
+            painter = QPainter(pixmap)
+            painter.setRenderHint(QPainter.Antialiasing, True)
+            painter.setPen(QPen(Qt.black, 2))
+            painter.setBrush(QBrush(color))
+            if shape == 'circle':
+                painter.drawEllipse(2, 2, size - 4, size - 4)
+            else:
+                painter.drawRect(2, 2, size - 4, size - 4)
+            painter.end()
+            buffer = QBuffer()
+            buffer.open(QBuffer.WriteOnly)
+            pixmap.save(buffer, 'PNG')
+            b64 = base64.b64encode(buffer.data()).decode('ascii')
+            return f'data:image/png;base64,{b64}'
+        except Exception:
+            return ''
+
     def render_whats_new_html(self, html):
         """Replace emoji flags with inline images to ensure consistent rendering in QTextBrowser."""
         try:

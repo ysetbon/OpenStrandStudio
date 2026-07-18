@@ -297,6 +297,8 @@ Examples:<br>
             <li style="font-size:14px;"><b>Control Point Visibility Fix:</b> "Show control points only for the selected strand" now hides only control points; other strands keep their endpoint squares and remain movable. Dragging an endpoint no longer makes an untouched control point appear.</li>
             <li style="font-size:14px;"><b>Shadow Settings Preserved:</b> A layer's hidden-shadow state is no longer reset by group move or duplicate operations.</li>
             <li style="font-size:14px;"><b>Improved Drawing Stability:</b> Fixed internal painting issues that could corrupt the canvas after a drawing error.</li>
+            <li style="font-size:14px;"><b>Arrow Customization in the Layer Menu:</b> Right-click a layer to style its arrows in place: start/end arrows, full arrow with color, transparency, texture, shaft style, arrow head and shadow, plus a new Arrow Sizes dropdown for all numeric arrow dimensions.</li>
+            <li style="font-size:14px;"><b>Copy & Paste Strand Data:</b> In multi-select mode, copy selected properties of a strand (start/end points, control points, width, strand and stroke colors) and paste them onto several layers at once, anchored from the start or end point — with a copy badge and one-click paste chips right on the layer buttons.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.109</p>
         ''',
@@ -832,6 +834,8 @@ Exemples :<br>
             <li style="font-size:14px;"><b>Correction de l'affichage des points de contrôle:</b> « Afficher les points de contrôle uniquement pour le brin sélectionné » ne masque plus que les points de contrôle ; les autres brins conservent leurs carrés d'extrémité et restent déplaçables. Faire glisser une extrémité ne fait plus apparaître un point de contrôle jamais utilisé.</li>
             <li style="font-size:14px;"><b>Réglages d'ombre préservés:</b> L'état « ombre masquée » d'un calque n'est plus réinitialisé par un déplacement ou une duplication de groupe.</li>
             <li style="font-size:14px;"><b>Stabilité de dessin améliorée:</b> Correction de problèmes internes de rendu qui pouvaient corrompre le canevas après une erreur de dessin.</li>
+            <li style="font-size:14px;"><b>Personnalisation des flèches dans le menu des couches:</b> Faites un clic droit sur une couche pour styliser ses flèches sur place : flèches de début/fin, flèche complète avec couleur, transparence, texture, style de hampe, pointe et ombre, plus un nouveau menu Tailles de la flèche pour toutes les dimensions numériques.</li>
+            <li style="font-size:14px;"><b>Copier & coller les données de brin:</b> En mode multi-sélection, copiez les propriétés choisies d'un brin (points de départ/fin, points de contrôle, largeur, couleurs du brin et du contour) et collez-les sur plusieurs couches à la fois, ancrées au point de départ ou de fin — avec un badge de copie et des pastilles de collage en un clic sur les boutons de couches.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.109</p>
         ''',
@@ -1449,6 +1453,8 @@ Beispiele:<br>
             <li style="font-size:14px;"><b>Kontrollpunkt-Anzeige korrigiert:</b> „Kontrollpunkte nur für den ausgewählten Strang anzeigen“ blendet jetzt nur noch Kontrollpunkte aus; andere Stränge behalten ihre Endpunkt-Quadrate und bleiben beweglich. Das Ziehen eines Endpunkts lässt keinen unbenutzten Kontrollpunkt mehr erscheinen.</li>
             <li style="font-size:14px;"><b>Schatteneinstellungen bleiben erhalten:</b> Der Zustand „Schatten ausgeblendet“ einer Ebene wird durch Gruppenverschiebung oder -duplizierung nicht mehr zurückgesetzt.</li>
             <li style="font-size:14px;"><b>Verbesserte Zeichenstabilität:</b> Interne Renderprobleme behoben, die nach einem Zeichenfehler die Leinwand beschädigen konnten.</li>
+            <li style="font-size:14px;"><b>Pfeil-Anpassung im Ebenenmenü:</b> Rechtsklick auf eine Ebene, um ihre Pfeile direkt zu gestalten: Start-/Endpfeile, vollständiger Pfeil mit Farbe, Transparenz, Textur, Schaftstil, Spitze und Schatten, plus ein neues Pfeilgrößen-Menü für alle numerischen Pfeilmaße.</li>
+            <li style="font-size:14px;"><b>Strangdaten kopieren & einfügen:</b> Im Mehrfachauswahl-Modus ausgewählte Eigenschaften eines Strangs kopieren (Start-/Endpunkte, Kontrollpunkte, Breite, Strang- und Konturfarben) und auf mehrere Ebenen zugleich einfügen, verankert am Start- oder Endpunkt — mit Kopier-Abzeichen und Ein-Klick-Einfüge-Chips direkt auf den Ebenen-Schaltflächen.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.109</p>
         ''',
@@ -2000,6 +2006,8 @@ Esempi:<br>
             <li style="font-size:14px;"><b>Correzione della visibilità dei punti di controllo:</b> «Mostra i punti di controllo solo per il filo selezionato» ora nasconde solo i punti di controllo; gli altri fili mantengono i loro quadrati alle estremità e restano spostabili. Trascinare un'estremità non fa più apparire un punto di controllo mai utilizzato.</li>
             <li style="font-size:14px;"><b>Impostazioni ombra preservate:</b> Lo stato «ombra nascosta» di un livello non viene più azzerato da spostamenti o duplicazioni di gruppo.</li>
             <li style="font-size:14px;"><b>Maggiore stabilità di disegno:</b> Risolti problemi interni di rendering che potevano corrompere la tela dopo un errore di disegno.</li>
+            <li style="font-size:14px;"><b>Personalizzazione delle frecce nel menu dei livelli:</b> Fai clic destro su un livello per personalizzare le sue frecce sul posto: frecce iniziale/finale, freccia completa con colore, trasparenza, texture, stile dell'asta, punta e ombra, più un nuovo menu Dimensioni freccia per tutte le dimensioni numeriche.</li>
+            <li style="font-size:14px;"><b>Copia e incolla dei dati del trefolo:</b> In modalità selezione multipla, copia le proprietà scelte di un trefolo (punti iniziale/finale, punti di controllo, larghezza, colori del trefolo e del contorno) e incollale su più livelli contemporaneamente, ancorate al punto iniziale o finale — con un distintivo di copia e chip di incolla con un clic sui pulsanti dei livelli.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Versione 1.109</p>
         ''',
@@ -2588,6 +2596,8 @@ Ejemplos:<br>
             <li style="font-size:14px;"><b>Corrección de la visibilidad de puntos de control:</b> «Mostrar puntos de control solo para la hebra seleccionada» ahora oculta solo los puntos de control; las demás hebras conservan sus cuadrados de extremo y siguen siendo movibles. Arrastrar un extremo ya no hace aparecer un punto de control sin usar.</li>
             <li style="font-size:14px;"><b>Ajustes de sombra preservados:</b> El estado de «sombra oculta» de una capa ya no se restablece al mover o duplicar grupos.</li>
             <li style="font-size:14px;"><b>Mayor estabilidad de dibujo:</b> Se corrigieron problemas internos de renderizado que podían corromper el lienzo tras un error de dibujo.</li>
+            <li style="font-size:14px;"><b>Personalización de flechas en el menú de capas:</b> Haz clic derecho en una capa para personalizar sus flechas en el sitio: flechas inicial/final, flecha completa con color, transparencia, textura, estilo del asta, punta y sombra, más un nuevo menú Tamaños de la flecha para todas las dimensiones numéricas.</li>
+            <li style="font-size:14px;"><b>Copiar y pegar datos de hebra:</b> En modo de selección múltiple, copia las propiedades elegidas de una hebra (puntos inicial/final, puntos de control, anchura, colores de la hebra y del contorno) y pégalas en varias capas a la vez, ancladas al punto inicial o final — con una insignia de copia y chips de pegado de un clic en los botones de capas.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Versión 1.109</p>
         ''',
@@ -3176,6 +3186,8 @@ Exemplos:<br>
             <li style="font-size:14px;"><b>Correção da visibilidade dos pontos de controle:</b> «Mostrar pontos de controle apenas para o fio selecionado» agora oculta apenas os pontos de controle; os outros fios mantêm seus quadrados de extremidade e continuam móveis. Arrastar uma extremidade não faz mais aparecer um ponto de controle nunca usado.</li>
             <li style="font-size:14px;"><b>Configurações de sombra preservadas:</b> O estado de «sombra oculta» de uma camada não é mais redefinido ao mover ou duplicar grupos.</li>
             <li style="font-size:14px;"><b>Maior estabilidade de desenho:</b> Corrigidos problemas internos de renderização que podiam corromper a tela após um erro de desenho.</li>
+            <li style="font-size:14px;"><b>Personalização de setas no menu de camadas:</b> Clique com o botão direito em uma camada para personalizar suas setas no local: setas inicial/final, seta completa com cor, transparência, textura, estilo da haste, ponta e sombra, além de um novo menu Tamanhos da flecha para todas as dimensões numéricas.</li>
+            <li style="font-size:14px;"><b>Copiar e colar dados do fio:</b> No modo de seleção múltipla, copie as propriedades escolhidas de um fio (pontos inicial/final, pontos de controle, largura, cores do fio e do contorno) e cole-as em várias camadas de uma vez, ancoradas no ponto inicial ou final — com um emblema de cópia e chips de colagem de um clique nos botões de camadas.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio – Versão 1.109</p>
         ''',
@@ -3772,6 +3784,8 @@ Exemplos:<br>
             <li style="font-size:14px;"><b>תיקון תצוגת נקודות בקרה:</b> "הצג נקודות בקרה רק עבור החוט הנבחר" מסתיר כעת רק נקודות בקרה; שאר החוטים שומרים על ריבועי הקצה שלהם וניתנים להזזה. גרירת קצה אינה גורמת עוד להופעת נקודת בקרה שמעולם לא הוזזה.</li>
             <li style="font-size:14px;"><b>הגדרות צל נשמרות:</b> מצב "צל מוסתר" של שכבה אינו מתאפס עוד בעת הזזה או שכפול של קבוצה.</li>
             <li style="font-size:14px;"><b>יציבות ציור משופרת:</b> תוקנו בעיות רינדור פנימיות שעלולות היו לפגוע בקנבס לאחר שגיאת ציור.</li>
+            <li style="font-size:14px;"><b>התאמת חצים בתפריט השכבות:</b> לחצו לחיצה ימנית על שכבה כדי לעצב את החצים שלה במקום: חצי התחלה/סיום, חץ מלא עם צבע, שקיפות, מרקם, סגנון גוף, ראש וצל, ובנוסף תפריט חדש של גדלי החץ לכל המידות המספריות.</li>
+            <li style="font-size:14px;"><b>העתקה והדבקה של נתוני גדיל:</b> במצב בחירה מרובה, העתיקו מאפיינים נבחרים של גדיל (נקודות התחלה/סיום, נקודות בקרה, רוחב, צבעי הגדיל וקו המתאר) והדביקו אותם על כמה שכבות בבת אחת, בעיגון לנקודת ההתחלה או הסיום — עם תג העתקה וסמני הדבקה בלחיצה אחת על כפתורי השכבות.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - גרסה 1.109</p>
         </div>

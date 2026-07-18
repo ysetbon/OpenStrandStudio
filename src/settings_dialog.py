@@ -13,6 +13,7 @@ from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from translations import translations
 from save_load_manager import load_strands, apply_loaded_strands
+from segmented_spin_box import upgrade_and_style_all, upgrade_spinbox, style_segmented_spinbox
 import os
 import sys
 import subprocess
@@ -647,6 +648,9 @@ class SettingsDialog(QDialog):
         # Reorganize widget order for language change
         self.reorganize_layouts_for_language(is_rtl)
 
+        # Remirror the segmented +/- spin box buttons for the new direction
+        upgrade_and_style_all(self, self.current_theme, is_rtl)
+
     def apply_numeric_input_alignment(self, container_widget, is_rtl):
         """Align numeric spin boxes according to the current language direction."""
         if not container_widget:
@@ -655,8 +659,12 @@ class SettingsDialog(QDialog):
         alignment = Qt.AlignRight | Qt.AlignVCenter if is_rtl else Qt.AlignLeft | Qt.AlignVCenter
 
         for spinbox in container_widget.findChildren(QSpinBox):
+            if spinbox.property('segmented'):
+                continue  # segmented steppers keep centered text
             spinbox.setAlignment(alignment)
         for spinbox in container_widget.findChildren(QDoubleSpinBox):
+            if spinbox.property('segmented'):
+                continue  # segmented steppers keep centered text
             spinbox.setAlignment(alignment)
 
     def reorganize_layouts_for_language(self, is_rtl):
@@ -3934,6 +3942,10 @@ class SettingsDialog(QDialog):
             if hasattr(self, button_name):
                 self.style_color_swatch_button(getattr(self, button_name))
 
+        # Upgrade every spin box to the segmented [ - | value | + ] stepper
+        # and restyle it for the current theme and text direction.
+        upgrade_and_style_all(self, theme_name, is_rtl)
+
     def refresh_button_explanations_html(self):
         """Refresh the button explanations HTML with current theme colors"""
         _ = translations[self.current_language]
@@ -7128,6 +7140,11 @@ class DefaultWidthConfigDialog(QDialog):
         self.thickness_spinbox.setRange(2, 20)  # Even numbers from 2 to 20
         self.thickness_spinbox.setSingleStep(2)  # Only even numbers
         self.thickness_spinbox.setValue(current_total_squares)
+        upgrade_spinbox(self.thickness_spinbox)
+        style_segmented_spinbox(
+            self.thickness_spinbox,
+            main_window.current_theme if (main_window and hasattr(main_window, 'current_theme')) else 'default',
+            settings_dialog.is_rtl_language(settings_dialog.current_language))
         thickness_layout.addWidget(self.thickness_spinbox)
         thickness_layout.addWidget(QLabel(_['grid_squares'] if 'grid_squares' in _ else "squares"))
         layout.addLayout(thickness_layout)

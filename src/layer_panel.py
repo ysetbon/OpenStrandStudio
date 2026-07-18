@@ -3716,14 +3716,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 button.set_hidden(getattr(strand, 'is_hidden', False))
                 button.set_shadow_only(getattr(strand, 'shadow_only', False))
                 
-                # Add visual indication for non-deletable strands
-                if not is_deletable:
-                    if hasattr(strand, 'knot_connections') and strand.knot_connections:
-                        button.setToolTip("This layer has knot connections but can still be deleted")
-                    else:
-                        button.setToolTip("This layer cannot be deleted (both ends are attached)")
-                else:
-                    button.setToolTip("")
+                # No hover tooltip on layer buttons — the deletability tooltips
+                # popped up constantly and were more annoying than helpful; the
+                # green attachable strip already shows the state
+                button.setToolTip("")
             else:
                 button.set_attachable(False)
         

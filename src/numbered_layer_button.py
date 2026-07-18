@@ -1,8 +1,9 @@
-from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QDoubleSpinBox, QSlider, QDialogButtonBox, QComboBox, QPushButton as QPB, QCheckBox, QDialogButtonBox, QStyleOptionButton
+from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QDoubleSpinBox, QSlider, QDialogButtonBox, QComboBox, QPushButton as QPB, QCheckBox, QDialogButtonBox, QStyleOptionButton, QToolButton
 from PyQt5.QtCore import Qt, pyqtSignal, QRect, QRectF, QMimeData, QTimer, QPoint, QPointF, QLocale
 from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag, QGuiApplication, QPixmap, QImage
 from render_utils import RenderUtils
 from translations import translations
+from segmented_spin_box import upgrade_spinbox, style_segmented_spinbox
 from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
 import os  # Add os for icon path resolution
@@ -254,6 +255,52 @@ def style_menu_combobox(combo, theme, is_rtl=False):
         QComboBox QAbstractItemView::item {{
             min-height: 24px;
             padding: 2px 6px;
+        }}
+    """)
+
+
+def style_menu_dropdown_button(button, theme, is_rtl=False):
+    """Combo-look styling for a QToolButton that opens a dropdown panel.
+
+    Matches style_menu_combobox() chrome so the button reads as another
+    dropdown in the same menu section.
+    """
+    if theme == 'dark':
+        bg, fg, border = '#3D3D3D', '#FFFFFF', '#666666'
+        hover_border, arrow_icon = '#999999', 'combo_arrow_light.png'
+        pressed_bg = '#2E2E2E'
+    else:
+        bg, fg, border = '#FFFFFF', '#000000', '#AAAAAA'
+        hover_border, arrow_icon = '#777777', 'combo_arrow_dark.png'
+        pressed_bg = '#E8E8E8'
+
+    arrow_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              'layer_panel_icons', arrow_icon).replace('\\', '/')
+    drop_side = 'left' if is_rtl else 'right'
+    padding = '4px 8px 4px 24px' if is_rtl else '4px 24px 4px 8px'
+    arrow_margin = 'margin-left: 6px;' if is_rtl else 'margin-right: 6px;'
+    button.setStyleSheet(f"""
+        QToolButton {{
+            background-color: {bg};
+            color: {fg};
+            border: 1px solid {border};
+            border-radius: 4px;
+            padding: {padding};
+            min-height: 20px;
+        }}
+        QToolButton:hover {{
+            border: 1px solid {hover_border};
+        }}
+        QToolButton:pressed {{
+            background-color: {pressed_bg};
+        }}
+        QToolButton::menu-indicator {{
+            image: url({arrow_path});
+            width: 10px;
+            height: 6px;
+            subcontrol-origin: padding;
+            subcontrol-position: {drop_side} center;
+            {arrow_margin}
         }}
     """)
 
@@ -1006,6 +1053,122 @@ class NumberedLayerButton(QPushButton):
                 shadow_layout.addStretch()
                 shadow_layout.addWidget(shadow_checkbox)
 
+                # Arrow Sizes dropdown: all the numeric arrow settings from the
+                # settings dialog, editable in place with the same segmented
+                # [ - | value | + ] spin boxes.
+                sizes_layout = QHBoxLayout()
+                sizes_label = QLabel(_['arrow_sizes'] if 'arrow_sizes' in _ else 'Arrow Sizes')
+                if is_hebrew:
+                    sizes_label.setLayoutDirection(Qt.RightToLeft)
+                    sizes_label.setAlignment(Qt.AlignRight)
+                sizes_label.setStyleSheet(f"color: {'#ffffff' if theme == 'dark' else '#000000'}; padding: 5px;")
+
+                sizes_button = QToolButton()
+                sizes_button.setText(_['adjust'] if 'adjust' in _ else 'Adjust')
+                sizes_button.setPopupMode(QToolButton.InstantPopup)
+                style_menu_dropdown_button(sizes_button, theme, is_hebrew)
+
+                sizes_menu = QMenu(sizes_button)
+                sizes_menu.setStyleSheet(build_menu_stylesheet(theme))
+                sizes_panel = QWidget()
+                sizes_panel.setStyleSheet(
+                    f"background-color: {'#333333' if theme == 'dark' else '#F0F0F0'}; border-radius: 5px;")
+                sizes_panel_layout = QVBoxLayout(sizes_panel)
+                sizes_panel_layout.setContentsMargins(10, 8, 10, 8)
+                sizes_panel_layout.setSpacing(6)
+
+                # (attr, label, is_int, min, max, default) — mirrors settings_dialog.py
+                arrow_size_settings = [
+                    ('arrow_head_length',
+                     _['arrow_head_length'] if 'arrow_head_length' in _ else 'Arrow Head Length',
+                     False, 0.0, 500.0, 20.0),
+                    ('arrow_head_width',
+                     _['arrow_head_width'] if 'arrow_head_width' in _ else 'Arrow Head Width',
+                     False, 0.0, 500.0, 10.0),
+                    ('arrow_head_stroke_width',
+                     _['arrow_head_stroke_width'] if 'arrow_head_stroke_width' in _ else 'Arrow Head Stroke Width',
+                     True, 1, 30, 4),
+                    ('arrow_gap_length',
+                     _['arrow_gap_length'] if 'arrow_gap_length' in _ else 'Arrow Gap Length',
+                     False, 0.0, 1000.0, 10.0),
+                    ('arrow_line_length',
+                     _['arrow_line_length'] if 'arrow_line_length' in _ else 'Arrow Line Length',
+                     False, 0.0, 1000.0, 20.0),
+                    ('arrow_line_width',
+                     _['arrow_line_width'] if 'arrow_line_width' in _ else 'Arrow Line Width',
+                     False, 0.1, 100.0, 10.0),
+                ]
+
+                arrow_sizes_pending_save = {'dialog': None}
+
+                def _find_settings_dialog():
+                    widget = layer_panel
+                    while widget is not None:
+                        dialog = getattr(widget, 'settings_dialog', None)
+                        if dialog is not None:
+                            return dialog
+                        widget = widget.parent()
+                    return None
+
+                def _apply_arrow_size(attr, value):
+                    canvas = layer_panel.canvas
+                    setattr(canvas, attr, value)
+                    canvas.update()
+                    # Mirror into the settings dialog so its spin boxes and the
+                    # saved settings stay in sync with the menu edits.
+                    dialog = _find_settings_dialog()
+                    if dialog is not None:
+                        setattr(dialog, attr, value)
+                        dialog_spin = getattr(dialog, attr + '_spinbox', None)
+                        if dialog_spin is not None:
+                            dialog_spin.blockSignals(True)
+                            dialog_spin.setValue(value)
+                            dialog_spin.blockSignals(False)
+                        arrow_sizes_pending_save['dialog'] = dialog
+
+                for attr, size_label_text, is_int, min_v, max_v, default in arrow_size_settings:
+                    size_row = QHBoxLayout()
+                    size_row_label = QLabel(size_label_text)
+                    size_row_label.setStyleSheet(
+                        f"color: {'#ffffff' if theme == 'dark' else '#000000'}; padding: 2px; background: transparent;")
+                    size_spin = QSpinBox() if is_int else QDoubleSpinBox()
+                    size_spin.setRange(min_v, max_v)
+                    size_spin.setValue(getattr(layer_panel.canvas, attr, default))
+                    size_spin.valueChanged.connect(lambda value, a=attr: _apply_arrow_size(a, value))
+                    upgrade_spinbox(size_spin)
+                    style_segmented_spinbox(size_spin, theme, is_hebrew)
+                    if is_hebrew:
+                        size_row_label.setLayoutDirection(Qt.RightToLeft)
+                        size_row_label.setAlignment(Qt.AlignRight)
+                        size_row.addWidget(size_spin)
+                        size_row.addStretch()
+                        size_row.addWidget(size_row_label)
+                    else:
+                        size_row.addWidget(size_row_label)
+                        size_row.addStretch()
+                        size_row.addWidget(size_spin)
+                    sizes_panel_layout.addLayout(size_row)
+
+                sizes_widget_action = QWidgetAction(sizes_menu)
+                sizes_widget_action.setDefaultWidget(sizes_panel)
+                sizes_menu.addAction(sizes_widget_action)
+                sizes_button.setMenu(sizes_menu)
+
+                def _persist_arrow_sizes():
+                    dialog = arrow_sizes_pending_save.get('dialog')
+                    if dialog is not None:
+                        arrow_sizes_pending_save['dialog'] = None
+                        try:
+                            dialog.save_settings_to_file()
+                        except Exception:
+                            pass
+
+                sizes_menu.aboutToHide.connect(_persist_arrow_sizes)
+
+                sizes_layout.addWidget(sizes_label)
+                sizes_layout.addStretch()
+                sizes_layout.addWidget(sizes_button)
+
                 # Add all layouts to the main layout
                 arrow_custom_layout.addLayout(color_layout)
                 arrow_custom_layout.addLayout(transparency_layout)
@@ -1013,6 +1176,7 @@ class NumberedLayerButton(QPushButton):
                 arrow_custom_layout.addLayout(shaft_layout)
                 arrow_custom_layout.addLayout(head_layout)
                 arrow_custom_layout.addLayout(shadow_layout)
+                arrow_custom_layout.addLayout(sizes_layout)
 
                 arrow_custom_widget.setLayout(arrow_custom_layout)
                 arrow_custom_widget.setStyleSheet(f"background-color: {'#333333' if theme == 'dark' else '#F0F0F0'}; border-radius: 5px;")

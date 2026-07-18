@@ -653,12 +653,10 @@ class MainWindow(QMainWindow):
                 # Apply current theme to dialog
                 self._settings_dialog.apply_dialog_theme(self.current_theme)
 
-            # Show the existing dialog
-            # Ensure the question mark button is removed
-            self._settings_dialog.setWindowFlags(self._settings_dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-            self._settings_dialog.show()
-            self._settings_dialog.raise_()
-            self._settings_dialog.activateWindow()
+            # Show the existing dialog (the constructor already removed the
+            # question mark button; re-applying window flags here recreated the
+            # native window on every open and caused a visible position flash)
+            self._show_settings_dialog()
         except RuntimeError:
             # C++ settings dialog object was deleted — recreate it
             from settings_dialog import SettingsDialog
@@ -673,10 +671,36 @@ class MainWindow(QMainWindow):
             self._settings_dialog.current_theme = self.current_theme
             self._settings_dialog.theme_changed.connect(self.apply_theme)
             self._settings_dialog.apply_dialog_theme(self.current_theme)
-            self._settings_dialog.setWindowFlags(self._settings_dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-            self._settings_dialog.show()
-            self._settings_dialog.raise_()
-            self._settings_dialog.activateWindow()
+            self._show_settings_dialog()
+
+    def _show_settings_dialog(self):
+        """Show the settings dialog mapped directly at its final geometry.
+
+        All slow preparation (retranslation) and the centering happen while the
+        dialog is still hidden; the explicit move() also sets WA_Moved, so
+        QDialog skips its own centering, which used to run ~300 ms after the
+        window was already on screen and made it visibly jump.
+        """
+        dialog = self._settings_dialog
+        if hasattr(dialog, 'sync_language_with_parent'):
+            dialog.sync_language_with_parent()
+        # Tight-fit the dialog to the current translations while still hidden
+        # (update_translations used to do this ~300 ms after the dialog was
+        # already visible, producing the size pop)
+        if hasattr(dialog, 'adjust_dialog_geometry'):
+            dialog.adjust_dialog_geometry()
+        if dialog.layout() is not None:
+            dialog.layout().activate()
+        frame = dialog.frameGeometry()
+        frame.moveCenter(self.frameGeometry().center())
+        # Keep the dialog fully on the screen that contains the main window
+        screen = QApplication.desktop().availableGeometry(self)
+        x = max(screen.left(), min(frame.left(), screen.right() - frame.width() + 1))
+        y = max(screen.top(), min(frame.top(), screen.bottom() - frame.height() + 1))
+        dialog.move(x, y)
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
 
     def apply_theme(self, theme_name):
         # Store the current theme

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings Dialog Position Flash — Bug Report</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1a1a1a; --muted: #666;
+    --card: #f6f7f9; --border: #d8dce2;
+    --bad: #c0392b; --good: #1e7e34; --warn: #b06000;
+    --code-bg: #f0f2f5; --accent: #2c5aa0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1e; --fg: #e8e8e8; --muted: #9a9a9a;
+      --card: #262a30; --border: #3a4048;
+      --bad: #e5776a; --good: #6fcf8b; --warn: #e0a04f;
+      --code-bg: #2a2e35; --accent: #7aa7e0;
+    }
+  }
+  body { font-family: "Segoe UI", Arial, sans-serif; background: var(--bg); color: var(--fg);
+         max-width: 900px; margin: 0 auto; padding: 24px; line-height: 1.55; }
+  h1 { font-size: 1.6em; border-bottom: 2px solid var(--accent); padding-bottom: 8px; }
+  h2 { font-size: 1.25em; margin-top: 1.8em; color: var(--accent); }
+  code, pre { font-family: Consolas, "Courier New", monospace; background: var(--code-bg);
+              border-radius: 4px; }
+  code { padding: 1px 5px; }
+  pre { padding: 12px 14px; overflow-x: auto; border: 1px solid var(--border); font-size: 0.86em; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92em; }
+  th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--card); }
+  .mono { font-family: Consolas, monospace; white-space: nowrap; }
+  .bad { color: var(--bad); font-weight: 600; }
+  .good { color: var(--good); font-weight: 600; }
+  .warn { color: var(--warn); font-weight: 600; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+          padding: 14px 18px; margin: 14px 0; }
+  .muted { color: var(--muted); }
+  .loc { font-weight: 600; }
+</style>
+</head>
+<body>
+
+<h1>🐛 Settings Dialog Position Flash</h1>
+<p class="muted">Investigated 2026-07-19 · OpenStrandStudio v1.109 · Windows 11, PyQt5 · reproduced with an instrumented run (<code>repro.py</code> in this folder)</p>
+
+<h2>Symptom</h2>
+<div class="card">
+  Opening the Settings dialog (main window → ⚙) briefly shows the dialog at the
+  <b>wrong position and wrong size</b>. Roughly a third of a second later it visibly
+  <b>shrinks</b> and <b>jumps</b> to its final centered position. The flash happens on
+  the first open and on every re-open.
+</div>
+
+<h2>Measured timeline</h2>
+<p>An event filter on the dialog logged every Show/Move/Resize with millisecond timestamps
+(<code>t=0</code> is the <code>open_settings_dialog()</code> call):</p>
+
+<h3>First open</h3>
+<table>
+  <tr><th>t (ms)</th><th>Event</th><th>Frame geometry</th><th>What it means</th></tr>
+  <tr><td class="mono">+103</td><td class="mono">WinIdChange</td><td class="mono">(841, 197) 875×600</td>
+      <td><code>setWindowFlags(...)</code> destroyed and recreated the native window</td></tr>
+  <tr><td class="mono">+111</td><td class="mono bad">Show</td><td class="mono bad">(841, 197) 875×644</td>
+      <td class="bad">Window appears on screen — stale position, stale width</td></tr>
+  <tr><td class="mono">+389</td><td class="mono warn">Resize</td><td class="mono">875 → 668 wide</td>
+      <td class="warn">Visible width pop, 278 ms after appearing (retranslation relayout finished)</td></tr>
+  <tr><td class="mono">+464</td><td class="mono warn">Move</td><td class="mono">(841,197) → (945,174)</td>
+      <td class="warn">Visible jump, 353 ms after appearing (Qt finally centers the dialog)</td></tr>
+</table>
+
+<h3>Second open (dialog closed, reopened)</h3>
+<table>
+  <tr><th>t (ms)</th><th>Event</th><th>Frame geometry</th><th>What it means</th></tr>
+  <tr><td class="mono">+1</td><td class="mono bad">Show</td><td class="mono">(945, 174) 668×644</td>
+      <td class="bad">Appears at last position — with stale height</td></tr>
+  <tr><td class="mono">+263</td><td class="mono warn">Resize</td><td class="mono">644 → 684 tall</td>
+      <td class="warn">Visible height pop after retranslation relayout</td></tr>
+  <tr><td class="mono">+334</td><td class="mono warn">Move</td><td class="mono">(945,174) → (945,154)</td>
+      <td class="warn">Visible re-centering jump</td></tr>
+</table>
+
+<p>The user-visible flash is the <b>≈280–350&nbsp;ms window between “Show” and the late
+“Resize”/“Move”</b>, during which the dialog sits on screen at the wrong geometry.</p>
+
+<h2>Root cause</h2>
+
+<h3>1 — Primary: heavy work runs in <code>showEvent</code> <i>before</i> Qt can position the dialog</h3>
+<p><span class="loc">src/settings_dialog.py : 6859, <code>SettingsDialog.showEvent()</code></span></p>
+<pre>def showEvent(self, event):
+    if hasattr(self.parent_window, 'language_code'):
+        self.current_language = self.parent_window.language_code
+        self.update_translations()      # ← ≈300 ms: retranslates EVERY widget,
+        self.update_layout_direction()  #   rebuilds the button-guide HTML, etc.
+
+    super().showEvent(event)            # ← QDialog.showEvent → adjustPosition()
+                                        #   (the built-in "center over parent")
+                                        #   runs ~350 ms too late</pre>
+<p>Qt centers a <code>QDialog</code> over its parent inside
+<code>QDialog::showEvent()</code> (via <code>adjustPosition()</code>). By the time this
+override calls <code>super().showEvent()</code>, the native window has already been mapped
+on screen — so the centering executes as a <b>visible jump</b> instead of an invisible
+pre-placement. The same retranslation also changes the layout's size hints, producing the
+<b>visible size pop</b> a moment earlier. Note the retranslation runs on
+<i>every single open</i>, even though the language almost never changes between opens.</p>
+
+<h3>2 — Contributing: <code>setWindowFlags()</code> on every open recreates the window</h3>
+<p><span class="loc">src/main_window.py : 658, <code>MainWindow.open_settings_dialog()</code></span> (also in the
+<code>RuntimeError</code> recovery path at line 676)</p>
+<pre>self._settings_dialog.setWindowFlags(
+    self._settings_dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+self._settings_dialog.show()</pre>
+<p>In Qt, changing window flags <b>destroys and recreates the native window</b>
+(the logged <code>WinIdChange</code>). This discards the window manager's placement and
+guarantees the first mapping happens at stale coordinates. Stripping the "?" help button
+is a one-time construction concern, not a per-open one.</p>
+
+<h3>3 — Nothing positions the dialog before <code>show()</code></h3>
+<p><code>open_settings_dialog()</code> resizes the dialog (once) but never moves it. The
+final position is only ever established by Qt's late centering described above — so the
+first mapped frame is always wrong.</p>
+
+<h2>How to fix (proposal — not yet applied)</h2>
+<table>
+  <tr><th>#</th><th>Change</th><th>Where</th><th>Effect</th></tr>
+  <tr>
+    <td>1</td>
+    <td>Strip <code>Qt.WindowContextHelpButtonHint</code> <b>once, in the constructor</b>;
+        delete both per-open <code>setWindowFlags(...)</code> calls.</td>
+    <td class="mono">settings_dialog.py __init__<br>main_window.py 658, 676</td>
+    <td>No more native-window recreation (<code>WinIdChange</code>) on open.</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>Retranslate <b>only when the language actually changed</b>:
+        <pre style="margin:6px 0 0 0">if self.current_language != self.parent_window.language_code:
+    self.current_language = ...
+    self.update_translations()
+    self.update_layout_direction()</pre></td>
+    <td class="mono">settings_dialog.py 6859</td>
+    <td>Removes ≈300 ms of work from every open; kills the size pop in the common case.</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>Pre-position before showing: in <code>open_settings_dialog()</code>, before
+        <code>show()</code>, activate the layout and center the dialog on the main window with an
+        explicit <code>move()</code>. An explicit move sets <code>WA_Moved</code>, so Qt's own late
+        <code>adjustPosition()</code> is skipped and the window maps directly at its final spot.</td>
+    <td class="mono">main_window.py 656–661</td>
+    <td>Dialog appears at the correct position in the very first frame; no jump.</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td><i>(Optional hardening)</i> Wrap any remaining heavy refresh in
+        <code>setUpdatesEnabled(False)</code> / <code>(True)</code> so intermediate layout states
+        can never paint.</td>
+    <td class="mono">settings_dialog.py showEvent</td>
+    <td>Defense in depth against future slow work added to <code>showEvent</code>.</td>
+  </tr>
+</table>
+
+<h2>Verification plan</h2>
+<p>Re-run <code>repro.py</code> (in this folder) after the fix. Expected: the
+<span class="good">Show</span> event already reports the final frame geometry, and there is
+<span class="good">no Move/Resize event in the 500&nbsp;ms after Show</span> on either the
+first or second open.</p>
+
+<p class="muted">Repro details: <code>repro.py</code> creates the real <code>MainWindow</code>,
+installs an event filter + 5&nbsp;ms geometry poll on the settings dialog, opens it, closes it,
+reopens it, and prints the millisecond timeline shown above.</p>
+
+</body>
+</html>

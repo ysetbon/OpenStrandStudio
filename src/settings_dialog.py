@@ -6856,14 +6856,24 @@ class SettingsDialog(QDialog):
                 f"{deleted_count} history files removed."
             )
 
-    def showEvent(self, event):
-        """Override showEvent to ensure translations are always up-to-date before showing."""
-        # Always get the current language from the parent and update translations
-        if hasattr(self.parent_window, 'language_code'):
+    def sync_language_with_parent(self):
+        """Retranslate if the parent window's language changed since the last show.
+
+        Called by MainWindow.open_settings_dialog() while the dialog is still
+        hidden, so the ~300 ms retranslation relayout can never flash on screen.
+        """
+        if (hasattr(self.parent_window, 'language_code')
+                and self.current_language != self.parent_window.language_code):
             self.current_language = self.parent_window.language_code
             self.update_translations()
-            # Update layout direction after updating translations
             self.update_layout_direction()
+
+    def showEvent(self, event):
+        """Override showEvent to ensure translations are up-to-date before showing."""
+        # Safety net only: retranslating unconditionally here kept the mapped
+        # window at a stale geometry for ~300 ms on every open (visible flash)
+        # before QDialog.showEvent could center it over the parent.
+        self.sync_language_with_parent()
 
         super().showEvent(event) # Call parent method AFTER ensuring translations
 

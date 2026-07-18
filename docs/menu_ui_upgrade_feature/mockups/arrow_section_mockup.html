@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenStrand Studio — Layer Menu Arrow Section Mock (v1.109)</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #ECECEC; color: #1a1a1a;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .subtitle { color: #555; margin-bottom: 20px; font-size: 13px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 16px;
+  }
+
+  /* ===== menu panel (mimics the layer context menu arrow section) ===== */
+  .panel {
+    border-radius: 6px; padding: 12px 10px;
+    border: 1px solid rgba(0,0,0,.2);
+    box-shadow: 0 2px 8px rgba(0,0,0,.18);
+    position: relative;
+  }
+  .panel-caption {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .8px; opacity: .55; margin: 0 6px 10px;
+  }
+  .theme-default { background: #F0F0F0; color: #000; }
+  .theme-light   { background: #F5F5F5; color: #000; }
+  .theme-dark    { background: #333333; color: #FFF; }
+
+  .row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 5px 8px; font-size: 13px; min-height: 34px;
+  }
+  .row .lbl { flex: 1; }
+
+  /* color swatch + slider (context only) */
+  .swatch { width: 44px; height: 20px; background: #111; border-radius: 4px; border: 1px solid #666; }
+  input[type=range] { width: 100px; }
+  .pct { width: 38px; text-align: right; }
+
+  /* ===== combo-look dropdowns (texture / shaft / arrow sizes) ===== */
+  .dd {
+    position: relative; display: inline-block;
+  }
+  .dd-btn {
+    min-width: 96px; padding: 5px 26px 5px 10px;
+    border: 1px solid; border-radius: 4px;
+    font-size: 13px; text-align: left; cursor: pointer;
+    font-family: inherit; position: relative;
+  }
+  .dd-btn::after {
+    content: ""; position: absolute; right: 8px; top: 50%;
+    transform: translateY(-40%);
+    border-left: 5px solid transparent; border-right: 5px solid transparent;
+    border-top: 6px solid;
+  }
+  .theme-default .dd-btn, .theme-light .dd-btn {
+    background: #FFFFFF; color: #000; border-color: #AAAAAA;
+  }
+  .theme-default .dd-btn::after, .theme-light .dd-btn::after { border-top-color: #444; }
+  .theme-default .dd-btn:hover, .theme-light .dd-btn:hover { border-color: #777; }
+  .theme-dark .dd-btn { background: #3D3D3D; color: #FFF; border-color: #666666; }
+  .theme-dark .dd-btn::after { border-top-color: #CCC; }
+  .theme-dark .dd-btn:hover { border-color: #999; }
+
+  .dd-pop {
+    display: none; position: absolute; top: calc(100% + 3px); z-index: 20;
+    border: 1px solid; border-radius: 5px; padding: 4px;
+    min-width: 120px; box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  }
+  .dd.open .dd-pop { display: block; }
+  [dir="ltr"] .dd-pop { right: 0; }
+  [dir="rtl"] .dd-pop { left: 0; }
+  .theme-default .dd-pop, .theme-light .dd-pop { background: #FFFFFF; border-color: #AAAAAA; }
+  .theme-dark .dd-pop { background: #333333; border-color: #666666; }
+  .dd-item {
+    padding: 6px 10px; border-radius: 3px; cursor: pointer; font-size: 13px;
+    white-space: nowrap;
+  }
+  .theme-default .dd-item:hover, .theme-light .dd-item:hover { background: #A0C0E0; }
+  .theme-dark .dd-item:hover { background: #4A6FA5; }
+
+  /* RTL: arrow on the left of dropdown buttons */
+  [dir="rtl"] .dd-btn { padding: 5px 10px 5px 26px; text-align: right; }
+  [dir="rtl"] .dd-btn::after { right: auto; left: 8px; }
+
+  /* ===== big themed checkbox (20px, blue accent, white V) ===== */
+  .chk {
+    width: 20px; height: 20px; border-radius: 4px; border: 2px solid;
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    flex: none;
+  }
+  .theme-default .chk, .theme-light .chk { border-color: #AAAAAA; background: #FFF; }
+  .theme-default .chk:hover, .theme-light .chk:hover { border-color: #888; background: #F8F8F8; }
+  .theme-dark .chk { border-color: #666; background: #2A2A2A; }
+  .theme-dark .chk:hover { border-color: #888; background: #454545; }
+  .chk.on { border-color: #7090C0; background: #A0C0E0; }
+  .theme-dark .chk.on { border-color: #6A9FD5; background: #4A6FA5; }
+  .chk.on::after {
+    content: ""; width: 10px; height: 6px;
+    border-left: 2.5px solid #fff; border-bottom: 2.5px solid #fff;
+    transform: rotate(-45deg) translateY(-1px);
+    border-radius: 1px;
+  }
+
+  /* ===== Arrow Sizes panel (shown OPEN, like the real popup) ===== */
+  .sizes-block {
+    margin: 4px 8px 6px 26px;
+    border: 1px solid; border-radius: 5px; padding: 8px 10px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.22);
+  }
+  [dir="rtl"] .sizes-block { margin: 4px 26px 6px 8px; }
+  .theme-default .sizes-block, .theme-light .sizes-block { background: #F0F0F0; border-color: #AAAAAA; }
+  .theme-dark .sizes-block { background: #333333; border-color: #666666; }
+  .sizes-block.collapsed { display: none; }
+  .sizes-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 3px 2px; font-size: 13px;
+  }
+  .sizes-row .lbl { flex: 1; min-width: 150px; }
+
+  /* segmented stepper [ - | value | + ]  (110 x 28, like the app) */
+  .step {
+    display: inline-flex; align-items: stretch; height: 28px; width: 110px;
+    border: 1px solid; border-radius: 5px; overflow: hidden; flex: none;
+  }
+  .theme-default .step, .theme-light .step { border-color: #ADADAD; background: #FFF; }
+  .theme-dark .step { border-color: #505050; background: #3D3D3D; }
+  .step input {
+    border: none; width: 48px; text-align: center; font-size: 13px;
+    background: transparent; color: inherit; outline: none; font-family: inherit;
+  }
+  .step button {
+    width: 30px; border: none; cursor: pointer; font-size: 15px; font-weight: 700;
+    font-family: inherit; padding: 0; line-height: 1;
+  }
+  .theme-default .step button, .theme-light .step button { background: #F5F5F5; color: #000; }
+  .theme-dark .step button { background: #333; color: #FFF; }
+  .theme-default .step button:hover, .theme-light .step button:hover { background: #E4E4E4; }
+  .theme-dark .step button:hover { background: #454545; }
+  .theme-default .step button:active, .theme-light .step button:active { background: #D0D0D0; }
+  .theme-dark .step button:active { background: #222; }
+  [dir="ltr"] .step button:first-child { border-right: 1px solid; }
+  [dir="ltr"] .step button:last-child { border-left: 1px solid; }
+  [dir="rtl"] .step button:first-child { border-left: 1px solid; }
+  [dir="rtl"] .step button:last-child { border-right: 1px solid; }
+  .theme-default .step button, .theme-light .step button { border-color: #D5D5D5 !important; }
+  .theme-dark .step button { border-color: #505050 !important; }
+
+  .note {
+    margin-top: 22px; padding: 12px 14px; background: #fff;
+    border: 1px solid #ddd; border-radius: 6px; font-size: 13px; color: #444;
+  }
+</style>
+</head>
+<body>
+
+<h1>Layer Context Menu — Arrow Section (v1.109)</h1>
+<div class="subtitle">
+  Interactive mock of what shipped on branch <b>worktree-setting-dialog-upgrade-109</b>:
+  themed dropdowns with proper triangle arrows, 50% larger checkboxes, and the new
+  <b>Arrow Sizes → Adjust</b> dropdown exposing all six settings-dialog arrow numbers with the
+  segmented <b>[ − | value | + ]</b> steppers. Everything is clickable — try the dropdowns,
+  toggles and steppers (press-and-hold repeats).
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="note">
+  <b>In the app:</b> right-click a layer button → enable <i>Show Full Arrow</i> → the arrow
+  section appears with this exact structure. Stepping a value in <i>Arrow Sizes</i> redraws the
+  canvas live, syncs the Settings dialog spin boxes, and saves to the settings file when the
+  popup closes.
+</div>
+
+<script>
+const THEMES = [
+  { cls: 'theme-default', name: 'Default theme' },
+  { cls: 'theme-light',   name: 'Light theme'   },
+  { cls: 'theme-dark',    name: 'Dark theme'    },
+];
+const T = {
+  ltr: {
+    color: 'Arrow Color', transp: 'Arrow Transparency', texture: 'Arrow Head Texture',
+    shaft: 'Arrow Shaft Style', head: 'Show Arrow Head', shadow: 'Arrow Casts Shadow',
+    sizes: 'Arrow Sizes', adjust: 'Adjust',
+    textureItems: ['None', 'Stripes', 'Dots', 'Crosshatch'],
+    shaftItems: ['Solid', 'Tiles', 'Stripes', 'Dots'],
+    sizeRows: [
+      ['Arrow Head Length', 20.00, 2],
+      ['Arrow Head Width', 10.00, 2],
+      ['Arrow Head Stroke Width', 4, 0],
+      ['Arrow Gap Length', 10.00, 2],
+      ['Arrow Line Length', 20.00, 2],
+      ['Arrow Line Width', 10.00, 2],
+    ],
+  },
+  rtl: {
+    color: 'צבע חץ', transp: 'שקיפות חץ', texture: 'מרקם ראש החץ',
+    shaft: 'סגנון גוף החץ', head: 'הצג ראש חץ', shadow: 'החץ מטיל צל',
+    sizes: 'גדלי החץ', adjust: 'התאמה',
+    textureItems: ['ללא', 'פסים', 'נקודות', 'שתי וערב'],
+    shaftItems: ['מלא', 'אריחים', 'פסים', 'נקודות'],
+    sizeRows: [
+      ['אורך ראש החץ', 20.00, 2],
+      ['רוחב ראש החץ', 10.00, 2],
+      ['עובי קו ראש החץ', 4, 0],
+      ['אורך הרווח', 10.00, 2],
+      ['אורך גוף החץ', 20.00, 2],
+      ['עובי גוף החץ', 10.00, 2],
+    ],
+  },
+};
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+function closeAll(except) {
+  document.querySelectorAll('.dd.open').forEach(d => { if (d !== except) d.classList.remove('open'); });
+}
+document.addEventListener('click', e => { if (!e.target.closest('.dd')) closeAll(); });
+
+function makeDropdown(items, initial) {
+  const dd = el('span', 'dd');
+  const btn = el('button', 'dd-btn', initial);
+  btn.type = 'button';
+  const pop = el('div', 'dd-pop');
+  items.forEach(it => {
+    const item = el('div', 'dd-item', it);
+    item.onclick = () => { btn.textContent = it; dd.classList.remove('open'); };
+    pop.append(item);
+  });
+  btn.onclick = e => { e.stopPropagation(); closeAll(dd); dd.classList.toggle('open'); };
+  dd.append(btn, pop);
+  return dd;
+}
+
+function makeStepper(value, decimals) {
+  const step = el('span', 'step');
+  const minus = el('button', '', '−'); minus.type = 'button';
+  const plus = el('button', '', '+'); plus.type = 'button';
+  const input = el('input');
+  let v = value;
+  input.value = v.toFixed(decimals);
+  const inc = decimals ? 1 : 1;
+  const set = d => { v = Math.max(0, v + d * inc); input.value = v.toFixed(decimals); };
+  [[minus, -1], [plus, +1]].forEach(([b, d]) => {
+    let t = null, iv = null;
+    const start = () => { set(d); t = setTimeout(() => iv = setInterval(() => set(d), 60), 400); };
+    const stop = () => { clearTimeout(t); clearInterval(iv); };
+    b.addEventListener('mousedown', start);
+    ['mouseup', 'mouseleave', 'blur'].forEach(ev => b.addEventListener(ev, stop));
+  });
+  step.append(minus, input, plus);
+  return step;
+}
+
+function makeSizesRowAndBlock(t) {
+  // The dropdown row + the sizes panel rendered OPEN below it (like the
+  // real popup in the app); clicking Adjust collapses/expands it.
+  const row = el('div', 'row');
+  const lbl = el('span', 'lbl', t.sizes);
+  const btn = el('button', 'dd-btn', t.adjust);
+  btn.type = 'button';
+  row.append(lbl, btn);
+
+  const block = el('div', 'sizes-block');
+  t.sizeRows.forEach(([label, value, decimals]) => {
+    const r = el('div', 'sizes-row');
+    r.append(el('span', 'lbl', label), makeStepper(value, decimals));
+    block.append(r);
+  });
+  btn.onclick = e => { e.stopPropagation(); block.classList.toggle('collapsed'); };
+  return [row, block];
+}
+
+function makeCheckbox(on) {
+  const c = el('span', 'chk' + (on ? ' on' : ''));
+  c.onclick = () => c.classList.toggle('on');
+  return c;
+}
+
+function makePanel(theme, rtl) {
+  const t = rtl ? T.rtl : T.ltr;
+  const p = el('div', 'panel ' + theme.cls);
+  p.dir = rtl ? 'rtl' : 'ltr';
+  p.append(el('div', 'panel-caption', theme.name + (rtl ? ' · RTL (עברית)' : ' · LTR')));
+
+  const rColor = el('div', 'row');
+  rColor.append(el('span', 'lbl', t.color), el('span', 'swatch'));
+
+  const rTransp = el('div', 'row');
+  const slider = el('input'); slider.type = 'range'; slider.min = 0; slider.max = 100; slider.value = 100;
+  const pct = el('span', 'pct', '100%');
+  slider.oninput = () => pct.textContent = slider.value + '%';
+  rTransp.append(el('span', 'lbl', t.transp), slider, pct);
+
+  const rTexture = el('div', 'row');
+  rTexture.append(el('span', 'lbl', t.texture), makeDropdown(t.textureItems, t.textureItems[0]));
+
+  const rShaft = el('div', 'row');
+  rShaft.append(el('span', 'lbl', t.shaft), makeDropdown(t.shaftItems, t.shaftItems[0]));
+
+  const rHead = el('div', 'row');
+  rHead.append(el('span', 'lbl', t.head), makeCheckbox(true));
+
+  const rShadow = el('div', 'row');
+  rShadow.append(el('span', 'lbl', t.shadow), makeCheckbox(false));
+
+  const [rSizes, sizesBlock] = makeSizesRowAndBlock(t);
+
+  p.append(rColor, rTransp, rTexture, rShaft, rHead, rShadow, rSizes, sizesBlock);
+  return p;
+}
+
+const grid = document.getElementById('grid');
+THEMES.forEach(theme => {
+  grid.append(makePanel(theme, false));
+  grid.append(makePanel(theme, true));
+});
+</script>
+</body>
+</html>

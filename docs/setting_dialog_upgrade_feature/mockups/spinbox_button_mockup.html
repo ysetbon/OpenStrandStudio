@@ -173,6 +173,50 @@
     border: 1px solid #ddd; border-radius: 6px; font-size: 13px; color: #444;
   }
   .note b { color: #222; }
+
+  /* =====================================================================
+     SHIPPED EXTRA — "Arrow Sizes" dropdown (layer context menu)
+     ===================================================================== */
+  .dd { position: relative; display: inline-block; }
+  .dd-btn {
+    min-width: 96px; padding: 5px 26px 5px 10px;
+    border: 1px solid; border-radius: 4px;
+    font-size: 13px; text-align: left; cursor: pointer;
+    font-family: inherit; position: relative;
+  }
+  .dd-btn::after {
+    content: ""; position: absolute; right: 8px; top: 50%;
+    transform: translateY(-40%);
+    border-left: 5px solid transparent; border-right: 5px solid transparent;
+    border-top: 6px solid;
+  }
+  .theme-default .dd-btn, .theme-light .dd-btn {
+    background: #FFFFFF; color: #000; border-color: #AAAAAA;
+  }
+  .theme-default .dd-btn::after, .theme-light .dd-btn::after { border-top-color: #444; }
+  .theme-default .dd-btn:hover, .theme-light .dd-btn:hover { border-color: #777; }
+  .theme-dark .dd-btn { background: #3D3D3D; color: #FFF; border-color: #666666; }
+  .theme-dark .dd-btn::after { border-top-color: #CCC; }
+  .theme-dark .dd-btn:hover { border-color: #999; }
+  [dir="rtl"] .dd-btn { padding: 5px 10px 5px 26px; text-align: right; }
+  [dir="rtl"] .dd-btn::after { right: auto; left: 8px; }
+
+  .dd-pop {
+    display: none; position: absolute; top: calc(100% + 3px); z-index: 20;
+    border: 1px solid; border-radius: 5px; padding: 10px; min-width: 320px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  }
+  .dd.open .dd-pop { display: block; }
+  [dir="ltr"] .dd-pop { right: 0; }
+  [dir="rtl"] .dd-pop { left: 0; }
+  .theme-default .dd-pop, .theme-light .dd-pop { background: #F0F0F0; border-color: #AAAAAA; }
+  .theme-dark .dd-pop { background: #333333; border-color: #666666; }
+  .sizes-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 3px 2px; font-size: 13px;
+  }
+  .sizes-row .lbl { flex: 1; min-width: 150px; }
+  .theme-dark .sizes-row { color: #fff; }
 </style>
 </head>
 <body>
@@ -214,11 +258,24 @@
   <div class="theme-grid" data-option="C"></div>
 </div>
 
+<!-- ================= SHIPPED EXTRA: ARROW SIZES DROPDOWN ================= -->
+<div class="option-block">
+  <div class="option-title"><span class="option-tag" style="background:#3e8e5a;">SHIPPED</span> Arrow Sizes dropdown — layer context menu</div>
+  <div class="option-desc">
+    Added to the arrow section of the layer right-click menu: a combo-styled <b>Arrow Sizes → Adjust</b>
+    dropdown exposing all six settings-dialog arrow numbers with the chosen Option B steppers.
+    Click <b>Adjust</b> to open the panel — values step live in the app and persist to the settings file.
+  </div>
+  <div class="theme-grid" data-option="D"></div>
+</div>
+
 <div class="note">
   <b>Implementation note:</b> all three options can be done purely with Qt stylesheets + a small
   <code>ThemedSpinBox</code> helper applied dialog-wide (Options A/B wrap the spinbox in a tiny widget;
   Option C is stylesheet-only on <code>QSpinBox::up-button/down-button</code>).
   Press-and-hold auto-repeat is native QSpinBox behavior and is kept in every option.
+  <br><b>Shipped:</b> Option B was implemented (110px control, halved value gap), plus the Arrow Sizes
+  dropdown above in the layer context menu.
 </div>
 
 <script>
@@ -294,11 +351,85 @@ function makePanel(option, theme, rtl) {
   return p;
 }
 
+// --- Shipped extra: Arrow Sizes dropdown (layer context menu) ---
+const SIZES_LTR = {
+  row: 'Arrow Sizes', btn: 'Adjust',
+  items: [
+    ['Arrow Head Length', 20.00, 2], ['Arrow Head Width', 10.00, 2],
+    ['Arrow Head Stroke Width', 4, 0], ['Arrow Gap Length', 10.00, 2],
+    ['Arrow Line Length', 20.00, 2], ['Arrow Line Width', 10.00, 2],
+  ],
+};
+const SIZES_RTL = {
+  row: 'גדלי החץ', btn: 'התאמה',
+  items: [
+    ['אורך ראש החץ', 20.00, 2], ['רוחב ראש החץ', 10.00, 2],
+    ['עובי קו ראש החץ', 4, 0], ['אורך הרווח', 10.00, 2],
+    ['אורך גוף החץ', 20.00, 2], ['עובי גוף החץ', 10.00, 2],
+  ],
+};
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.dd'))
+    document.querySelectorAll('.dd.open').forEach(d => d.classList.remove('open'));
+});
+
+function makeSizesPanel(theme, rtl) {
+  const t = rtl ? SIZES_RTL : SIZES_LTR;
+  const p = document.createElement('div');
+  p.className = 'panel ' + theme.cls;
+  p.dir = rtl ? 'rtl' : 'ltr';
+  const cap = document.createElement('div');
+  cap.className = 'panel-caption';
+  cap.textContent = theme.name + (rtl ? ' · RTL (עברית)' : ' · LTR');
+  p.append(cap);
+
+  const row = document.createElement('div');
+  row.className = 'row';
+  const lbl = document.createElement('span');
+  lbl.className = 'lbl';
+  lbl.textContent = t.row;
+
+  const dd = document.createElement('span');
+  dd.className = 'dd';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'dd-btn';
+  btn.textContent = t.btn;
+  const pop = document.createElement('div');
+  pop.className = 'dd-pop';
+  t.items.forEach(([label, value, dec]) => {
+    const r = document.createElement('div');
+    r.className = 'sizes-row';
+    const l = document.createElement('span');
+    l.className = 'lbl';
+    l.textContent = label;
+    r.append(l, makeStepper('B', {value: value, step: 1, dec: dec}));
+    pop.append(r);
+  });
+  pop.onclick = e => e.stopPropagation();
+  btn.onclick = e => {
+    e.stopPropagation();
+    document.querySelectorAll('.dd.open').forEach(d => { if (d !== dd) d.classList.remove('open'); });
+    dd.classList.toggle('open');
+  };
+  dd.append(btn, pop);
+
+  row.append(lbl, dd);
+  p.append(row);
+  return p;
+}
+
 document.querySelectorAll('.theme-grid').forEach(grid => {
   const opt = grid.dataset.option;
   THEMES.forEach(theme => {
-    grid.append(makePanel(opt, theme, false));
-    grid.append(makePanel(opt, theme, true));
+    if (opt === 'D') {
+      grid.append(makeSizesPanel(theme, false));
+      grid.append(makeSizesPanel(theme, true));
+    } else {
+      grid.append(makePanel(opt, theme, false));
+      grid.append(makePanel(opt, theme, true));
+    }
   });
 });
 </script>

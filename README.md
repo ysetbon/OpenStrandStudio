@@ -1,24 +1,34 @@
-# OpenStrand Studio - Version 1.108
+# OpenStrand Studio - Version 1.109
 
 An advanced diagramming tool for creating tutorials involving strand manipulation (knots, hitches, etc.)
 with dynamic masking that automatically adjusts the over-under effects between strands,
 making complex patterns clear and easy to understand.
 
-## What's New in Version 1.108
+## What's New in Version 1.109
 
 ### ✨ New Features
 
-- **Multi-Tab Workspace**: A new Tabs button opens a draggable tab edge that magnet-snaps to the side of the canvas. Each tab is an independent session with its own strands, groups, and undo/redo history, and you are warned before quitting when a tab still has unsaved changes.
+- **Lock Mode Redesigned**: Each layer button now shows a small padlock in lock mode. Click the padlock to lock/unlock; clicking the layer simply selects it. Locked strands can be selected but not moved or attached to, and New Strand / Delete Strand remain available (delete is blocked only for locked layers). The lock state is also remembered through undo/redo, save/load, and tab switching.
 
-- **View Mode Toggles in Settings**: New settings let you hide the selection highlight and hide control points while in View mode, giving you a clean, capture-ready canvas without changing your actual selection.
+- **Per-Layer Hide Shadow Option**: Right-click a layer to stop it from casting shadow onto other strands. The setting is saved with your project and survives undo/redo and group operations.
 
-- **Unfolded Start Edge by Default**: A new Layer Panel setting makes every newly attached strand begin with an unfolded (transparent) start edge automatically, so you no longer have to set it strand by strand from the layer button menu.
+- **Arrow Customization in the Layer Menu**: Right-click a layer to style its arrows in place: start/end arrows, full arrow with color, transparency, texture, shaft style, arrow head and shadow, plus a new Arrow Sizes dropdown for all numeric arrow dimensions.
 
-- **Per-Layer Width Control**: A new "Change Width (This Layer Only)" option in the layer button menu resizes a single strand independently of its set, sets the stroke thickness directly in pixels, supports fractional grid sizes, and offers a match-connected-strand elliptical end-cap.
+- **Copy & Paste Strand Data**: In multi-select mode, copy selected properties of a strand (start/end points, control points, width, strand and stroke colors) and paste them onto several layers at once, anchored from the start or end point — with a copy badge and one-click paste chips right on the layer buttons.
+
+- **Mask Shadows in the Shadow Editor**: Shadows cast through a mask now appear in the over-strand's Shadow Editor, so you can turn them on or off like any other shadow.
 
 ### 🐛 Bug Fixes & Improvements
 
-- **Elliptical End-Cap Rendering**: Fixed the closed-knot and attached-strand end caps so a widened strand with the elliptical option renders a flat ellipse instead of a protruding semicircle, including inside masked strands and shadows.
+- **Automatic Shadow Correction for Woven Masks**: Incorrect shadow marks at mask crossings are now hidden automatically; your manual Shadow Editor settings are always respected.
+
+- **More Accurate Strand Selection**: Clicking now selects exactly what you see: strand edges, end caps, and mask outlines are all clickable, the topmost strand is always picked, and the hover highlight always matches what a click will select.
+
+- **Control Point Visibility Fix**: "Show control points only for the selected strand" now hides only control points; other strands keep their endpoint squares and remain movable. Dragging an endpoint no longer makes an untouched control point appear.
+
+- **Shadow Settings Preserved**: A layer's hidden-shadow state is no longer reset by group move or duplicate operations.
+
+- **Improved Drawing Stability**: Fixed internal painting issues that could corrupt the canvas after a drawing error.
 
 ## Features
 
@@ -79,4 +89,4 @@ Created by Yonatan Setbon
 
 ---
 
-© 2026 OpenStrand Studio - Version 1.108
+© 2026 OpenStrand Studio - Version 1.109

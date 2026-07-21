@@ -24,6 +24,48 @@ The masked layer feature is essential for creating intricate, overlapping design
 
 ------
 
+## Version 1.109 (Released: 21/07/2026)
+
+### New Features and Improvements:
+
+1. **Lock Mode Redesigned:**
+   - Each layer button now shows a small padlock in lock mode: click the padlock to lock/unlock, clicking the layer simply selects it.
+   - Locked strands can be selected but not moved or attached to; New Strand / Delete Strand remain available (delete is blocked only for locked layers).
+   - The lock state is remembered through undo/redo, save/load, and tab switching.
+
+2. **Per-Layer Hide Shadow Option:**
+   - Right-click a layer to stop it from casting shadow onto other strands.
+   - The setting is saved with your project and survives undo/redo and group operations.
+
+3. **Arrow Customization in the Layer Menu:**
+   - Right-click a layer to style its arrows in place: start/end arrows, full arrow with color, transparency, texture, shaft style, arrow head and shadow.
+   - A new Arrow Sizes dropdown adjusts all numeric arrow dimensions.
+
+4. **Copy & Paste Strand Data:**
+   - In multi-select mode, copy selected properties of a strand (start/end points, control points, width, strand and stroke colors) and paste them onto several layers at once, anchored from the start or end point.
+   - A copy badge and one-click paste chips appear right on the layer buttons.
+
+5. **Mask Shadows in the Shadow Editor:**
+   - Shadows cast through a mask now appear in the over-strand's Shadow Editor, so you can turn them on or off like any other shadow.
+
+6. **Automatic Shadow Correction for Woven Masks:**
+   - Incorrect shadow marks at mask crossings are now hidden automatically; your manual Shadow Editor settings are always respected.
+
+7. **More Accurate Strand Selection:**
+   - Clicking now selects exactly what you see: strand edges, end caps, and mask outlines are all clickable, the topmost strand is always picked, and the hover highlight always matches what a click will select.
+
+8. **Control Point Visibility Fix:**
+   - "Show control points only for the selected strand" now hides only control points; other strands keep their endpoint squares and remain movable.
+   - Dragging an endpoint no longer makes an untouched control point appear.
+
+9. **Shadow Settings Preserved:**
+   - A layer's hidden-shadow state is no longer reset by group move or duplicate operations.
+
+10. **Improved Drawing Stability:**
+    - Fixed internal painting issues that could corrupt the canvas after a drawing error.
+
+------
+
 ## Version 1.108 (Released: 11/06/2026)
 
 ### New Features and Improvements:
@@ -635,6 +677,48 @@ Pour utiliser cette fonctionnalité :
 3. Relâchez la touche Contrôle pour créer le calque masqué
 
 La fonctionnalité de calque masqué est essentielle pour créer des designs complexes et superposés et c'est l'un des outils les plus puissants d'OpenStrand Studio. Assurez-vous d'expérimenter avec cette fonctionnalité pour libérer tout le potentiel de vos designs de brins !
+
+------
+
+## Version 1.109 (Sortie : 21/07/2026)
+
+### Nouvelles Fonctionnalités et Améliorations :
+
+1. **Mode verrouillage repensé :**
+   - Chaque bouton de calque affiche désormais un petit cadenas en mode verrouillage : cliquez sur le cadenas pour verrouiller/déverrouiller, cliquer sur le calque le sélectionne simplement.
+   - Les brins verrouillés peuvent être sélectionnés mais ni déplacés ni utilisés pour l'attache ; Nouveau brin / Supprimer le brin restent disponibles (la suppression n'est bloquée que pour les calques verrouillés).
+   - L'état de verrouillage est conservé lors des annulations/rétablissements, de l'enregistrement/du chargement et du changement d'onglet.
+
+2. **Option Masquer l'ombre par calque :**
+   - Faites un clic droit sur un calque pour l'empêcher de projeter une ombre sur les autres brins.
+   - Le réglage est enregistré avec votre projet et survit aux annulations/rétablissements et aux opérations de groupe.
+
+3. **Personnalisation des flèches dans le menu des couches :**
+   - Faites un clic droit sur une couche pour styliser ses flèches sur place : flèches de début/fin, flèche complète avec couleur, transparence, texture, style de hampe, pointe et ombre.
+   - Un nouveau menu Tailles de la flèche règle toutes les dimensions numériques.
+
+4. **Copier & coller les données de brin :**
+   - En mode multi-sélection, copiez les propriétés choisies d'un brin (points de départ/fin, points de contrôle, largeur, couleurs du brin et du contour) et collez-les sur plusieurs couches à la fois, ancrées au point de départ ou de fin.
+   - Un badge de copie et des pastilles de collage en un clic apparaissent directement sur les boutons de couches.
+
+5. **Ombres de masque dans l'éditeur d'ombres :**
+   - Les ombres projetées à travers un masque apparaissent désormais dans l'éditeur d'ombres du brin supérieur, vous pouvez donc les activer ou les désactiver comme n'importe quelle autre ombre.
+
+6. **Correction automatique des ombres pour les masques tissés :**
+   - Les marques d'ombre incorrectes aux croisements des masques sont désormais masquées automatiquement ; vos réglages manuels dans l'éditeur d'ombres sont toujours respectés.
+
+7. **Sélection de brins plus précise :**
+   - Un clic sélectionne désormais exactement ce que vous voyez : les bords des brins, les extrémités et les contours des masques sont tous cliquables, le brin le plus haut est toujours choisi, et la surbrillance au survol correspond toujours à ce qu'un clic sélectionnera.
+
+8. **Correction de l'affichage des points de contrôle :**
+   - « Afficher les points de contrôle uniquement pour le brin sélectionné » ne masque plus que les points de contrôle ; les autres brins conservent leurs carrés d'extrémité et restent déplaçables.
+   - Faire glisser une extrémité ne fait plus apparaître un point de contrôle jamais utilisé.
+
+9. **Réglages d'ombre préservés :**
+   - L'état « ombre masquée » d'un calque n'est plus réinitialisé par un déplacement ou une duplication de groupe.
+
+10. **Stabilité de dessin améliorée :**
+    - Correction de problèmes internes de rendu qui pouvaient corrompre le canevas après une erreur de dessin.
 
 ------
 

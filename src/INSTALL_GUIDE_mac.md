@@ -18,14 +18,16 @@ pip3 install -r requirements.txt && python3 src/main.py
 That's it. `requirements.txt` pins PyQt5 5.15.4 and Pillow, which is all the
 app needs at runtime.
 
-> On Apple Silicon, if `pip3 install PyQt5==5.15.4` has no wheel for your
-> Python, use a Python 3.9–3.11 interpreter (e.g. from python.org or
-> `brew install python@3.11`), or install PyQt5 via
-> `brew install pyqt@5` and run with that Python.
+> **Python version matters: use 3.9–3.13, NOT 3.14+.** PyQt5 has no working
+> support for Python 3.14 — the app segfaults immediately (both from source
+> and packaged). If `python3 --version` says 3.14, install a supported one
+> (`brew install python@3.13`), install the deps for it
+> (`python3.13 -m pip install "PyQt5>=5.15.10" pillow pyinstaller`) and run
+> everything through `python3.13` / `PYTHON=python3.13`.
 
 ## Prerequisites for building the installer
 
-- Python 3.9+ (recommended: 3.13)
+- Python 3.9–3.13 (recommended: 3.13; **3.14 is not supported by PyQt5**)
 - pip (Python package manager)
 - Xcode Command Line Tools
 

@@ -40,6 +40,7 @@ making complex patterns clear and easy to understand.
 1. Clone the repository, best to use:
 ```bash
 git clone --filter=blob:limit=5m https://github.com/ysetbon/OpenStrandStudio <your-desired-folder>
+cd <your-desired-folder>
 ```
 
 2. Install dependencies:
@@ -49,8 +50,11 @@ pip install -r requirements.txt
 
 3. Run the application:
 ```bash
-python main.py
+python src/main.py
 ```
+
+For installer builds see `src/INSTALL_GUIDE_Windows.md` and
+`src/INSTALL_GUIDE_mac.md` (macOS: one command — `bash src/build_mac_1_109.sh`).
 
 ## Video Tutorials
 

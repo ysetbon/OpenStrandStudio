@@ -58,6 +58,10 @@ APP_DATE="19_July_2026"
 PUBLISHER="Yonatan Setbon"
 IDENTIFIER="com.yonatan.openstrandstudio"
 
+# All paths are relative to this script's own directory (the src folder), so
+# the build works from any clone location.
+SRC_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 # Create directories
 WORKING_DIR="$(mktemp -d)"
 SCRIPTS_DIR="$WORKING_DIR/scripts"
@@ -66,7 +70,8 @@ RESOURCES_DIR="$WORKING_DIR/resources"
 # version dot is never mistaken for a file extension. VERSION itself stays dotted
 # for the installer title and pkg metadata.
 VERSION_FILE="${VERSION//./_}"
-PKG_PATH="/Users/yonatan/Documents/GitHub/OpenStrandStudio/src/installer_output/${APP_NAME}_${VERSION_FILE}.pkg"
+PKG_PATH="$SRC_DIR/installer_output/${APP_NAME}_${VERSION_FILE}.pkg"
+mkdir -p "$SRC_DIR/installer_output"
 
 mkdir -p "$SCRIPTS_DIR" "$RESOURCES_DIR"
 
@@ -1182,7 +1187,7 @@ EOF
 # Build component package
 echo "Building component package..."
 pkgbuild \
-    --root "/Users/yonatan/Documents/GitHub/OpenStrandStudio/src/dist/OpenStrandStudio.app" \
+    --root "$SRC_DIR/dist/OpenStrandStudio.app" \
     --install-location "/Applications/OpenStrandStudio.app" \
     --scripts "$SCRIPTS_DIR" \
     --identifier "$IDENTIFIER" \

@@ -3,8 +3,10 @@
 #define MyAppPublisher "Yonatan Setbon"
 #define MyAppExeName "OpenStrandStudio.exe"
 #define MyAppDate "19_Jul_2026"
-#define SourcePath "C:\Users\YonatanSetbon\projects\OpenStrandStudio\src"
-#define ExePath "C:\Users\YonatanSetbon\projects\OpenStrandStudio\src\dist"
+; Paths are relative to this .iss file (src\inno setup\), so the installer
+; compiles from any clone location.
+#define SourcePath ".."
+#define ExePath "..\dist"
 
 [Setup]
 AppName={#MyAppName}
@@ -13,7 +15,7 @@ AppPublisher={#MyAppPublisher}
 AppContact=ysetbon@gmail.com
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
-OutputDir=C:\Users\YonatanSetbon\projects\OpenStrandStudio\src\dist
+OutputDir=..\dist
 OutputBaseFilename=OpenStrandStudioSetup_{#MyAppDate}_1_109
 Compression=lzma2/ultra64
 InternalCompressLevel=max

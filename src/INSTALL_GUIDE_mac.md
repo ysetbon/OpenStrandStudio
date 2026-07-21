@@ -1,12 +1,29 @@
 # OpenStrand Studio - macOS Installation Guide
 
-## Version 1.108 - June 11, 2026
+## Version 1.109 - July 19, 2026
 
-This guide explains how to build and package OpenStrand Studio for macOS.
+This guide covers running OpenStrand Studio from source (fastest) and building
+the macOS installer package.
 
-## Prerequisites
+## Fastest: run from source after cloning
 
-Before starting, ensure you have the following installed:
+No packaging needed — three commands from a fresh clone:
+
+```bash
+git clone --filter=blob:limit=5m https://github.com/ysetbon/OpenStrandStudio
+cd OpenStrandStudio
+pip3 install -r requirements.txt && python3 src/main.py
+```
+
+That's it. `requirements.txt` pins PyQt5 5.15.4 and Pillow, which is all the
+app needs at runtime.
+
+> On Apple Silicon, if `pip3 install PyQt5==5.15.4` has no wheel for your
+> Python, use a Python 3.9–3.11 interpreter (e.g. from python.org or
+> `brew install python@3.11`), or install PyQt5 via
+> `brew install pyqt@5` and run with that Python.
+
+## Prerequisites for building the installer
 
 - Python 3.9+ (recommended: 3.13)
 - pip (Python package manager)
@@ -24,25 +41,25 @@ From the repository root, run this single line. It builds the app bundle
 with PyInstaller **and** packages the `.pkg` installer in one step:
 
 ```bash
-bash src/build_mac_1_108.sh
+bash src/build_mac_1_109.sh
 ```
 
 No `chmod` and no `cd` needed — running it through `bash` doesn't require
-the executable bit, and the script switches into `src` on its own.
+the executable bit, and the script switches into `src` on its own. All build
+paths are relative to the script, so any clone location works.
 
-When it finishes, the installer is created in the `installer_output`
-directory as `OpenStrandStudio_1.108.pkg`, and that folder is opened
-automatically.
+When it finishes, the installer is created in `src/installer_output/` as
+`OpenStrandStudio_1_109.pkg`, and that folder is opened automatically.
 
 Options:
 
 ```bash
-PYTHON=python3.13 bash src/build_mac_1_108.sh   # use a specific Python interpreter
-bash src/build_mac_1_108.sh --dmg               # build a .dmg instead of the .pkg
+PYTHON=python3.13 bash src/build_mac_1_109.sh   # use a specific Python interpreter
+bash src/build_mac_1_109.sh --dmg               # build a .dmg instead of the .pkg
 ```
 
 > The one-command script simply chains the two manual steps below
-> (`OpenStrandStudio_mac.spec` → `build_installer_1_108.sh`). Use the manual
+> (`OpenStrandStudio_mac.spec` → `build_installer_1_109.sh`). Use the manual
 > steps if you need to run them individually.
 
 ## Manual Build (step by step)
@@ -57,25 +74,25 @@ python3 -m PyInstaller OpenStrandStudio_mac.spec
 ```
 
 This creates `dist/OpenStrandStudio.app` using the macOS-specific spec file,
-which includes the proper app-bundle configuration, flag images, and SVG
-resources.
+which includes the proper app-bundle configuration, flag images, layer-panel
+icons, and SVG resources.
 
 ### Step 2: Create the Installer Package
 
-Make the 1.108 installer script executable and run it:
+Make the 1.109 installer script executable and run it:
 
 ```bash
-chmod +x build_installer_1_108.sh
-./build_installer_1_108.sh
+chmod +x build_installer_1_109.sh
+./build_installer_1_109.sh
 ```
 
-This creates `OpenStrandStudio_1.108.pkg` in the `installer_output` directory.
+This creates `OpenStrandStudio_1_109.pkg` in the `installer_output` directory.
 
-> To build a disk image instead, use `build_dmg_1_108.sh` the same way.
+> To build a disk image instead, use `build_dmg_1_109.sh` the same way.
 
 ## Step 3: Distribute the Application
 
-Distribute `installer_output/OpenStrandStudio_1.108.pkg`. When users run it, it will:
+Distribute `installer_output/OpenStrandStudio_1_109.pkg`. When users run it, it will:
 
 1. Install the application to their Applications folder (including SVG resources)
 2. Create a desktop icon
@@ -100,23 +117,25 @@ If language selection doesn't show flag images, ensure the `flags` directory wit
 
 If shapes don't appear correctly, ensure the `images` directory with SVG files (circle.svg, square.svg, triangle.svg, bias_circle.svg, bias_triangle.svg) is in the src directory before building.
 
-## Optional: Updating the Application (next version)
+### Missing layer-panel icons
 
-When creating the next version:
+If the layer-panel toolbar buttons or the copy/paste indicators show blank,
+ensure the `layer_panel_icons` directory (PNG files) is in the src directory
+before building — the spec files package it automatically.
 
-1. Copy `build_installer_1_108.sh` to `build_installer_1_XXX.sh` (and
-   `build_dmg_1_108.sh` / `build_mac_1_108.sh` likewise)
-2. Update the `VERSION` and `APP_DATE` variables at the top of each script
-3. Search for `#todo` markers to update the "What's New" header and feature
-   descriptions for each language
-4. Follow the Quick Build (or manual steps) to rebuild and package
+## Creating the next version
+
+Do not edit the build scripts by hand — generate them. See
+`src/RELEASE_HOWTO.md`: edit the CONFIG section of
+`scripts/make_release_files.py` (new version, dates, what's-new bullets in 7
+languages) and run it. It produces the new `.iss`, `build_installer_X_XXX.sh`,
+`build_dmg_X_XXX.sh`, `build_mac_X_XXX.sh` and updates `translations.py` and
+`OpenStrandStudio_mac.spec`.
 
 ## Notes for Developers
 
 - The installer package includes scripts that handle setup and configuration
 - PyInstaller bundles all dependencies into the application
 - The final application runs on macOS 10.13 or later
-- The build scripts assume the repository lives at
-  `/Users/yonatan/Documents/GitHub/OpenStrandStudio` (the paths inside
-  `build_installer_1_108.sh` are absolute); adjust those paths if your clone
-  is elsewhere
+- All paths inside the build scripts are relative to the script location, so
+  the repository can live anywhere

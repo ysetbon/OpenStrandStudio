@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QPushButton, QMenu, QAction, QColorDialog, QApplication, QWidget, QWidgetAction, QLabel, QHBoxLayout, QDialog, QVBoxLayout, QSpinBox, QDoubleSpinBox, QSlider, QDialogButtonBox, QComboBox, QPushButton as QPB, QCheckBox, QDialogButtonBox, QStyleOptionButton, QToolButton
-from PyQt5.QtCore import Qt, pyqtSignal, QRect, QRectF, QMimeData, QTimer, QPoint, QPointF, QLocale
+from PyQt5.QtCore import Qt, pyqtSignal, QRect, QRectF, QMimeData, QTimer, QPoint, QPointF, QLocale, QObject, QEvent
 from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDrag, QGuiApplication, QPixmap, QImage
 from render_utils import RenderUtils
 from translations import translations
@@ -65,57 +65,119 @@ def get_indicator_icon(name, device_size=None):
     return _indicator_icon_cache[key]
 
 
-# Disc design: 20px logical circle; (background alpha, icon inset in logical px)
-_INDICATOR_DISC_SPECS = {
-    'copy_badge': (220, 3.0),
-    'chip_start': (210, 5.0),
-    'chip_end': (210, 5.0),
-}
+# Indicator column (Style B): one 26px-wide sharp-square column on the
+# trailing side, shared by the copy badge and the segmented ▲/● paste stack
+# so their edges always align and the gap to the green strip is identical.
+_INDICATOR_COL_WIDTH = 26    # matches the padlock diameter
+# 9px green strip + 6px gap (kept without a strip): the extra clearance keeps
+# the column off the 2px blue/yellow selection borders.
+_INDICATOR_EDGE_OFFSET = 15
+_INDICATOR_SS = 8            # supersampling factor for crisp downscales
+
+_INDICATOR_BORDER = QColor(30, 30, 30, 200)
+_INDICATOR_FILL = QColor(255, 255, 255, 225)
+_INDICATOR_HOVER = QColor(0, 120, 215, 70)
+_INDICATOR_GLYPH = QColor(61, 61, 61)
 
 
-def get_indicator_disc(name, device_size, hovered=False):
-    """Complete indicator disc (circle + fill + icon [+ hover tint]).
+def get_copy_badge_square(device_size, hovered=False):
+    """Sharp 26x26 copy button (square + fill + copy icon [+ hover tint]).
 
-    Composited at 8x resolution and smooth-downscaled once, so the circle
-    outline is as clean as the icon at any size and DPI.
+    Composited at 8x resolution and smooth-downscaled once, so the outline
+    is as clean as the icon at any size and DPI.
     """
-    key = ('disc', name, device_size, hovered)
+    key = ('badge_sq', device_size, hovered)
     if key not in _indicator_icon_cache:
-        canvas = 160
-        logical = 20.0
-        scale = canvas / logical
-        bg_alpha, icon_inset = _INDICATOR_DISC_SPECS[name]
+        scale = _INDICATOR_SS
+        canvas = _INDICATOR_COL_WIDTH * scale
 
         image = QImage(canvas, canvas, QImage.Format_ARGB32_Premultiplied)
         image.fill(Qt.transparent)
-        disc_painter = QPainter(image)
-        disc_painter.setRenderHint(QPainter.Antialiasing, True)
-        disc_painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        painter = QPainter(image)
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
 
         pen_width = 1.0 * scale
         half = pen_width / 2.0
-        circle = QRectF(half, half, canvas - pen_width, canvas - pen_width)
-        disc_painter.setPen(QPen(QColor(30, 30, 30, 170), pen_width))
-        disc_painter.setBrush(QColor(255, 255, 255, bg_alpha))
-        disc_painter.drawEllipse(circle)
+        square = QRectF(half, half, canvas - pen_width, canvas - pen_width)
+        painter.setPen(QPen(_INDICATOR_BORDER, pen_width))
+        painter.setBrush(QColor(_INDICATOR_FILL))
+        painter.drawRect(square)
 
-        icon = get_indicator_icon(name)
+        icon = get_indicator_icon('copy_badge')
         if not icon.isNull():
-            margin = icon_inset * scale
-            disc_painter.drawPixmap(
+            margin = 3.0 * scale
+            painter.drawPixmap(
                 QRectF(margin, margin,
                        canvas - 2 * margin, canvas - 2 * margin).toRect(),
                 icon,
             )
 
         if hovered:
-            disc_painter.setPen(Qt.NoPen)
-            disc_painter.setBrush(QColor(0, 120, 215, 70))
-            disc_painter.drawEllipse(circle)
-        disc_painter.end()
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QColor(_INDICATOR_HOVER))
+            painter.drawRect(square)
+        painter.end()
 
         _indicator_icon_cache[key] = QPixmap.fromImage(image).scaled(
             device_size, device_size, Qt.KeepAspectRatio, Qt.SmoothTransformation
+        )
+    return _indicator_icon_cache[key]
+
+
+def get_paste_stack_pixmap(device_w, device_h, cell_height, hovered=None):
+    """Segmented ▲/● paste control: one sharp rectangle, hairline divider,
+    ▲ start cell on top, ● end cell below (the ● glyph's diameter equals the
+    ▲ triangle's width). ``hovered`` is None, 'start' or 'end' and tints only
+    that cell. Composited at 8x and smooth-downscaled once.
+    """
+    key = ('stack', device_w, device_h, cell_height, hovered)
+    if key not in _indicator_icon_cache:
+        scale = _INDICATOR_SS
+        canvas_w = _INDICATOR_COL_WIDTH * scale
+        canvas_h = cell_height * 2 * scale
+
+        image = QImage(canvas_w, canvas_h, QImage.Format_ARGB32_Premultiplied)
+        image.fill(Qt.transparent)
+        painter = QPainter(image)
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+
+        pen_width = 1.0 * scale
+        half = pen_width / 2.0
+        outer = QRectF(half, half, canvas_w - pen_width, canvas_h - pen_width)
+        pen = QPen(_INDICATOR_BORDER, pen_width)
+        painter.setPen(pen)
+        painter.setBrush(QColor(_INDICATOR_FILL))
+        painter.drawRect(outer)
+        mid = canvas_h / 2.0
+        painter.drawLine(QPointF(half, mid), QPointF(canvas_w - half, mid))
+
+        # Glyphs: both fit the same centered box so the ● circle's diameter
+        # equals the ▲ triangle's width.
+        glyph = 0.62 * cell_height * scale
+        triangle = get_indicator_icon('chip_start')
+        if not triangle.isNull():
+            painter.drawPixmap(
+                QRectF((canvas_w - glyph) / 2.0, (mid - glyph) / 2.0,
+                       glyph, glyph).toRect(),
+                triangle,
+            )
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QColor(_INDICATOR_GLYPH))
+        painter.drawEllipse(QRectF((canvas_w - glyph) / 2.0,
+                                   mid + (mid - glyph) / 2.0, glyph, glyph))
+
+        if hovered in ('start', 'end'):
+            tint_top = half if hovered == 'start' else mid
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QColor(_INDICATOR_HOVER))
+            painter.drawRect(QRectF(half, tint_top,
+                                    canvas_w - pen_width, mid - half))
+        painter.end()
+
+        _indicator_icon_cache[key] = QPixmap.fromImage(image).scaled(
+            device_w, device_h, Qt.IgnoreAspectRatio, Qt.SmoothTransformation
         )
     return _indicator_icon_cache[key]
 
@@ -195,6 +257,49 @@ def build_menu_stylesheet(theme):
     return base_style
 
 
+class _RtlComboHelper(QObject):
+    """Helper filter for the RTL (read-only editable) menu combos.
+
+    - Opens the popup on any left click, matching a plain non-editable combo.
+    - Pins the line edit to the visual text field (arrow area left, 8px right
+      padding): QStyleSheetStyle miscomputes the edit-field rect for RTL
+      combos, reserving the drop-down width on the wrong side.
+    """
+
+    _FIELD_LEFT = 24   # drop-down width (22) + hairline
+    # 8px padding + border, minus the line edit's ~5px internal text margin so
+    # the visible text gap matches the LTR label's ~10px
+    _FIELD_RIGHT = 4
+
+    def __init__(self, combo):
+        super().__init__(combo)
+        self._combo = combo
+
+    def _fix_line_edit_geometry(self):
+        combo = self._combo
+        line_edit = combo.lineEdit()
+        if line_edit is not None:
+            line_edit.setGeometry(
+                self._FIELD_LEFT, 2,
+                max(10, combo.width() - self._FIELD_LEFT - self._FIELD_RIGHT),
+                combo.height() - 4)
+
+    def eventFilter(self, obj, event):
+        event_type = event.type()
+        if (event_type == QEvent.MouseButtonPress
+                and event.button() == Qt.LeftButton):
+            if obj.view() is not None and obj.view().isVisible():
+                obj.hidePopup()
+            else:
+                obj.showPopup()
+            return True
+        if event_type in (QEvent.Resize, QEvent.Show, QEvent.StyleChange,
+                          QEvent.LayoutRequest, QEvent.FontChange):
+            # After Qt's own updateLineEditGeometry() runs
+            QTimer.singleShot(0, self._fix_line_edit_geometry)
+        return False
+
+
 def style_menu_combobox(combo, theme, is_rtl=False):
     """Theme-aware styling for QComboBox widgets embedded in layer context menus.
 
@@ -202,6 +307,30 @@ def style_menu_combobox(combo, theme, is_rtl=False):
     rest of the menu: rounded 4px border, themed popup list and a flat
     triangle drop-down arrow, mirrored for RTL.
     """
+    # Explicit direction: the combo is styled before it is parented into the
+    # (RTL) context menu, so it would otherwise keep the default LTR direction.
+    # The stylesheet below always uses the LTR values — Qt mirrors subcontrol
+    # rects, padding and the label automatically under RTL, so mirroring
+    # manually in the stylesheet as well would double-flip.
+    combo.setLayoutDirection(Qt.RightToLeft if is_rtl else Qt.LeftToRight)
+    if combo.view() is not None:
+        combo.view().setLayoutDirection(
+            Qt.RightToLeft if is_rtl else Qt.LeftToRight)
+    if is_rtl and not combo.isEditable():
+        # Even in RTL, QStyleSheetStyle paints the closed label of a
+        # non-editable combo at the visual left. Take over the text with a
+        # read-only line edit pinned to the literal right edge (AlignAbsolute:
+        # plain AlignRight is logical and would flip back to the left). The
+        # line edit ignores the mouse and a click filter reopens the popup,
+        # so the combo still behaves exactly like a non-editable one.
+        combo.setEditable(True)
+        line_edit = combo.lineEdit()
+        line_edit.setReadOnly(True)
+        line_edit.setAlignment(
+            Qt.Alignment(Qt.AlignRight | Qt.AlignVCenter | Qt.AlignAbsolute))
+        line_edit.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        line_edit.setFocusPolicy(Qt.NoFocus)
+        combo.installEventFilter(_RtlComboHelper(combo))
     if theme == 'dark':
         bg, fg, border = '#3D3D3D', '#FFFFFF', '#666666'
         hover_border, arrow_icon = '#999999', 'combo_arrow_light.png'
@@ -216,9 +345,9 @@ def style_menu_combobox(combo, theme, is_rtl=False):
     # Qt stylesheets can't draw CSS border-triangles; use the packaged PNGs.
     arrow_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                               'layer_panel_icons', arrow_icon).replace('\\', '/')
-    drop_side = 'left' if is_rtl else 'right'
-    padding = '4px 8px 4px 24px' if is_rtl else '4px 24px 4px 8px'
-    arrow_margin = 'margin-left: 6px;' if is_rtl else 'margin-right: 6px;'
+    drop_side = 'right'
+    padding = '4px 24px 4px 8px'
+    arrow_margin = 'margin-right: 6px;'
     combo.setStyleSheet(f"""
         QComboBox {{
             background-color: {bg};
@@ -256,6 +385,12 @@ def style_menu_combobox(combo, theme, is_rtl=False):
             min-height: 24px;
             padding: 2px 6px;
         }}
+        QComboBox QLineEdit {{
+            background: transparent;
+            color: {fg};
+            border: none;
+            padding: 0px;
+        }}
     """)
 
 
@@ -265,6 +400,11 @@ def style_menu_dropdown_button(button, theme, is_rtl=False):
     Matches style_menu_combobox() chrome so the button reads as another
     dropdown in the same menu section.
     """
+    # Same explicit direction as style_menu_combobox: styled before parenting.
+    # The stylesheet always uses the LTR values — Qt mirrors the subcontrol
+    # rects and padding automatically under RTL, so mirroring manually in the
+    # stylesheet as well would double-flip the ▼ indicator into the text.
+    button.setLayoutDirection(Qt.RightToLeft if is_rtl else Qt.LeftToRight)
     if theme == 'dark':
         bg, fg, border = '#3D3D3D', '#FFFFFF', '#666666'
         hover_border, arrow_icon = '#999999', 'combo_arrow_light.png'
@@ -276,7 +416,10 @@ def style_menu_dropdown_button(button, theme, is_rtl=False):
 
     arrow_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                               'layer_panel_icons', arrow_icon).replace('\\', '/')
-    drop_side = 'left' if is_rtl else 'right'
+    # Under RTL Qt mirrors the ::menu-indicator subcontrol position but NOT
+    # the QToolButton padding box, so the indicator side stays the LTR value
+    # while the padding (and the indicator margin) are mirrored manually.
+    drop_side = 'right'
     padding = '4px 8px 4px 24px' if is_rtl else '4px 24px 4px 8px'
     arrow_margin = 'margin-left: 6px;' if is_rtl else 'margin-right: 6px;'
     button.setStyleSheet(f"""
@@ -1155,13 +1298,12 @@ class NumberedLayerButton(QPushButton):
                     if is_hebrew:
                         size_row_label.setLayoutDirection(Qt.RightToLeft)
                         size_row_label.setAlignment(Qt.AlignRight)
-                        size_row.addWidget(size_spin)
-                        size_row.addStretch()
-                        size_row.addWidget(size_row_label)
-                    else:
-                        size_row.addWidget(size_row_label)
-                        size_row.addStretch()
-                        size_row.addWidget(size_spin)
+                    # The context menu is RTL in Hebrew, so the row layout
+                    # mirrors automatically — one add order keeps the label on
+                    # the reading side (left in LTR, right in RTL).
+                    size_row.addWidget(size_row_label)
+                    size_row.addStretch()
+                    size_row.addWidget(size_spin)
                     sizes_panel_layout.addLayout(size_row)
 
                 sizes_widget_action = QWidgetAction(sizes_menu)
@@ -1562,9 +1704,9 @@ class NumberedLayerButton(QPushButton):
         on the side opposite the green attachable strip (left for LTR, right for RTL).
         """
         diameter = 26
-        # Keep the toggle close to the edge so long (masked) layer names
-        # like "1_1_2_3" don't crowd it
-        margin = 3
+        # Keep the toggle near the edge (so long masked names like "1_1_2_3"
+        # don't crowd it) but clear of the 2px blue/yellow selection borders
+        margin = 6
         y = (self.height() - diameter) // 2
         if self._is_rtl():
             return QRect(self.width() - margin - diameter, y, diameter, diameter)
@@ -1595,30 +1737,36 @@ class NumberedLayerButton(QPushButton):
         chips = (not is_source) and panel.is_strand_data_paste_target(index)
         return panel, index, is_source, chips
 
-    def copy_badge_rect(self):
-        """Rect of the copy badge: same size and spot as the ■ end chip.
+    def indicator_column_x(self):
+        """Left x of the 26px indicator column on the trailing side.
 
-        Badge and chips never coexist on one button, so the badge takes the
-        end chip's place — vertically centered on the trailing side.
+        LTR -> right side, RTL -> left side; 13px from the button edge (4px
+        clearance from the green strip, kept even when there is no strip) so
+        the copy badge and the paste stack always share the same edges.
         """
-        return self.paste_chip_rects()[1]
+        if self._is_rtl():
+            return _INDICATOR_EDGE_OFFSET
+        return self.width() - _INDICATOR_EDGE_OFFSET - _INDICATOR_COL_WIDTH
+
+    def copy_badge_rect(self):
+        """Sharp 26x26 copy button, vertically centered on the indicator column."""
+        y = (self.height() - _INDICATOR_COL_WIDTH) // 2
+        return QRect(self.indicator_column_x(), y,
+                     _INDICATOR_COL_WIDTH, _INDICATOR_COL_WIDTH)
 
     def paste_chip_rects(self):
-        """(start_rect, end_rect) of the hover-only ▲ / ■ paste chips."""
-        diameter, gap = 20, 2
-        y = (self.height() - diameter) // 2
-        # Keep clear of the green attachable strip (9 px) on the trailing side
-        strip = 13
-        if self._is_rtl():
-            left = strip
-            return (
-                QRect(left, y, diameter, diameter),
-                QRect(left + diameter + gap, y, diameter, diameter),
-            )
-        right = self.width() - strip
+        """(start_cell, end_cell) of the segmented ▲/● paste rectangle.
+
+        One 26px-wide sharp rectangle on the indicator column, split into a
+        ▲ start cell (top) and a ● end cell (bottom). Cell height scales with
+        the button so the stack fits at every size.
+        """
+        cell = min(_INDICATOR_COL_WIDTH, (self.height() - 8) // 2)
+        top = self.height() // 2 - cell
+        x = self.indicator_column_x()
         return (
-            QRect(right - 2 * diameter - gap, y, diameter, diameter),
-            QRect(right - diameter, y, diameter, diameter),
+            QRect(x, top, _INDICATOR_COL_WIDTH, cell),
+            QRect(x, top + cell, _INDICATOR_COL_WIDTH, cell),
         )
 
     def strand_indicator_tooltip_at(self, pos):
@@ -1807,23 +1955,8 @@ class NumberedLayerButton(QPushButton):
             x = (rect.width() - text_bounds.width()) / 2 - text_bounds.x()
             y = (rect.height() - text_bounds.height()) / 2 - text_bounds.y() + 1
 
-            # When the padlock toggle is visible, center the text in the free
-            # span between the padlock and the green strip so long (masked)
-            # names don't run into either
-            if self.selectable or self.locked:
-                lock_rect = self.lock_button_rect()
-                pad = 4
-                # Always reserve the green-strip width so text lines up
-                # across attachable and non-attachable layers
-                strip = 9
-                if is_rtl:
-                    free_left = strip + 2
-                    free_right = lock_rect.left() - pad
-                else:
-                    free_left = lock_rect.right() + pad
-                    free_right = rect.width() - strip - 2
-                x = free_left + (free_right - free_left - text_bounds.width()) / 2 - text_bounds.x()
-                x = max(x, free_left - text_bounds.x())
+            # Lock mode must NOT shift the text: names keep the same centered
+            # position in every mode so they never drift over the paste chips.
 
             path = QPainterPath()
             path.addText(x, y, font, self._text)
@@ -1887,24 +2020,22 @@ class NumberedLayerButton(QPushButton):
 
             if is_copy_source:
                 badge_rect = self.copy_badge_rect()
-                disc = get_indicator_disc(
-                    'copy_badge',
+                badge = get_copy_badge_square(
                     max(1, round(badge_rect.width() * device_ratio)),
                     hovered=self.strand_badge_hover,
                 )
-                painter.drawPixmap(badge_rect, disc)
+                painter.drawPixmap(badge_rect, badge)
 
             if chips_enabled and self.underMouse():
-                for chip_rect, key in zip(
-                    self.paste_chip_rects(),
-                    ("start", "end"),
-                ):
-                    disc = get_indicator_disc(
-                        f'chip_{key}',
-                        max(1, round(chip_rect.width() * device_ratio)),
-                        hovered=self.strand_chip_hover == key,
-                    )
-                    painter.drawPixmap(chip_rect, disc)
+                start_rect, end_rect = self.paste_chip_rects()
+                stack_rect = start_rect.united(end_rect)
+                stack = get_paste_stack_pixmap(
+                    max(1, round(stack_rect.width() * device_ratio)),
+                    max(1, round(stack_rect.height() * device_ratio)),
+                    start_rect.height(),
+                    hovered=self.strand_chip_hover,
+                )
+                painter.drawPixmap(stack_rect, stack)
 
             if self.is_hidden:
                 painter.save()

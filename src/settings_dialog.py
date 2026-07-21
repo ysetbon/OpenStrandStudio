@@ -3007,9 +3007,11 @@ class SettingsDialog(QDialog):
         _lp_refresh_icon = _lp_img('refresh.png')
         _lp_home_icon = _lp_img('home.png')
         _lp_lock_icon = _lp_img('lock_open.png') + ' ' + _lp_img('lock_closed.png')
-        _lp_copy_badge_icon = _lp_img('copy_badge.png', 24)
-        _lp_chip_start_icon = _lp_img('chip_start.png', 24)
-        _lp_chip_end_icon = _lp_img('chip_end.png', 24)
+        # Real indicators as drawn on the layer buttons: sharp copy square +
+        # segmented ▲/● paste stack with the relevant cell hover-tinted.
+        _lp_copy_badge_icon = self.strand_indicator_img('badge')
+        _lp_chip_start_icon = self.strand_indicator_img('stack', 'start')
+        _lp_chip_end_icon = self.strand_indicator_img('stack', 'end')
 
         # Selection indicator icons: exact colors/alphas the canvas uses in
         # move and attach modes, rendered with the same 2px black outline.
@@ -4036,9 +4038,11 @@ class SettingsDialog(QDialog):
         _lp_refresh_icon = _lp_img('refresh.png')
         _lp_home_icon = _lp_img('home.png')
         _lp_lock_icon = _lp_img('lock_open.png') + ' ' + _lp_img('lock_closed.png')
-        _lp_copy_badge_icon = _lp_img('copy_badge.png', 24)
-        _lp_chip_start_icon = _lp_img('chip_start.png', 24)
-        _lp_chip_end_icon = _lp_img('chip_end.png', 24)
+        # Real indicators as drawn on the layer buttons: sharp copy square +
+        # segmented ▲/● paste stack with the relevant cell hover-tinted.
+        _lp_copy_badge_icon = self.strand_indicator_img('badge')
+        _lp_chip_start_icon = self.strand_indicator_img('stack', 'start')
+        _lp_chip_end_icon = self.strand_indicator_img('stack', 'end')
 
         # Selection indicator icons: exact colors/alphas the canvas uses in
         # move and attach modes, rendered with the same 2px black outline.
@@ -4833,9 +4837,11 @@ class SettingsDialog(QDialog):
             _lp_refresh_icon = _lp_img('refresh.png')
             _lp_home_icon = _lp_img('home.png')
             _lp_lock_icon = _lp_img('lock_open.png') + ' ' + _lp_img('lock_closed.png')
-            _lp_copy_badge_icon = _lp_img('copy_badge.png', 24)
-            _lp_chip_start_icon = _lp_img('chip_start.png', 24)
-            _lp_chip_end_icon = _lp_img('chip_end.png', 24)
+            # Real indicators as drawn on the layer buttons: sharp copy square +
+            # segmented ▲/● paste stack with the relevant cell hover-tinted.
+            _lp_copy_badge_icon = self.strand_indicator_img('badge')
+            _lp_chip_start_icon = self.strand_indicator_img('stack', 'start')
+            _lp_chip_end_icon = self.strand_indicator_img('stack', 'end')
 
             # Selection indicator icons: exact colors/alphas the canvas uses in
             # move and attach modes, rendered with the same 2px black outline.
@@ -5917,6 +5923,34 @@ class SettingsDialog(QDialog):
             pixmap.save(buffer, 'PNG')
             b64 = base64.b64encode(buffer.data()).decode('ascii')
             return f'data:image/png;base64,{b64}'
+        except Exception:
+            return ''
+
+    def strand_indicator_img(self, kind, hovered=None):
+        """Render the real copy-badge / paste-stack indicator — exactly what the
+        layer buttons draw — to an inline <img> for the button guide.
+
+        ``kind`` is 'badge' (sharp 26px copy square) or 'stack' (segmented
+        ▲/● paste rectangle); for 'stack', ``hovered`` tints the 'start' or
+        'end' cell like on the canvas."""
+        try:
+            from numbered_layer_button import (
+                get_copy_badge_square, get_paste_stack_pixmap)
+            scale = 2  # render at 2x so the guide images stay crisp
+            if kind == 'badge':
+                width, height = 26, 26
+                pixmap = get_copy_badge_square(width * scale)
+            else:
+                cell = 16  # cell height on the standard 40px layer button
+                width, height = 26, cell * 2
+                pixmap = get_paste_stack_pixmap(width * scale, height * scale,
+                                                cell, hovered)
+            buffer = QBuffer()
+            buffer.open(QBuffer.WriteOnly)
+            pixmap.save(buffer, 'PNG')
+            b64 = base64.b64encode(buffer.data()).decode('ascii')
+            return (f'<img src="data:image/png;base64,{b64}" width="{width}" '
+                    f'height="{height}" style="vertical-align: middle;" />')
         except Exception:
             return ''
 

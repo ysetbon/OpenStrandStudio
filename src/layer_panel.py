@@ -1888,14 +1888,15 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 button.setProperty("multi_selected", True)
                 button.style().unpolish(button)
                 button.style().polish(button)
-                # Add gold border styling
+                # Add gold border styling (2px keeps the highlight off the
+                # padlock and the copy/paste indicator column)
                 current_style = button.styleSheet()
                 button.setStyleSheet(current_style + """
                     QPushButton[multi_selected="true"] {
-                        border: 3px solid #FFD700 !important;
+                        border: 2px solid #FFD700 !important;
                     }
                     QPushButton[multi_selected="true"]:checked {
-                        border: 3px solid #0066FF !important;
+                        border: 2px solid #0066FF !important;
                     }
                 """)
             else:

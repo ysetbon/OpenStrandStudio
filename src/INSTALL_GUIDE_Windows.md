@@ -1,6 +1,6 @@
 # Installation Guide for Windows
 
-## Version 1.109 - Released July 19, 2026
+## Version 1.109 - Released July 21, 2026
 
 ## Prerequisites
 

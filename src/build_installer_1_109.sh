@@ -54,7 +54,7 @@
 # Set variables
 APP_NAME="OpenStrandStudio"
 VERSION="1.109"
-APP_DATE="19_July_2026"
+APP_DATE="21_July_2026"
 PUBLISHER="Yonatan Setbon"
 IDENTIFIER="com.yonatan.openstrandstudio"
 

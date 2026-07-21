@@ -2,7 +2,7 @@
 #define MyAppVersion "1.109"
 #define MyAppPublisher "Yonatan Setbon"
 #define MyAppExeName "OpenStrandStudio.exe"
-#define MyAppDate "19_Jul_2026"
+#define MyAppDate "21_Jul_2026"
 ; Paths are relative to this .iss file (src\inno setup\), so the installer
 ; compiles from any clone location.
 #define SourcePath ".."

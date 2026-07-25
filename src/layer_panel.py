@@ -2426,11 +2426,16 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 # Store all existing colors before any operations
                 original_colors = {}
                 for strand in self.canvas.strands:
-                    original_colors[strand.layer_name] = strand.color
+                    original_colors[strand.layer_name] = QColor(strand.color)
                     if hasattr(strand, 'set_number'):
                         set_number = strand.set_number
                         if set_number not in self.set_colors:
-                            self.set_colors[set_number] = strand.color
+                            canonical = getattr(
+                                self.canvas,
+                                'strand_colors',
+                                {},
+                            ).get(set_number, strand.color)
+                            self.set_colors[set_number] = QColor(canonical)
                 
                 # Create the masked layer
                 self.mask_created.emit(strand1, strand2)
@@ -2451,9 +2456,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                         # Restore all original colors
                         for strand in self.canvas.strands:
                             if strand.layer_name in original_colors:
-                                strand.color = original_colors[strand.layer_name]
-                            elif hasattr(strand, 'set_number'):
-                                strand.color = self.set_colors.get(strand.set_number, strand.color)
+                                strand.color = QColor(original_colors[strand.layer_name])
                         
                         # Get the masked strand index before refresh
                         masked_strand_index = self.canvas.strands.index(masked_strand)
@@ -2860,6 +2863,12 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # Update set_counts and set_colors
         self.set_counts = {new_set_numbers[k]: v for k, v in self.set_counts.items() if k in new_set_numbers}
         self.set_colors = {new_set_numbers[k]: v for k, v in self.set_colors.items() if k in new_set_numbers}
+        if hasattr(self.canvas, 'strand_colors'):
+            self.canvas.strand_colors = {
+                new_set_numbers[k]: QColor(v)
+                for k, v in self.canvas.strand_colors.items()
+                if k in new_set_numbers
+            }
         
 
 
@@ -2899,11 +2908,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                     strand.set_number = new_set_number
                     # Use strand's actual layer_name instead of constructing text
                     button.setText(strand.layer_name)
-                    # Use canvas default strand color if available, otherwise fallback to purple
-                    default_color = QColor(200, 170, 230, 255)  # Fallback
-                    if self.canvas and hasattr(self.canvas, 'default_strand_color'):
-                        default_color = self.canvas.default_strand_color
-                    button.set_color(self.set_colors.get(new_set_number, default_color))
+                    # Preserve per-layer color outliers when sets are renumbered.
+                    button.set_color(strand.color)
 
         self.update_layer_button_states()
 
@@ -3167,6 +3173,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
             # Reset set colors
             self.set_colors.clear()
+            if hasattr(self.canvas, 'clear_set_color_state'):
+                self.canvas.clear_set_color_state()
+            elif hasattr(self.canvas, 'strand_colors'):
+                self.canvas.strand_colors.clear()
 
             # Clear any locked layers
             self.locked_layers.clear()
@@ -3179,6 +3189,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
             # Update canvas
             self.canvas.update()
+
+            if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+                self.canvas.layer_state_manager.save_current_state()
 
             # Save state AFTER deletion to capture the "deleted" state for redo
             if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
@@ -3214,6 +3227,11 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         
         # Force canvas update
         self.canvas.update()
+
+        # Keep relationship/state tracking aligned with the live strand colors.
+        # Undo/project persistence remains owned by save_load_manager.
+        if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+            self.canvas.layer_state_manager.save_current_state()
 
         # Explicitly save state after color change
         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
@@ -3282,8 +3300,12 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         else:
             pass
             
-    def on_strand_created(self, strand):
-        """Handle strand creation event."""
+    def on_strand_created(self, strand, preserve_layer_color=False):
+        """Handle strand creation.
+
+        ``preserve_layer_color`` is used by group duplication, where copied
+        layers may intentionally differ from their set's canonical color.
+        """
         
         # SUPER EXPLICIT DEBUG - log everything before processing
         if hasattr(strand, 'layer_name') and strand.layer_name:
@@ -3337,31 +3359,22 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         if temp_suppress_lock:
             self._suppress_lock_mode_temporarily = False
         
-        # Check if there are existing strands in this set with different colors
-        existing_strands_in_set = [s for s in self.canvas.strands if hasattr(s, 'set_number') and s.set_number == set_number and s != strand]
-        
-        if existing_strands_in_set:
-            # There are existing strands in this set - preserve their color
-            existing_color = existing_strands_in_set[0].color  # Use the color of the first existing strand
-            self.set_colors[set_number] = existing_color
-            # Update the new strand to match the existing set color
-            strand.color = existing_color
-        else:
-            # This is a new set or first strand in set - use the strand's current color or default
-            if set_number not in self.set_colors:
-                # Use the strand's current color if it has one, otherwise use default
-                if hasattr(strand, 'color') and strand.color:
-                    self.set_colors[set_number] = strand.color
-                else:
-                    # Use canvas default strand color if available, otherwise fallback to purple
-                    default_color = QColor(200, 170, 230, 255)  # Fallback
-                    if self.canvas and hasattr(self.canvas, 'default_strand_color'):
-                        default_color = self.canvas.default_strand_color
-                    self.set_colors[set_number] = default_color
-                    strand.color = default_color
-            else:
-                # Set color already exists, update strand to match
-                strand.color = self.set_colors[set_number]
+        # Canvas creation assigns the canonical set color before this UI hook.
+        # Register that canonical color if needed, but never recolor existing
+        # layers: they may contain intentional layer-only overrides. Group
+        # duplication pre-registers the destination set color and passes
+        # preserve_layer_color=True for clarity.
+        if set_number not in self.set_colors:
+            canonical = getattr(self.canvas, 'strand_colors', {}).get(set_number)
+            if canonical is None:
+                canonical = getattr(strand, 'color', None)
+            if canonical is None:
+                canonical = getattr(
+                    self.canvas,
+                    'default_strand_color',
+                    QColor(200, 170, 230, 255),
+                )
+            self.set_colors[set_number] = QColor(canonical)
         
         # Refresh the layer panel
         if isinstance(strand, AttachedStrand):
@@ -3648,9 +3661,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                     if self.canvas.strand_colors[set_number] == QColor(200, 170, 230, 255):
                         self.canvas.strand_colors[set_number] = self.canvas.default_strand_color
                 
-                # Ensure set 1 uses the correct default color for new projects
-                if 1 not in self.canvas.strand_colors:
-                    self.canvas.strand_colors[1] = self.canvas.default_strand_color
+                # Do not pre-create a color-map entry for an empty set. New-set
+                # numbering uses the keys of strand_colors, so a phantom set 1
+                # would make the first real strand start at set 2.
 
     def set_canvas(self, canvas):
         """Set the canvas associated with this layer panel."""

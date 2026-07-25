@@ -16,6 +16,8 @@ making complex patterns clear and easy to understand.
 
 - **Copy & Paste Strand Data**: In multi-select mode, copy selected properties of a strand (start/end points, control points, width, strand and stroke colors) and paste them onto several layers at once, anchored from the start or end point — with a copy badge and one-click paste chips right on the layer buttons.
 
+- **Layer-Only Colors and Set-Wide Stroke Color**: The layer menu now pairs every color option with a layer-only version: Change Color / Change Color (This Layer Only) and Change Stroke Color / Change Stroke Color (This Layer Only), matching the existing width entries. Change Stroke Color now recolors the whole set just like Change Color, while the layer-only entries repaint only the clicked layer. Per-layer exceptions are saved with your project and survive undo/redo, tab switching and group operations; changing the set color again resets them.
+
 - **Mask Shadows in the Shadow Editor**: Shadows cast through a mask now appear in the over-strand's Shadow Editor, so you can turn them on or off like any other shadow.
 
 ### 🐛 Bug Fixes & Improvements

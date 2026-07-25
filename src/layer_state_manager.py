@@ -80,6 +80,8 @@ class LayerStateManager(QObject):
             'connections': {},
             'masked_layers': [],
             'colors': {},
+            'stroke_colors': {},
+            'set_colors': {},
             'positions': {},
             'selected_strand': None,
             'newest_strand': None,
@@ -177,12 +179,35 @@ class LayerStateManager(QObject):
         try:
             # Preserve shadow_overrides from previous state
             prev_shadow_overrides = self.layer_state.get('shadow_overrides', {})
+            active_set_numbers = {
+                getattr(strand, 'set_number', None)
+                for strand in self.canvas.strands
+                if not isinstance(strand, MaskedStrand)
+            }
+            active_set_numbers.discard(None)
 
             self.layer_state = {
                 'order': list(dict.fromkeys(strand.layer_name for strand in self.canvas.strands)),
                 'connections': self.get_layer_connections(self.canvas.strands),
                 'masked_layers': list(set(strand.layer_name for strand in self.canvas.strands if isinstance(strand, MaskedStrand))),
-                'colors': {strand.layer_name: strand.color.name() for strand in self.canvas.strands},
+                # HexArgb preserves alpha while remaining backward-compatible
+                # with consumers that construct QColor from the stored string.
+                'colors': {
+                    strand.layer_name: strand.color.name(QColor.HexArgb)
+                    for strand in self.canvas.strands
+                },
+                'stroke_colors': {
+                    strand.layer_name: strand.stroke_color.name(QColor.HexArgb)
+                    for strand in self.canvas.strands
+                    if hasattr(strand, 'stroke_color')
+                },
+                # This is tracking metadata only. Project/undo persistence is
+                # owned by save_load_manager.
+                'set_colors': {
+                    str(set_number): color.name(QColor.HexArgb)
+                    for set_number, color in getattr(self.canvas, 'strand_colors', {}).items()
+                    if set_number in active_set_numbers
+                },
                 'positions': {strand.layer_name: (strand.start.x(), strand.start.y(), strand.end.x(), strand.end.y())
                             for strand in self.canvas.strands},
                 'selected_strand': self.canvas.selected_strand.layer_name if self.canvas.selected_strand else None,
@@ -404,13 +429,25 @@ class LayerStateManager(QObject):
         for layer_name in state_data['order']:
             color_name = state_data['colors'][layer_name]
             color = QColor(color_name)
+            stroke_color_name = state_data.get('stroke_colors', {}).get(layer_name)
+            stroke_color = (
+                QColor(stroke_color_name)
+                if stroke_color_name
+                else QColor(self.canvas.stroke_color)
+            )
             positions = state_data['positions'][layer_name]
             start = QPointF(positions[0], positions[1])
             end = QPointF(positions[2], positions[3])
 
-            strand = Strand(start, end, self.canvas.strand_width, color, self.canvas.stroke_color, self.canvas.stroke_width)
+            strand = Strand(
+                start,
+                end,
+                self.canvas.strand_width,
+                color,
+                stroke_color,
+                self.canvas.stroke_width,
+            )
             if hasattr(self.canvas, 'highlight_color'):
-                from PyQt5.QtGui import QColor
                 strand.highlight_color = QColor(self.canvas.highlight_color)
             strand.layer_name = layer_name
             set_number = int(layer_name.split('_')[0])
@@ -430,7 +467,6 @@ class LayerStateManager(QObject):
                         attached.layer_name = connected_strand.layer_name
                         attached.set_number = strand.set_number
                         if hasattr(self, 'canvas') and hasattr(self.canvas, 'highlight_color'):
-                            from PyQt5.QtGui import QColor
                             attached.highlight_color = QColor(self.canvas.highlight_color)
                         attached.set_color(connected_strand.color)
                         attached.parent = strand
@@ -459,6 +495,46 @@ class LayerStateManager(QObject):
         # actual strand relationships.
 
         # Update UI
+        restored_set_colors = {}
+        for raw_set_number, raw_color in state_data.get('set_colors', {}).items():
+            try:
+                restored_set_colors[int(raw_set_number)] = QColor(raw_color)
+            except (TypeError, ValueError):
+                continue
+        # Legacy state logs have no explicit set-color map. Infer any missing
+        # canonical entry from the main (_1) strand so applying a state cannot
+        # retain colors from the project that was just cleared.
+        regular_strands = [
+            strand for strand in self.canvas.strands
+            if not isinstance(strand, MaskedStrand)
+        ]
+        active_set_numbers = {strand.set_number for strand in regular_strands}
+        restored_set_colors = {
+            set_number: color
+            for set_number, color in restored_set_colors.items()
+            if set_number in active_set_numbers
+        }
+        regular_strands.sort(
+            key=lambda strand: (
+                0 if str(getattr(strand, 'layer_name', '')).endswith('_1') else 1
+            )
+        )
+        for strand in regular_strands:
+            restored_set_colors.setdefault(
+                strand.set_number,
+                QColor(strand.color),
+            )
+
+        self.canvas.strand_colors = {
+            set_number: QColor(color)
+            for set_number, color in restored_set_colors.items()
+        }
+        if self.layer_panel is not None:
+            self.layer_panel.set_colors = {
+                set_number: QColor(color)
+                for set_number, color in restored_set_colors.items()
+            }
+
         if self.layer_panel:
             self.layer_panel.rebuild_layer_buttons()
             self.layer_panel.refresh()
@@ -501,6 +577,7 @@ class LayerStateManager(QObject):
             'deleted_layers': [],
             'moved_layers': [],
             'color_changes': [],
+            'stroke_color_changes': [],
             'connection_changes': [],
             'group_changes': []
         }
@@ -516,6 +593,9 @@ class LayerStateManager(QObject):
                 differences['moved_layers'].append(layer)
             if self.layer_state['colors'][layer] != self.initial_state['colors'][layer]:
                 differences['color_changes'].append(layer)
+            if (self.layer_state.get('stroke_colors', {}).get(layer)
+                    != self.initial_state.get('stroke_colors', {}).get(layer)):
+                differences['stroke_color_changes'].append(layer)
             if self.layer_state['connections'][layer] != self.initial_state['connections'][layer]:
                 differences['connection_changes'].append(layer)
 

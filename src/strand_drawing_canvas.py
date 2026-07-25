@@ -1644,6 +1644,7 @@ class StrandDrawingCanvas(QWidget):
         """
         self.strands = []
         self.groups = {}
+        self.clear_set_color_state()
 
         # Selection / active references.
         self.selected_strand = None
@@ -1678,6 +1679,10 @@ class StrandDrawingCanvas(QWidget):
         self.is_angle_adjusting = False
         self.mask_mode_active = False
         self.mask_selected_strands = []
+
+        state_manager = getattr(self, 'layer_state_manager', None)
+        if state_manager is not None:
+            state_manager.save_current_state()
 
         # Reset move-mode internals if present.
         move_mode = getattr(self, 'move_mode', None)
@@ -3126,11 +3131,10 @@ class StrandDrawingCanvas(QWidget):
             # Create a fresh QColor for each strand to avoid reference issues
             strand.stroke_color = QColor(color.red(), color.green(), color.blue(), color.alpha())
             
-            # For AttachedStrand instances, also update circle_stroke_color if it's not transparent
+            # Preserve independently transparent start/end outlines while
+            # updating every visible attached-strand outline.
             if strand.__class__.__name__ == 'AttachedStrand':
-                if hasattr(strand, 'circle_stroke_color') and strand.circle_stroke_color.alpha() > 0:
-                    strand.circle_stroke_color = QColor(color.red(), color.green(), color.blue(), color.alpha())
-                    pass
+                self._update_visible_circle_strokes(strand, color)
         
         pass
         self.update()  # Force a redraw of the canvas to apply the change
@@ -3776,9 +3780,7 @@ class StrandDrawingCanvas(QWidget):
                     
                     # For AttachedStrand instances, also update circle_stroke_color if it's not transparent
                     if strand.__class__.__name__ == 'AttachedStrand':
-                        if hasattr(strand, 'circle_stroke_color') and strand.circle_stroke_color.alpha() > 0:
-                            strand.circle_stroke_color = QColor(stroke_with_alpha)
-                            pass
+                        self._update_visible_circle_strokes(strand, stroke_with_alpha)
 
                 pass
 
@@ -3890,8 +3892,12 @@ class StrandDrawingCanvas(QWidget):
             if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
                 self.undo_redo_manager._suppress_intermediate_saves = True
             
-            # Update the color in the layer panel
-            self.layer_panel.on_color_changed(set_number, self.strand_colors[set_number])
+            # Register the canonical set color without invoking the set-wide
+            # recolor action. Existing layers may intentionally have
+            # layer-only fill overrides that must survive new attachments.
+            self.layer_panel.set_colors[set_number] = QColor(
+                self.strand_colors[set_number]
+            )
             
             # Clear suppression flag after color update
             if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
@@ -5206,9 +5212,36 @@ class StrandDrawingCanvas(QWidget):
     def clear_strands(self):
         """Clear all strands from the canvas."""
         self.strands.clear()
+        self.clear_set_color_state()
         self.current_strand = None
         self.selected_strand_index = None
         self.update()
+
+    def clear_set_color_state(self):
+        """Clear both copies of the canonical per-set fill-color map."""
+        self.strand_colors.clear()
+        layer_panel = getattr(self, 'layer_panel', None)
+        if layer_panel is not None and hasattr(layer_panel, 'set_colors'):
+            layer_panel.set_colors.clear()
+
+    @staticmethod
+    def _update_visible_circle_strokes(strand, color):
+        """Update visible start/end outlines without revealing transparent ones."""
+        updated_separate_colors = False
+        for attribute in ('start_circle_stroke_color', 'end_circle_stroke_color'):
+            if not hasattr(strand, attribute):
+                continue
+            current_color = getattr(strand, attribute)
+            if current_color is not None and current_color.alpha() > 0:
+                setattr(strand, attribute, QColor(color))
+            updated_separate_colors = True
+
+        # Compatibility for older/fake strand implementations that expose only
+        # the former combined property.
+        if (not updated_separate_colors
+                and hasattr(strand, 'circle_stroke_color')
+                and strand.circle_stroke_color.alpha() > 0):
+            strand.circle_stroke_color = QColor(color)
 
     def _snap_point_to_grid(self, point):
         """Return the point snapped to the nearest grid intersection."""

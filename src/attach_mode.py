@@ -1157,9 +1157,18 @@ class AttachMode(QObject):
             new_strand = AttachedStrand(parent_strand, attach_point, side)
             new_strand.canvas = self.canvas
 
-            # Set properties from parent strand
+            # Set properties from the strand's set. A parent may have a
+            # layer-only fill override, which must not become the inherited set
+            # color or overwrite the canvas's set-level color map.
             new_strand.highlight_color = QColor(self.canvas.highlight_color)
-            new_strand.color = parent_strand.color  # Directly set color property
+            set_color = self.canvas.strand_colors.get(new_strand.set_number)
+            if set_color is None:
+                layer_panel = getattr(self.canvas, 'layer_panel', None)
+                if layer_panel is not None:
+                    set_color = layer_panel.set_colors.get(new_strand.set_number)
+            if set_color is None:
+                set_color = parent_strand.color
+            new_strand.set_color(QColor(set_color))
             new_strand.stroke_color = parent_strand.stroke_color  # Copy stroke color from parent
             new_strand.set_number = parent_strand.set_number
             new_strand.is_start_side = False
@@ -1167,10 +1176,6 @@ class AttachMode(QObject):
             new_strand.curve_response_exponent = self.canvas.curve_response_exponent
             new_strand.control_point_base_fraction = self.canvas.control_point_base_fraction
             new_strand.distance_multiplier = self.canvas.distance_multiplier
-            
-            # Ensure the color is properly set in the canvas's color management system
-            if hasattr(self.canvas, 'strand_colors'):
-                self.canvas.strand_colors[new_strand.set_number] = parent_strand.color
             
             # Update parent strand
             parent_strand.attached_strands.append(new_strand)

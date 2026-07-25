@@ -3099,7 +3099,9 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
             <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
             <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
+            <li><span class="button-name">{_['change_layer_color']}</span> - {_['ctx_change_layer_color_desc']}</li>
             <li><span class="button-name">{_['change_stroke_color']}</span> - {_['ctx_change_stroke_color_desc']}</li>
+            <li><span class="button-name">{_['change_layer_stroke_color']}</span> - {_['ctx_change_layer_stroke_color_desc']}</li>
             <li><span class="button-name">{_['change_width']}</span> - {_['ctx_change_width_desc']}</li>
             <li><span class="button-name">{_['change_layer_width']}</span> - {_['ctx_change_layer_width_desc']}</li>
             <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
@@ -3127,7 +3129,9 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
             <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
             <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
+            <li><span class="button-name">{_['change_layer_color']}</span> - {_['ctx_change_layer_color_desc']}</li>
             <li><span class="button-name">{_['change_stroke_color']}</span> - {_['ctx_change_stroke_color_desc']}</li>
+            <li><span class="button-name">{_['change_layer_stroke_color']}</span> - {_['ctx_change_layer_stroke_color_desc']}</li>
             <li><span class="button-name">{_['change_width']}</span> - {_['ctx_change_width_desc']}</li>
             <li><span class="button-name">{_['change_layer_width']}</span> - {_['ctx_change_layer_width_desc']}</li>
             <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
@@ -4131,7 +4135,9 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
             <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
             <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
+            <li><span class="button-name">{_['change_layer_color']}</span> - {_['ctx_change_layer_color_desc']}</li>
             <li><span class="button-name">{_['change_stroke_color']}</span> - {_['ctx_change_stroke_color_desc']}</li>
+            <li><span class="button-name">{_['change_layer_stroke_color']}</span> - {_['ctx_change_layer_stroke_color_desc']}</li>
             <li><span class="button-name">{_['change_width']}</span> - {_['ctx_change_width_desc']}</li>
             <li><span class="button-name">{_['change_layer_width']}</span> - {_['ctx_change_layer_width_desc']}</li>
             <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
@@ -4159,7 +4165,9 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
             <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
             <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
+            <li><span class="button-name">{_['change_layer_color']}</span> - {_['ctx_change_layer_color_desc']}</li>
             <li><span class="button-name">{_['change_stroke_color']}</span> - {_['ctx_change_stroke_color_desc']}</li>
+            <li><span class="button-name">{_['change_layer_stroke_color']}</span> - {_['ctx_change_layer_stroke_color_desc']}</li>
             <li><span class="button-name">{_['change_width']}</span> - {_['ctx_change_width_desc']}</li>
             <li><span class="button-name">{_['change_layer_width']}</span> - {_['ctx_change_layer_width_desc']}</li>
             <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
@@ -4930,7 +4938,9 @@ class SettingsDialog(QDialog):
                 <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
                 <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
                 <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
+                <li><span class="button-name">{_['change_layer_color']}</span> - {_['ctx_change_layer_color_desc']}</li>
                 <li><span class="button-name">{_['change_stroke_color']}</span> - {_['ctx_change_stroke_color_desc']}</li>
+                <li><span class="button-name">{_['change_layer_stroke_color']}</span> - {_['ctx_change_layer_stroke_color_desc']}</li>
                 <li><span class="button-name">{_['change_width']}</span> - {_['ctx_change_width_desc']}</li>
                 <li><span class="button-name">{_['change_layer_width']}</span> - {_['ctx_change_layer_width_desc']}</li>
                 <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>
@@ -4958,7 +4968,9 @@ class SettingsDialog(QDialog):
                 <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
                 <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
                 <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
+                <li><span class="button-name">{_['change_layer_color']}</span> - {_['ctx_change_layer_color_desc']}</li>
                 <li><span class="button-name">{_['change_stroke_color']}</span> - {_['ctx_change_stroke_color_desc']}</li>
+                <li><span class="button-name">{_['change_layer_stroke_color']}</span> - {_['ctx_change_layer_stroke_color_desc']}</li>
                 <li><span class="button-name">{_['change_width']}</span> - {_['ctx_change_width_desc']}</li>
                 <li><span class="button-name">{_['change_layer_width']}</span> - {_['ctx_change_layer_width_desc']}</li>
                 <li><span class="button-name">{_['transparent_stroke']}</span> - {_['ctx_stroke_transparency_desc']}</li>

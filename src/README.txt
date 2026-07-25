@@ -24,7 +24,7 @@ The masked layer feature is essential for creating intricate, overlapping design
 
 ------
 
-## Version 1.109 (Released: 21/07/2026)
+## Version 1.109 (Released: 26/07/2026)
 
 ### New Features and Improvements:
 
@@ -63,6 +63,11 @@ The masked layer feature is essential for creating intricate, overlapping design
 
 10. **Improved Drawing Stability:**
     - Fixed internal painting issues that could corrupt the canvas after a drawing error.
+
+11. **Layer-Only Colors and Set-Wide Stroke Color:**
+    - The layer menu now pairs every color option with a layer-only version: Change Color / Change Color (This Layer Only) and Change Stroke Color / Change Stroke Color (This Layer Only), matching the existing width entries.
+    - Change Stroke Color now recolors the whole set just like Change Color, while the layer-only entries repaint only the clicked layer.
+    - Per-layer exceptions are saved with your project and survive undo/redo, tab switching and group operations; changing the set color again resets them.
 
 ------
 
@@ -680,7 +685,7 @@ La fonctionnalité de calque masqué est essentielle pour créer des designs com
 
 ------
 
-## Version 1.109 (Sortie : 21/07/2026)
+## Version 1.109 (Sortie : 26/07/2026)
 
 ### Nouvelles Fonctionnalités et Améliorations :
 
@@ -719,6 +724,11 @@ La fonctionnalité de calque masqué est essentielle pour créer des designs com
 
 10. **Stabilité de dessin améliorée :**
     - Correction de problèmes internes de rendu qui pouvaient corrompre le canevas après une erreur de dessin.
+
+11. **Couleurs par calque et couleur du trait pour tout l'ensemble :**
+    - Le menu des calques associe désormais à chaque option de couleur une version pour un seul calque : Changer la couleur / Changer la couleur (ce calque seulement) et Changer la couleur du trait / Changer la couleur du trait (ce calque seulement), comme les entrées de largeur existantes.
+    - Changer la couleur du trait recolore maintenant tout l'ensemble comme le fait Changer la couleur, tandis que les entrées « ce calque seulement » ne repeignent que le calque cliqué.
+    - Les exceptions par calque sont enregistrées avec votre projet et survivent aux annulations/rétablissements, au changement d'onglet et aux opérations de groupe ; changer à nouveau la couleur de l'ensemble les réinitialise.
 
 ------
 

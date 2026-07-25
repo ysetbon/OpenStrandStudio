@@ -242,6 +242,8 @@ class TabManager(QObject):
         else:
             canvas.strands = []
             canvas.groups = {}
+            if hasattr(canvas, 'strand_colors'):
+                canvas.strand_colors.clear()
             canvas.selected_strand = None
             if hasattr(canvas, 'selected_strand_index'):
                 canvas.selected_strand_index = None
@@ -257,6 +259,8 @@ class TabManager(QObject):
         lp = getattr(mw, 'layer_panel', None)
         if lp is not None:
             lp.set_counts = {}
+            if hasattr(lp, 'set_colors'):
+                lp.set_colors.clear()
             lp.current_set = 1
             if hasattr(lp, 'refresh'):
                 lp.refresh()

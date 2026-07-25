@@ -2471,6 +2471,46 @@ class GroupPanel(QWidget):
         
         pass
 
+    def _initialize_duplicate_set_colors(self, original_strands, set_mapping):
+        """Copy canonical set colors without flattening per-layer overrides."""
+        from masked_strand import MaskedStrand
+        from PyQt5.QtGui import QColor
+
+        source_set_colors = {}
+        layer_panel = getattr(self.canvas, 'layer_panel', None) if self.canvas else None
+        for old_set_num in set_mapping:
+            canonical = None
+            if self.canvas and hasattr(self.canvas, 'strand_colors'):
+                canonical = self.canvas.strand_colors.get(old_set_num)
+            if canonical is None and layer_panel is not None:
+                canonical = layer_panel.set_colors.get(old_set_num)
+            if canonical is None:
+                source_candidates = [
+                    strand for strand in original_strands
+                    if (getattr(strand, 'set_number', None) == old_set_num
+                        and not isinstance(strand, MaskedStrand))
+                ]
+                source_candidates.sort(
+                    key=lambda strand: (
+                        0 if getattr(strand, 'layer_name', '').endswith('_1') else 1
+                    )
+                )
+                if source_candidates:
+                    canonical = source_candidates[0].color
+            if canonical is not None:
+                source_set_colors[old_set_num] = QColor(canonical)
+
+        if self.canvas:
+            for old_set_num, new_set_num in set_mapping.items():
+                canonical = source_set_colors.get(old_set_num)
+                if canonical is None:
+                    continue
+                self.canvas.strand_colors[new_set_num] = QColor(canonical)
+                if layer_panel is not None:
+                    layer_panel.set_colors[new_set_num] = QColor(canonical)
+
+        return source_set_colors
+
     def duplicate_group(self, group_name):
         """Duplicate a group with all its strands, creating new unique names."""
         pass
@@ -2588,6 +2628,17 @@ class GroupPanel(QWidget):
             old_to_new_set_mapping = {}
             for i, old_set_num in enumerate(sorted(unique_set_numbers)):
                 old_to_new_set_mapping[old_set_num] = consecutive_set_numbers[i]
+
+            # A duplicated group preserves two distinct concepts:
+            #   1. each layer's own fill/stroke (copied by duplicate_*), and
+            #   2. the canonical set fill inherited by future attachments.
+            # Capture the latter once per source set so a layer-only outlier
+            # cannot become the new set color simply because it is processed
+            # later in the duplication loop.
+            self._initialize_duplicate_set_colors(
+                original_strands,
+                old_to_new_set_mapping,
+            )
             
             pass
             
@@ -2632,8 +2683,6 @@ class GroupPanel(QWidget):
                 # Add to canvas and color mapping
                 if self.canvas:
                     self.canvas.add_strand(new_strand)
-                    if hasattr(new_strand, 'set_number') and hasattr(new_strand, 'color'):
-                        self.canvas.strand_colors[new_strand.set_number] = new_strand.color
 
             # Second pass: duplicate AttachedStrands now that parent strands exist
             print(f"\n  Phase 2: Duplicating attached strands...")
@@ -2648,8 +2697,6 @@ class GroupPanel(QWidget):
 
                 if self.canvas:
                     self.canvas.add_strand(new_strand)
-                    if hasattr(new_strand, 'set_number') and hasattr(new_strand, 'color'):
-                        self.canvas.strand_colors[new_strand.set_number] = new_strand.color
 
             # Third pass: duplicate MaskedStrands with references to duplicated component strands
             print(f"\n  Phase 3: Duplicating masked strands...")
@@ -2680,10 +2727,6 @@ class GroupPanel(QWidget):
                 # Add to canvas strands using proper method to set canvas reference
                 if self.canvas:
                     self.canvas.add_strand(new_strand)
-
-                    # Update canvas color mapping
-                    if hasattr(new_strand, 'set_number') and hasattr(new_strand, 'color'):
-                        self.canvas.strand_colors[new_strand.set_number] = new_strand.color
             
             # Add strands to layer panel
             # Note: Strands have already been added to canvas.strands in the duplication loops above
@@ -2691,8 +2734,12 @@ class GroupPanel(QWidget):
             if self.canvas and hasattr(self.canvas, 'layer_panel') and self.canvas.layer_panel:
                 for new_strand in duplicated_strands:
                     # Strands are already in canvas.strands from add_strand() calls above
-                    # Just create the layer buttons
-                    self.canvas.layer_panel.on_strand_created(new_strand)
+                    # Just create the layer buttons. Preserve the copied layer
+                    # color instead of normalizing it to the set color.
+                    self.canvas.layer_panel.on_strand_created(
+                        new_strand,
+                        preserve_layer_color=True,
+                    )
                     
             
             # Update knot connections for duplicated strands BEFORE creating UI elements

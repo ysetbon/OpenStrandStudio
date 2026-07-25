@@ -178,8 +178,10 @@ Examples:<br>
         'ctx_hide_show_desc': 'Hide or show this layer on the canvas.',
         'ctx_shadow_only_desc': "Show only the strand's shadow while hiding the strand itself.",
         'ctx_edit_shadows_desc': 'Open the shadow editor to adjust how this layer casts and receives shadows.',
-        'ctx_change_color_desc': 'Change the fill color of the strand.',
-        'ctx_change_stroke_color_desc': 'Change the outline (stroke) color of the strand.',
+        'ctx_change_color_desc': 'Change the fill color of every layer in the related set.',
+        'ctx_change_layer_color_desc': 'Change the fill color of this layer only.',
+        'ctx_change_stroke_color_desc': 'Change the outline (stroke) color of every layer in the related set.',
+        'ctx_change_layer_stroke_color_desc': 'Change the outline (stroke) color of this layer only.',
         'ctx_change_width_desc': 'Change the thickness of the strand.',
         'ctx_change_layer_width_desc': 'Change the thickness of only this specific layer, without affecting the rest of the set.',
         'ctx_stroke_transparency_desc': 'Make the circle stroke transparent, or restore the default stroke when it is already transparent.',
@@ -299,6 +301,7 @@ Examples:<br>
             <li style="font-size:14px;"><b>Improved Drawing Stability:</b> Fixed internal painting issues that could corrupt the canvas after a drawing error.</li>
             <li style="font-size:14px;"><b>Arrow Customization in the Layer Menu:</b> Right-click a layer to style its arrows in place: start/end arrows, full arrow with color, transparency, texture, shaft style, arrow head and shadow, plus a new Arrow Sizes dropdown for all numeric arrow dimensions.</li>
             <li style="font-size:14px;"><b>Copy & Paste Strand Data:</b> In multi-select mode, copy selected properties of a strand (start/end points, control points, width, strand and stroke colors) and paste them onto several layers at once, anchored from the start or end point — with a copy badge and one-click paste chips right on the layer buttons.</li>
+            <li style="font-size:14px;"><b>Layer-Only Colors and Set-Wide Stroke Color:</b> The layer menu now pairs every color option with a layer-only version: Change Color / Change Color (This Layer Only) and Change Stroke Color / Change Stroke Color (This Layer Only), matching the existing width entries. Change Stroke Color now recolors the whole set just like Change Color, while the layer-only entries repaint only the clicked layer. Per-layer exceptions are saved with your project and survive undo/redo, tab switching and group operations; changing the set color again resets them.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.109</p>
         ''',
@@ -454,7 +457,9 @@ Examples:<br>
         'restore_default_stroke': 'Fold Over Start Edge',
         'restore_default_closing_knot_stroke': 'Restore Default Closing Knot Stroke',
         'change_color': 'Change Color',
+        'change_layer_color': 'Change Color (This Layer Only)',
         'change_stroke_color': 'Change Stroke Color',
+        'change_layer_stroke_color': 'Change Stroke Color (This Layer Only)',
         'change_width': 'Change Width',
         'change_layer_width': 'Change Width (This Layer Only)',
         'make_elliptical_end': 'Match connected strand (elliptical end-cap)',
@@ -770,8 +775,10 @@ Exemples :<br>
         'ctx_hide_show_desc': 'Masquer ou afficher ce calque sur le canevas.',
         'ctx_shadow_only_desc': "Afficher uniquement l'ombre du brin en masquant le brin lui-même.",
         'ctx_edit_shadows_desc': "Ouvrir l'éditeur d'ombres pour régler la façon dont ce calque projette et reçoit les ombres.",
-        'ctx_change_color_desc': 'Changer la couleur de remplissage du brin.',
-        'ctx_change_stroke_color_desc': 'Changer la couleur du contour du brin.',
+        'ctx_change_color_desc': 'Changer la couleur de remplissage de tous les calques du même ensemble.',
+        'ctx_change_layer_color_desc': 'Changer la couleur de remplissage de ce calque uniquement.',
+        'ctx_change_stroke_color_desc': 'Changer la couleur du contour de tous les calques du même ensemble.',
+        'ctx_change_layer_stroke_color_desc': 'Changer la couleur du contour de ce calque uniquement.',
         'ctx_change_width_desc': "Changer l'épaisseur du brin.",
         'ctx_change_layer_width_desc': "Changer l'épaisseur de ce calque uniquement, sans affecter le reste de l'ensemble.",
         'ctx_stroke_transparency_desc': "Rendre le contour du cercle transparent, ou restaurer le contour par défaut lorsqu'il est déjà transparent.",
@@ -836,6 +843,7 @@ Exemples :<br>
             <li style="font-size:14px;"><b>Stabilité de dessin améliorée:</b> Correction de problèmes internes de rendu qui pouvaient corrompre le canevas après une erreur de dessin.</li>
             <li style="font-size:14px;"><b>Personnalisation des flèches dans le menu des couches:</b> Faites un clic droit sur une couche pour styliser ses flèches sur place : flèches de début/fin, flèche complète avec couleur, transparence, texture, style de hampe, pointe et ombre, plus un nouveau menu Tailles de la flèche pour toutes les dimensions numériques.</li>
             <li style="font-size:14px;"><b>Copier & coller les données de brin:</b> En mode multi-sélection, copiez les propriétés choisies d'un brin (points de départ/fin, points de contrôle, largeur, couleurs du brin et du contour) et collez-les sur plusieurs couches à la fois, ancrées au point de départ ou de fin — avec un badge de copie et des pastilles de collage en un clic sur les boutons de couches.</li>
+            <li style="font-size:14px;"><b>Couleurs par calque et couleur du trait pour tout l'ensemble:</b> Le menu des calques associe désormais à chaque option de couleur une version pour un seul calque : Changer la couleur / Changer la couleur (ce calque seulement) et Changer la couleur du trait / Changer la couleur du trait (ce calque seulement), comme les entrées de largeur existantes. Changer la couleur du trait recolore maintenant tout l'ensemble comme le fait Changer la couleur, tandis que les entrées « ce calque seulement » ne repeignent que le calque cliqué. Les exceptions par calque sont enregistrées avec votre projet et survivent aux annulations/rétablissements, au changement d'onglet et aux opérations de groupe ; changer à nouveau la couleur de l'ensemble les réinitialise.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.109</p>
         ''',
@@ -954,7 +962,9 @@ Exemples :<br>
         'restore_default_closing_knot_stroke': 'Restaurer le Trait du Nœud Fermé par Défaut',
         'restore_default_stroke': 'Replier le Bord de Départ',
         'change_color': 'Changer la couleur',
+        'change_layer_color': 'Changer la couleur (ce calque seulement)',
         'change_stroke_color': 'Changer la couleur du trait',
+        'change_layer_stroke_color': 'Changer la couleur du trait (ce calque seulement)',
         'change_width': 'Changer largeur',
         'change_layer_width': 'Changer largeur (ce calque seulement)',
         'make_elliptical_end': 'Adapter au brin connecté (extrémité elliptique)',
@@ -1359,8 +1369,10 @@ Beispiele:<br>
         'ctx_hide_show_desc': 'Diese Ebene auf der Leinwand aus- oder einblenden.',
         'ctx_shadow_only_desc': 'Nur den Schatten des Strangs anzeigen und den Strang selbst ausblenden.',
         'ctx_edit_shadows_desc': 'Den Schatten-Editor öffnen, um einzustellen, wie diese Ebene Schatten wirft und empfängt.',
-        'ctx_change_color_desc': 'Die Füllfarbe des Strangs ändern.',
-        'ctx_change_stroke_color_desc': 'Die Umrissfarbe (Kontur) des Strangs ändern.',
+        'ctx_change_color_desc': 'Die Füllfarbe aller Ebenen im zugehörigen Satz ändern.',
+        'ctx_change_layer_color_desc': 'Die Füllfarbe nur dieser Ebene ändern.',
+        'ctx_change_stroke_color_desc': 'Die Umrissfarbe aller Ebenen im zugehörigen Satz ändern.',
+        'ctx_change_layer_stroke_color_desc': 'Die Umrissfarbe nur dieser Ebene ändern.',
         'ctx_change_width_desc': 'Die Dicke des Strangs ändern.',
         'ctx_change_layer_width_desc': 'Die Dicke nur dieser Ebene ändern, ohne den Rest des Satzes zu beeinflussen.',
         'ctx_stroke_transparency_desc': 'Die Kreiskontur transparent machen oder die Standardkontur wiederherstellen, wenn sie bereits transparent ist.',
@@ -1455,6 +1467,7 @@ Beispiele:<br>
             <li style="font-size:14px;"><b>Verbesserte Zeichenstabilität:</b> Interne Renderprobleme behoben, die nach einem Zeichenfehler die Leinwand beschädigen konnten.</li>
             <li style="font-size:14px;"><b>Pfeil-Anpassung im Ebenenmenü:</b> Rechtsklick auf eine Ebene, um ihre Pfeile direkt zu gestalten: Start-/Endpfeile, vollständiger Pfeil mit Farbe, Transparenz, Textur, Schaftstil, Spitze und Schatten, plus ein neues Pfeilgrößen-Menü für alle numerischen Pfeilmaße.</li>
             <li style="font-size:14px;"><b>Strangdaten kopieren & einfügen:</b> Im Mehrfachauswahl-Modus ausgewählte Eigenschaften eines Strangs kopieren (Start-/Endpunkte, Kontrollpunkte, Breite, Strang- und Konturfarben) und auf mehrere Ebenen zugleich einfügen, verankert am Start- oder Endpunkt — mit Kopier-Abzeichen und Ein-Klick-Einfüge-Chips direkt auf den Ebenen-Schaltflächen.</li>
+            <li style="font-size:14px;"><b>Ebenen-eigene Farben und satzweite Konturfarbe:</b> Das Ebenenmenü bietet jetzt zu jeder Farboption eine Variante für nur eine Ebene: Farbe ändern / Farbe ändern (nur diese Ebene) und Konturfarbe ändern / Konturfarbe ändern (nur diese Ebene), passend zu den vorhandenen Breite-Einträgen. Konturfarbe ändern färbt jetzt wie Farbe ändern den gesamten Satz um, während die Einträge „nur diese Ebene“ ausschließlich die angeklickte Ebene umfärben. Ebenen-Ausnahmen werden mit dem Projekt gespeichert und überstehen Rückgängig/Wiederherstellen, Tab-Wechsel und Gruppenoperationen; eine erneute Satzfarbe setzt sie zurück.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.109</p>
         ''',
@@ -1597,7 +1610,9 @@ Beispiele:<br>
         'restore_default_stroke': 'Startkante umfalten',
         'restore_default_closing_knot_stroke': 'Standardkontur (geschl. Knoten) wiederherstellen',
         'change_color': 'Farbe ändern',
+        'change_layer_color': 'Farbe ändern (nur diese Ebene)',
         'change_stroke_color': 'Konturfarbe ändern',
+        'change_layer_stroke_color': 'Konturfarbe ändern (nur diese Ebene)',
         'change_width': 'Breite ändern',
         'change_layer_width': 'Breite ändern (nur diese Ebene)',
         'make_elliptical_end': 'An verbundenen Strang anpassen (elliptisches Ende)',
@@ -1942,8 +1957,10 @@ Esempi:<br>
         'ctx_hide_show_desc': 'Nascondi o mostra questo livello sulla tela.',
         'ctx_shadow_only_desc': "Mostra solo l'ombra del trefolo nascondendo il trefolo stesso.",
         'ctx_edit_shadows_desc': "Apri l'editor delle ombre per regolare come questo livello proietta e riceve le ombre.",
-        'ctx_change_color_desc': 'Cambia il colore di riempimento del trefolo.',
-        'ctx_change_stroke_color_desc': 'Cambia il colore del contorno del trefolo.',
+        'ctx_change_color_desc': 'Cambia il colore di riempimento di tutti i livelli del set correlato.',
+        'ctx_change_layer_color_desc': 'Cambia il colore di riempimento solo di questo livello.',
+        'ctx_change_stroke_color_desc': 'Cambia il colore del contorno di tutti i livelli del set correlato.',
+        'ctx_change_layer_stroke_color_desc': 'Cambia il colore del contorno solo di questo livello.',
         'ctx_change_width_desc': 'Cambia lo spessore del trefolo.',
         'ctx_change_layer_width_desc': 'Cambia lo spessore solo di questo livello, senza influenzare il resto del set.',
         'ctx_stroke_transparency_desc': 'Rendi trasparente il contorno del cerchio o ripristina il contorno predefinito quando è già trasparente.',
@@ -2008,6 +2025,7 @@ Esempi:<br>
             <li style="font-size:14px;"><b>Maggiore stabilità di disegno:</b> Risolti problemi interni di rendering che potevano corrompere la tela dopo un errore di disegno.</li>
             <li style="font-size:14px;"><b>Personalizzazione delle frecce nel menu dei livelli:</b> Fai clic destro su un livello per personalizzare le sue frecce sul posto: frecce iniziale/finale, freccia completa con colore, trasparenza, texture, stile dell'asta, punta e ombra, più un nuovo menu Dimensioni freccia per tutte le dimensioni numeriche.</li>
             <li style="font-size:14px;"><b>Copia e incolla dei dati del trefolo:</b> In modalità selezione multipla, copia le proprietà scelte di un trefolo (punti iniziale/finale, punti di controllo, larghezza, colori del trefolo e del contorno) e incollale su più livelli contemporaneamente, ancorate al punto iniziale o finale — con un distintivo di copia e chip di incolla con un clic sui pulsanti dei livelli.</li>
+            <li style="font-size:14px;"><b>Colori per singolo livello e colore del tratto per tutto il set:</b> Il menu dei livelli affianca ora a ogni opzione di colore una versione per il solo livello: Cambia colore / Cambia colore (solo questo livello) e Cambia colore del tratto / Cambia colore del tratto (solo questo livello), come le voci di larghezza già esistenti. Cambia colore del tratto ora ricolora l'intero set proprio come Cambia colore, mentre le voci «solo questo livello» ridipingono soltanto il livello su cui hai fatto clic. Le eccezioni per livello vengono salvate con il progetto e sopravvivono ad annulla/ripristina, al cambio di scheda e alle operazioni di gruppo; cambiando di nuovo il colore del set vengono azzerate.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Versione 1.109</p>
         ''',
@@ -2126,7 +2144,9 @@ Esempi:<br>
         'restore_default_closing_knot_stroke': 'Ripristina Bordo del Nodo Chiuso Predefinito',
         'restore_default_stroke': 'Ripiega Bordo Iniziale',
         'change_color': 'Cambia colore',
+        'change_layer_color': 'Cambia colore (solo questo livello)',
         'change_stroke_color': 'Cambia colore del tratto',
+        'change_layer_stroke_color': 'Cambia colore del tratto (solo questo livello)',
         'change_width': 'Cambia larghezza',
         'change_layer_width': 'Cambia larghezza (solo questo livello)',
         'make_elliptical_end': 'Adatta al trefolo connesso (estremità ellittica)',
@@ -2532,8 +2552,10 @@ Ejemplos:<br>
         'ctx_hide_show_desc': 'Ocultar o mostrar esta capa en el lienzo.',
         'ctx_shadow_only_desc': 'Mostrar solo la sombra de la hebra ocultando la hebra en sí.',
         'ctx_edit_shadows_desc': 'Abrir el editor de sombras para ajustar cómo esta capa proyecta y recibe sombras.',
-        'ctx_change_color_desc': 'Cambiar el color de relleno de la hebra.',
-        'ctx_change_stroke_color_desc': 'Cambiar el color del contorno de la hebra.',
+        'ctx_change_color_desc': 'Cambiar el color de relleno de todas las capas del conjunto relacionado.',
+        'ctx_change_layer_color_desc': 'Cambiar el color de relleno solo de esta capa.',
+        'ctx_change_stroke_color_desc': 'Cambiar el color del contorno de todas las capas del conjunto relacionado.',
+        'ctx_change_layer_stroke_color_desc': 'Cambiar el color del contorno solo de esta capa.',
         'ctx_change_width_desc': 'Cambiar el grosor de la hebra.',
         'ctx_change_layer_width_desc': 'Cambiar el grosor solo de esta capa, sin afectar al resto del conjunto.',
         'ctx_stroke_transparency_desc': 'Hacer transparente el contorno del círculo, o restaurar el contorno predeterminado cuando ya es transparente.',
@@ -2598,6 +2620,7 @@ Ejemplos:<br>
             <li style="font-size:14px;"><b>Mayor estabilidad de dibujo:</b> Se corrigieron problemas internos de renderizado que podían corromper el lienzo tras un error de dibujo.</li>
             <li style="font-size:14px;"><b>Personalización de flechas en el menú de capas:</b> Haz clic derecho en una capa para personalizar sus flechas en el sitio: flechas inicial/final, flecha completa con color, transparencia, textura, estilo del asta, punta y sombra, más un nuevo menú Tamaños de la flecha para todas las dimensiones numéricas.</li>
             <li style="font-size:14px;"><b>Copiar y pegar datos de hebra:</b> En modo de selección múltiple, copia las propiedades elegidas de una hebra (puntos inicial/final, puntos de control, anchura, colores de la hebra y del contorno) y pégalas en varias capas a la vez, ancladas al punto inicial o final — con una insignia de copia y chips de pegado de un clic en los botones de capas.</li>
+            <li style="font-size:14px;"><b>Colores por capa y color del trazo para todo el conjunto:</b> El menú de capas acompaña ahora cada opción de color con una versión para una sola capa: Cambiar color / Cambiar color (solo esta capa) y Cambiar color del trazo / Cambiar color del trazo (solo esta capa), igual que las entradas de ancho ya existentes. Cambiar color del trazo ahora recolorea todo el conjunto como lo hace Cambiar color, mientras que las entradas «solo esta capa» repintan únicamente la capa en la que hiciste clic. Las excepciones por capa se guardan con tu proyecto y sobreviven a deshacer/rehacer, al cambio de pestaña y a las operaciones de grupo; volver a cambiar el color del conjunto las restablece.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Versión 1.109</p>
         ''',
@@ -2716,7 +2739,9 @@ Ejemplos:<br>
         'restore_default_closing_knot_stroke': 'Restaurar Borde del Nudo Cerrado Predeterminado',
         'restore_default_stroke': 'Replegar Borde Inicial',
         'change_color': 'Cambiar color',
+        'change_layer_color': 'Cambiar color (solo esta capa)',
         'change_stroke_color': 'Cambiar color del trazo',
+        'change_layer_stroke_color': 'Cambiar color del trazo (solo esta capa)',
         'change_width': 'Cambiar ancho',
         'change_layer_width': 'Cambiar ancho (solo esta capa)',
         'make_elliptical_end': 'Ajustar a la hebra conectada (extremo elíptico)',
@@ -3122,8 +3147,10 @@ Exemplos:<br>
         'ctx_hide_show_desc': 'Ocultar ou mostrar esta camada na tela.',
         'ctx_shadow_only_desc': 'Mostrar apenas a sombra do fio, ocultando o próprio fio.',
         'ctx_edit_shadows_desc': 'Abrir o editor de sombras para ajustar como esta camada projeta e recebe sombras.',
-        'ctx_change_color_desc': 'Alterar a cor de preenchimento do fio.',
-        'ctx_change_stroke_color_desc': 'Alterar a cor do contorno do fio.',
+        'ctx_change_color_desc': 'Alterar a cor de preenchimento de todas as camadas do conjunto relacionado.',
+        'ctx_change_layer_color_desc': 'Alterar a cor de preenchimento apenas desta camada.',
+        'ctx_change_stroke_color_desc': 'Alterar a cor do contorno de todas as camadas do conjunto relacionado.',
+        'ctx_change_layer_stroke_color_desc': 'Alterar a cor do contorno apenas desta camada.',
         'ctx_change_width_desc': 'Alterar a espessura do fio.',
         'ctx_change_layer_width_desc': 'Alterar a espessura apenas desta camada, sem afetar o resto do conjunto.',
         'ctx_stroke_transparency_desc': 'Tornar o contorno do círculo transparente ou restaurar o contorno padrão quando já estiver transparente.',
@@ -3188,6 +3215,7 @@ Exemplos:<br>
             <li style="font-size:14px;"><b>Maior estabilidade de desenho:</b> Corrigidos problemas internos de renderização que podiam corromper a tela após um erro de desenho.</li>
             <li style="font-size:14px;"><b>Personalização de setas no menu de camadas:</b> Clique com o botão direito em uma camada para personalizar suas setas no local: setas inicial/final, seta completa com cor, transparência, textura, estilo da haste, ponta e sombra, além de um novo menu Tamanhos da flecha para todas as dimensões numéricas.</li>
             <li style="font-size:14px;"><b>Copiar e colar dados do fio:</b> No modo de seleção múltipla, copie as propriedades escolhidas de um fio (pontos inicial/final, pontos de controle, largura, cores do fio e do contorno) e cole-as em várias camadas de uma vez, ancoradas no ponto inicial ou final — com um emblema de cópia e chips de colagem de um clique nos botões de camadas.</li>
+            <li style="font-size:14px;"><b>Cores por camada e cor do traço para todo o conjunto:</b> O menu de camadas agora acompanha cada opção de cor com uma versão para uma única camada: Mudar cor / Mudar cor (apenas esta camada) e Mudar cor do traço / Mudar cor do traço (apenas esta camada), tal como as entradas de largura já existentes. Mudar cor do traço agora recolore todo o conjunto como Mudar cor faz, enquanto as entradas «apenas esta camada» repintam somente a camada clicada. As exceções por camada são salvas com o projeto e sobrevivem a desfazer/refazer, à troca de aba e às operações de grupo; mudar novamente a cor do conjunto as redefine.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio – Versão 1.109</p>
         ''',
@@ -3306,7 +3334,9 @@ Exemplos:<br>
         'restore_default_closing_knot_stroke': 'Restaurar Borda do Nó Fechado Padrão',
         'restore_default_stroke': 'Dobrar Borda Inicial',
         'change_color': 'Mudar cor',
+        'change_layer_color': 'Mudar cor (apenas esta camada)',
         'change_stroke_color': 'Mudar cor do traço',
+        'change_layer_stroke_color': 'Mudar cor do traço (apenas esta camada)',
         'change_width': 'Mudar largura',
         'change_layer_width': 'Mudar largura (apenas esta camada)',
         'make_elliptical_end': 'Ajustar ao fio conectado (extremidade elíptica)',
@@ -3719,8 +3749,10 @@ Exemplos:<br>
         'ctx_hide_show_desc': 'הסתר או הצג שכבה זו על הקנבס.',
         'ctx_shadow_only_desc': 'הצג רק את צל הגדיל תוך הסתרת הגדיל עצמו.',
         'ctx_edit_shadows_desc': 'פתח את עורך הצללים כדי לכוון כיצד שכבה זו מטילה ומקבלת צללים.',
-        'ctx_change_color_desc': 'שנה את צבע המילוי של הגדיל.',
-        'ctx_change_stroke_color_desc': 'שנה את צבע המתאר של הגדיל.',
+        'ctx_change_color_desc': 'שנה את צבע המילוי של כל השכבות בסט הקשור.',
+        'ctx_change_layer_color_desc': 'שנה את צבע המילוי של שכבה זו בלבד.',
+        'ctx_change_stroke_color_desc': 'שנה את צבע המתאר של כל השכבות בסט הקשור.',
+        'ctx_change_layer_stroke_color_desc': 'שנה את צבע המתאר של שכבה זו בלבד.',
         'ctx_change_width_desc': 'שנה את עובי הגדיל.',
         'ctx_change_layer_width_desc': 'שנה את העובי של שכבה זו בלבד, מבלי להשפיע על שאר הסט.',
         'ctx_stroke_transparency_desc': 'הפוך את מתאר העיגול לשקוף, או שחזר את מתאר ברירת המחדל כאשר הוא כבר שקוף.',
@@ -3786,6 +3818,7 @@ Exemplos:<br>
             <li style="font-size:14px;"><b>יציבות ציור משופרת:</b> תוקנו בעיות רינדור פנימיות שעלולות היו לפגוע בקנבס לאחר שגיאת ציור.</li>
             <li style="font-size:14px;"><b>התאמת חצים בתפריט השכבות:</b> לחצו לחיצה ימנית על שכבה כדי לעצב את החצים שלה במקום: חצי התחלה/סיום, חץ מלא עם צבע, שקיפות, מרקם, סגנון גוף, ראש וצל, ובנוסף תפריט חדש של גדלי החץ לכל המידות המספריות.</li>
             <li style="font-size:14px;"><b>העתקה והדבקה של נתוני גדיל:</b> במצב בחירה מרובה, העתיקו מאפיינים נבחרים של גדיל (נקודות התחלה/סיום, נקודות בקרה, רוחב, צבעי הגדיל וקו המתאר) והדביקו אותם על כמה שכבות בבת אחת, בעיגון לנקודת ההתחלה או הסיום — עם תג העתקה וסמני הדבקה בלחיצה אחת על כפתורי השכבות.</li>
+            <li style="font-size:14px;"><b>צבעים לשכבה בודדת וצבע קו לכל הסט:</b> תפריט השכבות מציע כעת לכל אפשרות צבע גם גרסה לשכבה בודדת: שנה צבע / שנה צבע (שכבה זו בלבד) ושנה צבע קו / שנה צבע קו (שכבה זו בלבד), בדומה לפריטי הרוחב הקיימים. שנה צבע קו משנה כעת את כל הסט בדיוק כמו שנה צבע, ואילו הפריטים "שכבה זו בלבד" צובעים רק את השכבה שנלחצה. החריגים לכל שכבה נשמרים עם הפרויקט ושורדים ביטול/ביצוע מחדש, מעבר בין כרטיסיות ופעולות קבוצה; שינוי חוזר של צבע הסט מאפס אותם.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - גרסה 1.109</p>
         </div>
@@ -3906,7 +3939,9 @@ Exemplos:<br>
         'restore_default_closing_knot_stroke': 'שחזר קו קשר סגור ברירת מחדל',
         'restore_default_stroke': 'קפל קצה התחלה',
         'change_color': 'שנה צבע',
+        'change_layer_color': 'שנה צבע (שכבה זו בלבד)',
         'change_stroke_color': 'שנה צבע קו',
+        'change_layer_stroke_color': 'שנה צבע קו (שכבה זו בלבד)',
         'change_width': 'שנה רוחב',
         'change_layer_width': 'שנה רוחב (שכבה זו בלבד)',
         'make_elliptical_end': 'התאם לגדיל המחובר (קצה אליפטי)',

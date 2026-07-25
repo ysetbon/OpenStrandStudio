@@ -311,9 +311,58 @@ def serialize_project_state(strands, groups, canvas):
     if hasattr(canvas, 'layer_state_manager') and getattr(canvas, 'layer_state_manager', None):
         shadow_overrides = getattr(canvas.layer_state_manager, 'layer_state', {}).get('shadow_overrides', {})
 
+    # Persist the canonical fill color for each set independently from the
+    # individual strand colors. This matters when one layer has a layer-only
+    # color override: future attachments must still inherit the set color after
+    # save/load or undo/redo.
+    active_set_numbers = {
+        getattr(strand, 'set_number', None)
+        for strand in strands
+        if not isinstance(strand, MaskedStrand)
+    }
+    active_set_numbers.discard(None)
+
+    canonical_set_colors = {}
+    for source in (
+        getattr(canvas, 'strand_colors', {}),
+        getattr(getattr(canvas, 'layer_panel', None), 'set_colors', {}),
+    ):
+        for set_number, color in source.items():
+            try:
+                normalized_set_number = int(set_number)
+            except (TypeError, ValueError):
+                continue
+            # Do not persist colors for deleted sets. Stale entries used to make
+            # the next new strand skip set numbers or inherit another project's
+            # color after an empty-workspace transition.
+            if normalized_set_number in active_set_numbers:
+                canonical_set_colors.setdefault(
+                    str(normalized_set_number),
+                    serialize_color(color),
+                )
+
+    # Defensive fallback for imported/legacy in-memory projects whose map is
+    # absent or only partially populated. Prefer each set's main (_1) strand.
+    regular_strands = [
+        strand for strand in strands if not isinstance(strand, MaskedStrand)
+    ]
+    regular_strands.sort(
+        key=lambda strand: (
+            0 if str(getattr(strand, 'layer_name', '')).endswith('_1') else 1
+        )
+    )
+    for strand in regular_strands:
+        set_number = getattr(strand, 'set_number', None)
+        if set_number is not None:
+            canonical_set_colors.setdefault(
+                str(set_number),
+                serialize_color(strand.color),
+            )
+
     data = {
         "strands": serialized_strands,
         "groups": serialize_groups(groups),
+        "strand_colors": canonical_set_colors,
         "selected_strand_name": selected_strand_name,  # Add selected strand name
         "locked_layers": list(locked_layers),  # Add locked layers information
         "lock_mode": lock_mode,  # Add lock mode state
@@ -1100,12 +1149,54 @@ def load_strands_from_data(data, canvas):
         if not hasattr(strand, 'knot_connections'):
             strand.knot_connections = {}
 
+    _restore_canonical_set_colors(data, canvas, strands)
+
     locked_layers = set(data.get("locked_layers", []))  # Get locked layers from saved data
     lock_mode = data.get("lock_mode", False)  # Get lock mode from saved data
     shadow_enabled = data.get("shadow_enabled", True)  # Get shadow button state from saved data
     show_control_points = data.get("show_control_points", False)  # Get control points button state from saved data
     shadow_overrides = data.get("shadow_overrides", {})  # Get shadow override settings from saved data
     return strands, data.get("groups", {}), selected_strand_name, locked_layers, lock_mode, shadow_enabled, show_control_points, shadow_overrides # Return selected strand name, locked layers, lock mode, button states, and shadow overrides
+
+
+def _restore_canonical_set_colors(data, canvas, strands):
+    """Restore set-level fill colors, with inference for legacy save files."""
+    restored = {}
+    raw_colors = data.get("strand_colors")
+    regular_strands = [s for s in strands if not isinstance(s, MaskedStrand)]
+    active_set_numbers = {
+        getattr(strand, 'set_number', None) for strand in regular_strands
+    }
+    active_set_numbers.discard(None)
+
+    if isinstance(raw_colors, dict):
+        for raw_set_number, raw_color in raw_colors.items():
+            try:
+                set_number = int(raw_set_number)
+                if set_number in active_set_numbers:
+                    restored[set_number] = deserialize_color(raw_color)
+            except (TypeError, ValueError):
+                continue
+
+    # Older files have no map, and malformed/partial files may omit individual
+    # active sets. Fill every missing entry from the main strand so loading
+    # always leaves one canonical color per real set.
+    regular_strands.sort(
+        key=lambda s: 0 if str(getattr(s, 'layer_name', '')).endswith('_1') else 1
+    )
+    for strand in regular_strands:
+        set_number = getattr(strand, 'set_number', None)
+        if set_number is not None and set_number not in restored:
+            restored[set_number] = QColor(strand.color)
+
+    canvas.strand_colors = {
+        set_number: QColor(color) for set_number, color in restored.items()
+    }
+    layer_panel = getattr(canvas, 'layer_panel', None)
+    if layer_panel is not None:
+        layer_panel.set_colors = {
+            set_number: QColor(color) for set_number, color in restored.items()
+        }
 
 
 def apply_project_state(canvas, state):

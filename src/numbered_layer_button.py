@@ -852,8 +852,19 @@ class NumberedLayerButton(QPushButton):
             change_action_color.setDefaultWidget(change_color_label)
             change_action_color.triggered.connect(self.change_color)
             context_menu.addAction(change_action_color)
+
+            # Add Change Color (This Layer Only) option
+            change_layer_color_text = _['change_layer_color'] if 'change_layer_color' in _ else "Change Color (This Layer Only)"
+            change_layer_color_label = HoverLabel(change_layer_color_text, self, theme)
+            if is_hebrew:
+                change_layer_color_label.setLayoutDirection(Qt.RightToLeft)
+                change_layer_color_label.setAlignment(Qt.AlignLeft)
+            change_layer_color_action = QWidgetAction(context_menu)
+            change_layer_color_action.setDefaultWidget(change_layer_color_label)
+            change_layer_color_action.triggered.connect(lambda: self.change_layer_color(strand, layer_panel))
+            context_menu.addAction(change_layer_color_action)
             
-            # Add Change Stroke Color option
+            # Add set-wide Change Stroke Color option
             change_stroke_text = _['change_stroke_color'] if 'change_stroke_color' in _ else "Change Stroke Color"
             change_stroke_label = HoverLabel(change_stroke_text, self, theme)
             if is_hebrew:
@@ -863,6 +874,17 @@ class NumberedLayerButton(QPushButton):
             change_stroke_action.setDefaultWidget(change_stroke_label)
             change_stroke_action.triggered.connect(lambda: self.change_stroke_color(strand, layer_panel))
             context_menu.addAction(change_stroke_action)
+
+            # Add Change Stroke Color (This Layer Only) option
+            change_layer_stroke_text = _['change_layer_stroke_color'] if 'change_layer_stroke_color' in _ else "Change Stroke Color (This Layer Only)"
+            change_layer_stroke_label = HoverLabel(change_layer_stroke_text, self, theme)
+            if is_hebrew:
+                change_layer_stroke_label.setLayoutDirection(Qt.RightToLeft)
+                change_layer_stroke_label.setAlignment(Qt.AlignLeft)
+            change_layer_stroke_action = QWidgetAction(context_menu)
+            change_layer_stroke_action.setDefaultWidget(change_layer_stroke_label)
+            change_layer_stroke_action.triggered.connect(lambda: self.change_layer_stroke_color(strand, layer_panel))
+            context_menu.addAction(change_layer_stroke_action)
             
             # Add Change Width option
             change_width_text = _['change_width'] if 'change_width' in _ else "Change Width"
@@ -3265,7 +3287,7 @@ class NumberedLayerButton(QPushButton):
     # --- END NEW ---
     
     def change_stroke_color(self, strand, layer_panel):
-        """Open a color dialog to change the strand's stroke color."""
+        """Change the stroke color of every strand in the clicked strand's set."""
         # Get translations
         _ = translations.get(layer_panel.language_code, translations['en'])
 
@@ -3299,19 +3321,140 @@ class NumberedLayerButton(QPushButton):
         if color_dialog.exec_() == QColorDialog.Accepted:
             color = color_dialog.currentColor()
             if color.isValid():
-                # Set the stroke color on the strand
-                if hasattr(strand, 'stroke_color'):
-                    strand.stroke_color = color
-                
-                # Request canvas repaint
-                if layer_panel and hasattr(layer_panel, 'canvas'):
-                    layer_panel.canvas.update()
-                    # Save state for undo/redo
-                    if hasattr(layer_panel.canvas, 'undo_redo_manager'):
-                        layer_panel.canvas.undo_redo_manager._last_save_time = 0
-                        layer_panel.canvas.undo_redo_manager.save_state()
+                set_prefix = None
+                if hasattr(strand, 'layer_name') and strand.layer_name:
+                    set_prefix = f"{strand.layer_name.split('_')[0]}_"
+
+                if set_prefix and layer_panel and hasattr(layer_panel, 'canvas'):
+                    for other_strand in layer_panel.canvas.strands:
+                        if (hasattr(other_strand, 'layer_name')
+                                and other_strand.layer_name
+                                and other_strand.layer_name.startswith(set_prefix)):
+                            self._apply_stroke_color(other_strand, color)
                 else:
-                    self.update()
+                    self._apply_stroke_color(strand, color)
+
+                self._refresh_canvas_and_save(layer_panel)
+
+    def change_layer_stroke_color(self, strand, layer_panel):
+        """Change the stroke color of only the clicked strand layer."""
+        _ = translations.get(layer_panel.language_code, translations['en'])
+
+        language_code = layer_panel.language_code if layer_panel else 'en'
+        locale_map = {
+            'en': QLocale.English,
+            'fr': QLocale.French,
+            'de': QLocale.German,
+            'it': QLocale.Italian,
+            'es': QLocale.Spanish,
+            'pt': QLocale.Portuguese,
+            'he': QLocale.Hebrew
+        }
+        if language_code in locale_map:
+            QLocale.setDefault(QLocale(locale_map[language_code]))
+
+        color_dialog = QColorDialog(self)
+        color_dialog.setWindowTitle(
+            _.get('change_layer_stroke_color', "Change Stroke Color (This Layer Only)")
+        )
+        color_dialog.setOption(QColorDialog.ShowAlphaChannel)
+        color_dialog.setOption(QColorDialog.DontUseNativeDialog)
+        current_color = (
+            strand.stroke_color
+            if hasattr(strand, 'stroke_color')
+            else QColor(0, 0, 0, 255)
+        )
+        color_dialog.setCurrentColor(current_color)
+        self.translate_color_dialog(color_dialog, _)
+
+        if color_dialog.exec_() == QColorDialog.Accepted:
+            color = color_dialog.currentColor()
+            if color.isValid():
+                self._apply_stroke_color(strand, color)
+                self._refresh_canvas_and_save(layer_panel)
+
+    def change_layer_color(self, strand, layer_panel):
+        """Change the fill color of only the clicked strand layer."""
+        _ = translations.get(layer_panel.language_code, translations['en'])
+
+        language_code = layer_panel.language_code if layer_panel else 'en'
+        locale_map = {
+            'en': QLocale.English,
+            'fr': QLocale.French,
+            'de': QLocale.German,
+            'it': QLocale.Italian,
+            'es': QLocale.Spanish,
+            'pt': QLocale.Portuguese,
+            'he': QLocale.Hebrew
+        }
+        if language_code in locale_map:
+            QLocale.setDefault(QLocale(locale_map[language_code]))
+
+        color_dialog = QColorDialog(self)
+        color_dialog.setWindowTitle(
+            _.get('change_layer_color', "Change Color (This Layer Only)")
+        )
+        color_dialog.setOption(QColorDialog.ShowAlphaChannel)
+        color_dialog.setOption(QColorDialog.DontUseNativeDialog)
+        color_dialog.setCurrentColor(strand.color)
+        self.translate_color_dialog(color_dialog, _)
+
+        if color_dialog.exec_() == QColorDialog.Accepted:
+            color = color_dialog.currentColor()
+            if color.isValid():
+                strand.set_color(color)
+
+                # Match the existing set-wide fill behavior: fill alpha also
+                # controls stroke alpha, without changing the stroke's RGB.
+                if hasattr(strand, 'stroke_color') and isinstance(strand.stroke_color, QColor):
+                    stroke_with_alpha = QColor(strand.stroke_color)
+                    stroke_with_alpha.setAlpha(color.alpha())
+                    self._apply_stroke_color(strand, stroke_with_alpha)
+
+                # Only this layer button changes. Set-level color maps remain the
+                # source of truth for future strands in the set.
+                self.set_color(color)
+                self._refresh_canvas_and_save(layer_panel)
+
+    @staticmethod
+    def _apply_stroke_color(strand, color):
+        """Apply a stroke color while preserving intentionally transparent circles."""
+        if not hasattr(strand, 'stroke_color'):
+            return
+
+        strand.stroke_color = QColor(color)
+        if strand.__class__.__name__ != 'AttachedStrand':
+            return
+
+        updated_separate_colors = False
+        for attribute in ('start_circle_stroke_color', 'end_circle_stroke_color'):
+            if not hasattr(strand, attribute):
+                continue
+            current_color = getattr(strand, attribute)
+            if current_color is not None and current_color.alpha() > 0:
+                setattr(strand, attribute, QColor(color))
+            updated_separate_colors = True
+
+        # Backward compatibility for implementations with only the old
+        # combined circle_stroke_color property.
+        if (not updated_separate_colors
+                and hasattr(strand, 'circle_stroke_color')
+                and strand.circle_stroke_color.alpha() > 0):
+            strand.circle_stroke_color = QColor(color)
+
+    def _refresh_canvas_and_save(self, layer_panel):
+        """Repaint the canvas and force an undo/redo snapshot."""
+        if layer_panel and hasattr(layer_panel, 'canvas'):
+            if (hasattr(layer_panel.canvas, 'layer_state_manager')
+                    and layer_panel.canvas.layer_state_manager):
+                layer_panel.canvas.layer_state_manager.save_current_state()
+            layer_panel.canvas.update()
+            if (hasattr(layer_panel.canvas, 'undo_redo_manager')
+                    and layer_panel.canvas.undo_redo_manager):
+                layer_panel.canvas.undo_redo_manager._last_save_time = 0
+                layer_panel.canvas.undo_redo_manager.save_state()
+        else:
+            self.update()
 
     def close_the_knot(self, strand, free_end_type, layer_panel):
         """

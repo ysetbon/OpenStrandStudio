@@ -895,6 +895,69 @@ class UndoRedoManager(QObject):
                             return False
                     # --- END ADD ---
 
+                # Compare canonical set colors separately from per-strand
+                # colors. Layer-only overrides can intentionally differ from
+                # this map, which controls the color inherited by new strands.
+                if 'strand_colors' in prev_data:
+                    active_set_numbers = {
+                        getattr(strand, 'set_number', None)
+                        for strand in self.canvas.strands
+                        if not isinstance(strand, MaskedStrand)
+                    }
+                    active_set_numbers.discard(None)
+                    current_set_colors = {}
+                    for source in (
+                        getattr(self.canvas, 'strand_colors', {}),
+                        getattr(getattr(self.canvas, 'layer_panel', None), 'set_colors', {}),
+                    ):
+                        for set_number, color in source.items():
+                            try:
+                                normalized_set_number = int(set_number)
+                            except (TypeError, ValueError):
+                                continue
+                            if normalized_set_number not in active_set_numbers:
+                                continue
+                            current_set_colors.setdefault(
+                                str(normalized_set_number),
+                                (color.red(), color.green(), color.blue(), color.alpha()),
+                            )
+                    regular_strands = [
+                        strand for strand in self.canvas.strands
+                        if not isinstance(strand, MaskedStrand)
+                    ]
+                    regular_strands.sort(
+                        key=lambda strand: (
+                            0
+                            if str(getattr(strand, 'layer_name', '')).endswith('_1')
+                            else 1
+                        )
+                    )
+                    for strand in regular_strands:
+                        set_number = getattr(strand, 'set_number', None)
+                        color = getattr(strand, 'color', None)
+                        if set_number is not None and color is not None:
+                            current_set_colors.setdefault(
+                                str(set_number),
+                                (
+                                    color.red(),
+                                    color.green(),
+                                    color.blue(),
+                                    color.alpha(),
+                                ),
+                            )
+
+                    previous_set_colors = {
+                        str(set_number): (
+                            color.get('r', 0),
+                            color.get('g', 0),
+                            color.get('b', 0),
+                            color.get('a', 255),
+                        )
+                        for set_number, color in prev_data.get('strand_colors', {}).items()
+                    }
+                    if current_set_colors != previous_set_colors:
+                        return False
+
                 # Check for differences in locked layers
                 current_locked_layers = set()
                 if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'locked_layers'):
@@ -1080,6 +1143,20 @@ class UndoRedoManager(QObject):
                 self.canvas.strands = []
                 if hasattr(self.canvas, 'groups'):
                     self.canvas.groups = {}
+                if hasattr(self.canvas, 'clear_set_color_state'):
+                    self.canvas.clear_set_color_state()
+                else:
+                    if hasattr(self.canvas, 'strand_colors'):
+                        self.canvas.strand_colors.clear()
+                    if hasattr(self.layer_panel, 'set_colors'):
+                        self.layer_panel.set_colors.clear()
+                self.canvas.selected_strand = None
+                self.canvas.selected_strand_index = None
+                if hasattr(self.canvas, 'selected_attached_strand'):
+                    self.canvas.selected_attached_strand = None
+                state_manager = getattr(self.canvas, 'layer_state_manager', None)
+                if state_manager is not None:
+                    state_manager.save_current_state()
                 
                 # Skip explicit refresh calls to prevent window flash (they're redundant)
                 # Don't call update() here - the refresh will handle it

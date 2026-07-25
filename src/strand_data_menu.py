@@ -448,6 +448,9 @@ class StrandDataClipboardMixin:
         if not changed:
             return 0
         self.canvas.update()
+        state_manager = getattr(self.canvas, "layer_state_manager", None)
+        if state_manager is not None:
+            state_manager.save_current_state()
         manager = getattr(self.canvas, "undo_redo_manager", None)
         if manager is not None:
             manager._last_save_time = 0

@@ -381,6 +381,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
     # Full width of the group panel (right_panel); narrow screens subtract
     # half of the compact reduction from it via set_compact_reduction.
     GROUP_PANEL_FULL_WIDTH = 270
+    # Fixed width of NumberedLayerButton (setFixedSize(146, 40)).
+    LAYER_LIST_BUTTON_WIDTH = 146
 
     def __init__(self, canvas, parent=None):
         super().__init__(parent)
@@ -1759,7 +1761,40 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         The total reduction is split evenly: half comes off the group panel's
         fixed width, half off the layer list (which shrinks automatically once
         the panel's overall minimum width drops by the full reduction)."""
-        self.right_panel.setFixedWidth(self.GROUP_PANEL_FULL_WIDTH - reduction // 2)
+        create_group = self.group_layer_manager.create_group_button
+        if not hasattr(self, '_create_group_full_width'):
+            # GroupPanel gives the button a fixed width (140); remember it so
+            # the compact override below can be undone.
+            self._create_group_full_width = create_group.minimumWidth()
+        # Compact screens leave the layer-list column exactly as wide as the
+        # fixed-width layer buttons, so a vertical scrollbar (many layers)
+        # would be painted under the group panel and the buttons' edge would
+        # sit against it. Reserve a real scrollbar gutter by giving the list
+        # slot the extra width and making the group panel that much shorter,
+        # so the splitter can actually honor the split. Wide screens already
+        # have spare room and keep the default widths untouched.
+        if reduction > 0:
+            vbar = self.scroll_area.verticalScrollBar()
+            extent = max(
+                vbar.sizeHint().width(),
+                self.style().pixelMetric(QStyle.PM_ScrollBarExtent, None, vbar),
+            )
+            list_w = self.LAYER_LIST_BUTTON_WIDTH + extent + 2
+            right_w = max(0, self.minimumWidth() - list_w - self.splitter.handleWidth())
+            self.scroll_area.setMinimumWidth(list_w)
+            self.right_panel.setFixedWidth(right_w)
+            create_group.setFixedWidth(
+                min(self._create_group_full_width, max(50, right_w - 4))
+            )
+            self.splitter.setSizes([list_w, right_w])
+        else:
+            # Note: if the window is manually resized from a compact width
+            # back past the threshold within one session, the inner splitter
+            # keeps the slightly wider list column until restart (Qt won't
+            # shrink it back); harmless — nothing is clipped or hidden.
+            self.scroll_area.setMinimumWidth(0)
+            self.right_panel.setFixedWidth(self.GROUP_PANEL_FULL_WIDTH)
+            create_group.setFixedWidth(self._create_group_full_width)
 
     def _apply_group_panel_alignment(self):
         """Anchor the group block toward the edge shared with the layer panel."""

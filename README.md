@@ -1,36 +1,14 @@
-# OpenStrand Studio - Version 1.109
+# OpenStrand Studio - Version 1.110
 
 An advanced diagramming tool for creating tutorials involving strand manipulation (knots, hitches, etc.)
 with dynamic masking that automatically adjusts the over-under effects between strands,
 making complex patterns clear and easy to understand.
 
-## What's New in Version 1.109
+## What's New in Version 1.110
 
 ### ✨ New Features
 
-- **Lock Mode Redesigned**: Each layer button now shows a small padlock in lock mode. Click the padlock to lock/unlock; clicking the layer simply selects it. Locked strands can be selected but not moved or attached to, and New Strand / Delete Strand remain available (delete is blocked only for locked layers). The lock state is also remembered through undo/redo, save/load, and tab switching.
-
-- **Per-Layer Hide Shadow Option**: Right-click a layer to stop it from casting shadow onto other strands. The setting is saved with your project and survives undo/redo and group operations.
-
-- **Arrow Customization in the Layer Menu**: Right-click a layer to style its arrows in place: start/end arrows, full arrow with color, transparency, texture, shaft style, arrow head and shadow, plus a new Arrow Sizes dropdown for all numeric arrow dimensions.
-
-- **Copy & Paste Strand Data**: In multi-select mode, copy selected properties of a strand (start/end points, control points, width, strand and stroke colors) and paste them onto several layers at once, anchored from the start or end point — with a copy badge and one-click paste chips right on the layer buttons.
-
 - **Layer-Only Colors and Set-Wide Stroke Color**: The layer menu now pairs every color option with a layer-only version: Change Color / Change Color (This Layer Only) and Change Stroke Color / Change Stroke Color (This Layer Only), matching the existing width entries. Change Stroke Color now recolors the whole set just like Change Color, while the layer-only entries repaint only the clicked layer. Per-layer exceptions are saved with your project and survive undo/redo, tab switching and group operations; changing the set color again resets them.
-
-- **Mask Shadows in the Shadow Editor**: Shadows cast through a mask now appear in the over-strand's Shadow Editor, so you can turn them on or off like any other shadow.
-
-### 🐛 Bug Fixes & Improvements
-
-- **Automatic Shadow Correction for Woven Masks**: Incorrect shadow marks at mask crossings are now hidden automatically; your manual Shadow Editor settings are always respected.
-
-- **More Accurate Strand Selection**: Clicking now selects exactly what you see: strand edges, end caps, and mask outlines are all clickable, the topmost strand is always picked, and the hover highlight always matches what a click will select.
-
-- **Control Point Visibility Fix**: "Show control points only for the selected strand" now hides only control points; other strands keep their endpoint squares and remain movable. Dragging an endpoint no longer makes an untouched control point appear.
-
-- **Shadow Settings Preserved**: A layer's hidden-shadow state is no longer reset by group move or duplicate operations.
-
-- **Improved Drawing Stability**: Fixed internal painting issues that could corrupt the canvas after a drawing error.
 
 ## Features
 

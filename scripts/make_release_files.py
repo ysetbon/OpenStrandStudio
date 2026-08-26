@@ -29,10 +29,10 @@ import re, os, sys
 # =============================================================================
 OLD_VERSION = '1.109'          # version the source files belong to
 NEW_VERSION = '1.110'          # version to generate
-OLD_DATE_SH = '14_July_2026'   # APP_DATE in the old .sh files
-NEW_DATE_SH = 'DD_Month_YYYY'  # e.g. '14_July_2026'
-OLD_DATE_ISS = '14_Jul_2026'   # MyAppDate in the old .iss
-NEW_DATE_ISS = 'DD_Mon_YYYY'   # e.g. '14_Jul_2026'
+OLD_DATE_SH = '21_July_2026'   # APP_DATE in the old .sh files
+NEW_DATE_SH = '26_August_2026'
+OLD_DATE_ISS = '21_Jul_2026'   # MyAppDate in the old .iss
+NEW_DATE_ISS = '26_Aug_2026'
 
 # What's-new bullets per language: list of (title, text). Same bullets are
 # used for the Windows installer, the macOS installer pages, and the in-app
@@ -40,25 +40,25 @@ NEW_DATE_ISS = 'DD_Mon_YYYY'   # e.g. '14_Jul_2026'
 # Hebrew entity-encoding for the .sh files is handled automatically.
 BULLETS = {
  'en': [
-  ("Feature Title", "Feature description."),
+  ("Layer-Only Colors and Set-Wide Stroke Color", "The layer menu now pairs every color option with a layer-only version: Change Color / Change Color (This Layer Only) and Change Stroke Color / Change Stroke Color (This Layer Only), matching the existing width entries. Change Stroke Color now recolors the whole set just like Change Color, while the layer-only entries repaint only the clicked layer. Per-layer exceptions are saved with your project and survive undo/redo, tab switching and group operations; changing the set color again resets them."),
  ],
  'fr': [
-  ("Titre", "Description."),
+  ("Couleurs par calque et couleur du trait pour tout l'ensemble", "Le menu des calques associe désormais à chaque option de couleur une version pour un seul calque : Changer la couleur / Changer la couleur (ce calque seulement) et Changer la couleur du trait / Changer la couleur du trait (ce calque seulement), comme les entrées de largeur existantes. Changer la couleur du trait recolore maintenant tout l'ensemble comme le fait Changer la couleur, tandis que les entrées « ce calque seulement » ne repeignent que le calque cliqué. Les exceptions par calque sont enregistrées avec votre projet et survivent aux annulations/rétablissements, au changement d'onglet et aux opérations de groupe ; changer à nouveau la couleur de l'ensemble les réinitialise."),
  ],
  'de': [
-  ("Titel", "Beschreibung."),
+  ("Ebenen-eigene Farben und satzweite Konturfarbe", "Das Ebenenmenü bietet jetzt zu jeder Farboption eine Variante für nur eine Ebene: Farbe ändern / Farbe ändern (nur diese Ebene) und Konturfarbe ändern / Konturfarbe ändern (nur diese Ebene), passend zu den vorhandenen Breite-Einträgen. Konturfarbe ändern färbt jetzt wie Farbe ändern den gesamten Satz um, während die Einträge „nur diese Ebene“ ausschließlich die angeklickte Ebene umfärben. Ebenen-Ausnahmen werden mit dem Projekt gespeichert und überstehen Rückgängig/Wiederherstellen, Tab-Wechsel und Gruppenoperationen; eine erneute Satzfarbe setzt sie zurück."),
  ],
  'it': [
-  ("Titolo", "Descrizione."),
+  ("Colori per singolo livello e colore del tratto per tutto il set", "Il menu dei livelli affianca ora a ogni opzione di colore una versione per il solo livello: Cambia colore / Cambia colore (solo questo livello) e Cambia colore del tratto / Cambia colore del tratto (solo questo livello), come le voci di larghezza già esistenti. Cambia colore del tratto ora ricolora l'intero set proprio come Cambia colore, mentre le voci «solo questo livello» ridipingono soltanto il livello su cui hai fatto clic. Le eccezioni per livello vengono salvate con il progetto e sopravvivono ad annulla/ripristina, al cambio di scheda e alle operazioni di gruppo; cambiando di nuovo il colore del set vengono azzerate."),
  ],
  'es': [
-  ("Título", "Descripción."),
+  ("Colores por capa y color del trazo para todo el conjunto", "El menú de capas acompaña ahora cada opción de color con una versión para una sola capa: Cambiar color / Cambiar color (solo esta capa) y Cambiar color del trazo / Cambiar color del trazo (solo esta capa), igual que las entradas de ancho ya existentes. Cambiar color del trazo ahora recolorea todo el conjunto como lo hace Cambiar color, mientras que las entradas «solo esta capa» repintan únicamente la capa en la que hiciste clic. Las excepciones por capa se guardan con tu proyecto y sobreviven a deshacer/rehacer, al cambio de pestaña y a las operaciones de grupo; volver a cambiar el color del conjunto las restablece."),
  ],
  'pt': [
-  ("Título", "Descrição."),
+  ("Cores por camada e cor do traço para todo o conjunto", "O menu de camadas agora acompanha cada opção de cor com uma versão para uma única camada: Mudar cor / Mudar cor (apenas esta camada) e Mudar cor do traço / Mudar cor do traço (apenas esta camada), tal como as entradas de largura já existentes. Mudar cor do traço agora recolore todo o conjunto como Mudar cor faz, enquanto as entradas «apenas esta camada» repintam somente a camada clicada. As exceções por camada são salvas com o projeto e sobrevivem a desfazer/refazer, à troca de aba e às operações de grupo; mudar novamente a cor do conjunto as redefine."),
  ],
  'he': [
-  ("כותרת", "תיאור."),
+  ("צבעים לשכבה בודדת וצבע קו לכל הסט", "תפריט השכבות מציע כעת לכל אפשרות צבע גם גרסה לשכבה בודדת: שנה צבע / שנה צבע (שכבה זו בלבד) ושנה צבע קו / שנה צבע קו (שכבה זו בלבד), בדומה לפריטי הרוחב הקיימים. שנה צבע קו משנה כעת את כל הסט בדיוק כמו שנה צבע, ואילו הפריטים \"שכבה זו בלבד\" צובעים רק את השכבה שנלחצה. החריגים לכל שכבה נשמרים עם הפרויקט ושורדים ביטול/ביצוע מחדש, מעבר בין כרטיסיות ופעולות קבוצה; שינוי חוזר של צבע הסט מאפס אותם."),
  ],
 }
 

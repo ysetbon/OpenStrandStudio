@@ -521,13 +521,34 @@ class MainWindow(QMainWindow):
             self.tab_edge.show_edge()
             self.tabs_button.setChecked(True)
 
+    # Layer panel sizing: full minimum width, and the compact reduction used
+    # on narrow screens (e.g. 1280-wide MacBook resolutions) so the toolbar
+    # buttons keep enough room. The reduction is split evenly between the
+    # group panel and the layer list (see LayerPanel.set_compact_reduction).
+    # 56 (28 per side) keeps the layer-list viewport at least 146px wide —
+    # the fixed width of NumberedLayerButton — so no horizontal overflow.
+    LAYER_PANEL_FULL_MIN_WIDTH = 350
+    COMPACT_LAYER_PANEL_REDUCTION = 56
+    COMPACT_WINDOW_WIDTH = 1350
+
+    def _apply_layer_panel_compact_width(self):
+        reduction = (
+            self.COMPACT_LAYER_PANEL_REDUCTION
+            if self.width() < self.COMPACT_WINDOW_WIDTH
+            else 0
+        )
+        self.layer_panel.setMinimumWidth(self.LAYER_PANEL_FULL_MIN_WIDTH - reduction)
+        if hasattr(self.layer_panel, 'set_compact_reduction'):
+            self.layer_panel.set_compact_reduction(reduction)
+
     def set_initial_splitter_sizes(self):
         """
         Set the initial sizes of the splitter to make the layer panel narrower.
         The layer panel is set to its minimum width, and the left widget
         takes the remaining space.
         """
-        # Use the minimum width of the layer panel (should be 350)
+        # Use the minimum width of the layer panel (350, or less on narrow screens)
+        self._apply_layer_panel_compact_width()
         layer_panel_width = self.layer_panel.minimumWidth()
         total_width = self.width()
         

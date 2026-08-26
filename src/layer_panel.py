@@ -378,6 +378,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
     strand_deleted = pyqtSignal(int)  # Signal for strand deletion
     layer_order_changed = pyqtSignal(list) # Signal when layer order changes
 
+    # Full width of the group panel (right_panel); narrow screens subtract
+    # half of the compact reduction from it via set_compact_reduction.
+    GROUP_PANEL_FULL_WIDTH = 270
+
     def __init__(self, canvas, parent=None):
         super().__init__(parent)
         self.canvas = canvas
@@ -406,6 +410,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self.left_panel = QWidget()
         self.left_layout = QVBoxLayout(self.left_panel)
         self.left_layout.setContentsMargins(0, 0, 0, 0)
+        # Explicit spacing (platform default is ~9): with the bottom panel's
+        # 2px top margin this leaves a 7px gap under the lowest layer button.
+        self.left_layout.setSpacing(5)
 
         # **Add the splitter handle at the top of the left layout**
         self.handle = SplitterHandle(self)
@@ -755,6 +762,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # Create scrollable area for layer buttons
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
+        # Layer buttons have a fixed width and are centered, so horizontal
+        # scrolling is never useful; without this a 2px overflow on compact
+        # screens pops a horizontal scrollbar under the buttons.
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         # Use the custom DropTargetWidget
         self.scroll_content = DropTargetWidget(self)
         self.scroll_layout = QVBoxLayout(self.scroll_content)
@@ -776,7 +787,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # Create bottom panel for control buttons
         bottom_panel = QWidget()
         bottom_layout = QVBoxLayout(bottom_panel)
-        bottom_layout.setContentsMargins(0, 5, 0, 5)
+        bottom_layout.setContentsMargins(0, 2, 0, 5)
         # Ensure consistent gap between control buttons across platforms
         bottom_layout.setSpacing(2)
         bottom_layout.setAlignment(Qt.AlignHCenter)
@@ -999,7 +1010,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # self.left_panel.setFixedWidth(200)
         
         # Set a fixed width for the right panel
-        self.right_panel.setFixedWidth(270)  # Set actual fixed width in pixels
+        self.right_panel.setFixedWidth(self.GROUP_PANEL_FULL_WIDTH)
         # Configure the right panel (group panel)
         self.right_panel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         
@@ -1741,6 +1752,14 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self.group_layer_manager.update_translations()
 
         self._apply_group_panel_alignment()
+
+    def set_compact_reduction(self, reduction):
+        """Slim the panel on narrow screens so the toolbar keeps its room.
+
+        The total reduction is split evenly: half comes off the group panel's
+        fixed width, half off the layer list (which shrinks automatically once
+        the panel's overall minimum width drops by the full reduction)."""
+        self.right_panel.setFixedWidth(self.GROUP_PANEL_FULL_WIDTH - reduction // 2)
 
     def _apply_group_panel_alignment(self):
         """Anchor the group block toward the edge shared with the layer panel."""

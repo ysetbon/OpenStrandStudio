@@ -1,4 +1,13 @@
-# Review set — complete coverage
+# Review set — complete coverage (Windows render)
+
+> These screens were rendered **on Windows**. macOS draws the same label wider,
+> so the equivalent Mac set is captured separately into `../reviewmac/` by
+> running the same script on a Mac — `capture_review_matrix.py` picks the
+> folder from the platform, so the two never overwrite each other. The three
+> tightest labels to check there are German `Bewegen`, Italian `Immagine` and
+> Spanish `Máscara` on ratios 01 and 03; see the "macOS headroom" section of
+> `../README.md`.
+
 
 Every supported language at every screen ratio: **7 languages x 10 ratios =
 70 screens**, plus 7 contact sheets and the 2 scrollbar cases. All rendered

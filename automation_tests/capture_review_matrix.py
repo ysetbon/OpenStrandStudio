@@ -1,6 +1,7 @@
 """Capture the full review matrix: every language at every screen ratio.
 
-Writes docs/screen_ratio_layout_feature/reviewerwindows/:
+Writes docs/screen_ratio_layout_feature/<reviewerwindows|reviewmac>/, picked
+from the platform so Windows and macOS captures sit side by side:
     contact_sheets/<language>.png      one sheet per language (all 10 ratios)
     by_language/<language>/NN_*.png    the 70 individual screens
     scrollbar/                         the 30-layer scrollbar cases
@@ -25,7 +26,10 @@ from capture_screen_ratio_mocks import (
     _measure, _grab_window, _compose_screen, _contact_sheet, _wait,
 )
 
-REVIEW_DIR = os.path.join(ROOT_DIR, "docs", "screen_ratio_layout_feature", "reviewerwindows")
+# Font metrics differ per platform — the same label is wider on macOS — so the
+# captures are kept side by side rather than overwriting each other.
+REVIEW_FOLDER = "reviewmac" if sys.platform == "darwin" else "reviewerwindows"
+REVIEW_DIR = os.path.join(ROOT_DIR, "docs", "screen_ratio_layout_feature", REVIEW_FOLDER)
 LANGUAGES = [
     ("en", "english"), ("fr", "french"), ("de", "german"), ("it", "italian"),
     ("es", "spanish"), ("pt", "portuguese"), ("he", "hebrew"),

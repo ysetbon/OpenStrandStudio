@@ -259,12 +259,24 @@ def _measure(window):
         elif btn_rect.right() > left_rect.right() - 1:
             clipped.append(btn.text() or btn.objectName() or "settings")
 
+    # Buttons narrower than their label needs: the toolbar buttons expand to
+    # fill the row, so they never overflow it geometrically — instead they
+    # shrink and the centered label gets cut at both ends.
+    squeezed = []
+    for btn in _toolbar_buttons(window):
+        if not btn.text():
+            continue
+        shortfall = btn.sizeHint().width() - btn.width()
+        if shortfall > 0:
+            squeezed.append((btn.text(), shortfall))
+
     return {
         "window": (win_w, win_h),
         "left": left_w,
         "panel": panel_w,
         "canvas": (window.canvas.width(), window.canvas.height()),
         "clipped": clipped,
+        "squeezed": squeezed,
         "target_min": target_min,
         "group_panel": panel.right_panel.width() if hasattr(panel, "right_panel") else 0,
         "panel_over_min": panel_w - target_min,
@@ -366,18 +378,25 @@ def _compose_screen(spec, app_pix, metrics):
     got_w, got_h = metrics["window"]
     target_min = metrics.get("target_min", LAYER_PANEL_TARGET_MIN)
     group_w = metrics.get("group_panel", 0)
-    warning = bool(clipped) or panel_w > target_min + 40
+    squeezed = metrics.get("squeezed", [])
+    warning = bool(clipped) or bool(squeezed) or panel_w > target_min + 40
     painter.setPen(QColor("#ff453a") if warning else QColor("#30d158"))
     font = QFont("Segoe UI", 10)
     font.setBold(True)
     painter.setFont(font)
     status = "BUTTONS CLIPPED" if clipped else (
-        "LAYER PANEL NOT MINIMIZED" if panel_w > target_min + 40 else "OK"
+        "LABELS CUT" if squeezed else (
+            "LAYER PANEL NOT MINIMIZED" if panel_w > target_min + 40 else "OK"
+        )
     )
     clip_txt = ""
     if clipped:
         clip_txt = "  |  hidden: " + ", ".join(clipped[:6])
         if len(clipped) > 6:
+            clip_txt += "…"
+    elif squeezed:
+        clip_txt = "  |  cut: " + ", ".join(f"{lbl} -{sh}px" for lbl, sh in squeezed[:5])
+        if len(squeezed) > 5:
             clip_txt += "…"
     compact_txt = "  ·  compact" if target_min < LAYER_PANEL_TARGET_MIN else ""
     metrics_line = (

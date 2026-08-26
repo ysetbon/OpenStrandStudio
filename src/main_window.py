@@ -547,6 +547,12 @@ class MainWindow(QMainWindow):
         self.layer_panel.setMinimumWidth(self.LAYER_PANEL_FULL_MIN_WIDTH - reduction)
         if hasattr(self.layer_panel, 'set_compact_reduction'):
             self.layer_panel.set_compact_reduction(reduction)
+        # QSplitter keeps its existing allocation when a child's minimum
+        # shrinks, so re-apply the outer split or a live resize across the
+        # threshold leaves the panel at its old width (toolbar gains nothing).
+        if hasattr(self, 'splitter'):
+            panel_width = self.layer_panel.minimumWidth()
+            self.splitter.setSizes([max(0, self.width() - panel_width), panel_width])
 
     def resizeEvent(self, event):
         """Re-evaluate compact sizing when the window crosses the threshold."""

@@ -267,8 +267,10 @@ class MainWindow(QMainWindow):
 
         # Create the horizontal layout for buttons (proportional sizing)
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(10)  # Minimal spacing between buttons
+        button_layout.setSpacing(self.TOOLBAR_SPACING)
         button_layout.setContentsMargins(4, 2, 4, 2)
+        # Kept so compact screens can tighten the gaps (see _apply_layer_panel_compact_width)
+        self.toolbar_button_layout = button_layout
         # No alignment set - buttons will stretch proportionally
 
         # Create buttons (keep original labels)
@@ -530,20 +532,35 @@ class MainWindow(QMainWindow):
     LAYER_PANEL_FULL_MIN_WIDTH = 350
     COMPACT_LAYER_PANEL_REDUCTION = 56
     COMPACT_WINDOW_WIDTH = 1350
+    # Gap between toolbar buttons: 16 buttons make every pixel here cost 15px
+    # of label room, so compact screens use the tighter value. Translations
+    # longer than English (de/es/pt/it) only fit at the compact spacing.
+    TOOLBAR_SPACING = 10
+    COMPACT_TOOLBAR_SPACING = 2
+    # Floor for the layer panel on compact screens: the layer list's 158px
+    # (buttons + scrollbar gutter) plus enough for the group panel's
+    # "Create Group" button, whose longest translations need ~117px. The few
+    # px of headroom matter on macOS, where the same string measures wider.
+    COMPACT_LAYER_PANEL_FLOOR = 286
 
     def _apply_layer_panel_compact_width(self):
         """Slim the layer panel on narrow windows, restore it on wide ones.
 
         No-op unless the reduction actually changes, so it is safe to call
         from every resize event."""
+        compact = self.width() < self.COMPACT_WINDOW_WIDTH
         reduction = (
-            self.COMPACT_LAYER_PANEL_REDUCTION
-            if self.width() < self.COMPACT_WINDOW_WIDTH
+            self.LAYER_PANEL_FULL_MIN_WIDTH - self.COMPACT_LAYER_PANEL_FLOOR
+            if compact
             else 0
         )
         if reduction == getattr(self, '_active_compact_reduction', None):
             return
         self._active_compact_reduction = reduction
+        if hasattr(self, 'toolbar_button_layout'):
+            self.toolbar_button_layout.setSpacing(
+                self.COMPACT_TOOLBAR_SPACING if compact else self.TOOLBAR_SPACING
+            )
         self.layer_panel.setMinimumWidth(self.LAYER_PANEL_FULL_MIN_WIDTH - reduction)
         if hasattr(self.layer_panel, 'set_compact_reduction'):
             self.layer_panel.set_compact_reduction(reduction)

@@ -32,6 +32,36 @@ verified pixel-identical.
    panel and clipped the buttons' right edge. Wide screens already have
    ~28px spare in their natural 174px column and are untouched.
 
+## Translated toolbar labels
+
+The toolbar holds 16 buttons with an Expanding size policy, so they never
+overflow the row geometrically — they shrink and the label gets cut on both
+sides (centered text). At 1280px the German, Spanish, Portuguese, Italian and
+French labels were being truncated to nonsense ("Verbinden" rendered as
+"rbind"). English and Hebrew were never affected.
+
+Two levers fixed it, in this order:
+
+1. **Shorter labels that are still complete words** — no truncation-style
+   abbreviations. e.g. de `Auswählen`->`Wählen`, `Ansicht`->`Sicht`,
+   `Verbinden`->`Binden`, `Speiche.`->`Sichern`; es `Seleccionar`->`Elegir`,
+   `Cuadrícula`->`Rejilla`, `Cargar`->`Abrir`; pt `Rotacionar`->`Girar`
+   (which its settings description already used), `Carregar`->`Abrir`;
+   it `Seleziona`->`Scegli`, `Sposta`->`Muovi`, `Collega`->`Unisci`;
+   fr `Ombres`->`Ombre`, `Onglets`->`Onglet`. The matching `*_desc` strings
+   in the settings dialog were updated so the button name shown there stays
+   consistent.
+2. **Width, not words, for the rest** — `TOOLBAR_SPACING` drops from 10px to
+   2px on compact screens. With 16 buttons that is 15 gaps, so this alone
+   returns ~120px to the labels: far more than the layer panel can give,
+   where each pixel is shared across all 16 buttons. The compact panel floor
+   is 286px (`COMPACT_LAYER_PANEL_FLOOR`), set by the group panel's
+   "Create Group" button rather than by the layer list.
+
+`automation_tests/audit_toolbar_languages.py` checks all languages x all
+ratios (it compares each button's width against its sizeHint) and
+`capture_language_toolbars.py` captures `screenshots/language_audit/`.
+
 ## Right-to-left (Hebrew)
 
 Verified, not a regression: in RTL the left panel already overlaps the

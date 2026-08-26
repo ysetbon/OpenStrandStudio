@@ -51,12 +51,34 @@ Two levers fixed it, in this order:
    fr `Ombres`->`Ombre`, `Onglets`->`Onglet`. The matching `*_desc` strings
    in the settings dialog were updated so the button name shown there stays
    consistent.
-2. **Width, not words, for the rest** — `TOOLBAR_SPACING` drops from 10px to
-   2px on compact screens. With 16 buttons that is 15 gaps, so this alone
-   returns ~120px to the labels: far more than the layer panel can give,
-   where each pixel is shared across all 16 buttons. The compact panel floor
-   is 286px (`COMPACT_LAYER_PANEL_FLOOR`), set by the group panel's
-   "Create Group" button rather than by the layer list.
+2. **Width, not words, for the rest** — the gap between toolbar buttons is
+   derived from the space the labels do not need (`_apply_toolbar_spacing`),
+   sliding between 10px and 2px. With 15 gaps that is up to ~120px returned
+   to the labels: far more than the layer panel can give, where each pixel is
+   shared across all 16 buttons. The compact panel floor is 286px
+   (`COMPACT_LAYER_PANEL_FLOOR`), set by the group panel's "Create Group"
+   button rather than by the layer list.
+
+   Spacing is deliberately *not* keyed to a window-width threshold. Doing that
+   left the 1440x900 and 1470x956 screens tighter than the 1280 ones — they
+   sat above the compact cutoff, so they kept the roomy panel and wide gaps
+   while carrying the same labels. German at 1440x900 had only 1.7% of growth
+   headroom as a result. Measuring the real surplus fixes that, and it also
+   covers macOS: the same string renders wider there, so the spacing tightens
+   on its own rather than the labels being cut.
+
+## macOS headroom
+
+Every measurement here is taken with Windows font metrics, but the app targets
+MacBooks and macOS renders the same string wider. `audit_toolbar_macos_margin.py`
+reports, per language and ratio, how much the text could grow before labels
+start being cut — computed at the spacing floor, since the adaptive spacing
+gives its room back first.
+
+Nothing is cut at current metrics. The tightest cases are German `Bewegen`
+(+6.4%), Italian `Immagine` (+9.1%) and Spanish `Máscara` (+9.6%), all on the
+1280-wide screens. Since macOS typically runs ~5-10% wider, those three are
+worth confirming on a real Mac. Everything else has >10% headroom.
 
 `automation_tests/audit_toolbar_languages.py` checks all languages x all
 ratios (it compares each button's width against its sizeHint) and

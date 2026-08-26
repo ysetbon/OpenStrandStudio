@@ -1,6 +1,6 @@
 """Capture the full review matrix: every language at every screen ratio.
 
-Writes docs/screen_ratio_layout_feature/review/:
+Writes docs/screen_ratio_layout_feature/reviewerwindows/:
     contact_sheets/<language>.png      one sheet per language (all 10 ratios)
     by_language/<language>/NN_*.png    the 70 individual screens
     scrollbar/                         the 30-layer scrollbar cases
@@ -25,7 +25,7 @@ from capture_screen_ratio_mocks import (
     _measure, _grab_window, _compose_screen, _contact_sheet, _wait,
 )
 
-REVIEW_DIR = os.path.join(ROOT_DIR, "docs", "screen_ratio_layout_feature", "review")
+REVIEW_DIR = os.path.join(ROOT_DIR, "docs", "screen_ratio_layout_feature", "reviewerwindows")
 LANGUAGES = [
     ("en", "english"), ("fr", "french"), ("de", "german"), ("it", "italian"),
     ("es", "spanish"), ("pt", "portuguese"), ("he", "hebrew"),

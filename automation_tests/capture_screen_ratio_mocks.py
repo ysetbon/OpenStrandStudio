@@ -486,7 +486,7 @@ def main():
     print("[capture] problems:", problems if problems else "none", flush=True)
     window.close()
     app.quit()
-    return 0 if not problems else 0
+    return 0 if not problems else 1
 
 
 if __name__ == "__main__":

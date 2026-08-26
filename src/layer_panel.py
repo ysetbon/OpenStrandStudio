@@ -1788,10 +1788,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             )
             self.splitter.setSizes([list_w, right_w])
         else:
-            # Note: if the window is manually resized from a compact width
-            # back past the threshold within one session, the inner splitter
-            # keeps the slightly wider list column until restart (Qt won't
-            # shrink it back); harmless — nothing is clipped or hidden.
+            # Restoring the group panel's fixed width makes the inner
+            # splitter drop the compact allocation and return to its natural
+            # even split (verified against a fresh wide launch).
             self.scroll_area.setMinimumWidth(0)
             self.right_panel.setFixedWidth(self.GROUP_PANEL_FULL_WIDTH)
             create_group.setFixedWidth(self._create_group_full_width)

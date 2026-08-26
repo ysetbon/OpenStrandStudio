@@ -532,14 +532,27 @@ class MainWindow(QMainWindow):
     COMPACT_WINDOW_WIDTH = 1350
 
     def _apply_layer_panel_compact_width(self):
+        """Slim the layer panel on narrow windows, restore it on wide ones.
+
+        No-op unless the reduction actually changes, so it is safe to call
+        from every resize event."""
         reduction = (
             self.COMPACT_LAYER_PANEL_REDUCTION
             if self.width() < self.COMPACT_WINDOW_WIDTH
             else 0
         )
+        if reduction == getattr(self, '_active_compact_reduction', None):
+            return
+        self._active_compact_reduction = reduction
         self.layer_panel.setMinimumWidth(self.LAYER_PANEL_FULL_MIN_WIDTH - reduction)
         if hasattr(self.layer_panel, 'set_compact_reduction'):
             self.layer_panel.set_compact_reduction(reduction)
+
+    def resizeEvent(self, event):
+        """Re-evaluate compact sizing when the window crosses the threshold."""
+        super().resizeEvent(event)
+        if hasattr(self, 'layer_panel'):
+            self._apply_layer_panel_compact_width()
 
     def set_initial_splitter_sizes(self):
         """

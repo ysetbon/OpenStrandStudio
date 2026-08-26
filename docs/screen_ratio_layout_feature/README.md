@@ -32,6 +32,16 @@ verified pixel-identical.
    panel and clipped the buttons' right edge. Wide screens already have
    ~28px spare in their natural 174px column and are untouched.
 
+## Right-to-left (Hebrew)
+
+Verified, not a regression: in RTL the left panel already overlaps the
+group panel (see the comment in `group_layers.py`, `_update_tree_column_width`,
+which clips the group text column to the left panel's edge). Compact mode
+slightly *reduces* that overlap (95px wide -> 84px compact), so visible group
+names go from ~175px to ~136px on narrow screens — the intended consequence of
+a narrower group panel. Create Group fits inside the panel in all four
+combinations (en/he x wide/compact).
+
 ## Porting notes (e.g. for the JS version / ossjs)
 
 The essence, independent of Qt:

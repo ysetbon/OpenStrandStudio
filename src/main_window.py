@@ -267,8 +267,10 @@ class MainWindow(QMainWindow):
 
         # Create the horizontal layout for buttons (proportional sizing)
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(10)  # Minimal spacing between buttons
+        button_layout.setSpacing(self.TOOLBAR_SPACING)
         button_layout.setContentsMargins(4, 2, 4, 2)
+        # Kept so compact screens can tighten the gaps (see _apply_layer_panel_compact_width)
+        self.toolbar_button_layout = button_layout
         # No alignment set - buttons will stretch proportionally
 
         # Create buttons (keep original labels)
@@ -521,13 +523,96 @@ class MainWindow(QMainWindow):
             self.tab_edge.show_edge()
             self.tabs_button.setChecked(True)
 
+    # Layer panel sizing: full minimum width, and the compact reduction used
+    # on narrow screens (e.g. 1280-wide MacBook resolutions) so the toolbar
+    # buttons keep enough room. The reduction is split evenly between the
+    # group panel and the layer list (see LayerPanel.set_compact_reduction).
+    # 56 (28 per side) keeps the layer-list viewport at least 146px wide —
+    # the fixed width of NumberedLayerButton — so no horizontal overflow.
+    LAYER_PANEL_FULL_MIN_WIDTH = 350
+    COMPACT_LAYER_PANEL_REDUCTION = 56
+    COMPACT_WINDOW_WIDTH = 1350
+    # Gap between toolbar buttons. With 16 buttons there are 15 gaps, so each
+    # pixel here costs 15px of label room. The spacing is chosen from the
+    # space actually left over (see _apply_toolbar_spacing) rather than from
+    # the window width: German and Spanish labels need the tight end, English
+    # never does, and measuring at runtime means macOS — where the same string
+    # renders wider — tightens on its own instead of clipping.
+    TOOLBAR_SPACING = 10
+    COMPACT_TOOLBAR_SPACING = 2
+    # Floor for the layer panel on compact screens: the layer list's 158px
+    # (buttons + scrollbar gutter) plus enough for the group panel's
+    # "Create Group" button, whose longest translations need ~117px. The few
+    # px of headroom matter on macOS, where the same string measures wider.
+    COMPACT_LAYER_PANEL_FLOOR = 286
+
+    def _apply_layer_panel_compact_width(self):
+        """Slim the layer panel on narrow windows, restore it on wide ones.
+
+        No-op unless the reduction actually changes, so it is safe to call
+        from every resize event."""
+        compact = self.width() < self.COMPACT_WINDOW_WIDTH
+        reduction = (
+            self.LAYER_PANEL_FULL_MIN_WIDTH - self.COMPACT_LAYER_PANEL_FLOOR
+            if compact
+            else 0
+        )
+        if reduction == getattr(self, '_active_compact_reduction', None):
+            return
+        self._active_compact_reduction = reduction
+        self.layer_panel.setMinimumWidth(self.LAYER_PANEL_FULL_MIN_WIDTH - reduction)
+        if hasattr(self.layer_panel, 'set_compact_reduction'):
+            self.layer_panel.set_compact_reduction(reduction)
+        # QSplitter keeps its existing allocation when a child's minimum
+        # shrinks, so re-apply the outer split or a live resize across the
+        # threshold leaves the panel at its old width (toolbar gains nothing).
+        if hasattr(self, 'splitter'):
+            panel_width = self.layer_panel.minimumWidth()
+            self.splitter.setSizes([max(0, self.width() - panel_width), panel_width])
+
+    def _apply_toolbar_spacing(self):
+        """Give the toolbar gaps whatever room the labels do not need.
+
+        The buttons sit at their natural width and a trailing stretch soaks up
+        the surplus, so spacing can be spent freely while there is spare space
+        and must be given back once the labels grow — which is what happens
+        with the longer German/Spanish translations, on narrow screens, and on
+        macOS where the same string measures wider. Deriving it from the
+        measured surplus covers all three without a per-case rule."""
+        layout = getattr(self, 'toolbar_button_layout', None)
+        if layout is None or not hasattr(self, 'left_widget'):
+            return
+        gaps = layout.count() - 1
+        if gaps <= 0:
+            return
+        margins = layout.contentsMargins()
+        needed = margins.left() + margins.right()
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            widget = item.widget() if item is not None else None
+            if widget is not None:
+                needed += widget.sizeHint().width()
+        surplus = self.left_widget.width() - needed
+        spacing = max(self.COMPACT_TOOLBAR_SPACING,
+                      min(self.TOOLBAR_SPACING, surplus // gaps))
+        if spacing != layout.spacing():
+            layout.setSpacing(spacing)
+
+    def resizeEvent(self, event):
+        """Re-evaluate compact sizing when the window crosses the threshold."""
+        super().resizeEvent(event)
+        if hasattr(self, 'layer_panel'):
+            self._apply_layer_panel_compact_width()
+        self._apply_toolbar_spacing()
+
     def set_initial_splitter_sizes(self):
         """
         Set the initial sizes of the splitter to make the layer panel narrower.
         The layer panel is set to its minimum width, and the left widget
         takes the remaining space.
         """
-        # Use the minimum width of the layer panel (should be 350)
+        # Use the minimum width of the layer panel (350, or less on narrow screens)
+        self._apply_layer_panel_compact_width()
         layer_panel_width = self.layer_panel.minimumWidth()
         total_width = self.width()
         
@@ -2669,6 +2754,10 @@ class MainWindow(QMainWindow):
         # for the new language (RTL grip/+/tab ordering for Hebrew).
         if hasattr(self, 'tab_manager'):
             self.tab_manager.retranslate()
+
+        # The new labels have different widths, so the toolbar gaps have to be
+        # re-derived: German needs the tight end where English does not.
+        self._apply_toolbar_spacing()
 
         pass
 

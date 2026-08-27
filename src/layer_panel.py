@@ -378,6 +378,12 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
     strand_deleted = pyqtSignal(int)  # Signal for strand deletion
     layer_order_changed = pyqtSignal(list) # Signal when layer order changes
 
+    # Full width of the group panel (right_panel); narrow screens subtract
+    # half of the compact reduction from it via set_compact_reduction.
+    GROUP_PANEL_FULL_WIDTH = 270
+    # Fixed width of NumberedLayerButton (setFixedSize(146, 40)).
+    LAYER_LIST_BUTTON_WIDTH = 146
+
     def __init__(self, canvas, parent=None):
         super().__init__(parent)
         self.canvas = canvas
@@ -406,6 +412,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self.left_panel = QWidget()
         self.left_layout = QVBoxLayout(self.left_panel)
         self.left_layout.setContentsMargins(0, 0, 0, 0)
+        # Explicit spacing (platform default is ~9): with the bottom panel's
+        # 2px top margin this leaves a 7px gap under the lowest layer button.
+        self.left_layout.setSpacing(5)
 
         # **Add the splitter handle at the top of the left layout**
         self.handle = SplitterHandle(self)
@@ -755,6 +764,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # Create scrollable area for layer buttons
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
+        # Layer buttons have a fixed width and are centered, so horizontal
+        # scrolling is never useful; without this a 2px overflow on compact
+        # screens pops a horizontal scrollbar under the buttons.
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         # Use the custom DropTargetWidget
         self.scroll_content = DropTargetWidget(self)
         self.scroll_layout = QVBoxLayout(self.scroll_content)
@@ -776,7 +789,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # Create bottom panel for control buttons
         bottom_panel = QWidget()
         bottom_layout = QVBoxLayout(bottom_panel)
-        bottom_layout.setContentsMargins(0, 5, 0, 5)
+        bottom_layout.setContentsMargins(0, 2, 0, 5)
         # Ensure consistent gap between control buttons across platforms
         bottom_layout.setSpacing(2)
         bottom_layout.setAlignment(Qt.AlignHCenter)
@@ -999,7 +1012,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # self.left_panel.setFixedWidth(200)
         
         # Set a fixed width for the right panel
-        self.right_panel.setFixedWidth(270)  # Set actual fixed width in pixels
+        self.right_panel.setFixedWidth(self.GROUP_PANEL_FULL_WIDTH)
         # Configure the right panel (group panel)
         self.right_panel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         
@@ -1741,6 +1754,46 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self.group_layer_manager.update_translations()
 
         self._apply_group_panel_alignment()
+
+    def set_compact_reduction(self, reduction):
+        """Slim the panel on narrow screens so the toolbar keeps its room.
+
+        The total reduction is split evenly: half comes off the group panel's
+        fixed width, half off the layer list (which shrinks automatically once
+        the panel's overall minimum width drops by the full reduction)."""
+        create_group = self.group_layer_manager.create_group_button
+        if not hasattr(self, '_create_group_full_width'):
+            # GroupPanel gives the button a fixed width (140); remember it so
+            # the compact override below can be undone.
+            self._create_group_full_width = create_group.minimumWidth()
+        # Compact screens leave the layer-list column exactly as wide as the
+        # fixed-width layer buttons, so a vertical scrollbar (many layers)
+        # would be painted under the group panel and the buttons' edge would
+        # sit against it. Reserve a real scrollbar gutter by giving the list
+        # slot the extra width and making the group panel that much shorter,
+        # so the splitter can actually honor the split. Wide screens already
+        # have spare room and keep the default widths untouched.
+        if reduction > 0:
+            vbar = self.scroll_area.verticalScrollBar()
+            extent = max(
+                vbar.sizeHint().width(),
+                self.style().pixelMetric(QStyle.PM_ScrollBarExtent, None, vbar),
+            )
+            list_w = self.LAYER_LIST_BUTTON_WIDTH + extent + 2
+            right_w = max(0, self.minimumWidth() - list_w - self.splitter.handleWidth())
+            self.scroll_area.setMinimumWidth(list_w)
+            self.right_panel.setFixedWidth(right_w)
+            create_group.setFixedWidth(
+                min(self._create_group_full_width, max(50, right_w - 4))
+            )
+            self.splitter.setSizes([list_w, right_w])
+        else:
+            # Restoring the group panel's fixed width makes the inner
+            # splitter drop the compact allocation and return to its natural
+            # even split (verified against a fresh wide launch).
+            self.scroll_area.setMinimumWidth(0)
+            self.right_panel.setFixedWidth(self.GROUP_PANEL_FULL_WIDTH)
+            create_group.setFixedWidth(self._create_group_full_width)
 
     def _apply_group_panel_alignment(self):
         """Anchor the group block toward the edge shared with the layer panel."""

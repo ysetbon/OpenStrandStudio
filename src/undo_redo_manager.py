@@ -1153,6 +1153,21 @@ class UndoRedoManager(QObject):
             self._state_metadata[step] = metadata
         return metadata
 
+    def _adopt_session(self, detail):
+        """Take over another session's history: its records, its journal, its log.
+
+        Both the loaded and the imported paths swap this manager onto a
+        different set of state files. Everything keyed to a session has to move
+        with it — the record cache (whose step numbers collide with the new
+        session's), and the journal, which is presented as "this session's
+        activity" and would otherwise list the actions of the session just
+        abandoned. journal_path follows session_id on its own.
+        """
+        self._reload_metadata_from_files()
+        self.history_journal = []
+        self._journal('load', build_metadata(
+            action='system.load', source='system', detail=detail, canvas=self.canvas))
+
     def _reload_metadata_from_files(self):
         """Rebuild the cache from the state files on disk (after an import)."""
         self._state_metadata = {}
@@ -2618,7 +2633,8 @@ class UndoRedoManager(QObject):
                 # step numbers collide with the loaded session's, and the cache
                 # is preferred over the files, so it has to be rebuilt from the
                 # states now on disk or every label would name the wrong edit.
-                self._reload_metadata_from_files()
+                self._adopt_session(
+                    'session {} at step {}'.format(loaded_session_id, loaded_step))
 
                 # Refresh UI
                 if hasattr(self.layer_panel, 'refresh'):
@@ -3166,7 +3182,7 @@ class UndoRedoManager(QObject):
 
             # The recreated files carry their own provenance — read it back so
             # an imported history still says what produced each step.
-            self._reload_metadata_from_files()
+            self._adopt_session('imported history, {} steps'.format(self.max_step))
 
             # Update UI buttons
             self._update_button_states()

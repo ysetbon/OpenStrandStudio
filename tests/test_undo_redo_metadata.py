@@ -290,6 +290,25 @@ def test_the_readable_log_follows_the_session_being_worked_on(tmp_path):
     assert "20200101000000_history.log" in manager.journal_path
 
 
+def test_adopting_a_session_leaves_none_of_the_old_one_in_the_journal(tmp_path):
+    """The journal is "this session's activity" — after a switch it must be its."""
+    manager, _ = make_manager(tmp_path)
+    manager.save_state(allow_empty=True, action="attach.new", targets=["1_1"])
+    assert [e["kind"] for e in manager.history_journal] == ["edit"]
+
+    manager.session_id = "20200101000000"
+    manager._adopt_session("session 20200101000000 at step 3")
+
+    kinds = [e["kind"] for e in manager.history_journal]
+    assert kinds == ["load"]                      # nothing carried over
+    entry = manager.get_session_journal()[0]
+    assert entry["metadata"]["action"] == "system.load"
+    assert "20200101000000" in entry["description"]
+    # ...and the line went to the adopted session's log, not the one we left.
+    assert "20200101000000_history.log" in manager.journal_path
+    assert "Loaded a document" in Path(manager.journal_path).read_text(encoding="utf-8")
+
+
 def test_adopting_another_session_rebuilds_the_records_from_its_files(tmp_path):
     manager, canvas = make_manager(tmp_path)
     manager.save_state(allow_empty=True, action="attach.new", targets=["1_1"])

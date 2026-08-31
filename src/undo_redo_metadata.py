@@ -155,6 +155,23 @@ def layer_names(canvas, indices):
     return names
 
 
+def set_member_names(canvas, set_number):
+    """Every layer in a set, by name.
+
+    A whole-set edit (colour, stroke, width) walks canvas.strands applying the
+    change to each layer whose name starts with "<set>_", so that is exactly
+    what the history entry has to name — recording only the clicked layer
+    understates what the step did.
+    """
+    prefix = "{}_".format(str(set_number).split("_")[0])
+    names = []
+    for strand in getattr(canvas, "strands", None) or []:
+        name = getattr(strand, "layer_name", None)
+        if name and name.startswith(prefix):
+            names.append(name)
+    return names
+
+
 def build_metadata(action=None, source=None, targets=None, detail=None,
                    canvas=None, origin=None):
     """Build the record stored with a state.
@@ -266,21 +283,26 @@ def read_metadata(filename):
         return None
 
 
-def journal_line(kind, meta):
-    """One human-readable line of the session journal."""
-    stamp = (meta or {}).get("at") or datetime.now().isoformat(timespec="seconds")
+def journal_line(kind, meta, at=None):
+    """One human-readable line of the session journal.
+
+    `at` is when the EVENT happened. An undo replays a record made earlier, so
+    falling back to the state's own timestamp would log the undo at the moment
+    the state was first created and leave the log out of order.
+    """
+    stamp = at or datetime.now().isoformat(timespec="seconds")
     prefix = {"undo": "UNDO ", "redo": "REDO "}.get(kind, "")
     return "{}  {}{}".format(stamp, prefix, describe(meta))
 
 
-def append_journal(path, kind, meta):
+def append_journal(path, kind, meta, at=None):
     """Append one event to the session's readable history log.
 
     Best-effort: losing a log line must never break an undo.
     """
     try:
         with open(path, "a", encoding="utf-8") as f:
-            f.write(journal_line(kind, meta) + "\n")
+            f.write(journal_line(kind, meta, at) + "\n")
         return True
     except Exception:
         return False

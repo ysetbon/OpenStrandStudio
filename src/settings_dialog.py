@@ -6882,7 +6882,14 @@ class SettingsDialog(QDialog):
                 rows.append("{}  {}{}".format(event['at'], prefix, event['description']))
 
         if not rows:
-            self.history_actions_list.addItem(_['no_actions_recorded'])
+            # The placeholder is a row like any other: it takes the same
+            # alignment, or it reads left-aligned in a right-aligned list.
+            empty_item = QListWidgetItem(_['no_actions_recorded'])
+            if self.is_rtl_language(self.current_language):
+                empty_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            else:
+                empty_item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            self.history_actions_list.addItem(empty_item)
             return
         for row in rows:
             item = QListWidgetItem(row)

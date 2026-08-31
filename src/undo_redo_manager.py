@@ -1132,7 +1132,9 @@ class UndoRedoManager(QObject):
         """
         entry = {"kind": kind, "meta": metadata, "at": datetime.now().isoformat(timespec="seconds")}
         self.history_journal.append(entry)
-        append_journal(self.journal_path, kind, metadata)
+        # The log line is stamped with when this happened, not when the state it
+        # names was created — an undo replays a record made minutes earlier.
+        append_journal(self.journal_path, kind, metadata, entry["at"])
         return entry
 
     def metadata_for_step(self, step):

@@ -3347,17 +3347,22 @@ class NumberedLayerButton(QPushButton):
                 if hasattr(strand, 'layer_name') and strand.layer_name:
                     set_prefix = f"{strand.layer_name.split('_')[0]}_"
 
+                recolored = []
                 if set_prefix and layer_panel and hasattr(layer_panel, 'canvas'):
                     for other_strand in layer_panel.canvas.strands:
                         if (hasattr(other_strand, 'layer_name')
                                 and other_strand.layer_name
                                 and other_strand.layer_name.startswith(set_prefix)):
                             self._apply_stroke_color(other_strand, color)
+                            recolored.append(other_strand.layer_name)
                 else:
                     self._apply_stroke_color(strand, color)
+                    recolored.append(getattr(strand, 'layer_name', self.text()))
 
+                # Name every layer that changed colour, not just the clicked one.
                 self._refresh_canvas_and_save(
-                    layer_panel, action='strand.color', detail='stroke, whole set')
+                    layer_panel, action='strand.color', targets=recolored,
+                    detail='stroke, whole set')
 
     def change_layer_stroke_color(self, strand, layer_panel):
         """Change the stroke color of only the clicked strand layer."""
@@ -3717,9 +3722,12 @@ class NumberedLayerButton(QPushButton):
         # Save state for undo/redo functionality
         if hasattr(layer_panel.canvas, 'undo_redo_manager'):
             # Use a small delay to ensure all knot properties are established
+            # Both ends of the knot are rewritten here, so both are recorded.
+            knot_targets = [getattr(strand, 'layer_name', None),
+                            getattr(target_strand, 'layer_name', None)]
             QTimer.singleShot(50, lambda: layer_panel.canvas.undo_redo_manager.save_state(
                 action='strand.close_knot', source='menu',
-                targets=[getattr(strand, 'layer_name', None)], detail=free_end_type))
+                targets=knot_targets, detail=free_end_type))
         
     
     def change_width(self, strand, layer_panel):
@@ -3741,6 +3749,9 @@ class NumberedLayerButton(QPushButton):
                 strand.update_shape()
             
             # Find and update related strands with the same set number (like color changes)
+            # Declared out here so the history entry below can name every layer
+            # the loop actually resized, not just the one that was clicked.
+            updated_strands = []
             if hasattr(strand, 'layer_name') and strand.layer_name:
                 layer_parts = strand.layer_name.split('_')
                 if len(layer_parts) >= 1:
@@ -3748,7 +3759,6 @@ class NumberedLayerButton(QPushButton):
                     set_prefix = f"{set_number}_"
                     
                     # Update all strands that belong to the same set
-                    updated_strands = []
                     grid_units_value = dialog.thickness_spinbox.value()
                     for other_strand in layer_panel.canvas.strands:
                         if (hasattr(other_strand, 'layer_name') and 
@@ -3779,7 +3789,8 @@ class NumberedLayerButton(QPushButton):
                     # Save the state
                     layer_panel.canvas.undo_redo_manager.save_state(
                         action='strand.width', source='dialog',
-                        targets=[getattr(strand, 'layer_name', None)], detail='whole set')
+                        targets=updated_strands or [getattr(strand, 'layer_name', None)],
+                        detail='whole set')
                     # Check if save actually happened
                     new_step = layer_panel.canvas.undo_redo_manager.current_step
                     if new_step > current_step:

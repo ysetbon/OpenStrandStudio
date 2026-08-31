@@ -306,3 +306,38 @@ def test_adopting_another_session_rebuilds_the_records_from_its_files(tmp_path):
     # Back to the first session: the cache must not answer with the other one's.
     manager._reload_metadata_from_files()
     assert manager.metadata_for_step(1)["action"] == "mask.create"
+
+
+def test_a_whole_set_edit_names_every_layer_in_the_set():
+    canvas = FakeCanvas([FakeStrand("1_1"), FakeStrand("1_2"), FakeStrand("2_1"),
+                         FakeStrand("1_3_2_1")])
+    # Masks built on the set carry its prefix and are repainted with it.
+    assert meta.set_member_names(canvas, 1) == ["1_1", "1_2", "1_3_2_1"]
+    assert meta.set_member_names(canvas, "1") == ["1_1", "1_2", "1_3_2_1"]
+    assert meta.set_member_names(canvas, 2) == ["2_1"]
+    assert meta.set_member_names(canvas, 9) == []
+
+
+def test_a_journalled_undo_is_stamped_when_it_happened(tmp_path):
+    """An undo replays a record made earlier; the log is a log of events."""
+    made_earlier = meta.build_metadata("attach.new", targets=["1_1"])
+    made_earlier["at"] = "2020-01-01T00:00:00"
+
+    line = meta.journal_line("undo", made_earlier, at="2026-08-31T18:30:00")
+    assert line.startswith("2026-08-31T18:30:00  UNDO")
+    assert "2020-01-01" not in line
+
+    # With no event time it still writes a line, stamped now rather than never.
+    assert meta.journal_line("edit", made_earlier).startswith("20")
+
+
+def test_the_manager_logs_each_event_at_its_own_time(tmp_path):
+    manager, _ = make_manager(tmp_path)
+    manager.save_state(allow_empty=True, action="attach.new", targets=["1_1"])
+    manager._undo_impl = lambda: setattr(manager, "current_step", 0) or True
+    manager.undo()
+
+    lines = Path(manager.journal_path).read_text(encoding="utf-8").strip().split("\n")
+    stamps = [line.split("  ")[0] for line in lines]
+    assert stamps == sorted(stamps)          # the log reads in the order it happened
+    assert lines[-1].split("  ")[1].startswith("UNDO")

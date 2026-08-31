@@ -10,7 +10,7 @@ from PyQt5.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent, QPainter, Q
 from render_utils import RenderUtils
 # --- End Import ---
 # Names the undo/redo provenance record uses to say WHICH layers an action touched.
-from undo_redo_metadata import layer_names
+from undo_redo_metadata import layer_names, set_member_names
 from functools import partial
 from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
@@ -3330,8 +3330,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             if not getattr(self.undo_redo_manager, '_suppress_intermediate_saves', False):
                 # Reset last save time to force save, as color change alone might not be detected otherwise
                 self.undo_redo_manager._last_save_time = 0 
-                self.undo_redo_manager.save_state(action='strand.color', source='dialog',
-                                                  detail='set {}'.format(set_number))
+                self.undo_redo_manager.save_state(
+                    action='strand.color', source='dialog',
+                    targets=set_member_names(self.canvas, set_number),
+                    detail='set {}'.format(set_number))
             else:
                 pass
             # --- END ADD --- 

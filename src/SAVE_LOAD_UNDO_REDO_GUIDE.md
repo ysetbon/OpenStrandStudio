@@ -69,11 +69,27 @@ def toggle_my_property(self, strand, layer_panel):
         if layer_panel and hasattr(layer_panel, 'canvas'):
             layer_panel.canvas.update()
 
-            # Save state for undo/redo
+            # Save state for undo/redo, recording WHAT produced this state
+            # (see "Recording WHAT Produced a State" below).
             if hasattr(layer_panel.canvas, 'undo_redo_manager'):
                 # Force save by resetting the last save time
                 layer_panel.canvas.undo_redo_manager._last_save_time = 0
-                layer_panel.canvas.undo_redo_manager.save_state()
+                layer_panel.canvas.undo_redo_manager.save_state(
+                    action='strand.my_new_property',   # add it to ACTIONS first
+                    source='menu',
+                    targets=[getattr(strand, 'layer_name', None)],
+                    detail='on' if strand.my_new_property else 'off',
+                )
+```
+
+Add the id to `ACTIONS` in `undo_redo_metadata.py` at the same time, so the
+history reads "Toggled my new property" rather than the prettified id:
+
+```python
+ACTIONS = {
+    # ...
+    "strand.my_new_property": "Toggled my new property",
+}
 ```
 
 ## Example: Full Arrow Implementation

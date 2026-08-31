@@ -427,7 +427,9 @@ class StrandDataClipboardMixin:
             targets = None
         else:
             targets = [index]
-        return self.paste_copied_strand_data(anchor, targets)
+        # The chip lives on the layer button, not in the menu — say so in the
+        # history, otherwise both routes read as a menu paste.
+        return self.paste_copied_strand_data(anchor, targets, source='panel')
 
     def _eligible_paste_indices(self, indices=None):
         candidates = self.multi_selected_layers if indices is None else indices
@@ -435,8 +437,12 @@ class StrandDataClipboardMixin:
             index for index in sorted(candidates) if self.is_strand_data_paste_target(index)
         ]
 
-    def paste_copied_strand_data(self, anchor="start", target_indices=None):
-        """Paste onto all eligible ticked layers and create one undo state."""
+    def paste_copied_strand_data(self, anchor="start", target_indices=None, source='menu'):
+        """Paste onto all eligible ticked layers and create one undo state.
+
+        `source` is the surface the paste came from, recorded with the state:
+        the copy/paste menu by default, or the layer-button chip.
+        """
         clipboard = getattr(self.canvas, "strand_clipboard", None)
         if clipboard is None:
             return 0
@@ -457,7 +463,7 @@ class StrandDataClipboardMixin:
         manager = getattr(self.canvas, "undo_redo_manager", None)
         if manager is not None:
             manager._last_save_time = 0
-            manager.save_state(action='strand.paste', source='menu',
+            manager.save_state(action='strand.paste', source=source,
                                targets=layer_names(self.canvas, changed),
                                detail='from the {} point'.format(anchor))
         return len(changed)

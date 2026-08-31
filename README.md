@@ -9,6 +9,7 @@ making complex patterns clear and easy to understand.
 ### ✨ New Features
 
 - **Layer-Only Colors and Set-Wide Stroke Color**: The layer menu now pairs every color option with a layer-only version: Change Color / Change Color (This Layer Only) and Change Stroke Color / Change Stroke Color (This Layer Only), matching the existing width entries. Change Stroke Color now recolors the whole set just like Change Color, while the layer-only entries repaint only the clicked layer. Per-layer exceptions are saved with your project and survive undo/redo, tab switching and group operations; changing the set color again resets them.
+- **Undo/Redo History That Says What You Did**: Every undo and redo step now records what produced it — the mode you were using, or the panel, dialog or menu entry — together with the layers it touched and when it happened. The Undo and Redo buttons name the action they will reverse or replay, and Settings → History gains a “Recorded actions” list showing this session's activity or the steps of a past session. The record travels inside each saved state, so it survives a restart, history export/import and session recovery.
 
 ## Features
 
@@ -69,4 +70,4 @@ Created by Yonatan Setbon
 
 ---
 
-© 2026 OpenStrand Studio - Version 1.109
+© 2026 OpenStrand Studio - Version 1.110

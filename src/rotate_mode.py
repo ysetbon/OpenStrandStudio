@@ -94,7 +94,9 @@ class RotateMode:
         if self.is_rotating:  # Only save state if we were actually rotating
             # Save state for undo/redo after rotation
             if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
-                self.canvas.layer_panel.undo_redo_manager.save_state()
+                self.canvas.layer_panel.undo_redo_manager.save_state(
+                    action='rotate.strand', source='mode',
+                    targets=[getattr(getattr(self, 'affected_strand', None), 'layer_name', None)])
 
         # Reset all properties
         self.is_rotating = False

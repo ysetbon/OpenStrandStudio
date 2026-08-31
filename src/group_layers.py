@@ -2271,7 +2271,8 @@ class GroupPanel(QWidget):
                 try:
                     if hasattr(self.canvas, 'layer_panel') and self.canvas.layer_panel is not None and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
                         self._rotation_save_done = True
-                        self.canvas.layer_panel.undo_redo_manager.save_state()
+                        self.canvas.layer_panel.undo_redo_manager.save_state(
+                            action='group.rotate', source='dialog', targets=[group_name])
                 except RuntimeError:
                     pass
 
@@ -3514,7 +3515,9 @@ class GroupPanel(QWidget):
             # Save undo/redo state before opening
             if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
                 self.canvas.undo_redo_manager._last_save_time = 0
-                self.canvas.undo_redo_manager.save_state()
+                self.canvas.undo_redo_manager.save_state(
+                    action='group.shadow', source='dialog', targets=[group_name],
+                    detail='before opening the shadow editor')
 
             from group_shadow_editor_dialog import GroupShadowEditorDialog
             # Store reference to prevent garbage collection of non-modal dialog
@@ -6791,11 +6794,13 @@ class StrandAngleEditDialog(QDialog):
             # Only save state on the layer panel's undo/redo manager to prevent duplicate saves
             if self.canvas and hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
                 self.canvas.layer_panel.undo_redo_manager._skip_save = False
-                self.canvas.layer_panel.undo_redo_manager.save_state()
+                self.canvas.layer_panel.undo_redo_manager.save_state(
+                    action='group.angle', source='dialog', targets=[self.group_name])
             elif self.canvas and hasattr(self.canvas, 'undo_redo_manager'):
                 # Fallback to canvas undo/redo manager if layer panel doesn't have one
                 self.canvas.undo_redo_manager._skip_save = False
-                self.canvas.undo_redo_manager.save_state()
+                self.canvas.undo_redo_manager.save_state(
+                    action='group.angle', source='dialog', targets=[self.group_name])
     def start_continuous_adjustment_plus(self):
         self.stop_adjustment()
         self.current_adjustment = self.delta_continuous_plus

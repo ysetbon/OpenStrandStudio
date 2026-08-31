@@ -558,6 +558,8 @@ Examples:<br>
         'history_cleared_title': 'History Cleared',
         'history_cleared_text': 'All past history sessions have been cleared.',
         'no_history_found': 'No past history sessions found.',
+        'history_actions': 'Recorded actions',
+        'no_actions_recorded': 'No actions recorded yet.',
         'history_explanation': 'Select a past session and click "Load Selected" to restore its final state.\nWarning: Loading history will clear your current undo/redo steps.',
         'history_list_tooltip': 'Select a session to load its final state',
         'history_state_label': 'State',  # For history list display
@@ -1046,6 +1048,8 @@ Exemples :<br>
         'history_cleared_title': 'Historique Effacé',
         'history_cleared_text': 'Toutes les sessions d\'historique passées ont été effacées.',
         'no_history_found': 'Aucune session d\'historique passée trouvée.',
+        'history_actions': 'Actions enregistrées',
+        'no_actions_recorded': 'Aucune action enregistrée pour l\'instant.',
         'history_explanation': 'Sélectionnez une session passée et cliquez sur "Charger Sélection" pour restaurer son état final.\nAttention : Le chargement de l\'historique effacera vos étapes annuler/rétablir actuelles.',
    
         'history_list_tooltip': 'Sélectionnez une session à charger dans son état final',
@@ -1685,6 +1689,8 @@ Beispiele:<br>
         'history_cleared_title': 'Verlauf gelöscht',
         'history_cleared_text': 'Alle bisherigen Verlaufssitzungen wurden gelöscht.',
         'no_history_found': 'Keine bisherigen Verlaufssitzungen gefunden.',
+        'history_actions': 'Aufgezeichnete Aktionen',
+        'no_actions_recorded': 'Noch keine Aktionen aufgezeichnet.',
         'history_explanation': 'Wählen Sie eine frühere Sitzung aus und klicken Sie auf "Ausgewählten laden", um den Endzustand wiederherzustellen.\nWarnung: Das Laden des Verlaufs löscht Ihre aktuellen Rückgängig/Wiederholen-Schritte.',
         'history_list_tooltip': 'Eine Sitzung auswählen, um ihren Endzustand zu laden',
         'history_state_label': 'Zustand',  # For history list display
@@ -2209,6 +2215,8 @@ Esempi:<br>
         'history_cleared_title': 'Cronologia Cancellata',
         'history_cleared_text': 'Tutte le sessioni di cronologia passate sono state cancellate.',
         'no_history_found': 'Nessuna sessione di cronologia passata trovata.',
+        'history_actions': 'Azioni registrate',
+        'no_actions_recorded': 'Nessuna azione registrata finora.',
         'history_explanation': 'Seleziona una sessione passata e fai clic su "Carica Selezionato" per ripristinarne lo stato finale.\nAttenzione: il caricamento della cronologia cancellerà i passaggi annulla/ripristina correnti.',
         'history_list_tooltip': 'Seleziona una sessione da caricare nel suo stato finale',
         'history_state_label': 'Stato',  # For history list display
@@ -2794,6 +2802,8 @@ Ejemplos:<br>
         'history_cleared_title': 'Historial Borrado',
         'history_cleared_text': 'Todas las sesiones de historial pasadas han sido borradas.',
         'no_history_found': 'No se encontraron sesiones de historial pasadas.',
+        'history_actions': 'Acciones registradas',
+        'no_actions_recorded': 'Aún no se han registrado acciones.',
         'history_explanation': 'Selecciona una sesión pasada y haz clic en "Cargar Seleccionado" para restaurarla.\nAdvertencia: Borra deshacer/rehacer actuales.',
         'history_list_tooltip': 'Selecciona una sesión para cargar su estado final',
         'history_state_label': 'Estado',  # For history list display
@@ -3378,6 +3388,8 @@ Exemplos:<br>
         'history_cleared_title': 'Histórico Limpo',
         'history_cleared_text': 'Todas as sessões de histórico passadas foram limpas.',
         'no_history_found': 'Nenhuma sessão de histórico passada encontrada.',
+        'history_actions': 'Ações registadas',
+        'no_actions_recorded': 'Ainda não foram registadas ações.',
         'history_explanation': 'Selecione uma sessão passada e clique em "Carregar Selecionado" para restaurar seu estado final.\nAviso: Carregar histórico limpará suas etapas atuais de desfazer/refazer.',
         'history_list_tooltip': 'Selecione uma sessão para carregar seu estado final',
         'history_state_label': 'Estado',  # For history list display
@@ -3973,6 +3985,8 @@ Exemplos:<br>
         'history_cleared_title': 'היסטוריה נוקתה',
         'history_cleared_text': 'כל הפעלות ההיסטוריה הקודמות נוקו.',
         'no_history_found': 'לא נמצאו הפעלות היסטוריה קודמות.',
+        'history_actions': 'פעולות שנרשמו',
+        'no_actions_recorded': 'עדיין לא נרשמו פעולות.',
         'history_explanation': ' בחר הפעלה קודמת ולחץ "טען נבחר" כדי לשחזר את המצב הסופי שלה.\n' +
             ' אזהרה: טעינת היסטוריה תנקה את שלבי הביטול/שחזור הנוכחיים שלך.',
         'history_list_tooltip': 'בחר הפעלה לטעינת המצב הסופי שלה',

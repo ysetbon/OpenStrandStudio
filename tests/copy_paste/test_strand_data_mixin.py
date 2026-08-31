@@ -34,9 +34,13 @@ class _StubUndoManager:
     def __init__(self):
         self.saves = 0
         self._last_save_time = 99
+        self.last_save_kwargs = {}
 
-    def save_state(self):
+    # save_state now also takes the provenance of the state being saved
+    # (undo_redo_metadata.py): what action produced it, and on what.
+    def save_state(self, allow_empty=False, **kwargs):
         self.saves += 1
+        self.last_save_kwargs = kwargs
 
 
 class _StubCanvas:

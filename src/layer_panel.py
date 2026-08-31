@@ -9,6 +9,8 @@ from PyQt5.QtGui import QColor, QPalette, QDrag, QGuiApplication, QCursor, QIcon
 from PyQt5.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent, QPainter, QPen # Added Painter/Pen
 from render_utils import RenderUtils
 # --- End Import ---
+# Names the undo/redo provenance record uses to say WHICH layers an action touched.
+from undo_redo_metadata import layer_names
 from functools import partial
 from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
@@ -1559,7 +1561,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
                 # Force save by resetting timing check to ensure visibility changes are captured
                 self.canvas.undo_redo_manager._last_save_time = 0
-                self.canvas.undo_redo_manager.save_state()
+                self.canvas.undo_redo_manager.save_state(
+                    action='strand.hidden', source='panel',
+                    targets=[getattr(strand, 'layer_name', None)],
+                    detail='hidden' if strand.is_hidden else 'shown')
 
         else:
             pass
@@ -1589,7 +1594,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
                 # Force save by resetting timing check to ensure shadow-only changes are captured
                 self.canvas.undo_redo_manager._last_save_time = 0
-                self.canvas.undo_redo_manager.save_state()
+                self.canvas.undo_redo_manager.save_state(
+                    action='strand.shadow_only', source='panel',
+                    targets=[getattr(strand, 'layer_name', None)],
+                    detail='on' if getattr(strand, 'shadow_only', False) else 'off')
             else:
                 pass
 
@@ -1617,7 +1625,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
                 # Force save by resetting timing check to ensure hide-shadow changes are captured
                 self.canvas.undo_redo_manager._last_save_time = 0
-                self.canvas.undo_redo_manager.save_state()
+                self.canvas.undo_redo_manager.save_state(
+                    action='strand.hide_shadow', source='panel',
+                    targets=[getattr(strand, 'layer_name', None)],
+                    detail='on' if getattr(strand, 'hide_shadow', False) else 'off')
             else:
                 pass
 
@@ -2081,7 +2092,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
             # Force save by resetting last save time to ensure this is captured as a new state
             self.canvas.undo_redo_manager._last_save_time = 0
-            self.canvas.undo_redo_manager.save_state()
+            self.canvas.undo_redo_manager.save_state(
+                action='strand.hidden', source='panel', detail='hide',
+                targets=layer_names(self.canvas, self.multi_selected_layers))
         else:
             pass
         
@@ -2110,7 +2123,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
             # Force save by resetting last save time to ensure this is captured as a new state
             self.canvas.undo_redo_manager._last_save_time = 0
-            self.canvas.undo_redo_manager.save_state()
+            self.canvas.undo_redo_manager.save_state(
+                action='strand.hidden', source='panel', detail='show',
+                targets=layer_names(self.canvas, self.multi_selected_layers))
         else:
             pass
         
@@ -2145,7 +2160,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
             # Force save by resetting last save time to ensure this is captured as a new state
             self.canvas.undo_redo_manager._last_save_time = 0
-            self.canvas.undo_redo_manager.save_state()
+            self.canvas.undo_redo_manager.save_state(
+                action='strand.shadow_only', source='panel', detail='on',
+                targets=layer_names(self.canvas, self.multi_selected_layers))
         else:
             pass
         
@@ -2175,7 +2192,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
             # Force save by resetting last save time to ensure this is captured as a new state
             self.canvas.undo_redo_manager._last_save_time = 0
-            self.canvas.undo_redo_manager.save_state()
+            self.canvas.undo_redo_manager.save_state(
+                action='strand.shadow_only', source='panel', detail='off',
+                targets=layer_names(self.canvas, self.multi_selected_layers))
         else:
             pass
 
@@ -2198,7 +2217,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
         # Save state BEFORE deletion for proper undo/redo
         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-            self.undo_redo_manager.save_state()
+            self.undo_redo_manager.save_state(
+                action='layer.delete', source='panel', detail='before deleting',
+                targets=layer_names(self.canvas, self.multi_selected_layers))
 
         # Sort indices in descending order to delete from highest to lowest
         # This prevents index shifting issues during deletion
@@ -2224,7 +2245,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
         # Save state AFTER deletion to capture the "deleted" state
         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-            self.undo_redo_manager.save_state(allow_empty=True)
+            self.undo_redo_manager.save_state(allow_empty=True,
+                                              action='layer.delete', source='panel')
 
         # Clear selections after operation
         self.multi_selected_layers.clear()
@@ -2263,7 +2285,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
             # Check if we're already in a mask save operation to prevent duplicates
             if not getattr(self.undo_redo_manager, '_mask_save_in_progress', False):
-                self.undo_redo_manager.save_state()
+                self.undo_redo_manager.save_state(action='mask.create', source='panel',
+                                                  detail='left mask mode')
             else:
                 pass
 
@@ -2300,7 +2323,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             # Force save by temporarily clearing the last save time to bypass timing check
             old_last_save_time = getattr(self.undo_redo_manager, '_last_save_time', 0)
             self.undo_redo_manager._last_save_time = 0
-            self.undo_redo_manager.save_state()
+            self.undo_redo_manager.save_state(action='layer.lock_mode', source='panel',
+                                              detail='on' if self.lock_mode else 'off')
             # Restore the last save time
             self.undo_redo_manager._last_save_time = old_last_save_time
 
@@ -2369,7 +2393,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             # Force save by temporarily clearing the last save time to bypass timing check
             old_last_save_time = getattr(self.undo_redo_manager, '_last_save_time', 0)
             self.undo_redo_manager._last_save_time = 0
-            self.undo_redo_manager.save_state()
+            self.undo_redo_manager.save_state(
+                action='layer.lock', source='panel',
+                targets=layer_names(self.canvas, [index]),
+                detail='locked' if index in self.locked_layers else 'unlocked')
             # Restore the last save time
             self.undo_redo_manager._last_save_time = old_last_save_time
 
@@ -2642,7 +2669,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
             # Force a save by resetting the last save time so the identical-state and timing checks are bypassed
             self.undo_redo_manager._last_save_time = 0
-            self.undo_redo_manager.save_state()
+            self.undo_redo_manager.save_state(action='mask.edit', source='panel',
+                                              detail='left mask edit mode')
         # --- END ADD ---
 
     def disable_controls(self):
@@ -2764,7 +2792,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 if isinstance(strand, MaskedStrand):
                     # Save state BEFORE deletion for proper undo/redo
                     if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-                        self.undo_redo_manager.save_state()
+                        self.undo_redo_manager.save_state(
+                            action='layer.delete', source='panel', targets=[strand_name],
+                            detail='before deleting the mask')
 
                     # Delete only this specific masked layer
                     if self.canvas.delete_masked_layer(strand):
@@ -2775,12 +2805,16 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
                         # Save state AFTER deletion to capture the "deleted" state
                         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-                            self.undo_redo_manager.save_state(allow_empty=True)
+                            self.undo_redo_manager.save_state(
+                                allow_empty=True, action='layer.delete', source='panel',
+                                targets=[strand_name], detail='mask deleted')
 
                 else:
                     # Save state BEFORE deletion for proper undo/redo
                     if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-                        self.undo_redo_manager.save_state()
+                        self.undo_redo_manager.save_state(
+                            action='layer.delete', source='panel', targets=[strand_name],
+                            detail='before deleting')
 
                     # Handle regular strand deletion
                     self.strand_deleted.emit(strand_index)
@@ -2791,7 +2825,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
                     # Save state AFTER deletion to capture the "deleted" state
                     if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-                        self.undo_redo_manager.save_state(allow_empty=True)
+                        self.undo_redo_manager.save_state(
+                            allow_empty=True, action='layer.delete', source='panel',
+                            targets=[strand_name], detail='deleted')
             else:
                 pass
         else:
@@ -3157,7 +3193,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             
             # Save state for undo/redo
             if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-                self.undo_redo_manager.save_state()
+                self.undo_redo_manager.save_state(action='layer.clear_locks', source='panel')
             
             # Update canvas to reflect changes
             self.canvas.update()
@@ -3208,7 +3244,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         if msg_box.clickedButton() == yes_button:
             # Save state for undo before deleting
             if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-                self.undo_redo_manager.save_state()
+                self.undo_redo_manager.save_state(action='layer.delete_all', source='panel',
+                                                  detail='before clearing')
 
             # Clear all strands from canvas
             self.canvas.strands.clear()
@@ -3248,7 +3285,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
             # Save state AFTER deletion to capture the "deleted" state for redo
             if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-                self.undo_redo_manager.save_state(allow_empty=True)
+                self.undo_redo_manager.save_state(allow_empty=True, action='layer.delete_all',
+                                                  source='panel')
 
     def on_color_changed(self, set_number, color):
         """Handle color change for a set of strands."""
@@ -3292,7 +3330,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             if not getattr(self.undo_redo_manager, '_suppress_intermediate_saves', False):
                 # Reset last save time to force save, as color change alone might not be detected otherwise
                 self.undo_redo_manager._last_save_time = 0 
-                self.undo_redo_manager.save_state()
+                self.undo_redo_manager.save_state(action='strand.color', source='dialog',
+                                                  detail='set {}'.format(set_number))
             else:
                 pass
             # --- END ADD --- 
@@ -3987,7 +4026,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                     self.group_layer_manager.refresh(),
                     self.scroll_layout.update(),
                     self.canvas.update(),
-                    self.undo_redo_manager.save_state() if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager else None
+                    self.undo_redo_manager.save_state(action='layer.reorder', source='panel')
+                    if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager else None
                 ))
             else:
                 # non‑macOS path: execute immediately
@@ -3997,7 +4037,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 self.scroll_layout.update()
                 self.canvas.update()
                 if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
-                    self.undo_redo_manager.save_state()
+                    self.undo_redo_manager.save_state(action='layer.reorder', source='panel')
 
 
         else:

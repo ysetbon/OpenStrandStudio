@@ -33,9 +33,13 @@ class FakeUndoRedoManager:
     def __init__(self):
         self._last_save_time = 1
         self.save_count = 0
+        self.last_save_kwargs = {}
 
-    def save_state(self):
+    # save_state now also takes the provenance of the state being saved
+    # (undo_redo_metadata.py): what action produced it, and on what.
+    def save_state(self, allow_empty=False, **kwargs):
         self.save_count += 1
+        self.last_save_kwargs = kwargs
 
 
 class FakeCanvas:
@@ -118,6 +122,9 @@ def test_set_wide_stroke_changes_only_matching_set(monkeypatch):
     assert color_tuple(strands[1].stroke_color) == (10, 20, 30, 200)
     assert color_tuple(strands[2].stroke_color) == (0, 0, 0, 255)
     assert panel.canvas.undo_redo_manager.save_count == 1
+    # The saved state records which menu entry produced it.
+    assert panel.canvas.undo_redo_manager.last_save_kwargs['action'] == 'strand.color'
+    assert 'whole set' in panel.canvas.undo_redo_manager.last_save_kwargs['detail']
 
 
 def test_layer_only_stroke_changes_only_clicked_strand(monkeypatch):

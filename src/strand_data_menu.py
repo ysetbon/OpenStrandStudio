@@ -16,6 +16,9 @@ from PyQt5.QtWidgets import (
     QWidgetAction,
 )
 
+# Layer names for the undo/redo provenance record (call sites hold indices).
+from undo_redo_metadata import layer_names
+
 
 def _keep_menu_on_screen(menu):
     """Shift an already-open menu back inside the screen after it grew.
@@ -454,5 +457,7 @@ class StrandDataClipboardMixin:
         manager = getattr(self.canvas, "undo_redo_manager", None)
         if manager is not None:
             manager._last_save_time = 0
-            manager.save_state()
+            manager.save_state(action='strand.paste', source='menu',
+                               targets=layer_names(self.canvas, changed),
+                               detail='from the {} point'.format(anchor))
         return len(changed)

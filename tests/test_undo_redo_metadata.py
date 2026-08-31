@@ -327,14 +327,18 @@ def test_adopting_another_session_rebuilds_the_records_from_its_files(tmp_path):
     assert manager.metadata_for_step(1)["action"] == "mask.create"
 
 
-def test_a_whole_set_edit_names_every_layer_in_the_set():
+def test_a_whole_set_edit_names_every_layer_the_change_reaches():
     canvas = FakeCanvas([FakeStrand("1_1"), FakeStrand("1_2"), FakeStrand("2_1"),
                          FakeStrand("1_3_2_1")])
-    # Masks built on the set carry its prefix and are repainted with it.
+    # A mask carries the set of its OVER component first...
     assert meta.set_member_names(canvas, 1) == ["1_1", "1_2", "1_3_2_1"]
     assert meta.set_member_names(canvas, "1") == ["1_1", "1_2", "1_3_2_1"]
-    assert meta.set_member_names(canvas, 2) == ["2_1"]
+    # ...and the panel repaints its border when the UNDER component's set
+    # changes, so that mask belongs to set 2's record as well.
+    assert meta.set_member_names(canvas, 2) == ["2_1", "1_3_2_1"]
     assert meta.set_member_names(canvas, 9) == []
+    # A set number is matched whole: set 1 is not set 12.
+    assert meta.set_member_names(FakeCanvas([FakeStrand("12_1")]), 1) == []
 
 
 def test_a_journalled_undo_is_stamped_when_it_happened(tmp_path):

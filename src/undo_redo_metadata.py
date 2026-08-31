@@ -156,18 +156,20 @@ def layer_names(canvas, indices):
 
 
 def set_member_names(canvas, set_number):
-    """Every layer in a set, by name.
+    """Every layer a change to `set_number` reaches, by name.
 
-    A whole-set edit (colour, stroke, width) walks canvas.strands applying the
-    change to each layer whose name starts with "<set>_", so that is exactly
-    what the history entry has to name — recording only the clicked layer
-    understates what the step did.
+    A whole-set edit (colour, stroke, width) repaints each layer whose name
+    begins with the set — and a mask, named "<over>_<n>_<under>_<m>", is also
+    repainted when the set is its SECOND component: the layer panel redraws its
+    border in that colour (on_color_changed). Both belong in the record;
+    naming only the clicked layer understates what the step did.
     """
-    prefix = "{}_".format(str(set_number).split("_")[0])
+    set_id = str(set_number).split("_")[0]
     names = []
     for strand in getattr(canvas, "strands", None) or []:
         name = getattr(strand, "layer_name", None)
-        if name and name.startswith(prefix):
+        parts = name.split("_") if name else []
+        if parts and (parts[0] == set_id or (len(parts) == 4 and parts[2] == set_id)):
             names.append(name)
     return names
 

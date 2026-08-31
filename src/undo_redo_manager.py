@@ -353,7 +353,6 @@ class UndoRedoManager(QObject):
         # state files.
         self._state_metadata = {}
         self.history_journal = []
-        self.journal_path = os.path.join(self.temp_dir, f"{self.session_id}_history.log")
         
         # Connect signals
         self.undo_performed.connect(self._update_button_states)
@@ -369,6 +368,16 @@ class UndoRedoManager(QObject):
         temp_dir = os.path.join(base_path, "temp_states")
         os.makedirs(temp_dir, exist_ok=True)
         return temp_dir
+
+    @property
+    def journal_path(self):
+        """The readable history log for the CURRENT session.
+
+        Derived rather than stored: load_specific_state adopts another
+        session's id mid-run, and a path frozen at construction would keep
+        appending this session's lines to the old session's log.
+        """
+        return os.path.join(self.temp_dir, f"{self.session_id}_history.log")
 
     def _get_state_filename(self, step):
         """Generate a filename for the specified step."""
@@ -2602,6 +2611,12 @@ class UndoRedoManager(QObject):
                 # Set the step pointers to match the loaded state
                 self.current_step = loaded_step
                 self.max_step = max_step
+
+                # The cached provenance describes the session we just left. Its
+                # step numbers collide with the loaded session's, and the cache
+                # is preferred over the files, so it has to be rebuilt from the
+                # states now on disk or every label would name the wrong edit.
+                self._reload_metadata_from_files()
 
                 # Refresh UI
                 if hasattr(self.layer_panel, 'refresh'):

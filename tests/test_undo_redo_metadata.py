@@ -34,6 +34,10 @@ class MoveMode(FakeMode):
     pass
 
 
+class AttachMode(FakeMode):
+    pass
+
+
 class FakeStrand:
     def __init__(self, layer_name):
         self.layer_name = layer_name
@@ -77,10 +81,31 @@ def test_the_active_mode_is_recorded_even_when_the_caller_says_nothing():
     assert record["origin"] == "layer_panel.py:some_handler"
 
 
-def test_the_mode_falls_back_to_the_mode_object_class():
+def test_the_mode_comes_from_the_mode_object_class():
     canvas = FakeCanvas()
     del canvas.current_mode_name
     assert meta.infer_mode(canvas) == "move"
+
+
+def test_the_live_mode_object_beats_a_remembered_name_that_went_stale():
+    # select_strand swaps current_mode straight to attach mode without going
+    # through set_mode, so the remembered name lags behind the real tool.
+    canvas = FakeCanvas()
+    canvas.current_mode = AttachMode()
+    canvas.current_mode_name = "rotate"          # stale
+    assert meta.infer_mode(canvas) == "attach"
+
+
+def test_the_remembered_name_covers_what_no_mode_object_can_express():
+    canvas = FakeCanvas()
+    canvas.current_mode = None                   # set_mode("new_strand")
+    canvas.current_mode_name = "new_strand"
+    assert meta.infer_mode(canvas) == "new_strand"
+    canvas.current_mode = "control_points"       # set_mode stores a bare string
+    assert meta.infer_mode(canvas) == "control_points"
+    canvas.current_mode = None
+    canvas.current_mode_name = None
+    assert meta.infer_mode(canvas) is None
 
 
 def test_a_described_action_names_what_it_touched_and_where_it_came_from():
@@ -235,3 +260,49 @@ def test_the_button_tooltip_names_the_action_and_survives_an_unrecorded_state():
     record = meta.build_metadata("layer.delete", source="panel", targets=["2_1"])
     assert UndoRedoManager._with_action("Undo", record) == "Undo\nDeleted a layer (2_1)"
     assert UndoRedoManager._with_action("Undo", None) == "Undo"
+
+
+def test_a_failed_metadata_rewrite_leaves_the_snapshot_intact(tmp_path, monkeypatch):
+    """The record is an annotation; losing it must never cost the undo step."""
+    path = tmp_path / "state.json"
+    original = json.dumps({"strands": [{"layer_name": "1_1"}], "groups": {}})
+    path.write_text(original, encoding="utf-8")
+
+    def explode(*args, **kwargs):
+        raise OSError("no space left on device")
+
+    monkeypatch.setattr(meta.json, "dump", explode)
+    assert meta.write_metadata(str(path), meta.build_metadata("attach.new")) is False
+    # The drawing is still there, byte for byte, and no debris was left behind.
+    assert path.read_text(encoding="utf-8") == original
+    assert [p.name for p in tmp_path.iterdir()] == ["state.json"]
+
+
+def test_the_readable_log_follows_the_session_being_worked_on(tmp_path):
+    manager, _ = make_manager(tmp_path)
+    first = manager.journal_path
+    assert manager.session_id in first
+
+    # load_specific_state adopts another session's id mid-run; the log has to
+    # follow it rather than keep appending to the session we left.
+    manager.session_id = "20200101000000"
+    assert manager.journal_path != first
+    assert "20200101000000_history.log" in manager.journal_path
+
+
+def test_adopting_another_session_rebuilds_the_records_from_its_files(tmp_path):
+    manager, canvas = make_manager(tmp_path)
+    manager.save_state(allow_empty=True, action="attach.new", targets=["1_1"])
+    assert manager.metadata_for_step(1)["action"] == "attach.new"
+
+    # A second session writes its own step 1 with a different action.
+    other = "20200101000000"
+    manager.session_id = other
+    canvas.strands.append(FakeStrand("2_1"))
+    manager.current_step = 0
+    manager.max_step = 0
+    manager.save_state(allow_empty=True, action="mask.create", targets=["2_1"])
+
+    # Back to the first session: the cache must not answer with the other one's.
+    manager._reload_metadata_from_files()
+    assert manager.metadata_for_step(1)["action"] == "mask.create"

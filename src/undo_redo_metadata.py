@@ -18,6 +18,7 @@ without a display.
 
 import json
 import os
+import tempfile
 from datetime import datetime
 
 # Metadata is stored under this key inside a state file. load_strands ignores
@@ -101,18 +102,24 @@ MODE_CLASS_NAMES = {
 
 
 def infer_mode(canvas):
-    """The name of the mode active on `canvas`, or None."""
+    """The name of the mode active on `canvas`, or None.
+
+    The mode OBJECT is read first because it cannot go stale: parts of the
+    canvas swap current_mode directly (select_strand drops back to attach mode
+    without going through set_mode), and trusting the remembered name there
+    would credit the state to whatever tool was held before. The name is the
+    fallback for the two cases an object cannot express — set_mode("new_strand")
+    leaves current_mode None, and "control_points" is stored as a bare string.
+    """
     if canvas is None:
         return None
-    name = getattr(canvas, "current_mode_name", None)
-    if isinstance(name, str) and name:
-        return name
     mode = getattr(canvas, "current_mode", None)
-    if mode is None:
-        return None
-    if isinstance(mode, str):        # set_mode("control_points") stores a string
+    if isinstance(mode, str) and mode:   # set_mode("control_points")
         return mode
-    return MODE_CLASS_NAMES.get(type(mode).__name__, type(mode).__name__)
+    if mode is not None:
+        return MODE_CLASS_NAMES.get(type(mode).__name__, type(mode).__name__)
+    name = getattr(canvas, "current_mode_name", None)
+    return name if isinstance(name, str) and name else None
 
 
 def _clean_targets(targets):
@@ -214,21 +221,36 @@ def write_metadata(filename, meta):
 
     Injected after save_strands rather than through it so the save format stays
     the single source of truth for the drawing itself. A failure here must never
-    cost the state: the snapshot is already on disk and stays valid without it.
+    cost the state, so the rewrite goes to a temporary file in the same
+    directory and is moved over the original only once it is complete: opening
+    the snapshot itself for writing would truncate it, and a dump that then
+    failed (a full disk, an I/O error) would destroy the undo step this is only
+    supposed to annotate.
     """
     if not meta or not filename or not os.path.exists(filename):
         return False
+    tmp_path = None
     try:
         with open(filename, "r", encoding="utf-8") as f:
             data = json.load(f)
         if not isinstance(data, dict):
             return False
         data[METADATA_KEY] = meta
-        with open(filename, "w", encoding="utf-8") as f:
+        directory = os.path.dirname(os.path.abspath(filename))
+        handle, tmp_path = tempfile.mkstemp(prefix=".undo_meta_", suffix=".json", dir=directory)
+        with os.fdopen(handle, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
+        os.replace(tmp_path, filename)   # atomic: the state file is never half-written
+        tmp_path = None
         return True
     except Exception:
         return False
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
 
 
 def read_metadata(filename):

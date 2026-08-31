@@ -13,6 +13,8 @@ from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from translations import translations
 from save_load_manager import load_strands, apply_loaded_strands
+# Reads the provenance recorded with each undo/redo state, for the History page.
+from undo_redo_metadata import describe as describe_history, read_metadata as read_history_metadata
 from segmented_spin_box import upgrade_and_style_all, upgrade_spinbox, style_segmented_spinbox
 import os
 import sys
@@ -3347,6 +3349,22 @@ class SettingsDialog(QDialog):
             self.history_list.setLayoutDirection(Qt.LeftToRight)
         self.history_list.setToolTip(_['history_list_tooltip'] if 'history_list_tooltip' in _ else "Select a session to load its final state")
         history_layout.addWidget(self.history_list)
+
+        # What was actually DONE, not just how many states exist. With no session
+        # selected this lists the current session's activity (every edit, undo and
+        # redo in order); selecting a past session lists what produced each of its
+        # saved states. See undo_redo_metadata.py.
+        self.history_actions_label = QLabel(_['history_actions'])
+        if self.is_rtl_language(self.current_language):
+            history_layout.addWidget(self.history_actions_label, 0, Qt.AlignLeft)
+        else:
+            history_layout.addWidget(self.history_actions_label)
+
+        self.history_actions_list = QListWidget()
+        if self.is_rtl_language(self.current_language):
+            self.history_actions_list.setLayoutDirection(Qt.LeftToRight)
+        self.history_actions_list.setSelectionMode(QListWidget.NoSelection)
+        history_layout.addWidget(self.history_actions_list)
         
         # Move the populate_history_list call to after button creation
         # self.populate_history_list() - Removing this call from here
@@ -3356,6 +3374,7 @@ class SettingsDialog(QDialog):
         self.load_history_button.clicked.connect(self.load_selected_history)
         self.load_history_button.setEnabled(False) # Disable initially
         self.history_list.currentItemChanged.connect(lambda item: self.load_history_button.setEnabled(item is not None))
+        self.history_list.currentItemChanged.connect(lambda item: self.populate_history_actions(item))
 
         self.clear_history_button = QPushButton(_['clear_all_history'])
         self.clear_history_button.clicked.connect(self.clear_all_history_action)
@@ -3368,6 +3387,7 @@ class SettingsDialog(QDialog):
         
         # Call populate_history_list after creating all the UI elements it needs
         self.populate_history_list()
+        self.populate_history_actions()
         
         self.stacked_widget.addWidget(self.history_widget)
 
@@ -5146,8 +5166,10 @@ class SettingsDialog(QDialog):
         self.load_history_button.setText(_['load_selected_history'])
         self.clear_history_button.setText(_['clear_all_history'])
         self.history_list.setToolTip(_['history_list_tooltip'] if 'history_list_tooltip' in _ else "Select a session to load its final state")
+        self.history_actions_label.setText(_['history_actions'])
         # Refresh history list to apply new language translations and RTL formatting
         self.populate_history_list()
+        self.populate_history_actions(self.history_list.currentItem())
         # Update What's New page elements
         self.whats_new_text_browser.setHtml(self.render_whats_new_html(_['whats_new_info']))
         # Update about text browser instead of label
@@ -6821,6 +6843,62 @@ class SettingsDialog(QDialog):
                     self.history_list.addItem(item)
             self.clear_history_button.setEnabled(True) # Enable clear if history exists
             
+    def populate_history_actions(self, selected_item=None):
+        """List what was done — this session's activity, or a past session's.
+
+        With no session selected this shows the running journal of the current
+        session (edits, undos and redos, newest first). With one selected it
+        reads the provenance recorded inside that session's state files, which
+        is why a recovered session can still say what produced each step.
+        """
+        if not hasattr(self, 'history_actions_list'):
+            return
+        _ = translations[self.current_language]
+        self.history_actions_list.clear()
+
+        rows = []
+        if selected_item is not None and self.undo_redo_manager:
+            filepath = selected_item.data(Qt.UserRole)
+            if filepath:
+                directory = os.path.dirname(filepath)
+                session_id = os.path.basename(filepath).split('_')[0]
+                steps = []
+                try:
+                    for filename in os.listdir(directory):
+                        if not filename.startswith(session_id + '_') or not filename.endswith('.json'):
+                            continue
+                        try:
+                            step = int(filename[len(session_id) + 1:-len('.json')])
+                        except ValueError:
+                            continue
+                        steps.append((step, os.path.join(directory, filename)))
+                except OSError:
+                    steps = []
+                for step, path in sorted(steps, reverse=True):
+                    rows.append("{}. {}".format(step, describe_history(read_history_metadata(path))))
+        elif self.undo_redo_manager:
+            for event in reversed(self.undo_redo_manager.get_session_journal()):
+                prefix = {'undo': 'Undo: ', 'redo': 'Redo: '}.get(event['kind'], '')
+                rows.append("{}  {}{}".format(event['at'], prefix, event['description']))
+
+        if not rows:
+            # The placeholder is a row like any other: it takes the same
+            # alignment, or it reads left-aligned in a right-aligned list.
+            empty_item = QListWidgetItem(_['no_actions_recorded'])
+            if self.is_rtl_language(self.current_language):
+                empty_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            else:
+                empty_item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            self.history_actions_list.addItem(empty_item)
+            return
+        for row in rows:
+            item = QListWidgetItem(row)
+            if self.is_rtl_language(self.current_language):
+                item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            else:
+                item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            self.history_actions_list.addItem(item)
+
     def load_selected_history(self):
         """Loads the final state of the selected history session."""
         _ = translations[self.current_language]

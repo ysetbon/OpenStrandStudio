@@ -34,9 +34,13 @@ class _StubUndoManager:
     def __init__(self):
         self.saves = 0
         self._last_save_time = 99
+        self.last_save_kwargs = {}
 
-    def save_state(self):
+    # save_state now also takes the provenance of the state being saved
+    # (undo_redo_metadata.py): what action produced it, and on what.
+    def save_state(self, allow_empty=False, **kwargs):
         self.saves += 1
+        self.last_save_kwargs = kwargs
 
 
 class _StubCanvas:
@@ -99,6 +103,21 @@ def test_chip_paste_on_unticked_layer_hits_that_layer_only():
 
     panel.multi_selected_layers = {1}
     assert panel.paste_strand_data_via_chip(2, "start") == 1  # unticked -> alone
+    # The chip is a layer-button control, not the copy/paste menu: the history
+    # has to name the surface the paste actually came from.
+    assert panel.canvas.undo_redo_manager.last_save_kwargs['source'] == 'panel'
+
+
+def test_a_menu_paste_is_recorded_as_a_menu_paste():
+    panel = make_panel()
+    panel.copy_strand_data(0)
+    panel.multi_selected_layers = {1, 2}
+
+    assert panel.paste_copied_strand_data("start") == 2
+    kwargs = panel.canvas.undo_redo_manager.last_save_kwargs
+    assert kwargs['source'] == 'menu'
+    assert kwargs['action'] == 'strand.paste'
+    assert 'start' in kwargs['detail']
 
 
 def test_batch_paste_is_one_undo_step_and_keeps_clipboard():

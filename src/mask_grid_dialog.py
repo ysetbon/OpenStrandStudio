@@ -658,7 +658,9 @@ class MaskGridDialog(QDialog):
                 setattr(undo_redo_manager, '_skip_save', False)
                 setattr(undo_redo_manager, '_mask_save_in_progress', False)
                 # Save state once for all masks created
-                undo_redo_manager.save_state()
+                undo_redo_manager.save_state(
+                    action='mask.create', source='dialog',
+                    detail='{} pairs from the mask grid'.format(len(mask_pairs)))
 
     def _refresh_table(self):
         """Refresh the table to reflect current mask state (both created and deleted masks)."""

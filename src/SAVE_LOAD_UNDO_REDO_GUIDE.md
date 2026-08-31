@@ -69,11 +69,27 @@ def toggle_my_property(self, strand, layer_panel):
         if layer_panel and hasattr(layer_panel, 'canvas'):
             layer_panel.canvas.update()
 
-            # Save state for undo/redo
+            # Save state for undo/redo, recording WHAT produced this state
+            # (see "Recording WHAT Produced a State" below).
             if hasattr(layer_panel.canvas, 'undo_redo_manager'):
                 # Force save by resetting the last save time
                 layer_panel.canvas.undo_redo_manager._last_save_time = 0
-                layer_panel.canvas.undo_redo_manager.save_state()
+                layer_panel.canvas.undo_redo_manager.save_state(
+                    action='strand.my_new_property',   # add it to ACTIONS first
+                    source='menu',
+                    targets=[getattr(strand, 'layer_name', None)],
+                    detail='on' if strand.my_new_property else 'off',
+                )
+```
+
+Add the id to `ACTIONS` in `undo_redo_metadata.py` at the same time, so the
+history reads "Toggled my new property" rather than the prettified id:
+
+```python
+ACTIONS = {
+    # ...
+    "strand.my_new_property": "Toggled my new property",
+}
 ```
 
 ## Example: Full Arrow Implementation
@@ -93,6 +109,42 @@ The `full_arrow_visible` property is a complete example of this pattern:
 
 ### 4. Toggle with Undo/Redo
 - `numbered_layer_button.py` line 2270-2282: `toggle_strand_full_arrow_visibility` function
+
+## Recording WHAT Produced a State
+
+Every saved state also carries a record of the action behind it — the mode that
+was active, or the panel, dialog or menu entry responsible — so the undo stack
+doubles as a log of what was done. `undo_redo_metadata.py` owns that record;
+`save_state` takes it:
+
+```python
+undo_redo_manager.save_state(
+    action='strand.hidden',      # an id from undo_redo_metadata.ACTIONS
+    source='menu',               # mode / panel / dialog / menu / shortcut / system
+    targets=[strand.layer_name], # what it touched (names, strands, or indices via layer_names)
+    detail='hidden',             # anything extra worth reading back
+)
+```
+
+Nothing is mandatory: a `save_state()` with no arguments still records the
+active mode and the calling function, so no state is completely anonymous. Add
+a new id to `ACTIONS` when you add a new kind of edit — an uncatalogued id still
+renders readably, it just reads as its own name.
+
+The record is written **inside the state file** (`undo_metadata`), so it
+survives a restart, `export_history`/`import_history` and session recovery.
+Older state files simply have none and read back as unrecorded.
+
+What it feeds:
+
+- The undo/redo button tooltips, which name the action they would reverse or replay.
+- The **Recorded actions** list on the Settings → History page: this session's
+  activity (edits, undos and redos), or a past session's saved steps.
+- A readable log next to the state files (`<session id>_history.log`).
+- `undo_redo_manager.get_history_entries()` / `get_session_journal()` for anything else.
+
+When adding a new property toggle (the walkthrough above), pass an `action` in
+step 4 — that is the only extra line the history needs.
 
 ## Key Implementation Details
 

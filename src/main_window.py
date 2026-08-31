@@ -2832,7 +2832,9 @@ class MainWindow(QMainWindow):
             if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
                 # Force immediate save to capture this state change
                 self.canvas.undo_redo_manager._last_save_time = 0
-                self.canvas.undo_redo_manager.save_state()
+                self.canvas.undo_redo_manager.save_state(
+                    action='system.setting', source='panel',
+                    detail='control points ' + ('on' if current_state else 'off'))
                 pass
         
         # Update all strands' control points visibility

@@ -682,6 +682,7 @@ class GroupShadowEditorDialog(QDialog):
 
         if hasattr(self.canvas, 'undo_redo_manager') and self.canvas.undo_redo_manager:
             self.canvas.undo_redo_manager._last_save_time = 0
-            self.canvas.undo_redo_manager.save_state()
+            self.canvas.undo_redo_manager.save_state(
+                action='group.shadow', source='dialog', targets=[self.group_name])
 
         super().closeEvent(event)

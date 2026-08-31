@@ -517,6 +517,10 @@ class StrandDrawingCanvas(QWidget):
 
         # Set initial mode to attach
         self.current_mode = self.attach_mode
+        # The mode NAME as set_mode was called with it. current_mode is a mode
+        # object (and None while drawing a new strand), so the undo/redo
+        # provenance record reads this rather than guessing from the class.
+        self.current_mode_name = "attach"
 
         # Connect mode-specific signals (if any)
         # For example:
@@ -3073,7 +3077,9 @@ class StrandDrawingCanvas(QWidget):
         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
             # Force immediate save to capture this state change
             self.undo_redo_manager._last_save_time = 0
-            self.undo_redo_manager.save_state()
+            self.undo_redo_manager.save_state(
+                action='system.setting', source='panel',
+                detail='control points ' + ('on' if self.show_control_points else 'off'))
             pass
 
     def toggle_shadow(self):
@@ -3101,7 +3107,9 @@ class StrandDrawingCanvas(QWidget):
         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
             # Force immediate save to capture this state change
             self.undo_redo_manager._last_save_time = 0
-            self.undo_redo_manager.save_state()
+            self.undo_redo_manager.save_state(
+                action='system.setting', source='panel',
+                detail='shadow ' + ('on' if self.shadow_enabled else 'off'))
             pass
         
     def set_shadow_color(self, color):
@@ -4983,6 +4991,9 @@ class StrandDrawingCanvas(QWidget):
         self.is_angle_adjusting = False
         self.mask_mode_active = False
         self.is_drawing_new_strand = False
+
+        # Remember the name for the undo/redo provenance record.
+        self.current_mode_name = mode
 
         # Set the new mode
         if mode == "attach":
@@ -7377,7 +7388,9 @@ class StrandDrawingCanvas(QWidget):
         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
             # Force immediate save to capture this state change
             self.undo_redo_manager._last_save_time = 0
-            self.undo_redo_manager.save_state()
+            self.undo_redo_manager.save_state(
+                action='strand.reset_mask', source='menu',
+                targets=[getattr(strand, 'layer_name', None)])
             pass
 
         pass

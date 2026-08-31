@@ -17,6 +17,11 @@ from PyQt5.QtCore import QTimer
 # We'll work with instances that are already created
 from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
+# Provenance of each saved state: which mode / panel / dialog produced it.
+from undo_redo_metadata import (
+    ACTIONS, append_journal, build_metadata, describe, read_metadata, short_label,
+    write_metadata,
+)
 
 # StrokeTextButton class incorporated directly into this file
 class StrokeTextButton(QPushButton):
@@ -339,6 +344,15 @@ class UndoRedoManager(QObject):
         self.session_id = datetime.now().strftime("%Y%m%d%H%M%S")
         self.undo_button = None
         self.redo_button = None
+
+        # Provenance (undo_redo_metadata.py). `_state_metadata` maps a step to
+        # the record of what created it — the authoritative copy lives inside
+        # the step's own JSON file, this is the read cache. `history_journal`
+        # is the session's running record of everything done, the undos and
+        # redos included, and it is mirrored to a readable log next to the
+        # state files.
+        self._state_metadata = {}
+        self.history_journal = []
         
         # Connect signals
         self.undo_performed.connect(self._update_button_states)
@@ -355,15 +369,32 @@ class UndoRedoManager(QObject):
         os.makedirs(temp_dir, exist_ok=True)
         return temp_dir
 
+    @property
+    def journal_path(self):
+        """The readable history log for the CURRENT session.
+
+        Derived rather than stored: load_specific_state adopts another
+        session's id mid-run, and a path frozen at construction would keep
+        appending this session's lines to the old session's log.
+        """
+        return os.path.join(self.temp_dir, f"{self.session_id}_history.log")
+
     def _get_state_filename(self, step):
         """Generate a filename for the specified step."""
         return os.path.join(self.temp_dir, f"{self.session_id}_{step}.json")
 
-    def save_state(self, allow_empty=False):
-        """Save the current state of strands and groups for undo/redo."""
+    def save_state(self, allow_empty=False, action=None, source=None, targets=None, detail=None):
+        """Save the current state of strands and groups for undo/redo.
+
+        The optional action/source/targets/detail describe WHAT is being saved —
+        the menu entry, dialog or panel button behind this state. Callers that
+        say nothing still get a record: the active mode and the calling function
+        are always captured, so no state is completely anonymous.
+        """
         # Add debug logging to track save_state calls
         import traceback
         caller_info = traceback.extract_stack()[-2]  # Get the caller info
+        origin = "{}:{}".format(os.path.basename(caller_info.filename), caller_info.name)
         
         # Check skip_save flag
         skip_save = getattr(self, '_skip_save', False)
@@ -408,10 +439,17 @@ class UndoRedoManager(QObject):
         self.current_step += 1
         self.max_step = self.current_step
         
+        # Record what produced this state before writing it, so the record ends
+        # up inside the state file itself and travels with it.
+        metadata = build_metadata(action=action, source=source, targets=targets,
+                                  detail=detail, canvas=self.canvas, origin=origin)
+
         # Save the state file
-        filename = self._save_state_file(self.current_step)
+        filename = self._save_state_file(self.current_step, metadata)
         
         if filename:
+            self._state_metadata[self.current_step] = metadata
+            self._journal('edit', metadata)
             # Signal that a state was saved
             self.state_saved.emit(self.current_step)
             
@@ -419,6 +457,7 @@ class UndoRedoManager(QObject):
             self._update_button_states()
         else:
             # If save failed, revert step counter
+            self._state_metadata.pop(self.current_step, None)
             self.current_step -= 1
             if self.max_step > self.current_step:
                 self.max_step = self.current_step
@@ -1035,6 +1074,7 @@ class UndoRedoManager(QObject):
                     os.remove(filename)
             except OSError as e:
                 pass
+            self._state_metadata.pop(step, None)
         
         # Reset max_step to current_step
         self.max_step = self.current_step
@@ -1061,7 +1101,7 @@ class UndoRedoManager(QObject):
         else:
             pass
 
-    def _save_state_file(self, step):
+    def _save_state_file(self, step, metadata=None):
         """Save the current state of the canvas to a file."""
         filename = self._get_state_filename(step)
         
@@ -1071,12 +1111,125 @@ class UndoRedoManager(QObject):
                          self.canvas.groups if hasattr(self.canvas, 'groups') else {},
                          filename,
                          self.canvas)
+            # The provenance rides inside the state file, so it survives an app
+            # restart, export_history/import_history and session recovery. It is
+            # written after the snapshot and never at its expense.
+            if metadata:
+                write_metadata(filename, metadata)
             self.state_saved.emit(step)
             return True
         except Exception as e:
             return False
 
+    # ---------------------------------------------------------------- history record
+
+    def _journal(self, kind, metadata):
+        """Add one event to the session journal and its readable log file.
+
+        `kind` is 'edit', 'undo' or 'redo'. Undos and redos are journalled too:
+        they create no new state, but they ARE things the user did, and a log
+        that omitted them would not match what happened.
+        """
+        entry = {"kind": kind, "meta": metadata, "at": datetime.now().isoformat(timespec="seconds")}
+        self.history_journal.append(entry)
+        # The log line is stamped with when this happened, not when the state it
+        # names was created — an undo replays a record made minutes earlier.
+        append_journal(self.journal_path, kind, metadata, entry["at"])
+        return entry
+
+    def metadata_for_step(self, step):
+        """The record of what produced `step`, or None.
+
+        Reads through to the state file when it is not cached, so states written
+        by an earlier run of the app (session recovery, an imported history) can
+        still say what made them.
+        """
+        if step is None or step <= 0:
+            return None
+        if step in self._state_metadata:
+            return self._state_metadata[step]
+        metadata = read_metadata(self._get_state_filename(step))
+        if metadata:
+            self._state_metadata[step] = metadata
+        return metadata
+
+    def _adopt_session(self, detail):
+        """Take over another session's history: its records, its journal, its log.
+
+        Both the loaded and the imported paths swap this manager onto a
+        different set of state files. Everything keyed to a session has to move
+        with it — the record cache (whose step numbers collide with the new
+        session's), and the journal, which is presented as "this session's
+        activity" and would otherwise list the actions of the session just
+        abandoned. journal_path follows session_id on its own.
+        """
+        self._reload_metadata_from_files()
+        self.history_journal = []
+        self._journal('load', build_metadata(
+            action='system.load', source='system', detail=detail, canvas=self.canvas))
+
+    def _reload_metadata_from_files(self):
+        """Rebuild the cache from the state files on disk (after an import)."""
+        self._state_metadata = {}
+        for step in range(1, self.max_step + 1):
+            metadata = read_metadata(self._get_state_filename(step))
+            if metadata:
+                self._state_metadata[step] = metadata
+
+    def current_state_description(self):
+        """What produced the state currently on the canvas."""
+        return describe(self.metadata_for_step(self.current_step))
+
+    def get_history_entries(self):
+        """Every saved step, oldest first, with what produced it.
+
+        Returns dicts of {step, metadata, description, is_current} — the data a
+        history view needs to list what was done rather than just how many
+        anonymous steps exist.
+        """
+        entries = []
+        for step in range(1, self.max_step + 1):
+            metadata = self.metadata_for_step(step)
+            entries.append({
+                "step": step,
+                "metadata": metadata,
+                "description": describe(metadata),
+                "is_current": step == self.current_step,
+            })
+        return entries
+
+    def get_session_journal(self):
+        """The session's running record: every edit, undo and redo in order."""
+        return [{
+            "kind": e["kind"],
+            "at": e["at"],
+            "description": describe(e["meta"]),
+            "metadata": e["meta"],
+        } for e in self.history_journal]
+
     def undo(self):
+        """Undo one step, recording it in the session journal."""
+        # The state being left carries the action that created it — which is
+        # exactly what this undo reverses.
+        reversed_action = self.metadata_for_step(self.current_step)
+        before = self.current_step
+        result = self._undo_impl()
+        if self.current_step != before:
+            self._journal('undo', reversed_action)
+            self._update_button_states()
+        return result
+
+    def redo(self):
+        """Redo one step, recording it in the session journal."""
+        before = self.current_step
+        result = self._redo_impl()
+        if self.current_step != before:
+            # Re-entering a state replays the action that made it.
+            self._journal('redo', self.metadata_for_step(self.current_step))
+            self._update_button_states()
+        return result
+
+    def _undo_impl(self):
         """Load the previous state if available."""
         if self.current_step > 0:
             # Store the current strands for comparison
@@ -1546,7 +1699,7 @@ class UndoRedoManager(QObject):
                     # If no visual difference found, skip this state and continue undoing
                     if not has_visual_difference:
                         # Recursively call undo to get to the next state
-                        return self.undo()
+                        return self._undo_impl()
                 
             self.undo_performed.emit()
             
@@ -1594,7 +1747,7 @@ class UndoRedoManager(QObject):
         else:
             pass
 
-    def redo(self):
+    def _redo_impl(self):
         """Load the next state if available."""
         if self.current_step < self.max_step:
             # Store the current strands for comparison
@@ -2008,7 +2161,7 @@ class UndoRedoManager(QObject):
                     # If no visual difference found, skip this state and continue redoing
                     if not has_visual_difference:
                         # Recursively call redo to get to the next state
-                        return self.redo() # Return the result of the recursive call
+                        return self._redo_impl() # Return the result of the recursive call
                     else:
                         pass
                         
@@ -2476,6 +2629,13 @@ class UndoRedoManager(QObject):
                 self.current_step = loaded_step
                 self.max_step = max_step
 
+                # The cached provenance describes the session we just left. Its
+                # step numbers collide with the loaded session's, and the cache
+                # is preferred over the files, so it has to be rebuilt from the
+                # states now on disk or every label would name the wrong edit.
+                self._adopt_session(
+                    'session {} at step {}'.format(loaded_session_id, loaded_step))
+
                 # Refresh UI
                 if hasattr(self.layer_panel, 'refresh'):
                     self.layer_panel.refresh()
@@ -2584,7 +2744,9 @@ class UndoRedoManager(QObject):
             
             _ = translations[language_code]
             if can_undo:
-                self.undo_button.set_custom_tooltip(_['undo_tooltip'])
+                # Say WHAT would be undone, not just that undo is available.
+                self.undo_button.set_custom_tooltip(
+                    self._with_action(_['undo_tooltip'], self.metadata_for_step(self.current_step)))
             else:
                 # Add "currently unavailable" to the tooltip when disabled
                 unavailable_text = _['currently_unavailable'] if 'currently_unavailable' in _ else 'Currently unavailable'
@@ -2607,7 +2769,8 @@ class UndoRedoManager(QObject):
             
             _ = translations[language_code]
             if can_redo:
-                self.redo_button.set_custom_tooltip(_['redo_tooltip'])
+                self.redo_button.set_custom_tooltip(
+                    self._with_action(_['redo_tooltip'], self.metadata_for_step(self.current_step + 1)))
             else:
                 # Add "currently unavailable" to the tooltip when disabled
                 unavailable_text = _['currently_unavailable'] if 'currently_unavailable' in _ else 'Currently unavailable'
@@ -2730,6 +2893,16 @@ class UndoRedoManager(QObject):
         
         return self.undo_button, self.redo_button
     
+    @staticmethod
+    def _with_action(tooltip, metadata):
+        """Append the recorded action to a button tooltip.
+
+        An unrecorded state (an older state file, or a save from a build without
+        this feature) leaves the tooltip exactly as the app has always shown it.
+        """
+        label = short_label(metadata)
+        return f"{tooltip}\n{label}" if label else tooltip
+
     def update_button_tooltips(self, language_code='en'):
         """Update button tooltips with the current language"""
         if self.undo_button and self.redo_button:
@@ -2738,13 +2911,15 @@ class UndoRedoManager(QObject):
             
             # Check if buttons are enabled and set appropriate tooltip
             if self.undo_button.isEnabled():
-                self.undo_button.set_custom_tooltip(_['undo_tooltip'])
+                self.undo_button.set_custom_tooltip(
+                    self._with_action(_['undo_tooltip'], self.metadata_for_step(self.current_step)))
             else:
                 unavailable_text = _['currently_unavailable'] if 'currently_unavailable' in _ else 'Currently unavailable'
                 self.undo_button.set_custom_tooltip(_['undo_tooltip'] + f'\n({unavailable_text})')
                 
             if self.redo_button.isEnabled():
-                self.redo_button.set_custom_tooltip(_['redo_tooltip'])
+                self.redo_button.set_custom_tooltip(
+                    self._with_action(_['redo_tooltip'], self.metadata_for_step(self.current_step + 1)))
             else:
                 unavailable_text = _['currently_unavailable'] if 'currently_unavailable' in _ else 'Currently unavailable'
                 self.redo_button.set_custom_tooltip(_['redo_tooltip'] + f'\n({unavailable_text})')
@@ -2761,10 +2936,14 @@ class UndoRedoManager(QObject):
 
         self.current_step = 0
         self.max_step = 0
+        # The step records described files that no longer exist. The session
+        # journal is NOT cleared: it records what was done, not what can still
+        # be undone.
+        self._state_metadata = {}
 
         if save_current:
             # Save current state as the initial state (step 1)
-            self.save_state() # This increments current_step to 1 and saves
+            self.save_state(action='system.new', source='system')  # increments current_step to 1 and saves
         else:
             # If not saving current, just reset steps and update buttons
             self._update_button_states()
@@ -2906,7 +3085,8 @@ class UndoRedoManager(QObject):
             # This guarantees that any changes since the last automatic save
             # are included in the exported history.
             if not self._would_be_identical_save():
-                self.save_state()
+                self.save_state(action='system.setting', source='system',
+                                detail='captured before exporting the history')
 
             history_payload = {
                 "type": "OpenStrandStudioHistory",
@@ -3000,6 +3180,10 @@ class UndoRedoManager(QObject):
             if not load_success:
                 return False
 
+            # The recreated files carry their own provenance — read it back so
+            # an imported history still says what produced each step.
+            self._adopt_session('imported history, {} steps'.format(self.max_step))
+
             # Update UI buttons
             self._update_button_states()
             return True
@@ -3084,6 +3268,9 @@ def connect_to_move_mode(canvas, undo_redo_manager):
             # IMPORTANT: Capture control point flags BEFORE they get reset
             was_moving_control_point = getattr(canvas.move_mode, 'is_moving_control_point', False)
             was_moving_bias_control = getattr(canvas.move_mode, 'is_moving_bias_control', False)
+            # Capture WHICH strand was dragged before the release resets the mode,
+            # so the saved state can name it.
+            moved_strand = getattr(canvas.move_mode, 'affected_strand', None)
             
             # Call the original function first to finalize the move and reset flags
             original_mouse_release(event)
@@ -3097,7 +3284,10 @@ def connect_to_move_mode(canvas, undo_redo_manager):
                 # If a control point was being moved (including bias controls), reset the last save time to force a new state
                 if was_moving_control_point or was_moving_bias_control:
                     undo_redo_manager._last_save_time = 0
-                undo_redo_manager.save_state()
+                undo_redo_manager.save_state(
+                    action='move.strand', source='mode',
+                    targets=[getattr(moved_strand, 'layer_name', None)] if moved_strand else None,
+                    detail='control point' if (was_moving_control_point or was_moving_bias_control) else None)
             else:
                 pass
         
@@ -3163,7 +3353,7 @@ def connect_to_attach_mode(canvas, undo_redo_manager):
                     
                     # Temporarily lift the suppression to allow exactly one save
                     setattr(undo_redo_manager, '_skip_save', False)
-                    undo_redo_manager.save_state()
+                    undo_redo_manager.save_state(action='attach.child', source='mode')
                     
                     # Mark as completed to prevent duplicate saves
                     setattr(undo_redo_manager, '_attach_save_completed', True)
@@ -3211,7 +3401,7 @@ def connect_to_mask_mode(canvas, undo_redo_manager):
                 
                 # Temporarily lift the suppression to allow exactly one save
                 setattr(undo_redo_manager, '_skip_save', False)
-                undo_redo_manager.save_state()
+                undo_redo_manager.save_state(action='mask.create', source='mode')
                 
                 # Mark as completed to prevent duplicate saves
                 setattr(undo_redo_manager, '_mask_save_completed', True)
@@ -3255,7 +3445,9 @@ def connect_to_group_operations(canvas, undo_redo_manager):
                 # For operations that have completion functions, we'll save state at completion
                 # For other operations, save state immediately
                 if operation not in ["move", "rotate", "edit_angles"]:
-                    undo_redo_manager.save_state()
+                    undo_redo_manager.save_state(
+                        action='group.' + operation if 'group.' + operation in ACTIONS else 'group.edit',
+                        source='panel', targets=[group_name], detail=operation)
                 
             # Connect the signal
             group_manager.group_operation.connect(on_group_operation)
@@ -3267,7 +3459,8 @@ def connect_to_group_operations(canvas, undo_redo_manager):
         original_canvas_finish_move = canvas.finish_group_move
         def enhanced_canvas_finish_move(*args, **kwargs):
             result = original_canvas_finish_move(*args, **kwargs)
-            undo_redo_manager.save_state()
+            undo_redo_manager.save_state(action='group.move', source='dialog',
+                                         targets=[a for a in args if isinstance(a, str)])
             return result
         canvas.finish_group_move = enhanced_canvas_finish_move
         
@@ -3332,7 +3525,9 @@ def connect_strand_creation(canvas, undo_redo_manager):
                 
             # Save state for regular main strands only
             # Use a small delay to ensure all strand properties and connections are established
-            QTimer.singleShot(50, lambda: undo_redo_manager.save_state())
+            QTimer.singleShot(50, lambda: undo_redo_manager.save_state(
+                action='attach.new', source='mode',
+                targets=[getattr(strand, 'layer_name', None)]))
 
         try:
             canvas.strand_created.disconnect() # Clear previous connections if any
@@ -3434,10 +3629,12 @@ def connect_group_panel_directly(group_panel, undo_redo_manager):
             
             # Force a save anyway to ensure group creation is recorded as a separate step
             # This ensures that strand creation and group creation are treated as separate operations
-            undo_redo_manager.save_state()
+            undo_redo_manager.save_state(action='group.create', source='panel',
+                                         targets=[a for a in args if isinstance(a, str)])
         else:
             # Normal save if no recent save
-            undo_redo_manager.save_state()
+            undo_redo_manager.save_state(action='group.create', source='panel',
+                                         targets=[a for a in args if isinstance(a, str)])
             # Record the timestamp
             undo_redo_manager._last_save_time = time.time()
             # Mark that we're in a saving state
@@ -3452,7 +3649,8 @@ def connect_group_panel_directly(group_panel, undo_redo_manager):
     original_delete_group = group_panel.delete_group
     def enhanced_delete_group(*args, **kwargs):
         result = original_delete_group(*args, **kwargs)
-        undo_redo_manager.save_state()
+        undo_redo_manager.save_state(action='group.delete', source='panel',
+                                     targets=[a for a in args if isinstance(a, str)])
         return result
     group_panel.delete_group = enhanced_delete_group
     
@@ -3460,7 +3658,8 @@ def connect_group_panel_directly(group_panel, undo_redo_manager):
     original_finish_group_move = group_panel.finish_group_move
     def enhanced_finish_group_move(*args, **kwargs):
         result = original_finish_group_move(*args, **kwargs)
-        undo_redo_manager.save_state()
+        undo_redo_manager.save_state(action='group.move', source='dialog',
+                                     targets=[a for a in args if isinstance(a, str)])
         return result
     group_panel.finish_group_move = enhanced_finish_group_move
     
@@ -3488,7 +3687,9 @@ def connect_group_panel_directly(group_panel, undo_redo_manager):
         # For operations that have completion functions, we'll save state at completion
         # For other operations, save state immediately
         if operation not in ["move", "rotate", "edit_angles"]:
-            undo_redo_manager.save_state()
+            undo_redo_manager.save_state(
+                action='group.' + operation if 'group.' + operation in ACTIONS else 'group.edit',
+                source='panel', targets=[group_name], detail=operation)
     
     group_panel.group_operation.connect(on_group_operation)
     

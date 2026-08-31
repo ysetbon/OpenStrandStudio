@@ -577,7 +577,9 @@ class AngleAdjustMode:
 
             # Save state for undo/redo after angle adjustment (skip_save flag already cleared in dialog cleanup)
             if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
-                self.canvas.layer_panel.undo_redo_manager.save_state()
+                self.canvas.layer_panel.undo_redo_manager.save_state(
+                    action='angle.adjust', source='mode',
+                    targets=[getattr(self.active_strand, 'layer_name', None)])
 
             # Deactivate the angle adjust mode
             self.canvas.is_angle_adjusting = False

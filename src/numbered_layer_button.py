@@ -1663,7 +1663,9 @@ class NumberedLayerButton(QPushButton):
                 if hasattr(layer_panel.canvas, 'undo_redo_manager'):
                     # Force save with detailed logging
                     layer_panel.canvas.undo_redo_manager._last_save_time = 0
-                    layer_panel.canvas.undo_redo_manager.save_state()
+                    layer_panel.canvas.undo_redo_manager.save_state(
+                        action='strand.arrow_style', source='dialog',
+                        targets=[self.text()], detail='arrow sizes')
             elif not state_changed:
                 pass
     def setText(self, text):
@@ -1851,7 +1853,9 @@ class NumberedLayerButton(QPushButton):
                     parent = parent.parent()
 
                 if layer_panel and hasattr(layer_panel.canvas, 'undo_redo_manager') and layer_panel.canvas.undo_redo_manager:
-                    layer_panel.canvas.undo_redo_manager.save_state()
+                    layer_panel.canvas.undo_redo_manager.save_state(
+                        action='strand.hidden', source='menu', targets=[self.text()],
+                        detail='hidden' if hidden else 'shown')
                 else:
                     pass
             except Exception as e:
@@ -2185,7 +2189,8 @@ class NumberedLayerButton(QPushButton):
                     canvas.undo_redo_manager._last_save_time = 0
                     if hasattr(canvas.undo_redo_manager, '_skip_save'):
                         canvas.undo_redo_manager._skip_save = False
-                    canvas.undo_redo_manager.save_state()
+                    canvas.undo_redo_manager.save_state(
+                        action='strand.circle_stroke', source='menu', targets=[self.text()])
 
     def set_end_circle_stroke_color(self, color):
         """
@@ -2268,7 +2273,9 @@ class NumberedLayerButton(QPushButton):
                             current_parent.canvas.undo_redo_manager._last_save_time = 0
                             if hasattr(current_parent.canvas.undo_redo_manager, '_skip_save'):
                                 current_parent.canvas.undo_redo_manager._skip_save = False
-                            current_parent.canvas.undo_redo_manager.save_state()
+                            current_parent.canvas.undo_redo_manager.save_state(
+                                action='strand.end_circle_stroke', source='menu',
+                                targets=[self.text()])
                         
                         break
                     current_parent = current_parent.parent()
@@ -2889,7 +2896,10 @@ class NumberedLayerButton(QPushButton):
             # Save state before opening dialog for undo/redo
             if hasattr(layer_panel.canvas, 'undo_redo_manager') and layer_panel.canvas.undo_redo_manager:
                 layer_panel.canvas.undo_redo_manager._last_save_time = 0
-                layer_panel.canvas.undo_redo_manager.save_state()
+                layer_panel.canvas.undo_redo_manager.save_state(
+                    action='strand.shadow', source='dialog',
+                    targets=[getattr(strand, 'layer_name', None)],
+                    detail='before opening the shadow editor')
 
             # Create and show the shadow editor dialog
             dialog = ShadowEditorDialog(layer_panel.canvas, strand, parent=layer_panel)
@@ -3003,7 +3013,8 @@ class NumberedLayerButton(QPushButton):
                 # Save state for undo/redo to persist the circle stroke color change
                 if hasattr(layer_panel.canvas, 'undo_redo_manager'):
                     layer_panel.canvas.undo_redo_manager._last_save_time = 0
-                    layer_panel.canvas.undo_redo_manager.save_state()
+                    layer_panel.canvas.undo_redo_manager.save_state(
+                        action='strand.circle_stroke', source='menu', targets=[self.text()])
             else:
                 # Fall back to just updating ourselves or the parent widget
                 self.update()
@@ -3025,7 +3036,10 @@ class NumberedLayerButton(QPushButton):
                     layer_panel.canvas.undo_redo_manager._last_save_time = 0 
                     print(f"Reset _last_save_time to force save for toggling {attr_name}")
                     # --- END ADD ---
-                    layer_panel.canvas.undo_redo_manager.save_state() # save_state is called AFTER changing the attribute
+                    layer_panel.canvas.undo_redo_manager.save_state(
+                        action='strand.line_visible', source='menu',
+                        targets=[getattr(strand, 'layer_name', None)],
+                        detail=attr_name)  # save_state is called AFTER changing the attribute
                     print(f"Undo/Redo state saved after toggling {attr_name}")
                 else:
                     print("Warning: Could not find undo_redo_manager on canvas to save state.")
@@ -3194,7 +3208,10 @@ class NumberedLayerButton(QPushButton):
                     layer_panel.canvas.undo_redo_manager._last_save_time = 0 
                     print(f"Reset _last_save_time to force save for toggling {attr_name}")
                     # --- END ADD ---
-                    layer_panel.canvas.undo_redo_manager.save_state() # save_state is called AFTER changing the attribute
+                    layer_panel.canvas.undo_redo_manager.save_state(
+                        action='strand.extension', source='menu',
+                        targets=[getattr(strand, 'layer_name', None)],
+                        detail=attr_name)  # save_state is called AFTER changing the attribute
                     print(f"Undo/Redo state saved after toggling {attr_name}")
                 else:
                     print("Warning: Could not find undo_redo_manager on canvas to save state.")
@@ -3221,7 +3238,10 @@ class NumberedLayerButton(QPushButton):
                     layer_panel.canvas.undo_redo_manager._last_save_time = 0 
                     print(f"Reset _last_save_time to force save for toggling {attr_name}")
                     # --- END ADD ---
-                    layer_panel.canvas.undo_redo_manager.save_state() # save_state is called AFTER changing the attribute
+                    layer_panel.canvas.undo_redo_manager.save_state(
+                        action='strand.arrow', source='menu',
+                        targets=[getattr(strand, 'layer_name', None)],
+                        detail=attr_name)  # save_state is called AFTER changing the attribute
                     print(f"Undo/Redo state saved after toggling {attr_name}")
                 else:
                     print("Warning: Could not find undo_redo_manager on canvas to save state.")
@@ -3281,7 +3301,9 @@ class NumberedLayerButton(QPushButton):
             # Save state for undo/redo if manager exists
             if hasattr(layer_panel.canvas, 'undo_redo_manager'):
                 layer_panel.canvas.undo_redo_manager._last_save_time = 0
-                layer_panel.canvas.undo_redo_manager.save_state()
+                layer_panel.canvas.undo_redo_manager.save_state(
+                    action='strand.circle_visible', source='menu',
+                    targets=[getattr(strand, 'layer_name', None)], detail=circle_type)
         else:
             self.update()
     # --- END NEW ---
@@ -3325,16 +3347,22 @@ class NumberedLayerButton(QPushButton):
                 if hasattr(strand, 'layer_name') and strand.layer_name:
                     set_prefix = f"{strand.layer_name.split('_')[0]}_"
 
+                recolored = []
                 if set_prefix and layer_panel and hasattr(layer_panel, 'canvas'):
                     for other_strand in layer_panel.canvas.strands:
                         if (hasattr(other_strand, 'layer_name')
                                 and other_strand.layer_name
                                 and other_strand.layer_name.startswith(set_prefix)):
                             self._apply_stroke_color(other_strand, color)
+                            recolored.append(other_strand.layer_name)
                 else:
                     self._apply_stroke_color(strand, color)
+                    recolored.append(getattr(strand, 'layer_name', self.text()))
 
-                self._refresh_canvas_and_save(layer_panel)
+                # Name every layer that changed colour, not just the clicked one.
+                self._refresh_canvas_and_save(
+                    layer_panel, action='strand.color', targets=recolored,
+                    detail='stroke, whole set')
 
     def change_layer_stroke_color(self, strand, layer_panel):
         """Change the stroke color of only the clicked strand layer."""
@@ -3371,7 +3399,8 @@ class NumberedLayerButton(QPushButton):
             color = color_dialog.currentColor()
             if color.isValid():
                 self._apply_stroke_color(strand, color)
-                self._refresh_canvas_and_save(layer_panel)
+                self._refresh_canvas_and_save(
+                    layer_panel, action='strand.color', detail='stroke, this layer only')
 
     def change_layer_color(self, strand, layer_panel):
         """Change the fill color of only the clicked strand layer."""
@@ -3414,7 +3443,8 @@ class NumberedLayerButton(QPushButton):
                 # Only this layer button changes. Set-level color maps remain the
                 # source of truth for future strands in the set.
                 self.set_color(color)
-                self._refresh_canvas_and_save(layer_panel)
+                self._refresh_canvas_and_save(
+                    layer_panel, action='strand.color', detail='fill, this layer only')
 
     @staticmethod
     def _apply_stroke_color(strand, color):
@@ -3442,8 +3472,14 @@ class NumberedLayerButton(QPushButton):
                 and strand.circle_stroke_color.alpha() > 0):
             strand.circle_stroke_color = QColor(color)
 
-    def _refresh_canvas_and_save(self, layer_panel):
-        """Repaint the canvas and force an undo/redo snapshot."""
+    def _refresh_canvas_and_save(self, layer_panel, action='strand.color',
+                                 source='menu', targets=None, detail=None):
+        """Repaint the canvas and force an undo/redo snapshot.
+
+        The action/source/targets/detail describe what the caller just changed;
+        they are recorded with the state so the history says which menu entry
+        produced it (see undo_redo_metadata.py).
+        """
         if layer_panel and hasattr(layer_panel, 'canvas'):
             if (hasattr(layer_panel.canvas, 'layer_state_manager')
                     and layer_panel.canvas.layer_state_manager):
@@ -3452,7 +3488,10 @@ class NumberedLayerButton(QPushButton):
             if (hasattr(layer_panel.canvas, 'undo_redo_manager')
                     and layer_panel.canvas.undo_redo_manager):
                 layer_panel.canvas.undo_redo_manager._last_save_time = 0
-                layer_panel.canvas.undo_redo_manager.save_state()
+                layer_panel.canvas.undo_redo_manager.save_state(
+                    action=action, source=source,
+                    targets=targets if targets is not None else [self.text()],
+                    detail=detail)
         else:
             self.update()
 
@@ -3683,7 +3722,12 @@ class NumberedLayerButton(QPushButton):
         # Save state for undo/redo functionality
         if hasattr(layer_panel.canvas, 'undo_redo_manager'):
             # Use a small delay to ensure all knot properties are established
-            QTimer.singleShot(50, lambda: layer_panel.canvas.undo_redo_manager.save_state())
+            # Both ends of the knot are rewritten here, so both are recorded.
+            knot_targets = [getattr(strand, 'layer_name', None),
+                            getattr(target_strand, 'layer_name', None)]
+            QTimer.singleShot(50, lambda: layer_panel.canvas.undo_redo_manager.save_state(
+                action='strand.close_knot', source='menu',
+                targets=knot_targets, detail=free_end_type))
         
     
     def change_width(self, strand, layer_panel):
@@ -3705,6 +3749,9 @@ class NumberedLayerButton(QPushButton):
                 strand.update_shape()
             
             # Find and update related strands with the same set number (like color changes)
+            # Declared out here so the history entry below can name every layer
+            # the loop actually resized, not just the one that was clicked.
+            updated_strands = []
             if hasattr(strand, 'layer_name') and strand.layer_name:
                 layer_parts = strand.layer_name.split('_')
                 if len(layer_parts) >= 1:
@@ -3712,7 +3759,6 @@ class NumberedLayerButton(QPushButton):
                     set_prefix = f"{set_number}_"
                     
                     # Update all strands that belong to the same set
-                    updated_strands = []
                     grid_units_value = dialog.thickness_spinbox.value()
                     for other_strand in layer_panel.canvas.strands:
                         if (hasattr(other_strand, 'layer_name') and 
@@ -3741,7 +3787,10 @@ class NumberedLayerButton(QPushButton):
                     # Get current step before saving
                     current_step = layer_panel.canvas.undo_redo_manager.current_step
                     # Save the state
-                    layer_panel.canvas.undo_redo_manager.save_state()
+                    layer_panel.canvas.undo_redo_manager.save_state(
+                        action='strand.width', source='dialog',
+                        targets=updated_strands or [getattr(strand, 'layer_name', None)],
+                        detail='whole set')
                     # Check if save actually happened
                     new_step = layer_panel.canvas.undo_redo_manager.current_step
                     if new_step > current_step:
@@ -3787,7 +3836,9 @@ class NumberedLayerButton(QPushButton):
                 # Save state for undo/redo
                 if hasattr(layer_panel.canvas, 'undo_redo_manager'):
                     layer_panel.canvas.undo_redo_manager._last_save_time = 0
-                    layer_panel.canvas.undo_redo_manager.save_state()
+                    layer_panel.canvas.undo_redo_manager.save_state(
+                        action='strand.width', source='dialog',
+                        targets=[getattr(strand, 'layer_name', None)], detail='this layer only')
 
     def _refresh_dependent_masks(self, strand, layer_panel):
         """Recalculate any MaskedStrand that uses `strand` as a component.
@@ -3886,7 +3937,10 @@ class NumberedLayerButton(QPushButton):
             layer_panel.canvas.update()
             if hasattr(layer_panel.canvas, 'undo_redo_manager'):
                 layer_panel.canvas.undo_redo_manager._last_save_time = 0
-                layer_panel.canvas.undo_redo_manager.save_state()
+                layer_panel.canvas.undo_redo_manager.save_state(
+                    action='strand.arrow_style', source='menu',
+                    targets=[getattr(strand, 'layer_name', None)],
+                    detail='casts shadow' if casts_shadow else 'no shadow')
     # --- END Arrow Customization Methods ---
 
 

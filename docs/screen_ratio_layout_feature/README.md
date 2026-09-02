@@ -84,6 +84,22 @@ worth confirming on a real Mac. Everything else has >10% headroom.
 ratios (it compares each button's width against its sizeHint) and
 `capture_language_toolbars.py` captures `screenshots/language_audit/`.
 
+## Group panel width = Create Group button
+
+`LayerPanel.GROUP_PANEL_FULL_WIDTH` is 140, the Create Group button's fixed
+width, rather than the old 270. The group column therefore ends exactly
+where the button ends, so the button's far edge (the outer window edge:
+right in LTR, left in RTL) is flush with the panel's at every window size,
+with no empty strip beyond it. The old 270 could not be honored anyway —
+the panel is only 350 wide, so the column ran ~95px past the window edge
+and the button stopped ~44px short of it. Compact mode keeps trimming the
+column to the remainder after the list's scrollbar gutter (~127 at 1280),
+and the button now spans that whole column instead of stopping 4px short.
+
+Measured headlessly (offscreen Qt, en and he, 1920/1536/1440/1366/1280):
+button far edge == group column far edge == layer panel far edge, 9px
+(the central layout margin) from the window edge, at every width.
+
 ## Right-to-left (Hebrew)
 
 Verified, not a regression: in RTL the left panel already overlaps the

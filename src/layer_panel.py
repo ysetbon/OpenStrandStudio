@@ -380,9 +380,13 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
     strand_deleted = pyqtSignal(int)  # Signal for strand deletion
     layer_order_changed = pyqtSignal(list) # Signal when layer order changes
 
-    # Full width of the group panel (right_panel); narrow screens subtract
-    # half of the compact reduction from it via set_compact_reduction.
-    GROUP_PANEL_FULL_WIDTH = 270
+    # Full width of the group panel (right_panel): exactly the Create Group
+    # button, which GroupLayerManager gives a fixed 140. The panel therefore
+    # ends where the button ends, so the button's far edge — the outer window
+    # edge, right in LTR and left in RTL — is flush with the panel's at every
+    # window size, with no empty strip beyond it. Narrow screens trim both a
+    # little further via set_compact_reduction.
+    GROUP_PANEL_FULL_WIDTH = 140
     # Fixed width of NumberedLayerButton (setFixedSize(146, 40)).
     LAYER_LIST_BUTTON_WIDTH = 146
 
@@ -1769,9 +1773,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
     def set_compact_reduction(self, reduction):
         """Slim the panel on narrow screens so the toolbar keeps its room.
 
-        The total reduction is split evenly: half comes off the group panel's
-        fixed width, half off the layer list (which shrinks automatically once
-        the panel's overall minimum width drops by the full reduction)."""
+        The group panel is already just the Create Group button at full size,
+        so most of the reduction comes off the layer list; the group panel
+        (and the button with it) gives up only what the list's scrollbar
+        gutter needs, per the arithmetic below."""
         create_group = self.group_layer_manager.create_group_button
         if not hasattr(self, '_create_group_full_width'):
             # GroupPanel gives the button a fixed width (140); remember it so
@@ -1794,17 +1799,25 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             right_w = max(0, self.minimumWidth() - list_w - self.splitter.handleWidth())
             self.scroll_area.setMinimumWidth(list_w)
             self.right_panel.setFixedWidth(right_w)
+            # The button spans the whole column, so its far edge stays flush
+            # with the panel's — and the window's — outer edge here too.
             create_group.setFixedWidth(
-                min(self._create_group_full_width, max(50, right_w - 4))
+                min(self._create_group_full_width, max(50, right_w))
             )
             self.splitter.setSizes([list_w, right_w])
         else:
-            # Restoring the group panel's fixed width makes the inner
-            # splitter drop the compact allocation and return to its natural
-            # even split (verified against a fresh wide launch).
+            # Full size: the group panel is exactly the button again, and the
+            # inner split is re-applied so a window growing back out of
+            # compact mode hands the list column the rest of the panel rather
+            # than keeping the compact allocation.
             self.scroll_area.setMinimumWidth(0)
-            self.right_panel.setFixedWidth(self.GROUP_PANEL_FULL_WIDTH)
+            right_w = self.GROUP_PANEL_FULL_WIDTH
+            self.right_panel.setFixedWidth(right_w)
             create_group.setFixedWidth(self._create_group_full_width)
+            self.splitter.setSizes([
+                max(0, self.width() - right_w - self.splitter.handleWidth()),
+                right_w,
+            ])
 
     def _apply_group_panel_alignment(self):
         """Anchor the group block toward the edge shared with the layer panel."""

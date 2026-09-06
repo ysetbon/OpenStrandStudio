@@ -1898,6 +1898,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         return self.GROUP_PANEL_FULL_WIDTH - self.group_column_width()
 
     def toggle_group_panel(self):
+        """Collapse the group column if expanded, expand it if collapsed."""
         self.set_group_panel_collapsed(not self.group_panel_collapsed)
 
     def set_group_panel_collapsed(self, collapsed, animate=True):
@@ -1955,15 +1956,18 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         anim.start()
 
     def _show_group_column_content(self, expanded):
+        """Show the Create Group button and tree, or the rail, never both."""
         self.group_button_container.setVisible(expanded)
         self.group_layer_manager.group_panel.setVisible(expanded)
         self.group_rail.setVisible(not expanded)
 
     def _set_group_column_width(self, width):
+        """Give the group column *width* px and re-split the panel to match."""
         self.right_panel.setFixedWidth(int(width))
         self._apply_inner_split(int(width))
 
     def _apply_inner_split(self, right_w=None):
+        """Hand the list column everything the group column does not take."""
         if right_w is None:
             right_w = self.right_panel.width()
         self.splitter.setSizes([
@@ -1983,6 +1987,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 apply_widths()
 
     def _refresh_group_toggle_glyph(self):
+        """Point the chevron the way the column will move, mirrored in RTL."""
         button = getattr(self, 'group_toggle_button', None)
         if button is None:
             return
@@ -1995,6 +2000,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         button.setText(toward_list if collapsed else toward_edge)
 
     def apply_group_rail_theme(self):
+        """Style the rail and the chevron from the group panel's theme colors;
+        the G tile borrows the Create Group button's current stylesheet."""
         rail = getattr(self, 'group_rail', None)
         if rail is None:
             return
@@ -2020,9 +2027,11 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         )
 
     def _on_rail_create_requested(self):
+        """The G tile: run the normal Create Group flow, staying collapsed."""
         self.group_layer_manager.create_group()
 
     def _on_rail_group_activated(self, group_name):
+        """A group tile: expand the column and bring that group into view."""
         self.set_group_panel_collapsed(False)
         group_panel = self.group_layer_manager.group_panel
         if hasattr(group_panel, 'focus_group'):

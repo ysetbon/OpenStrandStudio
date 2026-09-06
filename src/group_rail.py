@@ -24,6 +24,8 @@ class GroupRail(QWidget):
     group_activated = pyqtSignal(str)
 
     def __init__(self, parent=None):
+        """Build the rail: the G tile on top, a scrolling column of group
+        tiles below. Call attach() to bind it to a GroupPanel."""
         super().__init__(parent)
         self._group_panel = None
         self._rebuild_pending = False
@@ -79,6 +81,8 @@ class GroupRail(QWidget):
         self.schedule_rebuild()
 
     def schedule_rebuild(self, *_args):
+        """Rebuild the tiles on the next event-loop turn; several model
+        signals in a row collapse into one rebuild."""
         if self._rebuild_pending:
             return
         self._rebuild_pending = True
@@ -112,6 +116,7 @@ class GroupRail(QWidget):
         return str(number)
 
     def rebuild(self):
+        """Recreate one tile per group, in tree order, from the tree itself."""
         self._rebuild_pending = False
         for tile in self._tiles:
             self.tiles_layout.removeWidget(tile)
@@ -132,6 +137,7 @@ class GroupRail(QWidget):
 
     # ------------------------------------------------------------------- state
     def set_create_enabled(self, enabled):
+        """Mirror the Create Group button's enabled state onto the G tile."""
         self.create_tile.setEnabled(bool(enabled))
 
     # ------------------------------------------------------------------- theme
@@ -150,6 +156,7 @@ class GroupRail(QWidget):
         self._style_tiles()
 
     def _style_tiles(self):
+        """Style the group tiles from the theme colors (defaults if none)."""
         colors = self._colors or {
             "group_bg": "#B9B4AE",
             "group_hover_bg": "#A29E99",

@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Group Panel Edge Controls</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #F3F2EF;
+    --fg: #1E1E1C;
+    --muted: #6B6862;
+    --line: #DCD9D2;
+    --card: #FFFFFF;
+    --card-2: #EAE8E2;
+    --accent: #C2410C;
+    --accent-ink: #FFFFFF;
+    --good: #2E7D4F;
+    --warn: #B7791F;
+    --bad: #B42318;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1F1F21; --fg: #ECEAE4; --muted: #A19D95; --line: #3A3A3E; --card: #2A2A2D; --card-2: #343438;
+      --accent: #F07A45; --accent-ink: #1F1F21; --good: #5CC08A; --warn: #E0A64A; --bad: #F0705F;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1F1F21; --fg: #ECEAE4; --muted: #A19D95; --line: #3A3A3E; --card: #2A2A2D; --card-2: #343438;
+    --accent: #F07A45; --accent-ink: #1F1F21; --good: #5CC08A; --warn: #E0A64A; --bad: #F0705F;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 15px; line-height: 1.5;
+  }
+  .page { max-width: 1000px; margin: 0 auto; padding: 44px 24px 72px; }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+  h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.01em; }
+  .brief { color: var(--muted); max-width: 62ch; margin: 8px 0 0; }
+  .eyebrow { font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  code, .mono { font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 0.92em; }
+
+  .option { margin-top: 56px; padding-top: 28px; border-top: 1px solid var(--line); }
+  .option-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .letter { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-weight: 500; font-size: 13px; color: var(--accent-ink); background: var(--accent); padding: 2px 8px; border-radius: 3px; }
+  .option h2 { font-size: 21px; font-weight: 600; }
+  .option .why { color: var(--muted); max-width: 66ch; margin: 6px 0 18px; }
+  .try { font-size: 13px; color: var(--muted); margin: 0 0 8px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .stage { width: 100%; overflow: hidden; border-radius: 6px; }
+  .scaler { width: 1100px; height: 460px; transform-origin: top left; }
+  .readout {
+    display: flex; gap: 22px; flex-wrap: wrap; margin-top: 10px; padding: 10px 12px; background: var(--card-2); border-radius: 4px;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12.5px; font-variant-numeric: tabular-nums;
+  }
+  .readout .k { color: var(--muted); }
+  .readout .delta { color: var(--good); }
+  .states { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .state { flex: 1 1 200px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 4px; font-size: 13.5px; }
+  .state b { display: block; font-weight: 600; margin-bottom: 2px; }
+  .pc { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 18px; }
+  @media (max-width: 640px) { .pc { grid-template-columns: 1fr; } }
+  .pc h3 { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+  .pc ul { margin: 0; padding-left: 18px; }
+  .pc li { margin: 3px 0; }
+
+  .compare { margin-top: 64px; padding-top: 28px; border-top: 1px solid var(--line); }
+  .tablewrap { overflow-x: auto; margin-top: 16px; }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 600; }
+  thead th { color: var(--muted); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+  td:first-child { color: var(--muted); white-space: nowrap; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .pill.good { background: color-mix(in srgb, var(--good) 18%, transparent); color: var(--good); }
+  .pill.warn { background: color-mix(in srgb, var(--warn) 20%, transparent); color: var(--warn); }
+  .pill.bad  { background: color-mix(in srgb, var(--bad) 16%, transparent); color: var(--bad); }
+  .reco { margin-top: 22px; padding: 16px 18px; border-left: 3px solid var(--accent); background: var(--card-2); border-radius: 0 4px 4px 0; max-width: 70ch; }
+  .reco strong { font-weight: 600; }
+
+  /* =========================================================
+     Mock window: the app's default theme, fixed colors.
+     ========================================================= */
+  .win {
+    width: 1100px; height: 460px; display: flex; position: relative; overflow: hidden;
+    background: #EBEBEB; color: #111;
+    font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif; font-size: 11px; font-weight: 700;
+    border: 1px solid #B9B6B0; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,.12), 0 8px 24px rgba(0,0,0,.08);
+  }
+  .win .left { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+  .tb { height: 36px; display: flex; align-items: center; gap: 5px; padding: 0 8px; flex: 0 0 auto; }
+  .tb .b {
+    height: 24px; padding: 0 6px; border-radius: 4px; display: flex; align-items: center; justify-content: center; white-space: nowrap;
+    flex: 1 1 auto; min-width: 0; max-width: 64px; overflow: hidden; font-size: 10.5px; font-weight: 700; color: #111; border: 0; font-family: inherit;
+  }
+  .tb .b.on { box-shadow: inset 0 0 0 2px #000; }
+  .tb .sp { flex: 0 1 60px; }
+  .tb .gear { flex: 0 0 24px; width: 24px; height: 24px; border-radius: 3px; background: #D0D0D0; display: grid; place-items: center; font-size: 14px; }
+  .canvas {
+    flex: 1; min-height: 0; background-color: #EBEBEB;
+    background-image: linear-gradient(#DADADA 1px, transparent 1px), linear-gradient(90deg, #DADADA 1px, transparent 1px); background-size: 28px 28px;
+  }
+  .lp { width: 350px; flex: 0 0 auto; display: flex; background: #ECECEC; border-left: 1px solid #D2D0CB; position: relative; transition: width .35s cubic-bezier(.4,0,.2,1); }
+  .list { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; padding: 8px 6px 6px; }
+  .icons { display: grid; grid-template-columns: repeat(3, 26px); gap: 6px; justify-content: center; }
+  .ic { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; }
+  .layers { margin-top: auto; display: flex; flex-direction: column; gap: 4px; align-items: center; }
+  .lay { width: 120px; height: 27px; border-radius: 3px; display: flex; align-items: center; justify-content: center; position: relative; font-size: 11px; }
+  .lay::after { content: ""; position: absolute; top: 2px; bottom: 2px; right: -5px; width: 4px; background: #2FB94A; border-radius: 1px; }
+  .bottom { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
+  .bb { height: 19px; border-radius: 3px; font-size: 10px; display: flex; align-items: center; justify-content: center; }
+
+  .grp {
+    width: 140px; flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; padding: 6px 0; overflow: hidden; position: relative;
+    background: #ECECEC; transition: width .35s cubic-bezier(.4,0,.2,1), opacity .25s, transform .3s cubic-bezier(.4,0,.2,1);
+  }
+  .cg { width: 128px; height: 40px; flex: 0 0 auto; border: 2px solid #000; border-radius: 4px; background: #F4F4F4; display: flex; align-items: center; justify-content: center; white-space: nowrap; font-size: 11px; font-weight: 700; color: #111; transition: width .3s, height .3s; }
+  .tree { width: 100%; margin-top: 8px; font-weight: 500; font-size: 10.5px; }
+  .tg { background: #B9B4AE; padding: 4px 8px; margin: 2px 6px; border-radius: 2px; font-weight: 600; white-space: nowrap; }
+  .tg.sel { background: #96938F; color: #fff; }
+  .tc { padding: 2px 6px 2px 24px; white-space: nowrap; }
+
+  .hot { outline: 2px solid #C2410C; outline-offset: 3px; animation: ring 1.4s ease-in-out 2; }
+  @keyframes ring { 0%, 100% { outline-offset: 3px; outline-color: #C2410C; } 50% { outline-offset: 6px; outline-color: rgba(194,65,12,.35); } }
+  button:focus-visible { outline: 2px solid #C2410C; outline-offset: 2px; }
+
+  /* ---------- B1: hover-reveal pin, auto-hide with peek ---------- */
+  .pin {
+    position: absolute; bottom: 8px; right: 8px; width: 24px; height: 24px; border-radius: 12px; border: 0; padding: 0; cursor: pointer;
+    background: #a34d92; color: #fff; display: grid; place-items: center; opacity: .35; transition: opacity .2s, transform .2s, background .2s; font-family: inherit;
+  }
+  .pin svg { width: 13px; height: 13px; fill: currentColor; transition: transform .2s; }
+  .grp:hover .pin, .pin:focus-visible, .win.b1[data-mode="auto"] .pin { opacity: 1; }
+  .pin:hover { background: #833a75; }
+  .win.b1[data-mode="auto"] .pin svg { transform: rotate(45deg); }
+  .win.b1[data-mode="auto"] .lp { width: 210px; }
+  .win.b1[data-mode="auto"] .grp {
+    position: absolute; top: 0; bottom: 0; right: 0; width: 140px; transform: translateX(100%); z-index: 3;
+    border-left: 1px solid #D2D0CB; box-shadow: -8px 0 18px rgba(0,0,0,.14);
+  }
+  .win.b1[data-mode="auto"].peek .grp { transform: translateX(0); }
+  .edge {
+    position: absolute; top: 0; bottom: 0; right: 0; width: 10px; z-index: 2; border: 0; padding: 0; cursor: pointer; font-family: inherit;
+    background: #DEDCD7; border-left: 1px solid #CBC8C1; display: none; align-items: center; justify-content: center; color: #444;
+  }
+  .edge:hover { background: #CFCCC5; }
+  .edge .vlabel { position: absolute; top: 12px; left: 50%; transform: translateX(-50%) rotate(180deg); writing-mode: vertical-rl; font-size: 8.5px; letter-spacing: .12em; font-weight: 700; }
+  .edge .badge { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); min-width: 12px; height: 12px; border-radius: 6px; background: #a34d92; color: #fff; font-size: 8px; font-weight: 700; display: grid; place-items: center; padding: 0 3px; }
+  .win.b1[data-mode="auto"] .edge { display: flex; }
+
+  /* ---------- B2: tab on the divider ---------- */
+  .divider { width: 6px; flex: 0 0 auto; position: relative; background: #DEDCD7; border-left: 1px solid #CBC8C1; border-right: 1px solid #CBC8C1; cursor: col-resize; z-index: 2; }
+  .tab2 {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 14px; height: 48px; border-radius: 4px; border: 1px solid #B5B2AB;
+    background: #CFCCC5; color: #333; display: grid; place-items: center; font-size: 14px; font-weight: 700; cursor: pointer; padding: 0; font-family: inherit;
+    transition: background .15s, color .15s, width .15s;
+  }
+  .tab2:hover { background: #a34d92; color: #fff; border-color: #833a75; width: 16px; }
+  .win.b2[data-hidden] .lp { width: 216px; }
+  .win.b2[data-hidden] .grp { width: 0; opacity: 0; padding: 0; }
+
+  /* ---------- B3: icon rail ---------- */
+  .rail { display: none; flex-direction: column; align-items: center; gap: 6px; margin-top: 8px; width: 100%; }
+  .rt { width: 30px; height: 24px; border-radius: 3px; background: #B9B4AE; border: 0; font-family: inherit; font-size: 9.5px; font-weight: 700; color: #111; cursor: pointer; padding: 0; }
+  .rt:hover { background: #A29E99; }
+  .rt.sel { background: #96938F; color: #fff; }
+  .rbtn {
+    position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); width: 30px; height: 22px; border-radius: 3px; border: 1px solid #B5B2AB; background: #DEDCD7;
+    color: #333; font-size: 13px; font-weight: 700; cursor: pointer; padding: 0; font-family: inherit; display: grid; place-items: center;
+  }
+  .rbtn:hover { background: #a34d92; color: #fff; border-color: #833a75; }
+  .win.b3 .grp { padding-bottom: 34px; }
+  .win.b3[data-hidden] .lp { width: 250px; }
+  .win.b3[data-hidden] .grp { width: 40px; }
+  .win.b3[data-hidden] .cg { width: 30px; height: 30px; font-size: 16px; }
+  .win.b3[data-hidden] .cg .full { display: none; }
+  .win.b3 .cg .short { display: none; }
+  .win.b3[data-hidden] .cg .short { display: inline; }
+  .win.b3[data-hidden] .tree { display: none; }
+  .win.b3[data-hidden] .rail { display: flex; }
+
+  .no-anim *, .no-anim *::before, .no-anim *::after { transition: none !important; animation: none !important; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header>
+    <div class="eyebrow">OpenStrandStudio · layer panel · option B variants</div>
+    <h1>Three edge controls for the group panel</h1>
+    <p class="brief">All three keep the control on the group column itself, where the first mock's option B put it. They differ in what the control is, what "hidden" leaves behind, and whether the panel can come back on hover. Hover and click inside each window.</p>
+  </header>
+
+  <!-- ============================ B1 ============================ -->
+  <section class="option" id="b1">
+    <div class="option-head"><span class="letter">B1</span><h2>Hover-reveal pin, auto-hide with peek</h2></div>
+    <p class="why">A small round pin sits faint in the bottom far corner of the group column and brightens while the mouse is over the column. Press it once and the column slides out of the way, leaving a 10 px edge strip. Hovering that strip peeks the panel over the canvas without moving anything; press the pin again while it is peeked and it sticks back in place.</p>
+    <p class="try">Hover the group column to reveal the pin, then click it. In auto-hide mode, hover the edge strip to peek, and click the pin again to stick.</p>
+    <div class="stage"><div class="scaler">
+      <div class="win b1" data-win="b1" data-mode="pinned">
+        <div class="left">
+          <div class="tb">
+            <span class="b" style="background:#D3D3D3">View</span><span class="b" style="background:#1B9E9E">Mask</span><span class="b" style="background:#F5C400">Select</span><span class="b" style="background:#7B4A9E">Attach</span><span class="b" style="background:#E0640E">Move</span><span class="b" style="background:#3A8CD8">Rotate</span><span class="b" style="background:#E84A46">Grid</span><span class="b" style="background:#C7A7E8">Angle</span><span class="b" style="background:#F27EAE">Save</span><span class="b" style="background:#B58B7A">Load</span><span class="b" style="background:#A0475F">Image</span><span class="b on" style="background:#4BB543">Points</span><span class="b" style="background:#B8BABB">Shadow</span><span class="b" style="background:#a34d92">Tabs</span>
+            <span class="sp"></span><span class="b" style="background:#F5C400">State</span><span class="gear">⚙</span>
+          </div>
+          <div class="canvas"></div>
+        </div>
+        <div class="lp">
+          <div class="list">
+            <div class="icons">
+              <span class="ic" style="background:#8E44E0">🏠</span><span class="ic" style="background:#7A7A7A">↶</span><span class="ic" style="background:#7A7A7A">↷</span>
+              <span class="ic" style="background:#F5C400">🔍</span><span class="ic" style="background:#F5C400">🔎</span><span class="ic" style="background:#8B0000">✋</span>
+              <span class="ic" style="background:#2FB94A">◎</span><span class="ic" style="background:#C9A07A">🎯</span><span class="ic" style="background:#C9A07A">📄</span>
+            </div>
+            <div class="layers">
+              <div class="lay" style="background:#8E7A9E;color:#fff">1_2</div>
+              <div class="lay" style="background:#C9A7E6;color:#fff">1_1</div>
+            </div>
+            <div class="bottom">
+              <div class="bb" style="background:#E68FE0">Draw Names</div><div class="bb" style="background:#FFA500">Lock Layers</div><div class="bb" style="background:#90EE90">New Strand</div>
+              <div class="bb" style="background:#FF6B6B">Delete Strand</div><div class="bb" style="background:#7FB2E5">Deselect All</div><div class="bb" style="background:#B0B0B0">Delete All</div>
+            </div>
+          </div>
+          <button class="edge" data-edge="b1" title="Groups (hover to peek)"><span class="vlabel">GROUPS</span><span class="badge">2</span></button>
+          <div class="grp" data-grp="b1">
+            <div class="cg">Create Group</div>
+            <div class="tree">
+              <div class="tg">▾ Group 1</div><div class="tc">1_1</div><div class="tc">1_2</div><div class="tg">▸ Group 2</div>
+            </div>
+            <button class="pin hot" data-pin="b1" title="Auto-hide groups" aria-pressed="true">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 1.5 14.5 6.5l-1.4 1.4-.7-.7-3 3 .3 3.3-1.1 1.1L5.6 11.6 2.2 15l-1.2-1.2 3.4-3.4L1.4 7.4l1.1-1.1 3.3.3 3-3-.7-.7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="readout" data-readout="b1"></div>
+    <div class="states">
+      <div class="state"><b>Pinned</b>Today's layout. The pin sits faint in the corner and brightens on hover, upright.</div>
+      <div class="state"><b>Auto-hide</b>Panel is off-screen. A 10 px edge strip with a label and count marks it. Canvas gains 140 px.</div>
+      <div class="state"><b>Peek</b>Hovering the strip slides the panel over the canvas. Leaving it slides it back. The pin now sits tilted; pressing it pins again.</div>
+    </div>
+    <div class="pc">
+      <div><h3>For</h3><ul>
+        <li>Nothing added to the layout at rest: the pin is invisible until you need it.</li>
+        <li>Groups stay one hover away, so hiding them costs almost nothing in workflow.</li>
+        <li>Pin / unpin is a pattern people know from Visual Studio, JetBrains and Windows taskbars.</li>
+      </ul></div>
+      <div><h3>Against</h3><ul>
+        <li>A control that hides itself is the hardest kind to find the first time.</li>
+        <li>Hover peeks need care: a mouse crossing the right edge on the way to the scrollbar would flash the panel. Needs a 150 to 250 ms hover delay.</li>
+        <li>Three states instead of two; the tilted pin is the only clue which one you are in.</li>
+        <li>Peek overlay does not work on touch; a click on the strip must also open it.</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- ============================ B2 ============================ -->
+  <section class="option" id="b2">
+    <div class="option-head"><span class="letter">B2</span><h2>Tab on the divider</h2></div>
+    <p class="why">The divider between the layer list and the group column becomes a real, draggable splitter handle, with a small tab at mid-height carrying a chevron. Click the tab to collapse or expand; drag the divider to make the group column narrower or wider; double-click it to toggle. Collapsed, the divider and tab stay at the window edge as the way back.</p>
+    <p class="try">Click the tab in the middle of the divider, or double-click the divider itself.</p>
+    <div class="stage"><div class="scaler">
+      <div class="win b2" data-win="b2">
+        <div class="left">
+          <div class="tb">
+            <span class="b" style="background:#D3D3D3">View</span><span class="b" style="background:#1B9E9E">Mask</span><span class="b" style="background:#F5C400">Select</span><span class="b" style="background:#7B4A9E">Attach</span><span class="b" style="background:#E0640E">Move</span><span class="b" style="background:#3A8CD8">Rotate</span><span class="b" style="background:#E84A46">Grid</span><span class="b" style="background:#C7A7E8">Angle</span><span class="b" style="background:#F27EAE">Save</span><span class="b" style="background:#B58B7A">Load</span><span class="b" style="background:#A0475F">Image</span><span class="b on" style="background:#4BB543">Points</span><span class="b" style="background:#B8BABB">Shadow</span><span class="b" style="background:#a34d92">Tabs</span>
+            <span class="sp"></span><span class="b" style="background:#F5C400">State</span><span class="gear">⚙</span>
+          </div>
+          <div class="canvas"></div>
+        </div>
+        <div class="lp">
+          <div class="list">
+            <div class="icons">
+              <span class="ic" style="background:#8E44E0">🏠</span><span class="ic" style="background:#7A7A7A">↶</span><span class="ic" style="background:#7A7A7A">↷</span>
+              <span class="ic" style="background:#F5C400">🔍</span><span class="ic" style="background:#F5C400">🔎</span><span class="ic" style="background:#8B0000">✋</span>
+              <span class="ic" style="background:#2FB94A">◎</span><span class="ic" style="background:#C9A07A">🎯</span><span class="ic" style="background:#C9A07A">📄</span>
+            </div>
+            <div class="layers">
+              <div class="lay" style="background:#8E7A9E;color:#fff">1_2</div>
+              <div class="lay" style="background:#C9A7E6;color:#fff">1_1</div>
+            </div>
+            <div class="bottom">
+              <div class="bb" style="background:#E68FE0">Draw Names</div><div class="bb" style="background:#FFA500">Lock Layers</div><div class="bb" style="background:#90EE90">New Strand</div>
+              <div class="bb" style="background:#FF6B6B">Delete Strand</div><div class="bb" style="background:#7FB2E5">Deselect All</div><div class="bb" style="background:#B0B0B0">Delete All</div>
+            </div>
+          </div>
+          <div class="divider" data-divider="b2" title="Drag to resize · double-click to collapse">
+            <button class="tab2 hot" data-toggle="b2" aria-pressed="true" title="Hide groups">›</button>
+          </div>
+          <div class="grp">
+            <div class="cg">Create Group</div>
+            <div class="tree">
+              <div class="tg">▾ Group 1</div><div class="tc">1_1</div><div class="tc">1_2</div><div class="tg">▸ Group 2</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="readout" data-readout="b2"></div>
+    <div class="pc">
+      <div><h3>For</h3><ul>
+        <li>Always visible, always in the same place; nothing to discover by accident.</li>
+        <li>Two states only, and the chevron always points the way the column will move.</li>
+        <li>Unlocks the splitter the code already has: dragging gives a wider group tree for long names, which nothing offers today.</li>
+        <li>The tab is what Finder, Explorer and most IDE sidebars use.</li>
+      </ul></div>
+      <div><h3>Against</h3><ul>
+        <li>Hidden state keeps a 6 px divider, so the canvas gains 134 px, not 140.</li>
+        <li>A draggable divider means the fixed-width arithmetic for compact screens has to learn about a variable group width.</li>
+        <li>The tab is a small target at mid-height, away from where the mouse usually is.</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- ============================ B3 ============================ -->
+  <section class="option" id="b3">
+    <div class="option-head"><span class="letter">B3</span><h2>Collapse to an icon rail</h2></div>
+    <p class="why">A chevron button sits at the bottom of the group column, always visible. Pressing it does not remove the column; it shrinks it to a 40 px rail: the Create Group button becomes a "+" tile, and each group becomes a small tile below it. Click a group tile and the column expands with that group selected. The rail stays useful while collapsed.</p>
+    <p class="try">Click the chevron at the bottom of the group column. Then click a group tile in the rail to expand with that group selected.</p>
+    <div class="stage"><div class="scaler">
+      <div class="win b3" data-win="b3">
+        <div class="left">
+          <div class="tb">
+            <span class="b" style="background:#D3D3D3">View</span><span class="b" style="background:#1B9E9E">Mask</span><span class="b" style="background:#F5C400">Select</span><span class="b" style="background:#7B4A9E">Attach</span><span class="b" style="background:#E0640E">Move</span><span class="b" style="background:#3A8CD8">Rotate</span><span class="b" style="background:#E84A46">Grid</span><span class="b" style="background:#C7A7E8">Angle</span><span class="b" style="background:#F27EAE">Save</span><span class="b" style="background:#B58B7A">Load</span><span class="b" style="background:#A0475F">Image</span><span class="b on" style="background:#4BB543">Points</span><span class="b" style="background:#B8BABB">Shadow</span><span class="b" style="background:#a34d92">Tabs</span>
+            <span class="sp"></span><span class="b" style="background:#F5C400">State</span><span class="gear">⚙</span>
+          </div>
+          <div class="canvas"></div>
+        </div>
+        <div class="lp">
+          <div class="list">
+            <div class="icons">
+              <span class="ic" style="background:#8E44E0">🏠</span><span class="ic" style="background:#7A7A7A">↶</span><span class="ic" style="background:#7A7A7A">↷</span>
+              <span class="ic" style="background:#F5C400">🔍</span><span class="ic" style="background:#F5C400">🔎</span><span class="ic" style="background:#8B0000">✋</span>
+              <span class="ic" style="background:#2FB94A">◎</span><span class="ic" style="background:#C9A07A">🎯</span><span class="ic" style="background:#C9A07A">📄</span>
+            </div>
+            <div class="layers">
+              <div class="lay" style="background:#8E7A9E;color:#fff">1_2</div>
+              <div class="lay" style="background:#C9A7E6;color:#fff">1_1</div>
+            </div>
+            <div class="bottom">
+              <div class="bb" style="background:#E68FE0">Draw Names</div><div class="bb" style="background:#FFA500">Lock Layers</div><div class="bb" style="background:#90EE90">New Strand</div>
+              <div class="bb" style="background:#FF6B6B">Delete Strand</div><div class="bb" style="background:#7FB2E5">Deselect All</div><div class="bb" style="background:#B0B0B0">Delete All</div>
+            </div>
+          </div>
+          <div class="grp">
+            <div class="cg" title="Create Group"><span class="full">Create Group</span><span class="short">+</span></div>
+            <div class="tree" data-tree="b3">
+              <div class="tg" data-g="1">▾ Group 1</div><div class="tc">1_1</div><div class="tc">1_2</div><div class="tg" data-g="2">▸ Group 2</div>
+            </div>
+            <div class="rail">
+              <button class="rt" data-rail="b3" data-g="1" title="Group 1">G1</button>
+              <button class="rt" data-rail="b3" data-g="2" title="Group 2">G2</button>
+            </div>
+            <button class="rbtn hot" data-toggle="b3" aria-pressed="true" title="Collapse groups">›</button>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="readout" data-readout="b3"></div>
+    <div class="pc">
+      <div><h3>For</h3><ul>
+        <li>Collapsed is still functional: Create Group and every group stay one click away.</li>
+        <li>The control is always visible, at the bottom where the mouse already goes for the layer buttons.</li>
+        <li>Two states, no hover behavior, works with touch and keyboard.</li>
+      </ul></div>
+      <div><h3>Against</h3><ul>
+        <li>Smallest gain: the rail keeps 40 px, so the canvas gains 100 px.</li>
+        <li>Group tiles need short labels; with many groups the rail needs its own scrolling.</li>
+        <li>More UI to build: tile rendering, selection sync with the tree, and a rail variant of the Create Group button.</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- ============================ COMPARISON ============================ -->
+  <section class="compare">
+    <div class="eyebrow">Side by side</div>
+    <h2 style="font-size:21px;font-weight:600;margin-top:4px">How the three compare</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th></th><th>B1 · Pin + peek</th><th>B2 · Divider tab</th><th>B3 · Icon rail</th></tr></thead>
+        <tbody>
+          <tr><td>Control</td><td>Round pin, bottom far corner, visible on hover</td><td>Tab at mid-height on the divider; divider drags and double-clicks</td><td>Chevron button at the bottom of the column, always visible</td></tr>
+          <tr><td>States</td><td>Pinned · Auto-hide · Peek</td><td>Shown · Hidden</td><td>Expanded · Rail</td></tr>
+          <tr><td>Discoverability</td><td><span class="pill warn">Low at first</span> control appears on hover</td><td><span class="pill good">High</span> always visible</td><td><span class="pill good">High</span> always visible</td></tr>
+          <tr><td>Canvas gain when hidden</td><td class="mono">+140 px</td><td class="mono">+134 px</td><td class="mono">+100 px</td></tr>
+          <tr><td>Groups reachable while hidden</td><td>Yes, hover to peek</td><td>No, expand first</td><td>Yes, tiles stay clickable</td></tr>
+          <tr><td>Hover dependence</td><td><span class="pill bad">High</span> pin and peek both need a mouse</td><td><span class="pill good">None</span></td><td><span class="pill good">None</span></td></tr>
+          <tr><td>Hebrew RTL</td><td>Mirror pin corner, edge strip, slide direction</td><td>Mirror chevron</td><td>Mirror chevron</td></tr>
+          <tr><td>Code touched</td><td>Overlay widget over the canvas, hover timers, three-state persistence</td><td>Unlock the inner splitter; tab widget on its handle; width persistence</td><td>Rail widget, tile rendering, selection sync with the tree</td></tr>
+          <tr><td>Effort / risk</td><td><span class="pill warn">Medium</span></td><td><span class="pill good">Small</span></td><td><span class="pill warn">Medium</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="reco">
+      <strong>Recommendation.</strong> B2 is the safest and cheapest: always visible, two states, and it turns the locked splitter into a real one. B1 is the most elegant once learned and gives the full 140 px, but the hover peek needs a delay and a click fallback, and first-time users have to find an invisible button. B3 is the pick if groups are used constantly and the goal is only to slim the panel, not to clear it. B1's pin can also be added on top of B2 later: the tab collapses, the pin decides whether collapsed means gone or peekable.
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var W = 1100, H = 460;
+  var IDS = ['b1', 'b2', 'b3'];
+
+  function fit() {
+    document.querySelectorAll('.stage').forEach(function (stage) {
+      var s = Math.min(1, stage.clientWidth / W);
+      stage.querySelector('.scaler').style.transform = 'scale(' + s + ')';
+      stage.style.height = Math.round(H * s) + 'px';
+    });
+  }
+
+  function stateOf(win) {
+    var id = win.getAttribute('data-win');
+    if (id === 'b1') {
+      if (win.getAttribute('data-mode') === 'pinned') return 'pinned';
+      return win.classList.contains('peek') ? 'auto-hide, peeking' : 'auto-hide';
+    }
+    if (id === 'b3') return win.hasAttribute('data-hidden') ? 'rail' : 'expanded';
+    return win.hasAttribute('data-hidden') ? 'hidden' : 'shown';
+  }
+
+  function readout(id) {
+    var win = document.querySelector('[data-win="' + id + '"]');
+    var out = document.querySelector('[data-readout="' + id + '"]');
+    if (!win || !out) return;
+    var canvas = win.querySelector('.canvas').offsetWidth;
+    var panel = win.querySelector('.lp').offsetWidth;
+    if (!win.hasAttribute('data-canvas-base')) win.setAttribute('data-canvas-base', canvas);
+    var delta = canvas - parseInt(win.getAttribute('data-canvas-base'), 10);
+    out.innerHTML =
+      '<span><span class="k">canvas</span> ' + canvas + ' px' + (delta > 0 ? ' <span class="delta">+' + delta + '</span>' : '') + '</span>' +
+      '<span><span class="k">layer panel</span> ' + panel + ' px</span>' +
+      '<span><span class="k">groups</span> ' + stateOf(win) + '</span>' +
+      '<span class="k">(window 1100 px wide in this mock)</span>';
+  }
+  function refresh(id) { readout(id); setTimeout(function () { readout(id); }, 400); }
+
+  /* ---- B1 ---- */
+  var w1 = document.querySelector('[data-win="b1"]');
+  var pin = w1.querySelector('[data-pin]');
+  var edge = w1.querySelector('[data-edge]');
+  var grp1 = w1.querySelector('[data-grp]');
+  var peekTimer = null;
+  function setPeek(on) {
+    clearTimeout(peekTimer);
+    if (on) { w1.classList.add('peek'); readout('b1'); }
+    else peekTimer = setTimeout(function () { w1.classList.remove('peek'); readout('b1'); }, 220);
+  }
+  pin.addEventListener('click', function () {
+    var pinned = w1.getAttribute('data-mode') === 'pinned';
+    pin.classList.remove('hot');
+    if (pinned) {
+      w1.setAttribute('data-mode', 'auto');
+      w1.classList.remove('peek');
+      pin.title = 'Pin groups';
+      pin.setAttribute('aria-pressed', 'false');
+    } else {
+      w1.setAttribute('data-mode', 'pinned');
+      w1.classList.remove('peek');
+      pin.title = 'Auto-hide groups';
+      pin.setAttribute('aria-pressed', 'true');
+    }
+    refresh('b1');
+  });
+  edge.addEventListener('mouseenter', function () { setPeek(true); });
+  edge.addEventListener('click', function () { w1.classList.toggle('peek'); readout('b1'); });
+  grp1.addEventListener('mouseenter', function () { if (w1.getAttribute('data-mode') === 'auto') setPeek(true); });
+  grp1.addEventListener('mouseleave', function () { if (w1.getAttribute('data-mode') === 'auto') setPeek(false); });
+  edge.addEventListener('mouseleave', function () { setPeek(false); });
+
+  /* ---- B2 ---- */
+  var w2 = document.querySelector('[data-win="b2"]');
+  var tab2 = w2.querySelector('[data-toggle="b2"]');
+  function toggleB2() {
+    var hidden = !w2.hasAttribute('data-hidden');
+    if (hidden) w2.setAttribute('data-hidden', ''); else w2.removeAttribute('data-hidden');
+    tab2.classList.remove('hot');
+    tab2.textContent = hidden ? '‹' : '›';
+    tab2.title = hidden ? 'Show groups' : 'Hide groups';
+    tab2.setAttribute('aria-pressed', hidden ? 'false' : 'true');
+    refresh('b2');
+  }
+  tab2.addEventListener('click', toggleB2);
+  w2.querySelector('[data-divider]').addEventListener('dblclick', function (e) { if (e.target !== tab2) toggleB2(); });
+
+  /* ---- B3 ---- */
+  var w3 = document.querySelector('[data-win="b3"]');
+  var btn3 = w3.querySelector('[data-toggle="b3"]');
+  function setB3(hidden) {
+    if (hidden) w3.setAttribute('data-hidden', ''); else w3.removeAttribute('data-hidden');
+    btn3.classList.remove('hot');
+    btn3.textContent = hidden ? '‹' : '›';
+    btn3.title = hidden ? 'Expand groups' : 'Collapse groups';
+    btn3.setAttribute('aria-pressed', hidden ? 'false' : 'true');
+    refresh('b3');
+  }
+  btn3.addEventListener('click', function () { setB3(!w3.hasAttribute('data-hidden')); });
+  w3.querySelectorAll('[data-rail]').forEach(function (tile) {
+    tile.addEventListener('click', function () {
+      var g = tile.getAttribute('data-g');
+      w3.querySelectorAll('.tg').forEach(function (n) { n.classList.toggle('sel', n.getAttribute('data-g') === g); });
+      w3.querySelectorAll('.rt').forEach(function (n) { n.classList.toggle('sel', n === tile); });
+      setB3(false);
+    });
+  });
+
+  document.querySelectorAll('.lp, .grp').forEach(function (el) {
+    el.addEventListener('transitionend', function () { readout(el.closest('[data-win]').getAttribute('data-win')); });
+  });
+
+  fit();
+  IDS.forEach(readout);
+  window.addEventListener('resize', function () { fit(); IDS.forEach(readout); });
+
+  // #hidden opens every mock in its collapsed state (used for the doc screenshots).
+  if (location.hash === '#hidden') {
+    document.documentElement.classList.add('no-anim');
+    pin.click(); tab2.click(); btn3.click();
+  }
+})();
+</script>
+</body>
+</html>

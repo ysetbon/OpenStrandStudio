@@ -23,6 +23,20 @@ static captures of the two states (`mockup.html#hidden` opens all mocks collapse
 Recommendation in the mockup: B fits the current layout best; C gives the best
 result if a layout change is acceptable; A is the quickest.
 
+## Option B variants (`mockup_b_variants.html`)
+
+Three ways to do the edge control itself, all on the group column:
+
+| | Control | Hidden state | Canvas gain |
+|---|---|---|---|
+| B1 | Round pin in the bottom far corner, faint until hovered | Off-screen; a 10 px edge strip peeks the panel over the canvas on hover; pressing the pin again sticks it | +140 px |
+| B2 | Chevron tab at mid-height on the divider, which also drags and double-clicks | 6 px divider with the tab stays at the window edge | +134 px |
+| B3 | Chevron button at the bottom of the column | Column shrinks to a 40 px rail: a "+" tile for Create Group and one tile per group; clicking a tile expands with that group selected | +100 px |
+
+`mockup_b_variants_shown.png` / `mockup_b_variants_hidden.png` are the captures.
+Recommendation: B2 is the safest; B1 is the most elegant once learned but depends
+on hover; B3 if groups are used constantly and the goal is only to slim the panel.
+
 ## Where each option lands in the code
 
 - Layer panel layout: `src/layer_panel.py` — the inner `QSplitter` between the

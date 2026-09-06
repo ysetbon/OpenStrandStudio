@@ -329,6 +329,25 @@ def test_shortcut_and_hebrew_chevron(window):
     pump(40)
 
 
+def test_create_tile_letter_follows_the_language(window):
+    from translations import translations
+    lp = window.layer_panel
+    lp.set_group_panel_collapsed(True, animate=False)
+    pump(60)
+    assert lp.group_rail.create_tile.text() == "G"
+    # Hebrew: the tile shows the first letter of "קבוצה" (group), not a Latin G.
+    window.set_language("he")
+    pump(80)
+    assert translations["he"]["create_group_tile"] == "ק"
+    assert lp.group_rail.create_tile.text() == "ק"
+    # Every language ships the key, and the Latin ones keep G.
+    for code, table in translations.items():
+        assert table["create_group_tile"] == ("ק" if code == "he" else "G"), code
+    window.set_language("en")
+    pump(40)
+    assert lp.group_rail.create_tile.text() == "G"
+
+
 def test_compact_window_keeps_rail_usable(window):
     lp = window.layer_panel
     window.resize(1280, 760)  # below COMPACT_WINDOW_WIDTH

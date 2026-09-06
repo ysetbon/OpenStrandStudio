@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Group Panel Toggle Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #F3F2EF;
+    --fg: #1E1E1C;
+    --muted: #6B6862;
+    --line: #DCD9D2;
+    --card: #FFFFFF;
+    --card-2: #EAE8E2;
+    --accent: #C2410C;
+    --accent-ink: #FFFFFF;
+    --good: #2E7D4F;
+    --warn: #B7791F;
+    --bad: #B42318;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1F1F21;
+      --fg: #ECEAE4;
+      --muted: #A19D95;
+      --line: #3A3A3E;
+      --card: #2A2A2D;
+      --card-2: #343438;
+      --accent: #F07A45;
+      --accent-ink: #1F1F21;
+      --good: #5CC08A;
+      --warn: #E0A64A;
+      --bad: #F0705F;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1F1F21;
+    --fg: #ECEAE4;
+    --muted: #A19D95;
+    --line: #3A3A3E;
+    --card: #2A2A2D;
+    --card-2: #343438;
+    --accent: #F07A45;
+    --accent-ink: #1F1F21;
+    --good: #5CC08A;
+    --warn: #E0A64A;
+    --bad: #F0705F;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .page { max-width: 1000px; margin: 0 auto; padding: 44px 24px 72px; }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+  h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.01em; }
+  .brief { color: var(--muted); max-width: 62ch; margin: 8px 0 0; }
+  .eyebrow {
+    font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+  }
+  code, .mono { font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 0.92em; }
+
+  /* ------- option blocks ------- */
+  .option { margin-top: 56px; padding-top: 28px; border-top: 1px solid var(--line); }
+  .option-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .letter {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace; font-weight: 500; font-size: 13px;
+    color: var(--accent-ink); background: var(--accent); padding: 2px 8px; border-radius: 3px;
+  }
+  .option h2 { font-size: 21px; font-weight: 600; }
+  .option .why { color: var(--muted); max-width: 66ch; margin: 6px 0 18px; }
+  .try { font-size: 13px; color: var(--muted); margin: 0 0 8px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .try label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+  .stage { width: 100%; overflow: hidden; border-radius: 6px; }
+  .scaler { width: 1100px; height: 460px; transform-origin: top left; }
+  .readout {
+    display: flex; gap: 22px; flex-wrap: wrap; margin-top: 10px; padding: 10px 12px;
+    background: var(--card-2); border-radius: 4px;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12.5px; font-variant-numeric: tabular-nums;
+  }
+  .readout .k { color: var(--muted); }
+  .readout .delta { color: var(--good); }
+  .pc { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 18px; }
+  @media (max-width: 640px) { .pc { grid-template-columns: 1fr; } }
+  .pc h3 { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+  .pc ul { margin: 0; padding-left: 18px; }
+  .pc li { margin: 3px 0; }
+
+  /* ------- comparison ------- */
+  .compare { margin-top: 64px; padding-top: 28px; border-top: 1px solid var(--line); }
+  .tablewrap { overflow-x: auto; margin-top: 16px; }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 600; }
+  thead th { color: var(--muted); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+  td:first-child { color: var(--muted); white-space: nowrap; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .pill.good { background: color-mix(in srgb, var(--good) 18%, transparent); color: var(--good); }
+  .pill.warn { background: color-mix(in srgb, var(--warn) 20%, transparent); color: var(--warn); }
+  .pill.bad  { background: color-mix(in srgb, var(--bad) 16%, transparent); color: var(--bad); }
+  .reco { margin-top: 22px; padding: 16px 18px; border-left: 3px solid var(--accent); background: var(--card-2); border-radius: 0 4px 4px 0; max-width: 70ch; }
+  .reco strong { font-weight: 600; }
+
+  .plumbing { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--line); }
+  .plumbing ul { margin: 10px 0 0; padding-left: 18px; max-width: 70ch; }
+  .plumbing li { margin: 6px 0; }
+
+  /* =========================================================
+     The mock window. These colors are the app's own default
+     theme and stay fixed regardless of the page theme.
+     ========================================================= */
+  .win {
+    width: 1100px; height: 460px; display: flex; position: relative; overflow: hidden;
+    background: #EBEBEB; color: #111;
+    font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif; font-size: 11px; font-weight: 700;
+    border: 1px solid #B9B6B0; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,.12), 0 8px 24px rgba(0,0,0,.08);
+  }
+  .win .left { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+  .tb { height: 36px; display: flex; align-items: center; gap: 5px; padding: 0 8px; flex: 0 0 auto; }
+  .tb .b {
+    height: 24px; padding: 0 6px; border-radius: 4px; display: flex; align-items: center; justify-content: center; white-space: nowrap;
+    flex: 1 1 auto; min-width: 0; max-width: 64px; overflow: hidden;
+    font-size: 10.5px; font-weight: 700; color: #111; border: 0; font-family: inherit;
+  }
+  .tb .b.on { box-shadow: inset 0 0 0 2px #000; }
+  .tb .sp { flex: 0 1 60px; }
+  .tb .gear { flex: 0 0 24px; width: 24px; height: 24px; border-radius: 3px; background: #D0D0D0; display: grid; place-items: center; font-size: 14px; }
+  .canvas {
+    flex: 1; min-height: 0;
+    background-color: #EBEBEB;
+    background-image: linear-gradient(#DADADA 1px, transparent 1px), linear-gradient(90deg, #DADADA 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  .lp {
+    width: 350px; flex: 0 0 auto; display: flex; background: #ECECEC; border-left: 1px solid #D2D0CB;
+    transition: width .35s cubic-bezier(.4,0,.2,1);
+  }
+  .win[dir="rtl"] .lp { border-left: 0; border-right: 1px solid #D2D0CB; }
+  .list { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; padding: 8px 6px 6px; }
+  .icons { display: grid; grid-template-columns: repeat(3, 26px); gap: 6px; justify-content: center; }
+  .ic { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; }
+  .layers { margin-top: auto; display: flex; flex-direction: column; gap: 4px; align-items: center; }
+  .lay { width: 120px; height: 27px; border-radius: 3px; display: flex; align-items: center; justify-content: center; position: relative; font-size: 11px; }
+  .lay::after { content: ""; position: absolute; top: 2px; bottom: 2px; inset-inline-end: -5px; width: 4px; background: #2FB94A; border-radius: 1px; }
+  .bottom { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
+  .bb { height: 19px; border-radius: 3px; font-size: 10px; display: flex; align-items: center; justify-content: center; }
+
+  .grp {
+    width: 140px; flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; padding: 6px 0; overflow: hidden;
+    transition: width .35s cubic-bezier(.4,0,.2,1), opacity .25s;
+  }
+  .cg { width: 128px; height: 40px; flex: 0 0 auto; border: 2px solid #000; border-radius: 4px; background: #F4F4F4; display: flex; align-items: center; justify-content: center; white-space: nowrap; font-family: inherit; font-size: 11px; font-weight: 700; color: #111; }
+  .tree { width: 100%; margin-top: 8px; font-weight: 500; font-size: 10.5px; }
+  .tg { background: #B9B4AE; padding: 4px 8px; margin: 2px 6px; border-radius: 2px; font-weight: 600; white-space: nowrap; }
+  .tc { padding: 2px 6px 2px 24px; white-space: nowrap; }
+  .win[dir="rtl"] .tc { padding: 2px 24px 2px 6px; }
+
+  /* option A: toolbar toggle */
+  .win.a[data-hidden] .lp { width: 210px; }
+  .win.a[data-hidden] .grp { width: 0; opacity: 0; padding: 0; }
+
+  /* option B: edge grip */
+  .grip {
+    width: 14px; flex: 0 0 auto; cursor: pointer; position: relative; border: 0; padding: 0; font-family: inherit;
+    background: #DEDCD7; border-left: 1px solid #CBC8C1; border-right: 1px solid #CBC8C1;
+    display: flex; align-items: center; justify-content: center; color: #333;
+  }
+  .grip:hover { background: #CFCCC5; }
+  .grip .chev { font-size: 16px; line-height: 1; font-weight: 700; }
+  .grip .vlabel { display: none; position: absolute; top: 12px; left: 50%; transform: translateX(-50%) rotate(180deg); writing-mode: vertical-rl; font-size: 9px; letter-spacing: .12em; font-weight: 700; color: #444; }
+  .grip .badge { display: none; position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); min-width: 12px; height: 12px; border-radius: 6px; background: #a34d92; color: #fff; font-size: 8px; font-weight: 700; place-items: center; padding: 0 3px; }
+  .win.b[data-hidden] .lp { width: 224px; }
+  .win.b[data-hidden] .grp { width: 0; opacity: 0; padding: 0; }
+  .win.b[data-hidden] .grip .vlabel { display: block; }
+  .win.b[data-hidden] .grip .badge { display: grid; }
+  .win.b[data-hidden] .grip .chev { display: none; }
+  .win.b:not([data-hidden]) .grip .vlabel, .win.b:not([data-hidden]) .grip .badge { display: none; }
+
+  /* option C: section header under the layer list */
+  .win.c .lp { width: 210px; }
+  .gsec { margin-top: 8px; display: flex; flex-direction: column; }
+  .gh {
+    height: 26px; display: flex; align-items: center; gap: 6px; padding: 0 6px; border: 0; width: 100%;
+    background: #DEDCD7; border-radius: 3px; cursor: pointer; font-family: inherit; font-size: 10.5px; font-weight: 700; color: #111; text-align: start;
+  }
+  .gh:hover { background: #CFCCC5; }
+  .gh .chev { width: 10px; transition: transform .25s; display: inline-block; }
+  .gh .cnt { min-width: 16px; height: 16px; border-radius: 8px; background: #a34d92; color: #fff; font-size: 9px; display: grid; place-items: center; padding: 0 4px; }
+  .gh .sp { flex: 1; }
+  .gh .mini { height: 18px; padding: 0 7px; border: 1.5px solid #000; border-radius: 3px; background: #F4F4F4; display: flex; align-items: center; font-size: 9.5px; white-space: nowrap; }
+  .gsec .tree { margin: 4px 0 0; max-height: 120px; overflow: hidden; transition: max-height .3s cubic-bezier(.4,0,.2,1), opacity .2s; }
+  .win.c[data-hidden] .gsec .tree { max-height: 0; opacity: 0; }
+  .win.c[data-hidden] .gh .chev { transform: rotate(-90deg); }
+
+  /* "look here" ring on each option's control */
+  .hot { outline: 2px solid #C2410C; outline-offset: 3px; animation: ring 1.4s ease-in-out 2; }
+  @keyframes ring { 0%, 100% { outline-offset: 3px; outline-color: #C2410C; } 50% { outline-offset: 6px; outline-color: rgba(194,65,12,.35); } }
+  button:focus-visible, .grip:focus-visible, .gh:focus-visible { outline: 2px solid #C2410C; outline-offset: 2px; }
+
+  .no-anim *, .no-anim *::before, .no-anim *::after { transition: none !important; animation: none !important; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header>
+    <div class="eyebrow">OpenStrandStudio · layer panel</div>
+    <h1>Three ways to hide the group panel</h1>
+    <p class="brief">The group column is a fixed 140 px inside the 350 px layer panel and has no way to get out of the way. Each mock below is clickable. When groups are hidden the layer panel shrinks and the canvas takes the room; the outer splitter still lets you drag the layer list wider.</p>
+  </header>
+
+  <!-- ============================ OPTION A ============================ -->
+  <section class="option" id="opt-a">
+    <div class="option-head"><span class="letter">A</span><h2>Toolbar toggle, next to Tabs</h2></div>
+    <p class="why">A checkable <strong>Groups</strong> button in the main toolbar, styled and wired exactly like the existing Tabs toggle: checked means shown, a black inset border marks the checked state. Global and explicit.</p>
+    <p class="try">Click the <strong>Groups</strong> button in the toolbar.</p>
+    <div class="stage"><div class="scaler">
+      <div class="win a" data-win="a">
+        <div class="left">
+          <div class="tb">
+            <span class="b" style="background:#D3D3D3">View</span>
+            <span class="b" style="background:#1B9E9E">Mask</span>
+            <span class="b" style="background:#F5C400">Select</span>
+            <span class="b" style="background:#7B4A9E">Attach</span>
+            <span class="b" style="background:#E0640E">Move</span>
+            <span class="b" style="background:#3A8CD8">Rotate</span>
+            <span class="b" style="background:#E84A46">Grid</span>
+            <span class="b" style="background:#C7A7E8">Angle</span>
+            <span class="b" style="background:#F27EAE">Save</span>
+            <span class="b" style="background:#B58B7A">Load</span>
+            <span class="b" style="background:#A0475F">Image</span>
+            <span class="b on" style="background:#4BB543">Points</span>
+            <span class="b" style="background:#B8BABB">Shadow</span>
+            <span class="b" style="background:#a34d92">Tabs</span>
+            <button class="b on hot" style="background:#4d8fa3" data-toggle="a" aria-pressed="true" title="Show/hide the group panel">Groups</button>
+            <span class="sp"></span>
+            <span class="b" style="background:#F5C400">State</span>
+            <span class="gear">⚙</span>
+          </div>
+          <div class="canvas"></div>
+        </div>
+        <div class="lp">
+          <div class="list">
+            <div class="icons">
+              <span class="ic" style="background:#8E44E0">🏠</span><span class="ic" style="background:#7A7A7A">↶</span><span class="ic" style="background:#7A7A7A">↷</span>
+              <span class="ic" style="background:#F5C400">🔍</span><span class="ic" style="background:#F5C400">🔎</span><span class="ic" style="background:#8B0000">✋</span>
+              <span class="ic" style="background:#2FB94A">◎</span><span class="ic" style="background:#C9A07A">🎯</span><span class="ic" style="background:#C9A07A">📄</span>
+            </div>
+            <div class="layers">
+              <div class="lay" style="background:#8E7A9E;color:#fff">1_2</div>
+              <div class="lay" style="background:#C9A7E6;color:#fff">1_1</div>
+            </div>
+            <div class="bottom">
+              <div class="bb" style="background:#E68FE0">Draw Names</div>
+              <div class="bb" style="background:#FFA500">Lock Layers</div>
+              <div class="bb" style="background:#90EE90">New Strand</div>
+              <div class="bb" style="background:#FF6B6B">Delete Strand</div>
+              <div class="bb" style="background:#7FB2E5">Deselect All</div>
+              <div class="bb" style="background:#B0B0B0">Delete All</div>
+            </div>
+          </div>
+          <div class="grp">
+            <div class="cg">Create Group</div>
+            <div class="tree">
+              <div class="tg">▾ Group 1</div>
+              <div class="tc">1_1</div>
+              <div class="tc">1_2</div>
+              <div class="tg">▸ Group 2</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="readout" data-readout="a"></div>
+    <div class="pc">
+      <div><h3>For</h3><ul>
+        <li>Zero learning cost: it is the Tabs button again, one slot over.</li>
+        <li>Always visible, labeled, and persistable like Tabs (settings file line, restored on launch).</li>
+        <li>Smallest code change: one button, one handler, one width constant.</li>
+      </ul></div>
+      <div><h3>Against</h3><ul>
+        <li>The toolbar is already fighting for room; a 17th button squeezes German and Spanish labels further.</li>
+        <li>The control sits far from the thing it controls, on the other side of the window.</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- ============================ OPTION B ============================ -->
+  <section class="option" id="opt-b">
+    <div class="option-head"><span class="letter">B</span><h2>Collapse grip on the panel edge</h2></div>
+    <p class="why">A 14 px grip between the layer list and the group column, with a chevron. Click it and the group column folds into the grip, which stays put as the handle to reopen it, carrying a small <em>GROUPS</em> label and a count so the feature never disappears from view.</p>
+    <p class="try">Click the grip between the layer list and the group column.
+      <label><input type="checkbox" data-rtl="b"> Preview in Hebrew (RTL)</label>
+    </p>
+    <div class="stage"><div class="scaler">
+      <div class="win b" data-win="b">
+        <div class="left">
+          <div class="tb">
+            <span class="b" style="background:#D3D3D3" data-he="תצוגה">View</span>
+            <span class="b" style="background:#1B9E9E" data-he="מסכה">Mask</span>
+            <span class="b" style="background:#F5C400" data-he="בחירה">Select</span>
+            <span class="b" style="background:#7B4A9E" data-he="חיבור">Attach</span>
+            <span class="b" style="background:#E0640E" data-he="הזזה">Move</span>
+            <span class="b" style="background:#3A8CD8" data-he="סיבוב">Rotate</span>
+            <span class="b" style="background:#E84A46" data-he="רשת">Grid</span>
+            <span class="b" style="background:#C7A7E8" data-he="זווית">Angle</span>
+            <span class="b" style="background:#F27EAE" data-he="שמירה">Save</span>
+            <span class="b" style="background:#B58B7A" data-he="טעינה">Load</span>
+            <span class="b" style="background:#A0475F" data-he="תמונה">Image</span>
+            <span class="b on" style="background:#4BB543" data-he="נקודות">Points</span>
+            <span class="b" style="background:#B8BABB" data-he="צל">Shadow</span>
+            <span class="b" style="background:#a34d92" data-he="לשוניות">Tabs</span>
+            <span class="sp"></span>
+            <span class="b" style="background:#F5C400" data-he="מצב">State</span>
+            <span class="gear">⚙</span>
+          </div>
+          <div class="canvas"></div>
+        </div>
+        <div class="lp">
+          <div class="list">
+            <div class="icons">
+              <span class="ic" style="background:#8E44E0">🏠</span><span class="ic" style="background:#7A7A7A">↶</span><span class="ic" style="background:#7A7A7A">↷</span>
+              <span class="ic" style="background:#F5C400">🔍</span><span class="ic" style="background:#F5C400">🔎</span><span class="ic" style="background:#8B0000">✋</span>
+              <span class="ic" style="background:#2FB94A">◎</span><span class="ic" style="background:#C9A07A">🎯</span><span class="ic" style="background:#C9A07A">📄</span>
+            </div>
+            <div class="layers">
+              <div class="lay" style="background:#8E7A9E;color:#fff">1_2</div>
+              <div class="lay" style="background:#C9A7E6;color:#fff">1_1</div>
+            </div>
+            <div class="bottom">
+              <div class="bb" style="background:#E68FE0" data-he="צייר שמות">Draw Names</div>
+              <div class="bb" style="background:#FFA500" data-he="נעל שכבות">Lock Layers</div>
+              <div class="bb" style="background:#90EE90" data-he="חוט חדש">New Strand</div>
+              <div class="bb" style="background:#FF6B6B" data-he="מחק חוט">Delete Strand</div>
+              <div class="bb" style="background:#7FB2E5" data-he="בטל בחירה">Deselect All</div>
+              <div class="bb" style="background:#B0B0B0" data-he="מחק הכל">Delete All</div>
+            </div>
+          </div>
+          <button class="grip hot" data-toggle="b" aria-pressed="true" title="Hide groups">
+            <span class="chev" data-chev></span>
+            <span class="vlabel" data-he="קבוצות">GROUPS</span>
+            <span class="badge">2</span>
+          </button>
+          <div class="grp">
+            <div class="cg" data-he="צור קבוצה">Create Group</div>
+            <div class="tree">
+              <div class="tg" data-he="▾ קבוצה 1">▾ Group 1</div>
+              <div class="tc">1_1</div>
+              <div class="tc">1_2</div>
+              <div class="tg" data-he="▸ קבוצה 2">▸ Group 2</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="readout" data-readout="b"></div>
+    <div class="pc">
+      <div><h3>For</h3><ul>
+        <li>The control lives on the thing it hides, so cause and effect are obvious.</li>
+        <li>No toolbar cost at all; the grip reuses the inner splitter that already exists between the two columns.</li>
+        <li>A pattern people know from Photoshop and VS Code side panels.</li>
+        <li>Collapsed, the label and count keep groups discoverable.</li>
+      </ul></div>
+      <div><h3>Against</h3><ul>
+        <li>Smaller click target than a toolbar button.</li>
+        <li>Needs mirroring for Hebrew, where the grip and chevron sit on the other side.</li>
+        <li>Hidden state keeps 14 px, so the canvas gains 126 px rather than 140.</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- ============================ OPTION C ============================ -->
+  <section class="option" id="opt-c">
+    <div class="option-head"><span class="letter">C</span><h2>Groups as a section under the layer list</h2></div>
+    <p class="why">Drop the side-by-side layout. The group tree becomes a collapsible <strong>Groups</strong> section stacked under the layer list, with a compact Create button in its header. Collapsed, only the 26 px header remains. Because there is no second column, the layer panel sits at 210 px even with groups open, so the canvas keeps the extra 140 px all the time.</p>
+    <p class="try">Click the <strong>Groups</strong> header inside the layer panel.</p>
+    <div class="stage"><div class="scaler">
+      <div class="win c" data-win="c">
+        <div class="left">
+          <div class="tb">
+            <span class="b" style="background:#D3D3D3">View</span>
+            <span class="b" style="background:#1B9E9E">Mask</span>
+            <span class="b" style="background:#F5C400">Select</span>
+            <span class="b" style="background:#7B4A9E">Attach</span>
+            <span class="b" style="background:#E0640E">Move</span>
+            <span class="b" style="background:#3A8CD8">Rotate</span>
+            <span class="b" style="background:#E84A46">Grid</span>
+            <span class="b" style="background:#C7A7E8">Angle</span>
+            <span class="b" style="background:#F27EAE">Save</span>
+            <span class="b" style="background:#B58B7A">Load</span>
+            <span class="b" style="background:#A0475F">Image</span>
+            <span class="b on" style="background:#4BB543">Points</span>
+            <span class="b" style="background:#B8BABB">Shadow</span>
+            <span class="b" style="background:#a34d92">Tabs</span>
+            <span class="sp"></span>
+            <span class="b" style="background:#F5C400">State</span>
+            <span class="gear">⚙</span>
+          </div>
+          <div class="canvas"></div>
+        </div>
+        <div class="lp">
+          <div class="list">
+            <div class="icons">
+              <span class="ic" style="background:#8E44E0">🏠</span><span class="ic" style="background:#7A7A7A">↶</span><span class="ic" style="background:#7A7A7A">↷</span>
+              <span class="ic" style="background:#F5C400">🔍</span><span class="ic" style="background:#F5C400">🔎</span><span class="ic" style="background:#8B0000">✋</span>
+              <span class="ic" style="background:#2FB94A">◎</span><span class="ic" style="background:#C9A07A">🎯</span><span class="ic" style="background:#C9A07A">📄</span>
+            </div>
+            <div class="layers">
+              <div class="lay" style="background:#8E7A9E;color:#fff">1_2</div>
+              <div class="lay" style="background:#C9A7E6;color:#fff">1_1</div>
+            </div>
+            <div class="gsec">
+              <button class="gh hot" data-toggle="c" aria-pressed="true" title="Show/hide groups">
+                <span class="chev">▾</span><span>Groups</span><span class="cnt">2</span><span class="sp"></span><span class="mini">+ Create</span>
+              </button>
+              <div class="tree">
+                <div class="tg">▾ Group 1</div>
+                <div class="tc">1_1</div>
+                <div class="tc">1_2</div>
+                <div class="tg">▸ Group 2</div>
+              </div>
+            </div>
+            <div class="bottom">
+              <div class="bb" style="background:#E68FE0">Draw Names</div>
+              <div class="bb" style="background:#FFA500">Lock Layers</div>
+              <div class="bb" style="background:#90EE90">New Strand</div>
+              <div class="bb" style="background:#FF6B6B">Delete Strand</div>
+              <div class="bb" style="background:#7FB2E5">Deselect All</div>
+              <div class="bb" style="background:#B0B0B0">Delete All</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="readout" data-readout="c"></div>
+    <div class="pc">
+      <div><h3>For</h3><ul>
+        <li>Canvas gains 140 px permanently, shown or hidden.</li>
+        <li>One narrow panel instead of two columns; group names get the full 200 px of width.</li>
+        <li>The header doubles as the Create button's home, so nothing is lost when collapsed.</li>
+        <li>Hebrew needs no special handling: a stacked layout has no side to mirror.</li>
+      </ul></div>
+      <div><h3>Against</h3><ul>
+        <li>Largest change: replaces the inner splitter and the compact-width arithmetic that assumes two columns.</li>
+        <li>The group tree now competes with the layer list for vertical space in projects with many layers.</li>
+        <li>Changes a layout users already know.</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- ============================ COMPARISON ============================ -->
+  <section class="compare">
+    <div class="eyebrow">Side by side</div>
+    <h2 style="font-size:21px;font-weight:600;margin-top:4px">How the three compare</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th></th><th>A · Toolbar toggle</th><th>B · Edge grip</th><th>C · Stacked section</th></tr></thead>
+        <tbody>
+          <tr><td>Control lives</td><td>Main toolbar, after Tabs</td><td>On the group column's edge</td><td>Header row inside the layer panel</td></tr>
+          <tr><td>Discoverability</td><td><span class="pill good">High</span> labeled, always visible</td><td><span class="pill warn">Medium</span> small grip, labeled when collapsed</td><td><span class="pill good">High</span> labeled header</td></tr>
+          <tr><td>Canvas gain, groups shown</td><td class="mono">0</td><td class="mono">0</td><td class="mono">+140 px</td></tr>
+          <tr><td>Canvas gain, groups hidden</td><td class="mono">+140 px</td><td class="mono">+126 px</td><td class="mono">+140 px</td></tr>
+          <tr><td>Toolbar cost</td><td><span class="pill bad">17th button</span> tight for DE / ES labels</td><td><span class="pill good">None</span></td><td><span class="pill good">None</span></td></tr>
+          <tr><td>Hebrew RTL</td><td>Nothing extra</td><td>Mirror grip and chevron</td><td>Nothing extra</td></tr>
+          <tr><td>Code touched</td><td>Toolbar button and handler in the main window; panel width switch in the layer panel</td><td>New grip widget on the layer panel's inner splitter; width switch; RTL alignment hook</td><td>Layer panel layout rewrite; compact-width arithmetic; group panel alignment code</td></tr>
+          <tr><td>Effort / risk</td><td><span class="pill good">Small</span></td><td><span class="pill good">Small to medium</span></td><td><span class="pill warn">Large</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="reco">
+      <strong>Recommendation.</strong> B fits the current code best: it costs no toolbar room, sits where the user is looking, and reuses the splitter that already separates the two columns. C gives the best end result if a layout change is on the table. A is the fallback if you want it done in an hour, and A and B can also coexist, with the toolbar button driving the same grip.
+    </div>
+  </section>
+
+  <section class="plumbing">
+    <div class="eyebrow">Shared by every option</div>
+    <ul>
+      <li><strong>Remembered between sessions.</strong> One line in <code>user_settings.txt</code>, <code>GroupPanelVisible: true</code>, written with the same read-modify-write the Tabs edge position uses, so the settings dialog's own lines are untouched.</li>
+      <li><strong>Keyboard shortcut.</strong> <code>Ctrl+G</code> (<code>⌘G</code> on macOS) toggles it from anywhere; the app has no shortcuts today, so this would be the first.</li>
+      <li><strong>Translations.</strong> One new key in all seven languages, plus a tooltip variant, following the <code>tabs</code> / <code>toggle_shadow</code> keys.</li>
+      <li><strong>Compact screens.</strong> The narrow-window path that slims the layer panel keeps working: hidden state simply removes the group column from that arithmetic.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+(function () {
+  var W = 1100, H = 460;
+
+  function fit() {
+    document.querySelectorAll('.stage').forEach(function (stage) {
+      var s = Math.min(1, stage.clientWidth / W);
+      var sc = stage.querySelector('.scaler');
+      sc.style.transform = 'scale(' + s + ')';
+      stage.style.height = Math.round(H * s) + 'px';
+    });
+  }
+
+  function readout(id) {
+    var win = document.querySelector('[data-win="' + id + '"]');
+    var out = document.querySelector('[data-readout="' + id + '"]');
+    if (!win || !out) return;
+    var canvas = win.querySelector('.canvas').offsetWidth;
+    var panel = win.querySelector('.lp').offsetWidth;
+    var hidden = win.hasAttribute('data-hidden');
+    var base = parseInt(win.getAttribute('data-canvas-base') || canvas, 10);
+    if (!win.hasAttribute('data-canvas-base')) win.setAttribute('data-canvas-base', canvas);
+    var delta = canvas - base;
+    out.innerHTML =
+      '<span><span class="k">canvas</span> ' + canvas + ' px' + (delta > 0 ? ' <span class="delta">+' + delta + '</span>' : '') + '</span>' +
+      '<span><span class="k">layer panel</span> ' + panel + ' px</span>' +
+      '<span><span class="k">groups</span> ' + (hidden ? 'hidden' : 'shown') + '</span>' +
+      '<span class="k">(window 1100 px wide in this mock)</span>';
+  }
+
+  function setChevron(win) {
+    var chev = win.querySelector('[data-chev]');
+    if (!chev) return;
+    var rtl = win.getAttribute('dir') === 'rtl';
+    // The chevron always points toward the group column: collapse direction.
+    chev.textContent = rtl ? '‹' : '›';
+  }
+
+  document.querySelectorAll('[data-toggle]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = btn.getAttribute('data-toggle');
+      var win = document.querySelector('[data-win="' + id + '"]');
+      var nowHidden = !win.hasAttribute('data-hidden');
+      if (nowHidden) win.setAttribute('data-hidden', ''); else win.removeAttribute('data-hidden');
+      btn.setAttribute('aria-pressed', nowHidden ? 'false' : 'true');
+      btn.classList.remove('hot');
+      if (id === 'a') btn.classList.toggle('on', !nowHidden);
+      if (id === 'b') btn.title = nowHidden ? 'Show groups' : 'Hide groups';
+      readout(id);
+      setTimeout(function () { readout(id); }, 400);
+    });
+  });
+
+  var rtl = document.querySelector('[data-rtl="b"]');
+  if (rtl) {
+    var winB = document.querySelector('[data-win="b"]');
+    winB.querySelectorAll('[data-he]').forEach(function (el) { el.setAttribute('data-en', el.textContent); });
+    rtl.addEventListener('change', function () {
+      var on = rtl.checked;
+      if (on) winB.setAttribute('dir', 'rtl'); else winB.removeAttribute('dir');
+      winB.querySelectorAll('[data-he]').forEach(function (el) {
+        el.textContent = on ? el.getAttribute('data-he') : el.getAttribute('data-en');
+      });
+      setChevron(winB);
+    });
+    setChevron(winB);
+  }
+
+  fit();
+  ['a', 'b', 'c'].forEach(readout);
+
+  document.querySelectorAll('.lp, .gsec .tree').forEach(function (el) {
+    el.addEventListener('transitionend', function () {
+      readout(el.closest('[data-win]').getAttribute('data-win'));
+    });
+  });
+
+  // #hidden opens every mock in its collapsed state (used for the doc screenshots).
+  if (location.hash === '#hidden') {
+    document.documentElement.classList.add('no-anim');
+    document.querySelectorAll('[data-toggle]').forEach(function (btn) { btn.click(); });
+  }
+  window.addEventListener('resize', function () { fit(); ['a', 'b', 'c'].forEach(readout); });
+})();
+</script>
+</body>
+</html>

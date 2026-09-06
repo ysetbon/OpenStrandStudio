@@ -33,6 +33,16 @@ The masked layer feature is essential for creating intricate, overlapping design
    - Change Stroke Color now recolors the whole set just like Change Color, while the layer-only entries repaint only the clicked layer.
    - Per-layer exceptions are saved with your project and survive undo/redo, tab switching and group operations; changing the set color again resets them.
 
+2. **Undo/Redo History That Says What You Did:**
+   - Every undo and redo step now records what produced it — the mode you were using, or the panel, dialog or menu entry — together with the layers it touched and when it happened.
+   - The Undo and Redo buttons name the action they will reverse or replay, and Settings → History gains a “Recorded actions” list showing this session's activity or the steps of a past session.
+   - The record travels inside each saved state, so it survives a restart, history export/import and session recovery.
+
+3. **Collapsible Group Column:**
+   - The group column on the right of the layer panel can now get out of the way: a small chevron at its bottom collapses it from 140 px to a 40 px rail, and the canvas takes the room.
+   - The rail keeps a G tile that opens the usual Create Group flow, plus one tile per group showing the first letter of its name; clicking a tile expands the column with that group in view.
+   - Ctrl+G (Cmd+G on Mac) toggles it, and the choice is remembered between sessions.
+
 ------
 
 ## Version 1.109 (Released: 21/07/2026)
@@ -699,6 +709,16 @@ La fonctionnalité de calque masqué est essentielle pour créer des designs com
    - Le menu des calques associe désormais à chaque option de couleur une version pour un seul calque : Changer la couleur / Changer la couleur (ce calque seulement) et Changer la couleur du trait / Changer la couleur du trait (ce calque seulement), comme les entrées de largeur existantes.
    - Changer la couleur du trait recolore maintenant tout l'ensemble comme le fait Changer la couleur, tandis que les entrées « ce calque seulement » ne repeignent que le calque cliqué.
    - Les exceptions par calque sont enregistrées avec votre projet et survivent aux annulations/rétablissements, au changement d'onglet et aux opérations de groupe ; changer à nouveau la couleur de l'ensemble les réinitialise.
+
+2. **Un historique qui dit ce que vous avez fait:**
+   - Chaque étape d'annulation et de rétablissement enregistre désormais ce qui l'a produite — le mode utilisé, ou le panneau, la boîte de dialogue ou l'entrée de menu — ainsi que les calques concernés et le moment.
+   - Les boutons Annuler et Refaire nomment l'action qu'ils vont annuler ou refaire, et Paramètres → Historique gagne une liste « Actions enregistrées » montrant l'activité de cette session ou les étapes d'une session passée.
+   - L'enregistrement voyage à l'intérieur de chaque état sauvegardé : il survit à un redémarrage, à l'export/import de l'historique et à la récupération de session.
+
+3. **Colonne des groupes repliable:**
+   - La colonne des groupes à droite du panneau des calques peut désormais s'effacer : un petit chevron en bas la replie de 140 px à une barre de 40 px, et le canevas récupère la place.
+   - La barre conserve une tuile G qui ouvre le flux habituel Créer Groupe, plus une tuile par groupe affichant la première lettre de son nom ; un clic sur une tuile déplie la colonne avec ce groupe en vue.
+   - Ctrl+G (Cmd+G sur Mac) bascule l'état, et le choix est mémorisé d'une session à l'autre.
 
 ------
 

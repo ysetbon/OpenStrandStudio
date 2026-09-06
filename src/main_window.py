@@ -5,7 +5,8 @@ from PyQt5.QtWidgets import (
     QSplitter, QFileDialog, QScrollArea, QMessageBox
 )
 from PyQt5.QtCore import Qt, QSize, pyqtSlot, pyqtSignal, QTimer, QEvent
-from PyQt5.QtGui import QIcon, QFont, QImage, QPainter, QColor
+from PyQt5.QtGui import QIcon, QFont, QImage, QPainter, QColor, QKeySequence
+from PyQt5.QtWidgets import QShortcut
 from PyQt5.QtWidgets import QApplication
 from layer_state_manager import LayerStateManager
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
@@ -89,6 +90,16 @@ class MainWindow(QMainWindow):
 
         # Load user settings from file
         self.load_settings_from_file()
+
+        # Group column collapse: persist every toggle, and give it a shortcut.
+        if hasattr(self.layer_panel, 'group_panel_collapsed_changed'):
+            self.layer_panel.group_panel_collapsed_changed.connect(self._save_group_panel_rail)
+            self.group_panel_shortcut = QShortcut(QKeySequence("Ctrl+G"), self)
+            # Window context: live whenever the main window is active, and
+            # silent while a modal dialog (Create Group's name prompt, the
+            # settings dialog) has taken over.
+            self.group_panel_shortcut.setContext(Qt.WindowShortcut)
+            self.group_panel_shortcut.activated.connect(self.layer_panel.toggle_group_panel)
         # Log initial state
         self.layer_state_manager.save_initial_state()
         self.layer_state_manager.log_layer_state()
@@ -213,6 +224,7 @@ class MainWindow(QMainWindow):
         theme_name = 'default'
         language_code = 'en'
         tab_edge_position = None
+        group_panel_rail = False
         # Note: Shadow color is now handled in main.py, not here
 
         if os.path.exists(file_path):
@@ -225,6 +237,9 @@ class MainWindow(QMainWindow):
                             language_code = line.strip().split(':', 1)[1].strip()
                         elif line.startswith('TabEdgePosition:'):
                             tab_edge_position = line.strip().split(':', 1)[1].strip()
+                        elif line.startswith('GroupPanelRail:'):
+                            value = line.strip().split(':', 1)[1].strip().lower()
+                            group_panel_rail = value in ('true', '1', 'yes')
                         # Note: ShadowColor handling removed from here
             except Exception as e:
                 pass
@@ -238,6 +253,10 @@ class MainWindow(QMainWindow):
         # Restore the tab edge position saved on last exit (default bottom-center).
         if tab_edge_position and hasattr(self, 'tab_edge'):
             self.tab_edge.apply_position_setting(tab_edge_position)
+
+        # Restore the group column's collapsed (icon rail) state.
+        if hasattr(self.layer_panel, 'set_group_panel_collapsed'):
+            self.layer_panel.set_group_panel_collapsed(group_panel_rail, animate=False)
         
         # Note: Shadow color application removed from here
 
@@ -546,28 +565,53 @@ class MainWindow(QMainWindow):
     # px of headroom matter on macOS, where the same string measures wider.
     COMPACT_LAYER_PANEL_FLOOR = 286
 
-    def _apply_layer_panel_compact_width(self):
+    def _apply_layer_panel_compact_width(self, force=False, keep_split=False):
         """Slim the layer panel on narrow windows, restore it on wide ones.
 
         No-op unless the reduction actually changes, so it is safe to call
-        from every resize event."""
+        from every resize event; pass force=True to re-apply regardless (the
+        layer panel does so when its group column collapses or expands).
+
+        A collapsed group column already frees more width than the compact
+        trim would, so while it is collapsed the compact reduction is not
+        applied on top: the panel minimum is simply the full minimum less
+        the width the column gave up.
+
+        The outer split is normally reset to the panel minimum. With
+        keep_split=True the panel instead keeps whatever extra width the
+        user dragged it to, shifted by the change in minimum, so a collapse
+        hands the canvas exactly the width the column gave up and an expand
+        takes exactly that back."""
         compact = self.width() < self.COMPACT_WINDOW_WIDTH
         reduction = (
             self.LAYER_PANEL_FULL_MIN_WIDTH - self.COMPACT_LAYER_PANEL_FLOOR
             if compact
             else 0
         )
-        if reduction == getattr(self, '_active_compact_reduction', None):
+        group_reduction = 0
+        if hasattr(self.layer_panel, 'group_column_reduction'):
+            group_reduction = self.layer_panel.group_column_reduction()
+        if group_reduction:
+            reduction = 0
+        key = (reduction, group_reduction)
+        if not force and key == getattr(self, '_active_compact_key', None):
             return
+        self._active_compact_key = key
         self._active_compact_reduction = reduction
-        self.layer_panel.setMinimumWidth(self.LAYER_PANEL_FULL_MIN_WIDTH - reduction)
+        old_min = self.layer_panel.minimumWidth()
+        new_min = self.LAYER_PANEL_FULL_MIN_WIDTH - reduction - group_reduction
+        self.layer_panel.setMinimumWidth(new_min)
         if hasattr(self.layer_panel, 'set_compact_reduction'):
             self.layer_panel.set_compact_reduction(reduction)
         # QSplitter keeps its existing allocation when a child's minimum
         # shrinks, so re-apply the outer split or a live resize across the
         # threshold leaves the panel at its old width (toolbar gains nothing).
         if hasattr(self, 'splitter'):
-            panel_width = self.layer_panel.minimumWidth()
+            panel_width = new_min
+            if keep_split:
+                sizes = self.splitter.sizes()
+                if len(sizes) == 2 and sizes[1] > 0:
+                    panel_width = max(new_min, sizes[1] + (new_min - old_min))
             self.splitter.setSizes([max(0, self.width() - panel_width), panel_width])
 
     def _apply_toolbar_spacing(self):
@@ -2982,6 +3026,38 @@ class MainWindow(QMainWindow):
             except Exception:
                 lines = []
         lines.append("TabEdgePosition: %s" % value)
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write("\n".join(lines) + "\n")
+        except Exception:
+            pass
+
+    def _save_group_panel_rail(self, collapsed):
+        """Persist whether the group column is collapsed to its icon rail.
+
+        Written on every toggle, with the same read-modify-write as the tab
+        edge position so the settings dialog's own lines are preserved."""
+        app_name = "OpenStrandStudio"
+        if sys.platform.startswith('darwin'):
+            program_data_dir = os.path.expanduser('~/Library/Application Support')
+        else:
+            program_data_dir = os.environ.get('APPDATA', '')
+        settings_dir = os.path.join(program_data_dir, app_name)
+        try:
+            os.makedirs(settings_dir, exist_ok=True)
+        except Exception:
+            return
+        file_path = os.path.join(settings_dir, 'user_settings.txt')
+
+        lines = []
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    lines = [ln.rstrip('\n') for ln in f
+                             if not ln.startswith('GroupPanelRail:')]
+            except Exception:
+                lines = []
+        lines.append("GroupPanelRail: %s" % ('true' if collapsed else 'false'))
         try:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write("\n".join(lines) + "\n")

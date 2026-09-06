@@ -1,0 +1,79 @@
+# Group panel show/hide — UX options
+
+Mockups for letting the user hide the group panel (the "Create Group" button and
+group tree) so the canvas gets more room. Open `mockup.html` in a browser; every
+mock is clickable. `mockup_groups_shown.png` / `mockup_groups_hidden.png` are
+static captures of the two states (`mockup.html#hidden` opens all mocks collapsed).
+
+## Decisions so far
+
+- Deliverable is the mockup first; the chosen option gets implemented in PyQt afterwards.
+- When the group panel is hidden the **canvas gains the room**: the layer panel's
+  minimum width drops from 350 to about 210 px. The outer splitter still lets the
+  user drag the layer list wider.
+
+## The options
+
+| | Control | Canvas gain (shown / hidden) | Effort |
+|---|---|---|---|
+| A | Checkable **Groups** button in the main toolbar, next to **Tabs** | 0 / +140 px | small |
+| B | 14 px collapse grip on the group column's edge (chevron, label + count when collapsed) | 0 / +126 px | small–medium |
+| C | Group tree becomes a collapsible **Groups** section stacked under the layer list | +140 / +140 px | large |
+
+Recommendation in the mockup: B fits the current layout best; C gives the best
+result if a layout change is acceptable; A is the quickest.
+
+## Option B variants (`mockup_b_variants.html`)
+
+Three ways to do the edge control itself, all on the group column:
+
+| | Control | Hidden state | Canvas gain |
+|---|---|---|---|
+| B1 | Round pin in the bottom far corner, faint until hovered | Off-screen; a 10 px edge strip peeks the panel over the canvas on hover; pressing the pin again sticks it | +140 px |
+| B2 | Chevron tab at mid-height on the divider, which also drags and double-clicks | 6 px divider with the tab stays at the window edge | +134 px |
+| B3 | Chevron button at the bottom of the column | Column shrinks to a 40 px rail: a "+" tile for Create Group and one tile per group; clicking a tile expands with that group selected | +100 px |
+
+`mockup_b_variants_shown.png` / `mockup_b_variants_hidden.png` are the captures.
+`Group_Panel_Option_B_UX.pptx` is a 23-slide walkthrough: the problem, the shared
+ground rules, then one chapter per variant (at a glance, states, step-by-step,
+interaction details, assessment) and a comparison with a recommendation.
+Recommendation: B2 is the safest; B1 is the most elegant once learned but depends
+on hover; B3 if groups are used constantly and the goal is only to slim the panel.
+
+## Where each option lands in the code
+
+- Layer panel layout: `src/layer_panel.py` — the inner `QSplitter` between the
+  layer list and `right_panel` (group column) is built around line 991–1046 and is
+  deliberately locked (`setChildrenCollapsible(False)`, handle disabled).
+  `GROUP_PANEL_FULL_WIDTH = 140`; compact-screen arithmetic in `set_compact_reduction`.
+- Main window: `src/main_window.py` — toolbar buttons (≈ line 343–381), the
+  `Tabs` toggle pattern (`toggle_tabs_edge`, `apply_tabs_button_style`), the outer
+  splitter and `LAYER_PANEL_FULL_MIN_WIDTH = 350`, and the settings read/write
+  pattern (`load_settings_from_file`, `_save_tab_edge_position`).
+- Group panel widget: `src/group_layers.py` — `GroupPanel` (≈ line 735), theme colors
+  in `_get_theme_colors`, Hebrew alignment in `refresh_group_alignment`.
+- Strings: `src/translations.py` — add a key in all seven languages.
+
+## Implemented: B3
+
+The chosen option is **B3**, with two changes from the mockup: the create tile
+reads **G** (not "+"), and each group tile shows the **first letter of the
+group's name** (its position in the list if the name has no letter or digit).
+The rail and the chevron carry no tooltips.
+
+- `src/group_rail.py` — `GroupRail`, the 40 px collapsed column. It rebuilds its
+  tiles from the group tree's model signals, so every code path that adds,
+  removes or renames a group is covered. "G" runs the normal Create Group flow
+  while staying collapsed; a numbered tile expands the column and brings that
+  group into view (`GroupPanel.focus_group`).
+- `src/layer_panel.py` — `set_group_panel_collapsed()` / `toggle_group_panel()`,
+  the chevron button pinned at the bottom of the column (mirrored for Hebrew),
+  a 200 ms width animation, and `group_column_width()` which the compact-screen
+  code and the main window read instead of assuming 140.
+- `src/main_window.py` — the layer panel minimum drops from 350 to 250 px while
+  collapsed so the canvas gains the 100 px; `Ctrl+G` toggles; the state is
+  saved to `user_settings.txt` as `GroupPanelRail: true|false` on every toggle
+  and restored on launch.
+
+`rail_expanded.png`, `rail_collapsed.png`, `rail_collapsed_he.png` are offscreen
+captures of the real app in the three states.

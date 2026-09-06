@@ -253,6 +253,7 @@ Examples:<br>
         'group_header_desc': 'Group Header - Click to expand/collapse group. Right-click for options',
         'rename_group_desc': 'Rename Group - Change the name of this group',
         'delete_group_desc': 'Delete Group - Remove this group (strands remain)',
+        'collapse_group_panel_desc': 'Collapse Group Panel - The chevron at the bottom of the group column shrinks it to a narrow rail: the G tile creates a group, lettered tiles reopen the column at that group',
         'select_group_desc': 'Select Group - Select all strands in this group',
         'move_group_desc': 'Move Group - Move all strands in the group together',
         'rotate_group_desc': 'Rotate Group - Rotate all strands in the group',
@@ -294,6 +295,8 @@ Examples:<br>
             <li style="font-size:14px;"><b>Layer-Only Colors and Set-Wide Stroke Color:</b> The layer menu now pairs every color option with a layer-only version: Change Color / Change Color (This Layer Only) and Change Stroke Color / Change Stroke Color (This Layer Only), matching the existing width entries. Change Stroke Color now recolors the whole set just like Change Color, while the layer-only entries repaint only the clicked layer. Per-layer exceptions are saved with your project and survive undo/redo, tab switching and group operations; changing the set color again resets them.</li>
 
             <li style="font-size:14px;"><b>Undo/Redo History That Says What You Did:</b> Every undo and redo step now records what produced it — the mode you were using, or the panel, dialog or menu entry — together with the layers it touched and when it happened. The Undo and Redo buttons name the action they will reverse or replay, and Settings → History gains a “Recorded actions” list showing this session's activity or the steps of a past session. The record travels inside each saved state, so it survives a restart, history export/import and session recovery.</li>
+
+            <li style="font-size:14px;"><b>Collapsible Group Column:</b> The group column on the right of the layer panel can now get out of the way. A small chevron at its bottom collapses it from 140 px to a 40 px rail, and the canvas takes the room. The rail keeps a G tile that opens the usual Create Group flow, plus one tile per group showing the first letter of its name; clicking a tile expands the column with that group in view. Ctrl+G (Cmd+G on Mac) toggles it, and the choice is remembered between sessions.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.110</p>
         ''',
@@ -423,6 +426,7 @@ Examples:<br>
         'shortcut_lock_layers_desc': 'L - Lock Layers',
         'shortcut_delete_strand_desc': 'D - Delete Strand',
         'shortcut_deselect_all_desc': 'A - Deselect All',
+        'shortcut_toggle_group_panel_desc': 'Ctrl+G - Collapse/expand the group panel',
 
         'groups': 'Groups',
         'masked_layers': 'Masked Layers',
@@ -831,6 +835,8 @@ Exemples :<br>
 
             <li style="font-size:14px;"><b>Un historique qui dit ce que vous avez fait:</b> Chaque étape d'annulation et de rétablissement enregistre désormais ce qui l'a produite — le mode utilisé, ou le panneau, la boîte de dialogue ou l'entrée de menu — ainsi que les calques concernés et le moment. Les boutons Annuler et Refaire nomment l'action qu'ils vont annuler ou refaire, et Paramètres → Historique gagne une liste « Actions enregistrées » montrant l'activité de cette session ou les étapes d'une session passée. L'enregistrement voyage à l'intérieur de chaque état sauvegardé : il survit à un redémarrage, à l'export/import de l'historique et à la récupération de session.</li>
 
+            <li style="font-size:14px;"><b>Colonne des groupes repliable:</b> La colonne des groupes à droite du panneau des calques peut désormais s'effacer. Un petit chevron en bas la replie de 140 px à une barre de 40 px, et le canevas récupère la place. La barre conserve une tuile G qui ouvre le flux habituel Créer Groupe, plus une tuile par groupe affichant la première lettre de son nom ; un clic sur une tuile déplie la colonne avec ce groupe en vue. Ctrl+G (Cmd+G sur Mac) bascule l'état, et le choix est mémorisé d'une session à l'autre.</li>
+
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.110</p>
         ''',
 
@@ -1101,6 +1107,7 @@ Exemples :<br>
         'group_header_desc': 'En-tête Groupe - Cliquez pour développer/réduire le groupe. Clic droit pour les options',
         'rename_group_desc': 'Renommer Groupe - Change le nom de ce groupe',
         'delete_group_desc': 'Supprimer Groupe - Supprime ce groupe (les brins restent)',
+        'collapse_group_panel_desc': 'Replier la colonne des groupes - Le chevron en bas de la colonne des groupes la réduit en une barre étroite : la tuile G crée un groupe, les tuiles à lettre rouvrent la colonne sur ce groupe',
         'select_group_desc': 'Sélectionner Groupe - Sélectionne tous les brins de ce groupe',
         'move_group_desc': 'Déplacer Groupe - Déplace tous les brins du groupe ensemble',
         'rotate_group_desc': 'Tourner Groupe - Fait pivoter tous les brins du groupe',
@@ -1162,6 +1169,7 @@ Exemples :<br>
         'shortcut_lock_layers_desc': 'L - Verr. Calques',
         'shortcut_delete_strand_desc': 'D - Supprim. Brin',
         'shortcut_deselect_all_desc': 'A - Désél. Tous',
+        'shortcut_toggle_group_panel_desc': 'Ctrl+G - Replier/déplier la colonne des groupes',
 
         'general_settings_buttons': 'Paramètres Généraux',
         'theme_select_desc': 'Sélection du Thème - Choisir entre les thèmes clair et sombre pour l\'interface',
@@ -1449,6 +1457,8 @@ Beispiele:<br>
 
             <li style="font-size:14px;"><b>Ein Verlauf, der sagt, was Sie getan haben:</b> Jeder Rückgängig- und Wiederherstellen-Schritt zeichnet jetzt auf, wodurch er entstanden ist — der verwendete Modus oder das Bedienfeld, der Dialog bzw. der Menüeintrag — samt der betroffenen Ebenen und dem Zeitpunkt. Die Schaltflächen Rückgängig und Wiederherstellen benennen die Aktion, die sie rückgängig machen oder wiederholen, und Einstellungen → Verlauf erhält eine Liste „Aufgezeichnete Aktionen“ mit der Aktivität dieser Sitzung oder den Schritten einer früheren Sitzung. Der Eintrag wird in jedem gespeicherten Zustand mitgeführt und übersteht Neustart, Export/Import des Verlaufs und Sitzungswiederherstellung.</li>
 
+            <li style="font-size:14px;"><b>Einklappbare Gruppenspalte:</b> Die Gruppenspalte rechts im Ebenenbedienfeld kann jetzt aus dem Weg gehen. Ein kleiner Pfeil an ihrem unteren Ende klappt sie von 140 px auf eine 40 px schmale Leiste zusammen, und die Zeichenfläche erhält den Platz. Die Leiste behält eine G-Kachel, die den gewohnten Ablauf „Neue Gruppe“ öffnet, plus eine Kachel je Gruppe mit dem Anfangsbuchstaben ihres Namens; ein Klick auf eine Kachel klappt die Spalte mit dieser Gruppe im Blick wieder auf. Strg+G (Cmd+G auf dem Mac) schaltet um, und die Wahl bleibt zwischen Sitzungen erhalten.</li>
+
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.110</p>
         ''',
         # About translations
@@ -1680,6 +1690,7 @@ Beispiele:<br>
         'group_header_desc': 'Gruppenkopf - Klicken zum Ein-/Ausklappen. Rechtsklick für Optionen',
         'rename_group_desc': 'Gruppe umbenennen - Den Namen dieser Gruppe ändern',
         'delete_group_desc': 'Gruppe löschen - Diese Gruppe entfernen (Stränge bleiben)',
+        'collapse_group_panel_desc': 'Gruppenspalte einklappen - Der Pfeil unten in der Gruppenspalte verkleinert sie zu einer schmalen Leiste: die G-Kachel erstellt eine Gruppe, Buchstaben-Kacheln öffnen die Spalte bei dieser Gruppe wieder',
         'select_group_desc': 'Gruppe auswählen - Alle Stränge dieser Gruppe auswählen',
         'move_group_desc': 'Gruppe verschieben - Alle Stränge der Gruppe gemeinsam verschieben',
         'rotate_group_desc': 'Gruppe drehen - Alle Stränge der Gruppe drehen',
@@ -1746,6 +1757,7 @@ Beispiele:<br>
         'shortcut_lock_layers_desc': 'L - Sperrmodus',
         'shortcut_delete_strand_desc': 'D - Strang entf.',
         'shortcut_deselect_all_desc': 'A - Alle abwählen',
+        'shortcut_toggle_group_panel_desc': 'Strg+G - Gruppenspalte ein-/ausklappen',
 
         'general_settings_buttons': 'Allgemeine Einstellungen',
         'theme_select_desc': 'Themenauswahl - Wählen Sie zwischen hellen und dunklen Themen für die Oberfläche',
@@ -2000,6 +2012,8 @@ Esempi:<br>
             <li style="font-size:14px;"><b>Colori per singolo livello e colore del tratto per tutto il set:</b> Il menu dei livelli affianca ora a ogni opzione di colore una versione per il solo livello: Cambia colore / Cambia colore (solo questo livello) e Cambia colore del tratto / Cambia colore del tratto (solo questo livello), come le voci di larghezza già esistenti. Cambia colore del tratto ora ricolora l'intero set proprio come Cambia colore, mentre le voci «solo questo livello» ridipingono soltanto il livello su cui hai fatto clic. Le eccezioni per livello vengono salvate con il progetto e sopravvivono ad annulla/ripristina, al cambio di scheda e alle operazioni di gruppo; cambiando di nuovo il colore del set vengono azzerate.</li>
 
             <li style="font-size:14px;"><b>Una cronologia che dice cosa hai fatto:</b> Ogni passo di annulla e ripristina registra ora che cosa lo ha prodotto — la modalità in uso, oppure il pannello, la finestra di dialogo o la voce di menu — insieme ai livelli interessati e al momento. I pulsanti Annulla e Ripeti indicano l'azione che annulleranno o ripeteranno, e Impostazioni → Cronologia aggiunge un elenco «Azioni registrate» con l'attività di questa sessione o i passi di una sessione precedente. La registrazione viaggia dentro ogni stato salvato: sopravvive a un riavvio, all'esportazione/importazione della cronologia e al ripristino della sessione.</li>
+
+            <li style="font-size:14px;"><b>Colonna dei gruppi comprimibile:</b> La colonna dei gruppi a destra del pannello livelli ora può farsi da parte. Una piccola freccia in basso la comprime da 140 px a una barra di 40 px, e la tela guadagna lo spazio. La barra conserva un riquadro G che apre il consueto flusso Crea Gruppo, più un riquadro per gruppo con la prima lettera del suo nome; un clic su un riquadro espande la colonna con quel gruppo in vista. Ctrl+G (Cmd+G su Mac) alterna lo stato, e la scelta viene ricordata tra le sessioni.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Versione 1.110</p>
         ''',
@@ -2271,6 +2285,7 @@ Esempi:<br>
         'group_header_desc': 'Intestazione Gruppo - Clicca per espandere/collassare il gruppo. Click destro per opzioni',
         'rename_group_desc': 'Rinomina Gruppo - Cambia il nome di questo gruppo',
         'delete_group_desc': 'Elimina Gruppo - Rimuove questo gruppo (i fili rimangono)',
+        'collapse_group_panel_desc': 'Comprimi la colonna dei gruppi - La freccia in fondo alla colonna dei gruppi la riduce a una barra stretta: il riquadro G crea un gruppo, i riquadri con lettera riaprono la colonna su quel gruppo',
         'select_group_desc': 'Seleziona Gruppo - Seleziona tutti i fili in questo gruppo',
         'move_group_desc': 'Sposta Gruppo - Sposta tutti i fili del gruppo insieme',
         'rotate_group_desc': 'Ruota Gruppo - Ruota tutti i fili del gruppo',
@@ -2332,6 +2347,7 @@ Esempi:<br>
         'shortcut_lock_layers_desc': 'L - Blocca Liv.',
         'shortcut_delete_strand_desc': 'D - Elim. Trefolo',
         'shortcut_deselect_all_desc': 'A - Desel. Tutto',
+        'shortcut_toggle_group_panel_desc': 'Ctrl+G - Comprimi/espandi la colonna dei gruppi',
 
         'general_settings_buttons': 'Impostazioni Generali',
         'theme_select_desc': 'Selezione Tema - Scegli tra temi chiari e scuri per l\'interfaccia',
@@ -2589,6 +2605,8 @@ Ejemplos:<br>
             <li style="font-size:14px;"><b>Colores por capa y color del trazo para todo el conjunto:</b> El menú de capas acompaña ahora cada opción de color con una versión para una sola capa: Cambiar color / Cambiar color (solo esta capa) y Cambiar color del trazo / Cambiar color del trazo (solo esta capa), igual que las entradas de ancho ya existentes. Cambiar color del trazo ahora recolorea todo el conjunto como lo hace Cambiar color, mientras que las entradas «solo esta capa» repintan únicamente la capa en la que hiciste clic. Las excepciones por capa se guardan con tu proyecto y sobreviven a deshacer/rehacer, al cambio de pestaña y a las operaciones de grupo; volver a cambiar el color del conjunto las restablece.</li>
 
             <li style="font-size:14px;"><b>Un historial que dice lo que hiciste:</b> Cada paso de deshacer y rehacer registra ahora qué lo produjo — el modo que estabas usando, o el panel, el diálogo o la entrada de menú — junto con las capas afectadas y el momento. Los botones Deshacer y Rehacer nombran la acción que van a deshacer o rehacer, y Ajustes → Historial suma una lista «Acciones registradas» con la actividad de esta sesión o los pasos de una sesión anterior. El registro viaja dentro de cada estado guardado: sobrevive a un reinicio, a la exportación/importación del historial y a la recuperación de sesión.</li>
+
+            <li style="font-size:14px;"><b>Columna de grupos plegable:</b> La columna de grupos a la derecha del panel de capas ahora puede apartarse. Una pequeña flecha en su parte inferior la pliega de 140 px a una barra de 40 px, y el lienzo gana el espacio. La barra conserva una ficha G que abre el flujo habitual de Crear Grupo, más una ficha por grupo con la primera letra de su nombre; al pulsar una ficha, la columna se despliega con ese grupo a la vista. Ctrl+G (Cmd+G en Mac) alterna el estado, y la elección se recuerda entre sesiones.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - Versión 1.110</p>
         ''',
@@ -2860,6 +2878,7 @@ Ejemplos:<br>
         'group_header_desc': 'Encabezado de Grupo - Haga clic para expandir/contraer grupo. Clic derecho para opciones',
         'rename_group_desc': 'Renombrar Grupo - Cambia el nombre de este grupo',
         'delete_group_desc': 'Eliminar Grupo - Elimina este grupo (los cordones permanecen)',
+        'collapse_group_panel_desc': 'Plegar la columna de grupos - La flecha al pie de la columna de grupos la reduce a una barra estrecha: la ficha G crea un grupo, las fichas con letra vuelven a abrir la columna en ese grupo',
         'select_group_desc': 'Seleccionar Grupo - Selecciona todos los cordones en este grupo',
         'move_group_desc': 'Mover Grupo - Mueve todos los cordones del grupo juntos',
         'rotate_group_desc': 'Rotar Grupo - Rota todos los cordones del grupo',
@@ -2921,6 +2940,7 @@ Ejemplos:<br>
         'shortcut_lock_layers_desc': 'L - Bloq. Capas',
         'shortcut_delete_strand_desc': 'D - Elim. Cordón',
         'shortcut_deselect_all_desc': 'A - Deselec. Todo',
+        'shortcut_toggle_group_panel_desc': 'Ctrl+G - Plegar/desplegar la columna de grupos',
 
         'general_settings_buttons': 'Configuración General',
         'theme_select_desc': 'Selección de Tema - Elige entre temas claros y oscuros para la interfaz',
@@ -3178,6 +3198,8 @@ Exemplos:<br>
             <li style="font-size:14px;"><b>Cores por camada e cor do traço para todo o conjunto:</b> O menu de camadas agora acompanha cada opção de cor com uma versão para uma única camada: Mudar cor / Mudar cor (apenas esta camada) e Mudar cor do traço / Mudar cor do traço (apenas esta camada), tal como as entradas de largura já existentes. Mudar cor do traço agora recolore todo o conjunto como Mudar cor faz, enquanto as entradas «apenas esta camada» repintam somente a camada clicada. As exceções por camada são salvas com o projeto e sobrevivem a desfazer/refazer, à troca de aba e às operações de grupo; mudar novamente a cor do conjunto as redefine.</li>
 
             <li style="font-size:14px;"><b>Um histórico que diz o que você fez:</b> Cada passo de desfazer e refazer agora regista o que o produziu — o modo em uso, ou o painel, a caixa de diálogo ou a entrada de menu — juntamente com as camadas afetadas e o momento. Os botões Desfazer e Refazer nomeiam a ação que vão desfazer ou refazer, e Definições → Histórico ganha uma lista «Ações registadas» com a atividade desta sessão ou os passos de uma sessão anterior. O registo viaja dentro de cada estado guardado: sobrevive a um reinício, à exportação/importação do histórico e à recuperação de sessão.</li>
+
+            <li style="font-size:14px;"><b>Coluna de grupos recolhível:</b> A coluna de grupos à direita do painel de camadas agora pode sair do caminho. Uma pequena seta na sua base recolhe-a de 140 px para uma barra de 40 px, e a tela ganha o espaço. A barra mantém um mosaico G que abre o fluxo habitual de Criar Grupo, mais um mosaico por grupo com a primeira letra do seu nome; clicar num mosaico expande a coluna com esse grupo à vista. Ctrl+G (Cmd+G no Mac) alterna o estado, e a escolha é lembrada entre sessões.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio – Versão 1.110</p>
         ''',
@@ -3448,6 +3470,7 @@ Exemplos:<br>
         'group_header_desc': 'Cabeçalho do Grupo - Clique para expandir/recolher grupo. Clique direito para opções',
         'rename_group_desc': 'Renomear Grupo - Altera o nome deste grupo',
         'delete_group_desc': 'Excluir Grupo - Remove este grupo (as mechas permanecem)',
+        'collapse_group_panel_desc': 'Recolher a coluna de grupos - A seta no fundo da coluna de grupos reduz-a a uma barra estreita: o mosaico G cria um grupo, os mosaicos com letra reabrem a coluna nesse grupo',
         'select_group_desc': 'Selecionar Grupo - Seleciona todas as mechas neste grupo',
         'move_group_desc': 'Mover Grupo - Move todas as mechas do grupo juntas',
         'rotate_group_desc': 'Rotacionar Grupo - Rotaciona todas as mechas do grupo',
@@ -3509,6 +3532,7 @@ Exemplos:<br>
         'shortcut_lock_layers_desc': 'L - Bloq. Camad.',
         'shortcut_delete_strand_desc': 'D - Excl. Mecha',
         'shortcut_deselect_all_desc': 'A - Desmar. Tudo',
+        'shortcut_toggle_group_panel_desc': 'Ctrl+G - Recolher/expandir a coluna de grupos',
 
         'general_settings_buttons': 'Configurações Gerais',
         'theme_select_desc': 'Seleção de Tema - Escolha entre temas claro e escuro para a interface',
@@ -3775,6 +3799,8 @@ Exemplos:<br>
             <li style="font-size:14px;"><b>צבעים לשכבה בודדת וצבע קו לכל הסט:</b> תפריט השכבות מציע כעת לכל אפשרות צבע גם גרסה לשכבה בודדת: שנה צבע / שנה צבע (שכבה זו בלבד) ושנה צבע קו / שנה צבע קו (שכבה זו בלבד), בדומה לפריטי הרוחב הקיימים. שנה צבע קו משנה כעת את כל הסט בדיוק כמו שנה צבע, ואילו הפריטים "שכבה זו בלבד" צובעים רק את השכבה שנלחצה. החריגים לכל שכבה נשמרים עם הפרויקט ושורדים ביטול/ביצוע מחדש, מעבר בין כרטיסיות ופעולות קבוצה; שינוי חוזר של צבע הסט מאפס אותם.</li>
 
             <li style="font-size:14px;"><b>היסטוריה שמספרת מה עשית:</b> כל שלב של ביטול וביצוע מחדש מתעד כעת מה יצר אותו — המצב שבו השתמשת, או הפאנל, תיבת הדו-שיח או פריט התפריט — יחד עם השכבות שהושפעו והזמן. כפתורי הביטול והביצוע מחדש מציינים את הפעולה שהם עומדים לבטל או לבצע מחדש, והגדרות ← היסטוריה מקבלות רשימת “פעולות שנרשמו” המציגה את הפעילות בהפעלה הנוכחית או את השלבים של הפעלה קודמת. הרישום נשמר בתוך כל מצב, ולכן הוא שורד הפעלה מחדש, ייצוא/ייבוא היסטוריה ושחזור הפעלה.</li>
+
+            <li style="font-size:14px;"><b>עמודת קבוצות מתקפלת:</b> עמודת הקבוצות שבלוח השכבות יכולה כעת לפנות מקום. חץ קטן בתחתיתה מכווץ אותה מ-140 פיקסלים לפס של 40 פיקסלים, והקנבס מקבל את המקום. הפס שומר על אריח G הפותח את תהליך יצירת הקבוצה הרגיל, ועוד אריח לכל קבוצה עם האות הראשונה של שמה; לחיצה על אריח מרחיבה את העמודה עם הקבוצה הזו בתצוגה. Ctrl+G (Cmd+G במק) מחליף מצב, והבחירה נשמרת בין הפעלות.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - גרסה 1.110</p>
         </div>
@@ -4057,6 +4083,7 @@ Exemplos:<br>
         'group_header_desc': 'כותרת קבוצה - לחץ להרחבה/כווץ קבוצה. לחיצה ימנית לאפשרויות',
         'rename_group_desc': 'שנה שם קבוצה - משנה את השם של הקבוצה הזו',
         'delete_group_desc': 'מחק קבוצה - מסיר את הקבוצה הזו (החוטים נשארים)',
+        'collapse_group_panel_desc': 'כיווץ עמודת הקבוצות - החץ בתחתית עמודת הקבוצות מכווץ אותה לפס צר: אריח G יוצר קבוצה, ואריחי האותיות פותחים מחדש את העמודה בקבוצה זו',
         'select_group_desc': 'בחר קבוצה - בוחר את כל החוטים בקבוצה הזו',
         'move_group_desc': 'הזז קבוצה - מזיז את כל החוטים בקבוצה יחד',
         'rotate_group_desc': 'סובב קבוצה - מסובב את כל החוטים בקבוצה',
@@ -4107,6 +4134,7 @@ Exemplos:<br>
         'shortcut_lock_layers_desc': 'L - נעל שכבות',
         'shortcut_delete_strand_desc': 'D - מחק חוט',
         'shortcut_deselect_all_desc': 'A - בטל בחירה',
+        'shortcut_toggle_group_panel_desc': 'Ctrl+G - כיווץ/הרחבה של עמודת הקבוצות',
 
         'general_settings_buttons': 'הגדרות כלליות',
         'theme_select_desc': 'בחירת ערכת נושא - בחר בין ערכות נושא בהירות וכהות לממשק',

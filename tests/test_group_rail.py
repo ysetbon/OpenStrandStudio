@@ -54,10 +54,19 @@ def window():
     win.resize(1600, 900)  # wide enough to stay out of compact mode
     pump(150)
     yield win
-    # Closing with unsaved work would raise the app's own confirmation dialog.
+    close_window(win)
+
+
+def close_window(win):
+    """Close and destroy a MainWindow while Python is still fully alive.
+
+    Closing with unsaved work would raise the app's own confirmation
+    dialog, and a window left for interpreter shutdown can receive Qt
+    events after its Python attributes are gone."""
     win._confirm_close_with_dirty_tabs = lambda *a, **k: True
     win.close()
-    pump(30)
+    win.deleteLater()
+    pump(60)
 
 
 def add_tree_group(group_panel, name, children=("1_1",)):
@@ -188,9 +197,7 @@ def test_state_persists_and_restores(window):
         assert second.layer_panel.group_panel_collapsed
         assert second.layer_panel.right_panel.width() == lp.GROUP_PANEL_RAIL_WIDTH
     finally:
-        second._confirm_close_with_dirty_tabs = lambda *a, **k: True
-        second.close()
-        pump(30)
+        close_window(second)
 
     lp.set_group_panel_collapsed(False, animate=False)
     pump(40)

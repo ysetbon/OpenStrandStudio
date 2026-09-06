@@ -944,7 +944,13 @@ class GroupPanel(QWidget):
         QTimer.singleShot(delay, _run_refresh)
 
     def eventFilter(self, watched, event):
-        if watched is self.tree.viewport():
+        # This filter is also installed on the layer panel, which can still
+        # deliver events while this panel is being torn down and its Python
+        # attributes are already gone; an exception here would abort Qt.
+        tree = getattr(self, 'tree', None)
+        if tree is None:
+            return False
+        if watched is tree.viewport():
             try:
                 if event.type() == QEvent.MouseMove:
                     item = self.tree.itemAt(event.pos())

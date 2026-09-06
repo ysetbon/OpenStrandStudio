@@ -3215,6 +3215,7 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['duplicate_group_desc'].split(' - ')[0]}</span> - {_['duplicate_group_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['rename_group_desc'].split(' - ')[0]}</span> - {_['rename_group_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['delete_group_desc'].split(' - ')[0]}</span> - {_['delete_group_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['collapse_group_panel_desc'].split(' - ')[0]}</span> - {_['collapse_group_panel_desc'].split(' - ')[1]}</li>
         </ul>
         
         <h2>{_['canvas_indicators_title']}</h2>
@@ -3303,6 +3304,7 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['shortcut_lock_layers_desc'].split(' - ')[0]}</span> - {_['shortcut_lock_layers_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['shortcut_delete_strand_desc'].split(' - ')[0]}</span> - {_['shortcut_delete_strand_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['shortcut_deselect_all_desc'].split(' - ')[0]}</span> - {_['shortcut_deselect_all_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['shortcut_toggle_group_panel_desc'].split(' - ')[0]}</span> - {_['shortcut_toggle_group_panel_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['shortcut_clear_suppression_desc'].split(' - ')[0]}</span> - {_['shortcut_clear_suppression_desc'].split(' - ')[1]}</li>
         </ul>
 
@@ -4269,6 +4271,7 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['duplicate_group_desc'].split(' - ')[0]}</span> - {_['duplicate_group_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['rename_group_desc'].split(' - ')[0]}</span> - {_['rename_group_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['delete_group_desc'].split(' - ')[0]}</span> - {_['delete_group_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['collapse_group_panel_desc'].split(' - ')[0]}</span> - {_['collapse_group_panel_desc'].split(' - ')[1]}</li>
         </ul>
         
         <h2>{_['canvas_indicators_title']}</h2>
@@ -4357,6 +4360,7 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['shortcut_lock_layers_desc'].split(' - ')[0]}</span> - {_['shortcut_lock_layers_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['shortcut_delete_strand_desc'].split(' - ')[0]}</span> - {_['shortcut_delete_strand_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['shortcut_deselect_all_desc'].split(' - ')[0]}</span> - {_['shortcut_deselect_all_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['shortcut_toggle_group_panel_desc'].split(' - ')[0]}</span> - {_['shortcut_toggle_group_panel_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['shortcut_clear_suppression_desc'].split(' - ')[0]}</span> - {_['shortcut_clear_suppression_desc'].split(' - ')[1]}</li>
         </ul>
 
@@ -5072,6 +5076,7 @@ class SettingsDialog(QDialog):
                 <li><span class="button-name">{_['duplicate_group_desc'].split(' - ')[0]}</span> - {_['duplicate_group_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['rename_group_desc'].split(' - ')[0]}</span> - {_['rename_group_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['delete_group_desc'].split(' - ')[0]}</span> - {_['delete_group_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['collapse_group_panel_desc'].split(' - ')[0]}</span> - {_['collapse_group_panel_desc'].split(' - ')[1]}</li>
             </ul>
             
             <h2>{_['canvas_indicators_title']}</h2>
@@ -5135,6 +5140,7 @@ class SettingsDialog(QDialog):
                 <li><span class="button-name">{_['shortcut_lock_layers_desc'].split(' - ')[0]}</span> - {_['shortcut_lock_layers_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['shortcut_delete_strand_desc'].split(' - ')[0]}</span> - {_['shortcut_delete_strand_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['shortcut_deselect_all_desc'].split(' - ')[0]}</span> - {_['shortcut_deselect_all_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">{_['shortcut_toggle_group_panel_desc'].split(' - ')[0]}</span> - {_['shortcut_toggle_group_panel_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['shortcut_clear_suppression_desc'].split(' - ')[0]}</span> - {_['shortcut_clear_suppression_desc'].split(' - ')[1]}</li>
             </ul>
 

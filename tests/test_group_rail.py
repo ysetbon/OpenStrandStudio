@@ -242,7 +242,12 @@ def test_tile_activation_flashes_the_group(window):
         # stylesheet decides the row colors.
         rect = gp.tree.visualItemRect(item)
         image = gp.tree.viewport().grab().toImage()
-        return image.pixelColor(rect.center().x(), rect.center().y()).name().lower()
+        # Widget coordinates are device-independent; the image is in device
+        # pixels, so map the sample point through the image's pixel ratio.
+        ratio = image.devicePixelRatio() or 1.0
+        x = int(rect.center().x() * ratio)
+        y = int(rect.center().y() * ratio)
+        return image.pixelColor(x, y).name().lower()
 
     lp.group_rail._tiles[0].click()
     pump(350)
@@ -253,6 +258,37 @@ def test_tile_activation_flashes_the_group(window):
     pump(gp.FOCUS_FLASH_MS + 100)
     assert row_pixel() != colors["menu_selected_bg"].lower()
     assert not item.isSelected()
+    assert gp.tree.selectionMode() == QAbstractItemView.NoSelection
+
+
+def test_second_flash_is_not_cut_short_by_the_first(window):
+    lp = window.layer_panel
+    gp = lp.group_layer_manager.group_panel
+    first = add_tree_group(gp, "alpha")
+    second = add_tree_group(gp, "beta")
+    pump(40)
+    gp.focus_group("alpha")
+    pump(300)
+    gp.focus_group("beta")           # inside alpha's flash window
+    pump(gp.FOCUS_FLASH_MS - 300 + 100)  # alpha's original timer would have fired by now
+    assert second.isSelected() and not first.isSelected()
+    pump(400)                        # beta's own window ends
+    assert not second.isSelected()
+    assert gp.tree.selectionMode() == QAbstractItemView.NoSelection
+
+
+def test_flash_cleanup_survives_a_deleted_group(window):
+    from PyQt5 import sip
+    lp = window.layer_panel
+    gp = lp.group_layer_manager.group_panel
+    item = add_tree_group(gp, "gone")
+    pump(40)
+    gp.focus_group("gone")
+    pump(100)
+    # The group is deleted (C++ side included) before the flash ends.
+    gp._remove_group_from_tree("gone")
+    sip.delete(item)
+    pump(gp.FOCUS_FLASH_MS + 100)
     assert gp.tree.selectionMode() == QAbstractItemView.NoSelection
 
 

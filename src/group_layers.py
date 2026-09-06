@@ -1272,21 +1272,40 @@ class GroupPanel(QWidget):
             # thing that paints the selection colors. Selection is normally
             # off in this tree, so it is switched on just for the flash.
             self.tree.setSelectionMode(QAbstractItemView.SingleSelection)
+            self.tree.clearSelection()
             item.setSelected(True)
             self.tree.viewport().update()
         except RuntimeError:
             return
 
-        def _clear_flash():
+        # One timer for all flashes, restarted on each call, so a second
+        # activation inside the flash window extends it rather than having
+        # the first timer wipe the second highlight.
+        timer = getattr(self, '_focus_flash_timer', None)
+        if timer is None:
+            timer = QTimer(self)
+            timer.setSingleShot(True)
+            timer.timeout.connect(self._end_focus_flash)
+            self._focus_flash_timer = timer
+        timer.start(self.FOCUS_FLASH_MS)
+
+    def _end_focus_flash(self):
+        """Drop the flash selection and put the tree back to NoSelection.
+
+        Works on the tree alone (never the flashed item, which may be gone
+        by now), and restores the mode whatever else fails, so a stray
+        exception cannot leave selection switched on."""
+        from PyQt5.QtWidgets import QAbstractItemView
+        try:
+            self.tree.clearSelection()
+        except RuntimeError:
+            pass
+        finally:
             try:
-                item.setSelected(False)
-                self.tree.clearSelection()
                 self.tree.setSelectionMode(QAbstractItemView.NoSelection)
                 self.tree.viewport().update()
             except RuntimeError:
                 pass
-
-        QTimer.singleShot(self.FOCUS_FLASH_MS, _clear_flash)
 
     def _update_group_item_label(self, item, group_name=None):
         if item is None:

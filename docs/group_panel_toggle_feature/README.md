@@ -34,6 +34,9 @@ Three ways to do the edge control itself, all on the group column:
 | B3 | Chevron button at the bottom of the column | Column shrinks to a 40 px rail: a "+" tile for Create Group and one tile per group; clicking a tile expands with that group selected | +100 px |
 
 `mockup_b_variants_shown.png` / `mockup_b_variants_hidden.png` are the captures.
+`Group_Panel_Option_B_UX.pptx` is a 23-slide walkthrough: the problem, the shared
+ground rules, then one chapter per variant (at a glance, states, step-by-step,
+interaction details, assessment) and a comparison with a recommendation.
 Recommendation: B2 is the safest; B1 is the most elegant once learned but depends
 on hover; B3 if groups are used constantly and the goal is only to slim the panel.
 

@@ -21,7 +21,7 @@ os.chdir(SRC_DIR)  # the app loads icons relative to src
 
 import pytest
 from PyQt5.QtCore import QPointF, QTimer
-from PyQt5.QtWidgets import QApplication, QTreeWidgetItem
+from PyQt5.QtWidgets import QApplication, QTreeWidgetItem, QAbstractItemView
 from PyQt5.QtCore import Qt
 
 from main_window import MainWindow
@@ -237,14 +237,23 @@ def test_tile_activation_flashes_the_group(window):
     item = add_tree_group(gp, "braid")
     lp.set_group_panel_collapsed(True, animate=False)
     pump(60)
+    def row_pixel():
+        # What is actually painted, not what the model says: the tree's
+        # stylesheet decides the row colors.
+        rect = gp.tree.visualItemRect(item)
+        image = gp.tree.viewport().grab().toImage()
+        return image.pixelColor(rect.center().x(), rect.center().y()).name().lower()
+
     lp.group_rail._tiles[0].click()
     pump(350)
-    # Highlighted in the selection colors while the pointer is still on the rail...
+    # Painted in the selection color while the pointer is still on the rail...
     colors = gp._get_theme_colors()
-    assert item.background(0).color().name().lower() == colors["menu_selected_bg"].lower()
-    # ...and back to normal once the flash is over.
+    assert row_pixel() == colors["menu_selected_bg"].lower()
+    # ...and back to the plain row, with selection switched off again, once the flash is over.
     pump(gp.FOCUS_FLASH_MS + 100)
-    assert item.data(0, Qt.BackgroundRole) is None
+    assert row_pixel() != colors["menu_selected_bg"].lower()
+    assert not item.isSelected()
+    assert gp.tree.selectionMode() == QAbstractItemView.NoSelection
 
 
 def test_many_groups_scroll_without_clipping_tiles(window):

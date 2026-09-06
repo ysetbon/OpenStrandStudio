@@ -1265,19 +1265,24 @@ class GroupPanel(QWidget):
             return
         try:
             from PyQt5.QtWidgets import QAbstractItemView
-            from PyQt5.QtGui import QBrush, QColor
             item.setExpanded(True)
             self.tree.scrollToItem(item, QAbstractItemView.PositionAtTop)
-            colors = self._get_theme_colors()
-            item.setBackground(0, QBrush(QColor(colors['menu_selected_bg'])))
-            item.setForeground(0, QBrush(QColor(colors['menu_selected_text'])))
+            # The tree paints rows from its stylesheet, which ignores the
+            # item's background role; its ::item:selected rule is the one
+            # thing that paints the selection colors. Selection is normally
+            # off in this tree, so it is switched on just for the flash.
+            self.tree.setSelectionMode(QAbstractItemView.SingleSelection)
+            item.setSelected(True)
+            self.tree.viewport().update()
         except RuntimeError:
             return
 
         def _clear_flash():
             try:
-                item.setData(0, Qt.BackgroundRole, None)
-                item.setData(0, Qt.ForegroundRole, None)
+                item.setSelected(False)
+                self.tree.clearSelection()
+                self.tree.setSelectionMode(QAbstractItemView.NoSelection)
+                self.tree.viewport().update()
             except RuntimeError:
                 pass
 

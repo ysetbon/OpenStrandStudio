@@ -95,7 +95,10 @@ class MainWindow(QMainWindow):
         if hasattr(self.layer_panel, 'group_panel_collapsed_changed'):
             self.layer_panel.group_panel_collapsed_changed.connect(self._save_group_panel_rail)
             self.group_panel_shortcut = QShortcut(QKeySequence("Ctrl+G"), self)
-            self.group_panel_shortcut.setContext(Qt.ApplicationShortcut)
+            # Window context: live whenever the main window is active, and
+            # silent while a modal dialog (Create Group's name prompt, the
+            # settings dialog) has taken over.
+            self.group_panel_shortcut.setContext(Qt.WindowShortcut)
             self.group_panel_shortcut.activated.connect(self.layer_panel.toggle_group_panel)
         # Log initial state
         self.layer_state_manager.save_initial_state()

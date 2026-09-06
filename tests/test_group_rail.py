@@ -206,8 +206,24 @@ def test_state_persists_and_restores(window):
     assert content.count("GroupPanelRail") == 1
 
 
+def test_theme_change_restyles_the_g_tile(window):
+    lp = window.layer_panel
+    create_button = lp.group_layer_manager.create_group_button
+    lp.set_group_panel_collapsed(True, animate=False)
+    pump(60)
+    for theme in ("dark", "light", "default"):
+        window.apply_theme(theme)
+        pump(60)
+        # The G tile always carries the Create Group button's current style.
+        assert create_button.styleSheet().strip() in lp.group_rail.create_tile.styleSheet()
+        assert lp.group_rail.create_tile.width() == GroupRail.TILE_WIDTH
+
+
 def test_shortcut_and_hebrew_chevron(window):
     lp = window.layer_panel
+    # Window context: a modal dialog (Create Group's name prompt) must not
+    # let Ctrl+G toggle the panel behind it.
+    assert window.group_panel_shortcut.context() == Qt.WindowShortcut
     window.group_panel_shortcut.activated.emit()
     pump(350)
     assert lp.group_panel_collapsed

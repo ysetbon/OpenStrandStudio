@@ -138,6 +138,12 @@ class GroupRail(QWidget):
         self._style_tiles()
 
     # ------------------------------------------------------------------- state
+    def set_create_label(self, text):
+        """Set the create tile's letter from the current language (the
+        'create_group_tile' translation: G in Latin scripts, ק in Hebrew)."""
+        label = str(text or "").strip() or "G"
+        self.create_tile.setText(label)
+
     def set_create_enabled(self, enabled):
         """Mirror the Create Group button's enabled state onto the G tile."""
         self.create_tile.setEnabled(bool(enabled))

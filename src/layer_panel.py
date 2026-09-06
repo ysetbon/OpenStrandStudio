@@ -1788,6 +1788,11 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
         self.delete_all_button.setText(_['delete_all'])
 
+        # The rail's create tile carries the language's letter for "group".
+        rail = getattr(self, 'group_rail', None)
+        if rail is not None:
+            rail.set_create_label(_.get('create_group_tile', 'G'))
+
         # Update button tooltips
         self.set_button_tooltip(self.reset_states_button, _['reset_tooltip'])
         self.set_button_tooltip(self.refresh_button, _['refresh_tooltip'])

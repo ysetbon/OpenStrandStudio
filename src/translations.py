@@ -350,6 +350,7 @@ Examples:<br>
         'angle_label': 'Angle:',
         'length_label': 'Length:',
         'create_group': 'Create Group',
+        'create_group_tile': 'G',
         'enter_group_name': 'Enter group name:',
         'group_creation_cancelled': 'No main strands selected. Group creation cancelled.',
         'move_group_strands': 'Move Strands',
@@ -891,6 +892,7 @@ Exemples :<br>
         'angle_label': 'Angle :',
         'length_label': 'Longueur :',
         'create_group': 'Créer Groupe',
+        'create_group_tile': 'G',
         'enter_group_name': 'Entrez le nom du groupe:',
         'group_creation_cancelled': 'Aucun brin principal sélectionné. Création du groupe annulée.',
         'move_group_strands': 'Déplacer Groupe',
@@ -1535,6 +1537,7 @@ Beispiele:<br>
         'angle_label': 'Winkel:',
         'length_label': 'Länge:',
         'create_group': 'Neue Gruppe',
+        'create_group_tile': 'G',
         'enter_group_name': 'Gruppennamen eingeben:',
         'group_creation_cancelled': 'Keine Hauptstränge ausgewählt. Gruppenerstellung abgebrochen.',
         'move_group_strands': 'Gruppe verschieben',
@@ -2069,6 +2072,7 @@ Esempi:<br>
         'angle_label': 'Angolo:',
         'length_label': 'Lunghezza:',
         'create_group': 'Crea Gruppo',
+        'create_group_tile': 'G',
         'enter_group_name': 'Inserisci nome gruppo:',
         'group_creation_cancelled': 'Nessun trefolo principale selezionato. Creazione gruppo annullata.',
         'move_group_strands': 'Sposta Gruppo',
@@ -2662,6 +2666,7 @@ Ejemplos:<br>
         'angle_label': 'Ángulo:',
         'length_label': 'Longitud:',
         'create_group': 'Crear Grupo',
+        'create_group_tile': 'G',
         'enter_group_name': 'Introduce nombre del grupo:',
         'group_creation_cancelled': 'No hay cordones principales seleccionados. Creación de grupo cancelada.',
         'move_group_strands': 'Mover Grupo',
@@ -3255,6 +3260,7 @@ Exemplos:<br>
         'angle_label': 'Ângulo:',
         'length_label': 'Comprimento:',
         'create_group': 'Criar Grupo',
+        'create_group_tile': 'G',
         'enter_group_name': 'Digite o nome do grupo:',
         'group_creation_cancelled': 'Nenhuma mecha principal selecionada. Criação do grupo cancelada.',
         'move_group_strands': 'Mover Grupo',
@@ -3800,7 +3806,7 @@ Exemplos:<br>
 
             <li style="font-size:14px;"><b>היסטוריה שמספרת מה עשית:</b> כל שלב של ביטול וביצוע מחדש מתעד כעת מה יצר אותו — המצב שבו השתמשת, או הפאנל, תיבת הדו-שיח או פריט התפריט — יחד עם השכבות שהושפעו והזמן. כפתורי הביטול והביצוע מחדש מציינים את הפעולה שהם עומדים לבטל או לבצע מחדש, והגדרות ← היסטוריה מקבלות רשימת “פעולות שנרשמו” המציגה את הפעילות בהפעלה הנוכחית או את השלבים של הפעלה קודמת. הרישום נשמר בתוך כל מצב, ולכן הוא שורד הפעלה מחדש, ייצוא/ייבוא היסטוריה ושחזור הפעלה.</li>
 
-            <li style="font-size:14px;"><b>עמודת קבוצות מתקפלת:</b> עמודת הקבוצות שבלוח השכבות יכולה כעת לפנות מקום. חץ קטן בתחתיתה מכווץ אותה מ-140 פיקסלים לפס של 40 פיקסלים, והקנבס מקבל את המקום. הפס שומר על אריח G הפותח את תהליך יצירת הקבוצה הרגיל, ועוד אריח לכל קבוצה עם האות הראשונה של שמה; לחיצה על אריח מרחיבה את העמודה עם הקבוצה הזו בתצוגה. Ctrl+G (Cmd+G במק) מחליף מצב, והבחירה נשמרת בין הפעלות.</li>
+            <li style="font-size:14px;"><b>עמודת קבוצות מתקפלת:</b> עמודת הקבוצות שבלוח השכבות יכולה כעת לפנות מקום. חץ קטן בתחתיתה מכווץ אותה מ-140 פיקסלים לפס של 40 פיקסלים, והקנבס מקבל את המקום. הפס שומר על אריח ק הפותח את תהליך יצירת הקבוצה הרגיל, ועוד אריח לכל קבוצה עם האות הראשונה של שמה; לחיצה על אריח מרחיבה את העמודה עם הקבוצה הזו בתצוגה. Ctrl+G (Cmd+G במק) מחליף מצב, והבחירה נשמרת בין הפעלות.</li>
 
         <p style="font-size:14px;">© 2026 OpenStrand Studio - גרסה 1.110</p>
         </div>
@@ -3857,6 +3863,7 @@ Exemplos:<br>
         'angle_label': 'זווית:',
         'length_label': 'אורך:',
         'create_group': 'צור קבוצה',
+        'create_group_tile': 'ק',
         'enter_group_name': 'הזן שם קבוצה:',
         'group_creation_cancelled': 'לא נבחרו חוטים עיקריים. יצירת הקבוצה בוטלה.',
         'move_group_strands': 'הזז קבוצה',
@@ -4083,7 +4090,7 @@ Exemplos:<br>
         'group_header_desc': 'כותרת קבוצה - לחץ להרחבה/כווץ קבוצה. לחיצה ימנית לאפשרויות',
         'rename_group_desc': 'שנה שם קבוצה - משנה את השם של הקבוצה הזו',
         'delete_group_desc': 'מחק קבוצה - מסיר את הקבוצה הזו (החוטים נשארים)',
-        'collapse_group_panel_desc': 'כיווץ עמודת הקבוצות - החץ בתחתית עמודת הקבוצות מכווץ אותה לפס צר: אריח G יוצר קבוצה, ואריחי האותיות פותחים מחדש את העמודה בקבוצה זו',
+        'collapse_group_panel_desc': 'כיווץ עמודת הקבוצות - החץ בתחתית עמודת הקבוצות מכווץ אותה לפס צר: אריח ק יוצר קבוצה, ואריחי האותיות פותחים מחדש את העמודה בקבוצה זו',
         'select_group_desc': 'בחר קבוצה - בוחר את כל החוטים בקבוצה הזו',
         'move_group_desc': 'הזז קבוצה - מזיז את כל החוטים בקבוצה יחד',
         'rotate_group_desc': 'סובב קבוצה - מסובב את כל החוטים בקבוצה',

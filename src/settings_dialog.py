@@ -5377,7 +5377,7 @@ class SettingsDialog(QDialog):
             try:
                 with open(file_path, 'r', encoding='utf-8') as existing:
                     for ln in existing:
-                        if ln.startswith('TabEdgePosition:'):
+                        if ln.startswith('TabEdgePosition:') or ln.startswith('GroupPanelRail:'):
                             preserved_lines.append(ln.rstrip('\n'))
             except Exception:
                 preserved_lines = []

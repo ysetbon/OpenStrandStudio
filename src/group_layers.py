@@ -950,7 +950,12 @@ class GroupPanel(QWidget):
         tree = getattr(self, 'tree', None)
         if tree is None:
             return False
-        if watched is tree.viewport():
+        try:
+            tree_viewport = tree.viewport()
+        except RuntimeError:
+            # The C++ tree is already gone; only its Python wrapper remains.
+            return False
+        if watched is tree_viewport:
             try:
                 if event.type() == QEvent.MouseMove:
                     item = self.tree.itemAt(event.pos())
@@ -1246,20 +1251,37 @@ class GroupPanel(QWidget):
         except RuntimeError:
             pass
 
-    def focus_group(self, group_name):
-        """Bring *group_name* into view: expand it, scroll to it, highlight it.
+    FOCUS_FLASH_MS = 900
 
-        Used by the collapsed rail's numbered tiles once the column expands."""
+    def focus_group(self, group_name):
+        """Bring *group_name* into view: expand it, scroll to it, and flash
+        it in the selection colors for a moment so the eye lands on it.
+
+        Used by the collapsed rail's tiles once the column expands. The
+        pointer is still over the rail at that point, so the tree's own
+        hover styling cannot do this job."""
         item = self.group_items.get(group_name)
         if item is None:
             return
         try:
             from PyQt5.QtWidgets import QAbstractItemView
+            from PyQt5.QtGui import QBrush, QColor
             item.setExpanded(True)
             self.tree.scrollToItem(item, QAbstractItemView.PositionAtTop)
-            self._set_hovered_group_name(group_name)
+            colors = self._get_theme_colors()
+            item.setBackground(0, QBrush(QColor(colors['menu_selected_bg'])))
+            item.setForeground(0, QBrush(QColor(colors['menu_selected_text'])))
         except RuntimeError:
-            pass
+            return
+
+        def _clear_flash():
+            try:
+                item.setData(0, Qt.BackgroundRole, None)
+                item.setData(0, Qt.ForegroundRole, None)
+            except RuntimeError:
+                pass
+
+        QTimer.singleShot(self.FOCUS_FLASH_MS, _clear_flash)
 
     def _update_group_item_label(self, item, group_name=None):
         if item is None:

@@ -52,7 +52,9 @@ class GroupRail(QWidget):
         self.scroll.setFrameShape(QFrame.NoFrame)
         self.scroll.setWidgetResizable(True)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        # No visible scrollbar: it would eat 12-16 px of a 40 px rail and
+        # clip the 30 px tiles. The wheel still scrolls the column.
+        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scroll.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         self.scroll.setFixedWidth(self.RAIL_WIDTH)
         self.scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")

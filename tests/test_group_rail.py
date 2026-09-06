@@ -219,6 +219,49 @@ def test_theme_change_restyles_the_g_tile(window):
         assert lp.group_rail.create_tile.width() == GroupRail.TILE_WIDTH
 
 
+def test_settings_dialog_save_keeps_rail_state(window):
+    lp = window.layer_panel
+    lp.set_group_panel_collapsed(True, animate=False)
+    pump(40)
+    assert "GroupPanelRail: true" in open(settings_path(), encoding="utf-8").read()
+    # The settings dialog rewrites the whole file; the rail line must survive.
+    window.settings_dialog.save_settings_to_file()
+    content = open(settings_path(), encoding="utf-8").read()
+    assert "GroupPanelRail: true" in content
+    assert content.count("GroupPanelRail") == 1
+
+
+def test_tile_activation_flashes_the_group(window):
+    lp = window.layer_panel
+    gp = lp.group_layer_manager.group_panel
+    item = add_tree_group(gp, "braid")
+    lp.set_group_panel_collapsed(True, animate=False)
+    pump(60)
+    lp.group_rail._tiles[0].click()
+    pump(350)
+    # Highlighted in the selection colors while the pointer is still on the rail...
+    colors = gp._get_theme_colors()
+    assert item.background(0).color().name().lower() == colors["menu_selected_bg"].lower()
+    # ...and back to normal once the flash is over.
+    pump(gp.FOCUS_FLASH_MS + 100)
+    assert item.data(0, Qt.BackgroundRole) is None
+
+
+def test_many_groups_scroll_without_clipping_tiles(window):
+    lp = window.layer_panel
+    gp = lp.group_layer_manager.group_panel
+    for i in range(30):
+        add_tree_group(gp, "Group %d" % i)
+    lp.set_group_panel_collapsed(True, animate=False)
+    pump(80)
+    rail = lp.group_rail
+    assert len(rail._tiles) == 30
+    assert all(t.width() == GroupRail.TILE_WIDTH for t in rail._tiles)
+    assert rail.scroll.viewport().width() == GroupRail.RAIL_WIDTH
+    assert not rail.scroll.verticalScrollBar().isVisible()
+    assert rail.scroll.verticalScrollBar().maximum() > 0  # the column still scrolls
+
+
 def test_shortcut_and_hebrew_chevron(window):
     lp = window.layer_panel
     # Window context: a modal dialog (Create Group's name prompt) must not

@@ -53,3 +53,28 @@ on hover; B3 if groups are used constantly and the goal is only to slim the pane
 - Group panel widget: `src/group_layers.py` — `GroupPanel` (≈ line 735), theme colors
   in `_get_theme_colors`, Hebrew alignment in `refresh_group_alignment`.
 - Strings: `src/translations.py` — add a key in all seven languages.
+
+## Implemented: B3
+
+The chosen option is **B3**, with two changes from the mockup: the create tile
+reads **G** (not "+"), and the group tiles carry plain numbers **1, 2, 3…** in
+tree order (the full group name is the tooltip).
+
+- `src/group_rail.py` — `GroupRail`, the 40 px collapsed column. It rebuilds its
+  tiles from the group tree's model signals, so every code path that adds,
+  removes or renames a group is covered. "G" runs the normal Create Group flow
+  while staying collapsed; a numbered tile expands the column and brings that
+  group into view (`GroupPanel.focus_group`).
+- `src/layer_panel.py` — `set_group_panel_collapsed()` / `toggle_group_panel()`,
+  the chevron button pinned at the bottom of the column (mirrored for Hebrew),
+  a 200 ms width animation, and `group_column_width()` which the compact-screen
+  code and the main window read instead of assuming 140.
+- `src/main_window.py` — the layer panel minimum drops from 350 to 250 px while
+  collapsed so the canvas gains the 100 px; `Ctrl+G` toggles; the state is
+  saved to `user_settings.txt` as `GroupPanelRail: true|false` on every toggle
+  and restored on launch.
+- `src/translations.py` — `collapse_groups` / `expand_groups` tooltips in all
+  seven languages.
+
+`rail_expanded.png`, `rail_collapsed.png`, `rail_collapsed_he.png` are offscreen
+captures of the real app in the three states.

@@ -28,6 +28,9 @@ from functools import partial
 from splitter_handle import SplitterHandle
 from numbered_layer_button import NumberedLayerButton, HoverLabel, build_menu_stylesheet
 from group_layers import GroupPanel, GroupLayerManager
+from group_rail import GroupRail
+from PyQt5.QtWidgets import QToolButton
+from PyQt5.QtCore import QVariantAnimation, QEasingCurve
 from PyQt5.QtWidgets import QWidget, QPushButton  # Example widget imports
 from PyQt5.QtGui import QPalette, QColor  # Added QPalette and QColor imports
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPoint  # Add QPoint here
@@ -387,8 +390,15 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
     # window size, with no empty strip beyond it. Narrow screens trim both a
     # little further via set_compact_reduction.
     GROUP_PANEL_FULL_WIDTH = 140
+    # Width of the group column once collapsed to the icon rail (GroupRail):
+    # the "G" tile and the numbered group tiles, nothing else.
+    GROUP_PANEL_RAIL_WIDTH = 40
     # Fixed width of NumberedLayerButton (setFixedSize(146, 40)).
     LAYER_LIST_BUTTON_WIDTH = 146
+
+    # Emitted after the group column finishes collapsing (True) or expanding
+    # (False); the main window persists the value.
+    group_panel_collapsed_changed = pyqtSignal(bool)
 
     def __init__(self, canvas, parent=None):
         super().__init__(parent)
@@ -1014,6 +1024,34 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self.right_layout.addWidget(self.group_button_container)
         self.right_layout.addWidget(self.group_layer_manager.group_panel)
 
+        # Collapsed form of the column: the icon rail (hidden while expanded)
+        # plus, in both states, the collapse/expand chevron pinned at the
+        # bottom so it never moves under the mouse.
+        self.group_panel_collapsed = False
+        self._group_width_animation = None
+        self.group_rail = GroupRail()
+        self.group_rail.hide()
+        self.group_rail.attach(self.group_layer_manager.group_panel)
+        self.group_rail.create_requested.connect(self._on_rail_create_requested)
+        self.group_rail.group_activated.connect(self._on_rail_group_activated)
+        self.right_layout.addWidget(self.group_rail)
+
+        self.group_toggle_button = QToolButton()
+        self.group_toggle_button.setObjectName("groupPanelToggle")
+        self.group_toggle_button.setFixedSize(30, 22)
+        self.group_toggle_button.setCursor(Qt.PointingHandCursor)
+        self.group_toggle_button.setFocusPolicy(Qt.NoFocus)
+        self.group_toggle_button.clicked.connect(self.toggle_group_panel)
+        self.group_toggle_row = QWidget()
+        toggle_layout = QHBoxLayout(self.group_toggle_row)
+        toggle_layout.setContentsMargins(0, 4, 0, 6)
+        toggle_layout.addStretch()
+        toggle_layout.addWidget(self.group_toggle_button)
+        toggle_layout.addStretch()
+        self.right_layout.addWidget(self.group_toggle_row)
+        self._refresh_group_toggle_glyph()
+        self.apply_group_rail_theme()
+
         # Remove fixed width from left panel so it can expand
         # self.left_panel.setFixedWidth(200)
         
@@ -1231,6 +1269,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             group_panel = getattr(self.group_layer_manager, 'group_panel', None)
             if group_panel and hasattr(group_panel, 'set_theme'):
                 group_panel.set_theme(theme_name)
+            self.apply_group_rail_theme()
 
         if theme_name == "dark":
             palette = self.palette()
@@ -1768,6 +1807,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self.group_layer_manager.language_code = self.language_code
             self.group_layer_manager.update_translations()
 
+        if hasattr(self, 'group_rail'):
+            self.group_rail.set_create_tooltip(_['create_group'])
+
         self._apply_group_panel_alignment()
 
     def set_compact_reduction(self, reduction):
@@ -1777,6 +1819,16 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         so most of the reduction comes off the layer list; the group panel
         (and the button with it) gives up only what the list's scrollbar
         gutter needs, per the arithmetic below."""
+        if getattr(self, 'group_panel_collapsed', False):
+            # The rail is narrower than any compact trim would make the
+            # column, so the list column simply takes the rest of the panel.
+            self.scroll_area.setMinimumWidth(0)
+            right_w = self.GROUP_PANEL_RAIL_WIDTH
+            if self._group_width_animation is None:
+                self.right_panel.setFixedWidth(right_w)
+                self._apply_inner_split(right_w)
+            return
+
         create_group = self.group_layer_manager.create_group_button
         if not hasattr(self, '_create_group_full_width'):
             # GroupPanel gives the button a fixed width (140); remember it so
@@ -1833,6 +1885,152 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
         if hasattr(self.group_layer_manager, 'group_panel') and hasattr(self.group_layer_manager.group_panel, 'refresh_group_alignment'):
             self.group_layer_manager.group_panel.refresh_group_alignment()
+        self._refresh_group_toggle_glyph()
+
+    # ------------------------------------------------------------------
+    # Group column collapse: the tree gives way to a 40 px icon rail.
+    # ------------------------------------------------------------------
+    def group_column_width(self):
+        """Current target width of the group column: the rail when collapsed."""
+        if getattr(self, 'group_panel_collapsed', False):
+            return self.GROUP_PANEL_RAIL_WIDTH
+        return self.GROUP_PANEL_FULL_WIDTH
+
+    def group_column_reduction(self):
+        """How much narrower the group column is than its full 140 px."""
+        return self.GROUP_PANEL_FULL_WIDTH - self.group_column_width()
+
+    def toggle_group_panel(self):
+        self.set_group_panel_collapsed(not self.group_panel_collapsed)
+
+    def set_group_panel_collapsed(self, collapsed, animate=True):
+        """Collapse the group column to the icon rail, or expand it again.
+
+        The tree and Create Group button swap with the rail straight away,
+        then the column's fixed width animates between 140 and 40 px. The
+        main window is asked to re-apply the layer panel's minimum width and
+        the outer split so the canvas actually gains (or gives back) the
+        room; the finished animation emits group_panel_collapsed_changed so
+        the state can be persisted."""
+        collapsed = bool(collapsed)
+        if collapsed == getattr(self, 'group_panel_collapsed', False):
+            return
+        self.group_panel_collapsed = collapsed
+        if self._group_width_animation is not None:
+            self._group_width_animation.stop()
+            self._group_width_animation = None
+
+        start = self.right_panel.width()
+        end = self.group_column_width()
+        if collapsed:
+            # The G tile borrows the Create Group button's current theme style.
+            self.apply_group_rail_theme()
+            self.group_rail.rebuild()
+        self._show_group_column_content(expanded=not collapsed)
+        self._refresh_group_toggle_glyph()
+
+        if not animate or start == end:
+            self._set_group_column_width(end)
+            self._notify_group_column_width_changed()
+            self.group_panel_collapsed_changed.emit(collapsed)
+            return
+
+        anim = QVariantAnimation(self)
+        anim.setStartValue(int(start))
+        anim.setEndValue(int(end))
+        anim.setDuration(200)
+        anim.setEasingCurve(QEasingCurve.InOutCubic)
+        anim.valueChanged.connect(lambda value: self._set_group_column_width(int(value)))
+
+        def _finished():
+            self._group_width_animation = None
+            self._set_group_column_width(end)
+            self.group_panel_collapsed_changed.emit(collapsed)
+
+        anim.finished.connect(_finished)
+        # Registered before the main window re-applies widths so that pass
+        # leaves the animated column alone (see set_compact_reduction).
+        self._group_width_animation = anim
+        self._notify_group_column_width_changed()
+        anim.start()
+
+    def _show_group_column_content(self, expanded):
+        self.group_button_container.setVisible(expanded)
+        self.group_layer_manager.group_panel.setVisible(expanded)
+        self.group_rail.setVisible(not expanded)
+
+    def _set_group_column_width(self, width):
+        self.right_panel.setFixedWidth(int(width))
+        self._apply_inner_split(int(width))
+
+    def _apply_inner_split(self, right_w=None):
+        if right_w is None:
+            right_w = self.right_panel.width()
+        self.splitter.setSizes([
+            max(0, self.width() - right_w - self.splitter.handleWidth()),
+            right_w,
+        ])
+
+    def _notify_group_column_width_changed(self):
+        """Have the main window recompute the layer panel minimum and the
+        outer split, so the canvas takes the width the column gave up."""
+        window = getattr(self, 'parent_window', None) or self.window()
+        apply_widths = getattr(window, '_apply_layer_panel_compact_width', None)
+        if callable(apply_widths):
+            try:
+                apply_widths(force=True)
+            except TypeError:
+                apply_widths()
+
+    def _refresh_group_toggle_glyph(self):
+        button = getattr(self, 'group_toggle_button', None)
+        if button is None:
+            return
+        is_rtl = self.language_code == 'he'
+        collapsed = getattr(self, 'group_panel_collapsed', False)
+        # The chevron points the way the column will move: toward the outer
+        # window edge to collapse, back toward the layer list to expand.
+        toward_edge = '‹' if is_rtl else '›'
+        toward_list = '›' if is_rtl else '‹'
+        button.setText(toward_list if collapsed else toward_edge)
+        _ = translations.get(self.language_code, translations['en'])
+        key = 'expand_groups' if collapsed else 'collapse_groups'
+        button.setToolTip(_.get(key, translations['en'].get(key, key)))
+
+    def apply_group_rail_theme(self):
+        rail = getattr(self, 'group_rail', None)
+        if rail is None:
+            return
+        group_panel = self.group_layer_manager.group_panel
+        colors = None
+        if hasattr(group_panel, '_get_theme_colors'):
+            try:
+                colors = group_panel._get_theme_colors()
+            except Exception:
+                colors = None
+        rail.apply_theme(colors, self.group_layer_manager.create_group_button.styleSheet())
+        c = colors or {}
+        self.group_toggle_button.setStyleSheet(
+            "QToolButton {{ background-color: {bg}; color: {text}; border: none;"
+            " border-radius: 3px; font-weight: bold; font-size: 15px; padding: 0px 0px 2px 0px; }}"
+            "QToolButton:hover {{ background-color: {hover}; }}"
+            "QToolButton:pressed {{ background-color: {pressed}; color: #FFFFFF; }}".format(
+                bg=c.get('group_bg', '#B9B4AE'),
+                text=c.get('text', '#000000'),
+                hover=c.get('group_hover_bg', '#A29E99'),
+                pressed=c.get('menu_selected_bg', '#96938F'),
+            )
+        )
+
+    def _on_rail_create_requested(self):
+        self.group_layer_manager.create_group()
+
+    def _on_rail_group_activated(self, group_name):
+        self.set_group_panel_collapsed(False)
+        group_panel = self.group_layer_manager.group_panel
+        if hasattr(group_panel, 'focus_group'):
+            # After the layout has swapped the tree back in.
+            QTimer.singleShot(0, lambda: group_panel.focus_group(group_name))
 
     def translate_ui(self):
         """Alias for update_translations to maintain compatibility with main window calls"""
@@ -2695,6 +2893,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self.deselect_all_button.setEnabled(False)
         if hasattr(self, 'group_layer_manager'):
             self.group_layer_manager.create_group_button.setEnabled(False)
+        if hasattr(self, 'group_rail'):
+            self.group_rail.set_create_enabled(False)
 
     def enable_controls(self):
         """Re-enable controls after mask editing."""
@@ -2704,6 +2904,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self.deselect_all_button.setEnabled(True)
         if hasattr(self, 'group_layer_manager'):
             self.group_layer_manager.create_group_button.setEnabled(True)
+        if hasattr(self, 'group_rail'):
+            self.group_rail.set_create_enabled(True)
 
     def is_strand_deletable(self, strand):
         """

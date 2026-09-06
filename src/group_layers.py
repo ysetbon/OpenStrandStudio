@@ -1240,6 +1240,21 @@ class GroupPanel(QWidget):
         except RuntimeError:
             pass
 
+    def focus_group(self, group_name):
+        """Bring *group_name* into view: expand it, scroll to it, highlight it.
+
+        Used by the collapsed rail's numbered tiles once the column expands."""
+        item = self.group_items.get(group_name)
+        if item is None:
+            return
+        try:
+            from PyQt5.QtWidgets import QAbstractItemView
+            item.setExpanded(True)
+            self.tree.scrollToItem(item, QAbstractItemView.PositionAtTop)
+            self._set_hovered_group_name(group_name)
+        except RuntimeError:
+            pass
+
     def _update_group_item_label(self, item, group_name=None):
         if item is None:
             return

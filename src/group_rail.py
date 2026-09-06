@@ -121,7 +121,7 @@ class GroupRail(QWidget):
         for number, name in enumerate(self.group_names(), start=1):
             tile = QToolButton()
             tile.setText(self.tile_label(name, number))
-            tile.setToolTip(name)
+            tile.group_name = name
             tile.setFixedSize(self.TILE_WIDTH, self.GROUP_TILE_HEIGHT)
             tile.setCursor(Qt.PointingHandCursor)
             tile.setFocusPolicy(Qt.NoFocus)
@@ -133,9 +133,6 @@ class GroupRail(QWidget):
     # ------------------------------------------------------------------- state
     def set_create_enabled(self, enabled):
         self.create_tile.setEnabled(bool(enabled))
-
-    def set_create_tooltip(self, text):
-        self.create_tile.setToolTip(text)
 
     # ------------------------------------------------------------------- theme
     def apply_theme(self, colors, create_button_stylesheet=None):

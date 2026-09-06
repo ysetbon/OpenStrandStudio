@@ -58,8 +58,8 @@ on hover; B3 if groups are used constantly and the goal is only to slim the pane
 
 The chosen option is **B3**, with two changes from the mockup: the create tile
 reads **G** (not "+"), and each group tile shows the **first letter of the
-group's name** (its position in the list if the name has no letter or digit);
-the full group name is the tooltip.
+group's name** (its position in the list if the name has no letter or digit).
+The rail and the chevron carry no tooltips.
 
 - `src/group_rail.py` — `GroupRail`, the 40 px collapsed column. It rebuilds its
   tiles from the group tree's model signals, so every code path that adds,
@@ -74,8 +74,6 @@ the full group name is the tooltip.
   collapsed so the canvas gains the 100 px; `Ctrl+G` toggles; the state is
   saved to `user_settings.txt` as `GroupPanelRail: true|false` on every toggle
   and restored on launch.
-- `src/translations.py` — `collapse_groups` / `expand_groups` tooltips in all
-  seven languages.
 
 `rail_expanded.png`, `rail_collapsed.png`, `rail_collapsed_he.png` are offscreen
 captures of the real app in the three states.

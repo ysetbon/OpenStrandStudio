@@ -1807,9 +1807,6 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self.group_layer_manager.language_code = self.language_code
             self.group_layer_manager.update_translations()
 
-        if hasattr(self, 'group_rail'):
-            self.group_rail.set_create_tooltip(_['create_group'])
-
         self._apply_group_panel_alignment()
 
     def set_compact_reduction(self, reduction):
@@ -1993,9 +1990,6 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         toward_edge = '‹' if is_rtl else '›'
         toward_list = '›' if is_rtl else '‹'
         button.setText(toward_list if collapsed else toward_edge)
-        _ = translations.get(self.language_code, translations['en'])
-        key = 'expand_groups' if collapsed else 'collapse_groups'
-        button.setToolTip(_.get(key, translations['en'].get(key, key)))
 
     def apply_group_rail_theme(self):
         rail = getattr(self, 'group_rail', None)

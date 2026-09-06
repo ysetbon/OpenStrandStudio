@@ -57,8 +57,9 @@ on hover; B3 if groups are used constantly and the goal is only to slim the pane
 ## Implemented: B3
 
 The chosen option is **B3**, with two changes from the mockup: the create tile
-reads **G** (not "+"), and the group tiles carry plain numbers **1, 2, 3…** in
-tree order (the full group name is the tooltip).
+reads **G** (not "+"), and each group tile shows the **first letter of the
+group's name** (its position in the list if the name has no letter or digit);
+the full group name is the tooltip.
 
 - `src/group_rail.py` — `GroupRail`, the 40 px collapsed column. It rebuilds its
   tiles from the group tree's model signals, so every code path that adds,

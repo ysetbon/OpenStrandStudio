@@ -102,6 +102,15 @@ class GroupRail(QWidget):
             pass
         return names
 
+    @staticmethod
+    def tile_label(name, number):
+        """First letter of the group's name, upper-cased; its position in
+        the tree if the name has no letter or digit to show."""
+        for ch in str(name).strip():
+            if ch.isalnum():
+                return ch.upper()
+        return str(number)
+
     def rebuild(self):
         self._rebuild_pending = False
         for tile in self._tiles:
@@ -111,7 +120,7 @@ class GroupRail(QWidget):
 
         for number, name in enumerate(self.group_names(), start=1):
             tile = QToolButton()
-            tile.setText(str(number))
+            tile.setText(self.tile_label(name, number))
             tile.setToolTip(name)
             tile.setFixedSize(self.TILE_WIDTH, self.GROUP_TILE_HEIGHT)
             tile.setCursor(Qt.PointingHandCursor)

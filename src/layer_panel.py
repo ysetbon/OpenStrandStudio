@@ -1918,7 +1918,6 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self._group_width_animation = None
 
         start = self.right_panel.width()
-        end = self.group_column_width()
         if collapsed:
             # The G tile borrows the Create Group button's current theme style.
             self.apply_group_rail_theme()
@@ -1926,12 +1925,19 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self._show_group_column_content(expanded=not collapsed)
         self._refresh_group_toggle_glyph()
 
+        # Let the main window re-apply the panel minimum and the compact
+        # trim first: that pass sets the column to its real target width
+        # (140, the rail's 40, or the compact-trimmed value on narrow
+        # windows), which the animation then runs toward.
+        self._notify_group_column_width_changed()
+        end = self.right_panel.width()
+
         if not animate or start == end:
             self._set_group_column_width(end)
-            self._notify_group_column_width_changed()
             self.group_panel_collapsed_changed.emit(collapsed)
             return
 
+        self._set_group_column_width(start)
         anim = QVariantAnimation(self)
         anim.setStartValue(int(start))
         anim.setEndValue(int(end))
@@ -1945,10 +1951,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self.group_panel_collapsed_changed.emit(collapsed)
 
         anim.finished.connect(_finished)
-        # Registered before the main window re-applies widths so that pass
-        # leaves the animated column alone (see set_compact_reduction).
         self._group_width_animation = anim
-        self._notify_group_column_width_changed()
         anim.start()
 
     def _show_group_column_content(self, expanded):
@@ -1975,7 +1978,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         apply_widths = getattr(window, '_apply_layer_panel_compact_width', None)
         if callable(apply_widths):
             try:
-                apply_widths(force=True)
+                apply_widths(force=True, keep_split=True)
             except TypeError:
                 apply_widths()
 

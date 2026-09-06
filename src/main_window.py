@@ -562,7 +562,7 @@ class MainWindow(QMainWindow):
     # px of headroom matter on macOS, where the same string measures wider.
     COMPACT_LAYER_PANEL_FLOOR = 286
 
-    def _apply_layer_panel_compact_width(self, force=False):
+    def _apply_layer_panel_compact_width(self, force=False, keep_split=False):
         """Slim the layer panel on narrow windows, restore it on wide ones.
 
         No-op unless the reduction actually changes, so it is safe to call
@@ -572,7 +572,13 @@ class MainWindow(QMainWindow):
         A collapsed group column already frees more width than the compact
         trim would, so while it is collapsed the compact reduction is not
         applied on top: the panel minimum is simply the full minimum less
-        the width the column gave up."""
+        the width the column gave up.
+
+        The outer split is normally reset to the panel minimum. With
+        keep_split=True the panel instead keeps whatever extra width the
+        user dragged it to, shifted by the change in minimum, so a collapse
+        hands the canvas exactly the width the column gave up and an expand
+        takes exactly that back."""
         compact = self.width() < self.COMPACT_WINDOW_WIDTH
         reduction = (
             self.LAYER_PANEL_FULL_MIN_WIDTH - self.COMPACT_LAYER_PANEL_FLOOR
@@ -589,16 +595,20 @@ class MainWindow(QMainWindow):
             return
         self._active_compact_key = key
         self._active_compact_reduction = reduction
-        self.layer_panel.setMinimumWidth(
-            self.LAYER_PANEL_FULL_MIN_WIDTH - reduction - group_reduction
-        )
+        old_min = self.layer_panel.minimumWidth()
+        new_min = self.LAYER_PANEL_FULL_MIN_WIDTH - reduction - group_reduction
+        self.layer_panel.setMinimumWidth(new_min)
         if hasattr(self.layer_panel, 'set_compact_reduction'):
             self.layer_panel.set_compact_reduction(reduction)
         # QSplitter keeps its existing allocation when a child's minimum
         # shrinks, so re-apply the outer split or a live resize across the
         # threshold leaves the panel at its old width (toolbar gains nothing).
         if hasattr(self, 'splitter'):
-            panel_width = self.layer_panel.minimumWidth()
+            panel_width = new_min
+            if keep_split:
+                sizes = self.splitter.sizes()
+                if len(sizes) == 2 and sizes[1] > 0:
+                    panel_width = max(new_min, sizes[1] + (new_min - old_min))
             self.splitter.setSizes([max(0, self.width() - panel_width), panel_width])
 
     def _apply_toolbar_spacing(self):

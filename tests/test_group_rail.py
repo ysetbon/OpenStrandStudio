@@ -230,6 +230,8 @@ def test_compact_window_keeps_rail_usable(window):
     window.resize(1280, 760)  # below COMPACT_WINDOW_WIDTH
     pump(150)
     assert lp.minimumWidth() == window.COMPACT_LAYER_PANEL_FLOOR
+    compact_column = lp.right_panel.width()
+    assert compact_column < lp.GROUP_PANEL_FULL_WIDTH
     lp.set_group_panel_collapsed(True, animate=False)
     pump(80)
     assert lp.right_panel.width() == lp.GROUP_PANEL_RAIL_WIDTH
@@ -237,4 +239,33 @@ def test_compact_window_keeps_rail_usable(window):
     lp.set_group_panel_collapsed(False, animate=False)
     pump(80)
     assert lp.minimumWidth() == window.COMPACT_LAYER_PANEL_FLOOR
-    assert lp.right_panel.width() < lp.GROUP_PANEL_FULL_WIDTH
+    assert lp.right_panel.width() == compact_column
+
+    # The animated path (chevron, Ctrl+G) must land on the same trimmed width.
+    lp.set_group_panel_collapsed(True, animate=False)
+    pump(80)
+    lp.toggle_group_panel()
+    pump(400)
+    assert not lp.group_panel_collapsed
+    assert lp.right_panel.width() == compact_column
+    assert lp.minimumWidth() == window.COMPACT_LAYER_PANEL_FLOOR
+
+
+def test_toggle_keeps_a_user_widened_panel(window):
+    lp = window.layer_panel
+    full_min = window.LAYER_PANEL_FULL_MIN_WIDTH
+    # The user dragged the layer panel 100 px wider than its minimum.
+    window.splitter.setSizes([window.width() - (full_min + 100), full_min + 100])
+    pump(80)
+    assert lp.width() == full_min + 100
+    canvas_before = window.canvas.width()
+
+    lp.set_group_panel_collapsed(True, animate=False)
+    pump(80)
+    assert lp.width() == full_min + 100 - 100
+    assert window.canvas.width() == canvas_before + 100
+
+    lp.toggle_group_panel()
+    pump(400)
+    assert lp.width() == full_min + 100
+    assert window.canvas.width() == canvas_before

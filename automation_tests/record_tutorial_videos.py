@@ -883,7 +883,16 @@ class Mouse:
         self._check_cursor_on(canvas)
         self._wait(150)
         self.rec.click_effect()
-        QTest.mouseClick(canvas, Qt.LeftButton, pos=QPoint(int(x), int(y)))
+        # Some press handlers (mask creation) pump the event loop while they
+        # run, which would let the capture timer record a half-finished
+        # state that a real screen never shows for more than a few
+        # milliseconds. Dispatch the click with capture paused; the ripple
+        # and the final state are recorded on the following frames.
+        _settle_without_capture(
+            self.rec,
+            lambda: QTest.mouseClick(canvas, Qt.LeftButton,
+                                     pos=QPoint(int(x), int(y))),
+            30)
         self._wait(450)
 
 

@@ -842,6 +842,10 @@ class GroupPanel(QWidget):
                 "menu_border": "#1A1A1A",
                 "menu_selected_bg": "#F0F0F0",
                 "menu_selected_text": "#000000",
+                # Pressed state of the group column's buttons (the chevron
+                # toggle and the rail tiles): the Create Group button's
+                # QPushButton:pressed color for this theme (main_window.py).
+                "pressed_bg": "#606060",
             }
 
         if theme_name == "light":
@@ -859,6 +863,7 @@ class GroupPanel(QWidget):
                 "menu_border": "#B8B8B8",
                 "menu_selected_bg": "#333333",
                 "menu_selected_text": "#FFFFFF",
+                "pressed_bg": "#86817A",
             }
 
         return {
@@ -875,6 +880,7 @@ class GroupPanel(QWidget):
             "menu_border": "#B0B0B0",
             "menu_selected_bg": "#96938F",
             "menu_selected_text": "#FFFFFF",
+            "pressed_bg": "#7E7B77",
         }
 
     def apply_theme(self):

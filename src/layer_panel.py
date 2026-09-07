@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (
     QScrollArea, QLabel, QSplitter, QInputDialog, QMenu, QAction, QWidgetAction, QToolTip, QFrame  # Add QMenu, QAction and QWidgetAction here
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPoint, QStandardPaths, QMimeData  ,QRect, QSize, QEvent# Added QMimeData
-from PyQt5.QtGui import QColor, QPalette, QDrag, QGuiApplication, QCursor, QIcon # Added QDrag and QGuiApplication
+from PyQt5.QtGui import QColor, QPalette, QDrag, QGuiApplication, QCursor, QIcon, QPixmap # Added QDrag and QGuiApplication
 # --- Import Correct Drag/Drop Event Types --- 
 from PyQt5.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent, QPainter, QPen # Added Painter/Pen
 from render_utils import RenderUtils
@@ -393,6 +393,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
     # Width of the group column once collapsed to the icon rail (GroupRail):
     # the "G" tile and the numbered group tiles, nothing else.
     GROUP_PANEL_RAIL_WIDTH = 40
+    GROUP_TOGGLE_ICON_SIZE = 16  # px edge of the chevron PNG inside the 30x22 toggle
     # Fixed width of NumberedLayerButton (setFixedSize(146, 40)).
     LAYER_LIST_BUTTON_WIDTH = 146
 
@@ -1039,6 +1040,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self.group_toggle_button = QToolButton()
         self.group_toggle_button.setObjectName("groupPanelToggle")
         self.group_toggle_button.setFixedSize(30, 22)
+        self._group_toggle_pixmaps = {}
         self.group_toggle_button.setCursor(Qt.PointingHandCursor)
         self.group_toggle_button.setFocusPolicy(Qt.NoFocus)
         self.group_toggle_button.clicked.connect(self.toggle_group_panel)
@@ -1991,8 +1993,45 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             except TypeError:
                 apply_widths()
 
+    def _group_toggle_theme_name(self):
+        """The theme the chevron icon is drawn for: the group panel's theme
+        table name (dark / light / default), which the toggle already borrows
+        its colors from, so the icon and its button always agree."""
+        name = None
+        group_panel = getattr(getattr(self, 'group_layer_manager', None), 'group_panel', None)
+        if group_panel is not None and hasattr(group_panel, '_get_theme_colors'):
+            try:
+                name = group_panel._get_theme_colors().get('name')
+            except Exception:
+                name = None
+        if not name:
+            name = getattr(self, 'current_theme', None)
+        name = str(name or 'default').lower()
+        return name if name in ('dark', 'light') else 'default'
+
+    def _group_toggle_pixmap(self, icon_filename, direction):
+        """The chevron pixmap for *icon_filename*, mirrored when it must point
+        right (the PNGs point left). Cached per file and direction; None when
+        the asset is missing so the caller can fall back to a text glyph."""
+        key = (icon_filename, direction)
+        if key in self._group_toggle_pixmaps:
+            return self._group_toggle_pixmaps[key]
+        pixmap = None
+        icon_path = self.get_layer_panel_icon_path(icon_filename)
+        if os.path.exists(icon_path):
+            loaded = QPixmap(icon_path)
+            if not loaded.isNull():
+                pixmap = loaded
+                if direction == 'right':
+                    pixmap = QPixmap.fromImage(loaded.toImage().mirrored(True, False))
+        self._group_toggle_pixmaps[key] = pixmap
+        return pixmap
+
     def _refresh_group_toggle_glyph(self):
-        """Point the chevron the way the column will move, mirrored in RTL."""
+        """Point the chevron the way the column will move, mirrored in RTL,
+        drawn from the current theme's layer_panel_icons/group_toggle_<theme>.png
+        (a left-pointing chevron, mirrored to point right). The text glyph
+        stands in only when the PNG is missing."""
         button = getattr(self, 'group_toggle_button', None)
         if button is None:
             return
@@ -2000,9 +2039,21 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         collapsed = getattr(self, 'group_panel_collapsed', False)
         # The chevron points the way the column will move: toward the outer
         # window edge to collapse, back toward the layer list to expand.
-        toward_edge = '‹' if is_rtl else '›'
-        toward_list = '›' if is_rtl else '‹'
-        button.setText(toward_list if collapsed else toward_edge)
+        toward_edge = 'left' if is_rtl else 'right'
+        toward_list = 'right' if is_rtl else 'left'
+        direction = toward_list if collapsed else toward_edge
+        icon_filename = 'group_toggle_{}.png'.format(self._group_toggle_theme_name())
+        button.setProperty('group_toggle_direction', direction)
+        button.setProperty('group_toggle_icon', icon_filename)
+
+        pixmap = self._group_toggle_pixmap(icon_filename, direction)
+        if pixmap is not None:
+            button.setIcon(QIcon(pixmap))
+            button.setIconSize(QSize(self.GROUP_TOGGLE_ICON_SIZE, self.GROUP_TOGGLE_ICON_SIZE))
+            button.setText("")
+        else:
+            button.setIcon(QIcon())
+            button.setText('‹' if direction == 'left' else '›')
 
     def apply_group_rail_theme(self):
         """Style the rail and the chevron from the group panel's theme colors;
@@ -2018,16 +2069,21 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             except Exception:
                 colors = None
         rail.apply_theme(colors, self.group_layer_manager.create_group_button.styleSheet())
+        # The chevron icon is per theme (group_toggle_<theme>.png), so it is
+        # re-picked here; the 2 px bottom padding only centres the text glyph
+        # used when the PNG is missing.
+        self._refresh_group_toggle_glyph()
         c = colors or {}
         self.group_toggle_button.setStyleSheet(
             "QToolButton {{ background-color: {bg}; color: {text}; border: none;"
-            " border-radius: 3px; font-weight: bold; font-size: 15px; padding: 0px 0px 2px 0px; }}"
+            " border-radius: 3px; font-weight: bold; font-size: 15px; padding: {padding}; }}"
             "QToolButton:hover {{ background-color: {hover}; }}"
             "QToolButton:pressed {{ background-color: {pressed}; color: #FFFFFF; }}".format(
                 bg=c.get('group_bg', '#B9B4AE'),
                 text=c.get('text', '#000000'),
                 hover=c.get('group_hover_bg', '#A29E99'),
                 pressed=c.get('menu_selected_bg', '#96938F'),
+                padding='0px' if not self.group_toggle_button.icon().isNull() else '0px 0px 2px 0px',
             )
         )
 

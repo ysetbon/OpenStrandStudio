@@ -78,7 +78,27 @@ OUT_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "recordings"
 
 FPS = 30
 WINDOW_W, WINDOW_H = 1920, 1080
+# Height of the native maximized title bar that sits above the app client in
+# every frame. 31 is only a fallback: _ensure_main_title_h() replaces it with
+# the height DWM actually paints on the capture machine (45 px on a 150% DPI
+# Windows 11 desktop, for example). Every cursor, click and popup position in
+# the video is offset by this value, so it must be measured, never assumed.
 MAIN_TITLE_H = 31
+_main_title_measured = False
+
+
+def _ensure_main_title_h(window):
+    """Measure the real native caption height once and make it the module-wide
+    offset used by window placement, frame compositing and cursor drawing."""
+    global MAIN_TITLE_H, _main_title_measured
+    if not _main_title_measured:
+        _bar, measured = _native_titlebar(window, WINDOW_W, maximized=True,
+                                          active=True)
+        MAIN_TITLE_H = int(measured)
+        _main_title_measured = True
+        print(f"[record] native title bar height: {MAIN_TITLE_H}px",
+              flush=True)
+    return MAIN_TITLE_H
 PLAYBACK_SPEED = 1.25
 # Durations of the four shipped tutorials immediately before the requested
 # speed-up. Full renders target exactly 80% of these durations, independent of
@@ -254,7 +274,7 @@ def _place_window(window):
     # setGeometry pins the CLIENT rect (frame-independent), so a real
     # (framed) window and a headless (never-mapped, frameless) window put
     # their content at exactly the same global position.
-    client_h = WINDOW_H - MAIN_TITLE_H
+    client_h = WINDOW_H - _ensure_main_title_h(window)
     window.setGeometry(geo.x() + geo.width() - WINDOW_W,
                        geo.y() + geo.height() - client_h,
                        WINDOW_W, client_h)
@@ -324,6 +344,8 @@ def _composite_frame(window, use_backing_store=False):
                           for w in QApplication.topLevelWidgets())
     main_bar, main_title_h = _native_titlebar(
         window, WINDOW_W, maximized=True, active=main_active)
+    assert main_title_h == MAIN_TITLE_H, (
+        f"title bar {main_title_h}px but client placed for {MAIN_TITLE_H}px")
     pm = QPixmap(WINDOW_W, WINDOW_H)
     pm.fill(Qt.black)
     painter = QPainter(pm)
@@ -460,7 +482,8 @@ class Recorder:
         from PyQt5.QtGui import QPolygonF, QPen, QColor, QBrush
 
         # Cursor positions are tracked in main-client coordinates; the video
-        # frame also contains the native Windows title bar above that client.
+        # frame also contains the native Windows title bar above that client
+        # (its measured height, see _ensure_main_title_h).
         x, y = self.cursor.x(), self.cursor.y() + MAIN_TITLE_H
 
         # Click ripple (behind the arrow)
@@ -489,14 +512,33 @@ class Recorder:
 
         if not self.caption_text:
             return
-        font = QFont("Segoe UI", 22, QFont.DemiBold)
-        painter.setFont(font)
-        fm = QFontMetrics(font)
-        text_w = fm.horizontalAdvance(self.caption_text)
+        from PyQt5.QtCore import QPoint
+
+        # Keep the caption inside the canvas' horizontal span so it never
+        # covers the layer panel buttons (New Strand, Delete Strand, ...)
+        # that the tutorial is asking the viewer to look at.
+        span_l, span_r = 40, w - 40
+        canvas = getattr(self.window, "canvas", None)
+        if canvas is not None and canvas.isVisible():
+            origin = self.window.mapToGlobal(QPoint(0, 0))
+            left = canvas.mapToGlobal(QPoint(0, 0)).x() - origin.x()
+            span_l = left + 20
+            span_r = left + canvas.width() - 20
         pad_x, pad_y = 34, 16
-        box_w = min(text_w + 2 * pad_x, w - 80)
+        point_size = 22
+        while True:
+            font = QFont("Segoe UI", point_size, QFont.DemiBold)
+            fm = QFontMetrics(font)
+            text_w = fm.horizontalAdvance(self.caption_text)
+            if text_w + 2 * pad_x <= span_r - span_l or point_size <= 14:
+                break
+            point_size -= 1
+        painter.setFont(font)
+        box_w = min(text_w + 2 * pad_x, span_r - span_l)
         box_h = fm.height() + 2 * pad_y
-        rect = QRectF((w - box_w) / 2, h - box_h - 36, box_w, box_h)
+        x = (w - box_w) / 2
+        x = max(span_l, min(x, span_r - box_w))
+        rect = QRectF(x, h - box_h - 36, box_w, box_h)
 
         painter.setPen(QPen(QColor(255, 255, 255, 50), 1))
         painter.setBrush(QBrush(QColor(20, 20, 25, 215)))
@@ -543,6 +585,17 @@ def _set_widget_hover(widget, pos, previous_pos=None):
                             Qt.NoModifier))
     if widget.testAttribute(Qt.WA_Hover):
         QApplication.sendEvent(widget, QHoverEvent(QEvent.HoverMove, p, old_p))
+    # A QMenu row is a QWidgetAction label that ignores mouse moves, so Qt
+    # would propagate the native move up to the menu, which then marks the
+    # row active. sendEvent() does not propagate; forward it explicitly.
+    from PyQt5.QtCore import QPoint
+    from PyQt5.QtWidgets import QMenu
+    menu = widget.window()
+    if isinstance(menu, QMenu) and menu is not widget:
+        mp = menu.mapFromGlobal(widget.mapToGlobal(QPoint(int(px), int(py))))
+        QApplication.sendEvent(
+            menu, QMouseEvent(QEvent.MouseMove, QPointF(mp), Qt.NoButton,
+                              Qt.NoButton, Qt.NoModifier))
     widget.update()
 
 
@@ -656,6 +709,12 @@ class Mouse:
             return None, None
         _priority, top, top_pos = max(candidates, key=lambda item: item[0])
         if isinstance(top, QMenu):
+            # The app's menu rows are QWidgetAction widgets (HoverLabel):
+            # their own enter/leave events paint the highlighted row, exactly
+            # as a native pointer crossing them would.
+            child = top.childAt(top_pos)
+            if child is not None:
+                return child, child.mapFromGlobal(global_pos)
             return top, top_pos
 
         target = top.childAt(top_pos) or top
@@ -715,11 +774,34 @@ class Mouse:
         self._wait(1000 / self.rec.fps)
         return pos
 
+    def _check_cursor_on(self, widget):
+        """Warn when the drawn cursor is not over the widget about to be
+        clicked (e.g. a dialog, popup or layout change moved the target after
+        its position was computed)."""
+        from PyQt5.QtWidgets import QWidget
+        under, _pos = self._widget_at_window_pos(self.rec.cursor.x(),
+                                                 self.rec.cursor.y())
+        w = under
+        while isinstance(w, QWidget):
+            if w is widget:
+                return True
+            w = w.parentWidget()
+        w = widget
+        while isinstance(w, QWidget):
+            if w is under:
+                return True
+            w = w.parentWidget()
+        print(f"[record] WARNING: cursor rests on "
+              f"{type(under).__name__ if under else None}, expected "
+              f"{type(widget).__name__} {widget.objectName()!r}", flush=True)
+        return False
+
     def click_widget(self, widget, pos=None, dur_ms=650):
         """Glide to a widget and left-click it (real QTest event)."""
         from PyQt5.QtCore import QPoint, Qt
         from PyQt5.QtTest import QTest
         pos = self.glide_to_widget(widget, pos, dur_ms)
+        self._check_cursor_on(widget)
         self._wait(150)
         self.rec.click_effect()
         QTest.mouseClick(widget, Qt.LeftButton,
@@ -730,6 +812,7 @@ class Mouse:
         from PyQt5.QtCore import QPoint, Qt
         from PyQt5.QtTest import QTest
         self.glide_to_widget(canvas, (x, y))
+        self._check_cursor_on(canvas)
         self._wait(150)
         self.rec.click_effect()
         QTest.mousePress(canvas, Qt.LeftButton, pos=QPoint(int(x), int(y)))
@@ -767,6 +850,7 @@ class Mouse:
         from PyQt5.QtCore import QPoint, Qt
         from PyQt5.QtTest import QTest
         self.glide_to_widget(canvas, (x, y))
+        self._check_cursor_on(canvas)
         self._wait(150)
         self.rec.click_effect()
         QTest.mouseClick(canvas, Qt.LeftButton, pos=QPoint(int(x), int(y)))
@@ -902,6 +986,7 @@ def _right_click_hold(mouse, rec, widget, hold_ms=2000):
     from PyQt5.QtTest import QTest
     c = widget.rect().center()
     mouse.glide_to_widget(widget)
+    mouse._check_cursor_on(widget)
     _hold(200)
     rec.click_effect()
     QTest.mousePress(widget, Qt.RightButton, pos=QPoint(c.x(), c.y()))
@@ -1178,6 +1263,8 @@ def scenario_knot(window, app, rec, mouse, test_only=False):
             return
         r = menu.actionGeometry(target)
         mouse.glide_to_widget(menu, pos=r.center(), dur_ms=800)
+        row = menu.childAt(r.center())
+        mouse._check_cursor_on(row if row is not None else menu)
         _hold(500)
         rec.click_effect()
         # Menu items are QWidgetActions whose labels swallow mouse events, so

@@ -343,12 +343,24 @@ def test_chevron_icon_follows_the_theme(window):
     assert button.text() == ""
     assert button.iconSize().width() == lp.GROUP_TOGGLE_ICON_SIZE
 
+    # Pressed: the Create Group button's pressed color for the theme, never
+    # the near-white menu_selected_bg that dark mode used to flash.
+    create_pressed = {"dark": "#606060", "light": "#86817A", "default": "#7E7B77"}
     for theme in ("dark", "light", "default"):
         window.apply_theme(theme)
         pump(40)
         assert button.property("group_toggle_icon") == f"group_toggle_{theme}.png"
         assert not button.icon().isNull()
         assert button.text() == ""
+        create_style = lp.group_layer_manager.create_group_button.styleSheet()
+        assert create_pressed[theme] in create_style
+        pressed_rule = button.styleSheet().split("QToolButton:pressed")[1]
+        assert create_pressed[theme] in pressed_rule
+        assert "#FFFFFF" not in pressed_rule
+        lp.group_rail.rebuild()
+        pump(20)
+        for tile in lp.group_rail._tiles:
+            assert create_pressed[theme] in tile.styleSheet().split("QToolButton:pressed")[1]
 
     # Pointing right is the left-pointing PNG mirrored, not a different file.
     left = lp._group_toggle_pixmap("group_toggle_default.png", "left").toImage()

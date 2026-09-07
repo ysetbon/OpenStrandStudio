@@ -393,7 +393,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
     # Width of the group column once collapsed to the icon rail (GroupRail):
     # the "G" tile and the numbered group tiles, nothing else.
     GROUP_PANEL_RAIL_WIDTH = 40
-    GROUP_TOGGLE_ICON_SIZE = 16  # px edge of the chevron PNG inside the 30x22 toggle
+    GROUP_TOGGLE_ICON_SIZE = 13  # px edge of the chevron PNG inside the 30x22 toggle (16 px, 20% smaller)
     # Fixed width of NumberedLayerButton (setFixedSize(146, 40)).
     LAYER_LIST_BUTTON_WIDTH = 146
 
@@ -2081,11 +2081,14 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             "QToolButton {{ background-color: {bg}; color: {text}; border: none;"
             " border-radius: 3px; font-weight: bold; font-size: 15px; padding: {padding}; }}"
             "QToolButton:hover {{ background-color: {hover}; }}"
-            "QToolButton:pressed {{ background-color: {pressed}; color: #FFFFFF; }}".format(
+            "QToolButton:pressed {{ background-color: {pressed}; }}".format(
                 bg=c.get('group_bg', '#B9B4AE'),
                 text=c.get('text', '#000000'),
                 hover=c.get('group_hover_bg', '#A29E99'),
-                pressed=c.get('menu_selected_bg', '#96938F'),
+                # Pressed: the Create Group button's pressed color, so the
+                # chevron presses like the button above it (in dark the old
+                # menu_selected_bg flashed near-white).
+                pressed=c.get('pressed_bg', '#7E7B77'),
                 padding='0px' if not self.group_toggle_button.icon().isNull() else '0px 0px 2px 0px',
             )
         )

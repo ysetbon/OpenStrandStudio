@@ -168,19 +168,22 @@ class GroupRail(QWidget):
         colors = self._colors or {
             "group_bg": "#B9B4AE",
             "group_hover_bg": "#A29E99",
-            "menu_selected_bg": "#96938F",
+            "pressed_bg": "#7E7B77",
             "text": "#000000",
         }
+        # Pressed uses the Create Group button's pressed color for the theme
+        # (pressed_bg), like the chevron toggle, so the whole column presses
+        # alike; the text keeps its color instead of flashing white.
         style = (
             "QToolButton {{"
             " background-color: {bg}; color: {text}; border: none; border-radius: 3px;"
             " font-weight: bold; font-size: 11px; padding: 0px; }}"
             "QToolButton:hover {{ background-color: {hover}; }}"
-            "QToolButton:pressed {{ background-color: {pressed}; color: #FFFFFF; }}"
+            "QToolButton:pressed {{ background-color: {pressed}; }}"
         ).format(
             bg=colors.get("group_bg", "#B9B4AE"),
             hover=colors.get("group_hover_bg", "#A29E99"),
-            pressed=colors.get("menu_selected_bg", "#96938F"),
+            pressed=colors.get("pressed_bg", "#7E7B77"),
             text=colors.get("text", "#000000"),
         )
         for tile in self._tiles:

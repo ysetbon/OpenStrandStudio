@@ -289,15 +289,45 @@ def _sync_native(w):
         wh.setGeometry(w.geometry())
 
 
+# Native frame around a real window on this desktop: 1 px sides/bottom and
+# the measured caption on top (verified against main.py: client (0,45,1920,
+# 1035) sits in frame (-1,0,1922,1081); the Settings client (625,211,671,750)
+# in frame (624,166,673,796)).
+FRAME_SIDE = 1
+
+
 def _center_dialog(window, dlg):
-    """Deterministically center a dialog's client area over the window's
-    client area. Qt's own first-show centering uses frame geometry, which
-    differs between a mapped (framed) and a headless window."""
-    from PyQt5.QtCore import QPoint
-    wc = QPoint(window.geometry().x() + window.width() // 2,
-                window.geometry().y() + window.height() // 2)
-    dlg.setGeometry(wc.x() - dlg.width() // 2, wc.y() - dlg.height() // 2,
-                    dlg.width(), dlg.height())
+    """Place a dialog exactly where MainWindow._show_settings_dialog puts it
+    in a real run.
+
+    The app centers ``dialog.frameGeometry()`` on ``self.frameGeometry()``
+    and calls ``move()``. On Windows that point becomes the *frame* corner and
+    the client lands (1, caption) further in. A never-mapped headless dialog
+    has no frame, so replicate both the frame arithmetic and the offset. The
+    real app also shows a quirk that viewers see: the first open computes with
+    a frameless rectangle (the dialog has never been mapped) and therefore
+    lands lower than every later open, which uses the real frame size.
+    """
+    from PyQt5.QtCore import QRect
+    from PyQt5.QtWidgets import QApplication
+    title_h = _ensure_main_title_h(window)
+    g = window.geometry()
+    main_frame = QRect(g.x() - FRAME_SIDE, g.y() - title_h,
+                       g.width() + 2 * FRAME_SIDE,
+                       g.height() + title_h + FRAME_SIDE)
+    if bool(dlg.property("_tutorial_mapped_before")):
+        frame = QRect(0, 0, dlg.width() + 2 * FRAME_SIDE,
+                      dlg.height() + title_h + FRAME_SIDE)
+    else:
+        frame = QRect(0, 0, dlg.width(), dlg.height())
+    frame.moveCenter(main_frame.center())
+    screen = QApplication.desktop().availableGeometry(window)
+    x = max(screen.left(),
+            min(frame.left(), screen.right() - frame.width() + 1))
+    y = max(screen.top(),
+            min(frame.top(), screen.bottom() - frame.height() + 1))
+    dlg.setGeometry(x + FRAME_SIDE, y + title_h, dlg.width(), dlg.height())
+    dlg.setProperty("_tutorial_mapped_before", True)
     _sync_native(dlg)
 
 
@@ -1383,6 +1413,12 @@ def _launch(headless):
     QTest.qWait(300)
     if hasattr(window, "set_initial_splitter_sizes"):
         window.set_initial_splitter_sizes()
+    # main.py's startup placement resizes the window again after the splitter
+    # is set, which re-derives the toolbar gaps from the toolbar's final
+    # width. A headless window gets no further resize, so its gaps would stay
+    # at the value computed while the toolbar was still narrow.
+    if hasattr(window, "_apply_toolbar_spacing"):
+        window._apply_toolbar_spacing()
     QTest.qWait(300)
     print(f"[record] window size: {window.width()}x{window.height()}"
           f" at {window.x()},{window.y()} headless={headless}", flush=True)
@@ -1460,6 +1496,10 @@ def _verify_states(window, app, out_dir, compensate_headless=False):
         from PyQt5.QtWidgets import QApplication
         QApplication.setActiveWindow(dlg)
     QTest.qWait(400)
+    print(f"[verify] frames: main client={window.geometry().getRect()} "
+          f"main frame={window.frameGeometry().getRect()} "
+          f"dialog client={dlg.geometry().getRect()} "
+          f"dialog frame={dlg.frameGeometry().getRect()}", flush=True)
     shot("03_settings_dialog")
 
     # Theme dropdown open
@@ -1564,6 +1604,61 @@ def _verify_states(window, app, out_dir, compensate_headless=False):
     dlg.theme_combobox.hidePopup()
     dlg.close()
     QTest.qWait(300)
+
+    # Mask tutorial states: a second set crossing 1_1, then mask mode with a
+    # hover, the first selection, a hover on the second strand and the
+    # finished mask. The real run hovers with the genuine Windows pointer;
+    # the recorder reproduces it with its in-process hover events.
+    def canvas_hover(pt):
+        if compensate_headless:
+            _set_widget_hover(canvas, pt)
+        else:
+            from PyQt5.QtGui import QCursor
+            QCursor.setPos(canvas.mapToGlobal(QPoint(pt[0], pt[1])))
+        QTest.qWait(400)
+
+    def canvas_drag(start, end):
+        from PyQt5.QtCore import QPointF, QEvent
+        from PyQt5.QtGui import QMouseEvent
+        from PyQt5.QtWidgets import QApplication
+        QTest.mousePress(canvas, Qt.LeftButton, pos=QPoint(*start))
+        QTest.qWait(150)
+        for i in range(1, 7):
+            x = start[0] + (end[0] - start[0]) * i / 6
+            y = start[1] + (end[1] - start[1]) * i / 6
+            QApplication.sendEvent(canvas, QMouseEvent(
+                QEvent.MouseMove, QPointF(x, y), Qt.LeftButton, Qt.LeftButton,
+                Qt.NoModifier))
+            QTest.qWait(40)
+        QTest.mouseRelease(canvas, Qt.LeftButton, pos=QPoint(*end))
+        QTest.qWait(500)
+
+    QTest.mouseClick(window.layer_panel.add_new_strand_button, Qt.LeftButton)
+    QTest.qWait(300)
+    canvas_drag((620, 640), (700, 480))
+    s21 = _strand_by_name(canvas, "2_1")
+    assert s21 is not None, "verify: 2_1 missing"
+    QTest.mouseClick(window.attach_button, Qt.LeftButton)
+    QTest.qWait(300)
+    end21 = (int(s21.end.x()), int(s21.end.y()))
+    canvas_drag(end21, (end21[0] + 60, 140))
+    assert _strand_by_name(canvas, "2_2") is not None, "verify: 2_2 missing"
+
+    QTest.mouseClick(window.mask_button, Qt.LeftButton)
+    QTest.qWait(400)
+    p1 = _point_along(_strand_by_name(canvas, "1_1"), 0.25)
+    canvas_hover(p1)
+    shot("11_mask_hover_first")
+    QTest.mouseClick(canvas, Qt.LeftButton, pos=QPoint(*p1))
+    QTest.qWait(500)
+    shot("12_mask_first_selected")
+    p2 = _point_along(_strand_by_name(canvas, "2_2"), 0.75)
+    canvas_hover(p2)
+    shot("13_mask_hover_second")
+    QTest.mouseClick(canvas, Qt.LeftButton, pos=QPoint(*p2))
+    QTest.qWait(800)
+    assert _strand_by_name(canvas, "1_1_2_2") is not None, "verify: mask missing"
+    shot("14_mask_created")
 
 
 def _run_verify_capture(mode):

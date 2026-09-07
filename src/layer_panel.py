@@ -402,6 +402,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
     group_panel_collapsed_changed = pyqtSignal(bool)
 
     def __init__(self, canvas, parent=None):
+        """Build the layer list, the control buttons and the group column
+        (with its collapsible rail and themed chevron toggle) and wire them
+        to *canvas*."""
         super().__init__(parent)
         self.canvas = canvas
         self.parent_window = parent

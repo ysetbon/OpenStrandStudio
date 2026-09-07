@@ -89,6 +89,8 @@ def test_tile_label_rules():
 
 
 def test_collapse_frees_width_and_expand_restores(window):
+    """Collapsing gives the canvas exactly the freed width, shows the rail
+    and points the chevron back toward the list; expanding restores it all."""
     lp = window.layer_panel
     assert lp.right_panel.width() == lp.GROUP_PANEL_FULL_WIDTH
     assert lp.minimumWidth() == window.LAYER_PANEL_FULL_MIN_WIDTH
@@ -308,6 +310,8 @@ def test_many_groups_scroll_without_clipping_tiles(window):
 
 
 def test_shortcut_and_hebrew_chevron(window):
+    """Ctrl+G toggles the column (window context only) and the chevron
+    mirrors its direction in Hebrew."""
     lp = window.layer_panel
     # Window context: a modal dialog (Create Group's name prompt) must not
     # let Ctrl+G toggle the panel behind it.

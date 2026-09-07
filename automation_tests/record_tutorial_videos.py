@@ -546,8 +546,22 @@ def _set_widget_hover(widget, pos, previous_pos=None):
     widget.update()
 
 
+def _widget_is_deleted(widget):
+    """True when the C++ side of a Qt wrapper is already gone.
+
+    The app deleteLater()s every layer-button context menu once it closes
+    (1.110 leak fix), so a widget the virtual mouse hovered a moment ago can
+    vanish between two recorder ticks.
+    """
+    try:
+        import sip
+    except ImportError:
+        from PyQt5 import sip
+    return sip.isdeleted(widget)
+
+
 def _clear_widget_hover(widget, pos=None):
-    if widget is None:
+    if widget is None or _widget_is_deleted(widget):
         return
     from PyQt5.QtCore import QEvent, QPointF, Qt
     from PyQt5.QtGui import QHoverEvent
@@ -660,6 +674,9 @@ class Mouse:
 
     def _update_hover_at_window_pos(self, wx, wy):
         target, pos = self._widget_at_window_pos(wx, wy)
+        if self._hovered_widget is not None and                 _widget_is_deleted(self._hovered_widget):
+            self._hovered_widget = None
+            self._hovered_pos = None
         if target is self._hovered_widget:
             if target is not None:
                 _set_widget_hover(target, pos, self._hovered_pos)
@@ -1164,10 +1181,14 @@ def scenario_knot(window, app, rec, mouse, test_only=False):
         _hold(500)
         rec.click_effect()
         # Menu items are QWidgetActions whose labels swallow mouse events, so
-        # trigger the action directly after the cursor lands on it.
+        # trigger the action directly after the cursor lands on it. The app
+        # deleteLater()s the menu once exec_() returns, so release the virtual
+        # mouse's hover on it first and never touch the menu afterwards.
+        mouse._clear_hover()
         target.trigger()
         _hold(200)
-        menu.close()
+        if not _widget_is_deleted(menu) and menu.isVisible():
+            menu.close()
 
     # show_context_menu blocks in menu.exec_(), so schedule the item click
     QTimer.singleShot(900, _click_menu_item)
@@ -1643,7 +1664,10 @@ def main():
                     encode(rec.frames_dir, rec.n, rec.elapsed,
                            out_base,
                            scenario=None if args.test else args.scenario)
-                    if not args.test:
+                    # A scenario that raised still gets encoded for
+                    # inspection, but only a complete run replaces the
+                    # shipped tutorial.
+                    if ok and not args.test:
                         _publish_tutorial(out_base, args.scenario)
             except Exception:
                 import traceback

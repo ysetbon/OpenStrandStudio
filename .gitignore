@@ -30,3 +30,7 @@ cad_mxn/
 
 # Tutorial video recording output (frames + encoded clips)
 automation_tests/recordings/
+
+# PyInstaller / Inno Setup output (Windows build)
+src/build/
+src/dist/

@@ -89,6 +89,8 @@ def test_tile_label_rules():
 
 
 def test_collapse_frees_width_and_expand_restores(window):
+    """Collapsing gives the canvas exactly the freed width, shows the rail
+    and points the chevron back toward the list; expanding restores it all."""
     lp = window.layer_panel
     assert lp.right_panel.width() == lp.GROUP_PANEL_FULL_WIDTH
     assert lp.minimumWidth() == window.LAYER_PANEL_FULL_MIN_WIDTH
@@ -102,7 +104,7 @@ def test_collapse_frees_width_and_expand_restores(window):
     assert window.canvas.width() == canvas_before + 100
     assert lp.group_rail.isVisible()
     assert not lp.group_layer_manager.group_panel.isVisible()
-    assert lp.group_toggle_button.text() == "‹"
+    assert lp.group_toggle_button.property("group_toggle_direction") == "left"
     assert not lp.group_toggle_button.toolTip()
 
     lp.toggle_group_panel()
@@ -110,7 +112,7 @@ def test_collapse_frees_width_and_expand_restores(window):
     assert lp.right_panel.width() == lp.GROUP_PANEL_FULL_WIDTH
     assert lp.minimumWidth() == window.LAYER_PANEL_FULL_MIN_WIDTH
     assert window.canvas.width() == canvas_before
-    assert lp.group_toggle_button.text() == "›"
+    assert lp.group_toggle_button.property("group_toggle_direction") == "right"
 
 
 def test_rail_mirrors_the_group_tree(window):
@@ -308,6 +310,8 @@ def test_many_groups_scroll_without_clipping_tiles(window):
 
 
 def test_shortcut_and_hebrew_chevron(window):
+    """Ctrl+G toggles the column (window context only) and the chevron
+    mirrors its direction in Hebrew."""
     lp = window.layer_panel
     # Window context: a modal dialog (Create Group's name prompt) must not
     # let Ctrl+G toggle the panel behind it.
@@ -321,12 +325,36 @@ def test_shortcut_and_hebrew_chevron(window):
 
     window.set_language("he")
     pump(80)
-    assert lp.group_toggle_button.text() == "‹"
+    assert lp.group_toggle_button.property("group_toggle_direction") == "left"
     lp.set_group_panel_collapsed(True, animate=False)
     pump(60)
-    assert lp.group_toggle_button.text() == "›"
+    assert lp.group_toggle_button.property("group_toggle_direction") == "right"
     window.set_language("en")
     pump(40)
+
+
+def test_chevron_icon_follows_the_theme(window):
+    """The chevron is the theme's group_toggle_<theme>.png, mirrored to point
+    right; the text glyph is only the fallback for a missing asset."""
+    lp = window.layer_panel
+    button = lp.group_toggle_button
+    assert button.property("group_toggle_icon") == "group_toggle_default.png"
+    assert not button.icon().isNull()
+    assert button.text() == ""
+    assert button.iconSize().width() == lp.GROUP_TOGGLE_ICON_SIZE
+
+    for theme in ("dark", "light", "default"):
+        window.apply_theme(theme)
+        pump(40)
+        assert button.property("group_toggle_icon") == f"group_toggle_{theme}.png"
+        assert not button.icon().isNull()
+        assert button.text() == ""
+
+    # Pointing right is the left-pointing PNG mirrored, not a different file.
+    left = lp._group_toggle_pixmap("group_toggle_default.png", "left").toImage()
+    right = lp._group_toggle_pixmap("group_toggle_default.png", "right").toImage()
+    assert right == left.mirrored(True, False)
+    assert right != left
 
 
 def test_create_tile_letter_follows_the_language(window):

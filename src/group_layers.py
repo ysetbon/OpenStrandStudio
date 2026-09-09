@@ -1,3 +1,4 @@
+import ui_zoom
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel, 
                              QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,  QScrollArea, QMenu, QTableWidget, 
                              QTableWidgetItem, QHeaderView, QSizePolicy,  QMessageBox, QAbstractButton)
@@ -632,7 +633,8 @@ class CollapsibleGroupWidget(QWidget):
         try:
             # Adjust the size of the widget to fit its contents
             self.adjustSize()
-            self.setMinimumHeight(self.sizeHint().height())
+            with ui_zoom.raw():
+                self.setMinimumHeight(self.sizeHint().height())
         except RuntimeError:
             pass
 
@@ -1427,7 +1429,8 @@ class GroupPanel(QWidget):
             menu = QMenu(parent_widget)
             menu.setLayoutDirection(Qt.RightToLeft if is_rtl else Qt.LeftToRight)
             menu.setStyleSheet(self._group_context_menu_stylesheet(is_rtl))
-            menu.setMinimumWidth(self._group_context_menu_width(menu, menu_labels))
+            with ui_zoom.raw():
+                menu.setMinimumWidth(self._group_context_menu_width(menu, menu_labels))
 
             theme = self._get_theme_colors().get('name', 'default')
             hover_theme = 'dark' if theme == 'dark' else 'light'
@@ -1510,7 +1513,8 @@ class GroupPanel(QWidget):
 
         metrics = QFontMetrics(menu.font())
         widest_label = max((metrics.horizontalAdvance(label) for label in labels), default=100)
-        return min(360, max(150, widest_label + 48))
+        # Already zoomed (the menu font is zoomed); callers set it inside raw().
+        return min(ui_zoom.S(360, 'menus'), max(ui_zoom.S(150, 'menus'), widest_label + ui_zoom.S(48, 'menus')))
 
     def _make_rtl_menu_action(self, menu, text, hover_theme, min_width):
         """Create a right-aligned menu entry for Hebrew (or any RTL language).
@@ -4915,7 +4919,8 @@ class GroupLayerManager:
             if isinstance(base_style, LargeIndicatorStyle):
                 base_style = base_style.baseStyle()
             checkbox.setStyle(LargeIndicatorStyle(base_style, 20))
-            checkbox.setMinimumHeight(max(checkbox.minimumHeight(), 26))
+            with ui_zoom.raw():
+                checkbox.setMinimumHeight(max(checkbox.minimumHeight(), ui_zoom.S(26, 'groups')))
 
             if is_dark_mode:
                 text_color = "#FFFFFF"
@@ -6438,7 +6443,8 @@ class StrandAngleEditDialog(QDialog):
         if isinstance(base_style, LargeIndicatorStyle):
             base_style = base_style.baseStyle()
         checkbox.setStyle(LargeIndicatorStyle(base_style, indicator_size))
-        checkbox.setMinimumHeight(max(checkbox.minimumHeight(), indicator_size + 6))
+        with ui_zoom.raw():
+            checkbox.setMinimumHeight(max(checkbox.minimumHeight(), ui_zoom.S(indicator_size + 6, 'groups')))
 
     def _setup_custom_checkmark(self, checkbox):
         """Draw a crisp custom checkmark that scales with the indicator size."""
@@ -6486,7 +6492,8 @@ class StrandAngleEditDialog(QDialog):
 
     def _set_checkbox_min_width(self, checkbox):
         """Ensure checkbox text stays readable without stretching the layout."""
-        checkbox.setMinimumWidth(checkbox.sizeHint().width())
+        with ui_zoom.raw():
+            checkbox.setMinimumWidth(checkbox.sizeHint().width())
         checkbox.updateGeometry()
 
     def _style_angle_checkbox(self, checkbox, is_dark_mode, is_enabled=None):

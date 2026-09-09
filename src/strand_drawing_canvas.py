@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import QWidget
+import ui_zoom
 from PyQt5.QtCore import Qt, QPointF, QRectF, QPoint, pyqtSignal, QTimer
 from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QFont, QFontMetrics, QImage, QPolygonF, QPalette, QPainterPathStroker, QTransform
 from render_utils import RenderUtils
@@ -2236,9 +2237,9 @@ class StrandDrawingCanvas(QWidget):
                         triangle_has_moved = getattr(selected_strand, 'triangle_has_moved', False)
                 
                         # Create the yellow rectangle with the consistent size for overlap checking
-                        yellow_square_size = 120  # Size for the yellow selection square
+                        yellow_square_size = int(round(120 * ui_zoom.canvas_factor()))  # Size for the yellow selection square
                         half_yellow_size = yellow_square_size / 2
-                        square_control_size = 50  # Size for control points
+                        square_control_size = int(round(50 * ui_zoom.canvas_factor()))  # Size for control points
                         half_control_size = square_control_size / 2
                 
                         if selected_side == 0:  # Start point
@@ -2285,7 +2286,7 @@ class StrandDrawingCanvas(QWidget):
                         # Bias control yellow highlight when moving them
                         elif (selected_side == 'bias_triangle' and triangle_has_moved
                               and hasattr(selected_strand, 'bias_control') and selected_strand.bias_control):
-                            bias_square_size = 50  # Same size as regular control points
+                            bias_square_size = int(round(50 * ui_zoom.canvas_factor()))  # Same size as regular control points
                             bias_half_size = bias_square_size / 2
                             tp, cp = selected_strand.bias_control.get_bias_control_positions(selected_strand)
                             if tp:
@@ -2297,7 +2298,7 @@ class StrandDrawingCanvas(QWidget):
                                 )
                         elif (selected_side == 'bias_circle' and triangle_has_moved
                               and hasattr(selected_strand, 'bias_control') and selected_strand.bias_control):
-                            bias_square_size = 50  # Same size as regular control points
+                            bias_square_size = int(round(50 * ui_zoom.canvas_factor()))  # Same size as regular control points
                             bias_half_size = bias_square_size / 2
                             tp, cp = selected_strand.bias_control.get_bias_control_positions(selected_strand)
                             if cp:
@@ -2389,11 +2390,11 @@ class StrandDrawingCanvas(QWidget):
                                         continue
                                 
                                     # Increased square size for better visibility
-                                    square_size = 120
+                                    square_size = int(round(120 * ui_zoom.canvas_factor()))
                                     half_size = square_size / 2
-                                    square_control_size = 50
+                                    square_control_size = int(round(50 * ui_zoom.canvas_factor()))
                                     half_control_size = square_control_size / 2
-                                    yellow_square_size = 120  # Size for the yellow selection square
+                                    yellow_square_size = int(round(120 * ui_zoom.canvas_factor()))  # Size for the yellow selection square
                                     half_yellow_size = yellow_square_size / 2
                             
                                     # Skip drawing only the exact selected point, not any overlapping rectangles
@@ -2609,7 +2610,7 @@ class StrandDrawingCanvas(QWidget):
                                                   and hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control):
                                                 tp, cp = strand.bias_control.get_bias_control_positions(strand)
                                                 if tp:
-                                                    bias_square_size = 50  # Same size as regular control points
+                                                    bias_square_size = int(round(50 * ui_zoom.canvas_factor()))  # Same size as regular control points
                                                     bias_half_size = bias_square_size / 2
                                                     bt_rect = QRectF(tp.x() - bias_half_size, tp.y() - bias_half_size, bias_square_size, bias_square_size)
                                                     painter.drawRect(bt_rect)
@@ -2619,7 +2620,7 @@ class StrandDrawingCanvas(QWidget):
                                                   and hasattr(self, 'enable_curvature_bias_control') and self.enable_curvature_bias_control):
                                                 tp, cp = strand.bias_control.get_bias_control_positions(strand)
                                                 if cp:
-                                                    bias_square_size = 50  # Same size as regular control points
+                                                    bias_square_size = int(round(50 * ui_zoom.canvas_factor()))  # Same size as regular control points
                                                     bias_half_size = bias_square_size / 2
                                                     bc_rect = QRectF(cp.x() - bias_half_size, cp.y() - bias_half_size, bias_square_size, bias_square_size)
                                                     painter.drawRect(bc_rect)
@@ -2674,7 +2675,7 @@ class StrandDrawingCanvas(QWidget):
                                                     and hasattr(strand, 'bias_control') and strand.bias_control):
                                                 tp, cp_pos = strand.bias_control.get_bias_control_positions(strand)
                                                 if tp:
-                                                    bias_square_size = 50  # Same size as regular control points
+                                                    bias_square_size = int(round(50 * ui_zoom.canvas_factor()))  # Same size as regular control points
                                                     bias_half_size = bias_square_size / 2
                                                     bt_rect = QRectF(tp.x() - bias_half_size, tp.y() - bias_half_size, bias_square_size, bias_square_size)
                                                     if strand == hovered_strand and hovered_side == 'bias_triangle':
@@ -2688,7 +2689,7 @@ class StrandDrawingCanvas(QWidget):
                                                         painter.drawRect(bt_rect)
                                                         bias_triangle_drawn = True
                                                 if cp_pos:
-                                                    bias_square_size = 50  # Same size as regular control points
+                                                    bias_square_size = int(round(50 * ui_zoom.canvas_factor()))  # Same size as regular control points
                                                     bias_half_size = bias_square_size / 2
                                                     bc_rect = QRectF(cp_pos.x() - bias_half_size, cp_pos.y() - bias_half_size, bias_square_size, bias_square_size)
                                                     if strand == hovered_strand and hovered_side == 'bias_circle':
@@ -2942,7 +2943,7 @@ class StrandDrawingCanvas(QWidget):
                                 circle_color = QColor(255, 230, 160, 140)  # Yellow with transparency (selected)
                                 painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
                                 painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
-                                circle_size = 120
+                                circle_size = int(round(120 * ui_zoom.canvas_factor()))
                                 radius = circle_size / 2
                                 start_ellipse = QRectF(
                                     strand.start.x() - radius,
@@ -2955,7 +2956,7 @@ class StrandDrawingCanvas(QWidget):
                                 circle_color = hover_color  # Yellow for hover
                                 painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
                                 painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
-                                circle_size = 120
+                                circle_size = int(round(120 * ui_zoom.canvas_factor()))
                                 radius = circle_size / 2
                                 start_ellipse = QRectF(
                                     strand.start.x() - radius,
@@ -2969,7 +2970,7 @@ class StrandDrawingCanvas(QWidget):
                                 circle_color.setAlpha(60)  # Default with transparency
                                 painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
                                 painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
-                                circle_size = 120
+                                circle_size = int(round(120 * ui_zoom.canvas_factor()))
                                 radius = circle_size / 2
                                 start_ellipse = QRectF(
                                     strand.start.x() - radius,
@@ -2989,7 +2990,7 @@ class StrandDrawingCanvas(QWidget):
                                 circle_color = QColor(255, 230, 160, 140)  # Yellow with transparency (selected)
                                 painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
                                 painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
-                                circle_size = 120
+                                circle_size = int(round(120 * ui_zoom.canvas_factor()))
                                 radius = circle_size / 2
                                 end_ellipse = QRectF(
                                     strand.end.x() - radius,
@@ -3002,7 +3003,7 @@ class StrandDrawingCanvas(QWidget):
                                 circle_color = hover_color  # Yellow for hover
                                 painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
                                 painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
-                                circle_size = 120
+                                circle_size = int(round(120 * ui_zoom.canvas_factor()))
                                 radius = circle_size / 2
                                 end_ellipse = QRectF(
                                     strand.end.x() - radius,
@@ -3015,7 +3016,7 @@ class StrandDrawingCanvas(QWidget):
                                 circle_color = QColor(0, 0, 255, 60)  # Default blue
                                 painter.setBrush(RenderUtils.create_smooth_brush(circle_color))
                                 painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
-                                circle_size = 120
+                                circle_size = int(round(120 * ui_zoom.canvas_factor()))
                                 radius = circle_size / 2
                                 end_ellipse = QRectF(
                                     strand.end.x() - radius,
@@ -3549,7 +3550,7 @@ class StrandDrawingCanvas(QWidget):
                             # Calculate the proper radius for the highlight
                             # The highlighted strand outline uses: QPen(QColor('red'), self.stroke_width + 8)
                             # This pen is drawn around the stroke path, so the outer edge is at:
-                            highlight_pen_thickness = 10  # Fixed thickness instead of stroke_width + 8
+                            highlight_pen_thickness = int(round(10 * ui_zoom.canvas_factor()))  # Fixed thickness instead of stroke_width + 8
                             stroke_path_radius = (strand.width + strand.stroke_width * 2) / 2
                             outer_radius = stroke_path_radius + highlight_pen_thickness / 2
                             inner_radius = strand.width / 2 + 6

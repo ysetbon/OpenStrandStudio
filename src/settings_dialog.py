@@ -21,6 +21,7 @@ import sys
 import subprocess
 import json
 from PyQt5.QtCore import QStandardPaths, QDateTime
+import ui_zoom
 # Import StrokeTextButton for displaying icons
 try:
     from undo_redo_manager import StrokeTextButton
@@ -1761,6 +1762,7 @@ class SettingsDialog(QDialog):
 
         categories = [
             _['general_settings'],
+            (_['display'] if 'display' in _ else 'Display'),  # Display (UI zoom) category
             _['layer_panel_title'],  # Add Layer Panel Settings category
             (_['selected_strand_settings'] if 'selected_strand_settings' in _ else 'Selected Strand'),
             _['change_language'],
@@ -2238,6 +2240,14 @@ class SettingsDialog(QDialog):
         general_layout.addWidget(self.apply_button)
 
         self.stacked_widget.addWidget(self.general_settings_widget)
+
+        # Display page (index 1): UI zoom, fine-tune, cursor size, preview
+        from display_settings_page import DisplaySettingsPage
+        self.display_settings_page = DisplaySettingsPage(self)
+        self.stacked_widget.addWidget(self.display_settings_page)
+        # The dialog's own geometry is measured from zoomed widgets; recompute
+        # it whenever the zoom changes so the category list and pages fit.
+        ui_zoom.state.changed.connect(self._on_ui_zoom_changed)
 
         # Layer Panel Settings Page (index 1)
         self.layer_panel_settings_widget = QWidget()
@@ -3531,8 +3541,11 @@ class SettingsDialog(QDialog):
                 text_width = font_metrics.width(text)
             max_category_width = max(max_category_width, text_width)
         # 13 px padding on each side keeps text readable without wasting space (added 3 px buffer)
-        self.category_panel_width = max_category_width + 26
-        self.categories_list.setFixedWidth(self.category_panel_width)
+        # Text width is already zoomed (measured with the zoomed font); only
+        # the padding needs scaling, and the setter must not scale again.
+        self.category_panel_width = max_category_width + ui_zoom.S(26, 'dialogs')
+        with ui_zoom.raw():
+            self.categories_list.setFixedWidth(self.category_panel_width)
 
     def adjust_dialog_geometry(self):
         """Resize the dialog so the content area fits the active translations exactly."""
@@ -3570,10 +3583,10 @@ class SettingsDialog(QDialog):
             right_panel_min_width = self.stacked_widget.sizeHint().width()
 
         dialog_min_width = self.category_panel_width + right_panel_min_width + spacing + left_margin + right_margin
-        self.setMinimumWidth(dialog_min_width)
-
         target_height = self.sizeHint().height()
-        self.resize(dialog_min_width, target_height)
+        with ui_zoom.raw():   # all of these are measured, already-zoomed sizes
+            self.setMinimumWidth(dialog_min_width)
+            self.resize(dialog_min_width, target_height)
 
     def style_dialog_buttons(self):
         """Apply consistent styling to all buttons in the dialog"""
@@ -3610,7 +3623,7 @@ class SettingsDialog(QDialog):
             # Use boundingRect for more accurate width and add generous padding (20 px each side)
             fm = button.fontMetrics()
             text_rect = fm.boundingRect(button.text())
-            calculated_width = text_rect.width() + 40  # 40 px total padding
+            calculated_width = text_rect.width() + ui_zoom.S(40, 'dialogs')  # 40 px total padding
 
             # Special-case: "Default Strand Width" button uses dynamic sizing based on translated text
             if button is self.default_strand_width_button:
@@ -3618,7 +3631,8 @@ class SettingsDialog(QDialog):
                 self.update_default_strand_width_button_size()
             else:
                 # Ensure a sensible lower bound (120) while allowing wider texts to fit
-                button.setMinimumWidth(max(120, calculated_width))
+                with ui_zoom.raw():
+                    button.setMinimumWidth(max(ui_zoom.S(120, 'dialogs'), calculated_width))
 
             # Force Qt to recalculate the size hint after updating the minimum width
             button.updateGeometry()
@@ -4712,6 +4726,18 @@ class SettingsDialog(QDialog):
         index = self.categories_list.row(item)
         self.stacked_widget.setCurrentIndex(index)
 
+    def show_display_page(self):
+        """Select the Display (UI zoom) category."""
+        self.categories_list.setCurrentRow(1)
+        self.stacked_widget.setCurrentIndex(1)
+
+    def _on_ui_zoom_changed(self):
+        try:
+            self.update_category_panel_width()
+            self.adjust_dialog_geometry()
+        except Exception:
+            pass
+
     def update_translations(self):
         if hasattr(self, 'parent_window') and hasattr(self.parent_window, 'language_code'):
             self.current_language = self.parent_window.language_code
@@ -4721,16 +4747,19 @@ class SettingsDialog(QDialog):
         self.setWindowTitle(_['settings'])
         # Update category names
         self.categories_list.item(0).setText(_['general_settings'])
-        self.categories_list.item(1).setText(_['layer_panel_title'])
-        self.categories_list.item(2).setText(_['selected_strand_settings'] if 'selected_strand_settings' in _ else 'Selected Strand')
-        self.categories_list.item(3).setText(_['change_language'])
-        self.categories_list.item(4).setText(_['save_load_settings_title'])  # Save/load settings category
-        self.categories_list.item(5).setText(_['tutorial'])
-        self.categories_list.item(6).setText(_['button_explanations']) # Update button guide category name
-        self.categories_list.item(7).setText(_['history']) # Update history category name
-        self.categories_list.item(8).setText(_['whats_new']) # Update what's new category name
-        self.categories_list.item(9).setText(_['samples'] if 'samples' in _ else 'Samples')
-        self.categories_list.item(10).setText(_['about']) # About remains last
+        self.categories_list.item(1).setText(_['display'] if 'display' in _ else 'Display')
+        self.categories_list.item(2).setText(_['layer_panel_title'])
+        self.categories_list.item(3).setText(_['selected_strand_settings'] if 'selected_strand_settings' in _ else 'Selected Strand')
+        self.categories_list.item(4).setText(_['change_language'])
+        self.categories_list.item(5).setText(_['save_load_settings_title'])  # Save/load settings category
+        self.categories_list.item(6).setText(_['tutorial'])
+        self.categories_list.item(7).setText(_['button_explanations']) # Update button guide category name
+        self.categories_list.item(8).setText(_['history']) # Update history category name
+        self.categories_list.item(9).setText(_['whats_new']) # Update what's new category name
+        self.categories_list.item(10).setText(_['samples'] if 'samples' in _ else 'Samples')
+        self.categories_list.item(11).setText(_['about']) # About remains last
+        if hasattr(self, 'display_settings_page'):
+            self.display_settings_page.set_language(self.current_language)
         self.update_category_panel_width()
         # Update labels and buttons
         self.theme_label.setText(_['select_theme'])
@@ -5389,6 +5418,9 @@ class SettingsDialog(QDialog):
                     file.write(ln + "\n")
                 file.write(f"Theme: {self.current_theme}\n")
                 file.write(f"Language: {self.current_language}\n")
+                # UI zoom (Display page)
+                for zoom_line in ui_zoom.settings_lines():
+                    file.write(zoom_line + "\n")
                 # Save shadow color in RGBA format
                 file.write(f"ShadowColor: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}\n")
                 # Save draw only affected strand setting
@@ -6706,13 +6738,14 @@ class SettingsDialog(QDialog):
         # Much larger buffer for high-DPI screens and button styling
         dpi_buffer = 80  # Increased from 40 to 80
         
-        calculated_width = text_width + padding + dpi_buffer
+        calculated_width = text_width + ui_zoom.S(padding + dpi_buffer, 'dialogs')
         
         # Set higher minimum to ensure button is never too small
-        final_width = max(260, calculated_width)  # Increased from 180 to 260
+        final_width = max(ui_zoom.S(260, 'dialogs'), calculated_width)  # Increased from 180 to 260
         
-        self.default_strand_width_button.setMinimumWidth(final_width)
-        self.default_strand_width_button.setMaximumWidth(final_width)
+        with ui_zoom.raw():   # text_width is measured with the zoomed font
+            self.default_strand_width_button.setMinimumWidth(final_width)
+            self.default_strand_width_button.setMaximumWidth(final_width)
         self.default_strand_width_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         
         # Get current screen DPI for logging

@@ -1,4 +1,5 @@
 from PyQt5.QtCore import QPointF, QTimer, pyqtSignal, QObject, QRect, QRectF, Qt
+import ui_zoom
 from PyQt5.QtGui import QCursor, QPainter, QPixmap, QPainterPath, QColor
 from PyQt5.QtWidgets import QApplication
 from render_utils import RenderUtils
@@ -741,7 +742,7 @@ class AttachMode(QObject):
             self.hovered_strand = None
             self.hovered_point = None
 
-            circle_size = 120
+            circle_size = int(round(120 * ui_zoom.canvas_factor()))
             radius = circle_size / 2
 
             # Check all strands for hover
@@ -1052,7 +1053,7 @@ class AttachMode(QObject):
     def get_attachment_area(self, strand, side):
         """Return the circular attachment area, independent of strand width."""
         try:
-            base_area_size = 120
+            base_area_size = int(round(120 * ui_zoom.canvas_factor()))
 
             area_size = base_area_size
             circle_radius = max(area_size / 2, 1.0)

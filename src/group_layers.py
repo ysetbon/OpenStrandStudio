@@ -4918,7 +4918,7 @@ class GroupLayerManager:
             base_style = checkbox.style()
             if isinstance(base_style, LargeIndicatorStyle):
                 base_style = base_style.baseStyle()
-            checkbox.setStyle(LargeIndicatorStyle(base_style, 20))
+            checkbox.setStyle(LargeIndicatorStyle(base_style, ui_zoom.S(20, 'groups')))
             with ui_zoom.raw():
                 checkbox.setMinimumHeight(max(checkbox.minimumHeight(), ui_zoom.S(26, 'groups')))
 
@@ -6442,7 +6442,7 @@ class StrandAngleEditDialog(QDialog):
         base_style = checkbox.style()
         if isinstance(base_style, LargeIndicatorStyle):
             base_style = base_style.baseStyle()
-        checkbox.setStyle(LargeIndicatorStyle(base_style, indicator_size))
+        checkbox.setStyle(LargeIndicatorStyle(base_style, ui_zoom.S(indicator_size, 'groups')))
         with ui_zoom.raw():
             checkbox.setMinimumHeight(max(checkbox.minimumHeight(), ui_zoom.S(indicator_size + 6, 'groups')))
 

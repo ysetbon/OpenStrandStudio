@@ -279,6 +279,9 @@ if __name__ == '__main__':
     if os.environ.get('OPENSTRAND_UI_ZOOM'):
         try:
             ui_zoom.state.zoom = ui_zoom.clamp_zoom(float(os.environ['OPENSTRAND_UI_ZOOM']))
+            # A one-off override for headless runs: never write it to the
+            # user's settings file.
+            ui_zoom.state.persist = False
         except ValueError:
             pass
     ui_zoom.apply_all()

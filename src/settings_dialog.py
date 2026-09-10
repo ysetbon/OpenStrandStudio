@@ -5408,6 +5408,10 @@ class SettingsDialog(QDialog):
                     for ln in existing:
                         if ln.startswith('TabEdgePosition:') or ln.startswith('GroupPanelRail:'):
                             preserved_lines.append(ln.rstrip('\n'))
+                        elif not ui_zoom.state.persist and ln.split(':', 1)[0].strip() in ui_zoom.SETTINGS_KEYS:
+                            # OPENSTRAND_UI_ZOOM override in effect: keep the
+                            # user's saved zoom instead of writing the override.
+                            preserved_lines.append(ln.rstrip('\n'))
             except Exception:
                 preserved_lines = []
 
@@ -5419,8 +5423,9 @@ class SettingsDialog(QDialog):
                 file.write(f"Theme: {self.current_theme}\n")
                 file.write(f"Language: {self.current_language}\n")
                 # UI zoom (Display page)
-                for zoom_line in ui_zoom.settings_lines():
-                    file.write(zoom_line + "\n")
+                if ui_zoom.state.persist:
+                    for zoom_line in ui_zoom.settings_lines():
+                        file.write(zoom_line + "\n")
                 # Save shadow color in RGBA format
                 file.write(f"ShadowColor: {self.shadow_color.red()},{self.shadow_color.green()},{self.shadow_color.blue()},{self.shadow_color.alpha()}\n")
                 # Save draw only affected strand setting

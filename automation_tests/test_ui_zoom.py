@@ -133,6 +133,10 @@ for zoom in ZOOMS:
         w.grab().save(os.path.join(shots, f'ui_zoom_{zoom}.png'), 'PNG')
 
     if zoom == ZOOMS[0]:
+        # no toast at startup: apply_all() ran before the window was shown
+        toast = getattr(w, '_zoom_toast', None)
+        if toast is not None and toast.isVisible():
+            failures.append("zoom toast shown without a zoom change")
         # live change on the same window
         ui_zoom.set_zoom(200)
         app.processEvents()
@@ -146,6 +150,21 @@ for zoom in ZOOMS:
         ui_zoom.set_zoom(100)
         app.processEvents()
         check("live back to 100 toolbar_h", w.move_button.height(), 32)
+        # Ctrl + wheel over the layer list (a scroll area viewport) steps the UI zoom
+        from PyQt5.QtGui import QWheelEvent
+        from PyQt5.QtCore import QPointF
+        viewport = w.layer_panel.scroll_area.viewport()
+        before = ui_zoom.state.zoom
+        ev = QWheelEvent(QPointF(5, 5), viewport.mapToGlobal(QPoint(5, 5)), QPoint(0, 0), QPoint(0, 120),
+                         Qt.NoButton, Qt.ControlModifier, Qt.NoScrollPhase, False)
+        app.sendEvent(viewport, ev)
+        app.processEvents()
+        check("ctrl+wheel over layer list steps zoom", ui_zoom.state.zoom, 110)
+        toast = getattr(w, '_zoom_toast', None)
+        if toast is None or not toast.isVisible():
+            failures.append("zoom toast not shown after a real zoom change")
+        ui_zoom.set_zoom(before)
+        app.processEvents()
         # cursor
         ui_zoom.set_cursor(size=48)
         app.processEvents()

@@ -90,6 +90,8 @@ class _ZoomState(QObject):
         # DPI scaling off, so 9 pt is already twice as tall at 200 %.  Point
         # sizes are therefore scaled by zoom / this ratio; pixel sizes by zoom.
         self.point_dpi_scale = 1.0
+        # False while OPENSTRAND_UI_ZOOM overrides the zoom: nothing is saved.
+        self.persist = True
         self.installed = False
         self.applying = False
         self.base_font = None
@@ -1010,7 +1012,7 @@ def schedule_save(delay_ms=400):
     """Write the zoom keys to user_settings.txt shortly after the last change."""
     global _save_timer
     path = getattr(state, 'settings_path', None)
-    if not path:
+    if not path or not state.persist:
         return
     from PyQt5.QtCore import QTimer
     if _save_timer is None:

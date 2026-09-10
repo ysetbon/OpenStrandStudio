@@ -37,11 +37,36 @@ from PyQt5.QtCore import QPointF
 # main_window.py
 
 class _UiZoomWheelFilter(QObject):
-    """Ctrl + wheel over the toolbar or side panel steps the UI zoom."""
+    """Ctrl + wheel over the toolbar or side panel steps the UI zoom.
+
+    Installed on the application so it sees the event before scroll areas and
+    trees inside the side panel consume it.  The canvas keeps its own
+    Ctrl + wheel (drawing zoom).
+    """
+
+    def __init__(self, window):
+        super().__init__(window)
+        self._window = window
+
+    def _zoom_target(self, obj):
+        """True when obj sits inside the toolbar or the layer panel."""
+        if not isinstance(obj, QWidget):
+            return False
+        window = self._window
+        targets = [getattr(window, 'toolbar_container', None), getattr(window, 'layer_panel', None)]
+        canvas = getattr(window, 'canvas', None)
+        w = obj
+        while w is not None:
+            if canvas is not None and w is canvas:
+                return False
+            if any(t is not None and w is t for t in targets):
+                return True
+            w = w.parentWidget()
+        return False
 
     def eventFilter(self, obj, event):
         try:
-            if event.type() == QEvent.Wheel and (event.modifiers() & Qt.ControlModifier):
+            if event.type() == QEvent.Wheel and (event.modifiers() & Qt.ControlModifier) and self._zoom_target(obj):
                 delta = event.angleDelta().y()
                 if delta:
                     ui_zoom.step(+1 if delta > 0 else -1)
@@ -128,9 +153,8 @@ class MainWindow(QMainWindow):
         # Ctrl + wheel over the toolbar and the side panel zooms the UI; over
         # the canvas it keeps zooming the drawing.
         self._zoom_wheel_filter = _UiZoomWheelFilter(self)
-        for target in (getattr(self, 'toolbar_container', None), getattr(self, 'layer_panel', None)):
-            if target is not None:
-                target.installEventFilter(self._zoom_wheel_filter)
+        QApplication.instance().installEventFilter(self._zoom_wheel_filter)
+        self._last_ui_zoom = ui_zoom.state.zoom
         ui_zoom.state.changed.connect(self._on_ui_zoom_changed)
         self._refresh_zoom_chip()
         # Log initial state
@@ -826,7 +850,12 @@ class MainWindow(QMainWindow):
 
     def _on_ui_zoom_changed(self):
         self._refresh_zoom_chip()
-        self._show_zoom_toast()
+        # The toast is for a zoom the user just changed; apply_all() also runs
+        # at startup and after fine-tune edits, which keep the zoom as it was.
+        z = ui_zoom.state.zoom
+        if z != getattr(self, '_last_ui_zoom', z) and self.isVisible():
+            self._show_zoom_toast()
+        self._last_ui_zoom = z
 
     def _refresh_zoom_chip(self):
         chip = getattr(self, 'zoom_chip', None)

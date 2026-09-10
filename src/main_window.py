@@ -4,7 +4,8 @@ from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
     QSplitter, QFileDialog, QScrollArea, QMessageBox
 )
-from PyQt5.QtCore import Qt, QSize, pyqtSlot, pyqtSignal, QTimer, QEvent
+from PyQt5.QtCore import Qt, QSize, pyqtSlot, pyqtSignal, QTimer, QEvent, QObject
+import ui_zoom
 from PyQt5.QtGui import QIcon, QFont, QImage, QPainter, QColor, QKeySequence
 from PyQt5.QtWidgets import QShortcut
 from PyQt5.QtWidgets import QApplication
@@ -34,6 +35,46 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import QPointF
 
 # main_window.py
+
+class _UiZoomWheelFilter(QObject):
+    """Ctrl + wheel over the toolbar or side panel steps the UI zoom.
+
+    Installed on the application so it sees the event before scroll areas and
+    trees inside the side panel consume it.  The canvas keeps its own
+    Ctrl + wheel (drawing zoom).
+    """
+
+    def __init__(self, window):
+        super().__init__(window)
+        self._window = window
+
+    def _zoom_target(self, obj):
+        """True when obj sits inside the toolbar or the layer panel."""
+        if not isinstance(obj, QWidget):
+            return False
+        window = self._window
+        targets = [getattr(window, 'toolbar_container', None), getattr(window, 'layer_panel', None)]
+        canvas = getattr(window, 'canvas', None)
+        w = obj
+        while w is not None:
+            if canvas is not None and w is canvas:
+                return False
+            if any(t is not None and w is t for t in targets):
+                return True
+            w = w.parentWidget()
+        return False
+
+    def eventFilter(self, obj, event):
+        try:
+            if event.type() == QEvent.Wheel and (event.modifiers() & Qt.ControlModifier) and self._zoom_target(obj):
+                delta = event.angleDelta().y()
+                if delta:
+                    ui_zoom.step(+1 if delta > 0 else -1)
+                    return True
+        except Exception:
+            pass
+        return False
+
 
 class MainWindow(QMainWindow):
     language_changed = pyqtSignal()
@@ -100,6 +141,22 @@ class MainWindow(QMainWindow):
             # settings dialog) has taken over.
             self.group_panel_shortcut.setContext(Qt.WindowShortcut)
             self.group_panel_shortcut.activated.connect(self.layer_panel.toggle_group_panel)
+
+        # UI zoom, like a browser: Ctrl + / Ctrl - / Ctrl 0 (Cmd on macOS).
+        self._zoom_shortcuts = []
+        for keys, fn in (("Ctrl++", lambda: ui_zoom.step(+1)), ("Ctrl+=", lambda: ui_zoom.step(+1)),
+                         ("Ctrl+-", lambda: ui_zoom.step(-1)), ("Ctrl+0", self.zoom_fit_screen)):
+            sc = QShortcut(QKeySequence(keys), self)
+            sc.setContext(Qt.WindowShortcut)
+            sc.activated.connect(fn)
+            self._zoom_shortcuts.append(sc)
+        # Ctrl + wheel over the toolbar and the side panel zooms the UI; over
+        # the canvas it keeps zooming the drawing.
+        self._zoom_wheel_filter = _UiZoomWheelFilter(self)
+        QApplication.instance().installEventFilter(self._zoom_wheel_filter)
+        self._last_ui_zoom = ui_zoom.state.zoom
+        ui_zoom.state.changed.connect(self._on_ui_zoom_changed)
+        self._refresh_zoom_chip()
         # Log initial state
         self.layer_state_manager.save_initial_state()
         self.layer_state_manager.log_layer_state()
@@ -399,6 +456,29 @@ class MainWindow(QMainWindow):
         # Settings button (fixed size, no stretch)
         button_layout.addWidget(self.settings_button, 0)
 
+        # Small "125 %" chip beside the gear, shown only when the UI zoom is
+        # not the one suggested for this screen (like a browser's magnifier).
+        self.zoom_chip = QPushButton("")
+        self.zoom_chip.setObjectName("zoomChip")
+        self.zoom_chip.setFixedHeight(22)
+        self.zoom_chip.setCursor(Qt.PointingHandCursor)
+        self.zoom_chip.setToolTip("UI zoom. Click to open Display settings. Ctrl + / Ctrl - / Ctrl 0")
+        self.zoom_chip.setStyleSheet("""
+            QPushButton#zoomChip {
+                background-color: rgba(11, 122, 120, 230);
+                color: white;
+                border: none;
+                border-radius: 11px;
+                padding: 0px 8px;
+                font-size: 11px;
+                font-weight: bold;
+            }
+            QPushButton#zoomChip:hover { background-color: rgba(11, 122, 120, 255); }
+        """)
+        self.zoom_chip.clicked.connect(self.open_display_settings)
+        self.zoom_chip.hide()
+        button_layout.addWidget(self.zoom_chip, 0)
+
         # Set up the splitter and layouts
         self.splitter = QSplitter(Qt.Horizontal)
 
@@ -412,6 +492,8 @@ class MainWindow(QMainWindow):
         button_container.setLayout(button_layout)
         button_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         button_container.setFixedHeight(40)  # Fixed height for button bar
+        button_container.setProperty('zoomArea', 'toolbar')  # UI zoom fine-tune area
+        self.toolbar_container = button_container
 
         left_layout.addWidget(button_container)
         left_layout.addWidget(self.canvas)
@@ -760,6 +842,69 @@ class MainWindow(QMainWindow):
             self.canvas.mask_edit_exited.connect(self.layer_panel.exit_mask_edit_mode)
         else:
             pass
+
+    # ------------------------------------------------------------ UI zoom
+    def zoom_fit_screen(self):
+        """Ctrl 0: back to the zoom suggested for this screen (not to 100 %)."""
+        ui_zoom.set_zoom(ui_zoom.state.suggested)
+
+    def _on_ui_zoom_changed(self):
+        self._refresh_zoom_chip()
+        # The toast is for a zoom the user just changed; apply_all() also runs
+        # at startup and after fine-tune edits, which keep the zoom as it was.
+        z = ui_zoom.state.zoom
+        if z != getattr(self, '_last_ui_zoom', z) and self.isVisible():
+            self._show_zoom_toast()
+        self._last_ui_zoom = z
+
+    def _refresh_zoom_chip(self):
+        chip = getattr(self, 'zoom_chip', None)
+        if chip is None:
+            return
+        z = ui_zoom.state.zoom
+        if z == ui_zoom.state.suggested:
+            chip.hide()
+        else:
+            chip.setText(f"{z} %")
+            chip.show()
+
+    def _show_zoom_toast(self):
+        """A one-second "Zoom 125 %" label, like a browser."""
+        toast = getattr(self, '_zoom_toast', None)
+        if toast is None:
+            toast = QLabel(self)
+            toast.setObjectName("zoomToast")
+            toast.setAlignment(Qt.AlignCenter)
+            toast.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+            toast.setStyleSheet("""
+                QLabel#zoomToast {
+                    background-color: rgba(30, 30, 30, 215);
+                    color: white;
+                    border-radius: 8px;
+                    padding: 8px 18px;
+                    font-size: 15px;
+                    font-weight: bold;
+                }
+            """)
+            self._zoom_toast = toast
+            self._zoom_toast_timer = QTimer(self)
+            self._zoom_toast_timer.setSingleShot(True)
+            self._zoom_toast_timer.timeout.connect(toast.hide)
+        toast.setText(f"Zoom {ui_zoom.state.zoom} %")
+        toast.adjustSize()
+        x = (self.width() - toast.width()) // 2
+        y = ui_zoom.S(60)
+        toast.move(x, y)
+        toast.show()
+        toast.raise_()
+        self._zoom_toast_timer.start(1000)
+
+    def open_display_settings(self):
+        """Open the settings dialog on the Display page."""
+        self.open_settings_dialog()
+        dialog = getattr(self, '_settings_dialog', None)
+        if dialog is not None and hasattr(dialog, 'show_display_page'):
+            dialog.show_display_page()
 
     def open_settings_dialog(self):
         """Open the settings dialog if it's not already open."""

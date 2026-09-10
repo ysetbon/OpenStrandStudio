@@ -266,12 +266,35 @@ if __name__ == '__main__':
     
     app = QApplication(sys.argv)
 
+    # UI zoom: wrap the Qt size setters before any widget exists, read the
+    # saved zoom, look at the screen and pick the zoom to start with.
+    import ui_zoom
+    import display_settings
+    ui_zoom.install(app)
+    ui_zoom.state.settings_path = os.path.join(get_settings_directory(), 'user_settings.txt')
+    _zoom_keys = ui_zoom.read_settings(ui_zoom.state.settings_path)
+    _screen_info = display_settings.detect()
+    ui_zoom.state.screen_info = _screen_info
+    display_settings.choose_startup_zoom(_zoom_keys, _screen_info)
+    if os.environ.get('OPENSTRAND_UI_ZOOM'):
+        try:
+            ui_zoom.state.zoom = ui_zoom.clamp_zoom(float(os.environ['OPENSTRAND_UI_ZOOM']))
+            # A one-off override for headless runs: never write it to the
+            # user's settings file.
+            ui_zoom.state.persist = False
+        except ValueError:
+            pass
+    ui_zoom.apply_all()
+
     # Load user settings
     theme, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point, enable_curvature_bias_control, arrow_head_length, arrow_head_width, arrow_gap_length, arrow_line_length, arrow_line_width, use_default_arrow_color, default_arrow_fill_color, default_strand_color, default_stroke_color, control_point_base_fraction, distance_multiplier, curve_response_exponent = load_user_settings()
     # logging.info(f"Loaded settings - Theme: {theme}, Language: {language_code}, Shadow Color RGBA: {shadow_color.red()},{shadow_color.green()},{shadow_color.blue()},{shadow_color.alpha()}, Draw Only Affected Strand: {draw_only_affected_strand}, Enable Third Control Point: {enable_third_control_point}, Use Extended Mask: {use_extended_mask}, ArrowHeadLength: {arrow_head_length}, ArrowHeadWidth: {arrow_head_width}, ArrowGapLength: {arrow_gap_length}, ArrowLineLength: {arrow_line_length}, ArrowLineWidth: {arrow_line_width}")
 
     # Initialize the main window with settings
     window = MainWindow()
+    # Widgets were styled before they were parented; now that the tree is
+    # complete, apply the per-area fine-tune multipliers.
+    ui_zoom.apply_all()
     
     # Set the shadow color immediately on the canvas
     if hasattr(window, 'canvas') and window.canvas:

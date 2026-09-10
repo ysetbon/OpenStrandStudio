@@ -9,6 +9,7 @@ from attached_strand import AttachedStrand
 import os  # Add os for icon path resolution
 import sys  # Add sys for platform detection
 import math  # Add math for angle calculations
+import ui_zoom
 
 # Cache for the lock-mode padlock icons (loaded once per state)
 _lock_icon_pixmaps = {}
@@ -596,9 +597,11 @@ class NumberedLayerButton(QPushButton):
         """Calculate optimal menu width based on text content"""
         from PyQt5.QtGui import QFontMetrics, QFont
         
-        # Create font to measure text
+        # Create font to measure text.  Measured unzoomed on purpose: the
+        # result goes into a stylesheet, which the UI zoom scales itself.
         font = QFont()
-        font.setPointSize(8)  # Match menu font size
+        with ui_zoom.raw():
+            font.setPointSize(8)  # Match menu font size
         metrics = QFontMetrics(font)
         
         max_width = 150  # Minimum width
@@ -1727,10 +1730,10 @@ class NumberedLayerButton(QPushButton):
         Rect of the small padlock toggle shown in lock mode: vertically centered
         on the side opposite the green attachable strip (left for LTR, right for RTL).
         """
-        diameter = 26
+        diameter = ui_zoom.S(26, 'layers')
         # Keep the toggle near the edge (so long masked names like "1_1_2_3"
         # don't crowd it) but clear of the 2px blue/yellow selection borders
-        margin = 6
+        margin = ui_zoom.S(6, 'layers')
         y = (self.height() - diameter) // 2
         if self._is_rtl():
             return QRect(self.width() - margin - diameter, y, diameter, diameter)
@@ -1769,14 +1772,14 @@ class NumberedLayerButton(QPushButton):
         the copy badge and the paste stack always share the same edges.
         """
         if self._is_rtl():
-            return _INDICATOR_EDGE_OFFSET
-        return self.width() - _INDICATOR_EDGE_OFFSET - _INDICATOR_COL_WIDTH
+            return ui_zoom.S(_INDICATOR_EDGE_OFFSET, 'layers')
+        return self.width() - ui_zoom.S(_INDICATOR_EDGE_OFFSET, 'layers') - ui_zoom.S(_INDICATOR_COL_WIDTH, 'layers')
 
     def copy_badge_rect(self):
         """Sharp 26x26 copy button, vertically centered on the indicator column."""
-        y = (self.height() - _INDICATOR_COL_WIDTH) // 2
+        y = (self.height() - ui_zoom.S(_INDICATOR_COL_WIDTH, 'layers')) // 2
         return QRect(self.indicator_column_x(), y,
-                     _INDICATOR_COL_WIDTH, _INDICATOR_COL_WIDTH)
+                     ui_zoom.S(_INDICATOR_COL_WIDTH, 'layers'), ui_zoom.S(_INDICATOR_COL_WIDTH, 'layers'))
 
     def paste_chip_rects(self):
         """(start_cell, end_cell) of the segmented ▲/● paste rectangle.
@@ -1785,12 +1788,12 @@ class NumberedLayerButton(QPushButton):
         ▲ start cell (top) and a ● end cell (bottom). Cell height scales with
         the button so the stack fits at every size.
         """
-        cell = min(_INDICATOR_COL_WIDTH, (self.height() - 8) // 2)
+        cell = min(ui_zoom.S(_INDICATOR_COL_WIDTH, 'layers'), (self.height() - ui_zoom.S(8, 'layers')) // 2)
         top = self.height() // 2 - cell
         x = self.indicator_column_x()
         return (
-            QRect(x, top, _INDICATOR_COL_WIDTH, cell),
-            QRect(x, top + cell, _INDICATOR_COL_WIDTH, cell),
+            QRect(x, top, ui_zoom.S(_INDICATOR_COL_WIDTH, 'layers'), cell),
+            QRect(x, top + cell, ui_zoom.S(_INDICATOR_COL_WIDTH, 'layers'), cell),
         )
 
     def strand_indicator_tooltip_at(self, pos):
@@ -2000,14 +2003,16 @@ class NumberedLayerButton(QPushButton):
                 black_color = QColor(Qt.black)
 
                 # Green strip on the right for LTR, mirrored to the left for RTL
+                sw = ui_zoom.S(9, 'layers')      # strip width, zoomed
+                b = ui_zoom.S(1, 'layers')       # border inset
                 if is_rtl:
-                    outer_rect = QRect(0, 0, 9, rect.height())
-                    inner_rect = QRect(1, 1, 7, rect.height() - 2)
+                    outer_rect = QRect(0, 0, sw, rect.height())
+                    inner_rect = QRect(b, b, sw - 2 * b, rect.height() - 2 * b)
                 else:
-                    outer_rect = QRect(rect.width() - 9, 0, 9, rect.height())
-                    inner_rect = QRect(rect.width() - 8, 1, 7, rect.height() - 2)
+                    outer_rect = QRect(rect.width() - sw, 0, sw, rect.height())
+                    inner_rect = QRect(rect.width() - sw + b, b, sw - 2 * b, rect.height() - 2 * b)
 
-                painter.setPen(QPen(black_color, 2))
+                painter.setPen(QPen(black_color, ui_zoom.S(2, 'layers')))
                 painter.setBrush(Qt.NoBrush)
                 painter.drawRect(outer_rect)
 

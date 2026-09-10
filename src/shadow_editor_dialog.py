@@ -4,7 +4,6 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
                              QProxyStyle, QStyle)
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QRect
 from PyQt5.QtGui import QColor, QPalette, QPainter, QPen, QPainterPath
-import ui_zoom
 from translations import translations
 
 
@@ -204,8 +203,7 @@ class ShadowListItem(QWidget):
 
     def set_subtract_column_width(self, width):
         """Keep the subtract column aligned with the rest of the dialog."""
-        with ui_zoom.raw():   # width is measured from zoomed widgets
-            self.subtract_container.setFixedWidth(width)
+        self.subtract_container.setFixedWidth(width)
         self.updateGeometry()
 
     def _apply_large_indicator(self, checkbox, indicator_size=20):
@@ -213,9 +211,8 @@ class ShadowListItem(QWidget):
         base_style = checkbox.style()
         if isinstance(base_style, LargeIndicatorStyle):
             base_style = base_style.baseStyle()
-        checkbox.setStyle(LargeIndicatorStyle(base_style, ui_zoom.S(indicator_size, 'dialogs')))
-        with ui_zoom.raw():
-            checkbox.setMinimumHeight(max(checkbox.minimumHeight(), ui_zoom.S(indicator_size + 6, 'dialogs')))
+        checkbox.setStyle(LargeIndicatorStyle(base_style, indicator_size))
+        checkbox.setMinimumHeight(max(checkbox.minimumHeight(), indicator_size + 6))
 
     def _setup_custom_checkmark(self, checkbox):
         """Setup custom checkmark for the checkbox using Qt's native indicator"""
@@ -281,8 +278,7 @@ class ShadowListItem(QWidget):
 
     def _set_checkbox_min_width(self, checkbox):
         """Ensure checkbox text is fully visible while preventing it from stretching."""
-        with ui_zoom.raw():
-            checkbox.setMinimumWidth(checkbox.sizeHint().width())
+        checkbox.setMinimumWidth(checkbox.sizeHint().width())
         checkbox.updateGeometry()
 
     def _style_shadow_checkbox(self, checkbox, is_dark_mode, is_enabled=None):
@@ -391,8 +387,7 @@ class ShadowListItem(QWidget):
         else:
             # Set maximum height to minimum when collapsing
             collapsed_height = max(self.sizeHint().height(), self.minimumHeight())
-            with ui_zoom.raw():
-                self.setMaximumHeight(collapsed_height)
+            self.setMaximumHeight(collapsed_height)
 
         # Update geometry and emit signal to resize list item
         self.subtract_content.adjustSize()
@@ -919,23 +914,22 @@ class ShadowEditorDialog(QDialog):
         sub_w = max(sub_w, self.section_toggles['subtract'].sizeHint().width())
         show_w = max(show_w, self.section_toggles['shadow'].sizeHint().width())
 
-        name_w += ui_zoom.S(12, 'dialogs')
-        sub_w += ui_zoom.S(6, 'dialogs')
+        name_w += 12
+        sub_w += 6
 
-        with ui_zoom.raw():   # all measured from zoomed widgets
-            for item in self.shadow_items:
-                item.name_label.setFixedWidth(name_w)
-                item.set_subtract_column_width(sub_w)
-                self._on_item_size_changed(item)
+        for item in self.shadow_items:
+            item.name_label.setFixedWidth(name_w)
+            item.set_subtract_column_width(sub_w)
+            self._on_item_size_changed(item)
 
-            if row_widget:
-                name_label = row_widget.findChild(QLabel, 'toggle_name_label')
-                if name_label:
-                    name_label.setFixedWidth(name_w)
-            self.section_toggles['visible'].setFixedWidth(vis_w)
-            self.section_toggles['full'].setFixedWidth(full_w)
-            self.section_toggles['subtract'].setFixedWidth(sub_w)
-            self.section_toggles['shadow'].setFixedWidth(show_w)
+        if row_widget:
+            name_label = row_widget.findChild(QLabel, 'toggle_name_label')
+            if name_label:
+                name_label.setFixedWidth(name_w)
+        self.section_toggles['visible'].setFixedWidth(vis_w)
+        self.section_toggles['full'].setFixedWidth(full_w)
+        self.section_toggles['subtract'].setFixedWidth(sub_w)
+        self.section_toggles['shadow'].setFixedWidth(show_w)
 
     def _toggle_all_visible(self, checked):
         for item in self.shadow_items:
@@ -1092,8 +1086,8 @@ class ShadowEditorDialog(QDialog):
         list_item = QListWidgetItem(self.shadows_list_widget)
         # Ensure proper size for the item
         size_hint = item_widget.sizeHint()
-        if size_hint.height() < ui_zoom.S(50, 'dialogs'):
-            size_hint.setHeight(ui_zoom.S(50, 'dialogs'))
+        if size_hint.height() < 50:
+            size_hint.setHeight(50)
         list_item.setSizeHint(size_hint)
         self.shadows_list_widget.addItem(list_item)
         self.shadows_list_widget.setItemWidget(list_item, item_widget)
@@ -1114,8 +1108,8 @@ class ShadowEditorDialog(QDialog):
         label.setStyleSheet(f"color: {color}; font-weight: {weight}; font-style: {style}; "
                             "background-color: transparent; padding: 4px;")
         size_hint = label.sizeHint()
-        if size_hint.height() < ui_zoom.S(30, 'dialogs'):
-            size_hint.setHeight(ui_zoom.S(30, 'dialogs'))
+        if size_hint.height() < 30:
+            size_hint.setHeight(30)
         list_item.setSizeHint(size_hint)
         self.shadows_list_widget.setItemWidget(list_item, label)
         self.static_labels[key] = label
@@ -1128,8 +1122,8 @@ class ShadowEditorDialog(QDialog):
             widget.updateGeometry()
             # Update the list item's size hint to match the widget's new size
             new_size_hint = widget.sizeHint()
-            if new_size_hint.height() < ui_zoom.S(50, 'dialogs'):
-                new_size_hint.setHeight(ui_zoom.S(50, 'dialogs'))
+            if new_size_hint.height() < 50:
+                new_size_hint.setHeight(50)
             list_item.setSizeHint(new_size_hint)
             # Force the list widget to update its layout immediately
             self.shadows_list_widget.scheduleDelayedItemsLayout()

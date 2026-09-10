@@ -2,7 +2,6 @@ import math
 import time
 from datetime import datetime
 from PyQt5.QtCore import QPointF, QRectF, QTimer, Qt, QTime, QEventLoop
-import ui_zoom
 from PyQt5.QtGui import QCursor, QPen, QColor, QPainterPathStroker, QTransform, QBrush, QPolygonF, QPainterPath, QPixmap, QImage
 from PyQt5.QtWidgets import QApplication, QWidget
 import PyQt5.QtGui as QtGui
@@ -996,14 +995,14 @@ class MoveMode:
         
         # Draw the appropriate yellow rectangle based on moving_side
         # Visual elements need to scale with zoom to appear consistent
-        base_yellow_square_size = int(round(120 * ui_zoom.canvas_factor()))
+        base_yellow_square_size = 120
         yellow_square_size = base_yellow_square_size 
         half_yellow_size = yellow_square_size / 2
-        base_square_control_size = int(round(50 * ui_zoom.canvas_factor()))
+        base_square_control_size = 50
         square_control_size = base_square_control_size 
         half_control_size = square_control_size / 2
         # Smaller rectangle for bias controls
-        bias_square_size = int(round(50 * ui_zoom.canvas_factor()))  # Same size as regular control points
+        bias_square_size = 50  # Same size as regular control points
         half_bias_size = bias_square_size / 2
         
         # Only draw the currently moving point's selection square
@@ -2001,7 +2000,7 @@ class MoveMode:
                 else:
                     side_name = 'bias_control'
                 # Build a selection rectangle for the specific bias control so yellow highlight draws
-                bias_square_size = int(round(50 * ui_zoom.canvas_factor()))
+                bias_square_size = 50
                 half_bias = bias_square_size / 2
                 rect = None
                 try:
@@ -2146,7 +2145,7 @@ class MoveMode:
     def get_control_point_rectangle(self, strand, control_point_number):
         """Get the rectangle around the specified control point for hit detection."""
         # Use fixed size in canvas coordinates - canvas handles zoom transformation
-        size = int(round(50 * ui_zoom.canvas_factor()))  # Size for control point selection
+        size = 50  # Size for control point selection
         if control_point_number == 1:
             center = strand.control_point1
         elif control_point_number == 2:
@@ -2173,7 +2172,7 @@ class MoveMode:
             QPainterPath: The selection area path.
         """
         # Define the outer rectangle (120x120 square)
-        outer_size = int(round(120 * ui_zoom.canvas_factor()))
+        outer_size = 120
         half_outer_size = outer_size / 2
         outer_rect = QRectF(
             strand.start.x() - half_outer_size,
@@ -2199,7 +2198,7 @@ class MoveMode:
             QPainterPath: The selection area path.
         """
         # Define the outer rectangle (120x120 square)
-        outer_size = int(round(120 * ui_zoom.canvas_factor()))
+        outer_size = 120
         half_outer_size = outer_size / 2
         outer_rect = QRectF(
             strand.end.x() - half_outer_size,
@@ -2896,7 +2895,7 @@ class MoveMode:
                     self.affected_strand.update_shape()
                     # Keep the yellow selection rectangle in sync with the moving bias control
                     try:
-                        bias_square_size = int(round(50 * ui_zoom.canvas_factor()))
+                        bias_square_size = 50
                         half_bias = bias_square_size / 2
                         tp, cp = self.affected_strand.bias_control.get_bias_control_positions(self.affected_strand)
                         if self.moving_side == 'bias_triangle' and tp:
@@ -2913,7 +2912,7 @@ class MoveMode:
                 self.move_masked_strand(new_pos, self.moving_side)
                 # Update the selection area  
                 if self.moving_side == 0:
-                    base_size = int(round(90 * ui_zoom.canvas_factor()))
+                    base_size = 90
                     # For visual consistency, scale the selection rectangle with zoom
                     visual_size = base_size / self.canvas.zoom_factor
                     self.selected_rectangle = QRectF(
@@ -2923,7 +2922,7 @@ class MoveMode:
                         visual_size
                     )
                 else:
-                    base_size = int(round(90 * ui_zoom.canvas_factor()))
+                    base_size = 90
                     # For visual consistency, scale the selection rectangle with zoom
                     visual_size = base_size / self.canvas.zoom_factor
                     self.selected_rectangle = QRectF(
@@ -3089,7 +3088,7 @@ class MoveMode:
             update_rect = self.selected_rectangle.adjusted(-padding, -padding, padding, padding)
         elif not update_rect:
             # Fallback to a default size around the new position
-            base_radius = int(round(250 * ui_zoom.canvas_factor()))
+            base_radius = 250
             # Scale radius for visual consistency
             radius = base_radius / self.canvas.zoom_factor
             size = radius * 2
@@ -3768,7 +3767,7 @@ class MoveMode:
                     # Calculate the proper radius for the highlight
                     # The highlighted strand outline uses: QPen(QColor('red'), self.stroke_width + 8)
                     # This pen is drawn around the stroke path, so the outer edge is at:
-                    highlight_pen_thickness = int(round(10 * ui_zoom.canvas_factor()))  # Fixed thickness instead of strand.stroke_width + 8
+                    highlight_pen_thickness = 10  # Fixed thickness instead of strand.stroke_width + 8
                     stroke_path_radius = (strand.width + strand.stroke_width * 2) / 2
                     outer_radius = stroke_path_radius + highlight_pen_thickness / 2
                     inner_radius = strand.width / 2 + 6

@@ -46,7 +46,6 @@ from undo_redo_manager import StrokeTextButton, setup_undo_redo
 from strand_data_menu import StrandDataClipboardMixin
 import os # Import os for path manipulation
 import sys # Import sys for platform check
-import ui_zoom
 
 
 
@@ -444,7 +443,6 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # **Add the refresh button below the splitter handle**
         # Create top panel for the refresh button
         self.top_panel = QWidget()
-        self.top_panel.setProperty('zoomArea', 'icons')  # UI zoom fine-tune area
         top_layout = QHBoxLayout(self.top_panel)
         top_layout.setContentsMargins(5, 5, 5, 5)
         top_layout.setAlignment(Qt.AlignHCenter)
@@ -511,7 +509,6 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         
         # Create a second row for zoom buttons
         self.zoom_panel = QWidget()
-        self.zoom_panel.setProperty('zoomArea', 'icons')  # UI zoom fine-tune area
         zoom_layout = QHBoxLayout(self.zoom_panel)
         zoom_layout.setContentsMargins(5, 0, 5, 5)  # No top margin since it's below the first row
         zoom_layout.setAlignment(Qt.AlignHCenter)
@@ -648,7 +645,6 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
         # Create a third row for refresh button (moved from 1st row)
         self.refresh_panel = QWidget()
-        self.refresh_panel.setProperty('zoomArea', 'icons')  # UI zoom fine-tune area
         refresh_layout = QHBoxLayout(self.refresh_panel)
         refresh_layout.setContentsMargins(5, 0, 5, 5)  # No top margin since it's below the second row
         refresh_layout.setAlignment(Qt.AlignHCenter)
@@ -812,7 +808,6 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
         # Create bottom panel for control buttons
         bottom_panel = QWidget()
-        bottom_panel.setProperty('zoomArea', 'actions')  # UI zoom fine-tune area
         bottom_layout = QVBoxLayout(bottom_panel)
         bottom_layout.setContentsMargins(0, 2, 0, 5)
         # Ensure consistent gap between control buttons across platforms
@@ -1009,7 +1004,6 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
         # Create right panel (group panel)
         self.right_panel = QWidget()
-        self.right_panel.setProperty('zoomArea', 'groups')  # UI zoom fine-tune area
         self.right_panel.setLayoutDirection(Qt.RightToLeft if self.language_code == 'he' else Qt.LeftToRight)
         self.right_layout = QVBoxLayout(self.right_panel)
         self.right_layout.setContentsMargins(0, 0, 0, 0)
@@ -1451,11 +1445,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         """Calculate optimal menu width based on text content"""
         from PyQt5.QtGui import QFontMetrics, QFont
         
-        # Create font to measure text.  Measured unzoomed on purpose: the
-        # result goes into a stylesheet, which the UI zoom scales itself.
+        # Create font to measure text
         font = QFont()
-        with ui_zoom.raw():
-            font.setPointSize(8)  # Match menu font size
+        font.setPointSize(8)  # Match menu font size
         metrics = QFontMetrics(font)
         
         max_width = 150  # Minimum width
@@ -1838,17 +1830,17 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             # The rail is narrower than any compact trim would make the
             # column, so the list column simply takes the rest of the panel.
             self.scroll_area.setMinimumWidth(0)
-            right_w = ui_zoom.S(self.GROUP_PANEL_RAIL_WIDTH, 'groups')
+            right_w = self.GROUP_PANEL_RAIL_WIDTH
             if self._group_width_animation is None:
-                with ui_zoom.raw():
-                    self.right_panel.setFixedWidth(right_w)
+                self.right_panel.setFixedWidth(right_w)
                 self._apply_inner_split(right_w)
             return
 
         create_group = self.group_layer_manager.create_group_button
-        # GroupPanel gives the button a fixed width (140), zoomed; recompute it
-        # every time so a zoom change is picked up.
-        self._create_group_full_width = ui_zoom.S(140, 'groups')
+        if not hasattr(self, '_create_group_full_width'):
+            # GroupPanel gives the button a fixed width (140); remember it so
+            # the compact override below can be undone.
+            self._create_group_full_width = create_group.minimumWidth()
         # Compact screens leave the layer-list column exactly as wide as the
         # fixed-width layer buttons, so a vertical scrollbar (many layers)
         # would be painted under the group panel and the buttons' edge would
@@ -1862,16 +1854,15 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 vbar.sizeHint().width(),
                 self.style().pixelMetric(QStyle.PM_ScrollBarExtent, None, vbar),
             )
-            list_w = ui_zoom.S(self.LAYER_LIST_BUTTON_WIDTH, 'layers') + extent + ui_zoom.S(2)
+            list_w = self.LAYER_LIST_BUTTON_WIDTH + extent + 2
             right_w = max(0, self.minimumWidth() - list_w - self.splitter.handleWidth())
-            with ui_zoom.raw():   # everything here is measured, already zoomed
-                self.scroll_area.setMinimumWidth(list_w)
-                self.right_panel.setFixedWidth(right_w)
-                # The button spans the whole column, so its far edge stays flush
-                # with the panel's — and the window's — outer edge here too.
-                create_group.setFixedWidth(
-                    min(self._create_group_full_width, max(ui_zoom.S(50, 'groups'), right_w))
-                )
+            self.scroll_area.setMinimumWidth(list_w)
+            self.right_panel.setFixedWidth(right_w)
+            # The button spans the whole column, so its far edge stays flush
+            # with the panel's — and the window's — outer edge here too.
+            create_group.setFixedWidth(
+                min(self._create_group_full_width, max(50, right_w))
+            )
             self.splitter.setSizes([list_w, right_w])
         else:
             # Full size: the group panel is exactly the button again, and the
@@ -1879,10 +1870,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             # compact mode hands the list column the rest of the panel rather
             # than keeping the compact allocation.
             self.scroll_area.setMinimumWidth(0)
-            right_w = ui_zoom.S(self.GROUP_PANEL_FULL_WIDTH, 'groups')
-            with ui_zoom.raw():
-                self.right_panel.setFixedWidth(right_w)
-                create_group.setFixedWidth(self._create_group_full_width)
+            right_w = self.GROUP_PANEL_FULL_WIDTH
+            self.right_panel.setFixedWidth(right_w)
+            create_group.setFixedWidth(self._create_group_full_width)
             self.splitter.setSizes([
                 max(0, self.width() - right_w - self.splitter.handleWidth()),
                 right_w,

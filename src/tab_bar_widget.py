@@ -9,7 +9,6 @@ colors come from the active theme table below.
 from PyQt5.QtCore import Qt, QEvent, QRectF, QSize, pyqtSignal
 from PyQt5.QtGui import QPainter, QColor, QPen, QBrush, QPainterPath, QFont
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QSizePolicy
-import ui_zoom
 
 from translations import translations
 
@@ -169,7 +168,7 @@ class DirtyDot(QWidget):
         p.setRenderHint(QPainter.Antialiasing, True)
         p.setPen(Qt.NoPen)
         p.setBrush(self._color)
-        p.drawEllipse(ui_zoom.S(1, 'tabs'), ui_zoom.S(1, 'tabs'), ui_zoom.S(6, 'tabs'), ui_zoom.S(6, 'tabs'))
+        p.drawEllipse(1, 1, 6, 6)
         p.end()
 
 
@@ -482,17 +481,15 @@ class DraggableTabEdge(QWidget):
         self._layout.activate()
         base_w = self._layout.sizeHint().width()
 
-        with ui_zoom.raw():   # size hints are already zoomed
-            for chip in chips:
-                chip.setMinimumWidth(round(chip.sizeHint().width() * TAB_WIDTH_SCALE))
+        for chip in chips:
+            chip.setMinimumWidth(round(chip.sizeHint().width() * TAB_WIDTH_SCALE))
 
         self._layout.invalidate()
         self._layout.activate()
         w = max(round(base_w * TAB_WIDTH_SCALE), self._layout.sizeHint().width())
-        max_w = max(ui_zoom.S(120, 'tabs'), self.canvas.width() - ui_zoom.S(20, 'tabs'))
+        max_w = max(120, self.canvas.width() - 20)
         w = min(w, max_w)
-        with ui_zoom.raw():
-            self.resize(w, ui_zoom.S(TAB_EDGE_HEIGHT, 'tabs'))
+        self.resize(w, TAB_EDGE_HEIGHT)
         self._layout.setGeometry(self.rect())
         for chip in chips:
             chip.layout().setGeometry(chip.rect())
@@ -514,7 +511,7 @@ class DraggableTabEdge(QWidget):
         ch = self.canvas.height()
         w = self.width()
         h = self.height()
-        m = ui_zoom.S(ANCHOR_MARGIN, 'tabs')
+        m = ANCHOR_MARGIN
         left_x = m
         center_x = (cw - w) // 2
         right_x = cw - w - m
@@ -549,7 +546,7 @@ class DraggableTabEdge(QWidget):
             y = int(cy * ch - h / 2.0)
         else:
             x = (cw - w) // 2
-            y = ch - h - ui_zoom.S(ANCHOR_MARGIN, 'tabs')
+            y = ch - h - ANCHOR_MARGIN
         x = max(0, min(x, max(0, cw - w)))
         y = max(0, min(y, max(0, ch - h)))
         self.move(x, y)
@@ -600,8 +597,8 @@ class DraggableTabEdge(QWidget):
     def _over_grip(self, pos):
         """Whether a point falls on the grip strip (left for LTR, right for RTL)."""
         if self._rtl:
-            return pos.x() >= self.width() - ui_zoom.S(self.GRIP_WIDTH, 'tabs')
-        return pos.x() <= ui_zoom.S(self.GRIP_WIDTH, 'tabs')
+            return pos.x() >= self.width() - self.GRIP_WIDTH
+        return pos.x() <= self.GRIP_WIDTH
 
     def _update_hover_cursor(self, pos):
         # Open-hand over the grip signals the edge can be moved; plain arrow on
@@ -646,7 +643,7 @@ class DraggableTabEdge(QWidget):
                 d = ((fx - ax) ** 2 + (fy - ay) ** 2) ** 0.5
                 if best_d is None or d < best_d:
                     best, best_d = name, d
-            if best is not None and best_d <= ui_zoom.S(SNAP_THRESHOLD, 'tabs'):
+            if best is not None and best_d <= SNAP_THRESHOLD:
                 ax, ay = anchors[best]
                 self.move(ax, ay)
                 self._snap_target = best

@@ -490,7 +490,7 @@ class MainWindow(QMainWindow):
                 border: 0px solid black;
                 border-radius: 6px;
                 height: 35px;
-                padding: 0px 4px;
+                padding: 0px 5px;
             }}
             QPushButton:hover {{
                 background-color: {hover_color};
@@ -499,15 +499,16 @@ class MainWindow(QMainWindow):
                 background-color: {pressed_color};
                 margin: 1px 1px;
             }}
+            /* Same box in every state; see setup_button_styles. */
             QPushButton:checked {{
                 background-color: {hover_color};
                 border: 4px solid black;
                 border-radius: 6px;
-                padding: 0px 4px;
+                padding: 0px 1px;
             }}
             QPushButton:checked:pressed {{
                 background-color: {pressed_color};
-                padding: 0px 4px;
+                padding: 0px 1px;
                 margin: 2px 2px;
                 border: 4px solid #2C2C2C;
             }}
@@ -1403,7 +1404,7 @@ class MainWindow(QMainWindow):
                 border: 0px solid black;
                 border-radius: 6px;
                 height: 35px;
-                padding: 0px 4px;
+                padding: 0px 5px;
             }}
             QPushButton:hover {{
                 background-color: {hover_color};
@@ -1412,15 +1413,21 @@ class MainWindow(QMainWindow):
                 background-color: {pressed_color};
                 margin: 1px 1px;
             }}
+            /* The checked border is drawn INSIDE the button, and the layout sizes
+               the button for the unchecked rule (sizeHint ignores :checked).
+               Keep border + padding equal to the unchecked padding so the text
+               area is the same in every state; otherwise the longest labels
+               ("Shadow") get clipped whenever the button sits at its natural
+               width instead of its 90px maximum. */
             QPushButton:checked {{
                 background-color: {checked_color};
                 border: 4px solid black;
                 border-radius: 6px;
-                padding: 0px 4px;
+                padding: 0px 1px;
             }}
             QPushButton:checked:pressed {{
                 background-color: {pressed_color};
-                padding: 0px 4px;
+                padding: 0px 1px;
                 margin: 2px 2px;
                 border: 4px solid #2C2C2C;
             }}

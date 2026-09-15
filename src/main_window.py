@@ -442,12 +442,16 @@ class MainWindow(QMainWindow):
         # Set minimum widths and enforce them using size policies
         self.left_widget.setMinimumWidth(300)
         self.left_widget.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-        self.layer_panel.setMinimumWidth(350)
+        self.layer_panel.setMinimumWidth(self.layer_panel_full_min_width())
         self.layer_panel.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         # Set splitter stretch factors properly - left widget (index 0) gets more stretch, right panel (index 1) is fixed
         self.splitter.setStretchFactor(0, 1)  # Left widget can stretch
         self.splitter.setStretchFactor(1, 0)  # Right panel (layer panel) doesn't stretch
+        # Dragging the handle past a child's minimum must stop there, not
+        # collapse the child to nothing: the layer panel's floor is exactly
+        # what its layer buttons need (see layer_panel_full_min_width).
+        self.splitter.setChildrenCollapsible(False)
 
 
         # After creating the buttons, set their size policy
@@ -545,14 +549,15 @@ class MainWindow(QMainWindow):
             self.tab_edge.show_edge()
             self.tabs_button.setChecked(True)
 
-    # Layer panel sizing: full minimum width, and the compact reduction used
-    # on narrow screens (e.g. 1280-wide MacBook resolutions) so the toolbar
-    # buttons keep enough room. The reduction is split evenly between the
-    # group panel and the layer list (see LayerPanel.set_compact_reduction).
-    # 56 (28 per side) keeps the layer-list viewport at least 146px wide —
-    # the fixed width of NumberedLayerButton — so no horizontal overflow.
-    LAYER_PANEL_FULL_MIN_WIDTH = 350
-    COMPACT_LAYER_PANEL_REDUCTION = 56
+    # Layer panel sizing. The panel's minimum (and default) width is measured
+    # from its contents, see layer_panel_full_min_width(): the fixed-width
+    # layer buttons (1_1, 1_2, ...) plus a scrollbar gutter, the inner
+    # splitter handle and the 140px group column. Nothing wider, so the user
+    # can drag the outer splitter until the panel is exactly as wide as the
+    # layer buttons need and no empty space is kept beside them. Narrow
+    # screens (e.g. 1280-wide MacBook resolutions) trim the group panel a
+    # little further so the toolbar buttons keep enough room (see
+    # LayerPanel.set_compact_reduction).
     COMPACT_WINDOW_WIDTH = 1350
     # Gap between toolbar buttons. With 16 buttons there are 15 gaps, so each
     # pixel here costs 15px of label room. The spacing is chosen from the
@@ -567,6 +572,12 @@ class MainWindow(QMainWindow):
     # "Create Group" button, whose longest translations need ~117px. The few
     # px of headroom matter on macOS, where the same string measures wider.
     COMPACT_LAYER_PANEL_FLOOR = 286
+
+    def layer_panel_full_min_width(self):
+        """Narrowest the layer panel can be with the group column expanded,
+        measured from the layer panel's widgets (see
+        LayerPanel.full_minimum_width)."""
+        return self.layer_panel.full_minimum_width()
 
     def _apply_layer_panel_compact_width(self, force=False, keep_split=False):
         """Slim the layer panel on narrow windows, restore it on wide ones.
@@ -586,8 +597,9 @@ class MainWindow(QMainWindow):
         hands the canvas exactly the width the column gave up and an expand
         takes exactly that back."""
         compact = self.width() < self.COMPACT_WINDOW_WIDTH
+        full_min = self.layer_panel_full_min_width()
         reduction = (
-            self.LAYER_PANEL_FULL_MIN_WIDTH - self.COMPACT_LAYER_PANEL_FLOOR
+            max(0, full_min - self.COMPACT_LAYER_PANEL_FLOOR)
             if compact
             else 0
         )
@@ -602,7 +614,7 @@ class MainWindow(QMainWindow):
         self._active_compact_key = key
         self._active_compact_reduction = reduction
         old_min = self.layer_panel.minimumWidth()
-        new_min = self.LAYER_PANEL_FULL_MIN_WIDTH - reduction - group_reduction
+        new_min = full_min - reduction - group_reduction
         self.layer_panel.setMinimumWidth(new_min)
         if hasattr(self.layer_panel, 'set_compact_reduction'):
             self.layer_panel.set_compact_reduction(reduction)
@@ -658,7 +670,8 @@ class MainWindow(QMainWindow):
         The layer panel is set to its minimum width, and the left widget
         takes the remaining space.
         """
-        # Use the minimum width of the layer panel (350, or less on narrow screens)
+        # Use the minimum width of the layer panel (what the layer buttons and
+        # the group column need, or less on narrow screens)
         self._apply_layer_panel_compact_width()
         layer_panel_width = self.layer_panel.minimumWidth()
         total_width = self.width()

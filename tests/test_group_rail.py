@@ -93,14 +93,14 @@ def test_collapse_frees_width_and_expand_restores(window):
     and points the chevron back toward the list; expanding restores it all."""
     lp = window.layer_panel
     assert lp.right_panel.width() == lp.GROUP_PANEL_FULL_WIDTH
-    assert lp.minimumWidth() == window.LAYER_PANEL_FULL_MIN_WIDTH
+    assert lp.minimumWidth() == window.layer_panel_full_min_width()
     canvas_before = window.canvas.width()
 
     lp.toggle_group_panel()
     pump(350)
     assert lp.group_panel_collapsed
     assert lp.right_panel.width() == lp.GROUP_PANEL_RAIL_WIDTH
-    assert lp.minimumWidth() == window.LAYER_PANEL_FULL_MIN_WIDTH - 100
+    assert lp.minimumWidth() == window.layer_panel_full_min_width() - 100
     assert window.canvas.width() == canvas_before + 100
     assert lp.group_rail.isVisible()
     assert not lp.group_layer_manager.group_panel.isVisible()
@@ -110,7 +110,7 @@ def test_collapse_frees_width_and_expand_restores(window):
     lp.toggle_group_panel()
     pump(350)
     assert lp.right_panel.width() == lp.GROUP_PANEL_FULL_WIDTH
-    assert lp.minimumWidth() == window.LAYER_PANEL_FULL_MIN_WIDTH
+    assert lp.minimumWidth() == window.layer_panel_full_min_width()
     assert window.canvas.width() == canvas_before
     assert lp.group_toggle_button.property("group_toggle_direction") == "right"
 
@@ -398,7 +398,7 @@ def test_compact_window_keeps_rail_usable(window):
     lp.set_group_panel_collapsed(True, animate=False)
     pump(80)
     assert lp.right_panel.width() == lp.GROUP_PANEL_RAIL_WIDTH
-    assert lp.minimumWidth() == window.LAYER_PANEL_FULL_MIN_WIDTH - 100
+    assert lp.minimumWidth() == window.layer_panel_full_min_width() - 100
     lp.set_group_panel_collapsed(False, animate=False)
     pump(80)
     assert lp.minimumWidth() == window.COMPACT_LAYER_PANEL_FLOOR
@@ -416,7 +416,7 @@ def test_compact_window_keeps_rail_usable(window):
 
 def test_toggle_keeps_a_user_widened_panel(window):
     lp = window.layer_panel
-    full_min = window.LAYER_PANEL_FULL_MIN_WIDTH
+    full_min = window.layer_panel_full_min_width()
     # The user dragged the layer panel 100 px wider than its minimum.
     window.splitter.setSizes([window.width() - (full_min + 100), full_min + 100])
     pump(80)

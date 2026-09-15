@@ -252,6 +252,28 @@ def load_user_settings():
 
     return theme_name, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point, enable_curvature_bias_control, arrow_head_length, arrow_head_width, arrow_gap_length, arrow_line_length, arrow_line_width, use_default_arrow_color, default_arrow_fill_color, default_strand_color, default_stroke_color, control_point_base_fraction, distance_multiplier, curve_response_exponent
 
+# Design minimum size of the main window, in logical pixels.
+MIN_WINDOW_WIDTH = 677
+MIN_WINDOW_HEIGHT = 820
+
+
+def apply_minimum_window_size(window, screen=None):
+    """Apply the design minimum window size, clamped to the screen's free area.
+
+    With high-DPI scaling active the minimum is in logical pixels, so on a
+    1920x1080 display at 150% (1280x720 logical) an unclamped 820 px minimum
+    height would force the window to be taller than the screen.
+    """
+    width, height = MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT
+    if screen is None:
+        screen = QGuiApplication.primaryScreen()
+    if screen is not None:
+        available = screen.availableGeometry()
+        width = min(width, available.width())
+        height = min(height, available.height())
+    window.setMinimumSize(width, height)
+
+
 def resource_base_path():
     """Return the directory that holds bundled resources (icons, flags, ...)."""
     if getattr(sys, 'frozen', False):
@@ -289,9 +311,17 @@ if __name__ == '__main__':
         except Exception:
             pass
 
-    # Disable automatic high-DPI scaling to prevent UI elements from being scaled
-    # We'll handle high-DPI rendering manually only for canvas elements
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, False)
+    # Follow the operating system's display scale (e.g. 125% / 150% on Windows)
+    # so buttons, text and panels are the same size as in every other app.
+    # Without this, Qt draws one logical pixel per physical pixel and the whole
+    # UI looks two-thirds size on a scaled display. PassThrough keeps the exact
+    # factor (1.5 stays 1.5) instead of Qt's default of rounding 150% up to 2x.
+    # The canvas already handles a non-1 device pixel ratio (Retina Macs), so
+    # strand rendering stays crisp and correctly positioned.
+    if hasattr(Qt, 'HighDpiScaleFactorRoundingPolicy'):
+        QGuiApplication.setHighDpiScaleFactorRoundingPolicy(
+            Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)  # Keep high-DPI pixmaps for better image quality
     
     pass
@@ -467,7 +497,7 @@ if __name__ == '__main__':
         
         
         # STEP 4: Set minimum size constraints
-        window.setMinimumSize(677, 820)
+        apply_minimum_window_size(window, target_screen)
         
         
         # STEP 5: Set window flags for better multi-monitor support
@@ -695,7 +725,7 @@ if __name__ == '__main__':
         # Emergency fallback
         try:
             window.setAttribute(Qt.WA_DontShowOnScreen, False)
-            window.setMinimumSize(677, 820)
+            apply_minimum_window_size(window)
             window.showMaximized()
             window.raise_()
             window.activateWindow()

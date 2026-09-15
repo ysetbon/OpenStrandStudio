@@ -1,0 +1,278 @@
+<title>OpenStrand Screen Matrix</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #f3f2ee;
+    --panel: #ffffff;
+    --ink: #1d1c1a;
+    --muted: #6d6a63;
+    --line: #dcd9d1;
+    --accent: #7a4fd8;
+    --accent-ink: #ffffff;
+    --ok: #2f8f5b;
+    --ok-bg: #e4f4ea;
+    --bad: #c8432c;
+    --bad-bg: #fbe6e1;
+    --warn: #b7791f;
+    --warn-bg: #fbf0d9;
+    --chip: #ebe9e3;
+    --stage: #2a2a2e;
+    --font: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17171a; --panel: #212125; --ink: #ecebe6; --muted: #a29f97;
+      --line: #35353b; --accent: #a688ff; --accent-ink: #17171a;
+      --ok: #6fd39a; --ok-bg: #1d3327; --bad: #ff8a72; --bad-bg: #3a221d;
+      --warn: #e6b45a; --warn-bg: #3a2f1a; --chip: #2c2c31; --stage: #0f0f11;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17171a; --panel: #212125; --ink: #ecebe6; --muted: #a29f97;
+    --line: #35353b; --accent: #a688ff; --accent-ink: #17171a;
+    --ok: #6fd39a; --ok-bg: #1d3327; --bad: #ff8a72; --bad-bg: #3a221d;
+    --warn: #e6b45a; --warn-bg: #3a2f1a; --chip: #2c2c31; --stage: #0f0f11;
+  }
+  html, body { height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.45; }
+  .wrap { max-width: 1500px; margin: 0 auto; padding-inline: 20px; padding-block: 18px 28px; display: grid; gap: 14px; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 18px; }
+  h1 { font-size: 20px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); }
+  .summary { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 500; background: var(--chip); }
+  .pill.ok { background: var(--ok-bg); color: var(--ok); }
+  .pill.bad { background: var(--bad-bg); color: var(--bad); }
+  .pill.warn { background: var(--warn-bg); color: var(--warn); }
+  .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  label { display: grid; gap: 4px; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 500; }
+  select { font: inherit; font-size: 14px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 8px; text-transform: none; letter-spacing: 0; }
+  select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .nav { display: flex; align-items: end; gap: 8px; }
+  .nav button { font: inherit; font-weight: 500; padding: 7px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+  .nav button:hover { border-color: var(--accent); }
+  .stage { background: var(--stage); border-radius: 10px; padding: 12px; display: grid; gap: 10px; }
+  .stage img { display: block; width: 100%; height: auto; max-width: 100%; border-radius: 4px; background: #000; image-rendering: auto; }
+  .caption { display: flex; flex-wrap: wrap; gap: 6px 16px; color: #d7d5cf; font-family: var(--mono); font-size: 12px; }
+  .caption b { color: #ffffff; font-weight: 500; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 500; margin: 0 0 8px; }
+  .checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+  .checks li { display: flex; gap: 8px; align-items: start; font-size: 13px; }
+  .checks li::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; background: var(--ok); }
+  .checks li.bad::before { background: var(--bad); }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; font-size: 13px; }
+  dt { color: var(--muted); }
+  dd { margin: 0; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .list { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .list-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .list-head h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 500; margin: 0; }
+  .tbl { overflow-x: auto; max-height: 420px; overflow-y: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { position: sticky; top: 0; background: var(--panel); font-weight: 500; color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover { background: var(--chip); }
+  tbody tr.current { background: var(--chip); box-shadow: inset 3px 0 var(--accent); }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); margin-right: 6px; vertical-align: middle; }
+  .dot.bad { background: var(--bad); }
+  .note { color: var(--muted); font-size: 12.5px; }
+  @media (prefers-reduced-motion: no-preference) { .stage img { transition: opacity .12s ease; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>OpenStrand Screen Matrix</h1>
+    <span class="sub">Every screen preset × display scale × language × layer-panel mode, captured from the live app with layout checks.</span>
+  </header>
+
+  <div class="summary" id="summary"></div>
+
+  <div class="controls">
+    <label>Screen &amp; scale
+      <select id="sel-preset"></select>
+    </label>
+    <label>Language
+      <select id="sel-lang"></select>
+    </label>
+    <label>Layer panel mode
+      <select id="sel-mode"></select>
+    </label>
+    <label>Show
+      <select id="sel-filter">
+        <option value="all">All shots</option>
+        <option value="bad">Only shots with faults</option>
+      </select>
+    </label>
+    <div class="nav">
+      <button id="prev" type="button" title="Previous shot (←)">← Prev</button>
+      <button id="next" type="button" title="Next shot (→)">Next →</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <img id="shot" alt="Screenshot of the OpenStrand Studio main window">
+    <div class="caption" id="caption"></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Checks</h2>
+      <ul class="checks" id="checks"></ul>
+    </div>
+    <div class="card">
+      <h2>Measured geometry (logical px)</h2>
+      <dl id="metrics"></dl>
+    </div>
+  </div>
+
+  <div class="list">
+    <div class="list-head">
+      <h2>All shots</h2>
+      <span class="note" id="list-note"></span>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th></th><th>Screen</th><th>Scale</th><th>Logical</th><th>Language</th><th>Mode</th><th>Panel</th><th>Toolbar rows</th><th>Faults</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+  <p class="note" id="footnote"></p>
+</div>
+
+<script>
+(function () {
+  const LANG = { en: "English", fr: "French", de: "German", it: "Italian", es: "Spanish", pt: "Portuguese", he: "Hebrew (RTL)" };
+  const MODE = { normal: "Normal", lock: "Lock mode (padlocks)", copy: "Copy mode (multi-select + copy badge)" };
+  const CHECKS = [
+    "Toolbar labels fit their buttons (checked border included)",
+    "No toolbar button leaves the row or overlaps a neighbour",
+    "Layer panel at or above the floor its layer buttons need",
+    "Layer list column keeps button width plus scrollbar gutter",
+    "No layer button clipped horizontally",
+    "Create Group and bottom-panel labels fit",
+    "Window laid out at the simulated screen size",
+  ];
+  const $ = (id) => document.getElementById(id);
+  let shots = [], presets = [], idx = 0;
+
+  function presetKey(s) { return s.preset; }
+  function presetLabel(s) { return `${s.title}  →  ${s.logical[0]}×${s.logical[1]} logical`; }
+
+  function fill(select, items, current) {
+    select.innerHTML = "";
+    for (const [value, text] of items) {
+      const o = document.createElement("option"); o.value = value; o.textContent = text; select.appendChild(o);
+    }
+    if (current !== undefined) select.value = current;
+  }
+
+  function visible() {
+    const only = $("sel-filter").value === "bad";
+    return shots.map((s, i) => [s, i]).filter(([s]) => !only || s.failures.length);
+  }
+
+  function findIndex(preset, lang, mode) {
+    return shots.findIndex((s) => s.preset === preset && s.language === lang && s.mode === mode);
+  }
+
+  function render() {
+    const s = shots[idx];
+    if (!s) return;
+    $("sel-preset").value = s.preset; $("sel-lang").value = s.language; $("sel-mode").value = s.mode;
+    const img = $("shot");
+    img.style.opacity = 0.35;
+    img.onload = () => { img.style.opacity = 1; };
+    img.src = s.image;
+    $("caption").innerHTML =
+      `<span><b>${s.title}</b></span><span>physical ${s.physical[0]}×${s.physical[1]}</span>` +
+      `<span>scale ${Math.round(s.scale * 100)}%</span><span>logical ${s.logical[0]}×${s.logical[1]}</span>` +
+      `<span>${LANG[s.language] || s.language}</span><span>${MODE[s.mode] || s.mode}</span>` +
+      `<span>captured at ${s.image_size[0]}×${s.image_size[1]} px</span>`;
+    const checks = $("checks"); checks.innerHTML = "";
+    if (s.failures.length) {
+      for (const f of s.failures) { const li = document.createElement("li"); li.className = "bad"; li.textContent = f; checks.appendChild(li); }
+    }
+    for (const c of CHECKS) { const li = document.createElement("li"); li.textContent = c; checks.appendChild(li); }
+    const m = s.metrics; const dl = $("metrics"); dl.innerHTML = "";
+    const rows = [
+      ["Window", `${m.window[0]} × ${m.window[1]}`],
+      ["Device pixel ratio", m.device_pixel_ratio],
+      ["Canvas", `${m.canvas[0]} × ${m.canvas[1]}`],
+      ["Toolbar rows / gap", `${m.toolbar_rows} / ${m.toolbar_spacing}px`],
+      ["Layer panel width", `${m.layer_panel} (min ${m.layer_panel_min})`],
+      ["List / group column", `${m.list_column} / ${m.group_column}`],
+      ["Layer buttons", m.layer_buttons.join(", ")],
+    ];
+    for (const [k, v] of rows) { const dt = document.createElement("dt"); dt.textContent = k; const dd = document.createElement("dd"); dd.textContent = v; dl.append(dt, dd); }
+    for (const tr of $("rows").children) tr.classList.toggle("current", Number(tr.dataset.i) === idx);
+    const cur = $("rows").querySelector("tr.current"); if (cur) cur.scrollIntoView({ block: "nearest" });
+  }
+
+  function buildTable() {
+    const tb = $("rows"); tb.innerHTML = "";
+    const vis = visible();
+    for (const [s, i] of vis) {
+      const tr = document.createElement("tr"); tr.dataset.i = i;
+      tr.innerHTML = `<td><span class="dot ${s.failures.length ? "bad" : ""}"></span></td><td>${s.title}</td>` +
+        `<td class="num">${Math.round(s.scale * 100)}%</td><td class="num">${s.logical[0]}×${s.logical[1]}</td>` +
+        `<td>${LANG[s.language] || s.language}</td><td>${MODE[s.mode] || s.mode}</td>` +
+        `<td class="num">${s.metrics.layer_panel}</td><td class="num">${s.metrics.toolbar_rows}</td>` +
+        `<td>${s.failures.length ? s.failures.join("; ") : "none"}</td>`;
+      tr.addEventListener("click", () => { idx = i; render(); });
+      tb.appendChild(tr);
+    }
+    $("list-note").textContent = `${vis.length} of ${shots.length} shots`;
+  }
+
+  function step(d) {
+    const vis = visible().map(([, i]) => i);
+    if (!vis.length) return;
+    const pos = vis.indexOf(idx);
+    idx = vis[(pos + d + vis.length) % vis.length];
+    render();
+  }
+
+  function onSelect() {
+    const i = findIndex($("sel-preset").value, $("sel-lang").value, $("sel-mode").value);
+    if (i >= 0) { idx = i; render(); }
+  }
+
+  // A bundled page carries its data inline; the folder build fetches it.
+  const inline = document.getElementById("shots-data");
+  const load = inline ? Promise.resolve(JSON.parse(inline.textContent)) : fetch("shots.json").then((r) => r.json());
+  load.then((data) => {
+    shots = data.shots;
+    const seen = new Map();
+    for (const s of shots) if (!seen.has(s.preset)) seen.set(s.preset, presetLabel(s));
+    presets = [...seen.entries()];
+    fill($("sel-preset"), presets);
+    fill($("sel-lang"), Object.keys(LANG).filter((l) => shots.some((s) => s.language === l)).map((l) => [l, LANG[l]]));
+    fill($("sel-mode"), Object.keys(MODE).filter((m) => shots.some((s) => s.mode === m)).map((m) => [m, MODE[m]]));
+    const bad = shots.filter((s) => s.failures.length).length;
+    const scales = [...new Set(shots.map((s) => Math.round(s.scale * 100)))].sort((a, b) => a - b);
+    $("summary").innerHTML =
+      `<span class="pill">${shots.length} shots</span><span class="pill">${presets.length} screens</span>` +
+      `<span class="pill">scales ${scales.map((x) => x + "%").join(" · ")}</span>` +
+      `<span class="pill">${Object.keys(LANG).filter((l) => shots.some((s) => s.language === l)).length} languages</span>` +
+      `<span class="pill">3 panel modes</span>` +
+      (bad ? `<span class="pill bad">${bad} with faults</span>` : `<span class="pill ok">all checks passed</span>`);
+    $("footnote").textContent =
+      `Captured offscreen with the app's own DPI setup (Qt high-DPI scaling, pass-through rounding) in font "${data.font || "platform default"}" as a stand-in for the Windows UI font; ` +
+      `label widths on Windows (Segoe UI) are slightly narrower, so any fit here fits there too. The offscreen screen reports 100 dpi, so images are about 4% larger than the nominal physical size.`;
+    for (const id of ["sel-preset", "sel-lang", "sel-mode"]) $(id).addEventListener("change", onSelect);
+    $("sel-filter").addEventListener("change", () => { buildTable(); const v = visible(); if (v.length && !v.some(([, i]) => i === idx)) { idx = v[0][1]; render(); } });
+    $("prev").addEventListener("click", () => step(-1));
+    $("next").addEventListener("click", () => step(1));
+    document.addEventListener("keydown", (e) => { if (e.target.tagName === "SELECT") return; if (e.key === "ArrowLeft") step(-1); if (e.key === "ArrowRight") step(1); });
+    try { const saved = localStorage.getItem("screen-matrix-idx"); if (saved !== null && shots[Number(saved)]) idx = Number(saved); } catch (e) {}
+    buildTable(); render();
+    window.addEventListener("beforeunload", () => { try { localStorage.setItem("screen-matrix-idx", String(idx)); } catch (e) {} });
+  });
+})();
+</script>

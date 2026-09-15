@@ -3,7 +3,7 @@ Utility class for enhanced high-DPI rendering across the application.
 Provides consistent crisp rendering for all QPainter instances.
 """
 
-from PyQt5.QtGui import QPainter, QImage, QPen, QBrush
+from PyQt5.QtGui import QPainter, QImage, QPen, QBrush, QPixmap
 from PyQt5.QtCore import Qt, QRect, QPoint
 
 
@@ -68,6 +68,41 @@ class RenderUtils:
         # Mark this painter as configured to prevent double setup
         painter._renderutils_configured = True
     
+    @staticmethod
+    def _widget_cache_geometry(widget):
+        """Return (physical_width, physical_height, device_pixel_ratio) for a cache covering ``widget``."""
+        rect = widget.viewport().rect() if hasattr(widget, 'viewport') else widget.rect()
+        dpr = widget.devicePixelRatioF() if hasattr(widget, 'devicePixelRatioF') else 1.0
+        width = max(1, int(round(rect.width() * dpr)))
+        height = max(1, int(round(rect.height() * dpr)))
+        return width, height, dpr
+
+    @staticmethod
+    def create_widget_cache_pixmap(widget):
+        """
+        Create a transparent QPixmap that covers ``widget`` at full screen resolution.
+
+        The pixmap is allocated in physical pixels and tagged with the widget's
+        device pixel ratio, so painting into it uses the widget's logical
+        coordinates and blitting it back is pixel-for-pixel on scaled displays
+        (Windows 125%/150%, Retina). A cache allocated in logical pixels would be
+        upscaled on blit and look blurry while dragging.
+        """
+        width, height, dpr = RenderUtils._widget_cache_geometry(widget)
+        pixmap = QPixmap(width, height)
+        pixmap.setDevicePixelRatio(dpr)
+        pixmap.fill(Qt.transparent)
+        return pixmap
+
+    @staticmethod
+    def cache_pixmap_matches_widget(pixmap, widget):
+        """True if ``pixmap`` was allocated for ``widget``'s current size and device pixel ratio."""
+        if pixmap is None or pixmap.isNull():
+            return False
+        width, height, dpr = RenderUtils._widget_cache_geometry(widget)
+        return (pixmap.width() == width and pixmap.height() == height
+                and abs(pixmap.devicePixelRatioF() - dpr) < 1e-3)
+
     @staticmethod
     def create_smooth_pen(color, width, style=Qt.SolidLine):
         """

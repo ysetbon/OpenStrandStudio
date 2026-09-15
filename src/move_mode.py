@@ -302,17 +302,9 @@ class MoveMode:
         from PyQt5.QtCore import Qt
         
         try:
-            # Create a background cache pixmap the size of the visible area
-            viewport_rect = self.canvas.viewport().rect() if hasattr(self.canvas, 'viewport') else self.canvas.rect()
-            
-            # Ensure valid dimensions
-            width = max(1, viewport_rect.width())
-            height = max(1, viewport_rect.height())
-            
-            # Create the pixmap and fill it
-            self.canvas.background_cache = QtGui.QPixmap(width, height)
-            # Fill with transparent color, not white
-            self.canvas.background_cache.fill(Qt.transparent)
+            # Create a transparent background cache pixmap the size of the
+            # visible area, at the screen's physical resolution (see RenderUtils).
+            self.canvas.background_cache = RenderUtils.create_widget_cache_pixmap(self.canvas)
             
             # Create a flag to indicate when the cache needs refreshing
             self.canvas.background_cache_valid = False
@@ -539,14 +531,7 @@ class MoveMode:
                 # To ensure consistent rendering, force recreate the background cache
                 if hasattr(self_canvas, 'background_cache'):
                     # Force recreation with proper dimensions and device pixel ratio
-                    viewport_rect = self_canvas.viewport().rect() if hasattr(self_canvas, 'viewport') else self_canvas.rect()
-                    dpr = self_canvas.devicePixelRatioF() if hasattr(self_canvas, 'devicePixelRatioF') else 1.0
-                    width = max(1, int(viewport_rect.width() * dpr))
-                    height = max(1, int(viewport_rect.height() * dpr))
-                    self_canvas.background_cache = QtGui.QPixmap(width, height)
-                    if hasattr(self_canvas.background_cache, 'setDevicePixelRatio'):
-                        self_canvas.background_cache.setDevicePixelRatio(dpr)
-                    self_canvas.background_cache.fill(Qt.transparent)
+                    self_canvas.background_cache = RenderUtils.create_widget_cache_pixmap(self_canvas)
             
             # Get truly moving strands from the canvas attribute if available, otherwise create it
             truly_moving_strands = getattr(self_canvas, 'truly_moving_strands', [])
@@ -652,14 +637,7 @@ class MoveMode:
                 try:
                     # Create or get the background cache
                     if not hasattr(self_canvas, 'background_cache'):
-                        viewport_rect = self_canvas.viewport().rect() if hasattr(self_canvas, 'viewport') else self_canvas.rect()
-                        dpr = self_canvas.devicePixelRatioF() if hasattr(self_canvas, 'devicePixelRatioF') else 1.0
-                        width = max(1, int(viewport_rect.width() * dpr))
-                        height = max(1, int(viewport_rect.height() * dpr))
-                        self_canvas.background_cache = QtGui.QPixmap(width, height)
-                        if hasattr(self_canvas.background_cache, 'setDevicePixelRatio'):
-                            self_canvas.background_cache.setDevicePixelRatio(dpr)
-                        self_canvas.background_cache.fill(Qt.transparent)
+                        self_canvas.background_cache = RenderUtils.create_widget_cache_pixmap(self_canvas)
                     
                     # Save the original strands list
                     original_strands = list(self_canvas.strands)
@@ -1080,16 +1058,10 @@ class MoveMode:
         self.canvas.update()
             
         if hasattr(self.canvas, 'background_cache'):
-            # Force recreation of the background pixmap on viewport resize
-            viewport_rect = self.canvas.viewport().rect() if hasattr(self.canvas, 'viewport') else self.canvas.rect()
-            current_width = self.canvas.background_cache.width()
-            current_height = self.canvas.background_cache.height()
-            
-            # If viewport size has changed, recreate the pixmap
-            if current_width != viewport_rect.width() or current_height != viewport_rect.height():
-                width = max(1, viewport_rect.width())
-                height = max(1, viewport_rect.height())
-                self.canvas.background_cache = QtGui.QPixmap(width, height)
+            # Force recreation of the background pixmap when the viewport size
+            # or the screen's device pixel ratio has changed
+            if not RenderUtils.cache_pixmap_matches_widget(self.canvas.background_cache, self.canvas):
+                self.canvas.background_cache = RenderUtils.create_widget_cache_pixmap(self.canvas)
                 self.canvas.background_cache_valid = False
                 self.canvas.update()  # Ensure update after recreating pixmap
 

@@ -1819,6 +1819,27 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
         self._apply_group_panel_alignment()
 
+    def list_column_min_width(self):
+        """Narrowest the layer-list column can be: the fixed-width layer
+        buttons (1_1, 1_2, ...) plus a real scrollbar gutter, so a vertical
+        scrollbar never paints over the buttons or under the group column."""
+        vbar = self.scroll_area.verticalScrollBar()
+        extent = max(
+            vbar.sizeHint().width(),
+            self.style().pixelMetric(QStyle.PM_ScrollBarExtent, None, vbar),
+        )
+        return self.LAYER_LIST_BUTTON_WIDTH + extent + 2
+
+    def full_minimum_width(self):
+        """Narrowest the whole panel can be with the group column expanded:
+        the list column at its minimum, the inner splitter handle and the
+        140 px group column. This is the floor the user can drag the outer
+        splitter down to, so the panel never keeps empty space beside the
+        layer buttons."""
+        return (self.list_column_min_width()
+                + self.splitter.handleWidth()
+                + self.GROUP_PANEL_FULL_WIDTH)
+
     def set_compact_reduction(self, reduction):
         """Slim the panel on narrow screens so the toolbar keeps its room.
 
@@ -1828,8 +1849,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         gutter needs, per the arithmetic below."""
         if getattr(self, 'group_panel_collapsed', False):
             # The rail is narrower than any compact trim would make the
-            # column, so the list column simply takes the rest of the panel.
-            self.scroll_area.setMinimumWidth(0)
+            # column, so the list column simply takes the rest of the panel
+            # (never less than the layer buttons need).
+            self.scroll_area.setMinimumWidth(self.list_column_min_width())
             right_w = self.GROUP_PANEL_RAIL_WIDTH
             if self._group_width_animation is None:
                 self.right_panel.setFixedWidth(right_w)
@@ -1841,22 +1863,16 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             # GroupPanel gives the button a fixed width (140); remember it so
             # the compact override below can be undone.
             self._create_group_full_width = create_group.minimumWidth()
-        # Compact screens leave the layer-list column exactly as wide as the
-        # fixed-width layer buttons, so a vertical scrollbar (many layers)
-        # would be painted under the group panel and the buttons' edge would
-        # sit against it. Reserve a real scrollbar gutter by giving the list
-        # slot the extra width and making the group panel that much shorter,
-        # so the splitter can actually honor the split. Wide screens already
-        # have spare room and keep the default widths untouched.
+        # The layer-list column is never narrower than the fixed-width layer
+        # buttons plus a scrollbar gutter (see list_column_min_width), so a
+        # vertical scrollbar (many layers) is never painted under the group
+        # panel and the buttons' edge never sits against it. Compact screens
+        # make the group panel that much shorter so the trimmed panel minimum
+        # can actually be honored by the inner split.
+        list_w = self.list_column_min_width()
+        self.scroll_area.setMinimumWidth(list_w)
         if reduction > 0:
-            vbar = self.scroll_area.verticalScrollBar()
-            extent = max(
-                vbar.sizeHint().width(),
-                self.style().pixelMetric(QStyle.PM_ScrollBarExtent, None, vbar),
-            )
-            list_w = self.LAYER_LIST_BUTTON_WIDTH + extent + 2
             right_w = max(0, self.minimumWidth() - list_w - self.splitter.handleWidth())
-            self.scroll_area.setMinimumWidth(list_w)
             self.right_panel.setFixedWidth(right_w)
             # The button spans the whole column, so its far edge stays flush
             # with the panel's — and the window's — outer edge here too.
@@ -1869,7 +1885,6 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             # inner split is re-applied so a window growing back out of
             # compact mode hands the list column the rest of the panel rather
             # than keeping the compact allocation.
-            self.scroll_area.setMinimumWidth(0)
             right_w = self.GROUP_PANEL_FULL_WIDTH
             self.right_panel.setFixedWidth(right_w)
             create_group.setFixedWidth(self._create_group_full_width)

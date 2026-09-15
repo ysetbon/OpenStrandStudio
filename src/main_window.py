@@ -271,13 +271,15 @@ class MainWindow(QMainWindow):
             # If running from source
             base_path = os.path.dirname(os.path.abspath(__file__))
 
-        # Set the window icon if available
-        icon_path = os.path.join(base_path, 'box_stitch.ico')
-        if os.path.exists(icon_path):
-            self.setWindowIcon(QIcon(icon_path))
-            pass
-        else:
-            pass
+        # Set the window icon (shown top-left in the title bar). Prefer the
+        # multi-resolution .ico and fall back to the PNG if it is missing.
+        for icon_name in ('box_stitch.ico', 'box_stitch.png'):
+            icon_path = os.path.join(base_path, icon_name)
+            if os.path.exists(icon_path):
+                window_icon = QIcon(icon_path)
+                if not window_icon.isNull():
+                    self.setWindowIcon(window_icon)
+                    break
 
         # Create central widget and main layout
         central_widget = QWidget()

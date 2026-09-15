@@ -17,7 +17,7 @@ import logging
 import faulthandler
 from PyQt5.QtWidgets import QApplication, QDesktopWidget
 from PyQt5.QtCore import Qt, QTimer, QEvent, QObject
-from PyQt5.QtGui import QColor, QCursor, QGuiApplication
+from PyQt5.QtGui import QColor, QCursor, QGuiApplication, QIcon
 from main_window import MainWindow
 from undo_redo_manager import connect_to_move_mode, connect_to_attach_mode, connect_to_mask_mode
 
@@ -252,9 +252,42 @@ def load_user_settings():
 
     return theme_name, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point, enable_curvature_bias_control, arrow_head_length, arrow_head_width, arrow_gap_length, arrow_line_length, arrow_line_width, use_default_arrow_color, default_arrow_fill_color, default_strand_color, default_stroke_color, control_point_base_fraction, distance_multiplier, curve_response_exponent
 
+def resource_base_path():
+    """Return the directory that holds bundled resources (icons, flags, ...)."""
+    if getattr(sys, 'frozen', False):
+        return sys._MEIPASS
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+def load_app_icon():
+    """Load the OpenStrand Studio logo as a QIcon, or None if no icon file exists.
+
+    Prefers the multi-resolution .ico (16-256 px) and falls back to the PNG so the
+    window icon is still shown when the .ico is missing from a bundle.
+    """
+    base_path = resource_base_path()
+    for name in ('box_stitch.ico', 'box_stitch.png'):
+        icon_path = os.path.join(base_path, name)
+        if os.path.exists(icon_path):
+            icon = QIcon(icon_path)
+            if not icon.isNull():
+                return icon
+    return None
+
+
 if __name__ == '__main__':
     pass
     setup_crash_logging()
+
+    # On Windows, give the process its own AppUserModelID so the taskbar shows
+    # the OpenStrand Studio logo instead of the generic Python icon when the app
+    # is run from source.
+    if sys.platform == 'win32':
+        try:
+            import ctypes
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('OpenStrandStudio.App')
+        except Exception:
+            pass
 
     # Disable automatic high-DPI scaling to prevent UI elements from being scaled
     # We'll handle high-DPI rendering manually only for canvas elements
@@ -265,6 +298,13 @@ if __name__ == '__main__':
     pass
     
     app = QApplication(sys.argv)
+
+    # Make the OpenStrand Studio logo the application-wide window icon so it
+    # appears at the top-left of every window (main window and dialogs) and in
+    # the taskbar/dock, regardless of which widget is shown first.
+    app_icon = load_app_icon()
+    if app_icon is not None:
+        app.setWindowIcon(app_icon)
 
     # Load user settings
     theme, language_code, shadow_color, draw_only_affected_strand, enable_third_control_point, enable_curvature_bias_control, arrow_head_length, arrow_head_width, arrow_gap_length, arrow_line_length, arrow_line_width, use_default_arrow_color, default_arrow_fill_color, default_strand_color, default_stroke_color, control_point_base_fraction, distance_multiplier, curve_response_exponent = load_user_settings()

@@ -198,13 +198,9 @@ class AttachMode(QObject):
         from PyQt5.QtCore import Qt
         
         try:
-            # Create a background cache pixmap the size of the visible area
-            viewport_rect = self.canvas.viewport().rect() if hasattr(self.canvas, 'viewport') else self.canvas.rect()
-            
-            # Ensure valid dimensions
-            width = max(1, viewport_rect.width())
-            height = max(1, viewport_rect.height())
-            
+            # Create a background cache pixmap the size of the visible area,
+            # at the screen's physical resolution (see RenderUtils).
+            #
             # NOTE: Do NOT upscale the cache when zoomed-out. It causes the
             # cached area to exceed the widget rectangle, so only the original
             # (0,0,width,height) portion is ever blitted back, leaving the
@@ -215,10 +211,8 @@ class AttachMode(QObject):
             # Therefore, we intentionally skip any width/height adjustment
             # based on zoom_factor here.
             
-            # Create the pixmap and fill it
-            self.canvas.background_cache = QtGui.QPixmap(width, height)
-            # Fill with transparent color, not white
-            self.canvas.background_cache.fill(Qt.transparent)
+            # Create the (transparent) pixmap
+            self.canvas.background_cache = RenderUtils.create_widget_cache_pixmap(self.canvas)
             
             # Create a flag to indicate when the cache needs refreshing
             self.canvas.background_cache_valid = False
@@ -381,7 +375,16 @@ class AttachMode(QObject):
                     # Draw the cached background to the update region
                     try:
                         update_rect_adjusted = update_rect.intersected(self_canvas.rect())
-                        painter.drawPixmap(update_rect_adjusted, self_canvas.background_cache, update_rect_adjusted)
+                        cache = self_canvas.background_cache
+                        # The cache is stored at physical resolution and drawPixmap's
+                        # source rect is in pixmap pixels, so scale it by the cache's
+                        # device pixel ratio; the target rect stays in logical pixels.
+                        cache_dpr = cache.devicePixelRatioF() if hasattr(cache, 'devicePixelRatioF') else 1.0
+                        source_rect = QRectF(update_rect_adjusted.x() * cache_dpr,
+                                             update_rect_adjusted.y() * cache_dpr,
+                                             update_rect_adjusted.width() * cache_dpr,
+                                             update_rect_adjusted.height() * cache_dpr)
+                        painter.drawPixmap(QRectF(update_rect_adjusted), cache, source_rect)
                     except RuntimeError:
                         painter.fillRect(update_rect, Qt.transparent)
                         

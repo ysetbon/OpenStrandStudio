@@ -409,11 +409,23 @@ class MainWindow(QMainWindow):
         left_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.setSpacing(0)
 
-        # Button container - no scroll needed, buttons scale proportionally
+        # Button container: one row of buttons, or two when the window is too
+        # narrow to show every label on one row (see _apply_toolbar_rows).
+        # The second row's layout starts empty and shares the first row's
+        # margins and spacing.
         button_container = QWidget()
-        button_container.setLayout(button_layout)
+        rows_layout = QVBoxLayout(button_container)
+        rows_layout.setContentsMargins(0, 0, 0, 0)
+        rows_layout.setSpacing(0)
+        rows_layout.addLayout(button_layout)
+        self.toolbar_button_layout_2 = QHBoxLayout()
+        self.toolbar_button_layout_2.setSpacing(button_layout.spacing())
+        self.toolbar_button_layout_2.setContentsMargins(button_layout.contentsMargins())
+        rows_layout.addLayout(self.toolbar_button_layout_2)
         button_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        button_container.setFixedHeight(40)  # Fixed height for button bar
+        button_container.setFixedHeight(self.TOOLBAR_ROW_HEIGHT)
+        self.toolbar_container = button_container
+        self._toolbar_two_rows = False
 
         left_layout.addWidget(button_container)
         left_layout.addWidget(self.canvas)
@@ -567,6 +579,15 @@ class MainWindow(QMainWindow):
     # renders wider — tightens on its own instead of clipping.
     TOOLBAR_SPACING = 10
     COMPACT_TOOLBAR_SPACING = 2
+    # Height of one toolbar row; the bar is twice this when it wraps.
+    TOOLBAR_ROW_HEIGHT = 40
+    # Buttons grow up to this width when the row has room. A label that is
+    # naturally wider (long translations, wide fonts) raises its own cap so
+    # it is never squeezed (see _apply_toolbar_rows).
+    TOOLBAR_BUTTON_MAX_WIDTH = 90
+    # When one row cannot fit every label, the buttons from this index on
+    # (Save onward) move to a second row together with State and settings.
+    TOOLBAR_SECOND_ROW_FROM = 8
     # Floor for the layer panel on compact screens: the layer list's 158px
     # (buttons + scrollbar gutter) plus enough for the group panel's
     # "Create Group" button, whose longest translations need ~117px. The few
@@ -629,6 +650,77 @@ class MainWindow(QMainWindow):
                     panel_width = max(new_min, sizes[1] + (new_min - old_min))
             self.splitter.setSizes([max(0, self.width() - panel_width), panel_width])
 
+    def _toolbar_row_widgets(self):
+        """The toolbar buttons in row order (State and settings last)."""
+        return [
+            self.view_button, self.mask_button, self.select_strand_button,
+            self.attach_button, self.move_button, self.rotate_button,
+            self.toggle_grid_button, self.angle_adjust_button,
+            self.save_button, self.load_button, self.save_image_button,
+            self.toggle_control_points_button, self.toggle_shadow_button,
+            self.tabs_button, self.layer_state_button, self.settings_button,
+        ]
+
+    def _toolbar_single_row_width(self):
+        """Width one row needs to show every label at its natural size with
+        the tightest gaps."""
+        widgets = self._toolbar_row_widgets()
+        margins = self.toolbar_button_layout.contentsMargins()
+        return (margins.left() + margins.right()
+                + sum(w.sizeHint().width() for w in widgets)
+                + (len(widgets) - 1) * self.COMPACT_TOOLBAR_SPACING)
+
+    def _apply_toolbar_rows(self):
+        """Wrap the toolbar onto two rows when one row cannot fit every label.
+
+        The buttons have an Expanding policy, so a row that is too narrow
+        does not overflow: Qt shrinks the buttons below their natural width
+        and the centred labels get cut at both ends ("Attach" -> "ttac").
+        That happens on any window narrower than the labels need — a
+        1366x768 laptop at 125% is 1093 logical px wide — so once the
+        natural single-row width no longer fits the canvas column, Save
+        onward (with State and settings) move to a second row and the bar
+        doubles in height; they move back as soon as one row fits again.
+
+        Also lifts each button's width cap to its natural width, so a label
+        wider than the 90px default (long translations, wide fonts) is
+        never squeezed by the cap itself."""
+        row2 = getattr(self, 'toolbar_button_layout_2', None)
+        if row2 is None or not hasattr(self, 'left_widget'):
+            return
+        widgets = self._toolbar_row_widgets()
+        for w in widgets:
+            if w.text():
+                w.setMaximumWidth(max(self.TOOLBAR_BUTTON_MAX_WIDTH, w.sizeHint().width()))
+        two_rows = self._toolbar_single_row_width() > self.left_widget.width()
+        if two_rows == self._toolbar_two_rows:
+            return
+        self._toolbar_two_rows = two_rows
+        row1 = self.toolbar_button_layout
+        for layout in (row1, row2):
+            while layout.count():
+                layout.takeAt(0)
+        split = self.TOOLBAR_SECOND_ROW_FROM if two_rows else len(widgets)
+        first, second = widgets[:split], widgets[split:]
+        # Each row keeps the original shape: buttons, a stretch, then State
+        # and the settings button at the far end of the last row.
+        state, settings = widgets[-2], widgets[-1]
+        for w in first:
+            if w is not state and w is not settings:
+                row1.addWidget(w)
+        row1.addStretch()
+        target = row2 if two_rows else row1
+        for w in second:
+            if w is not state and w is not settings:
+                target.addWidget(w)
+        if two_rows:
+            row2.addStretch()
+        target.addWidget(state)
+        target.addWidget(settings, 0)
+        self.toolbar_container.setFixedHeight(
+            self.TOOLBAR_ROW_HEIGHT * (2 if two_rows else 1))
+        self._apply_toolbar_spacing()
+
     def _apply_toolbar_spacing(self):
         """Give the toolbar gaps whatever room the labels do not need.
 
@@ -637,31 +729,36 @@ class MainWindow(QMainWindow):
         and must be given back once the labels grow — which is what happens
         with the longer German/Spanish translations, on narrow screens, and on
         macOS where the same string measures wider. Deriving it from the
-        measured surplus covers all three without a per-case rule."""
-        layout = getattr(self, 'toolbar_button_layout', None)
-        if layout is None or not hasattr(self, 'left_widget'):
+        measured surplus covers all three without a per-case rule. Each row
+        of a wrapped toolbar is spaced from its own surplus."""
+        if not hasattr(self, 'left_widget'):
             return
-        gaps = layout.count() - 1
-        if gaps <= 0:
-            return
-        margins = layout.contentsMargins()
-        needed = margins.left() + margins.right()
-        for i in range(layout.count()):
-            item = layout.itemAt(i)
-            widget = item.widget() if item is not None else None
-            if widget is not None:
-                needed += widget.sizeHint().width()
-        surplus = self.left_widget.width() - needed
-        spacing = max(self.COMPACT_TOOLBAR_SPACING,
-                      min(self.TOOLBAR_SPACING, surplus // gaps))
-        if spacing != layout.spacing():
-            layout.setSpacing(spacing)
+        for layout in (getattr(self, 'toolbar_button_layout', None),
+                       getattr(self, 'toolbar_button_layout_2', None)):
+            if layout is None:
+                continue
+            gaps = layout.count() - 1
+            if gaps <= 0:
+                continue
+            margins = layout.contentsMargins()
+            needed = margins.left() + margins.right()
+            for i in range(layout.count()):
+                item = layout.itemAt(i)
+                widget = item.widget() if item is not None else None
+                if widget is not None:
+                    needed += widget.sizeHint().width()
+            surplus = self.left_widget.width() - needed
+            spacing = max(self.COMPACT_TOOLBAR_SPACING,
+                          min(self.TOOLBAR_SPACING, surplus // gaps))
+            if spacing != layout.spacing():
+                layout.setSpacing(spacing)
 
     def resizeEvent(self, event):
         """Re-evaluate compact sizing when the window crosses the threshold."""
         super().resizeEvent(event)
         if hasattr(self, 'layer_panel'):
             self._apply_layer_panel_compact_width()
+        self._apply_toolbar_rows()
         self._apply_toolbar_spacing()
 
     def set_initial_splitter_sizes(self):
@@ -2332,6 +2429,11 @@ class MainWindow(QMainWindow):
 
     def eventFilter(self, obj, event):
         """Filter events to catch keyboard shortcuts before they reach child widgets."""
+        # The toolbar wraps or unwraps from the canvas column's width, which
+        # changes on splitter drags and panel re-sizing as well as on window
+        # resizes, so follow the column itself.
+        if event.type() == QEvent.Resize and obj is getattr(self, 'left_widget', None):
+            self._apply_toolbar_rows()
         if event.type() in (QEvent.KeyPress, QEvent.KeyRelease, QEvent.ShortcutOverride):
             # Handle undo/redo keyboard shortcuts globally
             if event.type() == QEvent.KeyPress:
@@ -2821,8 +2923,10 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'tab_manager'):
             self.tab_manager.retranslate()
 
-        # The new labels have different widths, so the toolbar gaps have to be
-        # re-derived: German needs the tight end where English does not.
+        # The new labels have different widths, so the toolbar rows and gaps
+        # have to be re-derived: German needs the tight end where English
+        # does not, and may need the second row on a narrow window.
+        self._apply_toolbar_rows()
         self._apply_toolbar_spacing()
 
         pass

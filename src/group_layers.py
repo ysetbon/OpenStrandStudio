@@ -6336,8 +6336,8 @@ class StrandAngleEditDialog(QDialog):
 
         self.populate_table()
 
-        bottom_layout = self.setup_bottom_layout()
-        main_layout.addLayout(bottom_layout)
+        self.bottom_layout = self.setup_bottom_layout()
+        main_layout.addLayout(self.bottom_layout)
 
 
         self.setLayout(main_layout)
@@ -6913,8 +6913,9 @@ class StrandAngleEditDialog(QDialog):
         dialog_height = min(int(screen.height() * 0.8), 700)  # 80% of screen height, max 700px
         
         # That is the size it opens at, not a floor: the table scrolls, so the
-        # dialog can be dragged down to fit any screen
-        allow_shrinking(self, minimum=(360, 260), fit=False)
+        # dialog can be dragged down to fit any screen; only the X-angle row
+        # under it has to fit whole
+        allow_shrinking(self, minimum=(360, 260), keep_whole=[self.bottom_layout], fit=False)
         self.resize(dialog_width, dialog_height)
         
         # Center the dialog on the screen

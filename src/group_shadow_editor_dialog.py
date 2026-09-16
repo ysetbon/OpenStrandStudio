@@ -96,8 +96,11 @@ class GroupShadowEditorDialog(QDialog):
             close_button.setText(_['close'])
         layout.addWidget(self.button_box)
 
-        # Freely shrinkable: the strand rows scroll, Close stays reachable
-        allow_shrinking(self, minimum=(360, 280), fit=False)
+        # Freely shrinkable in height: the strand rows scroll, Close stays
+        # reachable. The global toggle row lines up with those rows' columns
+        # and cannot wrap, so it is what sets the floor width.
+        allow_shrinking(self, minimum=(360, 280),
+                        keep_whole=[self.global_toggle_row, self.button_box], fit=False)
         cap_to_screen(self, 800, 600)
 
         if hasattr(canvas, 'language_changed'):

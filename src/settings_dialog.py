@@ -7339,8 +7339,9 @@ class VideoPlayerDialog(QDialog):
         self.video_path = video_path
         self.setWindowTitle("Video Player")
         self.setup_ui()
-        # Freely shrinkable: the video picture is what gives up the space
-        allow_shrinking(self, minimum=(320, 220), fit=False)
+        # Freely shrinkable: the video picture is what gives up the space,
+        # the control row never does
+        allow_shrinking(self, minimum=(320, 220), keep_whole=[self.control_layout], fit=False)
         cap_to_screen(self, 640, 420)
         self.load_video()
 
@@ -7356,7 +7357,7 @@ class VideoPlayerDialog(QDialog):
         self.media_player.setVideoOutput(self.video_widget)
 
         # Control Buttons Layout
-        control_layout = QHBoxLayout()
+        control_layout = self.control_layout = QHBoxLayout()
 
         # Play Button
         self.play_button = QPushButton("Play")

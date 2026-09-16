@@ -14,6 +14,11 @@ helpers are that same treatment, packaged so the other dialogs can take it:
 ``allow_shrinking``  for a dialog whose body already scrolls (a table, a
                      list, its own scroll area): drop the floor and let the
                      body give up the space.
+``floor_for``        the one thing that still sets a floor: a row that can
+                     neither scroll nor wrap (a button row, a toolbar of
+                     toggles) must fit whole, so the dialog is never
+                     narrower than the widest of those needs under the
+                     stylesheet that is actually in effect.
 ``relax``            stops a long or wrapped label from setting that floor.
 ``scroll_area``      the frameless, see-through scroll area both of the
                      above put the body in.
@@ -76,12 +81,39 @@ def relax(*widgets, width=1, height=1):
             widget.setMinimumSize(width, height)
 
 
-def allow_shrinking(dialog, minimum=DEFAULT_MINIMUM, fit=True):
+def _needed_width(item):
+    """The width a widget, a nested layout or a layout item holding either
+    cannot be squeezed below."""
+    if not isinstance(item, (QWidget, QLayout)):  # a QLayoutItem from takeAt
+        item = item.widget() or item.layout()
+    if isinstance(item, QLayout):
+        return item.minimumSize().width()
+    item.ensurePolished()  # the app stylesheet's min-width has to count
+    return max(item.minimumWidth(), item.minimumSizeHint().width())
+
+
+def floor_for(dialog, minimum, keep_whole=()):
+    """``minimum``, widened so that every ``keep_whole`` row still fits.
+
+    The app's theme stylesheet gives buttons a min-width, so what a row of
+    them needs is only known at run time and only once they are polished;
+    a floor chosen at the desk would leave the last button off the edge."""
+    width, height = minimum
+    if keep_whole:
+        layout = dialog.layout()
+        left, _, right, _ = layout.getContentsMargins() if layout else (0, 0, 0, 0)
+        width = max(width, max(_needed_width(item) for item in keep_whole) + left + right)
+    return width, height
+
+
+def allow_shrinking(dialog, minimum=DEFAULT_MINIMUM, keep_whole=(), fit=True):
     """Free a dialog whose body already scrolls.
 
-    Setting the minimum explicitly is also what stops Qt from replacing it
-    with the layout's own, much larger, idea of a minimum."""
-    dialog.setMinimumSize(*minimum)
+    ``keep_whole`` names the rows that do not scroll and must fit as they
+    are (see ``floor_for``).  Setting the minimum explicitly is also what
+    stops Qt from replacing it with the layout's own, much larger, idea of
+    a minimum."""
+    dialog.setMinimumSize(*floor_for(dialog, minimum, keep_whole))
     dialog.setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)
     dialog.setSizeGripEnabled(True)
     layout = dialog.layout()
@@ -163,7 +195,9 @@ def make_shrinkable(dialog, minimum=DEFAULT_MINIMUM, header=(), pinned=(),
     for item in taken_pinned:
         _re_add(outer, item)
 
-    dialog.setMinimumSize(*minimum)
+    # The header and the pinned rows are exactly the parts that do not scroll
+    dialog.setMinimumSize(*floor_for(dialog, minimum, [
+        item for item in taken_header + taken_pinned if item is not None]))
     dialog.setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)
     dialog.setSizeGripEnabled(True)
     if fit:

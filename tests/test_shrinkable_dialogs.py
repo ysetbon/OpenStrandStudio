@@ -33,6 +33,8 @@ from shrinkable_dialog import (allow_shrinking, cap_to_screen, fit_to_screen,
 
 APP = QApplication.instance() or QApplication([])
 
+from main_window import MainWindow  # noqa: E402  (needs the QApplication first)
+
 # Every dialog built here stays referenced for the whole run: several of them
 # queue work with QTimer.singleShot(0, self...), which segfaults the
 # interpreter if the dialog is collected before it fires.
@@ -42,18 +44,35 @@ _KEEP = []
 SMALL_SCREEN = (800, 480)
 
 
+@pytest.fixture(scope='module', autouse=True)
+def app_theme():
+    """Run under the app's real theme stylesheet, which gives every button a
+    min-width: a floor that fits the buttons unstyled can leave the last one
+    off the edge once the theme is on."""
+    window = keep(MainWindow())
+    window.apply_theme('default')
+    assert 'QPushButton' in APP.styleSheet()
+    yield
+    APP.setStyleSheet('')
+
+
 def keep(dialog):
     _KEEP.append(dialog)
     return dialog
 
 
 def shrink(dialog):
-    """Show the dialog and drag it down as far as it will go."""
+    """Show the dialog, drag it down as far as it will go, and check that it
+    got all the way to its floor and that the floor fits a small screen."""
     keep(dialog)
     dialog.show()
     APP.processEvents()
     dialog.resize(1, 1)
     APP.processEvents()
+    floor = (dialog.minimumWidth(), dialog.minimumHeight())
+    assert size_of(dialog) == floor
+    assert floor[0] <= SMALL_SCREEN[0] and floor[1] <= SMALL_SCREEN[1], (
+        "%s cannot be shrunk to fit a %dx%d screen" % ((type(dialog).__name__,) + SMALL_SCREEN))
     return size_of(dialog)
 
 
@@ -161,6 +180,8 @@ def test_settings_dialog_shrinks_and_scrolls_its_pages():
     assert dialog.isSizeGripEnabled()
 
     assert shrink(dialog) == SettingsDialog.SHRUNK_MINIMUM
+    # The Settings dialog has no fixed row of its own: its floor is the one
+    # it names, whatever the theme does to buttons (they scroll)
     # Both halves are still there at the floor: pick a category, read a page
     assert dialog.categories_list.width() > 0 and dialog.pages_scroll.width() > 0
     dialog.categories_list.setCurrentRow(0)
@@ -218,7 +239,6 @@ def video_player_dialog():
 def test_video_player_shrinks_with_its_controls_reachable():
     dialog = video_player_dialog()
     shrink(dialog)
-    assert dialog.width() <= 320 and dialog.height() <= 220
     for button in (dialog.play_button, dialog.pause_button, dialog.close_button):
         assert fully_inside(button, dialog)
     dialog.hide()
@@ -247,7 +267,6 @@ WIDTH_DIALOGS = (layer_width_dialog, default_width_dialog)
 def test_width_dialogs_keep_ok_and_cancel_reachable_when_shrunk(build):
     dialog = build()
     shrink(dialog)
-    assert dialog.width() <= 300 and dialog.height() <= 200
     assert fully_inside(dialog.ok_button, dialog)
     assert fully_inside(dialog.cancel_button, dialog)
     dialog.reject()
@@ -277,9 +296,12 @@ SHADOW_EDITORS = (strand_shadow_editor, group_shadow_editor)
 def test_shadow_editors_shrink_with_close_still_reachable(build):
     dialog = build()
     shrink(dialog)
-    assert dialog.width() <= 360 and dialog.height() <= 280
     close = dialog.button_box.button(QDialogButtonBox.Close)
     assert fully_inside(close, dialog)
+    # The toggle row lines up with the list's columns and cannot wrap: it
+    # is what sets the floor width, and it is whole there
+    row = dialog.toggle_row if hasattr(dialog, 'toggle_row') else dialog.global_toggle_row
+    assert fully_inside(row, dialog)
     dialog.hide()
 
 
@@ -304,9 +326,17 @@ def strand_angle_dialog():
 def test_mask_grid_dialog_shrinks_with_its_grid_scrolling():
     dialog = mask_grid_dialog()
     shrink(dialog)
-    assert dialog.width() <= 340 and dialog.height() <= 240
     assert fully_inside(dialog.apply_button, dialog)
     assert fully_inside(dialog.close_button, dialog)
+    dialog.hide()
+
+
+def test_strand_angle_dialog_keeps_its_x_angle_row_whole():
+    dialog = strand_angle_dialog()
+    shrink(dialog)
+    assert fully_inside(dialog.x_angle_input, dialog)
+    for button in (dialog.minus_minus_button, dialog.plus_plus_button):
+        assert fully_inside(button, dialog)
     dialog.hide()
 
 
@@ -317,9 +347,6 @@ EVERY_DIALOG = ((settings_dialog, mask_grid_dialog, strand_angle_dialog, video_p
 @pytest.mark.parametrize('build', EVERY_DIALOG)
 def test_no_dialog_demands_more_room_than_a_small_screen(build):
     dialog = build()
-    floor = dialog.minimumSize()
-    assert (floor.width() <= SMALL_SCREEN[0] and floor.height() <= SMALL_SCREEN[1]), (
-        "%s cannot be shrunk to fit a %dx%d screen" %
-        (type(dialog).__name__, SMALL_SCREEN[0], SMALL_SCREEN[1]))
+    shrink(dialog)
     assert dialog.isSizeGripEnabled(), "%s has no size grip" % type(dialog).__name__
     dialog.hide()

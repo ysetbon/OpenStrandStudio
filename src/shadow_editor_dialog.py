@@ -693,8 +693,11 @@ class ShadowEditorDialog(QDialog):
 
         layout.addWidget(self.button_box)
 
-        # Freely shrinkable: the shadow list scrolls, Close stays reachable
-        allow_shrinking(self, minimum=(360, 260), fit=False)
+        # Freely shrinkable in height: the shadow list scrolls, Close stays
+        # reachable. The toggle row lines up with the list's columns and
+        # cannot wrap, so it is what sets the floor width.
+        allow_shrinking(self, minimum=(360, 260),
+                        keep_whole=[self.toggle_row, self.button_box], fit=False)
         cap_to_screen(self, 750, 500)
 
         # Connect canvas update signal to refresh when canvas changes

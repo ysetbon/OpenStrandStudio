@@ -332,7 +332,7 @@ class MaskGridDialog(QDialog):
         main_layout.addLayout(button_layout)
 
         # Freely shrinkable: the grid scrolls, Apply / Close stay reachable
-        allow_shrinking(self, minimum=(340, 240), fit=False)
+        allow_shrinking(self, minimum=(340, 240), keep_whole=[button_layout], fit=False)
         cap_to_screen(self, 800, 600)
 
     def _populate_table(self):

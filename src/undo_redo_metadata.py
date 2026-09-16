@@ -68,6 +68,7 @@ ACTIONS = {
     "strand.close_knot": "Closed a knot",
     "strand.paste": "Pasted strand data",
     "strand.width": "Changed strand width",
+    "strand.end_style": "Stylized an end side",
     "strand.shadow": "Edited strand shadow",
 
     # Groups

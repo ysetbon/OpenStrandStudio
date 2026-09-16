@@ -144,6 +144,9 @@ class MaskedStrand(Strand):
         shadow_stroker.setJoinStyle(Qt.MiterJoin)
         shadow_stroker.setCapStyle(Qt.RoundCap)  # Use RoundCap for smoother shadows
         shadow_path1 = shadow_stroker.createStroke(path1)
+        styled1 = self._styled_footprint(self.first_selected_strand, margin=shadow_width_offset / 2.0)
+        if not styled1.isEmpty():
+            shadow_path1 = styled1
         # Include start circle of attached strands when visible
         circle1 = self._get_strand_start_circle_path(self.first_selected_strand, shadow_width1 / 2)
         if not circle1.isEmpty():
@@ -156,6 +159,9 @@ class MaskedStrand(Strand):
         shadow_stroker.setJoinStyle(Qt.MiterJoin)
         shadow_stroker.setCapStyle(Qt.RoundCap)  # Use RoundCap for smoother shadows
         shadow_path2 = shadow_stroker.createStroke(path2)
+        styled2 = self._styled_footprint(self.second_selected_strand, margin=shadow_width_offset / 2.0)
+        if not styled2.isEmpty():
+            shadow_path2 = styled2
         # Include start circle of attached strands when visible
         circle2 = self._get_strand_start_circle_path(self.second_selected_strand, shadow_width2 / 2)
         if not circle2.isEmpty():
@@ -356,6 +362,19 @@ class MaskedStrand(Strand):
             caps = cap if caps.isEmpty() else caps.united(cap)
         return caps
 
+    def _styled_footprint(self, strand, inner=False, margin=0.0):
+        """The component's footprint when one of its free ends is stylized
+        (see end_style.py), else an empty path so the caller keeps its
+        classic stroker. Following the elliptical-cap precedent, the mask is
+        recomputed from the live components on every paint, so it follows a
+        trimmed, angled or extended end automatically."""
+        if not hasattr(strand, 'get_footprint_path'):
+            return QPainterPath()
+        try:
+            return strand.get_footprint_path(inner=inner, margin=margin)
+        except Exception:
+            return QPainterPath()
+
     def get_path_for_strand(self, strand):
         """Helper method to get the stroked path for a strand."""
         path = strand.get_path()
@@ -364,6 +383,9 @@ class MaskedStrand(Strand):
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
         stroked = stroker.createStroke(path)
+        styled = self._styled_footprint(strand, inner=True)
+        if not styled.isEmpty():
+            stroked = styled
         # Include start circle of attached strands when visible
         circle = self._get_strand_start_circle_path(strand, strand.width / 2)
         if not circle.isEmpty():
@@ -381,6 +403,9 @@ class MaskedStrand(Strand):
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
         stroked = stroker.createStroke(path)
+        styled = self._styled_footprint(strand)
+        if not styled.isEmpty():
+            stroked = styled
         # Include start circle of attached strands when visible
         circle = self._get_strand_start_circle_path(strand, (strand.width + strand.stroke_width * 2) / 2)
         if not circle.isEmpty():
@@ -398,6 +423,9 @@ class MaskedStrand(Strand):
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
         stroked = stroker.createStroke(path)
+        styled = self._styled_footprint(strand, margin=2.0)
+        if not styled.isEmpty():
+            stroked = styled
         # Include start circle of attached strands when visible
         circle = self._get_strand_start_circle_path(strand, (strand.width + strand.stroke_width * 2 + 4) / 2)
         if not circle.isEmpty():
@@ -416,6 +444,9 @@ class MaskedStrand(Strand):
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
         stroked = stroker.createStroke(path)
+        styled = self._styled_footprint(strand, margin=self.canvas.max_blur_radius / 2.0)
+        if not styled.isEmpty():
+            stroked = styled
         # Include start circle of attached strands when visible
         circle = self._get_strand_start_circle_path(strand, shadow_width / 2)
         if not circle.isEmpty():
@@ -435,6 +466,9 @@ class MaskedStrand(Strand):
         stroker.setJoinStyle(Qt.MiterJoin)
         stroker.setCapStyle(Qt.FlatCap)
         stroked = stroker.createStroke(path)
+        styled = self._styled_footprint(strand, margin=self.canvas.max_blur_radius / 2.0)
+        if not styled.isEmpty():
+            stroked = styled
         # Include start circle of attached strands when visible
         circle = self._get_strand_start_circle_path(strand, shadow_width / 2)
         if not circle.isEmpty():

@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout
 from strand import Strand
 from attached_strand import AttachedStrand
 from masked_strand import MaskedStrand
+from end_style import serialize_end_styles, deserialize_end_styles
 import sys
 
 
@@ -130,6 +131,8 @@ def serialize_strand(strand, canvas, index=None):
         "is_start_side": getattr(strand, 'is_start_side', True),
         "start_line_visible": getattr(strand, 'start_line_visible', True),
         "end_line_visible": getattr(strand, 'end_line_visible', True),
+        # Stylized free ends (None per end = classic look)
+        "end_styles": serialize_end_styles(strand),
         "is_hidden": getattr(strand, 'is_hidden', False),
         # NEW: Extension & Arrow visibility flags
         "start_extension_visible": getattr(strand, 'start_extension_visible', False),
@@ -500,6 +503,7 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
         strand.is_start_side = data.get("is_start_side", True)
         strand.start_line_visible = data.get("start_line_visible", True)
         strand.end_line_visible = data.get("end_line_visible", True)
+        strand.end_styles = deserialize_end_styles(data.get("end_styles"))
         strand.is_hidden = data.get("is_hidden", False)
         strand.shadow_only = data.get("shadow_only", False)
         strand.hide_shadow = data.get("hide_shadow", False)
@@ -771,6 +775,7 @@ def load_strands_from_data(data, canvas):
             # Visibility flags
             strand.start_line_visible = strand_data.get("start_line_visible", True)
             strand.end_line_visible = strand_data.get("end_line_visible", True)
+            strand.end_styles = deserialize_end_styles(strand_data.get("end_styles"))
 
             # NEW: Extension & Arrow visibility flags
             strand.start_extension_visible = strand_data.get("start_extension_visible", False)
@@ -943,6 +948,7 @@ def load_strands_from_data(data, canvas):
                 # Load visibility flags
                 strand.start_line_visible = masked_data.get("start_line_visible", True)
                 strand.end_line_visible = masked_data.get("end_line_visible", True)
+                strand.end_styles = deserialize_end_styles(masked_data.get("end_styles"))
                 
                 # NEW: Extension & Arrow visibility flags
                 strand.start_extension_visible = masked_data.get("start_extension_visible", False)

@@ -1407,6 +1407,58 @@ class NumberedLayerButton(QPushButton):
                 )
                 context_menu.addAction(close_knot_action)
 
+            # --- Stylize End Side: one flat button per free end (Start / End) ---
+            # Built like the Line row. Masked layers have no ends of their own;
+            # an attached strand can only style its end (its start is attached).
+            stylize_sides = []
+            if not isinstance(strand, MaskedStrand) and hasattr(strand, 'has_circles'):
+                if not isinstance(strand, AttachedStrand) and not strand.has_circles[0]:
+                    stylize_sides.append(0)
+                if len(strand.has_circles) > 1 and not strand.has_circles[1]:
+                    stylize_sides.append(1)
+            if stylize_sides:
+                context_menu.addSeparator()
+                stylize_widget = QWidget()
+                stylize_layout = QHBoxLayout(stylize_widget)
+                stylize_layout.setContentsMargins(5, 1, 5, 1)
+                stylize_label = QLabel(_['stylize_end_side'] if 'stylize_end_side' in _ else "Stylize End Side")
+                if is_hebrew:
+                    stylize_widget.setLayoutDirection(Qt.RightToLeft)
+                    stylize_label.setAlignment(Qt.AlignLeft)
+                stylize_layout.addWidget(stylize_label)
+                for stylize_side in stylize_sides:
+                    if stylize_side == 0:
+                        side_text = _['stylize_side_start'] if 'stylize_side_start' in _ else "Start"
+                    else:
+                        side_text = _['stylize_side_end'] if 'stylize_side_end' in _ else "End"
+                    side_btn = QPushButton(side_text)
+                    side_btn.setFlat(True)
+                    side_btn.clicked.connect(
+                        lambda checked=False, side=stylize_side: (
+                            context_menu.close(),
+                            self.open_end_style_dialog(strand, side, layer_panel),
+                        )
+                    )
+                    stylize_layout.addWidget(side_btn)
+                stylize_action = QWidgetAction(context_menu)
+                stylize_action.setDefaultWidget(stylize_widget)
+                context_menu.addAction(stylize_action)
+                if theme == "dark":
+                    stylize_style = """
+                        QPushButton { background-color: transparent; border: none; color: white; text-align: right; }
+                        QPushButton:hover { background-color: #F0F0F0; color: black; }
+                        QLabel { color: white; background-color: transparent; padding: 2px; }
+                    """
+                else:
+                    stylize_style = """
+                        QPushButton { background-color: transparent; border: none; color: black; text-align: right; }
+                        QPushButton:hover { background-color: #333333; color: white; }
+                        QLabel { color: black; background-color: transparent; padding: 2px; }
+                    """
+                for child in stylize_widget.findChildren(QWidget):
+                    child.setStyleSheet(stylize_style)
+            # --- END Stylize End Side ---
+
             # --- NEW: Add Transparent Ending Edge option for closed connections ---
             # Check if strand has closed connections at the end
             has_closed_ending = False
@@ -3839,6 +3891,20 @@ class NumberedLayerButton(QPushButton):
                     layer_panel.canvas.undo_redo_manager.save_state(
                         action='strand.width', source='dialog',
                         targets=[getattr(strand, 'layer_name', None)], detail='this layer only')
+
+    def open_end_style_dialog(self, strand, side, layer_panel):
+        """Open the Stylize End Side dialog for one free end (0 = start, 1 = end).
+
+        The dialog previews live on the canvas; it restores the opening
+        snapshot on Cancel and saves one undo step on OK, so nothing is applied
+        here beyond refreshing the masks that use this strand.
+        """
+        from end_style_dialog import EndStyleDialog
+        dialog = EndStyleDialog(strand, side, layer_panel, self)
+        dialog.exec_()
+        self._refresh_dependent_masks(strand, layer_panel)
+        if layer_panel and hasattr(layer_panel, 'canvas'):
+            layer_panel.canvas.update()
 
     def _refresh_dependent_masks(self, strand, layer_panel):
         """Recalculate any MaskedStrand that uses `strand` as a component.

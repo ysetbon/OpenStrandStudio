@@ -3368,6 +3368,9 @@ class GroupPanel(QWidget):
                 new_strand.start_line_visible = original.start_line_visible
             if hasattr(original, 'end_line_visible'):
                 new_strand.end_line_visible = original.end_line_visible
+            if hasattr(original, 'end_styles'):
+                from end_style import copy_style
+                new_strand.end_styles = [copy_style(original.end_styles[0]), copy_style(original.end_styles[1])]
             if hasattr(original, 'control_point_center_locked'):
                 new_strand.control_point_center_locked = original.control_point_center_locked
 

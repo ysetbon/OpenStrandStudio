@@ -775,6 +775,11 @@ class UndoRedoManager(QObject):
                          return False
                     # --- END ADD ---
 
+                    # --- Stylized free ends ---
+                    from end_style import serialize_end_styles
+                    if serialize_end_styles(current_strand) != prev_strand.get('end_styles', [None, None]):
+                        return False
+
                     # --- ADD: Check strand width and stroke_width ---
                     if hasattr(current_strand, 'width') and 'width' in prev_strand:
                         if abs(current_strand.width - prev_strand.get('width', 0)) > 0.1:

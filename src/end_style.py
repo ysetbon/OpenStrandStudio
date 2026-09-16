@@ -289,24 +289,92 @@ def _chord_extended(prof, half, ylim=None):
             QPointF(a.x() + d.x() * tb, a.y() + d.y() * tb))
 
 
-def _remove_region(prof, half, x_far, y_lim):
-    """Local-frame region OUTWARD of the profile, bounded by x = x_far and
-    |y| = y_lim: what the end style cuts away from the (extended) body.
+def _clip_polyline_y(pts, ylim):
+    """The polyline restricted to |y| <= ylim (crossing points inserted)."""
+    if not pts:
+        return []
+    out = []
+    prev = None
+    for p in pts:
+        inside = abs(p.y()) <= ylim
+        if prev is not None:
+            prev_inside = abs(prev.y()) <= ylim
+            if prev_inside != inside or (not prev_inside and not inside and (prev.y() > 0) != (p.y() > 0)):
+                # cross one or both bounds between prev and p
+                for bound in ((-ylim, ylim) if prev.y() < p.y() else (ylim, -ylim)):
+                    lo, hi = min(prev.y(), p.y()), max(prev.y(), p.y())
+                    if lo < bound < hi:
+                        t = (bound - prev.y()) / (p.y() - prev.y())
+                        out.append(QPointF(prev.x() + (p.x() - prev.x()) * t, bound))
+        if inside:
+            out.append(p)
+        prev = p
+    return out
 
-    The bounds are deliberately local. Everything that must go lies between
-    the profile and the extended body's flat cap, within its width; a region
-    reaching further would also cut a strand whose other arm passes in front
-    of this end (a U shape)."""
+
+def _runs_by_x(pts, x0, ahead):
+    """Runs of consecutive points ahead of (x > x0) or behind (x < x0) the
+    plane, each starting and ending on the plane."""
+    runs = []
+    run = []
+
+    def cross(a, b):
+        t = (x0 - a.x()) / (b.x() - a.x())
+        return QPointF(x0, a.y() + (b.y() - a.y()) * t)
+
+    prev = None
+    for p in pts:
+        keep = p.x() > x0 if ahead else p.x() < x0
+        if prev is not None:
+            prev_keep = prev.x() > x0 if ahead else prev.x() < x0
+            if prev_keep != keep:
+                c = cross(prev, p)
+                if keep:
+                    run = [c]
+                else:
+                    run.append(c)
+                    runs.append(run)
+                    run = []
+        if keep:
+            run.append(p)
+        prev = p
+    if len(run) >= 2:
+        runs.append(run)
+    return [r for r in runs if len(r) >= 2]
+
+
+def _runs_to_polygons(runs, x0):
+    """Close each run back along the plane x = x0 into a simple polygon."""
+    polys = []
+    for run in runs:
+        poly = QPainterPath()
+        poly.moveTo(QPointF(x0, run[0].y()))
+        for q in run:
+            poly.lineTo(q)
+        poly.lineTo(QPointF(x0, run[-1].y()))
+        poly.closeSubpath()
+        polys.append(poly)
+    return polys
+
+
+def _ahead_polygons(prof, half, y_lim, x0=-1.0):
+    """The region between the plane x = x0 (just behind the endpoint) and the
+    profile, where the profile is ahead of it, within |y| <= y_lim: the cap
+    piece that is *added* to the classic body. Built directly, one simple
+    polygon per run, so no boolean operation is needed."""
+    first, last = _chord_extended(prof, half, y_lim + 1.0)
+    pts = _clip_polyline_y([first] + list(prof) + [last], y_lim)
+    return _runs_to_polygons(_runs_by_x(pts, x0, ahead=True), x0)
+
+
+def _behind_polygons(prof, half, y_lim, x0=0.0):
+    """The region outward of the profile but behind the plane x = x0: what a
+    cut *removes* from the classic body. Nothing ahead of the endpoint plane
+    is ever removed, so a body that bends back in front of its own end (a
+    tight curl) keeps every pixel it has today."""
     first, last = _chord_extended(prof, half, y_lim)
-    poly = QPainterPath()
-    poly.moveTo(first)
-    for p in prof:
-        poly.lineTo(p)
-    poly.lineTo(last)
-    poly.lineTo(QPointF(x_far, last.y()))
-    poly.lineTo(QPointF(x_far, first.y()))
-    poly.closeSubpath()
-    return poly
+    pts = [first] + list(prof) + [last]
+    return _runs_to_polygons(_runs_by_x(pts, x0, ahead=False), x0)
 
 
 def _band_region(prof, inner_prof, half, y_lim):
@@ -432,7 +500,7 @@ def end_frame(strand, side):
 class StyledEnd:
     """The local-frame pieces of one styled end, mapped to canvas coords."""
 
-    def __init__(self, strand, side, style, line_visible):
+    def __init__(self, strand, side, style, line_visible, frame=None):
         self.side = side
         self.style = style
         self.line_visible = bool(line_visible)
@@ -448,7 +516,7 @@ class StyledEnd:
         self.band_width = self.line_width if self.line_visible else 0.0
         self.base_x = self.band_width + float(style.get('offset', 0.0))
 
-        point, angle = end_frame(strand, side)
+        point, angle = frame if frame is not None else end_frame(strand, side)
         self.point = point
         self.angle = angle
         self.transform = QTransform()
@@ -467,15 +535,6 @@ class StyledEnd:
         # (endpoint plane + side line) would put it: decorations anchored on
         # the endpoint (dash extension, small arrow) are shifted by this.
         self.extent_shift = self.max_x - self.band_width
-        # The centre line is continued straight past the endpoint by this much
-        # before stroking, so the body reaches the profile (the cut then trims
-        # it back). Its flat cap and long edges are then exactly aligned with
-        # the profile's frame, which a polygon glued onto the stroked body is
-        # not (the stroker's cap follows its own flattening of the curve).
-        self.extension_length = max(0.0, self.max_x) + 2.0
-        # Local x of the extended centre line's far end; set by the geometry
-        # once the base path is known (the shadow base is itself longer).
-        self.cap_x = self.extension_length
         self.edge = self.transform.map(_edge_path(self.profile, half))
         self.corners = (self.transform.map(self.profile[0]), self.transform.map(self.profile[-1]))
         self._cuts = {}
@@ -484,33 +543,69 @@ class StyledEnd:
         return ((point.x() - self.point.x()) * self.unit.x()
                 + (point.y() - self.point.y()) * self.unit.y())
 
-    def _cut(self, prof, margin):
-        # Past the extended body's flat cap by half a width: at a tight bend
-        # the stroker's mitred corner reaches a few pixels beyond the cap.
-        x_far = self.cap_x + self.half + margin
-        y_lim = 1.5 * self.half + margin
-        return self.transform.map(_remove_region(prof, self.half, x_far, y_lim))
+    def _mapped(self, polygons):
+        return [self.transform.map(poly) for poly in polygons]
 
-    def remove(self, margin=0.0):
-        """Everything outward of the profile (the cut), for a body stroked
-        ``margin`` wider than the strand."""
-        key = ('remove', round(margin, 3))
+    # The cut plane sits a hair ahead of the endpoint plane, so the body's
+    # own flat cap (and the mitre spike a tight bend leaves along it) falls
+    # cleanly inside the cut instead of straddling its edge.
+    CUT_PLANE = 0.5
+
+    def behind_cuts(self, margin=0.0, x0=CUT_PLANE):
+        """Polygons removed from the classic body (outward of the profile,
+        behind the endpoint plane) for a body stroked ``margin`` wider."""
+        key = ('behind', round(margin, 3), round(x0, 3))
         if key not in self._cuts:
-            self._cuts[key] = self._cut(self.profile, margin)
+            self._cuts[key] = self._mapped(_behind_polygons(self.profile, self.half, 1.5 * self.half + margin, x0))
         return self._cuts[key]
 
-    def fill_cut(self):
-        """Everything outward of the side line's inner edge: what the fill
-        loses. With the line hidden it is the cut itself."""
-        key = ('fill', 0.0)
+    def behind_fill_cuts(self, x0=CUT_PLANE):
+        """The same for the fill, along the side line's inner edge."""
+        key = ('behind_fill', round(x0, 3))
         if key not in self._cuts:
-            self._cuts[key] = self._cut(self.inner_profile, 0.0) if self.band_width > 0 else self.remove()
+            prof = self.inner_profile if self.band_width > 0 else self.profile
+            self._cuts[key] = self._mapped(_behind_polygons(prof, self.half, 1.5 * self.half, x0))
+        return self._cuts[key]
+
+    def ahead_pieces(self, margin=0.0):
+        """Polygons added ahead of the endpoint plane, to the stroke body of
+        half-width ``half + margin``."""
+        key = ('ahead', round(margin, 3))
+        if key not in self._cuts:
+            self._cuts[key] = self._mapped(_ahead_polygons(self.profile, self.half, self.half + margin))
+        return self._cuts[key]
+
+    def ahead_fill_pieces(self):
+        """Polygons added ahead of the endpoint plane to the fill body."""
+        key = ('ahead_fill', 0.0)
+        if key not in self._cuts:
+            prof = self.inner_profile if self.band_width > 0 else self.profile
+            self._cuts[key] = self._mapped(_ahead_polygons(prof, self.half, self.half - self.stroke_width))
+        return self._cuts[key]
+
+    def remove(self, margin=0.0):
+        """Everything outward of the profile within the cap zone, as one path
+        (for the highlight and other whole-region users)."""
+        key = ('remove', round(margin, 3))
+        if key not in self._cuts:
+            y_lim = 1.5 * self.half + margin
+            first, last = _chord_extended(self.profile, self.half, y_lim)
+            x_far = self.max_x + self.half + margin + 12.0
+            poly = QPainterPath()
+            poly.moveTo(first)
+            for p in self.profile:
+                poly.lineTo(p)
+            poly.lineTo(last)
+            poly.lineTo(QPointF(x_far, last.y()))
+            poly.lineTo(QPointF(x_far, first.y()))
+            poly.closeSubpath()
+            self._cuts[key] = self.transform.map(poly)
         return self._cuts[key]
 
     def zone(self, margin=0.0):
         """Local rectangle around the cap, mapped to canvas coords."""
         x_min = min(self.min_x, -1.0) - 2.0 * margin - 2.0
-        x_max = self.cap_x + self.half + margin
+        x_max = self.max_x + self.half + margin + 12.0
         y = 1.5 * self.half + margin
         rect = QPainterPath()
         rect.addRect(x_min, -y, x_max - x_min, 2.0 * y)
@@ -518,7 +613,7 @@ class StyledEnd:
 
     def band(self):
         """The side-line band: the strip between the side line's inner edge
-        and the profile, continued a little past the strand's width.
+        and the profile, across the strand's width.
 
         It is a plain polygon, not clipped to the body: callers paint it with
         the outer footprint as the painter's clip path (antialiased in the
@@ -528,16 +623,36 @@ class StyledEnd:
             return QPainterPath()
         key = ('band', 0.0)
         if key not in self._cuts:
+            # Exactly the strand's width, like the classic side line: a body
+            # that bulges or curls past the width next to its end is body,
+            # not side line.
             self._cuts[key] = self.transform.map(
-                _band_region(self.profile, self.inner_profile, self.half, 1.5 * self.half))
+                _band_region(self.profile, self.inner_profile, self.half, self.half + _EDGE_CLEARANCE))
         return self._cuts[key]
+
+
+def _signed_area(path):
+    area = 0.0
+    for polygon in path.toSubpathPolygons():
+        n = polygon.count()
+        for i in range(n):
+            a, b = polygon[i], polygon[(i + 1) % n]
+            area += a.x() * b.y() - b.x() * a.y()
+    return area
 
 
 class EndStyleGeometry:
     """Outer footprint / inner fill / side-line bands of a strand whose free
     end(s) carry a style. ``base_path`` defaults to ``strand.get_path()``; the
     shadow code passes ``strand.get_shadow_path()`` so the unstyled end keeps
-    its classic shadow extension."""
+    its classic shadow extension.
+
+    The body is the classic stroke of the centre line, plus polygons built
+    directly for whatever the profile adds ahead of the endpoint plane, minus
+    polygons for whatever it removes behind that plane. Nothing ahead of the
+    plane is ever removed from the classic body, so a strand that bends back
+    in front of its own end keeps every pixel it has today, and with the
+    default record the drawing is the classic one."""
 
     def __init__(self, strand, sides, base_path=None):
         self.strand = strand
@@ -552,60 +667,92 @@ class EndStyleGeometry:
                 continue
             visible = bool(strand.start_line_visible if side == 0 else strand.end_line_visible)
             self.ends[side] = StyledEnd(strand, side, style, visible)
+        self._strokes = {}
 
-        self.extended_path = self._extend_base_path()
-        self.body = _stroke(self.extended_path, self.total, Qt.MiterJoin, Qt.FlatCap)
-        outer = self.body
-        for end in self.ends.values():
-            outer = outer.subtracted(end.remove())
-        outer.setFillRule(Qt.WindingFill)
-        self.outer = outer
+        # Paint bodies: winding-filled multi-subpath paths, no boolean ops
+        self.body = self._paint_body(self.total, [p for e in self.ends.values() for p in e.ahead_pieces()])
+        self._fill_body = None
+        # Boolean footprint for selection, shadows and masks
+        self.outer = self._boolean_footprint(
+            self.total, Qt.MiterJoin,
+            [p for e in self.ends.values() for p in e.ahead_pieces()],
+            [p for e in self.ends.values() for p in e.behind_cuts()])
         self._inner = None
         self._bands = {}
         self._dilated = {}
 
-    def _extend_base_path(self):
-        """The centre line continued straight along the tangent at each styled
-        end, far enough to reach the profile. Each end also learns where that
-        continuation stops (its cuts reach exactly that far)."""
-        path = QPainterPath(self.base_path)
-        if path.isEmpty():
-            return path
-        if 1 in self.ends:
-            end = self.ends[1]
-            last = path.currentPosition()
-            far = QPointF(last.x() + end.unit.x() * end.extension_length,
-                          last.y() + end.unit.y() * end.extension_length)
-            path.lineTo(far)
-            end.cap_x = end.local_x(far)
-        if 0 in self.ends:
-            start = self.ends[0]
-            first_element = path.elementAt(0)
-            first = QPointF(first_element.x, first_element.y)
-            far = QPointF(first.x() + start.unit.x() * start.extension_length,
-                          first.y() + start.unit.y() * start.extension_length)
-            prefix = QPainterPath()
-            prefix.moveTo(far)
-            prefix.lineTo(first)
-            prefix.connectPath(path)
-            path = prefix
-            start.cap_x = start.local_x(far)
-        return path
+    # -- bodies -------------------------------------------------------------
+    def _classic(self, width, join=Qt.MiterJoin):
+        key = (round(width, 3), int(join))
+        if key not in self._strokes:
+            self._strokes[key] = _stroke(self.base_path, width, join, Qt.FlatCap)
+        return self._strokes[key]
 
-    # -- fill -------------------------------------------------------------
+    def _paint_body(self, width, pieces, join=Qt.MiterJoin):
+        body = QPainterPath()
+        body.setFillRule(Qt.WindingFill)
+        body.addPath(self._classic(width, join))
+        for piece in pieces:
+            body.addPath(piece)
+        return body
+
+    def _boolean_footprint(self, width, join, pieces, cuts):
+        """(classic − cuts) ∪ pieces, for the path consumers."""
+        result = self._classic(width, join)
+        for cut in cuts:
+            result = result.subtracted(cut)
+        for piece in pieces:
+            result = result.united(piece)
+        result.setFillRule(Qt.WindingFill)
+        return result
+
+    # -- painting without the clipper ------------------------------------
+    # What the canvas paints never goes through QPainterPath's boolean ops:
+    # the classic body plus the cap pieces are drawn with the painter
+    # clipped to everything but the cut polygons. Clip paths honour fill
+    # rules and are antialiased, so this is exact where the clipper is not.
+    def fill_body(self):
+        """The uncut fill body (paint it under keep_inner_clip)."""
+        if self._fill_body is None:
+            self._fill_body = self._paint_body(
+                self.width, [p for e in self.ends.values() for p in e.ahead_fill_pieces()])
+        return self._fill_body
+
+    def _keep_clip(self, polygons):
+        """Winding-filled clip: a big rectangle (+1) minus the cut polygons
+        (oriented against the rectangle)."""
+        rect_path = QPainterPath()
+        pad = 6.0 * self.total + 20.0
+        rect_path.addRect(self.body.boundingRect().adjusted(-pad, -pad, pad, pad))
+        rect_sign = _signed_area(rect_path) >= 0
+        clip = QPainterPath()
+        clip.setFillRule(Qt.WindingFill)
+        clip.addPath(rect_path)
+        for polygon in polygons:
+            if (_signed_area(polygon) >= 0) == rect_sign:
+                polygon = polygon.toReversed()
+            clip.addPath(polygon)
+        return clip
+
+    def keep_outer_clip(self):
+        """Everything but the cuts: clip for painting the stroke body."""
+        return self._keep_clip([p for e in self.ends.values() for p in e.behind_cuts()])
+
+    def keep_inner_clip(self):
+        """Everything but the fill cuts: clip for painting the fill body."""
+        return self._keep_clip([p for e in self.ends.values() for p in e.behind_fill_cuts()])
+
+    # -- boolean footprints -------------------------------------------------
     def inner(self):
-        """The fill: the (extended) fill stroker cut back to each side line's
-        inner edge. One polygon cut per end, the same shape of operation as
-        the outer footprint's cut, which the clipper handles reliably."""
+        """The fill footprint: the fill body cut back to each side line's
+        inner edge."""
         if self._inner is None:
-            inner = _stroke(self.extended_path, self.width, Qt.MiterJoin, Qt.FlatCap)
-            for end in self.ends.values():
-                inner = inner.subtracted(end.fill_cut())
-            inner.setFillRule(Qt.WindingFill)
-            self._inner = inner
+            self._inner = self._boolean_footprint(
+                self.width, Qt.MiterJoin,
+                [p for e in self.ends.values() for p in e.ahead_fill_pieces()],
+                [p for e in self.ends.values() for p in e.behind_fill_cuts()])
         return self._inner
 
-    # -- side line ----------------------------------------------------------
     def band(self, side):
         if side not in self.ends:
             return QPainterPath()
@@ -617,7 +764,6 @@ class EndStyleGeometry:
         end = self.ends.get(side)
         return end.extent_shift if end else 0.0
 
-    # -- margins (shadow / mask helpers) ------------------------------------
     def dilated(self, margin, join=Qt.MiterJoin):
         """The outer footprint pushed outward by ``margin``.
 
@@ -629,9 +775,10 @@ class EndStyleGeometry:
         key = (round(margin, 3), int(join))
         if key in self._dilated:
             return self._dilated[key]
-        result = _stroke(self.extended_path, self.total + 2.0 * margin, join, Qt.FlatCap)
-        for end in self.ends.values():
-            result = result.subtracted(end.remove(margin))
+        result = self._boolean_footprint(
+            self.total + 2.0 * margin, join,
+            [p for e in self.ends.values() for p in e.ahead_pieces(margin)],
+            [p for e in self.ends.values() for p in e.behind_cuts(margin)])
         for end in self.ends.values():
             piece = self.outer.intersected(end.zone(margin))
             if not piece.isEmpty():

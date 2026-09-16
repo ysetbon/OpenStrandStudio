@@ -1015,7 +1015,8 @@ class AttachedStrand(Strand):
             # Stylized free end replaces the flat cap with its own footprint
             _end_geometry = self._end_geometry()
             if _end_geometry is not None:
-                stroke_path = QPainterPath(_end_geometry.outer)
+                # Uncut extended body; the cut is applied as a clip when painting
+                stroke_path = QPainterPath(_end_geometry.body)
                 stroke_path.setFillRule(Qt.WindingFill)
             # --- END ADD BACK ---
 
@@ -1225,7 +1226,7 @@ class AttachedStrand(Strand):
                 fill_path = fill_stroker.createStroke(path)
                 fill_path.setFillRule(Qt.WindingFill)
                 if _end_geometry is not None:
-                    fill_path = QPainterPath(_end_geometry.inner())
+                    fill_path = QPainterPath(_end_geometry.fill_body())
                     fill_path.setFillRule(Qt.WindingFill)
                 combined_fill_path = QPainterPath()
                 combined_fill_path.setFillRule(Qt.WindingFill)
@@ -1466,12 +1467,7 @@ class AttachedStrand(Strand):
 
                 # Now paint everything together - stroke first, then fill
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.stroke_color)
-                painter.drawPath(combined_stroke_path)
-
-                painter.setPen(Qt.NoPen)  # Explicitly set pen to NoPen again before fill
-                painter.setBrush(self.color)
-                painter.drawPath(combined_fill_path)
+                self._paint_body_paths(painter, combined_stroke_path, combined_fill_path, _end_geometry)
        
                 # Draw the end line conditionally this is after drawing the combined_stroke_path and combined_fill_path
                 # (classic stroke_width line, or the styled band of a stylized free end)
@@ -2828,7 +2824,8 @@ class AttachedStrand(Strand):
             # Stylized free end replaces the flat cap with its own footprint
             _end_geometry = self._end_geometry()
             if _end_geometry is not None:
-                stroke_path = QPainterPath(_end_geometry.outer)
+                # Uncut extended body; the cut is applied as a clip when painting
+                stroke_path = QPainterPath(_end_geometry.body)
                 stroke_path.setFillRule(Qt.WindingFill)
             # --- END ADD BACK ---
 
@@ -3038,7 +3035,7 @@ class AttachedStrand(Strand):
                 fill_path = fill_stroker.createStroke(path)
                 fill_path.setFillRule(Qt.WindingFill)
                 if _end_geometry is not None:
-                    fill_path = QPainterPath(_end_geometry.inner())
+                    fill_path = QPainterPath(_end_geometry.fill_body())
                     fill_path.setFillRule(Qt.WindingFill)
                 combined_fill_path = QPainterPath()
                 combined_fill_path.setFillRule(Qt.WindingFill)
@@ -3279,12 +3276,7 @@ class AttachedStrand(Strand):
 
                 # Now paint everything together - stroke first, then fill
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.stroke_color)
-                painter.drawPath(combined_stroke_path)
-
-                painter.setPen(Qt.NoPen)  # Explicitly set pen to NoPen again before fill
-                painter.setBrush(self.color)
-                painter.drawPath(combined_fill_path)
+                self._paint_body_paths(painter, combined_stroke_path, combined_fill_path, _end_geometry)
        
                 # Draw the end line conditionally this is after drawing the combined_stroke_path and combined_fill_path
                 # (classic stroke_width line, or the styled band of a stylized free end)

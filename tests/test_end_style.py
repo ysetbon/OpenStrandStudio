@@ -206,21 +206,23 @@ def test_styled_end_layers_nest_correctly(style, curve, side):
     assert {px for px in erode(inner) if near(px)} - folds <= outer
     assert {px for px in erode(band) if near(px)} <= outer
     # The cut continues straight along its own line past the width, so the
-    # limit is the farthest point of the chord-extended profile.
-    # (Within the cut's own width band: a strongly curved strand may swing
-    # back in front of its own end further out, and that is body, not cap.)
+    # limit is the farthest point of the chord-extended profile. Only what
+    # lies behind the endpoint plane is ever removed: pixels beyond the
+    # limit must all be classic body (a bend swinging in front of its end,
+    # or the stroker's mitred cap corner).
     end = geometry.ends[side]
     limit = max(p.x() for p in end.profile + list(end_style._chord_extended(end.profile, end.half))) + 1.5
     in_band = lambda px: abs(local_y(strand, side, px)) <= 1.5 * end.half - 1
-    assert all(local_x(strand, side, px) <= limit for px in outer if in_band(px))
-    assert all(local_x(strand, side, px) <= limit for px in inner if in_band(px))
+    assert {px for px in outer if in_band(px) and local_x(strand, side, px) > limit} <= classic_stroke
+    assert {px for px in inner if in_band(px) and local_x(strand, side, px) > limit} <= classic_fill
 
     # The fill is inset by the line width along the profile, by the stroke
     # width along the long edges: outline pixels form a closed ring.
     ring = outer - inner
     assert len(ring) > 400
     band_thickness = style.get('line_width') or strand.stroke_width
-    assert not (erode(band, max(1, int(band_thickness // 2) - 1)) & inner)
+    ahead = lambda px: local_x(strand, side, px) > -1.0  # the cut plane itself is edge pixels
+    assert not {px for px in erode(band, max(1, int(band_thickness // 2) - 1)) & inner if not ahead(px)}
 
     # The other end is untouched: it reaches exactly as far as the classic cap.
     other = 1 - side
@@ -614,4 +616,64 @@ def test_dialog_thickness_at_stroke_width_keeps_following_change_width():
     assert strand.get_end_style(1)['line_width'] == 9
     dialog.reset_button.click()
     assert strand.get_end_style(1) is None
+    dialog.reject()
+
+
+def _preview_pixels(dialog):
+    pixmap = dialog.preview_label.pixmap()
+    image = pixmap.toImage()
+    return image
+
+
+def test_preview_paints_the_classic_end_exactly_like_angled_zero():
+    """An unstyled end and an 'Angled 0°' end are the same drawing, so the
+    preview must show the same picture for both (the classic preview used to
+    stroke the fill with a square cap that overran the endpoint)."""
+    strand = make_strand(cp1=(190, 110), cp2=(310, 190))
+    dialog, _ = open_dialog(strand, 1)
+    classic = _preview_pixels(dialog)
+    dialog.shape_buttons['angled'].click()
+    angled = _preview_pixels(dialog)
+    assert classic.size() == angled.size()
+
+    # The styled body is the classic stroke plus a cap piece, so the only
+    # admissible differences are anti-aliasing shifts of at most a pixel.
+    # Compare 5x5 box-blurred luminance: a one-pixel edge shift moves it by
+    # ~50 at most, a real notch or a missing side line by far more.
+    w, h = classic.width(), classic.height()
+
+    def luminance(image):
+        return [[image.pixelColor(x, y).lightness() for x in range(w)] for y in range(h)]
+
+    def blur(rows):
+        out = []
+        for y in range(2, h - 2):
+            line = []
+            for x in range(2, w - 2):
+                line.append(sum(rows[y + dy][x + dx] for dy in range(-2, 3) for dx in range(-2, 3)) / 25.0)
+            out.append(line)
+        return out
+
+    a, b = blur(luminance(classic)), blur(luminance(angled))
+    off = sum(1 for ra, rb in zip(a, b) for va, vb in zip(ra, rb) if abs(va - vb) > 60)
+    assert off < 40
+    dialog.reject()
+
+
+def test_preview_keeps_canvas_orientation_and_shows_the_side_line():
+    """The preview is centred on the endpoint, in the canvas's orientation:
+    a strand running left-to-right shows its body to the left of its end,
+    and the classic side line (stroke colour) sits just past the endpoint."""
+    strand = make_strand()  # start (40,100) -> end (260,100)
+    dialog, _ = open_dialog(strand, 1)
+    image = _preview_pixels(dialog)
+    cx, cy = image.width() // 2, image.height() // 2
+    fill = strand.color.getRgb()[:3]
+    # Body (fill colour) to the left of the endpoint, none to the right
+    assert image.pixelColor(cx - 40, cy).getRgb()[:3] == fill
+    assert image.pixelColor(cx + 40, cy).getRgb()[:3] != fill
+    # Side line: stroke colour right after the endpoint plane
+    ratio, scale = 2, min(1.6, 0.6 * 120 / 54)
+    probe = int(cx + 2 * scale * ratio)
+    assert image.pixelColor(probe, cy).getRgb()[:3] == strand.stroke_color.getRgb()[:3]
     dialog.reject()

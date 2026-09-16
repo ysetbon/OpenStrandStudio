@@ -722,6 +722,32 @@ class Strand:
             return QColor(style['line_color'])
         return QColor(self.stroke_color)
 
+    def _paint_body_paths(self, painter, stroke_path, fill_path, geometry=None):
+        """Paint the stroke body then the fill body. With a styled end the
+        paths are the uncut extended bodies and the painter is clipped to
+        everything but the cut polygons (see EndStyleGeometry)."""
+        painter.setPen(Qt.NoPen)
+        if geometry is None:
+            painter.setBrush(self.stroke_color)
+            painter.drawPath(stroke_path)
+            painter.setBrush(self.color)
+            painter.drawPath(fill_path)
+            return
+        painter.save()
+        try:
+            painter.setClipPath(geometry.keep_outer_clip(), Qt.IntersectClip)
+            painter.setBrush(self.stroke_color)
+            painter.drawPath(stroke_path)
+        finally:
+            painter.restore()
+        painter.save()
+        try:
+            painter.setClipPath(geometry.keep_inner_clip(), Qt.IntersectClip)
+            painter.setBrush(self.color)
+            painter.drawPath(fill_path)
+        finally:
+            painter.restore()
+
     def _draw_side_lines(self, painter):
         """Paint the side line of each free end: the classic stroke_width line
         in the stroke colour, or the styled band in its own colour."""
@@ -732,10 +758,10 @@ class Strand:
                 band = self.get_end_band_path(side)
                 if band.isEmpty():
                     continue
-                # The band is a plain strip; the footprint clips it to the body
+                # The band is a plain strip; the (uncut) body clips it
                 painter.save()
                 try:
-                    painter.setClipPath(self.get_footprint_path(), Qt.IntersectClip)
+                    painter.setClipPath(self._end_geometry().body, Qt.IntersectClip)
                     painter.setPen(Qt.NoPen)
                     painter.setBrush(self.side_line_color_for(side))
                     painter.drawPath(band)
@@ -2679,7 +2705,8 @@ class Strand:
             # Stylized free ends replace the flat cap with their own footprint
             _end_geometry = self._end_geometry()
             if _end_geometry is not None:
-                stroke_path = QPainterPath(_end_geometry.outer)
+                # Uncut extended body; the cut is applied as a clip when painting
+                stroke_path = QPainterPath(_end_geometry.body)
                 stroke_path.setFillRule(Qt.WindingFill)
 
             # Draw shadow for overlapping strands - using the utility function
@@ -2767,7 +2794,7 @@ class Strand:
             fill_path = fill_stroker.createStroke(path)
             fill_path.setFillRule(Qt.WindingFill)
             if _end_geometry is not None:
-                fill_path = QPainterPath(_end_geometry.inner())
+                fill_path = QPainterPath(_end_geometry.fill_body())
                 fill_path.setFillRule(Qt.WindingFill)
 
             # Create combined paths (like attached_strand.py)
@@ -2918,12 +2945,7 @@ class Strand:
             if not getattr(self, 'shadow_only', False):
                 # Draw combined_stroke_path with the stroke color
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.stroke_color)
-                painter.drawPath(combined_stroke_path)
-
-                # Draw combined_fill_path with the strand's color
-                painter.setBrush(self.color)
-                painter.drawPath(combined_fill_path)
+                self._paint_body_paths(painter, combined_stroke_path, combined_fill_path, _end_geometry)
 
                 # Draw the side lines conditionally - this is after drawing the combined_stroke_path and combined_fill_path
                 # (classic stroke_width line, or the styled band of a stylized free end)
@@ -3416,7 +3438,8 @@ class Strand:
             # Stylized free ends replace the flat cap with their own footprint
             _end_geometry = self._end_geometry()
             if _end_geometry is not None:
-                stroke_path = QPainterPath(_end_geometry.outer)
+                # Uncut extended body; the cut is applied as a clip when painting
+                stroke_path = QPainterPath(_end_geometry.body)
                 stroke_path.setFillRule(Qt.WindingFill)
 
             # Draw shadow for overlapping strands - using the utility function
@@ -3504,7 +3527,7 @@ class Strand:
             fill_path = fill_stroker.createStroke(path)
             fill_path.setFillRule(Qt.WindingFill)
             if _end_geometry is not None:
-                fill_path = QPainterPath(_end_geometry.inner())
+                fill_path = QPainterPath(_end_geometry.fill_body())
                 fill_path.setFillRule(Qt.WindingFill)
 
             # Create combined paths (like attached_strand.py)
@@ -3655,12 +3678,7 @@ class Strand:
             if not getattr(self, 'shadow_only', False):
                 # Draw combined_stroke_path with the stroke color
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.stroke_color)
-                painter.drawPath(combined_stroke_path)
-
-                # Draw combined_fill_path with the strand's color
-                painter.setBrush(self.color)
-                painter.drawPath(combined_fill_path)
+                self._paint_body_paths(painter, combined_stroke_path, combined_fill_path, _end_geometry)
 
                 # Draw the side lines conditionally - this is after drawing the combined_stroke_path and combined_fill_path
                 # (classic stroke_width line, or the styled band of a stylized free end)

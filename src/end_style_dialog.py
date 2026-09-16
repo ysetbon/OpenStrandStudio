@@ -14,7 +14,7 @@ import math
 
 from PyQt5.QtCore import Qt, QPointF, QSize, QTimer
 from PyQt5.QtGui import (QColor, QIcon, QImage, QIntValidator, QPainter, QPainterPath,
-                         QPen, QPixmap)
+                         QPainterPathStroker, QPen, QPixmap)
 from PyQt5.QtWidgets import (QButtonGroup, QCheckBox, QColorDialog, QDialog, QFrame,
                              QHBoxLayout, QLabel, QLineEdit, QPushButton, QSlider,
                              QSpinBox, QStyleFactory, QToolButton, QVBoxLayout, QWidget)
@@ -37,6 +37,10 @@ SHAPE_KEYS = (
 
 def _tr(_, key, fallback):
     return _[key] if key in _ else fallback
+
+
+def total_width(strand):
+    return float(strand.width) + 2.0 * float(strand.stroke_width)
 
 
 def _dialog_stylesheet(theme):
@@ -384,22 +388,14 @@ class EndStyleDialog(QDialog):
         if shape == 'straight':
             style['offset'] = 0.001  # any non-default value so the styled path is used
         sample.set_end_style(1, style)
-        geometry = sample._end_geometry()
-        if geometry is not None:
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(sample.stroke_color)
-            painter.drawPath(geometry.outer)
-            painter.setBrush(sample.color)
-            painter.drawPath(geometry.inner())
-            painter.setClipPath(geometry.outer)
-            painter.setBrush(sample.stroke_color)
-            painter.drawPath(geometry.band(1))
+        self._paint_strand_body(painter, sample)
         painter.end()
         return QIcon(QPixmap.fromImage(image))
 
     def _refresh_preview(self):
-        """Draw the real end with the current settings, the outward direction
-        pointing right, the endpoint marked with a dashed green circle."""
+        """Draw the real end with the current settings, exactly as the canvas
+        draws it and in the canvas's own orientation, centred on the endpoint
+        (marked with a dashed green circle)."""
         w, h = 380, 120
         ratio = 2
         image = QImage(w * ratio, h * ratio, QImage.Format_ARGB32_Premultiplied)
@@ -416,38 +412,13 @@ class EndStyleDialog(QDialog):
         strand = self.strand
         total = float(strand.width) + 2.0 * float(strand.stroke_width)
         scale = min(1.6, 0.6 * h / max(total, 1.0))
-        point, angle = end_style.end_frame(strand, self.side)
-        painter.translate(w * 0.62, h / 2.0)
+        point = strand.start if self.side == 0 else strand.end
+        painter.translate(w / 2.0, h / 2.0)
         painter.scale(scale, scale)
-        painter.rotate(-math.degrees(angle))
         painter.translate(-point.x(), -point.y())
 
-        geometry = strand._end_geometry()
-        painter.setPen(Qt.NoPen)
-        if geometry is not None:
-            painter.setBrush(strand.stroke_color)
-            painter.drawPath(geometry.outer)
-            painter.setBrush(strand.color)
-            painter.drawPath(geometry.inner())
-            painter.save()
-            painter.setClipPath(geometry.outer)
-            for side in geometry.ends:
-                if strand._end_side_line_visible(side):
-                    painter.setBrush(strand.side_line_color_for(side))
-                    painter.drawPath(geometry.band(side))
-            painter.restore()
-        else:
-            # Default look: the classic flat cap and side line
-            painter.setBrush(strand.stroke_color)
-            painter.drawPath(strand.get_body_selection_path())
-            fill = QPainterPath(strand.get_stroked_path(strand.width))
-            painter.setBrush(strand.color)
-            painter.drawPath(fill)
-            for side in (0, 1):
-                decoration = strand.get_end_decoration_path(side)
-                if not decoration.isEmpty():
-                    painter.setBrush(strand.stroke_color)
-                    painter.drawPath(decoration)
+        self._paint_strand_body(painter, strand)
+
         painter.setPen(QPen(QColor(59, 164, 36), 1.5 / scale, Qt.DashLine))
         painter.setBrush(Qt.NoBrush)
         painter.drawEllipse(point, 6 / scale, 6 / scale)
@@ -455,6 +426,35 @@ class EndStyleDialog(QDialog):
         pixmap = QPixmap.fromImage(image)
         pixmap.setDevicePixelRatio(ratio)
         self.preview_label.setPixmap(pixmap)
+
+    @staticmethod
+    def _paint_strand_body(painter, strand):
+        """The strand body as Strand.draw paints it (no shadow, no
+        decorations): styled footprint when an end is styled, otherwise the
+        classic flat-capped stroke and fill plus the side lines."""
+        painter.setPen(Qt.NoPen)
+        geometry = strand._end_geometry()
+        if geometry is not None:
+            stroke_path, fill_path = geometry.body, geometry.fill_body()
+        else:
+            path = strand.get_path()
+            stroke_stroker = QPainterPathStroker()
+            stroke_stroker.setWidth(total_width(strand))
+            stroke_stroker.setJoinStyle(Qt.MiterJoin)
+            stroke_stroker.setCapStyle(Qt.FlatCap)
+            stroke_path = stroke_stroker.createStroke(path)
+            fill_stroker = QPainterPathStroker()
+            fill_stroker.setWidth(strand.width)
+            fill_stroker.setJoinStyle(Qt.MiterJoin)
+            fill_stroker.setCapStyle(Qt.FlatCap)
+            fill_path = fill_stroker.createStroke(path)
+        for body_path in (stroke_path, fill_path):
+            body_path.setFillRule(Qt.WindingFill)
+        strand._paint_body_paths(painter, stroke_path, fill_path, geometry)
+        # Side lines: the classic stroke_width line or the styled band, both
+        # through the same routine the canvas uses
+        if hasattr(strand, '_draw_side_lines'):
+            strand._draw_side_lines(painter)
 
     # ------------------------------------------------------------------
     # State

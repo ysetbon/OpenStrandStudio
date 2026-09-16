@@ -1600,6 +1600,12 @@ class UndoRedoManager(QObject):
                                 break
                             # --- END NEW ---
 
+                            # --- Check stylized end sides (shape/tilt/depth/offset/line) ---
+                            from end_style import serialize_end_styles
+                            if serialize_end_styles(new_strand) != serialize_end_styles(original_strand):
+                                has_visual_difference = True
+                                break
+
                             # --- NEW: Check layer visibility (is_hidden) ---
                             if hasattr(new_strand, 'is_hidden') and hasattr(original_strand, 'is_hidden'):
                                 if new_strand.is_hidden != original_strand.is_hidden:
@@ -2061,6 +2067,12 @@ class UndoRedoManager(QObject):
                                 has_visual_difference = True
                                 break
                             # --- END NEW ---
+
+                            # --- Check stylized end sides (shape/tilt/depth/offset/line) ---
+                            from end_style import serialize_end_styles
+                            if serialize_end_styles(new_strand) != serialize_end_styles(original_strand):
+                                has_visual_difference = True
+                                break
 
                             # --- NEW: Check layer visibility (is_hidden) ---
                             if hasattr(new_strand, 'is_hidden') and hasattr(original_strand, 'is_hidden'):

@@ -697,6 +697,42 @@ class Strand:
             return 0.0
         return geometry.extent_shift(side)
 
+    def highlight_footprint_path(self, trim_start=0.0, trim_end=0.0):
+        """The styled footprint for the selection highlight, or an empty path
+        when no end is styled. trim_start / trim_end cut that many pixels off
+        an *unstyled* end (the classic highlight shortens the body where a
+        circle stroke is fully transparent); a styled end is never trimmed."""
+        footprint = self.get_footprint_path()
+        if footprint.isEmpty():
+            return footprint
+        for side, distance in ((0, trim_start), (1, trim_end)):
+            if distance <= 0 or self._end_style_active(side):
+                continue
+            footprint = footprint.subtracted(self._end_slab(side, distance))
+        return footprint
+
+    def _end_slab(self, side, distance):
+        """A box covering the last `distance` px of an unstyled end (plus the
+        room outside it), bounded by the end's perpendicular plane so a body
+        that curls back past the endpoint is left alone."""
+        point = self.start if side == 0 else self.end
+        angle = self._cap_tangent_angle(side)
+        if side == 0:
+            angle += math.pi  # outward
+        full = self.width + self.stroke_width * 2
+        half = full / 2 + 12.0
+        depth = distance + full
+        ox, oy = math.cos(angle), math.sin(angle)
+        px, py = -oy, ox
+        near = QPointF(point.x() - ox * distance, point.y() - oy * distance)
+        slab = QPainterPath()
+        slab.moveTo(near.x() + px * half, near.y() + py * half)
+        slab.lineTo(near.x() - px * half, near.y() - py * half)
+        slab.lineTo(near.x() - px * half + ox * depth, near.y() - py * half + oy * depth)
+        slab.lineTo(near.x() + px * half + ox * depth, near.y() + py * half + oy * depth)
+        slab.closeSubpath()
+        return slab
+
     def _end_anchor(self, side):
         """Endpoint shifted to the styled edge's farthest point: the anchor for
         the dash extension and the small arrow, so they never sit on top of an
@@ -2273,9 +2309,10 @@ class Strand:
         t_start_point = 5.0 if self.start_circle_stroke_color.alpha() == 0 else 0.0
         t_end_point = 5.0 if self.end_circle_stroke_color.alpha() == 0 else 0.0
 
-        styled_footprint = self.get_footprint_path()
+        styled_footprint = self.highlight_footprint_path(t_start_point, t_end_point)
         if not styled_footprint.isEmpty():
             # Styled ends: the footprint already carries the cap and the band
+            # (an unstyled end with a transparent circle is trimmed like below)
             body_stroke_path = styled_footprint
         elif (self.start_circle_stroke_color.alpha() == 0 or self.end_circle_stroke_color.alpha() == 0) and total_length > 10:
             t_start = path.percentAtLength(t_start_point)

@@ -436,18 +436,84 @@ def test_undo_state_comparison_sees_end_style_changes(tmp_path):
     assert not manager._would_be_identical_save()
 
 
+def test_highlight_trims_a_transparent_circle_end_next_to_a_styled_end():
+    """The selection highlight shortens the body where a circle stroke is fully
+    transparent (closed knot / hidden circle).  With the other end styled the
+    footprint must still be trimmed there, and never at the styled end."""
+    strand = make_strand()
+    strand.has_circles = [True, False]
+    strand.start_circle_stroke_color = QColor(0, 0, 0, 0)
+    strand.set_end_style(1, {'shape': 'pointed', 'depth': 0.6})
+    just_inside_start = QPointF(strand.start.x() + 2, strand.start.y())
+    assert strand.get_footprint_path().contains(just_inside_start)
+    trimmed = strand.highlight_footprint_path(5.0, 5.0)
+    assert not trimmed.contains(just_inside_start)
+    assert trimmed.contains(QPointF(strand.start.x() + 8, strand.start.y()))
+    # The styled end keeps its full pointed tip.
+    anchor = strand._end_anchor(1)
+    tip = anchor + (strand.end - anchor) * (2.0 / strand.get_end_extent_shift(1))
+    assert strand.get_footprint_path().contains(tip)
+    assert trimmed.contains(tip)
+    # Nothing is cut when neither circle is transparent.
+    assert strand.highlight_footprint_path(0.0, 0.0) == strand.get_footprint_path()
+
+    parent = make_strand()
+    child = AttachedStrand(parent, parent.end, 1)
+    child.update(QPointF(420, 100))
+    child.has_circles = [True, False]
+    child.start_circle_stroke_color = QColor(0, 0, 0, 0)
+    child.set_end_style(1, {'shape': 'rounded'})
+    inside = QPointF(child.start.x() + 2, child.start.y())
+    assert child.get_footprint_path().contains(inside)
+    assert not child.highlight_footprint_path(5.5, 3.5).contains(inside)
+    assert child.highlight_footprint_path(5.5, 3.5).contains(QPointF(child.start.x() + 9, child.start.y()))
+
+
+def test_undo_and_redo_step_through_style_only_changes(tmp_path):
+    """Undo skips states that look identical; a change to nothing but an end
+    style must still count as a step (it used to be skipped straight past)."""
+    from undo_redo_manager import UndoRedoManager
+    strand = make_strand()
+    strand.closed_connections = [False, False]
+    canvas = PersistenceCanvas([strand])
+    canvas.layer_panel.canvas = canvas
+    manager = UndoRedoManager(canvas, canvas.layer_panel, str(tmp_path))
+
+    def save(action):
+        manager._last_save_time = 0
+        manager.save_state(action=action, source='test')
+
+    save('layer.add')
+    strand.set_end_style(1, {'shape': 'pointed', 'depth': 0.5})
+    save('strand.end_style')
+    strand.set_end_style(1, {'shape': 'rounded', 'depth': 0.9})
+    save('strand.end_style')
+    assert manager.current_step == 3
+
+    manager.undo()
+    assert manager.current_step == 2
+    assert canvas.strands[0].get_end_style(1)['shape'] == 'pointed'
+    manager.undo()
+    assert manager.current_step == 1
+    assert canvas.strands[0].get_end_style(1) is None
+    manager.redo()
+    assert manager.current_step == 2
+    assert canvas.strands[0].get_end_style(1)['shape'] == 'pointed'
+
+
 def test_group_duplication_copies_end_styles():
     from group_layers import GroupPanel
     source = make_strand()
     source.set_end_style(1, {'shape': 'pointed', 'line_color': QColor(5, 6, 7)})
     target = make_strand(layer_name="1_2")
-    # The duplication helper copies attributes onto a new strand; reuse its
-    # copy block through the same attribute path it uses.
-    if hasattr(source, 'end_styles'):
-        target.end_styles = [end_style.copy_style(source.end_styles[0]), end_style.copy_style(source.end_styles[1])]
+    # Run the real duplication helper; it only touches self.canvas for the
+    # optional curvature-bias control, so a bare stand-in panel is enough.
+    panel = SimpleNamespace(canvas=None)
+    GroupPanel.copy_strand_properties(panel, source, target)
     assert end_style.styles_equal(target.get_end_style(1), source.get_end_style(1))
+    assert target.end_styles[1] is not source.end_styles[1]
     assert target.end_styles[1]['line_color'] is not source.end_styles[1]['line_color']
-    assert GroupPanel is not None
+    assert target.get_end_style(0) is None
 
 
 # ----------------------------------------------------------------------------

@@ -571,9 +571,10 @@ class AttachedStrand(Strand):
         t_start_point = 5.5 if self.start_circle_stroke_color.alpha() == 0 else 0.0
         t_end_point = 3.5 if self.end_circle_stroke_color.alpha() == 0 else 0.0
 
-        styled_footprint = self.get_footprint_path()
+        styled_footprint = self.highlight_footprint_path(t_start_point, t_end_point)
         if not styled_footprint.isEmpty():
             # Styled end: the footprint already carries the cap and the band
+            # (a transparent start circle still trims the start like below)
             body_stroke_path = styled_footprint
         elif (self.start_circle_stroke_color.alpha() == 0 or self.end_circle_stroke_color.alpha() == 0) and total_length > 10:
             t_start = path.percentAtLength(t_start_point)

@@ -1601,6 +1601,13 @@ def build_rendered_geometry(strand):
         stroker.setCapStyle(Qt.FlatCap)     # Squared ends (no false circles)
         result_path = stroker.createStroke(body_source)
 
+        # Stylized free ends: start from the styled footprint (built on the
+        # same shadow path, so the unstyled end keeps its extension)
+        if hasattr(strand, 'get_footprint_path'):
+            styled = strand.get_footprint_path(shadow_base=hasattr(strand, 'get_shadow_path'))
+            if not styled.isEmpty():
+                result_path = QPainterPath(styled)
+
         # ------------------------------------------------------------------
         # 2) Union with visible circles
         # ------------------------------------------------------------------
@@ -1850,6 +1857,15 @@ def build_shadow_geometry(strand, fixed_shadow_extension=30.0, include_circles=T
         stroker.setJoinStyle(Qt.RoundJoin)  # Smooth corners at curves
         stroker.setCapStyle(Qt.FlatCap)     # Squared ends (no false circles)
         result_path = stroker.createStroke(body_source)
+
+        # Stylized free ends: the styled footprint pushed outward by the same
+        # fixed extension, so the cast shadow follows the end's profile
+        if hasattr(strand, 'get_footprint_path'):
+            styled = strand.get_footprint_path(
+                margin=fixed_shadow_extension, join=Qt.RoundJoin,
+                shadow_base=hasattr(strand, 'get_shadow_path'))
+            if not styled.isEmpty():
+                result_path = QPainterPath(styled)
 
         # Add visible circles with same fixed extension if requested
         if include_circles and hasattr(strand, 'has_circles') and any(strand.has_circles):

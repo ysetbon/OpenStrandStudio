@@ -1,9 +1,17 @@
 # Stylize End Side — Product Concept
 
-> Status: **concept only** — no application code has been changed. This folder holds the
-> spec page ([`stylize_end_side.html`](stylize_end_side.html), self-contained, images inlined),
-> the mockup images in [`mockups/`](mockups/), and the helper scripts in [`tools/`](tools/) that
-> produced them.
+> Status: **implemented** — see `src/end_style.py` (style records + geometry),
+> `src/end_style_dialog.py` (the dialog), the `Stylize End Side` row in
+> `src/numbered_layer_button.py`, and `tests/test_end_style.py`. This folder keeps the
+> original spec page ([`stylize_end_side.html`](stylize_end_side.html), self-contained, images
+> inlined), the mockup images in [`mockups/`](mockups/), and the helper scripts in
+> [`tools/`](tools/) that produced them.
+>
+> Two details changed while building it, both for Qt's path clipper: the styled body is the
+> centre line continued straight past the endpoint and stroked, then cut back at the profile
+> (instead of a polygon glued onto the flat cap), and the side-line band is a plain strip
+> painted with the outer footprint as the painter's clip path (instead of a boolean
+> intersection).
 >
 > **The strands in the mockups are drawn by the app's real `Strand` class**: `tools/end_styles.py`
 > is a working prototype of the proposed end geometry running on top of `Strand.get_path()`;

@@ -102,6 +102,9 @@ class AttachedStrand(Strand):
         # Add line visibility flags (only end matters for attached)
         self.start_line_visible = True # Still needed for attribute checks
         self.end_line_visible = True
+        # Stylized free end (only the end can be styled; the start is attached)
+        self.end_styles = [None, None]
+        self._end_geometry_cache = {}
         # --- NEW: Full arrow visibility flag ---
         self.full_arrow_visible = False
         # Arrow customization properties (inherited from Strand)
@@ -511,6 +514,10 @@ class AttachedStrand(Strand):
 
         # Include side lines in the bounding rect
         bounding_rect = stroke_path.boundingRect()
+        # A styled end may extend past the flat cap
+        styled = self.get_footprint_path()
+        if not styled.isEmpty():
+            bounding_rect = bounding_rect.united(styled.boundingRect())
         # logging.info(f"  Initial stroke path bounds: {bounding_rect}")
         bounding_rect = bounding_rect.united(QRectF(self.start_line_start, self.start_line_end))
         bounding_rect = bounding_rect.united(QRectF(self.end_line_start, self.end_line_end))
@@ -564,7 +571,12 @@ class AttachedStrand(Strand):
         t_start_point = 5.5 if self.start_circle_stroke_color.alpha() == 0 else 0.0
         t_end_point = 3.5 if self.end_circle_stroke_color.alpha() == 0 else 0.0
 
-        if (self.start_circle_stroke_color.alpha() == 0 or self.end_circle_stroke_color.alpha() == 0) and total_length > 10:
+        styled_footprint = self.highlight_footprint_path(t_start_point, t_end_point)
+        if not styled_footprint.isEmpty():
+            # Styled end: the footprint already carries the cap and the band
+            # (a transparent start circle still trims the start like below)
+            body_stroke_path = styled_footprint
+        elif (self.start_circle_stroke_color.alpha() == 0 or self.end_circle_stroke_color.alpha() == 0) and total_length > 10:
             t_start = path.percentAtLength(t_start_point)
             t_end = path.percentAtLength(total_length - t_end_point)
             highlight_path = QPainterPath()
@@ -597,7 +609,7 @@ class AttachedStrand(Strand):
         combined_highlight.addPath(body_highlight)
 
         # --- End side line ---
-        if self.end_line_visible and not self.has_circles[1]:
+        if self.end_line_visible and not self.has_circles[1] and not self._end_style_active(1):
             highlight_pen_thickness = 10
             black_half_width = (self.width + self.stroke_width * 2) / 2
             highlight_half_width = black_half_width + (highlight_pen_thickness / 2)
@@ -1001,6 +1013,12 @@ class AttachedStrand(Strand):
             stroke_stroker.setCapStyle(Qt.FlatCap)
             stroke_path = stroke_stroker.createStroke(path)
             stroke_path.setFillRule(Qt.WindingFill)
+            # Stylized free end replaces the flat cap with its own footprint
+            _end_geometry = self._end_geometry()
+            if _end_geometry is not None:
+                # Uncut extended body; the cut is applied as a clip when painting
+                stroke_path = QPainterPath(_end_geometry.body)
+                stroke_path.setFillRule(Qt.WindingFill)
             # --- END ADD BACK ---
 
             # Draw shadow for overlapping strands - using the utility function
@@ -1087,8 +1105,8 @@ class AttachedStrand(Strand):
                     length_end = math.hypot(tangent_end.x(), tangent_end.y())
                     if length_end:
                         unit_end = QPointF(tangent_end.x()/length_end, tangent_end.y()/length_end)
-                        raw_end = QPointF(self.end.x() + unit_end.x()*ext_len, self.end.y() + unit_end.y()*ext_len)
-                        start_pt = QPointF(self.end.x() - unit_end.x()*dash_gap, self.end.y() - unit_end.y()*dash_gap)
+                        raw_end = QPointF(self._end_anchor(1).x() + unit_end.x()*ext_len, self._end_anchor(1).y() + unit_end.y()*ext_len)
+                        start_pt = QPointF(self._end_anchor(1).x() - unit_end.x()*dash_gap, self._end_anchor(1).y() - unit_end.y()*dash_gap)
                         end_pt = QPointF(raw_end.x() - unit_end.x()*dash_gap, raw_end.y() - unit_end.y()*dash_gap)
                         painter.drawLine(start_pt, end_pt)
 
@@ -1154,8 +1172,8 @@ class AttachedStrand(Strand):
                         unit = QPointF(tangent_end.x() / len_end, tangent_end.y() / len_end)
                         arrow_dir = QPointF(unit.x(), unit.y())
                         shaft_start = QPointF(
-                            self.end.x() + arrow_dir.x() * arrow_gap_length,
-                            self.end.y() + arrow_dir.y() * arrow_gap_length
+                            self._end_anchor(1).x() + arrow_dir.x() * arrow_gap_length,
+                            self._end_anchor(1).y() + arrow_dir.y() * arrow_gap_length
                         )
                         shaft_end = QPointF(
                             shaft_start.x() + arrow_dir.x() * arrow_line_length,
@@ -1208,6 +1226,9 @@ class AttachedStrand(Strand):
                 fill_stroker.setCapStyle(Qt.FlatCap)
                 fill_path = fill_stroker.createStroke(path)
                 fill_path.setFillRule(Qt.WindingFill)
+                if _end_geometry is not None:
+                    fill_path = QPainterPath(_end_geometry.fill_body())
+                    fill_path.setFillRule(Qt.WindingFill)
                 combined_fill_path = QPainterPath()
                 combined_fill_path.setFillRule(Qt.WindingFill)
                 combined_fill_path.addPath(fill_path)  # Add the main strand fill
@@ -1447,22 +1468,11 @@ class AttachedStrand(Strand):
 
                 # Now paint everything together - stroke first, then fill
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.stroke_color)
-                painter.drawPath(combined_stroke_path)
-
-                painter.setPen(Qt.NoPen)  # Explicitly set pen to NoPen again before fill
-                painter.setBrush(self.color)
-                painter.drawPath(combined_fill_path)
+                self._paint_body_paths(painter, combined_stroke_path, combined_fill_path, _end_geometry)
        
                 # Draw the end line conditionally this is after drawing the combined_stroke_path and combined_fill_path
-                if self.end_line_visible and not self.has_circles[1]: # Only draw end line if visible
-                    side_pen = QPen(self.stroke_color, self.stroke_width)
-                    side_pen.setCapStyle(Qt.FlatCap)
-                    side_color = QColor(self.stroke_color)
-                    side_color.setAlpha(self.stroke_color.alpha())
-                    side_pen.setColor(side_color)
-                    painter.setPen(side_pen)
-                    painter.drawLine(self.end_line_start, self.end_line_end)
+                # (classic stroke_width line, or the styled band of a stylized free end)
+                self._draw_side_lines(painter)
 
                 # (C-shape highlights now handled in _draw_unified_highlight)
 
@@ -2812,6 +2822,12 @@ class AttachedStrand(Strand):
             stroke_stroker.setCapStyle(Qt.FlatCap)
             stroke_path = stroke_stroker.createStroke(path)
             stroke_path.setFillRule(Qt.WindingFill)
+            # Stylized free end replaces the flat cap with its own footprint
+            _end_geometry = self._end_geometry()
+            if _end_geometry is not None:
+                # Uncut extended body; the cut is applied as a clip when painting
+                stroke_path = QPainterPath(_end_geometry.body)
+                stroke_path.setFillRule(Qt.WindingFill)
             # --- END ADD BACK ---
 
             # Draw shadow for overlapping strands - using the utility function
@@ -2898,8 +2914,8 @@ class AttachedStrand(Strand):
                     length_end = math.hypot(tangent_end.x(), tangent_end.y())
                     if length_end:
                         unit_end = QPointF(tangent_end.x()/length_end, tangent_end.y()/length_end)
-                        raw_end = QPointF(self.end.x() + unit_end.x()*ext_len, self.end.y() + unit_end.y()*ext_len)
-                        start_pt = QPointF(self.end.x() - unit_end.x()*dash_gap, self.end.y() - unit_end.y()*dash_gap)
+                        raw_end = QPointF(self._end_anchor(1).x() + unit_end.x()*ext_len, self._end_anchor(1).y() + unit_end.y()*ext_len)
+                        start_pt = QPointF(self._end_anchor(1).x() - unit_end.x()*dash_gap, self._end_anchor(1).y() - unit_end.y()*dash_gap)
                         end_pt = QPointF(raw_end.x() - unit_end.x()*dash_gap, raw_end.y() - unit_end.y()*dash_gap)
                         painter.drawLine(start_pt, end_pt)
 
@@ -2965,8 +2981,8 @@ class AttachedStrand(Strand):
                         unit = QPointF(tangent_end.x() / len_end, tangent_end.y() / len_end)
                         arrow_dir = QPointF(unit.x(), unit.y())
                         shaft_start = QPointF(
-                            self.end.x() + arrow_dir.x() * arrow_gap_length,
-                            self.end.y() + arrow_dir.y() * arrow_gap_length
+                            self._end_anchor(1).x() + arrow_dir.x() * arrow_gap_length,
+                            self._end_anchor(1).y() + arrow_dir.y() * arrow_gap_length
                         )
                         shaft_end = QPointF(
                             shaft_start.x() + arrow_dir.x() * arrow_line_length,
@@ -3019,6 +3035,9 @@ class AttachedStrand(Strand):
                 fill_stroker.setCapStyle(Qt.FlatCap)
                 fill_path = fill_stroker.createStroke(path)
                 fill_path.setFillRule(Qt.WindingFill)
+                if _end_geometry is not None:
+                    fill_path = QPainterPath(_end_geometry.fill_body())
+                    fill_path.setFillRule(Qt.WindingFill)
                 combined_fill_path = QPainterPath()
                 combined_fill_path.setFillRule(Qt.WindingFill)
                 combined_fill_path.addPath(fill_path)  # Add the main strand fill
@@ -3258,22 +3277,11 @@ class AttachedStrand(Strand):
 
                 # Now paint everything together - stroke first, then fill
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(self.stroke_color)
-                painter.drawPath(combined_stroke_path)
-
-                painter.setPen(Qt.NoPen)  # Explicitly set pen to NoPen again before fill
-                painter.setBrush(self.color)
-                painter.drawPath(combined_fill_path)
+                self._paint_body_paths(painter, combined_stroke_path, combined_fill_path, _end_geometry)
        
                 # Draw the end line conditionally this is after drawing the combined_stroke_path and combined_fill_path
-                if self.end_line_visible and not self.has_circles[1]: # Only draw end line if visible
-                    side_pen = QPen(self.stroke_color, self.stroke_width)
-                    side_pen.setCapStyle(Qt.FlatCap)
-                    side_color = QColor(self.stroke_color)
-                    side_color.setAlpha(self.stroke_color.alpha())
-                    side_pen.setColor(side_color)
-                    painter.setPen(side_pen)
-                    painter.drawLine(self.end_line_start, self.end_line_end)
+                # (classic stroke_width line, or the styled band of a stylized free end)
+                self._draw_side_lines(painter)
 
                 # (C-shape highlights now handled in _draw_unified_highlight)
 

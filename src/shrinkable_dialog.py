@@ -24,10 +24,7 @@ helpers are that same treatment, packaged so the other dialogs can take it:
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QApplication, QFrame, QLayout, QScrollArea, QVBoxLayout,
-                             QWidget)
-
-# Qt's QWIDGETSIZE_MAX, which PyQt does not export
-QWIDGETSIZE_MAX = 16777215
+                             QWidget, QWIDGETSIZE_MAX)
 
 # Small enough to fit on any screen the app runs on, large enough that the
 # dialog is still worth looking at

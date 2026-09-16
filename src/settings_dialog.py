@@ -3599,7 +3599,16 @@ class SettingsDialog(QDialog):
                         left_margin + right_margin)
         target_height = (max(right_panel_height, self.categories_list.sizeHint().height()) +
                          top_margin + bottom_margin)
+
+        # This runs again on every open and on every language change. Once the
+        # user has dragged the dialog to a size of their own, keep it: the
+        # pages scroll, so nothing is lost, and snapping back would undo the
+        # one thing they just did.
+        fitted = getattr(self, '_fitted_size', None)
+        if fitted is not None and self.size() != fitted:
+            return
         cap_to_screen(self, target_width, target_height)
+        self._fitted_size = self.size()
 
     def style_dialog_buttons(self):
         """Apply consistent styling to all buttons in the dialog"""
@@ -7336,11 +7345,11 @@ class VideoPlayerDialog(QDialog):
         self.load_video()
 
     def setup_ui(self):
-        self.layout = QVBoxLayout(self)
+        layout = QVBoxLayout(self)
 
         # Video Widget
         self.video_widget = QVideoWidget()
-        self.layout.addWidget(self.video_widget)
+        layout.addWidget(self.video_widget)
 
         # Media Player
         self.media_player = QMediaPlayer(None, QMediaPlayer.VideoSurface)
@@ -7370,7 +7379,7 @@ class VideoPlayerDialog(QDialog):
         self.close_button.clicked.connect(self.close)
         control_layout.addWidget(self.close_button)
 
-        self.layout.addLayout(control_layout)
+        layout.addLayout(control_layout)
 
         # Connect media player signals
         self.media_player.positionChanged.connect(self.position_changed)

@@ -33,18 +33,23 @@ from shrinkable_dialog import (allow_shrinking, cap_to_screen, fit_to_screen,
 
 APP = QApplication.instance() or QApplication([])
 
-# Dialogs stay referenced for the whole run: several of them queue work with
-# QTimer.singleShot(0, self...), which aborts the interpreter if the dialog is
-# collected before it fires.
+# Every dialog built here stays referenced for the whole run: several of them
+# queue work with QTimer.singleShot(0, self...), which segfaults the
+# interpreter if the dialog is collected before it fires.
 _KEEP = []
 
 # Smaller than any screen the app runs on: no dialog may demand more
 SMALL_SCREEN = (800, 480)
 
 
+def keep(dialog):
+    _KEEP.append(dialog)
+    return dialog
+
+
 def shrink(dialog):
     """Show the dialog and drag it down as far as it will go."""
-    _KEEP.append(dialog)
+    keep(dialog)
     dialog.show()
     APP.processEvents()
     dialog.resize(1, 1)
@@ -145,7 +150,7 @@ def test_cap_to_screen_opens_no_larger_than_the_screen():
 # ----------------------------------------------------------------------
 def settings_dialog():
     from settings_dialog import SettingsDialog
-    return SettingsDialog(None)
+    return keep(SettingsDialog(None))
 
 
 def test_settings_dialog_shrinks_and_scrolls_its_pages():
@@ -179,22 +184,60 @@ def test_settings_dialog_still_opens_wide_enough_for_its_translations():
     dialog.reject()
 
 
+def test_settings_dialog_keeps_the_size_the_user_chose_when_reopened():
+    from settings_dialog import SettingsDialog
+
+    dialog = settings_dialog()
+    dialog.show()
+    APP.processEvents()
+    opened = size_of(dialog)
+
+    # Untouched, a language change or a re-open may re-fit it
+    dialog.adjust_dialog_geometry()
+    assert size_of(dialog) == opened
+
+    # Dragged down by the user, then closed and re-opened the way
+    # MainWindow does it: the size they chose survives
+    chosen = (SettingsDialog.SHRUNK_MINIMUM[0] + 60, SettingsDialog.SHRUNK_MINIMUM[1] + 40)
+    dialog.resize(*chosen)
+    APP.processEvents()
+    dialog.hide()
+    dialog.adjust_dialog_geometry()
+    dialog.show()
+    APP.processEvents()
+    assert size_of(dialog) == chosen
+    dialog.reject()
+
+
+def video_player_dialog():
+    from settings_dialog import VideoPlayerDialog
+
+    return keep(VideoPlayerDialog('/nonexistent/tutorial.mp4'))
+
+
+def test_video_player_shrinks_with_its_controls_reachable():
+    dialog = video_player_dialog()
+    shrink(dialog)
+    assert dialog.width() <= 320 and dialog.height() <= 220
+    for button in (dialog.play_button, dialog.pause_button, dialog.close_button):
+        assert fully_inside(button, dialog)
+    dialog.hide()
+
+
 def layer_width_dialog():
     from numbered_layer_button import WidthConfigDialog
 
     strand = SimpleNamespace(width=46, stroke_width=4, width_in_grid_units=None,
                              elliptical_end_caps=False)
     layer_panel = SimpleNamespace(language_code='en')
-    return WidthConfigDialog(strand, layer_panel, show_elliptical=True)
+    return keep(WidthConfigDialog(strand, layer_panel, show_elliptical=True))
 
 
 def default_width_dialog():
     from settings_dialog import DefaultWidthConfigDialog
 
     owner = settings_dialog()
-    dialog = DefaultWidthConfigDialog(owner)
-    dialog._owner = owner  # the settings dialog must outlive the one it opened
-    return dialog
+    return keep(DefaultWidthConfigDialog(owner))
 
 
 WIDTH_DIALOGS = (layer_width_dialog, default_width_dialog)
@@ -218,13 +261,13 @@ def strand_shadow_editor():
     from shadow_editor_dialog import ShadowEditorDialog
 
     strand = SimpleNamespace(layer_name='1_1', color=QColor(200, 170, 230))
-    return ShadowEditorDialog(stub_canvas(), strand)
+    return keep(ShadowEditorDialog(stub_canvas(), strand))
 
 
 def group_shadow_editor():
     from group_shadow_editor_dialog import GroupShadowEditorDialog
 
-    return GroupShadowEditorDialog(stub_canvas(), 'group', [])
+    return keep(GroupShadowEditorDialog(stub_canvas(), 'group', []))
 
 
 SHADOW_EDITORS = (strand_shadow_editor, group_shadow_editor)
@@ -248,14 +291,14 @@ def mask_grid_dialog():
     canvas = stub_canvas()
     canvas.strands = strands
     canvas._resolve_group_strands = lambda name: {'strands': strands}
-    return MaskGridDialog(canvas, 'group')
+    return keep(MaskGridDialog(canvas, 'group'))
 
 
 def strand_angle_dialog():
     from group_layers import StrandAngleEditDialog
 
     group = {'strands': [], 'layers': [], 'editable_layers': []}
-    return StrandAngleEditDialog('group', group, stub_canvas())
+    return keep(StrandAngleEditDialog('group', group, stub_canvas()))
 
 
 def test_mask_grid_dialog_shrinks_with_its_grid_scrolling():
@@ -267,7 +310,7 @@ def test_mask_grid_dialog_shrinks_with_its_grid_scrolling():
     dialog.hide()
 
 
-EVERY_DIALOG = ((settings_dialog, mask_grid_dialog, strand_angle_dialog) +
+EVERY_DIALOG = ((settings_dialog, mask_grid_dialog, strand_angle_dialog, video_player_dialog) +
                 WIDTH_DIALOGS + SHADOW_EDITORS)
 
 

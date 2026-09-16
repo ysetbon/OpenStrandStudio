@@ -95,7 +95,7 @@ def inject_stylize_row(menu, btn, free_ends=('end',), hovered=None):
     row = QWidget(); h = QHBoxLayout(row); h.setContentsMargins(5, 1, 5, 1)
     lab = QLabel('Stylize End Side'); h.addWidget(lab)
     for side in free_ends:
-        b = QPushButton('Start\u2026' if side == 'start' else 'End\u2026'); b.setFlat(True)
+        b = QPushButton('Start' if side == 'start' else 'End'); b.setFlat(True)
         if hovered == side:
             b.setStyleSheet('QPushButton { background-color: #333333; color: white; border: none; text-align: right; }')
         h.addWidget(b)

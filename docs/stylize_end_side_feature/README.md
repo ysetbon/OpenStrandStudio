@@ -16,13 +16,14 @@
 Right-clicking a layer button that has a **free end** (an end with `has_circles[side] == False`,
 which is what the green strip on the button already signals) adds a **Stylize End Side** row to
 the normal context menu, right under **Close the Knot**. The row is built like the existing
-Line / Arrow / Dash / Circle rows: a label plus one flat button per free end (`Start…`, `End…`).
+Line / Arrow / Dash / Circle rows: a label plus one flat button per free end (`Start`, `End`).
 
 Each button opens a modal **Stylize End Side** dialog for that one end:
 
 - **End Shape** — Straight (today), Angled, Rounded, Pointed, Notched, Concave
 - **Tilt** (−60°…+60°), **Depth** (0–100 % of the width), **Extend / Trim** (px; the endpoint never moves)
-- **Side Line** — show (same flag as Show/Hide End Line), thickness, colour (default: stroke colour)
+- **Side Line** — show (same flag as Show/Hide End Line), thickness, colour (default: stroke colour); the spec audits every existing menu action for collisions
+- Controls reuse the app's own widgets: mask-grid checkboxes, move-group slider rows, settings-dialog +/- steppers
 - **Apply to both free ends** (only when the strand has two free ends), **Reset to Straight**, OK / Cancel
 
 The dialog previews live on the canvas (like the shadow editor); Cancel restores the opening

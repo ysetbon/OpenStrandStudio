@@ -633,6 +633,7 @@ def test_preview_paints_the_classic_end_exactly_like_angled_zero():
     dialog, _ = open_dialog(strand, 1)
     classic = _preview_pixels(dialog)
     dialog.shape_buttons['angled'].click()
+    dialog.tilt_slider.setValue(0)
     angled = _preview_pixels(dialog)
     assert classic.size() == angled.size()
 
@@ -676,4 +677,55 @@ def test_preview_keeps_canvas_orientation_and_shows_the_side_line():
     ratio, scale = 2, min(1.6, 0.6 * 120 / 54)
     probe = int(cx + 2 * scale * ratio)
     assert image.pixelColor(probe, cy).getRgb()[:3] == strand.stroke_color.getRgb()[:3]
+    dialog.reject()
+
+
+def test_straight_is_always_square_and_angled_starts_slanted():
+    # The record: Straight ignores Tilt entirely
+    assert end_style.normalize_style({'shape': 'straight', 'tilt': 30}) is None
+    assert end_style.normalize_style({'shape': 'straight', 'tilt': 30, 'offset': 5})['tilt'] == 0.0
+    assert end_style.normalize_style({'shape': 'angled', 'tilt': 30})['tilt'] == 30.0
+
+    strand = make_strand()
+    dialog, _ = open_dialog(strand, 1)
+    assert not dialog.tilt_slider.isEnabled()
+    # Picking Angled from Straight starts visibly slanted
+    dialog.shape_buttons['angled'].click()
+    assert dialog.tilt_slider.isEnabled()
+    assert dialog.tilt_slider.value() == 30
+    assert strand.get_end_style(1)['tilt'] == 30.0
+    # Back to Straight: square again, Tilt disabled and zeroed
+    dialog.shape_buttons['straight'].click()
+    assert dialog.tilt_slider.value() == 0
+    assert not dialog.tilt_slider.isEnabled()
+    assert strand.get_end_style(1) is None
+    # A shaped end keeps whatever tilt the user set
+    dialog.shape_buttons['pointed'].click()
+    dialog.tilt_slider.setValue(-20)
+    assert strand.get_end_style(1)['tilt'] == -20.0
+    dialog.reject()
+
+
+def test_dialog_shrinks_and_keeps_its_buttons_reachable():
+    strand = make_strand()
+    dialog, _ = open_dialog(strand, 1)
+    dialog.show()
+    APP.processEvents()
+    # The body scrolls; header and buttons live outside the scroll area
+    assert dialog.scroll_area.widget() is not None
+    assert dialog.ok_button.parent() is dialog and dialog.header_label.parent() is dialog
+    assert dialog.preview_label.parent() is not dialog
+    dialog.resize(dialog.minimumWidth(), dialog.minimumHeight())
+    APP.processEvents()
+    assert dialog.width() <= 440 and dialog.height() <= 300
+    assert dialog.ok_button.isVisible() and dialog.cancel_button.isVisible()
+    assert dialog.ok_button.geometry().bottom() <= dialog.height()
+    # Shape buttons wrap to two rows instead of forcing the window's width
+    assert dialog.shape_grid._columns == 3
+    dialog.resize(760, 830)
+    APP.processEvents()
+    assert dialog.shape_grid._columns == 6
+    # The preview keeps painting at the size it is given
+    assert dialog.preview_label.width() > 0
+    assert not dialog.preview_label.pixmap().isNull()
     dialog.reject()

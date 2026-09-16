@@ -45,7 +45,7 @@ def default_style():
     """The record that reproduces today's flat cap + side line."""
     return {
         'shape': 'straight',
-        'tilt': 0.0,        # degrees, -TILT_MAX .. TILT_MAX, 0 = square to the strand
+        'tilt': 0.0,        # degrees, -TILT_MAX .. TILT_MAX, 0 = square to the strand (always 0 for straight)
         'depth': 0.5,       # 0 .. 1, share of the strand width (ignored by straight/angled)
         'offset': 0.0,      # px along the tangent, + extends, - trims (the endpoint never moves)
         'line_width': None, # px, None = follow stroke_width
@@ -102,6 +102,8 @@ def normalize_style(style):
     shape = style.get('shape', 'straight')
     clean['shape'] = shape if shape in SHAPES else 'straight'
     clean['tilt'] = _clamp(_as_float(style.get('tilt'), 0.0), -TILT_MAX, TILT_MAX)
+    if clean['shape'] == 'straight':
+        clean['tilt'] = 0.0  # Straight is always square to the strand; Angled is the tilted cut
     clean['depth'] = _clamp(_as_float(style.get('depth'), 0.5), 0.0, 1.0)
     clean['offset'] = _as_float(style.get('offset'), 0.0)
     line_width = style.get('line_width')

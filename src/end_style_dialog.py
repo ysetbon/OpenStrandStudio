@@ -15,15 +15,18 @@ import math
 from PyQt5.QtCore import Qt, QPointF, QSize, QTimer
 from PyQt5.QtGui import (QColor, QIcon, QImage, QIntValidator, QPainter, QPainterPath,
                          QPainterPathStroker, QPen, QPixmap)
-from PyQt5.QtWidgets import (QButtonGroup, QCheckBox, QColorDialog, QDialog, QFrame,
-                             QHBoxLayout, QLabel, QLineEdit, QPushButton, QSlider,
-                             QSpinBox, QStyleFactory, QToolButton, QVBoxLayout, QWidget)
+from PyQt5.QtWidgets import (QApplication, QButtonGroup, QCheckBox, QColorDialog, QDialog,
+                             QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
+                             QScrollArea, QSizePolicy, QSlider, QSpinBox, QStyleFactory,
+                             QToolButton, QVBoxLayout, QWidget)
 
 import end_style
 from mask_grid_dialog import LargeIndicatorStyle, MaskGridDialog
 from segmented_spin_box import upgrade_spinbox, style_segmented_spinbox
 from translations import translations
 
+
+ANGLED_DEFAULT_TILT = 30  # what Angled starts at when picked with Tilt still at 0
 
 SHAPE_KEYS = (
     ('straight', 'end_shape_straight', 'Straight'),
@@ -89,6 +92,77 @@ def _dialog_stylesheet(theme):
     """
 
 
+class EndPreview(QWidget):
+    """The preview picture, painted at whatever size the layout gives it.
+
+    ``pixmap()`` renders the same picture at a fixed 380 x 120 (2x) for tests
+    and for anyone who wants an image of it."""
+
+    LOGICAL = (380, 120)
+
+    def __init__(self, dialog):
+        super().__init__(dialog)
+        self._dialog = dialog
+        self.setMinimumHeight(70)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+
+    def sizeHint(self):
+        return QSize(*self.LOGICAL)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        self._dialog._paint_preview(painter, self.width(), self.height())
+        painter.end()
+
+    def pixmap(self):
+        w, h = self.LOGICAL
+        ratio = 2
+        image = QImage(w * ratio, h * ratio, QImage.Format_ARGB32_Premultiplied)
+        painter = QPainter(image)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.scale(ratio, ratio)
+        self._dialog._paint_preview(painter, w, h)
+        painter.end()
+        pixmap = QPixmap.fromImage(image)
+        pixmap.setDevicePixelRatio(ratio)
+        return pixmap
+
+
+class ShapeGrid(QWidget):
+    """The six shape buttons in one row when there is room, otherwise two
+    rows of three, so a narrow dialog never has to elide their labels."""
+
+    BUTTON = (88, 72)
+
+    def __init__(self, buttons, parent=None):
+        super().__init__(parent)
+        self._buttons = buttons
+        self._columns = 0
+        self._grid = QGridLayout(self)
+        self._grid.setContentsMargins(0, 0, 0, 0)
+        self._grid.setSpacing(6)
+        for button in buttons:
+            button.setFixedSize(*self.BUTTON)
+        self._reflow(6)
+
+    def _reflow(self, columns):
+        if columns == self._columns:
+            return
+        self._columns = columns
+        for button in self._buttons:
+            self._grid.removeWidget(button)
+        for index, button in enumerate(self._buttons):
+            self._grid.addWidget(button, index // columns, index % columns, Qt.AlignLeft)
+        self._grid.setColumnStretch(columns, 1)
+        self.updateGeometry()
+
+    def resizeEvent(self, event):
+        needed = len(self._buttons) * (self.BUTTON[0] + 6)
+        self._reflow(6 if event.size().width() >= needed else 3)
+        super().resizeEvent(event)
+
+
 class EndStyleDialog(QDialog):
     """Edit the end style of one free end of ``strand`` (side 0 = start, 1 = end)."""
 
@@ -117,7 +191,9 @@ class EndStyleDialog(QDialog):
         self.setModal(True)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setStyleSheet(_dialog_stylesheet(self.theme))
-        self.setMinimumWidth(640)
+        # Freely resizable: the body scrolls, the header and buttons stay put
+        self.setMinimumSize(440, 300)
+        self.setSizeGripEnabled(True)
 
         # Snapshot for Cancel: both ends' styles and both side-line flags
         self._snapshot = {
@@ -134,6 +210,7 @@ class EndStyleDialog(QDialog):
         self._build_ui(_, current)
         self._sync_enabled_state()
         self._refresh_preview()
+        self._fit_to_screen()
 
         if self.canvas is not None and hasattr(self.canvas, 'language_changed'):
             try:
@@ -225,18 +302,32 @@ class EndStyleDialog(QDialog):
     # UI
     # ------------------------------------------------------------------
     def _build_ui(self, _, current):
-        root = QVBoxLayout(self)
-        root.setSpacing(10)
+        outer = QVBoxLayout(self)
+        outer.setSpacing(10)
 
         self.header_label = QLabel()
         self.header_label.setObjectName('header')
-        root.addWidget(self.header_label)
+        outer.addWidget(self.header_label)
+
+        # Everything between the header and the buttons scrolls, so the
+        # dialog can be made as small as the user likes
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameShape(QFrame.NoFrame)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll_area.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        self.scroll_area.viewport().setStyleSheet("background: transparent;")
+        content = QWidget()
+        content.setStyleSheet("background: transparent;")
+        root = QVBoxLayout(content)
+        root.setContentsMargins(0, 0, 8, 0)
+        root.setSpacing(10)
+        self.scroll_area.setWidget(content)
+        outer.addWidget(self.scroll_area, 1)
 
         # Preview
         frame, layout, self.preview_title = self._section(_tr(_, 'end_style_preview', 'Preview'))
-        self.preview_label = QLabel()
-        self.preview_label.setAlignment(Qt.AlignCenter)
-        self.preview_label.setMinimumHeight(130)
+        self.preview_label = EndPreview(self)
         layout.addWidget(self.preview_label)
         self.preview_hint = QLabel()
         self.preview_hint.setObjectName('hint')
@@ -246,8 +337,6 @@ class EndStyleDialog(QDialog):
 
         # End shape
         frame, layout, self.shape_title = self._section(_tr(_, 'end_shape', 'End Shape'))
-        shape_row = QHBoxLayout()
-        shape_row.setSpacing(6)
         self.shape_group = QButtonGroup(self)
         self.shape_group.setExclusive(True)
         self.shape_buttons = {}
@@ -258,13 +347,12 @@ class EndStyleDialog(QDialog):
             button.setIcon(self._shape_icon(key))
             button.setIconSize(QSize(56, 34))
             button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-            button.setFixedSize(92, 76)
             button.setChecked(key == current['shape'])
             button.clicked.connect(lambda checked=False, k=key: self._on_shape(k))
             self.shape_group.addButton(button)
-            shape_row.addWidget(button)
             self.shape_buttons[key] = button
-        layout.addLayout(shape_row)
+        self.shape_grid = ShapeGrid(list(self.shape_buttons.values()))
+        layout.addWidget(self.shape_grid)
 
         tilt_row, self.tilt_label, self.tilt_slider, self.tilt_value, self.tilt_field = self._slider_row(
             _tr(_, 'end_tilt', 'Tilt'), -int(end_style.TILT_MAX), int(end_style.TILT_MAX),
@@ -342,8 +430,9 @@ class EndStyleDialog(QDialog):
         if self._has_two_free_ends():
             self.both_ends_box = self._checkbox(_tr(_, 'apply_to_both_free_ends', 'Apply to both free ends'), False)
             root.addWidget(self.both_ends_box)
+        root.addStretch()
 
-        # Buttons
+        # Buttons (outside the scroll area: always reachable)
         button_row = QHBoxLayout()
         self.reset_button = QPushButton(_tr(_, 'reset_to_straight', 'Reset to Straight'))
         self.reset_button.clicked.connect(self._reset_to_straight)
@@ -355,10 +444,28 @@ class EndStyleDialog(QDialog):
         self.cancel_button.clicked.connect(self.reject)
         button_row.addWidget(self.ok_button)
         button_row.addWidget(self.cancel_button)
-        root.addLayout(button_row)
+        outer.addLayout(button_row)
 
         self._update_swatch()
         self.update_translations()
+
+    def _fit_to_screen(self):
+        """Open at the content's natural size, but never larger than the
+        available screen area (the body scrolls instead)."""
+        hint = self.sizeHint()
+        width, height = hint.width(), hint.height()
+        screen = None
+        try:
+            screen = self.screen()
+        except AttributeError:
+            pass
+        if screen is None:
+            screen = QApplication.primaryScreen()
+        if screen is not None:
+            available = screen.availableGeometry()
+            width = min(width, int(available.width() * 0.9))
+            height = min(height, int(available.height() * 0.9))
+        self.resize(max(width, self.minimumWidth()), max(height, self.minimumHeight()))
 
     def _has_two_free_ends(self):
         if hasattr(self.strand, 'parent'):
@@ -393,16 +500,13 @@ class EndStyleDialog(QDialog):
         return QIcon(QPixmap.fromImage(image))
 
     def _refresh_preview(self):
+        self.preview_label.update()
+
+    def _paint_preview(self, painter, w, h):
         """Draw the real end with the current settings, exactly as the canvas
         draws it and in the canvas's own orientation, centred on the endpoint
-        (marked with a dashed green circle)."""
-        w, h = 380, 120
-        ratio = 2
-        image = QImage(w * ratio, h * ratio, QImage.Format_ARGB32_Premultiplied)
-        image.fill(QColor('#2C2C2C') if self.is_dark else QColor('#FFFFFF'))
-        painter = QPainter(image)
-        painter.setRenderHint(QPainter.Antialiasing)
-        painter.scale(ratio, ratio)
+        (marked with a dashed green circle), into a w x h picture."""
+        painter.fillRect(0, 0, w, h, QColor('#2C2C2C') if self.is_dark else QColor('#FFFFFF'))
         painter.setPen(QPen(QColor(255, 255, 255, 25) if self.is_dark else QColor(0, 0, 0, 18), 1))
         for gx in range(0, w, 27):
             painter.drawLine(gx, 0, gx, h)
@@ -422,10 +526,6 @@ class EndStyleDialog(QDialog):
         painter.setPen(QPen(QColor(59, 164, 36), 1.5 / scale, Qt.DashLine))
         painter.setBrush(Qt.NoBrush)
         painter.drawEllipse(point, 6 / scale, 6 / scale)
-        painter.end()
-        pixmap = QPixmap.fromImage(image)
-        pixmap.setDevicePixelRatio(ratio)
-        self.preview_label.setPixmap(pixmap)
 
     @staticmethod
     def _paint_strand_body(painter, strand):
@@ -475,6 +575,11 @@ class EndStyleDialog(QDialog):
         }
 
     def _sync_enabled_state(self):
+        # Straight is always square to the strand: Tilt belongs to Angled and
+        # to the shaped ends
+        tilt_enabled = self._shape != 'straight'
+        for widget in (self.tilt_label, self.tilt_slider, self.tilt_value, self.tilt_field):
+            widget.setEnabled(tilt_enabled)
         depth_enabled = self._shape in end_style.DEPTH_SHAPES
         for widget in (self.depth_label, self.depth_slider, self.depth_value, self.depth_field):
             widget.setEnabled(depth_enabled)
@@ -494,7 +599,17 @@ class EndStyleDialog(QDialog):
             f"border: 1px solid {'#888888' if self.is_dark else '#666666'}; border-radius: 3px; }}")
 
     def _on_shape(self, key):
+        previous = self._shape
         self._shape = key
+        self._updating = True
+        try:
+            if key == 'straight':
+                self.tilt_slider.setValue(0)
+            elif key == 'angled' and previous == 'straight' and self.tilt_slider.value() == 0:
+                # Angled is the slanted cut: start it visibly slanted
+                self.tilt_slider.setValue(ANGLED_DEFAULT_TILT)
+        finally:
+            self._updating = False
         self._sync_enabled_state()
         self._apply_live()
 

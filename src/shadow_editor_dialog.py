@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
                              QProxyStyle, QStyle)
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QRect
 from PyQt5.QtGui import QColor, QPalette, QPainter, QPen, QPainterPath
+from shrinkable_dialog import allow_shrinking, cap_to_screen, relax
 from translations import translations
 
 
@@ -626,8 +627,6 @@ class ShadowEditorDialog(QDialog):
 
         self.setWindowTitle(f"{_['shadow_editor_title']} - {self.casting_layer}")
         self.setModal(False)  # Allow interaction with canvas
-        self.setMinimumSize(700, 400)
-        self.resize(750, 500)
 
         # Find the main window to inherit its theme
         main_window = parent
@@ -653,6 +652,9 @@ class ShadowEditorDialog(QDialog):
         # Info label
         self.info_label = QLabel(_['shadow_editor_info'].format(self.casting_layer))
         layout.addWidget(self.info_label)
+        # Neither paragraph gets to set a floor for the whole window: the list
+        # between them is what gives up space first, and past that they do
+        relax(self.info_label)
 
         # Per-strand toggle row
         self.toggle_row = self._create_toggle_row()
@@ -677,6 +679,7 @@ class ShadowEditorDialog(QDialog):
         self.help_label.setLayoutDirection(Qt.RightToLeft if self.language_code == 'he' else Qt.LeftToRight)
         self.help_label.setAlignment(get_shadow_help_alignment(self.language_code))
         self.help_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        relax(self.help_label)
         layout.addWidget(self.help_label)
 
         # Button box
@@ -689,6 +692,10 @@ class ShadowEditorDialog(QDialog):
             close_button.setText(_['close'])
 
         layout.addWidget(self.button_box)
+
+        # Freely shrinkable: the shadow list scrolls, Close stays reachable
+        allow_shrinking(self, minimum=(360, 260), fit=False)
+        cap_to_screen(self, 750, 500)
 
         # Connect canvas update signal to refresh when canvas changes
         if hasattr(canvas, 'canvas_updated'):

@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QTableWidget,
 from PyQt5.QtCore import Qt, pyqtSignal, QRect
 from PyQt5.QtGui import QColor, QPainter, QPen, QPainterPath
 from masked_strand import MaskedStrand
+from shrinkable_dialog import allow_shrinking, cap_to_screen, relax
 from translations import translations
 
 
@@ -267,8 +268,6 @@ class MaskGridDialog(QDialog):
         # Window setup
         self.setWindowTitle(f"{_['create_mask_grid']} - {self.group_name}")
         self.setModal(False)
-        self.setMinimumSize(600, 400)
-        self.resize(800, 600)
 
         # Set RTL for Hebrew
         if self.language_code == 'he':
@@ -283,6 +282,9 @@ class MaskGridDialog(QDialog):
         info_text = _['mask_grid_info'].format(self.group_name, len(self.strands))
         info_label = QLabel(info_text)
         info_label.setWordWrap(True)
+        # The paragraph is as tall as the text needs at the dialog's width,
+        # which would otherwise be a floor the window could not go under
+        relax(info_label)
         main_layout.addWidget(info_label)
 
         # Create table
@@ -328,6 +330,10 @@ class MaskGridDialog(QDialog):
         button_layout.addWidget(self.close_button)
 
         main_layout.addLayout(button_layout)
+
+        # Freely shrinkable: the grid scrolls, Apply / Close stay reachable
+        allow_shrinking(self, minimum=(340, 240), fit=False)
+        cap_to_screen(self, 800, 600)
 
     def _populate_table(self):
         """Populate the table with strand info and checkboxes."""

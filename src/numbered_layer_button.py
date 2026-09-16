@@ -4,6 +4,7 @@ from PyQt5.QtGui import QColor, QPainter, QFont, QPainterPath, QIcon, QPen, QDra
 from render_utils import RenderUtils
 from translations import translations
 from segmented_spin_box import upgrade_spinbox, style_segmented_spinbox
+from shrinkable_dialog import cap_to_screen, make_shrinkable
 from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
 import os  # Add os for icon path resolution
@@ -4032,7 +4033,6 @@ class WidthConfigDialog(QDialog):
 
         self.setWindowTitle(_['change_width'] if 'change_width' in _ else "Change Width")
         self.setModal(True)
-        self.setMinimumSize(400, 220)
         self.resize(450, 240)
         
         # Find the main window to inherit its theme
@@ -4328,7 +4328,12 @@ class WidthConfigDialog(QDialog):
         button_layout.addWidget(self.cancel_button)
         
         layout.addLayout(button_layout)
-        
+
+        # Freely shrinkable: the width controls scroll, OK / Cancel stay put
+        make_shrinkable(self, minimum=(300, 200), pinned=[button_layout], fit=False)
+        hint = self.sizeHint()
+        cap_to_screen(self, max(450, hint.width()), max(240, hint.height()))
+
         # Connect to language change signal if available
         if hasattr(layer_panel, 'canvas') and hasattr(layer_panel.canvas, 'language_changed'):
             layer_panel.canvas.language_changed.connect(self.update_translations)

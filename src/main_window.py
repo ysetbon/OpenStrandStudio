@@ -882,8 +882,9 @@ class MainWindow(QMainWindow):
                 self._settings_dialog = self.settings_dialog
                 # Remove fixed size and use expanding size policy
                 self._settings_dialog.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-                # Set initial size (optional, can be adjusted based on content)
-                self._settings_dialog.resize(800, 600)
+                # No resize here: the dialog already fitted itself to its
+                # translations and the screen, and adjust_dialog_geometry
+                # would read any other size as one the user chose
                 # Add margins to prevent content clipping
                 dialog_layout = self._settings_dialog.layout()
                 if dialog_layout is not None:
@@ -906,7 +907,6 @@ class MainWindow(QMainWindow):
             self.settings_dialog = SettingsDialog(parent=self, canvas=self.canvas, undo_redo_manager=undo_manager, layer_panel=self.layer_panel)
             self._settings_dialog = self.settings_dialog
             self._settings_dialog.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-            self._settings_dialog.resize(800, 600)
             dialog_layout = self._settings_dialog.layout()
             if dialog_layout is not None:
                 dialog_layout.setContentsMargins(10, 10, 10, 10)

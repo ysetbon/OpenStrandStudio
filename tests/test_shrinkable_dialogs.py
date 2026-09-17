@@ -52,7 +52,7 @@ def app_theme():
     window = keep(MainWindow())
     window.apply_theme('default')
     assert 'QPushButton' in APP.styleSheet()
-    yield
+    yield window
     APP.setStyleSheet('')
 
 
@@ -228,6 +228,31 @@ def test_settings_dialog_keeps_the_size_the_user_chose_when_reopened():
     APP.processEvents()
     assert size_of(dialog) == chosen
     dialog.reject()
+
+
+def test_settings_dialog_opens_fitted_from_the_main_window(app_theme):
+    """The real open path: MainWindow builds the dialog, then shows it via
+    open_settings_dialog. Nothing on that path may count as the user
+    resizing, so the first open is the fitted, screen-capped size."""
+    window = app_theme
+    window.open_settings_dialog()
+    APP.processEvents()
+    dialog = keep(window._settings_dialog)
+    available = dialog.screen().availableGeometry()
+    assert dialog.isVisible()
+    assert dialog.height() <= int(available.height() * 0.9)
+    assert dialog.width() <= int(available.width() * 0.9)
+    assert size_of(dialog) == (dialog._fitted_size.width(), dialog._fitted_size.height())
+
+    # Dragged down by the user, closed, reopened the same way: kept
+    chosen = (dialog.minimumWidth() + 60, dialog.minimumHeight() + 40)
+    dialog.resize(*chosen)
+    APP.processEvents()
+    dialog.hide()
+    window.open_settings_dialog()
+    APP.processEvents()
+    assert size_of(dialog) == chosen
+    dialog.hide()
 
 
 def video_player_dialog():

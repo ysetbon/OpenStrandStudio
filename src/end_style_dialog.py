@@ -15,14 +15,15 @@ import math
 from PyQt5.QtCore import Qt, QPointF, QSize, QTimer
 from PyQt5.QtGui import (QColor, QIcon, QImage, QIntValidator, QPainter, QPainterPath,
                          QPainterPathStroker, QPen, QPixmap)
-from PyQt5.QtWidgets import (QApplication, QButtonGroup, QCheckBox, QColorDialog, QDialog,
-                             QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
-                             QScrollArea, QSizePolicy, QSlider, QSpinBox, QStyleFactory,
-                             QToolButton, QVBoxLayout, QWidget)
+from PyQt5.QtWidgets import (QButtonGroup, QCheckBox, QColorDialog, QDialog, QFrame,
+                             QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
+                             QSizePolicy, QSlider, QSpinBox, QStyleFactory, QToolButton,
+                             QVBoxLayout, QWidget)
 
 import end_style
 from mask_grid_dialog import LargeIndicatorStyle, MaskGridDialog
 from segmented_spin_box import upgrade_spinbox, style_segmented_spinbox
+from shrinkable_dialog import fit_to_screen, scroll_area
 from translations import translations
 
 
@@ -210,7 +211,7 @@ class EndStyleDialog(QDialog):
         self._build_ui(_, current)
         self._sync_enabled_state()
         self._refresh_preview()
-        self._fit_to_screen()
+        fit_to_screen(self)
 
         if self.canvas is not None and hasattr(self.canvas, 'language_changed'):
             try:
@@ -311,12 +312,7 @@ class EndStyleDialog(QDialog):
 
         # Everything between the header and the buttons scrolls, so the
         # dialog can be made as small as the user likes
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setFrameShape(QFrame.NoFrame)
-        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scroll_area.setStyleSheet("QScrollArea { background: transparent; border: none; }")
-        self.scroll_area.viewport().setStyleSheet("background: transparent;")
+        self.scroll_area = scroll_area(horizontal=Qt.ScrollBarAlwaysOff)
         content = QWidget()
         content.setStyleSheet("background: transparent;")
         root = QVBoxLayout(content)
@@ -448,24 +444,6 @@ class EndStyleDialog(QDialog):
 
         self._update_swatch()
         self.update_translations()
-
-    def _fit_to_screen(self):
-        """Open at the content's natural size, but never larger than the
-        available screen area (the body scrolls instead)."""
-        hint = self.sizeHint()
-        width, height = hint.width(), hint.height()
-        screen = None
-        try:
-            screen = self.screen()
-        except AttributeError:
-            pass
-        if screen is None:
-            screen = QApplication.primaryScreen()
-        if screen is not None:
-            available = screen.availableGeometry()
-            width = min(width, int(available.width() * 0.9))
-            height = min(height, int(available.height() * 0.9))
-        self.resize(max(width, self.minimumWidth()), max(height, self.minimumHeight()))
 
     def _has_two_free_ends(self):
         if hasattr(self.strand, 'parent'):

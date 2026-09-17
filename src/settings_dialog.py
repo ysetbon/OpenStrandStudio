@@ -16,6 +16,8 @@ from save_load_manager import load_strands, apply_loaded_strands
 # Reads the provenance recorded with each undo/redo state, for the History page.
 from undo_redo_metadata import describe as describe_history, read_metadata as read_history_metadata
 from segmented_spin_box import upgrade_and_style_all, upgrade_spinbox, style_segmented_spinbox
+from shrinkable_dialog import (QWIDGETSIZE_MAX, allow_shrinking, cap_to_screen,
+                              make_shrinkable, scroll_area)
 import os
 import sys
 import subprocess
@@ -37,6 +39,11 @@ except ImportError:
 
 class SettingsDialog(QDialog):
     theme_changed = pyqtSignal(str)
+
+    # How small the dialog may be dragged. Below this the category column and
+    # a readable slice of the settings page stop fitting side by side; the
+    # pages scroll for everything past it.
+    SHRUNK_MINIMUM = (420, 300)
 
     def __init__(self, parent=None, canvas=None, undo_redo_manager=None, layer_panel=None):
         super(SettingsDialog, self).__init__(parent)
@@ -3499,16 +3506,23 @@ class SettingsDialog(QDialog):
         about_layout.addWidget(self.about_text_browser)
         self.stacked_widget.addWidget(self.about_widget)
 
-        # Add widgets to main layout with proper spacing
+        # Add widgets to main layout with proper spacing. The pages live in a
+        # scroll area so the dialog can be dragged down to any size it likes
+        # and the settings scroll rather than being cut off.
+        self.pages_scroll = scroll_area(self)
+        self.pages_scroll.setWidget(self.stacked_widget)
         main_layout.addWidget(self.categories_list)
-        main_layout.addWidget(self.stacked_widget)
+        main_layout.addWidget(self.pages_scroll, 1)
 
-        # Expand dialog width so localized text (e.g., Portuguese) fits without scrolling.
+        # Open wide enough for localized text (e.g., Portuguese) to fit without
+        # scrolling, without making that width a floor.
         self.adjust_dialog_geometry()
 
-        # Prevent dialog from being resizable
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
+        # Freely resizable: keep the maximize button so the dialog can be thrown
+        # open as well as dragged down small, and the size grip in the corner.
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowMinimizeButtonHint)
+        self.setSizeGripEnabled(True)
 
         # Set default category
         self.categories_list.setCurrentRow(0)
@@ -3535,7 +3549,11 @@ class SettingsDialog(QDialog):
         self.categories_list.setFixedWidth(self.category_panel_width)
 
     def adjust_dialog_geometry(self):
-        """Resize the dialog so the content area fits the active translations exactly."""
+        """Open the dialog at the size the active translations want.
+
+        That size is where the dialog *starts*, not a floor it is held to:
+        the minimum stays small and the pages scroll, so the window can be
+        dragged down to fit any screen (see SHRUNK_MINIMUM)."""
         if (
             not hasattr(self, 'categories_list') or
             not hasattr(self, 'stacked_widget') or
@@ -3550,10 +3568,11 @@ class SettingsDialog(QDialog):
         # long names (e.g. "Save/Load") never show elided as "Save/Loa..."
         self.update_category_panel_width()
 
-        left_margin, _, right_margin, _ = layout.getContentsMargins()
+        left_margin, top_margin, right_margin, bottom_margin = layout.getContentsMargins()
         spacing = layout.spacing()
 
-        right_panel_min_width = 0
+        right_panel_width = 0
+        right_panel_height = 0
         for index in range(self.stacked_widget.count()):
             page = self.stacked_widget.widget(index)
             if not page:
@@ -3563,17 +3582,33 @@ class SettingsDialog(QDialog):
                 page.sizeHint().width(),
                 page.minimumSizeHint().width(),
             ]
-            right_panel_min_width = max(right_panel_min_width, *width_hints)
+            right_panel_width = max(right_panel_width, *width_hints)
+            right_panel_height = max(right_panel_height, page.sizeHint().height())
 
-        # Fallback to a sane minimum if pages have not reported widths yet
-        if right_panel_min_width <= 0:
-            right_panel_min_width = self.stacked_widget.sizeHint().width()
+        # Fallback to a sane size if pages have not reported hints yet
+        if right_panel_width <= 0:
+            right_panel_width = self.stacked_widget.sizeHint().width()
+        if right_panel_height <= 0:
+            right_panel_height = self.stacked_widget.sizeHint().height()
 
-        dialog_min_width = self.category_panel_width + right_panel_min_width + spacing + left_margin + right_margin
-        self.setMinimumWidth(dialog_min_width)
+        # Nothing here is a floor; the dialog may be made smaller than any of it
+        self.setMinimumSize(*self.SHRUNK_MINIMUM)
+        self.setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)
 
-        target_height = self.sizeHint().height()
-        self.resize(dialog_min_width, target_height)
+        target_width = (self.category_panel_width + right_panel_width + spacing +
+                        left_margin + right_margin)
+        target_height = (max(right_panel_height, self.categories_list.sizeHint().height()) +
+                         top_margin + bottom_margin)
+
+        # This runs again on every open and on every language change. Once the
+        # user has dragged the dialog to a size of their own, keep it: the
+        # pages scroll, so nothing is lost, and snapping back would undo the
+        # one thing they just did.
+        fitted = getattr(self, '_fitted_size', None)
+        if fitted is not None and self.size() != fitted:
+            return
+        cap_to_screen(self, target_width, target_height)
+        self._fitted_size = self.size()
 
     def style_dialog_buttons(self):
         """Apply consistent styling to all buttons in the dialog"""
@@ -7303,23 +7338,26 @@ class VideoPlayerDialog(QDialog):
         super(VideoPlayerDialog, self).__init__(parent)
         self.video_path = video_path
         self.setWindowTitle("Video Player")
-        self.setMinimumSize(600, 400)
         self.setup_ui()
+        # Freely shrinkable: the video picture is what gives up the space,
+        # the control row never does
+        allow_shrinking(self, minimum=(320, 220), keep_whole=[self.control_layout], fit=False)
+        cap_to_screen(self, 640, 420)
         self.load_video()
 
     def setup_ui(self):
-        self.layout = QVBoxLayout(self)
+        layout = QVBoxLayout(self)
 
         # Video Widget
         self.video_widget = QVideoWidget()
-        self.layout.addWidget(self.video_widget)
+        layout.addWidget(self.video_widget)
 
         # Media Player
         self.media_player = QMediaPlayer(None, QMediaPlayer.VideoSurface)
         self.media_player.setVideoOutput(self.video_widget)
 
         # Control Buttons Layout
-        control_layout = QHBoxLayout()
+        control_layout = self.control_layout = QHBoxLayout()
 
         # Play Button
         self.play_button = QPushButton("Play")
@@ -7342,7 +7380,7 @@ class VideoPlayerDialog(QDialog):
         self.close_button.clicked.connect(self.close)
         control_layout.addWidget(self.close_button)
 
-        self.layout.addLayout(control_layout)
+        layout.addLayout(control_layout)
 
         # Connect media player signals
         self.media_player.positionChanged.connect(self.position_changed)
@@ -7389,7 +7427,6 @@ class DefaultWidthConfigDialog(QDialog):
         
         self.setWindowTitle(_['default_strand_width'] if 'default_strand_width' in _ else "Default Strand Width")
         self.setModal(True)
-        self.setMinimumSize(400, 220)
         self.resize(450, 240)
         
         # Find the main window to inherit its theme
@@ -7567,7 +7604,12 @@ class DefaultWidthConfigDialog(QDialog):
         button_layout.addWidget(self.cancel_button)
         
         layout.addLayout(button_layout)
-        
+
+        # Freely shrinkable: the settings scroll, OK / Cancel stay put
+        make_shrinkable(self, minimum=(300, 200), pinned=[button_layout], fit=False)
+        hint = self.sizeHint()
+        cap_to_screen(self, max(450, hint.width()), max(240, hint.height()))
+
         # Connect to language change signal if available
         if hasattr(settings_dialog, 'parent_window') and hasattr(settings_dialog.parent_window, 'language_changed'):
             settings_dialog.parent_window.language_changed.connect(self.update_translations)

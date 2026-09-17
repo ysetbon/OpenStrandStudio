@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
                              QSizePolicy, QGridLayout, QSpacerItem, QLayout)
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QColor, QFont
+from shrinkable_dialog import allow_shrinking, cap_to_screen, refit_floor, relax
 from translations import translations
 from shadow_editor_dialog import ShadowListItem, get_shadow_help_alignment, get_shadow_help_text
 
@@ -26,8 +27,6 @@ class GroupShadowEditorDialog(QDialog):
 
         self.setWindowTitle(f"{_['group_shadow_editor_title']} - {group_name}")
         self.setModal(False)
-        self.setMinimumSize(750, 450)
-        self.resize(800, 600)
 
         main_window = parent
         while main_window and not hasattr(main_window, 'current_theme'):
@@ -48,6 +47,9 @@ class GroupShadowEditorDialog(QDialog):
         # Info label
         self.info_label = QLabel(_['group_shadow_editor_info'].format(group_name))
         layout.addWidget(self.info_label)
+        # Neither paragraph gets to set a floor for the whole window: the
+        # scroll area between them is what gives up space first
+        relax(self.info_label)
 
         # Global toggle row
         self.global_toggle_row = self._create_global_toggle_row()
@@ -80,6 +82,7 @@ class GroupShadowEditorDialog(QDialog):
         self.help_label.setLayoutDirection(Qt.RightToLeft if self.language_code == 'he' else Qt.LeftToRight)
         self.help_label.setAlignment(get_shadow_help_alignment(self.language_code))
         self.help_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        relax(self.help_label)
         layout.addWidget(self.help_label)
 
         # Sync widths and row heights after the scroll area has laid out its children.
@@ -92,6 +95,13 @@ class GroupShadowEditorDialog(QDialog):
         if close_button:
             close_button.setText(_['close'])
         layout.addWidget(self.button_box)
+
+        # Freely shrinkable in height: the strand rows scroll, Close stays
+        # reachable. The global toggle row lines up with those rows' columns
+        # and cannot wrap, so it is what sets the floor width.
+        allow_shrinking(self, minimum=(360, 280),
+                        keep_whole=[self.global_toggle_row, self.button_box], fit=False)
+        cap_to_screen(self, 800, 600)
 
         if hasattr(canvas, 'language_changed'):
             canvas.language_changed.connect(self.update_translations)
@@ -161,6 +171,11 @@ class GroupShadowEditorDialog(QDialog):
 
         for toggles in toggle_rows:
             apply_to_toggles(toggles)
+
+        # The global toggle row may have just outgrown the floor measured
+        # before the columns were sized (a long layer name, a longer
+        # translation)
+        refit_floor(self)
 
     def _refresh_scroll_layout(self, ensure_widget_visible=None):
         """

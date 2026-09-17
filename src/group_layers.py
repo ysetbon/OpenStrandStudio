@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QStyleOptionButton, QProxyStyle, QStyle, QStyledItem
 from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QPoint, QEvent, QEventLoop, QTimer
 from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon, QIntValidator, QGuiApplication, QPainter, QPen, QPainterPath
 from math import atan2, degrees, isqrt
+from shrinkable_dialog import allow_shrinking
 from translations import translations
 from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
 from PyQt5.QtWidgets import (
@@ -6335,8 +6336,8 @@ class StrandAngleEditDialog(QDialog):
 
         self.populate_table()
 
-        bottom_layout = self.setup_bottom_layout()
-        main_layout.addLayout(bottom_layout)
+        self.bottom_layout = self.setup_bottom_layout()
+        main_layout.addLayout(self.bottom_layout)
 
 
         self.setLayout(main_layout)
@@ -6911,8 +6912,10 @@ class StrandAngleEditDialog(QDialog):
         dialog_width = min(int(screen.width() * 0.8), 1000)  # 80% of screen width, max 1000px
         dialog_height = min(int(screen.height() * 0.8), 700)  # 80% of screen height, max 700px
         
-        # Use a minimum size to ensure everything is visible
-        self.setMinimumSize(800, 400)
+        # That is the size it opens at, not a floor: the table scrolls, so the
+        # dialog can be dragged down to fit any screen; only the X-angle row
+        # under it has to fit whole
+        allow_shrinking(self, minimum=(360, 260), keep_whole=[self.bottom_layout], fit=False)
         self.resize(dialog_width, dialog_height)
         
         # Center the dialog on the screen

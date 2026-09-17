@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
                              QProxyStyle, QStyle)
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QRect
 from PyQt5.QtGui import QColor, QPalette, QPainter, QPen, QPainterPath
-from shrinkable_dialog import allow_shrinking, cap_to_screen, relax
+from shrinkable_dialog import allow_shrinking, cap_to_screen, refit_floor, relax
 from translations import translations
 
 
@@ -940,6 +940,10 @@ class ShadowEditorDialog(QDialog):
         self.section_toggles['full'].setFixedWidth(full_w)
         self.section_toggles['subtract'].setFixedWidth(sub_w)
         self.section_toggles['shadow'].setFixedWidth(show_w)
+
+        # The toggle row may have just outgrown the floor measured before the
+        # columns were sized (a long layer name, a longer translation)
+        refit_floor(self)
 
     def _toggle_all_visible(self, checked):
         for item in self.shadow_items:

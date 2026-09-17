@@ -19,6 +19,9 @@ helpers are that same treatment, packaged so the other dialogs can take it:
                      toggles) must fit whole, so the dialog is never
                      narrower than the widest of those needs under the
                      stylesheet that is actually in effect.
+``refit_floor``      measures those rows again, for a dialog that sizes
+                     them later - on a timer after the list fills, or on
+                     a language change.
 ``relax``            stops a long or wrapped label from setting that floor.
 ``scroll_area``      the frameless, see-through scroll area both of the
                      above put the body in.
@@ -92,18 +95,40 @@ def _needed_width(item):
     return max(item.minimumWidth(), item.minimumSizeHint().width())
 
 
-def floor_for(dialog, minimum, keep_whole=()):
+def floor_for(dialog, minimum, keep_whole=(), fraction=0.9):
     """``minimum``, widened so that every ``keep_whole`` row still fits.
 
     The app's theme stylesheet gives buttons a min-width, so what a row of
     them needs is only known at run time and only once they are polished;
-    a floor chosen at the desk would leave the last button off the edge."""
+    a floor chosen at the desk would leave the last button off the edge.
+    A row wider than the screen (a very long layer name in a fixed column)
+    cannot be fitted whole whatever the floor, so the floor stops at the
+    screen rather than make the window unfit the display."""
     width, height = minimum
     if keep_whole:
         layout = dialog.layout()
         left, _, right, _ = layout.getContentsMargins() if layout else (0, 0, 0, 0)
-        width = max(width, max(_needed_width(item) for item in keep_whole) + left + right)
+        needed = max(_needed_width(item) for item in keep_whole) + left + right
+        screen = screen_of(dialog)
+        if screen is not None:
+            needed = min(needed, int(screen.availableGeometry().width() * fraction))
+        width = max(width, needed)
     return width, height
+
+
+def refit_floor(dialog):
+    """Measure the ``keep_whole`` rows again and reset the floor to them.
+
+    For a dialog whose rows are only sized later: the shadow editors line
+    their toggle row up with the list's columns on a zero-delay timer, and
+    again on every language change, and the row can outgrow the floor that
+    was measured before that ran.  A dialog already below the new floor
+    grows to it.  Does nothing for a dialog that never had a floor set."""
+    floor = getattr(dialog, '_shrink_floor', None)
+    if floor is None:
+        return
+    minimum, keep_whole = floor
+    dialog.setMinimumSize(*floor_for(dialog, minimum, keep_whole))
 
 
 def allow_shrinking(dialog, minimum=DEFAULT_MINIMUM, keep_whole=(), fit=True):
@@ -113,7 +138,8 @@ def allow_shrinking(dialog, minimum=DEFAULT_MINIMUM, keep_whole=(), fit=True):
     are (see ``floor_for``).  Setting the minimum explicitly is also what
     stops Qt from replacing it with the layout's own, much larger, idea of
     a minimum."""
-    dialog.setMinimumSize(*floor_for(dialog, minimum, keep_whole))
+    dialog._shrink_floor = (tuple(minimum), tuple(keep_whole))
+    refit_floor(dialog)
     dialog.setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)
     dialog.setSizeGripEnabled(True)
     layout = dialog.layout()
@@ -196,8 +222,9 @@ def make_shrinkable(dialog, minimum=DEFAULT_MINIMUM, header=(), pinned=(),
         _re_add(outer, item)
 
     # The header and the pinned rows are exactly the parts that do not scroll
-    dialog.setMinimumSize(*floor_for(dialog, minimum, [
-        item for item in taken_header + taken_pinned if item is not None]))
+    dialog._shrink_floor = (tuple(minimum), tuple(
+        item for item in taken_header + taken_pinned if item is not None))
+    refit_floor(dialog)
     dialog.setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)
     dialog.setSizeGripEnabled(True)
     if fit:

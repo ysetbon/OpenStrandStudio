@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
                              QSizePolicy, QGridLayout, QSpacerItem, QLayout)
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QColor, QFont
-from shrinkable_dialog import allow_shrinking, cap_to_screen, relax
+from shrinkable_dialog import allow_shrinking, cap_to_screen, refit_floor, relax
 from translations import translations
 from shadow_editor_dialog import ShadowListItem, get_shadow_help_alignment, get_shadow_help_text
 
@@ -171,6 +171,11 @@ class GroupShadowEditorDialog(QDialog):
 
         for toggles in toggle_rows:
             apply_to_toggles(toggles)
+
+        # The global toggle row may have just outgrown the floor measured
+        # before the columns were sized (a long layer name, a longer
+        # translation)
+        refit_floor(self)
 
     def _refresh_scroll_layout(self, ensure_widget_visible=None):
         """

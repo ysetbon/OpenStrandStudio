@@ -29,7 +29,7 @@ from PyQt5.QtWidgets import (QApplication, QDialog, QDialogButtonBox, QHBoxLayou
                              QLabel, QListWidget, QPushButton, QScrollArea, QVBoxLayout)
 
 from shrinkable_dialog import (allow_shrinking, cap_to_screen, fit_to_screen,
-                               make_shrinkable, relax)
+                               make_shrinkable, refit_floor, relax)
 
 APP = QApplication.instance() or QApplication([])
 
@@ -315,6 +315,65 @@ def group_shadow_editor():
 
 
 SHADOW_EDITORS = (strand_shadow_editor, group_shadow_editor)
+
+
+LONG_NAME = '1_1_a_receiving_layer_with_a_name_long_enough_to_widen_the_name_column'
+
+
+def populated_canvas(names):
+    """A canvas whose layer state the shadow editors can read, with real
+    receiving layers so their lists fill and their columns get sized."""
+    strands = [SimpleNamespace(layer_name=name, color=QColor(200, 170, 230), is_hidden=False,
+                               first_selected_strand=None) for name in names]
+    canvas = stub_canvas()
+    canvas.strands = strands
+    canvas.layer_state_manager = SimpleNamespace(
+        getOrder=lambda: list(names),
+        get_shadow_override=lambda caster, receiver: {},
+        get_shadow_visibility=lambda caster, receiver: True,
+        get_subtracted_layers=lambda caster, receiver: [])
+    return canvas, strands
+
+
+def shadow_editor_with_long_name():
+    from shadow_editor_dialog import ShadowEditorDialog
+
+    canvas, strands = populated_canvas([LONG_NAME, '1_2', '1_3'])
+    return keep(ShadowEditorDialog(canvas, strands[-1])), 'toggle_row'
+
+
+def group_editor_with_long_name():
+    from group_shadow_editor_dialog import GroupShadowEditorDialog
+
+    canvas, strands = populated_canvas([LONG_NAME, '1_2', '1_3'])
+    return keep(GroupShadowEditorDialog(canvas, 'group', strands)), 'global_toggle_row'
+
+
+@pytest.mark.parametrize('build', (shadow_editor_with_long_name, group_editor_with_long_name))
+def test_shadow_editors_refit_their_floor_once_the_columns_are_sized(build):
+    """The toggle row is sized to the list's widest name on a zero-delay
+    timer after the dialog is built. The floor measured before that ran
+    is stale by then; the row must still be whole at the floor."""
+    dialog, row_name = build()
+    dialog.show()
+    APP.processEvents()  # the deferred _sync_column_widths
+    APP.processEvents()
+    row = getattr(dialog, row_name)
+    assert len(dialog.shadow_items if hasattr(dialog, 'shadow_items') else dialog.all_shadow_items) > 0
+    # A floor the row does not fit under would leave it clipped
+    assert row.minimumSizeHint().width() <= dialog.minimumWidth() or \
+        dialog.minimumWidth() >= int(dialog.screen().availableGeometry().width() * 0.9)
+    shrink(dialog)
+    assert fully_inside(row, dialog)
+    dialog.hide()
+
+
+def test_refit_floor_is_a_no_op_for_a_dialog_without_a_floor():
+    dialog = QDialog()
+    QVBoxLayout(dialog).addWidget(QLabel("hi"))
+    before = dialog.minimumSize()
+    refit_floor(dialog)
+    assert dialog.minimumSize() == before
 
 
 @pytest.mark.parametrize('build', SHADOW_EDITORS)

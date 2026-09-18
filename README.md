@@ -1,16 +1,17 @@
-# OpenStrand Studio - Version 1.110
+# OpenStrand Studio - Version 1.111
 
 An advanced diagramming tool for creating tutorials involving strand manipulation (knots, hitches, etc.)
 with dynamic masking that automatically adjusts the over-under effects between strands,
 making complex patterns clear and easy to understand.
 
-## What's New in Version 1.110
+## What's New in Version 1.111
 
 ### ✨ New Features
 
-- **Layer-Only Colors and Set-Wide Stroke Color**: The layer menu now pairs every color option with a layer-only version: Change Color / Change Color (This Layer Only) and Change Stroke Color / Change Stroke Color (This Layer Only), matching the existing width entries. Change Stroke Color now recolors the whole set just like Change Color, while the layer-only entries repaint only the clicked layer. Per-layer exceptions are saved with your project and survive undo/redo, tab switching and group operations; changing the set color again resets them.
-- **Undo/Redo History That Says What You Did**: Every undo and redo step now records what produced it — the mode you were using, or the panel, dialog or menu entry — together with the layers it touched and when it happened. The Undo and Redo buttons name the action they will reverse or replay, and Settings → History gains a “Recorded actions” list showing this session's activity or the steps of a past session. The record travels inside each saved state, so it survives a restart, history export/import and session recovery.
-- **Collapsible Group Column**: The group column on the right of the layer panel can now get out of the way. A small chevron at its bottom collapses it from 140 px to a 40 px rail, and the canvas takes the room. The rail keeps a G tile that opens the usual Create Group flow, plus one tile per group showing the first letter of its name; clicking a tile expands the column with that group in view. Ctrl+G (Cmd+G on Mac) toggles it, and the choice is remembered between sessions.
+- **Stylize End Side**: Right-click a layer with a free end and pick Stylize End Side, just under Close the Knot. A dialog lets you choose how the strand ends: Straight, Angled, Rounded, Pointed, Notched or Concave. You can also set the tilt and depth, extend or trim the end, and add a side line with its own thickness and color. The preview is live on the canvas. The shadow, side line and masks all follow the new shape. End styles are saved with your project and work with undo and redo.
+- **Right Size on Scaled Screens**: On high-resolution screens with display scaling turned on, the buttons and text used to look too small. The app now follows your display scale. Toolbar labels no longer get cut off, and the toolbar moves onto two rows when the window is narrow. The layer panel can be dragged narrower than before. The OpenStrand Studio logo now appears on every window and in the taskbar.
+- **Dialogs Fit Small Screens**: The Settings dialog can now be made smaller, so its Apply and OK buttons always stay on screen. The same goes for Edit Shadow, the group shadow editor, Create Mask Grid, Edit Strand Angles, Change Width and the video player. A dialog never opens larger than your screen, and it keeps the size you give it.
+- **Smoother Dragging**: The canvas stays sharp while you drag, even on scaled displays or with supersampling on. Move mode shows a closed hand while dragging a point. View mode can now pan with the left mouse button too. The Refresh button's tooltip now says what it does: reload layers and reset the view.
 
 ## Features
 
@@ -46,7 +47,7 @@ python src/main.py
 ```
 
 For installer builds see `src/INSTALL_GUIDE_Windows.md` and
-`src/INSTALL_GUIDE_mac.md` (macOS: one command — `bash src/build_mac_1_110.sh`).
+`src/INSTALL_GUIDE_mac.md` (macOS: one command — `bash src/build_mac_1_111.sh`).
 
 ## Video Tutorials
 
@@ -71,4 +72,4 @@ Created by Yonatan Setbon
 
 ---
 
-© 2026 OpenStrand Studio - Version 1.110
+© 2026 OpenStrand Studio - Version 1.111

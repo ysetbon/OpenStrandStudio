@@ -24,6 +24,38 @@ The masked layer feature is essential for creating intricate, overlapping design
 
 ------
 
+## Version 1.111 (Released: 19/09/2026)
+
+### New Features and Improvements:
+
+1. **Stylize End Side:**
+   - Right-click a layer with a free end and pick Stylize End Side, just under Close the Knot.
+   - A dialog lets you choose how the strand ends: Straight, Angled, Rounded, Pointed, Notched or Concave.
+   - You can also set the tilt and depth, extend or trim the end, and add a side line with its own thickness and color.
+   - The preview is live on the canvas.
+   - The shadow, side line and masks all follow the new shape.
+   - End styles are saved with your project and work with undo and redo.
+
+2. **Right Size on Scaled Screens:**
+   - On high-resolution screens with display scaling turned on, the buttons and text used to look too small.
+   - The app now follows your display scale.
+   - Toolbar labels no longer get cut off, and the toolbar moves onto two rows when the window is narrow.
+   - The layer panel can be dragged narrower than before.
+   - The OpenStrand Studio logo now appears on every window and in the taskbar.
+
+3. **Dialogs Fit Small Screens:**
+   - The Settings dialog can now be made smaller, so its Apply and OK buttons always stay on screen.
+   - The same goes for Edit Shadow, the group shadow editor, Create Mask Grid, Edit Strand Angles, Change Width and the video player.
+   - A dialog never opens larger than your screen, and it keeps the size you give it.
+
+4. **Smoother Dragging:**
+   - The canvas stays sharp while you drag, even on scaled displays or with supersampling on.
+   - Move mode shows a closed hand while dragging a point.
+   - View mode can now pan with the left mouse button too.
+   - The Refresh button's tooltip now says what it does: reload layers and reset the view.
+
+------
+
 ## Version 1.110 (Released: 26/08/2026)
 
 ### New Features and Improvements:
@@ -698,6 +730,38 @@ Pour utiliser cette fonctionnalité :
 3. Relâchez la touche Contrôle pour créer le calque masqué
 
 La fonctionnalité de calque masqué est essentielle pour créer des designs complexes et superposés et c'est l'un des outils les plus puissants d'OpenStrand Studio. Assurez-vous d'expérimenter avec cette fonctionnalité pour libérer tout le potentiel de vos designs de brins !
+
+------
+
+## Version 1.111 (Sortie : 19/09/2026)
+
+### Nouvelles Fonctionnalités et Améliorations :
+
+1. **Styliser le côté d'extrémité:**
+   - Faites un clic droit sur un calque ayant une extrémité libre et choisissez Styliser le côté d'extrémité, juste sous Fermer le Nœud.
+   - Une boîte de dialogue vous laisse choisir la forme de l'extrémité du brin : Droite, Inclinée, Arrondie, Pointue, Entaillée ou Concave.
+   - Vous pouvez aussi régler l'inclinaison et la profondeur, allonger ou raccourcir l'extrémité, et ajouter une ligne latérale avec sa propre épaisseur et sa propre couleur.
+   - L'aperçu est en direct sur le canevas.
+   - L'ombre, la ligne latérale et les masques suivent tous la nouvelle forme.
+   - Les styles d'extrémité sont enregistrés avec votre projet et fonctionnent avec annuler et rétablir.
+
+2. **La bonne taille sur les écrans mis à l'échelle:**
+   - Sur les écrans haute résolution avec une mise à l'échelle de l'affichage, les boutons et le texte paraissaient trop petits.
+   - L'application suit désormais l'échelle de votre écran.
+   - Les libellés de la barre d'outils ne sont plus coupés, et la barre d'outils passe sur deux lignes quand la fenêtre est étroite.
+   - Le panneau des calques peut être réduit plus qu'avant.
+   - Le logo OpenStrand Studio apparaît maintenant sur chaque fenêtre et dans la barre des tâches.
+
+3. **Des boîtes de dialogue adaptées aux petits écrans:**
+   - La boîte de dialogue Paramètres peut désormais être réduite, de sorte que ses boutons Appliquer et OK restent toujours à l'écran.
+   - Il en va de même pour Modifier l'ombre, l'éditeur d'ombre de groupe, Créer Grille de Masque, Modifier les angles des brins, Changer largeur et le lecteur vidéo.
+   - Une boîte de dialogue ne s'ouvre jamais plus grande que votre écran, et elle garde la taille que vous lui donnez.
+
+4. **Un glissement plus fluide:**
+   - Le canevas reste net pendant que vous faites glisser, même sur les écrans mis à l'échelle ou avec le suréchantillonnage activé.
+   - Le mode déplacement affiche une main fermée pendant le glissement d'un point.
+   - Le mode vue peut maintenant aussi se déplacer avec le bouton gauche de la souris.
+   - L'info-bulle du bouton Actualiser indique désormais ce qu'il fait : recharger les calques et réinitialiser la vue.
 
 ------
 

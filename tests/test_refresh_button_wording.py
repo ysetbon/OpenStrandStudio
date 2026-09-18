@@ -30,13 +30,10 @@ EXPECTED_BODIES = {
 
 OLD_PHRASES = (
     'Refresh the layer panel display',
-    'Reload layers',
     "Actualise l'affichage du panneau des calques",
     'Recharger les calques',
     'Aktualisiert die Anzeige des Ebenenpanels',
-    'Ebenen neu laden',
     'Aggiorna la visualizzazione del pannello livelli',
-    'Ricarica i livelli',
     'Actualiza la visualización del panel de capas',
     'Recargar capas',
     'Atualiza a exibição do painel de camadas',
@@ -93,6 +90,19 @@ class RefreshButtonWordingTest(unittest.TestCase):
                 parts = strings['refresh_desc'].split(' - ', 1)
                 self.assertEqual(len(parts), 2)
                 self.assertEqual(parts[1], EXPECTED_BODIES[lang])
+
+    def test_tooltip_wraps_onto_two_body_lines(self):
+        """Right-click tooltips do not word-wrap; keep each row short."""
+        for lang, strings in translations.items():
+            with self.subTest(lang=lang):
+                lines = strings['refresh_tooltip'].split('\n')
+                self.assertGreaterEqual(len(lines), 3)
+                for line in lines:
+                    self.assertLessEqual(
+                        len(line),
+                        28,
+                        f'{lang} tooltip line is too long: {line!r}',
+                    )
 
 
 if __name__ == '__main__':

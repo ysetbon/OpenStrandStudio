@@ -1765,7 +1765,7 @@ class StrandDrawingCanvas(QWidget):
                 pass
 
     def _update_pan_button_icon(self, is_panning):
-        """Update the pan button icon/state in layer panel during right-click panning."""
+        """Update the layer-panel Pan button during temporary canvas panning."""
         layer_panel = None
 
         # Method 1: Direct reference

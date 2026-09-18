@@ -143,6 +143,15 @@ class MoveMode:
         self.redraw_timer.timeout.connect(self.force_continuous_redraw)
         self.redraw_timer.setInterval(16)  # ~60fps for smooth updates
 
+    def _set_active_drag_cursor(self):
+        """Show that Move mode has grabbed a movable strand point."""
+        self.canvas.setCursor(Qt.ClosedHandCursor)
+
+    def _restore_idle_cursor(self):
+        """Restore Move mode's idle cursor without overriding another mode."""
+        if getattr(self.canvas, 'current_mode', self) is self:
+            self.canvas.setCursor(Qt.OpenHandCursor)
+
     def set_locked_layers(self, locked_layers, lock_mode_active):
         """
         Set the locked layers and lock mode state.
@@ -1577,6 +1586,8 @@ class MoveMode:
                 except AttributeError:
                     pass
 
+        self._restore_idle_cursor()
+
     def mouseReleaseEvent(self, event):
         """
         Handle mouse release events.
@@ -2433,6 +2444,7 @@ class MoveMode:
         self.affected_strand = strand
         self.selected_rectangle = area
         self.is_moving = True
+        self._set_active_drag_cursor()
         # Reset position tracking for snap-to-grid optimization
         self._last_redrawn_pos = None
         self._last_continuous_redraw_pos = None

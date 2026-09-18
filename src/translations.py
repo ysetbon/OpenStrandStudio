@@ -333,7 +333,7 @@ Examples:<br>
         'exited_lock_mode': 'Exited lock mode',
         # Button tooltips
         'reset_tooltip': 'Reset:\nKeep only current state\nas first state',
-        'refresh_tooltip': 'Refresh:\nReload layers\nand reset the view',
+        'refresh_tooltip': 'Refresh:\nReload layers and\nreset the view',
         'center_tooltip': 'Center:\nPan to center all strands\nin canvas',
         'hide_mode_tooltip': 'Multi-Layer Select:\nClick to select layers\nRight-click for batch\noperations, or delete\nselected layers',
         'zoom_in_tooltip': 'Zoom In',
@@ -1080,7 +1080,7 @@ Exemples :<br>
         'exited_lock_mode': 'Mode verrouillage quitté',
         # Button tooltips
         'reset_tooltip': 'Réinitialiser :\nGarder uniquement l\'état\nactuel comme premier état',
-        'refresh_tooltip': 'Actualiser :\nRecharge les calques\net réinitialise la vue',
+        'refresh_tooltip': 'Actualiser :\nRecharge les calques et\nréinitialise la vue',
         'center_tooltip': 'Centrer :\nDéplacer pour centrer tous\nles fils dans le canevas',
         'hide_mode_tooltip': 'Sélection Multi-Calques:\nCliquez pour sélectionner\nClic droit pour batch,\nou supprimez les\ncalques sélectionnés',
         'zoom_in_tooltip': 'Zoom avant',
@@ -1768,7 +1768,7 @@ Beispiele:<br>
         'use_default_arrow_color': 'Standard-Pfeilfarbe verwenden',
         # Button tooltips
         'reset_tooltip': 'Zurücksetzen:\nNur aktuellen Zustand\nals ersten Zustand behalten',
-        'refresh_tooltip': 'Aktualisieren:\nEbenen neu laden\nund Ansicht zurücksetzen',
+        'refresh_tooltip': 'Aktualisieren:\nEbenen neu laden und\nAnsicht zurücksetzen',
         'center_tooltip': 'Zentrieren:\nLeinwand verschieben, um\nalle Stränge zu zentrieren',
         'hide_mode_tooltip': 'Mehrschicht-Auswahl:\nKlicken zum Auswählen\nRechtsklick für Batch,\noder Löschen der\ngewählten Ebenen',
         'zoom_in_tooltip': 'Heranzoomen',
@@ -2320,7 +2320,7 @@ Esempi:<br>
         'exited_lock_mode': 'Uscito dalla modalità blocco',
         # Button tooltips
         'reset_tooltip': 'Ripristina:\nMantieni solo lo stato\ncorrente come primo stato',
-        'refresh_tooltip': 'Aggiorna:\nRicarica i livelli\ne reimposta la vista',
+        'refresh_tooltip': 'Aggiorna:\nRicarica i livelli e\nreimposta la vista',
         'center_tooltip': 'Centra:\nSposta per centrare tutti\ni fili nel canvas',
         'hide_mode_tooltip': 'Selezione Multi-Livelli:\nClicca per selezionare\nClic destro per batch,\no elimina i livelli\nselezionati',
         'zoom_in_tooltip': 'Zoom avanti',
@@ -2944,7 +2944,7 @@ Ejemplos:<br>
         'exited_lock_mode': 'Salió del modo bloqueo',
         # Button tooltips
         'reset_tooltip': 'Restablecer:\nMantener solo el estado\nactual como primer estado',
-        'refresh_tooltip': 'Actualizar:\nRecarga las capas\ny restablece la vista',
+        'refresh_tooltip': 'Actualizar:\nRecarga las capas y\nrestablece la vista',
         'center_tooltip': 'Centrar:\nDesplazar para centrar\ntodos los cordones en el\nlienzo',
         'hide_mode_tooltip': 'Selección Multi-Capa:\nClic para seleccionar\nClic derecho para batch,\no eliminar las capas\nseleccionadas',
         'zoom_in_tooltip': 'Acercar',
@@ -3568,7 +3568,7 @@ Exemplos:<br>
         'exited_lock_mode': 'Saiu do modo bloqueio',
         # Button tooltips
         'reset_tooltip': 'Redefinir:\nManter apenas o estado\natual como primeiro estado',
-        'refresh_tooltip': 'Atualizar:\nRecarrega as camadas\ne redefine a vista',
+        'refresh_tooltip': 'Atualizar:\nRecarrega as camadas e\nredefine a vista',
         'center_tooltip': 'Centralizar:\nMover para centralizar\ntodas as mechas na tela',
         'hide_mode_tooltip': 'Seleção Multi-Camada:\nClique para selecionar\nClique direito p/ batch,\nou deletar as camadas\nselecionadas',
         'zoom_in_tooltip': 'Aumentar zoom',
@@ -4129,7 +4129,7 @@ Exemplos:<br>
         'exited_lock_mode': 'יצא ממצב נעילה',
         # Button tooltips
         'reset_tooltip': 'איפוס:\nשמור רק את המצב\nהנוכחי כמצב ראשון',
-        'refresh_tooltip': 'רענון:\nטוען מחדש שכבות\nומאפס את התצוגה',
+        'refresh_tooltip': 'רענון:\nטוען מחדש שכבות ו\nמאפס את התצוגה',
         'center_tooltip': 'מרכז:\nהזז למרכז כל החוטים\nבקנבס',
         'hide_mode_tooltip': 'בחירת ריבוי שכבות:\nלחץ לבחירת שכבות\nלחץ ימני לפעולות\nקבוצתיות, או מחק\nשכבות נבחרות',
         'zoom_in_tooltip': 'הגדל',

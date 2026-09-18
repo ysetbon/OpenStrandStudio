@@ -45,7 +45,9 @@ OLD_PHRASES = (
 
 def _tooltip_body(text):
     _title, body = text.split('\n', 1)
-    return ' '.join(body.split())
+    joined = ' '.join(body.split())
+    # Hebrew "and" is a leading vav; a line break after it must not leave a space.
+    return joined.replace('ו ', 'ו')
 
 
 class RefreshButtonWordingTest(unittest.TestCase):
@@ -93,6 +95,10 @@ class RefreshButtonWordingTest(unittest.TestCase):
 
     def test_tooltip_wraps_onto_two_body_lines(self):
         """Right-click tooltips do not word-wrap; keep each row short."""
+        self.assertEqual(
+            translations['en']['refresh_tooltip'],
+            'Refresh:\nReload layers and\nreset the view',
+        )
         for lang, strings in translations.items():
             with self.subTest(lang=lang):
                 lines = strings['refresh_tooltip'].split('\n')

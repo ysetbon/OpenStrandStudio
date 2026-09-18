@@ -231,7 +231,7 @@ Examples:<br>
         'zoom_out_desc': 'Zoom Out - Zoom out to see the bigger picture',
         'center_strands_desc': 'Center Strands - Center all strands in the view',
         'multi_select_desc': 'Hide Mode - Click to activate hide mode, then select layers and right-click for batch hide/show operations',
-        'refresh_desc': 'Refresh - Refresh the layer panel display',
+        'refresh_desc': 'Refresh - Reload layers and reset the view',
         'reset_states_desc': 'Reset States - Reset all layer states to default',
         # Main window button descriptions
         'attach_mode_desc': 'Attach Mode - Connect strands together at their endpoints',
@@ -333,7 +333,7 @@ Examples:<br>
         'exited_lock_mode': 'Exited lock mode',
         # Button tooltips
         'reset_tooltip': 'Reset:\nKeep only current state\nas first state',
-        'refresh_tooltip': 'Refresh:\nReload layers',
+        'refresh_tooltip': 'Refresh:\nReload layers and\nreset the view',
         'center_tooltip': 'Center:\nPan to center all strands\nin canvas',
         'hide_mode_tooltip': 'Multi-Layer Select:\nClick to select layers\nRight-click for batch\noperations, or delete\nselected layers',
         'zoom_in_tooltip': 'Zoom In',
@@ -1080,7 +1080,7 @@ Exemples :<br>
         'exited_lock_mode': 'Mode verrouillage quitté',
         # Button tooltips
         'reset_tooltip': 'Réinitialiser :\nGarder uniquement l\'état\nactuel comme premier état',
-        'refresh_tooltip': 'Actualiser :\nRecharger les calques',
+        'refresh_tooltip': 'Actualiser :\nRecharge les calques et\nréinitialise la vue',
         'center_tooltip': 'Centrer :\nDéplacer pour centrer tous\nles fils dans le canevas',
         'hide_mode_tooltip': 'Sélection Multi-Calques:\nCliquez pour sélectionner\nClic droit pour batch,\nou supprimez les\ncalques sélectionnés',
         'zoom_in_tooltip': 'Zoom avant',
@@ -1147,7 +1147,7 @@ Exemples :<br>
         'zoom_out_desc': 'Zoom Arrière - Zoomez en arrière pour voir l\'ensemble',
         'center_strands_desc': 'Centrer Brins - Centre tous les brins dans la vue',
         'multi_select_desc': 'Mode Masquer - Cliquez pour activer le mode masquer, puis sélectionnez les calques et faites un clic droit pour les opérations de masquage/affichage par lot',
-        'refresh_desc': 'Actualiser - Actualise l\'affichage du panneau des calques',
+        'refresh_desc': 'Actualiser - Recharge les calques et réinitialise la vue',
         'reset_states_desc': 'Réinitialiser États - Remet tous les états des calques par défaut',
         # Main window button descriptions
         'attach_mode_desc': 'Mode Attacher - Connecte les brins ensemble à leurs extrémités',
@@ -1495,7 +1495,7 @@ Beispiele:<br>
         'zoom_out_desc': 'Herauszoomen - Herauszoomen, um den Überblick zu sehen',
         'center_strands_desc': 'Stränge zentrieren - Zentriert alle Stränge in der Ansicht',
         'multi_select_desc': 'Versteckmodus - Klicken zum Aktivieren, dann Ebenen wählen und Rechtsklick für Sammel Ein-/Ausblendung',
-        'refresh_desc': 'Aktualisieren - Aktualisiert die Anzeige des Ebenenpanels',
+        'refresh_desc': 'Aktualisieren - Ebenen neu laden und Ansicht zurücksetzen',
         'reset_states_desc': 'Zustände zurücksetzen - Setzt alle Ebenenzustände auf Standard zurück',
         # Main window button descriptions
         'attach_mode_desc': 'Binden-Modus - Verbindet Stränge an ihren Endpunkten',
@@ -1768,7 +1768,7 @@ Beispiele:<br>
         'use_default_arrow_color': 'Standard-Pfeilfarbe verwenden',
         # Button tooltips
         'reset_tooltip': 'Zurücksetzen:\nNur aktuellen Zustand\nals ersten Zustand behalten',
-        'refresh_tooltip': 'Aktualisieren:\nEbenen neu laden',
+        'refresh_tooltip': 'Aktualisieren:\nEbenen neu laden und\nAnsicht zurücksetzen',
         'center_tooltip': 'Zentrieren:\nLeinwand verschieben, um\nalle Stränge zu zentrieren',
         'hide_mode_tooltip': 'Mehrschicht-Auswahl:\nKlicken zum Auswählen\nRechtsklick für Batch,\noder Löschen der\ngewählten Ebenen',
         'zoom_in_tooltip': 'Heranzoomen',
@@ -2320,7 +2320,7 @@ Esempi:<br>
         'exited_lock_mode': 'Uscito dalla modalità blocco',
         # Button tooltips
         'reset_tooltip': 'Ripristina:\nMantieni solo lo stato\ncorrente come primo stato',
-        'refresh_tooltip': 'Aggiorna:\nRicarica i livelli',
+        'refresh_tooltip': 'Aggiorna:\nRicarica i livelli e\nreimposta la vista',
         'center_tooltip': 'Centra:\nSposta per centrare tutti\ni fili nel canvas',
         'hide_mode_tooltip': 'Selezione Multi-Livelli:\nClicca per selezionare\nClic destro per batch,\no elimina i livelli\nselezionati',
         'zoom_in_tooltip': 'Zoom avanti',
@@ -2387,7 +2387,7 @@ Esempi:<br>
         'zoom_out_desc': 'Zoom Indietro - Rimpicciolisci per vedere il quadro generale',
         'center_strands_desc': 'Centra Fili - Centra tutti i fili nella vista',
         'multi_select_desc': 'Modalità Nascondi - Clicca per attivare la modalità nascondi, poi seleziona i livelli e click destro per operazioni di nascondi/mostra in batch',
-        'refresh_desc': 'Aggiorna - Aggiorna la visualizzazione del pannello livelli',
+        'refresh_desc': 'Aggiorna - Ricarica i livelli e reimposta la vista',
         'reset_states_desc': 'Ripristina Stati - Ripristina tutti gli stati dei livelli al default',
         # Main window button descriptions
         'attach_mode_desc': 'Modalità Unisci - Collega i fili insieme alle loro estremità',
@@ -2944,7 +2944,7 @@ Ejemplos:<br>
         'exited_lock_mode': 'Salió del modo bloqueo',
         # Button tooltips
         'reset_tooltip': 'Restablecer:\nMantener solo el estado\nactual como primer estado',
-        'refresh_tooltip': 'Actualizar:\nRecargar capas',
+        'refresh_tooltip': 'Actualizar:\nRecarga las capas y\nrestablece la vista',
         'center_tooltip': 'Centrar:\nDesplazar para centrar\ntodos los cordones en el\nlienzo',
         'hide_mode_tooltip': 'Selección Multi-Capa:\nClic para seleccionar\nClic derecho para batch,\no eliminar las capas\nseleccionadas',
         'zoom_in_tooltip': 'Acercar',
@@ -3011,7 +3011,7 @@ Ejemplos:<br>
         'zoom_out_desc': 'Alejar - Aléjese para ver el panorama general',
         'center_strands_desc': 'Centrar Cordones - Centra todos los cordones en la vista',
         'multi_select_desc': 'Modo Ocultar - Haga clic para activar el modo ocultar, luego seleccione capas y clic derecho para operaciones de ocultar/mostrar por lotes',
-        'refresh_desc': 'Actualizar - Actualiza la visualización del panel de capas',
+        'refresh_desc': 'Actualizar - Recarga las capas y restablece la vista',
         'reset_states_desc': 'Reiniciar Estados - Reinicia todos los estados de las capas al predeterminado',
         # Main window button descriptions
         'attach_mode_desc': 'Modo Conectar - Conecta cordones juntos en sus extremos',
@@ -3568,7 +3568,7 @@ Exemplos:<br>
         'exited_lock_mode': 'Saiu do modo bloqueio',
         # Button tooltips
         'reset_tooltip': 'Redefinir:\nManter apenas o estado\natual como primeiro estado',
-        'refresh_tooltip': 'Atualizar:\nRecarregar camadas',
+        'refresh_tooltip': 'Atualizar:\nRecarrega as camadas e\nredefine a vista',
         'center_tooltip': 'Centralizar:\nMover para centralizar\ntodas as mechas na tela',
         'hide_mode_tooltip': 'Seleção Multi-Camada:\nClique para selecionar\nClique direito p/ batch,\nou deletar as camadas\nselecionadas',
         'zoom_in_tooltip': 'Aumentar zoom',
@@ -3634,7 +3634,7 @@ Exemplos:<br>
         'zoom_out_desc': 'Afastar - Afaste-se para ver o quadro geral',
         'center_strands_desc': 'Centralizar Mechas - Centraliza todas as mechas na vista',
         'multi_select_desc': 'Modo Ocultar - Clique para ativar o modo ocultar, depois selecione camadas e clique direito para operações de ocultar/mostrar em lote',
-        'refresh_desc': 'Atualizar - Atualiza a exibição do painel de camadas',
+        'refresh_desc': 'Atualizar - Recarrega as camadas e redefine a vista',
         'reset_states_desc': 'Redefinir Estados - Redefine todos os estados das camadas para o padrão',
         # Main window button descriptions
         'attach_mode_desc': 'Modo Unir - Conecta mechas juntas em suas extremidades',
@@ -4129,7 +4129,7 @@ Exemplos:<br>
         'exited_lock_mode': 'יצא ממצב נעילה',
         # Button tooltips
         'reset_tooltip': 'איפוס:\nשמור רק את המצב\nהנוכחי כמצב ראשון',
-        'refresh_tooltip': 'רענון:\nטען מחדש שכבות',
+        'refresh_tooltip': 'רענון:\nטוען מחדש שכבות ו\nמאפס את התצוגה',
         'center_tooltip': 'מרכז:\nהזז למרכז כל החוטים\nבקנבס',
         'hide_mode_tooltip': 'בחירת ריבוי שכבות:\nלחץ לבחירת שכבות\nלחץ ימני לפעולות\nקבוצתיות, או מחק\nשכבות נבחרות',
         'zoom_in_tooltip': 'הגדל',
@@ -4278,7 +4278,7 @@ Exemplos:<br>
         'zoom_out_desc': 'הקטן - הקטן כדי לראות את התמונה הכללית',
         'center_strands_desc': 'מרכז חוטים - ממרכז את כל החוטים בתצוגה',
         'multi_select_desc': 'מצב הסתרה - לחץ להפעלת מצב הסתרה, ואז בחר שכבות ולחץ ימני לפעולות הסתרה/הצגה קבוצתיות',
-        'refresh_desc': 'רענן - מרענן את תצוגת פאנל השכבות',
+        'refresh_desc': 'רענן - טוען מחדש שכבות ומאפס את התצוגה',
         'reset_states_desc': 'איפוס מצבים - מאפס את כל מצבי השכבות לברירת מחדל',
         # Main window button descriptions
         'attach_mode_desc': 'מצב חיבור - מחבר חוטים יחד בקצותיהם',

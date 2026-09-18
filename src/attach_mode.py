@@ -244,6 +244,15 @@ class AttachMode(QObject):
         
         def optimized_paint_event(self_canvas, event):
             """Optimized paint event that uses background caching for efficiency."""
+            # The native-DPI cache and clipped pixmap blit do not rasterize the
+            # grid the same way as the canvas's supersampled paint path. That
+            # produces a quality change and a visible seam at the far cache
+            # edge while an attachment is dragged. Use the canonical canvas
+            # renderer whenever supersampling is enabled.
+            if getattr(self_canvas, 'use_supersampling', False):
+                self_canvas.original_paintEvent(event)
+                return
+
             from PyQt5.QtGui import QPainter, QPixmap
             from PyQt5.QtCore import Qt, QPointF, QRectF
             painter = None

@@ -398,6 +398,16 @@ class MoveMode:
         
         def optimized_paint_event(self_canvas, event):
             """Optimized paint event for drawing moving strands on top."""
+            # The normal canvas path renders into its supersampled buffer and
+            # downsamples the completed frame. Compositing the move-mode cache
+            # directly onto the widget uses a different rasterization path,
+            # which makes the grid and strands visibly change sharpness for
+            # the duration of a drag. Keep one paint path when supersampling is
+            # enabled so drag frames have exactly the same rendering quality.
+            if getattr(self_canvas, 'use_supersampling', False):
+                self_canvas.original_paintEvent(event)
+                return
+
             import PyQt5.QtGui as QtGui
             from PyQt5.QtCore import Qt
             

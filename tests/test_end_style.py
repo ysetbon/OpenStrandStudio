@@ -22,8 +22,9 @@ if str(SRC_DIR) not in sys.path:
 
 import pytest
 from PyQt5.QtCore import QPoint, QPointF, Qt
-from PyQt5.QtGui import QColor, QImage, QPainter, QPainterPath
-from PyQt5.QtWidgets import QApplication, QMenu, QWidget, QWidgetAction, QLabel, QPushButton
+from PyQt5.QtGui import QColor, QImage, QPainter, QPainterPath, QPalette
+from PyQt5.QtWidgets import (QApplication, QMenu, QWidget, QWidgetAction, QLabel,
+                             QPushButton, QToolTip)
 
 import end_style
 import shader_utils
@@ -794,4 +795,55 @@ def test_dialog_shrinks_and_keeps_its_buttons_reachable():
     # The preview keeps painting at the size it is given
     assert dialog.preview_label.width() > 0
     assert not dialog.preview_label.pixmap().isNull()
+    dialog.reject()
+
+
+def _luminance_gap(first, second):
+    """How far apart two colours are in perceived lightness, 0 to 1."""
+    def luminance(colour):
+        return (0.2126 * colour.redF() + 0.7152 * colour.greenF()
+                + 0.0722 * colour.blueF())
+    return abs(luminance(first) - luminance(second))
+
+
+def test_slider_tooltips_keep_their_background():
+    """The dialog's body is transparent so the window can shrink; a tooltip
+    shown from inside it must not be.
+
+    A Qt stylesheet written with no selector applies to the widget and every
+    descendant, and a tooltip is parented to the widget it belongs to, so a
+    bare "background: transparent" on the scrolling body reached the two
+    slider tooltips and left them painting nothing - a black bar with no
+    readable text under the Windows style."""
+    strand = make_strand()
+    strand.has_circles = [False, False]
+    dialog, _ = open_dialog(strand, 1)
+    dialog.show()
+    APP.processEvents()
+
+    for slider in (dialog.tilt_slider, dialog.depth_slider):
+        assert slider.toolTip(), "slider has no tooltip to check"
+        QToolTip.showText(
+            slider.mapToGlobal(QPoint(slider.width() // 2, slider.height())),
+            slider.toolTip(), slider)
+        APP.processEvents()
+        tips = [w for w in QApplication.allWidgets()
+                if w.metaObject().className() == 'QTipLabel']
+        assert tips, "no tooltip widget was created"
+        tip = tips[-1]
+        tip.ensurePolished()
+
+        # What the tooltip actually paints, against the text it paints on
+        # top: a tooltip that has lost its background comes out near-black
+        # under near-black text and cannot be read at all.
+        painted = tip.grab().toImage()
+        background = QColor(painted.pixel(3, tip.height() // 2))
+        text = tip.palette().color(QPalette.ToolTipText)
+        assert _luminance_gap(background, text) > 0.3, (
+            "tooltip text %s is unreadable on its background %s"
+            % (text.name(), background.name()))
+
+        QToolTip.hideText()
+        APP.processEvents()
+
     dialog.reject()

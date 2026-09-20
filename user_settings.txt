@@ -1,9 +1,9 @@
-Theme: default
+Theme: dark
 Language: en
 ShadowColor: 0,0,0,150
 DrawOnlyAffectedStrand: false
-EnableThirdControlPoint: true
-EnableSnapToGrid: false
+EnableThirdControlPoint: false
+EnableSnapToGrid: true
 EnableSnapToGridAttach: true
 ShowMoveHighlights: true
 ShowHoverHighlights: true

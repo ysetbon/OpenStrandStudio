@@ -1,5 +1,18 @@
 # Installation Guide for Windows
 
+## **Best Practice**
+
+For developers building OpenStrand Studio on Windows, use the provided virtual-environment script:
+
+```powershell
+cd C:\path\to\OpenStrandStudio\src
+.\build_with_venv.bat
+```
+
+This is the recommended build method because it creates a clean, isolated Python environment and avoids common PyQt and Anaconda DLL conflicts.
+
+For regular users, the recommended installation method is to run the finished Windows installer (`OpenStrandStudioSetup_<date>_<version>.exe`). A Python virtual environment is only needed when running from source or building the application.
+
 ## Version 1.109 - Released July 26, 2026
 
 ## Prerequisites

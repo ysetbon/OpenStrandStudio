@@ -30,9 +30,9 @@ import re, os, sys
 OLD_VERSION = '1.110'          # version the source files belong to
 NEW_VERSION = '1.111'          # version to generate
 OLD_DATE_SH = '07_September_2026'   # APP_DATE in the old .sh files
-NEW_DATE_SH = '19_September_2026'
+NEW_DATE_SH = '20_September_2026'
 OLD_DATE_ISS = '07_Sep_2026'   # MyAppDate in the old .iss
-NEW_DATE_ISS = '19_Sep_2026'
+NEW_DATE_ISS = '20_Sep_2026'
 
 # What's-new bullets per language: list of (title, text). Same bullets are
 # used for the Windows installer, the macOS installer pages, and the in-app

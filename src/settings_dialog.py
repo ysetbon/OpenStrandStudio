@@ -5978,12 +5978,28 @@ class SettingsDialog(QDialog):
         except Exception:
             return ''
 
+    def canvas_ground_color(self):
+        """The background the canvas paints for the current theme.
+
+        Kept in step with StrandDrawingCanvas.set_theme().
+        """
+        return QColor('#2C2C2C') if self.current_theme == 'dark' else QColor('#FFFFFF')
+
     def indicator_icon_data_url(self, shape, color, size=36):
         """Render a canvas-style selection indicator (translucent fill, 2px black
-        outline) to a PNG data URL so the guide shows exactly what the canvas draws."""
+        outline) to a PNG data URL so the guide shows exactly what the canvas draws.
+
+        The tile is filled with the canvas background rather than left
+        transparent. These fills are translucent, so on the dialog's own
+        backdrop -- #3D3D3D in the dark theme, against the canvas's #2C2C2C --
+        they composite to a different colour than the canvas shows, and the
+        black outline lands on a different ground than the one it has to read
+        against in use. Compositing on the canvas colour keeps each swatch a
+        literal sample of what the strand actually gets.
+        """
         try:
             pixmap = QPixmap(size, size)
-            pixmap.fill(Qt.transparent)
+            pixmap.fill(self.canvas_ground_color())
             painter = QPainter(pixmap)
             painter.setRenderHint(QPainter.Antialiasing, True)
             painter.setPen(QPen(Qt.black, 2))

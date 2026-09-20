@@ -5985,25 +5985,37 @@ class SettingsDialog(QDialog):
         """
         return QColor('#2C2C2C') if self.current_theme == 'dark' else QColor('#FFFFFF')
 
+    def flatten_on_canvas(self, color):
+        """Blend a translucent indicator fill over the canvas background.
+
+        Returns the opaque colour the canvas ends up showing for that fill.
+        """
+        ground = self.canvas_ground_color()
+        weight = color.alpha() / 255.0
+        return QColor(
+            round(color.red() * weight + ground.red() * (1 - weight)),
+            round(color.green() * weight + ground.green() * (1 - weight)),
+            round(color.blue() * weight + ground.blue() * (1 - weight)),
+        )
+
     def indicator_icon_data_url(self, shape, color, size=36):
         """Render a canvas-style selection indicator (translucent fill, 2px black
         outline) to a PNG data URL so the guide shows exactly what the canvas draws.
 
-        The tile is filled with the canvas background rather than left
-        transparent. These fills are translucent, so on the dialog's own
-        backdrop -- #3D3D3D in the dark theme, against the canvas's #2C2C2C --
-        they composite to a different colour than the canvas shows, and the
-        black outline lands on a different ground than the one it has to read
-        against in use. Compositing on the canvas colour keeps each swatch a
-        literal sample of what the strand actually gets.
+        The shape is painted with the fill already flattened onto the canvas
+        background, opaque, on a transparent tile. Left translucent it would
+        composite on the dialog's own backdrop instead -- #3D3D3D in the dark
+        theme, against the canvas's #2C2C2C -- giving a colour the strand never
+        actually gets; filling the tile with the canvas colour would fix that
+        but box every circle in a visible square of it.
         """
         try:
             pixmap = QPixmap(size, size)
-            pixmap.fill(self.canvas_ground_color())
+            pixmap.fill(Qt.transparent)
             painter = QPainter(pixmap)
             painter.setRenderHint(QPainter.Antialiasing, True)
             painter.setPen(QPen(Qt.black, 2))
-            painter.setBrush(QBrush(color))
+            painter.setBrush(QBrush(self.flatten_on_canvas(color)))
             if shape == 'circle':
                 painter.drawEllipse(2, 2, size - 4, size - 4)
             else:

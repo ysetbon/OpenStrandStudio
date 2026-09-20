@@ -58,10 +58,15 @@ class GroupRail(QWidget):
         self.scroll.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         self.scroll.setFixedWidth(self.RAIL_WIDTH)
         self.scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
-        self.scroll.viewport().setStyleSheet("background: transparent;")
+        # Both rules are scoped by object name: a selector-less rule would
+        # reach every descendant, a drop-down list or menu opened from a
+        # tile included, and leave it without a background
+        self.scroll.viewport().setObjectName('groupRailViewport')
+        self.scroll.viewport().setStyleSheet("#groupRailViewport { background: transparent; }")
 
         self.tiles_host = QWidget()
-        self.tiles_host.setStyleSheet("background: transparent;")
+        self.tiles_host.setObjectName('groupRailTiles')
+        self.tiles_host.setStyleSheet("#groupRailTiles { background: transparent; }")
         self.tiles_layout = QVBoxLayout(self.tiles_host)
         self.tiles_layout.setContentsMargins(0, 0, 0, 0)
         self.tiles_layout.setSpacing(6)

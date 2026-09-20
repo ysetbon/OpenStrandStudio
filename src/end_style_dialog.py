@@ -314,7 +314,10 @@ class EndStyleDialog(QDialog):
         # dialog can be made as small as the user likes
         self.scroll_area = scroll_area(horizontal=Qt.ScrollBarAlwaysOff)
         content = QWidget()
-        content.setStyleSheet("background: transparent;")
+        # Scoped by object name: a selector-less rule would reach every
+        # descendant, a combo box's drop-down list included
+        content.setObjectName('endStyleBody')
+        content.setStyleSheet("#endStyleBody { background: transparent; }")
         root = QVBoxLayout(content)
         root.setContentsMargins(0, 0, 8, 0)
         root.setSpacing(10)

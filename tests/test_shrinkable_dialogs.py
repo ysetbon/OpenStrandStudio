@@ -24,12 +24,12 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 import pytest
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import (QApplication, QDialog, QDialogButtonBox, QHBoxLayout,
-                             QLabel, QListWidget, QPushButton, QScrollArea, QVBoxLayout)
+from PyQt5.QtGui import QColor, QPixmap
+from PyQt5.QtWidgets import (QApplication, QComboBox, QDialog, QDialogButtonBox, QHBoxLayout,
+                             QLabel, QListWidget, QPushButton, QScrollArea, QVBoxLayout, QWidget)
 
 from shrinkable_dialog import (allow_shrinking, cap_to_screen, fit_to_screen,
-                               make_shrinkable, refit_floor, relax)
+                               make_shrinkable, refit_floor, relax, scroll_area)
 
 APP = QApplication.instance() or QApplication([])
 
@@ -433,4 +433,59 @@ def test_no_dialog_demands_more_room_than_a_small_screen(build):
     dialog = build()
     shrink(dialog)
     assert dialog.isSizeGripEnabled(), "%s has no size grip" % type(dialog).__name__
+    dialog.hide()
+
+
+def popup_background(combo):
+    """Open the combo box's drop-down list and report the colour its list
+    paints behind the entries, as a lower-case #rrggbb string.
+
+    Rendered onto magenta on purpose: a list whose background rule has been
+    made transparent paints nothing there, so the magenta shows through
+    where the user would see a black box with invisible entries."""
+    combo.showPopup()
+    APP.processEvents()
+    view = combo.view()
+    canvas = QPixmap(view.size())
+    canvas.fill(QColor('magenta'))
+    view.render(canvas)
+    # Sample just inside the left edge, below the first entry's icon column
+    colour = QColor(canvas.toImage().pixel(3, view.height() // 2 + 20)).name()
+    combo.hidePopup()
+    APP.processEvents()
+    return colour
+
+
+def test_scroll_area_leaves_its_combo_box_lists_a_background():
+    """The see-through viewport must not reach into the drop-down lists.
+
+    A stylesheet with no selector applies to every descendant, and a combo
+    box's list is a child window of the combo box: the Settings dialog's
+    theme and language lists came up as black boxes with their entries
+    unreadable once the pages moved into the scroll area."""
+    dialog = keep(QDialog())
+    layout = QVBoxLayout(dialog)
+    page = QWidget()
+    page_layout = QVBoxLayout(page)
+    combo = QComboBox()
+    combo.setStyleSheet("QComboBox { padding: 8px; }")
+    for name in ('Default', 'Light', 'Dark'):
+        combo.addItem(name)
+    page_layout.addWidget(combo)
+    area = scroll_area(dialog)
+    area.setWidget(page)
+    layout.addWidget(area)
+    dialog.show()
+    APP.processEvents()
+    assert popup_background(combo) != '#ff00ff'
+    dialog.hide()
+
+
+def test_settings_dialog_theme_and_language_lists_keep_a_background():
+    dialog = settings_dialog()
+    dialog.show()
+    APP.processEvents()
+    for combo in (dialog.theme_combobox, dialog.language_combobox):
+        assert popup_background(combo) != '#ff00ff', (
+            "%s drop-down list paints no background" % combo.objectName())
     dialog.hide()

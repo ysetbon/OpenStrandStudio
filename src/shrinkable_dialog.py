@@ -39,6 +39,12 @@ from PyQt5.QtWidgets import (QApplication, QFrame, QLayout, QScrollArea, QVBoxLa
 DEFAULT_MINIMUM = (380, 260)
 
 _TRANSPARENT_AREA = "QScrollArea { background: transparent; border: none; }"
+# Scoped to the viewport by object name on purpose. A stylesheet with no
+# selector applies to the widget *and every descendant*, and a combo box's
+# drop-down list is a child window of the combo box: with a bare
+# "background: transparent" it lost its background and came up as a black
+# box with invisible entries (the Settings dialog's theme and language lists).
+_TRANSPARENT_VIEWPORT = "#shrinkableViewport { background: transparent; }"
 
 
 def screen_of(widget):
@@ -157,7 +163,8 @@ def scroll_area(parent=None, horizontal=Qt.ScrollBarAsNeeded):
     area.setFrameShape(QFrame.NoFrame)
     area.setHorizontalScrollBarPolicy(horizontal)
     area.setStyleSheet(_TRANSPARENT_AREA)
-    area.viewport().setStyleSheet("background: transparent;")
+    area.viewport().setObjectName('shrinkableViewport')
+    area.viewport().setStyleSheet(_TRANSPARENT_VIEWPORT)
     return area
 
 

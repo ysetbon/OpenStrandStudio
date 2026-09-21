@@ -822,15 +822,28 @@ def test_slider_explanations_sit_under_the_sliders():
 
 def test_button_guide_explains_stylize_end_side_tilt():
     """The right-click layer menu section of the Button Guide lists Stylize
-    End Side for both strand menus, including what Tilt does."""
+    End Side for both strand menus, including what Tilt does.
+
+    The two menus get different text: show_context_menu offers a main strand
+    a Start button, an End button or both, but never collects side 0 for an
+    AttachedStrand, whose start is attached. Both still explain Tilt."""
     from settings_dialog import SettingsDialog
 
     dialog = SettingsDialog(None)
     _KEEP.append(dialog)
     html = dialog.button_explanations_text_browser.toHtml()
-    desc = translations['en']['ctx_stylize_end_side_desc']
-    assert html.count(desc) == 2
-    assert 'square to the strand' in desc
+    _ = translations['en']
+    main_desc = _['ctx_stylize_end_side_desc']
+    attached_desc = _['ctx_stylize_end_side_attached_desc']
+    assert html.count(main_desc) == 1
+    assert html.count(attached_desc) == 1
+    for desc in (main_desc, attached_desc):
+        assert 'square to the strand' in desc
+    assert 'Start and/or End' in main_desc
+    assert 'Start' not in attached_desc.split(':')[0].replace('the start is attached', '')
+    # Every language carries both, so a rebuild after a language switch works.
+    for code, table in translations.items():
+        assert 'ctx_stylize_end_side_attached_desc' in table, code
     dialog.hide()
 
 

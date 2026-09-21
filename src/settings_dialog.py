@@ -3128,6 +3128,7 @@ class SettingsDialog(QDialog):
                 </ul>
             </li>
             <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
+            <li><span class="button-name">{_['stylize_end_side']}</span> - {_['ctx_stylize_end_side_desc']}</li>
             <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
             <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
             <li><span class="button-name">{_['circle']}</span> - {_['ctx_circle_desc']}</li>
@@ -3158,6 +3159,7 @@ class SettingsDialog(QDialog):
                 </ul>
             </li>
             <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
+            <li><span class="button-name">{_['stylize_end_side']}</span> - {_['ctx_stylize_end_side_desc']}</li>
             <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
             <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
             <li><span class="button-name">{_['circle']}</span> - {_['ctx_circle_desc']}</li>
@@ -4212,6 +4214,7 @@ class SettingsDialog(QDialog):
                 </ul>
             </li>
             <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
+            <li><span class="button-name">{_['stylize_end_side']}</span> - {_['ctx_stylize_end_side_desc']}</li>
             <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
             <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
             <li><span class="button-name">{_['circle']}</span> - {_['ctx_circle_desc']}</li>
@@ -4242,6 +4245,7 @@ class SettingsDialog(QDialog):
                 </ul>
             </li>
             <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
+            <li><span class="button-name">{_['stylize_end_side']}</span> - {_['ctx_stylize_end_side_desc']}</li>
             <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
             <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
             <li><span class="button-name">{_['circle']}</span> - {_['ctx_circle_desc']}</li>
@@ -5017,6 +5021,7 @@ class SettingsDialog(QDialog):
                 </ul>
             </li>
                 <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
+                <li><span class="button-name">{_['stylize_end_side']}</span> - {_['ctx_stylize_end_side_desc']}</li>
                 <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
                 <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
                 <li><span class="button-name">{_['circle']}</span> - {_['ctx_circle_desc']}</li>
@@ -5047,6 +5052,7 @@ class SettingsDialog(QDialog):
                 </ul>
             </li>
                 <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
+                <li><span class="button-name">{_['stylize_end_side']}</span> - {_['ctx_stylize_end_side_desc']}</li>
                 <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
                 <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
                 <li><span class="button-name">{_['circle']}</span> - {_['ctx_circle_desc']}</li>

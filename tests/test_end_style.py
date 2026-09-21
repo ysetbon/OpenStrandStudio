@@ -832,3 +832,30 @@ def test_button_guide_explains_stylize_end_side_tilt():
     assert html.count(desc) == 2
     assert 'square to the strand' in desc
     dialog.hide()
+
+
+def test_button_guide_lists_hide_shadow_with_the_menu():
+    """Hide Shadow sits between Shadow Only and Edit Shadows in every
+
+    right-click menu the Button Guide documents, so it has to appear in all
+    three guide lists, in that slot."""
+    from settings_dialog import SettingsDialog
+
+    dialog = SettingsDialog(None)
+    _KEEP.append(dialog)
+    html = dialog.button_explanations_text_browser.toHtml()
+    _ = translations['en']
+    assert html.count(_['ctx_hide_shadow_desc']) == 3
+    for section in (_['main_strand_menu_title'], _['attached_strand_menu_title'],
+                    _['mask_strand_menu_title']):
+        assert section in html
+    # Order within a list: Shadow Only, then Hide Shadow, then Edit Shadows.
+    shadow_only = html.index(_['ctx_shadow_only_desc'])
+    hide_shadow = html.index(_['ctx_hide_shadow_desc'])
+    edit_shadows = html.index(_['ctx_edit_shadows_desc'])
+    assert shadow_only < hide_shadow < edit_shadows
+    # Every language the guide can be rebuilt in carries the key.
+    for code, table in translations.items():
+        assert 'ctx_hide_shadow_desc' in table, code
+        assert 'hide_shadow' in table, code
+    dialog.hide()

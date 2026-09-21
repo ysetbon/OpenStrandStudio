@@ -356,13 +356,19 @@ class EndStyleDialog(QDialog):
         tilt_row, self.tilt_label, self.tilt_slider, self.tilt_value, self.tilt_field = self._slider_row(
             _tr(_, 'end_tilt', 'Tilt'), -int(end_style.TILT_MAX), int(end_style.TILT_MAX),
             int(round(current['tilt'])), lambda v: f"{v:+d}°")
-        self.tilt_slider.setToolTip(_tr(_, 'end_tilt_tooltip', 'Rotate the end edge around the endpoint. 0° is square to the strand.'))
         layout.addLayout(tilt_row)
+        self.tilt_hint = QLabel()
+        self.tilt_hint.setObjectName('hint')
+        self.tilt_hint.setWordWrap(True)
+        layout.addWidget(self.tilt_hint)
 
         depth_row, self.depth_label, self.depth_slider, self.depth_value, self.depth_field = self._slider_row(
             _tr(_, 'end_depth', 'Depth'), 0, 100, int(round(current['depth'] * 100)), lambda v: f"{v} %")
-        self.depth_slider.setToolTip(_tr(_, 'end_depth_tooltip', "How far the shape reaches, as a share of the strand's width."))
         layout.addLayout(depth_row)
+        self.depth_hint = QLabel()
+        self.depth_hint.setObjectName('hint')
+        self.depth_hint.setWordWrap(True)
+        layout.addWidget(self.depth_hint)
 
         total_width = float(self.strand.width) + 2.0 * float(self.strand.stroke_width)
         offset_min = -int(math.floor(total_width / 2.0))
@@ -736,9 +742,11 @@ class EndStyleDialog(QDialog):
         for key, tr_key, fallback in SHAPE_KEYS:
             self.shape_buttons[key].setText(_tr(_, tr_key, fallback))
         self.tilt_label.setText(_tr(_, 'end_tilt', 'Tilt'))
-        self.tilt_slider.setToolTip(_tr(_, 'end_tilt_tooltip', 'Rotate the end edge around the endpoint. 0° is square to the strand.'))
+        self.tilt_hint.setText(_tr(_, 'end_tilt_hint',
+                                   'Rotate the end edge around the endpoint. 0° is square to the strand.'))
         self.depth_label.setText(_tr(_, 'end_depth', 'Depth'))
-        self.depth_slider.setToolTip(_tr(_, 'end_depth_tooltip', "How far the shape reaches, as a share of the strand's width."))
+        self.depth_hint.setText(_tr(_, 'end_depth_hint',
+                                    "How far the shape reaches, as a share of the strand's width."))
         self.extend_label.setText(_tr(_, 'end_extend_trim', 'Extend / Trim'))
         self.extend_px.setText(_tr(_, 'px', 'px'))
         self.extend_hint.setText(_tr(_, 'end_extend_trim_hint',

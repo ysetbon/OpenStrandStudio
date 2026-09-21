@@ -22,9 +22,9 @@ if str(SRC_DIR) not in sys.path:
 
 import pytest
 from PyQt5.QtCore import QPoint, QPointF, Qt
-from PyQt5.QtGui import QColor, QImage, QPainter, QPainterPath, QPalette
+from PyQt5.QtGui import QColor, QImage, QPainter, QPainterPath
 from PyQt5.QtWidgets import (QApplication, QMenu, QWidget, QWidgetAction, QLabel,
-                             QPushButton, QToolTip)
+                             QPushButton)
 
 import end_style
 import shader_utils
@@ -587,7 +587,8 @@ def test_every_language_has_the_dialog_strings():
     keys = ['stylize_end_side', 'stylize_side_start', 'stylize_side_end', 'end_style_header', 'side_start',
             'side_end', 'end_style_preview', 'end_style_live_hint', 'end_shape', 'end_shape_straight',
             'end_shape_angled', 'end_shape_rounded', 'end_shape_pointed', 'end_shape_notched',
-            'end_shape_concave', 'end_tilt', 'end_tilt_tooltip', 'end_depth', 'end_depth_tooltip',
+            'end_shape_concave', 'end_tilt', 'end_tilt_hint', 'end_depth', 'end_depth_hint',
+            'ctx_stylize_end_side_desc',
             'end_extend_trim', 'end_extend_trim_hint', 'side_line_section', 'show_side_line',
             'side_line_thickness', 'side_line_color', 'use_stroke_color', 'apply_to_both_free_ends',
             'reset_to_straight', 'px']
@@ -798,52 +799,36 @@ def test_dialog_shrinks_and_keeps_its_buttons_reachable():
     dialog.reject()
 
 
-def _luminance_gap(first, second):
-    """How far apart two colours are in perceived lightness, 0 to 1."""
-    def luminance(colour):
-        return (0.2126 * colour.redF() + 0.7152 * colour.greenF()
-                + 0.0722 * colour.blueF())
-    return abs(luminance(first) - luminance(second))
+def test_slider_explanations_sit_under_the_sliders():
+    """Tilt and depth are explained under the sliders, not by a tooltip.
 
-
-def test_slider_tooltips_keep_their_background():
-    """The dialog's body is transparent so the window can shrink; a tooltip
-    shown from inside it must not be.
-
-    A Qt stylesheet written with no selector applies to the widget and every
-    descendant, and a tooltip is parented to the widget it belongs to, so a
-    bare "background: transparent" on the scrolling body reached the two
-    slider tooltips and left them painting nothing - a black bar with no
-    readable text under the Windows style."""
+    The Button Guide covers the right-click command. The dialog still has
+    to say what each slider does while it is on screen."""
     strand = make_strand()
     strand.has_circles = [False, False]
     dialog, _ = open_dialog(strand, 1)
     dialog.show()
     APP.processEvents()
 
-    for slider in (dialog.tilt_slider, dialog.depth_slider):
-        assert slider.toolTip(), "slider has no tooltip to check"
-        QToolTip.showText(
-            slider.mapToGlobal(QPoint(slider.width() // 2, slider.height())),
-            slider.toolTip(), slider)
-        APP.processEvents()
-        tips = [w for w in QApplication.allWidgets()
-                if w.metaObject().className() == 'QTipLabel']
-        assert tips, "no tooltip widget was created"
-        tip = tips[-1]
-        tip.ensurePolished()
-
-        # What the tooltip actually paints, against the text it paints on
-        # top: a tooltip that has lost its background comes out near-black
-        # under near-black text and cannot be read at all.
-        painted = tip.grab().toImage()
-        background = QColor(painted.pixel(3, tip.height() // 2))
-        text = tip.palette().color(QPalette.ToolTipText)
-        assert _luminance_gap(background, text) > 0.3, (
-            "tooltip text %s is unreadable on its background %s"
-            % (text.name(), background.name()))
-
-        QToolTip.hideText()
-        APP.processEvents()
-
+    _ = translations['en']
+    assert not dialog.tilt_slider.toolTip()
+    assert not dialog.depth_slider.toolTip()
+    assert dialog.tilt_hint.text() == _['end_tilt_hint']
+    assert dialog.depth_hint.text() == _['end_depth_hint']
+    assert dialog.tilt_hint.y() > dialog.tilt_slider.y()
+    assert dialog.depth_hint.y() > dialog.depth_slider.y()
     dialog.reject()
+
+
+def test_button_guide_explains_stylize_end_side_tilt():
+    """The right-click layer menu section of the Button Guide lists Stylize
+    End Side for both strand menus, including what Tilt does."""
+    from settings_dialog import SettingsDialog
+
+    dialog = SettingsDialog(None)
+    _KEEP.append(dialog)
+    html = dialog.button_explanations_text_browser.toHtml()
+    desc = translations['en']['ctx_stylize_end_side_desc']
+    assert html.count(desc) == 2
+    assert 'square to the strand' in desc
+    dialog.hide()

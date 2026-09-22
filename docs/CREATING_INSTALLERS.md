@@ -161,8 +161,8 @@ pyinstaller OpenStrandStudio_mac.spec     # → dist/OpenStrandStudio.app
    `.lproj` folder matching the user's language. Each language's `welcome.html`
    contains **all 10 languages**, but with **that language listed first**. The
    builder script writes one base `welcome.html` plus one per `*.lproj`
-   (`en/fr/de/it/es/pt/he`) with the per-language ordering. So the same feature
-   bullets appear ~7 times in the script — keep them in sync.
+   (`en/fr/de/it/es/pt/he/ru/fi/sv`) with the per-language ordering. So the
+   same feature bullets appear 10 times in the script — keep them in sync.
 
    **Hebrew is written as HTML entities** (`&#x05D1;` …), not raw UTF-8, to
    render reliably in the Installer welcome pane. To convert Hebrew text to

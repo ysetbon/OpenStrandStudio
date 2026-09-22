@@ -2875,6 +2875,8 @@ class SettingsDialog(QDialog):
         self.add_lang_item_ru(_['russian'], 'ru')
         self.add_lang_item_fi(_['finnish'], 'fi')
         self.add_lang_item_sv(_['swedish'], 'sv')
+        self.add_lang_item_ja(_['japanese'], 'ja')
+        self.add_lang_item_zh(_['chinese'], 'zh')
         
         # Set the current language
         current_language = getattr(self, 'current_language', 'en')
@@ -5277,6 +5279,8 @@ class SettingsDialog(QDialog):
         self.add_lang_item_ru(_['russian'], 'ru')
         self.add_lang_item_fi(_['finnish'], 'fi')
         self.add_lang_item_sv(_['swedish'], 'sv')
+        self.add_lang_item_ja(_['japanese'], 'ja')
+        self.add_lang_item_zh(_['chinese'], 'zh')
         
         # Restore the previously selected language
         index = self.language_combobox.findData(current_data)
@@ -5317,12 +5321,13 @@ class SettingsDialog(QDialog):
             self.theme_combobox.setItemText(2, _['dark'])
             
             # Reset language combobox text to original translations
-            for lang_code in ['en', 'fr', 'de', 'it', 'es', 'pt', 'he', 'ru', 'fi', 'sv']:
+            for lang_code in ['en', 'fr', 'de', 'it', 'es', 'pt', 'he', 'ru', 'fi', 'sv', 'ja', 'zh']:
                 lang_index = self.language_combobox.findData(lang_code)
                 if lang_index >= 0:
                     lang_key = {'en': 'english', 'fr': 'french', 'de': 'german', 'it': 'italian',
                                'es': 'spanish', 'pt': 'portuguese', 'he': 'hebrew',
-                               'ru': 'russian', 'fi': 'finnish', 'sv': 'swedish'}[lang_code]
+                               'ru': 'russian', 'fi': 'finnish', 'sv': 'swedish',
+                               'ja': 'japanese', 'zh': 'chinese'}[lang_code]
                     self.language_combobox.setItemText(lang_index, _[lang_key])
 
         # Update tutorial explanations and play buttons
@@ -5680,7 +5685,7 @@ class SettingsDialog(QDialog):
             if 'language' in settings:
                 self.current_language = settings['language']
                 # Update language combobox
-                lang_map = {'en': 0, 'fr': 1, 'de': 2, 'it': 3, 'es': 4, 'pt': 5, 'he': 6, 'ru': 7, 'fi': 8, 'sv': 9}
+                lang_map = {'en': 0, 'fr': 1, 'de': 2, 'it': 3, 'es': 4, 'pt': 5, 'he': 6, 'ru': 7, 'fi': 8, 'sv': 9, 'ja': 10, 'zh': 11}
                 if settings['language'] in lang_map:
                     self.language_combobox.setCurrentIndex(lang_map[settings['language']])
 
@@ -6235,6 +6240,24 @@ class SettingsDialog(QDialog):
         else:
             self.language_combobox.addItem(text, data)
 
+    def add_lang_item_ja(self, text, data):
+        """Add the Japanese entry with its flag icon to the language combobox."""
+        icon, icon_size = self.create_flag_icon('jp.png')
+        if icon:
+            self.language_combobox.addItem(icon, text, data)
+            self.language_combobox.setIconSize(icon_size)
+        else:
+            self.language_combobox.addItem(text, data)
+
+    def add_lang_item_zh(self, text, data):
+        """Add the Chinese entry with its flag icon to the language combobox."""
+        icon, icon_size = self.create_flag_icon('cn.png')
+        if icon:
+            self.language_combobox.addItem(icon, text, data)
+            self.language_combobox.setIconSize(icon_size)
+        else:
+            self.language_combobox.addItem(text, data)
+
     def add_lang_item_he(self, text, data):
         icon, icon_size = self.create_flag_icon('il.png')
         if icon:
@@ -6371,7 +6394,9 @@ class SettingsDialog(QDialog):
             'he': QLocale.Hebrew,
             'ru': QLocale.Russian,
             'fi': QLocale.Finnish,
-            'sv': QLocale.Swedish
+            'sv': QLocale.Swedish,
+            'ja': QLocale.Japanese,
+            'zh': QLocale.Chinese
         }
         if language_code in locale_map:
             QLocale.setDefault(QLocale(locale_map[language_code]))

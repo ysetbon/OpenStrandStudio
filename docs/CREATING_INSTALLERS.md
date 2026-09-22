@@ -25,9 +25,9 @@ consistent.
 | Installer output (Win) | `OpenStrandStudioSetup_<date>_1_108.exe` | |
 | Installer output (Mac) | `OpenStrandStudio_1.108.pkg` | |
 
-Every release ships release notes in **10 languages**, always in this set and
+Every release ships release notes in **12 languages**, always in this set and
 order of definition: **English, French, German, Italian, Spanish, Portuguese,
-Hebrew, Russian, Finnish, Swedish**. Keep the wording identical between the Windows and macOS installers.
+Hebrew, Russian, Finnish, Swedish, Japanese, Chinese**. Keep the wording identical between the Windows and macOS installers.
 
 ---
 
@@ -96,7 +96,7 @@ build_windows.bat
    #define ExePath    "C:\Users\YonatanSetbon\projects\OpenStrandStudio\src\dist"
    ```
 4. In `[CustomMessages]`, replace every `#todo` with the real release notes for
-   all 10 languages. Rules for this section:
+   all 12 languages. Rules for this section:
    - `%n` = line break, `%n%n` = blank line.
    - `&&` = a literal `&` (a single `&` is an accelerator hint and will vanish).
    - Format each feature as `• Feature Title: short description.`
@@ -113,7 +113,13 @@ to `src/dist/OpenStrandStudioSetup_01_Jun_2026_1_108.exe`.
 ### What the `.iss` sections do
 - `[Setup]` — identity, output name, compression, per-user install
   (`PrivilegesRequired=lowest`), icons.
-- `[Languages]` — the 10 bundled message files.
+- `[Languages]` — the 12 language entries; English uses `compiler:Default.isl`,
+  the other 11 use `compiler:Languages\*.isl`.
+  Inno Setup only ships `Swedish.isl` and `ChineseSimplified.isl` from version
+  6.4 on; on an older install run `src\inno setup\install_missing_isl.bat` once
+  (as administrator) to copy the checked-in files from
+  `src\inno setup\Languages\` into the compiler's Languages folder, or those
+  lines fail with "Couldn't open include file ... .isl".
 - `[Files]` — the exe plus every asset folder (mirror of the spec `datas`).
 - `[Icons]` — Start-menu + optional desktop shortcut.
 - `[Tasks]` — the (unchecked) "create desktop icon" option.
@@ -127,7 +133,7 @@ to `src/dist/OpenStrandStudioSetup_01_Jun_2026_1_108.exe`.
 ## 3. macOS release (`.sh` → `.pkg` / `.dmg`)
 
 There are two builder scripts per version; both are self-contained bash scripts
-that embed all 10 languages of HTML welcome/license screens:
+that embed all 12 languages of HTML welcome/license screens:
 
 - **`build_installer_1_108.sh`** → a `.pkg` (guided Installer.app flow).
 - **`build_dmg_1_108.sh`** → the same content packaged for a drag-install image.
@@ -159,10 +165,10 @@ pyinstaller OpenStrandStudio_mac.spec     # → dist/OpenStrandStudio.app
 
    **Localization layout (important):** macOS shows the welcome screen from the
    `.lproj` folder matching the user's language. Each language's `welcome.html`
-   contains **all 10 languages**, but with **that language listed first**. The
+   contains **all 12 languages**, but with **that language listed first**. The
    builder script writes one base `welcome.html` plus one per `*.lproj`
-   (`en/fr/de/it/es/pt/he/ru/fi/sv`) with the per-language ordering. So the
-   same feature bullets appear 10 times in the script — keep them in sync.
+   (`en/fr/de/it/es/pt/he/ru/fi/sv/ja/zh-Hans`) with the per-language ordering.
+   So the same feature bullets appear 12 times in the script — keep them in sync.
 
    **Hebrew is written as HTML entities** (`&#x05D1;` …), not raw UTF-8, to
    render reliably in the Installer welcome pane. To convert Hebrew text to
@@ -205,8 +211,8 @@ constants, and run it from `src/`.
 
 - [ ] `OpenStrandStudio_mac.spec` — bump `CFBundleShortVersionString` & `CFBundleVersion`.
 - [ ] New asset folders (if any) added to **both** specs and the `.iss` `[Files]`.
-- [ ] `inno setup/OpenStrand Studio1_<ver>.iss` — version, date, output suffix, 7-language notes.
-- [ ] `build_installer_1_<ver>.sh` & `build_dmg_1_<ver>.sh` — `VERSION`, `APP_DATE`, 7-language notes (Hebrew as entities).
+- [ ] `inno setup/OpenStrand Studio1_<ver>.iss` — version, date, output suffix, 12-language notes.
+- [ ] `build_installer_1_<ver>.sh` & `build_dmg_1_<ver>.sh` — `VERSION`, `APP_DATE`, 12-language notes (Hebrew as entities).
 - [ ] Windows exe built (`build_windows.bat`) and `.iss` compiled.
 - [ ] macOS `.app` built (`OpenStrandStudio_mac.spec`) and `.sh` run.
 - [ ] Release notes added to `README.md` and `src/README.txt`.

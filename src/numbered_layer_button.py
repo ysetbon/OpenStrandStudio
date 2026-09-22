@@ -2915,7 +2915,9 @@ class NumberedLayerButton(QPushButton):
             'he': QLocale.Hebrew,
             'ru': QLocale.Russian,
             'fi': QLocale.Finnish,
-            'sv': QLocale.Swedish
+            'sv': QLocale.Swedish,
+            'ja': QLocale.Japanese,
+            'zh': QLocale.Chinese
         }
         if language_code in locale_map:
             QLocale.setDefault(QLocale(locale_map[language_code]))
@@ -3381,7 +3383,9 @@ class NumberedLayerButton(QPushButton):
             'he': QLocale.Hebrew,
             'ru': QLocale.Russian,
             'fi': QLocale.Finnish,
-            'sv': QLocale.Swedish
+            'sv': QLocale.Swedish,
+            'ja': QLocale.Japanese,
+            'zh': QLocale.Chinese
         }
         if language_code in locale_map:
             QLocale.setDefault(QLocale(locale_map[language_code]))
@@ -3438,7 +3442,9 @@ class NumberedLayerButton(QPushButton):
             'he': QLocale.Hebrew,
             'ru': QLocale.Russian,
             'fi': QLocale.Finnish,
-            'sv': QLocale.Swedish
+            'sv': QLocale.Swedish,
+            'ja': QLocale.Japanese,
+            'zh': QLocale.Chinese
         }
         if language_code in locale_map:
             QLocale.setDefault(QLocale(locale_map[language_code]))
@@ -3479,7 +3485,9 @@ class NumberedLayerButton(QPushButton):
             'he': QLocale.Hebrew,
             'ru': QLocale.Russian,
             'fi': QLocale.Finnish,
-            'sv': QLocale.Swedish
+            'sv': QLocale.Swedish,
+            'ja': QLocale.Japanese,
+            'zh': QLocale.Chinese
         }
         if language_code in locale_map:
             QLocale.setDefault(QLocale(locale_map[language_code]))
@@ -3962,7 +3970,9 @@ class NumberedLayerButton(QPushButton):
             'he': QLocale.Hebrew,
             'ru': QLocale.Russian,
             'fi': QLocale.Finnish,
-            'sv': QLocale.Swedish
+            'sv': QLocale.Swedish,
+            'ja': QLocale.Japanese,
+            'zh': QLocale.Chinese
         }
         if language in locale_map:
             QLocale.setDefault(QLocale(locale_map[language]))

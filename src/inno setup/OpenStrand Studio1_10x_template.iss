@@ -60,6 +60,8 @@ Name: "hebrew"; MessagesFile: "compiler:Languages\Hebrew.isl"
 Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 Name: "finnish"; MessagesFile: "compiler:Languages\Finnish.isl"
 Name: "swedish"; MessagesFile: "compiler:Languages\Swedish.isl"
+Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
+Name: "chinese"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 
 [Files]
 Source: "{#ExePath}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion solidbreak
@@ -127,3 +129,9 @@ finnish.LaunchAfterInstall=Käynnistä {#MyAppName} asennuksen jälkeen
 
 swedish.WelcomeLabel2=Detta installerar [name/ver] på din dator.%n%nNyheter i version X.XXX:%n%n• #todo feature title: #todo feature description.%n• #todo feature title: #todo feature description.%n%nProgrammet kommer från Yonatan Setbon. Du kan kontakta mig på ysetbon@gmail.com.%n%nDet rekommenderas att du stänger alla andra program innan du fortsätter.
 swedish.LaunchAfterInstall=Starta {#MyAppName} efter installationen
+
+japanese.WelcomeLabel2=このプログラムは [name/ver] をお使いのコンピューターにインストールします。%n%nバージョン X.XXX の新機能:%n%n• #todo feature title: #todo feature description.%n• #todo feature title: #todo feature description.%n%nこのプログラムは Yonatan Setbon が提供しています。ysetbon@gmail.com までご連絡ください。%n%n続行する前に、他のすべてのアプリケーションを閉じることをお勧めします。
+japanese.LaunchAfterInstall=インストール後に {#MyAppName} を起動する
+
+chinese.WelcomeLabel2=本程序将在您的计算机上安装 [name/ver]。%n%n版本 X.XXX 的新功能:%n%n• #todo feature title: #todo feature description.%n• #todo feature title: #todo feature description.%n%n本程序由 Yonatan Setbon 提供。您可以通过 ysetbon@gmail.com 联系我。%n%n建议您在继续之前关闭所有其他应用程序。
+chinese.LaunchAfterInstall=安装后启动 {#MyAppName}

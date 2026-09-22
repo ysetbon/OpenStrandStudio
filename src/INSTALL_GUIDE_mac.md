@@ -113,7 +113,7 @@ If you encounter issues with missing dependencies:
 
 ### Missing Flag Images
 
-If language selection doesn't show flag images, ensure the `flags` directory with country flag PNG files (us.png, fr.png, it.png, es.png, pt.png, il.png, de.png, ru.png, fi.png, se.png) is in the src directory before building.
+If language selection doesn't show flag images, ensure the `flags` directory with country flag PNG files (us.png, fr.png, it.png, es.png, pt.png, il.png, de.png, ru.png, fi.png, se.png, jp.png, cn.png) is in the src directory before building.
 
 ### Missing SVG Shapes
 

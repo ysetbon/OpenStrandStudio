@@ -7,7 +7,7 @@
 # LOGIC EXPLANATION:
 # ==================
 # This script creates a macOS .pkg installer with full multilingual support
-# for 10 languages: English, French, German, Italian, Spanish, Portuguese, Hebrew, Russian, Finnish, Swedish
+# for 12 languages: English, French, German, Italian, Spanish, Portuguese, Hebrew, Russian, Finnish, Swedish, Japanese, Chinese
 #
 # MULTILINGUAL STRUCTURE:
 # -----------------------
@@ -15,22 +15,24 @@
 # 1. A license.html file in its own *.lproj folder (e.g., fr.lproj/license.html)
 # 2. A welcome.html file in its own *.lproj folder (e.g., fr.lproj/welcome.html)
 #
-# CRITICAL: Each language's welcome.html contains ALL 10 languages, BUT the
+# CRITICAL: Each language's welcome.html contains ALL 12 languages, BUT the
 # order is different - the target language appears FIRST, followed by others.
 # This ensures users see their preferred language at the top when they select it.
 #
 # LANGUAGE ORDER IN EACH FILE:
 # -----------------------------
-# Base (en.lproj):  English, German, French, Italian, Spanish, Portuguese, Hebrew, Russian, Finnish, Swedish
-# fr.lproj:         French, English, German, Italian, Spanish, Portuguese, Hebrew, Russian, Finnish, Swedish
-# de.lproj:         German, English, French, Italian, Spanish, Portuguese, Hebrew, Russian, Finnish, Swedish
-# it.lproj:         Italian, English, German, French, Spanish, Portuguese, Hebrew, Russian, Finnish, Swedish
-# es.lproj:         Spanish, English, French, German, Italian, Portuguese, Hebrew, Russian, Finnish, Swedish
-# pt.lproj:         Portuguese, English, French, German, Italian, Spanish, Hebrew, Russian, Finnish, Swedish
-# he.lproj:         Hebrew, English, French, German, Italian, Spanish, Portuguese, Russian, Finnish, Swedish
-# ru.lproj:         Russian, English, German, French, Italian, Spanish, Portuguese, Hebrew, Finnish, Swedish
-# fi.lproj:         Finnish, English, German, French, Italian, Spanish, Portuguese, Hebrew, Russian, Swedish
-# sv.lproj:         Swedish, English, German, French, Italian, Spanish, Portuguese, Hebrew, Russian, Finnish
+# Base (en.lproj):  English, German, French, Italian, Spanish, Portuguese, Hebrew, Russian, Finnish, Swedish, Japanese, Chinese
+# fr.lproj:         French, English, German, Italian, Spanish, Portuguese, Hebrew, Russian, Finnish, Swedish, Japanese, Chinese
+# de.lproj:         German, English, French, Italian, Spanish, Portuguese, Hebrew, Russian, Finnish, Swedish, Japanese, Chinese
+# it.lproj:         Italian, English, German, French, Spanish, Portuguese, Hebrew, Russian, Finnish, Swedish, Japanese, Chinese
+# es.lproj:         Spanish, English, French, German, Italian, Portuguese, Hebrew, Russian, Finnish, Swedish, Japanese, Chinese
+# pt.lproj:         Portuguese, English, French, German, Italian, Spanish, Hebrew, Russian, Finnish, Swedish, Japanese, Chinese
+# he.lproj:         Hebrew, English, French, German, Italian, Spanish, Portuguese, Russian, Finnish, Swedish, Japanese, Chinese
+# ru.lproj:         Russian, English, German, French, Italian, Spanish, Portuguese, Hebrew, Finnish, Swedish, Japanese, Chinese
+# fi.lproj:         Finnish, English, German, French, Italian, Spanish, Portuguese, Hebrew, Russian, Swedish, Japanese, Chinese
+# sv.lproj:         Swedish, English, German, French, Italian, Spanish, Portuguese, Hebrew, Russian, Finnish, Japanese, Chinese
+# ja.lproj:         Japanese, English, German, French, Italian, Spanish, Portuguese, Hebrew, Russian, Finnish, Swedish, Chinese
+# zh-Hans.lproj:    Chinese, English, German, French, Italian, Spanish, Portuguese, Hebrew, Russian, Finnish, Swedish, Japanese
 #
 # TEMPLATE USAGE:
 # ---------------
@@ -262,6 +264,30 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
         <li>#todo feature description</li>
         <li>#todo feature description</li>
     </ul>
+    <hr>
+    <!-- Japanese -->
+    <h2 dir="ltr">OpenStrandStudio x へようこそ</h2>
+    <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Chinese -->
+    <h2 dir="ltr">欢迎使用 OpenStrandStudio x</h2>
+    <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
 </body>
 </html>
 EOF
@@ -279,7 +305,7 @@ cat > "$RESOURCES_DIR/license.html" << EOF
 EOF
 
 # Duplicate license.html into localized resource folders
-declare -a LANG_CODES=("en" "fr" "de" "it" "es" "pt" "he" "ru" "fi" "sv")
+declare -a LANG_CODES=("en" "fr" "de" "it" "es" "pt" "he" "ru" "fi" "sv" "ja" "zh-Hans")
 
 # Create translated license pages for each supported language
 
@@ -397,6 +423,33 @@ cat > "$RESOURCES_DIR/sv.lproj/license.html" << 'EOF'
     <h2>Licensavtal</h2>
     <p>Upphovsrätt (c) 2026 Yonatan Setbon</p>
     <p>Genom att installera denna programvara godkänner du villkoren.</p>
+</body>
+</html>
+EOF
+
+
+# Japanese
+mkdir -p "$RESOURCES_DIR/ja.lproj"
+cat > "$RESOURCES_DIR/ja.lproj/license.html" << 'EOF'
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>使用許諾契約</h2>
+    <p>著作権 (c) 2026 Yonatan Setbon</p>
+    <p>このソフトウェアをインストールすることで、利用規約に同意したものとみなされます。</p>
+</body>
+</html>
+EOF
+
+# Chinese
+mkdir -p "$RESOURCES_DIR/zh-Hans.lproj"
+cat > "$RESOURCES_DIR/zh-Hans.lproj/license.html" << 'EOF'
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>许可协议</h2>
+    <p>版权所有 (c) 2026 Yonatan Setbon</p>
+    <p>安装本软件即表示您同意相关条款和条件。</p>
 </body>
 </html>
 EOF
@@ -560,6 +613,30 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
         <li>#todo feature description</li>
         <li>#todo feature description</li>
     </ul>
+    <hr>
+    <!-- Japanese -->
+    <h2 dir="ltr">OpenStrandStudio x へようこそ</h2>
+    <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Chinese -->
+    <h2 dir="ltr">欢迎使用 OpenStrandStudio x</h2>
+    <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
 </body>
 </html>
 EOF
@@ -685,6 +762,30 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <!-- Swedish -->
     <h2 dir="ltr">Välkommen till OpenStrandStudio x</h2>
     <p>Detta installerar OpenStrandStudio på din dator. Du guidas genom stegen som behövs för att installera programmet.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Japanese -->
+    <h2 dir="ltr">OpenStrandStudio x へようこそ</h2>
+    <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Chinese -->
+    <h2 dir="ltr">欢迎使用 OpenStrandStudio x</h2>
+    <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
     <p>#todo What's New message</p>
     <ul>
         <li>#todo feature description</li>
@@ -826,6 +927,30 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
         <li>#todo feature description</li>
         <li>#todo feature description</li>
     </ul>
+    <hr>
+    <!-- Japanese -->
+    <h2 dir="ltr">OpenStrandStudio x へようこそ</h2>
+    <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Chinese -->
+    <h2 dir="ltr">欢迎使用 OpenStrandStudio x</h2>
+    <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
 </body>
 </html>
 EOF
@@ -951,6 +1076,30 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <!-- Swedish -->
     <h2 dir="ltr">Välkommen till OpenStrandStudio x</h2>
     <p>Detta installerar OpenStrandStudio på din dator. Du guidas genom stegen som behövs för att installera programmet.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Japanese -->
+    <h2 dir="ltr">OpenStrandStudio x へようこそ</h2>
+    <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Chinese -->
+    <h2 dir="ltr">欢迎使用 OpenStrandStudio x</h2>
+    <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
     <p>#todo What's New message</p>
     <ul>
         <li>#todo feature description</li>
@@ -1092,6 +1241,30 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
         <li>#todo feature description</li>
         <li>#todo feature description</li>
     </ul>
+    <hr>
+    <!-- Japanese -->
+    <h2 dir="ltr">OpenStrandStudio x へようこそ</h2>
+    <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Chinese -->
+    <h2 dir="ltr">欢迎使用 OpenStrandStudio x</h2>
+    <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
 </body>
 </html>
 EOF
@@ -1217,6 +1390,30 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <!-- Swedish -->
     <h2 dir="ltr">Välkommen till OpenStrandStudio x</h2>
     <p dir="ltr">Detta installerar OpenStrandStudio på din dator. Du guidas genom stegen som behövs för att installera programmet.</p>
+    <p dir="ltr">#todo What's New message</p>
+    <ul dir="ltr">
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Japanese -->
+    <h2 dir="ltr">OpenStrandStudio x へようこそ</h2>
+    <p dir="ltr">このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
+    <p dir="ltr">#todo What's New message</p>
+    <ul dir="ltr">
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Chinese -->
+    <h2 dir="ltr">欢迎使用 OpenStrandStudio x</h2>
+    <p dir="ltr">本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
     <p dir="ltr">#todo What's New message</p>
     <ul dir="ltr">
         <li>#todo feature description</li>
@@ -1358,6 +1555,30 @@ cat > "$RESOURCES_DIR/ru.lproj/welcome.html" << 'EOF'
         <li>#todo feature description</li>
         <li>#todo feature description</li>
     </ul>
+    <hr>
+    <!-- Japanese -->
+    <h2 dir="ltr">OpenStrandStudio x へようこそ</h2>
+    <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Chinese -->
+    <h2 dir="ltr">欢迎使用 OpenStrandStudio x</h2>
+    <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
 </body>
 </html>
 EOF
@@ -1491,6 +1712,30 @@ cat > "$RESOURCES_DIR/fi.lproj/welcome.html" << 'EOF'
         <li>#todo feature description</li>
         <li>#todo feature description</li>
     </ul>
+    <hr>
+    <!-- Japanese -->
+    <h2 dir="ltr">OpenStrandStudio x へようこそ</h2>
+    <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Chinese -->
+    <h2 dir="ltr">欢迎使用 OpenStrandStudio x</h2>
+    <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
 </body>
 </html>
 EOF
@@ -1616,6 +1861,344 @@ cat > "$RESOURCES_DIR/sv.lproj/welcome.html" << 'EOF'
     <!-- Finnish -->
     <h2 dir="ltr">Tervetuloa OpenStrandStudio x -ohjelmaan</h2>
     <p>Tämä asentaa OpenStrandStudion tietokoneellesi. Sinut opastetaan asennuksen vaiheiden läpi.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Japanese -->
+    <h2 dir="ltr">OpenStrandStudio x へようこそ</h2>
+    <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Chinese -->
+    <h2 dir="ltr">欢迎使用 OpenStrandStudio x</h2>
+    <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+</body>
+</html>
+EOF
+
+# Create welcome.html  (welcome Japanese + localized sections). Template with #todo placeholders.
+cat > "$RESOURCES_DIR/ja.lproj/welcome.html" << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <!-- Japanese -->
+    <h2 dir="ltr">OpenStrandStudio x へようこそ</h2>
+    <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- English -->
+    <h2 dir="ltr">Welcome to OpenStrandStudio x</h2>
+    <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- German -->
+    <h2 dir="ltr">Willkommen bei OpenStrandStudio x</h2>
+    <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- French -->
+    <h2 dir="ltr">Bienvenue dans OpenStrandStudio x</h2>
+    <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Italian -->
+    <h2 dir="ltr">Benvenuto in OpenStrandStudio x</h2>
+    <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Spanish -->
+    <h2 dir="ltr">Bienvenido a OpenStrandStudio x</h2>
+    <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Portuguese -->
+    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio x</h2>
+    <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Hebrew -->
+    <div dir="rtl">
+    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio x</h2>
+    <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    </div>
+    <hr>
+    <!-- Russian -->
+    <h2 dir="ltr">Добро пожаловать в OpenStrandStudio x</h2>
+    <p>Эта программа установит OpenStrandStudio на ваш компьютер. Вы пройдёте все необходимые шаги установки.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Finnish -->
+    <h2 dir="ltr">Tervetuloa OpenStrandStudio x -ohjelmaan</h2>
+    <p>Tämä asentaa OpenStrandStudion tietokoneellesi. Sinut opastetaan asennuksen vaiheiden läpi.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Swedish -->
+    <h2 dir="ltr">Välkommen till OpenStrandStudio x</h2>
+    <p>Detta installerar OpenStrandStudio på din dator. Du guidas genom stegen som behövs för att installera programmet.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Chinese -->
+    <h2 dir="ltr">欢迎使用 OpenStrandStudio x</h2>
+    <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+</body>
+</html>
+EOF
+
+# Create welcome.html  (welcome Chinese + localized sections). Template with #todo placeholders.
+cat > "$RESOURCES_DIR/zh-Hans.lproj/welcome.html" << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <!-- Chinese -->
+    <h2 dir="ltr">欢迎使用 OpenStrandStudio x</h2>
+    <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- English -->
+    <h2 dir="ltr">Welcome to OpenStrandStudio x</h2>
+    <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- German -->
+    <h2 dir="ltr">Willkommen bei OpenStrandStudio x</h2>
+    <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- French -->
+    <h2 dir="ltr">Bienvenue dans OpenStrandStudio x</h2>
+    <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Italian -->
+    <h2 dir="ltr">Benvenuto in OpenStrandStudio x</h2>
+    <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Spanish -->
+    <h2 dir="ltr">Bienvenido a OpenStrandStudio x</h2>
+    <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Portuguese -->
+    <h2 dir="ltr">Bem-vindo ao OpenStrandStudio x</h2>
+    <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Hebrew -->
+    <div dir="rtl">
+    <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio x</h2>
+    <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    </div>
+    <hr>
+    <!-- Russian -->
+    <h2 dir="ltr">Добро пожаловать в OpenStrandStudio x</h2>
+    <p>Эта программа установит OpenStrandStudio на ваш компьютер. Вы пройдёте все необходимые шаги установки.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Finnish -->
+    <h2 dir="ltr">Tervetuloa OpenStrandStudio x -ohjelmaan</h2>
+    <p>Tämä asentaa OpenStrandStudion tietokoneellesi. Sinut opastetaan asennuksen vaiheiden läpi.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Swedish -->
+    <h2 dir="ltr">Välkommen till OpenStrandStudio x</h2>
+    <p>Detta installerar OpenStrandStudio på din dator. Du guidas genom stegen som behövs för att installera programmet.</p>
+    <p>#todo What's New message</p>
+    <ul>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+        <li>#todo feature description</li>
+    </ul>
+    <hr>
+    <!-- Japanese -->
+    <h2 dir="ltr">OpenStrandStudio x へようこそ</h2>
+    <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
     <p>#todo What's New message</p>
     <ul>
         <li>#todo feature description</li>

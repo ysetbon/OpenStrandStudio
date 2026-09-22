@@ -183,6 +183,7 @@ class MainWindow(QMainWindow):
         self.layer_state_button.setText(_['layer_state'])
         self.toggle_control_points_button.setText(_['toggle_control_points'])
         self.toggle_shadow_button.setText(_['toggle_shadow'])
+        self.toggle_shadow_button.setToolTip(_['toggle_shadow_tooltip'])
         if hasattr(self, 'tabs_button'):
             self.tabs_button.setText(_['tabs'])
             self.tabs_button.setToolTip(_['tabs'])
@@ -2968,6 +2969,7 @@ class MainWindow(QMainWindow):
         self.layer_state_button.setText(_['layer_state'])
         self.toggle_control_points_button.setText(_['toggle_control_points'])
         self.toggle_shadow_button.setText(_['toggle_shadow'])
+        self.toggle_shadow_button.setToolTip(_['toggle_shadow_tooltip'])
         if hasattr(self, 'tabs_button'):
             self.tabs_button.setText(_['tabs'])
             self.tabs_button.setToolTip(_['tabs'])

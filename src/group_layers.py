@@ -1,8 +1,10 @@
+from copy import deepcopy
+from checkbox_style import apply_large_indicator
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QPushButton, QInputDialog, QVBoxLayout, QWidget, QLabel, 
                              QHBoxLayout, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,  QScrollArea, QMenu, QTableWidget, 
                              QTableWidgetItem, QHeaderView, QSizePolicy,  QMessageBox, QAbstractButton)
-from PyQt5.QtWidgets import QStyleOptionButton, QProxyStyle, QStyle, QStyledItemDelegate
-from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QPoint, QEvent, QEventLoop, QTimer
+from PyQt5.QtWidgets import QStyleOptionButton, QStyle, QStyledItemDelegate
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QPoint, QEvent, QEventLoop, QTimer, QSignalBlocker
 from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon, QIntValidator, QGuiApplication, QPainter, QPen, QPainterPath
 from math import atan2, degrees, isqrt
 from shrinkable_dialog import allow_shrinking
@@ -1665,12 +1667,22 @@ class GroupPanel(QWidget):
                     f"layers={resolved.get('layers', [])}, "
                     f"strands={[getattr(s, 'layer_name', None) for s in resolved.get('strands', [])]}"
                 )
-                dialog = GroupMoveDialog(self.canvas, group_name, parent=self)
+                dialog = GroupMoveDialog(self.canvas, group_name, parent=self.window() or self)
                 dialog.move_updated.connect(self.update_group_move)
-                dialog.move_finished.connect(self.finish_group_move)
-                print(f"[DEBUG MOVE]   executing GroupMoveDialog for {group_name!r}")
-                dialog.exec_()
-                print(f"[DEBUG MOVE]   GroupMoveDialog closed for {group_name!r}")
+                self._move_dialog_ref = dialog
+                try:
+                    result = dialog.exec_()
+                    # Cleanup and undo recording run after the button callback
+                    # and modal event loop have returned, exactly once.
+                    if result == QDialog.Accepted:
+                        self.finish_group_move(group_name)
+                        dialog.move_finished.emit(group_name)
+                    else:
+                        dialog.restore_initial_positions()
+                        self.canvas.reset_group_move(group_name)
+                finally:
+                    self._move_dialog_ref = None
+                    dialog.deleteLater()
             else:
                 print(f"[DEBUG MOVE]   group {group_name!r} not found")
         except RuntimeError:
@@ -1995,7 +2007,6 @@ class GroupPanel(QWidget):
 
                     print(f"[DEBUG ROTATE] Connecting dialog signals for '{group_name}'")
                     dialog.rotation_updated.connect(self.update_group_rotation)
-                    dialog.rotation_finished.connect(self.finish_group_rotation)
                     dialog.finished.connect(
                         lambda result, name=group_name: print(
                             f"[DEBUG ROTATE] Dialog finished for '{name}' with result={result}"
@@ -2003,16 +2014,16 @@ class GroupPanel(QWidget):
                     )
                     # Keep a strong reference while the dialog is open.
                     self._rotation_dialog_ref = dialog
-                    dialog.finished.connect(lambda *_args, owner=self: setattr(owner, '_rotation_dialog_ref', None))
                     print("[DEBUG ROTATE] Dialog created, about to exec...")
                     dialog.setModal(True)
-                    # Flush pending events (including any queued paint events)
-                    # while repaint is suppressed, then re-enable painting so
-                    # the rotation slider can update the canvas normally.
-                    from PyQt5.QtWidgets import QApplication
-                    QApplication.processEvents()
                     self.canvas._suppress_repaint = False
-                    dialog.exec_()
+                    try:
+                        dialog.exec_()
+                        self.finish_group_rotation(group_name)
+                        dialog.rotation_finished.emit(group_name)
+                    finally:
+                        self._rotation_dialog_ref = None
+                        dialog.deleteLater()
                     print("[DEBUG ROTATE] Dialog exec completed")
                 except Exception as e:
                     print(f"[DEBUG ROTATE] Rotation setup failed for '{group_name}': {e}")
@@ -2308,8 +2319,7 @@ class GroupPanel(QWidget):
         self._finish_group_rotation_inner(group_name)
 
     def _finish_group_rotation_inner(self, group_name):
-        """Finish a group rotation: canvas teardown first, then deferred session-state wipe."""
-        from PyQt5.QtCore import QTimer
+        """Finish rotation after the modal dialog has returned."""
         print(
             f"[DEBUG ROTATE] _finish_group_rotation_inner start for {group_name!r}: "
             f"canvas_group_exists={group_name in self.canvas.groups if self.canvas else 'N/A'}"
@@ -2331,12 +2341,8 @@ class GroupPanel(QWidget):
                         if hasattr(strand, '_is_being_rotated'):
                             strand._is_being_rotated = False
 
-                # Finish rotation in canvas before wiping session state so any
-                # pending rotation_updated signals still find a valid snapshot.
-                # Suppress repaint during teardown — immediate canvas.update()
-                # after rotation finish causes access violations on Windows
-                # (same pattern as group creation crash).
-                self.canvas._suppress_repaint = True
+                # No nested event dispatch here: update() schedules painting
+                # after this complete state transition returns.
                 print(f"[DEBUG ROTATE] Calling canvas.finish_group_rotation for {group_name!r}")
                 self.canvas.finish_group_rotation(group_name)
                 print(f"[DEBUG ROTATE] canvas.finish_group_rotation returned for {group_name!r}")
@@ -2350,26 +2356,10 @@ class GroupPanel(QWidget):
                 except RuntimeError:
                     pass
 
-                # Defer session-state teardown and canvas repaint so Qt finishes
-                # processing the dialog close and internal widget updates before
-                # any painting occurs.  Immediate canvas.update() here causes
-                # access violations (dangling widget pointers after dialog close).
-                def _clear_rotation_session(expected_group=group_name):
-                    try:
-                        if self.active_group_name == expected_group:
-                            if hasattr(self, 'pre_rotation_state'):
-                                delattr(self, 'pre_rotation_state')
-                            self.active_group_name = None
-                            print(f"[DEBUG ROTATE] Cleared deferred rotation session for {expected_group!r}")
-                        # Now safe to repaint
-                        if self.canvas:
-                            self.canvas._suppress_repaint = False
-                            self.canvas.update()
-                    except RuntimeError:
-                        pass
-
-                QTimer.singleShot(50, _clear_rotation_session)
-                print(f"[DEBUG ROTATE] Scheduled deferred rotation session clear for {group_name!r}")
+                if self.active_group_name == group_name:
+                    self.pre_rotation_state = {}
+                    self.active_group_name = None
+                self.canvas.update()
 
             except Exception as e:
                 import traceback
@@ -3634,8 +3624,11 @@ class GroupPanel(QWidget):
                 self.canvas,
                 self
             )
-            dialog.finished.connect(lambda: self.update_group_after_angle_edit(group_name))
-            dialog.exec_()
+            try:
+                dialog.exec_()
+                self.update_group_after_angle_edit(group_name)
+            finally:
+                dialog.deleteLater()
         except RuntimeError:
             pass
 
@@ -3791,6 +3784,14 @@ class GroupMoveDialog(QDialog):
         
         # Initialize original positions
         print(f"[DEBUG MOVE DIALOG] initializing original positions for {group_name!r}")
+        fields = ('start', 'end', 'control_point1', 'control_point2',
+                  'control_point_center', 'base_center_point', 'edited_center_point',
+                  'deletion_rectangles')
+        self._initial_positions = [
+            (strand, {name: deepcopy(getattr(strand, name)) for name in fields
+                      if hasattr(strand, name)})
+            for strand in self.canvas.groups.get(group_name, {}).get('strands', [])
+        ]
         self.initialize_original_positions()
         print(f"[DEBUG MOVE DIALOG] building UI for {group_name!r}")
         self.setup_ui()
@@ -4158,8 +4159,7 @@ class GroupMoveDialog(QDialog):
                 f"dx={float(self.total_dx)}, dy={float(self.total_dy)}"
             )
             self.move_updated.emit(self.group_name, float(self.total_dx), float(self.total_dy))
-            # Update the canvas
-            self.canvas.update()
+            # The connected panel updates the canvas after applying geometry.
             print(f"[DEBUG MOVE DIALOG] update_positions complete for {self.group_name!r}")
         except RuntimeError:
             pass
@@ -4168,14 +4168,16 @@ class GroupMoveDialog(QDialog):
         self.total_dx = int(self.dx_slider.value())  # Ensure integer value
         print(f"[DEBUG MOVE DIALOG] dx slider changed for {self.group_name!r}: {self.total_dx}")
         self.dx_value.setText(str(self.total_dx))
-        self.dx_input.setText(str(self.total_dx))
+        with QSignalBlocker(self.dx_input):
+            self.dx_input.setText(str(self.total_dx))
         self.update_positions()
 
     def update_dy_from_slider(self):
         self.total_dy = int(self.dy_slider.value())  # Ensure integer value
         print(f"[DEBUG MOVE DIALOG] dy slider changed for {self.group_name!r}: {self.total_dy}")
         self.dy_value.setText(str(self.total_dy))
-        self.dy_input.setText(str(self.total_dy))
+        with QSignalBlocker(self.dy_input):
+            self.dy_input.setText(str(self.total_dy))
         self.update_positions()
 
     def update_dx_from_input(self):
@@ -4184,7 +4186,8 @@ class GroupMoveDialog(QDialog):
             value = max(min(value, 600), -600)
             self.total_dx = value
             print(f"[DEBUG MOVE DIALOG] dx input changed for {self.group_name!r}: {value}")
-            self.dx_slider.setValue(value)
+            with QSignalBlocker(self.dx_slider):
+                self.dx_slider.setValue(value)
             self.dx_value.setText(str(value))
             self.update_positions()
         except ValueError:
@@ -4200,7 +4203,8 @@ class GroupMoveDialog(QDialog):
             value = max(min(value, 600), -600)
             self.total_dy = value
             print(f"[DEBUG MOVE DIALOG] dy input changed for {self.group_name!r}: {value}")
-            self.dy_slider.setValue(value)
+            with QSignalBlocker(self.dy_slider):
+                self.dy_slider.setValue(value)
             self.dy_value.setText(str(value))
             self.update_positions()
         except ValueError:
@@ -4226,9 +4230,11 @@ class GroupMoveDialog(QDialog):
             )
             
             # Update the pixel movement controls to show the new total
-            self.dx_slider.setValue(max(min(self.total_dx, 600), -600))
+            with QSignalBlocker(self.dx_slider):
+                self.dx_slider.setValue(max(min(self.total_dx, 600), -600))
             self.dx_value.setText(str(self.total_dx))
-            self.dx_input.setText(str(self.total_dx))
+            with QSignalBlocker(self.dx_input):
+                self.dx_input.setText(str(self.total_dx))
             
             # Reset the grid input
             self.x_grid_input.setText("0")
@@ -4259,9 +4265,11 @@ class GroupMoveDialog(QDialog):
             )
             
             # Update the pixel movement controls to show the new total
-            self.dy_slider.setValue(max(min(self.total_dy, 600), -600))
+            with QSignalBlocker(self.dy_slider):
+                self.dy_slider.setValue(max(min(self.total_dy, 600), -600))
             self.dy_value.setText(str(self.total_dy))
-            self.dy_input.setText(str(self.total_dy))
+            with QSignalBlocker(self.dy_input):
+                self.dy_input.setText(str(self.total_dy))
             
             # Reset the grid input
             self.y_grid_input.setText("0")
@@ -4312,73 +4320,26 @@ class GroupMoveDialog(QDialog):
         except ValueError:
             self.y_grid_input.setText("-1")
 
+    def restore_initial_positions(self):
+        """Roll back the preview before clearing the movement snapshot."""
+        # Restore all geometry first: masks can depend on other group members.
+        for strand, state in self._initial_positions:
+            for name, value in state.items():
+                setattr(strand, name, deepcopy(value))
+        for strand, state in self._initial_positions:
+            strand.update_shape()
+            if isinstance(strand, MaskedStrand):
+                strand.update_mask_path()
+                # Keep user-edited mask centers exactly as they were.
+                for name in ('base_center_point', 'edited_center_point'):
+                    if name in state:
+                        setattr(strand, name, deepcopy(state[name]))
+            else:
+                strand.update_side_line()
+            strand.updating_position = False
+
     def on_ok_clicked(self):
-        """Finalize the movement by storing current positions as new originals"""
-        print(
-            f"[DEBUG MOVE DIALOG] on_ok_clicked for {self.group_name!r}: "
-            f"dx={getattr(self, 'total_dx', None)}, dy={getattr(self, 'total_dy', None)}"
-        )
-        try:
-            self._finalize_move()
-        except RuntimeError:
-            import traceback
-            print(f"[WARN] _finalize_move failed for group '{self.group_name}'; "
-                  f"original_* state may be partially updated:")
-            traceback.print_exc()
-        self.move_finished.emit(self.group_name)
         self.accept()
-
-    def _finalize_move(self):
-        """Store current strand positions as new originals."""
-        if not self.canvas or self.group_name not in self.canvas.groups:
-            print(f"[DEBUG MOVE DIALOG] _finalize_move early exit for {self.group_name!r}")
-            return
-        group_data = self.canvas.groups[self.group_name]
-        print(
-            f"[DEBUG MOVE DIALOG] _finalize_move storing positions for {self.group_name!r}: "
-            f"strands={[getattr(s, 'layer_name', None) for s in list(group_data.get('strands', []))]}"
-        )
-        for strand in list(group_data.get('strands', [])):
-                # Store final positions as new originals
-                strand.original_start = QPointF(strand.start)
-                strand.original_end = QPointF(strand.end)
-                # Only update control points for non-masked strands
-                if not isinstance(strand, MaskedStrand):
-                    # Ensure control points exist before copying
-                    if hasattr(strand, 'control_point1') and strand.control_point1 is not None:
-                        strand.original_control_point1 = QPointF(strand.control_point1)
-                    else:
-                         # Fallback if control point is None or missing
-                         strand.original_control_point1 = QPointF(strand.start)
-
-                    if hasattr(strand, 'control_point2') and strand.control_point2 is not None:
-                        strand.original_control_point2 = QPointF(strand.control_point2)
-                    else:
-                         # Fallback if control point is None or missing
-                         strand.original_control_point2 = QPointF(strand.end)
-
-                    if hasattr(strand, 'control_point_center') and strand.control_point_center is not None:
-                         strand.original_control_point_center = QPointF(strand.control_point_center)
-                elif isinstance(strand, MaskedStrand):
-                     # Update original center points and deletion rectangles for MaskedStrand
-                     strand.calculate_center_point() # Recalculate just in case
-                     strand.original_base_center_point = QPointF(strand.base_center_point) if strand.base_center_point else None
-                     strand.original_edited_center_point = QPointF(strand.edited_center_point) if strand.edited_center_point else None
-                     if hasattr(strand, 'deletion_rectangles'):
-                         strand.original_deletion_rectangles = []
-                         for rect in strand.deletion_rectangles:
-                             strand.original_deletion_rectangles.append({
-                                 'top_left': QPointF(*rect['top_left']),
-                                 'top_right': QPointF(*rect['top_right']),
-                                 'bottom_left': QPointF(*rect['bottom_left']),
-                                 'bottom_right': QPointF(*rect['bottom_right']),
-                                 'offset_x': rect.get('offset_x'),
-                                 'offset_y': rect.get('offset_y'),
-                                 'x': rect.get('x'),
-                                 'y': rect.get('y'),
-                                 'width': rect.get('width'),
-                                 'height': rect.get('height')
-                             })
 
     def snap_to_grid(self):
         print(f"[DEBUG MOVE DIALOG] snap_to_grid clicked for {self.group_name!r}")
@@ -4389,7 +4350,6 @@ class GroupMoveDialog(QDialog):
             import traceback
             print(f"[WARN] snap_group_to_grid failed for group '{self.group_name}':")
             traceback.print_exc()
-        self.move_finished.emit(self.group_name)
         self.accept()
 
 
@@ -4718,25 +4678,9 @@ class GroupLayerManager:
                         selected.add(main_strand)
                 except RuntimeError:
                     pass
-        # NOTE: dialog.deleteLater() was removed here because it caused
-        # "Windows fatal exception: access violation" crashes.  When Qt
-        # processes the deferred delete, child widgets are destroyed while
-        # pending events (tooltips, focus, repaint) still reference them.
-        # We hide + reparent instead, and clean up old refs to limit leaks.
-        # If you see a memory leak from group dialogs, this is why.
-        print(f"[GROUP DIALOG] strand-selection dialog hidden (not deleted) to avoid access violation")
-        dialog.hide()
-        dialog.setParent(None)
-        if not hasattr(self, '_dialog_refs'):
-            self._dialog_refs = []
-        # Keep only the last few refs to limit memory growth
-        if len(self._dialog_refs) > 5:
-            old = self._dialog_refs.pop(0)
-            try:
-                old.deleteLater()
-            except RuntimeError:
-                pass
-        self._dialog_refs.append(dialog)
+        # Checkbox proxy styles now own private base styles, so normal
+        # deferred deletion no longer risks destroying a shared widget style.
+        dialog.deleteLater()
         return selected if selected else None
 
     def _build_strand_selection_dialog(self, main_strands, _=None):
@@ -4915,10 +4859,7 @@ class GroupLayerManager:
                                 checkbox_dict[related_strand].setChecked(False)
 
         def style_main_checkbox(checkbox):
-            base_style = checkbox.style()
-            if isinstance(base_style, LargeIndicatorStyle):
-                base_style = base_style.baseStyle()
-            checkbox.setStyle(LargeIndicatorStyle(base_style, 20))
+            apply_large_indicator(checkbox, 20)
             checkbox.setMinimumHeight(max(checkbox.minimumHeight(), 26))
 
             if is_dark_mode:
@@ -5141,24 +5082,9 @@ class GroupLayerManager:
         result = dialog.exec_()
         text = input_field.text() if input_field else ""
         ok = (result == QDialog.Accepted)
-        # NOTE: dialog.deleteLater() was removed here because it caused
-        # "Windows fatal exception: access violation" crashes.  When Qt
-        # processes the deferred delete, child widgets are destroyed while
-        # pending events (tooltips, focus, repaint) still reference them.
-        # We hide + reparent instead, and clean up old refs to limit leaks.
-        # If you see a memory leak from group dialogs, this is why.
-        print(f"[GROUP DIALOG] input dialog hidden (not deleted) to avoid access violation")
-        dialog.hide()
-        dialog.setParent(None)
-        if not hasattr(self, '_dialog_refs'):
-            self._dialog_refs = []
-        if len(self._dialog_refs) > 5:
-            old = self._dialog_refs.pop(0)
-            try:
-                old.deleteLater()
-            except RuntimeError:
-                pass
-        self._dialog_refs.append(dialog)
+        # Checkbox proxy styles now own private base styles, so normal
+        # deferred deletion no longer risks destroying a shared widget style.
+        dialog.deleteLater()
         return text, ok
 
     def _build_question_dialog(self, parent, title, message, translations):
@@ -5629,153 +5555,17 @@ class GroupLayerManager:
             pass
 
     def start_group_rotation(self, group_name):
-        try:
-            # Resolve full strand list from root strands
-            group_data = self.canvas._resolve_group_strands(group_name)
-            if group_data:
-                # Cache resolved data on canvas
-                self.canvas.groups[group_name] = group_data
-
-                # Set the active group name
-                self.active_group_name = group_name
-                if self.canvas:
-                    strands_to_rotate = group_data.get('strands', [])
-                    if not strands_to_rotate:
-                        pass
-                        return
-
-                    self.pre_rotation_state = {}
-
-                    for strand in strands_to_rotate:
-                        # Store all current positions and angles
-                        state = {
-                            'start': QPointF(strand.start),
-                            'end': QPointF(strand.end)
-                        }
-
-                        # Only store control points for regular strands, not masked strands
-                        if not isinstance(strand, MaskedStrand):
-                            state['control_point1'] = QPointF(strand.control_point1) if strand.control_point1 else QPointF(strand.start)
-                            state['control_point2'] = QPointF(strand.control_point2) if strand.control_point2 else QPointF(strand.end)
-                            # Store control_point_center if it exists
-                            if hasattr(strand, 'control_point_center') and strand.control_point_center:
-                                state['control_point_center'] = QPointF(strand.control_point_center)
-                            pass
-                        else:
-                            pass
-                                 # NEW: Store each deletion rectangle's original corners.
-                            if hasattr(strand, 'deletion_rectangles'):
-                                rect_corners = []
-                                for rect in strand.deletion_rectangles:
-                                    rect_corners.append({
-                                        'top_left': QPointF(*rect['top_left']),
-                                        'top_right': QPointF(*rect['top_right']),
-                                        'bottom_left': QPointF(*rect['bottom_left']),
-                                        'bottom_right': QPointF(*rect['bottom_right'])
-                                    })
-                                state['deletion_rectangles'] = rect_corners
-                            # ------------------------------------------------------------------
-
-                        self.pre_rotation_state[strand.layer_name] = state
-
-                    self.canvas._suppress_repaint = True
-                    self.canvas.start_group_rotation(group_name)
-                dialog = GroupRotateDialog(group_name, self, parent=self.main_window)
-                dialog.rotation_updated.connect(self.update_group_rotation)
-                dialog.rotation_finished.connect(self.finish_group_rotation)
-                dialog.finished.connect(
-                    lambda result, name=group_name: print(
-                        f"[DEBUG ROTATE] Dialog finished for '{name}' with result={result}"
-                    )
-                )
-                # Keep a strong reference while the dialog is open.
-                self._rotation_dialog_ref = dialog
-                dialog.finished.connect(lambda *_args, owner=self: setattr(owner, '_rotation_dialog_ref', None))
-                dialog.setModal(True)
-                # Flush pending paint events while repaint is suppressed,
-                # then re-enable so the rotation slider can update normally.
-                from PyQt5.QtWidgets import QApplication
-                QApplication.processEvents()
-                self.canvas._suppress_repaint = False
-                dialog.open()
-            else:
-                pass
-        except RuntimeError:
-            pass
+        """Use the panel's rotation lifecycle for every entry point."""
+        return self.group_panel.start_group_rotation(group_name)
 
     def update_group_rotation(self, group_name, angle):
-        """
-        Update the rotation of the given group to the specified absolute angle,
-        based on the group's pre-rotation snapshot. This prevents repeatedly
-        stacking rotations on already-rotated geometry.
-        """
-        try:
-            pass
-
-            # Ensure we only rotate if this is the currently active group
-            if group_name != self.active_group_name:
-                pass
-                return
-
-            if self.canvas and hasattr(self, '_perform_immediate_group_rotation'):
-                self._perform_immediate_group_rotation(group_name, angle)
-            else:
-                pass
-        except RuntimeError:
-            pass
+        return self.group_panel.update_group_rotation(group_name, angle)
 
     def finish_group_rotation(self, group_name):
-        if self.active_group_name == group_name:
-            from PyQt5.QtCore import QTimer
-            # Restore group data; do this synchronously so the canvas is
-            # consistent before any pending repaints fire.
-            self.group_layer_manager.restore_group_data(group_name)
-
-            # Defer session-state teardown so queued rotation_updated signals
-            # or repaints issued before the next event-loop iteration can still
-            # read pre_rotation_state and active_group_name safely.
-            def _clear_rotation_session(expected_group=group_name):
-                try:
-                    if self.active_group_name == expected_group:
-                        self.pre_rotation_state = {}
-                        self.active_group_name = None
-                except RuntimeError:
-                    pass
-
-            QTimer.singleShot(0, _clear_rotation_session)
+        return self.group_panel.finish_group_rotation(group_name)
 
     def edit_strand_angles(self, group_name):
-        # Resolve full strand list from root strands
-        group_data = self.canvas._resolve_group_strands(group_name)
-        if not group_data:
-            return
-        all_strands = list(group_data.get('strands', []))
-        if not all_strands:
-            return
-
-        # Set flag to prevent undo/redo saves during dialog interaction
-        if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
-            self.canvas.layer_panel.undo_redo_manager._skip_save = True
-        if hasattr(self.canvas, 'undo_redo_manager'):
-            self.canvas.undo_redo_manager._skip_save = True
-
-        # Create editable layers list
-        editable_layers = [strand.layer_name for strand in all_strands
-                          if hasattr(strand, 'layer_name') and self.is_layer_editable(strand.layer_name)]
-
-        # Pass the fetched data to the dialog with proper QWidget parent
-        dialog = StrandAngleEditDialog(
-            group_name,
-            {
-                'strands': all_strands,
-                'layers': [s.layer_name for s in all_strands if hasattr(s, 'layer_name')],
-                'editable_layers': editable_layers
-            },
-            self.canvas,
-            self.main_window
-        )
-        dialog.finished.connect(lambda: self.update_group_after_angle_edit(group_name))
-        dialog.exec_()
+        return self.group_panel.edit_strand_angles(group_name)
 
     def get_group_strands(self, group_name):
         resolved = self.group_panel.resolve_group_data(group_name)
@@ -6137,26 +5927,8 @@ class GroupRotateDialog(QDialog):
                 f"text={self.angle_input.text()!r}"
             )
             pass  # Ignore invalid input
-        self._finish_and_close()
         self.accept()
 
-    def reject(self):
-        self._finish_and_close()
-        super().reject()
-
-    def closeEvent(self, event):
-        self._finish_and_close()
-        super().closeEvent(event)
-
-    def _finish_and_close(self):
-        """Emit rotation_finished exactly once, regardless of how the dialog is closed."""
-        if getattr(self, '_already_finished', False):
-            print(f"[DEBUG ROTATE DIALOG] _finish_and_close ignored for {self.group_name!r}: already finished")
-            return
-        self._already_finished = True
-        print(f"[DEBUG ROTATE] Dialog closing for '{self.group_name}'")
-        print(f"[DEBUG ROTATE DIALOG] emitting rotation_finished for {self.group_name!r}")
-        self.rotation_finished.emit(self.group_name)
 
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView
 from PyQt5.QtCore import Qt
@@ -6225,17 +5997,6 @@ class FloatDelegate(QStyledItemDelegate):
         value = editor.text()
         model.setData(index, float(value), Qt.EditRole)
 
-class LargeIndicatorStyle(QProxyStyle):
-    """Proxy style that enforces a specific checkbox indicator size."""
-
-    def __init__(self, base_style, indicator_size=20):
-        super().__init__(base_style)
-        self._indicator_size = indicator_size
-
-    def pixelMetric(self, metric, option=None, widget=None):
-        if metric in (QStyle.PM_IndicatorWidth, QStyle.PM_IndicatorHeight):
-            return self._indicator_size
-        return super().pixelMetric(metric, option, widget)
 
 class StrandAngleEditDialog(QDialog):
     angle_changed = pyqtSignal(str, float)
@@ -6438,10 +6199,7 @@ class StrandAngleEditDialog(QDialog):
 
     def _apply_large_indicator(self, checkbox, indicator_size=20):
         """Apply a proxy style so the checkbox indicator uses a crisp fixed size."""
-        base_style = checkbox.style()
-        if isinstance(base_style, LargeIndicatorStyle):
-            base_style = base_style.baseStyle()
-        checkbox.setStyle(LargeIndicatorStyle(base_style, indicator_size))
+        apply_large_indicator(checkbox, indicator_size)
         checkbox.setMinimumHeight(max(checkbox.minimumHeight(), indicator_size + 6))
 
     def _setup_custom_checkmark(self, checkbox):

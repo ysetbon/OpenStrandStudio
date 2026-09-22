@@ -1,7 +1,8 @@
+from checkbox_style import apply_large_indicator
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
                              QListWidgetItem, QLabel, QPushButton, QCheckBox,
                              QDialogButtonBox, QWidget, QGroupBox, QComboBox, QSizePolicy, QStyleOptionButton,
-                             QProxyStyle, QStyle)
+                             QStyle)
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QRect
 from PyQt5.QtGui import QColor, QPalette, QPainter, QPen, QPainterPath
 from shrinkable_dialog import allow_shrinking, cap_to_screen, refit_floor, relax
@@ -23,18 +24,6 @@ def get_shadow_help_alignment(language_code):
         return Qt.AlignRight | Qt.AlignTop
     return Qt.AlignLeft | Qt.AlignTop
 
-
-class LargeIndicatorStyle(QProxyStyle):
-    """Proxy style that enforces a specific checkbox indicator size."""
-
-    def __init__(self, base_style, indicator_size=20):
-        super().__init__(base_style)
-        self._indicator_size = indicator_size
-
-    def pixelMetric(self, metric, option=None, widget=None):
-        if metric in (QStyle.PM_IndicatorWidth, QStyle.PM_IndicatorHeight):
-            return self._indicator_size
-        return super().pixelMetric(metric, option, widget)
 
 
 class ShadowListItem(QWidget):
@@ -209,10 +198,7 @@ class ShadowListItem(QWidget):
 
     def _apply_large_indicator(self, checkbox, indicator_size=20):
         """Apply a proxy style so the checkbox indicator uses a crisp fixed size."""
-        base_style = checkbox.style()
-        if isinstance(base_style, LargeIndicatorStyle):
-            base_style = base_style.baseStyle()
-        checkbox.setStyle(LargeIndicatorStyle(base_style, indicator_size))
+        apply_large_indicator(checkbox, indicator_size)
         checkbox.setMinimumHeight(max(checkbox.minimumHeight(), indicator_size + 6))
 
     def _setup_custom_checkmark(self, checkbox):

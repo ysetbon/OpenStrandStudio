@@ -17,11 +17,12 @@ from PyQt5.QtGui import (QColor, QIcon, QImage, QIntValidator, QPainter, QPainte
                          QPainterPathStroker, QPen, QPixmap)
 from PyQt5.QtWidgets import (QButtonGroup, QCheckBox, QColorDialog, QDialog, QFrame,
                              QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
-                             QSizePolicy, QSlider, QSpinBox, QStyleFactory, QToolButton,
+                             QSizePolicy, QSlider, QSpinBox, QToolButton,
                              QVBoxLayout, QWidget)
 
 import end_style
-from mask_grid_dialog import LargeIndicatorStyle, MaskGridDialog
+from mask_grid_dialog import MaskGridDialog
+from checkbox_style import apply_large_indicator
 from segmented_spin_box import upgrade_spinbox, style_segmented_spinbox
 from shrinkable_dialog import fit_to_screen, scroll_area
 from translations import translations
@@ -226,7 +227,7 @@ class EndStyleDialog(QDialog):
         """The Create Mask Grid dialog's checkbox, built with its own helpers."""
         box = QCheckBox(text)
         box.setChecked(checked)
-        box.setStyle(LargeIndicatorStyle(QStyleFactory.create('Fusion'), 20))
+        apply_large_indicator(box, 20, style_name='Fusion')
         box.setMinimumHeight(26)
         MaskGridDialog._setup_custom_checkmark(None, box)
         MaskGridDialog._style_mask_checkbox(None, box, self.is_dark, True, 8)

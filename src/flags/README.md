@@ -12,6 +12,10 @@ Replace the following files with 64x48 high-quality versions:
 - `es.png` - Spain flag (Spanish)
 - `pt.png` - Portugal flag (Portuguese)
 - `il.png` - Israel flag (Hebrew)
+- `de.png` - Germany flag (German)
+- `ru.png` - Russia flag (Russian)
+- `fi.png` - Finland flag (Finnish)
+- `se.png` - Sweden flag (Swedish)
 
 ## Where to Get High-Quality Flag Images
 

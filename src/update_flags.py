@@ -68,7 +68,11 @@ def main():
         'it.png': 'IT',
         'es.png': 'ES',
         'pt.png': 'PT',
-        'il.png': 'IL'
+        'il.png': 'IL',
+        'de.png': 'DE',
+        'ru.png': 'RU',
+        'fi.png': 'FI',
+        'se.png': 'SE'
     }
     
     print("Current flag image sizes:")

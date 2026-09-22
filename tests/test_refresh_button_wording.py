@@ -26,6 +26,9 @@ EXPECTED_BODIES = {
     'es': 'Recarga las capas y restablece la vista',
     'pt': 'Recarrega as camadas e redefine a vista',
     'he': 'טוען מחדש שכבות ומאפס את התצוגה',
+    'ru': 'Заново загружает слои и сбрасывает вид',
+    'fi': 'Lataa tasot uudelleen ja palauttaa näkymän',
+    'sv': 'Laddar om lagren och återställer vyn',
 }
 
 OLD_PHRASES = (

@@ -300,8 +300,13 @@ def test_many_groups_scroll_without_clipping_tiles(window):
     for i in range(30):
         add_tree_group(gp, "Group %d" % i)
     lp.set_group_panel_collapsed(True, animate=False)
-    pump(80)
     rail = lp.group_rail
+    # The scroll range appears once the tile column's layout has run, which
+    # can take more than one event-loop pass on a loaded machine.
+    for _ in range(20):
+        pump(50)
+        if rail.scroll.verticalScrollBar().maximum() > 0:
+            break
     assert len(rail._tiles) == 30
     assert all(t.width() == GroupRail.TILE_WIDTH for t in rail._tiles)
     assert rail.scroll.viewport().width() == GroupRail.RAIL_WIDTH

@@ -1,7 +1,9 @@
 # High-Quality Flag Images for OpenStrandStudio
 
 ## Current Status
-The application now expects 64x48 pixel flag images for optimal display quality.
+The application scales each flag to a 40 px tall icon, keeping its aspect ratio,
+so ship a high-resolution image in the country's official proportions. The
+bundled flags are 2560 px wide (for example 2560x1707 for a 3:2 flag).
 
 ## Required Flag Images
 Replace the following files with 64x48 high-quality versions:

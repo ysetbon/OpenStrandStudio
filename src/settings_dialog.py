@@ -6209,6 +6209,7 @@ class SettingsDialog(QDialog):
             self.language_combobox.addItem(text, data) # Ensure combobox uses the new size
 
     def add_lang_item_ru(self, text, data):
+        """Add the Russian entry with its flag icon to the language combobox."""
         icon, icon_size = self.create_flag_icon('ru.png')
         if icon:
             self.language_combobox.addItem(icon, text, data)
@@ -6217,6 +6218,7 @@ class SettingsDialog(QDialog):
             self.language_combobox.addItem(text, data)
 
     def add_lang_item_fi(self, text, data):
+        """Add the Finnish entry with its flag icon to the language combobox."""
         icon, icon_size = self.create_flag_icon('fi.png')
         if icon:
             self.language_combobox.addItem(icon, text, data)
@@ -6225,6 +6227,7 @@ class SettingsDialog(QDialog):
             self.language_combobox.addItem(text, data)
 
     def add_lang_item_sv(self, text, data):
+        """Add the Swedish entry with its flag icon to the language combobox."""
         icon, icon_size = self.create_flag_icon('se.png')
         if icon:
             self.language_combobox.addItem(icon, text, data)

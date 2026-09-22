@@ -300,8 +300,13 @@ def test_many_groups_scroll_without_clipping_tiles(window):
     for i in range(30):
         add_tree_group(gp, "Group %d" % i)
     lp.set_group_panel_collapsed(True, animate=False)
-    pump(80)
     rail = lp.group_rail
+    # The scroll range appears once the tile column's layout has run, which
+    # can take more than one event-loop pass on a loaded machine.
+    for _ in range(20):
+        pump(50)
+        if rail.scroll.verticalScrollBar().maximum() > 0:
+            break
     assert len(rail._tiles) == 30
     assert all(t.width() == GroupRail.TILE_WIDTH for t in rail._tiles)
     assert rail.scroll.viewport().width() == GroupRail.RAIL_WIDTH
@@ -380,9 +385,11 @@ def test_create_tile_letter_follows_the_language(window):
     pump(80)
     assert translations["he"]["create_group_tile"] == "ק"
     assert lp.group_rail.create_tile.text() == "ק"
-    # Every language ships the key, and the Latin ones keep G.
+    # Every language ships the key: non-Latin scripts show the first letter
+    # of their word for "group", and the Latin ones keep G.
+    native_tile = {"he": "ק", "ru": "Г"}
     for code, table in translations.items():
-        assert table["create_group_tile"] == ("ק" if code == "he" else "G"), code
+        assert table["create_group_tile"] == native_tile.get(code, "G"), code
     window.set_language("en")
     pump(40)
     assert lp.group_rail.create_tile.text() == "G"

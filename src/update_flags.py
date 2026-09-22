@@ -68,7 +68,11 @@ def main():
         'it.png': 'IT',
         'es.png': 'ES',
         'pt.png': 'PT',
-        'il.png': 'IL'
+        'il.png': 'IL',
+        'de.png': 'DE',
+        'ru.png': 'RU',
+        'fi.png': 'FI',
+        'se.png': 'SE'
     }
     
     print("Current flag image sizes:")
@@ -97,7 +101,8 @@ if __name__ == "__main__":
             backup_dir = os.path.join(flags_dir, 'backup')
             os.makedirs(backup_dir, exist_ok=True)
             
-            flag_files = ['us.png', 'fr.png', 'it.png', 'es.png', 'pt.png', 'il.png']
+            flag_files = ['us.png', 'fr.png', 'it.png', 'es.png', 'pt.png', 'il.png',
+                          'de.png', 'ru.png', 'fi.png', 'se.png']
             
             for filename in flag_files:
                 original_path = os.path.join(flags_dir, filename)
@@ -118,7 +123,11 @@ if __name__ == "__main__":
                 'it.png': 'IT',
                 'es.png': 'ES',
                 'pt.png': 'PT',
-                'il.png': 'IL'
+                'il.png': 'IL',
+                'de.png': 'DE',
+                'ru.png': 'RU',
+                'fi.png': 'FI',
+                'se.png': 'SE'
             }
             
             for filename, country_code in flag_files.items():

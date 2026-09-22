@@ -29,8 +29,10 @@ import pytest
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 SCRIPT = os.path.join(ROOT, "automation_tests", "capture_screen_matrix.py")
 sys.path.insert(0, os.path.join(ROOT, "automation_tests"))
+sys.path.insert(0, os.path.join(ROOT, "src"))
 
 from capture_screen_matrix import all_scales, presets_for_scale  # noqa: E402
+from translations import translations  # noqa: E402
 
 
 def _out_dir(tmp_path, scale):
@@ -62,7 +64,7 @@ def test_layout_across_screens_languages_and_modes(tmp_path, scale):
         results = json.load(fh)
 
     expected = len(presets_for_scale(scale)) * (2 if os.environ.get(
-        "OPENSTRAND_SCREEN_MATRIX_QUICK") else 7) * 3
+        "OPENSTRAND_SCREEN_MATRIX_QUICK") else len(translations)) * 3
     assert len(results["shots"]) == expected, f"expected {expected} shots, got {len(results['shots'])}"
     for shot in results["shots"]:
         assert os.path.exists(os.path.join(out, shot["file"]))

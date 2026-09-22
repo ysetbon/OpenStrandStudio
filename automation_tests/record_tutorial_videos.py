@@ -342,11 +342,22 @@ def _prepare_reference_look():
     app.setPalette(palette)
     # windowsvista paints a selected row of an unfocused item view light
     # grey (the Settings categories list while its combobox has focus);
-    # Fusion keeps the highlight colour. The app's dark theme styles the
-    # list itself, so only the unstyled default theme is affected.
-    app.setStyleSheet(
-        "QListView::item:selected:!active { background: #d0cfd4;"
-        " color: black; }")
+    # Fusion keeps the highlight colour. MainWindow.apply_theme replaces the
+    # application stylesheet, so append the rule after every theme change,
+    # and only for the default theme (the dark theme styles the list itself).
+    from main_window import MainWindow
+    unfocused_rule = ("\nQListView::item:selected:!active { background: "
+                      "#d0cfd4; color: black; }")
+    original_apply_theme = MainWindow.apply_theme
+
+    def apply_theme(self, theme_name, *args, **kwargs):
+        result = original_apply_theme(self, theme_name, *args, **kwargs)
+        if theme_name == "default":
+            app.setStyleSheet(app.styleSheet() + unfocused_rule)
+        return result
+
+    MainWindow.apply_theme = apply_theme
+    app.setStyleSheet(unfocused_rule)
     print(f"[record] reference look: font {QFontInfo(font).family()} "
           f"{QFontInfo(font).pixelSize()}px, style Fusion, "
           f"QT_FONT_DPI={os.environ.get('QT_FONT_DPI')}", flush=True)

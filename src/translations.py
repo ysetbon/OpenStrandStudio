@@ -4574,7 +4574,7 @@ Exemplos:<br>
         'sample_interwoven_double_closed_knot': 'Переплетённый двойной закрытый узел',
         'about': 'О программе',
         'select_language': 'Выберите язык:',
-        'ok': 'ОК',
+        'ok': 'Подтвердить',
         'cancel': 'Отмена',
         'apply': 'Применить',
         'pick_screen_color': 'Взять цвет с экрана',
@@ -4750,26 +4750,32 @@ Exemplos:<br>
         'select_layers_to_lock': 'Щёлкните по замку, чтобы заблокировать/разблокировать слой; щёлкните по слою, чтобы выбрать его',
         'exited_lock_mode': 'Режим блокировки завершён',
         'reset_tooltip': '''Сброс:
-Оставить только текущее
-состояние как первое''',
+Оставить только
+текущее состояние
+как первое''',
         'refresh_tooltip': '''Обновить:
-Заново загружает слои и
-сбрасывает вид''',
+Заново загружает
+слои и сбрасывает вид''',
         'center_tooltip': '''Центр:
-Сместить вид так, чтобы все
-пряди были по центру холста''',
-        'hide_mode_tooltip': '''Множественный выбор слоёв:
-Щёлкните, чтобы выбрать слои
-Правый щелчок — групповые
-операции или удаление
+Сдвинуть вид, чтобы
+все пряди были
+в центре холста''',
+        'hide_mode_tooltip': '''Мультивыбор слоёв:
+Щёлкните, чтобы
+выбрать слои
+Правый щелчок —
+групповые операции
+или удаление
 выбранных слоёв''',
         'zoom_in_tooltip': 'Приблизить',
         'zoom_out_tooltip': 'Отдалить',
         'pan_tooltip': '''Панорама:
-Щёлкните и перетащите,
-чтобы сдвинуть холст''',
+Щёлкните и
+перетащите, чтобы
+сдвинуть холст''',
         'undo_tooltip': '''Отменить:
-Отменить последнее действие''',
+Отменить последнее
+действие''',
         'redo_tooltip': '''Повторить:
 Повторить последнее
 отменённое действие''',
@@ -5361,16 +5367,19 @@ Vinkki: napsauta tasopaneelin kuvakkeita hiiren oikealla painikkeella nähdäkse
         'select_layers_to_lock': 'Napsauta lukkoa lukitaksesi/avataksesi tason; napsauta tasoa valitaksesi sen',
         'exited_lock_mode': 'Poistuttiin lukitustilasta',
         'reset_tooltip': '''Palauta:
-Säilytä vain nykyinen tila
+Säilytä vain
+nykyinen tila
 ensimmäisenä tilana''',
         'refresh_tooltip': '''Päivitä:
 Lataa tasot uudelleen ja
 palauttaa näkymän''',
         'center_tooltip': '''Keskitä:
-Panoroi niin, että kaikki säikeet
-keskittyvät piirtoalueelle''',
+Panoroi niin, että
+kaikki säikeet ovat
+piirtoalueen keskellä''',
         'hide_mode_tooltip': '''Tasojen monivalinta:
-Napsauta valitaksesi tasoja
+Napsauta valitaksesi
+tasoja
 Oikea painike eräajoihin
 tai valittujen tasojen
 poistoon''',
@@ -5380,11 +5389,12 @@ poistoon''',
 Napsauta ja raahaa
 siirtääksesi piirtoaluetta''',
         'undo_tooltip': '''Kumoa:
-Kumoa viimeisin toiminto''',
+Kumoa viimeisin
+toiminto''',
         'redo_tooltip': '''Tee uudelleen:
 Tee viimeksi kumottu
 toiminto uudelleen''',
-        'currently_unavailable': 'Ei tällä hetkellä käytettävissä',
+        'currently_unavailable': 'Ei nyt käytettävissä',
         'layer_cannot_delete_tooltip': 'Tätä tasoa ei voi poistaa (molemmat päät on liitetty)',
         'adjust_angle_and_length': 'Säädä kulmaa ja pituutta',
         'angle_label': 'Kulma:',
@@ -5973,13 +5983,15 @@ Tips: högerklicka på ikonerna i lagerpanelen för att se deras förklaringar!'
         'exited_lock_mode': 'Lämnade låsläget',
         'reset_tooltip': '''Återställ:
 Behåll bara nuvarande
-tillstånd som första tillstånd''',
+tillstånd som
+första tillstånd''',
         'refresh_tooltip': '''Uppdatera:
 Laddar om lagren och
 återställer vyn''',
         'center_tooltip': '''Centrera:
-Panorera så att alla strängar
-centreras på arbetsytan''',
+Panorera så att alla
+strängar centreras
+på arbetsytan''',
         'hide_mode_tooltip': '''Flerval av lager:
 Klicka för att välja lager
 Högerklicka för batch-
@@ -6407,7 +6419,7 @@ Varning: att ladda historik rensar dina nuvarande ångra/gör om-steg.''',
         'sample_interwoven_double_closed_knot': '交互に編んだ二重の閉じた結び目',
         'about': 'このアプリについて',
         'select_language': '言語を選択:',
-        'ok': 'OK',
+        'ok': '確定',
         'cancel': 'キャンセル',
         'apply': '適用',
         'pick_screen_color': '画面から色を取得',
@@ -6586,16 +6598,18 @@ Varning: att ladda historik rensar dina nuvarande ångra/gör om-steg.''',
 現在の状態だけを
 最初の状態として残す''',
         'refresh_tooltip': '''更新:
-レイヤーを再読み込みして
-表示をリセット''',
+レイヤーを再読み込み
+して表示をリセット''',
         'center_tooltip': '''中央:
 すべてのストランドが
-キャンバス中央に来るようパン''',
+キャンバス中央に
+来るようパン''',
         'hide_mode_tooltip': '''レイヤーの複数選択:
-クリックでレイヤーを選択
+クリックで
+レイヤーを選択
 右クリックで一括操作、
-または選択したレイヤーを
-削除''',
+または選択した
+レイヤーを削除''',
         'zoom_in_tooltip': 'ズームイン',
         'zoom_out_tooltip': 'ズームアウト',
         'pan_tooltip': '''パン:

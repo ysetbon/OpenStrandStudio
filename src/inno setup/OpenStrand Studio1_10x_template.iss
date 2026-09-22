@@ -57,6 +57,9 @@ Name: "italian"; MessagesFile: "compiler:Languages\Italian.isl"
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "portuguese"; MessagesFile: "compiler:Languages\Portuguese.isl"
 Name: "hebrew"; MessagesFile: "compiler:Languages\Hebrew.isl"
+Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
+Name: "finnish"; MessagesFile: "compiler:Languages\Finnish.isl"
+Name: "swedish"; MessagesFile: "compiler:Languages\Swedish.isl"
 
 [Files]
 Source: "{#ExePath}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion solidbreak
@@ -115,3 +118,12 @@ portuguese.LaunchAfterInstall=Iniciar {#MyAppName} após a instalação
 
 hebrew.WelcomeLabel2=פעולה זו תתקין את [name/ver] על המחשב שלך.%n%nמה חדש בגרסה X.XXX:%n%n• #todo כותרת: #todo תיאור.%n• #todo כותרת: #todo תיאור.%n%nהתוכנית מובאת אליכם על ידי יהונתן סטבון. ניתן ליצור איתי קשר בכתובת ysetbon@gmail.com.%n%nמומלץ לסגור את כל היישומים האחרים לפני שתמשיך.
 hebrew.LaunchAfterInstall=הפעל את {#MyAppName} לאחר ההתקנה
+
+russian.WelcomeLabel2=Эта программа установит [name/ver] на ваш компьютер.%n%nЧто нового в версии X.XXX:%n%n• #todo feature title: #todo feature description.%n• #todo feature title: #todo feature description.%n%nПрограмму создал Йонатан Сетбон. Связаться со мной можно по адресу ysetbon@gmail.com.%n%nРекомендуется закрыть все остальные приложения, прежде чем продолжить.
+russian.LaunchAfterInstall=Запустить {#MyAppName} после установки
+
+finnish.WelcomeLabel2=Tämä asentaa [name/ver] tietokoneellesi.%n%nMitä uutta versiossa X.XXX:%n%n• #todo feature title: #todo feature description.%n• #todo feature title: #todo feature description.%n%nOhjelman on tehnyt Yonatan Setbon. Voit ottaa minuun yhteyttä osoitteessa ysetbon@gmail.com.%n%nOn suositeltavaa sulkea kaikki muut sovellukset ennen jatkamista.
+finnish.LaunchAfterInstall=Käynnistä {#MyAppName} asennuksen jälkeen
+
+swedish.WelcomeLabel2=Detta installerar [name/ver] på din dator.%n%nNyheter i version X.XXX:%n%n• #todo feature title: #todo feature description.%n• #todo feature title: #todo feature description.%n%nProgrammet kommer från Yonatan Setbon. Du kan kontakta mig på ysetbon@gmail.com.%n%nDet rekommenderas att du stänger alla andra program innan du fortsätter.
+swedish.LaunchAfterInstall=Starta {#MyAppName} efter installationen

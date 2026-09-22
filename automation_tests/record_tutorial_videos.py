@@ -600,6 +600,7 @@ class Recorder:
         self.cursor = QPoint(window.width() // 2, window.height() // 2)
         self.click_frames_left = 0
         self.caption_text = ""
+        self.caption_top = False
         self.t0 = None
         self.elapsed = 0.0
         self.timer = QTimer()
@@ -627,8 +628,12 @@ class Recorder:
         """Show a click ripple around the cursor for ~0.4s."""
         self.click_frames_left = int(self.fps * 0.4)
 
-    def caption(self, text):
+    def caption(self, text, top=False):
+        """Set the step caption. ``top=True`` places it just below the toolbar
+        instead of at the bottom, for steps whose popup (the twelve-language
+        dropdown) reaches into the bottom caption area."""
         self.caption_text = text
+        self.caption_top = top
 
     # -- frame capture -------------------------------------------------------
     def _capture(self):
@@ -725,7 +730,16 @@ class Recorder:
         box_h = fm.height() + 2 * pad_y
         x = (w - box_w) / 2
         x = max(span_l, min(x, span_r - box_w))
-        rect = QRectF(x, h - box_h - 36, box_w, box_h)
+        y = h - box_h - 36
+        if self.caption_top:
+            toolbar = getattr(self.window, "toolbar_container", None)
+            if toolbar is not None and toolbar.isVisible():
+                origin = self.window.mapToGlobal(QPoint(0, 0))
+                y = toolbar.mapToGlobal(QPoint(0, toolbar.height())).y() \
+                    - origin.y() + MAIN_TITLE_H + 12
+            else:
+                y = MAIN_TITLE_H + 80
+        rect = QRectF(x, y, box_w, box_h)
 
         painter.setPen(QPen(QColor(255, 255, 255, 50), 1))
         painter.setBrush(QBrush(QColor(20, 20, 25, 215)))
@@ -1264,13 +1278,17 @@ def scenario_settings(window, app, rec, mouse, test_only=False):
     _hold(800)
 
     # Step 5: switch to French and apply
-    rec.caption("5. Pick a language, then OK - the interface updates")
+    # The twelve-language dropdown reaches into the bottom caption area, so
+    # steps 5 and 6 show their caption between the toolbar and the dialog.
+    rec.caption("5. Pick a language, then OK - the interface updates",
+                top=True)
     _combo_select(window, mouse, rec, dlg.language_combobox, "fr")
     mouse.click_widget(dlg.language_ok_button)
     _hold(2400)
 
     # Step 6: switch back to English the same way
-    rec.caption("6. Switch back anytime - settings are saved automatically")
+    rec.caption("6. Switch back anytime - settings are saved automatically",
+                top=True)
     dlg = _open_settings(window, mouse, rec)
     _combo_select(window, mouse, rec, dlg.language_combobox, "en")
     mouse.click_widget(dlg.language_ok_button)

@@ -286,7 +286,7 @@ def _schedule_dialog_fill_group_name(app, group_name, delay_ms=500):
                         QTest.keyClick(le, ch); QTest.qWait(50)
                     QTest.qWait(300)
                     for btn in w.findChildren(QPushButton):
-                        if btn.text().lower() in ("ok", "אישור"):
+                        if btn.text().lower() in ("ok", "אישור", "подтвердить", "確定", "确定"):
                             btn.click(); return
                     w.accept(); return
     QTimer.singleShot(delay_ms, _fill)
@@ -302,7 +302,7 @@ def _schedule_dialog_select_strands(app, labels, delay_ms=500):
                         cb.setChecked(True)
                 QTest.qWait(300)
                 for btn in w.findChildren(QPushButton):
-                    if btn.text().lower() in ("ok", "אישור"):
+                    if btn.text().lower() in ("ok", "אישור", "подтвердить", "確定", "确定"):
                         btn.click(); return
                 w.accept(); return
     QTimer.singleShot(delay_ms, _select)

@@ -6126,39 +6126,13 @@ class SettingsDialog(QDialog):
                 Qt.SmoothTransformation
             )
             
-            # Add small border around the flag
-            border_width = 2
-            canvas_width = scaled_flag.width() + 2 * border_width
-            canvas_height = scaled_flag.height() + 2 * border_width
-            
-            # Create canvas for the final icon
-            pixmap = QPixmap(canvas_width, canvas_height)
+            # Keep fully transparent padding around the flag, without an outline.
+            padding = 2
+            pixmap = QPixmap(scaled_flag.width() + 2 * padding,
+                             scaled_flag.height() + 2 * padding)
             pixmap.fill(Qt.transparent)
             painter = QPainter(pixmap)
-            
-            # Enable all quality rendering hints for crisp display
-            painter.setRenderHint(QPainter.Antialiasing, True)
-            painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
-            painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
-            
-            # Draw the scaled flag
-            flag_rect = QRect(border_width, border_width, scaled_flag.width(), scaled_flag.height())
-            painter.drawPixmap(flag_rect.topLeft(), scaled_flag)
-            
-            # Add crisp border based on theme
-            border_color = QColor("#000000")
-            if self.current_theme == "dark":
-                border_color = QColor("#ffffff")
-            
-            # Use precise pen for crisp border lines
-            pen = QPen(border_color, 1)
-            pen.setStyle(Qt.SolidLine)
-            painter.setPen(pen)
-            
-            # Draw crisp border rectangle
-            painter.drawRect(border_width - 1, border_width - 1, 
-                           scaled_flag.width() + 1, scaled_flag.height() + 1)
-            
+            painter.drawPixmap(padding, padding, scaled_flag)
             painter.end()
             return QIcon(pixmap), pixmap.size()
         else:

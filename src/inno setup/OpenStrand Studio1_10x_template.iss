@@ -59,8 +59,9 @@ Name: "portuguese"; MessagesFile: "compiler:Languages\Portuguese.isl"
 Name: "hebrew"; MessagesFile: "compiler:Languages\Hebrew.isl"
 Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 Name: "finnish"; MessagesFile: "compiler:Languages\Finnish.isl"
-; Swedish is bundled here: Inno Setup only ships it (in compiler:Languages\) from 6.4 on.
-Name: "swedish"; MessagesFile: "Languages\Swedish.isl"
+; Inno Setup ships Swedish.isl from 6.4 on. On older versions run
+; "install_swedish_isl.bat" (next to this script) once to copy it into the compiler's Languages folder.
+Name: "swedish"; MessagesFile: "compiler:Languages\Swedish.isl"
 
 [Files]
 Source: "{#ExePath}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion solidbreak

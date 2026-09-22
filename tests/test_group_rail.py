@@ -380,9 +380,11 @@ def test_create_tile_letter_follows_the_language(window):
     pump(80)
     assert translations["he"]["create_group_tile"] == "ק"
     assert lp.group_rail.create_tile.text() == "ק"
-    # Every language ships the key, and the Latin ones keep G.
+    # Every language ships the key: non-Latin scripts show the first letter
+    # of their word for "group", and the Latin ones keep G.
+    native_tile = {"he": "ק", "ru": "Г"}
     for code, table in translations.items():
-        assert table["create_group_tile"] == ("ק" if code == "he" else "G"), code
+        assert table["create_group_tile"] == native_tile.get(code, "G"), code
     window.set_language("en")
     pump(40)
     assert lp.group_rail.create_tile.text() == "G"

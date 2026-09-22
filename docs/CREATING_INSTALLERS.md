@@ -113,7 +113,10 @@ to `src/dist/OpenStrandStudioSetup_01_Jun_2026_1_108.exe`.
 ### What the `.iss` sections do
 - `[Setup]` — identity, output name, compression, per-user install
   (`PrivilegesRequired=lowest`), icons.
-- `[Languages]` — the 10 bundled message files.
+- `[Languages]` — the 10 message files. Nine come with Inno Setup
+  (`compiler:Languages\*.isl`); Swedish is checked in at
+  `src\inno setup\Languages\Swedish.isl` because Inno Setup only ships it from
+  version 6.4 on (older versions keep it in the unofficial translations).
 - `[Files]` — the exe plus every asset folder (mirror of the spec `datas`).
 - `[Icons]` — Start-menu + optional desktop shortcut.
 - `[Tasks]` — the (unchecked) "create desktop icon" option.

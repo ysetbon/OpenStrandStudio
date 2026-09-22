@@ -1049,27 +1049,25 @@ class StrandDrawingCanvas(QWidget):
             f"strands={[getattr(s, 'layer_name', None) for s in strands]}"
         )
 
-        for strand in strands:
-            if isinstance(strand, MaskedStrand):
-                # Skip masked strands
+        temporary_names = (
+            'original_start', 'original_end', 'original_control_point1',
+            'original_control_point2', 'original_control_point_center',
+            'original_base_center_point', 'original_edited_center_point',
+            'original_deletion_rectangles',
+        )
+        pending = list(strands)
+        seen = set()
+        while pending:
+            strand = pending.pop()
+            if id(strand) in seen:
                 continue
-
-            # Delete temporary attributes if they exist
-            if hasattr(strand, 'original_start'):
-                del strand.original_start
-            if hasattr(strand, 'original_end'):
-                del strand.original_end
-
-            # Reset attached strands
-            if hasattr(strand, 'attached_strands'):
-                for attached_strand in strand.attached_strands:
-                    if isinstance(attached_strand, MaskedStrand):
-                        continue
-
-                    if hasattr(attached_strand, 'original_start'):
-                        del attached_strand.original_start
-                    if hasattr(attached_strand, 'original_end'):
-                        del attached_strand.original_end
+            seen.add(id(strand))
+            pending.extend(getattr(strand, 'attached_strands', []))
+            for name in temporary_names:
+                # MaskedStrand.__getattr__ reports missing control points as
+                # None, so hasattr() does not mean an attribute can be deleted.
+                strand.__dict__.pop(name, None)
+            strand.updating_position = False
 
         self.update()
         print(f"[CANVAS MOVE] reset_group_move complete for {group_name!r}")

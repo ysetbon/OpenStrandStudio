@@ -1,25 +1,14 @@
+from checkbox_style import apply_large_indicator
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QTableWidget,
                              QPushButton, QCheckBox, QWidget, QLabel,
                              QHeaderView, QTableWidgetItem, QSizePolicy, QStyleOptionButton,
-                             QProxyStyle, QStyle)
+                             QStyle)
 from PyQt5.QtCore import Qt, pyqtSignal, QRect
 from PyQt5.QtGui import QColor, QPainter, QPen, QPainterPath
 from masked_strand import MaskedStrand
 from shrinkable_dialog import allow_shrinking, cap_to_screen, relax
 from translations import translations
 
-
-class LargeIndicatorStyle(QProxyStyle):
-    """Proxy style that enforces a specific checkbox indicator size."""
-
-    def __init__(self, base_style, indicator_size=20):
-        super().__init__(base_style)
-        self._indicator_size = indicator_size
-
-    def pixelMetric(self, metric, option=None, widget=None):
-        if metric in (QStyle.PM_IndicatorWidth, QStyle.PM_IndicatorHeight):
-            return self._indicator_size
-        return super().pixelMetric(metric, option, widget)
 
 
 class MaskGridDialog(QDialog):
@@ -117,10 +106,7 @@ class MaskGridDialog(QDialog):
 
     def _apply_large_indicator(self, checkbox, indicator_size=20):
         """Apply a proxy style so the checkbox indicator uses a crisp fixed size."""
-        base_style = checkbox.style()
-        if isinstance(base_style, LargeIndicatorStyle):
-            base_style = base_style.baseStyle()
-        checkbox.setStyle(LargeIndicatorStyle(base_style, indicator_size))
+        apply_large_indicator(checkbox, indicator_size)
         checkbox.setMinimumHeight(max(checkbox.minimumHeight(), indicator_size + 6))
 
     def _setup_custom_checkmark(self, checkbox):

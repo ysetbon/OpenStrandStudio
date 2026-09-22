@@ -18,6 +18,8 @@ Replace the following files with 64x48 high-quality versions:
 - `ru.png` - Russia flag (Russian)
 - `fi.png` - Finland flag (Finnish)
 - `se.png` - Sweden flag (Swedish)
+- `jp.png` - Japan flag (Japanese)
+- `cn.png` - China flag (Chinese)
 
 ## Where to Get High-Quality Flag Images
 

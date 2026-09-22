@@ -6,6 +6,7 @@ Its right-click tooltip (refresh_tooltip) and the Button Guide entry
 guide splits on ' - '.
 """
 import os
+import re
 import sys
 import unittest
 
@@ -29,7 +30,13 @@ EXPECTED_BODIES = {
     'ru': 'Заново загружает слои и сбрасывает вид',
     'fi': 'Lataa tasot uudelleen ja palauttaa näkymän',
     'sv': 'Laddar om lagren och återställer vyn',
+    'ja': 'レイヤーを再読み込みして表示をリセット',
+    'zh': '重新加载图层并重置视图',
 }
+
+# Languages written without spaces between words: the word count does not
+# apply, so the description is kept short by character count instead.
+NO_SPACES = {'ja', 'zh'}
 
 OLD_PHRASES = (
     'Refresh the layer panel display',
@@ -50,7 +57,9 @@ def _tooltip_body(text):
     _title, body = text.split('\n', 1)
     joined = ' '.join(body.split())
     # Hebrew "and" is a leading vav; a line break after it must not leave a space.
-    return joined.replace('ו ', 'ו')
+    joined = joined.replace('ו ', 'ו')
+    # CJK text has no spaces: a line break between two ideographs joins directly.
+    return re.sub(r'(?<=[\u3000-\u9fff\uff00-\uffef]) (?=[\u3000-\u9fff\uff00-\uffef])', '', joined)
 
 
 class RefreshButtonWordingTest(unittest.TestCase):
@@ -62,12 +71,15 @@ class RefreshButtonWordingTest(unittest.TestCase):
                 name, desc = strings['refresh_desc'].split(' - ', 1)
                 self.assertTrue(name.strip(), f'{lang} refresh_desc missing name')
                 self.assertEqual(desc, body)
-                words = desc.split()
-                self.assertIn(
-                    len(words),
-                    (6, 7),
-                    f'{lang} description is {len(words)} words: {desc!r}',
-                )
+                if lang in NO_SPACES:
+                    self.assertLessEqual(len(desc), 24, f'{lang} description is too long: {desc!r}')
+                else:
+                    words = desc.split()
+                    self.assertIn(
+                        len(words),
+                        (6, 7),
+                        f'{lang} description is {len(words)} words: {desc!r}',
+                    )
                 self.assertEqual(_tooltip_body(strings['refresh_tooltip']), body)
 
     def test_old_incomplete_wording_is_gone(self):

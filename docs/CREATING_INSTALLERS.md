@@ -210,8 +210,8 @@ constants, and run it from `src/`.
 
 - [ ] `OpenStrandStudio_mac.spec` — bump `CFBundleShortVersionString` & `CFBundleVersion`.
 - [ ] New asset folders (if any) added to **both** specs and the `.iss` `[Files]`.
-- [ ] `inno setup/OpenStrand Studio1_<ver>.iss` — version, date, output suffix, 7-language notes.
-- [ ] `build_installer_1_<ver>.sh` & `build_dmg_1_<ver>.sh` — `VERSION`, `APP_DATE`, 7-language notes (Hebrew as entities).
+- [ ] `inno setup/OpenStrand Studio1_<ver>.iss` — version, date, output suffix, 12-language notes.
+- [ ] `build_installer_1_<ver>.sh` & `build_dmg_1_<ver>.sh` — `VERSION`, `APP_DATE`, 12-language notes (Hebrew as entities).
 - [ ] Windows exe built (`build_windows.bat`) and `.iss` compiled.
 - [ ] macOS `.app` built (`OpenStrandStudio_mac.spec`) and `.sh` run.
 - [ ] Release notes added to `README.md` and `src/README.txt`.

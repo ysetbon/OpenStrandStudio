@@ -278,12 +278,29 @@ class StrokeTextButton(QPushButton):
                         self._custom_tooltip_widget.setLayoutDirection(direction)
                         # Force theme update to ensure proper styling
                         self._custom_tooltip_widget.updateTheme()
+                        # Wrap to the panel's content width, not the screen width.
+                        # Recalculate on each right-click after panel/font changes.
+                        tooltip = self._custom_tooltip_widget
+                        bounds = layer_panel.contentsRect()
+                        padding = min(8, max(0, (bounds.width() - 1) // 2))
+                        available_width = max(1, bounds.width() - 2 * padding)
+                        label = tooltip.label
+                        label.ensurePolished()
+                        natural_width = label.sizeHint().width()
+                        label.setWordWrap(True)
+                        label.setFixedWidth(min(natural_width, available_width))
+                        label.setFixedHeight(label.heightForWidth(label.width()))
                         self._custom_tooltip_widget.adjustSize()
                         
-                        # Position tooltip so its center aligns exactly with center_x
+                        # Keep the complete tooltip within the panel even when
+                        # the toolbar buttons are not centered in it.
                         tooltip_width = self._custom_tooltip_widget.width()
+                        left = layer_panel.mapToGlobal(bounds.topLeft()).x() + padding
+                        right = left + available_width
+                        tooltip_x = max(left, min(center_x - tooltip_width // 2,
+                                                  right - tooltip_width))
                         tooltip_pos = QPoint(
-                            center_x - tooltip_width // 2,
+                            tooltip_x,
                             fourth_row_y
                         )
                         

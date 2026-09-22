@@ -454,3 +454,46 @@ def test_right_click_tooltip_uses_rtl_and_keeps_group_names_as_plain_text():
         tooltip.hide()
     panel.close()
     panel.deleteLater()
+
+
+def test_right_click_history_wraps_inside_panel_for_all_languages():
+    from PyQt5.QtCore import Qt, QPoint, QPointF, QEvent
+    from PyQt5.QtGui import QMouseEvent
+    from PyQt5.QtWidgets import QWidget, QPushButton
+    from undo_redo_manager import StrokeTextButton
+    from translations import translations
+
+    class LayerPanel(QWidget):
+        pass
+
+    panel = LayerPanel()
+    panel.multi_select_button = QPushButton(panel)
+    panel.refresh_button = QPushButton(panel)
+    # Deliberately off-center buttons must not push the tooltip past the edge.
+    panel.refresh_button.move(150, 0)
+    button = StrokeTextButton('undo', panel)
+    try:
+        for width in (170, 260):
+            panel.resize(width, 500)
+            for language, strings in translations.items():
+                for action in meta.ACTIONS:
+                    record = meta.build_metadata(action, targets=['2_1', '3_2', '12_3_14_5'])
+                    for heading in ('undo_tooltip', 'redo_tooltip'):
+                        text = UndoRedoManager._with_action(strings[heading], record, language)
+                        button.set_custom_tooltip(text)
+                        event = QMouseEvent(QEvent.MouseButtonPress, QPointF(1, 1), Qt.RightButton, Qt.RightButton, Qt.NoModifier)
+                        button.mousePressEvent(event)
+                        tooltip = button._custom_tooltip_widget
+                        APP.processEvents()
+                        left = panel.mapToGlobal(QPoint(0, 0)).x()
+                        assert tooltip.x() >= left + 8
+                        assert tooltip.x() + tooltip.width() <= left + width - 8
+                        assert tooltip.label.wordWrap()
+                        assert tooltip.label.text() == text
+                        assert tooltip.label.height() >= tooltip.label.heightForWidth(tooltip.label.width())
+                        if any(tooltip.label.fontMetrics().horizontalAdvance(line) > tooltip.label.width() for line in text.splitlines()):
+                            assert tooltip.label.height() > tooltip.label.fontMetrics().height() * len(text.splitlines())
+                        tooltip.hide()
+    finally:
+        panel.close()
+        panel.deleteLater()

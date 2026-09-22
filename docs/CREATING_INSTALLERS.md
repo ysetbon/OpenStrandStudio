@@ -113,7 +113,8 @@ to `src/dist/OpenStrandStudioSetup_01_Jun_2026_1_108.exe`.
 ### What the `.iss` sections do
 - `[Setup]` — identity, output name, compression, per-user install
   (`PrivilegesRequired=lowest`), icons.
-- `[Languages]` — the 12 message files, all as `compiler:Languages\*.isl`.
+- `[Languages]` — the 12 language entries; English uses `compiler:Default.isl`,
+  the other 11 use `compiler:Languages\*.isl`.
   Inno Setup only ships `Swedish.isl` and `ChineseSimplified.isl` from version
   6.4 on; on an older install run `src\inno setup\install_missing_isl.bat` once
   (as administrator) to copy the checked-in files from

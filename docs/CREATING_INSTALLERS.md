@@ -25,9 +25,9 @@ consistent.
 | Installer output (Win) | `OpenStrandStudioSetup_<date>_1_108.exe` | |
 | Installer output (Mac) | `OpenStrandStudio_1.108.pkg` | |
 
-Every release ships release notes in **7 languages**, always in this set and
+Every release ships release notes in **10 languages**, always in this set and
 order of definition: **English, French, German, Italian, Spanish, Portuguese,
-Hebrew**. Keep the wording identical between the Windows and macOS installers.
+Hebrew, Russian, Finnish, Swedish**. Keep the wording identical between the Windows and macOS installers.
 
 ---
 
@@ -96,7 +96,7 @@ build_windows.bat
    #define ExePath    "C:\Users\YonatanSetbon\projects\OpenStrandStudio\src\dist"
    ```
 4. In `[CustomMessages]`, replace every `#todo` with the real release notes for
-   all 7 languages. Rules for this section:
+   all 10 languages. Rules for this section:
    - `%n` = line break, `%n%n` = blank line.
    - `&&` = a literal `&` (a single `&` is an accelerator hint and will vanish).
    - Format each feature as `• Feature Title: short description.`
@@ -113,7 +113,7 @@ to `src/dist/OpenStrandStudioSetup_01_Jun_2026_1_108.exe`.
 ### What the `.iss` sections do
 - `[Setup]` — identity, output name, compression, per-user install
   (`PrivilegesRequired=lowest`), icons.
-- `[Languages]` — the 7 bundled message files.
+- `[Languages]` — the 10 bundled message files.
 - `[Files]` — the exe plus every asset folder (mirror of the spec `datas`).
 - `[Icons]` — Start-menu + optional desktop shortcut.
 - `[Tasks]` — the (unchecked) "create desktop icon" option.
@@ -127,7 +127,7 @@ to `src/dist/OpenStrandStudioSetup_01_Jun_2026_1_108.exe`.
 ## 3. macOS release (`.sh` → `.pkg` / `.dmg`)
 
 There are two builder scripts per version; both are self-contained bash scripts
-that embed all 7 languages of HTML welcome/license screens:
+that embed all 10 languages of HTML welcome/license screens:
 
 - **`build_installer_1_108.sh`** → a `.pkg` (guided Installer.app flow).
 - **`build_dmg_1_108.sh`** → the same content packaged for a drag-install image.
@@ -159,7 +159,7 @@ pyinstaller OpenStrandStudio_mac.spec     # → dist/OpenStrandStudio.app
 
    **Localization layout (important):** macOS shows the welcome screen from the
    `.lproj` folder matching the user's language. Each language's `welcome.html`
-   contains **all 7 languages**, but with **that language listed first**. The
+   contains **all 10 languages**, but with **that language listed first**. The
    builder script writes one base `welcome.html` plus one per `*.lproj`
    (`en/fr/de/it/es/pt/he`) with the per-language ordering. So the same feature
    bullets appear ~7 times in the script — keep them in sync.

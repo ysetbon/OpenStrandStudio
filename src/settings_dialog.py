@@ -3106,6 +3106,7 @@ class SettingsDialog(QDialog):
         <ul>
             <li><span class="button-name">{_['hide_layer']} / {_['show_layer']}</span> - {_['ctx_hide_show_desc']}</li>
             <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
+            <li><span class="button-name">{_['hide_shadow']}</span> - {_['ctx_hide_shadow_desc']}</li>
             <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
             <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
             <li><span class="button-name">{_['change_layer_color']}</span> - {_['ctx_change_layer_color_desc']}</li>
@@ -3137,6 +3138,7 @@ class SettingsDialog(QDialog):
         <ul>
             <li><span class="button-name">{_['hide_layer']} / {_['show_layer']}</span> - {_['ctx_hide_show_desc']}</li>
             <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
+            <li><span class="button-name">{_['hide_shadow']}</span> - {_['ctx_hide_shadow_desc']}</li>
             <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
             <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
             <li><span class="button-name">{_['change_layer_color']}</span> - {_['ctx_change_layer_color_desc']}</li>
@@ -3159,7 +3161,7 @@ class SettingsDialog(QDialog):
                 </ul>
             </li>
             <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
-            <li><span class="button-name">{_['stylize_end_side']}</span> - {_['ctx_stylize_end_side_desc']}</li>
+            <li><span class="button-name">{_['stylize_end_side']}</span> - {_['ctx_stylize_end_side_attached_desc']}</li>
             <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
             <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
             <li><span class="button-name">{_['circle']}</span> - {_['ctx_circle_desc']}</li>
@@ -3168,6 +3170,7 @@ class SettingsDialog(QDialog):
         <ul>
             <li><span class="button-name">{_['hide_layer']} / {_['show_layer']}</span> - {_['ctx_hide_show_desc']}</li>
             <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
+            <li><span class="button-name">{_['hide_shadow']}</span> - {_['ctx_hide_shadow_desc']}</li>
             <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
             <li><span class="button-name">{_['edit_mask']}</span> - {_['ctx_edit_mask_desc']}</li>
             <li><span class="button-name">{_['reset_mask']}</span> - {_['ctx_reset_mask_desc']}</li>
@@ -4192,6 +4195,7 @@ class SettingsDialog(QDialog):
         <ul>
             <li><span class="button-name">{_['hide_layer']} / {_['show_layer']}</span> - {_['ctx_hide_show_desc']}</li>
             <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
+            <li><span class="button-name">{_['hide_shadow']}</span> - {_['ctx_hide_shadow_desc']}</li>
             <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
             <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
             <li><span class="button-name">{_['change_layer_color']}</span> - {_['ctx_change_layer_color_desc']}</li>
@@ -4223,6 +4227,7 @@ class SettingsDialog(QDialog):
         <ul>
             <li><span class="button-name">{_['hide_layer']} / {_['show_layer']}</span> - {_['ctx_hide_show_desc']}</li>
             <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
+            <li><span class="button-name">{_['hide_shadow']}</span> - {_['ctx_hide_shadow_desc']}</li>
             <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
             <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
             <li><span class="button-name">{_['change_layer_color']}</span> - {_['ctx_change_layer_color_desc']}</li>
@@ -4245,7 +4250,7 @@ class SettingsDialog(QDialog):
                 </ul>
             </li>
             <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
-            <li><span class="button-name">{_['stylize_end_side']}</span> - {_['ctx_stylize_end_side_desc']}</li>
+            <li><span class="button-name">{_['stylize_end_side']}</span> - {_['ctx_stylize_end_side_attached_desc']}</li>
             <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
             <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
             <li><span class="button-name">{_['circle']}</span> - {_['ctx_circle_desc']}</li>
@@ -4254,6 +4259,7 @@ class SettingsDialog(QDialog):
         <ul>
             <li><span class="button-name">{_['hide_layer']} / {_['show_layer']}</span> - {_['ctx_hide_show_desc']}</li>
             <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
+            <li><span class="button-name">{_['hide_shadow']}</span> - {_['ctx_hide_shadow_desc']}</li>
             <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
             <li><span class="button-name">{_['edit_mask']}</span> - {_['ctx_edit_mask_desc']}</li>
             <li><span class="button-name">{_['reset_mask']}</span> - {_['ctx_reset_mask_desc']}</li>
@@ -4999,6 +5005,7 @@ class SettingsDialog(QDialog):
             <ul>
                 <li><span class="button-name">{_['hide_layer']} / {_['show_layer']}</span> - {_['ctx_hide_show_desc']}</li>
                 <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
+                <li><span class="button-name">{_['hide_shadow']}</span> - {_['ctx_hide_shadow_desc']}</li>
                 <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
                 <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
                 <li><span class="button-name">{_['change_layer_color']}</span> - {_['ctx_change_layer_color_desc']}</li>
@@ -5030,6 +5037,7 @@ class SettingsDialog(QDialog):
             <ul>
                 <li><span class="button-name">{_['hide_layer']} / {_['show_layer']}</span> - {_['ctx_hide_show_desc']}</li>
                 <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
+                <li><span class="button-name">{_['hide_shadow']}</span> - {_['ctx_hide_shadow_desc']}</li>
                 <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
                 <li><span class="button-name">{_['change_color']}</span> - {_['ctx_change_color_desc']}</li>
                 <li><span class="button-name">{_['change_layer_color']}</span> - {_['ctx_change_layer_color_desc']}</li>
@@ -5052,7 +5060,7 @@ class SettingsDialog(QDialog):
                 </ul>
             </li>
                 <li><span class="button-name">{_['close_the_knot']}</span> - {_['ctx_close_knot_desc']}</li>
-                <li><span class="button-name">{_['stylize_end_side']}</span> - {_['ctx_stylize_end_side_desc']}</li>
+                <li><span class="button-name">{_['stylize_end_side']}</span> - {_['ctx_stylize_end_side_attached_desc']}</li>
                 <li><span class="button-name">{_['transparent_closing_knot_side']}</span> - {_['ctx_closing_knot_desc']}</li>
                 <li><span class="button-name">{_['extension']}</span> - {_['ctx_dash_desc']}</li>
                 <li><span class="button-name">{_['circle']}</span> - {_['ctx_circle_desc']}</li>
@@ -5061,6 +5069,7 @@ class SettingsDialog(QDialog):
             <ul>
                 <li><span class="button-name">{_['hide_layer']} / {_['show_layer']}</span> - {_['ctx_hide_show_desc']}</li>
                 <li><span class="button-name">{_['shadow_only']}</span> - {_['ctx_shadow_only_desc']}</li>
+                <li><span class="button-name">{_['hide_shadow']}</span> - {_['ctx_hide_shadow_desc']}</li>
                 <li><span class="button-name">{_['edit_shadows']}</span> - {_['ctx_edit_shadows_desc']}</li>
                 <li><span class="button-name">{_['edit_mask']}</span> - {_['ctx_edit_mask_desc']}</li>
                 <li><span class="button-name">{_['reset_mask']}</span> - {_['ctx_reset_mask_desc']}</li>

@@ -822,13 +822,53 @@ def test_slider_explanations_sit_under_the_sliders():
 
 def test_button_guide_explains_stylize_end_side_tilt():
     """The right-click layer menu section of the Button Guide lists Stylize
-    End Side for both strand menus, including what Tilt does."""
+    End Side for both strand menus, including what Tilt does.
+
+    The two menus get different text: show_context_menu offers a main strand
+    a Start button, an End button or both, but never collects side 0 for an
+    AttachedStrand, whose start is attached. Both still explain Tilt."""
     from settings_dialog import SettingsDialog
 
     dialog = SettingsDialog(None)
     _KEEP.append(dialog)
     html = dialog.button_explanations_text_browser.toHtml()
-    desc = translations['en']['ctx_stylize_end_side_desc']
-    assert html.count(desc) == 2
-    assert 'square to the strand' in desc
+    _ = translations['en']
+    main_desc = _['ctx_stylize_end_side_desc']
+    attached_desc = _['ctx_stylize_end_side_attached_desc']
+    assert html.count(main_desc) == 1
+    assert html.count(attached_desc) == 1
+    for desc in (main_desc, attached_desc):
+        assert 'square to the strand' in desc
+    assert 'Start and/or End' in main_desc
+    assert 'Start' not in attached_desc.split(':')[0].replace('the start is attached', '')
+    # Every language carries both, so a rebuild after a language switch works.
+    for code, table in translations.items():
+        assert 'ctx_stylize_end_side_attached_desc' in table, code
+    dialog.hide()
+
+
+def test_button_guide_lists_hide_shadow_with_the_menu():
+    """Hide Shadow sits between Shadow Only and Edit Shadows in every
+
+    right-click menu the Button Guide documents, so it has to appear in all
+    three guide lists, in that slot."""
+    from settings_dialog import SettingsDialog
+
+    dialog = SettingsDialog(None)
+    _KEEP.append(dialog)
+    html = dialog.button_explanations_text_browser.toHtml()
+    _ = translations['en']
+    assert html.count(_['ctx_hide_shadow_desc']) == 3
+    for section in (_['main_strand_menu_title'], _['attached_strand_menu_title'],
+                    _['mask_strand_menu_title']):
+        assert section in html
+    # Order within a list: Shadow Only, then Hide Shadow, then Edit Shadows.
+    shadow_only = html.index(_['ctx_shadow_only_desc'])
+    hide_shadow = html.index(_['ctx_hide_shadow_desc'])
+    edit_shadows = html.index(_['ctx_edit_shadows_desc'])
+    assert shadow_only < hide_shadow < edit_shadows
+    # Every language the guide can be rebuilt in carries the key.
+    for code, table in translations.items():
+        assert 'ctx_hide_shadow_desc' in table, code
+        assert 'hide_shadow' in table, code
     dialog.hide()

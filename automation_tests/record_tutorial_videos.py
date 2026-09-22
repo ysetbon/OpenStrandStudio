@@ -13,6 +13,18 @@ Usage:
     python automation_tests\record_tutorial_videos.py --scenario mask --test
         (--test stops after the first two steps: quick clip to check the look)
 
+On Linux (e.g. a CI container) the same four recordings are produced under a
+virtual X server that has the capture machine's 1920x1080 screen:
+
+    xvfb-run -a -s "-screen 0 1920x1080x24" \
+        python3 automation_tests/record_tutorial_videos.py --scenario settings
+
+The native Windows chrome is then taken from automation_tests/tutorial_chrome
+(the caption strips of the reference recordings), fonts resolve through a
+"Segoe UI" family (install Microsoft's metric-compatible open-source Selawik
+under that family name) at the capture machine's 150 % DPI, and Qt's Fusion
+style stands in for windowsvista. See _prepare_reference_look().
+
 Scenario -> tutorial mapping: settings=1, buttons=2, mask=3, knot=4.
 Output goes to automation_tests\recordings\<scenario>\ (frames + .mp4).
 """
@@ -76,6 +88,20 @@ from test_menu_strand_flow import _bootstrap_real_app, _strand_by_name
 
 OUT_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "recordings")
 
+IS_WINDOWS = sys.platform == "win32"
+# Real Windows 11 caption strips (active/inactive maximized main window and
+# the Settings dialog) cut from the reference recordings. Non-Windows hosts
+# composite these instead of asking DWM to paint a title bar.
+CHROME_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                          "tutorial_chrome")
+# The shipped tutorials were captured on a 150 % DPI Windows desktop, where
+# Qt sizes point-based fonts (menus, dialog text, the step captions) against
+# a 144 dpi logical screen. Pixel-based styles (toolbar buttons) are
+# unaffected. Reproduce that scale on other hosts before Qt starts.
+REFERENCE_FONT_DPI = 144
+if not IS_WINDOWS:
+    os.environ.setdefault("QT_FONT_DPI", str(REFERENCE_FONT_DPI))
+
 FPS = 30
 WINDOW_W, WINDOW_H = 1920, 1080
 # Height of the native maximized title bar that sits above the app client in
@@ -125,10 +151,6 @@ def _native_titlebar(widget, outer_width, maximized=False, active=True):
     from PyQt5.QtCore import QRect, Qt
     from PyQt5.QtGui import QImage, QPixmap
     from PyQt5.QtWidgets import QApplication, QDialog, QMainWindow
-    import ctypes
-    import win32con
-    import win32gui
-    import win32ui
 
     is_dialog = isinstance(widget, QDialog)
     key = ("dialog" if is_dialog else "main", widget.windowTitle(),
@@ -137,6 +159,15 @@ def _native_titlebar(widget, outer_width, maximized=False, active=True):
     cached = _native_titlebar_cache.get(key)
     if cached is not None:
         return cached
+    if not IS_WINDOWS:
+        result = _reference_titlebar(widget, outer_width, active)
+        _native_titlebar_cache[key] = result
+        return result
+
+    import ctypes
+    import win32con
+    import win32gui
+    import win32ui
 
     helper_cls = QDialog if is_dialog else QMainWindow
     helper = helper_cls(None, widget.windowFlags())
@@ -205,6 +236,132 @@ def _native_titlebar(widget, outer_width, maximized=False, active=True):
     result = (pixmap, title_h)
     _native_titlebar_cache[key] = result
     return result
+
+
+def _reference_titlebar(widget, outer_width, active=True):
+    """Compose a Windows caption from the reference strips (non-Windows hosts).
+
+    The main window strip is used as recorded (its title never changes). A
+    dialog strip keeps the real icon and close button; the recorded title
+    text is kept for the English "Settings" caption and re-drawn in the
+    caption font for any other dialog title (the language tutorial reopens
+    Settings while the interface is in French). A dialog wider or narrower
+    than the reference stretches only the plain background between the
+    title text and the close button.
+    """
+    from PyQt5.QtCore import QRect, Qt
+    from PyQt5.QtGui import QFont, QFontMetrics, QPainter, QPixmap
+    from PyQt5.QtWidgets import QDialog
+
+    is_dialog = isinstance(widget, QDialog)
+    name = "dialog" if is_dialog else ("main_active" if active
+                                       else "main_inactive")
+    path = os.path.join(CHROME_DIR, f"caption_{name}.png")
+    strip = QPixmap(path)
+    if strip.isNull():
+        raise RuntimeError(f"reference caption strip missing: {path}")
+    title_h = strip.height()
+    if not is_dialog:
+        if strip.width() != outer_width:
+            strip = strip.scaled(outer_width, title_h, Qt.IgnoreAspectRatio,
+                                 Qt.SmoothTransformation)
+        return strip, title_h
+
+    # Reference dialog caption: icon at x 20..39, "Settings" text from x 52,
+    # close button in the last 60 px (measured on the recorded strip).
+    text_x = 52
+    keep_right = 60
+    title = widget.windowTitle()
+    reference_title = "Settings"
+    font = QFont("Segoe UI", 9)
+    fm = QFontMetrics(font)
+    left_w = 120
+    if title != reference_title:
+        left_w = max(left_w, text_x + fm.horizontalAdvance(title) + 8)
+    left_w = min(left_w, strip.width() - keep_right - 1)
+    out = QPixmap(outer_width, title_h)
+    painter = QPainter(out)
+    # Left part (icon + recorded title), stretched middle, right part (close).
+    painter.drawPixmap(0, 0, strip, 0, 0, left_w, title_h)
+    mid_src = QRect(strip.width() - keep_right - 2, 0, 1, title_h)
+    mid_dst = QRect(left_w, 0, outer_width - left_w - keep_right, title_h)
+    painter.drawPixmap(mid_dst, strip, mid_src)
+    painter.drawPixmap(outer_width - keep_right, 0, strip,
+                       strip.width() - keep_right, 0, keep_right, title_h)
+    if title != reference_title:
+        # Erase the recorded "Settings" text and draw the current title in
+        # the caption font (black, baseline measured on the strip).
+        painter.drawPixmap(QRect(text_x - 4, 0, left_w - text_x + 4, title_h),
+                           strip, mid_src)
+        painter.setFont(font)
+        painter.setPen(Qt.black)
+        painter.drawText(text_x, 28, title)
+    painter.end()
+    return out, title_h
+
+
+_reference_app = None
+
+
+def _prepare_reference_look():
+    """Non-Windows hosts: create the QApplication with the capture machine's
+    defaults before MainWindow exists.
+
+    Windows gives Qt the "Segoe UI" 9 pt message font and the windowsvista
+    style; a Linux host would otherwise start from its own sans-serif font
+    and Fusion's blue highlight, which changes every text width, the layer
+    panel width and the Settings dialog size. Selawik (Microsoft's open
+    Segoe UI replacement) installed under the "Segoe UI" family name gives
+    the same metrics; the palette highlight becomes the Windows accent.
+    """
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QPalette
+    from PyQt5.QtWidgets import QApplication
+
+    global _reference_app
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, False)
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication(sys.argv)
+    # Keep the wrapper alive: a collected PyQt QApplication wrapper destroys
+    # the C++ application, and _bootstrap_real_app would then create a new
+    # one with the host's default font.
+    _reference_app = app
+    font = QFont("Segoe UI", 9)
+    if QFontInfo(font).family() != "Segoe UI":
+        raise RuntimeError(
+            "no 'Segoe UI' font family is installed; install Selawik "
+            "(github.com/microsoft/Selawik) under that family name so text "
+            "metrics match the reference recordings")
+    app.setStyle("Fusion")
+    app.setFont(font)
+    palette = app.palette()
+    palette.setColor(QPalette.Highlight, QColor(0, 120, 215))
+    palette.setColor(QPalette.HighlightedText, QColor(255, 255, 255))
+    app.setPalette(palette)
+    # windowsvista paints a selected row of an unfocused item view light
+    # grey (the Settings categories list while its combobox has focus);
+    # Fusion keeps the highlight colour. MainWindow.apply_theme replaces the
+    # application stylesheet, so append the rule after every theme change,
+    # and only for the default theme (the dark theme styles the list itself).
+    from main_window import MainWindow
+    unfocused_rule = ("\nQListView::item:selected:!active { background: "
+                      "#d0cfd4; color: black; }")
+    original_apply_theme = MainWindow.apply_theme
+
+    def apply_theme(self, theme_name, *args, **kwargs):
+        result = original_apply_theme(self, theme_name, *args, **kwargs)
+        if theme_name == "default":
+            app.setStyleSheet(app.styleSheet() + unfocused_rule)
+        return result
+
+    MainWindow.apply_theme = apply_theme
+    app.setStyleSheet(unfocused_rule)
+    print(f"[record] reference look: font {QFontInfo(font).family()} "
+          f"{QFontInfo(font).pixelSize()}px, style Fusion, "
+          f"QT_FONT_DPI={os.environ.get('QT_FONT_DPI')}", flush=True)
+    return app
 
 
 # ---------------------------------------------------------------------------
@@ -1388,6 +1545,8 @@ def _launch(headless):
     1920x1080 window. With headless=True nothing appears on the desktop."""
     faulthandler.enable(all_threads=True)
     _install_clean_profile()
+    if not IS_WINDOWS:
+        _prepare_reference_look()
     app, window = _bootstrap_real_app()
     if headless:
         _install_headless_filter(app)

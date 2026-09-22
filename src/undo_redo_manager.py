@@ -271,6 +271,11 @@ class StrokeTextButton(QPushButton):
                         
                         self._custom_tooltip_widget = CustomTooltip("", self)
                         self._custom_tooltip_widget.setText(self.custom_tooltip)
+                        # History contains user-supplied group names, not markup.
+                        self._custom_tooltip_widget.label.setTextFormat(Qt.PlainText)
+                        direction = Qt.RightToLeft if self._custom_tooltip_widget.is_hebrew else Qt.LeftToRight
+                        self._custom_tooltip_widget.label.setLayoutDirection(direction)
+                        self._custom_tooltip_widget.setLayoutDirection(direction)
                         # Force theme update to ensure proper styling
                         self._custom_tooltip_widget.updateTheme()
                         self._custom_tooltip_widget.adjustSize()
@@ -2763,7 +2768,7 @@ class UndoRedoManager(QObject):
             if can_undo:
                 # Say WHAT would be undone, not just that undo is available.
                 self.undo_button.set_custom_tooltip(
-                    self._with_action(_['undo_tooltip'], self.metadata_for_step(self.current_step)))
+                    self._with_action(_['undo_tooltip'], self.metadata_for_step(self.current_step), language_code))
             else:
                 # Add "currently unavailable" to the tooltip when disabled
                 unavailable_text = _['currently_unavailable'] if 'currently_unavailable' in _ else 'Currently unavailable'
@@ -2787,7 +2792,7 @@ class UndoRedoManager(QObject):
             _ = translations[language_code]
             if can_redo:
                 self.redo_button.set_custom_tooltip(
-                    self._with_action(_['redo_tooltip'], self.metadata_for_step(self.current_step + 1)))
+                    self._with_action(_['redo_tooltip'], self.metadata_for_step(self.current_step + 1), language_code))
             else:
                 # Add "currently unavailable" to the tooltip when disabled
                 unavailable_text = _['currently_unavailable'] if 'currently_unavailable' in _ else 'Currently unavailable'
@@ -2911,13 +2916,13 @@ class UndoRedoManager(QObject):
         return self.undo_button, self.redo_button
     
     @staticmethod
-    def _with_action(tooltip, metadata):
+    def _with_action(tooltip, metadata, language_code='en'):
         """Append the recorded action to a button tooltip.
 
         An unrecorded state (an older state file, or a save from a build without
         this feature) leaves the tooltip exactly as the app has always shown it.
         """
-        label = short_label(metadata)
+        label = short_label(metadata, language_code)
         return f"{tooltip}\n{label}" if label else tooltip
 
     def update_button_tooltips(self, language_code='en'):
@@ -2929,14 +2934,14 @@ class UndoRedoManager(QObject):
             # Check if buttons are enabled and set appropriate tooltip
             if self.undo_button.isEnabled():
                 self.undo_button.set_custom_tooltip(
-                    self._with_action(_['undo_tooltip'], self.metadata_for_step(self.current_step)))
+                    self._with_action(_['undo_tooltip'], self.metadata_for_step(self.current_step), language_code))
             else:
                 unavailable_text = _['currently_unavailable'] if 'currently_unavailable' in _ else 'Currently unavailable'
                 self.undo_button.set_custom_tooltip(_['undo_tooltip'] + f'\n({unavailable_text})')
                 
             if self.redo_button.isEnabled():
                 self.redo_button.set_custom_tooltip(
-                    self._with_action(_['redo_tooltip'], self.metadata_for_step(self.current_step + 1)))
+                    self._with_action(_['redo_tooltip'], self.metadata_for_step(self.current_step + 1), language_code))
             else:
                 unavailable_text = _['currently_unavailable'] if 'currently_unavailable' in _ else 'Currently unavailable'
                 self.redo_button.set_custom_tooltip(_['redo_tooltip'] + f'\n({unavailable_text})')
@@ -3304,7 +3309,7 @@ def connect_to_move_mode(canvas, undo_redo_manager):
                 undo_redo_manager.save_state(
                     action='move.strand', source='mode',
                     targets=[getattr(moved_strand, 'layer_name', None)] if moved_strand else None,
-                    detail='control point' if (was_moving_control_point or was_moving_bias_control) else None)
+                    detail='control point' if (was_moving_control_point or was_moving_bias_control) else 'endpoint')
             else:
                 pass
         

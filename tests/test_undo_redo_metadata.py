@@ -364,3 +364,93 @@ def test_the_manager_logs_each_event_at_its_own_time(tmp_path):
     stamps = [line.split("  ")[0] for line in lines]
     assert stamps == sorted(stamps)          # the log reads in the order it happened
     assert lines[-1].split("  ")[1].startswith("UNDO")
+
+
+# Display language is chosen when the tooltip is rendered, never persisted.
+def test_every_supported_language_covers_every_history_action():
+    from translations import translations
+    from undo_redo_translations import ACTION_TRANSLATIONS
+    assert set(ACTION_TRANSLATIONS) == set(translations) - {'en'}
+    for language, labels in ACTION_TRANSLATIONS.items():
+        assert set(meta.ACTIONS) <= set(labels)
+        for action in meta.ACTIONS:
+            record = meta.build_metadata(action, targets=['2_1'])
+            label = meta.short_label(record, language)
+            assert label.startswith(labels[action])
+            assert labels[action] != meta.ACTIONS[action]
+            assert '2_1' in label
+            assert record['targets'] == ['2_1']
+
+
+def test_hebrew_preserves_identifiers_and_arbitrary_group_names():
+    record = meta.build_metadata('group.move', targets=['2_1', '1_3_2_1', '<group & name>'])
+    label = meta.short_label(record, 'he')
+    for target in record['targets']:
+        assert '\u2068' + target + '\u2069' in label
+    assert '\u2068' not in meta.short_label(record, 'en')
+    assert meta.short_label(record, 'unsupported') == meta.short_label(record)
+    assert meta.short_label(None, 'he') == ''
+
+
+def test_move_tooltips_distinguish_endpoint_and_control_point_in_every_language():
+    from translations import translations
+    for language in translations:
+        labels = [meta.short_label(meta.build_metadata('move.strand', targets=['2_1'], detail=detail), language)
+                  for detail in (None, 'endpoint', 'control point')]
+        assert len(set(labels)) == 3
+
+
+def test_tooltips_follow_language_switches_and_history_position(tmp_path):
+    from undo_redo_manager import StrokeTextButton
+    from translations import translations
+    manager, canvas = make_manager(tmp_path)
+    manager.undo_button = StrokeTextButton('undo')
+    manager.redo_button = StrokeTextButton('redo')
+    manager.current_step, manager.max_step = 1, 2
+    manager._state_metadata = {
+        1: meta.build_metadata('move.strand', targets=['2_1'], detail='endpoint'),
+        2: meta.build_metadata('layer.delete', targets=['3_1']),
+    }
+    for language in translations:
+        canvas.layer_panel.language_code = language
+        manager._update_button_states()
+        manager.update_button_tooltips(language)
+        assert manager.undo_button.custom_tooltip == translations[language]['undo_tooltip'] + '\n' + meta.short_label(manager._state_metadata[1], language)
+        assert manager.redo_button.custom_tooltip == translations[language]['redo_tooltip'] + '\n' + meta.short_label(manager._state_metadata[2], language)
+        manager.current_step = 0
+        manager._update_button_states()
+        assert translations[language]['currently_unavailable'] in manager.undo_button.custom_tooltip
+        assert meta.short_label(manager._state_metadata[1], language) in manager.redo_button.custom_tooltip
+        manager.current_step = 2
+        manager._update_button_states()
+        assert translations[language]['currently_unavailable'] in manager.redo_button.custom_tooltip
+        manager.current_step = 1
+    manager.undo_button.deleteLater()
+    manager.redo_button.deleteLater()
+
+
+def test_right_click_tooltip_uses_rtl_and_keeps_group_names_as_plain_text():
+    from PyQt5.QtCore import Qt, QPointF, QEvent
+    from PyQt5.QtGui import QMouseEvent
+    from PyQt5.QtWidgets import QWidget, QPushButton
+    from undo_redo_manager import StrokeTextButton
+
+    class LayerPanel(QWidget):
+        pass
+
+    panel = LayerPanel()
+    panel.multi_select_button = QPushButton(panel)
+    panel.refresh_button = QPushButton(panel)
+    button = StrokeTextButton('undo', panel)
+    record = meta.build_metadata('group.move', targets=['2_1', '<b>group</b>'])
+    for language, direction in [('he', Qt.RightToLeft), ('en', Qt.LeftToRight)]:
+        button.set_custom_tooltip(UndoRedoManager._with_action('Undo', record, language))
+        event = QMouseEvent(QEvent.MouseButtonPress, QPointF(1, 1), Qt.RightButton, Qt.RightButton, Qt.NoModifier)
+        button.mousePressEvent(event)
+        tooltip = button._custom_tooltip_widget
+        assert tooltip.label.layoutDirection() == direction
+        assert tooltip.label.textFormat() == Qt.PlainText
+        assert '<b>group</b>' in tooltip.label.text()
+        tooltip.hide()
+    panel.close()
+    panel.deleteLater()

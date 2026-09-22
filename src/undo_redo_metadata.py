@@ -227,12 +227,25 @@ def describe(meta):
     return "{}  ·  {}".format(" - ".join(parts), where)
 
 
-def short_label(meta):
+def short_label(meta, language_code='en'):
     """Compact form for a button tooltip: no source suffix."""
     if not meta:
         return ""
-    head = ACTIONS.get(meta.get("action", ""), _prettify(meta.get("action", "")))
+    from undo_redo_translations import ACTION_TRANSLATIONS
+
+    action = meta.get("action", "")
+    head = ACTIONS.get(action, _prettify(action))
+    if action == 'move.strand':
+        if meta.get('detail') == 'control point':
+            action, head = 'move.control_point', 'Moved a control point'
+        elif meta.get('detail') == 'endpoint':
+            action, head = 'move.endpoint', 'Moved an endpoint'
+    head = ACTION_TRANSLATIONS.get(language_code, {}).get(action, head)
     targets = meta.get("targets") or []
+    if language_code == 'he':
+        # Isolate each identifier/name so underscores, digits and punctuation
+        # retain their order in an RTL sentence, including mixed group names.
+        targets = ['\u2068' + str(target) + '\u2069' for target in targets]
     return "{} ({})".format(head, ", ".join(targets)) if targets else head
 
 

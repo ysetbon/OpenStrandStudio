@@ -136,13 +136,26 @@ def _erased_area(mask_strand):
 def _zone_of(mask_strand, blur_px, cache):
     """The mask's footprint grown by the blur radius (where its shadows
     reach), minus the parts the user erased, where the second strand stays on
-    top; once per paint."""
+    top; once per paint.
+
+    Growing a curved footprint is costly, so the last zone is also kept on
+    the mask and reused while its footprint, erased parts and the blur are
+    unchanged (for example while another strand is dragged). It is kept in
+    the instance's own __dict__: MaskedStrand forwards unknown attributes to
+    its strands."""
     key = ('zone', id(mask_strand), float(blur_px))
     if key not in cache:
-        zone = _grown(_piece_of(mask_strand, cache), blur_px)
+        piece = _piece_of(mask_strand, cache)
         erased = _erased_area(mask_strand)
-        if not erased.isEmpty():
-            zone = zone.subtracted(erased)
+        own = getattr(mask_strand, '__dict__', {})
+        memo = own.get('_mask_zone_memo')
+        if memo is not None and memo[0] == float(blur_px) and memo[1] == piece and memo[2] == erased:
+            zone = memo[3]
+        else:
+            zone = _grown(piece, blur_px)
+            if not erased.isEmpty():
+                zone = zone.subtracted(erased)
+            own['_mask_zone_memo'] = (float(blur_px), QPainterPath(piece), QPainterPath(erased), zone)
         cache[key] = zone
     return cache[key]
 

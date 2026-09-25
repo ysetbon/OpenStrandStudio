@@ -3,7 +3,7 @@ import math
 from strand import Strand
 from PyQt5.QtCore import QPointF, Qt, QRectF
 from PyQt5.QtGui import (
-    QColor, QPainter, QPen, QBrush, QPainterPath, QPainterPathStroker,  QTransform,QImage, QRadialGradient
+    QColor, QPainter, QPen, QBrush, QPainterPath, QPainterPathStroker,  QTransform, QRadialGradient
 )
 from render_utils import RenderUtils
 from PyQt5.QtGui import QPainterPath, QPainterPathStroker

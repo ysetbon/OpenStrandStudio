@@ -86,9 +86,13 @@ class Renderer:
         import shader_utils
         self.shader_utils = shader_utils
         self.original_strand_shadow = shader_utils.draw_strand_shadow
-        self.original_mask_shadow = shader_utils.draw_mask_strand_shadow
         self.original_blocker = shader_utils.get_shadow_blocker_path
         self.original_mask_draw = masked_strand.MaskedStrand.draw
+        # The mask's own shadow passes: draw_mask_strand_shadow before the
+        # mask shadow fix, draw_mask_lift_shadow and draw_mask_overlying after.
+        self.mask_passes = {name: getattr(shader_utils, name) for name in
+                            ("draw_mask_strand_shadow", "draw_mask_lift_shadow", "draw_mask_overlying")
+                            if hasattr(shader_utils, name)}
 
         # Every call site imports these from shader_utils at call time, so
         # wrapping the module attributes lets us name and skip single passes.
@@ -98,16 +102,21 @@ class Renderer:
         renderer = self
 
         def strand_shadow(painter, strand, *args, **kwargs):
+            if kwargs.get("collect_only"):
+                # A mask pass reusing the strand's shadow paths, not a pass of its own.
+                return renderer.original_strand_shadow(painter, strand, *args, **kwargs)
             key = "%s: draw_strand_shadow" % strand.layer_name
             renderer.calls.append(key)
             if key not in renderer.skip:
                 return renderer.original_strand_shadow(painter, strand, *args, **kwargs)
 
-        def mask_shadow(painter, *args, **kwargs):
-            key = "%s: draw_mask_strand_shadow" % renderer.drawing_mask
-            renderer.calls.append(key)
-            if key not in renderer.skip:
-                return renderer.original_mask_shadow(painter, *args, **kwargs)
+        def mask_pass(name):
+            def wrapped(painter, *args, **kwargs):
+                key = "%s: %s" % (renderer.drawing_mask, name)
+                renderer.calls.append(key)
+                if key not in renderer.skip:
+                    return renderer.mask_passes[name](painter, *args, **kwargs)
+            return wrapped
 
         def mask_draw(strand, painter, *args, **kwargs):
             renderer.drawing_mask = strand.layer_name
@@ -117,7 +126,8 @@ class Renderer:
                 renderer.drawing_mask = None
 
         shader_utils.draw_strand_shadow = strand_shadow
-        shader_utils.draw_mask_strand_shadow = mask_shadow
+        for name in self.mask_passes:
+            setattr(shader_utils, name, mask_pass(name))
         masked_strand.MaskedStrand.draw = mask_draw
 
     def configure(self, window_size, canvas_background):
@@ -260,14 +270,17 @@ def components(mask):
     return found
 
 
-def transplant_region(current, reference, near_zone, keep_zone):
+def transplant_region(current, reference, near_zone, keep_zone, own_zone=None):
     """Pixels to take from the reference: changed components that reach the
-    masked crossing's neighbourhood and stay clear of the keep zone."""
+    masked crossing's neighbourhood and stay clear of the keep zone, plus
+    every changed pixel on the mask's own piece (*own_zone*), which only this
+    mask governs even where a keep zone reaches over it."""
     near, keep = near_zone.load(), keep_zone.load()
     region = Image.new("L", current.size, 0)
     out = region.load()
     picked = []
-    for component in components(changed(current, reference)):
+    diff = changed(current, reference)
+    for component in components(diff):
         if not any(near[x, y] for x, y in component):
             continue
         if any(keep[x, y] for x, y in component):
@@ -275,6 +288,12 @@ def transplant_region(current, reference, near_zone, keep_zone):
         picked.append(component)
         for x, y in component:
             out[x, y] = 255
+    if own_zone is not None:
+        on_piece = ImageChops.subtract(ImageChops.multiply(diff, own_zone), region)
+        for component in components(on_piece):
+            picked.append(component)
+            for x, y in component:
+                out[x, y] = 255
     # One pixel of slack so anti-aliased fringes come from the same render.
     return region.filter(ImageFilter.MaxFilter(3)), picked
 
@@ -474,16 +493,21 @@ def run_example(renderer, example_dir):
         keep = Image.new("L", current.size, 0)
         for zone in entry.get("keep_zones", []):
             keep = ImageChops.lighter(keep, renderer.pair_zone(*zone["strands"], grow_px=zone["grow_px"]))
-        zones.append((renderer.mask_zone(entry["mask"], entry["near_mask_px"]), keep))
+        own = renderer.mask_zone(entry["mask"], entry["own_piece_px"]) if "own_piece_px" in entry else None
+        zones.append((renderer.mask_zone(entry["mask"], entry["near_mask_px"]), keep, own))
     highlight = renderer.canvas_highlight_color()
     selected = renderer.render(scene, shadow, select=spec.get("screenshot_select", entries[0]["mask"]))
 
     expected, expected_selected = current, selected
     region = Image.new("L", current.size, 0)
     picked, per_mask = [], {}
-    for entry, (near, keep) in zip(entries, zones):
-        reference = renderer.render(scene, shadow, order=entry["reference_order"])
-        mine, mine_picked = transplant_region(current, reference, near, keep)
+    references = [renderer.render(scene, shadow, order=entry["reference_order"]) for entry in entries]
+    for index, (entry, (near, keep, own), reference) in enumerate(zip(entries, zones, references)):
+        mine, mine_picked = transplant_region(current, reference, near, keep, own)
+        # Each mask's own piece belongs to that mask's reference alone.
+        for other_index, (_near, _keep, other_own) in enumerate(zones):
+            if other_index != index and other_own is not None:
+                mine = ImageChops.subtract(mine, other_own)
         mine = ImageChops.subtract(mine, region)  # the first mask to claim a pixel keeps it
         expected = Image.composite(reference, expected, mine)
         expected_selected = reapply_highlight(expected_selected, current, reference, mine, highlight)

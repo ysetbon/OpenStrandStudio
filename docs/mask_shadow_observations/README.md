@@ -12,7 +12,9 @@ as if it were genuinely above `c_d` in the layer order. For shadows that means:
 1. **The top strand casts its normal shadow on the bottom strand.** Same soft band on both sides of the
    crossing as any regular crossing.
 2. **Nothing from below lands on the top strand.** Near the crossing, neither the bottom strand's own
-   shadow nor the blurred edge of shadows it casts on strands further down may darken the top strand.
+   shadow nor the blurred edge of shadows it casts on strands further down may darken the top strand. The
+   mask does not shade the top strand either: its continuation just past the crossing (for example its
+   rounded end) stays clean.
 3. **Other strands are unaffected by the mask.** A third strand passing under the crossing gets the same
    shadows it would get without the mask: straight bands along each strand above it, meeting at clean
    corners, with no notches, bumps, or missing pieces. A third strand that lies *above* the top strand stays
@@ -55,6 +57,11 @@ QT_QPA_PLATFORM=offscreen python automation_tests/capture_mask_shadow_observatio
      they differ from example 1 (the "default" theme paints the canvas `#ECECEC`).
    - `workaround_order` (optional): a layer order, mask included, that gets close to the expected look
      with today's code. The script renders it and reports how far it is from the expected image.
+   - `masks` (optional): for scenes with several masks whose crossings form a loop, a list of
+     `{mask, reference_order, reference_note, near_mask_px, keep_zones}`, one reference per mask.
+   - `screenshot_select` (optional): which layer was selected in the screenshot, if not the mask.
+   - `screenshot_unreproduced` (optional): canvas boxes where the screenshot shows something the rebuilt
+     scene does not draw; the expected screenshot takes the expected render there.
 3. Run the script, then write the example's `README.md`: a table of what differs, and why.
 
 ## Examples
@@ -63,7 +70,10 @@ QT_QPA_PLATFORM=offscreen python automation_tests/capture_mask_shadow_observatio
 |---|---|---|
 | [1](example_01_mask_2_1_over_2_3/README.md) | Mask `2_1_2_3` (2_1 over 2_3) beside an unrelated strand `1_1` | The mask's own shadow is right. A stray wedge of 2_3's shadow lands on top of 2_1 (it leaks through the blur clip). 1_1's shadow is notched by the mask's shadow blocker, and switching the blocker off exposes a second wedge. |
 | [2](example_02_mask_1_1_over_1_4/README.md) | Mask `1_1_1_4` (1_1 over 1_4) right where 1_1 also passes under 1_3 | The mask's shading on 1_4 is right. The mask, sitting at the top of the stack, also paints a corner of 1_1 over 1_3 and casts a shadow onto it. Expected: 1_3 stays on top along its whole band and casts its usual shadow, which also puts 1_3 over 1_4 at their hairpin joint. Moving 1_3 above the mask in the layer panel already gets within 141 px of that. |
+| [4](example_04_two_masks_weave/README.md) | Two masks weaving `2_2` and `2_3` through `1_2` and `1_3` (a 2×2 checkerboard) | Each mask's shading is right. Each mask also shades its own strand's rounded end just past the crossing, and dents the shadows at its corners. The reported screenshot also shows an L-shaped shadow on 1_3 that a fresh load of the layer state does not draw. |
 
 ![Example 1: screenshot vs expected](example_01_mask_2_1_over_2_3/compare_screenshot.png)
 
 ![Example 2: screenshot vs expected](example_02_mask_1_1_over_1_4/compare_screenshot.png)
+
+![Example 4: screenshot vs expected](example_04_two_masks_weave/compare_screenshot.png)

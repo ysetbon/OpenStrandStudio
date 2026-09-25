@@ -47,6 +47,7 @@ MUTED = (95, 95, 105)
 PASS_COLORS = [
     (0, 150, 255), (0, 190, 90), (255, 140, 0), (220, 0, 0),
     (170, 0, 200), (0, 170, 170), (140, 90, 40), (120, 120, 120),
+    (255, 0, 255), (0, 0, 0), (255, 215, 0), (0, 80, 160),
 ]
 
 
@@ -358,7 +359,13 @@ def comparison_figure(title, left, right, crop, insets, footer, out_path):
     width = pad * 2 + cw * 2 + gap
     probe = ImageDraw.Draw(Image.new("RGB", (10, 10)))
     footer_lines = wrap(probe, footer, font(14), width - pad * 2)
-    height = 64 + 34 + ch + 22 + inset_px + 30 + 16 + 20 * len(footer_lines) + pad
+    captions = []
+    for inset in insets:
+        text = "%s  (%dx zoom)" % (inset["title"], inset_px // (inset["box"][2] - inset["box"][0]))
+        fits = probe.textbbox((0, 0), text, font=font(13))[2] <= inset_px
+        captions.append([text] if fits else wrap(probe, text, font(13), inset_px))
+    extra = 16 * (max(len(c) for c in captions) - 1) if captions else 0
+    height = 64 + 34 + ch + 22 + inset_px + 30 + extra + 16 + 20 * len(footer_lines) + pad
     fig = Image.new("RGB", (width, height), (255, 255, 255))
     draw = ImageDraw.Draw(fig)
     draw.text((pad, 20), title, fill=INK, font=font(20, bold=True))
@@ -379,8 +386,8 @@ def comparison_figure(title, left, right, crop, insets, footer, out_path):
             fig.paste(zoomed, (ix, iy))
             draw.rectangle((ix - 1, iy - 1, ix + inset_px, iy + inset_px), outline=color, width=2)
             badge(draw, (ix + 14, iy + 14), inset["label"], color)
-            draw.text((ix, iy + inset_px + 6), "%s  (%dx zoom)" % (inset["title"], inset_px // (inset["box"][2] - inset["box"][0])),
-                      fill=MUTED, font=font(13))
+            for n, line in enumerate(captions[i]):
+                draw.text((ix, iy + inset_px + 6 + 16 * n), line, fill=MUTED, font=font(13))
     y = height - pad - 20 * len(footer_lines)
     for line in footer_lines:
         draw.text((pad, y), line, fill=MUTED, font=font(14))
@@ -455,26 +462,47 @@ def run_example(renderer, example_dir):
     label = spec["label"]
     renderer.configure(spec.get("window_size", WINDOW_SIZE), spec.get("canvas_background"))
 
+    # One entry per mask. A single mask can be described at the top level; a
+    # scene with several masks whose crossings form a loop (no layer order
+    # draws them all) lists each mask with its own reference order in "masks".
+    entries = spec.get("masks") or [spec]
+
     current = renderer.render(scene, shadow)
     passes_seen = list(dict.fromkeys(renderer.calls))
-    near = renderer.mask_zone(spec["mask"], spec["near_mask_px"])
-    keep = Image.new("L", current.size, 0)
-    for zone in spec.get("keep_zones", []):
-        keep = ImageChops.lighter(keep, renderer.pair_zone(*zone["strands"], grow_px=zone["grow_px"]))
+    zones = []  # computed while the masks are still loaded
+    for entry in entries:
+        keep = Image.new("L", current.size, 0)
+        for zone in entry.get("keep_zones", []):
+            keep = ImageChops.lighter(keep, renderer.pair_zone(*zone["strands"], grow_px=zone["grow_px"]))
+        zones.append((renderer.mask_zone(entry["mask"], entry["near_mask_px"]), keep))
     highlight = renderer.canvas_highlight_color()
-    selected = renderer.render(scene, shadow, select=spec["mask"])
-    reference = renderer.render(scene, shadow, order=spec["reference_order"])
+    selected = renderer.render(scene, shadow, select=spec.get("screenshot_select", entries[0]["mask"]))
 
-    region, picked = transplant_region(current, reference, near, keep)
-    expected = Image.composite(reference, current, region)
-    expected_selected = reapply_highlight(selected, current, reference, region, highlight)
+    expected, expected_selected = current, selected
+    region = Image.new("L", current.size, 0)
+    picked, per_mask = [], {}
+    for entry, (near, keep) in zip(entries, zones):
+        reference = renderer.render(scene, shadow, order=entry["reference_order"])
+        mine, mine_picked = transplant_region(current, reference, near, keep)
+        mine = ImageChops.subtract(mine, region)  # the first mask to claim a pixel keeps it
+        expected = Image.composite(reference, expected, mine)
+        expected_selected = reapply_highlight(expected_selected, current, reference, mine, highlight)
+        region = ImageChops.lighter(region, mine)
+        picked += mine_picked
+        per_mask[entry["mask"]] = sum(len(c) for c in mine_picked)
+        name = "reference.png" if len(entries) == 1 else "reference_%s.png" % entry["mask"]
+        reference.crop(crop).save(out(name))
 
-    for name, image in [("current.png", current), ("expected.png", expected),
-                        ("reference.png", reference)]:
+    for name, image in [("current.png", current), ("expected.png", expected)]:
         image.crop(crop).save(out(name))
 
-    footer = ("Expected = %s, used only where it differs from today's drawing next to the masked "
-              "crossing. Everything else is today's render, untouched." % spec["reference_note"])
+    if len(entries) == 1:
+        footer = ("Expected = %s, used only where it differs from today's drawing next to the masked "
+                  "crossing. Everything else is today's render, untouched." % spec["reference_note"])
+    else:
+        footer = ("Expected = %s; each used only where it differs from today's drawing next to its own "
+                  "mask. Everything else is today's render, untouched."
+                  % "; ".join("around %s, %s" % (e["mask"], e["reference_note"]) for e in entries))
     comparison_figure("%s \u2014 clean render (nothing selected)" % label, current, expected, crop,
                       spec["insets"], footer, out("compare_clean.png"))
 
@@ -483,6 +511,8 @@ def run_example(renderer, example_dir):
                   {"bbox": [min(p[0] for p in c), min(p[1] for p in c),
                             max(p[0] for p in c), max(p[1] for p in c)], "pixels": len(c)}
                   for c in picked]}
+    if len(entries) > 1:
+        report["transplanted_pixels_per_mask"] = per_mask
 
     shot_name = spec.get("screenshot")
     if shot_name and os.path.exists(out(shot_name)):
@@ -492,8 +522,17 @@ def run_example(renderer, example_dir):
         mismatch = changed(same, selected.crop(crop))
         report["screenshot_pixels_off_by_more_than_%d" % DIFF_THRESHOLD] = count_on(mismatch)
         report["screenshot_pixels_compared"] = same.width * same.height
+        # Places where the screenshot shows something the rebuilt scene does
+        # not draw: the expected screenshot takes the expected render there.
+        paste = region.copy()
+        unexplained = ImageDraw.Draw(paste)
+        for item in spec.get("screenshot_unreproduced", []):
+            x0, y0, x1, y1 = item["box"]
+            unexplained.rectangle([x0, y0, x1 - 1, y1 - 1], fill=255)
+            box = shift_box(tuple(item["box"]), (-crop[0], -crop[1]))
+            report.setdefault("screenshot_unreproduced_pixels", []).append(count_on(mismatch.crop(box)))
         shot_expected = shot.copy()
-        shot_expected.paste(expected_selected, offset, region)
+        shot_expected.paste(expected_selected, offset, paste)
         shot_expected.save(out("user_screenshot_expected.png"))
         comparison_figure("%s \u2014 the reported screenshot (mask selected)" % label, shot, shot_expected,
                           shift_box(crop, offset),

@@ -1,0 +1,24 @@
+{
+  "label": "Example 2",
+  "title": "Mask 1_1_1_4 (1_1 over 1_4) where 1_1 also passes under 1_3",
+  "scene": "scene.json",
+  "shadow": {"num_steps": 2, "max_blur_radius": 30.0},
+  "window_size": [2300, 1300],
+  "canvas_background": "#ECECEC",
+  "mask": "1_1_1_4",
+  "reference_order": ["1_2", "1_4", "1_1", "1_3"],
+  "reference_note": "the app's own drawing of 1_1 genuinely under 1_3 and over 1_4 (layer order 1_2, 1_4, 1_1, 1_3 with the mask removed)",
+  "workaround_order": ["1_1", "1_2", "1_4", "1_1_1_4", "1_3"],
+  "near_mask_px": 45,
+  "keep_zones": [
+    {"strands": ["1_1", "1_2"], "grow_px": 20,
+     "note": "1_1/1_2 joint: the reference order also puts 1_1 over 1_2 there, which the mask does not govern, so anything within 20 px of both strands is kept exactly as drawn today"}
+  ],
+  "crop": [1110, 280, 1580, 710],
+  "insets": [
+    {"label": "1", "box": [1388, 474, 1458, 544], "title": "corner of 1_1 over 1_3"},
+    {"label": "2", "box": [1466, 470, 1536, 540], "title": "1_3 / 1_4 joint"}
+  ],
+  "screenshot": "user_screenshot.png",
+  "screenshot_canvas_offset": [-1000, -178]
+}

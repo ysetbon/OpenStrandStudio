@@ -37,7 +37,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
 from capture_screen_ratio_mocks import _bootstrap, _force_available_size, _wait
 
-WINDOW_SIZE = (1264, 935)   # window size of the first reported screenshot
+WINDOW_SIZE = (1264, 935)   # default window size (the first reported screenshot)
 DIFF_THRESHOLD = 8          # per-channel difference (0-255) that counts as changed
 
 CURRENT_RED = (190, 30, 45)
@@ -78,7 +78,8 @@ class Renderer:
         self.window.setMinimumSize(0, 0)
         self.window.show()
         self.app.processEvents()
-        _force_available_size(self.window, *WINDOW_SIZE)
+        self.canvas_style = self.window.canvas.styleSheet()
+        self.configure(WINDOW_SIZE, None)
 
         import masked_strand
         import shader_utils
@@ -117,6 +118,14 @@ class Renderer:
         shader_utils.draw_strand_shadow = strand_shadow
         shader_utils.draw_mask_strand_shadow = mask_shadow
         masked_strand.MaskedStrand.draw = mask_draw
+
+    def configure(self, window_size, canvas_background):
+        """Match the reporter's window size and canvas background colour
+        (the "default" theme paints the canvas #ECECEC instead of white)."""
+        _force_available_size(self.window, *window_size)
+        self.window.canvas.setStyleSheet(
+            "background-color: %s;" % canvas_background if canvas_background else self.canvas_style)
+        self.app.processEvents()
 
     def render(self, scene_path, shadow, order=None, select=None, skip=(),
                neutralise_blocker=False):
@@ -444,6 +453,7 @@ def run_example(renderer, example_dir):
     crop = tuple(spec["crop"])
     out = lambda name: os.path.join(example_dir, name)
     label = spec["label"]
+    renderer.configure(spec.get("window_size", WINDOW_SIZE), spec.get("canvas_background"))
 
     current = renderer.render(scene, shadow)
     passes_seen = list(dict.fromkeys(renderer.calls))
@@ -500,7 +510,24 @@ def run_example(renderer, example_dir):
                        no_shadow, attributed, crop, spec["insets"], out("attribution.png"))
     report["passes"] = {key: count_on(mask) for key, mask in attributed}
 
-    # Switch the mask shadow blocker off to see what it currently hides.
+    # A layer order, mask included, that a user could set by hand to get
+    # (close to) the expected look with today's code.
+    if "workaround_order" in spec:
+        workaround = renderer.render(scene, shadow, order=spec["workaround_order"])
+        workaround.crop(crop).save(out("workaround.png"))
+        report["workaround_pixels_off_expected"] = count_on(changed(workaround, expected))
+
+    if "blocker_inset" in spec:
+        blocker_experiment(renderer, spec, scene, shadow, current, reference, report, out)
+
+    with open(out("capture_report.json"), "w", encoding="utf-8") as handle:
+        json.dump(report, handle, indent=2)
+    print("[mask-shadow] %s: %s" % (os.path.basename(example_dir), json.dumps(report)), flush=True)
+
+
+def blocker_experiment(renderer, spec, scene, shadow, current, reference, report, out):
+    """Switch the mask shadow blocker off to see what it currently hides."""
+    label = spec["label"]
     unblocked = renderer.render(scene, shadow, neutralise_blocker=True)
     inset = next(i for i in spec["insets"] if i["label"] == spec["blocker_inset"])
     box = tuple(inset["box"])
@@ -521,10 +548,6 @@ def run_example(renderer, example_dir):
                  "holes into other strands' shadows. Circled: what then still differs from the "
                  "reference.",
                  out("blocker_experiment.png"))
-
-    with open(out("capture_report.json"), "w", encoding="utf-8") as handle:
-        json.dump(report, handle, indent=2)
-    print("[mask-shadow] %s: %s" % (os.path.basename(example_dir), json.dumps(report)), flush=True)
 
 
 def main(argv):

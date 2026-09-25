@@ -1,0 +1,97 @@
+{
+  "transplanted_pixels": 4268,
+  "transplanted_components": [
+    {
+      "bbox": [
+        1383,
+        481,
+        1520,
+        545
+      ],
+      "pixels": 3886
+    },
+    {
+      "bbox": [
+        1524,
+        505,
+        1534,
+        523
+      ],
+      "pixels": 23
+    },
+    {
+      "bbox": [
+        1525,
+        523,
+        1530,
+        527
+      ],
+      "pixels": 6
+    },
+    {
+      "bbox": [
+        1502,
+        529,
+        1521,
+        538
+      ],
+      "pixels": 22
+    },
+    {
+      "bbox": [
+        1386,
+        530,
+        1419,
+        545
+      ],
+      "pixels": 321
+    },
+    {
+      "bbox": [
+        1396,
+        531,
+        1396,
+        531
+      ],
+      "pixels": 1
+    },
+    {
+      "bbox": [
+        1391,
+        532,
+        1394,
+        534
+      ],
+      "pixels": 4
+    },
+    {
+      "bbox": [
+        1483,
+        549,
+        1483,
+        550
+      ],
+      "pixels": 2
+    },
+    {
+      "bbox": [
+        1441,
+        569,
+        1442,
+        571
+      ],
+      "pixels": 3
+    }
+  ],
+  "screenshot_pixels_off_by_more_than_8": 6,
+  "screenshot_pixels_compared": 202100,
+  "passes": {
+    "1_1: draw_strand_shadow": 0,
+    "1_2: draw_strand_shadow": 1431,
+    "1_3: draw_strand_shadow": 2666,
+    "1_4: draw_strand_shadow": 3509,
+    "1_1_1_4: draw_strand_shadow": 1200,
+    "1_1_1_4: draw_mask_strand_shadow": 1499
+  },
+  "workaround_pixels_off_expected": 141
+}

@@ -1,0 +1,41 @@
+{
+  "label": "Example 4",
+  "title": "Two masks weaving 2_2 and 2_3 through 1_2 and 1_3",
+  "scene": "scene.json",
+  "shadow": {"num_steps": 2, "max_blur_radius": 30.0},
+  "window_size": [2300, 1300],
+  "canvas_background": "#ECECEC",
+  "masks": [
+    {"mask": "2_2_1_2",
+     "reference_order": ["1_1", "2_1", "2_3", "1_2", "2_2", "1_3"],
+     "reference_note": "the app's own drawing of 2_2 genuinely over 1_2 (layer order 1_1, 2_1, 2_3, 1_2, 2_2, 1_3, masks removed)",
+     "near_mask_px": 45,
+     "own_piece_px": 2,
+     "keep_zones": [
+       {"strands": ["2_3", "1_3"], "grow_px": 20,
+        "note": "that order also flips the 2_3/1_3 crossing, which belongs to the other mask"}
+     ]},
+    {"mask": "2_3_1_3",
+     "reference_order": ["1_1", "2_1", "2_2", "1_3", "2_3", "1_2"],
+     "reference_note": "the app's own drawing of 2_3 genuinely over 1_3 (layer order 1_1, 2_1, 2_2, 1_3, 2_3, 1_2, masks removed)",
+     "near_mask_px": 45,
+     "own_piece_px": 2,
+     "keep_zones": [
+       {"strands": ["2_2", "1_2"], "grow_px": 20,
+        "note": "that order also flips the 2_2/1_2 crossing, which belongs to the other mask"}
+     ]}
+  ],
+  "crop": [1130, 240, 1650, 630],
+  "insets": [
+    {"label": "1", "box": [1459, 392, 1509, 442], "title": "2_2 shades its own end"},
+    {"label": "2", "box": [1403, 518, 1453, 568], "title": "2_3 shades its own end"},
+    {"label": "3", "box": [1490, 462, 1540, 512], "title": "L on 1_3 (screenshot only)"}
+  ],
+  "screenshot": "user_screenshot.png",
+  "screenshot_canvas_offset": [-1071, -154],
+  "screenshot_select": "2_2_1_2",
+  "screenshot_unreproduced": [
+    {"box": [1490, 474, 1542, 510],
+     "note": "an L-shaped shadow on 1_3's rounded end that a fresh load of this layer state does not draw"}
+  ]
+}

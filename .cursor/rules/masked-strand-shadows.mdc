@@ -5,15 +5,13 @@ alwaysApply: false
 ---
 # Masked Strand Shadow Rendering
 
-This rule describes the process and relevant files for rendering shadows of `MaskedStrand` objects, particularly concerning interactions with edits (deletion rectangles) and movement.
+This rule describes how shadows around `MaskedStrand` objects are drawn.
 
-- The `MaskedStrand` class, defined in [src/masked_strand.py](mdc:src/masked_strand.py), represents the visual intersection of two parent strands.
-- `MaskedStrand` can be visually modified by applying deletion rectangles, which are stored within the `MaskedStrand` instance itself (`deletion_rectangles` attribute).
-- The geometric path for the masked strand's shadow, accounting for deletions, is calculated primarily within the `get_masked_shadow_path` method in [src/masked_strand.py](mdc:src/masked_strand.py).
-- The actual rendering of the blurred/faded shadow effect using this path occurs in the `draw_mask_strand_shadow` function within [src/shader_utils.py](mdc:src/shader_utils.py). This function also handles clipping based on layer order and other strands.
-- Standard strand shadows (for non-masked strands) are handled by `draw_strand_shadow` in the same utils file.
-- Moving strands, including `MaskedStrand` objects or their components, is managed by [src/move_mode.py](mdc:src/move_mode.py). Movement triggers updates to strand geometry and repaint events, which in turn call the relevant shadow calculation and drawing functions.
-- Debugging logs specific to `MaskedStrand` operations and the `draw_mask_strand_shadow` function are configured in [src/main.py](mdc:src/main.py) and output to `masked_strand.log`.
-
-**Key Interaction:** When a `MaskedStrand` with deletion rectangles is moved, `move_mode.py` updates its position. The subsequent repaint calls `MaskedStrand.draw()`, which relies on `get_masked_shadow_path` to get the correct shadow shape *after* deletions and movement, and then `draw_mask_strand_shadow` attempts to render this shape with appropriate clipping and effects. Issues can arise if the path calculation or the rendering/clipping logic doesn't handle the updated state correctly during rapid movement events.
-
+- A `MaskedStrand` ([src/masked_strand.py](mdc:src/masked_strand.py)) lifts its first strand F over its second strand S where they cross: it paints F's piece of the crossing (`get_mask_path_stroke`, `get_mask_path`, minus the user's `deletion_rectangles`) at its own place in the layer order.
+- The goal is that a masked crossing looks exactly like a genuine one, as if F were above S in the layer order. [docs/mask_shadow_observations](mdc:docs/mask_shadow_observations/README.md) records examples and their expected images; `automation_tests/check_mask_shadow_fix.py` and `automation_tests/check_mask_shadow_random.py` verify the renderer against them and against genuine crossings in random scenes.
+- A mask casts no shadow of its own (`draw_strand_shadow` returns early for masks). F's own pass in `draw_strand_shadow` ([src/shader_utils.py](mdc:src/shader_utils.py)) computes F's shadow on S as at a genuine crossing (the "lift"); `draw_mask_lift_shadow` re-applies it on top of S when the mask is drawn.
+- Near a mask the strands are restacked (`_mask_sides`): F and the strands crossing over F there (upper side) lie above S and the strands S crosses over there (lower side). `_lifted_near_masks`, `_sunk_near_masks`, `_lowered_near_masks` and `_raised_near_masks` turn that into which strands lie between a caster and its receiver, and `_clip_off_lifted_strands` keeps blurred edges off strands the mask puts above the caster. A mask with no erased parts puts F above S everywhere; otherwise only within its zone (footprint grown by the blur, minus the erased parts).
+- Strands drawn between F and the mask that cross the piece are drawn again on top of it (`_overlying_strands`, `draw_mask_overlying`); one that is also below S is lifted over S across their overlap (`_LoopLift`, which the shadow code treats like a mask). Shadows of strands above F that reach the piece are put back on it.
+- Everything derived from the masks is computed once per paint and kept on the painter (`_frame_cache`); every strand's pass reuses it. Growing a curved footprint is the costliest step, so a mask's zone is also kept on the mask (in its own `__dict__`: `MaskedStrand.__getattr__` forwards unknown names to its strands) and reused while its footprint, erased parts and the blur are unchanged.
+- Keep Qt boolean-operation pitfalls in mind: adding paths under the winding rule can cancel oppositely oriented outlines (use `united()`), and every boolean operation merges a path's overlapping subpaths, which changes the blurred edge stroked along it.
+- `calculate_shadow_for_layer_pair` (Shadow Editor preview and `auto_shadow.py`) still uses the old mask blocker (`get_shadow_blocker_path`), so auto-hidden pairs stay as they were.

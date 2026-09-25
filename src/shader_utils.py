@@ -5,48 +5,6 @@ import math
 from functools import lru_cache
 
 
-def _apply_deletion_rects(path: QPainterPath, deletion_rects: List) -> QPainterPath:
-    """Helper to subtract a list of deletion rectangles from a QPainterPath.
-    Optimized to union all deletion rects first, then subtract once.
-    """
-    if not deletion_rects or path.isEmpty():
-        return path
-
-    deletion_union = QPainterPath()
-    deletion_union.setFillRule(Qt.WindingFill)
-
-    for rect in deletion_rects:
-        rect_path = QPainterPath()
-        try:
-            if isinstance(rect, QRectF):
-                rect_path.addRect(rect)
-            elif isinstance(rect, dict) and all(k in rect for k in ("top_left", "top_right", "bottom_left", "bottom_right")):
-                tl = QPointF(*rect["top_left"])
-                tr = QPointF(*rect["top_right"])
-                br = QPointF(*rect["bottom_right"])
-                bl = QPointF(*rect["bottom_left"])
-
-                rect_path.moveTo(tl)
-                rect_path.lineTo(tr)
-                rect_path.lineTo(br)
-                rect_path.lineTo(bl)
-                rect_path.closeSubpath()
-            elif all(k in rect for k in ("x", "y", "width", "height")):
-                rect_path.addRect(QRectF(rect["x"], rect["y"], rect["width"], rect["height"]))
-        except Exception as de_err:
-            pass
-            continue
-
-        if not rect_path.isEmpty():
-            deletion_union.addPath(rect_path)
-            
-    if deletion_union.isEmpty():
-        return path
-        
-    # Subtract the union of all deletions at once
-    return path.subtracted(deletion_union)
-
-
 def _union_paths(*paths: QPainterPath) -> QPainterPath:
     """
     Build a new QPainterPath that covers the union of the supplied paths.
@@ -64,27 +22,6 @@ def _union_paths(*paths: QPainterPath) -> QPainterPath:
         return QPainterPath()
     combined.setFillRule(Qt.WindingFill)
     return QPainterPath(combined).simplified()
-
-
-def _expand_path_for_shadow_blocker(base_path: QPainterPath, extra_radius: float) -> QPainterPath:
-    """
-    Enlarge *base_path* by ``extra_radius`` on all sides so soft-edge strokes
-    (blur) remain clipped when rendering.
-
-    The routine unions the original geometry with a stroked outline whose
-    width equals twice the requested radius.  This mirrors the logic used for
-    mask blocker paths and keeps subtraction effects intact even after the
-    gradient-stroke pass.
-    """
-    if not isinstance(base_path, QPainterPath) or base_path.isEmpty() or extra_radius <= 0:
-        return QPainterPath(base_path)
-
-    stroker = QPainterPathStroker()
-    stroker.setWidth(extra_radius * 2.0)
-    stroker.setJoinStyle(Qt.RoundJoin)
-    stroker.setCapStyle(Qt.RoundCap)
-    expanded_outline = stroker.createStroke(base_path)
-    return _union_paths(base_path, expanded_outline)
 
 
 def _get_mask_visual_path(mask_strand) -> QPainterPath:
@@ -114,6 +51,139 @@ def _get_mask_visual_path(mask_strand) -> QPainterPath:
             stroke_path = QPainterPath()
 
     return _union_paths(fill_path, stroke_path)
+
+
+def _mask_footprint(mask_strand) -> QPainterPath:
+    """Everything the mask paints: its stroke and fill paths united.
+
+    Unlike _get_mask_visual_path this is a proper union. Adding the two paths
+    under the winding rule cancels them wherever they run in opposite
+    directions, which drops whole parts of some masks (a crossing where one
+    strand ends inside the other)."""
+    try:
+        fill_path = mask_strand.get_mask_path()
+        stroke_path = mask_strand.get_mask_path_stroke()
+    except Exception:
+        return QPainterPath()
+    if stroke_path.isEmpty():
+        return QPainterPath(fill_path)
+    if fill_path.isEmpty():
+        return QPainterPath(stroke_path)
+    return QPainterPath(stroke_path).united(fill_path)
+
+
+def _grown(path: QPainterPath, radius: float) -> QPainterPath:
+    """*path* grown by *radius* on every side, as a proper union (see
+    _mask_footprint). The stroker's outline overlaps itself; it is
+    simplified before the union, which otherwise drops pixels of *path* for
+    small radii."""
+    if path.isEmpty() or radius <= 0:
+        return QPainterPath(path)
+    stroker = QPainterPathStroker()
+    stroker.setWidth(radius * 2.0)
+    stroker.setJoinStyle(Qt.RoundJoin)
+    stroker.setCapStyle(Qt.RoundCap)
+    return QPainterPath(path).united(stroker.createStroke(path).simplified())
+
+
+def _frame_cache(painter):
+    """Scratch space for one paint of the canvas: mask geometry and shadow
+    paths that every strand's pass would otherwise compute again. It lives on
+    the painter, which the canvas creates anew for every paint, so nothing
+    carries over once the scene changes."""
+    if painter is None:
+        return {}
+    cache = getattr(painter, '_mask_shadow_cache', None)
+    if cache is None:
+        cache = {}
+        try:
+            painter._mask_shadow_cache = cache
+        except Exception:
+            pass
+    return cache
+
+
+def _piece_of(mask_strand, cache):
+    """_mask_footprint(), once per paint."""
+    key = ('footprint', id(mask_strand))
+    if key not in cache:
+        cache[key] = _mask_footprint(mask_strand)
+    return cache[key]
+
+
+def _erased_area(mask_strand):
+    """The parts of a mask the user erased (its deletion rectangles, read as
+    MaskedStrand.get_mask_path reads them), united."""
+    area = QPainterPath()
+    for rect in getattr(mask_strand, 'deletion_rectangles', None) or []:
+        piece = QPainterPath()
+        try:
+            if 'top_left' in rect and 'bottom_right' in rect:
+                piece.moveTo(QPointF(*rect['top_left']))
+                piece.lineTo(QPointF(*rect.get('top_right', rect['bottom_right'])))
+                piece.lineTo(QPointF(*rect['bottom_right']))
+                piece.lineTo(QPointF(*rect.get('bottom_left', rect['top_left'])))
+                piece.closeSubpath()
+            elif all(k in rect for k in ('x', 'y', 'width', 'height')):
+                piece.addRect(QRectF(rect['x'], rect['y'], rect['width'], rect['height']))
+        except Exception:
+            continue
+        if not piece.isEmpty():
+            area = piece if area.isEmpty() else area.united(piece)
+    return area
+
+
+def _zone_of(mask_strand, blur_px, cache):
+    """The mask's footprint grown by the blur radius (where its shadows
+    reach), minus the parts the user erased, where the second strand stays on
+    top; once per paint.
+
+    Growing a curved footprint is costly, so the last zone is also kept on
+    the mask and reused while its footprint, erased parts and the blur are
+    unchanged (for example while another strand is dragged). It is kept in
+    the instance's own __dict__: MaskedStrand forwards unknown attributes to
+    its strands."""
+    key = ('zone', id(mask_strand), float(blur_px))
+    if key not in cache:
+        piece = _piece_of(mask_strand, cache)
+        erased = _erased_area(mask_strand)
+        own = getattr(mask_strand, '__dict__', {})
+        memo = own.get('_mask_zone_memo')
+        if memo is not None and memo[0] == float(blur_px) and memo[1] == piece and memo[2] == erased:
+            zone = memo[3]
+        else:
+            zone = _grown(piece, blur_px)
+            if not erased.isEmpty():
+                zone = zone.subtracted(erased)
+            own['_mask_zone_memo'] = (float(blur_px), QPainterPath(piece), QPainterPath(erased), zone)
+        cache[key] = zone
+    return cache[key]
+
+
+def _may_touch(item, rect, cache=None):
+    """Cheap and conservative: can *item*'s drawn geometry overlap *rect*?
+    Qt's boolean operations leave a path untouched when the other one does
+    not overlap it, so skipping such items changes nothing."""
+    key = ('bounds', id(item))
+    bounds = cache.get(key) if cache is not None else None
+    if bounds is None:
+        try:
+            first = getattr(item, 'first_selected_strand', None)
+            second = getattr(item, 'second_selected_strand', None)
+            if hasattr(item, 'get_mask_path') and first is not None and second is not None:
+                bounds = first.boundingRect().intersected(second.boundingRect())
+                owner = first
+            else:
+                bounds = item.boundingRect()
+                owner = item
+            # Room for rounded ends, circles and the masks' widened outlines.
+            margin = getattr(owner, 'width', 0) + 2 * getattr(owner, 'stroke_width', 0) + 4
+            bounds = bounds.adjusted(-margin, -margin, margin, margin)
+        except Exception:
+            return True
+        if cache is not None:
+            cache[key] = bounds
+    return bounds.intersects(rect)
 
 
 def _subtract_visible_component_mask_coverage(
@@ -176,203 +246,52 @@ def _subtract_visible_component_mask_coverage(
     return current_shadow
 
 
-def draw_mask_strand_shadow(
-    painter,
-    first_path: QPainterPath,
-    second_path: QPainterPath,
-    first_strand_center_path: QPainterPath,
-    first_strand_width: float,
-    first_strand_stroke_width: float,
-    deletion_rects: List[QRectF] = None,
-    shadow_color: QColor = None,
-    first_strand=None,
-    num_steps: int = 3,
-    max_blur_radius: float = 29.99,
-):
-    """Draw a blurred shadow for the **intersection** between *first_path* and *second_path*.
+def draw_mask_lift_shadow(painter, mask_strand, shadow_color=None, num_steps=3, max_blur_radius=29.99):
+    """Paint the first strand's shadow on the second strand where the mask
+    lifts it.
 
-    The function no longer depends on a *MaskedStrand* instance – instead it
-    receives the fully-stroked paths of the two component strands and derives
-    everything it needs from them.  This greatly simplifies the implementation
-    and removes a large amount of canvas / layer specific logic that is not
-    required for the basic visual effect.
+    The first strand's own pass computes this shadow together with all its
+    other shadows, exactly as for a genuine crossing, but that pass runs
+    before the second strand is drawn, which would cover it. The mask re-applies
+    the same fill and soft edge on top, clipped to the part of the second
+    strand that shows (only near the mask when part of it is erased).
     """
-    # Early return if shadows are disabled (defense-in-depth check)
-    if first_strand and hasattr(first_strand, 'canvas') and first_strand.canvas:
-        if hasattr(first_strand.canvas, 'shadow_enabled') and not first_strand.canvas.shadow_enabled:
-            return
+    first = getattr(mask_strand, 'first_selected_strand', None)
+    second = getattr(mask_strand, 'second_selected_strand', None)
+    canvas = getattr(mask_strand, 'canvas', None)
+    if first is None or second is None or canvas is None:
+        return
+    if hasattr(canvas, 'shadow_enabled') and not canvas.shadow_enabled:
+        return
+    collected = draw_strand_shadow(painter, first, shadow_color, num_steps=num_steps,
+                                   max_blur_radius=max_blur_radius, collect_only=True)
+    if not collected or collected['lift_path'].isEmpty():
+        return
 
-    painter.save()
-    try:
-        # ------------------------------------------------------------------
-        # Determine the region that should receive the shadow – this is the
-        # intersection of the two supplied paths.
-        # ------------------------------------------------------------------
-        if first_path.isEmpty() or second_path.isEmpty():
-            # logging.warning("draw_mask_strand_shadow: both paths empty - nothing to draw")
-            return
+    cache = _frame_cache(painter)
+    mask_path = _piece_of(mask_strand, cache)
+    if mask_path.isEmpty():
+        return
+    visible = build_rendered_geometry(second)
+    if hasattr(canvas, 'layer_state_manager') and canvas.layer_state_manager:
+        layer_order = canvas.layer_state_manager.getOrder()
+        if second.layer_name in layer_order and mask_strand.layer_name in layer_order:
+            # Whatever is drawn after the second strand but before the mask covers it.
+            covering = _get_intermediate_layer_names(layer_order, second.layer_name, mask_strand.layer_name)
+            by_name = {getattr(item, 'layer_name', None): item for item in canvas.strands}
+            area = visible.boundingRect()
+            covering = [name for name in covering if name in by_name and _may_touch(by_name[name], area, cache)]
+            visible, _ = _subtract_named_layer_paths(visible, canvas, covering)
+    clip = QPainterPath(visible)
+    if not _whole_mask(mask_strand):
+        # Only near the mask; elsewhere the second strand stays on top.
+        clip = clip.intersected(_zone_of(mask_strand, max_blur_radius, cache))
+    if clip.isEmpty():
+        return
 
-        try:
-            # Compute intersection of component paths
-            intersection_path = QPainterPath(first_path).intersected(second_path)
-        except Exception:
-            return
+    _paint_collected_shadow(painter, collected, clip, num_steps, max_blur_radius,
+                            fill_path=collected['lift_path'])
 
-        # Apply deletion rectangles to intersection_path if provided
-        try:
-            intersection_path = _apply_deletion_rects(intersection_path, deletion_rects)
-        except Exception:
-            pass # If deletion fails, just use the base intersection
-
-        # ------------------------------------------------------------------
-        # Resolve shadow colour – mirror the logic from ``draw_strand_shadow``.
-        # Priority:
-        #   1. Explicit *shadow_color* argument supplied by caller
-        #   2. ``first_strand.shadow_color`` if available
-        #   3. Default semi-transparent black
-        # ------------------------------------------------------------------
-        if shadow_color is not None:
-            # Caller has provided an explicit colour (may be a tuple, Qt.GlobalColor, …)
-            color_to_use = QColor(shadow_color) if not isinstance(shadow_color, QColor) else QColor(shadow_color)
-        elif first_strand and hasattr(first_strand, "shadow_color") and first_strand.shadow_color:
-            color_to_use = QColor(first_strand.shadow_color)
-        else:
-            color_to_use = QColor(0, 0, 0, 150)  # ~59 % opacity
-        # Ensure we have an *independent* QColor instance so that we can safely
-        # tweak its alpha value later.
-        base_color = QColor(color_to_use)
-        base_alpha = base_color.alpha()
-
-        # ------------------------------------------------------------------
-        # Prepare painter state.
-        # ------------------------------------------------------------------
-
-    
-        # ------------------------------------------------------------------
-        # 1) Fill the solid shadow core.
-        # ------------------------------------------------------------------
-        # (Solid fill moved below – we now draw it *after* establishing the
-        # clipping region so that the fill is restricted in exactly the same
-        # way as the subsequent blur strokes.)
-
-        # ------------------------------------------------------------------
-        # 2) Add a blurred / faded edge by repeatedly stroking the path with
-        #    increasing width and decreasing alpha.
-        # ------------------------------------------------------------------
-        # We allow the blurred edge to extend anywhere the ORIGINAL component
-        # paths exist (their union) so that the blur is not clipped too early.
- 
-
-        # ------------------------------------------------------------------
-        # Restrict the blurred stroke so that it can expand inside the
-        # *receiving* strand (``second_path``) but never draws over the
-        # *casting* strand (``first_strand``).
-        #
-        # We therefore construct a clipping path that equals the second
-        # strand **minus** the first strand and apply that as the painter's
-        # clipping region.  QPainter::setClipPath replaces the previous
-        # clip region by default, so we build the final region explicitly
-        # and set it only once.
-        # ------------------------------------------------------------------
-
-        # ------------------------------------------------------------------
-        # Force a WINDING fill rule and simplify the geometry to merge any
-        # overlapping sub-paths.  This avoids small voids that could appear
-        # in the centre of complex intersections (visually manifesting as
-        # the "striped" gaps you reported).
-        # ------------------------------------------------------------------
-        intersection_path.setFillRule(Qt.WindingFill)
-        intersection_path = QPainterPath(intersection_path).simplified()
-        # ------------------------------------------------------------------
-        # Build the precise *inner-core* geometry that should receive the
-        # actual shadow.  We create a thinner stroke around the centre line
-        # of the first strand and intersect it with the full path of the
-        # second strand.  This reproduces exactly the area shown in the
-        # previously highlighted block and re-uses it for the main blur loop
-        # and the solid core fill that follows.
-        # ------------------------------------------------------------------
-        try:
-            # Do not use stroker_inner; just use the first_strand_center_path directly
-            shading_path = QPainterPath(first_strand_center_path).intersected(second_path)
-
-            # Respect deletion rectangles so the shading honours user erasures
-            shading_path = _apply_deletion_rects(shading_path, deletion_rects)
-
-            # Fallback: if anything goes wrong or the path is empty, revert to the
-            # broader intersection so something still renders.
-            if shading_path.isEmpty():
-                shading_path = intersection_path
-        except Exception as _inner_err:
-            pass
-            shading_path = intersection_path
-
-        # Follow the EXACT same pattern as draw_strand_shadow for consistent layering
-        painter.setRenderHint(QPainter.Antialiasing, True)
-        painter.setBrush(Qt.NoBrush)  # We are stroking, not filling
-        painter.setPen(Qt.NoPen)  # We are stroking, not filling
-
-        # Apply clipping so the shadow cannot appear where no underlying strand exists
-        painter.setClipPath(second_path)
-        shading_path = QPainterPath(second_path).intersected(first_path)
-        shading_path = _apply_deletion_rects(shading_path, deletion_rects)
-
-        # --- 2) Draw faded strokes (exactly like draw_strand_shadow) ---
-        for i in range(num_steps):
-            # Use EXACT same alpha calculation as draw_strand_shadow
-            progress = (float(num_steps - i) / num_steps)
-            current_alpha = base_alpha * progress * (1.0 / num_steps) * 2.0
-            current_width = max_blur_radius * (float(i + 1) / num_steps)
-
-            pen_color = QColor(base_color.red(), base_color.green(), base_color.blue(), max(0, min(255, int(current_alpha))))
-            pen = QPen(pen_color)
-            pen.setWidthF(current_width)
-            pen.setCapStyle(Qt.FlatCap)  # Keep ends squared off
-            pen.setJoinStyle(Qt.RoundJoin)
-
-            painter.setPen(pen)
-            painter.strokePath(shading_path, pen)
-
-        # Define core_color for the additional layers you added back
-        core_color = QColor(base_color)
-
-        # --- 3) Draw a final, darker "inner core" shadow ---
-        # This adds extra depth by taking a thinner version of the casting
-        # path (first_path), intersecting it with the receiving path
-        # (second_path), and filling that smaller area with the darkest shade.
-        try:
-            # Create a stroker with half the width of the first strand.
-            stroker = QPainterPathStroker()
-            stroker.setWidth(first_strand_width + first_strand_stroke_width * 2)
-            stroker.setJoinStyle(Qt.RoundJoin)
-            stroker.setCapStyle(Qt.FlatCap)
-
-            # Create the thinner stroke from the original center-line path.
-            thinner_stroke = stroker.createStroke(first_strand_center_path)
-
-            # Intersect this with the second strand's full path.
-            inner_core_path = QPainterPath(thinner_stroke).intersected(second_path)
-
-            # Also apply deletion rectangles to the inner core.
-            inner_core_path = _apply_deletion_rects(inner_core_path, deletion_rects)
-
-            if not inner_core_path.isEmpty():
-                # Use the same colour and opacity as the centre layer of the strand shadow
-                inner_core_color = QColor(core_color)
-
-                painter.save()
-                try:
-                    painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-                    painter.setPen(Qt.NoPen)
-                    painter.setBrush(QBrush(inner_core_color))
-                    painter.drawPath(inner_core_path)
-                finally:
-                    painter.restore()
-
-        except Exception as e:
-            pass
-
-    finally:
-        painter.restore()
 
 def draw_circle_shadow(painter, strand, shadow_color=None):
     """
@@ -445,7 +364,680 @@ def _subtract_named_layer_paths(source_path, canvas, layer_names):
 
     return result_path, blocker_path
 
-def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur_radius=None):
+def _approx_path_area(path: QPainterPath) -> float:
+    """Area of *path* from its fill polygons, so overlap tests can ignore the
+    hairline slivers Qt's boolean operations leave along shared edges."""
+    area = 0.0
+    for polygon in path.toFillPolygons():
+        points = [polygon.at(i) for i in range(polygon.count())]
+        twice = 0.0
+        for a, b in zip(points, points[1:] + points[:1]):
+            twice += a.x() * b.y() - b.x() * a.y()
+        area += abs(twice) / 2.0
+    return area
+
+
+def _overlap_within(path_a: QPainterPath, path_b: QPainterPath, zone: QPainterPath) -> bool:
+    """Whether two strand outlines genuinely overlap inside *zone*."""
+    if not path_a.boundingRect().intersects(path_b.boundingRect()):
+        return False
+    shared = QPainterPath(path_a).intersected(path_b)
+    if shared.isEmpty():
+        return False
+    return _approx_path_area(QPainterPath(shared).intersected(zone)) > 1.0
+
+
+def _drawn_footprint(strand) -> QPainterPath:
+    """What *strand* paints, rounded ends included. build_rendered_geometry
+    leaves out an attached strand's own start cap even though draw() paints
+    it."""
+    try:
+        footprint = strand.get_selection_path()
+        if not footprint.isEmpty():
+            return footprint
+    except Exception:
+        pass
+    return build_rendered_geometry(strand)
+
+
+def _mask_sides(mask_strand, canvas, layer_order, blur_px, lifted_pairs=frozenset(), cache=None):
+    """How a visible mask restacks the strands around it, or None.
+
+    A mask lifts its first strand F over its second strand S at their
+    crossing, but only the crossing itself is redrawn. Near the mask (the
+    ``zone``: its footprint grown by the blur radius) the picture must look
+    like a genuine crossing: the ``upper`` side (F and the strands above F
+    that cross F there) lies above the ``lower`` side (S and the strands below
+    S that S crosses there), as if F had been moved above S in the layer
+    order. Returns {'zone', 'upper', 'lower'} with sets of layer names, plus
+    ``first``/``second`` (layer names) and ``whole``: whether the mask covers
+    all of F and S's overlap (no erased parts), which makes F lie above S
+    everywhere, not only near the mask. *lifted_pairs* are the (first,
+    second) layer names of every visible mask: a strand another mask lifts
+    over S is not below S, and one F is lifted over is not above F.
+    """
+    key = ('sides', id(mask_strand), float(blur_px))
+    if cache is not None and key in cache:
+        return cache[key]
+    sides = _compute_mask_sides(mask_strand, canvas, layer_order, blur_px, lifted_pairs,
+                                {} if cache is None else cache)
+    if cache is not None:
+        cache[key] = sides
+    return sides
+
+
+def _compute_mask_sides(mask_strand, canvas, layer_order, blur_px, lifted_pairs, cache):
+    first = getattr(mask_strand, 'first_selected_strand', None)
+    second = getattr(mask_strand, 'second_selected_strand', None)
+    if (first is None or second is None or getattr(mask_strand, 'is_hidden', False)
+            or first.layer_name not in layer_order or second.layer_name not in layer_order):
+        return None
+    mask_path = _piece_of(mask_strand, cache)
+    if mask_path.isEmpty():
+        return None
+    zone = _zone_of(mask_strand, blur_px, cache)
+    zone_rect = zone.boundingRect()
+    first_index = layer_order.index(first.layer_name)
+    second_index = layer_order.index(second.layer_name)
+    first_geometry = build_rendered_geometry(first)
+    second_geometry = build_rendered_geometry(second)
+    upper = {first.layer_name}
+    lower = {second.layer_name}
+    for other in canvas.strands:
+        name = getattr(other, 'layer_name', None)
+        if (other is first or other is second or name not in layer_order
+                or hasattr(other, 'get_mask_path') or getattr(other, 'is_hidden', False)):
+            continue
+        index = layer_order.index(name)
+        if (index <= first_index and index >= second_index) or not _may_touch(other, zone_rect, cache):
+            continue
+        geometry = build_rendered_geometry(other)
+        if (index > first_index and (first.layer_name, name) not in lifted_pairs
+                and _overlap_within(geometry, first_geometry, zone)):
+            upper.add(name)
+        elif (index < second_index and (name, second.layer_name) not in lifted_pairs
+                and _overlap_within(geometry, second_geometry, zone)):
+            lower.add(name)
+    return {'zone': zone, 'zone_rect': zone_rect, 'upper': upper, 'lower': lower,
+            'first': first.layer_name, 'second': second.layer_name, 'whole': _whole_mask(mask_strand)}
+
+
+def _whole_mask(mask_strand):
+    """Whether the mask lifts its first strand over the whole of its overlap
+    with the second strand (no part erased), so that the first strand lies
+    above the second strand everywhere."""
+    return (not isinstance(mask_strand, _LoopLift)
+            and not getattr(mask_strand, 'deletion_rectangles', None))
+
+
+def _frame_masks_map(canvas, layer_order, cache):
+    """{layer name: {'masked_strand', 'components'}} for the canvas's masks,
+    plus the loop lifts they imply (see _overlying_strands): a strand that must
+    stay above a mask's first strand but is below its second strand is lifted
+    over the second strand near the mask, which for shadows behaves exactly
+    like a mask."""
+    masks_map = cache.get('masks_map')
+    if masks_map is not None:
+        return masks_map
+    masks_map = {}
+    for item in canvas.strands:
+        if item.__class__.__name__ != 'MaskedStrand':
+            continue
+        first = getattr(item, 'first_selected_strand', None)
+        second = getattr(item, 'second_selected_strand', None)
+        first_layer = getattr(first, 'layer_name', None)
+        second_layer = getattr(second, 'layer_name', None)
+        if first_layer and second_layer:
+            masks_map[getattr(item, 'layer_name', None) or '%s_%s' % (first_layer, second_layer)] = {
+                'masked_strand': item, 'components': [first_layer, second_layer]}
+    for masked_info in list(masks_map.values()):
+        mask_obj = masked_info['masked_strand']
+        if getattr(mask_obj, 'is_hidden', False):
+            continue
+        for over_strand, _region, loop in _overlying_strands(mask_obj, cache):
+            if loop is not None:
+                masks_map[loop.layer_name] = {
+                    'masked_strand': loop,
+                    'components': [over_strand.layer_name, mask_obj.second_selected_strand.layer_name],
+                }
+    cache['masks_map'] = masks_map
+    return masks_map
+
+
+def _lifted_pairs(masked_strands_map):
+    """(first, second) layer names of every visible mask."""
+    return frozenset(tuple(info['components']) for info in masked_strands_map.values()
+                     if not getattr(info['masked_strand'], 'is_hidden', False))
+
+
+def _masks_near(strand, masked_strands_map, canvas, layer_order, blur_px, cache=None):
+    """_mask_sides() of every visible mask whose zone *strand* can reach."""
+    reach = QRectF(strand.boundingRect())
+    reach.adjust(-blur_px, -blur_px, blur_px, blur_px)
+    near = []
+    lifted_pairs = _lifted_pairs(masked_strands_map)
+    for masked_info in masked_strands_map.values():
+        mask_strand = masked_info['masked_strand']
+        if getattr(mask_strand, 'is_hidden', False):
+            continue
+        sides = _mask_sides(mask_strand, canvas, layer_order, blur_px, lifted_pairs, cache)
+        if sides is not None and sides['zone_rect'].intersects(reach):
+            near.append(sides)
+    return near
+
+
+def _lifted_near_masks(strand, near_masks):
+    """Where masks put strands above *strand*, as [(area, layer names)];
+    an area of None means everywhere.
+
+    When *strand* is on a mask's lower side (see _mask_sides), its blurred
+    shadow edge must not land on the upper side near the mask, although plain
+    layer order would let it. For the mask's own second strand, the first
+    strand is above it everywhere when the mask covers their whole overlap.
+    """
+    lifted = []
+    for sides in near_masks:
+        if strand.layer_name not in sides['lower']:
+            continue
+        upper = set(sides['upper'])
+        if strand.layer_name == sides['second'] and sides['whole']:
+            lifted.append((None, {sides['first']}))
+            upper.discard(sides['first'])
+        if upper:
+            lifted.append((sides['zone'], upper))
+    return lifted
+
+
+def _sunk_near_masks(receiver_layer, near_masks):
+    """Where masks put strands below the receiver, as [(area, layer names)];
+    an area of None means everywhere.
+
+    When the receiver is on a mask's upper side (see _mask_sides), the
+    lower-side strands lie below it near the mask, so they are not between
+    it and a caster there, although plain layer order may put them there.
+    """
+    sunk = []
+    for sides in near_masks:
+        if receiver_layer not in sides['upper']:
+            continue
+        lower = set(sides['lower'])
+        if receiver_layer == sides['first'] and sides['whole']:
+            sunk.append((None, {sides['second']}))
+            lower.discard(sides['second'])
+        if lower:
+            sunk.append((sides['zone'], lower))
+    return sunk
+
+
+def _restacked_above(upper_layer, lower_layer, near_masks):
+    """Whether a mask near by puts *upper_layer* above *lower_layer*."""
+    return any(upper_layer in sides['upper'] and lower_layer in sides['lower'] for sides in near_masks)
+
+
+def _raised_near_masks(receiver_layer, caster_layer, near_masks, layer_order, canvas):
+    """Strands masks put between the receiver and the caster from below, as
+    [(area, geometry)]; an area of None means everywhere.
+
+    When the receiver is on a mask's lower side and the caster is not, the
+    upper-side strands below the receiver in the layer order lie above it near
+    the mask, so they are between it and the caster there, as at a genuine
+    crossing. The mask's first strand lies above its second strand
+    everywhere when the mask covers their whole overlap.
+    """
+    raised = []
+    if not near_masks or receiver_layer not in layer_order or caster_layer not in layer_order:
+        return raised
+    receiver_index = layer_order.index(receiver_layer)
+    caster_index = layer_order.index(caster_layer)
+    for sides in near_masks:
+        if receiver_layer not in sides['lower'] or caster_layer in sides['lower']:
+            continue
+        for name in sides['upper']:
+            index = layer_order.index(name)
+            # Below the receiver in the layer order, but still below the caster
+            # (which a mask may have lifted over the receiver).
+            if (name == caster_layer or index >= receiver_index or index >= caster_index
+                    or _restacked_above(name, caster_layer, near_masks)):
+                continue
+            everywhere = sides['whole'] and receiver_layer == sides['second'] and name == sides['first']
+            raised.append((None if everywhere else sides['zone'],
+                           build_rendered_geometry(_find_canvas_strand_by_layer_name(canvas, name))))
+    return raised
+
+
+def _lowered_near_masks(strand, near_masks, layer_order):
+    """Where masks put strands below *strand*, as [(upper layer names,
+    [(layer name, layer index, geometry, area)] of the lower-side strands
+    above it)]; an area of None means everywhere.
+
+    When *strand* is on a mask's upper side, the lower-side strands lie
+    between it and whatever it shades below them near the mask, as at a
+    genuine crossing, although plain layer order puts them above it. The
+    mask's own second strand lies below its first strand everywhere when the
+    mask covers their whole overlap.
+    """
+    lowered = []
+    if not near_masks or strand.layer_name not in layer_order:
+        return lowered
+    this_index = layer_order.index(strand.layer_name)
+    for sides in near_masks:
+        if strand.layer_name not in sides['upper']:
+            continue
+        below = []
+        for name in sides['lower']:
+            if layer_order.index(name) <= this_index:
+                continue
+            everywhere = sides['whole'] and strand.layer_name == sides['first'] and name == sides['second']
+            below.append((name, layer_order.index(name),
+                          build_rendered_geometry(_find_canvas_strand_by_layer_name(strand.canvas, name)),
+                          None if everywhere else sides['zone']))
+        if below:
+            lowered.append((sides['upper'], below))
+    return lowered
+
+
+def _mask_lift_zone(masked_strands_map, first_layer, second_layer, blur_px, cache=None):
+    """(zone, mask) when a visible mask lifts *first_layer* over
+    *second_layer*: where the first strand's shadow on the second strand
+    belongs, the mask's footprint grown by the blur radius, or None for
+    everywhere (see _whole_mask). Else None."""
+    cache = {} if cache is None else cache
+    by_pair = cache.get(('masks_by_pair', id(masked_strands_map)))
+    if by_pair is None:
+        by_pair = {}
+        for masked_info in masked_strands_map.values():
+            if not getattr(masked_info['masked_strand'], 'is_hidden', False):
+                by_pair.setdefault(tuple(masked_info['components']), masked_info['masked_strand'])
+        cache[('masks_by_pair', id(masked_strands_map))] = by_pair
+    mask_strand = by_pair.get((first_layer, second_layer))
+    if mask_strand is None or _piece_of(mask_strand, cache).isEmpty():
+        return None
+    return (None if _whole_mask(mask_strand) else _zone_of(mask_strand, blur_px, cache)), mask_strand
+
+
+def _subtract_intermediates(region, canvas, intermediate_layers, exemptions, cache=None):
+    """Remove the strands between caster and receiver from a shadow area.
+
+    Returns (outline, fill_area). *exemptions* are [(area, layer names)] of
+    strands that lie between the two in the layer order but not near a mask
+    (area None: nowhere): above the caster (see _lifted_near_masks) or below
+    the receiver (see _sunk_near_masks). There they are not cut out of the
+    outline: at a genuine crossing the soft edge is stroked along an area that
+    runs on past them. They are still kept out of the filled area. With no
+    mask involved the two paths are the same and match the plain subtraction
+    exactly (fill_area is then None).
+    """
+    exempt = {}
+    if exemptions:
+        between = set(intermediate_layers)
+        for zone, names in exemptions:
+            for name in names & between:
+                exempt.setdefault(name, []).append(zone)
+    if not exempt:
+        region, _ = _subtract_named_layer_paths(region, canvas, intermediate_layers)
+        return region, None
+
+    fill_cover = QPainterPath()
+    region_rect = region.boundingRect()
+    for layer_name in intermediate_layers:
+        layer_strand = _find_canvas_strand_by_layer_name(canvas, layer_name)
+        if (layer_strand is None or getattr(layer_strand, 'is_hidden', False)
+                or not _may_touch(layer_strand, region_rect, cache)):
+            continue
+        if hasattr(layer_strand, 'get_mask_path'):
+            geometry = get_proper_masked_strand_path(layer_strand)
+        else:
+            geometry = build_rendered_geometry(layer_strand)
+        if geometry.isEmpty():
+            continue
+        for zone in exempt.get(layer_name, ()):
+            if zone is None:
+                geometry = QPainterPath()
+                covered = QPainterPath(_drawn_footprint(layer_strand))
+            else:
+                geometry = QPainterPath(geometry).subtracted(zone)
+                covered = QPainterPath(_drawn_footprint(layer_strand)).intersected(zone)
+            fill_cover = covered if fill_cover.isEmpty() else fill_cover.united(covered)
+            if geometry.isEmpty():
+                break
+        if not geometry.isEmpty():
+            region = QPainterPath(region).subtracted(geometry)
+    fill_area = QPainterPath(region)
+    if not fill_cover.isEmpty():
+        fill_area = QPainterPath(fill_area).subtracted(fill_cover)
+    return region, fill_area
+
+
+class _LoopLift:
+    """A strand lifted over a mask's second strand near the mask, handled
+    like a mask by the shadow code (first strand over second strand)."""
+
+    def __init__(self, over_strand, under_strand, region, mask_name):
+        self.first_selected_strand = over_strand
+        self.second_selected_strand = under_strand
+        self.layer_name = '%s_%s~%s' % (over_strand.layer_name, under_strand.layer_name, mask_name)
+        self.is_hidden = False
+        self._region = QPainterPath(region)
+
+    def get_mask_path(self):
+        return QPainterPath(self._region)
+
+    def get_mask_path_stroke(self):
+        return QPainterPath()
+
+    def _intersection_shadow_visible(self):
+        return True
+
+
+def _overlying_strands(mask_strand, cache=None):
+    """Strands the mask's lifted piece must stay under: [(strand, region, loop)].
+
+    The mask lifts its first strand F over its second strand S, but it is drawn
+    as one layer, above everything below it. A strand X drawn before the mask
+    that is above F in the layer order and crosses the mask's area would be
+    painted over, although only F and S swap places. *region* is where X is
+    redrawn on top of the piece. When X is also below S in the layer order,
+    X > F > S cannot hold in one layer order (a loop): X is then lifted over S
+    across their whole connected overlap there, so no seam is left where X
+    would dive under S, and *loop* is that lift (a _LoopLift); otherwise None.
+    """
+    canvas = getattr(mask_strand, 'canvas', None)
+    first = getattr(mask_strand, 'first_selected_strand', None)
+    second = getattr(mask_strand, 'second_selected_strand', None)
+    manager = getattr(canvas, 'layer_state_manager', None) if canvas else None
+    if first is None or second is None or manager is None or getattr(mask_strand, 'is_hidden', False):
+        return []
+    layer_order = manager.getOrder()
+    names = (first.layer_name, second.layer_name, mask_strand.layer_name)
+    if any(name not in layer_order for name in names):
+        return []
+    key = ('overlying', id(mask_strand))
+    if cache is not None and key in cache:
+        return cache[key]
+
+    result = []
+    piece = _piece_of(mask_strand, {} if cache is None else cache)
+    first_index = layer_order.index(first.layer_name)
+    second_index = layer_order.index(second.layer_name)
+    mask_index = layer_order.index(mask_strand.layer_name)
+    if not piece.isEmpty():
+        piece_rect = piece.boundingRect()
+        second_footprint = None
+        for over in canvas.strands:
+            name = getattr(over, 'layer_name', None)
+            if (over is first or over is second or name not in layer_order
+                    or hasattr(over, 'get_mask_path') or getattr(over, 'is_hidden', False)):
+                continue
+            index = layer_order.index(name)
+            if index <= first_index or index >= mask_index:
+                continue
+            if not over.boundingRect().intersects(piece_rect):
+                continue
+            over_footprint = _drawn_footprint(over)
+            crossing = QPainterPath(over_footprint).intersected(piece)
+            if _approx_path_area(crossing) <= 1.0:
+                continue
+            region = QPainterPath(crossing)
+            loop = None
+            if index < second_index:
+                if second_footprint is None:
+                    second_footprint = _drawn_footprint(second)
+                overlap = QPainterPath(over_footprint).intersected(second_footprint)
+                joined = QPainterPath()
+                for polygon in overlap.toFillPolygons():
+                    component = QPainterPath()
+                    component.addPolygon(polygon)
+                    component.closeSubpath()
+                    if _approx_path_area(QPainterPath(component).intersected(crossing)) > 1.0:
+                        # united(), not addPath(): polygons can run either way round,
+                        # and opposite windings would cancel where they overlap.
+                        joined = component if joined.isEmpty() else joined.united(component)
+                if not joined.isEmpty():
+                    region = region.united(joined)
+                    loop = _LoopLift(over, second, joined, mask_strand.layer_name)
+            result.append((over, region, loop))
+    if cache is not None:
+        cache[key] = result
+    return result
+
+
+def _split_subpaths(path):
+    """[(bounding rect, subpath)] of *path*, curves kept as they are."""
+    pieces = []
+    current = None
+    index, count = 0, path.elementCount()
+    while index < count:
+        element = path.elementAt(index)
+        if element.type == QPainterPath.MoveToElement:
+            if current is not None:
+                pieces.append(current)
+            current = QPainterPath()
+            current.moveTo(element.x, element.y)
+            index += 1
+        elif element.type == QPainterPath.LineToElement:
+            current.lineTo(element.x, element.y)
+            index += 1
+        elif element.type == QPainterPath.CurveToElement and index + 2 < count:
+            control, end = path.elementAt(index + 1), path.elementAt(index + 2)
+            current.cubicTo(element.x, element.y, control.x, control.y, end.x, end.y)
+            index += 3
+        else:
+            index += 1
+    if current is not None:
+        pieces.append(current)
+    return [(piece.boundingRect(), piece) for piece in pieces]
+
+
+def _stroke_source_near(collected, rect, reach):
+    """The parts of a collected soft-edge outline whose strokes can reach
+    *rect*: each subpath is stroked on its own, so the rest cannot change a
+    pixel there. A mask re-applies a whole strand's shadow for one small
+    area, and stroking everything again would cost as much as the pass."""
+    pieces = collected.get('_subpaths')
+    if pieces is None:
+        pieces = collected['_subpaths'] = _split_subpaths(collected['stroke_path'])
+    area = QRectF(rect).adjusted(-reach, -reach, reach, reach)
+    near = QPainterPath()
+    near.setFillRule(collected['stroke_path'].fillRule())
+    for bounds, piece in pieces:
+        if bounds.intersects(area) or (bounds.isEmpty() and area.contains(bounds.topLeft())):
+            near.addPath(piece)
+    return near
+
+
+def _paint_collected_shadow(painter, collected, clip, num_steps, max_blur_radius, fill_path=None):
+    """Paint a shadow computed with draw_strand_shadow(collect_only=True):
+    the fill, then the same faded edge, clipped to *clip*."""
+    if clip.isEmpty():
+        return
+    color = collected['color']
+    stroke_source = _stroke_source_near(collected, clip.boundingRect(), max_blur_radius / 2.0 + 2.0)
+    painter.save()
+    try:
+        painter.setClipPath(clip)
+        painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+        if fill_path is not None and not fill_path.isEmpty():
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QBrush(color))
+            painter.drawPath(fill_path)
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setBrush(Qt.NoBrush)
+        base_alpha = color.alpha()
+        for i in range(num_steps):
+            progress = (float(num_steps - i) / num_steps)
+            current_alpha = base_alpha * progress * (1.0 / num_steps) * 2.0
+            current_width = max_blur_radius * (float(i + 1) / num_steps)
+            pen_color = QColor(color.red(), color.green(), color.blue(), max(0, min(255, int(current_alpha))))
+            pen = QPen(pen_color)
+            pen.setWidthF(current_width)
+            pen.setCapStyle(Qt.FlatCap)
+            pen.setJoinStyle(Qt.RoundJoin)
+            painter.setPen(pen)
+            painter.strokePath(stroke_source, pen)
+    finally:
+        painter.restore()
+
+
+def _shading_the_piece(mask_strand, overlying, blur_px, cache):
+    """Strands drawn between the mask's first strand and the mask, in drawing
+    order, that stay above the lifted piece: the overlying strands and any
+    other strand above the first strand whose shadow can reach the piece. At a
+    genuine crossing their shadows fall on the first strand there."""
+    canvas = mask_strand.canvas
+    layer_order = canvas.layer_state_manager.getOrder()
+    first = mask_strand.first_selected_strand
+    if first.layer_name not in layer_order or mask_strand.layer_name not in layer_order:
+        return list(overlying)
+    lifted_pairs = _lifted_pairs(_frame_masks_map(canvas, layer_order, cache))
+    sides = _mask_sides(mask_strand, canvas, layer_order, blur_px, lifted_pairs, cache)
+    piece_rect = _piece_of(mask_strand, cache).boundingRect()
+    if sides is None or piece_rect.isEmpty():
+        return []
+    first_index = layer_order.index(first.layer_name)
+    mask_index = layer_order.index(mask_strand.layer_name)
+    by_strand = {id(over): (over, region, loop) for over, region, loop in overlying}
+    shading = []
+    for other in canvas.strands:
+        name = getattr(other, 'layer_name', None)
+        if id(other) in by_strand:
+            shading.append(by_strand[id(other)])
+            continue
+        if (name not in layer_order or hasattr(other, 'get_mask_path') or getattr(other, 'is_hidden', False)
+                or name in sides['lower'] or not first_index < layer_order.index(name) < mask_index):
+            continue
+        reach = QRectF(other.boundingRect()).adjusted(-blur_px, -blur_px, blur_px, blur_px)
+        if reach.intersects(piece_rect):
+            shading.append((other, None, None))
+    return shading
+
+
+def draw_mask_overlying(painter, mask_strand, shadow_color=None, num_steps=3, max_blur_radius=29.99):
+    """After the mask's piece is drawn: put back the strands that stay above
+    it (see _overlying_strands), and the shadows that strands above the first
+    strand cast on the piece (and, for a loop lift, on the second strand)."""
+    canvas = mask_strand.canvas
+    cache = _frame_cache(painter)
+    shadows_on = not (hasattr(canvas, 'shadow_enabled') and not canvas.shadow_enabled)
+    overlying = _overlying_strands(mask_strand, cache)
+    shading = _shading_the_piece(mask_strand, overlying, max_blur_radius, cache) if shadows_on else overlying
+    if not shading:
+        return
+    piece = _piece_of(mask_strand, cache)
+    second = mask_strand.second_selected_strand
+    # Everything painted over since the strands below were drawn: the piece,
+    # then each redrawn strand (bottom to top). A strand's shadows must be put
+    # back there, on the piece and on the strands redrawn under it.
+    repainted = QPainterPath(piece)
+    for over, region, loop in shading:
+        if shadows_on and not getattr(over, 'hide_shadow', False):
+            collected = draw_strand_shadow(painter, over, shadow_color, num_steps=num_steps,
+                                           max_blur_radius=max_blur_radius, collect_only=True)
+            if collected:
+                targets = QPainterPath(repainted)
+                if loop is not None:
+                    zone = _zone_of(loop, max_blur_radius, cache)
+                    under = QPainterPath(build_rendered_geometry(second)).intersected(zone)
+                    targets = targets.united(under)
+                fill_path = QPainterPath(collected['fill_path'])
+                if loop is not None:
+                    fill_path.addPath(collected['lift_path'])
+                _paint_collected_shadow(painter, collected, targets, num_steps, max_blur_radius,
+                                        fill_path=fill_path)
+        if region is None:
+            continue
+        replaced = _redraw_within(painter, over, _grown(region, 2.0))
+        if not replaced.isEmpty():
+            repainted = repainted.united(replaced)
+
+
+def _redraw_within(painter, strand, region):
+    """Draw *strand*'s body again, but only inside *region*, and return
+    the (pixel-aligned) area that was replaced.
+
+    The strand is drawn into a transparent layer first and the layer is
+    composited through a pixel-aligned region. Clipping the strand's own
+    drawing with a path would give the region's edge partial coverage, and
+    the strand paints its outline and fill as two layers, so the edge would
+    show as a faint dark line even where the redraw matches what is there.
+    """
+    from PyQt5.QtGui import QImage, QRegion
+    device = painter.device()
+    # The canvas paints into a supersampled buffer whose device pixel ratio
+    # does the scaling; the layer must match it or it renders coarser.
+    ratio = device.devicePixelRatioF() if hasattr(device, 'devicePixelRatioF') else 1.0
+    transform = painter.transform()
+    device_region = transform.map(region)
+    bounds = device_region.boundingRect().toAlignedRect().adjusted(-2, -2, 2, 2)
+    bounds = bounds.intersected(QRectF(0, 0, device.width() / ratio, device.height() / ratio).toAlignedRect())
+    if bounds.isEmpty():
+        return QPainterPath()
+    layer = QImage(int(round(bounds.width() * ratio)), int(round(bounds.height() * ratio)),
+                   QImage.Format_ARGB32_Premultiplied)
+    layer.setDevicePixelRatio(ratio)
+    layer.fill(Qt.transparent)
+    layer_painter = QPainter(layer)
+    had_flag = hasattr(strand, 'hide_shadow')
+    saved_flag = getattr(strand, 'hide_shadow', False)
+    try:
+        layer_painter.setRenderHints(painter.renderHints())
+        layer_painter.setTransform(transform * QTransform.fromTranslate(-bounds.x(), -bounds.y()))
+        strand.hide_shadow = True
+        strand.draw(layer_painter, skip_painter_setup=True)
+    finally:
+        layer_painter.end()
+        if had_flag:
+            strand.hide_shadow = saved_flag
+        else:
+            del strand.hide_shadow
+    clip = QRegion()
+    for polygon in device_region.toFillPolygons():
+        clip = clip.united(QRegion(polygon.toPolygon(), Qt.WindingFill))
+    painter.save()
+    try:
+        painter.resetTransform()
+        painter.setClipRegion(clip)
+        painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+        painter.drawImage(bounds.topLeft(), layer)
+    finally:
+        painter.restore()
+    # The pixels actually replaced, in the painter's coordinates, so shadows
+    # put back over them can be clipped to exactly the same pixels.
+    replaced = QPainterPath()
+    replaced.addRegion(clip)
+    inverse, invertible = transform.inverted()
+    return inverse.map(replaced) if invertible else QPainterPath(region)
+
+
+def _clip_off_lifted_strands(receiver_path, canvas, lifted_near_masks, layers_between, cache=None):
+    """The receiver's clip for the blurred edge, minus the lifted strands
+    drawn between the receiver and the caster (see _lifted_near_masks)."""
+    clip = QPainterPath(receiver_path)
+    if not lifted_near_masks or not layers_between:
+        return clip
+    between = set(layers_between)
+    keep_off = QPainterPath()
+    clip_rect = clip.boundingRect()
+    for zone, upper in lifted_near_masks:
+        for name in upper & between:
+            lifted_strand = _find_canvas_strand_by_layer_name(canvas, name)
+            if lifted_strand is None or not _may_touch(lifted_strand, clip_rect, cache):
+                continue
+            piece = QPainterPath(_drawn_footprint(lifted_strand))
+            if zone is not None:
+                piece = piece.intersected(zone)
+            if not piece.isEmpty():
+                keep_off = piece if keep_off.isEmpty() else keep_off.united(piece)
+    if keep_off.isEmpty():
+        return clip
+    clip = QPainterPath(clip).subtracted(keep_off)
+    # Boolean results come back odd-even; the other receivers are added to
+    # the same clip afterwards and overlaps must not cancel out.
+    clip.setFillRule(Qt.WindingFill)
+    return clip
+
+
+def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur_radius=None,
+                       collect_only=False):
     """
     Draw shadow for a strand that overlaps with other strands.
     This function should be called before drawing the strand itself.
@@ -454,6 +1046,11 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         painter: The QPainter to draw with
         strand: The strand to draw shadow for
         shadow_color: Custom shadow color or None to use strand's shadow_color
+        collect_only: Paint nothing and return the computed paths instead
+            (see draw_mask_lift_shadow): a dict with the stroked outline
+            ``stroke_path``, the shadow on mask partners ``lift_path``, the
+            other filled areas ``fill_path`` and the ``color``, or None when
+            there is no shadow.
     """
     # Check if the strand is hidden - hidden strands should not cast shadows
     if hasattr(strand, 'is_hidden') and strand.is_hidden:
@@ -464,6 +1061,16 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
 
     # Per-layer "Hide Shadow" option - the strand casts no shadow at all
     if getattr(strand, 'hide_shadow', False):
+        return
+
+    # A mask draws a piece of its first strand over its second strand. All the
+    # shadows around that piece are the first strand's own (its pass computes
+    # them as at a genuine crossing, and the mask re-applies the part on the
+    # second strand, see draw_mask_lift_shadow). As a caster of its own the
+    # mask only contributed the slivers where its fill overhangs the second
+    # strand's outline, whose blurred edges landed on whatever was drawn in
+    # between (a strand's rounded end, a third strand crossing nearby).
+    if hasattr(strand, 'get_mask_path'):
         return
     
     # Auto-calculate blur radius based on strand thickness if not provided
@@ -494,6 +1101,13 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     # Remove the cap on opacity to respect user's chosen alpha value
     # if color_to_use.alpha() > 150:
     #     color_to_use.setAlpha(150)
+
+    # A mask re-applies this strand's shadow paths later in the same paint (see
+    # draw_mask_lift_shadow and draw_mask_overlying); compute them only once.
+    cache = _frame_cache(painter)
+    collected_key = ('collected', id(strand), num_steps, float(max_blur_radius), color_to_use.rgba())
+    if collect_only and collected_key in cache:
+        return cache[collected_key]
     
     # Reduced high-frequency logging for performance during moves
     # logging.info(f"Drawing shadow for strand {strand.layer_name} with color {color_to_use.name()} alpha={color_to_use.alpha()}")
@@ -568,6 +1182,15 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     # Instead of combining them with united() which can cause issues with multiple overlaps,
     # we'll keep them separate and handle them properly
     individual_shadow_paths = []
+    # The outlines the soft edge is stroked along. Same as the filled areas,
+    # except near a mask where lifted strands must not cut them (see
+    # _subtract_intermediates).
+    individual_stroke_paths = []
+    # Shadow on the second strand of a mask this strand is the first strand of,
+    # near the mask: stroked together with everything else (so the soft edges
+    # meet exactly as at a genuine crossing), but painted by the mask on top of
+    # the second strand instead of here, underneath it.
+    lift_shadow_paths = []
     combined_shadow_path = QPainterPath()
     has_shadow_content = False
     all_shadow_paths = []
@@ -589,23 +1212,13 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         # logging.info(f"Current connections: {connections}")
         
         # Track masked strands and their components for special handling
-        masked_strands_map = {}
-        
-        # First pass: identify all masked strands and their components
-        for s in canvas.strands:
-            if hasattr(s, '__class__') and s.__class__.__name__ == 'MaskedStrand':
-                if hasattr(s, 'first_selected_strand') and hasattr(s, 'second_selected_strand'):
-                    # Store the masked strand and its components
-                    first_layer = s.first_selected_strand.layer_name if hasattr(s.first_selected_strand, 'layer_name') else None
-                    second_layer = s.second_selected_strand.layer_name if hasattr(s.second_selected_strand, 'layer_name') else None
-                    
-                    if first_layer and second_layer:
-                        masked_name = s.layer_name if hasattr(s, 'layer_name') else f"{first_layer}_{second_layer}"
-                        masked_strands_map[masked_name] = {
-                            'masked_strand': s,
-                            'components': [first_layer, second_layer]
-                        }
-                        pass
+        # (with the loop lifts they imply, see _frame_masks_map)
+        masked_strands_map = _frame_masks_map(canvas, layer_order, cache)
+        near_masks = _masks_near(strand, masked_strands_map, canvas, layer_order, max_blur_radius, cache) \
+            if this_layer in layer_order else []
+        lifted_near_masks = _lifted_near_masks(strand, near_masks)
+        lowered_near_masks = _lowered_near_masks(strand, near_masks, layer_order)
+
         # logging.info(f"Checking shadow for : {strand.layer_name}")
         # Check against all other strands
         for other_strand in canvas.strands:
@@ -642,9 +1255,18 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                 self_index = layer_order.index(this_layer)
                 other_index = layer_order.index(other_layer)
                 should_be_above = self_index > other_index
+                # Where a visible mask lifts this strand over the other one, cast onto it
+                # near the mask even though it is higher in the layer order. A whole mask
+                # whose first strand is already above its second changes nothing, and the
+                # layer order casts; with erased parts it still bounds where that is so
+                # (another mask may lift the second strand over the first elsewhere).
+                mask_lift = _mask_lift_zone(masked_strands_map, this_layer, other_layer, max_blur_radius, cache)
+                lift = mask_lift
+                if mask_lift is not None and should_be_above and mask_lift[0] is None:
+                    lift = None
             
                 # Only calculate shadow if this strand should be above the other
-                if should_be_above:
+                if should_be_above or lift is not None:
                     
                     # Check if both strands are components of the same VISIBLE masked strand
                     part_of_same_visible_mask = False # Renamed for clarity
@@ -660,7 +1282,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                 part_of_same_visible_mask = True
                                 break  # Found a visible mask containing both components, no need to check others
 
-                    if part_of_same_visible_mask:
+                    if part_of_same_visible_mask and mask_lift is None:
                         continue # Skip shadow calculation for this pair
                         
                     # Quick reject using bounding rectangles
@@ -744,6 +1366,10 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                             circle_shadow_path = build_shadow_circle_geometry(strand, max_blur_radius+2)
                             intersection.addPath(circle_shadow_path)
                         intersection = QPainterPath(intersection).intersected(other_stroke_path)
+                        if lift is not None and lift[0] is not None and not lift[0].contains(intersection):
+                            # Only cut when needed: every boolean operation merges the
+                            # region's overlapping pieces, and the soft edge follows them.
+                            intersection = QPainterPath(intersection).intersected(lift[0])
                         # logging.info(f"Intersection path for {this_layer} onto {other_layer}: bounds={intersection.boundingRect()}, elements={intersection.elementCount()}")
                         
                         # Skip shadow if there's no actual intersection between the paths
@@ -754,7 +1380,11 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                         # --- CHECK SHADOW OVERRIDE ---
                         # Check if there's a shadow override for this specific shadow relationship
                         shadow_override = None
-                        if hasattr(strand.canvas, 'layer_state_manager'):
+                        if lift is not None:
+                            # Keyed like the mask's own shading row in the shadow editor.
+                            if hasattr(lift[1], '_intersection_shadow_visible') and not lift[1]._intersection_shadow_visible():
+                                continue
+                        elif hasattr(strand.canvas, 'layer_state_manager'):
                             shadow_override = strand.canvas.layer_state_manager.get_shadow_override(this_layer, other_layer)
                             if not strand.canvas.layer_state_manager.get_shadow_visibility(this_layer, other_layer):
                                 continue
@@ -773,189 +1403,52 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                                 subtracted_layers,
                             )
 
-                        width_masked_strand = max_blur_radius
-                        # --- NEW MASK SUBTRACTION LOGIC ---
-                        # Check if any VISIBLE mask is layered ABOVE this_layer.
-                        # If so, subtract the mask's area from the calculated intersection BEFORE adding it
-                        # to the combined shadow path for this specific underlying strand.
-                        # This ensures the mask blocks shadow *only* where it covers the specific intersection.
-
-                        # Create a temporary path for the current intersection to modify
+                        # Masks no longer cut a "blocker" (the mask grown by half the blur)
+                        # out of shadows cast from below them: anything under an opaque mask
+                        # is painted over by the mask anyway, and the grown ring notched the
+                        # shadows of strands the mask does not cover. The blurred edges that
+                        # the blocker used to hide are kept off the lifted strands by the
+                        # clip below instead.
                         current_intersection_shadow = QPainterPath(intersection)
-
-                        # Skip mask blocking if allow_full_shadow is enabled
-                        if not current_intersection_shadow.isEmpty() and not allow_full_shadow: # Check if there's any shadow intersection to modify
-                            for mask_name_sub, mask_info_sub in masked_strands_map.items():
-                                mask_strand_sub = mask_info_sub['masked_strand']
-                                mask_layer_sub = mask_name_sub # Assuming mask_name is the layer name
-
-                                # Check if mask is visible and in layer order
-                                # Use getattr for backward compatibility with masks that don't have is_hidden
-                                is_mask_hidden = getattr(mask_strand_sub, 'is_hidden', False)
-                                if (not is_mask_hidden and mask_layer_sub in layer_order):
-
-                                    mask_index_sub = layer_order.index(mask_layer_sub)
-
-                                    # Skip if we're casting onto this mask itself (avoid self-blocking)
-                                    if mask_layer_sub == other_layer:
-                                        continue
-
-                                    # CRITICAL: Only apply mask blocking if mask is ABOVE the casting strand
-                                    # A mask can only block shadows from strands below it in the layer order
-                                    if mask_index_sub <= self_index:
-                                        # Mask is at or below the casting strand - cannot visually block
-                                        continue
-
-                                    # --------------------------------------------------
-                                    # Fast-path: use (and cache) the mask's pre-computed
-                                    # shadow-blocking geometry.  If we can subtract the
-                                    # blocker right away we can skip all of the legacy
-                                    # QPainterPath maths below.
-                                    # --------------------------------------------------
-                                    fast_blocker = get_shadow_blocker_path(mask_strand_sub, max_blur_radius)
-
-                                    # Save the original shadow intersection before any blocking
-                                    original_intersection_shadow = QPainterPath(current_intersection_shadow)
-
-                                    # Apply shadow deletion rectangles if they exist
-                                    # Subtract the blocker from the shadow
-                                    if not fast_blocker.isEmpty():
-                                        current_intersection_shadow = QPainterPath(current_intersection_shadow).subtracted(fast_blocker)
-                                        # Skip the legacy path calculation below
-                                        continue
-
-                                    if False:  # Old code disabled
-                                        current_intersection_shadow = QPainterPath(current_intersection_shadow).subtracted(fast_blocker)
-                                        # Nothing left to do for this mask in the current
-                                        # intersection – jump to the next mask.
-                                        continue
-                                    
-                                    try:
-                                        # Early check: First verify if the mask even intersects with the underlying layer
-                                        # Get the mask's actual path to check intersection
-                                        if hasattr(mask_strand_sub, 'get_mask_path'):
-                                            mask_actual_path = mask_strand_sub.get_mask_path()
-                                            if mask_actual_path.isEmpty() or not mask_actual_path.intersects(other_stroke_path):
-                                                pass
-                                                continue
-                                        
-                                        # IMPROVED: Use the mask's actual rendered path (which already respects deletions)
-                                        # and extend it by the shadow blur radius for accurate shadow blocking.
-                                        # This approach is simpler and more accurate than manually calculating intersections.
-                                        subtraction_path = QPainterPath()
-                                        
-                                        # Get the mask's actual path that already includes all deletions
-                                        if hasattr(mask_strand_sub, 'get_mask_path'):
-                                            try:
-                                                # Get the base mask path which already respects deletion rectangles
-                                                base_mask_path = mask_strand_sub.get_mask_path()
-                                                
-                                                if not base_mask_path.isEmpty():
-                                                    # Extend the mask path by the shadow blur radius to create
-                                                    # the shadow blocking area. This simulates how the shadow
-                                                    # would be blocked by the mask's blur effect.
-                                                    stroker = QPainterPathStroker()
-                                                    # Extend by blur radius to match shadow rendering
-                                                    stroker.setWidth(max_blur_radius)
-                                                    stroker.setJoinStyle(Qt.MiterJoin)  # Use miter joins for sharper blocker edges
-                                                    stroker.setCapStyle(Qt.FlatCap)    # Use flat caps for straight blocker ends
-                                                    
-                                                    # Create the extended path for shadow blocking
-                                                    extended_mask = stroker.createStroke(base_mask_path)
-
-                                                    # Unite the original mask with its extended border to create
-                                                    # the complete shadow blocking area
-                                                    subtraction_path = QPainterPath(base_mask_path)
-                                                    subtraction_path.addPath(extended_mask)
-                                                    
-                                                    pass
-                                                else:
-                                                    pass
-                                                    
-                                            except Exception as mask_path_err:
-                                                pass
-                                                # Fallback to original approach if mask path fails
-                                                subtraction_path = QPainterPath()
-                                        else:
-                                            # Fallback: if no get_mask_path method, use the original intersection approach
-                                            # but without separate deletion rectangle handling since they should already be in the mask
-                                            if hasattr(mask_strand_sub, 'first_selected_strand') and mask_strand_sub.first_selected_strand and \
-                                               hasattr(mask_strand_sub, 'second_selected_strand') and mask_strand_sub.second_selected_strand:
-
-                                                s1 = mask_strand_sub.first_selected_strand
-                                                s2 = mask_strand_sub.second_selected_strand
-
-                                                # Calculate base component paths
-                                                stroker1 = QPainterPathStroker()
-                                                stroker1.setWidth(s1.width + s1.stroke_width * 2)
-                                                stroker1.setJoinStyle(Qt.MiterJoin)
-                                                stroker1.setCapStyle(Qt.FlatCap)
-                                                path1 = stroker1.createStroke(s1.get_path())
-
-                                                stroker2 = QPainterPathStroker()
-                                                stroker2.setWidth(s2.width + s2.stroke_width * 2)
-                                                stroker2.setJoinStyle(Qt.MiterJoin)
-                                                stroker2.setCapStyle(Qt.FlatCap)
-                                                path2 = stroker2.createStroke(s2.get_path())
-
-                                                # Get intersection and extend by blur radius
-                                                base_intersection = QPainterPath(path1).intersected(path2)
-                                                if not base_intersection.isEmpty():
-                                                    stroker = QPainterPathStroker()
-                                                    stroker.setWidth(max_blur_radius * 2)
-                                                    stroker.setJoinStyle(Qt.MiterJoin)
-                                                    stroker.setCapStyle(Qt.FlatCap)
-                                                    extended_intersection = stroker.createStroke(base_intersection)
-                                                    subtraction_path = QPainterPath(base_intersection)
-                                                    subtraction_path.addPath(extended_intersection)
-                                                    
-                                                pass
-
-                                        if not subtraction_path.isEmpty():
-                                            # Check if the mask actually intersects with the underlying layer Y
-                                            # Only subtract if there's an actual intersection
-                                            mask_intersects_underlying = subtraction_path.intersects(other_stroke_path)
-                                            
-                                            if mask_intersects_underlying:
-                                                original_rect_intersect = current_intersection_shadow.boundingRect()
-                                                current_intersection_shadow = QPainterPath(current_intersection_shadow).subtracted(subtraction_path) # Apply to current intersection
-                                                new_rect_intersect = current_intersection_shadow.boundingRect()
-
-                                                original_area_intersect = original_rect_intersect.width() * original_rect_intersect.height()
-                                                new_area_intersect = new_rect_intersect.width() * new_rect_intersect.height()
-
-                                                if abs(original_area_intersect - new_area_intersect) > 1e-6 or \
-                                                   (original_area_intersect > 1e-6 and current_intersection_shadow.isEmpty()):
-                                                    pass
-                                            else:
-                                                pass
-                                            # (duplicate else branch removed)
-
-
-                                    except Exception as e:
-                                        # logging.error(f"Error calculating or subtracting overlying mask '{mask_layer_sub}' from shadow intersection: {e}")
-                                        pass
-
-                            current_intersection_shadow = _subtract_visible_component_mask_coverage(
-                                current_intersection_shadow,
-                                masked_strands_map,
-                                layer_order,
-                                other_layer,
-                                other_stroke_path,
-                                max_blur_radius,
-                            )
-                        # --- END MASK SUBTRACTION FOR THIS INTERSECTION ---
 
                         # --- SUBTRACT INTERMEDIATE STRANDS ---
                         # Any strands between the casting and receiving strands should block the shadow
+                        current_fill_shadow = None
                         if not allow_full_shadow and not current_intersection_shadow.isEmpty():
-                            intermediate_layers = _get_intermediate_layer_names(layer_order, this_layer, other_layer)
-                            current_intersection_shadow, _ = _subtract_named_layer_paths(
+                            # Where a mask lifts this strand over the other one, nothing lies
+                            # between them: the strands drawn in between are below the other
+                            # one there, or above this one (and put back by the mask).
+                            intermediate_layers = [] if lift is not None else \
+                                _get_intermediate_layer_names(layer_order, this_layer, other_layer)
+                            current_intersection_shadow, current_fill_shadow = _subtract_intermediates(
                                 current_intersection_shadow,
                                 canvas,
                                 intermediate_layers,
+                                lifted_near_masks + _sunk_near_masks(other_layer, near_masks),
+                                cache,
                             )
                         # --- END INTERMEDIATE STRAND SUBTRACTION ---
+                        if not current_intersection_shadow.isEmpty():
+                            # Near a mask that puts this strand above others, those others
+                            # lie between it and the strands below them, as at a genuine crossing.
+                            cuts = []
+                            for upper, below in lowered_near_masks:
+                                if other_layer in upper:
+                                    continue
+                                for below_name, below_index, below_geometry, area in below:
+                                    # Unless another mask puts the receiver above it.
+                                    if other_index < below_index and not _restacked_above(
+                                            other_layer, below_name, near_masks):
+                                        cuts.append((area, below_geometry))
+                            # Likewise strands a mask lifts above the receiver.
+                            cuts += _raised_near_masks(other_layer, this_layer, near_masks, layer_order, canvas)
+                            for area, geometry in cuts:
+                                cut = QPainterPath(geometry)
+                                if area is not None:
+                                    cut = cut.intersected(area)
+                                current_intersection_shadow = QPainterPath(current_intersection_shadow).subtracted(cut)
+                                if current_fill_shadow is not None:
+                                    current_fill_shadow = QPainterPath(current_fill_shadow).subtracted(cut)
 
                         # Apply side line exclusion for both casting and receiving strands
                         if not current_intersection_shadow.isEmpty():
@@ -976,6 +1469,11 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                             except Exception as exclusion_err:
                                 pass
                         
+                        if lift is not None:
+                            if not current_intersection_shadow.isEmpty():
+                                lift_shadow_paths.append(current_intersection_shadow)
+                            continue
+
                         # Only add the (potentially modified) intersection if it's still not empty
                         if not current_intersection_shadow.isEmpty():
                             # Add the calculated intersection area to the path that will be drawn
@@ -983,10 +1481,17 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                             # to include the area of the underlying strand, ensuring the faded
                             # shadow effect only renders where an underlying strand exists.
                             # Include the underlying strand area in the clip path so the shadow can't draw where there is no strand
+                            receiver_clip = _clip_off_lifted_strands(
+                                other_stroke_path, canvas, lifted_near_masks,
+                                _get_intermediate_layer_names(layer_order, this_layer, other_layer), cache)
                             if clip_path.isEmpty():
-                                clip_path = QPainterPath(other_stroke_path)
+                                clip_path = QPainterPath(receiver_clip)
+                            elif receiver_clip is other_stroke_path or receiver_clip == other_stroke_path:
+                                clip_path.addPath(QPainterPath(receiver_clip))
                             else:
-                                clip_path.addPath(QPainterPath(other_stroke_path))
+                                # A trimmed clip is a boolean result whose winding may run
+                                # the other way round; unite it so overlaps cannot cancel.
+                                clip_path = QPainterPath(clip_path).united(receiver_clip)
                             
                             if not clip_blocker_path.isEmpty():
                                 try:
@@ -996,7 +1501,9 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                             
                             # Add this intersection to the list of individual shadows
                             # This preserves each shadow intersection separately to avoid issues with united()
-                            individual_shadow_paths.append(current_intersection_shadow)
+                            individual_shadow_paths.append(
+                                current_intersection_shadow if current_fill_shadow is None else current_fill_shadow)
+                            individual_stroke_paths.append(current_intersection_shadow)
                             has_shadow_content = True
                                 
                             # logging.info(f"Added shadow from {this_layer} onto {other_layer} to individual paths")
@@ -1024,20 +1531,26 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
             combined_shadow_path.setFillRule(Qt.WindingFill)
             
             # Draw shadow (uncommented to actually render the solid shadow core)
-            painter.save()
-            try:
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(QBrush(color_to_use))
+            if not collect_only:
+                painter.save()
+                try:
+                    painter.setPen(Qt.NoPen)
+                    painter.setBrush(QBrush(color_to_use))
 
-                # IMPORTANT: Use SourceOver composition mode to prevent shadow darkening
-                painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-                # Uncommented to fix the missing shadow rendering
-                painter.drawPath(combined_shadow_path)
-            finally:
-                painter.restore()
+                    # IMPORTANT: Use SourceOver composition mode to prevent shadow darkening
+                    painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+                    # Uncommented to fix the missing shadow rendering
+                    painter.drawPath(combined_shadow_path)
+                finally:
+                    painter.restore()
             
             # Initialize shadow_paths and all_shadow_paths
-            all_shadow_paths = [combined_shadow_path]
+            combined_stroke_path = QPainterPath()
+            for stroke_region in individual_stroke_paths:
+                if not stroke_region.isEmpty():
+                    combined_stroke_path.addPath(stroke_region)
+            combined_stroke_path.setFillRule(Qt.WindingFill)
+            all_shadow_paths = [combined_stroke_path]
             
             pass
     else:
@@ -1339,6 +1852,16 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         all_shadow_paths = [combined_path]
         pass
     
+    lift_path = QPainterPath()
+    for path in lift_shadow_paths:
+        lift_path.addPath(path)
+    lift_path.setFillRule(Qt.WindingFill)
+    if not lift_path.isEmpty():
+        stroke_source = QPainterPath(all_shadow_paths[0]) if all_shadow_paths else QPainterPath()
+        stroke_source.addPath(lift_path)
+        stroke_source.setFillRule(Qt.WindingFill)
+        all_shadow_paths = [stroke_source]
+
     # Draw all shadow paths at once using the faded effect
     # logging.info(f"Shadow paths for strand {getattr(strand, 'layer_name', 'unknown')}: count={len(all_shadow_paths)}, empty_paths={sum(1 for p in all_shadow_paths if p.isEmpty())}, non_empty={sum(1 for p in all_shadow_paths if not p.isEmpty())}")
 
@@ -1369,12 +1892,25 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
             circle_shadow_path = build_shadow_circle_geometry(strand, max_blur_radius)
             total_shadow_path.addPath(circle_shadow_path)
 
+        # The filled areas as at a genuine crossing (the outlines, which strands
+        # a mask restacks do not cut), combined like the normal fill.
+        fill_path = QPainterPath()
+        for stroke_region in individual_stroke_paths:
+            fill_path.addPath(stroke_region)
+        fill_path.setFillRule(Qt.WindingFill)
+        cache[collected_key] = {'stroke_path': total_shadow_path, 'lift_path': lift_path,
+                                'fill_path': fill_path, 'color': QColor(color_to_use)}
+        if collect_only:
+            return cache[collected_key]
+        if clip_path.isEmpty():
+            # Only a mask partner receives this strand's shadow; the mask paints it.
+            return
+
         # Reduced high-frequency logging for performance during moves
         # logging.info(f"Drawing faded shadow for strand {strand.layer_name}")
         # Draw the combined path with a faded edge effect
         base_color = color_to_use
         base_alpha = base_color.alpha()
-        # Mirror draw_mask_strand_shadow: introduce a dedicated core_color derived from base_color
         core_color = QColor(base_color)
 
         # Prepare painter with clipping so the shadow cannot appear where no underlying strand exists

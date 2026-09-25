@@ -1001,6 +1001,12 @@ class ShadowEditorDialog(QDialog):
         # Get layers below (lower indices = below in Z-order)
         layers_below = layer_order[:casting_index]
 
+        # A mask casts one shadow: its first strand's shading on its second
+        # strand, where it lifts the first strand over it.
+        mask_partner = self._mask_second_layer(self.strand)
+        if mask_partner is not None:
+            layers_below = [name for name in layers_below if name == mask_partner]
+
         # Hidden layers do not receive editable shadows.
         receiving_layers = []
         for layer_name in layers_below:
@@ -1035,9 +1041,19 @@ class ShadowEditorDialog(QDialog):
         if not self.shadow_items:
             self._add_static_row('no_casters', self._tr('shadow_no_casters'), italic=True)
 
+    @staticmethod
+    def _mask_second_layer(strand):
+        """The layer a mask lifts its first strand over, or None if *strand*
+        is not a mask."""
+        if not hasattr(strand, 'get_mask_path'):
+            return None
+        second = getattr(strand, 'second_selected_strand', None)
+        return getattr(second, 'layer_name', None)
+
     def _collect_mask_proxy_rows(self, layer_order):
         """Collect (mask_name, receiving_layer, strand) rows for masks whose
-        over-strand is this dialog's strand."""
+        over-strand is this dialog's strand: the shading each mask draws on
+        its under-strand, the one shadow a mask casts."""
         rows = []
         for mask in self.canvas.strands:
             over_strand = getattr(mask, 'first_selected_strand', None)
@@ -1048,13 +1064,12 @@ class ShadowEditorDialog(QDialog):
             mask_name = mask.layer_name
             if mask_name not in layer_order:
                 continue
-            for layer_name in layer_order[:layer_order.index(mask_name)]:
-                # The over-strand shadowing itself is noise in this view.
-                if layer_name == self.casting_layer:
-                    continue
-                strand = self._find_strand_by_name(layer_name)
-                if strand and not getattr(strand, 'is_hidden', False):
-                    rows.append((mask_name, layer_name, strand))
+            layer_name = self._mask_second_layer(mask)
+            if layer_name not in layer_order[:layer_order.index(mask_name)]:
+                continue
+            strand = self._find_strand_by_name(layer_name)
+            if strand and not getattr(strand, 'is_hidden', False):
+                rows.append((mask_name, layer_name, strand))
         return rows
 
     def _add_shadow_row(self, casting_layer, layer_name, strand, available_layers, display_text=None):

@@ -1,5 +1,9 @@
 # Example 1: mask `2_1_2_3` (2_1 over 2_3) beside strand `1_1`
 
+**Status: fixed.** The app now draws [`expected.png`](expected.png) apart from 9 pixels of anti-aliasing at the corners of
+the lifted piece, 8 of them drawn exactly as before the fix (see [the fix](../README.md#the-fix)). The images below
+show the app before the fix.
+
 The mask flips one crossing so that **2_1 goes over 2_3**, while the layer order still has 2_3 above 2_1.
 Strand 1_1 is at the bottom and runs under both strands right next to the mask.
 

@@ -1,5 +1,8 @@
 # Example 4: two masks weaving 2_2 and 2_3 through 1_2 and 1_3
 
+**Status: fixed.** The app now draws [`expected.png`](expected.png) exactly (see [the fix](../README.md#the-fix)).
+The images below show the app before the fix.
+
 A small 2×2 weave. Set 1 is a short diagonal 1_1 with 1_2 attached at its start (running right) and 1_3 at its
 end (running left). Set 2 is a short diagonal 2_1 with 2_3 attached at its start (running up) and 2_2 at its end
 (running down). The two diagonals sit at the bottom of the stack and are completely covered. The four arms
@@ -21,11 +24,13 @@ Reported layer state:
 | Masked layers | `2_2_1_2` (2_2 over 1_2), `2_3_1_3` (2_3 over 1_3) |
 | Positions | 1_1 (1400,448)→(1512,504) · 1_2 (1400,448)→(1624,448) · 1_3 (1512,504)→(1148,504) · 2_1 (1428,532)→(1484,420) · 2_2 (1484,420)→(1484,588) · 2_3 (1428,532)→(1428,252) |
 | Shadow settings | Shadow on, NumSteps 2, MaxBlurRadius 30, color 0,0,0,150; width 46, stroke 4; "default" theme (canvas #ECECEC) |
+| Shadow overrides | 1_2 → 1_1, 1_2 → 2_1, 1_3 → 1_1 and 1_3 → 2_1 hidden. The app adds these by itself when the masks are created (`src/auto_shadow.py`): the diagonals are buried under the weave. |
 
 [`scene.json`](scene.json) rebuilds this state (open it with **Load**). Rendered headless with mask `2_2_1_2`
-selected (the red outline in the screenshot), it differs from the reported screenshot in 922 of 202,800
-compared pixels. 854 of them are one L-shaped shadow on 1_3's rounded end that the rebuilt scene does not draw
-(see 3 below). The other 68 are anti-aliasing.
+selected (the red outline in the screenshot), it differs from the reported screenshot in 847 of 202,800
+compared pixels, all of them in one L-shaped shadow on 1_3's rounded end that the rebuilt scene does not draw
+(see 3 below). The hidden shadows only touch anti-aliasing on 1_1's rounded ends, but without them 75 more
+pixels differ from the screenshot, so the reporter's scene had them too.
 
 ## Screenshot vs expected
 
@@ -45,11 +50,12 @@ The same comparison without the selection outline:
 | ✓ | On 1_2 on both sides of 2_2, and on 1_3 on both sides of 2_3 | Each mask's soft shadow bands | Correct along their length; only their ends at the corners differ (4) |
 | 1 | 2_2's rounded end, just above 1_2 | A dark band across it: mask `2_2_1_2` casts its shadow onto 2_2 itself (691 px) | Clean. Nothing lies above 2_2 there. |
 | 2 | 2_3's rounded end, just below 1_3 | The same: mask `2_3_1_3` shades 2_3 (692 px) | Clean |
-| 3 | 1_3's rounded end, right of 2_2 (**screenshot only**) | An L-shaped shadow with a dark core (854 px) | Clean. 1_3 lies over 2_2 here, so nothing from 2_2's mask may darken it. |
+| 3 | 1_3's rounded end, right of 2_2 (**screenshot only**) | An L-shaped shadow with a dark core (847 px) | Clean. 1_3 lies over 2_2 here, so nothing from 2_2's mask may darken it. |
 | 4 | Where the masks meet the edges of 1_2 and 1_3 | 1_2's shadow on 2_3 is rounded off next to mask `2_2_1_2`, and the shading band on 1_2 has a dark rounded top corner (mirrored at the other mask) | Straight bands that meet at clean corners, as at a genuine crossing |
+| 5 | The lifted pieces, along 1_3's top edge (2_2's piece) and 1_2's bottom edge (2_3's piece) | Plain: the mask paints its piece over the shadow 1_3 casts on 2_2 there (and 1_2 on 2_3) | 1_3's soft shadow band runs along the bottom of 2_2's piece, as at a genuine crossing, where 1_3 lies above 2_2; likewise 1_2's band along the top of 2_3's piece |
 
-Put simply: each mask's own shading is right, but each mask also shades the strand it belongs to (1, 2) and
-dents the shadows next to it (4).
+Put simply: each mask's own shading is right, but each mask also shades the strand it belongs to (1, 2),
+dents the shadows next to it (4), and covers the shadow the neighbouring strand casts on it (5).
 
 ## Why
 
@@ -76,7 +82,8 @@ dents the shadows next to it (4).
 
 ## How "expected" was made
 
-No single layer order draws a checkerboard, so each mask gets its own reference, rendered with the masks removed:
+No single layer order draws a checkerboard, so each mask gets its own reference, rendered with the masks removed
+(the shadow overrides stay):
 
 - around `2_2_1_2`: order `1_1, 2_1, 2_3, 1_2, 2_2, 1_3` ([`reference_2_2_1_2.png`](reference_2_2_1_2.png)), which
   is right for every crossing except 2_3/1_3;
@@ -84,8 +91,9 @@ No single layer order draws a checkerboard, so each mask gets its own reference,
   is right for every crossing except 2_2/1_2.
 
 Each reference is used only next to its own mask, and the crossing it gets wrong is a keep zone (the other mask's
-crossing). [`capture_report.json`](capture_report.json) lists the transplanted pieces: 783 pixels per mask, 636
-of them on the rounded end.
+crossing). Each mask's own piece always comes from its own reference (`own_piece_px`): the pieces touch the other
+mask's keep zone, and without that rule the band of observation 5 was left out. [`capture_report.json`](capture_report.json)
+lists the transplanted pieces: 1,485 and 1,484 pixels for the two masks, 636 of each on the rounded end.
 
 Regenerate everything in this folder:
 

@@ -10,6 +10,7 @@
      "reference_order": ["1_1", "2_1", "2_3", "1_2", "2_2", "1_3"],
      "reference_note": "the app's own drawing of 2_2 genuinely over 1_2 (layer order 1_1, 2_1, 2_3, 1_2, 2_2, 1_3, masks removed)",
      "near_mask_px": 45,
+     "own_piece_px": 2,
      "keep_zones": [
        {"strands": ["2_3", "1_3"], "grow_px": 20,
         "note": "that order also flips the 2_3/1_3 crossing, which belongs to the other mask"}
@@ -18,6 +19,7 @@
      "reference_order": ["1_1", "2_1", "2_2", "1_3", "2_3", "1_2"],
      "reference_note": "the app's own drawing of 2_3 genuinely over 1_3 (layer order 1_1, 2_1, 2_2, 1_3, 2_3, 1_2, masks removed)",
      "near_mask_px": 45,
+     "own_piece_px": 2,
      "keep_zones": [
        {"strands": ["2_2", "1_2"], "grow_px": 20,
         "note": "that order also flips the 2_2/1_2 crossing, which belongs to the other mask"}

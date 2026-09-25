@@ -1,5 +1,10 @@
 # Example 2: mask `1_1_1_4` (1_1 over 1_4) where 1_1 also passes under 1_3
 
+**Status: fixed.** The app now draws [`expected.png`](expected.png) apart from anti-aliasing (see
+[the fix](../README.md#the-fix)): 33 pixels where `expected.png` has a seam on the 1_3/1_4 joint ring and the render
+equals the genuine reference, and 9 pixels at the corners of the lifted piece and on the joint ring. The images
+below show the app before the fix.
+
 One strand set bent into a star: 1_1 → 1_2 → 1_3 → 1_4, each attached to the end of the one before. The mask
 lifts 1_1 over 1_4. Just above that crossing, 1_1 also passes **under** 1_3, and the two crossings overlap.
 1_3 and 1_4 meet in a sharp hairpin at (1512, 504), so they overlap in a long wedge, and 1_1 runs straight

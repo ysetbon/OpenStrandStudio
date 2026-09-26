@@ -13,7 +13,7 @@ Run offscreen from the repo root:
 
 Writes a side-by-side image per example (render | expected | differences in
 red) to out_dir. Exits non-zero if a mask-free reference changed, or if a pixel
-that is not drawn as in a genuine render differs from expected.png by more
+that is not drawn as in a reference render differs from expected.png by more
 than anti-aliasing (AA_TOLERANCE per channel).
 """
 import json
@@ -71,19 +71,24 @@ def check_example(renderer, example_dir, out_dir):
     entries = spec.get("masks") or [spec]
     references = []
     for entry in entries:
-        reference_name = "reference.png" if len(entries) == 1 else "reference_%s.png" % entry["mask"]
-        reference = renderer.render(scene, spec["shadow"], order=entry["reference_order"]).crop(crop)
+        reference_name = capture.reference_name(entry, len(entries))
         committed = Image.open(os.path.join(example_dir, reference_name)).convert("RGB")
+        references.append(committed)
+        if "reference_skip" in entry or "reference_neutralise_blocker" in entry or "reference_order" not in entry:
+            # Today's drawing with some of its shadow passes switched off: only
+            # the code before the fix can render it.
+            print("  %s (the app before the fix, adjusted): not re-rendered" % reference_name, flush=True)
+            continue
+        reference = renderer.render(scene, spec["shadow"], order=entry["reference_order"]).crop(crop)
         diff = capture.changed(reference, committed)
         print("  %s (mask-free): %d px differ from the committed render" % (reference_name, capture.count_on(diff)),
               flush=True)
         failures += bool(capture.count_on(diff))
-        references.append(committed)
 
-    # expected.png is today's render with pieces of the genuine (mask-free)
-    # renders pasted in. Where the render differs from expected.png but equals
-    # a genuine render, it is drawing the genuine crossing there and the
-    # difference is only where the pasted piece happened to end.
+    # expected.png is today's render with pieces of the reference renders
+    # pasted in. Where the render differs from expected.png but equals one of
+    # them, it is drawing that reference there and the difference is only
+    # where the pasted piece happened to end.
     if pieces:
         as_genuine = Image.new("L", render.size, 0)
         for reference in references:
@@ -96,7 +101,7 @@ def check_example(renderer, example_dir, out_dir):
             for x in range(render.width):
                 if flags[x, y]:
                     worst = max(worst, max(abs(a - b) for a, b in zip(render_px[x, y], expected_px[x, y])))
-        print("  of those, %d px are drawn exactly as in the genuine render; %d px are not%s" % (
+        print("  of those, %d px are drawn exactly as in a reference render; %d px are not%s" % (
             capture.count_on(mask) - capture.count_on(unexplained), capture.count_on(unexplained),
             "" if not rest else " (largest %s, at most %d/255 off: %s)" % (
                 rest[:6], worst, "anti-aliasing" if worst <= AA_TOLERANCE else "FAIL")), flush=True)

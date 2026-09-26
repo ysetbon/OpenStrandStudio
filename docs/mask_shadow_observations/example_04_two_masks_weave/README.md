@@ -3,6 +3,10 @@
 **Status: fixed.** The app now draws [`expected.png`](expected.png) exactly (see [the fix](../README.md#the-fix)).
 The images below show the app before the fix.
 
+**Corrected on review:** an earlier version of `expected.png` also put 1_3's shadow band across 2_2's lifted piece
+(and 1_2's across 2_3's). A mask is a layer, and both masks lie on top of every strand, so nothing below them
+shades their pieces: the pieces stay plain, as the app draws them.
+
 A small 2×2 weave. Set 1 is a short diagonal 1_1 with 1_2 attached at its start (running right) and 1_3 at its
 end (running left). Set 2 is a short diagonal 2_1 with 2_3 attached at its start (running up) and 2_2 at its end
 (running down). The two diagonals sit at the bottom of the stack and are completely covered. The four arms
@@ -52,10 +56,10 @@ The same comparison without the selection outline:
 | 2 | 2_3's rounded end, just below 1_3 | The same: mask `2_3_1_3` shades 2_3 (692 px) | Clean |
 | 3 | 1_3's rounded end, right of 2_2 (**screenshot only**) | An L-shaped shadow with a dark core (847 px) | Clean. 1_3 lies over 2_2 here, so nothing from 2_2's mask may darken it. |
 | 4 | Where the masks meet the edges of 1_2 and 1_3 | 1_2's shadow on 2_3 is rounded off next to mask `2_2_1_2`, and the shading band on 1_2 has a dark rounded top corner (mirrored at the other mask) | Straight bands that meet at clean corners, as at a genuine crossing |
-| 5 | The lifted pieces, along 1_3's top edge (2_2's piece) and 1_2's bottom edge (2_3's piece) | Plain: the mask paints its piece over the shadow 1_3 casts on 2_2 there (and 1_2 on 2_3) | 1_3's soft shadow band runs along the bottom of 2_2's piece, as at a genuine crossing, where 1_3 lies above 2_2; likewise 1_2's band along the top of 2_3's piece |
+| ✓ | The lifted pieces, along 1_3's top edge (2_2's piece) and 1_2's bottom edge (2_3's piece) | Plain: the mask, a layer at the top of the stack, lies over the shadow 1_3 casts on 2_2 there (and 1_2 on 2_3) | Correct as is: nothing below a mask shades its piece |
 
-Put simply: each mask's own shading is right, but each mask also shades the strand it belongs to (1, 2),
-dents the shadows next to it (4), and covers the shadow the neighbouring strand casts on it (5).
+Put simply: each mask's own shading is right, but each mask also shades the strand it belongs to (1, 2) and
+dents the shadows next to it (4).
 
 ## Why
 
@@ -91,9 +95,10 @@ No single layer order draws a checkerboard, so each mask gets its own reference,
   is right for every crossing except 2_2/1_2.
 
 Each reference is used only next to its own mask, and the crossing it gets wrong is a keep zone (the other mask's
-crossing). Each mask's own piece always comes from its own reference (`own_piece_px`): the pieces touch the other
-mask's keep zone, and without that rule the band of observation 5 was left out. [`capture_report.json`](capture_report.json)
-lists the transplanted pieces: 1,485 and 1,484 pixels for the two masks, 636 of each on the rounded end.
+crossing). The masks' pieces stay exactly as the app draws them (`outside_pieces_px` in [`example.json`](example.json)):
+both masks are layers on top of every strand, so the references, where the neighbouring strands shade the lifted
+strand, do not apply there. [`capture_report.json`](capture_report.json) lists the transplanted pieces: 783 and 782
+pixels for the two masks, 636 of each on the rounded end.
 
 Regenerate everything in this folder:
 

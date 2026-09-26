@@ -613,7 +613,6 @@ class MaskedStrand(Strand):
 
                         finally:
                             painter.restore()
-                        self._draw_overlying(painter)
   
             except Exception as e:
                 pass
@@ -623,25 +622,6 @@ class MaskedStrand(Strand):
             # Restore the painter state
         finally:
             painter.restore()
-
-    def _draw_overlying(self, painter):
-        """Put back the strands that stay above the lifted piece (a third
-        strand above the first strand crossing the mask's area)."""
-        try:
-            try:
-                from shader_utils import draw_mask_overlying
-            except ImportError:
-                from src.shader_utils import draw_mask_overlying
-            shadow_color = getattr(self.canvas, 'default_shadow_color', None) if self.canvas else None
-            draw_mask_overlying(
-                painter,
-                self,
-                shadow_color,
-                num_steps=self.canvas.num_steps if hasattr(self.canvas, 'num_steps') else 3,
-                max_blur_radius=self.canvas.max_blur_radius if hasattr(self.canvas, 'max_blur_radius') else 29.99,
-            )
-        except Exception:
-            pass
 
     def _draw_direct(self, painter):
         """Draw the masked strand directly to the painter without temporary image optimization.
@@ -748,7 +728,6 @@ class MaskedStrand(Strand):
 
                 finally:
                     painter.restore()
-                self._draw_overlying(painter)
             
             except Exception as e:
                 pass

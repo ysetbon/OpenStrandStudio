@@ -196,10 +196,13 @@ class Renderer:
         image = QImage(canvas.width(), canvas.height(), QImage.Format_Grayscale8)
         image.fill(0)
         painter = QPainter(image)
-        pen = QPen(QColor(255, 255, 255))
-        pen.setWidthF(grow_px * 2)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
+        if grow_px > 0:
+            pen = QPen(QColor(255, 255, 255))
+            pen.setWidthF(grow_px * 2)
+            pen.setJoinStyle(Qt.RoundJoin)
+            painter.setPen(pen)
+        else:
+            painter.setPen(Qt.NoPen)
         painter.setBrush(QColor(255, 255, 255))
         for path in paths:
             painter.drawPath(path)
@@ -221,6 +224,31 @@ class Renderer:
         zones = [self._grown([build_rendered_geometry(self._strand(name))], grow_px)
                  for name in (first, second)]
         return ImageChops.multiply(zones[0], zones[1])
+
+    def strand_area(self, area):
+        """Binary image of an entry's "area": inside the listed strands (all of
+        the canvas when "inside" is missing), outside the others, and, with
+        "outside_pieces_px", clear of every mask's piece grown by that many
+        pixels (scene of the last render). A mask is a layer: its piece is
+        drawn at its own place in the layer order, over everything below it,
+        so the piece itself stays as the app draws it. An "exclusive" area is
+        reserved for its entry: later entries do not take pixels in it, even
+        where this entry's reference equals today's drawing."""
+        from shader_utils import build_rendered_geometry
+        canvas = self.window.canvas
+        inside = Image.new("L", (canvas.width(), canvas.height()), 255)
+        if area.get("inside"):
+            inside = self._grown([build_rendered_geometry(self._strand(n)) for n in area["inside"]], 0)
+        if area.get("outside"):
+            outside = self._grown([build_rendered_geometry(self._strand(n)) for n in area["outside"]], 0)
+            inside = ImageChops.subtract(inside, outside)
+        if "outside_pieces_px" in area:
+            masks = [s for s in canvas.strands if hasattr(s, "get_mask_path")]
+            pieces = self._grown([path for mask in masks
+                                  for path in (mask.get_mask_path_stroke(), mask.get_mask_path())],
+                                 area["outside_pieces_px"])
+            inside = ImageChops.subtract(inside, pieces)
+        return inside
 
     def canvas_highlight_color(self):
         color = getattr(self.window.canvas, "highlight_color", None)
@@ -270,16 +298,19 @@ def components(mask):
     return found
 
 
-def transplant_region(current, reference, near_zone, keep_zone, own_zone=None):
+def transplant_region(current, reference, near_zone, keep_zone, own_zone=None, area=None):
     """Pixels to take from the reference: changed components that reach the
     masked crossing's neighbourhood and stay clear of the keep zone, plus
     every changed pixel on the mask's own piece (*own_zone*), which only this
-    mask governs even where a keep zone reaches over it."""
+    mask governs even where a keep zone reaches over it. With an *area*, only
+    pixels inside it are considered."""
     near, keep = near_zone.load(), keep_zone.load()
     region = Image.new("L", current.size, 0)
     out = region.load()
     picked = []
     diff = changed(current, reference)
+    if area is not None:
+        diff = ImageChops.multiply(diff, area)
     for component in components(diff):
         if not any(near[x, y] for x, y in component):
             continue
@@ -295,7 +326,10 @@ def transplant_region(current, reference, near_zone, keep_zone, own_zone=None):
             for x, y in component:
                 out[x, y] = 255
     # One pixel of slack so anti-aliased fringes come from the same render.
-    return region.filter(ImageFilter.MaxFilter(3)), picked
+    region = region.filter(ImageFilter.MaxFilter(3))
+    if area is not None:
+        region = ImageChops.multiply(region, area)
+    return region, picked
 
 
 def reapply_highlight(selected, current, reference, region, color):
@@ -471,6 +505,13 @@ def strip_figure(title, panels, box, caption, out_path, size=300):
 # Driver
 # ----------------------------------------------------------------------------
 
+def reference_name(entry, count):
+    """File name of an entry's reference render."""
+    if "reference_name" in entry:
+        return entry["reference_name"]
+    return "reference.png" if count == 1 else "reference_%s.png" % entry["mask"]
+
+
 def run_example(renderer, example_dir):
     with open(os.path.join(example_dir, "example.json"), encoding="utf-8") as handle:
         spec = json.load(handle)
@@ -494,18 +535,27 @@ def run_example(renderer, example_dir):
         for zone in entry.get("keep_zones", []):
             keep = ImageChops.lighter(keep, renderer.pair_zone(*zone["strands"], grow_px=zone["grow_px"]))
         own = renderer.mask_zone(entry["mask"], entry["own_piece_px"]) if "own_piece_px" in entry else None
-        zones.append((renderer.mask_zone(entry["mask"], entry["near_mask_px"]), keep, own))
+        area = renderer.strand_area(entry["area"]) if "area" in entry else None
+        zones.append((renderer.mask_zone(entry["mask"], entry["near_mask_px"]), keep, own, area))
     highlight = renderer.canvas_highlight_color()
     selected = renderer.render(scene, shadow, select=spec.get("screenshot_select", entries[0]["mask"]))
 
     expected, expected_selected = current, selected
     region = Image.new("L", current.size, 0)
+    reserved = Image.new("L", current.size, 0)  # areas marked "exclusive" by earlier entries
     picked, per_mask = [], {}
-    references = [renderer.render(scene, shadow, order=entry["reference_order"]) for entry in entries]
-    for index, (entry, (near, keep, own), reference) in enumerate(zip(entries, zones, references)):
-        mine, mine_picked = transplant_region(current, reference, near, keep, own)
+    references = [renderer.render(scene, shadow, order=entry.get("reference_order"),
+                                  skip=entry.get("reference_skip", ()),
+                                  neutralise_blocker=entry.get("reference_neutralise_blocker", False))
+                  for entry in entries]
+    for index, (entry, (near, keep, own, area), reference) in enumerate(zip(entries, zones, references)):
+        if area is not None:
+            area = ImageChops.subtract(area, reserved)
+            if entry["area"].get("exclusive"):
+                reserved = ImageChops.lighter(reserved, area)
+        mine, mine_picked = transplant_region(current, reference, near, keep, own, area)
         # Each mask's own piece belongs to that mask's reference alone.
-        for other_index, (_near, _keep, other_own) in enumerate(zones):
+        for other_index, (_near, _keep, other_own, _area) in enumerate(zones):
             if other_index != index and other_own is not None:
                 mine = ImageChops.subtract(mine, other_own)
         mine = ImageChops.subtract(mine, region)  # the first mask to claim a pixel keeps it
@@ -513,8 +563,9 @@ def run_example(renderer, example_dir):
         expected_selected = reapply_highlight(expected_selected, current, reference, mine, highlight)
         region = ImageChops.lighter(region, mine)
         picked += mine_picked
-        per_mask[entry["mask"]] = sum(len(c) for c in mine_picked)
-        name = "reference.png" if len(entries) == 1 else "reference_%s.png" % entry["mask"]
+        name = reference_name(entry, len(entries))
+        per_mask[entry["reference_name"][:-4] if "reference_name" in entry else entry["mask"]] = \
+            sum(len(c) for c in mine_picked)
         reference.crop(crop).save(out(name))
 
     for name, image in [("current.png", current), ("expected.png", expected)]:
@@ -526,7 +577,8 @@ def run_example(renderer, example_dir):
     else:
         footer = ("Expected = %s; each used only where it differs from today's drawing next to its own "
                   "mask. Everything else is today's render, untouched."
-                  % "; ".join("around %s, %s" % (e["mask"], e["reference_note"]) for e in entries))
+                  % "; ".join("%s, %s" % (e.get("area_note", "around %s" % e["mask"]), e["reference_note"])
+                              for e in entries))
     comparison_figure("%s \u2014 clean render (nothing selected)" % label, current, expected, crop,
                       spec["insets"], footer, out("compare_clean.png"))
 

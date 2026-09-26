@@ -1,10 +1,13 @@
 """Check mask shadows against genuine crossings in random scenes.
 
 Builds scenes of 3-5 straight strands in a random layer order and masks one
-crossing (first strand below second strand in the layer order). When moving
-the first strand right above the second strand (or the second right below the
-first) flips no other overlapping pair, that layer order without the mask is
-the genuine crossing the mask stands for, and the two must look the same.
+crossing (first strand below second strand in the layer order); the mask goes
+on top of the stack. When moving the first strand right above the second
+strand (or the second right below the first) flips no other overlapping pair,
+and no strand above the first strand crosses the mask's piece or shades it
+(the mask, a layer on top, would cover it there), that layer order without
+the mask is the genuine crossing the mask stands for, and the two must look
+the same.
 
 The mask's lifted piece itself is drawn by filling the mask paths, whose
 anti-aliased corners and the end lines of strands ending inside the crossing
@@ -33,6 +36,7 @@ from PIL import ImageChops, ImageFilter
 
 MAX_SPECK = 2  # isolated anti-aliased pixels
 SHADOW = {"num_steps": 2, "max_blur_radius": 30.0}
+SHADOW_REACH = SHADOW["max_blur_radius"] / 2 + 2  # how far a soft shadow edge reaches past a strand
 COLORS = [(200, 170, 230, 255), (170, 220, 190, 255), (240, 200, 150, 255),
           (160, 200, 240, 255), (240, 170, 170, 255), (220, 220, 140, 255)]
 
@@ -90,7 +94,7 @@ def main(argv):
     renderer = capture.Renderer()
     renderer.configure((1264, 935), "#ECECEC")
     canvas = renderer.window.canvas
-    from PyQt5.QtGui import QPainterPath
+    from PyQt5.QtGui import QPainterPath, QPainterPathStroker
     from shader_utils import build_rendered_geometry
 
     def render(scene, order=None, shadows=True):
@@ -132,6 +136,21 @@ def main(argv):
             continue
         first, second = rnd.choice(pairs)
         between = order[order.index(first) + 1:order.index(second)]
+
+        piece = QPainterPath(footprint[first]).intersected(footprint[second])
+
+        def shades_piece(name):
+            # Whether *name* crosses the piece or comes within reach of its shadow.
+            stroker = QPainterPathStroker()
+            stroker.setWidth(2 * SHADOW_REACH)
+            reach = QPainterPath(footprint[name]).united(stroker.createStroke(footprint[name]))
+            return area(QPainterPath(piece).intersected(reach)) > 0.5
+
+        if any(shades_piece(name) for name in order[order.index(first) + 1:] if name != second):
+            # The mask is a layer on top of the stack: it covers any strand
+            # above its first strand where that strand crosses the piece, and
+            # that strand's shadow on the piece, which no layer order draws.
+            continue
         if not any(touch(first, name) for name in between):
             genuine = [name for name in order if name != first]
             genuine.insert(genuine.index(second) + 1, first)

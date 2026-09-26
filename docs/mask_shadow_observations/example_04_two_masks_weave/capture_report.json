@@ -1,5 +1,5 @@
 {
-  "transplanted_pixels": 2969,
+  "transplanted_pixels": 1565,
   "transplanted_components": [
     {
       "bbox": [
@@ -75,15 +75,6 @@
     },
     {
       "bbox": [
-        1461,
-        460,
-        1506,
-        476
-      ],
-      "pixels": 702
-    },
-    {
-      "bbox": [
         1455,
         518,
         1463,
@@ -153,20 +144,11 @@
         545
       ],
       "pixels": 11
-    },
-    {
-      "bbox": [
-        1405,
-        475,
-        1450,
-        491
-      ],
-      "pixels": 702
     }
   ],
   "transplanted_pixels_per_mask": {
-    "2_2_1_2": 1485,
-    "2_3_1_3": 1484
+    "2_2_1_2": 783,
+    "2_3_1_3": 782
   },
   "screenshot_pixels_off_by_more_than_8": 847,
   "screenshot_pixels_compared": 202800,

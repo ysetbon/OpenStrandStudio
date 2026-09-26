@@ -734,6 +734,33 @@ def _split_subpaths(path):
     return [(piece.boundingRect(), piece) for piece in pieces]
 
 
+def _closed_outline(path):
+    """*path* with every subpath closed, for stroking a shadow area's soft
+    edge along it. Qt can return a boolean result open: intersected() with an
+    axis-aligned rectangle clips each polygon without repeating its first
+    point, and the stroke then misses that last side (a horizontal strand
+    over one drawn from the bottom right up to the top left lost the soft
+    edge below it). Filling closes subpaths anyway."""
+    start = last = None
+    is_open = False
+    for index in range(path.elementCount()):
+        element = path.elementAt(index)
+        if element.type == QPainterPath.MoveToElement:
+            if start is not None and (abs(last.x - start.x) > 1e-6 or abs(last.y - start.y) > 1e-6):
+                is_open = True
+                break
+            start = element
+        last = element
+    if not is_open and (start is None or (abs(last.x - start.x) <= 1e-6 and abs(last.y - start.y) <= 1e-6)):
+        return path
+    closed = QPainterPath()
+    closed.setFillRule(path.fillRule())
+    for _bounds, piece in _split_subpaths(path):
+        piece.closeSubpath()
+        closed.addPath(piece)
+    return closed
+
+
 def _stroke_source_near(collected, rect, reach):
     """The parts of a collected soft-edge outline whose strokes can reach
     *rect*: each subpath is stroked on its own, so the rest cannot change a
@@ -1244,6 +1271,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                             except Exception as exclusion_err:
                                 pass
                         
+                        current_intersection_shadow = _closed_outline(current_intersection_shadow)
                         if lift is not None:
                             if not current_intersection_shadow.isEmpty():
                                 lift_shadow_paths.append(current_intersection_shadow)

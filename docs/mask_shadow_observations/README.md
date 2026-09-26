@@ -75,6 +75,12 @@ drawn as a layer at its own place in the stack
   over every strand below the mask (example 2's corner over 1_3), and no strand below the mask shades it
   (example 4).
 - **Pan and zoom draw the same** as the default view: both mask drawing paths share the same code.
+- **Closed shadow outlines.** A shadow's soft edge is stroked along the outline of the area it falls on.
+  Qt's `intersected()` with an axis-aligned rectangle returns that outline open, and the stroke then misses
+  its last side. Before the fix the blocker's extra path operations happened to close it near masks; without
+  them a woven star lost the soft edge below a horizontal strand next to a mask. Outlines are now closed
+  before they are stroked (`_closed_outline`), which also restores that edge where no mask is involved (a
+  horizontal strand over one drawn from the bottom right up to the top left lost it before the fix too).
 
 [`automation_tests/check_mask_shadow_fix.py`](../../automation_tests/check_mask_shadow_fix.py) renders
 every example with the code in `src/` and compares it with `expected.png`. It also checks that the

@@ -1,6 +1,7 @@
 """Check mask shadows against genuine crossings in random scenes.
 
-Builds scenes of 3-5 straight strands in a random layer order and masks one
+Builds scenes of 3-5 straight strands (from seed AXIS_ALIGNED_FROM on, some
+of them horizontal or vertical) in a random layer order and masks one
 crossing (first strand below second strand in the layer order); the mask goes
 on top of the stack. When moving the first strand right above the second
 strand (or the second right below the first) flips no other overlapping pair,
@@ -35,6 +36,10 @@ import capture_mask_shadow_observations as capture
 from PIL import ImageChops, ImageFilter
 
 MAX_SPECK = 2  # isolated anti-aliased pixels
+# From this seed on, some strands are made horizontal or vertical: their
+# bodies are axis-aligned rectangles, which Qt's boolean operations handle on
+# a code path of their own (see shader_utils._closed_outline).
+AXIS_ALIGNED_FROM = 60
 SHADOW = {"num_steps": 2, "max_blur_radius": 30.0}
 SHADOW_REACH = SHADOW["max_blur_radius"] / 2 + 2  # how far a soft shadow edge reaches past a strand
 COLORS = [(200, 170, 230, 255), (170, 220, 190, 255), (240, 200, 150, 255),
@@ -88,7 +93,7 @@ def area(path):
 
 def main(argv):
     first_seed = int(argv[1]) if len(argv) > 1 else 0
-    last_seed = int(argv[2]) if len(argv) > 2 else 59
+    last_seed = int(argv[2]) if len(argv) > 2 else 99
     work = tempfile.mkdtemp(prefix="mask_shadow_random_")
     history, strand_t, mask_t = templates()
     renderer = capture.Renderer()
@@ -110,12 +115,20 @@ def main(argv):
     compared, failed = 0, []
     for seed in range(first_seed, last_seed + 1):
         rnd = random.Random(seed)
+        # A separate generator, so the scenes of the other seeds stay as they were.
+        axis = random.Random(-seed) if seed >= AXIS_ALIGNED_FROM else None
         strands = []
         for index in range(rnd.randint(3, 5)):
             while True:
                 x0, y0, x1, y1 = [rnd.randint(200, 800) for _ in range(4)]
                 if (x1 - x0) ** 2 + (y1 - y0) ** 2 > 250 ** 2:
                     break
+            if axis is not None and axis.random() < 0.5:
+                length = max(abs(x1 - x0), abs(y1 - y0), 300)
+                if axis.random() < 0.5:
+                    y1, x1 = y0, (x0 + length if x0 + length <= 900 else x0 - length)
+                else:
+                    x1, y1 = x0, (y0 + length if y0 + length <= 900 else y0 - length)
             strands.append(("%d_1" % (index + 1), (x0, y0, x1, y1), COLORS[index % len(COLORS)]))
         rnd.shuffle(strands)
         order = [name for name, _, _ in strands]

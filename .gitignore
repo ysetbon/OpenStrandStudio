@@ -32,5 +32,13 @@ cad_mxn/
 automation_tests/recordings/
 
 # PyInstaller / Inno Setup output (Windows build)
+build/
+dist/
 src/build/
 src/dist/
+
+# Python virtual environments
+.venv/
+venv/
+build_env/
+src/build_env/

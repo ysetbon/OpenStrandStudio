@@ -1,0 +1,31 @@
+{
+  "label": "Example 5",
+  "title": "Mask 2_2_1_3 (2_2 over 1_3), and 1_3's shadow on 2_1 beside it",
+  "kind": "shadow_row",
+  "scene": "scene.json",
+  "shadow": {
+    "num_steps": 2,
+    "max_blur_radius": 30.0
+  },
+  "canvas_background": "#ECECEC",
+  "expected_overrides": {},
+  "reference_note": "the same scene with 1_3's shadow on 2_1 shown, i.e. without the override the app added automatically when the mask was made",
+  "crop": [
+    150,
+    30,
+    580,
+    440
+  ],
+  "insets": [
+    {
+      "label": "1",
+      "box": [
+        335,
+        160,
+        395,
+        220
+      ],
+      "title": "1_3's shadow on 2_1"
+    }
+  ]
+}

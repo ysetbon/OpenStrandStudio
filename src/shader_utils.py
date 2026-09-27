@@ -743,6 +743,34 @@ def _split_subpaths(path):
     return [(piece.boundingRect(), piece) for piece in pieces]
 
 
+def _subtraction_ok(path, cut, result, samples=12):
+    """Whether *result* holds everything of *path* outside *cut*, checked on
+    a grid of points over *path* (a point on the edge of *cut* may land
+    either side, so a few may go)."""
+    rect = path.boundingRect()
+    if rect.isEmpty():
+        return True
+    kept = lost = 0
+    for i in range(samples):
+        for j in range(samples):
+            point = QPointF(rect.left() + rect.width() * (i + 0.5) / samples,
+                            rect.top() + rect.height() * (j + 0.5) / samples)
+            if path.contains(point) and not cut.contains(point):
+                if result.contains(point):
+                    kept += 1
+                else:
+                    lost += 1
+    return lost <= max(2, (kept + lost) // 20)
+
+
+def _subtracted_checked(path, cut):
+    """*path* minus *cut*, or *path* itself where Qt's boolean operation gets
+    it wrong: subtracting a *cut* from a strand with an end circle can return
+    an empty path, even where they barely touch (_subtraction_ok)."""
+    result = QPainterPath(path).subtracted(cut)
+    return result if _subtraction_ok(path, cut, result) else QPainterPath(path)
+
+
 def _closed_outline(path):
     """*path* with every subpath closed, for stroking a shadow area's soft
     edge along it. Qt can return a boolean result open: intersected() with an
@@ -845,6 +873,34 @@ def _clip_off_lifted_strands(receiver_path, canvas, lifted_near_masks, layers_be
     # Boolean results come back odd-even; the other receivers are added to
     # the same clip afterwards and overlaps must not cancel out.
     clip.setFillRule(Qt.WindingFill)
+    return clip
+
+
+def _clip_off_hidden_rows(clip, canvas, caster_layer, layers_between, cache=None):
+    """*clip* minus the strands between the receiver and the caster whose own
+    shadow from the caster is hidden (in the Shadow Editor, or by
+    auto_shadow.py). The faded edge of the caster's shadow on the receiver
+    would otherwise land on them where they lie over the receiver: hiding a
+    shadow hides all of the caster's shadow on that strand."""
+    manager = getattr(canvas, 'layer_state_manager', None)
+    if manager is None or not layers_between or clip.isEmpty():
+        return clip
+    clip_rect = clip.boundingRect()
+    for name in layers_between:
+        if manager.get_shadow_visibility(caster_layer, name):
+            continue
+        hidden_strand = _find_canvas_strand_by_layer_name(canvas, name)
+        if (hidden_strand is None or getattr(hidden_strand, 'is_hidden', False)
+                or not _may_touch(hidden_strand, clip_rect, cache)):
+            continue
+        footprint = (_piece_of(hidden_strand, cache if cache is not None else {})
+                     if hasattr(hidden_strand, 'get_mask_path') else _drawn_footprint(hidden_strand))
+        if footprint.isEmpty():
+            continue
+        clip = _subtracted_checked(clip, footprint)
+        # As in _clip_off_lifted_strands: the other receivers are added to
+        # the same clip afterwards.
+        clip.setFillRule(Qt.WindingFill)
     return clip
 
 
@@ -1087,9 +1143,10 @@ def _pair_shadow(strand, other_strand, shadow_path, canvas, layer_order, masked_
         # The receiver's area, so the faded edge only lands where a strand is.
         receiver_clip = None
         if lift is None:
+            layers_between = _get_intermediate_layer_names(layer_order, this_layer, other_layer)
             receiver_clip = _clip_off_lifted_strands(
-                other_stroke_path, canvas, lifted_near_masks,
-                _get_intermediate_layer_names(layer_order, this_layer, other_layer), cache)
+                other_stroke_path, canvas, lifted_near_masks, layers_between, cache)
+            receiver_clip = _clip_off_hidden_rows(receiver_clip, canvas, this_layer, layers_between, cache)
         return {'outline': current_intersection_shadow, 'fill': current_fill_shadow,
                 'lift': lift[1] if lift is not None else None, 'receiver_path': other_stroke_path,
                 'clip': receiver_clip, 'clip_blocker': clip_blocker_path}

@@ -698,7 +698,7 @@ def eared_knot(centre, base, ears, tail, spread=16, step=3, tail_gap=22):
 
     ears maps a position (0..n-1, clockwise from the bottom) to its ear length.
     The cord visits positions in star order, so the chords between ears weave
-    through the centre, and each ear is a rounded loop.
+    through the centre, and each ear ends in a round bulb.
     """
     n = len(ears)+1
     angle = lambda k: 90+360*k/n
@@ -707,19 +707,19 @@ def eared_knot(centre, base, ears, tail, spread=16, step=3, tail_gap=22):
               polar(centre, base*1.05, angle(0)+spread)]
     for k in [(i*step) % n for i in range(1, n)]:
         length, theta = ears[k], angle(k)
-        w = math.degrees(math.atan2(length*.33, base+length*.8))
-        points += [polar(centre, base, theta-spread),
-                   polar(centre, base+length*.45, theta-spread*.9-w*.35),
-                   polar(centre, base+length*.82, theta-w), polar(centre, base+length, theta),
-                   polar(centre, base+length*.82, theta+w),
-                   polar(centre, base+length*.45, theta+spread*.9+w*.35),
-                   polar(centre, base, theta+spread)]
+        # A round bulb at the ear's end, entered and left through the base.
+        bulb = min(length*.42, 80)
+        middle = polar(centre, base+length-bulb, theta)
+        points.append(polar(centre, base, theta-spread))
+        for turn in (-115, -60, 0, 60, 115):
+            points.append(polar(middle, bulb, theta+turn))
+        points.append(polar(centre, base, theta+spread))
     points += [polar(centre, base*1.05, angle(0)-spread),
                (cx+tail_gap, cy+base+tail*.55), (cx+tail_gap, cy+base+tail)]
     return spline(points)
 
 
-def heart_outline(centre, offset_by=0.0, lobe_gap=125, lobe=135, depth=320, tip=64, dip=60):
+def heart_outline(centre, offset_by=0.0, lobe_gap=125, lobe=135, depth=320, tip=78, dip=74):
     """A heart built from arcs and tangent lines, grown outward by offset_by.
 
     Two lobe circles, a rounded tip below and a fillet in the top notch. Every
@@ -753,7 +753,7 @@ def heart_outline(centre, offset_by=0.0, lobe_gap=125, lobe=135, depth=320, tip=
     return resample(ring, 2.0)
 
 
-def four_leaf_clover(centre, radius, ratio=.6, dent=.25, width=.22):
+def four_leaf_clover(centre, radius, ratio=.6, dent=.2, width=.3):
     """Four interlocking leaves (a closed curve with eight crossings).
 
     E^(3it) + ratio*E^(-it) gives four round lobes that each pass through both
@@ -781,12 +781,12 @@ def scenes(only=None):
         s = Scene('woven_heart')
         centre = (600, 300)
         for offset_by, color in [(42, '#cc526c'), (0, '#e799a5'), (-42, '#934e83')]:
-            s.cord(heart_outline(centre, offset_by), color, 'Heart ribbons', 20, closed=True)
+            s.cord(heart_outline(centre, offset_by), color, 'Heart ribbons', 24, closed=True)
         laces = []
         for y in (330, 430, 530):
             laces.append(len(s.cords))
             s.cord(spline([(220, y+38), (450, y-12), (750, y+12), (980, y-38)]),
-                   PALETTE[1], 'Gold lacing', 16)
+                   PALETTE[1], 'Gold lacing', 18)
         s.interlace(checkerboard(laces))
         yield s
 
@@ -818,8 +818,9 @@ def scenes(only=None):
         knot_cord(s, leaves, 24, colors=(RED, RED), group='Leaves', closed=True)
         # The gold stem starts hidden under the centre square and tucks
         # under the leaves wherever it meets them.
-        edge = min((p for p in leaves if p[1] > centre[1]), key=lambda p: dist(p, (620, 468)))
-        stem = spline([(edge[0]-2, edge[1]-7), (648, 560), (668, 680), (700, 800), (760, 880)])
+        edge = min((p for p in leaves if 440 < p[1] < 520), key=lambda p: dist(p, (590, 470)))
+        # The bends make it cross each leaf strand at 50 degrees or more.
+        stem = spline([(edge[0], edge[1]-7), (640, 570), (660, 690), (700, 820), (760, 880)])
         s.cord(stem, GOLD, 'Stem', 24, hidden_ends=(0,))
         s.interlace(woven(tucked={1}))
         yield s
@@ -839,7 +840,8 @@ def scenes(only=None):
     if wanted('chinese_good_luck'):
         s = Scene('chinese_good_luck')
         big, small = 235, 120
-        knot_cord(s, eared_knot((600, 400), 160, {1: small, 2: big, 3: small, 4: big,
+        # This base keeps crossings 50 apart and every other pass 40 apart.
+        knot_cord(s, eared_knot((600, 400), 190, {1: small, 2: big, 3: small, 4: big,
                                                   5: small, 6: big, 7: small}, 260), 22)
         s.interlace(woven())
         yield s

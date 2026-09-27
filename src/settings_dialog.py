@@ -63,6 +63,12 @@ class SettingsDialog(QDialog):
         ('sample_button_bridge', 'sample_bridge', 'Bridge', 'bridge.json'),
         ('sample_button_twisted_pairs', 'sample_twisted_pairs', 'Twisted Pairs', 'twisted_pairs.json'),
         ('sample_button_kagome_weave', 'sample_kagome_weave', 'Kagome Weave', 'kagome_weave.json'),
+        ('sample_button_woven_heart', 'sample_woven_heart', 'Woven Heart', 'woven_heart.json'),
+        ('sample_button_tidal_waves', 'sample_tidal_waves', 'Tidal Waves', 'tidal_waves.json'),
+        ('sample_button_chinese_double_coin', 'sample_chinese_double_coin', 'Chinese Double Coin', 'chinese_double_coin.json'),
+        ('sample_button_chinese_cloverleaf', 'sample_chinese_cloverleaf', 'Chinese Cloverleaf', 'chinese_cloverleaf.json'),
+        ('sample_button_chinese_good_luck', 'sample_chinese_good_luck', 'Chinese Good Luck', 'chinese_good_luck.json'),
+        ('sample_button_chinese_pan_chang', 'sample_chinese_pan_chang', 'Chinese Pan Chang', 'chinese_pan_chang.json'),
     ]
 
     def __init__(self, parent=None, canvas=None, undo_redo_manager=None, layer_panel=None):
@@ -3477,7 +3483,7 @@ class SettingsDialog(QDialog):
         
         samples_dir = os.path.join(base_path, 'samples')
 
-        # Two buttons per row, so every sample shows without scrolling
+        # Two buttons per row; the settings page scrolls for larger collections.
         samples_grid = QGridLayout()
         for index, (attribute, key, name, file_name) in enumerate(self.SAMPLES):
             button = QPushButton(_[key] if key in _ else name)

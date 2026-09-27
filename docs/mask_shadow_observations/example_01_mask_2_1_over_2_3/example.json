@@ -1,0 +1,22 @@
+{
+  "label": "Example 1",
+  "title": "Mask 2_1_2_3 (2_1 over 2_3) beside an unrelated strand 1_1",
+  "scene": "scene.json",
+  "shadow": {"num_steps": 2, "max_blur_radius": 30.0},
+  "mask": "2_1_2_3",
+  "reference_order": ["1_1", "2_2", "2_3", "2_1"],
+  "reference_note": "the app's own drawing of a genuine 2_1-over-2_3 crossing (layer order 1_1, 2_2, 2_3, 2_1 with the mask removed)",
+  "near_mask_px": 45,
+  "keep_zones": [
+    {"strands": ["2_1", "2_2"], "grow_px": 20,
+     "note": "2_1/2_2 junction: the reference order also puts 2_1 over 2_2 here, which the mask does not govern, so anything within 20 px of both strands is kept exactly as drawn today"}
+  ],
+  "crop": [170, 150, 690, 740],
+  "insets": [
+    {"label": "1", "box": [434, 368, 484, 418], "title": "stray shadow on 2_1"},
+    {"label": "2", "box": [424, 310, 474, 360], "title": "notched shadow on 1_1"}
+  ],
+  "blocker_inset": "2",
+  "screenshot": "user_screenshot.png",
+  "screenshot_canvas_offset": [3, 51]
+}

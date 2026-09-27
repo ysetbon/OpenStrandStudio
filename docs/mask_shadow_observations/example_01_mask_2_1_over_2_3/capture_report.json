@@ -1,0 +1,88 @@
+{
+  "transplanted_pixels": 246,
+  "transplanted_components": [
+    {
+      "bbox": [
+        523,
+        294,
+        524,
+        295
+      ],
+      "pixels": 2
+    },
+    {
+      "bbox": [
+        446,
+        327,
+        464,
+        346
+      ],
+      "pixels": 157
+    },
+    {
+      "bbox": [
+        461,
+        328,
+        466,
+        333
+      ],
+      "pixels": 6
+    },
+    {
+      "bbox": [
+        441,
+        329,
+        449,
+        335
+      ],
+      "pixels": 17
+    },
+    {
+      "bbox": [
+        465,
+        340,
+        466,
+        341
+      ],
+      "pixels": 3
+    },
+    {
+      "bbox": [
+        520,
+        355,
+        521,
+        356
+      ],
+      "pixels": 2
+    },
+    {
+      "bbox": [
+        454,
+        389,
+        461,
+        400
+      ],
+      "pixels": 58
+    },
+    {
+      "bbox": [
+        461,
+        402,
+        461,
+        402
+      ],
+      "pixels": 1
+    }
+  ],
+  "screenshot_pixels_off_by_more_than_8": 1572,
+  "screenshot_pixels_compared": 306800,
+  "passes": {
+    "1_1: draw_strand_shadow": 0,
+    "2_1: draw_strand_shadow": 759,
+    "2_2: draw_strand_shadow": 2847,
+    "2_3: draw_strand_shadow": 3404,
+    "2_1_2_3: draw_strand_shadow": 0,
+    "2_1_2_3: draw_mask_strand_shadow": 2010
+  },
+  "blocker_off_vs_reference_pixels_in_inset": 62
+}

@@ -151,6 +151,13 @@ Examples:<br>
         'sample_overhand_knot': 'Overhand Knot',
         'sample_three_strand_braid': 'Three-Strand Braid',
         'sample_interwoven_double_closed_knot': 'Interwoven Double Closed Knot',
+        'sample_straight_weave': 'Straight Weave, 12×12',
+        'sample_curved_weave': 'Curved Weave, 6×6',
+        'sample_plait': 'Plait',
+        'sample_thick_and_thin': 'Thick and Thin',
+        'sample_bridge': 'Bridge',
+        'sample_twisted_pairs': 'Twisted Pairs',
+        'sample_kagome_weave': 'Kagome Weave',
         'about': 'About',
         'select_theme': 'Select Theme:',
         'select_language': 'Select Language:',
@@ -299,15 +306,13 @@ Examples:<br>
         'curve_shape_full_desc': 'Curve Shape - Controls the mathematical curve type (1.0=sharp angles, 2.0=smooth curves, 3.0=very smooth)',
         'reset_curvature_full_desc': 'Reset Curvature Settings - Restores Control Influence, Distance Boost, and Curve Shape to defaults',
         'whats_new_info': '''
-        <h2>What's New in Version 1.111</h2>
+        <h2>What's New in Version 1.112</h2>
 
-            <li style="font-size:14px;"><b>Stylize End Side:</b> Right-click a layer with a free end and pick Stylize End Side, just under Close the Knot. A dialog lets you choose how the strand ends: Straight, Angled, Rounded, Pointed, Notched or Concave. You can also set the tilt and depth, extend or trim the end, and add a side line with its own thickness and color. The preview is live on the canvas. The shadow, side line and masks all follow the new shape. End styles are saved with your project and work with undo and redo.</li>
-            <li style="font-size:14px;"><b>Right Size on Scaled Screens:</b> On high-resolution screens with display scaling turned on, the buttons and text used to look too small. The app now follows your display scale. Toolbar labels no longer get cut off, and the toolbar moves onto two rows when the window is narrow. The layer panel can be dragged narrower than before. The OpenStrand Studio logo now appears on every window and in the taskbar.</li>
-            <li style="font-size:14px;"><b>Dialogs Fit Small Screens:</b> The Settings dialog can now be made smaller, so its Apply and OK buttons always stay on screen. The same goes for Edit Shadow, the group shadow editor, Create Mask Grid, Edit Strand Angles, Change Width and the video player. A dialog never opens larger than your screen, and it keeps the size you give it.</li>
-            <li style="font-size:14px;"><b>Smoother Dragging:</b> The canvas stays sharp while you drag, even on scaled displays or with supersampling on. Move mode shows a closed hand while dragging a point. View mode can now pan with the left mouse button too. The Refresh button's tooltip now says what it does: reload layers and reset the view.</li>
-            <li style="font-size:14px;"><b>Russian, Finnish, Swedish, Japanese and Chinese:</b> The app is now available in Russian, Finnish, Swedish, Japanese and Chinese. Choose the language in Settings, under Change Language: every button, menu, dialog and help text is translated, and each language has its flag in the list.</li>
+            <li style="font-size:14px;"><b>Better Shadows Around Masks:</b> Where a mask lifts one strand over another, the shadows now look just like a real crossing. The stray dark wedges, bumps and dents near masks are gone, and the lifted strand stays clean. The Shadow Path preview in the Shadow Editor now shows exactly what the canvas draws.</li>
+            <li style="font-size:14px;"><b>Hidden Shadows Stay Hidden:</b> When you untick a shadow in the Shadow Editor, all of it now goes away. Before, a small grey bump could stay behind next to another strand. Making a mask also no longer hides a shadow that should stay visible.</li>
+            <li style="font-size:14px;"><b>Seven New Samples:</b> In Settings, under Samples, you will find seven new projects to open and learn from: Straight Weave 12×12, Curved Weave 6×6, Plait, Thick and Thin, Bridge, Twisted Pairs and Kagome Weave. The sample buttons now sit two to a row, so the whole list fits on the page.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.111</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.112</p>
         ''',
 
 
@@ -786,6 +791,13 @@ Exemples :<br>
             'sample_overhand_knot': 'Nœud simple',
             'sample_three_strand_braid': 'Tresse à trois brins',
             'sample_interwoven_double_closed_knot': 'Nœud fermé double entrelacé',
+            'sample_straight_weave': 'Tissage droit, 12×12',
+            'sample_curved_weave': 'Tissage courbe, 6×6',
+            'sample_plait': 'Natte',
+            'sample_thick_and_thin': 'Épais et fin',
+            'sample_bridge': 'Pont',
+            'sample_twisted_pairs': 'Paires torsadées',
+            'sample_kagome_weave': 'Tissage kagome',
         'about': 'À propos',
         'select_theme': 'Sélectionner le thème :',
         'select_language': 'Sélectionner la langue :',
@@ -878,15 +890,13 @@ Exemples :<br>
         'curve_shape_full_desc': 'Forme de Courbe - Contrôle le type de courbe mathématique (1.0=angles aigus, 2.0=courbes lisses, 3.0=très lisse)',
         'reset_curvature_full_desc': "Réinitialiser les Paramètres de Courbure - Restaure l'Influence, l'Amplification et la Forme aux valeurs par défaut",
         'whats_new_info': '''
-        <h2>Nouveautés de la version 1.111</h2>
+        <h2>Nouveautés de la version 1.112</h2>
 
-            <li style="font-size:14px;"><b>Styliser le côté d'extrémité:</b> Faites un clic droit sur un calque ayant une extrémité libre et choisissez Styliser le côté d'extrémité, juste sous Fermer le Nœud. Une boîte de dialogue vous laisse choisir la forme de l'extrémité du brin : Droite, Inclinée, Arrondie, Pointue, Entaillée ou Concave. Vous pouvez aussi régler l'inclinaison et la profondeur, allonger ou raccourcir l'extrémité, et ajouter une ligne latérale avec sa propre épaisseur et sa propre couleur. L'aperçu est en direct sur le canevas. L'ombre, la ligne latérale et les masques suivent tous la nouvelle forme. Les styles d'extrémité sont enregistrés avec votre projet et fonctionnent avec annuler et rétablir.</li>
-            <li style="font-size:14px;"><b>La bonne taille sur les écrans mis à l'échelle:</b> Sur les écrans haute résolution avec une mise à l'échelle de l'affichage, les boutons et le texte paraissaient trop petits. L'application suit désormais l'échelle de votre écran. Les libellés de la barre d'outils ne sont plus coupés, et la barre d'outils passe sur deux lignes quand la fenêtre est étroite. Le panneau des calques peut être réduit plus qu'avant. Le logo OpenStrand Studio apparaît maintenant sur chaque fenêtre et dans la barre des tâches.</li>
-            <li style="font-size:14px;"><b>Des boîtes de dialogue adaptées aux petits écrans:</b> La boîte de dialogue Paramètres peut désormais être réduite, de sorte que ses boutons Appliquer et OK restent toujours à l'écran. Il en va de même pour Modifier l'ombre, l'éditeur d'ombre de groupe, Créer Grille de Masque, Modifier les angles des brins, Changer largeur et le lecteur vidéo. Une boîte de dialogue ne s'ouvre jamais plus grande que votre écran, et elle garde la taille que vous lui donnez.</li>
-            <li style="font-size:14px;"><b>Un glissement plus fluide:</b> Le canevas reste net pendant que vous faites glisser, même sur les écrans mis à l'échelle ou avec le suréchantillonnage activé. Le mode déplacement affiche une main fermée pendant le glissement d'un point. Le mode vue peut maintenant aussi se déplacer avec le bouton gauche de la souris. L'info-bulle du bouton Actualiser indique désormais ce qu'il fait : recharger les calques et réinitialiser la vue.</li>
-            <li style="font-size:14px;"><b>Russe, finnois, suédois, japonais et chinois:</b> L'application est désormais disponible en russe, en finnois, en suédois, en japonais et en chinois. Choisissez la langue dans Paramètres, sous Changer de langue : chaque bouton, menu, boîte de dialogue et texte d'aide est traduit, et chaque langue a son drapeau dans la liste.</li>
+            <li style="font-size:14px;"><b>De plus belles ombres autour des masques:</b> Là où un masque fait passer un brin par-dessus un autre, les ombres ressemblent maintenant à un vrai croisement. Les coins sombres, les bosses et les entailles parasites près des masques ont disparu, et le brin soulevé reste net. L'aperçu Chemin d'Ombre de l'Éditeur d'Ombres montre maintenant exactement ce que dessine le canevas.</li>
+            <li style="font-size:14px;"><b>Les ombres masquées restent masquées:</b> Quand vous décochez une ombre dans l'Éditeur d'Ombres, elle disparaît maintenant entièrement. Avant, une petite bosse grise pouvait rester à côté d'un autre brin. Créer un masque ne cache plus non plus une ombre qui doit rester visible.</li>
+            <li style="font-size:14px;"><b>Sept nouveaux exemples:</b> Dans Paramètres, sous Exemples, vous trouverez sept nouveaux projets à ouvrir et à étudier : Tissage droit 12×12, Tissage courbe 6×6, Natte, Épais et fin, Pont, Paires torsadées et Tissage kagome. Les boutons des exemples sont maintenant deux par ligne, pour que toute la liste tienne sur la page.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.111</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.112</p>
         ''',
 
 
@@ -1418,6 +1428,13 @@ Beispiele:<br>
             'sample_overhand_knot': 'Achterknoten',
             'sample_three_strand_braid': 'Dreisträngiger Zopf',
             'sample_interwoven_double_closed_knot': 'Verflochtener doppelter geschlossener Knoten',
+            'sample_straight_weave': 'Gerades Geflecht, 12×12',
+            'sample_curved_weave': 'Geschwungenes Geflecht, 6×6',
+            'sample_plait': 'Flechtzopf',
+            'sample_thick_and_thin': 'Dick und dünn',
+            'sample_bridge': 'Brücke',
+            'sample_twisted_pairs': 'Verdrehte Paare',
+            'sample_kagome_weave': 'Kagome-Geflecht',
         'about': 'Über',
         'select_theme': 'Thema auswählen:',
         'select_language': 'Sprache auswählen:',
@@ -1540,15 +1557,13 @@ Beispiele:<br>
         'toggle_shadow_desc': 'Schatten ein/aus - Zeigt/verbirgt Schatten auf Strängen',
         'layer_state_desc': 'Layer-Status - Zeigt Debug-Informationen zu Ebenen',
         'whats_new_info': '''
-        <h2>Neu in Version 1.111</h2>
+        <h2>Neu in Version 1.112</h2>
 
-            <li style="font-size:14px;"><b>Endseite gestalten:</b> Klicken Sie mit der rechten Maustaste auf eine Ebene mit einem freien Ende und wählen Sie Endseite gestalten, direkt unter Knoten schließen. In einem Dialog wählen Sie, wie der Strang endet: Gerade, Schräg, Abgerundet, Spitz, Eingekerbt oder Konkav. Sie können außerdem Neigung und Tiefe einstellen, das Ende verlängern oder kürzen und eine Seitenlinie mit eigener Dicke und Farbe hinzufügen. Die Vorschau erscheint live auf der Zeichenfläche. Schatten, Seitenlinie und Masken folgen alle der neuen Form. Endstile werden mit dem Projekt gespeichert und funktionieren mit Rückgängig und Wiederherstellen.</li>
-            <li style="font-size:14px;"><b>Richtige Größe auf skalierten Bildschirmen:</b> Auf hochauflösenden Bildschirmen mit aktivierter Anzeigeskalierung wirkten Schaltflächen und Text zu klein. Die App folgt jetzt Ihrer Anzeigeskalierung. Beschriftungen in der Werkzeugleiste werden nicht mehr abgeschnitten, und die Werkzeugleiste wechselt bei schmalen Fenstern auf zwei Zeilen. Das Ebenenpanel lässt sich schmaler ziehen als zuvor. Das OpenStrand Studio Logo erscheint jetzt in jedem Fenster und in der Taskleiste.</li>
-            <li style="font-size:14px;"><b>Dialoge passen auf kleine Bildschirme:</b> Der Dialog Einstellungen kann jetzt verkleinert werden, sodass seine Schaltflächen Übernehmen und OK immer sichtbar bleiben. Dasselbe gilt für Schatten bearbeiten, den Gruppenschatten-Editor, Maskenraster Erstellen, Strangwinkel bearbeiten, Breite ändern und den Videoplayer. Ein Dialog öffnet sich nie größer als Ihr Bildschirm und behält die Größe, die Sie ihm geben.</li>
-            <li style="font-size:14px;"><b>Flüssigeres Ziehen:</b> Die Zeichenfläche bleibt beim Ziehen scharf, auch auf skalierten Bildschirmen oder mit eingeschaltetem Supersampling. Der Verschiebemodus zeigt beim Ziehen eines Punktes eine geschlossene Hand. Der Ansichtsmodus kann jetzt auch mit der linken Maustaste verschoben werden. Der Tooltip der Schaltfläche Aktualisieren sagt jetzt, was sie tut: Ebenen neu laden und Ansicht zurücksetzen.</li>
-            <li style="font-size:14px;"><b>Russisch, Finnisch, Schwedisch, Japanisch und Chinesisch:</b> Die App ist jetzt auch auf Russisch, Finnisch, Schwedisch, Japanisch und Chinesisch verfügbar. Wählen Sie die Sprache in den Einstellungen unter Sprache ändern: Jede Schaltfläche, jedes Menü, jeder Dialog und jeder Hilfetext ist übersetzt, und jede Sprache hat ihre Flagge in der Liste.</li>
+            <li style="font-size:14px;"><b>Bessere Schatten an Masken:</b> Wo eine Maske einen Strang über einen anderen legt, sehen die Schatten jetzt aus wie bei einer echten Kreuzung. Die störenden dunklen Keile, Beulen und Dellen an Masken sind verschwunden, und der angehobene Strang bleibt sauber. Die Vorschau Schattenpfad im Schatten-Editor zeigt jetzt genau das, was die Zeichenfläche zeichnet.</li>
+            <li style="font-size:14px;"><b>Ausgeblendete Schatten bleiben ausgeblendet:</b> Wenn Sie einen Schatten im Schatten-Editor abwählen, verschwindet er jetzt ganz. Vorher konnte eine kleine graue Beule neben einem anderen Strang zurückbleiben. Beim Erstellen einer Maske werden außerdem keine Schatten mehr ausgeblendet, die sichtbar bleiben sollen.</li>
+            <li style="font-size:14px;"><b>Sieben neue Beispiele:</b> In den Einstellungen unter Beispiele finden Sie sieben neue Projekte zum Öffnen und Lernen: Gerades Geflecht 12×12, Geschwungenes Geflecht 6×6, Flechtzopf, Dick und dünn, Brücke, Verdrehte Paare und Kagome-Geflecht. Die Beispiel-Schaltflächen stehen jetzt zu zweit in einer Reihe, sodass die ganze Liste auf die Seite passt.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.111</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.112</p>
         ''',
         # About translations
         'about_info': '''
@@ -2044,6 +2059,13 @@ Esempi:<br>
             'sample_overhand_knot': 'Nodo semplice',
             'sample_three_strand_braid': 'Treccia a tre capi',
             'sample_interwoven_double_closed_knot': 'Nodo chiuso doppio intrecciato',
+            'sample_straight_weave': 'Intreccio dritto, 12×12',
+            'sample_curved_weave': 'Intreccio curvo, 6×6',
+            'sample_plait': 'Treccia piatta',
+            'sample_thick_and_thin': 'Spesso e sottile',
+            'sample_bridge': 'Ponte',
+            'sample_twisted_pairs': 'Coppie ritorte',
+            'sample_kagome_weave': 'Intreccio kagome',
         'about': 'Informazioni',
         'select_theme': 'Seleziona Tema:',
         'select_language': 'Seleziona Lingua:',
@@ -2136,15 +2158,13 @@ Esempi:<br>
         'curve_shape_full_desc': 'Forma Curva - Controlla il tipo di curva matematica (1.0=angoli acuti, 2.0=curve lisce, 3.0=molto liscio)',
         'reset_curvature_full_desc': 'Ripristina Impostazioni Curvatura - Ripristina Influenza, Amplificazione e Forma ai valori predefiniti',
         'whats_new_info': '''
-        <h2>Novità della versione 1.111</h2>
+        <h2>Novità della versione 1.112</h2>
 
-            <li style="font-size:14px;"><b>Stilizza il lato finale:</b> Fai clic destro su un livello con un'estremità libera e scegli Stilizza il lato finale, subito sotto Chiudi il Nodo. Una finestra ti permette di scegliere come termina il trefolo: Dritta, Inclinata, Arrotondata, Appuntita, Intagliata o Concava. Puoi anche regolare inclinazione e profondità, allungare o accorciare l'estremità e aggiungere una linea laterale con spessore e colore propri. L'anteprima è dal vivo sulla tela. Ombra, linea laterale e maschere seguono tutte la nuova forma. Gli stili delle estremità vengono salvati con il progetto e funzionano con annulla e ripristina.</li>
-            <li style="font-size:14px;"><b>Dimensione giusta sugli schermi ridimensionati:</b> Sugli schermi ad alta risoluzione con il ridimensionamento attivo, pulsanti e testo apparivano troppo piccoli. L'app ora segue la scala del tuo schermo. Le etichette della barra degli strumenti non vengono più tagliate, e la barra passa su due righe quando la finestra è stretta. Il pannello dei livelli può essere ristretto più di prima. Il logo di OpenStrand Studio appare ora su ogni finestra e nella barra delle applicazioni.</li>
-            <li style="font-size:14px;"><b>Finestre adatte agli schermi piccoli:</b> La finestra Impostazioni ora può essere rimpicciolita, così i pulsanti Applica e OK restano sempre visibili. Lo stesso vale per Modifica ombra, l'editor dell'ombra di gruppo, Crea Griglia Maschera, Modifica Angoli Trefolo, Cambia larghezza e il lettore video. Una finestra non si apre mai più grande dello schermo e mantiene la dimensione che le dai.</li>
-            <li style="font-size:14px;"><b>Trascinamento più fluido:</b> La tela resta nitida mentre trascini, anche su schermi ridimensionati o con il supersampling attivo. La modalità sposta mostra una mano chiusa mentre trascini un punto. La modalità vista ora può scorrere anche con il tasto sinistro del mouse. Il suggerimento del pulsante Aggiorna ora dice cosa fa: ricarica i livelli e reimposta la vista.</li>
-            <li style="font-size:14px;"><b>Russo, finlandese, svedese, giapponese e cinese:</b> L'app è ora disponibile in russo, finlandese, svedese, giapponese e cinese. Scegli la lingua in Impostazioni, sotto Cambia lingua: ogni pulsante, menu, finestra e testo di aiuto è tradotto, e ogni lingua ha la sua bandiera nell'elenco.</li>
+            <li style="font-size:14px;"><b>Ombre migliori intorno alle maschere:</b> Dove una maschera fa passare un trefolo sopra un altro, le ombre ora sembrano quelle di un vero incrocio. I cunei scuri, le gobbe e le tacche indesiderate vicino alle maschere sono spariti, e il trefolo sollevato resta pulito. L'anteprima Percorso Ombra dell'Editor di Ombre ora mostra esattamente ciò che la tela disegna.</li>
+            <li style="font-size:14px;"><b>Le ombre nascoste restano nascoste:</b> Quando togli la spunta a un'ombra nell'Editor di Ombre, ora sparisce del tutto. Prima poteva restare una piccola gobba grigia accanto a un altro trefolo. Creare una maschera inoltre non nasconde più un'ombra che deve restare visibile.</li>
+            <li style="font-size:14px;"><b>Sette nuovi esempi:</b> In Impostazioni, sotto Esempi, trovi sette nuovi progetti da aprire e da cui imparare: Intreccio dritto 12×12, Intreccio curvo 6×6, Treccia piatta, Spesso e sottile, Ponte, Coppie ritorte e Intreccio kagome. I pulsanti degli esempi ora sono due per riga, così l'elenco intero sta nella pagina.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - Versione 1.111</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Versione 1.112</p>
         ''',
 
 
@@ -2677,6 +2697,13 @@ Ejemplos:<br>
             'sample_overhand_knot': 'Nudo simple',
             'sample_three_strand_braid': 'Trenza de tres cabos',
             'sample_interwoven_double_closed_knot': 'Nudo cerrado doble entrelazado',
+            'sample_straight_weave': 'Tejido recto, 12×12',
+            'sample_curved_weave': 'Tejido curvo, 6×6',
+            'sample_plait': 'Trenza plana',
+            'sample_thick_and_thin': 'Grueso y fino',
+            'sample_bridge': 'Puente',
+            'sample_twisted_pairs': 'Pares torcidos',
+            'sample_kagome_weave': 'Tejido kagome',
         'about': 'Acerca',
         'select_theme': 'Seleccionar Tema:',
         'select_language': 'Seleccionar Idioma:',
@@ -2769,15 +2796,13 @@ Ejemplos:<br>
         'curve_shape_full_desc': 'Forma de Curva - Controla el tipo de curva matemática (1.0=ángulos agudos, 2.0=curvas suaves, 3.0=muy suave)',
         'reset_curvature_full_desc': 'Restablecer Configuración de Curvatura - Restaura Influencia, Amplificación y Forma a valores predeterminados',
         'whats_new_info': '''
-        <h2>Novedades de la versión 1.111</h2>
+        <h2>Novedades de la versión 1.112</h2>
 
-            <li style="font-size:14px;"><b>Estilizar lado del extremo:</b> Haz clic derecho en una capa con un extremo libre y elige Estilizar lado del extremo, justo debajo de Cerrar el Nudo. Un cuadro de diálogo te permite elegir cómo termina el cordón: Recto, Inclinado, Redondeado, Puntiagudo, Con muesca o Cóncavo. También puedes ajustar la inclinación y la profundidad, alargar o recortar el extremo, y añadir una línea lateral con su propio grosor y color. La vista previa es en vivo sobre el lienzo. La sombra, la línea lateral y las máscaras siguen la nueva forma. Los estilos de extremo se guardan con tu proyecto y funcionan con deshacer y rehacer.</li>
-            <li style="font-size:14px;"><b>Tamaño correcto en pantallas escaladas:</b> En pantallas de alta resolución con el escalado activado, los botones y el texto se veían demasiado pequeños. La aplicación ahora sigue la escala de tu pantalla. Las etiquetas de la barra de herramientas ya no se cortan, y la barra pasa a dos filas cuando la ventana es estrecha. El panel de capas se puede estrechar más que antes. El logotipo de OpenStrand Studio aparece ahora en cada ventana y en la barra de tareas.</li>
-            <li style="font-size:14px;"><b>Diálogos que caben en pantallas pequeñas:</b> El diálogo Configuración ahora se puede hacer más pequeño, así sus botones Aplicar y OK siempre quedan en pantalla. Lo mismo ocurre con Editar sombra, el editor de sombra de grupo, Crear Cuadrícula de Máscara, Editar Ángulos del Cordón, Cambiar ancho y el reproductor de video. Un diálogo nunca se abre más grande que tu pantalla, y conserva el tamaño que le das.</li>
-            <li style="font-size:14px;"><b>Arrastre más suave:</b> El lienzo se mantiene nítido mientras arrastras, incluso en pantallas escaladas o con el supermuestreo activado. El modo mover muestra una mano cerrada mientras arrastras un punto. El modo vista ahora también puede desplazarse con el botón izquierdo del ratón. La descripción del botón Actualizar ahora dice lo que hace: recargar las capas y restablecer la vista.</li>
-            <li style="font-size:14px;"><b>Ruso, finés, sueco, japonés y chino:</b> La aplicación ya está disponible en ruso, finés, sueco, japonés y chino. Elige el idioma en Configuración, bajo Cambiar idioma: todos los botones, menús, diálogos y textos de ayuda están traducidos, y cada idioma tiene su bandera en la lista.</li>
+            <li style="font-size:14px;"><b>Mejores sombras alrededor de las máscaras:</b> Donde una máscara pasa un cordón por encima de otro, las sombras ahora se ven como en un cruce real. Las cuñas oscuras, los bultos y las muescas sueltas cerca de las máscaras desaparecieron, y el cordón levantado queda limpio. La vista previa Ruta de Sombra del Editor de Sombras ahora muestra exactamente lo que dibuja el lienzo.</li>
+            <li style="font-size:14px;"><b>Las sombras ocultas siguen ocultas:</b> Cuando desmarcas una sombra en el Editor de Sombras, ahora desaparece por completo. Antes podía quedar un pequeño bulto gris junto a otro cordón. Además, crear una máscara ya no oculta una sombra que debe seguir visible.</li>
+            <li style="font-size:14px;"><b>Siete ejemplos nuevos:</b> En Configuración, bajo Ejemplos, encontrarás siete proyectos nuevos para abrir y aprender: Tejido recto 12×12, Tejido curvo 6×6, Trenza plana, Grueso y fino, Puente, Pares torcidos y Tejido kagome. Los botones de ejemplos ahora van de dos en dos por fila, así la lista entera cabe en la página.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - Versión 1.111</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Versión 1.112</p>
         ''',
  
 
@@ -3310,6 +3335,13 @@ Exemplos:<br>
             'sample_overhand_knot': 'Nó simples',
             'sample_three_strand_braid': 'Trança de três mechas',
             'sample_interwoven_double_closed_knot': 'Nó fechado duplo entrelaçado',
+            'sample_straight_weave': 'Tecelagem reta, 12×12',
+            'sample_curved_weave': 'Tecelagem curva, 6×6',
+            'sample_plait': 'Trança plana',
+            'sample_thick_and_thin': 'Grosso e fino',
+            'sample_bridge': 'Ponte',
+            'sample_twisted_pairs': 'Pares torcidos',
+            'sample_kagome_weave': 'Tecelagem kagome',
         'about': 'Sobre',
         'select_theme': 'Selecionar Tema:',
         'select_language': 'Selecionar Idioma:',
@@ -3402,15 +3434,13 @@ Exemplos:<br>
         'curve_shape_full_desc': 'Forma da Curva - Controla o tipo de curva matemática (1.0=ângulos agudos, 2.0=curvas suaves, 3.0=muito suave)',
         'reset_curvature_full_desc': 'Redefinir Configurações de Curvatura - Restaura Influência, Amplificação e Forma aos padrões',
         'whats_new_info': '''
-        <h2>Novidades da versão 1.111</h2>
+        <h2>Novidades da versão 1.112</h2>
 
-            <li style="font-size:14px;"><b>Estilizar lado da extremidade:</b> Clique com o botão direito numa camada com uma extremidade livre e escolha Estilizar lado da extremidade, logo abaixo de Fechar o Nó. Uma janela permite escolher como a mecha termina: Reta, Inclinada, Arredondada, Pontiaguda, Entalhada ou Côncava. Também pode ajustar a inclinação e a profundidade, alongar ou encurtar a extremidade e adicionar uma linha lateral com espessura e cor próprias. A pré-visualização é ao vivo na tela. A sombra, a linha lateral e as máscaras seguem todas a nova forma. Os estilos de extremidade são salvos com o projeto e funcionam com desfazer e refazer.</li>
-            <li style="font-size:14px;"><b>Tamanho certo em ecrãs com escala:</b> Em ecrãs de alta resolução com a escala de exibição ativada, os botões e o texto pareciam pequenos demais. A aplicação agora segue a escala do seu ecrã. Os rótulos da barra de ferramentas já não são cortados, e a barra passa para duas linhas quando a janela é estreita. O painel de camadas pode ser estreitado mais do que antes. O logótipo do OpenStrand Studio aparece agora em todas as janelas e na barra de tarefas.</li>
-            <li style="font-size:14px;"><b>Janelas que cabem em ecrãs pequenos:</b> A janela Configurações agora pode ser reduzida, para que os botões Aplicar e OK fiquem sempre visíveis. O mesmo vale para Editar sombra, o editor de sombra de grupo, Criar Grade de Máscara, Editar Ângulos da Mecha, Mudar largura e o reprodutor de vídeo. Uma janela nunca abre maior do que o seu ecrã e mantém o tamanho que lhe der.</li>
-            <li style="font-size:14px;"><b>Arrasto mais suave:</b> A tela permanece nítida enquanto arrasta, mesmo em ecrãs com escala ou com a superamostragem ativada. O modo mover mostra uma mão fechada enquanto arrasta um ponto. O modo de visualização agora também pode deslocar-se com o botão esquerdo do rato. A dica do botão Atualizar agora diz o que ele faz: recarregar as camadas e redefinir a vista.</li>
-            <li style="font-size:14px;"><b>Russo, finlandês, sueco, japonês e chinês:</b> A aplicação está agora disponível em russo, finlandês, sueco, japonês e chinês. Escolha o idioma em Configurações, em Mudar idioma: todos os botões, menus, janelas e textos de ajuda estão traduzidos, e cada idioma tem a sua bandeira na lista.</li>
+            <li style="font-size:14px;"><b>Sombras melhores à volta das máscaras:</b> Onde uma máscara passa uma mecha por cima de outra, as sombras agora parecem as de um cruzamento real. As cunhas escuras, os altos e os entalhes soltos perto das máscaras desapareceram, e a mecha levantada fica limpa. A pré-visualização Caminho de Sombra do Editor de Sombras agora mostra exatamente o que a tela desenha.</li>
+            <li style="font-size:14px;"><b>Sombras ocultas continuam ocultas:</b> Quando desmarca uma sombra no Editor de Sombras, ela agora desaparece por completo. Antes, podia ficar um pequeno alto cinzento ao lado de outra mecha. Criar uma máscara também já não oculta uma sombra que deve continuar visível.</li>
+            <li style="font-size:14px;"><b>Sete novos exemplos:</b> Em Configurações, em Exemplos, encontra sete novos projetos para abrir e aprender: Tecelagem reta 12×12, Tecelagem curva 6×6, Trança plana, Grosso e fino, Ponte, Pares torcidos e Tecelagem kagome. Os botões dos exemplos agora ficam dois por linha, para que a lista inteira caiba na página.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio – Versão 1.111</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio – Versão 1.112</p>
         ''',
 
 
@@ -3950,6 +3980,13 @@ Exemplos:<br>
             'sample_overhand_knot': 'קשר רגיל',
             'sample_three_strand_braid': 'צמה משלושה חוטים',
             'sample_interwoven_double_closed_knot': 'קשר סגור כפול משולב',
+            'sample_straight_weave': 'אריגה ישרה, 12×12',
+            'sample_curved_weave': 'אריגה מעוקלת, 6×6',
+            'sample_plait': 'צמה שטוחה',
+            'sample_thick_and_thin': 'עבה ודק',
+            'sample_bridge': 'גשר',
+            'sample_twisted_pairs': 'זוגות מפותלים',
+            'sample_kagome_weave': 'אריגת קגומה',
         'about': ' אודות OpenStrand Studio',
         'select_theme': 'בחר ערכת נושא:    ',
         'select_language': 'בחר שפה:',
@@ -4043,15 +4080,13 @@ Exemplos:<br>
         'reset_curvature_full_desc': 'אפס הגדרות עקמומיות - מחזיר השפעה, הגברה וצורה לברירת המחדל',
         'whats_new_info': '''
         <div dir="rtl" style="text-align: right;">
-        <h2>מה חדש בגרסה 1.111</h2>
+        <h2>מה חדש בגרסה 1.112</h2>
 
-            <li style="font-size:14px;"><b>עיצוב צד הקצה:</b> לחצו לחיצה ימנית על שכבה עם קצה חופשי ובחרו עיצוב צד הקצה, ממש מתחת לסגור את הקשר. חלון דו-שיח מאפשר לבחור איך החוט מסתיים: ישר, משופע, מעוגל, מחודד, חרוץ או קעור. אפשר גם לכוון את ההטיה והעומק, להאריך או לקצר את הקצה, ולהוסיף קו צד עם עובי וצבע משלו. התצוגה המקדימה חיה על הקנבס. הצל, קו הצד והמסכות עוקבים כולם אחרי הצורה החדשה. סגנונות הקצה נשמרים עם הפרויקט ועובדים עם ביטול וביצוע מחדש.</li>
-            <li style="font-size:14px;"><b>גודל נכון במסכים עם קנה מידה:</b> במסכים ברזולוציה גבוהה עם קנה מידה של התצוגה מופעל, הכפתורים והטקסט נראו קטנים מדי. האפליקציה עוקבת כעת אחרי קנה המידה של המסך שלכם. תוויות סרגל הכלים כבר לא נחתכות, וסרגל הכלים עובר לשתי שורות כשהחלון צר. את לוח השכבות אפשר לגרור צר יותר מבעבר. הלוגו של OpenStrand Studio מופיע כעת בכל חלון ובשורת המשימות.</li>
-            <li style="font-size:14px;"><b>חלונות שמתאימים למסכים קטנים:</b> את חלון ההגדרות אפשר כעת להקטין, כך שכפתורי החל ואישור נשארים תמיד על המסך. כך גם עריכת צל, עורך הצל של הקבוצה, צור רשת מסכות, ערוך זוויות חוט, שנה רוחב ונגן הווידאו. חלון לעולם לא נפתח גדול מהמסך שלכם, והוא שומר על הגודל שנתתם לו.</li>
-            <li style="font-size:14px;"><b>גרירה חלקה יותר:</b> הקנבס נשאר חד בזמן הגרירה, גם במסכים עם קנה מידה או עם דגימת-יתר מופעלת. מצב הזזה מציג יד סגורה בזמן גרירת נקודה. מצב תצוגה יכול כעת להזיז את התצוגה גם עם הכפתור השמאלי של העכבר. הטיפ של כפתור הרענון אומר כעת מה הוא עושה: טוען מחדש שכבות ומאפס את התצוגה.</li>
-            <li style="font-size:14px;"><b>רוסית, פינית, שוודית, יפנית וסינית:</b> האפליקציה זמינה כעת גם ברוסית, בפינית, בשוודית, ביפנית ובסינית. בחרו את השפה בהגדרות, תחת שינוי שפה: כל כפתור, תפריט, חלון וטקסט עזרה מתורגמים, ולכל שפה יש דגל ברשימה.</li>
+            <li style="font-size:14px;"><b>צללים טובים יותר סביב מסכות:</b> במקום שבו מסכה מעבירה חוט אחד מעל חוט אחר, הצללים נראים עכשיו בדיוק כמו בהצטלבות אמיתית. הטריזים הכהים, הבליטות והשקעים המיותרים ליד מסכות נעלמו, והחוט המורם נשאר נקי. התצוגה המקדימה נתיב צל בעורך הצללים מציגה עכשיו בדיוק את מה שמצויר על הקנבס.</li>
+            <li style="font-size:14px;"><b>צללים מוסתרים נשארים מוסתרים:</b> כשמבטלים את הסימון של צל בעורך הצללים, הוא נעלם עכשיו לגמרי. קודם יכלה להישאר בליטה אפורה קטנה ליד חוט אחר. גם יצירת מסכה כבר לא מסתירה צל שצריך להישאר גלוי.</li>
+            <li style="font-size:14px;"><b>שבע דוגמאות חדשות:</b> בהגדרות, תחת דוגמאות, יש שבעה פרויקטים חדשים לפתוח וללמוד מהם: אריגה ישרה 12×12, אריגה מעוקלת 6×6, צמה שטוחה, עבה ודק, גשר, זוגות מפותלים ואריגת קגומה. כפתורי הדוגמאות מסודרים עכשיו שניים בשורה, כך שכל הרשימה נכנסת בעמוד.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - גרסה 1.111</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - גרסה 1.112</p>
         </div>
         ''',
 
@@ -4580,6 +4615,13 @@ Exemplos:<br>
         'sample_overhand_knot': 'Простой узел',
         'sample_three_strand_braid': 'Коса из трёх прядей',
         'sample_interwoven_double_closed_knot': 'Переплетённый двойной закрытый узел',
+        'sample_straight_weave': 'Прямое плетение, 12×12',
+        'sample_curved_weave': 'Изогнутое плетение, 6×6',
+        'sample_plait': 'Плоская коса',
+        'sample_thick_and_thin': 'Толстые и тонкие',
+        'sample_bridge': 'Мост',
+        'sample_twisted_pairs': 'Скрученные пары',
+        'sample_kagome_weave': 'Плетение кагомэ',
         'about': 'О программе',
         'select_language': 'Выберите язык:',
         'ok': 'Подтвердить',
@@ -4721,15 +4763,13 @@ Exemplos:<br>
         'curve_shape_full_desc': 'Форма кривой - управляет математическим типом кривой (1.0=резкие углы, 2.0=плавные кривые, 3.0=очень плавные)',
         'reset_curvature_full_desc': 'Сбросить настройки кривизны - возвращает влияние контрольных точек, усиление по расстоянию и форму кривой к значениям по умолчанию',
         'whats_new_info': '''
-        <h2>Что нового в версии 1.111</h2>
+        <h2>Что нового в версии 1.112</h2>
 
-            <li style="font-size:14px;"><b>Оформление конца:</b> щёлкните правой кнопкой по слою со свободным концом и выберите «Оформить конец» сразу под пунктом «Замкнуть узел». В диалоге можно выбрать, как заканчивается прядь: прямой, скошенный, скруглённый, заострённый, с вырезом или вогнутый конец. Также можно задать наклон и глубину, удлинить или укоротить конец и добавить боковую линию со своей толщиной и цветом. Предпросмотр отображается на холсте сразу. Тень, боковая линия и маски следуют новой форме. Стили концов сохраняются вместе с проектом и работают с отменой и повтором.</li>
-            <li style="font-size:14px;"><b>Правильный размер на масштабированных экранах:</b> на экранах с высоким разрешением и включённым масштабированием кнопки и текст выглядели слишком мелко. Теперь приложение учитывает масштаб экрана. Надписи на панели инструментов больше не обрезаются, а при узком окне панель переносится на две строки. Панель слоёв можно сузить сильнее, чем раньше. Логотип OpenStrand Studio теперь показывается в каждом окне и на панели задач.</li>
-            <li style="font-size:14px;"><b>Диалоги помещаются на маленьких экранах:</b> диалог настроек теперь можно уменьшить, поэтому кнопки «Применить» и «ОК» всегда остаются на экране. То же касается редактора теней, редактора теней группы, создания сетки масок, изменения углов прядей, изменения ширины и видеоплеера. Диалог никогда не открывается больше экрана и сохраняет заданный вами размер.</li>
-            <li style="font-size:14px;"><b>Более плавное перетаскивание:</b> холст остаётся чётким во время перетаскивания даже на масштабированных экранах или при включённом суперсэмплинге. В режиме перемещения при перетаскивании точки показывается сжатая ладонь. В режиме обзора теперь можно панорамировать и левой кнопкой мыши. Подсказка кнопки «Обновить» теперь говорит, что она делает: перезагружает слои и сбрасывает вид.</li>
-            <li style="font-size:14px;"><b>Русский, финский, шведский, японский и китайский:</b> приложение теперь доступно на русском, финском, шведском, японском и китайском языках. Выберите язык в настройках, в разделе «Сменить язык»: переведены все кнопки, меню, диалоги и справочные тексты, а у каждого языка в списке есть свой флаг.</li>
+            <li style="font-size:14px;"><b>Лучшие тени у масок:</b> там, где маска поднимает одну прядь над другой, тени теперь выглядят как у настоящего пересечения. Лишние тёмные клинья, бугорки и вмятины возле масок исчезли, а поднятая прядь остаётся чистой. Предпросмотр «Контур тени» в редакторе теней теперь показывает ровно то, что рисуется на холсте.</li>
+            <li style="font-size:14px;"><b>Скрытые тени остаются скрытыми:</b> если снять флажок у тени в редакторе теней, она теперь исчезает полностью. Раньше рядом с другой прядью мог остаться маленький серый бугорок. Кроме того, создание маски больше не скрывает тень, которая должна оставаться видимой.</li>
+            <li style="font-size:14px;"><b>Семь новых примеров:</b> в настройках, в разделе «Примеры», появилось семь новых проектов, которые можно открыть и изучить: Прямое плетение 12×12, Изогнутое плетение 6×6, Плоская коса, Толстые и тонкие, Мост, Скрученные пары и Плетение кагомэ. Кнопки примеров теперь стоят по две в ряд, поэтому весь список помещается на странице.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - Версия 1.111</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Версия 1.112</p>
         ''',
         'selected_strand_settings': 'Выбранная прядь',
         'move_selected_only': 'В режиме перемещения разрешать двигать только выбранную прядь',
@@ -5198,6 +5238,13 @@ Esimerkkejä:<br>
         'sample_overhand_knot': 'Umpisolmu',
         'sample_three_strand_braid': 'Kolmisäikeinen letti',
         'sample_interwoven_double_closed_knot': 'Punottu kaksinkertainen suljettu solmu',
+        'sample_straight_weave': 'Suora kudos, 12×12',
+        'sample_curved_weave': 'Kaareva kudos, 6×6',
+        'sample_plait': 'Palmikko',
+        'sample_thick_and_thin': 'Paksu ja ohut',
+        'sample_bridge': 'Silta',
+        'sample_twisted_pairs': 'Kierretyt parit',
+        'sample_kagome_weave': 'Kagome-kudos',
         'about': 'Tietoja',
         'select_language': 'Valitse kieli:',
         'ok': 'OK',
@@ -5339,15 +5386,13 @@ Vinkki: napsauta tasopaneelin kuvakkeita hiiren oikealla painikkeella nähdäkse
         'curve_shape_full_desc': 'Kaaren muoto - määrää kaaren matemaattisen tyypin (1.0=terävät kulmat, 2.0=pehmeät kaaret, 3.0=erittäin pehmeät)',
         'reset_curvature_full_desc': 'Palauta kaarevuusasetukset - palauttaa ohjauspisteen vaikutuksen, etäisyysvahvistuksen ja kaaren muodon oletuksiin',
         'whats_new_info': '''
-        <h2>Mitä uutta versiossa 1.111</h2>
+        <h2>Mitä uutta versiossa 1.112</h2>
 
-            <li style="font-size:14px;"><b>Muotoile pää:</b> napsauta hiiren oikealla painikkeella tasoa, jolla on vapaa pää, ja valitse Muotoile pää heti Sulje solmu -kohdan alta. Ikkunassa voit valita, miten säie päättyy: suora, viisto, pyöristetty, terävä, lovettu tai kovera. Voit myös asettaa kallistuksen ja syvyyden, pidentää tai lyhentää päätä sekä lisätä sivuviivan, jolla on oma paksuus ja väri. Esikatselu näkyy piirtoalueella heti. Varjo, sivuviiva ja maskit seuraavat uutta muotoa. Pään tyylit tallentuvat projektin mukana ja toimivat kumoamisen ja uudelleentekemisen kanssa.</li>
-            <li style="font-size:14px;"><b>Oikea koko skaalatuilla näytöillä:</b> korkean resoluution näytöillä, joilla näytön skaalaus on päällä, painikkeet ja teksti näyttivät ennen liian pieniltä. Sovellus noudattaa nyt näytön skaalausta. Työkalupalkin tekstit eivät enää katkea, ja työkalupalkki siirtyy kahdelle riville, kun ikkuna on kapea. Tasopaneelin voi vetää entistä kapeammaksi. OpenStrand Studion logo näkyy nyt jokaisessa ikkunassa ja tehtäväpalkissa.</li>
-            <li style="font-size:14px;"><b>Ikkunat mahtuvat pienille näytöille:</b> Asetukset-ikkunan voi nyt pienentää, joten sen Käytä- ja OK-painikkeet pysyvät aina näytöllä. Sama koskee varjoeditoria, ryhmän varjoeditoria, maskiruudukon luontia, säikeiden kulmien muokkausta, leveyden muutosta ja videosoitinta. Ikkuna ei koskaan avaudu näyttöä suurempana, ja se säilyttää antamasi koon.</li>
-            <li style="font-size:14px;"><b>Sujuvampi raahaus:</b> piirtoalue pysyy terävänä raahauksen aikana myös skaalatuilla näytöillä tai ylinäytteistyksen ollessa päällä. Siirtotila näyttää suljetun käden pistettä raahattaessa. Katselutilassa voi nyt panoroida myös hiiren vasemmalla painikkeella. Päivitä-painikkeen vihje kertoo nyt, mitä se tekee: lataa tasot uudelleen ja palauttaa näkymän.</li>
-            <li style="font-size:14px;"><b>Venäjä, suomi, ruotsi, japani ja kiina:</b> Sovellus on nyt saatavilla venäjäksi, suomeksi, ruotsiksi, japaniksi ja kiinaksi. Valitse kieli asetuksista kohdasta Vaihda kieli: jokainen painike, valikko, ikkuna ja ohjeteksti on käännetty, ja jokaisella kielellä on oma lippunsa luettelossa.</li>
+            <li style="font-size:14px;"><b>Paremmat varjot maskien ympärillä:</b> kun maski nostaa säikeen toisen yli, varjot näyttävät nyt aivan oikealta risteykseltä. Maskien lähellä olleet ylimääräiset tummat kiilat, kyhmyt ja painaumat ovat poissa, ja nostettu säie pysyy siistinä. Varjoeditorin Varjon polku -esikatselu näyttää nyt täsmälleen sen, mitä piirtoalueelle piirretään.</li>
+            <li style="font-size:14px;"><b>Piilotetut varjot pysyvät piilossa:</b> kun poistat varjon valinnan varjoeditorissa, se katoaa nyt kokonaan. Aiemmin toisen säikeen viereen saattoi jäädä pieni harmaa kyhmy. Maskin luominen ei myöskään enää piilota varjoa, jonka pitää näkyä.</li>
+            <li style="font-size:14px;"><b>Seitsemän uutta esimerkkiä:</b> asetuksissa, kohdassa Esimerkit, on seitsemän uutta projektia avattavaksi ja opittavaksi: Suora kudos 12×12, Kaareva kudos 6×6, Palmikko, Paksu ja ohut, Silta, Kierretyt parit ja Kagome-kudos. Esimerkkipainikkeet ovat nyt kaksi rinnakkain, joten koko luettelo mahtuu sivulle.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - Versio 1.111</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Versio 1.112</p>
         ''',
         'selected_strand_settings': 'Valittu säie',
         'move_selected_only': 'Salli siirtotilassa vain valitun säikeen siirtäminen',
@@ -5814,6 +5859,13 @@ Exempel:<br>
         'sample_overhand_knot': 'Överhandsknop',
         'sample_three_strand_braid': 'Tresträngad fläta',
         'sample_interwoven_double_closed_knot': 'Sammanflätad dubbel sluten knop',
+        'sample_straight_weave': 'Rak väv, 12×12',
+        'sample_curved_weave': 'Böjd väv, 6×6',
+        'sample_plait': 'Platt fläta',
+        'sample_thick_and_thin': 'Tjock och tunn',
+        'sample_bridge': 'Bro',
+        'sample_twisted_pairs': 'Tvinnade par',
+        'sample_kagome_weave': 'Kagomeväv',
         'about': 'Om',
         'select_language': 'Välj språk:',
         'ok': 'OK',
@@ -5955,15 +6007,13 @@ Tips: högerklicka på ikonerna i lagerpanelen för att se deras förklaringar!'
         'curve_shape_full_desc': 'Kurvform - styr den matematiska kurvtypen (1.0=skarpa vinklar, 2.0=mjuka kurvor, 3.0=mycket mjuka)',
         'reset_curvature_full_desc': 'Återställ krökningsinställningar - återställer kontrollpunkternas inflytande, avståndsförstärkning och kurvform till standard',
         'whats_new_info': '''
-        <h2>Vad är nytt i version 1.111</h2>
+        <h2>Vad är nytt i version 1.112</h2>
 
-            <li style="font-size:14px;"><b>Forma ändsida:</b> högerklicka på ett lager med en fri ände och välj Forma ändsida, strax under Slut knopen. I en dialog väljer du hur strängen slutar: rak, vinklad, rundad, spetsig, skårad eller konkav. Du kan också ställa in lutning och djup, förlänga eller korta änden och lägga till en sidolinje med egen tjocklek och färg. Förhandsvisningen är live på arbetsytan. Skuggan, sidolinjen och maskerna följer alla den nya formen. Ändstilar sparas med projektet och fungerar med ångra och gör om.</li>
-            <li style="font-size:14px;"><b>Rätt storlek på skalade skärmar:</b> på högupplösta skärmar med skärmskalning påslagen såg knappar och text för små ut. Programmet följer nu din skärmskalning. Verktygsfältets etiketter klipps inte längre av, och verktygsfältet läggs på två rader när fönstret är smalt. Lagerpanelen kan dras smalare än förut. OpenStrand Studio-logotypen visas nu i varje fönster och i aktivitetsfältet.</li>
-            <li style="font-size:14px;"><b>Dialoger får plats på små skärmar:</b> inställningsdialogen kan nu göras mindre, så att dess Verkställ- och OK-knappar alltid stannar på skärmen. Detsamma gäller Redigera skugga, gruppens skuggredigerare, Skapa maskrutnät, Redigera strängvinklar, Ändra bredd och videospelaren. En dialog öppnas aldrig större än skärmen, och den behåller storleken du ger den.</li>
-            <li style="font-size:14px;"><b>Mjukare dragning:</b> arbetsytan förblir skarp medan du drar, även på skalade skärmar eller med supersampling påslaget. Flyttläget visar en knuten hand när en punkt dras. Vyläget kan nu panorera även med vänster musknapp. Uppdatera-knappens verktygstips säger nu vad den gör: laddar om lagren och återställer vyn.</li>
-            <li style="font-size:14px;"><b>Ryska, finska, svenska, japanska och kinesiska:</b> Programmet finns nu på ryska, finska, svenska, japanska och kinesiska. Välj språk i Inställningar under Byt språk: varje knapp, meny, dialog och hjälptext är översatt, och varje språk har sin flagga i listan.</li>
+            <li style="font-size:14px;"><b>Bättre skuggor kring masker:</b> där en mask lyfter en sträng över en annan ser skuggorna nu ut precis som vid en riktig korsning. De lösa mörka kilarna, bulorna och bucklorna nära masker är borta, och den lyfta strängen förblir ren. Förhandsvisningen Skuggbana i skuggredigeraren visar nu exakt det som ritas på arbetsytan.</li>
+            <li style="font-size:14px;"><b>Dolda skuggor förblir dolda:</b> när du avmarkerar en skugga i skuggredigeraren försvinner hela skuggan nu. Förut kunde en liten grå bula bli kvar bredvid en annan sträng. Att skapa en mask döljer inte heller längre en skugga som ska synas.</li>
+            <li style="font-size:14px;"><b>Sju nya exempel:</b> i Inställningar, under Exempel, finns sju nya projekt att öppna och lära sig av: Rak väv 12×12, Böjd väv 6×6, Platt fläta, Tjock och tunn, Bro, Tvinnade par och Kagomeväv. Exempelknapparna står nu två i varje rad, så hela listan får plats på sidan.</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.111</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - Version 1.112</p>
         ''',
         'selected_strand_settings': 'Vald sträng',
         'move_selected_only': 'Tillåt i flyttläge endast att flytta den valda strängen',
@@ -6428,6 +6478,13 @@ Varning: att ladda historik rensar dina nuvarande ångra/gör om-steg.''',
         'sample_overhand_knot': '止め結び',
         'sample_three_strand_braid': '三つ編み',
         'sample_interwoven_double_closed_knot': '交互に編んだ二重の閉じた結び目',
+        'sample_straight_weave': '直線の織り、12×12',
+        'sample_curved_weave': '曲線の織り、6×6',
+        'sample_plait': '平編み',
+        'sample_thick_and_thin': '太い線と細い線',
+        'sample_bridge': '橋',
+        'sample_twisted_pairs': 'ねじれたペア',
+        'sample_kagome_weave': 'かごめ編み',
         'about': 'このアプリについて',
         'select_language': '言語を選択:',
         'ok': '確定',
@@ -6569,15 +6626,13 @@ Varning: att ladda historik rensar dina nuvarande ångra/gör om-steg.''',
         'curve_shape_full_desc': 'カーブの形 - 数学的なカーブの種類を制御します(1.0=鋭角、2.0=滑らか、3.0=非常に滑らか)',
         'reset_curvature_full_desc': '曲率設定をリセット - 制御点の影響、距離ブースト、カーブの形をデフォルトに戻します',
         'whats_new_info': '''
-        <h2>新機能: バージョン 1.111</h2>
+        <h2>新機能: バージョン 1.112</h2>
 
-            <li style="font-size:14px;"><b>端のスタイル設定:</b> 自由な端を持つレイヤーを右クリックし、「結び目を閉じる」のすぐ下にある「端のスタイル設定」を選びます。ダイアログでストランドの終わり方を選べます: 直線、斜め、丸み、尖り、切り欠き、凹み。傾きと深さの設定、端の延長や切り詰め、独自の太さと色を持つサイドラインの追加もできます。プレビューはキャンバス上にリアルタイムで表示されます。影、サイドライン、マスクはすべて新しい形に追従します。端のスタイルはプロジェクトと一緒に保存され、元に戻す/やり直しにも対応します。</li>
-            <li style="font-size:14px;"><b>拡大表示の画面で適切なサイズに:</b> 表示の拡大縮小を有効にした高解像度の画面では、ボタンや文字が小さく見えていました。アプリは画面の拡大率に従うようになりました。ツールバーのラベルが切れなくなり、ウィンドウが狭いときはツールバーが2行になります。レイヤーパネルは以前より細くドラッグできます。OpenStrand Studio のロゴがすべてのウィンドウとタスクバーに表示されます。</li>
-            <li style="font-size:14px;"><b>小さな画面に収まるダイアログ:</b> 設定ダイアログを小さくできるようになり、「適用」と「OK」のボタンが常に画面内に収まります。影の編集、グループ影エディター、マスクグリッドの作成、ストランドの角度を編集、幅を変更、動画プレーヤーも同様です。ダイアログは画面より大きく開くことはなく、指定したサイズを保ちます。</li>
-            <li style="font-size:14px;"><b>より滑らかなドラッグ:</b> 拡大表示の画面やスーパーサンプリングが有効なときでも、ドラッグ中のキャンバスは鮮明なままです。移動モードでは点をドラッグ中に握った手のカーソルが表示されます。表示モードでは左マウスボタンでもパンできるようになりました。更新ボタンのツールチップが実際の動作を示すようになりました: レイヤーを再読み込みして表示をリセット。</li>
-            <li style="font-size:14px;"><b>ロシア語、フィンランド語、スウェーデン語、日本語、中国語:</b> アプリがロシア語、フィンランド語、スウェーデン語、日本語、中国語で使えるようになりました。設定の「言語を変更」で言語を選んでください。すべてのボタン、メニュー、ダイアログ、ヘルプテキストが翻訳され、各言語には一覧に国旗が表示されます。</li>
+            <li style="font-size:14px;"><b>マスクまわりの影がきれいに:</b> マスクで一方のストランドをもう一方の上に重ねた部分の影が、本物の交差と同じ見た目になりました。マスクの近くに出ていた余分な暗いくさび、こぶ、へこみはなくなり、持ち上げたストランドもきれいなままです。影エディターの「影のパス」プレビューは、キャンバスに描かれるとおりの影を表示するようになりました。</li>
+            <li style="font-size:14px;"><b>非表示の影はきちんと非表示に:</b> 影エディターで影のチェックを外すと、その影が完全に消えるようになりました。以前は、別のストランドの横に小さな灰色のこぶが残ることがありました。また、マスクを作成したときに、表示されるべき影が隠れることもなくなりました。</li>
+            <li style="font-size:14px;"><b>7つの新しいサンプル:</b> 設定の「サンプル」に、開いて学べる新しいプロジェクトが7つ加わりました: 直線の織り 12×12、曲線の織り 6×6、平編み、太い線と細い線、橋、ねじれたペア、かごめ編み。サンプルのボタンは1行に2つずつ並ぶようになり、一覧全体がページに収まります。</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - バージョン 1.111</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - バージョン 1.112</p>
         ''',
         'selected_strand_settings': '選択中のストランド',
         'move_selected_only': '移動モードでは選択中のストランドのみ移動を許可する',
@@ -7042,6 +7097,13 @@ ESC で終了''',
         'sample_overhand_knot': '单结',
         'sample_three_strand_braid': '三股辫',
         'sample_interwoven_double_closed_knot': '交织双重闭合绳结',
+        'sample_straight_weave': '直线编织，12×12',
+        'sample_curved_weave': '曲线编织，6×6',
+        'sample_plait': '扁平辫',
+        'sample_thick_and_thin': '粗与细',
+        'sample_bridge': '桥',
+        'sample_twisted_pairs': '扭绞线对',
+        'sample_kagome_weave': '笼目编织',
         'about': '关于',
         'select_language': '选择语言:',
         'ok': '确定',
@@ -7183,15 +7245,13 @@ ESC で終了''',
         'curve_shape_full_desc': '曲线形状 - 控制数学曲线类型(1.0=尖角，2.0=平滑曲线，3.0=非常平滑)',
         'reset_curvature_full_desc': '重置曲率设置 - 将控制点影响力、距离增强和曲线形状恢复为默认值',
         'whats_new_info': '''
-        <h2>新功能: 版本 1.111</h2>
+        <h2>新功能: 版本 1.112</h2>
 
-            <li style="font-size:14px;"><b>末端样式:</b> 右键点击有自由端的图层，在“闭合绳结”正下方选择“末端样式”。对话框可让你选择绳股的收尾方式: 平直、斜切、圆角、尖角、缺口或凹陷。还可以设置倾斜和深度、延长或修剪末端，并添加带有独立粗细和颜色的侧线。预览会实时显示在画布上。阴影、侧线和遮罩都会跟随新形状。末端样式随项目保存，并支持撤销和重做。</li>
-            <li style="font-size:14px;"><b>缩放屏幕上的正确尺寸:</b> 在开启了显示缩放的高分辨率屏幕上，按钮和文字以前看起来太小。应用现在会遵循你的显示缩放。工具栏标签不再被截断，窗口较窄时工具栏会换成两行。图层面板可以拖得比以前更窄。OpenStrand Studio 的标志现在显示在每个窗口和任务栏中。</li>
-            <li style="font-size:14px;"><b>对话框适应小屏幕:</b> 设置对话框现在可以缩小，因此“应用”和“确定”按钮始终留在屏幕上。编辑阴影、组阴影编辑器、创建遮罩网格、编辑绳股角度、更改宽度和视频播放器也是如此。对话框打开时绝不会大于屏幕，并且会保持你设置的大小。</li>
-            <li style="font-size:14px;"><b>更流畅的拖动:</b> 拖动时画布保持清晰，即使在缩放屏幕上或开启超级采样时也是如此。移动模式下拖动点时会显示握紧的手形光标。查看模式现在也可以用鼠标左键平移。刷新按钮的提示现在说明了它的作用: 重新加载图层并重置视图。</li>
-            <li style="font-size:14px;"><b>俄语、芬兰语、瑞典语、日语和中文:</b> 应用现已支持俄语、芬兰语、瑞典语、日语和中文。在“设置”的“更改语言”中选择语言: 所有按钮、菜单、对话框和帮助文本都已翻译，每种语言在列表中都有自己的国旗。</li>
+            <li style="font-size:14px;"><b>遮罩周围的阴影更好看:</b> 在遮罩把一根绳股抬到另一根上方的地方，阴影现在看起来就像真正的交叉一样。遮罩附近多余的暗色楔形、凸起和凹痕都消失了，被抬起的绳股也保持干净。阴影编辑器中的“阴影路径”预览现在会准确显示画布上绘制的内容。</li>
+            <li style="font-size:14px;"><b>隐藏的阴影保持隐藏:</b> 在阴影编辑器中取消勾选某个阴影后，它现在会完全消失。以前，另一根绳股旁边可能会留下一个灰色的小凸起。另外，创建遮罩时也不会再隐藏本应显示的阴影。</li>
+            <li style="font-size:14px;"><b>七个新示例:</b> 在“设置”的“示例”中，新增了七个可以打开学习的项目: 直线编织 12×12、曲线编织 6×6、扁平辫、粗与细、桥、扭绞线对和笼目编织。示例按钮现在每行两个，整个列表可以完整显示在页面上。</li>
 
-        <p style="font-size:14px;">© 2026 OpenStrand Studio - 版本 1.111</p>
+        <p style="font-size:14px;">© 2026 OpenStrand Studio - 版本 1.112</p>
         ''',
         'selected_strand_settings': '选中的绳股',
         'move_selected_only': '在移动模式下只允许移动选中的绳股',

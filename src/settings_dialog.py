@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (
     QWidget, QLabel, QStackedWidget, QComboBox, QPushButton,
     QSpacerItem, QSizePolicy, QMessageBox, QTextBrowser, QSlider,
     QColorDialog, QCheckBox, QBoxLayout, QDialogButtonBox,
-    QSpinBox, QDoubleSpinBox, QStyleOptionButton, QFileDialog # Add these
+    QSpinBox, QDoubleSpinBox, QStyleOptionButton, QFileDialog, QGridLayout
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QUrl, QRectF, QRect, QTimer, QBuffer, QByteArray, QPointF, QLocale
 from PyQt5.QtSvg import QSvgRenderer
@@ -44,6 +44,26 @@ class SettingsDialog(QDialog):
     # a readable slice of the settings page stop fitting side by side; the
     # pages scroll for everything past it.
     SHRUNK_MINIMUM = (420, 300)
+
+    # The Samples page, in order: (button attribute, translation key, English
+    # name, file in the samples folder).
+    SAMPLES = [
+        ('sample_button_closed_knot', 'sample_closed_knot', 'Closed Knot', 'closed_knot.json'),
+        ('sample_button_box_stitch', 'sample_box_stitch', 'Box Stitch', 'box_stitch.json'),
+        ('sample_button_overhand_knot', 'sample_overhand_knot', 'Overhand Knot', 'overhand_knot.json'),
+        ('sample_button_three_strand_braid', 'sample_three_strand_braid', 'Three-Strand Braid',
+         'three_strand_braid.json'),
+        ('sample_button_interwoven_double_closed_knot', 'sample_interwoven_double_closed_knot',
+         'Interwoven Double Closed Knot', 'Interwoven_double_closed_knot.json'),
+        ('sample_button_straight_weave', 'sample_straight_weave', 'Straight Weave, 12×12',
+         'straight_weave_12x12.json'),
+        ('sample_button_curved_weave', 'sample_curved_weave', 'Curved Weave, 6×6', 'curved_weave_6x6.json'),
+        ('sample_button_plait', 'sample_plait', 'Plait', 'plait.json'),
+        ('sample_button_thick_and_thin', 'sample_thick_and_thin', 'Thick and Thin', 'thick_and_thin.json'),
+        ('sample_button_bridge', 'sample_bridge', 'Bridge', 'bridge.json'),
+        ('sample_button_twisted_pairs', 'sample_twisted_pairs', 'Twisted Pairs', 'twisted_pairs.json'),
+        ('sample_button_kagome_weave', 'sample_kagome_weave', 'Kagome Weave', 'kagome_weave.json'),
+    ]
 
     def __init__(self, parent=None, canvas=None, undo_redo_manager=None, layer_panel=None):
         super(SettingsDialog, self).__init__(parent)
@@ -3440,7 +3460,7 @@ class SettingsDialog(QDialog):
         samples_layout.addWidget(self.samples_header_label)
         samples_layout.addWidget(self.samples_sub_label)
 
-        # Build sample buttons for the three curated samples (static, not scanning folder)
+        # Build sample buttons for the curated samples (static, not scanning folder)
         self.sample_buttons = []
         # Use proper path resolution for samples directory
         if getattr(sys, 'frozen', False):
@@ -3457,48 +3477,16 @@ class SettingsDialog(QDialog):
         
         samples_dir = os.path.join(base_path, 'samples')
 
-        # Closed Knot
-        self.sample_button_closed_knot = QPushButton(_['sample_closed_knot'] if 'sample_closed_knot' in _ else 'Closed Knot')
-        closed_knot_path = os.path.join(samples_dir, 'closed_knot.json')
-        self.sample_button_closed_knot.clicked.connect(lambda _, p=closed_knot_path: self.on_sample_button_clicked(p))
-        samples_layout.addWidget(self.sample_button_closed_knot)
-        self.sample_buttons.append(self.sample_button_closed_knot)
-
-        # Box Stitch
-        self.sample_button_box_stitch = QPushButton(_['sample_box_stitch'] if 'sample_box_stitch' in _ else 'Box Stitch')
-        box_stitch_path = os.path.join(samples_dir, 'box_stitch.json')
-        self.sample_button_box_stitch.clicked.connect(lambda _, p=box_stitch_path: self.on_sample_button_clicked(p))
-        samples_layout.addWidget(self.sample_button_box_stitch)
-        self.sample_buttons.append(self.sample_button_box_stitch)
-
-        # Overhand Knot
-        self.sample_button_overhand_knot = QPushButton(_['sample_overhand_knot'] if 'sample_overhand_knot' in _ else 'Overhand Knot')
-        overhand_knot_path = os.path.join(samples_dir, 'overhand_knot.json')
-        self.sample_button_overhand_knot.clicked.connect(lambda _, p=overhand_knot_path: self.on_sample_button_clicked(p))
-        samples_layout.addWidget(self.sample_button_overhand_knot)
-        self.sample_buttons.append(self.sample_button_overhand_knot)
-
-        # Three-Strand Braid
-        self.sample_button_three_strand_braid = QPushButton(
-            _['sample_three_strand_braid'] if 'sample_three_strand_braid' in _ else 'Three-Strand Braid'
-        )
-        three_strand_braid_path = os.path.join(samples_dir, 'three_strand_braid.json')
-        self.sample_button_three_strand_braid.clicked.connect(
-            lambda _, p=three_strand_braid_path: self.on_sample_button_clicked(p)
-        )
-        samples_layout.addWidget(self.sample_button_three_strand_braid)
-        self.sample_buttons.append(self.sample_button_three_strand_braid)
-
-        # Interwoven Double Closed Knot
-        self.sample_button_interwoven_double_closed_knot = QPushButton(
-            _['sample_interwoven_double_closed_knot'] if 'sample_interwoven_double_closed_knot' in _ else 'Interwoven Double Closed Knot'
-        )
-        interwoven_double_closed_knot_path = os.path.join(samples_dir, 'Interwoven_double_closed_knot.json')
-        self.sample_button_interwoven_double_closed_knot.clicked.connect(
-            lambda _, p=interwoven_double_closed_knot_path: self.on_sample_button_clicked(p)
-        )
-        samples_layout.addWidget(self.sample_button_interwoven_double_closed_knot)
-        self.sample_buttons.append(self.sample_button_interwoven_double_closed_knot)
+        # Two buttons per row, so every sample shows without scrolling
+        samples_grid = QGridLayout()
+        for index, (attribute, key, name, file_name) in enumerate(self.SAMPLES):
+            button = QPushButton(_[key] if key in _ else name)
+            sample_path = os.path.join(samples_dir, file_name)
+            button.clicked.connect(lambda _, p=sample_path: self.on_sample_button_clicked(p))
+            samples_grid.addWidget(button, index // 2, index % 2)
+            setattr(self, attribute, button)
+            self.sample_buttons.append(button)
+        samples_layout.addLayout(samples_grid)
 
         samples_layout.addStretch()
         self.stacked_widget.addWidget(self.samples_widget)
@@ -5249,21 +5237,10 @@ class SettingsDialog(QDialog):
         self.theme_combobox.setItemText(2, _['dark'])
         
         # Update sample buttons' text
-        if hasattr(self, 'sample_button_closed_knot'):
-            self.sample_button_closed_knot.setText(_['sample_closed_knot'] if 'sample_closed_knot' in _ else 'Closed Knot')
-        if hasattr(self, 'sample_button_box_stitch'):
-            self.sample_button_box_stitch.setText(_['sample_box_stitch'] if 'sample_box_stitch' in _ else 'Box Stitch')
-        if hasattr(self, 'sample_button_overhand_knot'):
-            self.sample_button_overhand_knot.setText(_['sample_overhand_knot'] if 'sample_overhand_knot' in _ else 'Overhand Knot')
-        if hasattr(self, 'sample_button_three_strand_braid'):
-            self.sample_button_three_strand_braid.setText(
-                _['sample_three_strand_braid'] if 'sample_three_strand_braid' in _ else 'Three-Strand Braid'
-            )
-        if hasattr(self, 'sample_button_interwoven_double_closed_knot'):
-            self.sample_button_interwoven_double_closed_knot.setText(
-                _['sample_interwoven_double_closed_knot'] if 'sample_interwoven_double_closed_knot' in _ else 'Interwoven Double Closed Knot'
-            )
-        
+        for attribute, key, name, _file_name in self.SAMPLES:
+            if hasattr(self, attribute):
+                getattr(self, attribute).setText(_[key] if key in _ else name)
+
         # Completely rebuild the language combobox to ensure proper translation
         current_data = self.current_language
         self.language_combobox.clear()

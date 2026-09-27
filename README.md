@@ -1,17 +1,16 @@
-# OpenStrand Studio - Version 1.111
+# OpenStrand Studio - Version 1.112
 
 An advanced diagramming tool for creating tutorials involving strand manipulation (knots, hitches, etc.)
 with dynamic masking that automatically adjusts the over-under effects between strands,
 making complex patterns clear and easy to understand.
 
-## What's New in Version 1.111
+## What's New in Version 1.112
 
-### ✨ New Features
+### ✨ New Features and Fixes
 
-- **Stylize End Side**: Right-click a layer with a free end and pick Stylize End Side, just under Close the Knot. A dialog lets you choose how the strand ends: Straight, Angled, Rounded, Pointed, Notched or Concave. You can also set the tilt and depth, extend or trim the end, and add a side line with its own thickness and color. The preview is live on the canvas. The shadow, side line and masks all follow the new shape. End styles are saved with your project and work with undo and redo.
-- **Right Size on Scaled Screens**: On high-resolution screens with display scaling turned on, the buttons and text used to look too small. The app now follows your display scale. Toolbar labels no longer get cut off, and the toolbar moves onto two rows when the window is narrow. The layer panel can be dragged narrower than before. The OpenStrand Studio logo now appears on every window and in the taskbar.
-- **Dialogs Fit Small Screens**: The Settings dialog can now be made smaller, so its Apply and OK buttons always stay on screen. The same goes for Edit Shadow, the group shadow editor, Create Mask Grid, Edit Strand Angles, Change Width and the video player. A dialog never opens larger than your screen, and it keeps the size you give it.
-- **Smoother Dragging**: The canvas stays sharp while you drag, even on scaled displays or with supersampling on. Move mode shows a closed hand while dragging a point. View mode can now pan with the left mouse button too. The Refresh button's tooltip now says what it does: reload layers and reset the view.
+- **Better Shadows Around Masks**: Where a mask lifts one strand over another, the shadows now look just like a real crossing. The stray dark wedges, bumps and dents near masks are gone, and the lifted strand stays clean. The Shadow Path preview in the Shadow Editor now shows exactly what the canvas draws.
+- **Hidden Shadows Stay Hidden**: When you untick a shadow in the Shadow Editor, all of it now goes away. Before, a small grey bump could stay behind next to another strand. Making a mask also no longer hides a shadow that should stay visible.
+- **Seven New Samples**: In Settings, under Samples, you will find seven new projects to open and learn from: Straight Weave 12×12, Curved Weave 6×6, Plait, Thick and Thin, Bridge, Twisted Pairs and Kagome Weave. The sample buttons now sit two to a row, so the whole list fits on the page.
 
 ## Features
 
@@ -47,7 +46,7 @@ python src/main.py
 ```
 
 For installer builds see `src/INSTALL_GUIDE_Windows.md` and
-`src/INSTALL_GUIDE_mac.md` (macOS: one command — `bash src/build_mac_1_111.sh`).
+`src/INSTALL_GUIDE_mac.md` (macOS: one command — `bash src/build_mac_1_112.sh`).
 
 ## Video Tutorials
 
@@ -72,4 +71,4 @@ Created by Yonatan Setbon
 
 ---
 
-© 2026 OpenStrand Studio - Version 1.111
+© 2026 OpenStrand Studio - Version 1.112

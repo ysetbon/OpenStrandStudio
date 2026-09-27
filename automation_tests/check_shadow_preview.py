@@ -2,15 +2,16 @@
 
 For every shadow row the Shadow Editor offers in a scene (each strand onto
 each layer below it, and each mask onto its second strand), this finds where
-the canvas draws that shadow: the pixels that change when the caster's
-shadow pass is switched off (for a mask, the pass that paints its first
-strand's shadow on its second strand), where the receiver shows (the pixels
-that change when the receiver is drawn in another colour). Switching off a
-single row would not do: the soft edge is stroked along all the caster's
-outlines at once and lands on every receiver it reaches, so where receivers
-overlap a row's shadow also reaches the receiver through the other one. The
-preview (shader_utils.shadow_preview) is measured against
-those pixels:
+the canvas draws that shadow: the pixels the caster's shadow pass paints (for
+a mask, the pass that paints its first strand's shadow on its second strand),
+where the receiver shows (the pixels that change when the receiver is drawn
+in another colour). Both are measured with every other shadow pass left out:
+where the shadows below it have made the canvas nearly black, the faint end
+of a soft edge changes a pixel by less than CHANGED. Switching off a single
+row would not do: the soft edge is stroked along all the caster's outlines
+at once and lands on every receiver it reaches, so where receivers overlap a
+row's shadow also reaches the receiver through the other one. The preview
+(shader_utils.shadow_preview) is measured against those pixels:
 
 - missed: how much of the drawn shadow the preview does not cover;
 - spill: how much of the preview, where the receiver shows, gets no shadow.
@@ -110,18 +111,22 @@ class PreviewCheck:
         painter.end()
         return binary(capture.qimage_to_pil(image).convert("L"))
 
-    def shows(self, base, strand):
-        """Where *strand* shows in *base*: the pixels that change when it is
-        drawn in another colour (the drawing order, joint circles and
-        translucency decide that, not the strands' outlines)."""
+    def shows(self, strand):
+        """Where *strand* shows: the pixels that change when it is drawn in
+        another colour (the drawing order, joint circles and translucency
+        decide that, not the strands' outlines), without shadows."""
         from PyQt5.QtGui import QColor
         color = QColor(strand.color)
         probe = QColor(255 - color.red(), 255 - color.green(), 128 if color.blue() < 128 else 0, color.alpha())
         strand.color = probe
         try:
-            return changed_pixels(base, self.grab())
+            return changed_pixels(self.bare, self.render_skipping(self.passes))
         finally:
             strand.color = color
+
+    def painted_by(self, shadow_pass):
+        """The pixels *shadow_pass* paints, on the scene without shadows."""
+        return changed_pixels(self.bare, self.render_skipping(self.passes - {shadow_pass}))
 
     def rows(self):
         """(caster, receiver) layer names of every row the Shadow Editor shows."""
@@ -145,7 +150,9 @@ class PreviewCheck:
 
     def check_scene(self, scene_path, window_size, background):
         self.renderer.configure(window_size, background)
-        base = self.renderer.render(scene_path, SHADOW)
+        self.renderer.render(scene_path, SHADOW)
+        self.passes = set(self.renderer.calls)
+        self.bare = self.render_skipping(self.passes)
         canvas = self.canvas
         by_name = {s.layer_name: s for s in canvas.strands}
         shows, painted = {}, {}
@@ -157,19 +164,18 @@ class PreviewCheck:
             if count(new) == 0 and count(old) == 0 and not self.may_touch(cs, rs):
                 continue
             if caster not in painted:
-                shadow_pass = "%s: %s" % (caster, "draw_mask_lift_shadow" if hasattr(cs, "get_mask_path")
-                                          else "draw_strand_shadow")
-                painted[caster] = changed_pixels(base, self.render_without(scene_path, shadow_pass))
+                painted[caster] = self.painted_by("%s: %s" % (
+                    caster, "draw_mask_lift_shadow" if hasattr(cs, "get_mask_path") else "draw_strand_shadow"))
             if receiver not in shows:
-                shows[receiver] = self.shows(base, rs)
+                shows[receiver] = self.shows(rs)
             drawn = both(painted[caster], shows[receiver])
             results.append((caster, receiver, self.measure(drawn, new, shows[receiver]),
                             self.measure(drawn, old, shows[receiver])))
         return results
 
-    def render_without(self, scene_path, shadow_pass):
-        """The scene drawn with one shadow pass left out (the scene stays loaded)."""
-        self.renderer.skip = {shadow_pass}
+    def render_skipping(self, shadow_passes):
+        """The scene drawn with *shadow_passes* left out (the scene stays loaded)."""
+        self.renderer.skip = set(shadow_passes)
         try:
             return self.grab()
         finally:

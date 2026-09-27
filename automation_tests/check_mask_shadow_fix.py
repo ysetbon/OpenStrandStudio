@@ -51,9 +51,30 @@ def side_by_side(render, expected, mask, out_path, scale=2):
     sheet.save(out_path)
 
 
+def check_shadow_row_example(renderer, example_dir, spec, out_dir):
+    """An example where the app hid a shadow row of its own accord: the scene
+    as the app draws it after the next edit of the weave, which refreshes the
+    automatic shadow overrides, must match expected.png up to anti-aliasing."""
+    name = os.path.basename(example_dir)
+    renderer.configure(spec.get("window_size", capture.WINDOW_SIZE), spec.get("canvas_background"))
+    render = renderer.render(os.path.join(example_dir, spec["scene"]), spec["shadow"],
+                             recompute_auto_shadow=True).crop(tuple(spec["crop"]))
+    expected = Image.open(os.path.join(example_dir, "expected.png")).convert("RGB")
+    mask = capture.changed(render, expected)
+    worst = max((max(abs(a - b) for a, b in zip(p, q))
+                 for p, q, flag in zip(render.getdata(), expected.getdata(), mask.getdata()) if flag), default=0)
+    print("%s: %d px differ from expected.png after the automatic shadow overrides are refreshed%s" % (
+        name, capture.count_on(mask), "" if not worst else " (at most %d/255 off: %s)" % (
+            worst, "anti-aliasing" if worst <= AA_TOLERANCE else "FAIL")), flush=True)
+    side_by_side(render, expected, mask, os.path.join(out_dir, "%s.png" % name))
+    return int(worst > AA_TOLERANCE)
+
+
 def check_example(renderer, example_dir, out_dir):
     with open(os.path.join(example_dir, "example.json"), encoding="utf-8") as handle:
         spec = json.load(handle)
+    if spec.get("kind") == "shadow_row":
+        return check_shadow_row_example(renderer, example_dir, spec, out_dir)
     name = os.path.basename(example_dir)
     scene = os.path.join(example_dir, spec["scene"])
     crop = tuple(spec["crop"])

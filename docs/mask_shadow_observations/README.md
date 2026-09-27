@@ -91,18 +91,40 @@ drawn as a layer at its own place in the stack
   empty path when a piece is subtracted from a strand with an end circle. Before, the preview had its own copy
   of the old computation: blockers included, the caster grown by twice the soft edge's reach, and a mask's row
   showing the mask's old shadow of its own, cut away by the mask's own blocker. `auto_shadow.py` keeps that
-  old measure (`_surviving_shadow`), which its threshold was tuned on, so the pairs it hides stay the same.
+  old measure (`_surviving_shadow`), which its threshold was tuned on.
 - **Overlapping receivers keep their shadow.** A strand's shadow is clipped to the strands it falls on, joined
   into one clip. The pass added each strand's outline to that clip, but once the clip is the result of a
   boolean operation (a "subtracted layers" setting on one of the strand's shadows, or a receiver trimmed near
   a mask) adding cancels wherever the outlines overlap. In a box stitch, 2_3's shadow on 1_3 lost its band on
   one side of 2_3 that way, before the fix too. The clip is now united after its first boolean operation.
+- **Hidden shadows stay hidden.** A shadow hidden in the Shadow Editor, or by `auto_shadow.py`, was only partly
+  hidden: the faded edge of the caster's shadow on a strand below the hidden one is clipped to that strand's
+  whole outline, and landed on the hidden one where it lies over it (example 5's half-disc). In example 5's
+  scene, hiding any one of 7 of its 15 shadows left 124–262 px of it behind, masks or not. A receiver's clip
+  now leaves out the strands between it and the caster whose own shadow from the caster is hidden
+  (`_clip_off_hidden_rows`). Where Qt's path subtraction goes wrong, which the result is checked for
+  (`_subtracted_checked`), the clip stays as it was: shadow is never lost that way, but in one row of a
+  crowded tangle whose masks form a loop the leak remains.
+- **The automatic hiding keeps real shadows.** `auto_shadow.py` hides a mask's second strand's shadows on its
+  fabric when most of their landing area is covered, as residue. That measure hid a genuine crossing in
+  example 5: 1_3 over 2_1, whose landing area is mostly covered by 2_2 but which still shows a full band. It
+  now also requires that the canvas would show next to nothing of the shadow (`_visible_shadow_px`: less than
+  a quarter of one crossing's band, measured by filling the Shadow Editor's preview of it clipped as the
+  canvas draws it). Example 5's shows 771 px and stays; example 4's automatically hidden shadows show 26–52 px
+  and the plait's 0 px, and stay hidden.
 
 [`automation_tests/check_shadow_preview.py`](../../automation_tests/check_shadow_preview.py) compares the
-Shadow Editor's preview of every row with what the canvas draws for it. The preview matches on every row of
-the examples. In a tangle of sticks whose masks form a loop (3_1 over 8_1 over 5_1 over 1_1 over 3_1), part of
-1_1's shadow on 3_1 also lands on 5_1: the preview shows it on the row 1_1 → 3_1, where the canvas works it
-out, and the check counts it against the row 1_1 → 5_1.
+Shadow Editor's preview of every row with what the canvas draws for it. It measures a shadow pass, and where
+each strand shows, with every other shadow pass switched off: where shadows stack up, the canvas is nearly
+black, and the faint end of a soft edge changes it by less than the check counts. The preview matches on every
+row of the examples. In a tangle of sticks whose masks form a loop (3_1 over 8_1 over 5_1 over 1_1 over 3_1),
+part of 1_1's shadow on 3_1 also lands on 5_1: the preview shows it on the row 1_1 → 3_1, where the canvas
+works it out, and the check counts it against the row 1_1 → 5_1.
+
+[`automation_tests/check_hidden_shadow_rows.py`](../../automation_tests/check_hidden_shadow_rows.py) hides
+every shadow of every strand in turn, as unticking it in the Shadow Editor does, and checks that the caster
+then paints nothing where the receiver shows. Every row of the examples passes; before the fix, 8 of their 42
+rows failed: 7 of example 5's and 1 of example 1's.
 
 [`automation_tests/check_mask_shadow_fix.py`](../../automation_tests/check_mask_shadow_fix.py) renders
 every example with the code in `src/` and compares it with `expected.png`. It also checks that the
@@ -117,6 +139,7 @@ QT_QPA_PLATFORM=offscreen python automation_tests/check_mask_shadow_fix.py [out_
 | 1 | 9 | Anti-aliasing (at most 27/255) at the corners of the lifted piece; 8 of them are drawn exactly as before the fix |
 | 2 | 48 | Specks along 1_1's edges where the two renders `expected.png` is stitched from meet; the render equals one of them at every one of these pixels |
 | 4 | 0 | |
+| 5 | 0 | Drawn after the automatic shadow overrides are refreshed, as on the app's next edit of the weave |
 
 ## Adding an example
 
@@ -147,6 +170,11 @@ QT_QPA_PLATFORM=offscreen python automation_tests/check_mask_shadow_fix.py [out_
    - `screenshot_select` (optional): which layer was selected in the screenshot, if not the mask.
    - `screenshot_unreproduced` (optional): canvas boxes where the screenshot shows something the rebuilt
      scene does not draw; the expected screenshot takes the expected render there.
+
+   An example where the app hides a shadow row by itself (example 5) sets `"kind": "shadow_row"` instead of the
+   mask fields: `current.png` is the scene as saved, and `expected.png` the same scene drawn with
+   `expected_overrides` as its shadow overrides. `check_mask_shadow_fix.py` draws it as the app does after the
+   next edit, which refreshes the automatic overrides.
 3. Run the script, then write the example's `README.md`: a table of what differs, and why.
 
 ## Examples
@@ -156,9 +184,12 @@ QT_QPA_PLATFORM=offscreen python automation_tests/check_mask_shadow_fix.py [out_
 | [1](example_01_mask_2_1_over_2_3/README.md) | Mask `2_1_2_3` (2_1 over 2_3) beside an unrelated strand `1_1` | The mask's own shadow is right. A stray wedge of 2_3's shadow lands on top of 2_1 (it leaks through the blur clip). 1_1's shadow is notched by the mask's shadow blocker, and switching the blocker off exposes a second wedge. |
 | [2](example_02_mask_1_1_over_1_4/README.md) | Mask `1_1_1_4` (1_1 over 1_4) right where 1_1 also passes under 1_3 | The mask is the top layer, so its piece of 1_1 rightly lies over 1_3 in the corner, and 1_4 stays over 1_3 at their hairpin joint. The mask's shading on 1_4 is right. The mask also casts a shadow of its own onto 1_3 around the corner (a thick band with a rounded bump over 1_4's band), and its shadow blocker notches 1_4's shadow there. |
 | [4](example_04_two_masks_weave/README.md) | Two masks weaving `2_2` and `2_3` through `1_2` and `1_3` (a 2×2 checkerboard) | Each mask's shading is right. Each mask also shades its own strand's rounded end just past the crossing, and dents the shadows at its corners. The reported screenshot also shows an L-shaped shadow on 1_3 that a fresh load of the layer state does not draw. |
+| [5](example_05_mask_2_2_over_1_3/README.md) | Mask `2_2_1_3` (2_2 over 1_3) next to where 1_3 crosses over `2_1` | The app hid 1_3's shadow on 2_1 by itself (`auto_shadow.py`), and a grey half-disc of 1_3's shadow on 1_1 was left on 2_1 where the band should be. |
 
 ![Example 1: screenshot vs expected](example_01_mask_2_1_over_2_3/compare_screenshot.png)
 
 ![Example 2: screenshot vs expected](example_02_mask_1_1_over_1_4/compare_screenshot.png)
 
 ![Example 4: screenshot vs expected](example_04_two_masks_weave/compare_screenshot.png)
+
+![Example 5: current vs expected](example_05_mask_2_2_over_1_3/compare_clean.png)

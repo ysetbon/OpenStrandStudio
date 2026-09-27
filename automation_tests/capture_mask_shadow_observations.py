@@ -139,7 +139,7 @@ class Renderer:
         self.app.processEvents()
 
     def render(self, scene_path, shadow, order=None, select=None, skip=(),
-               neutralise_blocker=False):
+               neutralise_blocker=False, overrides=None, recompute_auto_shadow=False):
         """Load *scene_path* through the app's history import and grab the canvas.
 
         order: layer names to keep, in drawing order (others are removed).
@@ -147,6 +147,9 @@ class Renderer:
         skip: shadow passes (keys as recorded in self.calls) to leave out.
         neutralise_blocker: make get_shadow_blocker_path return a far-away
             speck, i.e. masks stop cutting holes into other strands' shadows.
+        overrides: shadow overrides to draw with instead of the scene's own.
+        recompute_auto_shadow: refresh the automatic shadow overrides first,
+            as the app does after the next edit of the weave.
         """
         from PyQt5.QtCore import QRectF
         from PyQt5.QtGui import QPainterPath
@@ -163,6 +166,11 @@ class Renderer:
             by_name = {s.layer_name: s for s in canvas.strands}
             canvas.strands = [by_name[name] for name in order]
             canvas.layer_state_manager.save_current_state()
+        if overrides is not None:
+            canvas.layer_state_manager.layer_state['shadow_overrides'] = json.loads(json.dumps(overrides))
+        if recompute_auto_shadow:
+            import auto_shadow
+            auto_shadow.recompute_auto_shadow_overrides(canvas)
         if select:
             canvas.select_strand([s.layer_name for s in canvas.strands].index(select))
         # Selecting can switch modes; the report was taken in View mode.
@@ -512,9 +520,29 @@ def reference_name(entry, count):
     return "reference.png" if count == 1 else "reference_%s.png" % entry["mask"]
 
 
+def run_shadow_row_example(renderer, example_dir, spec):
+    """An example where the app hides a shadow row of its own accord
+    (auto_shadow.py): current is the scene as saved, with the row hidden, and
+    expected is the same scene with the row shown (spec["expected_overrides"])."""
+    scene = os.path.join(example_dir, spec["scene"])
+    crop = tuple(spec["crop"])
+    renderer.configure(spec.get("window_size", WINDOW_SIZE), spec.get("canvas_background"))
+    current = renderer.render(scene, spec["shadow"])
+    expected = renderer.render(scene, spec["shadow"], overrides=spec["expected_overrides"])
+    for name, image in [("current.png", current), ("expected.png", expected)]:
+        image.crop(crop).save(os.path.join(example_dir, name))
+    comparison_figure("%s \u2014 clean render (nothing selected)" % spec["label"], current, expected, crop,
+                      spec["insets"], "Expected = %s." % spec["reference_note"],
+                      os.path.join(example_dir, "compare_clean.png"))
+    print("%s: %d px differ between current and expected" % (
+        os.path.basename(example_dir), count_on(changed(current.crop(crop), expected.crop(crop)))), flush=True)
+
+
 def run_example(renderer, example_dir):
     with open(os.path.join(example_dir, "example.json"), encoding="utf-8") as handle:
         spec = json.load(handle)
+    if spec.get("kind") == "shadow_row":
+        return run_shadow_row_example(renderer, example_dir, spec)
     scene = os.path.join(example_dir, spec["scene"])
     shadow = spec["shadow"]
     crop = tuple(spec["crop"])

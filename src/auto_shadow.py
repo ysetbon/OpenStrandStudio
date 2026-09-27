@@ -19,8 +19,9 @@ woven on top, contradicting the weave.
 The fix: whenever masks change, evaluate each casting->receiving pair the
 way the renderer drew it when this was tuned (_surviving_shadow; the
 renderer has since stopped cutting mask blockers), and if the surviving
-shadow is only a small fraction of the raw caster/receiver overlap, the pair
-can only contribute
+shadow is only a small fraction of the raw caster/receiver overlap, and the
+canvas would show next to nothing of it (_visible_shadow_px), the pair can
+only contribute
 residue -> write shadow_overrides[casting][receiving] = {'visibility': False,
 'auto': True}. This is plain shadow_overrides data, so rendering stays
 byte-identical everywhere overrides are honored (including OpenStrandJS),
@@ -51,6 +52,16 @@ AUTO_HIDE_SURVIVAL_RATIO = 0.45
 # Ignore grazing overlaps (world-units^2). A real strand crossing at default
 # width (46+2*4 = 54 px wide bodies) is tens of thousands of px^2.
 AUTO_MIN_RAW_AREA = 150.0
+
+# ...and only while what the pair would show on screen is less than this
+# share of one crossing's shadow band (receiver width x half the blur, about
+# 200 px at default width and blur 30). The survival ratio was tuned with the
+# mask blockers the renderer no longer cuts, and it counts landing area that
+# strands drawn later cover anyway; the pairs it catches that draw a real
+# band (a strand genuinely crossing over a partly covered x_1 parent, next
+# to a mask on the same fabric: about 770 px) must keep it, while residue
+# shows 0-60 px (rims along outlines, slivers).
+AUTO_HIDE_MAX_VISIBLE_BAND = 0.25
 
 
 def _path_area(path):
@@ -218,6 +229,54 @@ def _surviving_shadow(canvas, casting_strand, receiving_strand, casting_layer, r
     return current_shadow
 
 
+def _visible_shadow_px(canvas, casting_strand, receiving_strand, casting_layer, receiving_layer):
+    """How many pixels of the pair's shadow the canvas would show: the Shadow
+    Editor preview of the pair (its area within its clips, as the renderer
+    works it out), minus the caster itself and every strand drawn after it.
+    Measured by filling it, not with path operations, which Qt gets wrong on
+    some strand outlines."""
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtGui import QColor, QImage, QPainter
+    import shader_utils
+
+    preview = shader_utils.shadow_preview(canvas, casting_strand, receiving_strand, casting_layer, receiving_layer)
+    if preview is None:
+        return 0
+    area, clips = preview
+    rect = clips[0].boundingRect().intersected(area.boundingRect()).adjusted(-2.0, -2.0, 2.0, 2.0)
+    if rect.isEmpty():
+        return 0
+    layer_order = canvas.layer_state_manager.getOrder()
+    above = set(layer_order[layer_order.index(casting_layer) + 1:])
+    covers = [shader_utils._drawn_footprint(casting_strand)]
+    for strand in canvas.strands:
+        # Masks drawn later are left out by the preview's own clips.
+        if (strand.layer_name in above and not hasattr(strand, 'get_mask_path')
+                and not getattr(strand, 'is_hidden', False)):
+            footprint = shader_utils._drawn_footprint(strand)
+            if not footprint.isEmpty() and footprint.boundingRect().intersects(rect):
+                covers.append(footprint)
+    width, height = int(rect.width()) + 2, int(rect.height()) + 2
+    image = QImage(width, height, QImage.Format_Grayscale8)
+    image.fill(0)
+    painter = QPainter(image)
+    try:
+        painter.translate(-rect.x(), -rect.y())
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QColor(255, 255, 255))
+        for clip in clips:
+            painter.setClipPath(clip, Qt.IntersectClip if painter.hasClipping() else Qt.ReplaceClip)
+        for footprint in covers:
+            painter.setClipPath(shader_utils._outside(footprint, rect), Qt.IntersectClip)
+        painter.drawPath(area)
+    finally:
+        painter.end()
+    shown = 0
+    for y in range(height):
+        shown += sum(1 for value in image.constScanLine(y).asstring(width) if value > 127)
+    return shown
+
+
 def compute_auto_hidden_pairs(canvas):
     """Find casting->receiving pairs whose shadow contradicts a masked weave.
 
@@ -230,9 +289,12 @@ def compute_auto_hidden_pairs(canvas):
     shadow, after the renderer's own mask-blocking + intermediate
     subtractions, keeps less than AUTO_HIDE_SURVIVAL_RATIO of its raw
     caster∩receiver overlap, everything it can still paint is residue
-    (slivers + blur fringe) on top of the woven fabric -> hide it. Y's
-    shadows onto EXPOSED fabric members at other, unmasked crossings survive
-    with high ratios and are kept.
+    (slivers + blur fringe) on top of the woven fabric -> hide it, unless
+    the canvas would still show a real band of it (_visible_shadow_px, at
+    least AUTO_HIDE_MAX_VISIBLE_BAND of a crossing's band): Y crossing over
+    an x_1 parent that another fabric strand partly covers is a genuine
+    crossing. Y's shadows onto EXPOSED fabric members at other, unmasked
+    crossings survive with high ratios and are kept.
 
     Returns a list of dicts: {'casting', 'receiving', 'ratio', 'raw_area'}.
     Pairs that already carry a user-authored override (no 'auto' key) are
@@ -316,18 +378,33 @@ def compute_auto_hidden_pairs(canvas):
             if raw_area < AUTO_MIN_RAW_AREA:
                 continue
 
-            # SURVIVOR: the per-pair path after the visibility gate +
-            # subtracted_layers + mask blocking + intermediate subtraction,
-            # measured as AUTO_HIDE_SURVIVAL_RATIO was tuned (_surviving_shadow).
-            survivor = _surviving_shadow(canvas, cs, rs, casting, receiving)
-            ratio = _path_area(survivor) / raw_area
-            if ratio < AUTO_HIDE_SURVIVAL_RATIO:
-                results.append({
-                    'casting': casting,
-                    'receiving': receiving,
-                    'ratio': ratio,
-                    'raw_area': raw_area,
-                })
+            # Measured as if the pair were shown: an earlier auto entry would
+            # hide it from both measures.
+            recv_map = overrides.get(casting)
+            auto_entry = recv_map.pop(receiving, None) if existing else None
+            try:
+                # SURVIVOR: the per-pair path after the visibility gate +
+                # subtracted_layers + mask blocking + intermediate subtraction,
+                # measured as AUTO_HIDE_SURVIVAL_RATIO was tuned (_surviving_shadow).
+                survivor = _surviving_shadow(canvas, cs, rs, casting, receiving)
+                ratio = _path_area(survivor) / raw_area
+                if ratio >= AUTO_HIDE_SURVIVAL_RATIO:
+                    continue
+                # A pair that would still show a real band of shadow is not
+                # residue, however much of its landing area is covered.
+                band = ((getattr(rs, 'width', 46) + 2 * getattr(rs, 'stroke_width', 4))
+                        * float(getattr(canvas, 'max_blur_radius', max_blur_radius) or max_blur_radius) / 2.0)
+                if _visible_shadow_px(canvas, cs, rs, casting, receiving) >= AUTO_HIDE_MAX_VISIBLE_BAND * band:
+                    continue
+            finally:
+                if auto_entry is not None:
+                    recv_map[receiving] = auto_entry
+            results.append({
+                'casting': casting,
+                'receiving': receiving,
+                'ratio': ratio,
+                'raw_area': raw_area,
+            })
     return results
 
 

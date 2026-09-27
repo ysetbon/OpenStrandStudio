@@ -72,8 +72,15 @@ drawn as a layer at its own place in the stack
   everywhere. A strand above the first strand and below the second that crosses both keeps its place in
   the layer order: the mask swaps its own two strands only (example 2's 1_3 stays under 1_4).
 - **The mask stays a layer.** Its piece is drawn at the mask's place in the layer order, as before the fix:
-  over every strand below the mask (example 2's corner over 1_3), and no strand below the mask shades it
+  over every strand below the mask (example 2's corner over 1_3), and no strand it is drawn over shades it
   (example 4).
+- **Shadows the piece paints over go back on top.** The piece is filled flat with the first strand's colour
+  and reaches 2 px past the second strand's outline (to hide that edge), so it covered the end of every
+  soft shadow band already on the first strand there, which then ended in a sharp cut. Those shadows come
+  from strands above the first strand that do not pass under the piece, and from strands that masks earlier
+  in the order lift over the first strand (in a triaxial weave, both at every junction).
+  `draw_mask_restored_shadows` paints them again over the piece, right after it is filled. A strand's shadow on
+  the second strand is cut by the piece first, as the first strand would cut it at a genuine crossing.
 - **Pan and zoom draw the same** as the default view: both mask drawing paths share the same code.
 - **Closed shadow outlines.** A shadow's soft edge is stroked along the outline of the area it falls on.
   Qt's `intersected()` with an axis-aligned rectangle returns that outline open, and the stroke then misses

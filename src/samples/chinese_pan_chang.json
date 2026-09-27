@@ -186,7 +186,7 @@
         },
         {
           "x": 910.0,
-          "y": 594.4097221939402
+          "y": 594.4097221939403
         }
       ],
       "control_point_center": {
@@ -384,16 +384,16 @@
       "control_points": [
         {
           "x": 290.0,
-          "y": 378.1091651894538
+          "y": 378.10916518945373
         },
         {
           "x": 910.0,
-          "y": 446.73129242982066
+          "y": 446.73129242982094
         }
       ],
       "control_point_center": {
         "x": 600.0,
-        "y": 412.42022880963725
+        "y": 412.42022880963736
       },
       "control_point_center_locked": false,
       "triangle_has_moved": true,
@@ -514,9 +514,9 @@
       },
       "width": 24,
       "color": {
-        "r": 232,
-        "g": 172,
-        "b": 69,
+        "r": 200,
+        "g": 62,
+        "b": 77,
         "a": 255
       },
       "stroke_color": {
@@ -615,9 +615,9 @@
       },
       "width": 24,
       "color": {
-        "r": 232,
-        "g": 172,
-        "b": 69,
+        "r": 200,
+        "g": 62,
+        "b": 77,
         "a": 255
       },
       "stroke_color": {
@@ -716,9 +716,9 @@
       },
       "width": 24,
       "color": {
-        "r": 232,
-        "g": 172,
-        "b": 69,
+        "r": 200,
+        "g": 62,
+        "b": 77,
         "a": 255
       },
       "stroke_color": {
@@ -787,16 +787,16 @@
       "length": 565.685424949238,
       "control_points": [
         {
-          "x": 548.2844312746588,
+          "x": 548.2844312745419,
           "y": 710.0
         },
         {
-          "x": 487.08701375661576,
+          "x": 487.08701375670825,
           "y": 150.0
         }
       ],
       "control_point_center": {
-        "x": 517.6857225156373,
+        "x": 517.6857225156251,
         "y": 430.0
       },
       "control_point_center_locked": false,
@@ -817,9 +817,9 @@
       },
       "width": 24,
       "color": {
-        "r": 232,
-        "g": 172,
-        "b": 69,
+        "r": 200,
+        "g": 62,
+        "b": 77,
         "a": 255
       },
       "stroke_color": {
@@ -918,9 +918,9 @@
       },
       "width": 24,
       "color": {
-        "r": 232,
-        "g": 172,
-        "b": 69,
+        "r": 200,
+        "g": 62,
+        "b": 77,
         "a": 255
       },
       "stroke_color": {
@@ -1273,8 +1273,8 @@
         null
       ],
       "control_point_center": {
-        "x": 523.9826803267993,
-        "y": 498.4229359819944
+        "x": 523.9826803267662,
+        "y": 498.4229359819955
       },
       "control_point_center_locked": false,
       "triangle_has_moved": false,
@@ -1458,7 +1458,7 @@
       ],
       "control_point_center": {
         "x": 442.9894560930326,
-        "y": 401.4382404841734
+        "y": 401.43824048417343
       },
       "control_point_center_locked": false,
       "triangle_has_moved": false,
@@ -1641,8 +1641,8 @@
         null
       ],
       "control_point_center": {
-        "x": 511.738017311702,
-        "y": 340.77856185927055
+        "x": 511.73801731172176,
+        "y": 340.7785618592729
       },
       "control_point_center_locked": false,
       "triangle_has_moved": false,
@@ -1792,7 +1792,7 @@
           },
           "control_point2": {
             "x": 910.0,
-            "y": 594.4097221939402
+            "y": 594.4097221939403
           },
           "control_point_center": null,
           "control_point_center_locked": false
@@ -1812,11 +1812,11 @@
         "1_4": {
           "control_point1": {
             "x": 290.0,
-            "y": 378.1091651894538
+            "y": 378.10916518945373
           },
           "control_point2": {
             "x": 910.0,
-            "y": 446.73129242982066
+            "y": 446.73129242982094
           },
           "control_point_center": null,
           "control_point_center_locked": false
@@ -1859,11 +1859,11 @@
         },
         "1_8": {
           "control_point1": {
-            "x": 548.2844312746588,
+            "x": 548.2844312745419,
             "y": 710.0
           },
           "control_point2": {
-            "x": 487.08701375661576,
+            "x": 487.08701375670825,
             "y": 150.0
           },
           "control_point_center": null,

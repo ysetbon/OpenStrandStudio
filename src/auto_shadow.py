@@ -17,8 +17,10 @@ clip_path). The residue lands on pixels that visually belong to the strand
 woven on top, contradicting the weave.
 
 The fix: whenever masks change, evaluate each casting->receiving pair the
-same way the renderer will, and if the surviving shadow is only a small
-fraction of the raw caster/receiver overlap, the pair can only contribute
+way the renderer drew it when this was tuned (_surviving_shadow; the
+renderer has since stopped cutting mask blockers), and if the surviving
+shadow is only a small fraction of the raw caster/receiver overlap, the pair
+can only contribute
 residue -> write shadow_overrides[casting][receiving] = {'visibility': False,
 'auto': True}. This is plain shadow_overrides data, so rendering stays
 byte-identical everywhere overrides are honored (including OpenStrandJS),
@@ -104,6 +106,118 @@ def _weld_chain_ids(canvas):
     return {name: find(name) for name in parent}
 
 
+def _surviving_shadow(canvas, casting_strand, receiving_strand, casting_layer, receiving_layer):
+    """What is left of *casting_layer*'s shadow on *receiving_layer* once the
+    masks' shadow blockers and the strands in between are cut out: the caster
+    grown by the blur, intersected with the receiver.
+
+    This is the measure AUTO_HIDE_SURVIVAL_RATIO was tuned on (it is how the
+    renderer treated masks before the mask shadow fix, and how the Shadow
+    Editor previewed shadows until then), so the pairs this module hides stay
+    the same. The renderer no longer cuts blockers; the preview now shows the
+    renderer's own shadow (shader_utils.shadow_preview).
+    """
+    from masked_strand import MaskedStrand
+    import shader_utils
+
+    layer_order = canvas.layer_state_manager.getOrder()
+    if casting_layer not in layer_order or receiving_layer not in layer_order:
+        return QPainterPath()
+
+    casting_index = layer_order.index(casting_layer)
+    receiving_index = layer_order.index(receiving_layer)
+
+    # Shadow only casts downward (onto layers with lower index)
+    if receiving_index >= casting_index:
+        return QPainterPath()
+
+    # Build shadow path from casting strand
+    max_blur_radius = 30.0
+    shadow_path = shader_utils.build_shadow_geometry(casting_strand, max_blur_radius, include_circles=False)
+
+    # Build receiving strand stroke path
+    receiving_stroke_path = shader_utils.build_rendered_geometry(receiving_strand)
+
+    # Special handling for masked strands
+    if hasattr(receiving_strand, 'get_mask_path'):
+        try:
+            receiving_stroke_path = shader_utils.get_proper_masked_strand_path(receiving_strand)
+        except Exception:
+            pass
+
+    # Calculate intersection
+    intersection = QPainterPath(shadow_path)
+    if not (getattr(casting_strand, 'full_arrow_visible', False) and getattr(casting_strand, 'arrow_casts_shadow', False)):
+        circle_shadow_path = shader_utils.build_shadow_circle_geometry(casting_strand, max_blur_radius+2)
+        intersection.addPath(circle_shadow_path)
+    intersection = QPainterPath(intersection).intersected(receiving_stroke_path)
+
+    if intersection.isEmpty():
+        return QPainterPath()
+
+    # Check shadow override visibility
+    shadow_override = canvas.layer_state_manager.get_shadow_override(casting_layer, receiving_layer)
+    if not canvas.layer_state_manager.get_shadow_visibility(casting_layer, receiving_layer):
+        return QPainterPath()
+
+    # Check if we should allow complete shadow (skip mask blocking)
+    allow_full_shadow = shadow_override and shadow_override.get('allow_full_shadow', False)
+
+    # Apply configured layer subtraction.
+    subtracted_layers = canvas.layer_state_manager.get_subtracted_layers(casting_layer, receiving_layer)
+    intersection, _ = shader_utils._subtract_named_layer_paths(intersection, canvas, subtracted_layers)
+    if intersection.isEmpty():
+        return QPainterPath()
+
+    # Apply mask blocking (unless allow_full_shadow is enabled)
+    current_shadow = QPainterPath(intersection)
+
+    masked_strands_map = {}
+    for s in canvas.strands:
+        if isinstance(s, MaskedStrand):
+            masked_strands_map[s.layer_name] = {
+                'masked_strand': s,
+                'components': [s.first_selected_strand.layer_name, s.second_selected_strand.layer_name]
+            }
+
+    if not allow_full_shadow:
+
+        # Apply blocking from each mask above the casting strand
+        for mask_name, mask_info in masked_strands_map.items():
+            mask_strand = mask_info['masked_strand']
+            is_mask_hidden = getattr(mask_strand, 'is_hidden', False)
+
+            if not is_mask_hidden and mask_name in layer_order:
+                mask_index = layer_order.index(mask_name)
+
+                # Only masks above the casting strand can block
+                if mask_index <= casting_index:
+                    continue
+
+                # Don't block if casting onto the mask itself
+                if mask_name == receiving_layer:
+                    continue
+
+                # Get blocker path
+                blocker_path = shader_utils.get_shadow_blocker_path(mask_strand, max_blur_radius)
+                if not blocker_path.isEmpty():
+                    current_shadow = QPainterPath(current_shadow).subtracted(blocker_path)
+
+        current_shadow = shader_utils._subtract_visible_component_mask_coverage(
+            current_shadow,
+            masked_strands_map,
+            layer_order,
+            receiving_layer,
+            receiving_stroke_path,
+            max_blur_radius,
+        )
+
+        intermediate_layers = shader_utils._get_intermediate_layer_names(layer_order, casting_layer, receiving_layer)
+        current_shadow, _ = shader_utils._subtract_named_layer_paths(current_shadow, canvas, intermediate_layers)
+
+    return current_shadow
+
+
 def compute_auto_hidden_pairs(canvas):
     """Find casting->receiving pairs whose shadow contradicts a masked weave.
 
@@ -185,8 +299,8 @@ def compute_auto_hidden_pairs(canvas):
                 continue  # user-authored (incl. 'pinned') — hands off
 
             # RAW overlap: caster shadow footprint ∩ receiver rendered
-            # geometry, exactly as calculate_shadow_for_layer_pair builds it
-            # before any gating/subtraction (shader_utils.py:1950-1969).
+            # geometry, exactly as _surviving_shadow builds it before any
+            # gating/subtraction.
             if raw_caster is None:
                 raw_caster = QPainterPath(
                     shader_utils.build_shadow_geometry(cs, max_blur_radius, include_circles=False))
@@ -202,11 +316,10 @@ def compute_auto_hidden_pairs(canvas):
             if raw_area < AUTO_MIN_RAW_AREA:
                 continue
 
-            # SURVIVOR: the final per-pair path after the renderer's own
-            # visibility gate + subtracted_layers + mask blocking +
-            # intermediate subtraction (the shadow-editor preview primitive).
-            survivor = shader_utils.calculate_shadow_for_layer_pair(
-                canvas, cs, rs, casting, receiving)
+            # SURVIVOR: the per-pair path after the visibility gate +
+            # subtracted_layers + mask blocking + intermediate subtraction,
+            # measured as AUTO_HIDE_SURVIVAL_RATIO was tuned (_surviving_shadow).
+            survivor = _surviving_shadow(canvas, cs, rs, casting, receiving)
             ratio = _path_area(survivor) / raw_area
             if ratio < AUTO_HIDE_SURVIVAL_RATIO:
                 results.append({

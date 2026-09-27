@@ -2801,7 +2801,7 @@ class StrandDrawingCanvas(QWidget):
             shadow_pairs_to_draw.update(self.visible_shadow_paths)
 
             if shadow_pairs_to_draw:
-                from shader_utils import calculate_shadow_for_layer_pair
+                from shader_utils import shadow_preview
 
                 # Build a lookup of strands by layer name
                 strand_lookup = {s.layer_name: s for s in self.strands}
@@ -2811,18 +2811,32 @@ class StrandDrawingCanvas(QWidget):
                     receiving_strand = strand_lookup.get(recv_layer)
 
                     if casting_strand and receiving_strand:
-                        shadow_path = calculate_shadow_for_layer_pair(
+                        preview = shadow_preview(
                             self,
                             casting_strand,
                             receiving_strand,
                             cast_layer,
-                            recv_layer
+                            recv_layer,
+                            painter=painter,
                         )
 
-                        if shadow_path and not shadow_path.isEmpty():
-                            painter.setBrush(QColor(0, 120, 255, 100))
-                            painter.setPen(QPen(QColor(0, 120, 255, 200), 2, Qt.SolidLine))
-                            painter.drawPath(shadow_path)
+                        if preview is not None:
+                            shadow_path, shadow_clips = preview
+                            painter.save()
+                            try:
+                                # Clipped like the shadow itself, to where it shows.
+                                for shadow_clip in shadow_clips:
+                                    painter.setClipPath(
+                                        shadow_clip, Qt.IntersectClip if painter.hasClipping() else Qt.ReplaceClip)
+                                painter.setPen(Qt.NoPen)
+                                painter.setBrush(QColor(0, 120, 255, 100))
+                                painter.drawPath(shadow_path)
+                                # The outline of the whole area, not of each overlapping part.
+                                painter.setBrush(Qt.NoBrush)
+                                painter.setPen(QPen(QColor(0, 120, 255, 200), 2, Qt.SolidLine))
+                                painter.drawPath(shadow_path.simplified())
+                            finally:
+                                painter.restore()
 
             # Reduced high-frequency logging for performance during moves
             # logging.info(

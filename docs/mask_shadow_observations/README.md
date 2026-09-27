@@ -81,6 +81,28 @@ drawn as a layer at its own place in the stack
   them a woven star lost the soft edge below a horizontal strand next to a mask. Outlines are now closed
   before they are stroked (`_closed_outline`), which also restores that edge where no mask is involved (a
   horizontal strand over one drawn from the bottom right up to the top left lost it before the fix too).
+- **The same drawing every time.** Near masks the strands are restacked in layer order; before, the order came
+  from Python sets, which changes between runs, and a crowded scene could come out slightly different
+  (by at most 1/255 here) each time it was opened.
+- **The Shadow Editor's preview shows what is drawn.** It is computed by the same per-pair code as the canvas
+  (`_pair_shadow`; for a mask's row, the shadow the mask paints on its second strand), and filled with the
+  painter clipped to where the shadow shows (`shadow_preview`): the receiver's clip, minus the pieces of masks
+  drawn over the shadow later. The painter does that clipping, not Qt's path operations, which can return an
+  empty path when a piece is subtracted from a strand with an end circle. Before, the preview had its own copy
+  of the old computation: blockers included, the caster grown by twice the soft edge's reach, and a mask's row
+  showing the mask's old shadow of its own, cut away by the mask's own blocker. `auto_shadow.py` keeps that
+  old measure (`_surviving_shadow`), which its threshold was tuned on, so the pairs it hides stay the same.
+- **Overlapping receivers keep their shadow.** A strand's shadow is clipped to the strands it falls on, joined
+  into one clip. The pass added each strand's outline to that clip, but once the clip is the result of a
+  boolean operation (a "subtracted layers" setting on one of the strand's shadows, or a receiver trimmed near
+  a mask) adding cancels wherever the outlines overlap. In a box stitch, 2_3's shadow on 1_3 lost its band on
+  one side of 2_3 that way, before the fix too. The clip is now united after its first boolean operation.
+
+[`automation_tests/check_shadow_preview.py`](../../automation_tests/check_shadow_preview.py) compares the
+Shadow Editor's preview of every row with what the canvas draws for it. The preview matches on every row of
+the examples. In a tangle of sticks whose masks form a loop (3_1 over 8_1 over 5_1 over 1_1 over 3_1), part of
+1_1's shadow on 3_1 also lands on 5_1: the preview shows it on the row 1_1 → 3_1, where the canvas works it
+out, and the check counts it against the row 1_1 → 5_1.
 
 [`automation_tests/check_mask_shadow_fix.py`](../../automation_tests/check_mask_shadow_fix.py) renders
 every example with the code in `src/` and compares it with `expected.png`. It also checks that the

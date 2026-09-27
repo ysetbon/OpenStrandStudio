@@ -267,11 +267,22 @@ def draw_mask_lift_shadow(painter, mask_strand, shadow_color=None, num_steps=3, 
                                    max_blur_radius=max_blur_radius, collect_only=True)
     if not collected or collected['lift_path'].isEmpty():
         return
-
-    cache = _frame_cache(painter)
-    mask_path = _piece_of(mask_strand, cache)
-    if mask_path.isEmpty():
+    clip = _mask_lift_clip(mask_strand, max_blur_radius, _frame_cache(painter))
+    if clip.isEmpty():
         return
+
+    _paint_collected_shadow(painter, collected, clip, num_steps, max_blur_radius,
+                            fill_path=collected['lift_path'])
+
+
+def _mask_lift_clip(mask_strand, max_blur_radius, cache):
+    """Where draw_mask_lift_shadow may paint: the part of the second strand
+    that shows when the mask is drawn (only near the mask when part of it is
+    erased)."""
+    canvas = mask_strand.canvas
+    second = mask_strand.second_selected_strand
+    if _piece_of(mask_strand, cache).isEmpty():
+        return QPainterPath()
     visible = build_rendered_geometry(second)
     if hasattr(canvas, 'layer_state_manager') and canvas.layer_state_manager:
         layer_order = canvas.layer_state_manager.getOrder()
@@ -286,11 +297,7 @@ def draw_mask_lift_shadow(painter, mask_strand, shadow_color=None, num_steps=3, 
     if not _whole_mask(mask_strand):
         # Only near the mask; elsewhere the second strand stays on top.
         clip = clip.intersected(_zone_of(mask_strand, max_blur_radius, cache))
-    if clip.isEmpty():
-        return
-
-    _paint_collected_shadow(painter, collected, clip, num_steps, max_blur_radius,
-                            fill_path=collected['lift_path'])
+    return clip
 
 
 def draw_circle_shadow(painter, strand, shadow_color=None):
@@ -591,7 +598,9 @@ def _raised_near_masks(receiver_layer, caster_layer, near_masks, layer_order, ca
     for sides in near_masks:
         if receiver_layer not in sides['lower'] or caster_layer in sides['lower']:
             continue
-        for name in sides['upper']:
+        # In layer order: set order changes between runs, and the order of
+        # the cuts changes the outline the soft edge follows.
+        for name in sorted(sides['upper'], key=layer_order.index):
             index = layer_order.index(name)
             # Below the receiver in the layer order, but still below the caster
             # (which a mask may have lifted over the receiver).
@@ -623,7 +632,7 @@ def _lowered_near_masks(strand, near_masks, layer_order):
         if strand.layer_name not in sides['upper']:
             continue
         below = []
-        for name in sides['lower']:
+        for name in sorted(sides['lower'], key=layer_order.index):
             if layer_order.index(name) <= this_index:
                 continue
             everywhere = sides['whole'] and strand.layer_name == sides['first'] and name == sides['second']
@@ -817,11 +826,11 @@ def _clip_off_lifted_strands(receiver_path, canvas, lifted_near_masks, layers_be
     clip = QPainterPath(receiver_path)
     if not lifted_near_masks or not layers_between:
         return clip
-    between = set(layers_between)
     keep_off = QPainterPath()
     clip_rect = clip.boundingRect()
     for zone, upper in lifted_near_masks:
-        for name in upper & between:
+        # In layer order, not set order: see _raised_near_masks.
+        for name in [name for name in layers_between if name in upper]:
             lifted_strand = _find_canvas_strand_by_layer_name(canvas, name)
             if lifted_strand is None or not _may_touch(lifted_strand, clip_rect, cache):
                 continue
@@ -837,6 +846,313 @@ def _clip_off_lifted_strands(receiver_path, canvas, lifted_near_masks, layers_be
     # the same clip afterwards and overlaps must not cancel out.
     clip.setFillRule(Qt.WindingFill)
     return clip
+
+
+def _pair_shadow(strand, other_strand, shadow_path, canvas, layer_order, masked_strands_map,
+                 near_masks, lifted_near_masks, lowered_near_masks, max_blur_radius, cache):
+    """The shadow *strand* casts on *other_strand*, computed as
+    draw_strand_shadow draws it, or None when it casts none there.
+
+    *shadow_path* is where the caster's shadow starts (_caster_shadow_path);
+    the other arguments are what draw_strand_shadow works out once per caster.
+    Returns a dict:
+
+    - ``outline``: the area whose outline the soft edge is stroked along;
+    - ``fill``: the area filled, or None when it is the outline's area;
+    - ``lift``: the mask that lifts the caster over the receiver, which paints
+      this shadow (see draw_mask_lift_shadow), or None;
+    - ``receiver_path``: the receiver's geometry;
+    - ``clip``: where the soft edge may land on the receiver (None for a lift);
+    - ``clip_blocker``: the layers the user subtracts from this shadow, which
+      draw_strand_shadow also cuts out of the clip of the receivers before it.
+
+    shadow_preview, the Shadow Editor's preview, uses the same function, so
+    the preview shows what is drawn.
+    """
+    # Skip self or strands without layer names
+    # Note: Arrow shadows should not cast on their own strand body
+    if other_strand is strand:
+        return None
+    if not hasattr(other_strand, 'layer_name') or not other_strand.layer_name:
+        return None
+    # Skip hidden strands - hidden strands should not receive shadows
+    # EXCEPT if they have a visible full arrow that should receive shadows
+    if getattr(other_strand, 'is_hidden', False) and not getattr(other_strand, 'full_arrow_visible', False):
+        return None
+    this_layer = strand.layer_name
+    other_layer = other_strand.layer_name
+    if this_layer not in layer_order or other_layer not in layer_order:
+        return None
+
+    # Normal layer order rules apply
+    self_index = layer_order.index(this_layer)
+    other_index = layer_order.index(other_layer)
+    should_be_above = self_index > other_index
+    # Where a visible mask lifts this strand over the other one, cast onto it
+    # near the mask even though it is higher in the layer order. A whole mask
+    # whose first strand is already above its second changes nothing, and the
+    # layer order casts; with erased parts it still bounds where that is so
+    # (another mask may lift the second strand over the first elsewhere).
+    mask_lift = _mask_lift_zone(masked_strands_map, this_layer, other_layer, max_blur_radius, cache)
+    lift = mask_lift
+    if mask_lift is not None and should_be_above and mask_lift[0] is None:
+        lift = None
+
+    # Only calculate shadow if this strand should be above the other
+    if not should_be_above and lift is None:
+        return None
+
+    # Both strands are components of the same visible mask: the mask owns
+    # their crossing.
+    part_of_same_visible_mask = False
+    for masked_info in masked_strands_map.values():
+        components = masked_info['components']
+        if this_layer in components and other_layer in components:
+            if not getattr(masked_info['masked_strand'], 'is_hidden', False):
+                part_of_same_visible_mask = True
+                break
+    if part_of_same_visible_mask and mask_lift is None:
+        return None
+
+    # Quick reject using bounding rectangles
+    try:
+        strand_rect = strand.boundingRect()
+        other_strand_rect = other_strand.boundingRect()
+        # --- EXTEND bounding rectangle to include circle geometry of the underlying strand ---
+        if hasattr(other_strand, 'has_circles') and any(other_strand.has_circles):
+            try:
+                base_circle_radius_br = other_strand.width + other_strand.stroke_width * 2
+                for oc_idx_br, oc_flag_br in enumerate(other_strand.has_circles):
+                    if not oc_flag_br:
+                        continue
+                    if hasattr(other_strand, 'circle_stroke_color'):
+                        oc_color_br = other_strand.circle_stroke_color
+                        if oc_color_br and oc_color_br.alpha() == 0:
+                            continue  # Transparent circle – no geometry
+                    oc_center_br = other_strand.start if oc_idx_br == 0 else other_strand.end
+                    # Create a QRectF for this circle and unite with other_strand_rect
+                    circle_rect_br = QRectF(
+                        oc_center_br.x() - (base_circle_radius_br / 2) - 1,
+                        oc_center_br.y() - (base_circle_radius_br / 2) - 1,
+                        base_circle_radius_br + 2,
+                        base_circle_radius_br + 2,
+                    )
+                    other_strand_rect = other_strand_rect.united(circle_rect_br)
+            except Exception:
+                pass
+        # Inflate the rectangles by half the rendered stroke width plus max blur so that
+        # the quick bounding-box test does not miss near-tangent crossings.
+        try:
+            inflate_self = (strand.width + strand.stroke_width * 2 + max_blur_radius) / 2.0
+            inflate_other = (other_strand.width + other_strand.stroke_width * 2 + max_blur_radius) / 2.0
+
+            strand_rect.adjust(-inflate_self, -inflate_self, inflate_self, inflate_self)
+            other_strand_rect.adjust(-inflate_other, -inflate_other, inflate_other, inflate_other)
+        except Exception:
+            # Should never happen, but be robust in case a strand misses width attributes.
+            pass
+        if not strand_rect.intersects(other_strand_rect):
+            return None
+    except Exception:
+        pass
+
+    try:
+        # Build the full rendered geometry (body + visible circles) of the
+        # underlying strand in a single call.  This guarantees that any
+        # end-circles are already part of the path we test against, avoiding
+        # later ad-hoc unions.
+        other_stroke_path = build_rendered_geometry(other_strand)
+
+        # If the other strand is a MaskedStrand, use its actual mask path
+        # instead of just the stroke path to get the correct intersection area
+        if hasattr(other_strand, 'get_mask_path'):
+            try:
+                other_stroke_path = get_proper_masked_strand_path(other_strand)
+            except Exception:
+                pass
+
+        # build_rendered_geometry() already includes the receiving
+        # strand's visible end-cap geometry, including elliptical
+        # match-connected caps. Re-adding circular caps here makes the
+        # clip path larger than the drawn strand and lets shadows appear
+        # over empty canvas at width-changed junctions.
+
+        # Calculate intersection
+        intersection = QPainterPath(shadow_path)
+        # Only add circle shadows if not using arrow shadow
+        if not (getattr(strand, 'full_arrow_visible', False) and getattr(strand, 'arrow_casts_shadow', False)):
+            circle_shadow_path = build_shadow_circle_geometry(strand, max_blur_radius+2)
+            intersection.addPath(circle_shadow_path)
+        intersection = QPainterPath(intersection).intersected(other_stroke_path)
+        if lift is not None and lift[0] is not None and not lift[0].contains(intersection):
+            # Only cut when needed: every boolean operation merges the
+            # region's overlapping pieces, and the soft edge follows them.
+            intersection = QPainterPath(intersection).intersected(lift[0])
+
+        # Skip shadow if there's no actual intersection between the paths
+        if intersection.isEmpty():
+            return None
+
+        # --- CHECK SHADOW OVERRIDE ---
+        # Check if there's a shadow override for this specific shadow relationship
+        shadow_override = None
+        if lift is not None:
+            # Keyed like the mask's own shading row in the shadow editor.
+            if hasattr(lift[1], '_intersection_shadow_visible') and not lift[1]._intersection_shadow_visible():
+                return None
+        elif hasattr(canvas, 'layer_state_manager'):
+            shadow_override = canvas.layer_state_manager.get_shadow_override(this_layer, other_layer)
+            if not canvas.layer_state_manager.get_shadow_visibility(this_layer, other_layer):
+                return None
+
+        # Check if we should allow complete shadow (skip mask blocking)
+        allow_full_shadow = shadow_override and shadow_override.get('allow_full_shadow', False)
+
+        # --- LAYER PATH SUBTRACTION ---
+        # Check if there are any layers whose paths should be subtracted from this shadow
+        clip_blocker_path = QPainterPath()
+        if hasattr(canvas, 'layer_state_manager'):
+            subtracted_layers = canvas.layer_state_manager.get_subtracted_layers(this_layer, other_layer)
+            intersection, clip_blocker_path = _subtract_named_layer_paths(
+                intersection,
+                canvas,
+                subtracted_layers,
+            )
+
+        # Masks no longer cut a "blocker" (the mask grown by half the blur)
+        # out of shadows cast from below them: anything under an opaque mask
+        # is painted over by the mask anyway, and the grown ring notched the
+        # shadows of strands the mask does not cover. The blurred edges that
+        # the blocker used to hide are kept off the lifted strands by the
+        # clip below instead.
+        current_intersection_shadow = QPainterPath(intersection)
+
+        # --- SUBTRACT INTERMEDIATE STRANDS ---
+        # Any strands between the casting and receiving strands should block the shadow
+        current_fill_shadow = None
+        if not allow_full_shadow and not current_intersection_shadow.isEmpty():
+            # Where a mask lifts this strand over the other one, nothing lies
+            # between them: the strands drawn in between are below the other
+            # one there, or above this one (and put back by the mask).
+            intermediate_layers = [] if lift is not None else \
+                _get_intermediate_layer_names(layer_order, this_layer, other_layer)
+            current_intersection_shadow, current_fill_shadow = _subtract_intermediates(
+                current_intersection_shadow,
+                canvas,
+                intermediate_layers,
+                lifted_near_masks + _sunk_near_masks(other_layer, near_masks),
+                cache,
+            )
+        # --- END INTERMEDIATE STRAND SUBTRACTION ---
+        if not current_intersection_shadow.isEmpty():
+            # Near a mask that puts this strand above others, those others
+            # lie between it and the strands below them, as at a genuine crossing.
+            cuts = []
+            for upper, below in lowered_near_masks:
+                if other_layer in upper:
+                    continue
+                for below_name, below_index, below_geometry, area in below:
+                    # Unless another mask puts the receiver above it.
+                    if other_index < below_index and not _restacked_above(
+                            other_layer, below_name, near_masks):
+                        cuts.append((area, below_geometry))
+            # Likewise strands a mask lifts above the receiver.
+            cuts += _raised_near_masks(other_layer, this_layer, near_masks, layer_order, canvas)
+            for area, geometry in cuts:
+                cut = QPainterPath(geometry)
+                if area is not None:
+                    cut = cut.intersected(area)
+                current_intersection_shadow = QPainterPath(current_intersection_shadow).subtracted(cut)
+                if current_fill_shadow is not None:
+                    current_fill_shadow = QPainterPath(current_fill_shadow).subtracted(cut)
+
+        # Apply side line exclusion for both casting and receiving strands
+        if not current_intersection_shadow.isEmpty():
+            try:
+                # Exclusion for the casting strand (this strand) - auto-calculate multiplier
+                casting_exclusion = get_side_line_exclusion_path(strand)
+                if not casting_exclusion.isEmpty():
+                    current_intersection_shadow = QPainterPath(current_intersection_shadow).subtracted(casting_exclusion)
+
+                # Exclusion for the receiving strand (other strand) - auto-calculate multiplier
+                receiving_exclusion = get_side_line_exclusion_path(other_strand)
+                if not receiving_exclusion.isEmpty():
+                    current_intersection_shadow = QPainterPath(current_intersection_shadow).subtracted(receiving_exclusion)
+            except Exception:
+                pass
+
+        current_intersection_shadow = _closed_outline(current_intersection_shadow)
+        if current_intersection_shadow.isEmpty():
+            return None
+        # The receiver's area, so the faded edge only lands where a strand is.
+        receiver_clip = None
+        if lift is None:
+            receiver_clip = _clip_off_lifted_strands(
+                other_stroke_path, canvas, lifted_near_masks,
+                _get_intermediate_layer_names(layer_order, this_layer, other_layer), cache)
+        return {'outline': current_intersection_shadow, 'fill': current_fill_shadow,
+                'lift': lift[1] if lift is not None else None, 'receiver_path': other_stroke_path,
+                'clip': receiver_clip, 'clip_blocker': clip_blocker_path}
+    except Exception:
+        return None
+
+
+def _caster_shadow_path(strand):
+    """(path, shadow_path) of a caster: its outline, and the area its shadow
+    starts from (the arrow when the arrow casts the shadow; transparent end
+    circles cut out)."""
+    # Check if arrow shading is enabled and use arrow path instead
+    if getattr(strand, 'full_arrow_visible', False) and getattr(strand, 'arrow_casts_shadow', False):
+        # Use the arrow path for shadow casting
+        arrow_shadow_path = strand.get_arrow_shadow_path() if hasattr(strand, 'get_arrow_shadow_path') else QPainterPath()
+        if not arrow_shadow_path.isEmpty():
+            path = arrow_shadow_path
+            shadow_path = arrow_shadow_path  # Use arrow path directly as shadow path
+        else:
+            path = get_proper_masked_strand_path(strand)
+            shadow_path = build_shadow_geometry(strand, 0, include_circles=False)
+    else:
+        path = get_proper_masked_strand_path(strand)
+        shadow_path = build_shadow_geometry(strand, 0, include_circles=False)  # Exclude circles, we'll handle them separately
+        
+    # --------------------------------------------------
+    # If this strand has a *transparent* circle at either end, the circle is
+    # NOT part of the rendered geometry, but the rectangular end-cap produced
+    # by the body stroke can still cast a little square shadow.  To guarantee
+    # that absolutely no shadow halo appears where the user explicitly asked
+    # for a fully-transparent cap, we subtract a slightly enlarged circle
+    # region from the shadow path.
+    # --------------------------------------------------
+    try:
+        if hasattr(strand, "has_circles") and any(strand.has_circles):
+            radius_base = (strand.width + strand.stroke_width * 2) / 1.5
+            adj_radius = radius_base   # ensure we cut beyond blur
+
+            for idx, enabled in enumerate(strand.has_circles):
+                if not enabled:
+                    continue  # Circle already hidden by flag
+
+                # Check transparency for each circle separately
+                is_transparent = False
+                if idx == 0:  # Start circle
+                    start_color = strand.start_circle_stroke_color
+                    if start_color and start_color.alpha() == 0:
+                        is_transparent = True
+                elif idx == 1:  # End circle
+                    end_color = strand.end_circle_stroke_color
+                    if end_color and end_color.alpha() == 0:
+                        is_transparent = True
+
+                if is_transparent:
+                    centre = strand.start if idx == 0 else strand.end
+                    cut = QPainterPath()
+                    cut.addEllipse(centre, adj_radius, adj_radius)
+                    shadow_path = QPainterPath(shadow_path).subtracted(cut)
+                    pass
+    except Exception as exc:
+        # logging.error(f"Error subtracting transparent circle from shadow_path of {getattr(strand, 'layer_name', 'unknown')}: {exc}")
+        pass
+    return path, shadow_path
 
 
 def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur_radius=None,
@@ -920,57 +1236,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     # visible end-circles.  This single path will be used for all subsequent
     # shadow computations, eliminating the need for special-casing circles.
 
-    # Check if arrow shading is enabled and use arrow path instead
-    if getattr(strand, 'full_arrow_visible', False) and getattr(strand, 'arrow_casts_shadow', False):
-        # Use the arrow path for shadow casting
-        arrow_shadow_path = strand.get_arrow_shadow_path() if hasattr(strand, 'get_arrow_shadow_path') else QPainterPath()
-        if not arrow_shadow_path.isEmpty():
-            path = arrow_shadow_path
-            shadow_path = arrow_shadow_path  # Use arrow path directly as shadow path
-        else:
-            path = get_proper_masked_strand_path(strand)
-            shadow_path = build_shadow_geometry(strand, 0, include_circles=False)
-    else:
-        path = get_proper_masked_strand_path(strand)
-        shadow_path = build_shadow_geometry(strand, 0, include_circles=False)  # Exclude circles, we'll handle them separately
-        
-    # --------------------------------------------------
-    # If this strand has a *transparent* circle at either end, the circle is
-    # NOT part of the rendered geometry, but the rectangular end-cap produced
-    # by the body stroke can still cast a little square shadow.  To guarantee
-    # that absolutely no shadow halo appears where the user explicitly asked
-    # for a fully-transparent cap, we subtract a slightly enlarged circle
-    # region from the shadow path.
-    # --------------------------------------------------
-    try:
-        if hasattr(strand, "has_circles") and any(strand.has_circles):
-            radius_base = (strand.width + strand.stroke_width * 2) / 1.5
-            adj_radius = radius_base   # ensure we cut beyond blur
-
-            for idx, enabled in enumerate(strand.has_circles):
-                if not enabled:
-                    continue  # Circle already hidden by flag
-
-                # Check transparency for each circle separately
-                is_transparent = False
-                if idx == 0:  # Start circle
-                    start_color = strand.start_circle_stroke_color
-                    if start_color and start_color.alpha() == 0:
-                        is_transparent = True
-                elif idx == 1:  # End circle
-                    end_color = strand.end_circle_stroke_color
-                    if end_color and end_color.alpha() == 0:
-                        is_transparent = True
-
-                if is_transparent:
-                    centre = strand.start if idx == 0 else strand.end
-                    cut = QPainterPath()
-                    cut.addEllipse(centre, adj_radius, adj_radius)
-                    shadow_path = QPainterPath(shadow_path).subtracted(cut)
-                    pass
-    except Exception as exc:
-        # logging.error(f"Error subtracting transparent circle from shadow_path of {getattr(strand, 'layer_name', 'unknown')}: {exc}")
-        pass
+    path, shadow_path = _caster_shadow_path(strand)
 
     # ------------------------------------------------------------------
     # Manual circle-exclusion logic removed – visible circles are already
@@ -998,6 +1264,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     has_shadow_content = False
     all_shadow_paths = []
     clip_path = QPainterPath()  # Will collect the union of underlying strand areas to clip the faded shadow
+    plain_clip = True  # clip_path is only strand outlines added together (see below)
 
     # Try to get layer ordering from layer state manager
     canvas = strand.canvas
@@ -1024,299 +1291,44 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         # logging.info(f"Checking shadow for : {strand.layer_name}")
         # Check against all other strands
         for other_strand in canvas.strands:
-            # logging.info(f"Checking shadow for other strand : {other_strand.layer_name}")
-            # Skip self or strands without layer names
-            # Note: Arrow shadows should not cast on their own strand body
-            if other_strand is strand:
-                # Special case: arrow can cast shadow on its own layer IF arrow_casts_shadow is disabled
-                # (normal behavior - strand doesn't shadow itself)
+            pair = _pair_shadow(strand, other_strand, shadow_path, canvas, layer_order, masked_strands_map,
+                                near_masks, lifted_near_masks, lowered_near_masks, max_blur_radius, cache)
+            if pair is None:
                 continue
-            if not hasattr(other_strand, 'layer_name') or not other_strand.layer_name:
+            if pair['lift'] is not None:
+                lift_shadow_paths.append(pair['outline'])
                 continue
-            # Skip hidden strands - hidden strands should not receive shadows
-            # EXCEPT if they have a visible full arrow that should receive shadows
-            if hasattr(other_strand, 'is_hidden') and other_strand.is_hidden:
-                # Only skip if there's NO full arrow visible
-                if not getattr(other_strand, 'full_arrow_visible', False):
-                    pass
-                    continue
-                # If it has a visible full arrow, continue to allow it to receive shadows on the arrow
-            # Prevent shadow calculation if the other strand is a component of the *same* masked strand
-            # (This check is redundant if part_of_same_visible_mask check is working correctly, but kept for safety)
-            # Check if other strand is a component of any masked strand
-     
-                    
-            # Skip if other strand isn't in layer order
-            other_layer = other_strand.layer_name
-            if other_layer not in layer_order:
-                # logging.warning(f"Layer {other_layer} not in layer order list, skipping shadow check")
-                continue
-            
-            # Normal layer order rules apply
-            if this_layer in layer_order and other_layer in layer_order:
-                self_index = layer_order.index(this_layer)
-                other_index = layer_order.index(other_layer)
-                should_be_above = self_index > other_index
-                # Where a visible mask lifts this strand over the other one, cast onto it
-                # near the mask even though it is higher in the layer order. A whole mask
-                # whose first strand is already above its second changes nothing, and the
-                # layer order casts; with erased parts it still bounds where that is so
-                # (another mask may lift the second strand over the first elsewhere).
-                mask_lift = _mask_lift_zone(masked_strands_map, this_layer, other_layer, max_blur_radius, cache)
-                lift = mask_lift
-                if mask_lift is not None and should_be_above and mask_lift[0] is None:
-                    lift = None
-            
-                # Only calculate shadow if this strand should be above the other
-                if should_be_above or lift is not None:
-                    
-                    # Check if both strands are components of the same VISIBLE masked strand
-                    part_of_same_visible_mask = False # Renamed for clarity
-                    for masked_name, masked_info in masked_strands_map.items():
-                        components = masked_info['components']
-                        if this_layer in components and other_layer in components:
-                            # Found the mask they belong to. Check if it's hidden.
-                            masked_strand_obj = masked_info['masked_strand']
-                            # Check if mask is visible (no is_hidden attribute means visible for backward compatibility)
-                            is_mask_hidden = getattr(masked_strand_obj, 'is_hidden', False)
-                            if not is_mask_hidden:
-                                # Mask exists and is VISIBLE, set flag and skip shadow
-                                part_of_same_visible_mask = True
-                                break  # Found a visible mask containing both components, no need to check others
-
-                    if part_of_same_visible_mask and mask_lift is None:
-                        continue # Skip shadow calculation for this pair
-                        
-                    # Quick reject using bounding rectangles
-                    # Calculate bounding rectangle safely
-                    try:
-                        strand_rect = strand.boundingRect()
-                        other_strand_rect = other_strand.boundingRect()
-                        # --- EXTEND bounding rectangle to include circle geometry of the underlying strand ---
-                        if hasattr(other_strand, 'has_circles') and any(other_strand.has_circles):
-                            try:
-                                base_circle_radius_br = other_strand.width + other_strand.stroke_width * 2
-                                for oc_idx_br, oc_flag_br in enumerate(other_strand.has_circles):
-                                    if not oc_flag_br:
-                                        continue
-                                    if hasattr(other_strand, 'circle_stroke_color'):
-                                        oc_color_br = other_strand.circle_stroke_color
-                                        if oc_color_br and oc_color_br.alpha() == 0:
-                                            continue  # Transparent circle – no geometry
-                                    oc_center_br = other_strand.start if oc_idx_br == 0 else other_strand.end
-                                    # Create a QRectF for this circle and unite with other_strand_rect
-                                    circle_rect_br = QRectF(
-                                        oc_center_br.x() - (base_circle_radius_br / 2) - 1,
-                                        oc_center_br.y() - (base_circle_radius_br / 2) - 1,
-                                        base_circle_radius_br + 2,
-                                        base_circle_radius_br + 2,
-                                    )
-                                    other_strand_rect = other_strand_rect.united(circle_rect_br)
-                            except Exception as br_e:
-                                # logging.error(f"Error extending bounding rect with circle geometry for {other_layer}: {br_e}")
-                                pass
-                        # Inflate the rectangles by half the rendered stroke width plus max blur so that
-                        # the quick bounding-box test does not miss near-tangent crossings.
-                        try:
-                            inflate_self = (strand.width + strand.stroke_width * 2 + max_blur_radius) / 2.0
-                            inflate_other = (other_strand.width + other_strand.stroke_width * 2 + max_blur_radius) / 2.0
-
-                            strand_rect.adjust(-inflate_self, -inflate_self, inflate_self, inflate_self)
-                            other_strand_rect.adjust(-inflate_other, -inflate_other, inflate_other, inflate_other)
-                        except Exception as inflate_err:
-                            # Should never happen, but be robust in case a strand misses width attributes.
-                            # logging.error(f"Error inflating bounding rects for quick reject: {inflate_err}")
-                            pass
-                        if not strand_rect.intersects(other_strand_rect):
-                            pass
-                            continue
-                    except Exception as e:
-                        # logging.warning(f"Could not get bounding rectangles for shadow check between {this_layer} and {other_layer}: {e}")
-                        # Optionally continue or handle error, continuing for now
-                        pass
-                        
-                    try:
-                        # Build the full rendered geometry (body + visible circles) of the
-                        # underlying strand in a single call.  This guarantees that any
-                        # end-circles are already part of the path we test against, avoiding
-                        # later ad-hoc unions.
-                        other_stroke_path = build_rendered_geometry(other_strand)
-                        
-                        # Special handling for masked strands
-                        # If the other strand is a MaskedStrand, use its actual mask path
-                        # instead of just the stroke path to get the correct intersection area
-                        if hasattr(other_strand, 'get_mask_path'):
-                            try:
-                                # Get the actual mask path which represents the true intersection area
-                                # using our helper function
-                                other_stroke_path = get_proper_masked_strand_path(other_strand)
-                                pass
-                            except Exception as e:
-                                # logging.error(f"Error getting mask path from MaskedStrand {other_layer}: {e}")
-                                pass
-                        
-                        # build_rendered_geometry() already includes the receiving
-                        # strand's visible end-cap geometry, including elliptical
-                        # match-connected caps. Re-adding circular caps here makes the
-                        # clip path larger than the drawn strand and lets shadows appear
-                        # over empty canvas at width-changed junctions.
-
-                        # Calculate intersection
-                        intersection = QPainterPath(shadow_path)
-                        # Only add circle shadows if not using arrow shadow
-                        if not (getattr(strand, 'full_arrow_visible', False) and getattr(strand, 'arrow_casts_shadow', False)):
-                            circle_shadow_path = build_shadow_circle_geometry(strand, max_blur_radius+2)
-                            intersection.addPath(circle_shadow_path)
-                        intersection = QPainterPath(intersection).intersected(other_stroke_path)
-                        if lift is not None and lift[0] is not None and not lift[0].contains(intersection):
-                            # Only cut when needed: every boolean operation merges the
-                            # region's overlapping pieces, and the soft edge follows them.
-                            intersection = QPainterPath(intersection).intersected(lift[0])
-                        # logging.info(f"Intersection path for {this_layer} onto {other_layer}: bounds={intersection.boundingRect()}, elements={intersection.elementCount()}")
-                        
-                        # Skip shadow if there's no actual intersection between the paths
-                        if intersection.isEmpty():
-                            pass
-                            continue
-
-                        # --- CHECK SHADOW OVERRIDE ---
-                        # Check if there's a shadow override for this specific shadow relationship
-                        shadow_override = None
-                        if lift is not None:
-                            # Keyed like the mask's own shading row in the shadow editor.
-                            if hasattr(lift[1], '_intersection_shadow_visible') and not lift[1]._intersection_shadow_visible():
-                                continue
-                        elif hasattr(strand.canvas, 'layer_state_manager'):
-                            shadow_override = strand.canvas.layer_state_manager.get_shadow_override(this_layer, other_layer)
-                            if not strand.canvas.layer_state_manager.get_shadow_visibility(this_layer, other_layer):
-                                continue
-
-                        # Check if we should allow complete shadow (skip mask blocking)
-                        allow_full_shadow = shadow_override and shadow_override.get('allow_full_shadow', False)
-
-                        # --- LAYER PATH SUBTRACTION ---
-                        # Check if there are any layers whose paths should be subtracted from this shadow
-                        clip_blocker_path = QPainterPath()
-                        if hasattr(strand.canvas, 'layer_state_manager'):
-                            subtracted_layers = strand.canvas.layer_state_manager.get_subtracted_layers(this_layer, other_layer)
-                            intersection, clip_blocker_path = _subtract_named_layer_paths(
-                                intersection,
-                                canvas,
-                                subtracted_layers,
-                            )
-
-                        # Masks no longer cut a "blocker" (the mask grown by half the blur)
-                        # out of shadows cast from below them: anything under an opaque mask
-                        # is painted over by the mask anyway, and the grown ring notched the
-                        # shadows of strands the mask does not cover. The blurred edges that
-                        # the blocker used to hide are kept off the lifted strands by the
-                        # clip below instead.
-                        current_intersection_shadow = QPainterPath(intersection)
-
-                        # --- SUBTRACT INTERMEDIATE STRANDS ---
-                        # Any strands between the casting and receiving strands should block the shadow
-                        current_fill_shadow = None
-                        if not allow_full_shadow and not current_intersection_shadow.isEmpty():
-                            # Where a mask lifts this strand over the other one, nothing lies
-                            # between them: the strands drawn in between are below the other
-                            # one there, or above this one (and put back by the mask).
-                            intermediate_layers = [] if lift is not None else \
-                                _get_intermediate_layer_names(layer_order, this_layer, other_layer)
-                            current_intersection_shadow, current_fill_shadow = _subtract_intermediates(
-                                current_intersection_shadow,
-                                canvas,
-                                intermediate_layers,
-                                lifted_near_masks + _sunk_near_masks(other_layer, near_masks),
-                                cache,
-                            )
-                        # --- END INTERMEDIATE STRAND SUBTRACTION ---
-                        if not current_intersection_shadow.isEmpty():
-                            # Near a mask that puts this strand above others, those others
-                            # lie between it and the strands below them, as at a genuine crossing.
-                            cuts = []
-                            for upper, below in lowered_near_masks:
-                                if other_layer in upper:
-                                    continue
-                                for below_name, below_index, below_geometry, area in below:
-                                    # Unless another mask puts the receiver above it.
-                                    if other_index < below_index and not _restacked_above(
-                                            other_layer, below_name, near_masks):
-                                        cuts.append((area, below_geometry))
-                            # Likewise strands a mask lifts above the receiver.
-                            cuts += _raised_near_masks(other_layer, this_layer, near_masks, layer_order, canvas)
-                            for area, geometry in cuts:
-                                cut = QPainterPath(geometry)
-                                if area is not None:
-                                    cut = cut.intersected(area)
-                                current_intersection_shadow = QPainterPath(current_intersection_shadow).subtracted(cut)
-                                if current_fill_shadow is not None:
-                                    current_fill_shadow = QPainterPath(current_fill_shadow).subtracted(cut)
-
-                        # Apply side line exclusion for both casting and receiving strands
-                        if not current_intersection_shadow.isEmpty():
-                            # Get side line exclusion paths for both strands
-                            try:
-                                # Exclusion for the casting strand (this strand) - auto-calculate multiplier
-                                casting_exclusion = get_side_line_exclusion_path(strand)
-                                if not casting_exclusion.isEmpty():
-                                    current_intersection_shadow = QPainterPath(current_intersection_shadow).subtracted(casting_exclusion)
-                                    pass
-
-                                # Exclusion for the receiving strand (other strand) - auto-calculate multiplier
-                                receiving_exclusion = get_side_line_exclusion_path(other_strand)
-                                if not receiving_exclusion.isEmpty():
-                                    current_intersection_shadow = QPainterPath(current_intersection_shadow).subtracted(receiving_exclusion)
-                                    pass
-                                    
-                            except Exception as exclusion_err:
-                                pass
-                        
-                        current_intersection_shadow = _closed_outline(current_intersection_shadow)
-                        if lift is not None:
-                            if not current_intersection_shadow.isEmpty():
-                                lift_shadow_paths.append(current_intersection_shadow)
-                            continue
-
-                        # Only add the (potentially modified) intersection if it's still not empty
-                        if not current_intersection_shadow.isEmpty():
-                            # Add the calculated intersection area to the path that will be drawn
-                            # as the final shadow for this strand. Also, expand the clipping path
-                            # to include the area of the underlying strand, ensuring the faded
-                            # shadow effect only renders where an underlying strand exists.
-                            # Include the underlying strand area in the clip path so the shadow can't draw where there is no strand
-                            receiver_clip = _clip_off_lifted_strands(
-                                other_stroke_path, canvas, lifted_near_masks,
-                                _get_intermediate_layer_names(layer_order, this_layer, other_layer), cache)
-                            if clip_path.isEmpty():
-                                clip_path = QPainterPath(receiver_clip)
-                            elif receiver_clip is other_stroke_path or receiver_clip == other_stroke_path:
-                                clip_path.addPath(QPainterPath(receiver_clip))
-                            else:
-                                # A trimmed clip is a boolean result whose winding may run
-                                # the other way round; unite it so overlaps cannot cancel.
-                                clip_path = QPainterPath(clip_path).united(receiver_clip)
-                            
-                            if not clip_blocker_path.isEmpty():
-                                try:
-                                    clip_path = QPainterPath(clip_path).subtracted(clip_blocker_path)
-                                except Exception:
-                                    pass
-                            
-                            # Add this intersection to the list of individual shadows
-                            # This preserves each shadow intersection separately to avoid issues with united()
-                            individual_shadow_paths.append(
-                                current_intersection_shadow if current_fill_shadow is None else current_fill_shadow)
-                            individual_stroke_paths.append(current_intersection_shadow)
-                            has_shadow_content = True
-                                
-                            # logging.info(f"Added shadow from {this_layer} onto {other_layer} to individual paths")
-                        else:
-                            pass
-                    except Exception as e:
-                        # logging.error(f"Error calculating strand shadow: {e}")
-                        pass
+            try:
+                # Expand the clipping path by the receiver's area, so the faded
+                # shadow only renders where an underlying strand exists.
+                receiver_clip, other_stroke_path = pair['clip'], pair['receiver_path']
+                plain_receiver = receiver_clip is other_stroke_path or receiver_clip == other_stroke_path
+                if clip_path.isEmpty():
+                    clip_path = QPainterPath(receiver_clip)
+                    plain_clip = plain_receiver
+                elif plain_clip and plain_receiver:
+                    clip_path.addPath(QPainterPath(receiver_clip))
                 else:
-                    pass
+                    # A boolean result is odd-even, or its winding may run the
+                    # other way round: adding a path to it, or it to the clip,
+                    # would cancel their overlap. Unite instead.
+                    clip_path = QPainterPath(clip_path).united(receiver_clip)
+                    plain_clip = False
+
+                if not pair['clip_blocker'].isEmpty():
+                    try:
+                        clip_path = QPainterPath(clip_path).subtracted(pair['clip_blocker'])
+                        plain_clip = False
+                    except Exception:
+                        pass
+
+                # Add this intersection to the list of individual shadows
+                # This preserves each shadow intersection separately to avoid issues with united()
+                individual_shadow_paths.append(pair['outline'] if pair['fill'] is None else pair['fill'])
+                individual_stroke_paths.append(pair['outline'])
+                has_shadow_content = True
+            except Exception:
+                pass
         
         # Combine individual shadow paths properly
         if has_shadow_content and individual_shadow_paths:
@@ -1702,7 +1714,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
             fill_path.addPath(stroke_region)
         fill_path.setFillRule(Qt.WindingFill)
         cache[collected_key] = {'stroke_path': total_shadow_path, 'lift_path': lift_path,
-                                'fill_path': fill_path, 'color': QColor(color_to_use)}
+                                'fill_path': fill_path, 'color': QColor(color_to_use),
+                                'clip': QPainterPath(clip_path)}
         if collect_only:
             return cache[collected_key]
         if clip_path.isEmpty():
@@ -2288,112 +2301,124 @@ def get_shadow_blocker_path(mask_strand, blur_px):
         return QPainterPath()
 
 
-def calculate_shadow_for_layer_pair(canvas, casting_strand, receiving_strand, casting_layer, receiving_layer):
+def shadow_preview(canvas, casting_strand, receiving_strand, casting_layer, receiving_layer, painter=None):
+    """Where the canvas draws the shadow *casting_layer* casts on
+    *receiving_layer*, for the Shadow Editor's preview, as (area, clips), or
+    None when it casts none there. Filled with the painter clipped to every
+    path in *clips* in turn, *area* covers the shadow's filled area and its
+    soft edge as far as the edge reaches onto the receiver.
+
+    It is computed by the code the canvas draws with (_pair_shadow; for a
+    mask, the paths draw_mask_lift_shadow paints), so the preview shows what
+    is drawn. A mask casts one shadow, on its second strand: its first
+    strand's shadow there, which the mask paints over the second strand.
+    The painter does the clipping, as it does for the shadow itself, and
+    also leaves out what is drawn over the shadow later (see
+    _outside_covering_pieces): Qt's boolean operations lose whole bands of a
+    stroke's self-overlapping outline, and can return nothing at all for a
+    strand with an end circle.
+    *painter* is the paint in progress, if any; the preview then reuses the
+    mask geometry that paint has already worked out.
     """
-    Calculate the shadow path for a specific casting->receiving layer pair.
-    This is used for visualization in the shadow editor.
-
-    Returns the final rendered shadow path after all mask blocking and overrides.
-    """
-    from masked_strand import MaskedStrand
-
-    # Get layer order
-    if not hasattr(canvas, 'layer_state_manager'):
-        return QPainterPath()
-
-    layer_order = canvas.layer_state_manager.getOrder()
+    manager = getattr(canvas, 'layer_state_manager', None)
+    if not manager or casting_strand is None or receiving_strand is None:
+        return None
+    layer_order = manager.getOrder()
     if casting_layer not in layer_order or receiving_layer not in layer_order:
-        return QPainterPath()
+        return None
+    max_blur_radius = float(getattr(canvas, 'max_blur_radius', 30.0) or 30.0)
+    num_steps = getattr(canvas, 'num_steps', 3)
+    cache = _frame_cache(painter)
 
-    casting_index = layer_order.index(casting_layer)
-    receiving_index = layer_order.index(receiving_layer)
+    if hasattr(casting_strand, 'get_mask_path'):
+        first = getattr(casting_strand, 'first_selected_strand', None)
+        second = getattr(casting_strand, 'second_selected_strand', None)
+        if (first is None or second is None or second.layer_name != receiving_layer
+                or getattr(casting_strand, 'is_hidden', False)
+                or not casting_strand._intersection_shadow_visible()):
+            return None
+        collected = draw_strand_shadow(painter, first, None, num_steps=num_steps,
+                                       max_blur_radius=max_blur_radius, collect_only=True)
+        if not collected or collected['lift_path'].isEmpty():
+            return None
+        clips = [_mask_lift_clip(casting_strand, max_blur_radius, cache)]
+        fill = collected['lift_path']
+        lifted_layer = first.layer_name
+    else:
+        # As in draw_strand_shadow: a hidden strand casts only through its
+        # arrow, and "Hide Shadow" switches a strand's shadow off.
+        if getattr(casting_strand, 'is_hidden', False) and not (
+                getattr(casting_strand, 'full_arrow_visible', False)
+                and getattr(casting_strand, 'arrow_casts_shadow', False)):
+            return None
+        if getattr(casting_strand, 'hide_shadow', False):
+            return None
+        if layer_order.index(receiving_layer) >= layer_order.index(casting_layer):
+            # Only a mask lifts a strand's shadow onto a strand above it, and
+            # that shadow is previewed on the mask's row.
+            return None
+        masked_strands_map = _frame_masks_map(canvas, layer_order, cache)
+        near_masks = _masks_near(casting_strand, masked_strands_map, canvas, layer_order, max_blur_radius, cache)
+        _outline, shadow_path = _caster_shadow_path(casting_strand)
+        pair = _pair_shadow(casting_strand, receiving_strand, shadow_path, canvas, layer_order,
+                            masked_strands_map, near_masks, _lifted_near_masks(casting_strand, near_masks),
+                            _lowered_near_masks(casting_strand, near_masks, layer_order), max_blur_radius, cache)
+        if pair is None or pair['lift'] is not None:
+            return None
+        clips = [pair['clip']]
+        if not pair['clip_blocker'].isEmpty():
+            clips.append(_outside(pair['clip_blocker'], pair['clip'].boundingRect()))
+        fill = pair['outline'] if pair['fill'] is None else pair['fill']
+        # The soft edge is stroked along all the caster's outlines at once
+        # (its other crossings and its end circles too), so the parts of them
+        # near the receiver land on it as well.
+        collected = draw_strand_shadow(painter, casting_strand, None, num_steps=num_steps,
+                                       max_blur_radius=max_blur_radius, collect_only=True)
+        if not collected:
+            return None
+        lifted_layer = casting_layer
+    if clips[0].isEmpty():
+        return None
+    rect = clips[0].boundingRect()
+    clips += _outside_covering_pieces(casting_strand, lifted_layer, layer_order, canvas, cache, rect)
+    stroker = QPainterPathStroker()
+    stroker.setWidth(max_blur_radius)
+    stroker.setJoinStyle(Qt.RoundJoin)
+    stroker.setCapStyle(Qt.FlatCap)
+    area = QPainterPath(fill)
+    area.addPath(stroker.createStroke(
+        _stroke_source_near(collected, rect, max_blur_radius / 2.0 + 2.0)))
+    area.setFillRule(Qt.WindingFill)
+    return area, clips
 
-    # Shadow only casts downward (onto layers with lower index)
-    if receiving_index >= casting_index:
-        return QPainterPath()
 
-    # Build shadow path from casting strand
-    max_blur_radius = 30.0
-    shadow_path = build_shadow_geometry(casting_strand, max_blur_radius, include_circles=False)
+def _outside(path, rect):
+    """A clip path for the part of *rect* outside *path*. The painter clips
+    to it exactly, where subtracting *path* from another path can fail."""
+    outside = QPainterPath()
+    outside.addRect(QRectF(rect).adjusted(-2.0, -2.0, 2.0, 2.0))
+    # Under the odd-even rule a point of the rectangle is inside exactly when
+    # it is outside *path*; simplified() gives *path* that rule.
+    outside.addPath(path if path.fillRule() == Qt.OddEvenFill else path.simplified())
+    outside.setFillRule(Qt.OddEvenFill)
+    return outside
 
-    # Build receiving strand stroke path
-    receiving_stroke_path = build_rendered_geometry(receiving_strand)
 
-    # Special handling for masked strands
-    if hasattr(receiving_strand, 'get_mask_path'):
-        try:
-            receiving_stroke_path = get_proper_masked_strand_path(receiving_strand)
-        except Exception:
-            pass
-
-    # Calculate intersection
-    intersection = QPainterPath(shadow_path)
-    if not (getattr(casting_strand, 'full_arrow_visible', False) and getattr(casting_strand, 'arrow_casts_shadow', False)):
-        circle_shadow_path = build_shadow_circle_geometry(casting_strand, max_blur_radius+2)
-        intersection.addPath(circle_shadow_path)
-    intersection = QPainterPath(intersection).intersected(receiving_stroke_path)
-
-    if intersection.isEmpty():
-        return QPainterPath()
-
-    # Check shadow override visibility
-    shadow_override = canvas.layer_state_manager.get_shadow_override(casting_layer, receiving_layer)
-    if not canvas.layer_state_manager.get_shadow_visibility(casting_layer, receiving_layer):
-        return QPainterPath()
-
-    # Check if we should allow complete shadow (skip mask blocking)
-    allow_full_shadow = shadow_override and shadow_override.get('allow_full_shadow', False)
-
-    # Apply configured layer subtraction in the preview exactly like the main renderer.
-    subtracted_layers = canvas.layer_state_manager.get_subtracted_layers(casting_layer, receiving_layer)
-    intersection, _ = _subtract_named_layer_paths(intersection, canvas, subtracted_layers)
-    if intersection.isEmpty():
-        return QPainterPath()
-
-    # Apply mask blocking (unless allow_full_shadow is enabled)
-    current_shadow = QPainterPath(intersection)
-
-    masked_strands_map = {}
-    for s in canvas.strands:
-        if isinstance(s, MaskedStrand):
-            masked_strands_map[s.layer_name] = {
-                'masked_strand': s,
-                'components': [s.first_selected_strand.layer_name, s.second_selected_strand.layer_name]
-            }
-
-    if not allow_full_shadow:
-
-        # Apply blocking from each mask above the casting strand
-        for mask_name, mask_info in masked_strands_map.items():
-            mask_strand = mask_info['masked_strand']
-            is_mask_hidden = getattr(mask_strand, 'is_hidden', False)
-
-            if not is_mask_hidden and mask_name in layer_order:
-                mask_index = layer_order.index(mask_name)
-
-                # Only masks above the casting strand can block
-                if mask_index <= casting_index:
-                    continue
-
-                # Don't block if casting onto the mask itself
-                if mask_name == receiving_layer:
-                    continue
-
-                # Get blocker path
-                blocker_path = get_shadow_blocker_path(mask_strand, max_blur_radius)
-                if not blocker_path.isEmpty():
-                    current_shadow = QPainterPath(current_shadow).subtracted(blocker_path)
-
-        current_shadow = _subtract_visible_component_mask_coverage(
-            current_shadow,
-            masked_strands_map,
-            layer_order,
-            receiving_layer,
-            receiving_stroke_path,
-            max_blur_radius,
-        )
-
-        intermediate_layers = _get_intermediate_layer_names(layer_order, casting_layer, receiving_layer)
-        current_shadow, _ = _subtract_named_layer_paths(current_shadow, canvas, intermediate_layers)
-
-    return current_shadow
+def _outside_covering_pieces(caster, lifted_layer, layer_order, canvas, cache, rect):
+    """Clip paths that leave out, within *rect*, the pieces of the masks
+    drawn after *caster*, which cover its shadow there: one per piece, since
+    pieces can overlap. A mask lifting *lifted_layer* (the strand that casts)
+    is left alone: its piece is that strand itself."""
+    if caster.layer_name not in layer_order:
+        return []
+    above = set(layer_order[layer_order.index(caster.layer_name) + 1:])
+    clips = []
+    for item in canvas.strands:
+        if (not hasattr(item, 'get_mask_path') or getattr(item, 'layer_name', None) not in above
+                or getattr(item, 'is_hidden', False)
+                or getattr(getattr(item, 'first_selected_strand', None), 'layer_name', None) == lifted_layer):
+            continue
+        piece = _piece_of(item, cache)
+        if not piece.isEmpty() and piece.boundingRect().intersects(rect):
+            clips.append(_outside(piece, rect))
+    return clips

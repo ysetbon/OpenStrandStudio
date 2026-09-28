@@ -706,7 +706,21 @@ class AttachedStrand(Strand):
         painter.setBrush(self.highlight_color)
         painter.drawPath(combined_highlight)
 
-    def draw(self, painter, skip_painter_setup=False):
+    def _unfolded_start_angle(self):
+        """The start tangent angle draw() orients an unfolded start cap by."""
+        tangent_start = self.point_at(0.001) - self.start
+        if tangent_start.manhattanLength() < 0.01:
+            tangent_start = self.calculate_cubic_tangent(0.0001)
+            if tangent_start.manhattanLength() == 0:
+                tangent_start = self.end - self.start
+        return math.atan2(tangent_start.y(), tangent_start.x())
+
+    def unfolded_start_cap(self):
+        """The inner cap draw() paints over an unfolded start (transparent
+        start circle), hiding the seam with the parent."""
+        return self._make_cap_inner(self.start, self._unfolded_start_angle(), self._partner_cap_dims(0)[1])
+
+    def _draw_self(self, painter, skip_painter_setup=False):
         """Draw the attached strand with a rounded start and squared end."""
         # Debug logging for closed connections
         painter.save() # Top Level Save
@@ -1359,7 +1373,9 @@ class AttachedStrand(Strand):
                     # NOTE: using addPath keeps sub-paths separate and avoids boolean simplification issues.
                                 # Add inner circle to combined fill path at start
                     inner_circle_start = self._make_cap_inner(self.start, angle_start, self._partner_cap_dims(0)[1])
-                    combined_fill_path.addPath(inner_circle_start)
+                    # A lowered cap is painted by the parent (shader_utils.lowered_start_cap).
+                    if not getattr(self, '_start_cap_lowered', False):
+                        combined_fill_path.addPath(inner_circle_start)
                     combined_fill_path.setFillRule(Qt.WindingFill)  # Ensure fill rule persists after adding path
 
                 if self.has_circles[1]:
@@ -3168,7 +3184,9 @@ class AttachedStrand(Strand):
                     # NOTE: using addPath keeps sub-paths separate and avoids boolean simplification issues.
                                 # Add inner circle to combined fill path at start
                     inner_circle_start = self._make_cap_inner(self.start, angle_start, self._partner_cap_dims(0)[1])
-                    combined_fill_path.addPath(inner_circle_start)
+                    # A lowered cap is painted by the parent (shader_utils.lowered_start_cap).
+                    if not getattr(self, '_start_cap_lowered', False):
+                        combined_fill_path.addPath(inner_circle_start)
                     combined_fill_path.setFillRule(Qt.WindingFill)  # Ensure fill rule persists after adding path
 
                 if self.has_circles[1]:

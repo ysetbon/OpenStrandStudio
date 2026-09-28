@@ -610,6 +610,7 @@ class MaskedStrand(Strand):
                                     painter.drawPath(fresh_mask_path)
                             except Exception as _e:
                                 pass
+                            self._restore_shadows_on_piece(painter)
 
                         finally:
                             painter.restore()
@@ -622,6 +623,28 @@ class MaskedStrand(Strand):
             # Restore the painter state
         finally:
             painter.restore()
+
+    def _restore_shadows_on_piece(self, painter):
+        """Put back the shadows the piece just painted over (see
+        shader_utils.draw_mask_restored_shadows)."""
+        canvas = getattr(self, 'canvas', None)
+        if canvas is None or (hasattr(canvas, 'shadow_enabled') and not canvas.shadow_enabled):
+            return
+        try:
+            try:
+                from shader_utils import draw_mask_restored_shadows
+            except ImportError:
+                from src.shader_utils import draw_mask_restored_shadows
+            # The colour the strands' own passes use, so their cached paths are reused.
+            draw_mask_restored_shadows(
+                painter,
+                self,
+                getattr(canvas, 'default_shadow_color', None),
+                num_steps=canvas.num_steps if hasattr(canvas, 'num_steps') else 3,
+                max_blur_radius=canvas.max_blur_radius if hasattr(canvas, 'max_blur_radius') else 29.99,
+            )
+        except Exception:
+            pass
 
     def _draw_direct(self, painter):
         """Draw the masked strand directly to the painter without temporary image optimization.
@@ -725,6 +748,7 @@ class MaskedStrand(Strand):
                             painter.drawPath(fresh_mask_path)
                     except Exception as _e:
                         pass
+                    self._restore_shadows_on_piece(painter)
 
                 finally:
                     painter.restore()

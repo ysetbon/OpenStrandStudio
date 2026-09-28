@@ -300,6 +300,145 @@ def _mask_lift_clip(mask_strand, max_blur_radius, cache):
     return clip
 
 
+def _shadow_shown_for(strand, canvas):
+    """Whether *strand*'s draw paints its shadow pass (not switched off for
+    it, and not left out by "shadow for the selected strand only")."""
+    if getattr(strand, 'hide_shadow', False) or not getattr(strand, 'should_draw_shadow', True):
+        return False
+    if getattr(canvas, 'shadow_selected_only', False):
+        return strand is getattr(canvas, 'selected_strand', None) or \
+            strand is getattr(canvas, 'selected_attached_strand', None)
+    return True
+
+
+def _footprint_of(strand, cache):
+    """_drawn_footprint(), once per paint."""
+    key = ('drawn', id(strand))
+    if key not in cache:
+        cache[key] = _drawn_footprint(strand)
+    return cache[key]
+
+
+def _cut_on_receiver(collected, receiver_layer, cut, cut_key, cache):
+    """*collected* (a draw_strand_shadow(collect_only=True) result) with its
+    outline on *receiver_layer* cut by *cut*, both for the fill and for the
+    soft edge.
+
+    Near a mask the caster's outline on the mask's second strand is not cut by
+    the first strand (see _subtract_intermediates), so the soft edge along it
+    would land on the piece the mask lifts over that strand. At a genuine
+    crossing the first strand, lying above the second one, cuts it there.
+    *cut_key* names *cut* in the frame cache."""
+    key = ('cut_on', id(collected), receiver_layer, cut_key)
+    if key in cache:
+        return cache[key]
+    outlines = collected.get('outlines')
+    if outlines is None or all(name != receiver_layer for name, _outline in outlines):
+        cache[key] = collected
+        return collected
+    fill_path = QPainterPath()
+    for name, outline in outlines:
+        if name == receiver_layer and outline.intersects(cut):
+            outline = _closed_outline(_subtracted_checked(outline, cut))
+        fill_path.addPath(outline)
+    fill_path.setFillRule(Qt.WindingFill)
+    stroke_path = QPainterPath(fill_path)
+    stroke_path.addPath(collected['lift_path'])
+    stroke_path.addPath(collected['circles'])
+    stroke_path.setFillRule(Qt.WindingFill)
+    result = dict(collected, stroke_path=stroke_path, fill_path=fill_path)
+    result.pop('_subpaths', None)
+    cache[key] = result
+    return result
+
+
+def draw_mask_restored_shadows(painter, mask_strand, shadow_color=None, num_steps=3, max_blur_radius=29.99):
+    """Paint again, on top of the mask's piece, the shadows that land on its
+    first strand there and were painted before the mask.
+
+    The mask fills its piece flat with the first strand's colour, reaching
+    2 px past the second strand's outline to hide that edge. Shadows already on
+    the first strand under the piece are painted over, and their soft edges
+    end in a straight cut along the piece. They come from strands above the
+    first strand in the layer order (their own passes) and from strands that
+    masks earlier in the order lift over the first strand (those masks'
+    draw_mask_lift_shadow). At a genuine crossing those strands would lie
+    above the lifted piece as well, so their shadows go back on top of it.
+
+    A strand that the piece is drawn over (it overlaps the piece) is left out:
+    the mask covers it there, so its shadow does not belong on the piece.
+    """
+    canvas = getattr(mask_strand, 'canvas', None)
+    first = getattr(mask_strand, 'first_selected_strand', None)
+    second = getattr(mask_strand, 'second_selected_strand', None)
+    if canvas is None or first is None or second is None:
+        return
+    if hasattr(canvas, 'shadow_enabled') and not canvas.shadow_enabled:
+        return
+    manager = getattr(canvas, 'layer_state_manager', None)
+    if not manager:
+        return
+    layer_order = manager.getOrder()
+    if mask_strand.layer_name not in layer_order or first.layer_name not in layer_order:
+        return
+    mask_index = layer_order.index(mask_strand.layer_name)
+    first_index = layer_order.index(first.layer_name)
+    cache = _frame_cache(painter)
+    piece = _piece_of(mask_strand, cache)
+    if piece.isEmpty():
+        return
+    area = piece.boundingRect()
+    reach = area.adjusted(-max_blur_radius, -max_blur_radius, max_blur_radius, max_blur_radius)
+
+    for item in canvas.strands:
+        if item is mask_strand or item is first or item is second:
+            continue
+        name = getattr(item, 'layer_name', None)
+        if name not in layer_order or layer_order.index(name) > mask_index:
+            continue
+        if hasattr(item, 'get_mask_path'):
+            # A mask before this one that lifts its first strand over ours.
+            if getattr(item, 'second_selected_strand', None) is not first or getattr(item, 'is_hidden', False):
+                continue
+            caster = getattr(item, 'first_selected_strand', None)
+            if (caster is None or not _shadow_shown_for(item, canvas)
+                    or not item._intersection_shadow_visible()
+                    or not _may_touch(item, reach, cache)):
+                continue
+            collected = draw_strand_shadow(painter, caster, shadow_color, num_steps=num_steps,
+                                           max_blur_radius=max_blur_radius, collect_only=True)
+            fill_path = collected['lift_path'] if collected else None
+            # As draw_mask_lift_shadow: only near that mask when part of it is erased.
+            zone = None if _whole_mask(item) else _zone_of(item, max_blur_radius, cache)
+        else:
+            # A strand above ours in the layer order, which its own pass shades.
+            if layer_order.index(name) < first_index:
+                continue
+            if not _shadow_shown_for(item, canvas) or not _may_touch(item, reach, cache):
+                continue
+            collected = draw_strand_shadow(painter, item, shadow_color, num_steps=num_steps,
+                                           max_blur_radius=max_blur_radius, collect_only=True)
+            # Only a strand that shades the first strand, and not one the piece
+            # is drawn over.
+            if not collected or all(receiver != first.layer_name
+                                    for receiver, _outline in collected.get('outlines', ())):
+                continue
+            if _may_touch(item, area, cache) and _footprint_of(item, cache).intersects(piece):
+                continue
+            zone = None
+            collected = _cut_on_receiver(collected, second.layer_name, piece,
+                                         id(mask_strand), cache)
+            fill_path = collected['fill_path']
+        if not collected or fill_path is None:
+            continue
+        if (not fill_path.boundingRect().intersects(area)
+                and _stroke_source_near(collected, area, max_blur_radius / 2.0 + 2.0).isEmpty()):
+            continue  # nothing of it reaches the piece
+        # The piece lies on the first strand, so it is the clip itself.
+        _paint_collected_shadow(painter, collected, piece, num_steps, max_blur_radius,
+                                fill_path=fill_path, and_clip=zone)
+
+
 def draw_circle_shadow(painter, strand, shadow_color=None):
     """
     Draw shadow for a circle at the start or end of a strand.
@@ -815,16 +954,21 @@ def _stroke_source_near(collected, rect, reach):
     return near
 
 
-def _paint_collected_shadow(painter, collected, clip, num_steps, max_blur_radius, fill_path=None):
+def _paint_collected_shadow(painter, collected, clip, num_steps, max_blur_radius, fill_path=None,
+                            and_clip=None):
     """Paint a shadow computed with draw_strand_shadow(collect_only=True):
-    the fill, then the same faded edge, clipped to *clip*."""
-    if clip.isEmpty():
+    the fill, then the same faded edge, clipped to *clip* (and to *and_clip*
+    too when given: the painter intersects the two, which is exact where a
+    boolean operation on paths sharing edges is not)."""
+    if clip.isEmpty() or (and_clip is not None and and_clip.isEmpty()):
         return
     color = collected['color']
     stroke_source = _stroke_source_near(collected, clip.boundingRect(), max_blur_radius / 2.0 + 2.0)
     painter.save()
     try:
         painter.setClipPath(clip)
+        if and_clip is not None:
+            painter.setClipPath(and_clip, Qt.IntersectClip)
         painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
         if fill_path is not None and not fill_path.isEmpty():
             painter.setPen(Qt.NoPen)
@@ -1312,6 +1456,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     # except near a mask where lifted strands must not cut them (see
     # _subtract_intermediates).
     individual_stroke_paths = []
+    # The receiver of each of those outlines (see draw_mask_restored_shadows).
+    stroke_receivers = []
     # Shadow on the second strand of a mask this strand is the first strand of,
     # near the mask: stroked together with everything else (so the soft edges
     # meet exactly as at a genuine crossing), but painted by the mask on top of
@@ -1383,6 +1529,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                 # This preserves each shadow intersection separately to avoid issues with united()
                 individual_shadow_paths.append(pair['outline'] if pair['fill'] is None else pair['fill'])
                 individual_stroke_paths.append(pair['outline'])
+                stroke_receivers.append(other_strand.layer_name)
                 has_shadow_content = True
             except Exception:
                 pass
@@ -1760,6 +1907,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
              return # Nothing to draw
 
         # Only add circle shadows if not using arrow shadow
+        circle_shadow_path = QPainterPath()
         if not (getattr(strand, 'full_arrow_visible', False) and getattr(strand, 'arrow_casts_shadow', False)):
             circle_shadow_path = build_shadow_circle_geometry(strand, max_blur_radius)
             total_shadow_path.addPath(circle_shadow_path)
@@ -1772,7 +1920,9 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         fill_path.setFillRule(Qt.WindingFill)
         cache[collected_key] = {'stroke_path': total_shadow_path, 'lift_path': lift_path,
                                 'fill_path': fill_path, 'color': QColor(color_to_use),
-                                'clip': QPainterPath(clip_path)}
+                                'clip': QPainterPath(clip_path),
+                                'outlines': list(zip(stroke_receivers, individual_stroke_paths)),
+                                'circles': circle_shadow_path}
         if collect_only:
             return cache[collected_key]
         if clip_path.isEmpty():

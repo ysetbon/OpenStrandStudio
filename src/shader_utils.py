@@ -573,14 +573,15 @@ def lowered_start_cap(strand):
     cap, its edge and the band it casts on the cord bitten off. Such a cap is
     lowered: the parent paints it right after itself (draw_lowered_caps), the
     strands crossing there are drawn over it and shade it (it counts as part
-    of the parent in build_rendered_geometry), and the attached strand leaves
-    their soft edge alone near the joint (``keep_off``) and hides the seam
-    with a thin strip (``patch``). Only a strand that crosses the parent at
+    of the parent in build_rendered_geometry), the attached strand hides the
+    seam with a thin strip (``patch``), and the crossers' soft edges are
+    painted again over the attached strand next to the joint (``shade_zone``),
+    where the cord still runs under them until it comes out. Only a strand that crosses the parent at
     the joint and not the attached strand's own body there counts: one the
     attached strand lies over next to the joint (the cord passes over it
     there, as the layer order says) keeps lying under the cap too.
 
-    Returns {'parent', 'cap', 'crossers', 'keep_off', 'patch',
+    Returns {'parent', 'cap', 'crossers', 'patch', 'shade_zone',
     'parent_geometry'}; memoised on the strand while the strands involved,
     the layer order and the blur are unchanged.
     """
@@ -653,15 +654,9 @@ def _compute_lowered_start_cap(strand, parent, candidates, shading, blur):
             crossers.append((item, footprint))
     if not crossers:
         return None
-    # Where the crossers and their soft edges show on the lowered cap.
-    reach = blur / 2.0 + 1.0 if shading else 1.0
-    keep_off = QPainterPath()
     covered = QPainterPath()
     for _item, footprint in crossers:
-        area = _grown(footprint, reach).intersected(cap)
-        keep_off = area if keep_off.isEmpty() else keep_off.united(area)
-        grown = _grown(footprint, reach)
-        covered = grown if covered.isEmpty() else covered.united(grown)
+        covered = QPainterPath(footprint) if covered.isEmpty() else covered.united(footprint)
     # A strip across the seam, where the attached strand's flat start meets
     # the parent's flat end, in fill colour so that no hairline shows there.
     angle = strand._unfolded_start_angle()
@@ -669,9 +664,24 @@ def _compute_lowered_start_cap(strand, parent, candidates, shading, blur):
     strip.addRect(QRectF(-2.5, -strand.width / 2.0, 5.0, strand.width))
     strip = QTransform().translate(strand.start.x(), strand.start.y()).rotate(math.degrees(angle)).map(strip)
     patch = _subtracted(strip, covered)
+    # Next to the joint the cord runs under the crossers until it comes out
+    # beside them, so their soft edges land on the attached strand there too:
+    # its body (and the strip) within a full width of the joint, off the
+    # crossers, and away from anywhere it lies over one of them.
+    own = QPainterPath(_build_rendered_geometry(strand)).united(strip)
+    reach = QPainterPath()
+    reach.addEllipse(QPointF(strand.start), strand.width + strand.stroke_width * 2,
+                     strand.width + strand.stroke_width * 2)
+    shade_zone = QPainterPath()
+    if shading:
+        shade_zone = _subtracted(QPainterPath(own).intersected(reach), covered)
+        for _item, footprint in crossers:
+            over = QPainterPath(footprint).intersected(own).intersected(reach)
+            if _approx_path_area(over) > 1.0:
+                shade_zone = _subtracted(shade_zone, _grown(over, blur / 2.0 + 2.0))
     parent_geometry = QPainterPath(_build_rendered_geometry(parent)).united(cap)
     return {'parent': parent, 'cap': cap, 'crossers': [item for item, _f in crossers],
-            'keep_off': keep_off, 'patch': patch, 'parent_geometry': parent_geometry}
+            'patch': patch, 'shade_zone': shade_zone, 'parent_geometry': parent_geometry}
 
 
 def lowered_caps_of(strand):
@@ -701,30 +711,52 @@ def draw_lowered_caps(painter, strand):
         painter.restore()
 
 
+def _draw_crosser_edges(painter, strand, info):
+    """Paint the soft edges of the crossers of *strand*'s lowered cap again
+    over *strand* next to the joint (``shade_zone``), as each crosser's own
+    pass strokes them."""
+    canvas = strand.canvas
+    zone = info['shade_zone']
+    if zone.isEmpty() or not getattr(canvas, 'shadow_enabled', False):
+        return
+    manager = getattr(canvas, 'layer_state_manager', None)
+    num_steps = int(getattr(canvas, 'num_steps', 3) or 3)
+    blur = float(getattr(canvas, 'max_blur_radius', 29.99) or 29.99)
+    parent_layer = info['parent'].layer_name
+    for crosser in info['crossers']:
+        if not _shadow_shown_for(crosser, canvas):
+            continue
+        if manager is not None and not manager.get_shadow_visibility(crosser.layer_name, parent_layer):
+            continue
+        _path, shadow_path, _joints = _caster_shadow_path(crosser)
+        color = QColor(getattr(canvas, 'default_shadow_color', None) or getattr(crosser, 'shadow_color', None)
+                       or QColor(0, 0, 0, 150))
+        collected = {'color': color, 'stroke_path': _closed_outline(shadow_path)}
+        _paint_collected_shadow(painter, collected, zone, num_steps, blur)
+
+
 def draw_with_lowered_cap(painter, strand, draw_body):
     """Draw *strand* with *draw_body* (its own drawing), handling a lowered
-    start cap: the body leaves the crossers' soft edges near the joint alone
-    and paints no cap of its own, and a strip hides the seam. Then paint the
-    lowered caps of the strands attached to it."""
+    start cap: the body paints no cap of its own, a strip hides the seam, and
+    the crossers' soft edges go back over it next to the joint. Then paint
+    the lowered caps of the strands attached to it."""
     info = lowered_start_cap(strand)
     if info is None:
         draw_body()
     else:
+        strand._start_cap_lowered = True
+        try:
+            draw_body()
+        finally:
+            strand._start_cap_lowered = False
         painter.save()
         try:
-            if not info['keep_off'].isEmpty():
-                everywhere = QRectF(-1.0e6, -1.0e6, 2.0e6, 2.0e6)
-                painter.setClipPath(_outside(info['keep_off'], everywhere), Qt.IntersectClip)
-            strand._start_cap_lowered = True
-            try:
-                draw_body()
-            finally:
-                strand._start_cap_lowered = False
             if not info['patch'].isEmpty():
                 painter.setRenderHint(QPainter.Antialiasing, True)
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(QBrush(strand.color))
                 painter.drawPath(info['patch'])
+            _draw_crosser_edges(painter, strand, info)
         finally:
             painter.restore()
     draw_lowered_caps(painter, strand)

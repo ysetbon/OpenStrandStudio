@@ -33,6 +33,13 @@ PALETTE = ['#257d98', '#e5a13b', '#d56272', '#6554a4', '#399780', '#b76c40']
 CURVE_SETTINGS = dict(control_point_base_fraction=1.0, distance_multiplier=2.0,
                       curve_response_exponent=2.0)
 _CURVE_FITS = {}
+_SPAN_FITS = {}
+# Fewest strands: each strand's two control points carry a long stretch of
+# the design, so few joins remain and each crossing casts one clean shadow.
+FIT_TOLERANCE = 2.5         # px from the design
+FIT_BEND_ERROR = 6.0        # degrees from the design's direction
+SHADOW_REACH = 30          # the canvas's default maximum shadow blur radius
+JOIN_CROWDING_COST = 4.0   # a join in a crowded spot costs up to this many strands
 NATIVE = NativeCurve(CURVE_SETTINGS['control_point_base_fraction'],
                      CURVE_SETTINGS['distance_multiplier'],
                      CURVE_SETTINGS['curve_response_exponent'])
@@ -154,6 +161,26 @@ def fit_cubics(points, tolerance=9, protected=()):
     return result
 
 
+def _stack(nodes, parent, pairs):
+    """Bottom-up order of nodes: each above its parent (a hard rule) and, as
+    far as possible, the upper node of every (a, b, a is over) pair above the
+    other. Ties keep the order of nodes; see Scene.stack."""
+    below = {n: set() for n in nodes}
+    for a, b, a_over in pairs:
+        over, under = (a, b) if a_over else (b, a)
+        below[over].add(under)
+    rank = {n: k for k, n in enumerate(nodes)}
+    placed, stacked, remaining = set(), [], list(nodes)
+    while remaining:
+        free = [n for n in remaining if parent(n) is None or parent(n) in placed]
+        ready = [n for n in free if below[n] <= placed]
+        pick = min(ready or free, key=lambda n: (len(below[n]-placed), rank[n]))
+        stacked.append(pick)
+        placed.add(pick)
+        remaining.remove(pick)
+    return stacked
+
+
 class Scene:
     def __init__(self, name):
         self.name, self.strands, self.groups = name, [], {}
@@ -161,25 +188,41 @@ class Scene:
         self.explicit_crossings = False
         self.cords, self.hits, self.warnings = [], [], []
 
-    def chain(self, points, color, group, width=24, closed=False, angular=False, cubics=None):
-        """A smooth interpolating spline, split into real attached strands."""
+    def chain(self, points, color, group, width=24, closed=False, angular=False, cubics=None, root=0):
+        """A smooth interpolating spline, split into real attached strands.
+
+        The strand of span root is the set's first strand. Later spans attach
+        forward from its end; earlier ones attach backward from its start,
+        each running against the cord (cubics[k] is then already reversed).
+        The chain is returned in cord order; each strand's reversed flag
+        tells which way it runs.
+        """
         self.set_count += 1
         points = [QPointF(*p) for p in points]
         if closed:
             points.append(QPointF(points[0]))
-        chain = []
-        for i, (start, end) in enumerate(zip(points, points[1:])):
-            if chain:
-                strand = AttachedStrand(chain[-1], start, 1)
-                strand.start, strand.end = QPointF(start), QPointF(end)
-                chain[-1].attached_strands.append(strand)
-                chain[-1].has_circles[1] = True
-                chain[-1].end_attached = True
-            else:
+        count = len(points)-1
+        chain = [None]*count
+        for n, i in enumerate([root]+list(range(root+1, count))+list(range(root-1, -1, -1))):
+            reversed_ = i < root
+            start, end = (points[i+1], points[i]) if reversed_ else (points[i], points[i+1])
+            if i == root:
                 strand = Strand(start, end, width, QColor(color), QColor('#263446'),
                                 2, self.set_count)
                 strand.is_first_strand = True
-            strand.layer_name = f'{self.set_count}_{i + 1}'
+            else:
+                parent = chain[i+1] if reversed_ else chain[i-1]
+                side = 0 if reversed_ and i+1 == root else 1
+                strand = AttachedStrand(parent, start, side)
+                strand.start, strand.end = QPointF(start), QPointF(end)
+                parent.attached_strands.append(strand)
+                parent.has_circles[side] = True
+                if side:
+                    parent.end_attached = True
+                else:
+                    parent.start_attached = True
+            strand.reversed = reversed_
+            strand.layer_name = f'{self.set_count}_{n + 1}'
             before = points[i - 1] if i else (points[-2] if closed else start)
             after = points[i + 2] if i + 2 < len(points) else (points[1] if closed else end)
             strand.control_point1 = start + ((end - start) / 3 if angular else (end - before) / 6)
@@ -199,7 +242,7 @@ class Scene:
                 strand.update_angle_length_from_geometry()
             strand.update_shape()
             strand.update_side_line()
-            chain.append(strand)
+            chain[i] = strand
         if closed:
             first, last = chain[0], chain[-1]
             first.closed_connections = [True, False]
@@ -209,7 +252,7 @@ class Scene:
             last.knot_connections = {'end': dict(connected_strand=first, connected_end='start', is_closing_strand=True)}
         self.strands.extend(chain)
         entry = self.groups.setdefault(group, dict(layers=[], main_strands=[], strands=[], control_points={}))
-        entry['main_strands'].append(chain[0])
+        entry['main_strands'].append(chain[root])
         entry['strands'].extend(chain)
         entry['layers'].extend(s.layer_name for s in chain)
         for s in chain:
@@ -333,7 +376,7 @@ class Scene:
         if expected is not False:
             print(f'{self.name}: {len(points)-2} -> {len(chain)-1} attachments; crossing order preserved', flush=True)
 
-    def cord(self, poly, color, group, width, closed=False, tolerance=None,
+    def cord(self, poly, color, group, width, closed=False, tolerance=None, bend_error=None,
              second_color=None, split=None, hidden_ends=()):
         """Register a designed centerline; fit() turns it into one attached chain.
 
@@ -344,7 +387,8 @@ class Scene:
         closing end line cannot show.
         """
         self.cords.append(dict(poly=poly, color=color, group=group, width=width, closed=closed,
-                               tolerance=min(width*.12, .8) if tolerance is None else tolerance,
+                               tolerance=FIT_TOLERANCE if tolerance is None else tolerance,
+                               bend_error=FIT_BEND_ERROR if bend_error is None else bend_error,
                                second_color=second_color, split=split, chain=None,
                                hidden_ends=hidden_ends))
 
@@ -370,7 +414,12 @@ class Scene:
         return out, hits
 
     def plan(self, rule):
-        """Hide closing joins and color changes under crossings."""
+        """Hide closing joins and color changes under crossings.
+
+        A closed cord's chain rises in the layer order from its first strand
+        to its last, so only another cord can lie over both ends without a
+        mask: a crossing covered by another cord is preferred for the join.
+        """
         for c, cord in enumerate(self.cords):
             if cord['closed']:
                 under, hits = self.covered_points(rule, c)
@@ -378,16 +427,62 @@ class Scene:
                 # Keep the join away from its neighbours' crossings.
                 def room(item):
                     return min((dist(item[3], h['point']) for h in hits if dist(item[3], h['point']) > 1), default=1e9)
-                position = max(under, key=room)[0]
+                position = max(under, key=lambda u: (u[1] != c, room(u)))[0]
                 poly = cord['poly'][:-1]
                 k = int(round(position)) % len(poly)
                 cord['poly'] = poly[k:]+poly[:k]+[poly[k]]
             if cord['split'] == 'auto':
                 under, _ = self.covered_points(rule, c)
                 middle = (len(cord['poly'])-1)/2
-                # The covering mask includes the attachment circle, so any
-                # covered crossing works; the one nearest the middle balances colors.
+                # The one nearest the middle balances colors.
                 cord['split'] = int(round(min(under, key=lambda u: abs(u[0]-middle))[0]))
+            cord['forced'] = {cord['split']} if cord['split'] is not None else set()
+
+    def unfit(self):
+        """Drop the fitted chains so fit() rebuilds them."""
+        self.strands, self.groups, self.set_count = [], {}, 0
+        for cord in self.cords:
+            cord['chain'] = None
+
+    def poly_index(self, c, position):
+        """Design sample index of a chain position (strand index + fraction)."""
+        spans = self.cords[c]['spans']
+        k = min(int(position), len(spans)-1)
+        i, j = spans[k]
+        return i+(position-k)*(j-i)
+
+    def conflict_joins(self, hits):
+        """Joins that stop two strands from crossing each other both ways.
+
+        Such a pair needs a mask with an erased part, and the canvas keeps
+        the shadow of one crossing out of the other's lifted zone, which
+        leaves a rounded shadow end next to it. A join between the two
+        crossings, on either cord, in the most open spot, separates them.
+        """
+        pairs = {}
+        for h in hits:
+            a, b = h['strands']
+            pairs.setdefault((id(a), id(b)), []).append(h)
+        extra = []
+        for group in pairs.values():
+            if len({h['over'] for h in group}) < 2:
+                continue
+            first = next(h for h in group if h['over'])
+            second = next(h for h in group if not h['over'])
+            best = None
+            for side in (0, 1):
+                c = first['cords'][side]
+                cord = self.cords[c]
+                lo, hi = sorted(self.poly_index(c, h['positions'][side]) for h in (first, second))
+                for k in range(int(lo)+1, int(hi)+1):
+                    if k in cord['avoid'] or k in cord['forced']:
+                        continue
+                    score = (cord['room'][k], min(k-lo, hi-k))
+                    if best is None or score > best[0]:
+                        best = (score, c, k)
+            if best is not None:
+                extra.append(best[1:])
+        return extra
 
     def fit(self):
         """Fit every registered cord, keeping joins out of all crossings."""
@@ -412,24 +507,46 @@ class Scene:
                     for k in ([u, v] if same else [u]):
                         avoid.update(range(int(k-reach/spacing), int(k+reach/spacing)+2))
             split = cord['split']
-            spans = NATIVE.fit(poly, cord['closed'], cord['tolerance'],
-                               forced={split} if split is not None else (), avoid=avoid,
-                               min_length=width*1.5)
+            room = self.clearance(c)
+            cord['avoid'], cord['room'] = avoid, room
+            # A join draws an end circle whose shadow, and the shadows cast
+            # across it, split into pieces; keep joins where nothing else
+            # runs within the width of a shadow.
+            need = width/2+max(o['width'] for o in self.cords)/2+SHADOW_REACH
+            key = (self.name, c, tuple(sorted(cord['forced'])))
+            if key not in _SPAN_FITS:
+                _SPAN_FITS[key] = NATIVE.fit(poly, cord['closed'], cord['tolerance'],
+                               forced=cord['forced'], avoid=avoid,
+                               min_length=width*1.5, max_bend_error=cord['bend_error'],
+                               free_ends=not cord['closed'],
+                               cost=lambda k: JOIN_CROWDING_COST*max(0.0, 1-room[k]/need))
+            spans = _SPAN_FITS[key]
             cubics = [tuple(QPointF(*p) for p in curve) for _, _, curve in spans]
             ends = [cubics[0][0]]+[q[3] for q in cubics]
+            root = cord.get('root', 0)
+            heading = tangents(poly, cord['closed'])
+            back = lambda v: (-v[0], -v[1])
+            for k, (i, j, _) in enumerate(spans[:root]):
+                # Drawn from its join towards the cord's start: the native
+                # curve is not symmetric, so fit it that way round.
+                loose = i == 0 and not cord['closed']
+                picks = list(range(j, i, -max(1, (j-i)//48)))+[i]
+                curve, _, _ = NATIVE.fit_span([poly[m] for m in picks], back(heading[j]),
+                                              None if loose else back(heading[i]))
+                assert curve is not None, (self.name, c, k, 'cannot reverse span')
+                cubics[k] = tuple(QPointF(*p) for p in curve)
             # A closed design is built as a chain whose ends meet under a
             # crossing: the covering mask hides a flat, line-free join, whereas
             # a closed attachment would draw its closing circle above the mask.
             chain = self.chain([(p.x(), p.y()) for p in ends], cord['color'], cord['group'], width,
-                               cubics=cubics)
-            if cord['closed']:
-                chain[0].start_line_visible = False
-                chain[-1].end_line_visible = False
-            for side in cord['hidden_ends']:
-                if side == 0:
-                    chain[0].start_line_visible = False
+                               cubics=cubics, root=root)
+            hidden = set(cord['hidden_ends']) | ({0, 1} if cord['closed'] else set())
+            for side in hidden:
+                end = chain[-1 if side else 0]
+                if (side == 0) != end.reversed:
+                    end.start_line_visible = False
                 else:
-                    chain[-1].end_line_visible = False
+                    end.end_line_visible = False
             for strand, (i, _, _) in zip(chain, spans):
                 if cord['second_color'] and i >= split:
                     strand.color = QColor(cord['second_color'])
@@ -437,6 +554,37 @@ class Scene:
                 strand.update_side_line()
             cord['chain'] = chain
             cord['spans'] = [(i, j) for i, j, _ in spans]
+
+    def clearance(self, c):
+        """Per sample of cord c: distance to the nearest other centerline.
+
+        The cord's own samples count when they lie farther along the cord
+        than three widths, so a loop passing close to itself is crowded too.
+        """
+        cord = self.cords[c]
+        cell, grid = 32.0, {}
+        for d, other in enumerate(self.cords):
+            lengths = arc_lengths(other['poly'])
+            for k, p in enumerate(other['poly']):
+                grid.setdefault((int(p[0]//cell), int(p[1]//cell)), []).append((d, lengths[k], p))
+        lengths = arc_lengths(cord['poly'])
+        total, window = lengths[-1], cord['width']*3
+        out = []
+        for k, p in enumerate(cord['poly']):
+            best = 4*cell
+            gx, gy = int(p[0]//cell), int(p[1]//cell)
+            for x in range(gx-4, gx+5):
+                for y in range(gy-4, gy+5):
+                    for d, s, q in grid.get((x, y), ()):
+                        if d == c:
+                            gap = abs(s-lengths[k])
+                            if cord['closed']:
+                                gap = min(gap, total-gap)
+                            if gap < window:
+                                continue
+                        best = min(best, dist(p, q))
+            out.append(best)
+        return out
 
     def cord_of(self, strand):
         for c, cord in enumerate(self.cords):
@@ -466,8 +614,13 @@ class Scene:
                 pa = [(p.x(), p.y()) for p in samples[id(a)]]
                 pb = [(p.x(), p.y()) for p in samples[id(b)]]
                 for u, v, point in polyline_crossings(pa, pb):
+                    if a.reversed:
+                        u = 80-u
+                    if b.reversed:
+                        v = 80-v
                     if self.adjacent(a, b):
-                        joint = a.end if self.cord_of(a)[1]+1 == self.cord_of(b)[1] else a.start
+                        forward = self.cord_of(a)[1]+1 == self.cord_of(b)[1]
+                        joint = a.end if forward != a.reversed else a.start
                         if dist(point, (joint.x(), joint.y())) < a.width:
                             continue
                     if any(dist(point, h['point']) < 3 for h in hits):
@@ -477,23 +630,31 @@ class Scene:
                                      positions=(ia+u/80, ib+v/80), strands=(a, b)))
         return hits
 
-    def interlace(self, rule):
-        """Mask every stroke overlap so the crossing's chosen strand is on top.
+    @staticmethod
+    def stack(regular, relations):
+        """Layer order that draws the upper strand of each crossing later.
 
-        rule(scene, hits) returns, for each hit, True when its first side is over.
+        A crossing whose upper strand is drawn later needs no mask, and the
+        canvas shades it from the strands' own outlines. An attached strand
+        always stays above its parent, which it covers at their join (the
+        parent's joint circle would show otherwise), so cords interleave but
+        keep their chain order. Strands are placed from the bottom up, each
+        once everything it covers is placed, keeping the chain order among
+        the free ones. Where no order works (A over B over C over A), the
+        placeable strand with fewest unplaced strands to cover goes next,
+        and masks lift it over those.
         """
-        if any(cord['chain'] is None for cord in self.cords):
-            self.plan(rule)
-            self.fit()
-        hits = self.find_crossings()
-        over_first = rule(self, hits)
-        for h, flag in zip(hits, over_first):
-            h['over'] = flag
-        self.hits = hits
+        by_id = {id(s): s for s in regular}
+        parent = lambda k: id(by_id[k].parent) if getattr(by_id[k], 'parent', None) is not None else None
+        pairs = [(id(a), id(b), a_over) for a, b, a_over, _ in relations]
+        return [by_id[k] for k in _stack(list(by_id), parent, pairs)]
+
+    def overlaps(self, hits):
+        """(a, b, a is over, overlap polygon) for every stroke overlap of a
+        strand a with a later strand b, from the crossing it belongs to."""
         regular = [s for s in self.strands if not isinstance(s, MaskedStrand)]
-        order = {id(s): k for k, s in enumerate(regular)}
         outlines = {id(s): stroke(s.get_path(), s.width+2*s.stroke_width) for s in regular}
-        wanted, natural = {}, {}
+        relations = []
         self.warnings = []
         for x, a in enumerate(regular):
             for b in regular[x+1:]:
@@ -525,8 +686,83 @@ class Scene:
                                    for d in shifts)
                     a_is_first = gap(ca, ia, 0)+gap(cb, ib, 1) <= gap(ca, ia, 1)+gap(cb, ib, 0)
                     a_over = h['over'] if a_is_first else not h['over']
-                    key = (id(a), id(b))
-                    (wanted if a_over else natural).setdefault(key, []).append(polygon)
+                    relations.append((a, b, a_over, polygon))
+        return relations
+
+    def choose_roots(self, relations):
+        """Pick where each open cord's first strand sits, for fewest masks.
+
+        Strands attach outwards from the first strand in both directions,
+        and each must be drawn above the one it attaches to, so the root
+        decides which layer orders are possible. Returns {cord: root} for
+        the cords whose root changes.
+        """
+        index = {id(s): (c, k) for c, cord in enumerate(self.cords) for k, s in enumerate(cord['chain'])}
+        pairs = [(index[id(a)], index[id(b)], a_over) for a, b, a_over, _ in relations]
+        nodes = [(c, k) for c, cord in enumerate(self.cords) for k in range(len(cord['chain']))]
+        roots = {c: cord.get('root', 0) for c, cord in enumerate(self.cords)}
+
+        def masks():
+            def parent(node):
+                c, k = node
+                return None if k == roots[c] else (c, k-1 if k > roots[c] else k+1)
+            order = {n: k for k, n in enumerate(_stack(nodes, parent, pairs))}
+            return len({(a, b, over) for a, b, over in pairs if (order[a] < order[b]) == over})
+        changed = {}
+        for c, cord in enumerate(self.cords):
+            if cord['closed'] or len(cord['chain']) < 3:
+                continue
+            scores = []
+            for root in range(len(cord['chain'])):
+                roots[c] = root
+                scores.append((masks(), root))
+            roots[c] = min(scores)[1]
+            if roots[c] != cord.get('root', 0):
+                changed[c] = roots[c]
+        return changed
+
+    def interlace(self, rule):
+        """Mask every stroke overlap so the crossing's chosen strand is on top.
+
+        rule(scene, hits) returns, for each hit, True when its first side is over.
+        """
+        if any(cord['chain'] is None for cord in self.cords):
+            self.plan(rule)
+            self.fit()
+        for attempt in range(8):
+            hits = self.find_crossings()
+            for h, flag in zip(hits, rule(self, hits)):
+                h['over'] = flag
+            extra = self.conflict_joins(hits)
+            if not extra or attempt == 7:
+                break
+            for c, k in extra:
+                self.cords[c]['forced'].add(k)
+            self.unfit()
+            self.fit()
+        roots = self.choose_roots(self.overlaps(hits))
+        if roots:
+            for c, root in roots.items():
+                self.cords[c]['root'] = root
+            self.unfit()
+            self.fit()
+            hits = self.find_crossings()
+            for h, flag in zip(hits, rule(self, hits)):
+                h['over'] = flag
+        self.hits = hits
+        self.conflicts = len(extra)
+        relations = self.overlaps(hits)
+        regular = [s for s in self.strands if not isinstance(s, MaskedStrand)]
+        outlines = {id(s): stroke(s.get_path(), s.width+2*s.stroke_width) for s in regular}
+        wanted, natural = {}, {}
+        regular = self.stack(regular, relations)
+        self.strands = regular+[s for s in self.strands if isinstance(s, MaskedStrand)]
+        order = {id(s): k for k, s in enumerate(regular)}
+        for a, b, a_over, polygon in relations:
+            if order[id(a)] > order[id(b)]:
+                a, b, a_over = b, a, not a_over
+            # A mask only where the lower strand of the two must be on top.
+            (wanted if a_over else natural).setdefault((id(a), id(b)), []).append(polygon)
         for key, polygons in sorted(wanted.items(), key=lambda kv: order[kv[0][1]]):
             over = next(s for s in regular if id(s) == key[0])
             under = next(s for s in regular if id(s) == key[1])
@@ -785,8 +1021,10 @@ def scenes(only=None):
         laces = []
         for y in (330, 430, 530):
             laces.append(len(s.cords))
+            # A freehand S: its shape, not its exact landmarks, matters, so
+            # one strand's two control points draw each lace.
             s.cord(spline([(220, y+38), (450, y-12), (750, y+12), (980, y-38)]),
-                   PALETTE[1], 'Gold lacing', 18)
+                   PALETTE[1], 'Gold lacing', 18, tolerance=12, bend_error=12)
         s.interlace(checkerboard(laces))
         yield s
 

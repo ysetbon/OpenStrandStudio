@@ -23,23 +23,35 @@ These are editable planar studies rather than step-by-step tying instructions.
 
 `scripts/generate_creative_samples.py` draws each design as a smooth, dense
 centerline, then `scripts/sample_geometry.py` fits it into the fewest attached
-strands whose native two-handle curves stay within 0.8 px of the design, with
-the design's own tangents at every join. A span may also turn through at most
-45 degrees, because a longer native curve bends unevenly and shows flat spots
-on round shapes. The fitting uses the live canvas curvature defaults (1, 2, 2).
+strands it can: each strand's two control points carry as long a stretch of
+the design as they can. A span must stay within 2.5 px of the design and follow
+its direction within 6 degrees (more on short, tight bends), so long spans
+cannot hide flat spots on round shapes. Joins keep the design's tangent; a
+cord's loose ends choose their own handles, so each Woven Heart lace is a
+single strand. The fitting uses the live canvas curvature defaults (1, 2, 2).
+
+Every join splits the shadows around it into pieces, so joins are kept out of
+crossings and, as far as they can be, out of the reach of any shadow: a join
+closer to another strand than a shadow's width costs up to four extra strands
+in the fit.
 
 Over/under is solved for all cords at once: consecutive crossings along every
 cord must alternate, which gives parity constraints between crossings. Hidden
 ends pass under, and closing joins are placed where their cord passes under.
-Every stroke overlap is then assigned to its crossing and realised with a
-MaskedStrand. The whole overlap is covered, joins are kept out of crossings
-(farther at shallow crossings), and a mask is erased only where the same pair
-crosses the other way. Two things would otherwise show, so they are hidden
-under a covering crossing:
+Two strands never cross each other both ways: a join goes between two such
+crossings, in the most open spot.
 
-- a colour change, whose attachment circle draws a round notch;
-- the join of a closed design, built as a chain whose flat, line-free ends meet
-  there.
+The layer order then draws the upper strand of each crossing later wherever it
+can, so most crossings need no mask and are shaded from the strands' own
+outlines. Each attached strand stays above the strand it attaches to (it
+covers their join). An open cord's first strand may sit in the middle of the
+cord, with strands attached outwards from both of its ends; it sits where the
+fewest masks remain. Every remaining crossing whose upper strand is drawn
+first is realised with a MaskedStrand that covers its whole overlap.
+
+A colour change and the join of a closed design are hidden under a covering
+crossing: the first would draw a round notch, the second is a chain whose
+flat, line-free ends meet there.
 
 The Cloverleaf stem tucks under every leaf; the Woven Heart laces alternate
 along their length and start on alternate sides. Every other cord alternates

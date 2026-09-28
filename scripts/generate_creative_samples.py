@@ -796,6 +796,8 @@ class Scene:
 
 
 RED, GOLD = '#c83e4d', '#e8ac45'
+# Single-colour knots.
+JADE, ROYAL_BLUE = '#2f9e7e', '#3f6fc4'
 
 
 def knot_cord(scene, poly, width, colors=(RED, GOLD), group='Complete knot', closed=False):
@@ -1045,7 +1047,7 @@ def scenes(only=None):
                 (300, 45), (305, 160), (215, 235), (80, 235), (-45, 160),
                 (-125, 40), (-150, -80), (-122, -180), (-55, -236), (0, -246)]
         points = mirror_knot([(cx+x, cy+y) for x, y in half], cx)
-        knot_cord(s, spline(points), 28)
+        knot_cord(s, spline(points), 28, colors=(JADE, JADE))
         s.interlace(woven())
         yield s
 
@@ -1080,7 +1082,8 @@ def scenes(only=None):
         big, small = 235, 120
         # This base keeps crossings 50 apart and every other pass 40 apart.
         knot_cord(s, eared_knot((600, 400), 190, {1: small, 2: big, 3: small, 4: big,
-                                                  5: small, 6: big, 7: small}, 260), 22)
+                                                  5: small, 6: big, 7: small}, 260), 22,
+                  colors=(ROYAL_BLUE, ROYAL_BLUE))
         s.interlace(woven())
         yield s
 

@@ -2481,6 +2481,12 @@ class Strand:
         painter.drawPath(combined_highlight)
 
     def draw(self, painter, skip_painter_setup=False):
+        """Draw the strand, and the unfolded start caps of its attached
+        strands that are drawn at its layer (shader_utils.lowered_start_cap)."""
+        from shader_utils import draw_with_lowered_cap
+        draw_with_lowered_cap(painter, self, lambda: self._draw_self(painter, skip_painter_setup))
+
+    def _draw_self(self, painter, skip_painter_setup=False):
         painter.save() # <<<< SAVE 1 (Top Level)
         try:
             if not skip_painter_setup:

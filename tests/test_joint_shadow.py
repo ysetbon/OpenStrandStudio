@@ -15,6 +15,7 @@ heart test covers the safeguards (_seam_slab, _subtracted).
 """
 
 import json
+import math
 import os
 import sys
 from pathlib import Path
@@ -103,6 +104,12 @@ def sample(name, width, stroke_width):
                              _suppress_layer_panel_refresh=True, _suppress_repaint=True,
                              update=lambda: None)
     strands = load_strands_from_data(data, loader)[0]
+    for strand in strands:
+        # The canvas's default curve settings, which are not saved in the file.
+        strand.control_point_base_fraction = 1.0
+        strand.distance_multiplier = 2.0
+        strand.curve_response_exponent = 2.0
+        strand.update_shape()
     scene(*strands)
     return {strand.layer_name: strand for strand in strands}
 
@@ -179,3 +186,45 @@ def test_joint_shadows_stay_on_their_casters_in_the_woven_heart():
         assert outline is not None and not outline.isEmpty(), (caster, receiver)
         footprint = shader_utils.build_shadow_geometry(strands[caster], 1.0).boundingRect()
         assert footprint.contains(outline.boundingRect()), (caster, receiver)
+
+
+# ----------------------------------------------------------------------------
+# Unfolded joint caps drawn under the strands crossing the joint
+# ----------------------------------------------------------------------------
+def test_unfolded_cap_goes_under_the_strands_crossing_the_joint():
+    # Widened, 1_10's cap at its joint with 1_1 overlaps 1_6, and 1_9's cap
+    # at its joint with 1_8 overlaps 1_10. Both strands lie between the two
+    # joined strands in the layer order and cross the parent there, so the
+    # cord passes under them. 1_8 is between 1_1 and 1_10 too, but the cord
+    # passes over it: it does not count.
+    strands = sample("chinese_double_coin.json", 80, 2)
+    j1 = shader_utils.lowered_start_cap(strands["1_10"])
+    j2 = shader_utils.lowered_start_cap(strands["1_9"])
+    assert j1 is not None and [s.layer_name for s in j1["crossers"]] == ["1_6"]
+    assert j2 is not None and [s.layer_name for s in j2["crossers"]] == ["1_10"]
+    assert j1["parent"] is strands["1_1"] and j2["parent"] is strands["1_8"]
+    # Every other joint keeps its cap where it was.
+    for name in ("1_2", "1_3", "1_4", "1_5", "1_6", "1_7", "1_8"):
+        assert shader_utils.lowered_start_cap(strands[name]) is None, name
+
+
+def test_lowered_cap_is_part_of_the_parent():
+    # The parent paints the cap at its layer, so the cap receives the
+    # crossing strand's shadow and blocks what lies below, like the parent.
+    strands = sample("chinese_double_coin.json", 80, 2)
+    child = strands["1_10"]
+    # Just past the seam on 1_10's side, where only the cap covers 1_1's end.
+    angle = child._unfolded_start_angle()
+    inside_cap_only = QPointF(child.start.x() + 20 * math.cos(angle), child.start.y() + 20 * math.sin(angle))
+    assert child.unfolded_start_cap().contains(inside_cap_only)
+    assert not shader_utils._build_rendered_geometry(strands["1_1"]).contains(inside_cap_only)
+    assert shader_utils.build_rendered_geometry(strands["1_1"]).contains(inside_cap_only)
+    # 1_6 shades the lowered cap; the shadow of 1_10 itself stays off it.
+    shaded = outline_on(strands["1_6"], strands["1_1"])
+    assert shaded is not None and shaded.intersects(child.unfolded_start_cap())
+
+
+def test_caps_stay_put_at_the_saved_width():
+    # At its saved width the double coin's caps reach no crossing strand.
+    strands = sample("chinese_double_coin.json", 28, 2)
+    assert all(shader_utils.lowered_start_cap(s) is None for s in strands.values())

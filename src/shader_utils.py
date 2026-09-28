@@ -536,7 +536,9 @@ def _overlap_within(path_a: QPainterPath, path_b: QPainterPath, zone: QPainterPa
 def _drawn_footprint(strand) -> QPainterPath:
     """What *strand* paints, rounded ends included. build_rendered_geometry
     leaves out an attached strand's own start cap even though draw() paints
-    it."""
+    it (unless the cap is lowered, see lowered_start_cap)."""
+    if lowered_start_cap(strand) is not None:
+        return _build_rendered_geometry(strand)
     try:
         footprint = strand.get_selection_path()
         if not footprint.isEmpty():
@@ -544,6 +546,188 @@ def _drawn_footprint(strand) -> QPainterPath:
     except Exception:
         pass
     return build_rendered_geometry(strand)
+
+
+def _strand_key(strand):
+    """The geometry a strand is drawn from, to tell when a memo is stale."""
+    def xy(point):
+        return (round(point.x(), 3), round(point.y(), 3)) if point is not None else None
+    return (id(strand), xy(getattr(strand, 'start', None)), xy(getattr(strand, 'end', None)),
+            xy(getattr(strand, 'control_point1', None)), xy(getattr(strand, 'control_point2', None)),
+            xy(getattr(strand, 'control_point_center', None)),
+            getattr(strand, 'width', None), getattr(strand, 'stroke_width', None),
+            bool(getattr(strand, 'is_hidden', False)),
+            getattr(strand, 'control_point_base_fraction', None), getattr(strand, 'distance_multiplier', None),
+            getattr(strand, 'curve_response_exponent', None),
+            bool(getattr(strand, 'control_point_center_locked', False)))
+
+
+def lowered_start_cap(strand):
+    """How an attached strand's unfolded start cap is drawn under the strands
+    that cross its parent at the joint, or None when it is drawn as usual.
+
+    An unfolded joint (start circle switched on with a transparent stroke) is
+    hidden by a round cap of fill colour. The attached strand painted it at
+    its own layer, so a strand between the parent and the attached strand in
+    the layer order that crosses the parent at the joint ended up under the
+    cap, its edge and the band it casts on the cord bitten off. Such a cap is
+    lowered: the parent paints it right after itself (draw_lowered_caps), the
+    strands crossing there are drawn over it and shade it (it counts as part
+    of the parent in build_rendered_geometry), and the attached strand leaves
+    their soft edge alone near the joint (``keep_off``) and hides the seam
+    with a thin strip (``patch``). Only a strand that crosses the parent at
+    the joint and not the attached strand's own body there counts: one the
+    attached strand lies over next to the joint (the cord passes over it
+    there, as the layer order says) keeps lying under the cap too.
+
+    Returns {'parent', 'cap', 'crossers', 'keep_off', 'patch',
+    'parent_geometry'}; memoised on the strand while the strands involved,
+    the layer order and the blur are unchanged.
+    """
+    parent = getattr(strand, 'parent', None)
+    canvas = getattr(strand, 'canvas', None)
+    if (parent is None or canvas is None or not hasattr(strand, 'unfolded_start_cap')
+            or getattr(strand, 'is_hidden', False) or getattr(parent, 'is_hidden', False)
+            or not strand.has_circles or not strand.has_circles[0]
+            or strand.start_circle_stroke_color.alpha() != 0
+            or not getattr(strand, 'is_setting_staring_circle', False)):
+        return None
+    manager = getattr(canvas, 'layer_state_manager', None)
+    if not manager:
+        return None
+    try:
+        layer_order = manager.getOrder()
+        low = layer_order.index(parent.layer_name)
+        high = layer_order.index(strand.layer_name)
+    except (ValueError, AttributeError):
+        return None
+    if high - low < 2:
+        return None
+    between = set(layer_order[low + 1:high])
+    candidates = [item for item in canvas.strands
+                  if getattr(item, 'layer_name', None) in between and not hasattr(item, 'get_mask_path')
+                  and not getattr(item, 'is_hidden', False)]
+    if not candidates:
+        return None
+    shading = bool(getattr(canvas, 'shadow_enabled', False))
+    blur = float(getattr(canvas, 'max_blur_radius', 29.99) or 29.99)
+    key = (tuple(layer_order), _strand_key(strand), _strand_key(parent),
+           tuple(_strand_key(item) for item in candidates), shading, blur)
+    own = strand.__dict__
+    memo = own.get('_lowered_cap_memo')
+    if memo is not None and memo[0] == key:
+        return memo[1]
+    info = _compute_lowered_start_cap(strand, parent, candidates, shading, blur)
+    own['_lowered_cap_memo'] = (key, info)
+    return info
+
+
+def _compute_lowered_start_cap(strand, parent, candidates, shading, blur):
+    try:
+        cap = strand.unfolded_start_cap()
+    except Exception:
+        return None
+    if cap.isEmpty():
+        return None
+    cap_rect = cap.boundingRect()
+    try:
+        parent_body = parent.get_body_selection_path()
+    except Exception:
+        parent_body = _build_rendered_geometry(parent)
+    near_joint = QPainterPath(parent_body).intersected(_grown(cap, 2.0))
+    # The attached strand's own body next to the joint (its cap left out): a
+    # strand it lies over there stays under the cap too.
+    own_near_joint = QPainterPath(_build_rendered_geometry(strand)).intersected(_grown(cap, 2.0))
+    crossers = []
+    for item in candidates:
+        try:
+            if not item.boundingRect().adjusted(-4, -4, 4, 4).intersects(cap_rect):
+                continue
+            footprint = item.get_selection_path()
+        except Exception:
+            continue
+        if footprint.isEmpty() or not footprint.intersects(cap):
+            continue
+        if (_approx_path_area(QPainterPath(footprint).intersected(near_joint)) > 1.0
+                and _approx_path_area(QPainterPath(footprint).intersected(own_near_joint)) <= 1.0):
+            crossers.append((item, footprint))
+    if not crossers:
+        return None
+    # Where the crossers and their soft edges show on the lowered cap.
+    reach = blur / 2.0 + 1.0 if shading else 1.0
+    keep_off = QPainterPath()
+    covered = QPainterPath()
+    for _item, footprint in crossers:
+        area = _grown(footprint, reach).intersected(cap)
+        keep_off = area if keep_off.isEmpty() else keep_off.united(area)
+        grown = _grown(footprint, reach)
+        covered = grown if covered.isEmpty() else covered.united(grown)
+    # A strip across the seam, where the attached strand's flat start meets
+    # the parent's flat end, in fill colour so that no hairline shows there.
+    angle = strand._unfolded_start_angle()
+    strip = QPainterPath()
+    strip.addRect(QRectF(-2.5, -strand.width / 2.0, 5.0, strand.width))
+    strip = QTransform().translate(strand.start.x(), strand.start.y()).rotate(math.degrees(angle)).map(strip)
+    patch = _subtracted(strip, covered)
+    parent_geometry = QPainterPath(_build_rendered_geometry(parent)).united(cap)
+    return {'parent': parent, 'cap': cap, 'crossers': [item for item, _f in crossers],
+            'keep_off': keep_off, 'patch': patch, 'parent_geometry': parent_geometry}
+
+
+def lowered_caps_of(strand):
+    """lowered_start_cap() of *strand*'s attached strands whose cap it paints."""
+    lowered = []
+    for child in getattr(strand, 'attached_strands', None) or []:
+        info = lowered_start_cap(child)
+        if info is not None and info['parent'] is strand:
+            lowered.append((child, info))
+    return lowered
+
+
+def draw_lowered_caps(painter, strand):
+    """Paint, at *strand*'s layer, the unfolded start caps of its attached
+    strands that are lowered (see lowered_start_cap)."""
+    lowered = lowered_caps_of(strand)
+    if not lowered:
+        return
+    painter.save()
+    try:
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setPen(Qt.NoPen)
+        for child, info in lowered:
+            painter.setBrush(QBrush(child.color))
+            painter.drawPath(info['cap'])
+    finally:
+        painter.restore()
+
+
+def draw_with_lowered_cap(painter, strand, draw_body):
+    """Draw *strand* with *draw_body* (its own drawing), handling a lowered
+    start cap: the body leaves the crossers' soft edges near the joint alone
+    and paints no cap of its own, and a strip hides the seam. Then paint the
+    lowered caps of the strands attached to it."""
+    info = lowered_start_cap(strand)
+    if info is None:
+        draw_body()
+    else:
+        painter.save()
+        try:
+            if not info['keep_off'].isEmpty():
+                everywhere = QRectF(-1.0e6, -1.0e6, 2.0e6, 2.0e6)
+                painter.setClipPath(_outside(info['keep_off'], everywhere), Qt.IntersectClip)
+            strand._start_cap_lowered = True
+            try:
+                draw_body()
+            finally:
+                strand._start_cap_lowered = False
+            if not info['patch'].isEmpty():
+                painter.setRenderHint(QPainter.Antialiasing, True)
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QBrush(strand.color))
+                painter.drawPath(info['patch'])
+        finally:
+            painter.restore()
+    draw_lowered_caps(painter, strand)
 
 
 def _mask_sides(mask_strand, canvas, layer_order, blur_px, lifted_pairs=frozenset(), cache=None):
@@ -1183,6 +1367,14 @@ def _pair_shadow(strand, other_strand, shadow_path, canvas, layer_order, masked_
         # end-circles are already part of the path we test against, avoiding
         # later ad-hoc unions.
         other_stroke_path = build_rendered_geometry(other_strand)
+        # A lowered cap only takes the shadows of the strands that cross the
+        # joint (see lowered_start_cap); elsewhere the attached strand covers it.
+        lowered = lowered_caps_of(other_strand)
+        if lowered and any(strand not in info['crossers'] for _child, info in lowered):
+            other_stroke_path = _build_rendered_geometry(other_strand)
+            for _child, info in lowered:
+                if strand in info['crossers']:
+                    other_stroke_path = QPainterPath(other_stroke_path).united(info['cap'])
 
         # If the other strand is a MaskedStrand, use its actual mask path
         # instead of just the stroke path to get the correct intersection area
@@ -1578,7 +1770,10 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
                 # Expand the clipping path by the receiver's area, so the faded
                 # shadow only renders where an underlying strand exists.
                 receiver_clip, other_stroke_path = pair['clip'], pair['receiver_path']
-                plain_receiver = receiver_clip is other_stroke_path or receiver_clip == other_stroke_path
+                # A receiver with a lowered cap is a boolean union (see
+                # build_rendered_geometry), not a plain outline.
+                plain_receiver = ((receiver_clip is other_stroke_path or receiver_clip == other_stroke_path)
+                                  and not lowered_caps_of(other_strand))
                 if clip_path.isEmpty():
                     clip_path = QPainterPath(receiver_clip)
                     plain_clip = plain_receiver
@@ -2172,6 +2367,22 @@ def get_side_line_exclusion_path(strand, shadow_width_multiplier=None):
     return exclusion_path
 
 def build_rendered_geometry(strand):
+    """The *visual* geometry of a strand (see _build_rendered_geometry), with
+    the lowered start caps it paints for its attached strands
+    (lowered_start_cap): they lie at its layer, so the strands crossing there
+    shade them and they block what lies below, like the strand itself."""
+    geometry = _build_rendered_geometry(strand)
+    if hasattr(strand, 'get_mask_path'):
+        return geometry
+    lowered = lowered_caps_of(strand)
+    if len(lowered) == 1:
+        return QPainterPath(lowered[0][1]['parent_geometry'])
+    for _child, info in lowered:
+        geometry = QPainterPath(geometry).united(info['cap'])
+    return geometry
+
+
+def _build_rendered_geometry(strand):
     """
     Returns the *visual* geometry of a strand as a single QPainterPath.
 

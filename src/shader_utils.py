@@ -499,7 +499,7 @@ def _subtract_named_layer_paths(source_path, canvas, layer_names):
         if subtraction_path.isEmpty():
             continue
 
-        result_path = QPainterPath(result_path).subtracted(subtraction_path)
+        result_path = _subtracted(result_path, subtraction_path)
         if blocker_path.isEmpty():
             blocker_path = QPainterPath(subtraction_path)
         else:
@@ -848,7 +848,7 @@ def _subtract_intermediates(region, canvas, intermediate_layers, exemptions, cac
             if geometry.isEmpty():
                 break
         if not geometry.isEmpty():
-            region = QPainterPath(region).subtracted(geometry)
+            region = _subtracted(region, geometry)
     fill_area = QPainterPath(region)
     if not fill_cover.isEmpty():
         fill_area = QPainterPath(fill_area).subtracted(fill_cover)
@@ -908,6 +908,26 @@ def _subtracted_checked(path, cut):
     an empty path, even where they barely touch (_subtraction_ok)."""
     result = QPainterPath(path).subtracted(cut)
     return result if _subtraction_ok(path, cut, result) else QPainterPath(path)
+
+
+def _subtracted(path, cut):
+    """*path* minus *cut*. Where *cut* meets *path* along a shared edge, as
+    two strands do at a seamless joint, Qt's boolean operation can return
+    nothing, or a path reaching past *path*: the cut moved by a hundredth of
+    a pixel is subtracted then (and *path* kept whole if that fails too).
+    Only an empty result is checked point by point, which is costly."""
+    bounds = path.boundingRect().adjusted(-0.5, -0.5, 0.5, 0.5)
+    result = QPainterPath(path).subtracted(cut)
+    if result.isEmpty():
+        if _subtraction_ok(path, cut, result):
+            return result
+    elif bounds.contains(result.boundingRect()):
+        return result
+    nudged = QTransform().translate(0.01, 0.01).map(cut)
+    result = QPainterPath(path).subtracted(nudged)
+    if (result.isEmpty() or bounds.contains(result.boundingRect())) and _subtraction_ok(path, nudged, result):
+        return result
+    return QPainterPath(path)
 
 
 def _closed_outline(path):
@@ -1049,12 +1069,13 @@ def _clip_off_hidden_rows(clip, canvas, caster_layer, layers_between, cache=None
 
 
 def _pair_shadow(strand, other_strand, shadow_path, canvas, layer_order, masked_strands_map,
-                 near_masks, lifted_near_masks, lowered_near_masks, max_blur_radius, cache):
+                 near_masks, lifted_near_masks, lowered_near_masks, max_blur_radius, cache, joints=()):
     """The shadow *strand* casts on *other_strand*, computed as
     draw_strand_shadow draws it, or None when it casts none there.
 
-    *shadow_path* is where the caster's shadow starts (_caster_shadow_path);
-    the other arguments are what draw_strand_shadow works out once per caster.
+    *shadow_path* is where the caster's shadow starts and *joints* its joints
+    hidden by a transparent circle (both from _caster_shadow_path); the other
+    arguments are what draw_strand_shadow works out once per caster.
     Returns a dict:
 
     - ``outline``: the area whose outline the soft edge is stroked along;
@@ -1179,6 +1200,11 @@ def _pair_shadow(strand, other_strand, shadow_path, canvas, layer_order, masked_
 
         # Calculate intersection
         intersection = QPainterPath(shadow_path)
+        # A strand that continues the caster at a hidden joint gets no halo
+        # around the joint (see _caster_shadow_path).
+        for centre, disc in joints:
+            if _ends_at(other_strand, centre):
+                intersection = QPainterPath(intersection).subtracted(disc)
         # Only add circle shadows if not using arrow shadow
         if not (getattr(strand, 'full_arrow_visible', False) and getattr(strand, 'arrow_casts_shadow', False)):
             circle_shadow_path = build_shadow_circle_geometry(strand, max_blur_radius+2)
@@ -1298,10 +1324,85 @@ def _pair_shadow(strand, other_strand, shadow_path, canvas, layer_order, masked_
         return None
 
 
+def _transparent_ends(strand):
+    """[(end index, centre, disc)] of *strand*'s ends whose circle is switched
+    on but fully transparent, with the area around the end that its shadow
+    keeps off (see _caster_shadow_path): a disc whose radius is two thirds of
+    the strand's full width."""
+    ends = []
+    try:
+        if not (hasattr(strand, "has_circles") and any(strand.has_circles)):
+            return ends
+        radius = (strand.width + strand.stroke_width * 2) / 1.5
+        for idx, enabled in enumerate(strand.has_circles):
+            if not enabled:
+                continue
+            color = strand.start_circle_stroke_color if idx == 0 else strand.end_circle_stroke_color
+            if color and color.alpha() == 0:
+                centre = QPointF(strand.start if idx == 0 else strand.end)
+                disc = QPainterPath()
+                disc.addEllipse(centre, radius, radius)
+                ends.append((idx, centre, disc))
+    except Exception:
+        pass
+    return ends
+
+
+def _seam_slab(strand, idx, depth=2.0):
+    """A thin band across *strand*'s flat end *idx*, reaching *depth* px to
+    either side of it and a little past both edges. At a seamless joint the
+    neighbour's flat end is the very same segment, and Qt's boolean
+    operations go wrong on shared edges: subtracting the neighbour from a
+    shadow that ends there returned nothing, or a path larger than the
+    shadow. With this band cut out, the shadow ends *depth* px short of the
+    joint, which its soft edge covers. Oriented along the path the body is
+    stroked from, as the stroker orients the flat end."""
+    try:
+        path = strand.get_shadow_path() if hasattr(strand, 'get_shadow_path') else strand.get_path()
+        length = path.length()
+        if length <= 0:
+            return QPainterPath()
+        step = min(1.0, length / 2.0)
+        if idx == 0:
+            end, inner = path.pointAtPercent(0.0), path.pointAtPercent(path.percentAtLength(step))
+        else:
+            end, inner = path.pointAtPercent(1.0), path.pointAtPercent(path.percentAtLength(length - step))
+        along = math.atan2(inner.y() - end.y(), inner.x() - end.x())
+        half_width = (strand.width + strand.stroke_width * 2) / 2.0 + 2.0
+        slab = QPainterPath()
+        slab.addRect(QRectF(-depth, -half_width, depth * 2, half_width * 2))
+        return QTransform().translate(end.x(), end.y()).rotate(math.degrees(along)).map(slab)
+    except Exception:
+        return QPainterPath()
+
+
+def _ends_at(item, point):
+    """Whether *item* is a visible strand with an end on *point*. A mask ends
+    where its first strand does, but continues no strand there."""
+    if hasattr(item, 'get_mask_path') or getattr(item, 'is_hidden', False):
+        return False
+    for end in (getattr(item, 'start', None), getattr(item, 'end', None)):
+        if end is not None and abs(end.x() - point.x()) < 0.5 and abs(end.y() - point.y()) < 0.5:
+            return True
+    return False
+
+
 def _caster_shadow_path(strand):
-    """(path, shadow_path) of a caster: its outline, and the area its shadow
-    starts from (the arrow when the arrow casts the shadow; transparent end
-    circles cut out)."""
+    """(path, shadow_path, joints) of a caster: its outline, the area its
+    shadow starts from (the arrow when the arrow casts the shadow), and
+    [(centre, disc)] of its joints hidden by a transparent circle.
+
+    A transparent circle asks for no shadow halo around its end, which the
+    flat end of the body would otherwise cast. At a free end the disc around
+    it (_transparent_ends) is cut out of the whole shadow. At a joint it is
+    cut only out of the shadow on the strands that end there and continue
+    the caster (_pair_shadow): any other strand passing the joint gets the
+    whole shadow, as anywhere else along the caster, less a thin band at the
+    joint itself (_seam_slab). The disc reaches past the caster's edge by a
+    sixth of its full width; cut out of every shadow, it cut short, with a
+    round end, the soft edge on each strand crossing near a joint (a strand
+    three grid squares wide lost 14 px of the 15 px edge the default blur
+    gives)."""
     # Check if arrow shading is enabled and use arrow path instead
     if getattr(strand, 'full_arrow_visible', False) and getattr(strand, 'arrow_casts_shadow', False):
         # Use the arrow path for shadow casting
@@ -1315,45 +1416,16 @@ def _caster_shadow_path(strand):
     else:
         path = get_proper_masked_strand_path(strand)
         shadow_path = build_shadow_geometry(strand, 0, include_circles=False)  # Exclude circles, we'll handle them separately
-        
-    # --------------------------------------------------
-    # If this strand has a *transparent* circle at either end, the circle is
-    # NOT part of the rendered geometry, but the rectangular end-cap produced
-    # by the body stroke can still cast a little square shadow.  To guarantee
-    # that absolutely no shadow halo appears where the user explicitly asked
-    # for a fully-transparent cap, we subtract a slightly enlarged circle
-    # region from the shadow path.
-    # --------------------------------------------------
-    try:
-        if hasattr(strand, "has_circles") and any(strand.has_circles):
-            radius_base = (strand.width + strand.stroke_width * 2) / 1.5
-            adj_radius = radius_base   # ensure we cut beyond blur
 
-            for idx, enabled in enumerate(strand.has_circles):
-                if not enabled:
-                    continue  # Circle already hidden by flag
-
-                # Check transparency for each circle separately
-                is_transparent = False
-                if idx == 0:  # Start circle
-                    start_color = strand.start_circle_stroke_color
-                    if start_color and start_color.alpha() == 0:
-                        is_transparent = True
-                elif idx == 1:  # End circle
-                    end_color = strand.end_circle_stroke_color
-                    if end_color and end_color.alpha() == 0:
-                        is_transparent = True
-
-                if is_transparent:
-                    centre = strand.start if idx == 0 else strand.end
-                    cut = QPainterPath()
-                    cut.addEllipse(centre, adj_radius, adj_radius)
-                    shadow_path = QPainterPath(shadow_path).subtracted(cut)
-                    pass
-    except Exception as exc:
-        # logging.error(f"Error subtracting transparent circle from shadow_path of {getattr(strand, 'layer_name', 'unknown')}: {exc}")
-        pass
-    return path, shadow_path
+    joints = []
+    others = getattr(getattr(strand, 'canvas', None), 'strands', None) or []
+    for idx, centre, disc in _transparent_ends(strand):
+        if any(item is not strand and _ends_at(item, centre) for item in others):
+            joints.append((centre, disc))
+            shadow_path = QPainterPath(shadow_path).subtracted(_seam_slab(strand, idx))
+        else:
+            shadow_path = QPainterPath(shadow_path).subtracted(disc)
+    return path, shadow_path, joints
 
 
 def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur_radius=None,
@@ -1437,7 +1509,7 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     # visible end-circles.  This single path will be used for all subsequent
     # shadow computations, eliminating the need for special-casing circles.
 
-    path, shadow_path = _caster_shadow_path(strand)
+    path, shadow_path, joints = _caster_shadow_path(strand)
 
     # ------------------------------------------------------------------
     # Manual circle-exclusion logic removed – visible circles are already
@@ -1495,7 +1567,8 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
         # Check against all other strands
         for other_strand in canvas.strands:
             pair = _pair_shadow(strand, other_strand, shadow_path, canvas, layer_order, masked_strands_map,
-                                near_masks, lifted_near_masks, lowered_near_masks, max_blur_radius, cache)
+                                near_masks, lifted_near_masks, lowered_near_masks, max_blur_radius, cache,
+                                joints)
             if pair is None:
                 continue
             if pair['lift'] is not None:
@@ -2566,10 +2639,11 @@ def shadow_preview(canvas, casting_strand, receiving_strand, casting_layer, rece
             return None
         masked_strands_map = _frame_masks_map(canvas, layer_order, cache)
         near_masks = _masks_near(casting_strand, masked_strands_map, canvas, layer_order, max_blur_radius, cache)
-        _outline, shadow_path = _caster_shadow_path(casting_strand)
+        _outline, shadow_path, joints = _caster_shadow_path(casting_strand)
         pair = _pair_shadow(casting_strand, receiving_strand, shadow_path, canvas, layer_order,
                             masked_strands_map, near_masks, _lifted_near_masks(casting_strand, near_masks),
-                            _lowered_near_masks(casting_strand, near_masks, layer_order), max_blur_radius, cache)
+                            _lowered_near_masks(casting_strand, near_masks, layer_order), max_blur_radius, cache,
+                            joints)
         if pair is None or pair['lift'] is not None:
             return None
         clips = [pair['clip']]

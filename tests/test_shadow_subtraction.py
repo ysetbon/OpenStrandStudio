@@ -12,6 +12,7 @@ never wipe it out.
 import os
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -65,14 +66,16 @@ def test_a_cut_that_misses_the_strand_changes_nothing():
         assert result.contains(QPointF(x, y)) == path.contains(QPointF(x, y))
 
 
-def test_a_hairline_overlap_does_not_count_as_lying_over_a_piece():
-    """A wide strand beside a mask's piece touches it by a sliver (the piece
-    reaches 2 px past its second strand's outline). Its shadow on the first
-    strand still belongs on the piece, so it must not be left out."""
+def test_a_strand_beside_a_piece_does_not_run_under_it():
+    """A mask's piece covers the edge of a wide neighbour running beside the
+    crossing. That neighbour keeps its shadow on the rest of the piece; only
+    a strand the piece is drawn across lies below it there."""
+    strand = SimpleNamespace(width=46, stroke_width=4)   # 54 px wide when drawn
     piece = rect(100, 100, 60, 50)
-    beside = rect(159.5, 80, 60, 90)   # overlaps the piece by half a pixel
-    across = rect(130, 80, 60, 90)     # runs over the piece
-    assert piece.intersects(beside)
-    assert not shader_utils._lies_over(beside, piece)
-    assert shader_utils._lies_over(across, piece)
-    assert not shader_utils._lies_over(rect(300, 300, 10, 10), piece)
+    for overlap in (0.5, 4, 10, 20):                     # an edge sliver, however thick
+        beside = rect(160 - overlap, 60, 54, 130)
+        assert piece.intersects(beside)
+        assert not shader_utils._runs_under(strand, beside, piece)
+    across = rect(110, 60, 54, 130)                      # crosses the piece
+    assert shader_utils._runs_under(strand, across, piece)
+    assert not shader_utils._runs_under(strand, rect(300, 300, 10, 10), piece)

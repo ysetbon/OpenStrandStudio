@@ -319,23 +319,25 @@ def _footprint_of(strand, cache):
     return cache[key]
 
 
-def _lies_over(footprint, piece, thickness=4.0):
-    """Whether *footprint* overlaps *piece* by more than a hairline.
+def _runs_under(item, footprint, piece):
+    """Whether the mask's piece covers *item* across (it crosses the piece),
+    not only along an edge (it runs beside the piece, its outline overlapping).
 
-    A mask's piece reaches 2 px past the second strand's outline, so a wide
-    strand running right beside it (its outline included) overlaps the piece
-    by a sliver under a pixel thick. That strand does not lie over the piece:
-    the piece is drawn beside it, and its shadow on the first strand still
-    belongs on the piece. The overlap counts when a stroke *thickness* wide
-    laid along its outline leaves something of it."""
-    if not footprint.boundingRect().intersects(piece.boundingRect()):
-        return False
+    It crosses when the overlap is more than half the strand's drawn width
+    thick somewhere: some point of it lies deeper than a quarter width inside,
+    which the overlap shifted that far in eight directions still covers."""
     shared = QPainterPath(footprint).intersected(piece)
     if shared.isEmpty():
         return False
-    stroker = QPainterPathStroker()
-    stroker.setWidth(thickness)
-    return not QPainterPath(shared).subtracted(stroker.createStroke(shared)).isEmpty()
+    reach = max(2.0, (getattr(item, 'width', 0) + 2 * getattr(item, 'stroke_width', 0)) / 4.0)
+    diagonal = reach * 0.7071
+    core = QPainterPath(shared)
+    for dx, dy in ((reach, 0), (-reach, 0), (0, reach), (0, -reach),
+                   (diagonal, diagonal), (diagonal, -diagonal), (-diagonal, diagonal), (-diagonal, -diagonal)):
+        core = core.intersected(QTransform().translate(dx, dy).map(shared))
+        if core.isEmpty():
+            return False
+    return _approx_path_area(core) > 0.5
 
 
 def _cut_on_receiver(collected, receiver_layer, cut, cut_key, cache):
@@ -371,6 +373,78 @@ def _cut_on_receiver(collected, receiver_layer, cut, cut_key, cache):
     return result
 
 
+def _covering_strands(mask_strand, cache):
+    """The strands the mask's piece must not cover, as [(strand, footprint)].
+
+    The piece is drawn at the mask's place in the layer order, over every
+    strand drawn before it. A strand above both of the mask's strands lies
+    above their crossing, lifted or not, so where it overlaps the piece it
+    stays on top: a wide neighbour running beside the crossing keeps its
+    edge, and the first strand keeps its shadow there. A strand between the
+    two strands keeps being covered (see _mask_sides: it would sit both above
+    and below the crossing)."""
+    key = ('covering', id(mask_strand))
+    if key in cache:
+        return cache[key]
+    covering = []
+    first = getattr(mask_strand, 'first_selected_strand', None)
+    second = getattr(mask_strand, 'second_selected_strand', None)
+    canvas = getattr(mask_strand, 'canvas', None)
+    manager = getattr(canvas, 'layer_state_manager', None) if canvas is not None else None
+    piece = _piece_of(mask_strand, cache) if first is not None and second is not None else QPainterPath()
+    if manager and not piece.isEmpty():
+        layer_order = manager.getOrder()
+        names = (mask_strand.layer_name, first.layer_name, second.layer_name)
+        if all(name in layer_order for name in names):
+            mask_index = layer_order.index(mask_strand.layer_name)
+            above = max(layer_order.index(first.layer_name), layer_order.index(second.layer_name))
+            area = piece.boundingRect()
+            for item in canvas.strands:
+                name = getattr(item, 'layer_name', None)
+                if (item is first or item is second or hasattr(item, 'get_mask_path')
+                        or getattr(item, 'is_hidden', False) or name not in layer_order
+                        or not above < layer_order.index(name) < mask_index
+                        or not _may_touch(item, area, cache)):
+                    continue
+                footprint = _footprint_of(item, cache)
+                if _approx_path_area(QPainterPath(footprint).intersected(piece)) > 1.0:
+                    covering.append((item, footprint))
+    cache[key] = covering
+    return covering
+
+
+def _uncovered_piece(mask_strand, cache):
+    """The mask's piece without the strands it must not cover
+    (_covering_strands), or the piece itself."""
+    key = ('uncovered', id(mask_strand))
+    if key not in cache:
+        piece = _piece_of(mask_strand, cache)
+        for _item, footprint in _covering_strands(mask_strand, cache):
+            piece = _subtracted(piece, footprint)
+        cache[key] = piece
+    return cache[key]
+
+
+def clip_mask_piece(painter, mask_strand):
+    """Clip *painter* so the mask's piece (fill and outline) leaves the
+    strands in _covering_strands uncovered. Call it inside a save/restore
+    before painting the piece."""
+    cache = _frame_cache(painter)
+    covering = _covering_strands(mask_strand, cache)
+    if not covering:
+        return
+    try:
+        bounds = mask_strand.get_mask_path_stroke().boundingRect().united(
+            _piece_of(mask_strand, cache).boundingRect()).adjusted(-4, -4, 4, 4)
+    except Exception:
+        return
+    keep = QPainterPath()
+    keep.addRect(bounds)
+    for _item, footprint in covering:
+        keep = keep.subtracted(footprint)
+    painter.setClipPath(keep, Qt.IntersectClip)
+
+
 def draw_mask_restored_shadows(painter, mask_strand, shadow_color=None, num_steps=3, max_blur_radius=29.99):
     """Paint again, on top of the mask's piece, the shadows that land on its
     first strand there and were painted before the mask.
@@ -384,8 +458,13 @@ def draw_mask_restored_shadows(painter, mask_strand, shadow_color=None, num_step
     draw_mask_lift_shadow). At a genuine crossing those strands would lie
     above the lifted piece as well, so their shadows go back on top of it.
 
-    A strand that the piece is drawn over (it overlaps the piece) is left out:
-    the mask covers it there, so its shadow does not belong on the piece.
+    The piece is not drawn over a strand above both of the mask's strands
+    (_covering_strands), so that strand's shadow always goes back. A strand
+    between the two in the layer order is covered where it overlaps the
+    piece. When the piece is drawn across it (_runs_under), it lies below the
+    lifted strand there and its shadow does not belong on the piece. When the
+    piece only covers its edge (a neighbour running beside the crossing), its
+    shadow goes back on the rest of the piece.
     """
     canvas = getattr(mask_strand, 'canvas', None)
     first = getattr(mask_strand, 'first_selected_strand', None)
@@ -408,6 +487,10 @@ def draw_mask_restored_shadows(painter, mask_strand, shadow_color=None, num_step
         return
     area = piece.boundingRect()
     reach = area.adjusted(-max_blur_radius, -max_blur_radius, max_blur_radius, max_blur_radius)
+    uncovered = {id(item) for item, _footprint in _covering_strands(mask_strand, cache)}
+    clip = _uncovered_piece(mask_strand, cache) if uncovered else piece
+    if clip.isEmpty():
+        return
 
     for item in canvas.strands:
         if item is mask_strand or item is first or item is second:
@@ -427,6 +510,7 @@ def draw_mask_restored_shadows(painter, mask_strand, shadow_color=None, num_step
             collected = draw_strand_shadow(painter, caster, shadow_color, num_steps=num_steps,
                                            max_blur_radius=max_blur_radius, collect_only=True)
             fill_path = collected['lift_path'] if collected else None
+            item_clip = clip
             # As draw_mask_lift_shadow: only near that mask when part of it is erased.
             zone = None if _whole_mask(item) else _zone_of(item, max_blur_radius, cache)
         else:
@@ -437,24 +521,34 @@ def draw_mask_restored_shadows(painter, mask_strand, shadow_color=None, num_step
                 continue
             collected = draw_strand_shadow(painter, item, shadow_color, num_steps=num_steps,
                                            max_blur_radius=max_blur_radius, collect_only=True)
-            # Only a strand that shades the first strand, and not one the piece
-            # is drawn over.
+            # Only a strand that shades the first strand.
             if not collected or all(receiver != first.layer_name
                                     for receiver, _outline in collected.get('outlines', ())):
                 continue
-            if _may_touch(item, area, cache) and _lies_over(_footprint_of(item, cache), piece):
-                continue
             zone = None
+            item_clip = clip
+            if id(item) not in uncovered and _may_touch(item, area, cache):
+                footprint = _footprint_of(item, cache)
+                if footprint.intersects(clip):
+                    if _runs_under(item, footprint, piece):
+                        # The piece is drawn across it, so it lies below the
+                        # lifted strand there: no shadow on the piece.
+                        continue
+                    # The piece only covers its edge: the shadow goes back on
+                    # the rest of the piece.
+                    item_clip = _subtracted(clip, footprint)
             collected = _cut_on_receiver(collected, second.layer_name, piece,
                                          id(mask_strand), cache)
             fill_path = collected['fill_path']
         if not collected or fill_path is None:
             continue
+        if item_clip.isEmpty():
+            continue
         if (not fill_path.boundingRect().intersects(area)
                 and _stroke_source_near(collected, area, max_blur_radius / 2.0 + 2.0).isEmpty()):
             continue  # nothing of it reaches the piece
         # The piece lies on the first strand, so it is the clip itself.
-        _paint_collected_shadow(painter, collected, piece, num_steps, max_blur_radius,
+        _paint_collected_shadow(painter, collected, item_clip, num_steps, max_blur_radius,
                                 fill_path=fill_path, and_clip=zone)
 
 

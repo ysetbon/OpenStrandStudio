@@ -464,7 +464,7 @@ def draw_mask_restored_shadows(painter, mask_strand, shadow_color=None, num_step
     piece. When the piece is drawn across it (_runs_under), it lies below the
     lifted strand there and its shadow does not belong on the piece. When the
     piece only covers its edge (a neighbour running beside the crossing), its
-    shadow goes back on the rest of the piece.
+    shadow goes back, reaching the piece's edge.
     """
     canvas = getattr(mask_strand, 'canvas', None)
     first = getattr(mask_strand, 'first_selected_strand', None)
@@ -527,16 +527,13 @@ def draw_mask_restored_shadows(painter, mask_strand, shadow_color=None, num_step
                 continue
             zone = None
             item_clip = clip
-            if id(item) not in uncovered and _may_touch(item, area, cache):
-                footprint = _footprint_of(item, cache)
-                if footprint.intersects(clip):
-                    if _runs_under(item, footprint, piece):
-                        # The piece is drawn across it, so it lies below the
-                        # lifted strand there: no shadow on the piece.
-                        continue
-                    # The piece only covers its edge: the shadow goes back on
-                    # the rest of the piece.
-                    item_clip = _subtracted(clip, footprint)
+            if (id(item) not in uncovered and _may_touch(item, area, cache)
+                    and _runs_under(item, _footprint_of(item, cache), piece)):
+                # The piece is drawn across it, so it lies below the lifted
+                # strand there: no shadow on the piece. When the piece only
+                # covers its edge, the shadow goes back up to the piece's
+                # visible edge.
+                continue
             collected = _cut_on_receiver(collected, second.layer_name, piece,
                                          id(mask_strand), cache)
             fill_path = collected['fill_path']

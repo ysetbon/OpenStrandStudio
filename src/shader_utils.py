@@ -319,6 +319,25 @@ def _footprint_of(strand, cache):
     return cache[key]
 
 
+def _lies_over(footprint, piece, thickness=4.0):
+    """Whether *footprint* overlaps *piece* by more than a hairline.
+
+    A mask's piece reaches 2 px past the second strand's outline, so a wide
+    strand running right beside it (its outline included) overlaps the piece
+    by a sliver under a pixel thick. That strand does not lie over the piece:
+    the piece is drawn beside it, and its shadow on the first strand still
+    belongs on the piece. The overlap counts when a stroke *thickness* wide
+    laid along its outline leaves something of it."""
+    if not footprint.boundingRect().intersects(piece.boundingRect()):
+        return False
+    shared = QPainterPath(footprint).intersected(piece)
+    if shared.isEmpty():
+        return False
+    stroker = QPainterPathStroker()
+    stroker.setWidth(thickness)
+    return not QPainterPath(shared).subtracted(stroker.createStroke(shared)).isEmpty()
+
+
 def _cut_on_receiver(collected, receiver_layer, cut, cut_key, cache):
     """*collected* (a draw_strand_shadow(collect_only=True) result) with its
     outline on *receiver_layer* cut by *cut*, both for the fill and for the
@@ -423,7 +442,7 @@ def draw_mask_restored_shadows(painter, mask_strand, shadow_color=None, num_step
             if not collected or all(receiver != first.layer_name
                                     for receiver, _outline in collected.get('outlines', ())):
                 continue
-            if _may_touch(item, area, cache) and _footprint_of(item, cache).intersects(piece):
+            if _may_touch(item, area, cache) and _lies_over(_footprint_of(item, cache), piece):
                 continue
             zone = None
             collected = _cut_on_receiver(collected, second.layer_name, piece,

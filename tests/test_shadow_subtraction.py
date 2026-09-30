@@ -63,3 +63,16 @@ def test_a_cut_that_misses_the_strand_changes_nothing():
     result = shader_utils._subtracted_checked(path, cut)
     for x, y in ((110, 110), (200, 127), (320, 127), (290, 150)):
         assert result.contains(QPointF(x, y)) == path.contains(QPointF(x, y))
+
+
+def test_a_hairline_overlap_does_not_count_as_lying_over_a_piece():
+    """A wide strand beside a mask's piece touches it by a sliver (the piece
+    reaches 2 px past its second strand's outline). Its shadow on the first
+    strand still belongs on the piece, so it must not be left out."""
+    piece = rect(100, 100, 60, 50)
+    beside = rect(159.5, 80, 60, 90)   # overlaps the piece by half a pixel
+    across = rect(130, 80, 60, 90)     # runs over the piece
+    assert piece.intersects(beside)
+    assert not shader_utils._lies_over(beside, piece)
+    assert shader_utils._lies_over(across, piece)
+    assert not shader_utils._lies_over(rect(300, 300, 10, 10), piece)

@@ -79,3 +79,34 @@ def test_a_strand_beside_a_piece_does_not_run_under_it():
     across = rect(110, 60, 54, 130)                      # crosses the piece
     assert shader_utils._runs_under(strand, across, piece)
     assert not shader_utils._runs_under(strand, rect(300, 300, 10, 10), piece)
+
+
+def test_only_a_solid_strand_keeps_a_mask_piece_off():
+    """A mask's piece leaves uncovered only what a strand paints solidly: a
+    strand drawn as a shadow only, or see-through, would let the unlifted
+    strand show through the hole. A strand paints its body in the outline
+    colour under its fill, so an opaque outline makes all of it solid."""
+    from PyQt5.QtGui import QColor
+    footprint = rect(100, 100, 60, 200)
+
+    def strand(fill=255, outline=255, **flags):
+        return SimpleNamespace(color=QColor(200, 100, 50, fill), stroke_color=QColor(0, 0, 0, outline),
+                               stroke_width=4, **flags)
+
+    assert shader_utils._opaque_cover(strand(), footprint) is footprint
+    assert shader_utils._opaque_cover(strand(shadow_only=True), footprint) is None
+    assert shader_utils._opaque_cover(strand(fill=140), footprint) is footprint
+    assert shader_utils._opaque_cover(strand(fill=140, outline=0), footprint) is None
+    # A see-through outline: only the fill, 4 px in from each side, counts.
+    fill_only = shader_utils._opaque_cover(strand(outline=0), footprint)
+    assert fill_only.contains(QPointF(130, 200))
+    assert not fill_only.contains(QPointF(102, 200))
+    assert not fill_only.contains(QPointF(158, 200))
+
+
+def test_a_strand_continuing_another_at_a_joint_is_joined_to_it():
+    parent = SimpleNamespace(start=QPointF(0, 0), end=QPointF(100, 0))
+    continuation = SimpleNamespace(start=QPointF(100, 0), end=QPointF(200, 50))
+    elsewhere = SimpleNamespace(start=QPointF(100, 40), end=QPointF(200, 50))
+    assert shader_utils._joined(continuation, (parent,))
+    assert not shader_utils._joined(elsewhere, (parent,))

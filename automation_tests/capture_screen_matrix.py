@@ -53,7 +53,8 @@ MODES = ("normal", "lock", "copy")
 
 # Bottom-panel buttons: "padding: 5px 10px" plus a 1px border each side.
 BOTTOM_LABEL_PADDING = 10 * 2 + 2
-# Strands / Masks halves: no side padding, only the 2px pressed border.
+# Strands / Masks halves: no side padding; a 1px border each side plus
+# 1px of air so the label never touches it.
 LAYER_TAB_LABEL_PADDING = 2 * 2
 CREATE_GROUP_LABEL_PADDING = 8
 

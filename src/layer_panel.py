@@ -399,6 +399,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
     # Pressed half of the Strands / Masks switch (both halves share it).
     # Mocha brown: no other layer panel button uses a brown.
     LAYER_TAB_COLOR = "#a47551"
+    LAYER_TAB_COLOR_HOVER = "#b98f6f"    # lighter on hover
+    LAYER_TAB_COLOR_PRESSED = "#8a5f3f"  # darker on press
 
     # Emitted after the group column finishes collapsing (True) or expanding
     # (False); the main window persists the value.
@@ -3206,15 +3208,23 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # side padding: each half is only ~79px and "Cordones" or
         # "Maschere" need nearly all of it.
         if pressed:
+            # Same look as Draw Names, Delete All etc.: 1px grey border,
+            # lighter on hover, darker while clicked
             return f"""
                 QPushButton {{
                     background-color: {self.LAYER_TAB_COLOR};
                     font-weight: bold;
                     font-size: 14px;
                     color: black;
-                    border: 2px solid #3c3c3c;
-                    padding: 4px 0px;
+                    border: 1px solid #888;
+                    padding: 5px 0px;
                     {corners}
+                }}
+                QPushButton:hover {{
+                    background-color: {self.LAYER_TAB_COLOR_HOVER};
+                }}
+                QPushButton:pressed {{
+                    background-color: {self.LAYER_TAB_COLOR_PRESSED};
                 }}
             """
         return f"""

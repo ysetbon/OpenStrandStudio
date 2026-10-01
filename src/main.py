@@ -937,11 +937,20 @@ if __name__ == '__main__':
         current_shadow = window.canvas.default_shadow_color
         
 
-    # Watchdog: dump all thread stacks periodically so a hang leaves a trace.
-    # Falls back to the crash log when stderr is missing (PyInstaller --windowed on Windows).
+    # Freeze watchdog: a 1 s heartbeat on the UI thread keeps pushing a 10 s
+    # faulthandler timer back. If the window stops responding for 10 s the
+    # timer fires and writes every thread's stack ("Timeout (0:00:10)!") to
+    # stderr, which is the crash log in the packaged app, so a hang shows
+    # exactly where it is stuck. A responsive app writes nothing.
     _watchdog_target = sys.stderr if sys.stderr is not None else _CRASH_LOG_HANDLE
+    _watchdog_timer = None
     if _watchdog_target is not None:
-        faulthandler.dump_traceback_later(timeout=120, repeat=True, file=_watchdog_target)
+        def _rearm_freeze_watchdog():
+            faulthandler.dump_traceback_later(timeout=10, repeat=False, file=_watchdog_target)
+        _rearm_freeze_watchdog()
+        _watchdog_timer = QTimer()
+        _watchdog_timer.timeout.connect(_rearm_freeze_watchdog)
+        _watchdog_timer.start(1000)
 
     def _graceful_shutdown():
         """Run right before QApplication is destroyed.
@@ -955,6 +964,8 @@ if __name__ == '__main__':
         and then exiting the app.
         """
         try:
+            if _watchdog_timer is not None:
+                _watchdog_timer.stop()
             faulthandler.cancel_dump_traceback_later()
         except Exception:
             pass

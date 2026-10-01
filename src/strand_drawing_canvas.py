@@ -13,6 +13,7 @@ from PyQt5.QtCore import QTimer
 from angle_adjust_mode import AngleAdjustMode
 from PyQt5.QtWidgets import QWidget, QMenu, QAction
 import math
+import logging
 import traceback
 from math import radians, cos, sin, atan2, degrees
 from rotate_mode import RotateMode
@@ -4988,8 +4989,11 @@ class StrandDrawingCanvas(QWidget):
                             self.selected_strand_index = new_strand_index
                             self.last_selected_strand_index = new_strand_index
                         self.layer_panel.select_layer(new_strand_index, emit_signal=False)
-                    except Exception as e:
-                        pass
+                    except Exception:
+                        # Don't hide it: written to the console and to
+                        # crash.log (see main.setup_crash_logging)
+                        logging.getLogger(__name__).exception(
+                            "New strand: updating the layer panel failed after mouse release")
                     finally:
                         # Re-enable UI updates - ALWAYS execute this even if there's an exception
                         if main_window:

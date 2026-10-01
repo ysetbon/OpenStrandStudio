@@ -530,3 +530,42 @@ def test_mask_right_click_menu_on_the_masks_tab(window, monkeypatch):
     _ = translations["en"]
     assert labels == [_["hide_layer"], _["shadow_only"], _["hide_shadow"], _["edit_shadows"], "---",
                       _["edit_mask"], _["reset_mask"]], labels
+
+
+def test_one_undo_removes_a_new_mask(monkeypatch):
+    """Open a file the way the app does, make a mask with New Mask, undo
+    once: the mask is gone and the layers are exactly as before; redo
+    brings it back. (Making a mask records an identical second state,
+    which undo skips.)"""
+    from PyQt5.QtWidgets import QFileDialog
+    path = str(SRC_DIR / "samples" / "bridge.json")
+    monkeypatch.setattr(QFileDialog, "getOpenFileName",
+                        staticmethod(lambda *a, **k: (path, "JSON Files (*.json)")))
+    win = MainWindow()
+    try:
+        win.show()
+        win.resize(1600, 900)
+        pump(200)
+        win.load_project()
+        pump(300)
+        lp, urm = win.layer_panel, win.layer_panel.undo_redo_manager
+        before = names(win.canvas.strands)
+
+        lp.set_layer_tab("masks")
+        lp.new_mask_button.click()
+        pump()
+        QTest.mouseClick(win.canvas, Qt.LeftButton, Qt.NoModifier, canvas_point_on(win, "3_1"))
+        pump(200)
+        QTest.mouseClick(win.canvas, Qt.LeftButton, Qt.NoModifier, canvas_point_on(win, "1_1"))
+        pump(400)
+        assert "3_1_1_1" in names(win.canvas.strands)
+
+        urm.undo()
+        pump(300)
+        assert names(win.canvas.strands) == before
+        urm.redo()
+        pump(300)
+        assert "3_1_1_1" in names(win.canvas.strands)
+        assert_indices_match(win)
+    finally:
+        close_window(win)

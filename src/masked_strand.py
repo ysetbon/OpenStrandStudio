@@ -595,6 +595,7 @@ class MaskedStrand(Strand):
                             painter.setRenderHint(QPainter.Antialiasing, True)
                             painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
                             painter.setPen(Qt.NoPen)
+                            self._clip_piece(painter)
                             try:
                                 fresh_mask_path = self.get_mask_path_stroke()
                                 if not fresh_mask_path.isEmpty():
@@ -623,6 +624,18 @@ class MaskedStrand(Strand):
             # Restore the painter state
         finally:
             painter.restore()
+
+    def _clip_piece(self, painter):
+        """Keep the piece off the strands above both of the mask's strands
+        (see shader_utils._covering_strands)."""
+        try:
+            try:
+                from shader_utils import clip_mask_piece
+            except ImportError:
+                from src.shader_utils import clip_mask_piece
+            clip_mask_piece(painter, self)
+        except Exception:
+            pass
 
     def _restore_shadows_on_piece(self, painter):
         """Put back the shadows the piece just painted over (see
@@ -730,7 +743,8 @@ class MaskedStrand(Strand):
                     painter.setRenderHint(QPainter.Antialiasing, True)
                     painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
                     painter.setPen(Qt.NoPen)
-            
+                    self._clip_piece(painter)
+
                     # Draw stroke layer first
                     try:
                         fresh_mask_path_stroke = self.get_mask_path_stroke()

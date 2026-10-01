@@ -319,6 +319,27 @@ def _footprint_of(strand, cache):
     return cache[key]
 
 
+def _runs_under(item, footprint, piece):
+    """Whether the mask's piece covers *item* across (it crosses the piece),
+    not only along an edge (it runs beside the piece, its outline overlapping).
+
+    It crosses when the overlap is more than half the strand's drawn width
+    thick somewhere: some point of it lies deeper than a quarter width inside,
+    which the overlap shifted that far in eight directions still covers."""
+    shared = QPainterPath(footprint).intersected(piece)
+    if shared.isEmpty():
+        return False
+    reach = max(2.0, (getattr(item, 'width', 0) + 2 * getattr(item, 'stroke_width', 0)) / 4.0)
+    diagonal = reach * 0.7071
+    core = QPainterPath(shared)
+    for dx, dy in ((reach, 0), (-reach, 0), (0, reach), (0, -reach),
+                   (diagonal, diagonal), (diagonal, -diagonal), (-diagonal, diagonal), (-diagonal, -diagonal)):
+        core = core.intersected(QTransform().translate(dx, dy).map(shared))
+        if core.isEmpty():
+            return False
+    return _approx_path_area(core) > 0.5
+
+
 def _cut_on_receiver(collected, receiver_layer, cut, cut_key, cache):
     """*collected* (a draw_strand_shadow(collect_only=True) result) with its
     outline on *receiver_layer* cut by *cut*, both for the fill and for the
@@ -352,6 +373,125 @@ def _cut_on_receiver(collected, receiver_layer, cut, cut_key, cache):
     return result
 
 
+def _layer_positions(canvas, cache):
+    """{layer name: index} in the canvas's layer order, once per paint."""
+    positions = cache.get('layer_positions')
+    if positions is None:
+        manager = getattr(canvas, 'layer_state_manager', None)
+        order = manager.getOrder() if manager else []
+        positions = {name: index for index, name in enumerate(order)}
+        cache['layer_positions'] = positions
+    return positions
+
+
+def _joined(item, strands):
+    """Whether *item* has an end on an end of one of *strands*: it continues
+    one of them at a joint (an attached strand, a closed knot)."""
+    for strand in strands:
+        for point in (getattr(strand, 'start', None), getattr(strand, 'end', None)):
+            if point is not None and _ends_at(item, point):
+                return True
+    return False
+
+
+def _opaque_cover(item, footprint):
+    """What *item* paints solidly over whatever is below it, or None when it
+    shows what is below. A strand paints its whole body in the outline
+    colour, then its fill on top (Strand._paint_body_paths): with an opaque
+    outline all of it is solid, whatever the fill; with a see-through outline
+    only an opaque fill is, 1 outline width in from the edge. A strand drawn
+    as a shadow only or as an arrow paints nothing solid there."""
+    if getattr(item, 'shadow_only', False) or getattr(item, 'full_arrow_visible', False):
+        return None
+    stroke = getattr(item, 'stroke_color', None)
+    stroke_width = float(getattr(item, 'stroke_width', 0) or 0)
+    if stroke_width > 0 and (stroke is None or stroke.alpha() == 255):
+        return footprint
+    color = getattr(item, 'color', None)
+    if color is not None and color.alpha() < 255:
+        return None
+    if stroke_width <= 0:
+        return footprint
+    solid = QPainterPath(footprint).simplified()
+    band = QPainterPathStroker()
+    band.setWidth(stroke_width * 2)
+    band.setJoinStyle(Qt.RoundJoin)
+    return solid.subtracted(band.createStroke(solid).simplified())
+
+
+def _covering_strands(mask_strand, cache):
+    """The strands the mask's piece must not cover, as [(strand, area)]:
+    the area is what the strand paints solidly (_opaque_cover).
+
+    The piece is drawn at the mask's place in the layer order, over every
+    strand drawn before it. A strand above both of the mask's strands lies
+    above their crossing, lifted or not, so where it overlaps the piece it
+    stays on top: a wide neighbour running beside the crossing keeps its
+    edge, and the first strand keeps its shadow there. Left out, and covered
+    as before: a strand between the two (see _mask_sides: it would sit both
+    above and below the crossing), one that shows what is below it (the
+    piece is what should show through it), and one that continues either
+    strand at a joint (the piece hides the joint)."""
+    key = ('covering', id(mask_strand))
+    if key in cache:
+        return cache[key]
+    covering = []
+    first = getattr(mask_strand, 'first_selected_strand', None)
+    second = getattr(mask_strand, 'second_selected_strand', None)
+    canvas = getattr(mask_strand, 'canvas', None)
+    piece = _piece_of(mask_strand, cache) if first is not None and second is not None else QPainterPath()
+    if canvas is not None and not piece.isEmpty():
+        positions = _layer_positions(canvas, cache)
+        indexes = [positions.get(getattr(item, 'layer_name', None)) for item in (mask_strand, first, second)]
+        if None not in indexes:
+            mask_index, above = indexes[0], max(indexes[1], indexes[2])
+            area = piece.boundingRect()
+            for item in canvas.strands:
+                index = positions.get(getattr(item, 'layer_name', None))
+                if (index is None or not above < index < mask_index or hasattr(item, 'get_mask_path')
+                        or getattr(item, 'is_hidden', False) or not _may_touch(item, area, cache)
+                        or _joined(item, (first, second))):
+                    continue
+                solid = _opaque_cover(item, _footprint_of(item, cache))
+                if solid is not None and _approx_path_area(QPainterPath(solid).intersected(piece)) > 1.0:
+                    covering.append((item, solid))
+    cache[key] = covering
+    return covering
+
+
+def _piece_keep(mask_strand, cache):
+    """Where the mask's piece may paint: around it, without the strands it
+    must not cover (_covering_strands); None when it covers them all. The
+    piece and the shadows put back on it are both clipped to it, so they
+    match exactly."""
+    key = ('keep', id(mask_strand))
+    if key not in cache:
+        keep = None
+        covering = _covering_strands(mask_strand, cache)
+        if covering:
+            try:
+                bounds = mask_strand.get_mask_path_stroke().boundingRect().united(
+                    _piece_of(mask_strand, cache).boundingRect()).adjusted(-4, -4, 4, 4)
+            except Exception:
+                bounds = None
+            if bounds is not None:
+                keep = QPainterPath()
+                keep.addRect(bounds)
+                for _item, solid in covering:
+                    keep = keep.subtracted(solid)
+        cache[key] = keep
+    return cache[key]
+
+
+def clip_mask_piece(painter, mask_strand):
+    """Clip *painter* so the mask's piece (fill and outline) leaves the
+    strands in _covering_strands uncovered. Call it inside a save/restore
+    before painting the piece."""
+    keep = _piece_keep(mask_strand, _frame_cache(painter))
+    if keep is not None:
+        painter.setClipPath(keep, Qt.IntersectClip)
+
+
 def draw_mask_restored_shadows(painter, mask_strand, shadow_color=None, num_steps=3, max_blur_radius=29.99):
     """Paint again, on top of the mask's piece, the shadows that land on its
     first strand there and were painted before the mask.
@@ -365,8 +505,14 @@ def draw_mask_restored_shadows(painter, mask_strand, shadow_color=None, num_step
     draw_mask_lift_shadow). At a genuine crossing those strands would lie
     above the lifted piece as well, so their shadows go back on top of it.
 
-    A strand that the piece is drawn over (it overlaps the piece) is left out:
-    the mask covers it there, so its shadow does not belong on the piece.
+    The piece is not drawn over a strand above both of the mask's strands
+    (_covering_strands), so that strand's shadow always goes back. Any other
+    strand is covered where it overlaps the piece:
+    - one that continues either strand at a joint casts no shadow on it;
+    - one the piece is drawn across (_runs_under) lies below the lifted
+      strand there, so its shadow does not belong on the piece;
+    - one whose edge only the piece covers (a neighbour running beside the
+      crossing) keeps its shadow, reaching the piece's edge.
     """
     canvas = getattr(mask_strand, 'canvas', None)
     first = getattr(mask_strand, 'first_selected_strand', None)
@@ -389,6 +535,8 @@ def draw_mask_restored_shadows(painter, mask_strand, shadow_color=None, num_step
         return
     area = piece.boundingRect()
     reach = area.adjusted(-max_blur_radius, -max_blur_radius, max_blur_radius, max_blur_radius)
+    uncovered = {id(item) for item, _solid in _covering_strands(mask_strand, cache)}
+    keep = _piece_keep(mask_strand, cache)
 
     for item in canvas.strands:
         if item is mask_strand or item is first or item is second:
@@ -418,14 +566,24 @@ def draw_mask_restored_shadows(painter, mask_strand, shadow_color=None, num_step
                 continue
             collected = draw_strand_shadow(painter, item, shadow_color, num_steps=num_steps,
                                            max_blur_radius=max_blur_radius, collect_only=True)
-            # Only a strand that shades the first strand, and not one the piece
-            # is drawn over.
+            # Only a strand that shades the first strand.
             if not collected or all(receiver != first.layer_name
                                     for receiver, _outline in collected.get('outlines', ())):
                 continue
-            if _may_touch(item, area, cache) and _footprint_of(item, cache).intersects(piece):
-                continue
             zone = None
+            if id(item) not in uncovered and _may_touch(item, area, cache):
+                footprint = _footprint_of(item, cache)
+                if _joined(item, (first, second)):
+                    # It continues one of the two at a joint the piece hides:
+                    # no shadow of it on the piece.
+                    if footprint.intersects(piece):
+                        continue
+                elif _runs_under(item, footprint, piece):
+                    # The piece is drawn across it, so it lies below the
+                    # lifted strand there: no shadow on the piece. When the
+                    # piece only covers its edge, the shadow goes back up to
+                    # the piece's visible edge.
+                    continue
             collected = _cut_on_receiver(collected, second.layer_name, piece,
                                          id(mask_strand), cache)
             fill_path = collected['fill_path']
@@ -434,9 +592,11 @@ def draw_mask_restored_shadows(painter, mask_strand, shadow_color=None, num_step
         if (not fill_path.boundingRect().intersects(area)
                 and _stroke_source_near(collected, area, max_blur_radius / 2.0 + 2.0).isEmpty()):
             continue  # nothing of it reaches the piece
-        # The piece lies on the first strand, so it is the clip itself.
+        # The piece lies on the first strand, so it is the clip itself, less
+        # the strands it leaves uncovered (keep) and, for a mask with erased
+        # parts, only near that mask (zone).
         _paint_collected_shadow(painter, collected, piece, num_steps, max_blur_radius,
-                                fill_path=fill_path, and_clip=zone)
+                                fill_path=fill_path, and_clip=[c for c in (zone, keep) if c is not None])
 
 
 def draw_circle_shadow(painter, strand, shadow_color=None):
@@ -1194,17 +1354,21 @@ def _paint_collected_shadow(painter, collected, clip, num_steps, max_blur_radius
                             and_clip=None):
     """Paint a shadow computed with draw_strand_shadow(collect_only=True):
     the fill, then the same faded edge, clipped to *clip* (and to *and_clip*
-    too when given: the painter intersects the two, which is exact where a
-    boolean operation on paths sharing edges is not)."""
-    if clip.isEmpty() or (and_clip is not None and and_clip.isEmpty()):
+    too when given, a path or a list of paths: the painter intersects them,
+    which is exact where a boolean operation on paths sharing edges is not)."""
+    if and_clip is None:
+        and_clip = []
+    elif isinstance(and_clip, QPainterPath):
+        and_clip = [and_clip]
+    if clip.isEmpty() or any(extra.isEmpty() for extra in and_clip):
         return
     color = collected['color']
     stroke_source = _stroke_source_near(collected, clip.boundingRect(), max_blur_radius / 2.0 + 2.0)
     painter.save()
     try:
         painter.setClipPath(clip)
-        if and_clip is not None:
-            painter.setClipPath(and_clip, Qt.IntersectClip)
+        for extra in and_clip:
+            painter.setClipPath(extra, Qt.IntersectClip)
         painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
         if fill_path is not None and not fill_path.isEmpty():
             painter.setPen(Qt.NoPen)

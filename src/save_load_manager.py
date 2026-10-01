@@ -694,10 +694,37 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
     except Exception as e:
         return None
 
+def keep_masks_on_top(strands, locked_layers=()):
+    """Order strands so every mask is drawn above every strand.
+
+    A mask only says which of its two strands is on top where they cross;
+    it works from anywhere above both of them, and stops working once one
+    of them is drawn over it. Masks live in their own layer panel tab, so
+    their place among the strands must not matter: strands keep their
+    order, masks keep theirs, and the masks come after all the strands.
+    Returns (strands, locked_layers) with the lock indices following their
+    layers to the new positions."""
+    plain = [s for s in strands if not isinstance(s, MaskedStrand)]
+    masks = [s for s in strands if isinstance(s, MaskedStrand)]
+    ordered = plain + masks
+    if all(a is b for a, b in zip(ordered, strands)):
+        return list(strands), set(locked_layers)
+    new_index = {id(s): i for i, s in enumerate(ordered)}
+    remapped = {new_index[id(strands[i])] for i in locked_layers if 0 <= i < len(strands)}
+    return ordered, remapped
+
+
+def _with_masks_on_top(loaded):
+    """load_strands_from_data's result with keep_masks_on_top applied."""
+    strands, groups, selected_strand_name, locked_layers, *rest = loaded
+    strands, locked_layers = keep_masks_on_top(strands, locked_layers)
+    return (strands, groups, selected_strand_name, locked_layers, *rest)
+
+
 def load_strands(filename, canvas):
     with open(filename, 'r') as f:
         data = json.load(f)
-    return load_strands_from_data(data, canvas)
+    return _with_masks_on_top(load_strands_from_data(data, canvas))
 
 
 def load_strands_from_data(data, canvas):
@@ -1214,7 +1241,8 @@ def apply_project_state(canvas, state):
     tab that only has a project_state snapshot (no undo/redo history payload).
     """
     strands, groups, selected_strand_name, locked_layers, lock_mode, \
-        shadow_enabled, show_control_points, shadow_overrides = load_strands_from_data(state, canvas)
+        shadow_enabled, show_control_points, shadow_overrides = _with_masks_on_top(
+            load_strands_from_data(state, canvas))
 
     # Clear existing canvas state
     canvas.strands = []

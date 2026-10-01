@@ -157,7 +157,7 @@ The split button above Draw Names chooses which layers the list shows:
 - **Strands:** only strands (names like `1_1`), with Draw Names, Lock Layers, New Strand, Delete Strand, Deselect All and Delete All.
 - **Masks:** only masks (names like `1_1_2_1`), with New Mask, Delete Mask, Deselect All and Delete All. Delete All here removes only the masks; the strands stay.
 
-Switching only hides the other list: the drawing order never changes. A selection the new tab would hide is cleared, and selecting a layer from the other list (for example by clicking it on the canvas) opens its tab.
+Switching only hides the other list: the drawing order never changes. Masks are always drawn above every strand (a mask only says which of its two strands is on top where they cross), so their position never depends on the strands: new strands go under the masks, and files whose masks sat between strands are tidied when opened. A selection the new tab would hide is cleared, and selecting a layer from the other list (for example by clicking it on the canvas) opens its tab.
 
 #### Advanced Layer Management
 **Group functionality:**

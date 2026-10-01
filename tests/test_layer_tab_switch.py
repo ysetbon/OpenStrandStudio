@@ -22,13 +22,15 @@ if str(SRC_DIR) not in sys.path:
 os.chdir(SRC_DIR)  # the app loads icons relative to src
 
 import pytest
-from PyQt5.QtCore import QMimeData, QPoint, Qt, QTimer
-from PyQt5.QtGui import QDropEvent, QFontMetrics
+from PyQt5.QtCore import QEvent, QMimeData, QPoint, QPointF, Qt, QTimer
+from PyQt5.QtGui import QDropEvent, QFontMetrics, QMouseEvent
+from PyQt5.QtTest import QTest
 from PyQt5.QtWidgets import QApplication
 
 from main_window import MainWindow
 from masked_strand import MaskedStrand
-from save_load_manager import apply_loaded_strands, load_strands_from_data
+from save_load_manager import (apply_loaded_strands, keep_masks_on_top, load_strands,
+                               load_strands_from_data)
 from translations import translations
 
 APP = QApplication.instance() or QApplication([])
@@ -365,3 +367,106 @@ def test_hebrew_puts_strands_on_the_right(window):
     masks_x = lp.masks_tab_button.mapTo(lp.left_panel, QPoint(0, 0)).x()
     assert strands_x > masks_x
     assert lp.strands_tab_button.text() == translations["he"]["layer_tab_strands"]
+
+
+# --- Masks always sit above every strand -------------------------------------
+# A mask only says which of its two strands is on top where they cross, so its
+# place among the strands must not matter. It works from anywhere above both of
+# them and stops working under either, so the app keeps every mask above every
+# strand: after loading, after drawing a new strand, after a drag.
+
+def masks_above_strands(win):
+    kinds = [isinstance(s, MaskedStrand) for s in win.canvas.strands]
+    return kinds == sorted(kinds)  # all strands (False) first, then all masks
+
+
+def test_keep_masks_on_top_moves_locks_with_their_layers():
+    class S:
+        def __init__(self, name):
+            self.layer_name = name
+
+    class M(MaskedStrand):
+        def __init__(self, name):  # no geometry needed for ordering
+            self.layer_name = name
+
+    a, m, b, c = S("1_1"), M("1_1_2_1"), S("2_1"), S("3_1")
+    ordered, locked = keep_masks_on_top([a, m, b, c], {1, 3})  # lock the mask and 3_1
+    assert [x.layer_name for x in ordered] == ["1_1", "2_1", "3_1", "1_1_2_1"]
+    assert locked == {3, 2}  # the mask is now 3, 3_1 is now 2
+    same, same_locked = keep_masks_on_top([a, b, m], {0})
+    assert [x.layer_name for x in same] == ["1_1", "2_1", "1_1_2_1"] and same_locked == {0}
+
+
+def test_loading_a_file_puts_the_masks_above_every_strand(window):
+    # thick_and_thin keeps strands 11_1 and 12_1 above its masks
+    path = SRC_DIR / "samples" / "thick_and_thin.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data = data["states"][data.get("current_step", 1) - 1]["data"]
+    saved = [s["layer_name"] for s in data["strands"]]
+    assert saved.index("12_1") > saved.index("1_1_6_1")
+
+    state_file = Path(tempfile.mkdtemp()) / "state.json"  # the file's current undo state
+    state_file.write_text(json.dumps(data), encoding="utf-8")
+    strands = load_strands(str(state_file), window.canvas)[0]
+    window.canvas.strands = []
+    apply_loaded_strands(window.canvas, strands, {})
+    pump(150)
+    assert masks_above_strands(window)
+    order = names(window.canvas.strands)
+    plain = [n for n in saved if n.count("_") == 1]
+    masks = [n for n in saved if n.count("_") == 3]
+    assert order == plain + masks  # each group keeps its own order
+    assert_indices_match(window)
+
+
+def draw_new_strand(win, x0, y0, x1, y1):
+    canvas = win.canvas
+    win.layer_panel.add_new_strand_button.click()
+    pump(80)
+    QTest.mousePress(canvas, Qt.LeftButton, Qt.NoModifier, QPoint(x0, y0))
+    for i in range(1, 7):
+        p = QPointF(x0 + (x1 - x0) * i / 6, y0 + (y1 - y0) * i / 6)
+        QApplication.sendEvent(canvas, QMouseEvent(QEvent.MouseMove, p, Qt.LeftButton,
+                                                   Qt.LeftButton, Qt.NoModifier))
+        pump(15)
+    QTest.mouseRelease(canvas, Qt.LeftButton, Qt.NoModifier, QPoint(x1, y1))
+    pump(200)
+
+
+def test_a_new_strand_is_drawn_under_the_masks(window):
+    lp = window.layer_panel
+    count = len(window.canvas.strands)
+    w, h = window.canvas.width(), window.canvas.height()
+    draw_new_strand(window, int(w * 0.2), int(h * 0.2), int(w * 0.7), int(h * 0.6))
+
+    assert len(window.canvas.strands) == count + 1
+    assert masks_above_strands(window)
+    new = [s for s in window.canvas.strands if s.layer_name == "9_1"]
+    assert new, names(window.canvas.strands)
+    selected = lp.get_selected_layer()
+    assert selected is not None and lp.layer_buttons[selected].text() == "9_1"
+    assert window.canvas.selected_strand is new[0]
+    assert lp.layer_tab == "strands"
+    assert_indices_match(window)
+
+
+def test_dragging_a_strand_to_the_top_keeps_it_under_the_masks(window):
+    lp = window.layer_panel
+    lp.set_layer_tab("strands")
+    pump(150)
+    layout = lp.scroll_layout
+    source = next(b for b in lp.layer_buttons if b.text() == "1_1")
+    top = next(b for b in lp.layer_buttons if b.text() == "8_1")  # top visible strand
+    drop = QPoint(20, top.mapTo(lp.scroll_content, QPoint(0, 0)).y() + 2)
+    mime = QMimeData()
+    mime.setData("application/x-layerbutton-index", str(layout.indexOf(source)).encode())
+    lp.dropEvent(QDropEvent(drop, Qt.MoveAction, mime, Qt.LeftButton, Qt.NoModifier))
+    pump(100)
+    lp.refresh()  # what DropTargetWidget does after a drop
+    pump(100)
+
+    order = names(window.canvas.strands)
+    assert masks_above_strands(window), order
+    plain = [n for n in order if n.count("_") == 1]
+    assert plain[-1] == "1_1"  # top of the strands, still under every mask
+    assert_indices_match(window)

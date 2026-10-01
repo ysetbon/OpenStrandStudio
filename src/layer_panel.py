@@ -15,6 +15,7 @@ from functools import partial
 from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
 from translations import translations
+from save_load_manager import keep_masks_on_top
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea, QLabel,
     QInputDialog, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,
@@ -3088,6 +3089,41 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
     # ------------------------------------------------------------------
     # Strands / Masks switch
     # ------------------------------------------------------------------
+    def keep_masks_on_top(self):
+        """Move the masks back above every strand after something (a new
+        strand, a reorder) put a strand over them; see
+        save_load_manager.keep_masks_on_top. Index-based state (locks,
+        multi-selection, selection) follows its layers. Returns True when
+        the order changed; the caller then rebuilds the buttons."""
+        strands = list(getattr(self.canvas, 'strands', None) or [])
+        ordered, locked = keep_masks_on_top(strands, self.locked_layers)
+        if all(a is b for a, b in zip(ordered, strands)):
+            return False
+        new_index = {id(s): i for i, s in enumerate(ordered)}
+
+        def _remap(indices):
+            return {new_index[id(strands[i])] for i in indices if 0 <= i < len(strands)}
+
+        def _remap_one(index):
+            if index is None or not 0 <= index < len(strands):
+                return index
+            return new_index[id(strands[index])]
+
+        self.canvas.strands[:] = ordered
+        self.locked_layers = locked
+        self.previously_locked_layers = _remap(self.previously_locked_layers)
+        self.multi_selected_layers = _remap(self.multi_selected_layers)
+        self.last_selected_index = _remap_one(self.last_selected_index)
+        if getattr(self.canvas, 'selected_strand', None) in ordered:
+            self.canvas.selected_strand_index = ordered.index(self.canvas.selected_strand)
+        if hasattr(self.canvas, 'last_selected_strand_index'):
+            self.canvas.last_selected_strand_index = _remap_one(self.canvas.last_selected_strand_index)
+        if self.lock_mode:
+            self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
+        if getattr(self.canvas, 'layer_state_manager', None):
+            self.canvas.layer_state_manager.save_current_state()
+        return True
+
     def _layer_tab_of(self, index):
         """'masks' when layer *index* is a MaskedStrand, otherwise 'strands'."""
         strands = getattr(self.canvas, 'strands', None) or []
@@ -4122,6 +4158,12 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 self.canvas.update()
 
             # NOTE: no call to refresh() or refresh_layers*(), so no overlay / flash occurs.
+
+        # A new strand is appended above the masks; put the masks back on
+        # top (refresh moves them and rebuilds the buttons to match)
+        strands = list(getattr(self.canvas, 'strands', None) or [])
+        if any(a is not b for a, b in zip(keep_masks_on_top(strands)[0], strands)):
+            self.refresh()
         
 
     def on_strands_deleted(self, indices):
@@ -4241,8 +4283,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             # 2. *** REBUILD THE PANEL ***
             # ------------------------------------------------------------------
             #
-            # 2‑a  Clear current buttons
+            # 2‑a  Masks back above every strand, then clear current buttons
             #
+            self.keep_masks_on_top()
             for btn in self.layer_buttons:
                 btn.setParent(None)
                 btn.deleteLater()
@@ -4642,6 +4685,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
             # --- Commit the new order (Reverse visual order for canvas) --- 
             self.canvas.strands = new_canvas_strands_visual_order[::-1]
+            # Masks stay one block above every strand
+            masks_moved = self.keep_masks_on_top()
             # self.layer_buttons will be rebuilt correctly by refresh()
 
             # --- Update LayerStateManager state --- 
@@ -4674,7 +4719,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             # --- THEN, refresh the UI. On macOS, defer to the next event-loop cycle to avoid crash; on other OS refresh immediately ---
             if sys.platform == 'darwin':
                 QTimer.singleShot(0, lambda: (
-                    self._sync_internal_lists_from_layout(),
+                    self.refresh() if masks_moved else self._sync_internal_lists_from_layout(),
                     self.update_layer_button_states(),
                     self.group_layer_manager.refresh(),
                     self.scroll_layout.update(),
@@ -4684,7 +4729,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 ))
             else:
                 # non‑macOS path: execute immediately
-                self._sync_internal_lists_from_layout()
+                if masks_moved:
+                    self.refresh()
+                else:
+                    self._sync_internal_lists_from_layout()
                 self.update_layer_button_states()
                 self.group_layer_manager.refresh()
                 self.scroll_layout.update()

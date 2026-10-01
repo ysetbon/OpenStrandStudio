@@ -4571,6 +4571,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             layout_item_count = self.scroll_layout.count()
             if layout_item_count > 0:
                 target_visual_index = layout_item_count # Default to bottom
+                last_visible_index = None
                 for i in range(layout_item_count):
                     item = self.scroll_layout.itemAt(i)
                     widget = item.widget()
@@ -4578,6 +4579,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                     # drop relative to the visible neighbours only
                     if not widget or widget.isHidden():
                         continue
+                    last_visible_index = i
                     # Use mapToGlobal and mapFromGlobal for reliable coordinates within the scroll area
                     widget_global_top_left = widget.mapToGlobal(QPoint(0, 0))
                     widget_local_top_left = self.scroll_content.mapFromGlobal(widget_global_top_left)
@@ -4586,6 +4588,13 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                     if drop_pos.y() < widget_center_y:
                         target_visual_index = i # Insert before this widget
                         break
+                else:
+                    # Below every visible button: land right after the
+                    # lowest one, not under the hidden layers beneath it.
+                    # (A mask dropped under all the hidden strands would
+                    # stop covering its crossing.)
+                    if last_visible_index is not None:
+                        target_visual_index = last_visible_index + 1
 
             # --- Move the widget in the layout (macOS-safe) ---
             item_to_move = self.scroll_layout.takeAt(source_index)

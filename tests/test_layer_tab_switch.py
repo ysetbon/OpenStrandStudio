@@ -299,6 +299,32 @@ def test_drop_ignores_hidden_buttons(window):
     assert_indices_match(window)
 
 
+def test_drop_below_the_last_mask_keeps_it_above_the_strands(window):
+    """On the Masks tab the strands are hidden under the masks. A mask
+    dropped below the lowest visible mask lands right after it, not under
+    every hidden strand, where it would stop covering its crossing."""
+    lp = window.layer_panel
+    lp.set_layer_tab("masks")
+    pump(150)
+
+    layout = lp.scroll_layout
+    source = next(b for b in lp.layer_buttons if b.text() == "5_1_8_1")  # top mask
+    lowest = next(b for b in lp.layer_buttons if b.text() == "1_1_3_1")  # bottom mask
+    lowest_bottom = lowest.mapTo(lp.scroll_content, QPoint(0, 0)).y() + lowest.height()
+    drop = QPoint(20, lowest_bottom + 1)  # just under the lowest mask
+    mime = QMimeData()
+    mime.setData("application/x-layerbutton-index", str(layout.indexOf(source)).encode())
+    lp.dropEvent(QDropEvent(drop, Qt.MoveAction, mime, Qt.LeftButton, Qt.NoModifier))
+    pump(100)
+
+    order = names(window.canvas.strands)
+    masks_at = [i for i, s in enumerate(window.canvas.strands) if isinstance(s, MaskedStrand)]
+    strands_at = [i for i, s in enumerate(window.canvas.strands) if not isinstance(s, MaskedStrand)]
+    assert min(masks_at) > max(strands_at), order  # every mask still above every strand
+    assert order.index("5_1_8_1") == order.index("1_1_3_1") - 1  # now just below 1_1_3_1
+    assert_indices_match(window)
+
+
 def test_mask_editing_locks_the_switch(window):
     lp = window.layer_panel
     lp.disable_controls()

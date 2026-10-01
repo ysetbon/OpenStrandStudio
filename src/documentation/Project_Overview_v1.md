@@ -81,7 +81,7 @@ Initialization        (Attach, Move, etc.)   & Undo/Redo
 ```
 
 ### Button Toolbar Features
-- **Mode Buttons**: Attach, Move, Rotate, Angle Adjust, Select, Mask modes
+- **Mode Buttons**: Attach, Move, Rotate, Angle Adjust, Select modes (mask mode starts from the layer panel's Masks tab → New Mask)
 - **Utility Buttons**: Toggle Grid, Save/Load projects, Export images
 - **Settings Button**: Access to application preferences
 
@@ -117,7 +117,7 @@ Initialization        (Attach, Move, etc.)   & Undo/Redo
 
 ### 5. Mask Mode (`mask_mode.py`)
 - **Purpose**: Create masked layers and visual effects
-- **Usage**: Define mask regions for strand visibility control
+- **Usage**: Layer panel → Masks tab → New Mask, then click two crossing strands
 
 ### 6. Select Mode (`select_mode.py`)
 - **Purpose**: General selection and properties editing

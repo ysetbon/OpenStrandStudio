@@ -3925,8 +3925,10 @@ class StrandDrawingCanvas(QWidget):
                 self.undo_redo_manager._suppress_intermediate_saves = False
 
         # Select the new strand if it's not an attached strand
-        if not isinstance(strand, AttachedStrand):
-            self.select_strand(len(self.strands) - 1)
+        if not isinstance(strand, AttachedStrand) and strand in self.strands:
+            # By identity: the layer panel keeps masks above every strand,
+            # so a new strand is not necessarily the last one any more
+            self.select_strand(self.strands.index(strand))
 
         # Update the canvas
         self.update()
@@ -4979,7 +4981,12 @@ class StrandDrawingCanvas(QWidget):
                     
                     try:
                         self.layer_panel.on_strand_created(new_strand)
-                        # Ensure the layer panel selection is updated
+                        # Ensure the layer panel selection is updated (the
+                        # panel moved the masks back above the new strand)
+                        if new_strand in self.strands:
+                            new_strand_index = self.strands.index(new_strand)
+                            self.selected_strand_index = new_strand_index
+                            self.last_selected_strand_index = new_strand_index
                         self.layer_panel.select_layer(new_strand_index, emit_signal=False)
                     except Exception as e:
                         pass

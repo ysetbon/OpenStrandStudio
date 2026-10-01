@@ -176,7 +176,6 @@ class MainWindow(QMainWindow):
         self.toggle_grid_button.setText(_['toggle_grid'])
         self.angle_adjust_button.setText(_['angle_adjust_mode'])
         self.select_strand_button.setText(_['select_mode'])
-        self.mask_button.setText(_['mask_mode'])
         self.save_button.setText(_['save'])
         self.load_button.setText(_['load'])
         self.save_image_button.setText(_['save_image'])
@@ -306,13 +305,13 @@ class MainWindow(QMainWindow):
         self.load_button = QPushButton("Load")
         self.save_image_button = QPushButton("Save as Image")
         self.select_strand_button = QPushButton("Select Strand")
-        self.mask_button = QPushButton("Mask Mode")
+        # Masks are made from the layer panel's Masks tab (New Mask), so the
+        # toolbar has no Mask Mode button.
 
         # Set all buttons to expand proportionally with a maximum width
         for btn in [self.view_button, self.attach_button, self.move_button, self.rotate_button,
                     self.toggle_grid_button, self.angle_adjust_button, self.save_button,
-                    self.load_button, self.save_image_button, self.select_strand_button,
-                    self.mask_button]:
+                    self.load_button, self.save_image_button, self.select_strand_button]:
             btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             btn.setMaximumWidth(90)
 
@@ -374,7 +373,6 @@ class MainWindow(QMainWindow):
 
         # Add buttons without stretch factor to prevent large gaps
         button_layout.addWidget(self.view_button)
-        button_layout.addWidget(self.mask_button)
         button_layout.addWidget(self.select_strand_button)
         button_layout.addWidget(self.attach_button)
         button_layout.addWidget(self.move_button)
@@ -478,7 +476,6 @@ class MainWindow(QMainWindow):
             self.load_button,
             self.save_image_button,
             self.select_strand_button,
-            self.mask_button,
             self.toggle_control_points_button,
             self.toggle_shadow_button
         ]
@@ -654,7 +651,7 @@ class MainWindow(QMainWindow):
     def _toolbar_row_widgets(self):
         """The toolbar buttons in row order (State and settings last)."""
         return [
-            self.view_button, self.mask_button, self.select_strand_button,
+            self.view_button, self.select_strand_button,
             self.attach_button, self.move_button, self.rotate_button,
             self.toggle_grid_button, self.angle_adjust_button,
             self.save_button, self.load_button, self.save_image_button,
@@ -819,7 +816,6 @@ class MainWindow(QMainWindow):
         self.load_button.clicked.connect(self.load_project)
         self.save_image_button.clicked.connect(self.save_canvas_as_image)
         self.select_strand_button.clicked.connect(self.set_select_mode)
-        self.mask_button.clicked.connect(self.set_mask_mode)
         self.settings_button.clicked.connect(self.open_settings_dialog)
 
         # Connect the toggle control points button
@@ -1577,13 +1573,6 @@ class MainWindow(QMainWindow):
                 "#B88A8A"     # disabled
             ),
             (
-                self.mask_button,
-                "#199693",    # normal (teal)
-                "#4CCBC8",    # hover (much lighter teal)
-                "#0F625F",    # pressed (darkest teal)
-                "#0F625F"     # disabled
-            ),
-            (
                 self.select_strand_button,
                 "#F1C40F",    # normal (yellow)
                 "#F9E287",    # hover (brighter yellow)
@@ -1718,12 +1707,16 @@ class MainWindow(QMainWindow):
             "move": self.move_button,
             "rotate": self.rotate_button,
             "select": self.select_strand_button,
-            "mask": self.mask_button,
             "angle_adjust": self.angle_adjust_button
         }
 
         for mode, button in buttons.items():
             button.setChecked(mode == active_mode)
+
+        # Mask mode is shown by the layer panel's New Mask button
+        layer_panel = getattr(self, 'layer_panel', None)
+        if layer_panel is not None and hasattr(layer_panel, 'set_new_mask_active'):
+            layer_panel.set_new_mask_active(active_mode == "mask")
 
         self.layer_state_button.clicked.connect(self.show_layer_state_log)
     def setup_connections(self):
@@ -1757,7 +1750,6 @@ class MainWindow(QMainWindow):
         self.load_button.clicked.connect(self.load_project)
         self.save_image_button.clicked.connect(self.save_canvas_as_image)
         self.select_strand_button.clicked.connect(self.set_select_mode)
-        self.mask_button.clicked.connect(self.set_mask_mode)
         self.settings_button.clicked.connect(self.open_settings_dialog)
 
         # Connect the toggle control points button
@@ -2356,7 +2348,6 @@ class MainWindow(QMainWindow):
             self.move_button.setEnabled(True)
             self.angle_adjust_button.setEnabled(True)
             self.select_strand_button.setEnabled(True)
-            self.mask_button.setEnabled(True)
             self.rotate_button.setEnabled(True)
         elif mode == "select":
             self.view_button.setEnabled(True)
@@ -2364,7 +2355,6 @@ class MainWindow(QMainWindow):
             self.move_button.setEnabled(True)
             self.angle_adjust_button.setEnabled(True)  # Keep enabled
             self.select_strand_button.setEnabled(False)
-            self.mask_button.setEnabled(True)
             self.rotate_button.setEnabled(True)
         elif mode == "attach":
             self.view_button.setEnabled(True)
@@ -2372,7 +2362,6 @@ class MainWindow(QMainWindow):
             self.move_button.setEnabled(True)
             self.angle_adjust_button.setEnabled(True)  # Keep enabled
             self.select_strand_button.setEnabled(True)
-            self.mask_button.setEnabled(True)
             self.rotate_button.setEnabled(True)
         elif mode == "move":
             self.view_button.setEnabled(True)
@@ -2380,7 +2369,6 @@ class MainWindow(QMainWindow):
             self.move_button.setEnabled(False)
             self.angle_adjust_button.setEnabled(True)  # Keep enabled
             self.select_strand_button.setEnabled(True)
-            self.mask_button.setEnabled(True)
             self.rotate_button.setEnabled(True)
         elif mode == "angle_adjust":
             self.view_button.setEnabled(True)
@@ -2388,7 +2376,6 @@ class MainWindow(QMainWindow):
             self.move_button.setEnabled(True)
             self.angle_adjust_button.setEnabled(True)  # Keep enabled
             self.select_strand_button.setEnabled(True)
-            self.mask_button.setEnabled(True)
             self.rotate_button.setEnabled(True)
         elif mode == "mask":
             self.view_button.setEnabled(True)
@@ -2396,7 +2383,6 @@ class MainWindow(QMainWindow):
             self.move_button.setEnabled(True)
             self.angle_adjust_button.setEnabled(True)  # Keep enabled
             self.select_strand_button.setEnabled(True)
-            self.mask_button.setEnabled(False)
             self.rotate_button.setEnabled(True)
         elif mode == "new_strand":
             self.view_button.setEnabled(True)
@@ -2404,7 +2390,6 @@ class MainWindow(QMainWindow):
             self.move_button.setEnabled(True)
             self.angle_adjust_button.setEnabled(True)  # Keep enabled
             self.select_strand_button.setEnabled(True)
-            self.mask_button.setEnabled(False)
             self.rotate_button.setEnabled(True)
         elif mode == "rotate":
             self.view_button.setEnabled(True)
@@ -2412,7 +2397,6 @@ class MainWindow(QMainWindow):
             self.move_button.setEnabled(True)
             self.angle_adjust_button.setEnabled(True)  # Keep enabled
             self.select_strand_button.setEnabled(True)
-            self.mask_button.setEnabled(True)
             self.rotate_button.setEnabled(False)
         elif mode == "control_points":
             self.toggle_control_points_button.setEnabled(False)
@@ -2576,7 +2560,6 @@ class MainWindow(QMainWindow):
         self.move_button.setChecked(False)
         self.rotate_button.setChecked(False)
         self.select_strand_button.setChecked(False)
-        self.mask_button.setChecked(False)
         self.angle_adjust_button.setChecked(False)
 
     def set_move_mode(self):
@@ -2650,9 +2633,9 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'move_button'):
             self.move_button.setChecked(False)
 
-        # Ensure mask mode button is OFF
-        if hasattr(self, 'mask_button'):
-            self.mask_button.setChecked(False)
+        # Ensure the layer panel's New Mask (mask mode) is OFF
+        if hasattr(self, 'layer_panel') and hasattr(self.layer_panel, 'set_new_mask_active'):
+            self.layer_panel.set_new_mask_active(False)
 
         # Ensure rotate mode button is OFF
         if hasattr(self, 'rotate_button'):
@@ -2677,8 +2660,6 @@ class MainWindow(QMainWindow):
             self._pre_creation_button_states['attach'] = self.attach_button.isChecked()
         if hasattr(self, 'move_button'):
             self._pre_creation_button_states['move'] = self.move_button.isChecked()
-        if hasattr(self, 'mask_button'):
-            self._pre_creation_button_states['mask'] = self.mask_button.isChecked()
         if hasattr(self, 'rotate_button'):
             self._pre_creation_button_states['rotate'] = self.rotate_button.isChecked()
 
@@ -2704,8 +2685,6 @@ class MainWindow(QMainWindow):
             self.attach_button.setChecked(states['attach'])
         if hasattr(self, 'move_button') and 'move' in states:
             self.move_button.setChecked(states['move'])
-        if hasattr(self, 'mask_button') and 'mask' in states:
-            self.mask_button.setChecked(states['mask'])
         if hasattr(self, 'rotate_button') and 'rotate' in states:
             self.rotate_button.setChecked(states['rotate'])
 
@@ -2887,7 +2866,6 @@ class MainWindow(QMainWindow):
     def exit_mask_edit_mode(self):
         """Handle exiting mask edit mode."""
         self.update_mode("select")
-        self.mask_button.setChecked(False)
         self.select_strand_button.setChecked(True)
         self.update_button_states("select")
 
@@ -2962,7 +2940,6 @@ class MainWindow(QMainWindow):
         self.toggle_grid_button.setText(_['toggle_grid'])
         self.angle_adjust_button.setText(_['angle_adjust_mode'])
         self.select_strand_button.setText(_['select_mode'])
-        self.mask_button.setText(_['mask_mode'])
         self.save_button.setText(_['save'])
         self.load_button.setText(_['load'])
         self.save_image_button.setText(_['save_image'])
@@ -3026,7 +3003,6 @@ class MainWindow(QMainWindow):
             self.toggle_grid_button,
             self.angle_adjust_button,
             self.select_strand_button,
-            self.mask_button,
             self.save_button,
             self.load_button,
             self.save_image_button,
@@ -3045,7 +3021,6 @@ class MainWindow(QMainWindow):
             self.toggle_grid_button,
             self.angle_adjust_button,
             self.select_strand_button,
-            self.mask_button,
             self.save_button,
             self.load_button,
             self.save_image_button,

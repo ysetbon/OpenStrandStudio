@@ -18,7 +18,7 @@ from translations import translations
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea, QLabel,
     QInputDialog, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,
-    QSplitter, QSizePolicy, QMessageBox
+    QSplitter, QSizePolicy, QMessageBox, QButtonGroup
 )
 from PyQt5.QtCore import QEventLoop          #  ← add this import
 
@@ -396,6 +396,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
     GROUP_TOGGLE_ICON_SIZE = 13  # px edge of the chevron PNG inside the 30x22 toggle (16 px, 20% smaller)
     # Fixed width of NumberedLayerButton (setFixedSize(146, 40)).
     LAYER_LIST_BUTTON_WIDTH = 146
+    # Pressed half of the Strands / Masks switch (both halves share it).
+    # Mocha brown: no other layer panel button uses a brown.
+    LAYER_TAB_COLOR = "#a47551"
 
     # Emitted after the group column finishes collapsing (True) or expanding
     # (False); the main window persists the value.
@@ -979,24 +982,68 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         """)
         self.delete_all_button.clicked.connect(self.request_delete_all)
 
+        # Strands / Masks switch: one button cut in half, on top of Draw Names.
+        # The layer list shows only the pressed half's layers; the other
+        # tab's buttons are hidden (never deleted) so layer_buttons indices,
+        # drag-and-drop and the layer order stay exactly as they are.
+        self.layer_tab = 'strands'
+        self.layer_tab_row = QWidget()
+        layer_tab_layout = QHBoxLayout(self.layer_tab_row)
+        layer_tab_layout.setContentsMargins(0, 0, 0, 0)
+        layer_tab_layout.setSpacing(0)
+        self.strands_tab_button = QPushButton(_['layer_tab_strands'])
+        self.masks_tab_button = QPushButton(_['layer_tab_masks'])
+        self.layer_tab_group = QButtonGroup(self.layer_tab_row)
+        self.layer_tab_group.setExclusive(True)
+        for button, tab in ((self.strands_tab_button, 'strands'),
+                            (self.masks_tab_button, 'masks')):
+            button.setCheckable(True)
+            button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            button.clicked.connect(partial(self.set_layer_tab, tab))
+            self.layer_tab_group.addButton(button)
+            # Equal stretch: two exact halves whatever the label lengths
+            layer_tab_layout.addWidget(button, 1)
+        self.strands_tab_button.setChecked(True)
+
+        # Masks tab buttons. Each one copies the stylesheet of its Strands
+        # twin, so New Mask is exactly the New Strand green and so on;
+        # Deselect All is shared by both tabs.
+        self.new_mask_button = QPushButton(_['new_mask'])
+        self.new_mask_button.setCheckable(True)
+        self.new_mask_button.clicked.connect(self.toggle_new_mask)
+        self.delete_mask_button = QPushButton(_['delete_mask'])
+        self.delete_mask_button.setEnabled(False)
+        self.delete_mask_button.clicked.connect(self.request_delete_mask)
+        self.delete_all_masks_button = QPushButton(_['delete_all'])
+        self.delete_all_masks_button.clicked.connect(self.request_delete_all_masks)
+        self._sync_mask_button_styles()
+
         # Ensure control buttons expand evenly and stay centered
         for button in (
             self.draw_names_button,
             self.lock_layers_button,
             self.add_new_strand_button,
+            self.new_mask_button,
             self.delete_strand_button,
+            self.delete_mask_button,
             self.deselect_all_button,
             self.delete_all_button,
+            self.delete_all_masks_button,
         ):
             button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
-        # Add buttons to bottom panel in the desired order
+        # Add buttons to bottom panel in the desired order; each tab shows
+        # only its own buttons (see _apply_layer_tab_filter)
+        bottom_layout.addWidget(self.layer_tab_row)
         bottom_layout.addWidget(self.draw_names_button)
         bottom_layout.addWidget(self.lock_layers_button)
         bottom_layout.addWidget(self.add_new_strand_button)
+        bottom_layout.addWidget(self.new_mask_button)
         bottom_layout.addWidget(self.delete_strand_button)
+        bottom_layout.addWidget(self.delete_mask_button)
         bottom_layout.addWidget(self.deselect_all_button)
         bottom_layout.addWidget(self.delete_all_button)
+        bottom_layout.addWidget(self.delete_all_masks_button)
 
         # Add scroll area and bottom panel to left layout
         self.left_layout.addWidget(self.scroll_area)
@@ -1139,6 +1186,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # Initialize button texts with the correct language
         self.update_translations()
 
+        # Start on the Strands tab with its own bottom buttons
+        self._apply_layer_tab_filter()
+
         # safe_info("LayerPanel initialized")
 
     def refresh_layers(self):
@@ -1158,53 +1208,6 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self.refresh()
         # Intentionally not resetting zoom to preserve state during strand attachment
     
-    def refresh_after_attachment(self):
-        """Complete refresh after strand attachment without resetting zoom/pan.
-        This function does everything refresh_layers does except the zoom reset and overlay."""
-        # safe_info("refresh_after_attachment called - refreshing without zoom reset and overlay")
-        
-        # Get the main window reference
-        main_window = self.parent_window if hasattr(self, 'parent_window') and self.parent_window else self.parent()
-        
-        # Suppress full-window repaint only on macOS; on Windows/Linux it causes a white flash
-        if sys.platform == 'darwin' and main_window:
-            main_window.setUpdatesEnabled(False)
-            # Suspend painting on the scroll area / its viewport only on macOS – doing this on
-            # Windows/Linux produces a short blank frame (the white-flash we are chasing).
-            self.scroll_area.setUpdatesEnabled(False)
-            if hasattr(self.scroll_area, 'viewport'):
-                self.scroll_area.viewport().setUpdatesEnabled(False)
-        
-        # Simplified refresh without overlay for attach mode to prevent temporary window
-        # Just rebuild the layer buttons without visual effects
-        removed_count = 0
-        while self.scroll_layout.count():
-            item = self.scroll_layout.takeAt(0)
-            widget = item.widget()
-            if widget:
-                removed_count += 1
-            del item
-        
-        # Re-add buttons in reverse order
-        added_count = 0
-        valid_buttons = [btn for btn in self.layer_buttons if btn]
-        for button in reversed(valid_buttons):
-            self.scroll_layout.addWidget(button, 0, Qt.AlignHCenter)
-            button.show()
-            added_count += 1
-        
-        # Update layout and canvas
-        self.scroll_layout.update()
-        self.canvas.update()  # Just update the canvas without changing zoom/pan
-        
-        # Re-enable updates after refresh (only on macOS)
-        if sys.platform == 'darwin':
-            if hasattr(self.scroll_area, 'viewport'):
-                self.scroll_area.viewport().setUpdatesEnabled(True)
-            self.scroll_area.setUpdatesEnabled(True)
-            if main_window:
-                main_window.setUpdatesEnabled(True)
-
     def create_layer_button(self, index, strand, count):
         """Create a layer button for the given strand."""
         button = NumberedLayerButton(
@@ -1425,6 +1428,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self._custom_tooltip_widget.set_theme(theme_name)
 
         self.mask_edit_label.hide() # Hide initially
+
+        # The Masks tab buttons copy the restyled Strands buttons
+        self._sync_mask_button_styles()
 
         # Connect the signal from the dialog to the handler in LayerPanel
         # self.layer_selection_dialog.edit_mask_requested.connect(self.request_edit_mask) # Moved from dialog init
@@ -1792,6 +1798,17 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self.deselect_all_button.setText(_['deselect_all'])
 
         self.delete_all_button.setText(_['delete_all'])
+
+        # Strands / Masks switch and the Masks tab buttons
+        if hasattr(self, 'layer_tab_row'):
+            self.strands_tab_button.setText(_['layer_tab_strands'])
+            self.masks_tab_button.setText(_['layer_tab_masks'])
+            self.new_mask_button.setText(_['new_mask'])
+            self.delete_mask_button.setText(_['delete_mask'])
+            self.delete_all_masks_button.setText(_['delete_all'])
+            if self.new_mask_button.isChecked():
+                self.notification_label.setText(_['new_mask_hint'])
+            self._apply_layer_tab_style()
 
         # The rail's create tile carries the language's letter for "group".
         rail = getattr(self, 'group_rail', None)
@@ -2878,6 +2895,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # Add the button to layout
         self.scroll_layout.insertWidget(0, button)
         self.layer_buttons.append(button)
+        self._apply_layer_tab_filter()
         
         # Restore scroll position after a brief delay
         QTimer.singleShot(10, lambda: scrollbar.setValue(current_scroll))
@@ -2979,6 +2997,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self.draw_names_button.setEnabled(False)
         self.lock_layers_button.setEnabled(False)
         self.deselect_all_button.setEnabled(False)
+        for button in (self.strands_tab_button, self.masks_tab_button,
+                       self.new_mask_button, self.delete_mask_button,
+                       self.delete_all_masks_button):
+            button.setEnabled(False)
         if hasattr(self, 'group_layer_manager'):
             self.group_layer_manager.create_group_button.setEnabled(False)
         if hasattr(self, 'group_rail'):
@@ -2990,6 +3012,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self.draw_names_button.setEnabled(True)
         self.lock_layers_button.setEnabled(True)
         self.deselect_all_button.setEnabled(True)
+        for button in (self.strands_tab_button, self.masks_tab_button,
+                       self.new_mask_button, self.delete_all_masks_button):
+            button.setEnabled(True)
+        self.update_delete_mask_button_state()
         if hasattr(self, 'group_layer_manager'):
             self.group_layer_manager.create_group_button.setEnabled(True)
         if hasattr(self, 'group_rail'):
@@ -3015,6 +3041,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
     def update_delete_button_state(self):
         """Update the delete button state based on the currently selected strand's deletability."""
+        self.update_delete_mask_button_state()
 
         # Check if we're in multi-select mode with selected layers
         if self.multi_select_mode and self.multi_selected_layers:
@@ -3055,6 +3082,299 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             # No strand selected, disable delete button
             self.delete_strand_button.setEnabled(False)
             self.delete_strand_button.update()
+
+    # ------------------------------------------------------------------
+    # Strands / Masks switch
+    # ------------------------------------------------------------------
+    def _layer_tab_of(self, index):
+        """'masks' when layer *index* is a MaskedStrand, otherwise 'strands'."""
+        strands = getattr(self.canvas, 'strands', None) or []
+        if 0 <= index < len(strands):
+            return 'masks' if isinstance(strands[index], MaskedStrand) else 'strands'
+        if 0 <= index < len(self.layer_buttons):
+            # Button without a strand yet: masks are named like 1_1_2_1
+            try:
+                name = self.layer_buttons[index].text()
+            except RuntimeError:
+                return 'strands'
+            return 'masks' if name.count('_') == 3 else 'strands'
+        return 'strands'
+
+    def set_layer_tab(self, tab):
+        """Show the Strands or the Masks list.
+
+        A selection the new tab would hide is dropped first, so no button
+        acts on a layer you can't see, and a half-made mask is cancelled.
+        Leaving the Masks tab also leaves the canvas mask mode."""
+        if tab not in ('strands', 'masks'):
+            return
+        if tab != self.layer_tab:
+            leaving_masks = self.layer_tab == 'masks'
+            self.layer_tab = tab
+            self._drop_hidden_selection()
+            self._cancel_pending_mask_selection()
+            main = self.parent_window
+            if (leaving_masks and main is not None
+                    and getattr(main, 'current_mode', None) == 'mask'
+                    and hasattr(main, 'set_attach_mode')):
+                main.set_attach_mode()
+        self._apply_layer_tab_filter()
+
+    def _drop_hidden_selection(self):
+        """Deselect the layers the current tab hides (single and multi)."""
+        selected = self.get_selected_layer()
+        canvas_index = getattr(self.canvas, 'selected_strand_index', None)
+        hidden_selected = (
+            (selected is not None and self._layer_tab_of(selected) != self.layer_tab)
+            or (canvas_index is not None and self._layer_tab_of(canvas_index) != self.layer_tab)
+        )
+        if hidden_selected:
+            # Uncheck first: anything below may re-run the tab filter, which
+            # would otherwise switch straight back to the selected layer.
+            for button in self.layer_buttons:
+                button.setChecked(False)
+            for strand in list(getattr(self.canvas, 'strands', [])):
+                try:
+                    strand.is_selected = False
+                except RuntimeError:
+                    pass
+            self.canvas.selected_strand = None
+            self.canvas.selected_strand_index = None
+            if hasattr(self.canvas, 'selected_attached_strand'):
+                self.canvas.selected_attached_strand = None
+            if hasattr(self.canvas, 'last_selected_strand_index'):
+                self.canvas.last_selected_strand_index = None
+            self.last_selected_index = None
+            self.deselect_all_requested.emit()
+        hidden_multi = {i for i in self.multi_selected_layers
+                        if self._layer_tab_of(i) != self.layer_tab}
+        if hidden_multi:
+            self.multi_selected_layers -= hidden_multi
+            self.update_layer_button_multi_select_display()
+        if hidden_selected or hidden_multi:
+            self.update_delete_button_state()
+            self.canvas.update()
+
+    def _cancel_pending_mask_selection(self):
+        """Forget a first strand picked for a mask that was never made."""
+        mask_mode = getattr(self.canvas, 'mask_mode', None)
+        if mask_mode is not None and getattr(mask_mode, 'selected_strands', None):
+            mask_mode.clear_selection()
+        if self.masked_mode and self.first_masked_layer is not None:
+            first = self.first_masked_layer
+            self.first_masked_layer = None
+            if 0 <= first < len(self.layer_buttons):
+                self.layer_buttons[first].set_masked_mode(True)
+
+    def _apply_layer_tab_filter(self):
+        """Show only the current tab's layer buttons and bottom buttons.
+
+        Buttons of the other tab are hidden, never removed, so
+        layer_buttons[i] still matches canvas.strands[i]. Called after every
+        rebuild, insert or reorder of the layer buttons. The selected layer
+        is never hidden: if it belongs to the other tab, that tab opens."""
+        if not hasattr(self, 'layer_tab_row'):
+            return
+        selected = self.get_selected_layer()
+        if selected is not None:
+            self.layer_tab = self._layer_tab_of(selected)
+        masks = self.layer_tab == 'masks'
+        for i, button in enumerate(self.layer_buttons):
+            try:
+                if button.parent() is None:
+                    continue  # detached; showing it would open a window
+                button.setVisible(self._layer_tab_of(i) == self.layer_tab)
+            except RuntimeError:
+                continue
+        for button in (self.draw_names_button, self.lock_layers_button,
+                       self.add_new_strand_button, self.delete_strand_button,
+                       self.delete_all_button):
+            button.setVisible(not masks)
+        for button in (self.new_mask_button, self.delete_mask_button,
+                       self.delete_all_masks_button):
+            button.setVisible(masks)
+        self._apply_layer_tab_style()
+        self.update_delete_mask_button_state()
+
+    def _layer_tab_half_style(self, side, pressed):
+        """Stylesheet of one half: only its outer corners are rounded."""
+        corners = ("border-top-left-radius: 4px; border-bottom-left-radius: 4px;"
+                   if side == 'left' else
+                   "border-top-right-radius: 4px; border-bottom-right-radius: 4px;")
+        # Border + padding add up to the same 12px as the bottom buttons
+        # (1px border, 5px padding), so the row matches their height. No
+        # side padding: each half is only ~79px and "Cordones" or
+        # "Maschere" need nearly all of it.
+        if pressed:
+            return f"""
+                QPushButton {{
+                    background-color: {self.LAYER_TAB_COLOR};
+                    font-weight: bold;
+                    font-size: 14px;
+                    color: black;
+                    border: 2px solid #3c3c3c;
+                    padding: 4px 0px;
+                    {corners}
+                }}
+            """
+        return f"""
+            QPushButton {{
+                background-color: #e8e8e8;
+                font-weight: bold;
+                font-size: 14px;
+                color: #555555;
+                border: 1px solid #888;
+                border-bottom: 3px solid #888;
+                padding: 4px 0px;
+                {corners}
+            }}
+            QPushButton:hover {{
+                background-color: #f2f2f2;
+            }}
+            QPushButton:disabled {{
+                color: #999999;
+            }}
+        """
+
+    def _apply_layer_tab_style(self):
+        """Press the current tab's half and style both halves; in Hebrew the
+        halves swap sides so Strands reads first, on the right."""
+        rtl = self.language_code == 'he'
+        self.layer_tab_row.setLayoutDirection(Qt.RightToLeft if rtl else Qt.LeftToRight)
+        current = self.strands_tab_button if self.layer_tab == 'strands' else self.masks_tab_button
+        current.setChecked(True)  # the exclusive group releases the other half
+        left, right = ((self.masks_tab_button, self.strands_tab_button) if rtl
+                       else (self.strands_tab_button, self.masks_tab_button))
+        for button, side in ((left, 'left'), (right, 'right')):
+            button.setStyleSheet(self._layer_tab_half_style(side, button.isChecked()))
+
+    def _sync_mask_button_styles(self):
+        """Masks tab buttons copy their Strands twins' stylesheets."""
+        if not hasattr(self, 'new_mask_button'):
+            return
+        # While mask mode is on, New Mask keeps its green and gets the
+        # pressed half's dark border (padding trimmed so the size holds).
+        self.new_mask_button.setStyleSheet(self.add_new_strand_button.styleSheet() + """
+            QPushButton:checked {
+                border: 2px solid #3c3c3c;
+                padding: 4px 9px;
+            }
+        """)
+        self.delete_mask_button.setStyleSheet(self.delete_strand_button.styleSheet())
+        self.delete_all_masks_button.setStyleSheet(self.delete_all_button.styleSheet())
+
+    def toggle_new_mask(self):
+        """New Mask: start the canvas mask mode, where clicking two crossing
+        strands makes a mask. Pressed again, it cancels back to attach mode."""
+        main = self.parent_window
+        if main is None or not hasattr(main, 'set_mask_mode'):
+            self.set_new_mask_active(False)
+            return
+        if getattr(main, 'current_mode', None) == 'mask':
+            main.set_attach_mode()
+        else:
+            main.set_mask_mode()
+        self.set_new_mask_active(getattr(main, 'current_mode', None) == 'mask')
+
+    def set_new_mask_active(self, active):
+        """Show whether mask mode is on: New Mask pressed, and a hint under
+        the buttons. MainWindow calls this on every mode change."""
+        if not hasattr(self, 'new_mask_button'):
+            return
+        active = bool(active)
+        if active and self.layer_tab != 'masks':
+            # Never be in mask mode without the button that shows it
+            self.set_layer_tab('masks')
+        self.new_mask_button.setChecked(active)
+        hint = translations[self.language_code]['new_mask_hint']
+        if active:
+            self.notification_label.setText(hint)
+            self.notification_label.show()
+        elif self.notification_label.text() == hint:
+            self.notification_label.clear()
+            self.notification_label.hide()
+
+    def update_delete_mask_button_state(self):
+        """Delete Mask works only on selected masks (never locked ones)."""
+        if not hasattr(self, 'delete_mask_button'):
+            return
+        if self.mask_editing:
+            enabled = False
+        elif self.multi_select_mode and self.multi_selected_layers:
+            enabled = (
+                all(self._layer_tab_of(i) == 'masks' for i in self.multi_selected_layers)
+                and not (self.lock_mode and self.multi_selected_layers & self.locked_layers)
+            )
+        else:
+            selected = self.get_selected_layer()
+            enabled = (
+                selected is not None
+                and self._layer_tab_of(selected) == 'masks'
+                and not (self.lock_mode and selected in self.locked_layers)
+            )
+        self.delete_mask_button.setEnabled(bool(enabled))
+
+    def request_delete_mask(self):
+        """Delete the selected mask(s) through the existing deletion paths."""
+        if self.multi_select_mode and self.multi_selected_layers:
+            if all(self._layer_tab_of(i) == 'masks' for i in self.multi_selected_layers):
+                self.delete_selected_layers()
+            return
+        selected = self.get_selected_layer()
+        if selected is not None and self._layer_tab_of(selected) == 'masks':
+            self.request_delete_strand()
+
+    def _ask_yes_no(self, title, text):
+        """Translated Yes / No question; True when Yes was clicked."""
+        _ = translations[self.language_code]
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(text)
+        msg_box.setIcon(QMessageBox.Question)
+        yes_button = msg_box.addButton(_['yes'], QMessageBox.YesRole)
+        no_button = msg_box.addButton(_['no'], QMessageBox.NoRole)
+        msg_box.setDefaultButton(no_button)
+        msg_box.exec_()
+        return msg_box.clickedButton() == yes_button
+
+    def request_delete_all_masks(self):
+        """Delete All on the Masks tab: remove every mask, keep the strands.
+        One undo step brings them all back."""
+        masks = [s for s in self.canvas.strands if isinstance(s, MaskedStrand)]
+        if not masks:
+            return
+        _ = translations[self.language_code]
+        if not self._ask_yes_no(_['delete_all'], _['delete_all_masks_confirm']):
+            return
+
+        names = [m.layer_name for m in masks]
+        removed = sorted(self.canvas.strands.index(m) for m in masks)
+        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            self.undo_redo_manager.save_state(
+                action='layer.delete_all', source='panel', targets=names,
+                detail='before deleting all masks')
+
+        for mask in masks:
+            self.canvas.delete_masked_layer(mask)
+
+        # Keep locks on the same strands now that the masks are gone
+        def _remap(indices):
+            return {i - sum(1 for r in removed if r < i)
+                    for i in indices if i not in removed}
+        self.locked_layers = _remap(self.locked_layers)
+        self.previously_locked_layers = _remap(self.previously_locked_layers)
+        if self.lock_mode:
+            self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)
+        self.multi_selected_layers.clear()
+
+        self.refresh()
+        self.canvas.update()
+        if hasattr(self.canvas, 'layer_state_manager') and self.canvas.layer_state_manager:
+            self.canvas.layer_state_manager.save_current_state()
+        if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
+            self.undo_redo_manager.save_state(
+                allow_empty=True, action='layer.delete_all', source='panel',
+                targets=names, detail='all masks deleted')
 
     def show_notification(self, message, duration=2000):
         """Show a temporary notification message."""
@@ -3351,6 +3671,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
         # Add button directly to layout at the top, aligned center
         self.scroll_layout.insertWidget(0, button, 0, Qt.AlignHCenter)
+        self._apply_layer_tab_filter()
 
         # Debug logging to trace button text issues
         for i, btn in enumerate(self.layer_buttons):
@@ -3849,7 +4170,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self.scroll_layout.addWidget(button, 0, Qt.AlignHCenter)
             button.show()
             added_count += 1
-        
+
+        # show() above made every button visible; hide the other tab's again
+        self._apply_layer_tab_filter()
+
         # Update layout and canvas
         self.scroll_layout.update()
         self.canvas.update()  # Just update the canvas without changing zoom/pan
@@ -4041,6 +4365,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
         # layout: top‑to‑bottom  →   logical list: bottom‑to‑top
         self.layer_buttons = list(reversed(ordered_buttons))
+        self._apply_layer_tab_filter()
 
     def update_default_colors(self):
         """Update the set_colors dictionary to use the canvas default colors."""
@@ -4155,6 +4480,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             # No valid strand selected
             self.delete_strand_button.setEnabled(False)
             self.delete_strand_button.update()
+        # Keep only the current Strands / Masks tab's buttons visible
+        self._apply_layer_tab_filter()
         # Force canvas update instead of refresh
         self.canvas.update()
 
@@ -4237,7 +4564,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 for i in range(layout_item_count):
                     item = self.scroll_layout.itemAt(i)
                     widget = item.widget()
-                    if not widget:
+                    # The other tab's hidden buttons keep stale geometry;
+                    # drop relative to the visible neighbours only
+                    if not widget or widget.isHidden():
                         continue
                     # Use mapToGlobal and mapFromGlobal for reliable coordinates within the scroll area
                     widget_global_top_left = widget.mapToGlobal(QPoint(0, 0))
@@ -4357,8 +4686,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         for i in range(self.scroll_layout.count()):
             item = self.scroll_layout.itemAt(i)
             widget = item.widget()
-            if not widget:
-                continue
+            if not widget or widget.isHidden():
+                continue  # the other tab's hidden buttons
 
             widget_rect = widget.geometry()
             widget_height = widget_rect.height()

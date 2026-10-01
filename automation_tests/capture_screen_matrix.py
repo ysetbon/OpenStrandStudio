@@ -53,6 +53,8 @@ MODES = ("normal", "lock", "copy")
 
 # Bottom-panel buttons: "padding: 5px 10px" plus a 1px border each side.
 BOTTOM_LABEL_PADDING = 10 * 2 + 2
+# Strands / Masks halves: no side padding, only the 2px pressed border.
+LAYER_TAB_LABEL_PADDING = 2 * 2
 CREATE_GROUP_LABEL_PADDING = 8
 
 
@@ -200,7 +202,6 @@ def _leave_mode(window, mode):
 def _toolbar_buttons(window):
     return [
         window.view_button,
-        window.mask_button,
         window.select_strand_button,
         window.attach_button,
         window.move_button,
@@ -284,15 +285,27 @@ def _check(window, mode, target):
         need = _text_width(create_group)
         if room < need:
             failures.append(f"'Create Group' label needs {need}px, has {room}px")
+    # Bottom buttons of both tabs share one column, so the always-visible
+    # Deselect All gives the width the hidden tab's buttons would get too.
+    column = lp.deselect_all_button.width()
     for attr in ("draw_names_button", "lock_layers_button", "add_new_strand_button",
-                 "delete_strand_button", "deselect_all_button", "delete_all_button"):
+                 "delete_strand_button", "deselect_all_button", "delete_all_button",
+                 "new_mask_button", "delete_mask_button", "delete_all_masks_button"):
         btn = getattr(lp, attr, None)
-        if btn is None or not btn.isVisible():
+        if btn is None:
             continue
-        room = btn.width() - BOTTOM_LABEL_PADDING
+        room = column - BOTTOM_LABEL_PADDING
         need = _text_width(btn)
         if room < need:
             failures.append(f"bottom button '{btn.text()}' needs {need}px, has {room}px")
+    for attr in ("strands_tab_button", "masks_tab_button"):
+        btn = getattr(lp, attr, None)
+        if btn is None or not btn.isVisible():
+            continue
+        room = btn.width() - LAYER_TAB_LABEL_PADDING
+        need = _text_width(btn)
+        if room < need:
+            failures.append(f"switch half '{btn.text()}' needs {need}px, has {room}px")
     # The panel sits on the right in LTR and on the left in Hebrew (RTL),
     # so compare rectangles rather than sides.
     panel_rect = _rect_in(lp, window)

@@ -23,7 +23,6 @@
 | 🔄 | Rotate | Rotate strands around center | Changing orientation, creating symmetry |
 | 📐 | Angle/Length | Precise numerical control | Technical precision, exact measurements |
 | 👆 | Select | Choose strands & access properties | Color changes, detailed modifications |
-| 🎭 | Mask | Create over/under effects | Making realistic knots, crossing effects |
 | ⊞ | Grid | Toggle alignment grid | Professional layouts, precise alignment |
 | 💾 | Save | Save project file | Preserving work, creating checkpoints |
 | 📁 | Load | Open existing project | Starting from templates, continuing work |
@@ -33,7 +32,7 @@
 ### Common Task Quick Steps
 
 **Create a Basic Knot (30 seconds):**
-1. Attach → Draw loop → Move → Adjust shape → Mask → Create crossing
+1. Attach → Draw loop → Move → Adjust shape → Masks tab → New Mask → Click both crossing strands
 2. Save → Name it → Done
 
 **Change Colors:**
@@ -132,6 +131,7 @@
 
 #### Mask Mode - The Realism Tool
 **What it does:** Creates over/under effects for realistic rope appearance
+**How to start:** Open the **Masks** tab in the layer panel and press **New Mask**, then click two crossing strands on the canvas. The new mask appears at the top of the Masks list, selected. Press New Mask again to cancel. (The toolbar no longer has a Mask button.)
 **Masking principles:**
 - **Visual occlusion:** Makes parts of strands invisible where others cross over
 - **Layer interaction:** Works with layer ordering to determine effects
@@ -151,6 +151,13 @@
 **Visual hierarchy:** Higher numbers appear "on top" of lower numbers
 **Selection integration:** Click layer number to select that strand on canvas
 **Reordering:** Drag layer buttons up/down to change drawing order
+
+#### Strands / Masks Switch
+The split button above Draw Names chooses which layers the list shows:
+- **Strands:** only strands (names like `1_1`), with Draw Names, Lock Layers, New Strand, Delete Strand, Deselect All and Delete All.
+- **Masks:** only masks (names like `1_1_2_1`), with New Mask, Delete Mask, Deselect All and Delete All. Delete All here removes only the masks; the strands stay.
+
+Switching only hides the other list: the drawing order never changes. A selection the new tab would hide is cleared, and selecting a layer from the other list (for example by clicking it on the canvas) opens its tab.
 
 #### Advanced Layer Management
 **Group functionality:**

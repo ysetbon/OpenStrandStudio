@@ -470,3 +470,63 @@ def test_dragging_a_strand_to_the_top_keeps_it_under_the_masks(window):
     plain = [n for n in order if n.count("_") == 1]
     assert plain[-1] == "1_1"  # top of the strands, still under every mask
     assert_indices_match(window)
+
+
+# --- Same behaviour as the old toolbar Mask button and mask menu --------------
+# Compared against main (old Mask button) with the same clicks: every step of
+# the flow and every mask menu item matched.
+
+def canvas_point_on(win, name):
+    from selection_utils import find_strands_at_point
+    strand = next(s for s in win.canvas.strands if s.layer_name == name)
+    path = strand.get_path()
+    for i in range(5, 96, 3):
+        point = path.pointAtPercent(i / 100)
+        hits = find_strands_at_point(win.canvas.strands, point, include_masked=False)
+        if hits and hits[0][0] is strand:
+            screen = win.canvas.canvas_to_screen(point)
+            return QPoint(int(round(screen.x())), int(round(screen.y())))
+    raise AssertionError(f"no clickable point on {name}")
+
+
+def test_new_mask_with_real_canvas_clicks(window):
+    lp = window.layer_panel
+    canvas = window.canvas
+    lp.set_layer_tab("masks")
+    lp.new_mask_button.click()
+    pump()
+    assert window.current_mode == "mask" and canvas.current_mode is canvas.mask_mode
+
+    QTest.mouseClick(canvas, Qt.LeftButton, Qt.NoModifier, canvas_point_on(window, "3_1"))
+    pump(200)
+    assert [s.layer_name for s in canvas.mask_mode.selected_strands] == ["3_1"]
+    assert window.current_mode == "mask"
+
+    QTest.mouseClick(canvas, Qt.LeftButton, Qt.NoModifier, canvas_point_on(window, "1_1"))
+    pump(250)
+    assert names(canvas.strands)[-1] == "3_1_1_1"  # on top, like every mask
+    assert getattr(canvas.selected_strand, "layer_name", None) == "3_1_1_1"
+    assert window.current_mode == "attach" and not lp.new_mask_button.isChecked()
+    assert lp.layer_tab == "masks"
+    assert_indices_match(window)
+
+
+def test_mask_right_click_menu_on_the_masks_tab(window, monkeypatch):
+    from PyQt5.QtWidgets import QMenu, QWidgetAction
+    lp = window.layer_panel
+    lp.set_layer_tab("masks")
+    pump()
+    shown = []
+    monkeypatch.setattr(QMenu, "exec_", lambda self, *a, **k: shown.append(self))
+    button = next(b for b in lp.layer_buttons if b.text() == "1_1_3_1")
+    button.customContextMenuRequested.emit(QPoint(20, 10))
+    pump(80)
+    assert shown, "no menu opened"
+    labels = []
+    for act in shown[-1].actions():
+        widget = act.defaultWidget() if isinstance(act, QWidgetAction) else None
+        labels.append("---" if act.isSeparator() else
+                      widget.text() if widget is not None and hasattr(widget, "text") else act.text())
+    _ = translations["en"]
+    assert labels == [_["hide_layer"], _["shadow_only"], _["hide_shadow"], _["edit_shadows"], "---",
+                      _["edit_mask"], _["reset_mask"]], labels

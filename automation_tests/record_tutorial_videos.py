@@ -635,6 +635,9 @@ class Recorder:
         self.click_frames_left = 0
         self.caption_text = ""
         self.caption_low = False
+        # One point size for every caption of the clip (see
+        # common_caption_size); None fits each caption on its own.
+        self.caption_pt = None
         self.t0 = None
         self.elapsed = 0.0
         self.timer = QTimer()
@@ -734,6 +737,34 @@ class Recorder:
         painter.setBrush(QBrush(QColor(255, 255, 255)))
         painter.drawPolygon(poly)
 
+    def _caption_span(self, w=WINDOW_W):
+        """Horizontal range a caption may use: inside the canvas, so it never
+        covers the layer panel buttons (New Strand, Delete Strand, ...) that
+        the tutorial is asking the viewer to look at."""
+        from PyQt5.QtCore import QPoint
+        span_l, span_r = 40, w - 40
+        canvas = getattr(self.window, "canvas", None)
+        if canvas is not None and canvas.isVisible():
+            origin = self.window.mapToGlobal(QPoint(0, 0))
+            left = canvas.mapToGlobal(QPoint(0, 0)).x() - origin.x()
+            span_l = left + 20
+            span_r = left + canvas.width() - 20
+        return span_l, span_r
+
+    def common_caption_size(self, texts, largest=22, smallest=18):
+        """Largest point size at which every caption of the clip fits on one
+        line, so all the steps of a video are set in the same size (a long
+        translation no longer shrinks only its own steps). A caption still
+        too long at the smallest size wraps onto a second line."""
+        from PyQt5.QtGui import QFont, QFontMetrics
+        span_l, span_r = self._caption_span()
+        for pt in range(largest, smallest, -1):
+            fm = QFontMetrics(QFont("Segoe UI", pt, QFont.DemiBold))
+            if all(fm.horizontalAdvance(t) + 2 * 34 <= span_r - span_l
+                   for t in texts):
+                return pt
+        return smallest
+
     def _draw_caption(self, painter, w, h):
         from PyQt5.QtCore import Qt, QRectF
         from PyQt5.QtGui import QFont, QColor, QPen, QBrush, QFontMetrics
@@ -742,23 +773,15 @@ class Recorder:
             return
         from PyQt5.QtCore import QPoint
 
-        # Keep the caption inside the canvas' horizontal span so it never
-        # covers the layer panel buttons (New Strand, Delete Strand, ...)
-        # that the tutorial is asking the viewer to look at.
-        span_l, span_r = 40, w - 40
-        canvas = getattr(self.window, "canvas", None)
-        if canvas is not None and canvas.isVisible():
-            origin = self.window.mapToGlobal(QPoint(0, 0))
-            left = canvas.mapToGlobal(QPoint(0, 0)).x() - origin.x()
-            span_l = left + 20
-            span_r = left + canvas.width() - 20
+        span_l, span_r = self._caption_span(w)
         pad_x, pad_y = 34, 16
-        point_size = 22
+        point_size = self.caption_pt or 22
         while True:
             font = QFont("Segoe UI", point_size, QFont.DemiBold)
             fm = QFontMetrics(font)
             text_w = fm.horizontalAdvance(self.caption_text)
-            if text_w + 2 * pad_x <= span_r - span_l or point_size <= 14:
+            if (self.caption_pt or text_w + 2 * pad_x <= span_r - span_l
+                    or point_size <= 14):
                 break
             point_size -= 1
         painter.setFont(font)
@@ -1282,7 +1305,7 @@ def _open_settings(window, mouse, rec, lift=0):
 
 
 # Pixels the Settings dialog is raised in the language steps (see _center_dialog)
-LANGUAGE_STEP_LIFT = 110
+LANGUAGE_STEP_LIFT = 150
 
 
 def scenario_settings(window, app, rec, mouse, test_only=False):
@@ -2086,6 +2109,11 @@ def main():
     def run():
         ok = False
         try:
+            prefix = {"settings": "s", "buttons": "b", "mask": "m",
+                      "knot": "k"}[args.scenario]
+            rec.caption_pt = rec.common_caption_size(
+                [cap(k) for k in CAPTIONS[LANG] if k[0] == prefix])
+            print(f"[record] caption size {rec.caption_pt} pt", flush=True)
             rec.start()
             SCENARIOS[args.scenario](window, app, rec, mouse, test_only=args.test)
             ok = True

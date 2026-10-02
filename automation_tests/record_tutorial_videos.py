@@ -482,7 +482,7 @@ def _sync_native(w):
 FRAME_SIDE = 1
 
 
-def _center_dialog(window, dlg):
+def _center_dialog(window, dlg, lift=0):
     """Place a dialog exactly where MainWindow._show_settings_dialog puts it
     in a real run.
 
@@ -493,6 +493,10 @@ def _center_dialog(window, dlg):
     real app also shows a quirk that viewers see: the first open computes with
     a frameless rectangle (the dialog has never been mapped) and therefore
     lands lower than every later open, which uses the real frame size.
+
+    ``lift`` raises the dialog by that many pixels (a user may drag it
+    anywhere): the twelve-language dropdown otherwise reaches down behind
+    the bottom caption.
     """
     from PyQt5.QtCore import QRect
     from PyQt5.QtWidgets import QApplication
@@ -507,6 +511,7 @@ def _center_dialog(window, dlg):
     else:
         frame = QRect(0, 0, dlg.width(), dlg.height())
     frame.moveCenter(main_frame.center())
+    frame.translate(0, -lift)
     screen = QApplication.desktop().availableGeometry(window)
     x = max(screen.left(),
             min(frame.left(), screen.right() - frame.width() + 1))
@@ -629,7 +634,7 @@ class Recorder:
         self.cursor = QPoint(window.width() // 2, window.height() // 2)
         self.click_frames_left = 0
         self.caption_text = ""
-        self.caption_avoid_left = None
+        self.caption_low = False
         self.t0 = None
         self.elapsed = 0.0
         self.timer = QTimer()
@@ -657,14 +662,14 @@ class Recorder:
         """Show a click ripple around the cursor for ~0.4s."""
         self.click_frames_left = int(self.fps * 0.4)
 
-    def caption(self, text, avoid_left=None):
-        """Set the step caption (always at the bottom of the picture).
+    def caption(self, text, low=False):
+        """Set the step caption (always centered at the bottom of the picture).
 
-        ``avoid_left`` is a window x: the caption stays to the right of it.
-        The steps that open the twelve-language dropdown use it to keep the
-        caption clear of the list, which reaches down into the caption row."""
+        ``low=True`` sits it a little closer to the bottom edge. The steps
+        that open the twelve-language dropdown use it to keep the caption
+        clear of the list, which reaches down into the caption row."""
         self.caption_text = text
-        self.caption_avoid_left = avoid_left
+        self.caption_low = low
 
     # -- frame capture -------------------------------------------------------
     def _capture(self):
@@ -747,8 +752,6 @@ class Recorder:
             left = canvas.mapToGlobal(QPoint(0, 0)).x() - origin.x()
             span_l = left + 20
             span_r = left + canvas.width() - 20
-        if self.caption_avoid_left is not None:
-            span_l = max(span_l, self.caption_avoid_left)
         pad_x, pad_y = 34, 16
         point_size = 22
         while True:
@@ -768,7 +771,7 @@ class Recorder:
         box_h = text_rect.height() + 2 * pad_y
         x = (w - box_w) / 2
         x = max(span_l, min(x, span_r - box_w))
-        y = h - box_h - 36
+        y = h - box_h - (12 if self.caption_low else 36)
         rect = QRectF(x, y, box_w, box_h)
 
         painter.setPen(QPen(QColor(255, 255, 255, 50), 1))
@@ -1240,7 +1243,7 @@ def _right_click_hold(mouse, rec, widget, hold_ms=2000):
 # Scenario: tutorial_1 — settings: themes and language
 # ---------------------------------------------------------------------------
 
-def _open_settings(window, mouse, rec):
+def _open_settings(window, mouse, rec, lift=0):
     """Click the gear button and center the dialog over the window (same
     place Qt's own parent-centering puts it, but frame-independent)."""
     import time
@@ -1266,7 +1269,7 @@ def _open_settings(window, mouse, rec):
     _hold(900)
     dlg = window._settings_dialog
     assert dlg is not None and dlg.isVisible(), "settings dialog not shown"
-    _center_dialog(window, dlg)
+    _center_dialog(window, dlg, lift)
     QApplication.setActiveWindow(dlg)
     _hold(150)
     if was_recording:
@@ -1276,6 +1279,10 @@ def _open_settings(window, mouse, rec):
         rec.timer.start()
     _hold(300)
     return dlg
+
+
+# Pixels the Settings dialog is raised in the language steps (see _center_dialog)
+LANGUAGE_STEP_LIFT = 110
 
 
 def scenario_settings(window, app, rec, mouse, test_only=False):
@@ -1304,7 +1311,7 @@ def scenario_settings(window, app, rec, mouse, test_only=False):
 
     # Step 4: reopen settings, go to the language category (row 3)
     rec.caption(cap("s4"))
-    dlg = _open_settings(window, mouse, rec)
+    dlg = _open_settings(window, mouse, rec, lift=LANGUAGE_STEP_LIFT)
     _click_list_row(window, mouse, rec, dlg.categories_list, 3)
     _hold(800)
 
@@ -1314,16 +1321,14 @@ def scenario_settings(window, app, rec, mouse, test_only=False):
     # The language shown is any language but the recording's own, so the
     # whole interface visibly changes (French, or English for the French cut).
     other = "fr" if LANG != "fr" else "en"
-    combo = dlg.language_combobox
-    keep_clear = mouse._widget_to_window(combo, (combo.width(), 0)).x() + 40
-    rec.caption(cap("s5"), avoid_left=keep_clear)
+    rec.caption(cap("s5"), low=True)
     _combo_select(window, mouse, rec, dlg.language_combobox, other)
     mouse.click_widget(dlg.language_ok_button)
     _hold(2400)
 
     # Step 6: switch back to English the same way
-    rec.caption(cap("s6"), avoid_left=keep_clear)
-    dlg = _open_settings(window, mouse, rec)
+    rec.caption(cap("s6"), low=True)
+    dlg = _open_settings(window, mouse, rec, lift=LANGUAGE_STEP_LIFT)
     _combo_select(window, mouse, rec, dlg.language_combobox, LANG)
     mouse.click_widget(dlg.language_ok_button)
     _hold(1600)

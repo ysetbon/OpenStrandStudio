@@ -1007,6 +1007,14 @@ if __name__ == '__main__':
             logging.warning("Ctrl+C state: %s", window.debug_state_snapshot())
         except Exception:
             logging.exception("Ctrl+C state snapshot failed")
+        try:
+            # The whole Python call stack, including frames waiting inside a
+            # nested exec_() (layer drag, dialog, menu) - the plain traceback
+            # stops at the Qt boundary and hides them.
+            import traceback
+            logging.warning("Ctrl+C stack:\n%s", "".join(traceback.format_stack(frame)))
+        except Exception:
+            logging.exception("Ctrl+C stack failed")
         raise KeyboardInterrupt
 
     try:

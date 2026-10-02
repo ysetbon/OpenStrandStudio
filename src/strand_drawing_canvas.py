@@ -4274,6 +4274,15 @@ class StrandDrawingCanvas(QWidget):
             event.accept()
             return
 
+        # New Strand owns the left button until the strand is released: no
+        # mode or leftover group-move state may take the press instead.
+        if self.is_drawing_new_strand and event.button() == Qt.LeftButton:
+            self.new_strand_start_point = self.snap_to_grid_for_attach(canvas_pos)
+            self.new_strand_end_point = None
+            self.update()
+            event.accept()
+            return
+
         if self.current_mode == "rotate":
             # Create a new event with converted coordinates
             new_event = type(event)(event.type(), canvas_pos, event.button(), event.buttons(), event.modifiers())
@@ -4491,6 +4500,11 @@ class StrandDrawingCanvas(QWidget):
             event.accept()
             return
 
+        if self.is_drawing_new_strand and self.new_strand_start_point is not None:
+            self.new_strand_end_point = self.snap_to_grid_for_attach(canvas_pos)
+            self.update()
+            return
+
         if self.moving_group and self.group_move_start_pos:
             # Calculate total dx and dy from the initial movement start position
             total_dx = canvas_pos.x() - self.group_move_start_pos.x()
@@ -4603,6 +4617,16 @@ class StrandDrawingCanvas(QWidget):
             # Clear the current rectangle
             self.current_erase_rect = None
             self.erase_start_pos = None
+            self.update()
+            event.accept()
+            return
+
+        # Releasing a new strand always finishes it (then attach mode, see
+        # finalize_new_strand), before any mode gets to see the release.
+        if (self.is_drawing_new_strand and self.new_strand_start_point is not None
+                and event.button() == Qt.LeftButton):
+            self.new_strand_end_point = self.snap_to_grid_for_attach(canvas_pos)
+            self.finalize_new_strand()
             self.update()
             event.accept()
             return
@@ -4771,7 +4795,7 @@ class StrandDrawingCanvas(QWidget):
         """
         if not hasattr(self, '_pre_creation_state') or not self._pre_creation_state:
             pass
-            self.current_mode = self.select_mode
+            self.current_mode = self.attach_mode  # a new strand ends in attach mode
             self.show_control_points = False
             return
         
@@ -4786,9 +4810,10 @@ class StrandDrawingCanvas(QWidget):
             main_window._restore_button_states()
             # Control points button was never changed during creation, so it should already be correct
         
-        # Restore mode flags
-        self.is_angle_adjusting = state.get('is_angle_adjusting', False)
-        self.mask_mode_active = state.get('mask_mode_active', False)
+        # The mode is not restored: a new strand always ends in attach mode
+        # (_finish_new_strand_in_attach_mode), so no other mode's flags
+        self.is_angle_adjusting = False
+        self.mask_mode_active = False
         
         # Restore move mode state
         if hasattr(self, 'move_mode') and self.move_mode:
@@ -4813,13 +4838,8 @@ class StrandDrawingCanvas(QWidget):
         if 'selected_attached_strand' in state:
             self.selected_attached_strand = state['selected_attached_strand']
         
-        # Restore current mode
-        previous_mode = state.get('current_mode', "select")
-        self.current_mode = previous_mode
-        
-        # If the previous mode was an object with activate method, reactivate it
-        if hasattr(previous_mode, 'activate'):
-            previous_mode.activate()
+        # Attach mode, not the mode from before New Strand
+        self.current_mode = self.attach_mode
         
         # Clear the saved state
         self._pre_creation_state = {}
@@ -4884,7 +4904,7 @@ class StrandDrawingCanvas(QWidget):
 
     def finalize_new_strand(self):
         try:
-            if self.new_strand_start_point and self.new_strand_end_point:
+            if self.new_strand_start_point is not None and self.new_strand_end_point is not None:
                 # Ensure coordinates are properly normalized regardless of zoom level
                 start_point = self.snap_to_grid_for_attach(self._normalize_coordinate_for_zoom(self.new_strand_start_point))
                 end_point = self.snap_to_grid_for_attach(self._normalize_coordinate_for_zoom(self.new_strand_end_point))
@@ -5026,7 +5046,41 @@ class StrandDrawingCanvas(QWidget):
                 pass
         except RuntimeError as e:
             print(f"[StrandDrawingCanvas] RuntimeError in finalize_new_strand: {e}")
-            return
+        except Exception:
+            logging.getLogger(__name__).exception("New strand: finishing the strand failed")
+        finally:
+            self._finish_new_strand_in_attach_mode()
+
+    def _finish_new_strand_in_attach_mode(self):
+        """A released new strand always ends in attach mode, whatever mode
+        was on before New Strand, and even if finishing it failed - never
+        half-way, with painting or the new-strand state left on."""
+        self.is_drawing_new_strand = False
+        self.new_strand_start_point = None
+        self.new_strand_end_point = None
+        self._pre_creation_state = {}
+        self.clear_suppression_flags()
+        # No group move can be in progress after drawing a strand; a leftover
+        # one would take the next attach-mode click
+        self.moving_group = False
+        self.move_group_name = None
+        self.move_group_layers = None
+        self.move_start_pos = None
+        self.group_move_start_pos = None
+        main_window = getattr(getattr(self, 'layer_panel', None), 'parent_window', None)
+        try:
+            if main_window is not None and hasattr(main_window, 'set_attach_mode'):
+                if not main_window.updatesEnabled():
+                    main_window.setUpdatesEnabled(True)
+                # Same as clicking Attach: toolbar, New Mask and canvas agree
+                main_window.set_attach_mode()
+            else:
+                self.set_mode("attach")
+        except Exception:
+            logging.getLogger(__name__).exception("New strand: switching to attach mode failed")
+            self.set_mode("attach")
+        self.update()
+
     def set_mode(self, mode):
         """
         Set the current mode of the canvas.

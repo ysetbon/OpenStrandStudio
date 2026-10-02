@@ -4186,10 +4186,22 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             # NOTE: no call to refresh() or refresh_layers*(), so no overlay / flash occurs.
 
         # A new strand is appended above the masks; put the masks back on
-        # top (refresh moves them and rebuilds the buttons to match)
+        # top (refresh moves them and rebuilds the buttons to match). Not
+        # now: this runs inside the mouse release that made the strand, and
+        # refresh() runs a nested event loop (processEvents). Inside an
+        # input handler on Windows that can leave the mouse captured and the
+        # whole window ignoring input - so reorder once the release is over.
         strands = list(getattr(self.canvas, 'strands', None) or [])
         if any(a is not b for a, b in zip(keep_masks_on_top(strands)[0], strands)):
-            self.refresh()
+            QTimer.singleShot(0, self._put_masks_back_on_top)
+
+    def _put_masks_back_on_top(self):
+        try:
+            strands = list(getattr(self.canvas, 'strands', None) or [])
+            if any(a is not b for a, b in zip(keep_masks_on_top(strands)[0], strands)):
+                self.refresh()
+        except RuntimeError:
+            pass  # panel already deleted
         
 
     def on_strands_deleted(self, indices):

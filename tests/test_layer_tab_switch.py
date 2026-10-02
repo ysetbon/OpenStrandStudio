@@ -827,3 +827,76 @@ def test_ctrl_c_snapshot_shows_what_can_freeze_the_window(window):
                 "widgetUnderCursor=", "focusWidget=", "overrideCursor=None",
                 "layer_drag_active=False", "visibleTopLevels=['MainWindow(OpenStrand Studio)@"):
         assert key in text, (key, text)
+
+
+# --- Nothing re-enters the event loop inside a new strand's mouse release -----
+
+def test_with_masks_the_layer_rebuild_waits_for_the_release_to_end(window, monkeypatch):
+    """With masks, a new strand used to make the panel refresh() inside the
+    mouse release; refresh runs processEvents, a nested event loop, which on
+    Windows can leave the mouse captured and the whole window frozen. The
+    rebuild now runs right after the release instead."""
+    canvas, lp = window.canvas, window.layer_panel
+    assert mask_names(window)  # bridge.json has masks
+    in_release = {"now": False}
+    refreshed = []
+    original_release = canvas.mouseReleaseEvent
+
+    def tracked_release(event):
+        in_release["now"] = True
+        try:
+            original_release(event)
+        finally:
+            in_release["now"] = False
+
+    original_refresh = lp.refresh
+
+    def tracked_refresh(*a, **k):
+        refreshed.append(in_release["now"])
+        return original_refresh(*a, **k)
+
+    monkeypatch.setattr(canvas, "mouseReleaseEvent", tracked_release)
+    monkeypatch.setattr(lp, "refresh", tracked_refresh)
+    w, h = canvas.width(), canvas.height()
+    draw_new_strand(window, int(w * 0.2), int(h * 0.2), int(w * 0.7), int(h * 0.6))
+
+    assert refreshed and True not in refreshed, refreshed
+    assert masks_above_strands(window)
+    assert lp.layer_buttons[lp.get_selected_layer()].text() == "9_1"
+    assert canvas.current_mode is canvas.attach_mode
+    assert_indices_match(window)
+
+
+class _FakeUser32:
+    def __init__(self):
+        self.released = 0
+
+    def ReleaseCapture(self):
+        self.released += 1
+
+
+def _fake_windows_capture(monkeypatch, window, capture):
+    import types
+    user32 = _FakeUser32()
+    monkeypatch.setitem(sys.modules, "ctypes", types.SimpleNamespace(
+        windll=types.SimpleNamespace(user32=user32)))
+    monkeypatch.setattr(window, "_native_mouse_capture", lambda: (capture, 4242))
+    return user32
+
+
+def test_a_capture_left_on_the_window_is_released(window, monkeypatch):
+    user32 = _fake_windows_capture(monkeypatch, window, 4242)
+    assert window.release_stale_mouse_capture() and user32.released == 1
+
+
+def test_a_capture_is_kept_while_a_button_is_down_or_on_another_window(window, monkeypatch):
+    user32 = _fake_windows_capture(monkeypatch, window, 777)  # someone else's
+    assert not window.release_stale_mouse_capture()
+    user32 = _fake_windows_capture(monkeypatch, window, 4242)
+    monkeypatch.setattr(QApplication, "mouseButtons", staticmethod(lambda: Qt.LeftButton))
+    assert not window.release_stale_mouse_capture() and user32.released == 0
+
+
+def test_ctrl_c_snapshot_reports_the_windows_mouse_capture(window, monkeypatch):
+    _fake_windows_capture(monkeypatch, window, 4242)
+    assert "win32.capture=this window" in window.debug_state_snapshot()

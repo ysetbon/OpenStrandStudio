@@ -34,17 +34,10 @@ The masked layer feature is essential for creating intricate, overlapping design
    - Delete All on this tab removes only the masks, after a confirmation, in one undo step.
    - Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you.
 
-2. **Better Shadows Around Masks:**
-   - Where a mask lifts one strand over another, the shadows now look just like a real crossing.
-   - The stray dark wedges, bumps and dents near masks are gone, and the lifted strand stays clean.
-   - The Shadow Path preview in the Shadow Editor now shows exactly what the canvas draws.
+2. **Fixed Shadow Issues:**
+   - Shadows around masks now look like a real crossing, and a shadow you untick in the Shadow Editor now disappears completely.
 
-3. **Hidden Shadows Stay Hidden:**
-   - When you untick a shadow in the Shadow Editor, all of it now goes away.
-   - Before, a small grey bump could stay behind next to another strand.
-   - Making a mask also no longer hides a shadow that should stay visible.
-
-4. **Seven New Samples:**
+3. **Seven New Samples:**
    - In Settings, under Samples, you will find seven new projects to open and learn from: Straight Weave 12×12, Curved Weave 6×6, Plait, Thick and Thin, Bridge, Twisted Pairs and Kagome Weave.
    - The sample buttons now sit two to a row, so the whole list fits on the page.
 
@@ -769,17 +762,10 @@ La fonctionnalité de calque masqué est essentielle pour créer des designs com
    - Tout supprimer sur cet onglet ne supprime que les masques, après confirmation, en une seule étape d'annulation.
    - Les masques restent toujours au-dessus de tous les brins, donc leur place dans la liste n'a plus d'importance, et sélectionner un calque de l'autre onglet ouvre cet onglet pour vous.
 
-2. **De plus belles ombres autour des masques:**
-   - Là où un masque fait passer un brin par-dessus un autre, les ombres ressemblent maintenant à un vrai croisement.
-   - Les coins sombres, les bosses et les entailles parasites près des masques ont disparu, et le brin soulevé reste net.
-   - L'aperçu Chemin d'Ombre de l'Éditeur d'Ombres montre maintenant exactement ce que dessine le canevas.
+2. **Ombres corrigées:**
+   - Les ombres autour des masques ressemblent maintenant à un vrai croisement, et une ombre décochée dans l'Éditeur d'Ombres disparaît entièrement.
 
-3. **Les ombres masquées restent masquées:**
-   - Quand vous décochez une ombre dans l'Éditeur d'Ombres, elle disparaît maintenant entièrement.
-   - Avant, une petite bosse grise pouvait rester à côté d'un autre brin.
-   - Créer un masque ne cache plus non plus une ombre qui doit rester visible.
-
-4. **Sept nouveaux exemples:**
+3. **Sept nouveaux exemples:**
    - Dans Paramètres, sous Exemples, vous trouverez sept nouveaux projets à ouvrir et à étudier : Tissage droit 12×12, Tissage courbe 6×6, Natte, Épais et fin, Pont, Paires torsadées et Tissage kagome.
    - Les boutons des exemples sont maintenant deux par ligne, pour que toute la liste tienne sur la page.
 

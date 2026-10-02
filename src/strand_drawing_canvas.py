@@ -5067,6 +5067,17 @@ class StrandDrawingCanvas(QWidget):
         self.move_group_layers = None
         self.move_start_pos = None
         self.group_move_start_pos = None
+        # Nor an attach: attach mode starts clean, painting with the canvas's
+        # own paintEvent
+        attach_mode = getattr(self, 'attach_mode', None)
+        if attach_mode is not None:
+            attach_mode.is_attaching = False
+            try:
+                attach_mode.move_timer.stop()
+            except (AttributeError, RuntimeError):
+                pass
+            attach_mode.end_drag_painting()
+        self.current_strand = None
         main_window = getattr(getattr(self, 'layer_panel', None), 'parent_window', None)
         try:
             if main_window is not None and hasattr(main_window, 'set_attach_mode'):

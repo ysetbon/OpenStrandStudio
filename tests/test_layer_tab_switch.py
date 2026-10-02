@@ -723,3 +723,69 @@ def test_a_failure_while_finishing_still_ends_in_attach_mode(window, monkeypatch
     assert not canvas.is_drawing_new_strand
     assert canvas.current_mode is canvas.attach_mode and window.current_mode == "attach"
     assert window.updatesEnabled() and not canvas._suppress_repaint
+
+
+# --- Attach mode never stays "mid-drag" after a release -----------------------
+
+def end_point_of(win, name):
+    strand = next(s for s in win.canvas.strands if s.layer_name == name)
+    p = win.canvas.canvas_to_screen(strand.end)
+    return QPoint(int(round(p.x())), int(round(p.y())))
+
+
+def drawn_strand(window):
+    w, h = window.canvas.width(), window.canvas.height()
+    draw_new_strand(window, int(w * 0.2), int(h * 0.2), int(w * 0.45), int(h * 0.45))
+    return next(s for s in window.canvas.strands if s.layer_name == "9_1")
+
+
+def test_an_attach_release_always_ends_the_drag(window):
+    canvas = window.canvas
+    drawn_strand(window)
+    end = end_point_of(window, "9_1")
+    drag_on_canvas(window, end.x(), end.y(), end.x() + 60, end.y() + 40)
+    assert "9_2" in names(canvas.strands)
+    assert not canvas.attach_mode.is_attaching and canvas.current_strand is None
+    assert not hasattr(canvas, "original_paintEvent")
+
+
+def test_a_stale_attaching_flag_does_not_swallow_the_next_attach(window):
+    """is_attaching used to be reset only when the new child got selected;
+    left on, every later press in attach mode was ignored."""
+    canvas = window.canvas
+    drawn_strand(window)
+    canvas.attach_mode.is_attaching = True  # left over, nothing being dragged
+    canvas.current_strand = None
+    end = end_point_of(window, "9_1")
+    drag_on_canvas(window, end.x(), end.y(), end.x() + 60, end.y() + 40)
+    assert "9_2" in names(canvas.strands)  # first try, not the second
+    assert not canvas.attach_mode.is_attaching
+
+
+@pytest.mark.parametrize("then", ["attach", "new_strand"])
+def test_a_stale_drag_painter_is_removed(window, then):
+    """The drag-time cached painter left installed keeps repainting an old
+    frame: the canvas looks frozen. A release or a new strand removes it."""
+    canvas = window.canvas
+    strand = drawn_strand(window)
+    canvas.attach_mode._setup_optimized_paint_handler()
+    canvas.active_strand_for_drawing = strand
+    assert hasattr(canvas, "original_paintEvent")
+    if then == "attach":
+        end = end_point_of(window, "9_1")
+        drag_on_canvas(window, end.x(), end.y(), end.x() + 60, end.y() + 40)
+    else:
+        w, h = canvas.width(), canvas.height()
+        draw_new_strand(window, int(w * 0.5), int(h * 0.7), int(w * 0.8), int(h * 0.4))
+    assert not hasattr(canvas, "original_paintEvent")
+    assert canvas.active_strand_for_drawing is None
+    assert canvas.paintEvent.__func__ is type(canvas).paintEvent
+
+
+def test_ctrl_c_snapshot_names_the_stuck_state(window):
+    window.canvas.attach_mode.is_attaching = True
+    text = window.debug_state_snapshot()
+    for key in ("main.current_mode=", "canvas.current_mode=AttachMode", "attach.is_attaching=True",
+                "is_drawing_new_strand=False", "paintEvent_swapped=False", "layer_tab=strands",
+                "window.updatesEnabled=True", "strands=["):
+        assert key in text, (key, text)

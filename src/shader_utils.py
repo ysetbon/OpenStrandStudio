@@ -1,5 +1,5 @@
-from PyQt5.QtGui import QPainterPath, QPainterPathStroker, QPen, QBrush, QColor, QPainter, QTransform
-from PyQt5.QtCore import Qt, QRectF, QPointF
+from PyQt5.QtGui import QPainterPath, QPainterPathStroker, QPen, QBrush, QColor, QPainter, QTransform, QImage, QBitmap, QRegion
+from PyQt5.QtCore import Qt, QRectF, QPointF, QPoint
 from typing import List
 import math
 from functools import lru_cache
@@ -267,12 +267,14 @@ def draw_mask_lift_shadow(painter, mask_strand, shadow_color=None, num_steps=3, 
                                    max_blur_radius=max_blur_radius, collect_only=True)
     if not collected or collected['lift_path'].isEmpty():
         return
-    clip = _mask_lift_clip(mask_strand, max_blur_radius, _frame_cache(painter))
+    cache = _frame_cache(painter)
+    clip = _mask_lift_clip(mask_strand, max_blur_radius, cache)
     if clip.isEmpty():
         return
 
     _paint_collected_shadow(painter, collected, clip, num_steps, max_blur_radius,
-                            fill_path=collected['lift_path'])
+                            fill_path=collected['lift_path'],
+                            clip_out=_highlight_region(painter, mask_strand))
 
 
 def _mask_lift_clip(mask_strand, max_blur_radius, cache):
@@ -492,6 +494,134 @@ def clip_mask_piece(painter, mask_strand):
         painter.setClipPath(keep, Qt.IntersectClip)
 
 
+def note_painted_highlight(painter, strand, outline):
+    """Remember the selection outline *strand* just painted, for the masks
+    drawn later in this paint (clip_painted_highlights)."""
+    if painter is None or outline is None or outline.isEmpty():
+        return
+    _frame_cache(painter).setdefault('highlights', []).append((strand, QPainterPath(outline)))
+
+
+def _highlights_above(mask_strand, cache):
+    """The selection outlines painted earlier in this paint by strands above
+    both of the mask's strands.
+
+    Such a strand lies above the crossing the mask lifts, so its outline
+    stays on top like its body (see _covering_strands). The outline reaches
+    past the body, and the mask, drawn after every strand, would paint its
+    lift shadow, its piece and the shadows put back on it over that part.
+    As there, one that continues either strand at a joint is left covered:
+    the piece hides the joint, outline and all."""
+    painted = cache.get('highlights')
+    first = getattr(mask_strand, 'first_selected_strand', None)
+    second = getattr(mask_strand, 'second_selected_strand', None)
+    canvas = getattr(mask_strand, 'canvas', None)
+    if not painted or first is None or second is None or canvas is None:
+        return []
+    positions = _layer_positions(canvas, cache)
+    indexes = [positions.get(getattr(item, 'layer_name', None)) for item in (first, second)]
+    if None in indexes:
+        return []
+    above = max(indexes)
+    return [outline for strand, outline in painted
+            if positions.get(getattr(strand, 'layer_name', None), -1) > above
+            and not hasattr(strand, 'get_mask_path') and not _joined(strand, (first, second))]
+
+
+def _mask_reach(mask_strand, cache):
+    """Where the mask can paint: its piece, grown by its outline and the
+    blur of the shadows it paints there (its lift shadow lies along its
+    first strand's shadow on the second, near their crossing)."""
+    canvas = getattr(mask_strand, 'canvas', None)
+    margin = float(getattr(canvas, 'max_blur_radius', 29.99) or 29.99) + 8
+    return _piece_of(mask_strand, cache).boundingRect().adjusted(-margin, -margin, margin, margin)
+
+
+def _highlight_region(painter, mask_strand):
+    """The device pixels of _highlights_above within the mask's reach, as a
+    QRegion (empty when there are none); once per paint.
+
+    Found by painting the outlines, not with path operations: an outline is
+    a stroke of a stroke and overlaps itself, and QPainterPath's boolean
+    operations (and simplified()) drop whole sides of it. Painted at the
+    device's resolution (deviceTransform includes a high-DPI scale)."""
+    cache = _frame_cache(painter)
+    key = ('highlight_region', id(mask_strand))
+    if key in cache:
+        return cache[key]
+    region = QRegion()
+    outlines = _highlights_above(mask_strand, cache)
+    if outlines:
+        device = painter.deviceTransform()
+        bounds = QRectF()
+        for outline in outlines:
+            bounds = bounds.united(device.map(outline).boundingRect())
+        bounds = bounds.intersected(device.mapRect(_mask_reach(mask_strand, cache)))
+        rect = bounds.toAlignedRect().adjusted(-1, -1, 1, 1)
+        if not bounds.isEmpty() and rect.width() > 0 and rect.height() > 0:
+            image = QImage(rect.size(), QImage.Format_ARGB32_Premultiplied)
+            image.fill(0)
+            ink = QPainter(image)
+            ink.setRenderHint(QPainter.Antialiasing, True)
+            ink.translate(-rect.left(), -rect.top())
+            ink.setTransform(device, True)
+            ink.setPen(Qt.NoPen)
+            ink.setBrush(Qt.black)
+            for outline in outlines:
+                ink.drawPath(outline)
+            ink.end()
+            # Every pixel the outline touches, its antialiased edge included.
+            # The padded corner is never touched: if the bitmap reads the
+            # other way round, take the rest of the rectangle.
+            touched = QRegion(QBitmap.fromImage(image.createMaskFromColor(0, Qt.MaskInColor)))
+            if touched.contains(QPoint(0, 0)):
+                touched = QRegion(0, 0, rect.width(), rect.height()).subtracted(touched)
+            region = touched.translated(rect.topLeft())
+    cache[key] = region
+    return region
+
+
+def clip_out_region(painter, region):
+    """Intersect *painter*'s clip with everything but *region* (device
+    pixels)."""
+    if region.isEmpty():
+        return
+    transform = painter.transform()
+    painter.resetTransform()
+    cache = _frame_cache(painter)
+    key = ('clip_out', id(region))
+    if key not in cache:
+        everything = region.boundingRect().adjusted(-100000, -100000, 100000, 100000)
+        if painter.deviceTransform().isIdentity():
+            outside = QRegion(everything).subtracted(region)
+        else:
+            # A high-DPI scale is left: a path in the painter's coordinates.
+            # The region's rectangles do not overlap, so with the odd-even
+            # rule they cut themselves out of one big rectangle, exactly,
+            # with no boolean operation.
+            outside = QPainterPath()
+            outside.addRect(QRectF(everything))
+            for rect in region.rects():
+                outside.addRect(QRectF(rect))
+            outside = painter.deviceTransform().inverted()[0].map(outside)
+            outside.setFillRule(Qt.OddEvenFill)
+        cache[key] = outside
+    outside = cache[key]
+    if isinstance(outside, QRegion):
+        painter.setClipRegion(outside, Qt.IntersectClip)
+    else:
+        painter.setClipPath(outside, Qt.IntersectClip)
+    painter.setTransform(transform)
+
+
+def clip_painted_highlights(painter, mask_strand):
+    """Clip *painter* so the mask's piece leaves the selection outlines of
+    the strands above it (_highlights_above) uncovered. Call it inside a
+    save/restore before the mask paints. Its shadows replace the clip
+    (_paint_collected_shadow), so they take _highlight_region themselves."""
+    clip_out_region(painter, _highlight_region(painter, mask_strand))
+
+
 def draw_mask_restored_shadows(painter, mask_strand, shadow_color=None, num_steps=3, max_blur_radius=29.99):
     """Paint again, on top of the mask's piece, the shadows that land on its
     first strand there and were painted before the mask.
@@ -537,6 +667,7 @@ def draw_mask_restored_shadows(painter, mask_strand, shadow_color=None, num_step
     reach = area.adjusted(-max_blur_radius, -max_blur_radius, max_blur_radius, max_blur_radius)
     uncovered = {id(item) for item, _solid in _covering_strands(mask_strand, cache)}
     keep = _piece_keep(mask_strand, cache)
+    highlight_region = _highlight_region(painter, mask_strand)
 
     for item in canvas.strands:
         if item is mask_strand or item is first or item is second:
@@ -594,9 +725,10 @@ def draw_mask_restored_shadows(painter, mask_strand, shadow_color=None, num_step
             continue  # nothing of it reaches the piece
         # The piece lies on the first strand, so it is the clip itself, less
         # the strands it leaves uncovered (keep) and, for a mask with erased
-        # parts, only near that mask (zone).
+        # parts, only near that mask (zone), and off selection outlines above it.
         _paint_collected_shadow(painter, collected, piece, num_steps, max_blur_radius,
-                                fill_path=fill_path, and_clip=[c for c in (zone, keep) if c is not None])
+                                fill_path=fill_path, and_clip=[c for c in (zone, keep) if c is not None],
+                                clip_out=highlight_region)
 
 
 def draw_circle_shadow(painter, strand, shadow_color=None):
@@ -1351,11 +1483,12 @@ def _stroke_source_near(collected, rect, reach):
 
 
 def _paint_collected_shadow(painter, collected, clip, num_steps, max_blur_radius, fill_path=None,
-                            and_clip=None):
+                            and_clip=None, clip_out=None):
     """Paint a shadow computed with draw_strand_shadow(collect_only=True):
     the fill, then the same faded edge, clipped to *clip* (and to *and_clip*
     too when given, a path or a list of paths: the painter intersects them,
-    which is exact where a boolean operation on paths sharing edges is not)."""
+    which is exact where a boolean operation on paths sharing edges is not),
+    leaving out *clip_out* when given (a QRegion of device pixels)."""
     if and_clip is None:
         and_clip = []
     elif isinstance(and_clip, QPainterPath):
@@ -1369,6 +1502,9 @@ def _paint_collected_shadow(painter, collected, clip, num_steps, max_blur_radius
         painter.setClipPath(clip)
         for extra in and_clip:
             painter.setClipPath(extra, Qt.IntersectClip)
+        if clip_out is not None and painter.deviceTransform().mapRect(clip.boundingRect()).toAlignedRect().intersects(
+                clip_out.boundingRect()):
+            clip_out_region(painter, clip_out)
         painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
         if fill_path is not None and not fill_path.isEmpty():
             painter.setPen(Qt.NoPen)

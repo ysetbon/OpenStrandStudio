@@ -2479,6 +2479,9 @@ class Strand:
         painter.setPen(Qt.NoPen)
         painter.setBrush(self.highlight_color)
         painter.drawPath(combined_highlight)
+        # Masks drawn after this strand keep clear of it
+        from shader_utils import note_painted_highlight
+        note_painted_highlight(painter, self, combined_highlight)
 
     def draw(self, painter, skip_painter_setup=False):
         """Draw the strand, and the unfolded start caps of its attached

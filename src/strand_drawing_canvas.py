@@ -5091,6 +5091,9 @@ class StrandDrawingCanvas(QWidget):
             logging.getLogger(__name__).exception("New strand: switching to attach mode failed")
             self.set_mode("attach")
         self.update()
+        if main_window is not None and hasattr(main_window, 'release_stale_mouse_capture'):
+            # After the release has been fully handled
+            QTimer.singleShot(0, main_window.release_stale_mouse_capture)
 
     def set_mode(self, mode):
         """

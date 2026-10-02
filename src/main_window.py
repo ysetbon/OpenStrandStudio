@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
     QSplitter, QFileDialog, QScrollArea, QMessageBox
@@ -1700,6 +1701,35 @@ class MainWindow(QMainWindow):
             }
         """)
 
+    def _native_mouse_capture(self):
+        """(capturing HWND, this window's HWND) on Windows, else (None, None).
+
+        Windows keeps its own mouse capture besides Qt's grabMouse (which
+        QWidget.mouseGrabber reports): a window left holding it receives
+        every click, so the rest of the window seems frozen."""
+        if sys.platform != 'win32':
+            return None, None
+        try:
+            import ctypes
+            return int(ctypes.windll.user32.GetCapture() or 0), int(self.winId())
+        except Exception:
+            return None, None
+
+    def release_stale_mouse_capture(self):
+        """Give the mouse back to Windows when this window still holds it
+        with no button down - nothing is being dragged, so nothing should."""
+        capture, own = self._native_mouse_capture()
+        if not capture or capture != own or QApplication.mouseButtons() != Qt.NoButton:
+            return False
+        try:
+            import ctypes
+            ctypes.windll.user32.ReleaseCapture()
+            logging.getLogger(__name__).warning(
+                "Released a mouse capture left on the window after a new strand")
+            return True
+        except Exception:
+            return False
+
     def debug_state_snapshot(self):
         """One line with every mode / drag / suppression flag that can leave
         the canvas looking stuck. main.py writes it to crash.log on Ctrl+C."""
@@ -1768,7 +1798,11 @@ class MainWindow(QMainWindow):
             return f"{type(widget).__name__}({label})" if label else type(widget).__name__
 
         override = QApplication.overrideCursor()
+        capture, own = self._native_mouse_capture()
         state.update({
+            'win32.capture': (None if capture is None else
+                              'none' if not capture else
+                              'this window' if capture == own else f'other hwnd {capture}'),
             'window.enabled': self.isEnabled(),
             'window.active': self.isActiveWindow(),
             'window.minimized': self.isMinimized(),

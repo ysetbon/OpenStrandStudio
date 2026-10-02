@@ -15,6 +15,7 @@ if sys.stderr is None:
 import traceback
 import logging
 import faulthandler
+import signal
 from PyQt5.QtWidgets import QApplication, QDesktopWidget
 from PyQt5.QtCore import Qt, QTimer, QEvent, QObject
 from PyQt5.QtGui import QColor, QCursor, QGuiApplication, QIcon
@@ -997,6 +998,21 @@ if __name__ == '__main__':
             pass
 
     app.aboutToQuit.connect(_graceful_shutdown)
+
+    # Ctrl+C in the terminal (what you press when the app seems stuck) first
+    # writes the app's mode/drag/suppression state to crash.log and the
+    # terminal, then raises KeyboardInterrupt like Python's own handler.
+    def _snapshot_then_interrupt(signum, frame):
+        try:
+            logging.warning("Ctrl+C state: %s", window.debug_state_snapshot())
+        except Exception:
+            logging.exception("Ctrl+C state snapshot failed")
+        raise KeyboardInterrupt
+
+    try:
+        signal.signal(signal.SIGINT, _snapshot_then_interrupt)
+    except (ValueError, OSError):
+        pass  # not the main thread / no console
 
     exit_code = app.exec_()
 

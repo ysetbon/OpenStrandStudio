@@ -567,12 +567,38 @@ class AttachMode(QObject):
             self.last_snapped_pos = None
             self.last_update_rect = None  # Clear the last update rect
             self.accumulated_delta = QPointF(0, 0)
+            # The release ends the drag, whichever branch ran above: no
+            # attach left "in progress" (it would swallow the next press)
+            # and no drag-time paint handler left drawing a cached frame.
+            self.is_attaching = False
+            self.end_drag_painting()
         except RuntimeError:
             try:
                 self.move_timer.stop()
             except RuntimeError:
                 pass
             return
+
+    def end_drag_painting(self):
+        """Put the canvas's own paintEvent back and drop the drag caches.
+
+        partial_update swaps in a cached-background painter while a strand
+        is dragged; left in place it keeps repainting that old frame and the
+        canvas looks frozen."""
+        canvas = self.canvas
+        try:
+            if hasattr(canvas, 'original_paintEvent'):
+                canvas.paintEvent = canvas.original_paintEvent
+                delattr(canvas, 'original_paintEvent')
+            for name in ('active_strand_for_drawing', 'active_strand_update_rect'):
+                if hasattr(canvas, name):
+                    setattr(canvas, name, None)
+            for name in ('last_strand_rect', 'background_cache',
+                         'background_cache_valid', 'attachment_first_draw'):
+                if hasattr(canvas, name):
+                    delattr(canvas, name)
+        except RuntimeError:
+            pass
 
     def mousePressEvent(self, event):
         """Handle mouse press events."""
@@ -685,7 +711,15 @@ class AttachMode(QObject):
                 # Clear the new strand creation flag
                 self.canvas.is_drawing_new_strand = False
                 self.move_timer.start(16)
-            elif not self.is_attaching:
+            else:
+                if self.is_attaching and self.canvas.current_strand is None:
+                    # Left over from an attach that ended without a normal
+                    # release: no strand is being dragged, so this press
+                    # starts a new attach instead of being ignored.
+                    self.is_attaching = False
+                    self.end_drag_painting()
+                if self.is_attaching:
+                    return
                 # Handle attachment to existing strands
                 # The event position is already in canvas coordinates (converted by the canvas)
                 canvas_pos = event.pos() if hasattr(event.pos(), 'x') else event.pos()

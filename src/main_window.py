@@ -1700,6 +1700,63 @@ class MainWindow(QMainWindow):
             }
         """)
 
+    def debug_state_snapshot(self):
+        """One line with every mode / drag / suppression flag that can leave
+        the canvas looking stuck. main.py writes it to crash.log on Ctrl+C."""
+        from PyQt5.QtWidgets import QWidget
+
+        def name(obj):
+            if obj is None or isinstance(obj, str):
+                return obj
+            return getattr(obj, 'layer_name', None) or type(obj).__name__
+
+        def get(obj, attr):
+            try:
+                return getattr(obj, attr, None)
+            except RuntimeError:
+                return 'deleted'
+
+        canvas = getattr(self, 'canvas', None)
+        panel = getattr(self, 'layer_panel', None)
+        attach = get(canvas, 'attach_mode')
+        manager = get(panel, 'undo_redo_manager')
+        timer = get(attach, 'move_timer')
+        state = {
+            'main.current_mode': get(self, 'current_mode'),
+            'canvas.current_mode': name(get(canvas, 'current_mode')),
+            'is_drawing_new_strand': get(canvas, 'is_drawing_new_strand'),
+            'new_strand_start_point': get(canvas, 'new_strand_start_point') is not None,
+            'current_strand': name(get(canvas, 'current_strand')),
+            'attach.is_attaching': get(attach, 'is_attaching'),
+            'attach.move_timer_active': timer.isActive() if timer is not None else None,
+            'paintEvent_swapped': canvas is not None and hasattr(canvas, 'original_paintEvent'),
+            'active_strand_for_drawing': name(get(canvas, 'active_strand_for_drawing')),
+            'mask_mode_active': get(canvas, 'mask_mode_active'),
+            'mask_edit_mode': get(canvas, 'mask_edit_mode'),
+            'moving_group': get(canvas, 'moving_group'),
+            'pan_mode': get(canvas, 'pan_mode'),
+            'view_mode_panning': get(canvas, 'view_mode_panning'),
+            'right_button_panning': get(canvas, 'right_button_panning'),
+            'is_angle_adjusting': get(canvas, 'is_angle_adjusting'),
+            '_suppress_repaint': get(canvas, '_suppress_repaint'),
+            '_suppress_layer_panel_refresh': get(canvas, '_suppress_layer_panel_refresh'),
+            '_suppress_attachment_updates': get(canvas, '_suppress_attachment_updates'),
+            'window.updatesEnabled': self.updatesEnabled(),
+            'canvas.updatesEnabled': canvas.updatesEnabled() if canvas is not None else None,
+            'mouseGrabber': type(QWidget.mouseGrabber()).__name__ if QWidget.mouseGrabber() else None,
+            'activePopup': type(QApplication.activePopupWidget()).__name__ if QApplication.activePopupWidget() else None,
+            'activeModal': type(QApplication.activeModalWidget()).__name__ if QApplication.activeModalWidget() else None,
+            'layer_tab': get(panel, 'layer_tab'),
+            'lock_mode': get(panel, 'lock_mode'),
+            'mask_editing': get(panel, 'mask_editing'),
+            'multi_select_mode': get(panel, 'multi_select_mode'),
+            'undo._skip_save': get(manager, '_skip_save'),
+            'undo._attach_save_in_progress': get(manager, '_attach_save_in_progress'),
+            'selected': name(get(canvas, 'selected_strand')),
+            'strands': [name(s) for s in (get(canvas, 'strands') or [])],
+        }
+        return ", ".join(f"{k}={v}" for k, v in state.items())
+
     def update_button_states(self, active_mode):
         buttons = {
             "view": self.view_button,

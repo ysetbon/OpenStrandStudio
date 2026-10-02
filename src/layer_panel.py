@@ -3151,12 +3151,31 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self.layer_tab = tab
             self._drop_hidden_selection()
             self._cancel_pending_mask_selection()
-            main = self.parent_window
-            if (leaving_masks and main is not None
-                    and getattr(main, 'current_mode', None) == 'mask'
-                    and hasattr(main, 'set_attach_mode')):
-                main.set_attach_mode()
+            if leaving_masks:
+                self._end_mask_mode()
         self._apply_layer_tab_filter()
+
+    def _end_mask_mode(self):
+        """New Mask lives on the Masks tab: leaving that tab, however it
+        happens, ends mask mode and goes back to attach mode."""
+        main = self.parent_window
+        if main is None or not hasattr(main, 'set_attach_mode'):
+            return
+        canvas = getattr(self, 'canvas', None)
+        canvas_in_mask_mode = (
+            canvas is not None
+            and getattr(canvas, 'mask_mode', None) is not None
+            and getattr(canvas, 'current_mode', None) is canvas.mask_mode)
+        if getattr(main, 'current_mode', None) == 'mask' or canvas_in_mask_mode:
+            main.set_attach_mode()
+
+    def _end_mask_mode_off_masks_tab(self):
+        """Deferred _end_mask_mode, for a tab change made mid-refresh."""
+        try:
+            if self.layer_tab != 'masks':
+                self._end_mask_mode()
+        except RuntimeError:
+            pass  # panel already deleted
 
     def _drop_hidden_selection(self):
         """Deselect the layers the current tab hides (single and multi)."""
@@ -3214,8 +3233,15 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         if not hasattr(self, 'layer_tab_row'):
             return
         selected = self.get_selected_layer()
-        if selected is not None:
+        if selected is not None and self._layer_tab_of(selected) != self.layer_tab:
+            leaving_masks = self.layer_tab == 'masks'
             self.layer_tab = self._layer_tab_of(selected)
+            if leaving_masks:
+                # e.g. Undo during New Mask selects a strand: the Strands tab
+                # opens, so the half-made mask ends like on a switch click.
+                # The mode change waits for the rebuild this runs inside.
+                self._cancel_pending_mask_selection()
+                QTimer.singleShot(0, self._end_mask_mode_off_masks_tab)
         masks = self.layer_tab == 'masks'
         for i, button in enumerate(self.layer_buttons):
             try:

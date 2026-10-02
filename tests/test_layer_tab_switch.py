@@ -587,3 +587,50 @@ def test_a_failure_after_drawing_a_strand_is_logged(window, monkeypatch, caplog)
     assert messages, [r.getMessage() for r in caplog.records]
     assert "panel update failed on purpose" in (messages[0].exc_text or "")
     assert window.updatesEnabled()  # the finally block still re-enabled painting
+
+
+@pytest.mark.parametrize("picks", [0, 1])
+def test_undo_during_new_mask_ends_mask_mode(monkeypatch, picks):
+    """New Mask, pick no strand or one, then Undo: undo selects a strand, so
+    the Strands tab opens. Mask mode must end with it, not keep picking
+    strands for a mask behind the Strands tab; a new strand works after."""
+    from PyQt5.QtWidgets import QFileDialog
+    path = str(SRC_DIR / "samples" / "bridge.json")
+    monkeypatch.setattr(QFileDialog, "getOpenFileName",
+                        staticmethod(lambda *a, **k: (path, "JSON Files (*.json)")))
+    win = MainWindow()
+    try:
+        win.show()
+        win.resize(1600, 900)
+        pump(200)
+        win.load_project()
+        pump(300)
+        lp, canvas = win.layer_panel, win.canvas
+        w, h = canvas.width(), canvas.height()
+        draw_new_strand(win, int(w * 0.2), int(h * 0.2), int(w * 0.7), int(h * 0.6))
+        QTest.mouseClick(canvas, Qt.LeftButton, Qt.NoModifier, canvas_point_on(win, "2_1"))
+        pump(200)
+
+        QTest.mouseClick(lp.masks_tab_button, Qt.LeftButton)
+        QTest.mouseClick(lp.new_mask_button, Qt.LeftButton)
+        pump()
+        if picks:
+            QTest.mouseClick(canvas, Qt.LeftButton, Qt.NoModifier, canvas_point_on(win, "3_1"))
+            pump(200)
+        assert canvas.current_mode is canvas.mask_mode
+        lp.undo_redo_manager.undo()
+        pump(300)
+
+        assert lp.layer_tab == "strands"
+        assert win.current_mode == "attach" and canvas.current_mode is canvas.attach_mode
+        assert not canvas.mask_mode_active and canvas.mask_mode.selected_strands == []
+        assert not lp.new_mask_button.isChecked()
+        assert lp.notification_label.text() != translations[lp.language_code]["new_mask_hint"]
+
+        count = len(canvas.strands)
+        draw_new_strand(win, int(w * 0.3), int(h * 0.7), int(w * 0.8), int(h * 0.3))
+        assert len(canvas.strands) == count + 1
+        assert canvas.current_mode is canvas.attach_mode and lp.layer_tab == "strands"
+        assert_indices_match(win)
+    finally:
+        close_window(win)

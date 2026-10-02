@@ -1755,6 +1755,34 @@ class MainWindow(QMainWindow):
             'selected': name(get(canvas, 'selected_strand')),
             'strands': [name(s) for s in (get(canvas, 'strands') or [])],
         }
+        # What can freeze the whole window while its event loop still runs:
+        # a nested loop (layer drag, dialog, menu), a disabled or inactive
+        # window, or another window lying on top and taking the clicks.
+        from PyQt5.QtGui import QCursor
+        app = QApplication.instance()
+
+        def describe(widget):
+            if widget is None:
+                return None
+            label = widget.objectName() or widget.windowTitle() or ''
+            return f"{type(widget).__name__}({label})" if label else type(widget).__name__
+
+        override = QApplication.overrideCursor()
+        state.update({
+            'window.enabled': self.isEnabled(),
+            'window.active': self.isActiveWindow(),
+            'window.minimized': self.isMinimized(),
+            'canvas.enabled': canvas.isEnabled() if canvas is not None else None,
+            'mouseButtons': int(QApplication.mouseButtons()),
+            'widgetUnderCursor': describe(QApplication.widgetAt(QCursor.pos())),
+            'focusWidget': describe(QApplication.focusWidget()),
+            'overrideCursor': override.shape() if override is not None else None,
+            'layer_drag_active': bool(app.property("layer_drag_active")) if app else None,
+            'visibleTopLevels': [
+                f"{describe(w)}@{w.geometry().x()},{w.geometry().y()},"
+                f"{w.geometry().width()}x{w.geometry().height()}"
+                for w in QApplication.topLevelWidgets() if w.isVisible()],
+        })
         return ", ".join(f"{k}={v}" for k, v in state.items())
 
     def update_button_states(self, active_mode):

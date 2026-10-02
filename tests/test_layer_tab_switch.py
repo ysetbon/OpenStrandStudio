@@ -789,3 +789,41 @@ def test_ctrl_c_snapshot_names_the_stuck_state(window):
                 "is_drawing_new_strand=False", "paintEvent_swapped=False", "layer_tab=strands",
                 "window.updatesEnabled=True", "strands=["):
         assert key in text, (key, text)
+
+
+# --- A layer button never starts a drag from a press that is over ------------
+
+def test_a_layer_button_forgets_its_press_on_release(window, monkeypatch):
+    """The press position used to outlive the click, so a later left-button
+    move over the button began a QDrag - a drag runs its own event loop and
+    takes over the whole window until it ends."""
+    from PyQt5.QtGui import QDrag
+    started = []
+    monkeypatch.setattr(QDrag, "exec_", lambda self, *a: started.append(a) or Qt.IgnoreAction)
+    lp = window.layer_panel
+    button = next(b for b in lp.layer_buttons if b.isVisible())
+    QTest.mouseClick(button, Qt.LeftButton, Qt.NoModifier, QPoint(20, 10))
+    pump()
+    assert button._drag_start_position is None
+    QApplication.sendEvent(button, QMouseEvent(QEvent.MouseMove, QPointF(80, 12), Qt.LeftButton,
+                                               Qt.LeftButton, Qt.NoModifier))
+    assert started == []
+
+
+def test_a_stale_press_position_never_starts_a_drag(window, monkeypatch):
+    from PyQt5.QtGui import QDrag
+    started = []
+    monkeypatch.setattr(QDrag, "exec_", lambda self, *a: started.append(a) or Qt.IgnoreAction)
+    button = next(b for b in window.layer_panel.layer_buttons if b.isVisible())
+    button._drag_start_position = QPoint(20, 10)  # left over, no button held
+    QApplication.sendEvent(button, QMouseEvent(QEvent.MouseMove, QPointF(80, 12), Qt.LeftButton,
+                                               Qt.LeftButton, Qt.NoModifier))
+    assert started == [] and button._drag_start_position is None
+
+
+def test_ctrl_c_snapshot_shows_what_can_freeze_the_window(window):
+    text = window.debug_state_snapshot()
+    for key in ("window.enabled=True", "canvas.enabled=True", "mouseButtons=0",
+                "widgetUnderCursor=", "focusWidget=", "overrideCursor=None",
+                "layer_drag_active=False", "visibleTopLevels=['MainWindow(OpenStrand Studio)@"):
+        assert key in text, (key, text)

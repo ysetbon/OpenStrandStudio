@@ -3147,6 +3147,13 @@ class NumberedLayerButton(QPushButton):
             self._drag_start_position = event.pos()
         super().mousePressEvent(event) # Call base class implementation
 
+    def mouseReleaseEvent(self, event):
+        """The press is over: forget where it started, so a later move can
+        never begin a drag from it."""
+        if event.button() == Qt.LeftButton:
+            self._drag_start_position = None
+        super().mouseReleaseEvent(event)
+
     def mouseMoveEvent(self, event):
         """Track padlock hover and initiate drag if the mouse moves significantly."""
         hovering = self.selectable and self.lock_button_rect().contains(event.pos())
@@ -3161,6 +3168,11 @@ class NumberedLayerButton(QPushButton):
         if not (event.buttons() & Qt.LeftButton):
             return
         if not self._drag_start_position:
+            return
+        if not (QApplication.mouseButtons() & Qt.LeftButton):
+            # The press this position came from is over: never start a
+            # drag from a stale one (a drag takes over the whole window).
+            self._drag_start_position = None
             return
         if (event.pos() - self._drag_start_position).manhattanLength() < QApplication.startDragDistance():
             # Not enough movement to start drag
@@ -3193,8 +3205,14 @@ class NumberedLayerButton(QPushButton):
         drag.setPixmap(pixmap)
         drag.setHotSpot(event.pos() - self.rect().topLeft()) # Center pixmap on cursor
 
-        # Start the drag operation
-        drop_action = drag.exec_(Qt.MoveAction) # We want to move the layer
+        # Start the drag operation. It runs its own event loop until the drop;
+        # the flag shows up in the Ctrl+C state line (main.py).
+        self._drag_start_position = None
+        QApplication.instance().setProperty("layer_drag_active", True)
+        try:
+            drop_action = drag.exec_(Qt.MoveAction) # We want to move the layer
+        finally:
+            QApplication.instance().setProperty("layer_drag_active", False)
 
         # Reset drag start position after drag finishes
         self._drag_start_position = None

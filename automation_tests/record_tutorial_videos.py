@@ -1344,13 +1344,13 @@ def scenario_settings(window, app, rec, mouse, test_only=False):
     # The language shown is any language but the recording's own, so the
     # whole interface visibly changes (French, or English for the French cut).
     other = "fr" if LANG != "fr" else "en"
-    rec.caption(cap("s5"), low=True)
+    rec.caption(cap("s5"))
     _combo_select(window, mouse, rec, dlg.language_combobox, other)
     mouse.click_widget(dlg.language_ok_button)
     _hold(2400)
 
     # Step 6: switch back to English the same way
-    rec.caption(cap("s6"), low=True)
+    rec.caption(cap("s6"))
     dlg = _open_settings(window, mouse, rec, lift=LANGUAGE_STEP_LIFT)
     _combo_select(window, mouse, rec, dlg.language_combobox, LANG)
     mouse.click_widget(dlg.language_ok_button)

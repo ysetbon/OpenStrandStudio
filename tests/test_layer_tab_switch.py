@@ -634,3 +634,92 @@ def test_undo_during_new_mask_ends_mask_mode(monkeypatch, picks):
         assert_indices_match(win)
     finally:
         close_window(win)
+
+
+# --- A released new strand always finishes, in attach mode -------------------
+
+def drag_on_canvas(win, x0, y0, x1, y1):
+    canvas = win.canvas
+    QTest.mousePress(canvas, Qt.LeftButton, Qt.NoModifier, QPoint(x0, y0))
+    for i in range(1, 7):
+        p = QPointF(x0 + (x1 - x0) * i / 6, y0 + (y1 - y0) * i / 6)
+        QApplication.sendEvent(canvas, QMouseEvent(QEvent.MouseMove, p, Qt.LeftButton,
+                                                   Qt.LeftButton, Qt.NoModifier))
+        pump(15)
+    QTest.mouseRelease(canvas, Qt.LeftButton, Qt.NoModifier, QPoint(x1, y1))
+    pump(200)
+
+
+def assert_finished_in_attach_mode(win, count_before):
+    canvas, lp = win.canvas, win.layer_panel
+    assert len(canvas.strands) == count_before + 1
+    assert not canvas.is_drawing_new_strand
+    assert canvas.current_mode is canvas.attach_mode and win.current_mode == "attach"
+    assert win.attach_button.isChecked()
+    assert not any(b.isChecked() for b in (win.move_button, win.view_button, win.rotate_button,
+                                           win.select_strand_button, win.angle_adjust_button))
+    assert not canvas.mask_mode_active and not lp.new_mask_button.isChecked()
+    assert lp.layer_tab == "strands"
+    assert win.updatesEnabled() and not canvas._suppress_repaint
+    assert_indices_match(win)
+
+
+def start_mask_mode(win):
+    win.layer_panel.set_layer_tab("masks")
+    win.layer_panel.new_mask_button.click()
+
+
+@pytest.mark.parametrize("enter_mode", [
+    lambda w: w.set_attach_mode(),
+    lambda w: w.set_move_mode(),
+    lambda w: w.set_view_mode(),
+    lambda w: w.set_select_mode(),
+    lambda w: w.set_rotate_mode(),
+    start_mask_mode,
+], ids=["attach", "move", "view", "select", "rotate", "mask"])
+def test_a_new_strand_always_ends_in_attach_mode(window, enter_mode):
+    """Whatever mode was on before New Strand (N works from any tab, even
+    with New Mask on), releasing the strand finishes it in attach mode."""
+    enter_mode(window)
+    pump()
+    count = len(window.canvas.strands)
+    window.layer_panel.add_new_strand_button.click()  # what the N key does
+    pump(80)
+    w, h = window.canvas.width(), window.canvas.height()
+    drag_on_canvas(window, int(w * 0.2), int(h * 0.2), int(w * 0.7), int(h * 0.6))
+    assert_finished_in_attach_mode(window, count)
+
+
+@pytest.mark.parametrize("stale", ["moving_group", "mode_object", "rotate"])
+def test_a_stale_state_never_swallows_the_new_strand(window, stale):
+    """A leftover group-move flag or a mode set behind New Strand's back used
+    to take the press or the release, so the strand never finished."""
+    canvas = window.canvas
+    count = len(canvas.strands)
+    window.layer_panel.add_new_strand_button.click()
+    pump(80)
+    if stale == "moving_group":
+        canvas.moving_group = True
+    elif stale == "mode_object":
+        canvas.current_mode = canvas.move_mode  # e.g. select_strand mid-creation
+    else:
+        canvas.current_mode = "rotate"
+    w, h = canvas.width(), canvas.height()
+    drag_on_canvas(window, int(w * 0.25), int(h * 0.3), int(w * 0.75), int(h * 0.55))
+    assert_finished_in_attach_mode(window, count)
+    assert not canvas.moving_group
+
+
+def test_a_failure_while_finishing_still_ends_in_attach_mode(window, monkeypatch):
+    def broken(*a, **k):
+        raise RuntimeError("panel update failed on purpose")
+
+    window.set_move_mode()
+    pump()
+    monkeypatch.setattr(window.layer_panel, "on_strand_created", broken)
+    w, h = window.canvas.width(), window.canvas.height()
+    draw_new_strand(window, int(w * 0.2), int(h * 0.2), int(w * 0.7), int(h * 0.6))
+    canvas = window.canvas
+    assert not canvas.is_drawing_new_strand
+    assert canvas.current_mode is canvas.attach_mode and window.current_mode == "attach"
+    assert window.updatesEnabled() and not canvas._suppress_repaint

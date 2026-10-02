@@ -5,7 +5,8 @@ performs scripted interactions (drawing strands, attaching, masking, closing a
 knot), and records every frame with a visible animated mouse cursor + numbered
 step captions, then encodes the frames to mp4/mov with ffmpeg.
 
-Usage:
+Usage (add --lang xx for fr, de, it, es, pt, he, ru, fi, sv, ja, zh; the
+whole app and the captions then run in that language, default en):
     python automation_tests\record_tutorial_videos.py --scenario settings
     python automation_tests\record_tutorial_videos.py --scenario buttons
     python automation_tests\record_tutorial_videos.py --scenario mask
@@ -26,7 +27,9 @@ under that family name) at the capture machine's 150 % DPI, and Qt's Fusion
 style stands in for windowsvista. See _prepare_reference_look().
 
 Scenario -> tutorial mapping: settings=1, buttons=2, mask=3, knot=4.
-Output goes to automation_tests\recordings\<scenario>\ (frames + .mp4).
+Output goes to automation_tests\recordings\<lang>\<scenario>\ (frames + .mp4)
+and a finished run is published to src/mp4/<lang>/ and src/mov/<lang>/.
+record_all_tutorials.sh records every language and scenario.
 """
 import os
 import sys
@@ -53,8 +56,21 @@ for p in (SRC_DIR, os.path.dirname(os.path.abspath(__file__))):
 # Sandbox APPDATA: recordings start from clean default settings (English,
 # default theme), and the settings tutorial's OK button cannot overwrite the
 # user's real OpenStrandStudio settings.
+def _arg_lang():
+    """--lang value, read before argparse because the sandbox below is
+    created at import time (one sandbox per language lets several recorders
+    run side by side)."""
+    for i, a in enumerate(sys.argv):
+        if a == "--lang" and i + 1 < len(sys.argv):
+            return sys.argv[i + 1]
+        if a.startswith("--lang="):
+            return a.split("=", 1)[1]
+    return "en"
+
+
+LANG = _arg_lang()
 _APPDATA_SANDBOX = os.path.join(ROOT_DIR, "automation_tests", "recordings",
-                                "clean_profile")
+                                "clean_profile_" + LANG)
 shutil.rmtree(_APPDATA_SANDBOX, ignore_errors=True)
 os.makedirs(_APPDATA_SANDBOX, exist_ok=True)
 os.environ["APPDATA"] = _APPDATA_SANDBOX
@@ -87,6 +103,28 @@ def _install_clean_profile():
 from test_menu_strand_flow import _bootstrap_real_app, _strand_by_name
 
 OUT_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "recordings")
+
+from tutorial_captions import CAPTIONS, LANGUAGES
+
+
+def cap(key):
+    """Caption ``key`` in the recording language, with the control names
+    filled in from the app's own translations (so a caption names a button
+    exactly as the viewer sees it)."""
+    from translations import translations
+    ui = translations[LANG]
+    names = {
+        "new_strand": ui["add_new_strand"],
+        "attach": ui["attach_mode"],
+        "new_mask": ui["new_mask"],
+        "masks": ui["layer_tab_masks"],
+        "strands": ui["layer_tab_strands"],
+        "close_knot": ui["close_the_knot"],
+        "dark": ui["dark"],
+        "ok": ui["ok"],
+        "change_language": ui["change_language"],
+    }
+    return CAPTIONS[LANG][key].format(**names)
 
 IS_WINDOWS = sys.platform == "win32"
 # Real Windows 11 caption strips (active/inactive maximized main window and
@@ -126,15 +164,6 @@ def _ensure_main_title_h(window):
               flush=True)
     return MAIN_TITLE_H
 PLAYBACK_SPEED = 1.25
-# Durations of the four shipped tutorials immediately before the requested
-# speed-up. Full renders target exactly 80% of these durations, independent of
-# capture-machine performance; short --test clips still use captured time.
-BASELINE_DURATION_S = {
-    "settings": 41.393741,
-    "buttons": 28.649706,
-    "mask": 49.193405,
-    "knot": 39.443388,
-}
 
 _native_titlebar_cache = {}
 
@@ -727,7 +756,12 @@ class Recorder:
             point_size -= 1
         painter.setFont(font)
         box_w = min(text_w + 2 * pad_x, span_r - span_l)
-        box_h = fm.height() + 2 * pad_y
+        # A long caption (some languages run much longer than English) wraps
+        # onto a second line instead of running out of the box.
+        text_rect = fm.boundingRect(0, 0, int(box_w - 2 * pad_x), 10000,
+                                    Qt.AlignCenter | Qt.TextWordWrap,
+                                    self.caption_text)
+        box_h = text_rect.height() + 2 * pad_y
         x = (w - box_w) / 2
         x = max(span_l, min(x, span_r - box_w))
         y = h - box_h - 36
@@ -745,7 +779,8 @@ class Recorder:
         painter.setBrush(QBrush(QColor(20, 20, 25, 215)))
         painter.drawRoundedRect(rect, 14, 14)
         painter.setPen(QPen(QColor(255, 255, 255)))
-        painter.drawText(rect, Qt.AlignCenter, self.caption_text)
+        painter.drawText(rect, Qt.AlignCenter | Qt.TextWordWrap,
+                         self.caption_text)
 
 
 # ---------------------------------------------------------------------------
@@ -1248,16 +1283,16 @@ def _open_settings(window, mouse, rec):
 
 
 def scenario_settings(window, app, rec, mouse, test_only=False):
-    rec.caption("Tutorial: themes and language")
+    rec.caption(cap("s_title"))
     _hold(2200)
 
     # Step 1: open the settings dialog with the gear button
-    rec.caption("1. Click the Settings (gear) button")
+    rec.caption(cap("s1"))
     dlg = _open_settings(window, mouse, rec)
     _hold(400)
 
     # Step 2: pick the dark theme
-    rec.caption("2. Open the theme dropdown and pick 'Dark'")
+    rec.caption(cap("s2"))
     _combo_select(window, mouse, rec, dlg.theme_combobox, "dark")
     _hold(400)
 
@@ -1267,12 +1302,12 @@ def scenario_settings(window, app, rec, mouse, test_only=False):
         return
 
     # Step 3: apply — OK closes the dialog and the whole app switches theme
-    rec.caption("3. Click OK - the whole app switches theme")
+    rec.caption(cap("s3"))
     mouse.click_widget(dlg.apply_button)
     _hold(2000)
 
     # Step 4: reopen settings, go to the language category (row 3)
-    rec.caption("4. Open Settings again and pick 'Change Language'")
+    rec.caption(cap("s4"))
     dlg = _open_settings(window, mouse, rec)
     _click_list_row(window, mouse, rec, dlg.categories_list, 3)
     _hold(800)
@@ -1280,21 +1315,22 @@ def scenario_settings(window, app, rec, mouse, test_only=False):
     # Step 5: switch to French and apply
     # The twelve-language dropdown reaches into the bottom caption area, so
     # steps 5 and 6 show their caption between the toolbar and the dialog.
-    rec.caption("5. Pick a language, then OK - the interface updates",
-                top=True)
-    _combo_select(window, mouse, rec, dlg.language_combobox, "fr")
+    # The language shown is any language but the recording's own, so the
+    # whole interface visibly changes (French, or English for the French cut).
+    other = "fr" if LANG != "fr" else "en"
+    rec.caption(cap("s5"), top=True)
+    _combo_select(window, mouse, rec, dlg.language_combobox, other)
     mouse.click_widget(dlg.language_ok_button)
     _hold(2400)
 
     # Step 6: switch back to English the same way
-    rec.caption("6. Switch back anytime - settings are saved automatically",
-                top=True)
+    rec.caption(cap("s6"), top=True)
     dlg = _open_settings(window, mouse, rec)
-    _combo_select(window, mouse, rec, dlg.language_combobox, "en")
+    _combo_select(window, mouse, rec, dlg.language_combobox, LANG)
     mouse.click_widget(dlg.language_ok_button)
     _hold(1600)
 
-    rec.caption("That's it - make OpenStrand Studio yours!")
+    rec.caption(cap("s_end"))
     _hold(2200)
 
 
@@ -1305,13 +1341,13 @@ def scenario_settings(window, app, rec, mouse, test_only=False):
 def scenario_buttons(window, app, rec, mouse, test_only=False):
     panel = window.layer_panel
 
-    rec.caption("Tutorial: what do the layer panel buttons do?")
+    rec.caption(cap("b_title"))
     _hold(2200)
 
-    rec.caption("1. Hold right-click on any button to see its description")
+    rec.caption(cap("b1"))
     _right_click_hold(mouse, rec, panel.reset_states_button, hold_ms=2400)
 
-    rec.caption("2. Release to hide it - try the zoom buttons too")
+    rec.caption(cap("b2"))
     _right_click_hold(mouse, rec, panel.zoom_in_button, hold_ms=2200)
 
     if test_only:
@@ -1321,16 +1357,16 @@ def scenario_buttons(window, app, rec, mouse, test_only=False):
 
     _right_click_hold(mouse, rec, panel.zoom_out_button, hold_ms=2000)
 
-    rec.caption("3. The hand button pans the canvas view")
+    rec.caption(cap("b3"))
     _right_click_hold(mouse, rec, panel.pan_button, hold_ms=2200)
 
-    rec.caption("4. Refresh redraws all the layers")
+    rec.caption(cap("b4"))
     _right_click_hold(mouse, rec, panel.refresh_button, hold_ms=2200)
 
-    rec.caption("5. The target button centers your strands")
+    rec.caption(cap("b5"))
     _right_click_hold(mouse, rec, panel.center_strands_button, hold_ms=2200)
 
-    rec.caption("Right-click any button you are unsure about - done!")
+    rec.caption(cap("b_end"))
     _hold(2400)
 
 
@@ -1340,20 +1376,20 @@ def scenario_buttons(window, app, rec, mouse, test_only=False):
 
 def scenario_mask(window, app, rec, mouse, test_only=False):
     canvas = window.canvas
+    panel = window.layer_panel
 
-    rec.caption("Tutorial: crossing strands with a mask")
+    rec.caption(cap("m_title"))
     _hold(2200)
 
     # Step 1: strand 1_1
-    _draw_first_strand(window, mouse, rec, (520, 300), (980, 300),
-                       "1. Click 'New Strand', then drag on the canvas to draw strand 1_1")
+    _draw_first_strand(window, mouse, rec, (520, 300), (980, 300), cap("m1"))
     s11 = _strand_by_name(canvas, "1_1")
     assert s11 is not None, "1_1 missing"
 
     # Step 2: attach 1_2 to the end of 1_1
     end11 = (int(s11.end.x()), int(s11.end.y()))
     _attach_strand(window, mouse, rec, end11, (end11[0], end11[1] + 300),
-                   "2. Click 'Attach', then drag from the end of 1_1 to add strand 1_2")
+                   cap("m2"))
     assert _strand_by_name(canvas, "1_2") is not None, "1_2 missing"
 
     if test_only:
@@ -1361,40 +1397,56 @@ def scenario_mask(window, app, rec, mouse, test_only=False):
         _hold(1500)
         return
 
-    # Step 3: new set — strand 2_1 (below 1_1, pointing up toward it)
-    _draw_first_strand(window, mouse, rec, (620, 640), (700, 480),
-                       "3. Click 'New Strand' again to start set 2 - draw strand 2_1")
+    # Step 3: new set - strand 2_1 (below 1_1, pointing up toward it)
+    _draw_first_strand(window, mouse, rec, (620, 640), (700, 480), cap("m3"))
     s21 = _strand_by_name(canvas, "2_1")
     assert s21 is not None, "2_1 missing"
 
     # Step 4: attach 2_2 so it crosses over 1_1
     end21 = (int(s21.end.x()), int(s21.end.y()))
     _attach_strand(window, mouse, rec, end21, (end21[0] + 60, 140),
-                   "4. Click 'Attach' and add strand 2_2 - it crosses over strand 1_1")
+                   cap("m4"))
     s22 = _strand_by_name(canvas, "2_2")
     assert s22 is not None, "2_2 missing"
     _hold(800)
 
-    # Step 5+6: mask mode — click 1_1 (over) then 2_2 (under)
-    rec.caption("5. Click 'Mask', then click strand 1_1 - it will stay on top")
-    mouse.click_widget(window.mask_button)
-    _hold(500)
-    mouse.canvas_click(canvas, *_point_along(_strand_by_name(canvas, "1_1"), 0.25))
+    # Step 5: since 1.112 the Mask button is gone from the toolbar. Masks
+    # live on their own tab of the layer list, with their own New Mask button.
+    rec.caption(cap("m5"))
+    mouse.click_widget(panel.masks_tab_button)
     _hold(700)
+    assert panel.layer_tab == "masks", "Masks tab did not open"
+    mouse.click_widget(panel.new_mask_button)
+    _hold(600)
 
-    rec.caption("6. Now click strand 2_2 - it goes under strand 1_1")
+    # Step 6+7: click 1_1 (stays on top), then 2_2 (goes under)
+    rec.caption(cap("m6"))
+    mouse.canvas_click(canvas, *_point_along(_strand_by_name(canvas, "1_1"), 0.25))
+    _hold(900)
+
+    rec.caption(cap("m7"))
     mouse.canvas_click(canvas, *_point_along(_strand_by_name(canvas, "2_2"), 0.75))
     _hold(1000)
 
     masked = _strand_by_name(canvas, "1_1_2_2")
     assert masked is not None, "mask 1_1_2_2 missing"
 
-    # Step 7: show the new mask layer in the panel
-    rec.caption("7. A mask layer '1_1_2_2' appears in the layer panel - done!")
+    # Step 8: the new mask layer sits in the Masks list
+    rec.caption(cap("m8"))
     btn = _layer_button(window, "1_1_2_2")
-    if btn is not None:
-        mouse.glide_to_widget(btn, dur_ms=900)
-    _hold(2600)
+    assert btn is not None and not btn.isHidden(), "mask layer button hidden"
+    mouse.glide_to_widget(btn, dur_ms=900)
+    _hold(2200)
+
+    # Step 9: switch between the two tabs to show each list
+    rec.caption(cap("m9"))
+    mouse.click_widget(panel.strands_tab_button)
+    _hold(1600)
+    mouse.click_widget(panel.masks_tab_button)
+    _hold(1800)
+
+    rec.caption(cap("m_end"))
+    _hold(2200)
 
 
 # ---------------------------------------------------------------------------
@@ -1406,19 +1458,19 @@ def scenario_knot(window, app, rec, mouse, test_only=False):
     from PyQt5.QtTest import QTest
     canvas = window.canvas
 
-    rec.caption("Tutorial: closing a knot")
+    rec.caption(cap("k_title"))
     _hold(2200)
 
     # Step 1: strand 1_1
     _draw_first_strand(window, mouse, rec, (620, 300), (980, 300),
-                       "1. Click 'New Strand' and drag to draw strand 1_1")
+                       cap("k1"))
     s11 = _strand_by_name(canvas, "1_1")
     assert s11 is not None, "1_1 missing"
 
     # Step 2: attach 1_2 from the end, angling down-left
     end11 = (int(s11.end.x()), int(s11.end.y()))
     _attach_strand(window, mouse, rec, end11, (end11[0] - 80, end11[1] + 320),
-                   "2. Click 'Attach' and add strand 1_2 from one end of 1_1")
+                   cap("k2"))
     s12 = _strand_by_name(canvas, "1_2")
     assert s12 is not None, "1_2 missing"
 
@@ -1432,14 +1484,14 @@ def scenario_knot(window, app, rec, mouse, test_only=False):
     start11 = (int(s11.start.x()), int(s11.start.y()))
     _attach_strand(window, mouse, rec, start11,
                    (start11[0] + 80, start11[1] + 320),
-                   "3. Attach strand 1_3 from the other end of 1_1",
+                   cap("k3"),
                    click_attach=False)
     s13 = _strand_by_name(canvas, "1_3")
     assert s13 is not None, "1_3 missing"
     _hold(800)
 
     # Step 4: right-click layer 1_2 -> "Close the Knot"
-    rec.caption("4. Right-click layer '1_2' and choose 'Close the Knot'")
+    rec.caption(cap("k4"))
     btn = _layer_button(window, "1_2")
     assert btn is not None, "layer button 1_2 missing"
     mouse.glide_to_widget(btn, dur_ms=900)
@@ -1465,9 +1517,11 @@ def scenario_knot(window, app, rec, mouse, test_only=False):
                     return w.text()
             return act.text()
 
+        from translations import translations
+        knot_text = translations[LANG]["close_the_knot"].lower()
         target = None
         for act in menu.actions():
-            if "knot" in _act_text(act).lower():
+            if knot_text in _act_text(act).lower():
                 target = act
                 break
         if target is None:
@@ -1502,7 +1556,7 @@ def scenario_knot(window, app, rec, mouse, test_only=False):
         bool(getattr(s12, "closed_connections", [False, False])[1])
     assert knot_ok, "knot did not close"
 
-    rec.caption("5. The free ends snap together - you made a closed knot!")
+    rec.caption(cap("k5"))
     s12 = _strand_by_name(canvas, "1_2")
     mouse.glide_to_widget(canvas, pos=(int(s12.end.x()), int(s12.end.y())),
                           dur_ms=900)
@@ -1514,13 +1568,13 @@ def scenario_knot(window, app, rec, mouse, test_only=False):
 # ---------------------------------------------------------------------------
 
 def encode(frames_dir, n_frames, elapsed_s, out_base, scenario=None):
-    """Encode H.264 MP4/MOV at the requested tutorial playback speed."""
+    """Encode H.264 MP4/MOV at the requested tutorial playback speed.
+
+    The recording runs in real time (every hold and glide is a wall-clock
+    wait), so the clip lasts elapsed / PLAYBACK_SPEED whatever frame rate the
+    capture machine managed."""
     real_fps = max(5.0, n_frames / max(elapsed_s, 0.001))
-    if scenario in BASELINE_DURATION_S:
-        target_duration = BASELINE_DURATION_S[scenario] / PLAYBACK_SPEED
-        fps = n_frames / target_duration
-    else:
-        fps = real_fps * PLAYBACK_SPEED
+    fps = real_fps * PLAYBACK_SPEED
     for ext in (".mp4", ".mov"):
         out = out_base + ext
         cmd = ["ffmpeg", "-y", "-framerate", f"{fps:.3f}",
@@ -1546,11 +1600,13 @@ TUTORIAL_NUMBERS = {"settings": 1, "buttons": 2, "mask": 3, "knot": 4}
 
 
 def _publish_tutorial(out_base, scenario):
-    """Copy a completed recording into the app's shipped media folders."""
+    """Copy a completed recording into the app's shipped media folders:
+    src/mp4/<lang>/tutorial_N.mp4 (Windows) and src/mov/<lang>/tutorial_N.mov
+    (macOS). The Settings > Tutorial page plays the one for its language."""
     number = TUTORIAL_NUMBERS[scenario]
     for ext in ("mp4", "mov"):
         source = out_base + "." + ext
-        target_dir = os.path.join(SRC_DIR, ext)
+        target_dir = os.path.join(SRC_DIR, ext, LANG)
         os.makedirs(target_dir, exist_ok=True)
         target = os.path.join(target_dir, f"tutorial_{number}.{ext}")
         shutil.copy2(source, target)
@@ -1563,6 +1619,13 @@ def _launch(headless):
     1920x1080 window. With headless=True nothing appears on the desktop."""
     faulthandler.enable(all_threads=True)
     _install_clean_profile()
+    # A real user has the chosen language saved; the Settings dialog is built
+    # from that file when the main window starts, so it must exist before.
+    settings_dir = os.path.join(_APPDATA_SANDBOX, "OpenStrandStudio")
+    os.makedirs(settings_dir, exist_ok=True)
+    with open(os.path.join(settings_dir, "user_settings.txt"), "w",
+              encoding="utf-8") as f:
+        f.write(f"Theme: default\nLanguage: {LANG}\n")
     if not IS_WINDOWS:
         _prepare_reference_look()
     app, window = _bootstrap_real_app()
@@ -1570,7 +1633,7 @@ def _launch(headless):
         _install_headless_filter(app)
 
     # Canonical look for tutorials regardless of the user's saved settings
-    window.set_language("en")
+    window.set_language(LANG)
     window.apply_theme("default")
 
     # showEvent's first-show hook re-applies the full screen geometry and
@@ -1986,6 +2049,8 @@ def _compare_verify_runs():
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--scenario", choices=sorted(SCENARIOS))
+    parser.add_argument("--lang", choices=LANGUAGES, default="en",
+                        help="interface and caption language of the clip")
     parser.add_argument("--test", action="store_true",
                         help="record only the first two steps (style check)")
     parser.add_argument("--verify", action="store_true",
@@ -2009,7 +2074,8 @@ def main():
 
     app, window = _launch(headless=True)
 
-    out_dir = os.path.join(OUT_ROOT, args.scenario + ("_test" if args.test else ""))
+    out_dir = os.path.join(OUT_ROOT, LANG,
+                           args.scenario + ("_test" if args.test else ""))
     os.makedirs(out_dir, exist_ok=True)
     rec = Recorder(window, out_dir)
     mouse = Mouse(rec, window)

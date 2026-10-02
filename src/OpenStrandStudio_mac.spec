@@ -7,7 +7,7 @@ a = Analysis(
     datas=[
         ('box_stitch.icns', '.'), 
         ('settings_icon.png', '.'),
-        ('mov/*.mov', 'mov/'),  # Include .mov tutorial videos for Mac compatibility
+        ('mov', 'mov'),  # Include .mov tutorial videos for Mac compatibility
         ('flags/*.png', 'flags/'),  # Include flag images
         ('layer_panel_icons/*.png', 'layer_panel_icons/'),  # Include layer-panel button icons
         ('samples/*.json', 'samples/'),  # Include sample JSON files

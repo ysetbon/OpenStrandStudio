@@ -569,3 +569,21 @@ def test_one_undo_removes_a_new_mask(monkeypatch):
         assert_indices_match(win)
     finally:
         close_window(win)
+
+
+def test_a_failure_after_drawing_a_strand_is_logged(window, monkeypatch, caplog):
+    """The canvas finishes a new strand inside a try that used to swallow any
+    error silently; it is now logged (console and crash.log)."""
+    import logging
+
+    def broken(*a, **k):
+        raise RuntimeError("panel update failed on purpose")
+
+    monkeypatch.setattr(window.layer_panel, "on_strand_created", broken)
+    w, h = window.canvas.width(), window.canvas.height()
+    with caplog.at_level(logging.ERROR):
+        draw_new_strand(window, int(w * 0.2), int(h * 0.2), int(w * 0.7), int(h * 0.6))
+    messages = [r for r in caplog.records if "mouse release" in r.getMessage()]
+    assert messages, [r.getMessage() for r in caplog.records]
+    assert "panel update failed on purpose" in (messages[0].exc_text or "")
+    assert window.updatesEnabled()  # the finally block still re-enabled painting

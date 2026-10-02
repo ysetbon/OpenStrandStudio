@@ -629,7 +629,7 @@ class Recorder:
         self.cursor = QPoint(window.width() // 2, window.height() // 2)
         self.click_frames_left = 0
         self.caption_text = ""
-        self.caption_top = False
+        self.caption_avoid_left = None
         self.t0 = None
         self.elapsed = 0.0
         self.timer = QTimer()
@@ -657,12 +657,14 @@ class Recorder:
         """Show a click ripple around the cursor for ~0.4s."""
         self.click_frames_left = int(self.fps * 0.4)
 
-    def caption(self, text, top=False):
-        """Set the step caption. ``top=True`` places it just below the toolbar
-        instead of at the bottom, for steps whose popup (the twelve-language
-        dropdown) reaches into the bottom caption area."""
+    def caption(self, text, avoid_left=None):
+        """Set the step caption (always at the bottom of the picture).
+
+        ``avoid_left`` is a window x: the caption stays to the right of it.
+        The steps that open the twelve-language dropdown use it to keep the
+        caption clear of the list, which reaches down into the caption row."""
         self.caption_text = text
-        self.caption_top = top
+        self.caption_avoid_left = avoid_left
 
     # -- frame capture -------------------------------------------------------
     def _capture(self):
@@ -745,6 +747,8 @@ class Recorder:
             left = canvas.mapToGlobal(QPoint(0, 0)).x() - origin.x()
             span_l = left + 20
             span_r = left + canvas.width() - 20
+        if self.caption_avoid_left is not None:
+            span_l = max(span_l, self.caption_avoid_left)
         pad_x, pad_y = 34, 16
         point_size = 22
         while True:
@@ -765,14 +769,6 @@ class Recorder:
         x = (w - box_w) / 2
         x = max(span_l, min(x, span_r - box_w))
         y = h - box_h - 36
-        if self.caption_top:
-            toolbar = getattr(self.window, "toolbar_container", None)
-            if toolbar is not None and toolbar.isVisible():
-                origin = self.window.mapToGlobal(QPoint(0, 0))
-                y = toolbar.mapToGlobal(QPoint(0, toolbar.height())).y() \
-                    - origin.y() + MAIN_TITLE_H + 12
-            else:
-                y = MAIN_TITLE_H + 80
         rect = QRectF(x, y, box_w, box_h)
 
         painter.setPen(QPen(QColor(255, 255, 255, 50), 1))
@@ -1318,13 +1314,15 @@ def scenario_settings(window, app, rec, mouse, test_only=False):
     # The language shown is any language but the recording's own, so the
     # whole interface visibly changes (French, or English for the French cut).
     other = "fr" if LANG != "fr" else "en"
-    rec.caption(cap("s5"), top=True)
+    combo = dlg.language_combobox
+    keep_clear = mouse._widget_to_window(combo, (combo.width(), 0)).x() + 40
+    rec.caption(cap("s5"), avoid_left=keep_clear)
     _combo_select(window, mouse, rec, dlg.language_combobox, other)
     mouse.click_widget(dlg.language_ok_button)
     _hold(2400)
 
     # Step 6: switch back to English the same way
-    rec.caption(cap("s6"), top=True)
+    rec.caption(cap("s6"), avoid_left=keep_clear)
     dlg = _open_settings(window, mouse, rec)
     _combo_select(window, mouse, rec, dlg.language_combobox, LANG)
     mouse.click_widget(dlg.language_ok_button)
@@ -1398,13 +1396,13 @@ def scenario_mask(window, app, rec, mouse, test_only=False):
         return
 
     # Step 3: new set - strand 2_1 (below 1_1, pointing up toward it)
-    _draw_first_strand(window, mouse, rec, (620, 640), (700, 480), cap("m3"))
+    _draw_first_strand(window, mouse, rec, (560, 640), (660, 480), cap("m3"))
     s21 = _strand_by_name(canvas, "2_1")
     assert s21 is not None, "2_1 missing"
 
     # Step 4: attach 2_2 so it crosses over 1_1
     end21 = (int(s21.end.x()), int(s21.end.y()))
-    _attach_strand(window, mouse, rec, end21, (end21[0] + 60, 140),
+    _attach_strand(window, mouse, rec, end21, (end21[0] + 220, 140),
                    cap("m4"))
     s22 = _strand_by_name(canvas, "2_2")
     assert s22 is not None, "2_2 missing"

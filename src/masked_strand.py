@@ -239,6 +239,36 @@ class MaskedStrand(Strand):
         # Return fresh mask including deletions
         return mask_path
             
+    @staticmethod
+    def _closed_for_stroke(path):
+        """Copy of *path* with every subpath closed.
+
+        The intersection that makes the mask path can leave its last side
+        implied: filling closes it, but stroking it draws only the other
+        sides, so a selection outline lacked one edge of the crossing."""
+        closed = QPainterPath()
+        count = path.elementCount()
+        open_subpath = False
+        i = 0
+        while i < count:
+            element = path.elementAt(i)
+            if element.type == QPainterPath.MoveToElement:
+                if open_subpath:
+                    closed.closeSubpath()
+                closed.moveTo(element.x, element.y)
+                open_subpath = True
+            elif element.type == QPainterPath.LineToElement:
+                closed.lineTo(element.x, element.y)
+            elif element.type == QPainterPath.CurveToElement and i + 2 < count:
+                control2 = path.elementAt(i + 1)
+                end = path.elementAt(i + 2)
+                closed.cubicTo(element.x, element.y, control2.x, control2.y, end.x, end.y)
+                i += 2
+            i += 1
+        if open_subpath:
+            closed.closeSubpath()
+        return closed
+
     def get_mask_path(self):
         """
         Get the path representing the masked area.
@@ -795,7 +825,7 @@ class MaskedStrand(Strand):
                         highlight_pen = QPen(hl_color, 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
                         painter.setPen(highlight_pen)
                         painter.setBrush(Qt.NoBrush)
-                        painter.drawPath(mask_path)
+                        painter.drawPath(self._closed_for_stroke(mask_path))
                 except Exception as e:
                     pass
 
@@ -1237,7 +1267,7 @@ class MaskedStrand(Strand):
                 # Only draw if the path is not empty (strands actually intersect)
                 if not mask_path.isEmpty():
                 
-                    painter.drawPath(mask_path)
+                    painter.drawPath(self._closed_for_stroke(mask_path))
 
         finally:
             painter.restore()

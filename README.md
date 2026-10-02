@@ -9,7 +9,7 @@ making complex patterns clear and easy to understand.
 ### ✨ New Features and Fixes
 
 - **Strands and Masks Tabs**: The layer list is now split into two tabs, Strands and Masks, with a switch just above Draw Names. The Masks tab has its own New Mask, Delete Mask, Deselect All and Delete All buttons, and New Mask replaces the Mask button in the toolbar. Delete All on this tab removes only the masks, after a confirmation, in one undo step. Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you.
-- **Fixed Shadow Issues**: Shadows around masks now look like a real crossing, and a shadow you untick in the Shadow Editor now disappears completely.
+- **Fixed Shadow Issues**: Fixed shadow issues from older versions. Shadows for masks now behave more naturally.
 - **Seven New Samples**: In Settings, under Samples, you will find seven new projects to open and learn from: Straight Weave 12×12, Curved Weave 6×6, Plait, Thick and Thin, Bridge, Twisted Pairs and Kagome Weave. The sample buttons now sit two to a row, so the whole list fits on the page.
 
 ## Features

@@ -35,7 +35,8 @@ The masked layer feature is essential for creating intricate, overlapping design
    - Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you.
 
 2. **Fixed Shadow Issues:**
-   - Shadows around masks now look like a real crossing, and a shadow you untick in the Shadow Editor now disappears completely.
+   - Fixed shadow issues from older versions.
+   - Shadows for masks now behave more naturally.
 
 3. **Seven New Samples:**
    - In Settings, under Samples, you will find seven new projects to open and learn from: Straight Weave 12×12, Curved Weave 6×6, Plait, Thick and Thin, Bridge, Twisted Pairs and Kagome Weave.
@@ -763,7 +764,8 @@ La fonctionnalité de calque masqué est essentielle pour créer des designs com
    - Les masques restent toujours au-dessus de tous les brins, donc leur place dans la liste n'a plus d'importance, et sélectionner un calque de l'autre onglet ouvre cet onglet pour vous.
 
 2. **Ombres corrigées:**
-   - Les ombres autour des masques ressemblent maintenant à un vrai croisement, et une ombre décochée dans l'Éditeur d'Ombres disparaît entièrement.
+   - Des problèmes d'ombres des versions précédentes ont été corrigés.
+   - Les ombres des masques se comportent maintenant de façon plus naturelle.
 
 3. **Sept nouveaux exemples:**
    - Dans Paramètres, sous Exemples, vous trouverez sept nouveaux projets à ouvrir et à étudier : Tissage droit 12×12, Tissage courbe 6×6, Natte, Épais et fin, Pont, Paires torsadées et Tissage kagome.

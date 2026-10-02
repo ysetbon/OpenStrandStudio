@@ -705,6 +705,9 @@ class AttachedStrand(Strand):
         painter.setPen(Qt.NoPen)
         painter.setBrush(self.highlight_color)
         painter.drawPath(combined_highlight)
+        # Masks drawn after this strand keep clear of it
+        from shader_utils import note_painted_highlight
+        note_painted_highlight(painter, self, combined_highlight)
 
     def _unfolded_start_angle(self):
         """The start tangent angle draw() orients an unfolded start cap by."""

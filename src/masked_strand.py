@@ -502,7 +502,9 @@ class MaskedStrand(Strand):
 
         painter.save()
         try:
-        
+            # Leave the selection outline of a strand above the crossing on top
+            self._clip_highlights(painter)
+
             # When zoomed (either in or out) OR panned, use direct drawing without temporary image
             # optimization to avoid clipping issues that can occur with bounds calculations
             zoom_factor = getattr(self.canvas, 'zoom_factor', 1.0) if hasattr(self, 'canvas') and self.canvas else 1.0
@@ -634,6 +636,19 @@ class MaskedStrand(Strand):
             except ImportError:
                 from src.shader_utils import clip_mask_piece
             clip_mask_piece(painter, self)
+        except Exception:
+            pass
+
+    def _clip_highlights(self, painter):
+        """Keep everything the mask paints off the selection outlines of the
+        strands above both of its strands (see
+        shader_utils.clip_painted_highlights)."""
+        try:
+            try:
+                from shader_utils import clip_painted_highlights
+            except ImportError:
+                from src.shader_utils import clip_painted_highlights
+            clip_painted_highlights(painter, self)
         except Exception:
             pass
 

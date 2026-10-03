@@ -522,6 +522,24 @@ def _center_dialog(window, dlg, lift=0):
     _sync_native(dlg)
 
 
+def _place_combo_popup(combo):
+    """Put a just-opened combo list exactly under its box.
+
+    A headless dialog keeps a stale native position, so QComboBox.showPopup
+    measures the box from the wrong place and opens the list some tens of
+    pixels beside it; a later sync then snaps it into place mid-video. Move
+    the list by the difference between where the box really is (its dialog's
+    geometry) and where Qt thinks it is, before any frame sees it."""
+    from PyQt5.QtCore import QPoint
+    dlg = combo.window()
+    really = dlg.geometry().topLeft() + combo.mapTo(dlg, QPoint(0, 0))
+    shift = really - combo.mapToGlobal(QPoint(0, 0))
+    popup = combo.view().window()
+    if shift != QPoint(0, 0) and popup is not dlg:
+        popup.move(popup.pos() + shift)
+    _sync_native(popup)
+
+
 def _normalize_popup(w):
     """Clamp a popup window to the screen exactly like Qt does for a mapped
     popup — a never-mapped popup skips the clamping — and sync its QWindow.
@@ -1212,7 +1230,11 @@ def _combo_select(window, mouse, rec, combo, match_data):
     # painted widget tree (large black backing-store holes). Preserve the
     # visible hover and click-ripple frames, but omit only the unpainted
     # transition and resume with the list already in its final position.
-    _settle_without_capture(rec, combo.showPopup, 220)
+    def _open_list():
+        combo.showPopup()
+        _place_combo_popup(combo)
+
+    _settle_without_capture(rec, _open_list, 220)
     _hold(700)
     view = combo.view()
     popup = view.window()

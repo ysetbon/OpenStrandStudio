@@ -1,10 +1,12 @@
-# OpenStrand Studio - Version 1.112
+# OpenStrand Studio - Version 2.0
 
 An advanced diagramming tool for creating tutorials involving strand manipulation (knots, hitches, etc.)
 with dynamic masking that automatically adjusts the over-under effects between strands,
 making complex patterns clear and easy to understand.
 
-## What's New in Version 1.112
+## What's New in Version 2.0
+
+Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots, and masks are a big part of weaving, so this is a major step for OpenStrand Studio.
 
 ### ✨ New Features and Fixes
 
@@ -71,4 +73,4 @@ Created by Yonatan Setbon
 
 ---
 
-© 2026 OpenStrand Studio - Version 1.112
+© 2026 OpenStrand Studio - Version 2.0

@@ -27,12 +27,12 @@ import re, os, sys
 # =============================================================================
 # CONFIG — edit this section for each release
 # =============================================================================
-OLD_VERSION = '1.111'          # version the source files belong to
-NEW_VERSION = '1.112'          # version to generate
-OLD_DATE_SH = '22_September_2026'   # APP_DATE in the old .sh files
-NEW_DATE_SH = '27_September_2026'
-OLD_DATE_ISS = '22_Sep_2026'   # MyAppDate in the old .iss
-NEW_DATE_ISS = '27_Sep_2026'
+OLD_VERSION = '1.112'          # version the source files belong to
+NEW_VERSION = '2.0'          # version to generate
+OLD_DATE_SH = '27_September_2026'   # APP_DATE in the old .sh files
+NEW_DATE_SH = '03_October_2026'
+OLD_DATE_ISS = '27_Sep_2026'   # MyAppDate in the old .iss
+NEW_DATE_ISS = '03_Oct_2026'
 
 # What's-new bullets per language: list of (title, text). Same bullets are
 # used for the Windows installer, the macOS installer pages, and the in-app
@@ -106,18 +106,18 @@ BULLETS = {
 # Update these to match the previous release's first bullet. For Hebrew give
 # the &#x....; entity form of the first few letters (as it appears in the .sh).
 MARKERS = {
- 'en': "Stylize End Side",
- 'fr': "Styliser le côté d'extrémité",
- 'de': "Endseite gestalten",
- 'it': "Stilizza il lato finale",
- 'es': "Estilizar lado del extremo",
- 'pt': "Estilizar lado da extremidade",
- 'he': "&#x05E2;&#x05D9;&#x05E6;&#x05D5;&#x05D1; &#x05E6;&#x05D3; &#x05D4;&#x05E7;&#x05E6;&#x05D4;",
- 'ru': 'Оформление конца',
- 'fi': 'Muotoile pää',
- 'sv': 'Forma ändsida',
- 'ja': '端のスタイル設定',
- 'zh': '末端样式',
+ 'en': 'Strands and Masks Tabs',
+ 'fr': 'Onglets Brins et Masques',
+ 'de': 'Tabs Stränge und Masken',
+ 'it': 'Schede Trefoli e Maschere',
+ 'es': 'Pestañas Cordones y Máscaras',
+ 'pt': 'Separadores Mechas e Máscaras',
+ 'he': '&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;',
+ 'ru': 'Вкладки «Пряди»',
+ 'fi': 'Säikeet- ja Maskit',
+ 'sv': 'Flikarna Strängar',
+ 'ja': 'ストランド/マスクタブ',
+ 'zh': '绳股/遮罩标签页',
 }
 # =============================================================================
 # END CONFIG

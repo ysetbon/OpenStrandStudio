@@ -24,6 +24,26 @@ The masked layer feature is essential for creating intricate, overlapping design
 
 ------
 
+## Version 2.0 (Released: 03/10/2026)
+
+### New Features and Improvements:
+
+1. **Strands and Masks Tabs:**
+   - The layer list is now split into two tabs, Strands and Masks, with a switch just above Draw Names.
+   - The Masks tab has its own New Mask, Delete Mask, Deselect All and Delete All buttons, and New Mask replaces the Mask button in the toolbar.
+   - Delete All on this tab removes only the masks, after a confirmation, in one undo step.
+   - Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you.
+
+2. **Fixed Shadow Issues:**
+   - Fixed shadow issues from older versions.
+   - Shadows for masks now behave more naturally.
+
+3. **Seven New Samples:**
+   - In Settings, under Samples, you will find seven new projects to open and learn from: Straight Weave 12×12, Curved Weave 6×6, Plait, Thick and Thin, Bridge, Twisted Pairs and Kagome Weave.
+   - The sample buttons now sit two to a row, so the whole list fits on the page.
+
+------
+
 ## Version 1.112 (Released: 27/09/2026)
 
 ### New Features and Improvements:
@@ -750,6 +770,26 @@ Pour utiliser cette fonctionnalité :
 3. Relâchez la touche Contrôle pour créer le calque masqué
 
 La fonctionnalité de calque masqué est essentielle pour créer des designs complexes et superposés et c'est l'un des outils les plus puissants d'OpenStrand Studio. Assurez-vous d'expérimenter avec cette fonctionnalité pour libérer tout le potentiel de vos designs de brins !
+
+------
+
+## Version 2.0 (Sortie : 03/10/2026)
+
+### Nouvelles Fonctionnalités et Améliorations :
+
+1. **Onglets Brins et Masques:**
+   - La liste des calques est maintenant séparée en deux onglets, Brins et Masques, avec un sélecteur juste au-dessus de Afficher les noms.
+   - L'onglet Masques a ses propres boutons Nouveau masque, Supprimer le masque, Tout désélectionner et Tout supprimer, et Nouveau masque remplace le bouton Masque de la barre d'outils.
+   - Tout supprimer sur cet onglet ne supprime que les masques, après confirmation, en une seule étape d'annulation.
+   - Les masques restent toujours au-dessus de tous les brins, donc leur place dans la liste n'a plus d'importance, et sélectionner un calque de l'autre onglet ouvre cet onglet pour vous.
+
+2. **Ombres corrigées:**
+   - Des problèmes d'ombres des versions précédentes ont été corrigés.
+   - Les ombres des masques se comportent maintenant de façon plus naturelle.
+
+3. **Sept nouveaux exemples:**
+   - Dans Paramètres, sous Exemples, vous trouverez sept nouveaux projets à ouvrir et à étudier : Tissage droit 12×12, Tissage courbe 6×6, Natte, Épais et fin, Pont, Paires torsadées et Tissage kagome.
+   - Les boutons des exemples sont maintenant deux par ligne, pour que toute la liste tienne sur la page.
 
 ------
 

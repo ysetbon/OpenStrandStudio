@@ -1,1 +1,4 @@
 *.mp4 filter=lfs diff=lfs merge=lfs -text
+
+# The per-language tutorial videos (src/mp4/<lang>/) are plain git files, not LFS
+src/mp4/*/*.mp4 -filter -diff -merge -text

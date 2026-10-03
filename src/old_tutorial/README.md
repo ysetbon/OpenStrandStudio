@@ -15,3 +15,12 @@ and the PyInstaller specs bundle only those two folders.
 | tutorial_2 | Right-click layer panel buttons for descriptions | `--scenario buttons` |
 | tutorial_3 | First strands and a mask (2_2 under 1_1) | `--scenario mask` |
 | tutorial_4 | Closing a knot from two attached strands | `--scenario knot` |
+
+## 1.110 videos (`1_110/`)
+
+The four videos that shipped with 1.110 and 1.111 (English only, recorded on
+2026-09-07). They show the old toolbar with its Mask button. 1.112 replaced
+them with new recordings of the same four scenarios, one set per app
+language: the mask tutorial now uses the Masks tab and New Mask. The new
+ones live in `src/mp4/<lang>/` and `src/mov/<lang>/` and are produced with
+`automation_tests/record_all_tutorials.sh`.

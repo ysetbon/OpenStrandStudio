@@ -5830,19 +5830,30 @@ class SettingsDialog(QDialog):
             video_directory = os.path.join(base_path, 'mp4')
             video_extension = '.mp4'
 
-        self.video_paths = [
-            os.path.join(video_directory, f'tutorial_1{video_extension}'),
-            os.path.join(video_directory, f'tutorial_2{video_extension}'),
-            os.path.join(video_directory, f'tutorial_3{video_extension}'),
-            os.path.join(video_directory, f'tutorial_4{video_extension}'),  # Previously tutorial_6.mp4
-        ]
+        # One folder per app language (mp4/fr/tutorial_1.mp4 ...): the
+        # captions and the interface in each video are in that language.
+        self.video_directory = video_directory
+        self.video_extension = video_extension
+        self.video_paths = [self.video_path_for(i) for i in range(4)]
 
-        # Optional: Log the video paths for debugging
-        for path in self.video_paths:
-            if not os.path.exists(path):
-                pass
+    def video_path_for(self, index):
+        """Path of tutorial ``index`` in the current language, falling back
+        to English and then to the old unsorted layout."""
+        name = f'tutorial_{index + 1}{self.video_extension}'
+        language = getattr(self, 'current_language', 'en')
+        candidates = [
+            os.path.join(self.video_directory, language, name),
+            os.path.join(self.video_directory, 'en', name),
+            os.path.join(self.video_directory, name),
+        ]
+        for path in candidates:
+            if os.path.exists(path):
+                return path
+        return candidates[0]
+
     def play_video(self, index):
-        video_path = self.video_paths[index]
+        # The language may have changed since the dialog was built
+        video_path = self.video_path_for(index)
         if os.path.exists(video_path):
             try:
                 if sys.platform.startswith('win'):

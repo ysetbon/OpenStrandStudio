@@ -11,8 +11,9 @@ All widths are read from the strand at call time, so per-strand or per-set
 width/stroke changes are picked up automatically.
 """
 
-from PyQt5.QtCore import QPointF, Qt
-from PyQt5.QtGui import QPainterPath, QPainterPathStroker
+from PyQt5.QtCore import QPointF, QRect, Qt
+from PyQt5.QtGui import (QImage, QPainter, QPainterPath, QPainterPathStroker,
+                         QPixmap, QTransform)
 
 from masked_strand import MaskedStrand
 
@@ -71,6 +72,65 @@ def selection_outline_path(path, border_width, join_style=Qt.MiterJoin,
     return stroker.createStroke(path).subtracted(path)
 
 
+def _paint_selection_border(painter, path, color, border_width, join_style, cap_style):
+    """Paint the ring around ``path`` without any Boolean path operation.
+
+    ``selection_outline_path`` subtracts the footprint from a wider stroke with
+    QPainterPath.subtracted().  On a footprint made of overlapping pieces whose
+    edges nearly coincide (a body plus the thin side-line band at each end)
+    Qt's Boolean code can drop pieces of the result, which left notches and
+    missing chunks in the border at the strand's corners.  Here the wide stroke
+    is painted on a small transparent layer and the very footprint the fill
+    uses is erased from it, so the ring is exact for any footprint.
+    """
+    if path.isEmpty() or border_width <= 0:
+        return
+    stroker = QPainterPathStroker()
+    # The stroke is centred on the boundary; doubling the width leaves the full
+    # requested width outside once the footprint is erased.
+    stroker.setWidth(border_width * 2)
+    stroker.setJoinStyle(join_style)
+    stroker.setCapStyle(cap_style)
+    ring = stroker.createStroke(path)
+
+    transform = painter.transform()
+    device = painter.device()
+    ratio = max(1.0, device.devicePixelRatioF())
+    bounds = transform.mapRect(ring.controlPointRect()).toAlignedRect().adjusted(-2, -2, 2, 2)
+    # Only the part that can be seen needs a layer (the strand may be zoomed
+    # far past the window).
+    width, height = device.width(), device.height()
+    if isinstance(device, (QImage, QPixmap)):
+        width, height = width / ratio, height / ratio
+    bounds = bounds.intersected(QRect(0, 0, int(width) + 1, int(height) + 1))
+    if bounds.isEmpty():
+        return
+
+    layer = QImage(int(bounds.width() * ratio), int(bounds.height() * ratio),
+                   QImage.Format_ARGB32_Premultiplied)
+    layer.setDevicePixelRatio(ratio)
+    layer.fill(Qt.transparent)
+    layer_painter = QPainter(layer)
+    try:
+        layer_painter.setRenderHint(QPainter.Antialiasing, True)
+        layer_painter.setTransform(
+            transform * QTransform.fromTranslate(-bounds.x(), -bounds.y()))
+        layer_painter.setPen(Qt.NoPen)
+        layer_painter.setBrush(color)
+        layer_painter.drawPath(ring)
+        layer_painter.setCompositionMode(QPainter.CompositionMode_Clear)
+        layer_painter.drawPath(path)
+    finally:
+        layer_painter.end()
+
+    painter.save()
+    try:
+        painter.resetTransform()
+        painter.drawImage(bounds.topLeft(), layer)
+    finally:
+        painter.restore()
+
+
 def draw_selection_overlay(painter, path, fill_color, border_color=None,
                            border_width=0, join_style=Qt.MiterJoin,
                            cap_style=Qt.FlatCap):
@@ -81,9 +141,8 @@ def draw_selection_overlay(painter, path, fill_color, border_color=None,
     painter.drawPath(path)
 
     if border_color is not None and border_width > 0:
-        painter.setBrush(border_color)
-        painter.drawPath(selection_outline_path(
-            path, border_width, join_style, cap_style))
+        _paint_selection_border(painter, path, border_color, border_width,
+                                join_style, cap_style)
 
 
 def find_strands_at_point(strands, pos, include_masked=True):

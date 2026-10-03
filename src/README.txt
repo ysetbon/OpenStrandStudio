@@ -24,7 +24,7 @@ The masked layer feature is essential for creating intricate, overlapping design
 
 ------
 
-## Version 2.0 (Released: 03/10/2026)
+## Version 2.0 (Released: 04/10/2026)
 
 Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots, and masks are a big part of weaving, so this is a major step for OpenStrand Studio.
 
@@ -775,7 +775,7 @@ La fonctionnalité de calque masqué est essentielle pour créer des designs com
 
 ------
 
-## Version 2.0 (Sortie : 03/10/2026)
+## Version 2.0 (Sortie : 04/10/2026)
 
 Pourquoi 2.0 ? Les masques sont maintenant beaucoup plus naturels à utiliser. Le tissage est essentiel pour faire des nœuds, et les masques en sont une grande partie : c'est une étape majeure pour OpenStrand Studio.
 

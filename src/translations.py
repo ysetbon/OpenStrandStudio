@@ -314,6 +314,7 @@ Examples:<br>
         'whats_new_info': '''
         <h2>What's New in Version 2.0</h2>
 
+            <p style="font-size:14px;">Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots, and masks are a big part of weaving, so this is a major step for OpenStrand Studio.</p>
             <li style="font-size:14px;"><b>Strands and Masks Tabs:</b> The layer list is now split into two tabs, Strands and Masks, with a switch just above Draw Names. The Masks tab has its own New Mask, Delete Mask, Deselect All and Delete All buttons, and New Mask replaces the Mask button in the toolbar. Delete All on this tab removes only the masks, after a confirmation, in one undo step. Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you.</li>
             <li style="font-size:14px;"><b>Fixed Shadow Issues:</b> Fixed shadow issues from older versions. Shadows for masks now behave more naturally.</li>
             <li style="font-size:14px;"><b>Seven New Samples:</b> In Settings, under Samples, you will find seven new projects to open and learn from: Straight Weave 12×12, Curved Weave 6×6, Plait, Thick and Thin, Bridge, Twisted Pairs and Kagome Weave. The sample buttons now sit two to a row, so the whole list fits on the page.</li>
@@ -910,6 +911,7 @@ Exemples :<br>
         'whats_new_info': '''
         <h2>Nouveautés de la version 2.0</h2>
 
+            <p style="font-size:14px;">Pourquoi 2.0 ? Les masques sont maintenant beaucoup plus naturels à utiliser. Le tissage est essentiel pour faire des nœuds, et les masques en sont une grande partie : c'est une étape majeure pour OpenStrand Studio.</p>
             <li style="font-size:14px;"><b>Onglets Brins et Masques:</b> La liste des calques est maintenant séparée en deux onglets, Brins et Masques, avec un sélecteur juste au-dessus de Dessin. Noms. L'onglet Masques a ses propres boutons Nouv. Masque, Suppr. Masque, Désél. Tous et Suppr. Tout, et Nouv. Masque remplace le bouton Masque de la barre d'outils. Suppr. Tout sur cet onglet ne supprime que les masques, après confirmation, en une seule étape d'annulation. Les masques restent toujours au-dessus de tous les brins, donc leur place dans la liste n'a plus d'importance, et sélectionner un calque de l'autre onglet ouvre cet onglet pour vous.</li>
             <li style="font-size:14px;"><b>Ombres corrigées:</b> Des problèmes d'ombres des versions précédentes ont été corrigés. Les ombres des masques se comportent maintenant de façon plus naturelle.</li>
             <li style="font-size:14px;"><b>Sept nouveaux exemples:</b> Dans Paramètres, sous Exemples, vous trouverez sept nouveaux projets à ouvrir et à étudier : Tissage droit 12×12, Tissage courbe 6×6, Natte, Épais et fin, Pont, Paires torsadées et Tissage kagome. Les boutons des exemples sont maintenant deux par ligne, pour que toute la liste tienne sur la page.</li>
@@ -1589,6 +1591,7 @@ Beispiele:<br>
         'whats_new_info': '''
         <h2>Neu in Version 2.0</h2>
 
+            <p style="font-size:14px;">Warum 2.0? Masken fühlen sich jetzt viel natürlicher an. Weben ist entscheidend beim Knüpfen von Knoten, und Masken sind ein großer Teil davon – ein wichtiger Schritt für OpenStrand Studio.</p>
             <li style="font-size:14px;"><b>Tabs Stränge und Masken:</b> Die Ebenenliste ist jetzt in zwei Tabs aufgeteilt, Stränge und Masken, mit einem Umschalter direkt über Namen zeigen. Der Tab Masken hat eigene Schaltflächen für Neue Maske, Maske entf., Alle abwählen und Alle löschen, und Neue Maske ersetzt die Maske-Schaltfläche in der Werkzeugleiste. Alle löschen löscht in diesem Tab nur die Masken, nach einer Bestätigung und in einem einzigen Rückgängig-Schritt. Masken liegen jetzt immer über allen Strängen, ihre Position in der Liste spielt also keine Rolle mehr, und wer eine Ebene des anderen Tabs auswählt, wird automatisch zu diesem Tab gebracht.</li>
             <li style="font-size:14px;"><b>Schattenprobleme behoben:</b> Schattenprobleme aus älteren Versionen wurden behoben. Schatten von Masken verhalten sich jetzt natürlicher.</li>
             <li style="font-size:14px;"><b>Sieben neue Beispiele:</b> In den Einstellungen unter Beispiele finden Sie sieben neue Projekte zum Öffnen und Lernen: Gerades Geflecht 12×12, Geschwungenes Geflecht 6×6, Flechtzopf, Dick und dünn, Brücke, Verdrehte Paare und Kagome-Geflecht. Die Beispiel-Schaltflächen stehen jetzt zu zweit in einer Reihe, sodass die ganze Liste auf die Seite passt.</li>
@@ -2202,6 +2205,7 @@ Esempi:<br>
         'whats_new_info': '''
         <h2>Novità della versione 2.0</h2>
 
+            <p style="font-size:14px;">Perché 2.0? Le maschere ora sono molto più naturali da usare. L'intreccio è fondamentale per fare i nodi e le maschere ne sono una parte importante: è un passo importante per OpenStrand Studio.</p>
             <li style="font-size:14px;"><b>Schede Trefoli e Maschere:</b> L'elenco dei livelli è ora diviso in due schede, Trefoli e Maschere, con un selettore subito sopra Disegna Nomi. La scheda Maschere ha i suoi pulsanti Nuova Masch., Elim. Maschera, Desel. Tutto ed Elimina Tutto, e Nuova Masch. sostituisce il pulsante Maschera della barra degli strumenti. Elimina Tutto in questa scheda elimina solo le maschere, dopo una conferma, in un unico passo di annullamento. Le maschere restano sempre sopra tutti i trefoli, quindi la loro posizione nell'elenco non conta più, e selezionare un livello dell'altra scheda apre quella scheda per voi.</li>
             <li style="font-size:14px;"><b>Problemi delle ombre risolti:</b> Sono stati risolti problemi delle ombre presenti nelle versioni precedenti. Le ombre delle maschere ora si comportano in modo più naturale.</li>
             <li style="font-size:14px;"><b>Sette nuovi esempi:</b> In Impostazioni, sotto Esempi, trovi sette nuovi progetti da aprire e da cui imparare: Intreccio dritto 12×12, Intreccio curvo 6×6, Treccia piatta, Spesso e sottile, Ponte, Coppie ritorte e Intreccio kagome. I pulsanti degli esempi ora sono due per riga, così l'elenco intero sta nella pagina.</li>
@@ -2852,6 +2856,7 @@ Ejemplos:<br>
         'whats_new_info': '''
         <h2>Novedades de la versión 2.0</h2>
 
+            <p style="font-size:14px;">¿Por qué 2.0? Las máscaras ahora son mucho más naturales de usar. El tejido es clave para hacer nudos y las máscaras son una gran parte del tejido, así que es un gran paso para OpenStrand Studio.</p>
             <li style="font-size:14px;"><b>Pestañas Cordones y Máscaras:</b> La lista de capas ahora se divide en dos pestañas, Cordones y Máscaras, con un selector justo encima de Ver Nombres. La pestaña Máscaras tiene sus propios botones Nueva Másc., Elim. Máscara, Deselec. Todo y Eliminar Todo, y Nueva Másc. reemplaza el botón Máscara de la barra de herramientas. Eliminar Todo en esta pestaña elimina solo las máscaras, tras una confirmación y en un único paso de deshacer. Las máscaras ahora se mantienen siempre por encima de todos los cordones, así que su posición en la lista ya no importa, y al seleccionar una capa de la otra pestaña se abre esa pestaña automáticamente.</li>
             <li style="font-size:14px;"><b>Problemas de sombras corregidos:</b> Se corrigieron problemas de sombras de versiones anteriores. Las sombras de las máscaras ahora se comportan de forma más natural.</li>
             <li style="font-size:14px;"><b>Siete ejemplos nuevos:</b> En Configuración, bajo Ejemplos, encontrarás siete proyectos nuevos para abrir y aprender: Tejido recto 12×12, Tejido curvo 6×6, Trenza plana, Grueso y fino, Puente, Pares torcidos y Tejido kagome. Los botones de ejemplos ahora van de dos en dos por fila, así la lista entera cabe en la página.</li>
@@ -3502,6 +3507,7 @@ Exemplos:<br>
         'whats_new_info': '''
         <h2>Novidades da versão 2.0</h2>
 
+            <p style="font-size:14px;">Porquê 2.0? As máscaras agora são muito mais naturais de usar. A tecelagem é essencial para fazer nós e as máscaras são uma grande parte dela, por isso é um grande passo para o OpenStrand Studio.</p>
             <li style="font-size:14px;"><b>Separadores Mechas e Máscaras:</b> A lista de camadas agora está dividida em dois separadores, Mechas e Máscaras, com um seletor mesmo acima de Exib. Nomes. O separador Máscaras tem os seus próprios botões Nova Másc., Excl. Máscara, Desmar. Tudo e Excluir Tudo, e Nova Másc. substitui o botão Máscara da barra de ferramentas. Excluir Tudo neste separador elimina apenas as máscaras, após uma confirmação e num único passo de anular. As máscaras ficam sempre acima de todas as mechas, por isso a sua posição na lista já não importa, e selecionar uma camada do outro separador abre esse separador por si.</li>
             <li style="font-size:14px;"><b>Problemas de sombras corrigidos:</b> Foram corrigidos problemas de sombras de versões anteriores. As sombras das máscaras agora comportam-se de forma mais natural.</li>
             <li style="font-size:14px;"><b>Sete novos exemplos:</b> Em Configurações, em Exemplos, encontra sete novos projetos para abrir e aprender: Tecelagem reta 12×12, Tecelagem curva 6×6, Trança plana, Grosso e fino, Ponte, Pares torcidos e Tecelagem kagome. Os botões dos exemplos agora ficam dois por linha, para que a lista inteira caiba na página.</li>
@@ -4160,6 +4166,7 @@ Exemplos:<br>
         <div dir="rtl" style="text-align: right;">
         <h2>מה חדש בגרסה 2.0</h2>
 
+            <p style="font-size:14px;">למה 2.0? המסכות מרגישות עכשיו הרבה יותר טבעיות לשימוש. אריגה היא מרכיב מרכזי בקשירת קשרים, ומסכות הן חלק גדול מהאריגה, ולכן זהו צעד משמעותי עבור OpenStrand Studio.</p>
             <li style="font-size:14px;"><b>לשוניות חוטים ומסכות:</b> רשימת השכבות מחולקת עכשיו לשתי לשוניות, חוטים ומסכות, עם מתג ממש מעל צייר שמות. בלשונית מסכות יש כפתורים משלה: מסכה חדשה, מחק מסכה, בטל בחירה ומחק הכל, והכפתור מסכה חדשה מחליף את כפתור המסכה בסרגל הכלים. מחק הכל בלשונית הזו מוחקת רק את המסכות, אחרי אישור, ובשלב ביטול אחד. המסכות נשארות תמיד מעל כל החוטים, ולכן מיקומן ברשימה כבר לא משנה, ובחירת שכבה מהלשונית השנייה פותחת אותה אוטומטית.</li>
             <li style="font-size:14px;"><b>תיקוני צללים:</b> תוקנו בעיות צללים מגרסאות קודמות. הצללים של מסכות מתנהגים עכשיו בצורה טבעית יותר.</li>
             <li style="font-size:14px;"><b>שבע דוגמאות חדשות:</b> בהגדרות, תחת דוגמאות, יש שבעה פרויקטים חדשים לפתוח וללמוד מהם: אריגה ישרה 12×12, אריגה מעוקלת 6×6, צמה שטוחה, עבה ודק, גשר, זוגות מפותלים ואריגת קגומה. כפתורי הדוגמאות מסודרים עכשיו שניים בשורה, כך שכל הרשימה נכנסת בעמוד.</li>
@@ -4855,6 +4862,7 @@ Exemplos:<br>
         'whats_new_info': '''
         <h2>Что нового в версии 2.0</h2>
 
+            <p style="font-size:14px;">Почему 2.0? Маски теперь гораздо естественнее в работе. Плетение — основа завязывания узлов, а маски — большая его часть, поэтому это важный шаг для OpenStrand Studio.</p>
             <li style="font-size:14px;"><b>Вкладки «Пряди» и «Маски»:</b> Список слоёв теперь разделён на две вкладки, «Пряди» и «Маски», с переключателем прямо над кнопкой «Показ имён». У вкладки «Маски» свои кнопки: «Новая маска», «Удалить маску», «Снять выбор» и «Удалить все», а «Новая маска» заменяет кнопку «Маска» на панели инструментов. «Удалить все» на этой вкладке удаляет только маски, после подтверждения и одним шагом отмены. Маски теперь всегда лежат над всеми прядями, поэтому их место в списке больше не важно, а выбор слоя с другой вкладки сам открывает эту вкладку.</li>
             <li style="font-size:14px;"><b>Исправлены проблемы с тенями:</b> Исправлены проблемы с тенями из прошлых версий. Тени масок теперь ведут себя естественнее.</li>
             <li style="font-size:14px;"><b>Семь новых примеров:</b> в настройках, в разделе «Примеры», появилось семь новых проектов, которые можно открыть и изучить: Прямое плетение 12×12, Изогнутое плетение 6×6, Плоская коса, Толстые и тонкие, Мост, Скрученные пары и Плетение кагомэ. Кнопки примеров теперь стоят по две в ряд, поэтому весь список помещается на странице.</li>
@@ -5490,6 +5498,7 @@ Vinkki: napsauta tasopaneelin kuvakkeita hiiren oikealla painikkeella nähdäkse
         'whats_new_info': '''
         <h2>Mitä uutta versiossa 2.0</h2>
 
+            <p style="font-size:14px;">Miksi 2.0? Maskit tuntuvat nyt paljon luonnollisemmilta käyttää. Kudonta on keskeistä solmujen tekemisessä, ja maskit ovat suuri osa kudontaa, joten tämä on iso askel OpenStrand Studiolle.</p>
             <li style="font-size:14px;"><b>Säikeet- ja Maskit-välilehdet:</b> Kerroslista on nyt jaettu kahteen välilehteen, Säikeet ja Maskit, ja valitsin on heti Näytä nimet -painikkeen yläpuolella. Maskit-välilehdellä on omat painikkeensa: Uusi maski, Poista maski, Poista valinnat ja Poista kaikki, ja Uusi maski korvaa työkalupalkin Maski-painikkeen. Poista kaikki poistaa tällä välilehdellä vain maskit, vahvistuksen jälkeen ja yhdellä kumoamisaskeleella. Maskit pysyvät nyt aina kaikkien säikeiden päällä, joten maskin paikalla listassa ei ole enää väliä, ja toisen välilehden kerroksen valinta avaa kyseisen välilehden puolestasi.</li>
             <li style="font-size:14px;"><b>Varjo-ongelmat korjattu:</b> Vanhojen versioiden varjo-ongelmat on korjattu. Maskien varjot käyttäytyvät nyt luonnollisemmin.</li>
             <li style="font-size:14px;"><b>Seitsemän uutta esimerkkiä:</b> asetuksissa, kohdassa Esimerkit, on seitsemän uutta projektia avattavaksi ja opittavaksi: Suora kudos 12×12, Kaareva kudos 6×6, Palmikko, Paksu ja ohut, Silta, Kierretyt parit ja Kagome-kudos. Esimerkkipainikkeet ovat nyt kaksi rinnakkain, joten koko luettelo mahtuu sivulle.</li>
@@ -6123,6 +6132,7 @@ Tips: högerklicka på ikonerna i lagerpanelen för att se deras förklaringar!'
         'whats_new_info': '''
         <h2>Vad är nytt i version 2.0</h2>
 
+            <p style="font-size:14px;">Varför 2.0? Masker känns nu mycket mer naturliga att använda. Vävning är nyckeln till att knyta knutar och masker är en stor del av vävningen, så detta är ett stort steg för OpenStrand Studio.</p>
             <li style="font-size:14px;"><b>Flikarna Strängar och Masker:</b> Lagerlistan är nu uppdelad i två flikar, Strängar och Masker, med en växlare precis ovanför Visa namn. Fliken Masker har egna knappar: Ny mask, Ta bort mask, Avmarkera alla och Ta bort alla, och Ny mask ersätter Mask-knappen i verktygsfältet. Ta bort alla på den här fliken tar bara bort maskerna, efter en bekräftelse och i ett enda ångra-steg. Masker ligger nu alltid ovanför alla strängar, så var en mask står i listan spelar ingen roll längre, och när du markerar ett lager på den andra fliken öppnas den fliken åt dig.</li>
             <li style="font-size:14px;"><b>Skuggproblem åtgärdade:</b> Skuggproblem från äldre versioner har åtgärdats. Skuggor för masker beter sig nu mer naturligt.</li>
             <li style="font-size:14px;"><b>Sju nya exempel:</b> i Inställningar, under Exempel, finns sju nya projekt att öppna och lära sig av: Rak väv 12×12, Böjd väv 6×6, Platt fläta, Tjock och tunn, Bro, Tvinnade par och Kagomeväv. Exempelknapparna står nu två i varje rad, så hela listan får plats på sidan.</li>
@@ -6754,6 +6764,7 @@ Varning: att ladda historik rensar dina nuvarande ångra/gör om-steg.''',
         'whats_new_info': '''
         <h2>新機能: バージョン 2.0</h2>
 
+            <p style="font-size:14px;">なぜ2.0なのか: マスクがずっと自然に使えるようになりました。結び目を作るには織りが重要で、マスクは織りの大きな部分を占めるため、OpenStrand Studioにとって大きな一歩です。</p>
             <li style="font-size:14px;"><b>ストランド/マスクタブ:</b> レイヤーリストが「ストランド」と「マスク」の2つのタブに分かれ、「名前を表示」のすぐ上に切り替えが付きました。マスクタブには専用の「新しいマスク」「マスクを削除」「すべて選択解除」「すべて削除」ボタンがあり、「新しいマスク」はツールバーのマスクボタンの代わりになります。このタブの「すべて削除」はマスクだけを、確認のあとに1回の元に戻す操作で削除します。マスクは常にすべてのストランドの上に保たれるため、リスト内の位置は気にする必要がなくなり、もう一方のタブのレイヤーを選ぶとそのタブが自動で開きます。</li>
             <li style="font-size:14px;"><b>影の問題を修正:</b> 以前のバージョンにあった影の問題を修正しました。マスクの影がより自然な動きになりました。</li>
             <li style="font-size:14px;"><b>7つの新しいサンプル:</b> 設定の「サンプル」に、開いて学べる新しいプロジェクトが7つ加わりました: 直線の織り 12×12、曲線の織り 6×6、平編み、太い線と細い線、橋、ねじれたペア、かごめ編み。サンプルのボタンは1行に2つずつ並ぶようになり、一覧全体がページに収まります。</li>
@@ -7385,6 +7396,7 @@ ESC で終了''',
         'whats_new_info': '''
         <h2>新功能: 版本 2.0</h2>
 
+            <p style="font-size:14px;">为什么是2.0？遮罩现在用起来自然得多。编织是打绳结的关键，而遮罩是编织的重要组成部分，因此这是 OpenStrand Studio 的重要一步。</p>
             <li style="font-size:14px;"><b>绳股/遮罩标签页:</b> 图层列表现在分为“绳股”和“遮罩”两个标签页，切换按钮就在“显示名称”上方。“遮罩”标签页有自己的“新建遮罩”“删除遮罩”“取消全选”和“全部删除”按钮，“新建遮罩”取代了工具栏中的遮罩按钮。在此标签页中“全部删除”只会删除遮罩，需确认，并且只算一次撤销。遮罩现在始终位于所有绳股之上，因此它在列表中的位置不再重要，选择另一个标签页中的图层时会自动打开该标签页。</li>
             <li style="font-size:14px;"><b>修复阴影问题:</b> 修复了旧版本中的阴影问题，遮罩的阴影现在表现得更自然。</li>
             <li style="font-size:14px;"><b>七个新示例:</b> 在“设置”的“示例”中，新增了七个可以打开学习的项目: 直线编织 12×12、曲线编织 6×6、扁平辫、粗与细、桥、扭绞线对和笼目编织。示例按钮现在每行两个，整个列表可以完整显示在页面上。</li>

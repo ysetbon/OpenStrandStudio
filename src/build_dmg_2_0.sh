@@ -152,6 +152,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <h2 dir="ltr">Welcome to OpenStrandStudio 2.0</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 2.0:</p>
+    <p>Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots, and masks are a big part of weaving, so this is a major step for OpenStrand Studio.</p>
     <ul>
         <li><b>Strands and Masks Tabs:</b> The layer list is now split into two tabs, Strands and Masks, with a switch just above Draw Names. The Masks tab has its own New Mask, Delete Mask, Deselect All and Delete All buttons, and New Mask replaces the Mask button in the toolbar. Delete All on this tab removes only the masks, after a confirmation, in one undo step. Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you.</li>
         <li><b>Fixed Shadow Issues:</b> Fixed shadow issues from older versions. Shadows for masks now behave more naturally.</li>
@@ -162,6 +163,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 2.0</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Neu in Version 2.0:</p>
+    <p>Warum 2.0? Masken fühlen sich jetzt viel natürlicher an. Weben ist entscheidend beim Knüpfen von Knoten, und Masken sind ein großer Teil davon – ein wichtiger Schritt für OpenStrand Studio.</p>
     <ul>
         <li><b>Tabs Stränge und Masken:</b> Die Ebenenliste ist jetzt in zwei Tabs aufgeteilt, Stränge und Masken, mit einem Umschalter direkt über Namen zeigen. Der Tab Masken hat eigene Schaltflächen für Neue Maske, Maske entf., Alle abwählen und Alle löschen, und Neue Maske ersetzt die Maske-Schaltfläche in der Werkzeugleiste. Alle löschen löscht in diesem Tab nur die Masken, nach einer Bestätigung und in einem einzigen Rückgängig-Schritt. Masken liegen jetzt immer über allen Strängen, ihre Position in der Liste spielt also keine Rolle mehr, und wer eine Ebene des anderen Tabs auswählt, wird automatisch zu diesem Tab gebracht.</li>
         <li><b>Schattenprobleme behoben:</b> Schattenprobleme aus älteren Versionen wurden behoben. Schatten von Masken verhalten sich jetzt natürlicher.</li>
@@ -172,6 +174,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenue dans OpenStrandStudio 2.0</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés de la version 2.0 :</p>
+    <p>Pourquoi 2.0 ? Les masques sont maintenant beaucoup plus naturels à utiliser. Le tissage est essentiel pour faire des nœuds, et les masques en sont une grande partie : c'est une étape majeure pour OpenStrand Studio.</p>
     <ul>
         <li><b>Onglets Brins et Masques:</b> La liste des calques est maintenant séparée en deux onglets, Brins et Masques, avec un sélecteur juste au-dessus de Dessin. Noms. L'onglet Masques a ses propres boutons Nouv. Masque, Suppr. Masque, Désél. Tous et Suppr. Tout, et Nouv. Masque remplace le bouton Masque de la barre d'outils. Suppr. Tout sur cet onglet ne supprime que les masques, après confirmation, en une seule étape d'annulation. Les masques restent toujours au-dessus de tous les brins, donc leur place dans la liste n'a plus d'importance, et sélectionner un calque de l'autre onglet ouvre cet onglet pour vous.</li>
         <li><b>Ombres corrigées:</b> Des problèmes d'ombres des versions précédentes ont été corrigés. Les ombres des masques se comportent maintenant de façon plus naturelle.</li>
@@ -182,6 +185,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 2.0</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità della versione 2.0:</p>
+    <p>Perché 2.0? Le maschere ora sono molto più naturali da usare. L'intreccio è fondamentale per fare i nodi e le maschere ne sono una parte importante: è un passo importante per OpenStrand Studio.</p>
     <ul>
         <li><b>Schede Trefoli e Maschere:</b> L'elenco dei livelli è ora diviso in due schede, Trefoli e Maschere, con un selettore subito sopra Disegna Nomi. La scheda Maschere ha i suoi pulsanti Nuova Masch., Elim. Maschera, Desel. Tutto ed Elimina Tutto, e Nuova Masch. sostituisce il pulsante Maschera della barra degli strumenti. Elimina Tutto in questa scheda elimina solo le maschere, dopo una conferma, in un unico passo di annullamento. Le maschere restano sempre sopra tutti i trefoli, quindi la loro posizione nell'elenco non conta più, e selezionare un livello dell'altra scheda apre quella scheda per voi.</li>
         <li><b>Problemi delle ombre risolti:</b> Sono stati risolti problemi delle ombre presenti nelle versioni precedenti. Le ombre delle maschere ora si comportano in modo più naturale.</li>
@@ -192,6 +196,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 2.0</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades de la versión 2.0:</p>
+    <p>¿Por qué 2.0? Las máscaras ahora son mucho más naturales de usar. El tejido es clave para hacer nudos y las máscaras son una gran parte del tejido, así que es un gran paso para OpenStrand Studio.</p>
     <ul>
         <li><b>Pestañas Cordones y Máscaras:</b> La lista de capas ahora se divide en dos pestañas, Cordones y Máscaras, con un selector justo encima de Ver Nombres. La pestaña Máscaras tiene sus propios botones Nueva Másc., Elim. Máscara, Deselec. Todo y Eliminar Todo, y Nueva Másc. reemplaza el botón Máscara de la barra de herramientas. Eliminar Todo en esta pestaña elimina solo las máscaras, tras una confirmación y en un único paso de deshacer. Las máscaras ahora se mantienen siempre por encima de todos los cordones, así que su posición en la lista ya no importa, y al seleccionar una capa de la otra pestaña se abre esa pestaña automáticamente.</li>
         <li><b>Problemas de sombras corregidos:</b> Se corrigieron problemas de sombras de versiones anteriores. Las sombras de las máscaras ahora se comportan de forma más natural.</li>
@@ -202,6 +207,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 2.0</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades da versão 2.0:</p>
+    <p>Porquê 2.0? As máscaras agora são muito mais naturais de usar. A tecelagem é essencial para fazer nós e as máscaras são uma grande parte dela, por isso é um grande passo para o OpenStrand Studio.</p>
     <ul>
         <li><b>Separadores Mechas e Máscaras:</b> A lista de camadas agora está dividida em dois separadores, Mechas e Máscaras, com um seletor mesmo acima de Exib. Nomes. O separador Máscaras tem os seus próprios botões Nova Másc., Excl. Máscara, Desmar. Tudo e Excluir Tudo, e Nova Másc. substitui o botão Máscara da barra de ferramentas. Excluir Tudo neste separador elimina apenas as máscaras, após uma confirmação e num único passo de anular. As máscaras ficam sempre acima de todas as mechas, por isso a sua posição na lista já não importa, e selecionar uma camada do outro separador abre esse separador por si.</li>
         <li><b>Problemas de sombras corrigidos:</b> Foram corrigidos problemas de sombras de versões anteriores. As sombras das máscaras agora comportam-se de forma mais natural.</li>
@@ -213,6 +219,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 2.0</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05DE;&#x05D4; &#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; 2.0:</p>
+    <p>&#x05DC;&#x05DE;&#x05D4; 2.0? &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D2;&#x05D9;&#x05E9;&#x05D5;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D4;&#x05E8;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05DC;&#x05E9;&#x05D9;&#x05DE;&#x05D5;&#x05E9;. &#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05DE;&#x05E8;&#x05DB;&#x05D9;&#x05D1; &#x05DE;&#x05E8;&#x05DB;&#x05D6;&#x05D9; &#x05D1;&#x05E7;&#x05E9;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05E9;&#x05E8;&#x05D9;&#x05DD;, &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D4;&#x05DF; &#x05D7;&#x05DC;&#x05E7; &#x05D2;&#x05D3;&#x05D5;&#x05DC; &#x05DE;&#x05D4;&#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05D6;&#x05D4;&#x05D5; &#x05E6;&#x05E2;&#x05D3; &#x05DE;&#x05E9;&#x05DE;&#x05E2;&#x05D5;&#x05EA;&#x05D9; &#x05E2;&#x05D1;&#x05D5;&#x05E8; OpenStrand Studio.</p>
     <ul>
         <li><b>&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;:</b> &#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05EA; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05DE;&#x05D7;&#x05D5;&#x05DC;&#x05E7;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05DC;&#x05E9;&#x05EA;&#x05D9; &#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA;, &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05E2;&#x05DD; &#x05DE;&#x05EA;&#x05D2; &#x05DE;&#x05DE;&#x05E9; &#x05DE;&#x05E2;&#x05DC; &#x05E6;&#x05D9;&#x05D9;&#x05E8; &#x05E9;&#x05DE;&#x05D5;&#x05EA;. &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D9;&#x05E9; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05DE;&#x05E9;&#x05DC;&#x05D4;: &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4;, &#x05DE;&#x05D7;&#x05E7; &#x05DE;&#x05E1;&#x05DB;&#x05D4;, &#x05D1;&#x05D8;&#x05DC; &#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC;, &#x05D5;&#x05D4;&#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05DE;&#x05D7;&#x05DC;&#x05D9;&#x05E3; &#x05D0;&#x05EA; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D1;&#x05E1;&#x05E8;&#x05D2;&#x05DC; &#x05D4;&#x05DB;&#x05DC;&#x05D9;&#x05DD;. &#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC; &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05D6;&#x05D5; &#x05DE;&#x05D5;&#x05D7;&#x05E7;&#x05EA; &#x05E8;&#x05E7; &#x05D0;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05D0;&#x05D7;&#x05E8;&#x05D9; &#x05D0;&#x05D9;&#x05E9;&#x05D5;&#x05E8;, &#x05D5;&#x05D1;&#x05E9;&#x05DC;&#x05D1; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D0;&#x05D7;&#x05D3;. &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05E0;&#x05E9;&#x05D0;&#x05E8;&#x05D5;&#x05EA; &#x05EA;&#x05DE;&#x05D9;&#x05D3; &#x05DE;&#x05E2;&#x05DC; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05DE;&#x05D9;&#x05E7;&#x05D5;&#x05DE;&#x05DF; &#x05D1;&#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05D4; &#x05DB;&#x05D1;&#x05E8; &#x05DC;&#x05D0; &#x05DE;&#x05E9;&#x05E0;&#x05D4;, &#x05D5;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E9;&#x05DB;&#x05D1;&#x05D4; &#x05DE;&#x05D4;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05E9;&#x05E0;&#x05D9;&#x05D9;&#x05D4; &#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05EA; &#x05D0;&#x05D5;&#x05EA;&#x05D4; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA;.</li>
         <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;. &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05E9;&#x05DC; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05EA;&#x05E0;&#x05D4;&#x05D2;&#x05D9;&#x05DD; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D1;&#x05E6;&#x05D5;&#x05E8;&#x05D4; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
@@ -224,6 +231,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <h2 dir="ltr">Добро пожаловать в OpenStrandStudio 2.0</h2>
     <p>Эта программа установит OpenStrandStudio на ваш компьютер. Вы пройдёте все необходимые шаги установки.</p>
     <p>Что нового в версии 2.0:</p>
+    <p>Почему 2.0? Маски теперь гораздо естественнее в работе. Плетение — основа завязывания узлов, а маски — большая его часть, поэтому это важный шаг для OpenStrand Studio.</p>
     <ul>
         <li><b>Вкладки «Пряди» и «Маски»:</b> Список слоёв теперь разделён на две вкладки, «Пряди» и «Маски», с переключателем прямо над кнопкой «Показ имён». У вкладки «Маски» свои кнопки: «Новая маска», «Удалить маску», «Снять выбор» и «Удалить все», а «Новая маска» заменяет кнопку «Маска» на панели инструментов. «Удалить все» на этой вкладке удаляет только маски, после подтверждения и одним шагом отмены. Маски теперь всегда лежат над всеми прядями, поэтому их место в списке больше не важно, а выбор слоя с другой вкладки сам открывает эту вкладку.</li>
         <li><b>Исправлены проблемы с тенями:</b> Исправлены проблемы с тенями из прошлых версий. Тени масок теперь ведут себя естественнее.</li>
@@ -234,6 +242,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <h2 dir="ltr">Tervetuloa OpenStrandStudio 2.0 -ohjelmaan</h2>
     <p>Tämä asentaa OpenStrandStudion tietokoneellesi. Sinut opastetaan asennuksen vaiheiden läpi.</p>
     <p>Mitä uutta versiossa 2.0:</p>
+    <p>Miksi 2.0? Maskit tuntuvat nyt paljon luonnollisemmilta käyttää. Kudonta on keskeistä solmujen tekemisessä, ja maskit ovat suuri osa kudontaa, joten tämä on iso askel OpenStrand Studiolle.</p>
     <ul>
         <li><b>Säikeet- ja Maskit-välilehdet:</b> Kerroslista on nyt jaettu kahteen välilehteen, Säikeet ja Maskit, ja valitsin on heti Näytä nimet -painikkeen yläpuolella. Maskit-välilehdellä on omat painikkeensa: Uusi maski, Poista maski, Poista valinnat ja Poista kaikki, ja Uusi maski korvaa työkalupalkin Maski-painikkeen. Poista kaikki poistaa tällä välilehdellä vain maskit, vahvistuksen jälkeen ja yhdellä kumoamisaskeleella. Maskit pysyvät nyt aina kaikkien säikeiden päällä, joten maskin paikalla listassa ei ole enää väliä, ja toisen välilehden kerroksen valinta avaa kyseisen välilehden puolestasi.</li>
         <li><b>Varjo-ongelmat korjattu:</b> Vanhojen versioiden varjo-ongelmat on korjattu. Maskien varjot käyttäytyvät nyt luonnollisemmin.</li>
@@ -244,6 +253,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <h2 dir="ltr">Välkommen till OpenStrandStudio 2.0</h2>
     <p>Detta installerar OpenStrandStudio på din dator. Du guidas genom stegen som behövs för att installera programmet.</p>
     <p>Nyheter i version 2.0:</p>
+    <p>Varför 2.0? Masker känns nu mycket mer naturliga att använda. Vävning är nyckeln till att knyta knutar och masker är en stor del av vävningen, så detta är ett stort steg för OpenStrand Studio.</p>
     <ul>
         <li><b>Flikarna Strängar och Masker:</b> Lagerlistan är nu uppdelad i två flikar, Strängar och Masker, med en växlare precis ovanför Visa namn. Fliken Masker har egna knappar: Ny mask, Ta bort mask, Avmarkera alla och Ta bort alla, och Ny mask ersätter Mask-knappen i verktygsfältet. Ta bort alla på den här fliken tar bara bort maskerna, efter en bekräftelse och i ett enda ångra-steg. Masker ligger nu alltid ovanför alla strängar, så var en mask står i listan spelar ingen roll längre, och när du markerar ett lager på den andra fliken öppnas den fliken åt dig.</li>
         <li><b>Skuggproblem åtgärdade:</b> Skuggproblem från äldre versioner har åtgärdats. Skuggor för masker beter sig nu mer naturligt.</li>
@@ -254,6 +264,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <h2 dir="ltr">OpenStrandStudio 2.0 へようこそ</h2>
     <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
     <p>バージョン 2.0 の新機能:</p>
+    <p>なぜ2.0なのか: マスクがずっと自然に使えるようになりました。結び目を作るには織りが重要で、マスクは織りの大きな部分を占めるため、OpenStrand Studioにとって大きな一歩です。</p>
     <ul>
         <li><b>ストランド/マスクタブ:</b> レイヤーリストが「ストランド」と「マスク」の2つのタブに分かれ、「名前を表示」のすぐ上に切り替えが付きました。マスクタブには専用の「新しいマスク」「マスクを削除」「すべて選択解除」「すべて削除」ボタンがあり、「新しいマスク」はツールバーのマスクボタンの代わりになります。このタブの「すべて削除」はマスクだけを、確認のあとに1回の元に戻す操作で削除します。マスクは常にすべてのストランドの上に保たれるため、リスト内の位置は気にする必要がなくなり、もう一方のタブのレイヤーを選ぶとそのタブが自動で開きます。</li>
         <li><b>影の問題を修正:</b> 以前のバージョンにあった影の問題を修正しました。マスクの影がより自然な動きになりました。</li>
@@ -264,6 +275,7 @@ cat > "$RESOURCES_DIR/welcome.html" << 'EOF'
     <h2 dir="ltr">欢迎使用 OpenStrandStudio 2.0</h2>
     <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
     <p>版本 2.0 的新功能:</p>
+    <p>为什么是2.0？遮罩现在用起来自然得多。编织是打绳结的关键，而遮罩是编织的重要组成部分，因此这是 OpenStrand Studio 的重要一步。</p>
     <ul>
         <li><b>绳股/遮罩标签页:</b> 图层列表现在分为“绳股”和“遮罩”两个标签页，切换按钮就在“显示名称”上方。“遮罩”标签页有自己的“新建遮罩”“删除遮罩”“取消全选”和“全部删除”按钮，“新建遮罩”取代了工具栏中的遮罩按钮。在此标签页中“全部删除”只会删除遮罩，需确认，并且只算一次撤销。遮罩现在始终位于所有绳股之上，因此它在列表中的位置不再重要，选择另一个标签页中的图层时会自动打开该标签页。</li>
         <li><b>修复阴影问题:</b> 修复了旧版本中的阴影问题，遮罩的阴影现在表现得更自然。</li>
@@ -477,6 +489,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenue dans OpenStrandStudio 2.0</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires pour installer ce logiciel.</p>
     <p>Nouveautés de la version 2.0 :</p>
+    <p>Pourquoi 2.0 ? Les masques sont maintenant beaucoup plus naturels à utiliser. Le tissage est essentiel pour faire des nœuds, et les masques en sont une grande partie : c'est une étape majeure pour OpenStrand Studio.</p>
     <ul>
         <li><b>Onglets Brins et Masques:</b> La liste des calques est maintenant séparée en deux onglets, Brins et Masques, avec un sélecteur juste au-dessus de Dessin. Noms. L'onglet Masques a ses propres boutons Nouv. Masque, Suppr. Masque, Désél. Tous et Suppr. Tout, et Nouv. Masque remplace le bouton Masque de la barre d'outils. Suppr. Tout sur cet onglet ne supprime que les masques, après confirmation, en une seule étape d'annulation. Les masques restent toujours au-dessus de tous les brins, donc leur place dans la liste n'a plus d'importance, et sélectionner un calque de l'autre onglet ouvre cet onglet pour vous.</li>
         <li><b>Ombres corrigées:</b> Des problèmes d'ombres des versions précédentes ont été corrigés. Les ombres des masques se comportent maintenant de façon plus naturelle.</li>
@@ -487,6 +500,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Welcome to OpenStrandStudio 2.0</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 2.0:</p>
+    <p>Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots, and masks are a big part of weaving, so this is a major step for OpenStrand Studio.</p>
     <ul>
         <li><b>Strands and Masks Tabs:</b> The layer list is now split into two tabs, Strands and Masks, with a switch just above Draw Names. The Masks tab has its own New Mask, Delete Mask, Deselect All and Delete All buttons, and New Mask replaces the Mask button in the toolbar. Delete All on this tab removes only the masks, after a confirmation, in one undo step. Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you.</li>
         <li><b>Fixed Shadow Issues:</b> Fixed shadow issues from older versions. Shadows for masks now behave more naturally.</li>
@@ -497,6 +511,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 2.0</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Neu in Version 2.0:</p>
+    <p>Warum 2.0? Masken fühlen sich jetzt viel natürlicher an. Weben ist entscheidend beim Knüpfen von Knoten, und Masken sind ein großer Teil davon – ein wichtiger Schritt für OpenStrand Studio.</p>
     <ul>
         <li><b>Tabs Stränge und Masken:</b> Die Ebenenliste ist jetzt in zwei Tabs aufgeteilt, Stränge und Masken, mit einem Umschalter direkt über Namen zeigen. Der Tab Masken hat eigene Schaltflächen für Neue Maske, Maske entf., Alle abwählen und Alle löschen, und Neue Maske ersetzt die Maske-Schaltfläche in der Werkzeugleiste. Alle löschen löscht in diesem Tab nur die Masken, nach einer Bestätigung und in einem einzigen Rückgängig-Schritt. Masken liegen jetzt immer über allen Strängen, ihre Position in der Liste spielt also keine Rolle mehr, und wer eine Ebene des anderen Tabs auswählt, wird automatisch zu diesem Tab gebracht.</li>
         <li><b>Schattenprobleme behoben:</b> Schattenprobleme aus älteren Versionen wurden behoben. Schatten von Masken verhalten sich jetzt natürlicher.</li>
@@ -507,6 +522,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 2.0</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità della versione 2.0:</p>
+    <p>Perché 2.0? Le maschere ora sono molto più naturali da usare. L'intreccio è fondamentale per fare i nodi e le maschere ne sono una parte importante: è un passo importante per OpenStrand Studio.</p>
     <ul>
         <li><b>Schede Trefoli e Maschere:</b> L'elenco dei livelli è ora diviso in due schede, Trefoli e Maschere, con un selettore subito sopra Disegna Nomi. La scheda Maschere ha i suoi pulsanti Nuova Masch., Elim. Maschera, Desel. Tutto ed Elimina Tutto, e Nuova Masch. sostituisce il pulsante Maschera della barra degli strumenti. Elimina Tutto in questa scheda elimina solo le maschere, dopo una conferma, in un unico passo di annullamento. Le maschere restano sempre sopra tutti i trefoli, quindi la loro posizione nell'elenco non conta più, e selezionare un livello dell'altra scheda apre quella scheda per voi.</li>
         <li><b>Problemi delle ombre risolti:</b> Sono stati risolti problemi delle ombre presenti nelle versioni precedenti. Le ombre delle maschere ora si comportano in modo più naturale.</li>
@@ -517,6 +533,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 2.0</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades de la versión 2.0:</p>
+    <p>¿Por qué 2.0? Las máscaras ahora son mucho más naturales de usar. El tejido es clave para hacer nudos y las máscaras son una gran parte del tejido, así que es un gran paso para OpenStrand Studio.</p>
     <ul>
         <li><b>Pestañas Cordones y Máscaras:</b> La lista de capas ahora se divide en dos pestañas, Cordones y Máscaras, con un selector justo encima de Ver Nombres. La pestaña Máscaras tiene sus propios botones Nueva Másc., Elim. Máscara, Deselec. Todo y Eliminar Todo, y Nueva Másc. reemplaza el botón Máscara de la barra de herramientas. Eliminar Todo en esta pestaña elimina solo las máscaras, tras una confirmación y en un único paso de deshacer. Las máscaras ahora se mantienen siempre por encima de todos los cordones, así que su posición en la lista ya no importa, y al seleccionar una capa de la otra pestaña se abre esa pestaña automáticamente.</li>
         <li><b>Problemas de sombras corregidos:</b> Se corrigieron problemas de sombras de versiones anteriores. Las sombras de las máscaras ahora se comportan de forma más natural.</li>
@@ -527,6 +544,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 2.0</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades da versão 2.0:</p>
+    <p>Porquê 2.0? As máscaras agora são muito mais naturais de usar. A tecelagem é essencial para fazer nós e as máscaras são uma grande parte dela, por isso é um grande passo para o OpenStrand Studio.</p>
     <ul>
         <li><b>Separadores Mechas e Máscaras:</b> A lista de camadas agora está dividida em dois separadores, Mechas e Máscaras, com um seletor mesmo acima de Exib. Nomes. O separador Máscaras tem os seus próprios botões Nova Másc., Excl. Máscara, Desmar. Tudo e Excluir Tudo, e Nova Másc. substitui o botão Máscara da barra de ferramentas. Excluir Tudo neste separador elimina apenas as máscaras, após uma confirmação e num único passo de anular. As máscaras ficam sempre acima de todas as mechas, por isso a sua posição na lista já não importa, e selecionar uma camada do outro separador abre esse separador por si.</li>
         <li><b>Problemas de sombras corrigidos:</b> Foram corrigidos problemas de sombras de versões anteriores. As sombras das máscaras agora comportam-se de forma mais natural.</li>
@@ -538,6 +556,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 2.0</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05DE;&#x05D4; &#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; 2.0:</p>
+    <p>&#x05DC;&#x05DE;&#x05D4; 2.0? &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D2;&#x05D9;&#x05E9;&#x05D5;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D4;&#x05E8;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05DC;&#x05E9;&#x05D9;&#x05DE;&#x05D5;&#x05E9;. &#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05DE;&#x05E8;&#x05DB;&#x05D9;&#x05D1; &#x05DE;&#x05E8;&#x05DB;&#x05D6;&#x05D9; &#x05D1;&#x05E7;&#x05E9;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05E9;&#x05E8;&#x05D9;&#x05DD;, &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D4;&#x05DF; &#x05D7;&#x05DC;&#x05E7; &#x05D2;&#x05D3;&#x05D5;&#x05DC; &#x05DE;&#x05D4;&#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05D6;&#x05D4;&#x05D5; &#x05E6;&#x05E2;&#x05D3; &#x05DE;&#x05E9;&#x05DE;&#x05E2;&#x05D5;&#x05EA;&#x05D9; &#x05E2;&#x05D1;&#x05D5;&#x05E8; OpenStrand Studio.</p>
     <ul>
         <li><b>&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;:</b> &#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05EA; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05DE;&#x05D7;&#x05D5;&#x05DC;&#x05E7;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05DC;&#x05E9;&#x05EA;&#x05D9; &#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA;, &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05E2;&#x05DD; &#x05DE;&#x05EA;&#x05D2; &#x05DE;&#x05DE;&#x05E9; &#x05DE;&#x05E2;&#x05DC; &#x05E6;&#x05D9;&#x05D9;&#x05E8; &#x05E9;&#x05DE;&#x05D5;&#x05EA;. &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D9;&#x05E9; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05DE;&#x05E9;&#x05DC;&#x05D4;: &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4;, &#x05DE;&#x05D7;&#x05E7; &#x05DE;&#x05E1;&#x05DB;&#x05D4;, &#x05D1;&#x05D8;&#x05DC; &#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC;, &#x05D5;&#x05D4;&#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05DE;&#x05D7;&#x05DC;&#x05D9;&#x05E3; &#x05D0;&#x05EA; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D1;&#x05E1;&#x05E8;&#x05D2;&#x05DC; &#x05D4;&#x05DB;&#x05DC;&#x05D9;&#x05DD;. &#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC; &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05D6;&#x05D5; &#x05DE;&#x05D5;&#x05D7;&#x05E7;&#x05EA; &#x05E8;&#x05E7; &#x05D0;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05D0;&#x05D7;&#x05E8;&#x05D9; &#x05D0;&#x05D9;&#x05E9;&#x05D5;&#x05E8;, &#x05D5;&#x05D1;&#x05E9;&#x05DC;&#x05D1; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D0;&#x05D7;&#x05D3;. &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05E0;&#x05E9;&#x05D0;&#x05E8;&#x05D5;&#x05EA; &#x05EA;&#x05DE;&#x05D9;&#x05D3; &#x05DE;&#x05E2;&#x05DC; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05DE;&#x05D9;&#x05E7;&#x05D5;&#x05DE;&#x05DF; &#x05D1;&#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05D4; &#x05DB;&#x05D1;&#x05E8; &#x05DC;&#x05D0; &#x05DE;&#x05E9;&#x05E0;&#x05D4;, &#x05D5;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E9;&#x05DB;&#x05D1;&#x05D4; &#x05DE;&#x05D4;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05E9;&#x05E0;&#x05D9;&#x05D9;&#x05D4; &#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05EA; &#x05D0;&#x05D5;&#x05EA;&#x05D4; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA;.</li>
         <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;. &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05E9;&#x05DC; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05EA;&#x05E0;&#x05D4;&#x05D2;&#x05D9;&#x05DD; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D1;&#x05E6;&#x05D5;&#x05E8;&#x05D4; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
@@ -549,6 +568,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Добро пожаловать в OpenStrandStudio 2.0</h2>
     <p>Эта программа установит OpenStrandStudio на ваш компьютер. Вы пройдёте все необходимые шаги установки.</p>
     <p>Что нового в версии 2.0:</p>
+    <p>Почему 2.0? Маски теперь гораздо естественнее в работе. Плетение — основа завязывания узлов, а маски — большая его часть, поэтому это важный шаг для OpenStrand Studio.</p>
     <ul>
         <li><b>Вкладки «Пряди» и «Маски»:</b> Список слоёв теперь разделён на две вкладки, «Пряди» и «Маски», с переключателем прямо над кнопкой «Показ имён». У вкладки «Маски» свои кнопки: «Новая маска», «Удалить маску», «Снять выбор» и «Удалить все», а «Новая маска» заменяет кнопку «Маска» на панели инструментов. «Удалить все» на этой вкладке удаляет только маски, после подтверждения и одним шагом отмены. Маски теперь всегда лежат над всеми прядями, поэтому их место в списке больше не важно, а выбор слоя с другой вкладки сам открывает эту вкладку.</li>
         <li><b>Исправлены проблемы с тенями:</b> Исправлены проблемы с тенями из прошлых версий. Тени масок теперь ведут себя естественнее.</li>
@@ -559,6 +579,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Tervetuloa OpenStrandStudio 2.0 -ohjelmaan</h2>
     <p>Tämä asentaa OpenStrandStudion tietokoneellesi. Sinut opastetaan asennuksen vaiheiden läpi.</p>
     <p>Mitä uutta versiossa 2.0:</p>
+    <p>Miksi 2.0? Maskit tuntuvat nyt paljon luonnollisemmilta käyttää. Kudonta on keskeistä solmujen tekemisessä, ja maskit ovat suuri osa kudontaa, joten tämä on iso askel OpenStrand Studiolle.</p>
     <ul>
         <li><b>Säikeet- ja Maskit-välilehdet:</b> Kerroslista on nyt jaettu kahteen välilehteen, Säikeet ja Maskit, ja valitsin on heti Näytä nimet -painikkeen yläpuolella. Maskit-välilehdellä on omat painikkeensa: Uusi maski, Poista maski, Poista valinnat ja Poista kaikki, ja Uusi maski korvaa työkalupalkin Maski-painikkeen. Poista kaikki poistaa tällä välilehdellä vain maskit, vahvistuksen jälkeen ja yhdellä kumoamisaskeleella. Maskit pysyvät nyt aina kaikkien säikeiden päällä, joten maskin paikalla listassa ei ole enää väliä, ja toisen välilehden kerroksen valinta avaa kyseisen välilehden puolestasi.</li>
         <li><b>Varjo-ongelmat korjattu:</b> Vanhojen versioiden varjo-ongelmat on korjattu. Maskien varjot käyttäytyvät nyt luonnollisemmin.</li>
@@ -569,6 +590,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Välkommen till OpenStrandStudio 2.0</h2>
     <p>Detta installerar OpenStrandStudio på din dator. Du guidas genom stegen som behövs för att installera programmet.</p>
     <p>Nyheter i version 2.0:</p>
+    <p>Varför 2.0? Masker känns nu mycket mer naturliga att använda. Vävning är nyckeln till att knyta knutar och masker är en stor del av vävningen, så detta är ett stort steg för OpenStrand Studio.</p>
     <ul>
         <li><b>Flikarna Strängar och Masker:</b> Lagerlistan är nu uppdelad i två flikar, Strängar och Masker, med en växlare precis ovanför Visa namn. Fliken Masker har egna knappar: Ny mask, Ta bort mask, Avmarkera alla och Ta bort alla, och Ny mask ersätter Mask-knappen i verktygsfältet. Ta bort alla på den här fliken tar bara bort maskerna, efter en bekräftelse och i ett enda ångra-steg. Masker ligger nu alltid ovanför alla strängar, så var en mask står i listan spelar ingen roll längre, och när du markerar ett lager på den andra fliken öppnas den fliken åt dig.</li>
         <li><b>Skuggproblem åtgärdade:</b> Skuggproblem från äldre versioner har åtgärdats. Skuggor för masker beter sig nu mer naturligt.</li>
@@ -579,6 +601,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">OpenStrandStudio 2.0 へようこそ</h2>
     <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
     <p>バージョン 2.0 の新機能:</p>
+    <p>なぜ2.0なのか: マスクがずっと自然に使えるようになりました。結び目を作るには織りが重要で、マスクは織りの大きな部分を占めるため、OpenStrand Studioにとって大きな一歩です。</p>
     <ul>
         <li><b>ストランド/マスクタブ:</b> レイヤーリストが「ストランド」と「マスク」の2つのタブに分かれ、「名前を表示」のすぐ上に切り替えが付きました。マスクタブには専用の「新しいマスク」「マスクを削除」「すべて選択解除」「すべて削除」ボタンがあり、「新しいマスク」はツールバーのマスクボタンの代わりになります。このタブの「すべて削除」はマスクだけを、確認のあとに1回の元に戻す操作で削除します。マスクは常にすべてのストランドの上に保たれるため、リスト内の位置は気にする必要がなくなり、もう一方のタブのレイヤーを選ぶとそのタブが自動で開きます。</li>
         <li><b>影の問題を修正:</b> 以前のバージョンにあった影の問題を修正しました。マスクの影がより自然な動きになりました。</li>
@@ -589,6 +612,7 @@ cat > "$RESOURCES_DIR/fr.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">欢迎使用 OpenStrandStudio 2.0</h2>
     <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
     <p>版本 2.0 的新功能:</p>
+    <p>为什么是2.0？遮罩现在用起来自然得多。编织是打绳结的关键，而遮罩是编织的重要组成部分，因此这是 OpenStrand Studio 的重要一步。</p>
     <ul>
         <li><b>绳股/遮罩标签页:</b> 图层列表现在分为“绳股”和“遮罩”两个标签页，切换按钮就在“显示名称”上方。“遮罩”标签页有自己的“新建遮罩”“删除遮罩”“取消全选”和“全部删除”按钮，“新建遮罩”取代了工具栏中的遮罩按钮。在此标签页中“全部删除”只会删除遮罩，需确认，并且只算一次撤销。遮罩现在始终位于所有绳股之上，因此它在列表中的位置不再重要，选择另一个标签页中的图层时会自动打开该标签页。</li>
         <li><b>修复阴影问题:</b> 修复了旧版本中的阴影问题，遮罩的阴影现在表现得更自然。</li>
@@ -610,6 +634,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 2.0</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Neu in Version 2.0:</p>
+    <p>Warum 2.0? Masken fühlen sich jetzt viel natürlicher an. Weben ist entscheidend beim Knüpfen von Knoten, und Masken sind ein großer Teil davon – ein wichtiger Schritt für OpenStrand Studio.</p>
     <ul>
         <li><b>Tabs Stränge und Masken:</b> Die Ebenenliste ist jetzt in zwei Tabs aufgeteilt, Stränge und Masken, mit einem Umschalter direkt über Namen zeigen. Der Tab Masken hat eigene Schaltflächen für Neue Maske, Maske entf., Alle abwählen und Alle löschen, und Neue Maske ersetzt die Maske-Schaltfläche in der Werkzeugleiste. Alle löschen löscht in diesem Tab nur die Masken, nach einer Bestätigung und in einem einzigen Rückgängig-Schritt. Masken liegen jetzt immer über allen Strängen, ihre Position in der Liste spielt also keine Rolle mehr, und wer eine Ebene des anderen Tabs auswählt, wird automatisch zu diesem Tab gebracht.</li>
         <li><b>Schattenprobleme behoben:</b> Schattenprobleme aus älteren Versionen wurden behoben. Schatten von Masken verhalten sich jetzt natürlicher.</li>
@@ -620,6 +645,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Welcome to OpenStrandStudio 2.0</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 2.0:</p>
+    <p>Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots, and masks are a big part of weaving, so this is a major step for OpenStrand Studio.</p>
     <ul>
         <li><b>Strands and Masks Tabs:</b> The layer list is now split into two tabs, Strands and Masks, with a switch just above Draw Names. The Masks tab has its own New Mask, Delete Mask, Deselect All and Delete All buttons, and New Mask replaces the Mask button in the toolbar. Delete All on this tab removes only the masks, after a confirmation, in one undo step. Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you.</li>
         <li><b>Fixed Shadow Issues:</b> Fixed shadow issues from older versions. Shadows for masks now behave more naturally.</li>
@@ -630,6 +656,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenue dans OpenStrandStudio 2.0</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés de la version 2.0 :</p>
+    <p>Pourquoi 2.0 ? Les masques sont maintenant beaucoup plus naturels à utiliser. Le tissage est essentiel pour faire des nœuds, et les masques en sont une grande partie : c'est une étape majeure pour OpenStrand Studio.</p>
     <ul>
         <li><b>Onglets Brins et Masques:</b> La liste des calques est maintenant séparée en deux onglets, Brins et Masques, avec un sélecteur juste au-dessus de Dessin. Noms. L'onglet Masques a ses propres boutons Nouv. Masque, Suppr. Masque, Désél. Tous et Suppr. Tout, et Nouv. Masque remplace le bouton Masque de la barre d'outils. Suppr. Tout sur cet onglet ne supprime que les masques, après confirmation, en une seule étape d'annulation. Les masques restent toujours au-dessus de tous les brins, donc leur place dans la liste n'a plus d'importance, et sélectionner un calque de l'autre onglet ouvre cet onglet pour vous.</li>
         <li><b>Ombres corrigées:</b> Des problèmes d'ombres des versions précédentes ont été corrigés. Les ombres des masques se comportent maintenant de façon plus naturelle.</li>
@@ -640,6 +667,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 2.0</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità della versione 2.0:</p>
+    <p>Perché 2.0? Le maschere ora sono molto più naturali da usare. L'intreccio è fondamentale per fare i nodi e le maschere ne sono una parte importante: è un passo importante per OpenStrand Studio.</p>
     <ul>
         <li><b>Schede Trefoli e Maschere:</b> L'elenco dei livelli è ora diviso in due schede, Trefoli e Maschere, con un selettore subito sopra Disegna Nomi. La scheda Maschere ha i suoi pulsanti Nuova Masch., Elim. Maschera, Desel. Tutto ed Elimina Tutto, e Nuova Masch. sostituisce il pulsante Maschera della barra degli strumenti. Elimina Tutto in questa scheda elimina solo le maschere, dopo una conferma, in un unico passo di annullamento. Le maschere restano sempre sopra tutti i trefoli, quindi la loro posizione nell'elenco non conta più, e selezionare un livello dell'altra scheda apre quella scheda per voi.</li>
         <li><b>Problemi delle ombre risolti:</b> Sono stati risolti problemi delle ombre presenti nelle versioni precedenti. Le ombre delle maschere ora si comportano in modo più naturale.</li>
@@ -650,6 +678,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 2.0</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades de la versión 2.0:</p>
+    <p>¿Por qué 2.0? Las máscaras ahora son mucho más naturales de usar. El tejido es clave para hacer nudos y las máscaras son una gran parte del tejido, así que es un gran paso para OpenStrand Studio.</p>
     <ul>
         <li><b>Pestañas Cordones y Máscaras:</b> La lista de capas ahora se divide en dos pestañas, Cordones y Máscaras, con un selector justo encima de Ver Nombres. La pestaña Máscaras tiene sus propios botones Nueva Másc., Elim. Máscara, Deselec. Todo y Eliminar Todo, y Nueva Másc. reemplaza el botón Máscara de la barra de herramientas. Eliminar Todo en esta pestaña elimina solo las máscaras, tras una confirmación y en un único paso de deshacer. Las máscaras ahora se mantienen siempre por encima de todos los cordones, así que su posición en la lista ya no importa, y al seleccionar una capa de la otra pestaña se abre esa pestaña automáticamente.</li>
         <li><b>Problemas de sombras corregidos:</b> Se corrigieron problemas de sombras de versiones anteriores. Las sombras de las máscaras ahora se comportan de forma más natural.</li>
@@ -660,6 +689,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 2.0</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades da versão 2.0:</p>
+    <p>Porquê 2.0? As máscaras agora são muito mais naturais de usar. A tecelagem é essencial para fazer nós e as máscaras são uma grande parte dela, por isso é um grande passo para o OpenStrand Studio.</p>
     <ul>
         <li><b>Separadores Mechas e Máscaras:</b> A lista de camadas agora está dividida em dois separadores, Mechas e Máscaras, com um seletor mesmo acima de Exib. Nomes. O separador Máscaras tem os seus próprios botões Nova Másc., Excl. Máscara, Desmar. Tudo e Excluir Tudo, e Nova Másc. substitui o botão Máscara da barra de ferramentas. Excluir Tudo neste separador elimina apenas as máscaras, após uma confirmação e num único passo de anular. As máscaras ficam sempre acima de todas as mechas, por isso a sua posição na lista já não importa, e selecionar uma camada do outro separador abre esse separador por si.</li>
         <li><b>Problemas de sombras corrigidos:</b> Foram corrigidos problemas de sombras de versões anteriores. As sombras das máscaras agora comportam-se de forma mais natural.</li>
@@ -671,6 +701,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 2.0</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05DE;&#x05D4; &#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; 2.0:</p>
+    <p>&#x05DC;&#x05DE;&#x05D4; 2.0? &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D2;&#x05D9;&#x05E9;&#x05D5;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D4;&#x05E8;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05DC;&#x05E9;&#x05D9;&#x05DE;&#x05D5;&#x05E9;. &#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05DE;&#x05E8;&#x05DB;&#x05D9;&#x05D1; &#x05DE;&#x05E8;&#x05DB;&#x05D6;&#x05D9; &#x05D1;&#x05E7;&#x05E9;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05E9;&#x05E8;&#x05D9;&#x05DD;, &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D4;&#x05DF; &#x05D7;&#x05DC;&#x05E7; &#x05D2;&#x05D3;&#x05D5;&#x05DC; &#x05DE;&#x05D4;&#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05D6;&#x05D4;&#x05D5; &#x05E6;&#x05E2;&#x05D3; &#x05DE;&#x05E9;&#x05DE;&#x05E2;&#x05D5;&#x05EA;&#x05D9; &#x05E2;&#x05D1;&#x05D5;&#x05E8; OpenStrand Studio.</p>
     <ul>
         <li><b>&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;:</b> &#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05EA; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05DE;&#x05D7;&#x05D5;&#x05DC;&#x05E7;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05DC;&#x05E9;&#x05EA;&#x05D9; &#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA;, &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05E2;&#x05DD; &#x05DE;&#x05EA;&#x05D2; &#x05DE;&#x05DE;&#x05E9; &#x05DE;&#x05E2;&#x05DC; &#x05E6;&#x05D9;&#x05D9;&#x05E8; &#x05E9;&#x05DE;&#x05D5;&#x05EA;. &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D9;&#x05E9; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05DE;&#x05E9;&#x05DC;&#x05D4;: &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4;, &#x05DE;&#x05D7;&#x05E7; &#x05DE;&#x05E1;&#x05DB;&#x05D4;, &#x05D1;&#x05D8;&#x05DC; &#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC;, &#x05D5;&#x05D4;&#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05DE;&#x05D7;&#x05DC;&#x05D9;&#x05E3; &#x05D0;&#x05EA; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D1;&#x05E1;&#x05E8;&#x05D2;&#x05DC; &#x05D4;&#x05DB;&#x05DC;&#x05D9;&#x05DD;. &#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC; &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05D6;&#x05D5; &#x05DE;&#x05D5;&#x05D7;&#x05E7;&#x05EA; &#x05E8;&#x05E7; &#x05D0;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05D0;&#x05D7;&#x05E8;&#x05D9; &#x05D0;&#x05D9;&#x05E9;&#x05D5;&#x05E8;, &#x05D5;&#x05D1;&#x05E9;&#x05DC;&#x05D1; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D0;&#x05D7;&#x05D3;. &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05E0;&#x05E9;&#x05D0;&#x05E8;&#x05D5;&#x05EA; &#x05EA;&#x05DE;&#x05D9;&#x05D3; &#x05DE;&#x05E2;&#x05DC; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05DE;&#x05D9;&#x05E7;&#x05D5;&#x05DE;&#x05DF; &#x05D1;&#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05D4; &#x05DB;&#x05D1;&#x05E8; &#x05DC;&#x05D0; &#x05DE;&#x05E9;&#x05E0;&#x05D4;, &#x05D5;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E9;&#x05DB;&#x05D1;&#x05D4; &#x05DE;&#x05D4;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05E9;&#x05E0;&#x05D9;&#x05D9;&#x05D4; &#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05EA; &#x05D0;&#x05D5;&#x05EA;&#x05D4; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA;.</li>
         <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;. &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05E9;&#x05DC; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05EA;&#x05E0;&#x05D4;&#x05D2;&#x05D9;&#x05DD; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D1;&#x05E6;&#x05D5;&#x05E8;&#x05D4; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
@@ -682,6 +713,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Добро пожаловать в OpenStrandStudio 2.0</h2>
     <p>Эта программа установит OpenStrandStudio на ваш компьютер. Вы пройдёте все необходимые шаги установки.</p>
     <p>Что нового в версии 2.0:</p>
+    <p>Почему 2.0? Маски теперь гораздо естественнее в работе. Плетение — основа завязывания узлов, а маски — большая его часть, поэтому это важный шаг для OpenStrand Studio.</p>
     <ul>
         <li><b>Вкладки «Пряди» и «Маски»:</b> Список слоёв теперь разделён на две вкладки, «Пряди» и «Маски», с переключателем прямо над кнопкой «Показ имён». У вкладки «Маски» свои кнопки: «Новая маска», «Удалить маску», «Снять выбор» и «Удалить все», а «Новая маска» заменяет кнопку «Маска» на панели инструментов. «Удалить все» на этой вкладке удаляет только маски, после подтверждения и одним шагом отмены. Маски теперь всегда лежат над всеми прядями, поэтому их место в списке больше не важно, а выбор слоя с другой вкладки сам открывает эту вкладку.</li>
         <li><b>Исправлены проблемы с тенями:</b> Исправлены проблемы с тенями из прошлых версий. Тени масок теперь ведут себя естественнее.</li>
@@ -692,6 +724,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Tervetuloa OpenStrandStudio 2.0 -ohjelmaan</h2>
     <p>Tämä asentaa OpenStrandStudion tietokoneellesi. Sinut opastetaan asennuksen vaiheiden läpi.</p>
     <p>Mitä uutta versiossa 2.0:</p>
+    <p>Miksi 2.0? Maskit tuntuvat nyt paljon luonnollisemmilta käyttää. Kudonta on keskeistä solmujen tekemisessä, ja maskit ovat suuri osa kudontaa, joten tämä on iso askel OpenStrand Studiolle.</p>
     <ul>
         <li><b>Säikeet- ja Maskit-välilehdet:</b> Kerroslista on nyt jaettu kahteen välilehteen, Säikeet ja Maskit, ja valitsin on heti Näytä nimet -painikkeen yläpuolella. Maskit-välilehdellä on omat painikkeensa: Uusi maski, Poista maski, Poista valinnat ja Poista kaikki, ja Uusi maski korvaa työkalupalkin Maski-painikkeen. Poista kaikki poistaa tällä välilehdellä vain maskit, vahvistuksen jälkeen ja yhdellä kumoamisaskeleella. Maskit pysyvät nyt aina kaikkien säikeiden päällä, joten maskin paikalla listassa ei ole enää väliä, ja toisen välilehden kerroksen valinta avaa kyseisen välilehden puolestasi.</li>
         <li><b>Varjo-ongelmat korjattu:</b> Vanhojen versioiden varjo-ongelmat on korjattu. Maskien varjot käyttäytyvät nyt luonnollisemmin.</li>
@@ -702,6 +735,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Välkommen till OpenStrandStudio 2.0</h2>
     <p>Detta installerar OpenStrandStudio på din dator. Du guidas genom stegen som behövs för att installera programmet.</p>
     <p>Nyheter i version 2.0:</p>
+    <p>Varför 2.0? Masker känns nu mycket mer naturliga att använda. Vävning är nyckeln till att knyta knutar och masker är en stor del av vävningen, så detta är ett stort steg för OpenStrand Studio.</p>
     <ul>
         <li><b>Flikarna Strängar och Masker:</b> Lagerlistan är nu uppdelad i två flikar, Strängar och Masker, med en växlare precis ovanför Visa namn. Fliken Masker har egna knappar: Ny mask, Ta bort mask, Avmarkera alla och Ta bort alla, och Ny mask ersätter Mask-knappen i verktygsfältet. Ta bort alla på den här fliken tar bara bort maskerna, efter en bekräftelse och i ett enda ångra-steg. Masker ligger nu alltid ovanför alla strängar, så var en mask står i listan spelar ingen roll längre, och när du markerar ett lager på den andra fliken öppnas den fliken åt dig.</li>
         <li><b>Skuggproblem åtgärdade:</b> Skuggproblem från äldre versioner har åtgärdats. Skuggor för masker beter sig nu mer naturligt.</li>
@@ -712,6 +746,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">OpenStrandStudio 2.0 へようこそ</h2>
     <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
     <p>バージョン 2.0 の新機能:</p>
+    <p>なぜ2.0なのか: マスクがずっと自然に使えるようになりました。結び目を作るには織りが重要で、マスクは織りの大きな部分を占めるため、OpenStrand Studioにとって大きな一歩です。</p>
     <ul>
         <li><b>ストランド/マスクタブ:</b> レイヤーリストが「ストランド」と「マスク」の2つのタブに分かれ、「名前を表示」のすぐ上に切り替えが付きました。マスクタブには専用の「新しいマスク」「マスクを削除」「すべて選択解除」「すべて削除」ボタンがあり、「新しいマスク」はツールバーのマスクボタンの代わりになります。このタブの「すべて削除」はマスクだけを、確認のあとに1回の元に戻す操作で削除します。マスクは常にすべてのストランドの上に保たれるため、リスト内の位置は気にする必要がなくなり、もう一方のタブのレイヤーを選ぶとそのタブが自動で開きます。</li>
         <li><b>影の問題を修正:</b> 以前のバージョンにあった影の問題を修正しました。マスクの影がより自然な動きになりました。</li>
@@ -722,6 +757,7 @@ cat > "$RESOURCES_DIR/de.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">欢迎使用 OpenStrandStudio 2.0</h2>
     <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
     <p>版本 2.0 的新功能:</p>
+    <p>为什么是2.0？遮罩现在用起来自然得多。编织是打绳结的关键，而遮罩是编织的重要组成部分，因此这是 OpenStrand Studio 的重要一步。</p>
     <ul>
         <li><b>绳股/遮罩标签页:</b> 图层列表现在分为“绳股”和“遮罩”两个标签页，切换按钮就在“显示名称”上方。“遮罩”标签页有自己的“新建遮罩”“删除遮罩”“取消全选”和“全部删除”按钮，“新建遮罩”取代了工具栏中的遮罩按钮。在此标签页中“全部删除”只会删除遮罩，需确认，并且只算一次撤销。遮罩现在始终位于所有绳股之上，因此它在列表中的位置不再重要，选择另一个标签页中的图层时会自动打开该标签页。</li>
         <li><b>修复阴影问题:</b> 修复了旧版本中的阴影问题，遮罩的阴影现在表现得更自然。</li>
@@ -743,6 +779,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 2.0</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità della versione 2.0:</p>
+    <p>Perché 2.0? Le maschere ora sono molto più naturali da usare. L'intreccio è fondamentale per fare i nodi e le maschere ne sono una parte importante: è un passo importante per OpenStrand Studio.</p>
     <ul>
         <li><b>Schede Trefoli e Maschere:</b> L'elenco dei livelli è ora diviso in due schede, Trefoli e Maschere, con un selettore subito sopra Disegna Nomi. La scheda Maschere ha i suoi pulsanti Nuova Masch., Elim. Maschera, Desel. Tutto ed Elimina Tutto, e Nuova Masch. sostituisce il pulsante Maschera della barra degli strumenti. Elimina Tutto in questa scheda elimina solo le maschere, dopo una conferma, in un unico passo di annullamento. Le maschere restano sempre sopra tutti i trefoli, quindi la loro posizione nell'elenco non conta più, e selezionare un livello dell'altra scheda apre quella scheda per voi.</li>
         <li><b>Problemi delle ombre risolti:</b> Sono stati risolti problemi delle ombre presenti nelle versioni precedenti. Le ombre delle maschere ora si comportano in modo più naturale.</li>
@@ -753,6 +790,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Welcome to OpenStrandStudio 2.0</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 2.0:</p>
+    <p>Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots, and masks are a big part of weaving, so this is a major step for OpenStrand Studio.</p>
     <ul>
         <li><b>Strands and Masks Tabs:</b> The layer list is now split into two tabs, Strands and Masks, with a switch just above Draw Names. The Masks tab has its own New Mask, Delete Mask, Deselect All and Delete All buttons, and New Mask replaces the Mask button in the toolbar. Delete All on this tab removes only the masks, after a confirmation, in one undo step. Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you.</li>
         <li><b>Fixed Shadow Issues:</b> Fixed shadow issues from older versions. Shadows for masks now behave more naturally.</li>
@@ -763,6 +801,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 2.0</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Neu in Version 2.0:</p>
+    <p>Warum 2.0? Masken fühlen sich jetzt viel natürlicher an. Weben ist entscheidend beim Knüpfen von Knoten, und Masken sind ein großer Teil davon – ein wichtiger Schritt für OpenStrand Studio.</p>
     <ul>
         <li><b>Tabs Stränge und Masken:</b> Die Ebenenliste ist jetzt in zwei Tabs aufgeteilt, Stränge und Masken, mit einem Umschalter direkt über Namen zeigen. Der Tab Masken hat eigene Schaltflächen für Neue Maske, Maske entf., Alle abwählen und Alle löschen, und Neue Maske ersetzt die Maske-Schaltfläche in der Werkzeugleiste. Alle löschen löscht in diesem Tab nur die Masken, nach einer Bestätigung und in einem einzigen Rückgängig-Schritt. Masken liegen jetzt immer über allen Strängen, ihre Position in der Liste spielt also keine Rolle mehr, und wer eine Ebene des anderen Tabs auswählt, wird automatisch zu diesem Tab gebracht.</li>
         <li><b>Schattenprobleme behoben:</b> Schattenprobleme aus älteren Versionen wurden behoben. Schatten von Masken verhalten sich jetzt natürlicher.</li>
@@ -773,6 +812,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenue dans OpenStrandStudio 2.0</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés de la version 2.0 :</p>
+    <p>Pourquoi 2.0 ? Les masques sont maintenant beaucoup plus naturels à utiliser. Le tissage est essentiel pour faire des nœuds, et les masques en sont une grande partie : c'est une étape majeure pour OpenStrand Studio.</p>
     <ul>
         <li><b>Onglets Brins et Masques:</b> La liste des calques est maintenant séparée en deux onglets, Brins et Masques, avec un sélecteur juste au-dessus de Dessin. Noms. L'onglet Masques a ses propres boutons Nouv. Masque, Suppr. Masque, Désél. Tous et Suppr. Tout, et Nouv. Masque remplace le bouton Masque de la barre d'outils. Suppr. Tout sur cet onglet ne supprime que les masques, après confirmation, en une seule étape d'annulation. Les masques restent toujours au-dessus de tous les brins, donc leur place dans la liste n'a plus d'importance, et sélectionner un calque de l'autre onglet ouvre cet onglet pour vous.</li>
         <li><b>Ombres corrigées:</b> Des problèmes d'ombres des versions précédentes ont été corrigés. Les ombres des masques se comportent maintenant de façon plus naturelle.</li>
@@ -783,6 +823,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 2.0</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades de la versión 2.0:</p>
+    <p>¿Por qué 2.0? Las máscaras ahora son mucho más naturales de usar. El tejido es clave para hacer nudos y las máscaras son una gran parte del tejido, así que es un gran paso para OpenStrand Studio.</p>
     <ul>
         <li><b>Pestañas Cordones y Máscaras:</b> La lista de capas ahora se divide en dos pestañas, Cordones y Máscaras, con un selector justo encima de Ver Nombres. La pestaña Máscaras tiene sus propios botones Nueva Másc., Elim. Máscara, Deselec. Todo y Eliminar Todo, y Nueva Másc. reemplaza el botón Máscara de la barra de herramientas. Eliminar Todo en esta pestaña elimina solo las máscaras, tras una confirmación y en un único paso de deshacer. Las máscaras ahora se mantienen siempre por encima de todos los cordones, así que su posición en la lista ya no importa, y al seleccionar una capa de la otra pestaña se abre esa pestaña automáticamente.</li>
         <li><b>Problemas de sombras corregidos:</b> Se corrigieron problemas de sombras de versiones anteriores. Las sombras de las máscaras ahora se comportan de forma más natural.</li>
@@ -793,6 +834,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 2.0</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades da versão 2.0:</p>
+    <p>Porquê 2.0? As máscaras agora são muito mais naturais de usar. A tecelagem é essencial para fazer nós e as máscaras são uma grande parte dela, por isso é um grande passo para o OpenStrand Studio.</p>
     <ul>
         <li><b>Separadores Mechas e Máscaras:</b> A lista de camadas agora está dividida em dois separadores, Mechas e Máscaras, com um seletor mesmo acima de Exib. Nomes. O separador Máscaras tem os seus próprios botões Nova Másc., Excl. Máscara, Desmar. Tudo e Excluir Tudo, e Nova Másc. substitui o botão Máscara da barra de ferramentas. Excluir Tudo neste separador elimina apenas as máscaras, após uma confirmação e num único passo de anular. As máscaras ficam sempre acima de todas as mechas, por isso a sua posição na lista já não importa, e selecionar uma camada do outro separador abre esse separador por si.</li>
         <li><b>Problemas de sombras corrigidos:</b> Foram corrigidos problemas de sombras de versões anteriores. As sombras das máscaras agora comportam-se de forma mais natural.</li>
@@ -804,6 +846,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 2.0</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05DE;&#x05D4; &#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; 2.0:</p>
+    <p>&#x05DC;&#x05DE;&#x05D4; 2.0? &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D2;&#x05D9;&#x05E9;&#x05D5;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D4;&#x05E8;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05DC;&#x05E9;&#x05D9;&#x05DE;&#x05D5;&#x05E9;. &#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05DE;&#x05E8;&#x05DB;&#x05D9;&#x05D1; &#x05DE;&#x05E8;&#x05DB;&#x05D6;&#x05D9; &#x05D1;&#x05E7;&#x05E9;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05E9;&#x05E8;&#x05D9;&#x05DD;, &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D4;&#x05DF; &#x05D7;&#x05DC;&#x05E7; &#x05D2;&#x05D3;&#x05D5;&#x05DC; &#x05DE;&#x05D4;&#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05D6;&#x05D4;&#x05D5; &#x05E6;&#x05E2;&#x05D3; &#x05DE;&#x05E9;&#x05DE;&#x05E2;&#x05D5;&#x05EA;&#x05D9; &#x05E2;&#x05D1;&#x05D5;&#x05E8; OpenStrand Studio.</p>
     <ul>
         <li><b>&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;:</b> &#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05EA; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05DE;&#x05D7;&#x05D5;&#x05DC;&#x05E7;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05DC;&#x05E9;&#x05EA;&#x05D9; &#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA;, &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05E2;&#x05DD; &#x05DE;&#x05EA;&#x05D2; &#x05DE;&#x05DE;&#x05E9; &#x05DE;&#x05E2;&#x05DC; &#x05E6;&#x05D9;&#x05D9;&#x05E8; &#x05E9;&#x05DE;&#x05D5;&#x05EA;. &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D9;&#x05E9; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05DE;&#x05E9;&#x05DC;&#x05D4;: &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4;, &#x05DE;&#x05D7;&#x05E7; &#x05DE;&#x05E1;&#x05DB;&#x05D4;, &#x05D1;&#x05D8;&#x05DC; &#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC;, &#x05D5;&#x05D4;&#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05DE;&#x05D7;&#x05DC;&#x05D9;&#x05E3; &#x05D0;&#x05EA; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D1;&#x05E1;&#x05E8;&#x05D2;&#x05DC; &#x05D4;&#x05DB;&#x05DC;&#x05D9;&#x05DD;. &#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC; &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05D6;&#x05D5; &#x05DE;&#x05D5;&#x05D7;&#x05E7;&#x05EA; &#x05E8;&#x05E7; &#x05D0;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05D0;&#x05D7;&#x05E8;&#x05D9; &#x05D0;&#x05D9;&#x05E9;&#x05D5;&#x05E8;, &#x05D5;&#x05D1;&#x05E9;&#x05DC;&#x05D1; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D0;&#x05D7;&#x05D3;. &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05E0;&#x05E9;&#x05D0;&#x05E8;&#x05D5;&#x05EA; &#x05EA;&#x05DE;&#x05D9;&#x05D3; &#x05DE;&#x05E2;&#x05DC; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05DE;&#x05D9;&#x05E7;&#x05D5;&#x05DE;&#x05DF; &#x05D1;&#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05D4; &#x05DB;&#x05D1;&#x05E8; &#x05DC;&#x05D0; &#x05DE;&#x05E9;&#x05E0;&#x05D4;, &#x05D5;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E9;&#x05DB;&#x05D1;&#x05D4; &#x05DE;&#x05D4;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05E9;&#x05E0;&#x05D9;&#x05D9;&#x05D4; &#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05EA; &#x05D0;&#x05D5;&#x05EA;&#x05D4; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA;.</li>
         <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;. &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05E9;&#x05DC; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05EA;&#x05E0;&#x05D4;&#x05D2;&#x05D9;&#x05DD; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D1;&#x05E6;&#x05D5;&#x05E8;&#x05D4; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
@@ -815,6 +858,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Добро пожаловать в OpenStrandStudio 2.0</h2>
     <p>Эта программа установит OpenStrandStudio на ваш компьютер. Вы пройдёте все необходимые шаги установки.</p>
     <p>Что нового в версии 2.0:</p>
+    <p>Почему 2.0? Маски теперь гораздо естественнее в работе. Плетение — основа завязывания узлов, а маски — большая его часть, поэтому это важный шаг для OpenStrand Studio.</p>
     <ul>
         <li><b>Вкладки «Пряди» и «Маски»:</b> Список слоёв теперь разделён на две вкладки, «Пряди» и «Маски», с переключателем прямо над кнопкой «Показ имён». У вкладки «Маски» свои кнопки: «Новая маска», «Удалить маску», «Снять выбор» и «Удалить все», а «Новая маска» заменяет кнопку «Маска» на панели инструментов. «Удалить все» на этой вкладке удаляет только маски, после подтверждения и одним шагом отмены. Маски теперь всегда лежат над всеми прядями, поэтому их место в списке больше не важно, а выбор слоя с другой вкладки сам открывает эту вкладку.</li>
         <li><b>Исправлены проблемы с тенями:</b> Исправлены проблемы с тенями из прошлых версий. Тени масок теперь ведут себя естественнее.</li>
@@ -825,6 +869,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Tervetuloa OpenStrandStudio 2.0 -ohjelmaan</h2>
     <p>Tämä asentaa OpenStrandStudion tietokoneellesi. Sinut opastetaan asennuksen vaiheiden läpi.</p>
     <p>Mitä uutta versiossa 2.0:</p>
+    <p>Miksi 2.0? Maskit tuntuvat nyt paljon luonnollisemmilta käyttää. Kudonta on keskeistä solmujen tekemisessä, ja maskit ovat suuri osa kudontaa, joten tämä on iso askel OpenStrand Studiolle.</p>
     <ul>
         <li><b>Säikeet- ja Maskit-välilehdet:</b> Kerroslista on nyt jaettu kahteen välilehteen, Säikeet ja Maskit, ja valitsin on heti Näytä nimet -painikkeen yläpuolella. Maskit-välilehdellä on omat painikkeensa: Uusi maski, Poista maski, Poista valinnat ja Poista kaikki, ja Uusi maski korvaa työkalupalkin Maski-painikkeen. Poista kaikki poistaa tällä välilehdellä vain maskit, vahvistuksen jälkeen ja yhdellä kumoamisaskeleella. Maskit pysyvät nyt aina kaikkien säikeiden päällä, joten maskin paikalla listassa ei ole enää väliä, ja toisen välilehden kerroksen valinta avaa kyseisen välilehden puolestasi.</li>
         <li><b>Varjo-ongelmat korjattu:</b> Vanhojen versioiden varjo-ongelmat on korjattu. Maskien varjot käyttäytyvät nyt luonnollisemmin.</li>
@@ -835,6 +880,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Välkommen till OpenStrandStudio 2.0</h2>
     <p>Detta installerar OpenStrandStudio på din dator. Du guidas genom stegen som behövs för att installera programmet.</p>
     <p>Nyheter i version 2.0:</p>
+    <p>Varför 2.0? Masker känns nu mycket mer naturliga att använda. Vävning är nyckeln till att knyta knutar och masker är en stor del av vävningen, så detta är ett stort steg för OpenStrand Studio.</p>
     <ul>
         <li><b>Flikarna Strängar och Masker:</b> Lagerlistan är nu uppdelad i två flikar, Strängar och Masker, med en växlare precis ovanför Visa namn. Fliken Masker har egna knappar: Ny mask, Ta bort mask, Avmarkera alla och Ta bort alla, och Ny mask ersätter Mask-knappen i verktygsfältet. Ta bort alla på den här fliken tar bara bort maskerna, efter en bekräftelse och i ett enda ångra-steg. Masker ligger nu alltid ovanför alla strängar, så var en mask står i listan spelar ingen roll längre, och när du markerar ett lager på den andra fliken öppnas den fliken åt dig.</li>
         <li><b>Skuggproblem åtgärdade:</b> Skuggproblem från äldre versioner har åtgärdats. Skuggor för masker beter sig nu mer naturligt.</li>
@@ -845,6 +891,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">OpenStrandStudio 2.0 へようこそ</h2>
     <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
     <p>バージョン 2.0 の新機能:</p>
+    <p>なぜ2.0なのか: マスクがずっと自然に使えるようになりました。結び目を作るには織りが重要で、マスクは織りの大きな部分を占めるため、OpenStrand Studioにとって大きな一歩です。</p>
     <ul>
         <li><b>ストランド/マスクタブ:</b> レイヤーリストが「ストランド」と「マスク」の2つのタブに分かれ、「名前を表示」のすぐ上に切り替えが付きました。マスクタブには専用の「新しいマスク」「マスクを削除」「すべて選択解除」「すべて削除」ボタンがあり、「新しいマスク」はツールバーのマスクボタンの代わりになります。このタブの「すべて削除」はマスクだけを、確認のあとに1回の元に戻す操作で削除します。マスクは常にすべてのストランドの上に保たれるため、リスト内の位置は気にする必要がなくなり、もう一方のタブのレイヤーを選ぶとそのタブが自動で開きます。</li>
         <li><b>影の問題を修正:</b> 以前のバージョンにあった影の問題を修正しました。マスクの影がより自然な動きになりました。</li>
@@ -855,6 +902,7 @@ cat > "$RESOURCES_DIR/it.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">欢迎使用 OpenStrandStudio 2.0</h2>
     <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
     <p>版本 2.0 的新功能:</p>
+    <p>为什么是2.0？遮罩现在用起来自然得多。编织是打绳结的关键，而遮罩是编织的重要组成部分，因此这是 OpenStrand Studio 的重要一步。</p>
     <ul>
         <li><b>绳股/遮罩标签页:</b> 图层列表现在分为“绳股”和“遮罩”两个标签页，切换按钮就在“显示名称”上方。“遮罩”标签页有自己的“新建遮罩”“删除遮罩”“取消全选”和“全部删除”按钮，“新建遮罩”取代了工具栏中的遮罩按钮。在此标签页中“全部删除”只会删除遮罩，需确认，并且只算一次撤销。遮罩现在始终位于所有绳股之上，因此它在列表中的位置不再重要，选择另一个标签页中的图层时会自动打开该标签页。</li>
         <li><b>修复阴影问题:</b> 修复了旧版本中的阴影问题，遮罩的阴影现在表现得更自然。</li>
@@ -876,6 +924,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 2.0</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades de la versión 2.0:</p>
+    <p>¿Por qué 2.0? Las máscaras ahora son mucho más naturales de usar. El tejido es clave para hacer nudos y las máscaras son una gran parte del tejido, así que es un gran paso para OpenStrand Studio.</p>
     <ul>
         <li><b>Pestañas Cordones y Máscaras:</b> La lista de capas ahora se divide en dos pestañas, Cordones y Máscaras, con un selector justo encima de Ver Nombres. La pestaña Máscaras tiene sus propios botones Nueva Másc., Elim. Máscara, Deselec. Todo y Eliminar Todo, y Nueva Másc. reemplaza el botón Máscara de la barra de herramientas. Eliminar Todo en esta pestaña elimina solo las máscaras, tras una confirmación y en un único paso de deshacer. Las máscaras ahora se mantienen siempre por encima de todos los cordones, así que su posición en la lista ya no importa, y al seleccionar una capa de la otra pestaña se abre esa pestaña automáticamente.</li>
         <li><b>Problemas de sombras corregidos:</b> Se corrigieron problemas de sombras de versiones anteriores. Las sombras de las máscaras ahora se comportan de forma más natural.</li>
@@ -886,6 +935,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Welcome to OpenStrandStudio 2.0</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 2.0:</p>
+    <p>Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots, and masks are a big part of weaving, so this is a major step for OpenStrand Studio.</p>
     <ul>
         <li><b>Strands and Masks Tabs:</b> The layer list is now split into two tabs, Strands and Masks, with a switch just above Draw Names. The Masks tab has its own New Mask, Delete Mask, Deselect All and Delete All buttons, and New Mask replaces the Mask button in the toolbar. Delete All on this tab removes only the masks, after a confirmation, in one undo step. Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you.</li>
         <li><b>Fixed Shadow Issues:</b> Fixed shadow issues from older versions. Shadows for masks now behave more naturally.</li>
@@ -896,6 +946,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenue dans OpenStrandStudio 2.0</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés de la version 2.0 :</p>
+    <p>Pourquoi 2.0 ? Les masques sont maintenant beaucoup plus naturels à utiliser. Le tissage est essentiel pour faire des nœuds, et les masques en sont une grande partie : c'est une étape majeure pour OpenStrand Studio.</p>
     <ul>
         <li><b>Onglets Brins et Masques:</b> La liste des calques est maintenant séparée en deux onglets, Brins et Masques, avec un sélecteur juste au-dessus de Dessin. Noms. L'onglet Masques a ses propres boutons Nouv. Masque, Suppr. Masque, Désél. Tous et Suppr. Tout, et Nouv. Masque remplace le bouton Masque de la barre d'outils. Suppr. Tout sur cet onglet ne supprime que les masques, après confirmation, en une seule étape d'annulation. Les masques restent toujours au-dessus de tous les brins, donc leur place dans la liste n'a plus d'importance, et sélectionner un calque de l'autre onglet ouvre cet onglet pour vous.</li>
         <li><b>Ombres corrigées:</b> Des problèmes d'ombres des versions précédentes ont été corrigés. Les ombres des masques se comportent maintenant de façon plus naturelle.</li>
@@ -906,6 +957,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 2.0</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Neu in Version 2.0:</p>
+    <p>Warum 2.0? Masken fühlen sich jetzt viel natürlicher an. Weben ist entscheidend beim Knüpfen von Knoten, und Masken sind ein großer Teil davon – ein wichtiger Schritt für OpenStrand Studio.</p>
     <ul>
         <li><b>Tabs Stränge und Masken:</b> Die Ebenenliste ist jetzt in zwei Tabs aufgeteilt, Stränge und Masken, mit einem Umschalter direkt über Namen zeigen. Der Tab Masken hat eigene Schaltflächen für Neue Maske, Maske entf., Alle abwählen und Alle löschen, und Neue Maske ersetzt die Maske-Schaltfläche in der Werkzeugleiste. Alle löschen löscht in diesem Tab nur die Masken, nach einer Bestätigung und in einem einzigen Rückgängig-Schritt. Masken liegen jetzt immer über allen Strängen, ihre Position in der Liste spielt also keine Rolle mehr, und wer eine Ebene des anderen Tabs auswählt, wird automatisch zu diesem Tab gebracht.</li>
         <li><b>Schattenprobleme behoben:</b> Schattenprobleme aus älteren Versionen wurden behoben. Schatten von Masken verhalten sich jetzt natürlicher.</li>
@@ -916,6 +968,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 2.0</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità della versione 2.0:</p>
+    <p>Perché 2.0? Le maschere ora sono molto più naturali da usare. L'intreccio è fondamentale per fare i nodi e le maschere ne sono una parte importante: è un passo importante per OpenStrand Studio.</p>
     <ul>
         <li><b>Schede Trefoli e Maschere:</b> L'elenco dei livelli è ora diviso in due schede, Trefoli e Maschere, con un selettore subito sopra Disegna Nomi. La scheda Maschere ha i suoi pulsanti Nuova Masch., Elim. Maschera, Desel. Tutto ed Elimina Tutto, e Nuova Masch. sostituisce il pulsante Maschera della barra degli strumenti. Elimina Tutto in questa scheda elimina solo le maschere, dopo una conferma, in un unico passo di annullamento. Le maschere restano sempre sopra tutti i trefoli, quindi la loro posizione nell'elenco non conta più, e selezionare un livello dell'altra scheda apre quella scheda per voi.</li>
         <li><b>Problemi delle ombre risolti:</b> Sono stati risolti problemi delle ombre presenti nelle versioni precedenti. Le ombre delle maschere ora si comportano in modo più naturale.</li>
@@ -926,6 +979,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 2.0</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades da versão 2.0:</p>
+    <p>Porquê 2.0? As máscaras agora são muito mais naturais de usar. A tecelagem é essencial para fazer nós e as máscaras são uma grande parte dela, por isso é um grande passo para o OpenStrand Studio.</p>
     <ul>
         <li><b>Separadores Mechas e Máscaras:</b> A lista de camadas agora está dividida em dois separadores, Mechas e Máscaras, com um seletor mesmo acima de Exib. Nomes. O separador Máscaras tem os seus próprios botões Nova Másc., Excl. Máscara, Desmar. Tudo e Excluir Tudo, e Nova Másc. substitui o botão Máscara da barra de ferramentas. Excluir Tudo neste separador elimina apenas as máscaras, após uma confirmação e num único passo de anular. As máscaras ficam sempre acima de todas as mechas, por isso a sua posição na lista já não importa, e selecionar uma camada do outro separador abre esse separador por si.</li>
         <li><b>Problemas de sombras corrigidos:</b> Foram corrigidos problemas de sombras de versões anteriores. As sombras das máscaras agora comportam-se de forma mais natural.</li>
@@ -937,6 +991,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 2.0</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05DE;&#x05D4; &#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; 2.0:</p>
+    <p>&#x05DC;&#x05DE;&#x05D4; 2.0? &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D2;&#x05D9;&#x05E9;&#x05D5;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D4;&#x05E8;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05DC;&#x05E9;&#x05D9;&#x05DE;&#x05D5;&#x05E9;. &#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05DE;&#x05E8;&#x05DB;&#x05D9;&#x05D1; &#x05DE;&#x05E8;&#x05DB;&#x05D6;&#x05D9; &#x05D1;&#x05E7;&#x05E9;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05E9;&#x05E8;&#x05D9;&#x05DD;, &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D4;&#x05DF; &#x05D7;&#x05DC;&#x05E7; &#x05D2;&#x05D3;&#x05D5;&#x05DC; &#x05DE;&#x05D4;&#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05D6;&#x05D4;&#x05D5; &#x05E6;&#x05E2;&#x05D3; &#x05DE;&#x05E9;&#x05DE;&#x05E2;&#x05D5;&#x05EA;&#x05D9; &#x05E2;&#x05D1;&#x05D5;&#x05E8; OpenStrand Studio.</p>
     <ul>
         <li><b>&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;:</b> &#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05EA; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05DE;&#x05D7;&#x05D5;&#x05DC;&#x05E7;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05DC;&#x05E9;&#x05EA;&#x05D9; &#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA;, &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05E2;&#x05DD; &#x05DE;&#x05EA;&#x05D2; &#x05DE;&#x05DE;&#x05E9; &#x05DE;&#x05E2;&#x05DC; &#x05E6;&#x05D9;&#x05D9;&#x05E8; &#x05E9;&#x05DE;&#x05D5;&#x05EA;. &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D9;&#x05E9; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05DE;&#x05E9;&#x05DC;&#x05D4;: &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4;, &#x05DE;&#x05D7;&#x05E7; &#x05DE;&#x05E1;&#x05DB;&#x05D4;, &#x05D1;&#x05D8;&#x05DC; &#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC;, &#x05D5;&#x05D4;&#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05DE;&#x05D7;&#x05DC;&#x05D9;&#x05E3; &#x05D0;&#x05EA; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D1;&#x05E1;&#x05E8;&#x05D2;&#x05DC; &#x05D4;&#x05DB;&#x05DC;&#x05D9;&#x05DD;. &#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC; &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05D6;&#x05D5; &#x05DE;&#x05D5;&#x05D7;&#x05E7;&#x05EA; &#x05E8;&#x05E7; &#x05D0;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05D0;&#x05D7;&#x05E8;&#x05D9; &#x05D0;&#x05D9;&#x05E9;&#x05D5;&#x05E8;, &#x05D5;&#x05D1;&#x05E9;&#x05DC;&#x05D1; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D0;&#x05D7;&#x05D3;. &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05E0;&#x05E9;&#x05D0;&#x05E8;&#x05D5;&#x05EA; &#x05EA;&#x05DE;&#x05D9;&#x05D3; &#x05DE;&#x05E2;&#x05DC; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05DE;&#x05D9;&#x05E7;&#x05D5;&#x05DE;&#x05DF; &#x05D1;&#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05D4; &#x05DB;&#x05D1;&#x05E8; &#x05DC;&#x05D0; &#x05DE;&#x05E9;&#x05E0;&#x05D4;, &#x05D5;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E9;&#x05DB;&#x05D1;&#x05D4; &#x05DE;&#x05D4;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05E9;&#x05E0;&#x05D9;&#x05D9;&#x05D4; &#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05EA; &#x05D0;&#x05D5;&#x05EA;&#x05D4; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA;.</li>
         <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;. &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05E9;&#x05DC; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05EA;&#x05E0;&#x05D4;&#x05D2;&#x05D9;&#x05DD; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D1;&#x05E6;&#x05D5;&#x05E8;&#x05D4; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
@@ -948,6 +1003,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Добро пожаловать в OpenStrandStudio 2.0</h2>
     <p>Эта программа установит OpenStrandStudio на ваш компьютер. Вы пройдёте все необходимые шаги установки.</p>
     <p>Что нового в версии 2.0:</p>
+    <p>Почему 2.0? Маски теперь гораздо естественнее в работе. Плетение — основа завязывания узлов, а маски — большая его часть, поэтому это важный шаг для OpenStrand Studio.</p>
     <ul>
         <li><b>Вкладки «Пряди» и «Маски»:</b> Список слоёв теперь разделён на две вкладки, «Пряди» и «Маски», с переключателем прямо над кнопкой «Показ имён». У вкладки «Маски» свои кнопки: «Новая маска», «Удалить маску», «Снять выбор» и «Удалить все», а «Новая маска» заменяет кнопку «Маска» на панели инструментов. «Удалить все» на этой вкладке удаляет только маски, после подтверждения и одним шагом отмены. Маски теперь всегда лежат над всеми прядями, поэтому их место в списке больше не важно, а выбор слоя с другой вкладки сам открывает эту вкладку.</li>
         <li><b>Исправлены проблемы с тенями:</b> Исправлены проблемы с тенями из прошлых версий. Тени масок теперь ведут себя естественнее.</li>
@@ -958,6 +1014,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Tervetuloa OpenStrandStudio 2.0 -ohjelmaan</h2>
     <p>Tämä asentaa OpenStrandStudion tietokoneellesi. Sinut opastetaan asennuksen vaiheiden läpi.</p>
     <p>Mitä uutta versiossa 2.0:</p>
+    <p>Miksi 2.0? Maskit tuntuvat nyt paljon luonnollisemmilta käyttää. Kudonta on keskeistä solmujen tekemisessä, ja maskit ovat suuri osa kudontaa, joten tämä on iso askel OpenStrand Studiolle.</p>
     <ul>
         <li><b>Säikeet- ja Maskit-välilehdet:</b> Kerroslista on nyt jaettu kahteen välilehteen, Säikeet ja Maskit, ja valitsin on heti Näytä nimet -painikkeen yläpuolella. Maskit-välilehdellä on omat painikkeensa: Uusi maski, Poista maski, Poista valinnat ja Poista kaikki, ja Uusi maski korvaa työkalupalkin Maski-painikkeen. Poista kaikki poistaa tällä välilehdellä vain maskit, vahvistuksen jälkeen ja yhdellä kumoamisaskeleella. Maskit pysyvät nyt aina kaikkien säikeiden päällä, joten maskin paikalla listassa ei ole enää väliä, ja toisen välilehden kerroksen valinta avaa kyseisen välilehden puolestasi.</li>
         <li><b>Varjo-ongelmat korjattu:</b> Vanhojen versioiden varjo-ongelmat on korjattu. Maskien varjot käyttäytyvät nyt luonnollisemmin.</li>
@@ -968,6 +1025,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Välkommen till OpenStrandStudio 2.0</h2>
     <p>Detta installerar OpenStrandStudio på din dator. Du guidas genom stegen som behövs för att installera programmet.</p>
     <p>Nyheter i version 2.0:</p>
+    <p>Varför 2.0? Masker känns nu mycket mer naturliga att använda. Vävning är nyckeln till att knyta knutar och masker är en stor del av vävningen, så detta är ett stort steg för OpenStrand Studio.</p>
     <ul>
         <li><b>Flikarna Strängar och Masker:</b> Lagerlistan är nu uppdelad i två flikar, Strängar och Masker, med en växlare precis ovanför Visa namn. Fliken Masker har egna knappar: Ny mask, Ta bort mask, Avmarkera alla och Ta bort alla, och Ny mask ersätter Mask-knappen i verktygsfältet. Ta bort alla på den här fliken tar bara bort maskerna, efter en bekräftelse och i ett enda ångra-steg. Masker ligger nu alltid ovanför alla strängar, så var en mask står i listan spelar ingen roll längre, och när du markerar ett lager på den andra fliken öppnas den fliken åt dig.</li>
         <li><b>Skuggproblem åtgärdade:</b> Skuggproblem från äldre versioner har åtgärdats. Skuggor för masker beter sig nu mer naturligt.</li>
@@ -978,6 +1036,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">OpenStrandStudio 2.0 へようこそ</h2>
     <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
     <p>バージョン 2.0 の新機能:</p>
+    <p>なぜ2.0なのか: マスクがずっと自然に使えるようになりました。結び目を作るには織りが重要で、マスクは織りの大きな部分を占めるため、OpenStrand Studioにとって大きな一歩です。</p>
     <ul>
         <li><b>ストランド/マスクタブ:</b> レイヤーリストが「ストランド」と「マスク」の2つのタブに分かれ、「名前を表示」のすぐ上に切り替えが付きました。マスクタブには専用の「新しいマスク」「マスクを削除」「すべて選択解除」「すべて削除」ボタンがあり、「新しいマスク」はツールバーのマスクボタンの代わりになります。このタブの「すべて削除」はマスクだけを、確認のあとに1回の元に戻す操作で削除します。マスクは常にすべてのストランドの上に保たれるため、リスト内の位置は気にする必要がなくなり、もう一方のタブのレイヤーを選ぶとそのタブが自動で開きます。</li>
         <li><b>影の問題を修正:</b> 以前のバージョンにあった影の問題を修正しました。マスクの影がより自然な動きになりました。</li>
@@ -988,6 +1047,7 @@ cat > "$RESOURCES_DIR/es.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">欢迎使用 OpenStrandStudio 2.0</h2>
     <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
     <p>版本 2.0 的新功能:</p>
+    <p>为什么是2.0？遮罩现在用起来自然得多。编织是打绳结的关键，而遮罩是编织的重要组成部分，因此这是 OpenStrand Studio 的重要一步。</p>
     <ul>
         <li><b>绳股/遮罩标签页:</b> 图层列表现在分为“绳股”和“遮罩”两个标签页，切换按钮就在“显示名称”上方。“遮罩”标签页有自己的“新建遮罩”“删除遮罩”“取消全选”和“全部删除”按钮，“新建遮罩”取代了工具栏中的遮罩按钮。在此标签页中“全部删除”只会删除遮罩，需确认，并且只算一次撤销。遮罩现在始终位于所有绳股之上，因此它在列表中的位置不再重要，选择另一个标签页中的图层时会自动打开该标签页。</li>
         <li><b>修复阴影问题:</b> 修复了旧版本中的阴影问题，遮罩的阴影现在表现得更自然。</li>
@@ -1009,6 +1069,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 2.0</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades da versão 2.0:</p>
+    <p>Porquê 2.0? As máscaras agora são muito mais naturais de usar. A tecelagem é essencial para fazer nós e as máscaras são uma grande parte dela, por isso é um grande passo para o OpenStrand Studio.</p>
     <ul>
         <li><b>Separadores Mechas e Máscaras:</b> A lista de camadas agora está dividida em dois separadores, Mechas e Máscaras, com um seletor mesmo acima de Exib. Nomes. O separador Máscaras tem os seus próprios botões Nova Másc., Excl. Máscara, Desmar. Tudo e Excluir Tudo, e Nova Másc. substitui o botão Máscara da barra de ferramentas. Excluir Tudo neste separador elimina apenas as máscaras, após uma confirmação e num único passo de anular. As máscaras ficam sempre acima de todas as mechas, por isso a sua posição na lista já não importa, e selecionar uma camada do outro separador abre esse separador por si.</li>
         <li><b>Problemas de sombras corrigidos:</b> Foram corrigidos problemas de sombras de versões anteriores. As sombras das máscaras agora comportam-se de forma mais natural.</li>
@@ -1019,6 +1080,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Welcome to OpenStrandStudio 2.0</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 2.0:</p>
+    <p>Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots, and masks are a big part of weaving, so this is a major step for OpenStrand Studio.</p>
     <ul>
         <li><b>Strands and Masks Tabs:</b> The layer list is now split into two tabs, Strands and Masks, with a switch just above Draw Names. The Masks tab has its own New Mask, Delete Mask, Deselect All and Delete All buttons, and New Mask replaces the Mask button in the toolbar. Delete All on this tab removes only the masks, after a confirmation, in one undo step. Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you.</li>
         <li><b>Fixed Shadow Issues:</b> Fixed shadow issues from older versions. Shadows for masks now behave more naturally.</li>
@@ -1029,6 +1091,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenue dans OpenStrandStudio 2.0</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés de la version 2.0 :</p>
+    <p>Pourquoi 2.0 ? Les masques sont maintenant beaucoup plus naturels à utiliser. Le tissage est essentiel pour faire des nœuds, et les masques en sont une grande partie : c'est une étape majeure pour OpenStrand Studio.</p>
     <ul>
         <li><b>Onglets Brins et Masques:</b> La liste des calques est maintenant séparée en deux onglets, Brins et Masques, avec un sélecteur juste au-dessus de Dessin. Noms. L'onglet Masques a ses propres boutons Nouv. Masque, Suppr. Masque, Désél. Tous et Suppr. Tout, et Nouv. Masque remplace le bouton Masque de la barre d'outils. Suppr. Tout sur cet onglet ne supprime que les masques, après confirmation, en une seule étape d'annulation. Les masques restent toujours au-dessus de tous les brins, donc leur place dans la liste n'a plus d'importance, et sélectionner un calque de l'autre onglet ouvre cet onglet pour vous.</li>
         <li><b>Ombres corrigées:</b> Des problèmes d'ombres des versions précédentes ont été corrigés. Les ombres des masques se comportent maintenant de façon plus naturelle.</li>
@@ -1039,6 +1102,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 2.0</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Neu in Version 2.0:</p>
+    <p>Warum 2.0? Masken fühlen sich jetzt viel natürlicher an. Weben ist entscheidend beim Knüpfen von Knoten, und Masken sind ein großer Teil davon – ein wichtiger Schritt für OpenStrand Studio.</p>
     <ul>
         <li><b>Tabs Stränge und Masken:</b> Die Ebenenliste ist jetzt in zwei Tabs aufgeteilt, Stränge und Masken, mit einem Umschalter direkt über Namen zeigen. Der Tab Masken hat eigene Schaltflächen für Neue Maske, Maske entf., Alle abwählen und Alle löschen, und Neue Maske ersetzt die Maske-Schaltfläche in der Werkzeugleiste. Alle löschen löscht in diesem Tab nur die Masken, nach einer Bestätigung und in einem einzigen Rückgängig-Schritt. Masken liegen jetzt immer über allen Strängen, ihre Position in der Liste spielt also keine Rolle mehr, und wer eine Ebene des anderen Tabs auswählt, wird automatisch zu diesem Tab gebracht.</li>
         <li><b>Schattenprobleme behoben:</b> Schattenprobleme aus älteren Versionen wurden behoben. Schatten von Masken verhalten sich jetzt natürlicher.</li>
@@ -1049,6 +1113,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 2.0</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità della versione 2.0:</p>
+    <p>Perché 2.0? Le maschere ora sono molto più naturali da usare. L'intreccio è fondamentale per fare i nodi e le maschere ne sono una parte importante: è un passo importante per OpenStrand Studio.</p>
     <ul>
         <li><b>Schede Trefoli e Maschere:</b> L'elenco dei livelli è ora diviso in due schede, Trefoli e Maschere, con un selettore subito sopra Disegna Nomi. La scheda Maschere ha i suoi pulsanti Nuova Masch., Elim. Maschera, Desel. Tutto ed Elimina Tutto, e Nuova Masch. sostituisce il pulsante Maschera della barra degli strumenti. Elimina Tutto in questa scheda elimina solo le maschere, dopo una conferma, in un unico passo di annullamento. Le maschere restano sempre sopra tutti i trefoli, quindi la loro posizione nell'elenco non conta più, e selezionare un livello dell'altra scheda apre quella scheda per voi.</li>
         <li><b>Problemi delle ombre risolti:</b> Sono stati risolti problemi delle ombre presenti nelle versioni precedenti. Le ombre delle maschere ora si comportano in modo più naturale.</li>
@@ -1059,6 +1124,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 2.0</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades de la versión 2.0:</p>
+    <p>¿Por qué 2.0? Las máscaras ahora son mucho más naturales de usar. El tejido es clave para hacer nudos y las máscaras son una gran parte del tejido, así que es un gran paso para OpenStrand Studio.</p>
     <ul>
         <li><b>Pestañas Cordones y Máscaras:</b> La lista de capas ahora se divide en dos pestañas, Cordones y Máscaras, con un selector justo encima de Ver Nombres. La pestaña Máscaras tiene sus propios botones Nueva Másc., Elim. Máscara, Deselec. Todo y Eliminar Todo, y Nueva Másc. reemplaza el botón Máscara de la barra de herramientas. Eliminar Todo en esta pestaña elimina solo las máscaras, tras una confirmación y en un único paso de deshacer. Las máscaras ahora se mantienen siempre por encima de todos los cordones, así que su posición en la lista ya no importa, y al seleccionar una capa de la otra pestaña se abre esa pestaña automáticamente.</li>
         <li><b>Problemas de sombras corregidos:</b> Se corrigieron problemas de sombras de versiones anteriores. Las sombras de las máscaras ahora se comportan de forma más natural.</li>
@@ -1070,6 +1136,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 2.0</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05DE;&#x05D4; &#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; 2.0:</p>
+    <p>&#x05DC;&#x05DE;&#x05D4; 2.0? &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D2;&#x05D9;&#x05E9;&#x05D5;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D4;&#x05E8;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05DC;&#x05E9;&#x05D9;&#x05DE;&#x05D5;&#x05E9;. &#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05DE;&#x05E8;&#x05DB;&#x05D9;&#x05D1; &#x05DE;&#x05E8;&#x05DB;&#x05D6;&#x05D9; &#x05D1;&#x05E7;&#x05E9;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05E9;&#x05E8;&#x05D9;&#x05DD;, &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D4;&#x05DF; &#x05D7;&#x05DC;&#x05E7; &#x05D2;&#x05D3;&#x05D5;&#x05DC; &#x05DE;&#x05D4;&#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05D6;&#x05D4;&#x05D5; &#x05E6;&#x05E2;&#x05D3; &#x05DE;&#x05E9;&#x05DE;&#x05E2;&#x05D5;&#x05EA;&#x05D9; &#x05E2;&#x05D1;&#x05D5;&#x05E8; OpenStrand Studio.</p>
     <ul>
         <li><b>&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;:</b> &#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05EA; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05DE;&#x05D7;&#x05D5;&#x05DC;&#x05E7;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05DC;&#x05E9;&#x05EA;&#x05D9; &#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA;, &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05E2;&#x05DD; &#x05DE;&#x05EA;&#x05D2; &#x05DE;&#x05DE;&#x05E9; &#x05DE;&#x05E2;&#x05DC; &#x05E6;&#x05D9;&#x05D9;&#x05E8; &#x05E9;&#x05DE;&#x05D5;&#x05EA;. &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D9;&#x05E9; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05DE;&#x05E9;&#x05DC;&#x05D4;: &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4;, &#x05DE;&#x05D7;&#x05E7; &#x05DE;&#x05E1;&#x05DB;&#x05D4;, &#x05D1;&#x05D8;&#x05DC; &#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC;, &#x05D5;&#x05D4;&#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05DE;&#x05D7;&#x05DC;&#x05D9;&#x05E3; &#x05D0;&#x05EA; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D1;&#x05E1;&#x05E8;&#x05D2;&#x05DC; &#x05D4;&#x05DB;&#x05DC;&#x05D9;&#x05DD;. &#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC; &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05D6;&#x05D5; &#x05DE;&#x05D5;&#x05D7;&#x05E7;&#x05EA; &#x05E8;&#x05E7; &#x05D0;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05D0;&#x05D7;&#x05E8;&#x05D9; &#x05D0;&#x05D9;&#x05E9;&#x05D5;&#x05E8;, &#x05D5;&#x05D1;&#x05E9;&#x05DC;&#x05D1; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D0;&#x05D7;&#x05D3;. &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05E0;&#x05E9;&#x05D0;&#x05E8;&#x05D5;&#x05EA; &#x05EA;&#x05DE;&#x05D9;&#x05D3; &#x05DE;&#x05E2;&#x05DC; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05DE;&#x05D9;&#x05E7;&#x05D5;&#x05DE;&#x05DF; &#x05D1;&#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05D4; &#x05DB;&#x05D1;&#x05E8; &#x05DC;&#x05D0; &#x05DE;&#x05E9;&#x05E0;&#x05D4;, &#x05D5;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E9;&#x05DB;&#x05D1;&#x05D4; &#x05DE;&#x05D4;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05E9;&#x05E0;&#x05D9;&#x05D9;&#x05D4; &#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05EA; &#x05D0;&#x05D5;&#x05EA;&#x05D4; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA;.</li>
         <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;. &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05E9;&#x05DC; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05EA;&#x05E0;&#x05D4;&#x05D2;&#x05D9;&#x05DD; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D1;&#x05E6;&#x05D5;&#x05E8;&#x05D4; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
@@ -1081,6 +1148,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Добро пожаловать в OpenStrandStudio 2.0</h2>
     <p>Эта программа установит OpenStrandStudio на ваш компьютер. Вы пройдёте все необходимые шаги установки.</p>
     <p>Что нового в версии 2.0:</p>
+    <p>Почему 2.0? Маски теперь гораздо естественнее в работе. Плетение — основа завязывания узлов, а маски — большая его часть, поэтому это важный шаг для OpenStrand Studio.</p>
     <ul>
         <li><b>Вкладки «Пряди» и «Маски»:</b> Список слоёв теперь разделён на две вкладки, «Пряди» и «Маски», с переключателем прямо над кнопкой «Показ имён». У вкладки «Маски» свои кнопки: «Новая маска», «Удалить маску», «Снять выбор» и «Удалить все», а «Новая маска» заменяет кнопку «Маска» на панели инструментов. «Удалить все» на этой вкладке удаляет только маски, после подтверждения и одним шагом отмены. Маски теперь всегда лежат над всеми прядями, поэтому их место в списке больше не важно, а выбор слоя с другой вкладки сам открывает эту вкладку.</li>
         <li><b>Исправлены проблемы с тенями:</b> Исправлены проблемы с тенями из прошлых версий. Тени масок теперь ведут себя естественнее.</li>
@@ -1091,6 +1159,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Tervetuloa OpenStrandStudio 2.0 -ohjelmaan</h2>
     <p>Tämä asentaa OpenStrandStudion tietokoneellesi. Sinut opastetaan asennuksen vaiheiden läpi.</p>
     <p>Mitä uutta versiossa 2.0:</p>
+    <p>Miksi 2.0? Maskit tuntuvat nyt paljon luonnollisemmilta käyttää. Kudonta on keskeistä solmujen tekemisessä, ja maskit ovat suuri osa kudontaa, joten tämä on iso askel OpenStrand Studiolle.</p>
     <ul>
         <li><b>Säikeet- ja Maskit-välilehdet:</b> Kerroslista on nyt jaettu kahteen välilehteen, Säikeet ja Maskit, ja valitsin on heti Näytä nimet -painikkeen yläpuolella. Maskit-välilehdellä on omat painikkeensa: Uusi maski, Poista maski, Poista valinnat ja Poista kaikki, ja Uusi maski korvaa työkalupalkin Maski-painikkeen. Poista kaikki poistaa tällä välilehdellä vain maskit, vahvistuksen jälkeen ja yhdellä kumoamisaskeleella. Maskit pysyvät nyt aina kaikkien säikeiden päällä, joten maskin paikalla listassa ei ole enää väliä, ja toisen välilehden kerroksen valinta avaa kyseisen välilehden puolestasi.</li>
         <li><b>Varjo-ongelmat korjattu:</b> Vanhojen versioiden varjo-ongelmat on korjattu. Maskien varjot käyttäytyvät nyt luonnollisemmin.</li>
@@ -1101,6 +1170,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Välkommen till OpenStrandStudio 2.0</h2>
     <p>Detta installerar OpenStrandStudio på din dator. Du guidas genom stegen som behövs för att installera programmet.</p>
     <p>Nyheter i version 2.0:</p>
+    <p>Varför 2.0? Masker känns nu mycket mer naturliga att använda. Vävning är nyckeln till att knyta knutar och masker är en stor del av vävningen, så detta är ett stort steg för OpenStrand Studio.</p>
     <ul>
         <li><b>Flikarna Strängar och Masker:</b> Lagerlistan är nu uppdelad i två flikar, Strängar och Masker, med en växlare precis ovanför Visa namn. Fliken Masker har egna knappar: Ny mask, Ta bort mask, Avmarkera alla och Ta bort alla, och Ny mask ersätter Mask-knappen i verktygsfältet. Ta bort alla på den här fliken tar bara bort maskerna, efter en bekräftelse och i ett enda ångra-steg. Masker ligger nu alltid ovanför alla strängar, så var en mask står i listan spelar ingen roll längre, och när du markerar ett lager på den andra fliken öppnas den fliken åt dig.</li>
         <li><b>Skuggproblem åtgärdade:</b> Skuggproblem från äldre versioner har åtgärdats. Skuggor för masker beter sig nu mer naturligt.</li>
@@ -1111,6 +1181,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">OpenStrandStudio 2.0 へようこそ</h2>
     <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
     <p>バージョン 2.0 の新機能:</p>
+    <p>なぜ2.0なのか: マスクがずっと自然に使えるようになりました。結び目を作るには織りが重要で、マスクは織りの大きな部分を占めるため、OpenStrand Studioにとって大きな一歩です。</p>
     <ul>
         <li><b>ストランド/マスクタブ:</b> レイヤーリストが「ストランド」と「マスク」の2つのタブに分かれ、「名前を表示」のすぐ上に切り替えが付きました。マスクタブには専用の「新しいマスク」「マスクを削除」「すべて選択解除」「すべて削除」ボタンがあり、「新しいマスク」はツールバーのマスクボタンの代わりになります。このタブの「すべて削除」はマスクだけを、確認のあとに1回の元に戻す操作で削除します。マスクは常にすべてのストランドの上に保たれるため、リスト内の位置は気にする必要がなくなり、もう一方のタブのレイヤーを選ぶとそのタブが自動で開きます。</li>
         <li><b>影の問題を修正:</b> 以前のバージョンにあった影の問題を修正しました。マスクの影がより自然な動きになりました。</li>
@@ -1121,6 +1192,7 @@ cat > "$RESOURCES_DIR/pt.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">欢迎使用 OpenStrandStudio 2.0</h2>
     <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
     <p>版本 2.0 的新功能:</p>
+    <p>为什么是2.0？遮罩现在用起来自然得多。编织是打绳结的关键，而遮罩是编织的重要组成部分，因此这是 OpenStrand Studio 的重要一步。</p>
     <ul>
         <li><b>绳股/遮罩标签页:</b> 图层列表现在分为“绳股”和“遮罩”两个标签页，切换按钮就在“显示名称”上方。“遮罩”标签页有自己的“新建遮罩”“删除遮罩”“取消全选”和“全部删除”按钮，“新建遮罩”取代了工具栏中的遮罩按钮。在此标签页中“全部删除”只会删除遮罩，需确认，并且只算一次撤销。遮罩现在始终位于所有绳股之上，因此它在列表中的位置不再重要，选择另一个标签页中的图层时会自动打开该标签页。</li>
         <li><b>修复阴影问题:</b> 修复了旧版本中的阴影问题，遮罩的阴影现在表现得更自然。</li>
@@ -1143,6 +1215,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 2.0</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05DE;&#x05D4; &#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; 2.0:</p>
+    <p>&#x05DC;&#x05DE;&#x05D4; 2.0? &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D2;&#x05D9;&#x05E9;&#x05D5;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D4;&#x05E8;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05DC;&#x05E9;&#x05D9;&#x05DE;&#x05D5;&#x05E9;. &#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05DE;&#x05E8;&#x05DB;&#x05D9;&#x05D1; &#x05DE;&#x05E8;&#x05DB;&#x05D6;&#x05D9; &#x05D1;&#x05E7;&#x05E9;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05E9;&#x05E8;&#x05D9;&#x05DD;, &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D4;&#x05DF; &#x05D7;&#x05DC;&#x05E7; &#x05D2;&#x05D3;&#x05D5;&#x05DC; &#x05DE;&#x05D4;&#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05D6;&#x05D4;&#x05D5; &#x05E6;&#x05E2;&#x05D3; &#x05DE;&#x05E9;&#x05DE;&#x05E2;&#x05D5;&#x05EA;&#x05D9; &#x05E2;&#x05D1;&#x05D5;&#x05E8; OpenStrand Studio.</p>
     <ul>
         <li><b>&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;:</b> &#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05EA; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05DE;&#x05D7;&#x05D5;&#x05DC;&#x05E7;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05DC;&#x05E9;&#x05EA;&#x05D9; &#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA;, &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05E2;&#x05DD; &#x05DE;&#x05EA;&#x05D2; &#x05DE;&#x05DE;&#x05E9; &#x05DE;&#x05E2;&#x05DC; &#x05E6;&#x05D9;&#x05D9;&#x05E8; &#x05E9;&#x05DE;&#x05D5;&#x05EA;. &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D9;&#x05E9; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05DE;&#x05E9;&#x05DC;&#x05D4;: &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4;, &#x05DE;&#x05D7;&#x05E7; &#x05DE;&#x05E1;&#x05DB;&#x05D4;, &#x05D1;&#x05D8;&#x05DC; &#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC;, &#x05D5;&#x05D4;&#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05DE;&#x05D7;&#x05DC;&#x05D9;&#x05E3; &#x05D0;&#x05EA; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D1;&#x05E1;&#x05E8;&#x05D2;&#x05DC; &#x05D4;&#x05DB;&#x05DC;&#x05D9;&#x05DD;. &#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC; &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05D6;&#x05D5; &#x05DE;&#x05D5;&#x05D7;&#x05E7;&#x05EA; &#x05E8;&#x05E7; &#x05D0;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05D0;&#x05D7;&#x05E8;&#x05D9; &#x05D0;&#x05D9;&#x05E9;&#x05D5;&#x05E8;, &#x05D5;&#x05D1;&#x05E9;&#x05DC;&#x05D1; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D0;&#x05D7;&#x05D3;. &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05E0;&#x05E9;&#x05D0;&#x05E8;&#x05D5;&#x05EA; &#x05EA;&#x05DE;&#x05D9;&#x05D3; &#x05DE;&#x05E2;&#x05DC; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05DE;&#x05D9;&#x05E7;&#x05D5;&#x05DE;&#x05DF; &#x05D1;&#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05D4; &#x05DB;&#x05D1;&#x05E8; &#x05DC;&#x05D0; &#x05DE;&#x05E9;&#x05E0;&#x05D4;, &#x05D5;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E9;&#x05DB;&#x05D1;&#x05D4; &#x05DE;&#x05D4;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05E9;&#x05E0;&#x05D9;&#x05D9;&#x05D4; &#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05EA; &#x05D0;&#x05D5;&#x05EA;&#x05D4; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA;.</li>
         <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;. &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05E9;&#x05DC; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05EA;&#x05E0;&#x05D4;&#x05D2;&#x05D9;&#x05DD; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D1;&#x05E6;&#x05D5;&#x05E8;&#x05D4; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
@@ -1154,6 +1227,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Welcome to OpenStrandStudio 2.0</h2>
     <p dir="ltr">This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p dir="ltr">What's New in Version 2.0:</p>
+    <p>Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots, and masks are a big part of weaving, so this is a major step for OpenStrand Studio.</p>
     <ul dir="ltr">
         <li><b>Strands and Masks Tabs:</b> The layer list is now split into two tabs, Strands and Masks, with a switch just above Draw Names. The Masks tab has its own New Mask, Delete Mask, Deselect All and Delete All buttons, and New Mask replaces the Mask button in the toolbar. Delete All on this tab removes only the masks, after a confirmation, in one undo step. Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you.</li>
         <li><b>Fixed Shadow Issues:</b> Fixed shadow issues from older versions. Shadows for masks now behave more naturally.</li>
@@ -1164,6 +1238,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenue dans OpenStrandStudio 2.0</h2>
     <p dir="ltr">Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p dir="ltr">Nouveautés de la version 2.0 :</p>
+    <p>Pourquoi 2.0 ? Les masques sont maintenant beaucoup plus naturels à utiliser. Le tissage est essentiel pour faire des nœuds, et les masques en sont une grande partie : c'est une étape majeure pour OpenStrand Studio.</p>
     <ul dir="ltr">
         <li><b>Onglets Brins et Masques:</b> La liste des calques est maintenant séparée en deux onglets, Brins et Masques, avec un sélecteur juste au-dessus de Dessin. Noms. L'onglet Masques a ses propres boutons Nouv. Masque, Suppr. Masque, Désél. Tous et Suppr. Tout, et Nouv. Masque remplace le bouton Masque de la barre d'outils. Suppr. Tout sur cet onglet ne supprime que les masques, après confirmation, en une seule étape d'annulation. Les masques restent toujours au-dessus de tous les brins, donc leur place dans la liste n'a plus d'importance, et sélectionner un calque de l'autre onglet ouvre cet onglet pour vous.</li>
         <li><b>Ombres corrigées:</b> Des problèmes d'ombres des versions précédentes ont été corrigés. Les ombres des masques se comportent maintenant de façon plus naturelle.</li>
@@ -1174,6 +1249,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 2.0</h2>
     <p dir="ltr">Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p dir="ltr">Neu in Version 2.0:</p>
+    <p>Warum 2.0? Masken fühlen sich jetzt viel natürlicher an. Weben ist entscheidend beim Knüpfen von Knoten, und Masken sind ein großer Teil davon – ein wichtiger Schritt für OpenStrand Studio.</p>
     <ul dir="ltr">
         <li><b>Tabs Stränge und Masken:</b> Die Ebenenliste ist jetzt in zwei Tabs aufgeteilt, Stränge und Masken, mit einem Umschalter direkt über Namen zeigen. Der Tab Masken hat eigene Schaltflächen für Neue Maske, Maske entf., Alle abwählen und Alle löschen, und Neue Maske ersetzt die Maske-Schaltfläche in der Werkzeugleiste. Alle löschen löscht in diesem Tab nur die Masken, nach einer Bestätigung und in einem einzigen Rückgängig-Schritt. Masken liegen jetzt immer über allen Strängen, ihre Position in der Liste spielt also keine Rolle mehr, und wer eine Ebene des anderen Tabs auswählt, wird automatisch zu diesem Tab gebracht.</li>
         <li><b>Schattenprobleme behoben:</b> Schattenprobleme aus älteren Versionen wurden behoben. Schatten von Masken verhalten sich jetzt natürlicher.</li>
@@ -1184,6 +1260,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 2.0</h2>
     <p dir="ltr">Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p dir="ltr">Novità della versione 2.0:</p>
+    <p>Perché 2.0? Le maschere ora sono molto più naturali da usare. L'intreccio è fondamentale per fare i nodi e le maschere ne sono una parte importante: è un passo importante per OpenStrand Studio.</p>
     <ul dir="ltr">
         <li><b>Schede Trefoli e Maschere:</b> L'elenco dei livelli è ora diviso in due schede, Trefoli e Maschere, con un selettore subito sopra Disegna Nomi. La scheda Maschere ha i suoi pulsanti Nuova Masch., Elim. Maschera, Desel. Tutto ed Elimina Tutto, e Nuova Masch. sostituisce il pulsante Maschera della barra degli strumenti. Elimina Tutto in questa scheda elimina solo le maschere, dopo una conferma, in un unico passo di annullamento. Le maschere restano sempre sopra tutti i trefoli, quindi la loro posizione nell'elenco non conta più, e selezionare un livello dell'altra scheda apre quella scheda per voi.</li>
         <li><b>Problemi delle ombre risolti:</b> Sono stati risolti problemi delle ombre presenti nelle versioni precedenti. Le ombre delle maschere ora si comportano in modo più naturale.</li>
@@ -1194,6 +1271,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 2.0</h2>
     <p dir="ltr">Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p dir="ltr">Novedades de la versión 2.0:</p>
+    <p>¿Por qué 2.0? Las máscaras ahora son mucho más naturales de usar. El tejido es clave para hacer nudos y las máscaras son una gran parte del tejido, así que es un gran paso para OpenStrand Studio.</p>
     <ul dir="ltr">
         <li><b>Pestañas Cordones y Máscaras:</b> La lista de capas ahora se divide en dos pestañas, Cordones y Máscaras, con un selector justo encima de Ver Nombres. La pestaña Máscaras tiene sus propios botones Nueva Másc., Elim. Máscara, Deselec. Todo y Eliminar Todo, y Nueva Másc. reemplaza el botón Máscara de la barra de herramientas. Eliminar Todo en esta pestaña elimina solo las máscaras, tras una confirmación y en un único paso de deshacer. Las máscaras ahora se mantienen siempre por encima de todos los cordones, así que su posición en la lista ya no importa, y al seleccionar una capa de la otra pestaña se abre esa pestaña automáticamente.</li>
         <li><b>Problemas de sombras corregidos:</b> Se corrigieron problemas de sombras de versiones anteriores. Las sombras de las máscaras ahora se comportan de forma más natural.</li>
@@ -1204,6 +1282,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 2.0</h2>
     <p dir="ltr">Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p dir="ltr">Novidades da versão 2.0:</p>
+    <p>Porquê 2.0? As máscaras agora são muito mais naturais de usar. A tecelagem é essencial para fazer nós e as máscaras são uma grande parte dela, por isso é um grande passo para o OpenStrand Studio.</p>
     <ul dir="ltr">
         <li><b>Separadores Mechas e Máscaras:</b> A lista de camadas agora está dividida em dois separadores, Mechas e Máscaras, com um seletor mesmo acima de Exib. Nomes. O separador Máscaras tem os seus próprios botões Nova Másc., Excl. Máscara, Desmar. Tudo e Excluir Tudo, e Nova Másc. substitui o botão Máscara da barra de ferramentas. Excluir Tudo neste separador elimina apenas as máscaras, após uma confirmação e num único passo de anular. As máscaras ficam sempre acima de todas as mechas, por isso a sua posição na lista já não importa, e selecionar uma camada do outro separador abre esse separador por si.</li>
         <li><b>Problemas de sombras corrigidos:</b> Foram corrigidos problemas de sombras de versões anteriores. As sombras das máscaras agora comportam-se de forma mais natural.</li>
@@ -1214,6 +1293,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Добро пожаловать в OpenStrandStudio 2.0</h2>
     <p dir="ltr">Эта программа установит OpenStrandStudio на ваш компьютер. Вы пройдёте все необходимые шаги установки.</p>
     <p dir="ltr">Что нового в версии 2.0:</p>
+    <p>Почему 2.0? Маски теперь гораздо естественнее в работе. Плетение — основа завязывания узлов, а маски — большая его часть, поэтому это важный шаг для OpenStrand Studio.</p>
     <ul dir="ltr">
         <li><b>Вкладки «Пряди» и «Маски»:</b> Список слоёв теперь разделён на две вкладки, «Пряди» и «Маски», с переключателем прямо над кнопкой «Показ имён». У вкладки «Маски» свои кнопки: «Новая маска», «Удалить маску», «Снять выбор» и «Удалить все», а «Новая маска» заменяет кнопку «Маска» на панели инструментов. «Удалить все» на этой вкладке удаляет только маски, после подтверждения и одним шагом отмены. Маски теперь всегда лежат над всеми прядями, поэтому их место в списке больше не важно, а выбор слоя с другой вкладки сам открывает эту вкладку.</li>
         <li><b>Исправлены проблемы с тенями:</b> Исправлены проблемы с тенями из прошлых версий. Тени масок теперь ведут себя естественнее.</li>
@@ -1224,6 +1304,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Tervetuloa OpenStrandStudio 2.0 -ohjelmaan</h2>
     <p dir="ltr">Tämä asentaa OpenStrandStudion tietokoneellesi. Sinut opastetaan asennuksen vaiheiden läpi.</p>
     <p dir="ltr">Mitä uutta versiossa 2.0:</p>
+    <p>Miksi 2.0? Maskit tuntuvat nyt paljon luonnollisemmilta käyttää. Kudonta on keskeistä solmujen tekemisessä, ja maskit ovat suuri osa kudontaa, joten tämä on iso askel OpenStrand Studiolle.</p>
     <ul dir="ltr">
         <li><b>Säikeet- ja Maskit-välilehdet:</b> Kerroslista on nyt jaettu kahteen välilehteen, Säikeet ja Maskit, ja valitsin on heti Näytä nimet -painikkeen yläpuolella. Maskit-välilehdellä on omat painikkeensa: Uusi maski, Poista maski, Poista valinnat ja Poista kaikki, ja Uusi maski korvaa työkalupalkin Maski-painikkeen. Poista kaikki poistaa tällä välilehdellä vain maskit, vahvistuksen jälkeen ja yhdellä kumoamisaskeleella. Maskit pysyvät nyt aina kaikkien säikeiden päällä, joten maskin paikalla listassa ei ole enää väliä, ja toisen välilehden kerroksen valinta avaa kyseisen välilehden puolestasi.</li>
         <li><b>Varjo-ongelmat korjattu:</b> Vanhojen versioiden varjo-ongelmat on korjattu. Maskien varjot käyttäytyvät nyt luonnollisemmin.</li>
@@ -1234,6 +1315,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Välkommen till OpenStrandStudio 2.0</h2>
     <p dir="ltr">Detta installerar OpenStrandStudio på din dator. Du guidas genom stegen som behövs för att installera programmet.</p>
     <p dir="ltr">Nyheter i version 2.0:</p>
+    <p>Varför 2.0? Masker känns nu mycket mer naturliga att använda. Vävning är nyckeln till att knyta knutar och masker är en stor del av vävningen, så detta är ett stort steg för OpenStrand Studio.</p>
     <ul dir="ltr">
         <li><b>Flikarna Strängar och Masker:</b> Lagerlistan är nu uppdelad i två flikar, Strängar och Masker, med en växlare precis ovanför Visa namn. Fliken Masker har egna knappar: Ny mask, Ta bort mask, Avmarkera alla och Ta bort alla, och Ny mask ersätter Mask-knappen i verktygsfältet. Ta bort alla på den här fliken tar bara bort maskerna, efter en bekräftelse och i ett enda ångra-steg. Masker ligger nu alltid ovanför alla strängar, så var en mask står i listan spelar ingen roll längre, och när du markerar ett lager på den andra fliken öppnas den fliken åt dig.</li>
         <li><b>Skuggproblem åtgärdade:</b> Skuggproblem från äldre versioner har åtgärdats. Skuggor för masker beter sig nu mer naturligt.</li>
@@ -1244,6 +1326,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">OpenStrandStudio 2.0 へようこそ</h2>
     <p dir="ltr">このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
     <p dir="ltr">バージョン 2.0 の新機能:</p>
+    <p>なぜ2.0なのか: マスクがずっと自然に使えるようになりました。結び目を作るには織りが重要で、マスクは織りの大きな部分を占めるため、OpenStrand Studioにとって大きな一歩です。</p>
     <ul dir="ltr">
         <li><b>ストランド/マスクタブ:</b> レイヤーリストが「ストランド」と「マスク」の2つのタブに分かれ、「名前を表示」のすぐ上に切り替えが付きました。マスクタブには専用の「新しいマスク」「マスクを削除」「すべて選択解除」「すべて削除」ボタンがあり、「新しいマスク」はツールバーのマスクボタンの代わりになります。このタブの「すべて削除」はマスクだけを、確認のあとに1回の元に戻す操作で削除します。マスクは常にすべてのストランドの上に保たれるため、リスト内の位置は気にする必要がなくなり、もう一方のタブのレイヤーを選ぶとそのタブが自動で開きます。</li>
         <li><b>影の問題を修正:</b> 以前のバージョンにあった影の問題を修正しました。マスクの影がより自然な動きになりました。</li>
@@ -1254,6 +1337,7 @@ cat > "$RESOURCES_DIR/he.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">欢迎使用 OpenStrandStudio 2.0</h2>
     <p dir="ltr">本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
     <p dir="ltr">版本 2.0 的新功能:</p>
+    <p>为什么是2.0？遮罩现在用起来自然得多。编织是打绳结的关键，而遮罩是编织的重要组成部分，因此这是 OpenStrand Studio 的重要一步。</p>
     <ul dir="ltr">
         <li><b>绳股/遮罩标签页:</b> 图层列表现在分为“绳股”和“遮罩”两个标签页，切换按钮就在“显示名称”上方。“遮罩”标签页有自己的“新建遮罩”“删除遮罩”“取消全选”和“全部删除”按钮，“新建遮罩”取代了工具栏中的遮罩按钮。在此标签页中“全部删除”只会删除遮罩，需确认，并且只算一次撤销。遮罩现在始终位于所有绳股之上，因此它在列表中的位置不再重要，选择另一个标签页中的图层时会自动打开该标签页。</li>
         <li><b>修复阴影问题:</b> 修复了旧版本中的阴影问题，遮罩的阴影现在表现得更自然。</li>
@@ -1275,6 +1359,7 @@ cat > "$RESOURCES_DIR/ru.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Добро пожаловать в OpenStrandStudio 2.0</h2>
     <p>Эта программа установит OpenStrandStudio на ваш компьютер. Вы пройдёте все необходимые шаги установки.</p>
     <p>Что нового в версии 2.0:</p>
+    <p>Почему 2.0? Маски теперь гораздо естественнее в работе. Плетение — основа завязывания узлов, а маски — большая его часть, поэтому это важный шаг для OpenStrand Studio.</p>
     <ul>
         <li><b>Вкладки «Пряди» и «Маски»:</b> Список слоёв теперь разделён на две вкладки, «Пряди» и «Маски», с переключателем прямо над кнопкой «Показ имён». У вкладки «Маски» свои кнопки: «Новая маска», «Удалить маску», «Снять выбор» и «Удалить все», а «Новая маска» заменяет кнопку «Маска» на панели инструментов. «Удалить все» на этой вкладке удаляет только маски, после подтверждения и одним шагом отмены. Маски теперь всегда лежат над всеми прядями, поэтому их место в списке больше не важно, а выбор слоя с другой вкладки сам открывает эту вкладку.</li>
         <li><b>Исправлены проблемы с тенями:</b> Исправлены проблемы с тенями из прошлых версий. Тени масок теперь ведут себя естественнее.</li>
@@ -1285,6 +1370,7 @@ cat > "$RESOURCES_DIR/ru.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Welcome to OpenStrandStudio 2.0</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 2.0:</p>
+    <p>Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots, and masks are a big part of weaving, so this is a major step for OpenStrand Studio.</p>
     <ul>
         <li><b>Strands and Masks Tabs:</b> The layer list is now split into two tabs, Strands and Masks, with a switch just above Draw Names. The Masks tab has its own New Mask, Delete Mask, Deselect All and Delete All buttons, and New Mask replaces the Mask button in the toolbar. Delete All on this tab removes only the masks, after a confirmation, in one undo step. Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you.</li>
         <li><b>Fixed Shadow Issues:</b> Fixed shadow issues from older versions. Shadows for masks now behave more naturally.</li>
@@ -1295,6 +1381,7 @@ cat > "$RESOURCES_DIR/ru.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 2.0</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Neu in Version 2.0:</p>
+    <p>Warum 2.0? Masken fühlen sich jetzt viel natürlicher an. Weben ist entscheidend beim Knüpfen von Knoten, und Masken sind ein großer Teil davon – ein wichtiger Schritt für OpenStrand Studio.</p>
     <ul>
         <li><b>Tabs Stränge und Masken:</b> Die Ebenenliste ist jetzt in zwei Tabs aufgeteilt, Stränge und Masken, mit einem Umschalter direkt über Namen zeigen. Der Tab Masken hat eigene Schaltflächen für Neue Maske, Maske entf., Alle abwählen und Alle löschen, und Neue Maske ersetzt die Maske-Schaltfläche in der Werkzeugleiste. Alle löschen löscht in diesem Tab nur die Masken, nach einer Bestätigung und in einem einzigen Rückgängig-Schritt. Masken liegen jetzt immer über allen Strängen, ihre Position in der Liste spielt also keine Rolle mehr, und wer eine Ebene des anderen Tabs auswählt, wird automatisch zu diesem Tab gebracht.</li>
         <li><b>Schattenprobleme behoben:</b> Schattenprobleme aus älteren Versionen wurden behoben. Schatten von Masken verhalten sich jetzt natürlicher.</li>
@@ -1305,6 +1392,7 @@ cat > "$RESOURCES_DIR/ru.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenue dans OpenStrandStudio 2.0</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés de la version 2.0 :</p>
+    <p>Pourquoi 2.0 ? Les masques sont maintenant beaucoup plus naturels à utiliser. Le tissage est essentiel pour faire des nœuds, et les masques en sont une grande partie : c'est une étape majeure pour OpenStrand Studio.</p>
     <ul>
         <li><b>Onglets Brins et Masques:</b> La liste des calques est maintenant séparée en deux onglets, Brins et Masques, avec un sélecteur juste au-dessus de Dessin. Noms. L'onglet Masques a ses propres boutons Nouv. Masque, Suppr. Masque, Désél. Tous et Suppr. Tout, et Nouv. Masque remplace le bouton Masque de la barre d'outils. Suppr. Tout sur cet onglet ne supprime que les masques, après confirmation, en une seule étape d'annulation. Les masques restent toujours au-dessus de tous les brins, donc leur place dans la liste n'a plus d'importance, et sélectionner un calque de l'autre onglet ouvre cet onglet pour vous.</li>
         <li><b>Ombres corrigées:</b> Des problèmes d'ombres des versions précédentes ont été corrigés. Les ombres des masques se comportent maintenant de façon plus naturelle.</li>
@@ -1315,6 +1403,7 @@ cat > "$RESOURCES_DIR/ru.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 2.0</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità della versione 2.0:</p>
+    <p>Perché 2.0? Le maschere ora sono molto più naturali da usare. L'intreccio è fondamentale per fare i nodi e le maschere ne sono una parte importante: è un passo importante per OpenStrand Studio.</p>
     <ul>
         <li><b>Schede Trefoli e Maschere:</b> L'elenco dei livelli è ora diviso in due schede, Trefoli e Maschere, con un selettore subito sopra Disegna Nomi. La scheda Maschere ha i suoi pulsanti Nuova Masch., Elim. Maschera, Desel. Tutto ed Elimina Tutto, e Nuova Masch. sostituisce il pulsante Maschera della barra degli strumenti. Elimina Tutto in questa scheda elimina solo le maschere, dopo una conferma, in un unico passo di annullamento. Le maschere restano sempre sopra tutti i trefoli, quindi la loro posizione nell'elenco non conta più, e selezionare un livello dell'altra scheda apre quella scheda per voi.</li>
         <li><b>Problemi delle ombre risolti:</b> Sono stati risolti problemi delle ombre presenti nelle versioni precedenti. Le ombre delle maschere ora si comportano in modo più naturale.</li>
@@ -1325,6 +1414,7 @@ cat > "$RESOURCES_DIR/ru.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 2.0</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades de la versión 2.0:</p>
+    <p>¿Por qué 2.0? Las máscaras ahora son mucho más naturales de usar. El tejido es clave para hacer nudos y las máscaras son una gran parte del tejido, así que es un gran paso para OpenStrand Studio.</p>
     <ul>
         <li><b>Pestañas Cordones y Máscaras:</b> La lista de capas ahora se divide en dos pestañas, Cordones y Máscaras, con un selector justo encima de Ver Nombres. La pestaña Máscaras tiene sus propios botones Nueva Másc., Elim. Máscara, Deselec. Todo y Eliminar Todo, y Nueva Másc. reemplaza el botón Máscara de la barra de herramientas. Eliminar Todo en esta pestaña elimina solo las máscaras, tras una confirmación y en un único paso de deshacer. Las máscaras ahora se mantienen siempre por encima de todos los cordones, así que su posición en la lista ya no importa, y al seleccionar una capa de la otra pestaña se abre esa pestaña automáticamente.</li>
         <li><b>Problemas de sombras corregidos:</b> Se corrigieron problemas de sombras de versiones anteriores. Las sombras de las máscaras ahora se comportan de forma más natural.</li>
@@ -1335,6 +1425,7 @@ cat > "$RESOURCES_DIR/ru.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 2.0</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades da versão 2.0:</p>
+    <p>Porquê 2.0? As máscaras agora são muito mais naturais de usar. A tecelagem é essencial para fazer nós e as máscaras são uma grande parte dela, por isso é um grande passo para o OpenStrand Studio.</p>
     <ul>
         <li><b>Separadores Mechas e Máscaras:</b> A lista de camadas agora está dividida em dois separadores, Mechas e Máscaras, com um seletor mesmo acima de Exib. Nomes. O separador Máscaras tem os seus próprios botões Nova Másc., Excl. Máscara, Desmar. Tudo e Excluir Tudo, e Nova Másc. substitui o botão Máscara da barra de ferramentas. Excluir Tudo neste separador elimina apenas as máscaras, após uma confirmação e num único passo de anular. As máscaras ficam sempre acima de todas as mechas, por isso a sua posição na lista já não importa, e selecionar uma camada do outro separador abre esse separador por si.</li>
         <li><b>Problemas de sombras corrigidos:</b> Foram corrigidos problemas de sombras de versões anteriores. As sombras das máscaras agora comportam-se de forma mais natural.</li>
@@ -1346,6 +1437,7 @@ cat > "$RESOURCES_DIR/ru.lproj/welcome.html" << 'EOF'
     <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 2.0</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05DE;&#x05D4; &#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; 2.0:</p>
+    <p>&#x05DC;&#x05DE;&#x05D4; 2.0? &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D2;&#x05D9;&#x05E9;&#x05D5;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D4;&#x05E8;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05DC;&#x05E9;&#x05D9;&#x05DE;&#x05D5;&#x05E9;. &#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05DE;&#x05E8;&#x05DB;&#x05D9;&#x05D1; &#x05DE;&#x05E8;&#x05DB;&#x05D6;&#x05D9; &#x05D1;&#x05E7;&#x05E9;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05E9;&#x05E8;&#x05D9;&#x05DD;, &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D4;&#x05DF; &#x05D7;&#x05DC;&#x05E7; &#x05D2;&#x05D3;&#x05D5;&#x05DC; &#x05DE;&#x05D4;&#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05D6;&#x05D4;&#x05D5; &#x05E6;&#x05E2;&#x05D3; &#x05DE;&#x05E9;&#x05DE;&#x05E2;&#x05D5;&#x05EA;&#x05D9; &#x05E2;&#x05D1;&#x05D5;&#x05E8; OpenStrand Studio.</p>
     <ul>
         <li><b>&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;:</b> &#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05EA; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05DE;&#x05D7;&#x05D5;&#x05DC;&#x05E7;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05DC;&#x05E9;&#x05EA;&#x05D9; &#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA;, &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05E2;&#x05DD; &#x05DE;&#x05EA;&#x05D2; &#x05DE;&#x05DE;&#x05E9; &#x05DE;&#x05E2;&#x05DC; &#x05E6;&#x05D9;&#x05D9;&#x05E8; &#x05E9;&#x05DE;&#x05D5;&#x05EA;. &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D9;&#x05E9; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05DE;&#x05E9;&#x05DC;&#x05D4;: &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4;, &#x05DE;&#x05D7;&#x05E7; &#x05DE;&#x05E1;&#x05DB;&#x05D4;, &#x05D1;&#x05D8;&#x05DC; &#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC;, &#x05D5;&#x05D4;&#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05DE;&#x05D7;&#x05DC;&#x05D9;&#x05E3; &#x05D0;&#x05EA; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D1;&#x05E1;&#x05E8;&#x05D2;&#x05DC; &#x05D4;&#x05DB;&#x05DC;&#x05D9;&#x05DD;. &#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC; &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05D6;&#x05D5; &#x05DE;&#x05D5;&#x05D7;&#x05E7;&#x05EA; &#x05E8;&#x05E7; &#x05D0;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05D0;&#x05D7;&#x05E8;&#x05D9; &#x05D0;&#x05D9;&#x05E9;&#x05D5;&#x05E8;, &#x05D5;&#x05D1;&#x05E9;&#x05DC;&#x05D1; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D0;&#x05D7;&#x05D3;. &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05E0;&#x05E9;&#x05D0;&#x05E8;&#x05D5;&#x05EA; &#x05EA;&#x05DE;&#x05D9;&#x05D3; &#x05DE;&#x05E2;&#x05DC; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05DE;&#x05D9;&#x05E7;&#x05D5;&#x05DE;&#x05DF; &#x05D1;&#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05D4; &#x05DB;&#x05D1;&#x05E8; &#x05DC;&#x05D0; &#x05DE;&#x05E9;&#x05E0;&#x05D4;, &#x05D5;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E9;&#x05DB;&#x05D1;&#x05D4; &#x05DE;&#x05D4;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05E9;&#x05E0;&#x05D9;&#x05D9;&#x05D4; &#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05EA; &#x05D0;&#x05D5;&#x05EA;&#x05D4; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA;.</li>
         <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;. &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05E9;&#x05DC; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05EA;&#x05E0;&#x05D4;&#x05D2;&#x05D9;&#x05DD; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D1;&#x05E6;&#x05D5;&#x05E8;&#x05D4; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
@@ -1357,6 +1449,7 @@ cat > "$RESOURCES_DIR/ru.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Tervetuloa OpenStrandStudio 2.0 -ohjelmaan</h2>
     <p>Tämä asentaa OpenStrandStudion tietokoneellesi. Sinut opastetaan asennuksen vaiheiden läpi.</p>
     <p>Mitä uutta versiossa 2.0:</p>
+    <p>Miksi 2.0? Maskit tuntuvat nyt paljon luonnollisemmilta käyttää. Kudonta on keskeistä solmujen tekemisessä, ja maskit ovat suuri osa kudontaa, joten tämä on iso askel OpenStrand Studiolle.</p>
     <ul>
         <li><b>Säikeet- ja Maskit-välilehdet:</b> Kerroslista on nyt jaettu kahteen välilehteen, Säikeet ja Maskit, ja valitsin on heti Näytä nimet -painikkeen yläpuolella. Maskit-välilehdellä on omat painikkeensa: Uusi maski, Poista maski, Poista valinnat ja Poista kaikki, ja Uusi maski korvaa työkalupalkin Maski-painikkeen. Poista kaikki poistaa tällä välilehdellä vain maskit, vahvistuksen jälkeen ja yhdellä kumoamisaskeleella. Maskit pysyvät nyt aina kaikkien säikeiden päällä, joten maskin paikalla listassa ei ole enää väliä, ja toisen välilehden kerroksen valinta avaa kyseisen välilehden puolestasi.</li>
         <li><b>Varjo-ongelmat korjattu:</b> Vanhojen versioiden varjo-ongelmat on korjattu. Maskien varjot käyttäytyvät nyt luonnollisemmin.</li>
@@ -1367,6 +1460,7 @@ cat > "$RESOURCES_DIR/ru.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Välkommen till OpenStrandStudio 2.0</h2>
     <p>Detta installerar OpenStrandStudio på din dator. Du guidas genom stegen som behövs för att installera programmet.</p>
     <p>Nyheter i version 2.0:</p>
+    <p>Varför 2.0? Masker känns nu mycket mer naturliga att använda. Vävning är nyckeln till att knyta knutar och masker är en stor del av vävningen, så detta är ett stort steg för OpenStrand Studio.</p>
     <ul>
         <li><b>Flikarna Strängar och Masker:</b> Lagerlistan är nu uppdelad i två flikar, Strängar och Masker, med en växlare precis ovanför Visa namn. Fliken Masker har egna knappar: Ny mask, Ta bort mask, Avmarkera alla och Ta bort alla, och Ny mask ersätter Mask-knappen i verktygsfältet. Ta bort alla på den här fliken tar bara bort maskerna, efter en bekräftelse och i ett enda ångra-steg. Masker ligger nu alltid ovanför alla strängar, så var en mask står i listan spelar ingen roll längre, och när du markerar ett lager på den andra fliken öppnas den fliken åt dig.</li>
         <li><b>Skuggproblem åtgärdade:</b> Skuggproblem från äldre versioner har åtgärdats. Skuggor för masker beter sig nu mer naturligt.</li>
@@ -1377,6 +1471,7 @@ cat > "$RESOURCES_DIR/ru.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">OpenStrandStudio 2.0 へようこそ</h2>
     <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
     <p>バージョン 2.0 の新機能:</p>
+    <p>なぜ2.0なのか: マスクがずっと自然に使えるようになりました。結び目を作るには織りが重要で、マスクは織りの大きな部分を占めるため、OpenStrand Studioにとって大きな一歩です。</p>
     <ul>
         <li><b>ストランド/マスクタブ:</b> レイヤーリストが「ストランド」と「マスク」の2つのタブに分かれ、「名前を表示」のすぐ上に切り替えが付きました。マスクタブには専用の「新しいマスク」「マスクを削除」「すべて選択解除」「すべて削除」ボタンがあり、「新しいマスク」はツールバーのマスクボタンの代わりになります。このタブの「すべて削除」はマスクだけを、確認のあとに1回の元に戻す操作で削除します。マスクは常にすべてのストランドの上に保たれるため、リスト内の位置は気にする必要がなくなり、もう一方のタブのレイヤーを選ぶとそのタブが自動で開きます。</li>
         <li><b>影の問題を修正:</b> 以前のバージョンにあった影の問題を修正しました。マスクの影がより自然な動きになりました。</li>
@@ -1387,6 +1482,7 @@ cat > "$RESOURCES_DIR/ru.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">欢迎使用 OpenStrandStudio 2.0</h2>
     <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
     <p>版本 2.0 的新功能:</p>
+    <p>为什么是2.0？遮罩现在用起来自然得多。编织是打绳结的关键，而遮罩是编织的重要组成部分，因此这是 OpenStrand Studio 的重要一步。</p>
     <ul>
         <li><b>绳股/遮罩标签页:</b> 图层列表现在分为“绳股”和“遮罩”两个标签页，切换按钮就在“显示名称”上方。“遮罩”标签页有自己的“新建遮罩”“删除遮罩”“取消全选”和“全部删除”按钮，“新建遮罩”取代了工具栏中的遮罩按钮。在此标签页中“全部删除”只会删除遮罩，需确认，并且只算一次撤销。遮罩现在始终位于所有绳股之上，因此它在列表中的位置不再重要，选择另一个标签页中的图层时会自动打开该标签页。</li>
         <li><b>修复阴影问题:</b> 修复了旧版本中的阴影问题，遮罩的阴影现在表现得更自然。</li>
@@ -1408,6 +1504,7 @@ cat > "$RESOURCES_DIR/fi.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Tervetuloa OpenStrandStudio 2.0 -ohjelmaan</h2>
     <p>Tämä asentaa OpenStrandStudion tietokoneellesi. Sinut opastetaan asennuksen vaiheiden läpi.</p>
     <p>Mitä uutta versiossa 2.0:</p>
+    <p>Miksi 2.0? Maskit tuntuvat nyt paljon luonnollisemmilta käyttää. Kudonta on keskeistä solmujen tekemisessä, ja maskit ovat suuri osa kudontaa, joten tämä on iso askel OpenStrand Studiolle.</p>
     <ul>
         <li><b>Säikeet- ja Maskit-välilehdet:</b> Kerroslista on nyt jaettu kahteen välilehteen, Säikeet ja Maskit, ja valitsin on heti Näytä nimet -painikkeen yläpuolella. Maskit-välilehdellä on omat painikkeensa: Uusi maski, Poista maski, Poista valinnat ja Poista kaikki, ja Uusi maski korvaa työkalupalkin Maski-painikkeen. Poista kaikki poistaa tällä välilehdellä vain maskit, vahvistuksen jälkeen ja yhdellä kumoamisaskeleella. Maskit pysyvät nyt aina kaikkien säikeiden päällä, joten maskin paikalla listassa ei ole enää väliä, ja toisen välilehden kerroksen valinta avaa kyseisen välilehden puolestasi.</li>
         <li><b>Varjo-ongelmat korjattu:</b> Vanhojen versioiden varjo-ongelmat on korjattu. Maskien varjot käyttäytyvät nyt luonnollisemmin.</li>
@@ -1418,6 +1515,7 @@ cat > "$RESOURCES_DIR/fi.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Welcome to OpenStrandStudio 2.0</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 2.0:</p>
+    <p>Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots, and masks are a big part of weaving, so this is a major step for OpenStrand Studio.</p>
     <ul>
         <li><b>Strands and Masks Tabs:</b> The layer list is now split into two tabs, Strands and Masks, with a switch just above Draw Names. The Masks tab has its own New Mask, Delete Mask, Deselect All and Delete All buttons, and New Mask replaces the Mask button in the toolbar. Delete All on this tab removes only the masks, after a confirmation, in one undo step. Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you.</li>
         <li><b>Fixed Shadow Issues:</b> Fixed shadow issues from older versions. Shadows for masks now behave more naturally.</li>
@@ -1428,6 +1526,7 @@ cat > "$RESOURCES_DIR/fi.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 2.0</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Neu in Version 2.0:</p>
+    <p>Warum 2.0? Masken fühlen sich jetzt viel natürlicher an. Weben ist entscheidend beim Knüpfen von Knoten, und Masken sind ein großer Teil davon – ein wichtiger Schritt für OpenStrand Studio.</p>
     <ul>
         <li><b>Tabs Stränge und Masken:</b> Die Ebenenliste ist jetzt in zwei Tabs aufgeteilt, Stränge und Masken, mit einem Umschalter direkt über Namen zeigen. Der Tab Masken hat eigene Schaltflächen für Neue Maske, Maske entf., Alle abwählen und Alle löschen, und Neue Maske ersetzt die Maske-Schaltfläche in der Werkzeugleiste. Alle löschen löscht in diesem Tab nur die Masken, nach einer Bestätigung und in einem einzigen Rückgängig-Schritt. Masken liegen jetzt immer über allen Strängen, ihre Position in der Liste spielt also keine Rolle mehr, und wer eine Ebene des anderen Tabs auswählt, wird automatisch zu diesem Tab gebracht.</li>
         <li><b>Schattenprobleme behoben:</b> Schattenprobleme aus älteren Versionen wurden behoben. Schatten von Masken verhalten sich jetzt natürlicher.</li>
@@ -1438,6 +1537,7 @@ cat > "$RESOURCES_DIR/fi.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenue dans OpenStrandStudio 2.0</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés de la version 2.0 :</p>
+    <p>Pourquoi 2.0 ? Les masques sont maintenant beaucoup plus naturels à utiliser. Le tissage est essentiel pour faire des nœuds, et les masques en sont une grande partie : c'est une étape majeure pour OpenStrand Studio.</p>
     <ul>
         <li><b>Onglets Brins et Masques:</b> La liste des calques est maintenant séparée en deux onglets, Brins et Masques, avec un sélecteur juste au-dessus de Dessin. Noms. L'onglet Masques a ses propres boutons Nouv. Masque, Suppr. Masque, Désél. Tous et Suppr. Tout, et Nouv. Masque remplace le bouton Masque de la barre d'outils. Suppr. Tout sur cet onglet ne supprime que les masques, après confirmation, en une seule étape d'annulation. Les masques restent toujours au-dessus de tous les brins, donc leur place dans la liste n'a plus d'importance, et sélectionner un calque de l'autre onglet ouvre cet onglet pour vous.</li>
         <li><b>Ombres corrigées:</b> Des problèmes d'ombres des versions précédentes ont été corrigés. Les ombres des masques se comportent maintenant de façon plus naturelle.</li>
@@ -1448,6 +1548,7 @@ cat > "$RESOURCES_DIR/fi.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 2.0</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità della versione 2.0:</p>
+    <p>Perché 2.0? Le maschere ora sono molto più naturali da usare. L'intreccio è fondamentale per fare i nodi e le maschere ne sono una parte importante: è un passo importante per OpenStrand Studio.</p>
     <ul>
         <li><b>Schede Trefoli e Maschere:</b> L'elenco dei livelli è ora diviso in due schede, Trefoli e Maschere, con un selettore subito sopra Disegna Nomi. La scheda Maschere ha i suoi pulsanti Nuova Masch., Elim. Maschera, Desel. Tutto ed Elimina Tutto, e Nuova Masch. sostituisce il pulsante Maschera della barra degli strumenti. Elimina Tutto in questa scheda elimina solo le maschere, dopo una conferma, in un unico passo di annullamento. Le maschere restano sempre sopra tutti i trefoli, quindi la loro posizione nell'elenco non conta più, e selezionare un livello dell'altra scheda apre quella scheda per voi.</li>
         <li><b>Problemi delle ombre risolti:</b> Sono stati risolti problemi delle ombre presenti nelle versioni precedenti. Le ombre delle maschere ora si comportano in modo più naturale.</li>
@@ -1458,6 +1559,7 @@ cat > "$RESOURCES_DIR/fi.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 2.0</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades de la versión 2.0:</p>
+    <p>¿Por qué 2.0? Las máscaras ahora son mucho más naturales de usar. El tejido es clave para hacer nudos y las máscaras son una gran parte del tejido, así que es un gran paso para OpenStrand Studio.</p>
     <ul>
         <li><b>Pestañas Cordones y Máscaras:</b> La lista de capas ahora se divide en dos pestañas, Cordones y Máscaras, con un selector justo encima de Ver Nombres. La pestaña Máscaras tiene sus propios botones Nueva Másc., Elim. Máscara, Deselec. Todo y Eliminar Todo, y Nueva Másc. reemplaza el botón Máscara de la barra de herramientas. Eliminar Todo en esta pestaña elimina solo las máscaras, tras una confirmación y en un único paso de deshacer. Las máscaras ahora se mantienen siempre por encima de todos los cordones, así que su posición en la lista ya no importa, y al seleccionar una capa de la otra pestaña se abre esa pestaña automáticamente.</li>
         <li><b>Problemas de sombras corregidos:</b> Se corrigieron problemas de sombras de versiones anteriores. Las sombras de las máscaras ahora se comportan de forma más natural.</li>
@@ -1468,6 +1570,7 @@ cat > "$RESOURCES_DIR/fi.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 2.0</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades da versão 2.0:</p>
+    <p>Porquê 2.0? As máscaras agora são muito mais naturais de usar. A tecelagem é essencial para fazer nós e as máscaras são uma grande parte dela, por isso é um grande passo para o OpenStrand Studio.</p>
     <ul>
         <li><b>Separadores Mechas e Máscaras:</b> A lista de camadas agora está dividida em dois separadores, Mechas e Máscaras, com um seletor mesmo acima de Exib. Nomes. O separador Máscaras tem os seus próprios botões Nova Másc., Excl. Máscara, Desmar. Tudo e Excluir Tudo, e Nova Másc. substitui o botão Máscara da barra de ferramentas. Excluir Tudo neste separador elimina apenas as máscaras, após uma confirmação e num único passo de anular. As máscaras ficam sempre acima de todas as mechas, por isso a sua posição na lista já não importa, e selecionar uma camada do outro separador abre esse separador por si.</li>
         <li><b>Problemas de sombras corrigidos:</b> Foram corrigidos problemas de sombras de versões anteriores. As sombras das máscaras agora comportam-se de forma mais natural.</li>
@@ -1479,6 +1582,7 @@ cat > "$RESOURCES_DIR/fi.lproj/welcome.html" << 'EOF'
     <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 2.0</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05DE;&#x05D4; &#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; 2.0:</p>
+    <p>&#x05DC;&#x05DE;&#x05D4; 2.0? &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D2;&#x05D9;&#x05E9;&#x05D5;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D4;&#x05E8;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05DC;&#x05E9;&#x05D9;&#x05DE;&#x05D5;&#x05E9;. &#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05DE;&#x05E8;&#x05DB;&#x05D9;&#x05D1; &#x05DE;&#x05E8;&#x05DB;&#x05D6;&#x05D9; &#x05D1;&#x05E7;&#x05E9;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05E9;&#x05E8;&#x05D9;&#x05DD;, &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D4;&#x05DF; &#x05D7;&#x05DC;&#x05E7; &#x05D2;&#x05D3;&#x05D5;&#x05DC; &#x05DE;&#x05D4;&#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05D6;&#x05D4;&#x05D5; &#x05E6;&#x05E2;&#x05D3; &#x05DE;&#x05E9;&#x05DE;&#x05E2;&#x05D5;&#x05EA;&#x05D9; &#x05E2;&#x05D1;&#x05D5;&#x05E8; OpenStrand Studio.</p>
     <ul>
         <li><b>&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;:</b> &#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05EA; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05DE;&#x05D7;&#x05D5;&#x05DC;&#x05E7;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05DC;&#x05E9;&#x05EA;&#x05D9; &#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA;, &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05E2;&#x05DD; &#x05DE;&#x05EA;&#x05D2; &#x05DE;&#x05DE;&#x05E9; &#x05DE;&#x05E2;&#x05DC; &#x05E6;&#x05D9;&#x05D9;&#x05E8; &#x05E9;&#x05DE;&#x05D5;&#x05EA;. &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D9;&#x05E9; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05DE;&#x05E9;&#x05DC;&#x05D4;: &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4;, &#x05DE;&#x05D7;&#x05E7; &#x05DE;&#x05E1;&#x05DB;&#x05D4;, &#x05D1;&#x05D8;&#x05DC; &#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC;, &#x05D5;&#x05D4;&#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05DE;&#x05D7;&#x05DC;&#x05D9;&#x05E3; &#x05D0;&#x05EA; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D1;&#x05E1;&#x05E8;&#x05D2;&#x05DC; &#x05D4;&#x05DB;&#x05DC;&#x05D9;&#x05DD;. &#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC; &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05D6;&#x05D5; &#x05DE;&#x05D5;&#x05D7;&#x05E7;&#x05EA; &#x05E8;&#x05E7; &#x05D0;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05D0;&#x05D7;&#x05E8;&#x05D9; &#x05D0;&#x05D9;&#x05E9;&#x05D5;&#x05E8;, &#x05D5;&#x05D1;&#x05E9;&#x05DC;&#x05D1; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D0;&#x05D7;&#x05D3;. &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05E0;&#x05E9;&#x05D0;&#x05E8;&#x05D5;&#x05EA; &#x05EA;&#x05DE;&#x05D9;&#x05D3; &#x05DE;&#x05E2;&#x05DC; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05DE;&#x05D9;&#x05E7;&#x05D5;&#x05DE;&#x05DF; &#x05D1;&#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05D4; &#x05DB;&#x05D1;&#x05E8; &#x05DC;&#x05D0; &#x05DE;&#x05E9;&#x05E0;&#x05D4;, &#x05D5;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E9;&#x05DB;&#x05D1;&#x05D4; &#x05DE;&#x05D4;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05E9;&#x05E0;&#x05D9;&#x05D9;&#x05D4; &#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05EA; &#x05D0;&#x05D5;&#x05EA;&#x05D4; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA;.</li>
         <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;. &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05E9;&#x05DC; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05EA;&#x05E0;&#x05D4;&#x05D2;&#x05D9;&#x05DD; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D1;&#x05E6;&#x05D5;&#x05E8;&#x05D4; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
@@ -1490,6 +1594,7 @@ cat > "$RESOURCES_DIR/fi.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Добро пожаловать в OpenStrandStudio 2.0</h2>
     <p>Эта программа установит OpenStrandStudio на ваш компьютер. Вы пройдёте все необходимые шаги установки.</p>
     <p>Что нового в версии 2.0:</p>
+    <p>Почему 2.0? Маски теперь гораздо естественнее в работе. Плетение — основа завязывания узлов, а маски — большая его часть, поэтому это важный шаг для OpenStrand Studio.</p>
     <ul>
         <li><b>Вкладки «Пряди» и «Маски»:</b> Список слоёв теперь разделён на две вкладки, «Пряди» и «Маски», с переключателем прямо над кнопкой «Показ имён». У вкладки «Маски» свои кнопки: «Новая маска», «Удалить маску», «Снять выбор» и «Удалить все», а «Новая маска» заменяет кнопку «Маска» на панели инструментов. «Удалить все» на этой вкладке удаляет только маски, после подтверждения и одним шагом отмены. Маски теперь всегда лежат над всеми прядями, поэтому их место в списке больше не важно, а выбор слоя с другой вкладки сам открывает эту вкладку.</li>
         <li><b>Исправлены проблемы с тенями:</b> Исправлены проблемы с тенями из прошлых версий. Тени масок теперь ведут себя естественнее.</li>
@@ -1500,6 +1605,7 @@ cat > "$RESOURCES_DIR/fi.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Välkommen till OpenStrandStudio 2.0</h2>
     <p>Detta installerar OpenStrandStudio på din dator. Du guidas genom stegen som behövs för att installera programmet.</p>
     <p>Nyheter i version 2.0:</p>
+    <p>Varför 2.0? Masker känns nu mycket mer naturliga att använda. Vävning är nyckeln till att knyta knutar och masker är en stor del av vävningen, så detta är ett stort steg för OpenStrand Studio.</p>
     <ul>
         <li><b>Flikarna Strängar och Masker:</b> Lagerlistan är nu uppdelad i två flikar, Strängar och Masker, med en växlare precis ovanför Visa namn. Fliken Masker har egna knappar: Ny mask, Ta bort mask, Avmarkera alla och Ta bort alla, och Ny mask ersätter Mask-knappen i verktygsfältet. Ta bort alla på den här fliken tar bara bort maskerna, efter en bekräftelse och i ett enda ångra-steg. Masker ligger nu alltid ovanför alla strängar, så var en mask står i listan spelar ingen roll längre, och när du markerar ett lager på den andra fliken öppnas den fliken åt dig.</li>
         <li><b>Skuggproblem åtgärdade:</b> Skuggproblem från äldre versioner har åtgärdats. Skuggor för masker beter sig nu mer naturligt.</li>
@@ -1510,6 +1616,7 @@ cat > "$RESOURCES_DIR/fi.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">OpenStrandStudio 2.0 へようこそ</h2>
     <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
     <p>バージョン 2.0 の新機能:</p>
+    <p>なぜ2.0なのか: マスクがずっと自然に使えるようになりました。結び目を作るには織りが重要で、マスクは織りの大きな部分を占めるため、OpenStrand Studioにとって大きな一歩です。</p>
     <ul>
         <li><b>ストランド/マスクタブ:</b> レイヤーリストが「ストランド」と「マスク」の2つのタブに分かれ、「名前を表示」のすぐ上に切り替えが付きました。マスクタブには専用の「新しいマスク」「マスクを削除」「すべて選択解除」「すべて削除」ボタンがあり、「新しいマスク」はツールバーのマスクボタンの代わりになります。このタブの「すべて削除」はマスクだけを、確認のあとに1回の元に戻す操作で削除します。マスクは常にすべてのストランドの上に保たれるため、リスト内の位置は気にする必要がなくなり、もう一方のタブのレイヤーを選ぶとそのタブが自動で開きます。</li>
         <li><b>影の問題を修正:</b> 以前のバージョンにあった影の問題を修正しました。マスクの影がより自然な動きになりました。</li>
@@ -1520,6 +1627,7 @@ cat > "$RESOURCES_DIR/fi.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">欢迎使用 OpenStrandStudio 2.0</h2>
     <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
     <p>版本 2.0 的新功能:</p>
+    <p>为什么是2.0？遮罩现在用起来自然得多。编织是打绳结的关键，而遮罩是编织的重要组成部分，因此这是 OpenStrand Studio 的重要一步。</p>
     <ul>
         <li><b>绳股/遮罩标签页:</b> 图层列表现在分为“绳股”和“遮罩”两个标签页，切换按钮就在“显示名称”上方。“遮罩”标签页有自己的“新建遮罩”“删除遮罩”“取消全选”和“全部删除”按钮，“新建遮罩”取代了工具栏中的遮罩按钮。在此标签页中“全部删除”只会删除遮罩，需确认，并且只算一次撤销。遮罩现在始终位于所有绳股之上，因此它在列表中的位置不再重要，选择另一个标签页中的图层时会自动打开该标签页。</li>
         <li><b>修复阴影问题:</b> 修复了旧版本中的阴影问题，遮罩的阴影现在表现得更自然。</li>
@@ -1541,6 +1649,7 @@ cat > "$RESOURCES_DIR/sv.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Välkommen till OpenStrandStudio 2.0</h2>
     <p>Detta installerar OpenStrandStudio på din dator. Du guidas genom stegen som behövs för att installera programmet.</p>
     <p>Nyheter i version 2.0:</p>
+    <p>Varför 2.0? Masker känns nu mycket mer naturliga att använda. Vävning är nyckeln till att knyta knutar och masker är en stor del av vävningen, så detta är ett stort steg för OpenStrand Studio.</p>
     <ul>
         <li><b>Flikarna Strängar och Masker:</b> Lagerlistan är nu uppdelad i två flikar, Strängar och Masker, med en växlare precis ovanför Visa namn. Fliken Masker har egna knappar: Ny mask, Ta bort mask, Avmarkera alla och Ta bort alla, och Ny mask ersätter Mask-knappen i verktygsfältet. Ta bort alla på den här fliken tar bara bort maskerna, efter en bekräftelse och i ett enda ångra-steg. Masker ligger nu alltid ovanför alla strängar, så var en mask står i listan spelar ingen roll längre, och när du markerar ett lager på den andra fliken öppnas den fliken åt dig.</li>
         <li><b>Skuggproblem åtgärdade:</b> Skuggproblem från äldre versioner har åtgärdats. Skuggor för masker beter sig nu mer naturligt.</li>
@@ -1551,6 +1660,7 @@ cat > "$RESOURCES_DIR/sv.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Welcome to OpenStrandStudio 2.0</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 2.0:</p>
+    <p>Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots, and masks are a big part of weaving, so this is a major step for OpenStrand Studio.</p>
     <ul>
         <li><b>Strands and Masks Tabs:</b> The layer list is now split into two tabs, Strands and Masks, with a switch just above Draw Names. The Masks tab has its own New Mask, Delete Mask, Deselect All and Delete All buttons, and New Mask replaces the Mask button in the toolbar. Delete All on this tab removes only the masks, after a confirmation, in one undo step. Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you.</li>
         <li><b>Fixed Shadow Issues:</b> Fixed shadow issues from older versions. Shadows for masks now behave more naturally.</li>
@@ -1561,6 +1671,7 @@ cat > "$RESOURCES_DIR/sv.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 2.0</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Neu in Version 2.0:</p>
+    <p>Warum 2.0? Masken fühlen sich jetzt viel natürlicher an. Weben ist entscheidend beim Knüpfen von Knoten, und Masken sind ein großer Teil davon – ein wichtiger Schritt für OpenStrand Studio.</p>
     <ul>
         <li><b>Tabs Stränge und Masken:</b> Die Ebenenliste ist jetzt in zwei Tabs aufgeteilt, Stränge und Masken, mit einem Umschalter direkt über Namen zeigen. Der Tab Masken hat eigene Schaltflächen für Neue Maske, Maske entf., Alle abwählen und Alle löschen, und Neue Maske ersetzt die Maske-Schaltfläche in der Werkzeugleiste. Alle löschen löscht in diesem Tab nur die Masken, nach einer Bestätigung und in einem einzigen Rückgängig-Schritt. Masken liegen jetzt immer über allen Strängen, ihre Position in der Liste spielt also keine Rolle mehr, und wer eine Ebene des anderen Tabs auswählt, wird automatisch zu diesem Tab gebracht.</li>
         <li><b>Schattenprobleme behoben:</b> Schattenprobleme aus älteren Versionen wurden behoben. Schatten von Masken verhalten sich jetzt natürlicher.</li>
@@ -1571,6 +1682,7 @@ cat > "$RESOURCES_DIR/sv.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenue dans OpenStrandStudio 2.0</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés de la version 2.0 :</p>
+    <p>Pourquoi 2.0 ? Les masques sont maintenant beaucoup plus naturels à utiliser. Le tissage est essentiel pour faire des nœuds, et les masques en sont une grande partie : c'est une étape majeure pour OpenStrand Studio.</p>
     <ul>
         <li><b>Onglets Brins et Masques:</b> La liste des calques est maintenant séparée en deux onglets, Brins et Masques, avec un sélecteur juste au-dessus de Dessin. Noms. L'onglet Masques a ses propres boutons Nouv. Masque, Suppr. Masque, Désél. Tous et Suppr. Tout, et Nouv. Masque remplace le bouton Masque de la barre d'outils. Suppr. Tout sur cet onglet ne supprime que les masques, après confirmation, en une seule étape d'annulation. Les masques restent toujours au-dessus de tous les brins, donc leur place dans la liste n'a plus d'importance, et sélectionner un calque de l'autre onglet ouvre cet onglet pour vous.</li>
         <li><b>Ombres corrigées:</b> Des problèmes d'ombres des versions précédentes ont été corrigés. Les ombres des masques se comportent maintenant de façon plus naturelle.</li>
@@ -1581,6 +1693,7 @@ cat > "$RESOURCES_DIR/sv.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 2.0</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità della versione 2.0:</p>
+    <p>Perché 2.0? Le maschere ora sono molto più naturali da usare. L'intreccio è fondamentale per fare i nodi e le maschere ne sono una parte importante: è un passo importante per OpenStrand Studio.</p>
     <ul>
         <li><b>Schede Trefoli e Maschere:</b> L'elenco dei livelli è ora diviso in due schede, Trefoli e Maschere, con un selettore subito sopra Disegna Nomi. La scheda Maschere ha i suoi pulsanti Nuova Masch., Elim. Maschera, Desel. Tutto ed Elimina Tutto, e Nuova Masch. sostituisce il pulsante Maschera della barra degli strumenti. Elimina Tutto in questa scheda elimina solo le maschere, dopo una conferma, in un unico passo di annullamento. Le maschere restano sempre sopra tutti i trefoli, quindi la loro posizione nell'elenco non conta più, e selezionare un livello dell'altra scheda apre quella scheda per voi.</li>
         <li><b>Problemi delle ombre risolti:</b> Sono stati risolti problemi delle ombre presenti nelle versioni precedenti. Le ombre delle maschere ora si comportano in modo più naturale.</li>
@@ -1591,6 +1704,7 @@ cat > "$RESOURCES_DIR/sv.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 2.0</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades de la versión 2.0:</p>
+    <p>¿Por qué 2.0? Las máscaras ahora son mucho más naturales de usar. El tejido es clave para hacer nudos y las máscaras son una gran parte del tejido, así que es un gran paso para OpenStrand Studio.</p>
     <ul>
         <li><b>Pestañas Cordones y Máscaras:</b> La lista de capas ahora se divide en dos pestañas, Cordones y Máscaras, con un selector justo encima de Ver Nombres. La pestaña Máscaras tiene sus propios botones Nueva Másc., Elim. Máscara, Deselec. Todo y Eliminar Todo, y Nueva Másc. reemplaza el botón Máscara de la barra de herramientas. Eliminar Todo en esta pestaña elimina solo las máscaras, tras una confirmación y en un único paso de deshacer. Las máscaras ahora se mantienen siempre por encima de todos los cordones, así que su posición en la lista ya no importa, y al seleccionar una capa de la otra pestaña se abre esa pestaña automáticamente.</li>
         <li><b>Problemas de sombras corregidos:</b> Se corrigieron problemas de sombras de versiones anteriores. Las sombras de las máscaras ahora se comportan de forma más natural.</li>
@@ -1601,6 +1715,7 @@ cat > "$RESOURCES_DIR/sv.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 2.0</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades da versão 2.0:</p>
+    <p>Porquê 2.0? As máscaras agora são muito mais naturais de usar. A tecelagem é essencial para fazer nós e as máscaras são uma grande parte dela, por isso é um grande passo para o OpenStrand Studio.</p>
     <ul>
         <li><b>Separadores Mechas e Máscaras:</b> A lista de camadas agora está dividida em dois separadores, Mechas e Máscaras, com um seletor mesmo acima de Exib. Nomes. O separador Máscaras tem os seus próprios botões Nova Másc., Excl. Máscara, Desmar. Tudo e Excluir Tudo, e Nova Másc. substitui o botão Máscara da barra de ferramentas. Excluir Tudo neste separador elimina apenas as máscaras, após uma confirmação e num único passo de anular. As máscaras ficam sempre acima de todas as mechas, por isso a sua posição na lista já não importa, e selecionar uma camada do outro separador abre esse separador por si.</li>
         <li><b>Problemas de sombras corrigidos:</b> Foram corrigidos problemas de sombras de versões anteriores. As sombras das máscaras agora comportam-se de forma mais natural.</li>
@@ -1612,6 +1727,7 @@ cat > "$RESOURCES_DIR/sv.lproj/welcome.html" << 'EOF'
     <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 2.0</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05DE;&#x05D4; &#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; 2.0:</p>
+    <p>&#x05DC;&#x05DE;&#x05D4; 2.0? &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D2;&#x05D9;&#x05E9;&#x05D5;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D4;&#x05E8;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05DC;&#x05E9;&#x05D9;&#x05DE;&#x05D5;&#x05E9;. &#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05DE;&#x05E8;&#x05DB;&#x05D9;&#x05D1; &#x05DE;&#x05E8;&#x05DB;&#x05D6;&#x05D9; &#x05D1;&#x05E7;&#x05E9;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05E9;&#x05E8;&#x05D9;&#x05DD;, &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D4;&#x05DF; &#x05D7;&#x05DC;&#x05E7; &#x05D2;&#x05D3;&#x05D5;&#x05DC; &#x05DE;&#x05D4;&#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05D6;&#x05D4;&#x05D5; &#x05E6;&#x05E2;&#x05D3; &#x05DE;&#x05E9;&#x05DE;&#x05E2;&#x05D5;&#x05EA;&#x05D9; &#x05E2;&#x05D1;&#x05D5;&#x05E8; OpenStrand Studio.</p>
     <ul>
         <li><b>&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;:</b> &#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05EA; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05DE;&#x05D7;&#x05D5;&#x05DC;&#x05E7;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05DC;&#x05E9;&#x05EA;&#x05D9; &#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA;, &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05E2;&#x05DD; &#x05DE;&#x05EA;&#x05D2; &#x05DE;&#x05DE;&#x05E9; &#x05DE;&#x05E2;&#x05DC; &#x05E6;&#x05D9;&#x05D9;&#x05E8; &#x05E9;&#x05DE;&#x05D5;&#x05EA;. &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D9;&#x05E9; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05DE;&#x05E9;&#x05DC;&#x05D4;: &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4;, &#x05DE;&#x05D7;&#x05E7; &#x05DE;&#x05E1;&#x05DB;&#x05D4;, &#x05D1;&#x05D8;&#x05DC; &#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC;, &#x05D5;&#x05D4;&#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05DE;&#x05D7;&#x05DC;&#x05D9;&#x05E3; &#x05D0;&#x05EA; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D1;&#x05E1;&#x05E8;&#x05D2;&#x05DC; &#x05D4;&#x05DB;&#x05DC;&#x05D9;&#x05DD;. &#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC; &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05D6;&#x05D5; &#x05DE;&#x05D5;&#x05D7;&#x05E7;&#x05EA; &#x05E8;&#x05E7; &#x05D0;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05D0;&#x05D7;&#x05E8;&#x05D9; &#x05D0;&#x05D9;&#x05E9;&#x05D5;&#x05E8;, &#x05D5;&#x05D1;&#x05E9;&#x05DC;&#x05D1; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D0;&#x05D7;&#x05D3;. &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05E0;&#x05E9;&#x05D0;&#x05E8;&#x05D5;&#x05EA; &#x05EA;&#x05DE;&#x05D9;&#x05D3; &#x05DE;&#x05E2;&#x05DC; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05DE;&#x05D9;&#x05E7;&#x05D5;&#x05DE;&#x05DF; &#x05D1;&#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05D4; &#x05DB;&#x05D1;&#x05E8; &#x05DC;&#x05D0; &#x05DE;&#x05E9;&#x05E0;&#x05D4;, &#x05D5;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E9;&#x05DB;&#x05D1;&#x05D4; &#x05DE;&#x05D4;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05E9;&#x05E0;&#x05D9;&#x05D9;&#x05D4; &#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05EA; &#x05D0;&#x05D5;&#x05EA;&#x05D4; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA;.</li>
         <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;. &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05E9;&#x05DC; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05EA;&#x05E0;&#x05D4;&#x05D2;&#x05D9;&#x05DD; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D1;&#x05E6;&#x05D5;&#x05E8;&#x05D4; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
@@ -1623,6 +1739,7 @@ cat > "$RESOURCES_DIR/sv.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Добро пожаловать в OpenStrandStudio 2.0</h2>
     <p>Эта программа установит OpenStrandStudio на ваш компьютер. Вы пройдёте все необходимые шаги установки.</p>
     <p>Что нового в версии 2.0:</p>
+    <p>Почему 2.0? Маски теперь гораздо естественнее в работе. Плетение — основа завязывания узлов, а маски — большая его часть, поэтому это важный шаг для OpenStrand Studio.</p>
     <ul>
         <li><b>Вкладки «Пряди» и «Маски»:</b> Список слоёв теперь разделён на две вкладки, «Пряди» и «Маски», с переключателем прямо над кнопкой «Показ имён». У вкладки «Маски» свои кнопки: «Новая маска», «Удалить маску», «Снять выбор» и «Удалить все», а «Новая маска» заменяет кнопку «Маска» на панели инструментов. «Удалить все» на этой вкладке удаляет только маски, после подтверждения и одним шагом отмены. Маски теперь всегда лежат над всеми прядями, поэтому их место в списке больше не важно, а выбор слоя с другой вкладки сам открывает эту вкладку.</li>
         <li><b>Исправлены проблемы с тенями:</b> Исправлены проблемы с тенями из прошлых версий. Тени масок теперь ведут себя естественнее.</li>
@@ -1633,6 +1750,7 @@ cat > "$RESOURCES_DIR/sv.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Tervetuloa OpenStrandStudio 2.0 -ohjelmaan</h2>
     <p>Tämä asentaa OpenStrandStudion tietokoneellesi. Sinut opastetaan asennuksen vaiheiden läpi.</p>
     <p>Mitä uutta versiossa 2.0:</p>
+    <p>Miksi 2.0? Maskit tuntuvat nyt paljon luonnollisemmilta käyttää. Kudonta on keskeistä solmujen tekemisessä, ja maskit ovat suuri osa kudontaa, joten tämä on iso askel OpenStrand Studiolle.</p>
     <ul>
         <li><b>Säikeet- ja Maskit-välilehdet:</b> Kerroslista on nyt jaettu kahteen välilehteen, Säikeet ja Maskit, ja valitsin on heti Näytä nimet -painikkeen yläpuolella. Maskit-välilehdellä on omat painikkeensa: Uusi maski, Poista maski, Poista valinnat ja Poista kaikki, ja Uusi maski korvaa työkalupalkin Maski-painikkeen. Poista kaikki poistaa tällä välilehdellä vain maskit, vahvistuksen jälkeen ja yhdellä kumoamisaskeleella. Maskit pysyvät nyt aina kaikkien säikeiden päällä, joten maskin paikalla listassa ei ole enää väliä, ja toisen välilehden kerroksen valinta avaa kyseisen välilehden puolestasi.</li>
         <li><b>Varjo-ongelmat korjattu:</b> Vanhojen versioiden varjo-ongelmat on korjattu. Maskien varjot käyttäytyvät nyt luonnollisemmin.</li>
@@ -1643,6 +1761,7 @@ cat > "$RESOURCES_DIR/sv.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">OpenStrandStudio 2.0 へようこそ</h2>
     <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
     <p>バージョン 2.0 の新機能:</p>
+    <p>なぜ2.0なのか: マスクがずっと自然に使えるようになりました。結び目を作るには織りが重要で、マスクは織りの大きな部分を占めるため、OpenStrand Studioにとって大きな一歩です。</p>
     <ul>
         <li><b>ストランド/マスクタブ:</b> レイヤーリストが「ストランド」と「マスク」の2つのタブに分かれ、「名前を表示」のすぐ上に切り替えが付きました。マスクタブには専用の「新しいマスク」「マスクを削除」「すべて選択解除」「すべて削除」ボタンがあり、「新しいマスク」はツールバーのマスクボタンの代わりになります。このタブの「すべて削除」はマスクだけを、確認のあとに1回の元に戻す操作で削除します。マスクは常にすべてのストランドの上に保たれるため、リスト内の位置は気にする必要がなくなり、もう一方のタブのレイヤーを選ぶとそのタブが自動で開きます。</li>
         <li><b>影の問題を修正:</b> 以前のバージョンにあった影の問題を修正しました。マスクの影がより自然な動きになりました。</li>
@@ -1653,6 +1772,7 @@ cat > "$RESOURCES_DIR/sv.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">欢迎使用 OpenStrandStudio 2.0</h2>
     <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
     <p>版本 2.0 的新功能:</p>
+    <p>为什么是2.0？遮罩现在用起来自然得多。编织是打绳结的关键，而遮罩是编织的重要组成部分，因此这是 OpenStrand Studio 的重要一步。</p>
     <ul>
         <li><b>绳股/遮罩标签页:</b> 图层列表现在分为“绳股”和“遮罩”两个标签页，切换按钮就在“显示名称”上方。“遮罩”标签页有自己的“新建遮罩”“删除遮罩”“取消全选”和“全部删除”按钮，“新建遮罩”取代了工具栏中的遮罩按钮。在此标签页中“全部删除”只会删除遮罩，需确认，并且只算一次撤销。遮罩现在始终位于所有绳股之上，因此它在列表中的位置不再重要，选择另一个标签页中的图层时会自动打开该标签页。</li>
         <li><b>修复阴影问题:</b> 修复了旧版本中的阴影问题，遮罩的阴影现在表现得更自然。</li>
@@ -1674,6 +1794,7 @@ cat > "$RESOURCES_DIR/ja.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">OpenStrandStudio 2.0 へようこそ</h2>
     <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
     <p>バージョン 2.0 の新機能:</p>
+    <p>なぜ2.0なのか: マスクがずっと自然に使えるようになりました。結び目を作るには織りが重要で、マスクは織りの大きな部分を占めるため、OpenStrand Studioにとって大きな一歩です。</p>
     <ul>
         <li><b>ストランド/マスクタブ:</b> レイヤーリストが「ストランド」と「マスク」の2つのタブに分かれ、「名前を表示」のすぐ上に切り替えが付きました。マスクタブには専用の「新しいマスク」「マスクを削除」「すべて選択解除」「すべて削除」ボタンがあり、「新しいマスク」はツールバーのマスクボタンの代わりになります。このタブの「すべて削除」はマスクだけを、確認のあとに1回の元に戻す操作で削除します。マスクは常にすべてのストランドの上に保たれるため、リスト内の位置は気にする必要がなくなり、もう一方のタブのレイヤーを選ぶとそのタブが自動で開きます。</li>
         <li><b>影の問題を修正:</b> 以前のバージョンにあった影の問題を修正しました。マスクの影がより自然な動きになりました。</li>
@@ -1684,6 +1805,7 @@ cat > "$RESOURCES_DIR/ja.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Welcome to OpenStrandStudio 2.0</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 2.0:</p>
+    <p>Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots, and masks are a big part of weaving, so this is a major step for OpenStrand Studio.</p>
     <ul>
         <li><b>Strands and Masks Tabs:</b> The layer list is now split into two tabs, Strands and Masks, with a switch just above Draw Names. The Masks tab has its own New Mask, Delete Mask, Deselect All and Delete All buttons, and New Mask replaces the Mask button in the toolbar. Delete All on this tab removes only the masks, after a confirmation, in one undo step. Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you.</li>
         <li><b>Fixed Shadow Issues:</b> Fixed shadow issues from older versions. Shadows for masks now behave more naturally.</li>
@@ -1694,6 +1816,7 @@ cat > "$RESOURCES_DIR/ja.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 2.0</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Neu in Version 2.0:</p>
+    <p>Warum 2.0? Masken fühlen sich jetzt viel natürlicher an. Weben ist entscheidend beim Knüpfen von Knoten, und Masken sind ein großer Teil davon – ein wichtiger Schritt für OpenStrand Studio.</p>
     <ul>
         <li><b>Tabs Stränge und Masken:</b> Die Ebenenliste ist jetzt in zwei Tabs aufgeteilt, Stränge und Masken, mit einem Umschalter direkt über Namen zeigen. Der Tab Masken hat eigene Schaltflächen für Neue Maske, Maske entf., Alle abwählen und Alle löschen, und Neue Maske ersetzt die Maske-Schaltfläche in der Werkzeugleiste. Alle löschen löscht in diesem Tab nur die Masken, nach einer Bestätigung und in einem einzigen Rückgängig-Schritt. Masken liegen jetzt immer über allen Strängen, ihre Position in der Liste spielt also keine Rolle mehr, und wer eine Ebene des anderen Tabs auswählt, wird automatisch zu diesem Tab gebracht.</li>
         <li><b>Schattenprobleme behoben:</b> Schattenprobleme aus älteren Versionen wurden behoben. Schatten von Masken verhalten sich jetzt natürlicher.</li>
@@ -1704,6 +1827,7 @@ cat > "$RESOURCES_DIR/ja.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenue dans OpenStrandStudio 2.0</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés de la version 2.0 :</p>
+    <p>Pourquoi 2.0 ? Les masques sont maintenant beaucoup plus naturels à utiliser. Le tissage est essentiel pour faire des nœuds, et les masques en sont une grande partie : c'est une étape majeure pour OpenStrand Studio.</p>
     <ul>
         <li><b>Onglets Brins et Masques:</b> La liste des calques est maintenant séparée en deux onglets, Brins et Masques, avec un sélecteur juste au-dessus de Dessin. Noms. L'onglet Masques a ses propres boutons Nouv. Masque, Suppr. Masque, Désél. Tous et Suppr. Tout, et Nouv. Masque remplace le bouton Masque de la barre d'outils. Suppr. Tout sur cet onglet ne supprime que les masques, après confirmation, en une seule étape d'annulation. Les masques restent toujours au-dessus de tous les brins, donc leur place dans la liste n'a plus d'importance, et sélectionner un calque de l'autre onglet ouvre cet onglet pour vous.</li>
         <li><b>Ombres corrigées:</b> Des problèmes d'ombres des versions précédentes ont été corrigés. Les ombres des masques se comportent maintenant de façon plus naturelle.</li>
@@ -1714,6 +1838,7 @@ cat > "$RESOURCES_DIR/ja.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 2.0</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità della versione 2.0:</p>
+    <p>Perché 2.0? Le maschere ora sono molto più naturali da usare. L'intreccio è fondamentale per fare i nodi e le maschere ne sono una parte importante: è un passo importante per OpenStrand Studio.</p>
     <ul>
         <li><b>Schede Trefoli e Maschere:</b> L'elenco dei livelli è ora diviso in due schede, Trefoli e Maschere, con un selettore subito sopra Disegna Nomi. La scheda Maschere ha i suoi pulsanti Nuova Masch., Elim. Maschera, Desel. Tutto ed Elimina Tutto, e Nuova Masch. sostituisce il pulsante Maschera della barra degli strumenti. Elimina Tutto in questa scheda elimina solo le maschere, dopo una conferma, in un unico passo di annullamento. Le maschere restano sempre sopra tutti i trefoli, quindi la loro posizione nell'elenco non conta più, e selezionare un livello dell'altra scheda apre quella scheda per voi.</li>
         <li><b>Problemi delle ombre risolti:</b> Sono stati risolti problemi delle ombre presenti nelle versioni precedenti. Le ombre delle maschere ora si comportano in modo più naturale.</li>
@@ -1724,6 +1849,7 @@ cat > "$RESOURCES_DIR/ja.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 2.0</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades de la versión 2.0:</p>
+    <p>¿Por qué 2.0? Las máscaras ahora son mucho más naturales de usar. El tejido es clave para hacer nudos y las máscaras son una gran parte del tejido, así que es un gran paso para OpenStrand Studio.</p>
     <ul>
         <li><b>Pestañas Cordones y Máscaras:</b> La lista de capas ahora se divide en dos pestañas, Cordones y Máscaras, con un selector justo encima de Ver Nombres. La pestaña Máscaras tiene sus propios botones Nueva Másc., Elim. Máscara, Deselec. Todo y Eliminar Todo, y Nueva Másc. reemplaza el botón Máscara de la barra de herramientas. Eliminar Todo en esta pestaña elimina solo las máscaras, tras una confirmación y en un único paso de deshacer. Las máscaras ahora se mantienen siempre por encima de todos los cordones, así que su posición en la lista ya no importa, y al seleccionar una capa de la otra pestaña se abre esa pestaña automáticamente.</li>
         <li><b>Problemas de sombras corregidos:</b> Se corrigieron problemas de sombras de versiones anteriores. Las sombras de las máscaras ahora se comportan de forma más natural.</li>
@@ -1734,6 +1860,7 @@ cat > "$RESOURCES_DIR/ja.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 2.0</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades da versão 2.0:</p>
+    <p>Porquê 2.0? As máscaras agora são muito mais naturais de usar. A tecelagem é essencial para fazer nós e as máscaras são uma grande parte dela, por isso é um grande passo para o OpenStrand Studio.</p>
     <ul>
         <li><b>Separadores Mechas e Máscaras:</b> A lista de camadas agora está dividida em dois separadores, Mechas e Máscaras, com um seletor mesmo acima de Exib. Nomes. O separador Máscaras tem os seus próprios botões Nova Másc., Excl. Máscara, Desmar. Tudo e Excluir Tudo, e Nova Másc. substitui o botão Máscara da barra de ferramentas. Excluir Tudo neste separador elimina apenas as máscaras, após uma confirmação e num único passo de anular. As máscaras ficam sempre acima de todas as mechas, por isso a sua posição na lista já não importa, e selecionar uma camada do outro separador abre esse separador por si.</li>
         <li><b>Problemas de sombras corrigidos:</b> Foram corrigidos problemas de sombras de versões anteriores. As sombras das máscaras agora comportam-se de forma mais natural.</li>
@@ -1745,6 +1872,7 @@ cat > "$RESOURCES_DIR/ja.lproj/welcome.html" << 'EOF'
     <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 2.0</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05DE;&#x05D4; &#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; 2.0:</p>
+    <p>&#x05DC;&#x05DE;&#x05D4; 2.0? &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D2;&#x05D9;&#x05E9;&#x05D5;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D4;&#x05E8;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05DC;&#x05E9;&#x05D9;&#x05DE;&#x05D5;&#x05E9;. &#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05DE;&#x05E8;&#x05DB;&#x05D9;&#x05D1; &#x05DE;&#x05E8;&#x05DB;&#x05D6;&#x05D9; &#x05D1;&#x05E7;&#x05E9;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05E9;&#x05E8;&#x05D9;&#x05DD;, &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D4;&#x05DF; &#x05D7;&#x05DC;&#x05E7; &#x05D2;&#x05D3;&#x05D5;&#x05DC; &#x05DE;&#x05D4;&#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05D6;&#x05D4;&#x05D5; &#x05E6;&#x05E2;&#x05D3; &#x05DE;&#x05E9;&#x05DE;&#x05E2;&#x05D5;&#x05EA;&#x05D9; &#x05E2;&#x05D1;&#x05D5;&#x05E8; OpenStrand Studio.</p>
     <ul>
         <li><b>&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;:</b> &#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05EA; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05DE;&#x05D7;&#x05D5;&#x05DC;&#x05E7;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05DC;&#x05E9;&#x05EA;&#x05D9; &#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA;, &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05E2;&#x05DD; &#x05DE;&#x05EA;&#x05D2; &#x05DE;&#x05DE;&#x05E9; &#x05DE;&#x05E2;&#x05DC; &#x05E6;&#x05D9;&#x05D9;&#x05E8; &#x05E9;&#x05DE;&#x05D5;&#x05EA;. &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D9;&#x05E9; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05DE;&#x05E9;&#x05DC;&#x05D4;: &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4;, &#x05DE;&#x05D7;&#x05E7; &#x05DE;&#x05E1;&#x05DB;&#x05D4;, &#x05D1;&#x05D8;&#x05DC; &#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC;, &#x05D5;&#x05D4;&#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05DE;&#x05D7;&#x05DC;&#x05D9;&#x05E3; &#x05D0;&#x05EA; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D1;&#x05E1;&#x05E8;&#x05D2;&#x05DC; &#x05D4;&#x05DB;&#x05DC;&#x05D9;&#x05DD;. &#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC; &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05D6;&#x05D5; &#x05DE;&#x05D5;&#x05D7;&#x05E7;&#x05EA; &#x05E8;&#x05E7; &#x05D0;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05D0;&#x05D7;&#x05E8;&#x05D9; &#x05D0;&#x05D9;&#x05E9;&#x05D5;&#x05E8;, &#x05D5;&#x05D1;&#x05E9;&#x05DC;&#x05D1; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D0;&#x05D7;&#x05D3;. &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05E0;&#x05E9;&#x05D0;&#x05E8;&#x05D5;&#x05EA; &#x05EA;&#x05DE;&#x05D9;&#x05D3; &#x05DE;&#x05E2;&#x05DC; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05DE;&#x05D9;&#x05E7;&#x05D5;&#x05DE;&#x05DF; &#x05D1;&#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05D4; &#x05DB;&#x05D1;&#x05E8; &#x05DC;&#x05D0; &#x05DE;&#x05E9;&#x05E0;&#x05D4;, &#x05D5;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E9;&#x05DB;&#x05D1;&#x05D4; &#x05DE;&#x05D4;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05E9;&#x05E0;&#x05D9;&#x05D9;&#x05D4; &#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05EA; &#x05D0;&#x05D5;&#x05EA;&#x05D4; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA;.</li>
         <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;. &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05E9;&#x05DC; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05EA;&#x05E0;&#x05D4;&#x05D2;&#x05D9;&#x05DD; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D1;&#x05E6;&#x05D5;&#x05E8;&#x05D4; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
@@ -1756,6 +1884,7 @@ cat > "$RESOURCES_DIR/ja.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Добро пожаловать в OpenStrandStudio 2.0</h2>
     <p>Эта программа установит OpenStrandStudio на ваш компьютер. Вы пройдёте все необходимые шаги установки.</p>
     <p>Что нового в версии 2.0:</p>
+    <p>Почему 2.0? Маски теперь гораздо естественнее в работе. Плетение — основа завязывания узлов, а маски — большая его часть, поэтому это важный шаг для OpenStrand Studio.</p>
     <ul>
         <li><b>Вкладки «Пряди» и «Маски»:</b> Список слоёв теперь разделён на две вкладки, «Пряди» и «Маски», с переключателем прямо над кнопкой «Показ имён». У вкладки «Маски» свои кнопки: «Новая маска», «Удалить маску», «Снять выбор» и «Удалить все», а «Новая маска» заменяет кнопку «Маска» на панели инструментов. «Удалить все» на этой вкладке удаляет только маски, после подтверждения и одним шагом отмены. Маски теперь всегда лежат над всеми прядями, поэтому их место в списке больше не важно, а выбор слоя с другой вкладки сам открывает эту вкладку.</li>
         <li><b>Исправлены проблемы с тенями:</b> Исправлены проблемы с тенями из прошлых версий. Тени масок теперь ведут себя естественнее.</li>
@@ -1766,6 +1895,7 @@ cat > "$RESOURCES_DIR/ja.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Tervetuloa OpenStrandStudio 2.0 -ohjelmaan</h2>
     <p>Tämä asentaa OpenStrandStudion tietokoneellesi. Sinut opastetaan asennuksen vaiheiden läpi.</p>
     <p>Mitä uutta versiossa 2.0:</p>
+    <p>Miksi 2.0? Maskit tuntuvat nyt paljon luonnollisemmilta käyttää. Kudonta on keskeistä solmujen tekemisessä, ja maskit ovat suuri osa kudontaa, joten tämä on iso askel OpenStrand Studiolle.</p>
     <ul>
         <li><b>Säikeet- ja Maskit-välilehdet:</b> Kerroslista on nyt jaettu kahteen välilehteen, Säikeet ja Maskit, ja valitsin on heti Näytä nimet -painikkeen yläpuolella. Maskit-välilehdellä on omat painikkeensa: Uusi maski, Poista maski, Poista valinnat ja Poista kaikki, ja Uusi maski korvaa työkalupalkin Maski-painikkeen. Poista kaikki poistaa tällä välilehdellä vain maskit, vahvistuksen jälkeen ja yhdellä kumoamisaskeleella. Maskit pysyvät nyt aina kaikkien säikeiden päällä, joten maskin paikalla listassa ei ole enää väliä, ja toisen välilehden kerroksen valinta avaa kyseisen välilehden puolestasi.</li>
         <li><b>Varjo-ongelmat korjattu:</b> Vanhojen versioiden varjo-ongelmat on korjattu. Maskien varjot käyttäytyvät nyt luonnollisemmin.</li>
@@ -1776,6 +1906,7 @@ cat > "$RESOURCES_DIR/ja.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Välkommen till OpenStrandStudio 2.0</h2>
     <p>Detta installerar OpenStrandStudio på din dator. Du guidas genom stegen som behövs för att installera programmet.</p>
     <p>Nyheter i version 2.0:</p>
+    <p>Varför 2.0? Masker känns nu mycket mer naturliga att använda. Vävning är nyckeln till att knyta knutar och masker är en stor del av vävningen, så detta är ett stort steg för OpenStrand Studio.</p>
     <ul>
         <li><b>Flikarna Strängar och Masker:</b> Lagerlistan är nu uppdelad i två flikar, Strängar och Masker, med en växlare precis ovanför Visa namn. Fliken Masker har egna knappar: Ny mask, Ta bort mask, Avmarkera alla och Ta bort alla, och Ny mask ersätter Mask-knappen i verktygsfältet. Ta bort alla på den här fliken tar bara bort maskerna, efter en bekräftelse och i ett enda ångra-steg. Masker ligger nu alltid ovanför alla strängar, så var en mask står i listan spelar ingen roll längre, och när du markerar ett lager på den andra fliken öppnas den fliken åt dig.</li>
         <li><b>Skuggproblem åtgärdade:</b> Skuggproblem från äldre versioner har åtgärdats. Skuggor för masker beter sig nu mer naturligt.</li>
@@ -1786,6 +1917,7 @@ cat > "$RESOURCES_DIR/ja.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">欢迎使用 OpenStrandStudio 2.0</h2>
     <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
     <p>版本 2.0 的新功能:</p>
+    <p>为什么是2.0？遮罩现在用起来自然得多。编织是打绳结的关键，而遮罩是编织的重要组成部分，因此这是 OpenStrand Studio 的重要一步。</p>
     <ul>
         <li><b>绳股/遮罩标签页:</b> 图层列表现在分为“绳股”和“遮罩”两个标签页，切换按钮就在“显示名称”上方。“遮罩”标签页有自己的“新建遮罩”“删除遮罩”“取消全选”和“全部删除”按钮，“新建遮罩”取代了工具栏中的遮罩按钮。在此标签页中“全部删除”只会删除遮罩，需确认，并且只算一次撤销。遮罩现在始终位于所有绳股之上，因此它在列表中的位置不再重要，选择另一个标签页中的图层时会自动打开该标签页。</li>
         <li><b>修复阴影问题:</b> 修复了旧版本中的阴影问题，遮罩的阴影现在表现得更自然。</li>
@@ -1807,6 +1939,7 @@ cat > "$RESOURCES_DIR/zh-Hans.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">欢迎使用 OpenStrandStudio 2.0</h2>
     <p>本程序将在您的计算机上安装 OpenStrandStudio。安装向导将引导您完成必要的步骤。</p>
     <p>版本 2.0 的新功能:</p>
+    <p>为什么是2.0？遮罩现在用起来自然得多。编织是打绳结的关键，而遮罩是编织的重要组成部分，因此这是 OpenStrand Studio 的重要一步。</p>
     <ul>
         <li><b>绳股/遮罩标签页:</b> 图层列表现在分为“绳股”和“遮罩”两个标签页，切换按钮就在“显示名称”上方。“遮罩”标签页有自己的“新建遮罩”“删除遮罩”“取消全选”和“全部删除”按钮，“新建遮罩”取代了工具栏中的遮罩按钮。在此标签页中“全部删除”只会删除遮罩，需确认，并且只算一次撤销。遮罩现在始终位于所有绳股之上，因此它在列表中的位置不再重要，选择另一个标签页中的图层时会自动打开该标签页。</li>
         <li><b>修复阴影问题:</b> 修复了旧版本中的阴影问题，遮罩的阴影现在表现得更自然。</li>
@@ -1817,6 +1950,7 @@ cat > "$RESOURCES_DIR/zh-Hans.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Welcome to OpenStrandStudio 2.0</h2>
     <p>This will install OpenStrandStudio on your computer. You will be guided through the steps necessary to install this software.</p>
     <p>What's New in Version 2.0:</p>
+    <p>Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots, and masks are a big part of weaving, so this is a major step for OpenStrand Studio.</p>
     <ul>
         <li><b>Strands and Masks Tabs:</b> The layer list is now split into two tabs, Strands and Masks, with a switch just above Draw Names. The Masks tab has its own New Mask, Delete Mask, Deselect All and Delete All buttons, and New Mask replaces the Mask button in the toolbar. Delete All on this tab removes only the masks, after a confirmation, in one undo step. Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you.</li>
         <li><b>Fixed Shadow Issues:</b> Fixed shadow issues from older versions. Shadows for masks now behave more naturally.</li>
@@ -1827,6 +1961,7 @@ cat > "$RESOURCES_DIR/zh-Hans.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Willkommen bei OpenStrandStudio 2.0</h2>
     <p>Dies installiert OpenStrandStudio auf Ihrem Computer. Sie werden durch die notwendigen Schritte geführt.</p>
     <p>Neu in Version 2.0:</p>
+    <p>Warum 2.0? Masken fühlen sich jetzt viel natürlicher an. Weben ist entscheidend beim Knüpfen von Knoten, und Masken sind ein großer Teil davon – ein wichtiger Schritt für OpenStrand Studio.</p>
     <ul>
         <li><b>Tabs Stränge und Masken:</b> Die Ebenenliste ist jetzt in zwei Tabs aufgeteilt, Stränge und Masken, mit einem Umschalter direkt über Namen zeigen. Der Tab Masken hat eigene Schaltflächen für Neue Maske, Maske entf., Alle abwählen und Alle löschen, und Neue Maske ersetzt die Maske-Schaltfläche in der Werkzeugleiste. Alle löschen löscht in diesem Tab nur die Masken, nach einer Bestätigung und in einem einzigen Rückgängig-Schritt. Masken liegen jetzt immer über allen Strängen, ihre Position in der Liste spielt also keine Rolle mehr, und wer eine Ebene des anderen Tabs auswählt, wird automatisch zu diesem Tab gebracht.</li>
         <li><b>Schattenprobleme behoben:</b> Schattenprobleme aus älteren Versionen wurden behoben. Schatten von Masken verhalten sich jetzt natürlicher.</li>
@@ -1837,6 +1972,7 @@ cat > "$RESOURCES_DIR/zh-Hans.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenue dans OpenStrandStudio 2.0</h2>
     <p>Ceci va installer OpenStrandStudio sur votre ordinateur. Vous serez guidé à travers les étapes nécessaires.</p>
     <p>Nouveautés de la version 2.0 :</p>
+    <p>Pourquoi 2.0 ? Les masques sont maintenant beaucoup plus naturels à utiliser. Le tissage est essentiel pour faire des nœuds, et les masques en sont une grande partie : c'est une étape majeure pour OpenStrand Studio.</p>
     <ul>
         <li><b>Onglets Brins et Masques:</b> La liste des calques est maintenant séparée en deux onglets, Brins et Masques, avec un sélecteur juste au-dessus de Dessin. Noms. L'onglet Masques a ses propres boutons Nouv. Masque, Suppr. Masque, Désél. Tous et Suppr. Tout, et Nouv. Masque remplace le bouton Masque de la barre d'outils. Suppr. Tout sur cet onglet ne supprime que les masques, après confirmation, en une seule étape d'annulation. Les masques restent toujours au-dessus de tous les brins, donc leur place dans la liste n'a plus d'importance, et sélectionner un calque de l'autre onglet ouvre cet onglet pour vous.</li>
         <li><b>Ombres corrigées:</b> Des problèmes d'ombres des versions précédentes ont été corrigés. Les ombres des masques se comportent maintenant de façon plus naturelle.</li>
@@ -1847,6 +1983,7 @@ cat > "$RESOURCES_DIR/zh-Hans.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Benvenuto in OpenStrandStudio 2.0</h2>
     <p>Questa procedura installerà OpenStrandStudio sul tuo computer.</p>
     <p>Novità della versione 2.0:</p>
+    <p>Perché 2.0? Le maschere ora sono molto più naturali da usare. L'intreccio è fondamentale per fare i nodi e le maschere ne sono una parte importante: è un passo importante per OpenStrand Studio.</p>
     <ul>
         <li><b>Schede Trefoli e Maschere:</b> L'elenco dei livelli è ora diviso in due schede, Trefoli e Maschere, con un selettore subito sopra Disegna Nomi. La scheda Maschere ha i suoi pulsanti Nuova Masch., Elim. Maschera, Desel. Tutto ed Elimina Tutto, e Nuova Masch. sostituisce il pulsante Maschera della barra degli strumenti. Elimina Tutto in questa scheda elimina solo le maschere, dopo una conferma, in un unico passo di annullamento. Le maschere restano sempre sopra tutti i trefoli, quindi la loro posizione nell'elenco non conta più, e selezionare un livello dell'altra scheda apre quella scheda per voi.</li>
         <li><b>Problemi delle ombre risolti:</b> Sono stati risolti problemi delle ombre presenti nelle versioni precedenti. Le ombre delle maschere ora si comportano in modo più naturale.</li>
@@ -1857,6 +1994,7 @@ cat > "$RESOURCES_DIR/zh-Hans.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bienvenido a OpenStrandStudio 2.0</h2>
     <p>Este asistente instalará OpenStrandStudio en su equipo.</p>
     <p>Novedades de la versión 2.0:</p>
+    <p>¿Por qué 2.0? Las máscaras ahora son mucho más naturales de usar. El tejido es clave para hacer nudos y las máscaras son una gran parte del tejido, así que es un gran paso para OpenStrand Studio.</p>
     <ul>
         <li><b>Pestañas Cordones y Máscaras:</b> La lista de capas ahora se divide en dos pestañas, Cordones y Máscaras, con un selector justo encima de Ver Nombres. La pestaña Máscaras tiene sus propios botones Nueva Másc., Elim. Máscara, Deselec. Todo y Eliminar Todo, y Nueva Másc. reemplaza el botón Máscara de la barra de herramientas. Eliminar Todo en esta pestaña elimina solo las máscaras, tras una confirmación y en un único paso de deshacer. Las máscaras ahora se mantienen siempre por encima de todos los cordones, así que su posición en la lista ya no importa, y al seleccionar una capa de la otra pestaña se abre esa pestaña automáticamente.</li>
         <li><b>Problemas de sombras corregidos:</b> Se corrigieron problemas de sombras de versiones anteriores. Las sombras de las máscaras ahora se comportan de forma más natural.</li>
@@ -1867,6 +2005,7 @@ cat > "$RESOURCES_DIR/zh-Hans.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Bem-vindo ao OpenStrandStudio 2.0</h2>
     <p>Este assistente instalará o OpenStrandStudio no seu computador.</p>
     <p>Novidades da versão 2.0:</p>
+    <p>Porquê 2.0? As máscaras agora são muito mais naturais de usar. A tecelagem é essencial para fazer nós e as máscaras são uma grande parte dela, por isso é um grande passo para o OpenStrand Studio.</p>
     <ul>
         <li><b>Separadores Mechas e Máscaras:</b> A lista de camadas agora está dividida em dois separadores, Mechas e Máscaras, com um seletor mesmo acima de Exib. Nomes. O separador Máscaras tem os seus próprios botões Nova Másc., Excl. Máscara, Desmar. Tudo e Excluir Tudo, e Nova Másc. substitui o botão Máscara da barra de ferramentas. Excluir Tudo neste separador elimina apenas as máscaras, após uma confirmação e num único passo de anular. As máscaras ficam sempre acima de todas as mechas, por isso a sua posição na lista já não importa, e selecionar uma camada do outro separador abre esse separador por si.</li>
         <li><b>Problemas de sombras corrigidos:</b> Foram corrigidos problemas de sombras de versões anteriores. As sombras das máscaras agora comportam-se de forma mais natural.</li>
@@ -1878,6 +2017,7 @@ cat > "$RESOURCES_DIR/zh-Hans.lproj/welcome.html" << 'EOF'
     <h2>&#x05D1;&#x05E8;&#x05D5;&#x05DB;&#x05D9;&#x05DD; &#x05D4;&#x05D1;&#x05D0;&#x05D9;&#x05DD; &#x05DC;-OpenStrandStudio 2.0</h2>
     <p>&#x05D0;&#x05E9;&#x05E3; &#x05D6;&#x05D4; &#x05D9;&#x05EA;&#x05E7;&#x05D9;&#x05DF; &#x05D0;&#x05EA; OpenStrandStudio &#x05D1;&#x05DE;&#x05D7;&#x05E9;&#x05D1; &#x05E9;&#x05DC;&#x05DA;.</p>
     <p>&#x05DE;&#x05D4; &#x05D7;&#x05D3;&#x05E9; &#x05D1;&#x05D2;&#x05E8;&#x05E1;&#x05D4; 2.0:</p>
+    <p>&#x05DC;&#x05DE;&#x05D4; 2.0? &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05E8;&#x05D2;&#x05D9;&#x05E9;&#x05D5;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D4;&#x05E8;&#x05D1;&#x05D4; &#x05D9;&#x05D5;&#x05EA;&#x05E8; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05DC;&#x05E9;&#x05D9;&#x05DE;&#x05D5;&#x05E9;. &#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4; &#x05D4;&#x05D9;&#x05D0; &#x05DE;&#x05E8;&#x05DB;&#x05D9;&#x05D1; &#x05DE;&#x05E8;&#x05DB;&#x05D6;&#x05D9; &#x05D1;&#x05E7;&#x05E9;&#x05D9;&#x05E8;&#x05EA; &#x05E7;&#x05E9;&#x05E8;&#x05D9;&#x05DD;, &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D4;&#x05DF; &#x05D7;&#x05DC;&#x05E7; &#x05D2;&#x05D3;&#x05D5;&#x05DC; &#x05DE;&#x05D4;&#x05D0;&#x05E8;&#x05D9;&#x05D2;&#x05D4;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05D6;&#x05D4;&#x05D5; &#x05E6;&#x05E2;&#x05D3; &#x05DE;&#x05E9;&#x05DE;&#x05E2;&#x05D5;&#x05EA;&#x05D9; &#x05E2;&#x05D1;&#x05D5;&#x05E8; OpenStrand Studio.</p>
     <ul>
         <li><b>&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA; &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;:</b> &#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05EA; &#x05D4;&#x05E9;&#x05DB;&#x05D1;&#x05D5;&#x05EA; &#x05DE;&#x05D7;&#x05D5;&#x05DC;&#x05E7;&#x05EA; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05DC;&#x05E9;&#x05EA;&#x05D9; &#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05D5;&#x05EA;, &#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD; &#x05D5;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05E2;&#x05DD; &#x05DE;&#x05EA;&#x05D2; &#x05DE;&#x05DE;&#x05E9; &#x05DE;&#x05E2;&#x05DC; &#x05E6;&#x05D9;&#x05D9;&#x05E8; &#x05E9;&#x05DE;&#x05D5;&#x05EA;. &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05D9;&#x05E9; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8;&#x05D9;&#x05DD; &#x05DE;&#x05E9;&#x05DC;&#x05D4;: &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4;, &#x05DE;&#x05D7;&#x05E7; &#x05DE;&#x05E1;&#x05DB;&#x05D4;, &#x05D1;&#x05D8;&#x05DC; &#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05D4; &#x05D5;&#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC;, &#x05D5;&#x05D4;&#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D7;&#x05D3;&#x05E9;&#x05D4; &#x05DE;&#x05D7;&#x05DC;&#x05D9;&#x05E3; &#x05D0;&#x05EA; &#x05DB;&#x05E4;&#x05EA;&#x05D5;&#x05E8; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D4; &#x05D1;&#x05E1;&#x05E8;&#x05D2;&#x05DC; &#x05D4;&#x05DB;&#x05DC;&#x05D9;&#x05DD;. &#x05DE;&#x05D7;&#x05E7; &#x05D4;&#x05DB;&#x05DC; &#x05D1;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05D6;&#x05D5; &#x05DE;&#x05D5;&#x05D7;&#x05E7;&#x05EA; &#x05E8;&#x05E7; &#x05D0;&#x05EA; &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA;, &#x05D0;&#x05D7;&#x05E8;&#x05D9; &#x05D0;&#x05D9;&#x05E9;&#x05D5;&#x05E8;, &#x05D5;&#x05D1;&#x05E9;&#x05DC;&#x05D1; &#x05D1;&#x05D9;&#x05D8;&#x05D5;&#x05DC; &#x05D0;&#x05D7;&#x05D3;. &#x05D4;&#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05E0;&#x05E9;&#x05D0;&#x05E8;&#x05D5;&#x05EA; &#x05EA;&#x05DE;&#x05D9;&#x05D3; &#x05DE;&#x05E2;&#x05DC; &#x05DB;&#x05DC; &#x05D4;&#x05D7;&#x05D5;&#x05D8;&#x05D9;&#x05DD;, &#x05D5;&#x05DC;&#x05DB;&#x05DF; &#x05DE;&#x05D9;&#x05E7;&#x05D5;&#x05DE;&#x05DF; &#x05D1;&#x05E8;&#x05E9;&#x05D9;&#x05DE;&#x05D4; &#x05DB;&#x05D1;&#x05E8; &#x05DC;&#x05D0; &#x05DE;&#x05E9;&#x05E0;&#x05D4;, &#x05D5;&#x05D1;&#x05D7;&#x05D9;&#x05E8;&#x05EA; &#x05E9;&#x05DB;&#x05D1;&#x05D4; &#x05DE;&#x05D4;&#x05DC;&#x05E9;&#x05D5;&#x05E0;&#x05D9;&#x05EA; &#x05D4;&#x05E9;&#x05E0;&#x05D9;&#x05D9;&#x05D4; &#x05E4;&#x05D5;&#x05EA;&#x05D7;&#x05EA; &#x05D0;&#x05D5;&#x05EA;&#x05D4; &#x05D0;&#x05D5;&#x05D8;&#x05D5;&#x05DE;&#x05D8;&#x05D9;&#x05EA;.</li>
         <li><b>&#x05EA;&#x05D9;&#x05E7;&#x05D5;&#x05E0;&#x05D9; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD;:</b> &#x05EA;&#x05D5;&#x05E7;&#x05E0;&#x05D5; &#x05D1;&#x05E2;&#x05D9;&#x05D5;&#x05EA; &#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05DE;&#x05D2;&#x05E8;&#x05E1;&#x05D0;&#x05D5;&#x05EA; &#x05E7;&#x05D5;&#x05D3;&#x05DE;&#x05D5;&#x05EA;. &#x05D4;&#x05E6;&#x05DC;&#x05DC;&#x05D9;&#x05DD; &#x05E9;&#x05DC; &#x05DE;&#x05E1;&#x05DB;&#x05D5;&#x05EA; &#x05DE;&#x05EA;&#x05E0;&#x05D4;&#x05D2;&#x05D9;&#x05DD; &#x05E2;&#x05DB;&#x05E9;&#x05D9;&#x05D5; &#x05D1;&#x05E6;&#x05D5;&#x05E8;&#x05D4; &#x05D8;&#x05D1;&#x05E2;&#x05D9;&#x05EA; &#x05D9;&#x05D5;&#x05EA;&#x05E8;.</li>
@@ -1889,6 +2029,7 @@ cat > "$RESOURCES_DIR/zh-Hans.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Добро пожаловать в OpenStrandStudio 2.0</h2>
     <p>Эта программа установит OpenStrandStudio на ваш компьютер. Вы пройдёте все необходимые шаги установки.</p>
     <p>Что нового в версии 2.0:</p>
+    <p>Почему 2.0? Маски теперь гораздо естественнее в работе. Плетение — основа завязывания узлов, а маски — большая его часть, поэтому это важный шаг для OpenStrand Studio.</p>
     <ul>
         <li><b>Вкладки «Пряди» и «Маски»:</b> Список слоёв теперь разделён на две вкладки, «Пряди» и «Маски», с переключателем прямо над кнопкой «Показ имён». У вкладки «Маски» свои кнопки: «Новая маска», «Удалить маску», «Снять выбор» и «Удалить все», а «Новая маска» заменяет кнопку «Маска» на панели инструментов. «Удалить все» на этой вкладке удаляет только маски, после подтверждения и одним шагом отмены. Маски теперь всегда лежат над всеми прядями, поэтому их место в списке больше не важно, а выбор слоя с другой вкладки сам открывает эту вкладку.</li>
         <li><b>Исправлены проблемы с тенями:</b> Исправлены проблемы с тенями из прошлых версий. Тени масок теперь ведут себя естественнее.</li>
@@ -1899,6 +2040,7 @@ cat > "$RESOURCES_DIR/zh-Hans.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Tervetuloa OpenStrandStudio 2.0 -ohjelmaan</h2>
     <p>Tämä asentaa OpenStrandStudion tietokoneellesi. Sinut opastetaan asennuksen vaiheiden läpi.</p>
     <p>Mitä uutta versiossa 2.0:</p>
+    <p>Miksi 2.0? Maskit tuntuvat nyt paljon luonnollisemmilta käyttää. Kudonta on keskeistä solmujen tekemisessä, ja maskit ovat suuri osa kudontaa, joten tämä on iso askel OpenStrand Studiolle.</p>
     <ul>
         <li><b>Säikeet- ja Maskit-välilehdet:</b> Kerroslista on nyt jaettu kahteen välilehteen, Säikeet ja Maskit, ja valitsin on heti Näytä nimet -painikkeen yläpuolella. Maskit-välilehdellä on omat painikkeensa: Uusi maski, Poista maski, Poista valinnat ja Poista kaikki, ja Uusi maski korvaa työkalupalkin Maski-painikkeen. Poista kaikki poistaa tällä välilehdellä vain maskit, vahvistuksen jälkeen ja yhdellä kumoamisaskeleella. Maskit pysyvät nyt aina kaikkien säikeiden päällä, joten maskin paikalla listassa ei ole enää väliä, ja toisen välilehden kerroksen valinta avaa kyseisen välilehden puolestasi.</li>
         <li><b>Varjo-ongelmat korjattu:</b> Vanhojen versioiden varjo-ongelmat on korjattu. Maskien varjot käyttäytyvät nyt luonnollisemmin.</li>
@@ -1909,6 +2051,7 @@ cat > "$RESOURCES_DIR/zh-Hans.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">Välkommen till OpenStrandStudio 2.0</h2>
     <p>Detta installerar OpenStrandStudio på din dator. Du guidas genom stegen som behövs för att installera programmet.</p>
     <p>Nyheter i version 2.0:</p>
+    <p>Varför 2.0? Masker känns nu mycket mer naturliga att använda. Vävning är nyckeln till att knyta knutar och masker är en stor del av vävningen, så detta är ett stort steg för OpenStrand Studio.</p>
     <ul>
         <li><b>Flikarna Strängar och Masker:</b> Lagerlistan är nu uppdelad i två flikar, Strängar och Masker, med en växlare precis ovanför Visa namn. Fliken Masker har egna knappar: Ny mask, Ta bort mask, Avmarkera alla och Ta bort alla, och Ny mask ersätter Mask-knappen i verktygsfältet. Ta bort alla på den här fliken tar bara bort maskerna, efter en bekräftelse och i ett enda ångra-steg. Masker ligger nu alltid ovanför alla strängar, så var en mask står i listan spelar ingen roll längre, och när du markerar ett lager på den andra fliken öppnas den fliken åt dig.</li>
         <li><b>Skuggproblem åtgärdade:</b> Skuggproblem från äldre versioner har åtgärdats. Skuggor för masker beter sig nu mer naturligt.</li>
@@ -1919,6 +2062,7 @@ cat > "$RESOURCES_DIR/zh-Hans.lproj/welcome.html" << 'EOF'
     <h2 dir="ltr">OpenStrandStudio 2.0 へようこそ</h2>
     <p>このプログラムは OpenStrandStudio をお使いのコンピューターにインストールします。インストールに必要な手順を順に案内します。</p>
     <p>バージョン 2.0 の新機能:</p>
+    <p>なぜ2.0なのか: マスクがずっと自然に使えるようになりました。結び目を作るには織りが重要で、マスクは織りの大きな部分を占めるため、OpenStrand Studioにとって大きな一歩です。</p>
     <ul>
         <li><b>ストランド/マスクタブ:</b> レイヤーリストが「ストランド」と「マスク」の2つのタブに分かれ、「名前を表示」のすぐ上に切り替えが付きました。マスクタブには専用の「新しいマスク」「マスクを削除」「すべて選択解除」「すべて削除」ボタンがあり、「新しいマスク」はツールバーのマスクボタンの代わりになります。このタブの「すべて削除」はマスクだけを、確認のあとに1回の元に戻す操作で削除します。マスクは常にすべてのストランドの上に保たれるため、リスト内の位置は気にする必要がなくなり、もう一方のタブのレイヤーを選ぶとそのタブが自動で開きます。</li>
         <li><b>影の問題を修正:</b> 以前のバージョンにあった影の問題を修正しました。マスクの影がより自然な動きになりました。</li>

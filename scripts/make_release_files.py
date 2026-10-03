@@ -101,6 +101,23 @@ BULLETS = {
  ],
 }
 
+# Optional one-paragraph note shown above the bullets (why this version number).
+# Leave as {} for a normal release.
+INTRO = {
+ 'en': "Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots, and masks are a big part of weaving, so this is a major step for OpenStrand Studio.",
+ 'fr': "Pourquoi 2.0 ? Les masques sont maintenant beaucoup plus naturels à utiliser. Le tissage est essentiel pour faire des nœuds, et les masques en sont une grande partie : c'est une étape majeure pour OpenStrand Studio.",
+ 'de': "Warum 2.0? Masken fühlen sich jetzt viel natürlicher an. Weben ist entscheidend beim Knüpfen von Knoten, und Masken sind ein großer Teil davon – ein wichtiger Schritt für OpenStrand Studio.",
+ 'it': "Perché 2.0? Le maschere ora sono molto più naturali da usare. L'intreccio è fondamentale per fare i nodi e le maschere ne sono una parte importante: è un passo importante per OpenStrand Studio.",
+ 'es': "¿Por qué 2.0? Las máscaras ahora son mucho más naturales de usar. El tejido es clave para hacer nudos y las máscaras son una gran parte del tejido, así que es un gran paso para OpenStrand Studio.",
+ 'pt': "Porquê 2.0? As máscaras agora são muito mais naturais de usar. A tecelagem é essencial para fazer nós e as máscaras são uma grande parte dela, por isso é um grande passo para o OpenStrand Studio.",
+ 'he': "למה 2.0? המסכות מרגישות עכשיו הרבה יותר טבעיות לשימוש. אריגה היא מרכיב מרכזי בקשירת קשרים, ומסכות הן חלק גדול מהאריגה, ולכן זהו צעד משמעותי עבור OpenStrand Studio.",
+ 'ru': "Почему 2.0? Маски теперь гораздо естественнее в работе. Плетение — основа завязывания узлов, а маски — большая его часть, поэтому это важный шаг для OpenStrand Studio.",
+ 'fi': "Miksi 2.0? Maskit tuntuvat nyt paljon luonnollisemmilta käyttää. Kudonta on keskeistä solmujen tekemisessä, ja maskit ovat suuri osa kudontaa, joten tämä on iso askel OpenStrand Studiolle.",
+ 'sv': "Varför 2.0? Masker känns nu mycket mer naturliga att använda. Vävning är nyckeln till att knyta knutar och masker är en stor del av vävningen, så detta är ett stort steg för OpenStrand Studio.",
+ 'ja': "なぜ2.0なのか: マスクがずっと自然に使えるようになりました。結び目を作るには織りが重要で、マスクは織りの大きな部分を占めるため、OpenStrand Studioにとって大きな一歩です。",
+ 'zh': "为什么是2.0？遮罩现在用起来自然得多。编织是打绳结的关键，而遮罩是编织的重要组成部分，因此这是 OpenStrand Studio 的重要一步。",
+}
+
 # A short unique substring of each language's FIRST bullet title in the OLD
 # version's files, used to recognize which language a <ul> block belongs to.
 # Update these to match the previous release's first bullet. For Hebrew give
@@ -140,6 +157,17 @@ def li_block_sh(lang):
         lines.append(li)
     return '\n'.join(lines)
 
+def intro_sh(lang):
+    if lang not in INTRO:
+        return ''
+    p = '<p>%s</p>\n    ' % INTRO[lang]
+    return he_entities(p) if lang == 'he' else p
+
+def intro_translations(lang):
+    if lang not in INTRO:
+        return ''
+    return '            <p style="font-size:14px;">%s</p>\n' % INTRO[lang]
+
 def li_block_translations(lang):
     return '\n'.join('            <li style="font-size:14px;"><b>%s:</b> %s</li>' % (t, x)
                      for t, x in BULLETS[lang])
@@ -169,7 +197,7 @@ def gen_sh(src_name, dst_name):
         for lang, marker in MARKERS.items():
             if marker in inner:
                 counts[lang] += 1
-                return '<ul%s>\n%s\n    </ul>' % (attrs, li_block_sh(lang))
+                return '%s<ul%s>\n%s\n    </ul>' % (intro_sh(lang), attrs, li_block_sh(lang))
         raise SystemExit('Unrecognized <ul> block in %s: %r...' % (src_name, inner[:80]))
     text = re.sub(r'<ul([^>]*)>\s*(.*?)\s*</ul>', repl, text, flags=re.S)
 
@@ -231,7 +259,8 @@ for line in text.split('\n'):
     if m and m.group(1) in ISS_WRAP:
         pre, post, lang = ISS_WRAP[m.group(1)]
         out.append('%s.WelcomeLabel2=%s%s%s'
-                   % (m.group(1), pre.format(v=NEW_VERSION), iss_bullets(lang), post))
+                   % (m.group(1), pre.format(v=NEW_VERSION),
+                      (INTRO[lang] + '%n%n' if lang in INTRO else '') + iss_bullets(lang), post))
     else:
         out.append(line)
 write(os.path.join(SRC, 'inno setup', 'OpenStrand Studio%s.iss' % NEW_U), '\n'.join(out))
@@ -264,7 +293,7 @@ for lang, (h2, cp) in TR.items():
         re.escape('<p style="font-size:14px;">%s %s</p>' % (cp, OLD_VERSION)), re.S)
     def repl(m):
         return ('<h2>%s %s</h2>\n\n%s\n\n%s<p style="font-size:14px;">%s %s</p>'
-                % (h2, NEW_VERSION, li_block_translations(lang), m.group(1), cp, NEW_VERSION))
+                % (h2, NEW_VERSION, intro_translations(lang) + li_block_translations(lang), m.group(1), cp, NEW_VERSION))
     text, n = pattern.subn(repl, text)
     n_total += n
     if n not in (0, 1):

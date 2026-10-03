@@ -93,28 +93,35 @@ def _paint_selection_border(painter, path, color, border_width, join_style, cap_
     stroker.setCapStyle(cap_style)
     ring = stroker.createStroke(path)
 
-    transform = painter.transform()
+    # Work in the device's physical pixels so the layer lands exactly on the
+    # pixel grid at any zoom and display scale (125 %, 150 %, 200 % ...).
+    # The world transform maps to logical device coordinates; Qt adds the
+    # display scale on top (in the view transform for images, in the backing
+    # store for widgets), so the world transform times the ratio gives pixels.
     device = painter.device()
-    ratio = max(1.0, device.devicePixelRatioF())
-    bounds = transform.mapRect(ring.controlPointRect()).toAlignedRect().adjusted(-2, -2, 2, 2)
+    ratio = device.devicePixelRatioF() if device is not None else 1.0
+    if ratio <= 0:
+        ratio = 1.0
+    to_pixels = painter.transform() * QTransform.fromScale(ratio, ratio)
+    bounds = to_pixels.mapRect(ring.controlPointRect()).toAlignedRect().adjusted(-2, -2, 2, 2)
     # Only the part that can be seen needs a layer (the strand may be zoomed
     # far past the window).
-    width, height = device.width(), device.height()
-    if isinstance(device, (QImage, QPixmap)):
-        width, height = width / ratio, height / ratio
-    bounds = bounds.intersected(QRect(0, 0, int(width) + 1, int(height) + 1))
+    if device is not None:
+        width, height = device.width(), device.height()
+        if not isinstance(device, (QImage, QPixmap)):
+            # Widgets report logical sizes; images and pixmaps report pixels.
+            width, height = width * ratio, height * ratio
+        bounds = bounds.intersected(QRect(0, 0, int(width + 0.999), int(height + 0.999)))
     if bounds.isEmpty():
         return
 
-    layer = QImage(int(bounds.width() * ratio), int(bounds.height() * ratio),
-                   QImage.Format_ARGB32_Premultiplied)
-    layer.setDevicePixelRatio(ratio)
+    layer = QImage(bounds.width(), bounds.height(), QImage.Format_ARGB32_Premultiplied)
     layer.fill(Qt.transparent)
     layer_painter = QPainter(layer)
     try:
         layer_painter.setRenderHint(QPainter.Antialiasing, True)
         layer_painter.setTransform(
-            transform * QTransform.fromTranslate(-bounds.x(), -bounds.y()))
+            to_pixels * QTransform.fromTranslate(-bounds.x(), -bounds.y()))
         layer_painter.setPen(Qt.NoPen)
         layer_painter.setBrush(color)
         layer_painter.drawPath(ring)
@@ -122,12 +129,17 @@ def _paint_selection_border(painter, path, color, border_width, join_style, cap_
         layer_painter.drawPath(path)
     finally:
         layer_painter.end()
+    layer.setDevicePixelRatio(ratio)
 
+    world_enabled = painter.worldMatrixEnabled()
     painter.save()
     try:
-        painter.resetTransform()
-        painter.drawImage(bounds.topLeft(), layer)
+        # Place the layer in logical device space: drop only the world
+        # transform; the display scale still applies and maps it 1:1 to pixels.
+        painter.setWorldMatrixEnabled(False)
+        painter.drawImage(QPointF(bounds.x() / ratio, bounds.y() / ratio), layer)
     finally:
+        painter.setWorldMatrixEnabled(world_enabled)
         painter.restore()
 
 

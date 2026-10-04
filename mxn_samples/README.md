@@ -6,17 +6,22 @@ Ready-to-open OpenStrandStudio documents (`.json`) and their pictures (`.png`) f
 mxn_samples/
 ├── lh/
 │   ├── starting/          every starting stitch, m and n from 1 to 8 (64)
+│   ├── stretched/         the stretched starting stitches, m and n from 1 to 8 (64)
 │   ├── k1_start/          k = 1 starting stitch, before alignment (10)
 │   ├── k1_continuation/   k = 1 aligned continuation (10)
 │   └── k1_alignment/      k = 1 angles, gaps and extensions (json only, 10)
 └── rh/                    same layout, mirrored hand
 ```
 
-Each of `starting`, `k1_start`, `k1_continuation` holds `json/` and `images/`; `k1_alignment` holds `json/` only.
+Each of `starting`, `stretched`, `k1_start`, `k1_continuation` holds `json/` and `images/`; `k1_alignment` holds `json/` only.
 
 ## Starting stitches (`starting/`)
 
 `mxn_<hand>_<m>x<n>.json` for every `m` and `n` from 1 to 8, so both `2x3` and `3x2` are present. They come straight from the repo's generators (`mxn_lh.generate_json`, `mxn_rh.generate_json` in [ysetbon/mxn](https://github.com/ysetbon/mxn)), colours as generated.
+
+## Stretched starting stitches (`stretched/`)
+
+`mxn_<hand>_stretch_<m>x<n>.json` for every `m` and `n` from 1 to 8, the same sizes as `starting/`. They come from mxn's stretched generators (`mxn_lh_strech.generate_json`, `mxn_rh_stretch.generate_json`): the ribbons are packed closer together, with no sideways offset between the two arms of a pair.
 
 ## k = 1 set (`k1_*`)
 

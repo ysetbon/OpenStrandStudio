@@ -1,0 +1,268 @@
+{
+  "tag": "rh_3x4_k1",
+  "m": 3,
+  "n": 4,
+  "k": 1,
+  "hand": "rh",
+  "direction": "ccw",
+  "engine": "site/dist/continuation-engine.js + site/jev_settings.JevSettings",
+  "jev": {
+    "configured": true,
+    "enabled": true,
+    "sdk": true,
+    "source": "saved"
+  },
+  "totals": {
+    "strands": 83,
+    "base": 21,
+    "continuation": 14,
+    "base_masks": 24,
+    "cont_masks": 24
+  },
+  "vertical_order": [
+    "5_4",
+    "5_5",
+    "6_4",
+    "6_5",
+    "7_4",
+    "7_5"
+  ],
+  "horizontal_order": [
+    "1_4",
+    "1_5",
+    "2_4",
+    "2_5",
+    "3_4",
+    "3_5",
+    "4_4",
+    "4_5"
+  ],
+  "base_masks": [
+    "5_2_1_3",
+    "5_2_2_3",
+    "5_2_3_3",
+    "5_2_4_3",
+    "6_2_1_3",
+    "6_2_2_3",
+    "6_2_3_3",
+    "6_2_4_3",
+    "7_2_1_3",
+    "7_2_2_3",
+    "7_2_3_3",
+    "7_2_4_3",
+    "5_3_1_2",
+    "5_3_2_2",
+    "5_3_3_2",
+    "5_3_4_2",
+    "6_3_1_2",
+    "6_3_2_2",
+    "6_3_3_2",
+    "6_3_4_2",
+    "7_3_1_2",
+    "7_3_2_2",
+    "7_3_3_2",
+    "7_3_4_2"
+  ],
+  "cont_masks": [
+    "5_4_1_5",
+    "5_4_2_5",
+    "5_4_3_5",
+    "5_4_4_5",
+    "5_5_1_4",
+    "5_5_2_4",
+    "5_5_3_4",
+    "5_5_4_4",
+    "6_4_1_5",
+    "6_4_2_5",
+    "6_4_3_5",
+    "6_4_4_5",
+    "6_5_1_4",
+    "6_5_2_4",
+    "6_5_3_4",
+    "6_5_4_4",
+    "7_4_1_5",
+    "7_4_2_5",
+    "7_4_3_5",
+    "7_4_4_5",
+    "7_5_1_4",
+    "7_5_2_4",
+    "7_5_3_4",
+    "7_5_4_4"
+  ],
+  "geometry": [
+    {
+      "name": "5_4",
+      "angle": -103.02,
+      "length": 526.97,
+      "group": "vertical"
+    },
+    {
+      "name": "5_5",
+      "angle": 76.98,
+      "length": 521.61,
+      "group": "vertical"
+    },
+    {
+      "name": "6_4",
+      "angle": -103.02,
+      "length": 541.09,
+      "group": "vertical"
+    },
+    {
+      "name": "6_5",
+      "angle": 76.98,
+      "length": 541.09,
+      "group": "vertical"
+    },
+    {
+      "name": "7_4",
+      "angle": -103.02,
+      "length": 521.61,
+      "group": "vertical"
+    },
+    {
+      "name": "7_5",
+      "angle": 76.98,
+      "length": 526.97,
+      "group": "vertical"
+    },
+    {
+      "name": "1_4",
+      "angle": -15.9,
+      "length": 446.39,
+      "group": "horizontal"
+    },
+    {
+      "name": "1_5",
+      "angle": 164.1,
+      "length": 413.63,
+      "group": "horizontal"
+    },
+    {
+      "name": "2_4",
+      "angle": -15.9,
+      "length": 452.1,
+      "group": "horizontal"
+    },
+    {
+      "name": "2_5",
+      "angle": 164.1,
+      "length": 432.86,
+      "group": "horizontal"
+    },
+    {
+      "name": "3_4",
+      "angle": -15.9,
+      "length": 432.86,
+      "group": "horizontal"
+    },
+    {
+      "name": "3_5",
+      "angle": 164.1,
+      "length": 452.1,
+      "group": "horizontal"
+    },
+    {
+      "name": "4_4",
+      "angle": -15.9,
+      "length": 413.63,
+      "group": "horizontal"
+    },
+    {
+      "name": "4_5",
+      "angle": 164.1,
+      "length": 446.39,
+      "group": "horizontal"
+    }
+  ],
+  "horizontal": {
+    "success": true,
+    "fallback": false,
+    "preserved": false,
+    "angle": -15.9,
+    "gap": 57.411975502988,
+    "gap_variance": 1.8830448314207453,
+    "spread": 401.88382852091655,
+    "extensions": [
+      70,
+      0,
+      40,
+      20
+    ],
+    "message": "Found parallel configuration at -15.90\u00b0 (pair exts: (70, 0, 40, 20))",
+    "search": {
+      "policy": "jev",
+      "rounds": 7,
+      "rounds_by_kind": {
+        "start": 1,
+        "explore": 4,
+        "move": 2
+      },
+      "cells_explored": 5,
+      "cells_total": 768,
+      "combos_evaluated": 3125,
+      "combos_total": 194481,
+      "combo_budget": 68069,
+      "stopped": "patience",
+      "valid_found": 10,
+      "policy_calls": 7,
+      "policy_input_tokens": 62726,
+      "mode": "guided"
+    }
+  },
+  "vertical": {
+    "success": true,
+    "fallback": false,
+    "preserved": false,
+    "angle": -103.02,
+    "gap": 56.88740616487313,
+    "gap_variance": 0.13203399690023568,
+    "spread": 284.43703082436565,
+    "extensions": [
+      40,
+      0,
+      20
+    ],
+    "message": "Found vertical parallel configuration at -103.02\u00b0 (pair exts: (40, 0, 20))",
+    "search": {
+      "policy": "jev",
+      "rounds": 4,
+      "rounds_by_kind": {
+        "start": 1,
+        "explore": 2,
+        "move": 1
+      },
+      "cells_explored": 3,
+      "cells_total": 192,
+      "combos_evaluated": 375,
+      "combos_total": 9261,
+      "combo_budget": 3242,
+      "stopped": "patience",
+      "valid_found": 14,
+      "policy_calls": 4,
+      "policy_input_tokens": 25351,
+      "mode": "guided"
+    }
+  },
+  "search": {
+    "ext_max": 200,
+    "h_step": 10,
+    "v_step": 10,
+    "h_pairs": 4,
+    "v_pairs": 3,
+    "h_combos": 194481,
+    "v_combos": 9261,
+    "angle_step": 0.5,
+    "angle_mode": "first_strand",
+    "passes": 1,
+    "clearance_rule_px": 23.0,
+    "h_clearance_px": 58.1,
+    "h_mode": "guided",
+    "v_mode": "guided"
+  },
+  "timing": {
+    "generate_s": 0.0,
+    "h_align_s": 3.94,
+    "v_align_s": 0.0
+  }
+}

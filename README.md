@@ -25,30 +25,54 @@ Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots,
 
 ## Screenshots
 
-<img width="1920" height="1030" alt="OpenStrand Studio 1.110 main window: the box stitch sample on the canvas, the layer panel and group column on the right, with the group column's collapse chevron at the bottom-right corner" src="docs/readme/main_window.png" />
+<img width="1920" height="1030" alt="OpenStrand Studio 2.0 main window: the Kagome Weave sample on the canvas, the Strands/Masks layer panel and group column on the right" src="docs/readme/main_window.png" />
 
+*The Kagome Weave sample (Settings → Samples), open in OpenStrand Studio 2.0.*
 
+## Install
 
-## Usage
+### Easiest: download the installer (no Python needed)
 
-1. Clone the repository, best to use:
+Grab the latest installer from the [Releases page](https://github.com/ysetbon/OpenStrandStudio/releases/latest) and run it.
+To update, just run the newer installer — it installs over the old version. Your saved `.oss` projects are ordinary files and are untouched.
+
+| | Download | Then |
+|---|---|---|
+| **Windows** | `OpenStrandStudioSetup_<date>_<version>.exe` | Double-click it and follow the wizard (Start Menu shortcut, optional desktop icon, `.oss` file association). |
+| **macOS** | `OpenStrandStudio_<version>.pkg` (or `.dmg`) | Double-click it and follow the wizard; the app lands in Applications. If macOS blocks it, right-click → **Open**. |
+
+### Run from source (any platform, always the newest code)
+
+Needs **Python 3.9–3.13** (not 3.14 — PyQt5 crashes on it).
+
+**macOS** (Terminal):
 ```bash
-git clone --filter=blob:limit=5m https://github.com/ysetbon/OpenStrandStudio <your-desired-folder>
-cd <your-desired-folder>
+git clone --filter=blob:limit=5m https://github.com/ysetbon/OpenStrandStudio
+cd OpenStrandStudio
+pip3 install -r requirements.txt && python3 src/main.py
 ```
 
-2. Install dependencies:
-```bash
+**Windows** (PowerShell — a virtual environment avoids PyQt/Anaconda DLL conflicts):
+```powershell
+git clone --filter=blob:limit=5m https://github.com/ysetbon/OpenStrandStudio
+cd OpenStrandStudio
+python -m venv venv
+venv\Scripts\activate
 pip install -r requirements.txt
+python src\main.py
 ```
 
-3. Run the application:
-```bash
-python src/main.py
-```
+To update later: `git pull`, then run it again.
 
-For installer builds see `src/INSTALL_GUIDE_Windows.md` and
-`src/INSTALL_GUIDE_mac.md` (macOS: one command — `bash src/build_mac_1_112.sh`).
+### Build the installer for a new version
+
+| | Command (from the repository root) | Output |
+|---|---|---|
+| **macOS** | `bash src/build_mac_2_0.sh` (add `--dmg` for a disk image; `PYTHON=python3.13 bash ...` to pick an interpreter) | `src/installer_output/OpenStrandStudio_2_0.pkg` |
+| **Windows** | `cd src` then `.\build_with_venv.bat`, then open `src\inno setup\OpenStrand Studio2_0.iss` in [Inno Setup](https://jrsoftware.org/isdl.php) and click **Compile** | `src\dist\OpenStrandStudioSetup_<date>_2_0.exe` |
+
+The version-specific scripts are generated, not hand-edited: for a new release, edit the CONFIG section of `scripts/make_release_files.py`
+and run it (see `src/RELEASE_HOWTO.md`). More detail and troubleshooting: `src/INSTALL_GUIDE_Windows.md` and `src/INSTALL_GUIDE_mac.md`.
 
 ## Video Tutorials
 

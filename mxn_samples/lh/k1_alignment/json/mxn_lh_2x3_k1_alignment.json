@@ -1,0 +1,214 @@
+{
+  "tag": "lh_2x3_k1",
+  "m": 2,
+  "n": 3,
+  "k": 1,
+  "hand": "lh",
+  "direction": "cw",
+  "engine": "site/dist/continuation-engine.js + site/jev_settings.JevSettings",
+  "jev": {
+    "configured": true,
+    "enabled": true,
+    "sdk": true,
+    "source": "saved"
+  },
+  "totals": {
+    "strands": 49,
+    "base": 15,
+    "continuation": 10,
+    "base_masks": 12,
+    "cont_masks": 12
+  },
+  "vertical_order": [
+    "4_4",
+    "4_5",
+    "5_4",
+    "5_5"
+  ],
+  "horizontal_order": [
+    "1_5",
+    "1_4",
+    "2_5",
+    "2_4",
+    "3_5",
+    "3_4"
+  ],
+  "base_masks": [
+    "4_2_1_3",
+    "4_2_2_3",
+    "4_2_3_3",
+    "5_2_1_3",
+    "5_2_2_3",
+    "5_2_3_3",
+    "4_3_1_2",
+    "4_3_2_2",
+    "4_3_3_2",
+    "5_3_1_2",
+    "5_3_2_2",
+    "5_3_3_2"
+  ],
+  "cont_masks": [
+    "4_4_1_5",
+    "4_4_2_5",
+    "4_4_3_5",
+    "4_5_1_4",
+    "4_5_2_4",
+    "4_5_3_4",
+    "5_4_1_5",
+    "5_4_2_5",
+    "5_4_3_5",
+    "5_5_1_4",
+    "5_5_2_4",
+    "5_5_3_4"
+  ],
+  "geometry": [
+    {
+      "name": "4_4",
+      "angle": 105.15,
+      "length": 427.37,
+      "group": "vertical"
+    },
+    {
+      "name": "4_5",
+      "angle": -74.85,
+      "length": 442.33,
+      "group": "vertical"
+    },
+    {
+      "name": "5_4",
+      "angle": 105.15,
+      "length": 442.33,
+      "group": "vertical"
+    },
+    {
+      "name": "5_5",
+      "angle": -74.85,
+      "length": 427.37,
+      "group": "vertical"
+    },
+    {
+      "name": "1_5",
+      "angle": -164.37,
+      "length": 376.73,
+      "group": "horizontal"
+    },
+    {
+      "name": "1_4",
+      "angle": 15.63,
+      "length": 372.21,
+      "group": "horizontal"
+    },
+    {
+      "name": "2_5",
+      "angle": -164.37,
+      "length": 391.47,
+      "group": "horizontal"
+    },
+    {
+      "name": "2_4",
+      "angle": 15.63,
+      "length": 391.47,
+      "group": "horizontal"
+    },
+    {
+      "name": "3_5",
+      "angle": -164.37,
+      "length": 372.21,
+      "group": "horizontal"
+    },
+    {
+      "name": "3_4",
+      "angle": 15.63,
+      "length": 376.73,
+      "group": "horizontal"
+    }
+  ],
+  "horizontal": {
+    "success": true,
+    "fallback": false,
+    "preserved": false,
+    "angle": -164.37,
+    "gap": 56.71346486396843,
+    "gap_variance": 0.19445492315067667,
+    "spread": 283.5673243198419,
+    "extensions": [
+      110,
+      70,
+      90
+    ],
+    "message": "Found parallel configuration at -164.37\u00b0 (pair exts: (110, 70, 90))",
+    "search": {
+      "policy": "jev",
+      "rounds": 8,
+      "rounds_by_kind": {
+        "start": 1,
+        "explore": 2,
+        "move": 5
+      },
+      "cells_explored": 3,
+      "cells_total": 192,
+      "combos_evaluated": 407,
+      "combos_total": 9261,
+      "combo_budget": 3242,
+      "stopped": "patience",
+      "valid_found": 15,
+      "policy_calls": 8,
+      "policy_input_tokens": 57152,
+      "mode": "guided"
+    }
+  },
+  "vertical": {
+    "success": true,
+    "fallback": false,
+    "preserved": false,
+    "angle": 105.15,
+    "gap": 56.697252950973166,
+    "gap_variance": 0.007232401547308242,
+    "spread": 170.09175885291964,
+    "extensions": [
+      50,
+      30
+    ],
+    "message": "Found vertical parallel configuration at 105.15\u00b0 (pair exts: (50, 30))",
+    "search": {
+      "policy": "jev",
+      "rounds": 5,
+      "rounds_by_kind": {
+        "start": 1,
+        "explore": 4,
+        "move": 0
+      },
+      "cells_explored": 5,
+      "cells_total": 48,
+      "combos_evaluated": 125,
+      "combos_total": 441,
+      "combo_budget": 155,
+      "stopped": "patience",
+      "valid_found": 53,
+      "policy_calls": 5,
+      "policy_input_tokens": 24162,
+      "mode": "guided"
+    }
+  },
+  "search": {
+    "ext_max": 200,
+    "h_step": 10,
+    "v_step": 10,
+    "h_pairs": 3,
+    "v_pairs": 2,
+    "h_combos": 9261,
+    "v_combos": 441,
+    "angle_step": 0.5,
+    "angle_mode": "first_strand",
+    "passes": 1,
+    "clearance_rule_px": 23.0,
+    "h_clearance_px": 111.2,
+    "h_mode": "guided",
+    "v_mode": "guided"
+  },
+  "timing": {
+    "generate_s": 0.0,
+    "h_align_s": 2.66,
+    "v_align_s": 0.0
+  }
+}

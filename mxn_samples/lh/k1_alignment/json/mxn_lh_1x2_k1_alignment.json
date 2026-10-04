@@ -1,0 +1,152 @@
+{
+  "tag": "lh_1x2_k1",
+  "m": 1,
+  "n": 2,
+  "k": 1,
+  "hand": "lh",
+  "direction": "cw",
+  "engine": "site/dist/continuation-engine.js + site/jev_settings.JevSettings",
+  "jev": {
+    "configured": true,
+    "enabled": true,
+    "sdk": true,
+    "source": "saved"
+  },
+  "totals": {
+    "strands": 23,
+    "base": 9,
+    "continuation": 6,
+    "base_masks": 4,
+    "cont_masks": 4
+  },
+  "vertical_order": [
+    "3_4",
+    "3_5"
+  ],
+  "horizontal_order": [
+    "1_5",
+    "1_4",
+    "2_5",
+    "2_4"
+  ],
+  "base_masks": [
+    "3_2_1_3",
+    "3_2_2_3",
+    "3_3_1_2",
+    "3_3_2_2"
+  ],
+  "cont_masks": [
+    "3_4_1_5",
+    "3_4_2_5",
+    "3_5_1_4",
+    "3_5_2_4"
+  ],
+  "geometry": [
+    {
+      "name": "3_4",
+      "angle": 117.28,
+      "length": 272.08,
+      "group": "vertical"
+    },
+    {
+      "name": "3_5",
+      "angle": -62.72,
+      "length": 272.08,
+      "group": "vertical"
+    },
+    {
+      "name": "1_5",
+      "angle": -145.17,
+      "length": 216.59,
+      "group": "horizontal"
+    },
+    {
+      "name": "1_4",
+      "angle": 34.83,
+      "length": 222.68,
+      "group": "horizontal"
+    },
+    {
+      "name": "2_5",
+      "angle": -145.17,
+      "length": 222.68,
+      "group": "horizontal"
+    },
+    {
+      "name": "2_4",
+      "angle": 34.83,
+      "length": 216.59,
+      "group": "horizontal"
+    }
+  ],
+  "horizontal": {
+    "success": true,
+    "fallback": false,
+    "preserved": false,
+    "angle": -145.17,
+    "gap": 57.20639082889389,
+    "gap_variance": 0.27112253031775235,
+    "spread": 171.6191724866818,
+    "extensions": [
+      50,
+      10
+    ],
+    "message": "Found parallel configuration at -145.17\u00b0 (pair exts: (50, 10))",
+    "search": {
+      "policy": "jev",
+      "rounds": 7,
+      "rounds_by_kind": {
+        "start": 1,
+        "explore": 3,
+        "move": 3
+      },
+      "cells_explored": 4,
+      "cells_total": 48,
+      "combos_evaluated": 100,
+      "combos_total": 441,
+      "combo_budget": 155,
+      "stopped": "patience",
+      "valid_found": 20,
+      "policy_calls": 7,
+      "policy_input_tokens": 36232,
+      "mode": "guided"
+    }
+  },
+  "vertical": {
+    "success": true,
+    "fallback": false,
+    "preserved": false,
+    "angle": 117.28,
+    "gap": 56.56319948839153,
+    "gap_variance": 0,
+    "spread": 56.56319948839153,
+    "extensions": [
+      0
+    ],
+    "message": "Found vertical parallel configuration at 117.28\u00b0 (pair exts: (0,))",
+    "search": {
+      "mode": "exhaustive"
+    }
+  },
+  "search": {
+    "ext_max": 200,
+    "h_step": 10,
+    "v_step": 10,
+    "h_pairs": 2,
+    "v_pairs": 1,
+    "h_combos": 441,
+    "v_combos": 21,
+    "angle_step": 0.5,
+    "angle_mode": "first_strand",
+    "passes": 1,
+    "clearance_rule_px": 23.0,
+    "h_clearance_px": 57.1,
+    "h_mode": "guided",
+    "v_mode": "exhaustive"
+  },
+  "timing": {
+    "generate_s": 0.0,
+    "h_align_s": 1.36,
+    "v_align_s": 0.0
+  }
+}

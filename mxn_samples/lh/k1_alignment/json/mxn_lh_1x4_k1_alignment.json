@@ -1,0 +1,197 @@
+{
+  "tag": "lh_1x4_k1",
+  "m": 1,
+  "n": 4,
+  "k": 1,
+  "hand": "lh",
+  "direction": "cw",
+  "engine": "site/dist/continuation-engine.js + site/jev_settings.JevSettings",
+  "jev": {
+    "configured": true,
+    "enabled": true,
+    "sdk": true,
+    "source": "saved"
+  },
+  "totals": {
+    "strands": 41,
+    "base": 15,
+    "continuation": 10,
+    "base_masks": 8,
+    "cont_masks": 8
+  },
+  "vertical_order": [
+    "5_4",
+    "5_5"
+  ],
+  "horizontal_order": [
+    "1_5",
+    "1_4",
+    "2_5",
+    "2_4",
+    "3_5",
+    "3_4",
+    "4_5",
+    "4_4"
+  ],
+  "base_masks": [
+    "5_2_1_3",
+    "5_2_2_3",
+    "5_2_3_3",
+    "5_2_4_3",
+    "5_3_1_2",
+    "5_3_2_2",
+    "5_3_3_2",
+    "5_3_4_2"
+  ],
+  "cont_masks": [
+    "5_4_1_5",
+    "5_4_2_5",
+    "5_4_3_5",
+    "5_4_4_5",
+    "5_5_1_4",
+    "5_5_2_4",
+    "5_5_3_4",
+    "5_5_4_4"
+  ],
+  "geometry": [
+    {
+      "name": "5_4",
+      "angle": 103.5,
+      "length": 497.6,
+      "group": "vertical"
+    },
+    {
+      "name": "5_5",
+      "angle": -76.5,
+      "length": 497.6,
+      "group": "vertical"
+    },
+    {
+      "name": "1_5",
+      "angle": -152.43,
+      "length": 259.33,
+      "group": "horizontal"
+    },
+    {
+      "name": "1_4",
+      "angle": 27.57,
+      "length": 217.24,
+      "group": "horizontal"
+    },
+    {
+      "name": "2_5",
+      "angle": -152.43,
+      "length": 270.43,
+      "group": "horizontal"
+    },
+    {
+      "name": "2_4",
+      "angle": 27.57,
+      "length": 243.84,
+      "group": "horizontal"
+    },
+    {
+      "name": "3_5",
+      "angle": -152.43,
+      "length": 243.84,
+      "group": "horizontal"
+    },
+    {
+      "name": "3_4",
+      "angle": 27.57,
+      "length": 270.43,
+      "group": "horizontal"
+    },
+    {
+      "name": "4_5",
+      "angle": -152.43,
+      "length": 217.24,
+      "group": "horizontal"
+    },
+    {
+      "name": "4_4",
+      "angle": 27.57,
+      "length": 259.33,
+      "group": "horizontal"
+    }
+  ],
+  "horizontal": {
+    "success": true,
+    "fallback": false,
+    "preserved": false,
+    "angle": -152.43,
+    "gap": 56.61587385737932,
+    "gap_variance": 0.0504392755037788,
+    "spread": 396.31111700165474,
+    "extensions": [
+      100,
+      10,
+      70,
+      40
+    ],
+    "message": "Found parallel configuration at -152.43\u00b0 (pair exts: (100, 10, 70, 40))",
+    "search": {
+      "policy": "jev",
+      "rounds": 12,
+      "rounds_by_kind": {
+        "start": 1,
+        "explore": 9,
+        "move": 2
+      },
+      "cells_explored": 10,
+      "cells_total": 768,
+      "combos_evaluated": 6271,
+      "combos_total": 194481,
+      "combo_budget": 68069,
+      "stopped": "patience",
+      "valid_found": 38,
+      "policy_calls": 12,
+      "policy_input_tokens": 116558,
+      "mode": "guided"
+    }
+  },
+  "vertical": {
+    "success": true,
+    "fallback": false,
+    "preserved": false,
+    "angle": 103.5,
+    "gap": 56.66727765314107,
+    "gap_variance": 0,
+    "spread": 56.66727765314107,
+    "extensions": [
+      10
+    ],
+    "message": "Twist-band vertical at 103.50\u00b0 (pair exts: (10,)), gap matched to the horizontal fan",
+    "search": {
+      "mode": "twist-band",
+      "band": [
+        98.0,
+        112.0
+      ],
+      "target_angle": 104.01,
+      "collapsed_angle_avoided": 90.0
+    }
+  },
+  "search": {
+    "ext_max": 200,
+    "h_step": 10,
+    "v_step": 10,
+    "h_pairs": 4,
+    "v_pairs": 1,
+    "h_combos": 194481,
+    "v_combos": 21,
+    "angle_step": 0.5,
+    "angle_mode": "first_strand",
+    "passes": 1,
+    "clearance_rule_px": 23.0,
+    "h_clearance_px": 47.2,
+    "h_mode": "guided",
+    "v_mode": "twist-band"
+  },
+  "timing": {
+    "generate_s": 0.0,
+    "h_align_s": 5.58,
+    "v_align_s": 0.0
+  },
+  "fix": "vertical re-aimed from 90.0\u00b0 to 103.5\u00b0; horizontal fan unchanged"
+}

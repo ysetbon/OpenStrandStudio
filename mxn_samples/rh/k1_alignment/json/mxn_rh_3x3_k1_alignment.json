@@ -1,0 +1,241 @@
+{
+  "tag": "rh_3x3_k1",
+  "m": 3,
+  "n": 3,
+  "k": 1,
+  "hand": "rh",
+  "direction": "ccw",
+  "engine": "site/dist/continuation-engine.js + site/jev_settings.JevSettings",
+  "jev": {
+    "configured": true,
+    "enabled": true,
+    "sdk": true,
+    "source": "saved"
+  },
+  "totals": {
+    "strands": 66,
+    "base": 18,
+    "continuation": 12,
+    "base_masks": 18,
+    "cont_masks": 18
+  },
+  "vertical_order": [
+    "4_4",
+    "4_5",
+    "5_4",
+    "5_5",
+    "6_4",
+    "6_5"
+  ],
+  "horizontal_order": [
+    "1_4",
+    "1_5",
+    "2_4",
+    "2_5",
+    "3_4",
+    "3_5"
+  ],
+  "base_masks": [
+    "4_2_1_3",
+    "4_2_2_3",
+    "4_2_3_3",
+    "5_2_1_3",
+    "5_2_2_3",
+    "5_2_3_3",
+    "6_2_1_3",
+    "6_2_2_3",
+    "6_2_3_3",
+    "4_3_1_2",
+    "4_3_2_2",
+    "4_3_3_2",
+    "5_3_1_2",
+    "5_3_2_2",
+    "5_3_3_2",
+    "6_3_1_2",
+    "6_3_2_2",
+    "6_3_3_2"
+  ],
+  "cont_masks": [
+    "4_4_1_5",
+    "4_4_2_5",
+    "4_4_3_5",
+    "4_5_1_4",
+    "4_5_2_4",
+    "4_5_3_4",
+    "5_4_1_5",
+    "5_4_2_5",
+    "5_4_3_5",
+    "5_5_1_4",
+    "5_5_2_4",
+    "5_5_3_4",
+    "6_4_1_5",
+    "6_4_2_5",
+    "6_4_3_5",
+    "6_5_1_4",
+    "6_5_2_4",
+    "6_5_3_4"
+  ],
+  "geometry": [
+    {
+      "name": "4_4",
+      "angle": -101.4,
+      "length": 505.77,
+      "group": "vertical"
+    },
+    {
+      "name": "4_5",
+      "angle": 78.6,
+      "length": 499.26,
+      "group": "vertical"
+    },
+    {
+      "name": "5_4",
+      "angle": -101.4,
+      "length": 518.86,
+      "group": "vertical"
+    },
+    {
+      "name": "5_5",
+      "angle": 78.6,
+      "length": 518.86,
+      "group": "vertical"
+    },
+    {
+      "name": "6_4",
+      "angle": -101.4,
+      "length": 499.26,
+      "group": "vertical"
+    },
+    {
+      "name": "6_5",
+      "angle": 78.6,
+      "length": 505.77,
+      "group": "vertical"
+    },
+    {
+      "name": "1_4",
+      "angle": -12.36,
+      "length": 486.14,
+      "group": "horizontal"
+    },
+    {
+      "name": "1_5",
+      "angle": 167.64,
+      "length": 480.18,
+      "group": "horizontal"
+    },
+    {
+      "name": "2_4",
+      "angle": -12.36,
+      "length": 499.71,
+      "group": "horizontal"
+    },
+    {
+      "name": "2_5",
+      "angle": 167.64,
+      "length": 499.71,
+      "group": "horizontal"
+    },
+    {
+      "name": "3_4",
+      "angle": -12.36,
+      "length": 480.18,
+      "group": "horizontal"
+    },
+    {
+      "name": "3_5",
+      "angle": 167.64,
+      "length": 486.14,
+      "group": "horizontal"
+    }
+  ],
+  "horizontal": {
+    "success": true,
+    "fallback": false,
+    "preserved": false,
+    "angle": -12.36,
+    "gap": 56.96644444220406,
+    "gap_variance": 0.3683144841199319,
+    "spread": 284.8322222110205,
+    "extensions": [
+      110,
+      70,
+      90
+    ],
+    "message": "Found parallel configuration at -12.36\u00b0 (pair exts: (110, 70, 90))",
+    "search": {
+      "policy": "jev",
+      "rounds": 10,
+      "rounds_by_kind": {
+        "start": 1,
+        "explore": 2,
+        "move": 7
+      },
+      "cells_explored": 3,
+      "cells_total": 192,
+      "combos_evaluated": 470,
+      "combos_total": 9261,
+      "combo_budget": 3242,
+      "stopped": "patience",
+      "valid_found": 27,
+      "policy_calls": 10,
+      "policy_input_tokens": 74844,
+      "mode": "guided"
+    }
+  },
+  "vertical": {
+    "success": true,
+    "fallback": false,
+    "preserved": false,
+    "angle": -101.4,
+    "gap": 56.814118185088226,
+    "gap_variance": 0.07973963028066636,
+    "spread": 284.07059092544137,
+    "extensions": [
+      130,
+      90,
+      110
+    ],
+    "message": "Found vertical parallel configuration at -101.40\u00b0 (pair exts: (130, 90, 110))",
+    "search": {
+      "policy": "jev",
+      "rounds": 10,
+      "rounds_by_kind": {
+        "start": 1,
+        "explore": 2,
+        "move": 7
+      },
+      "cells_explored": 3,
+      "cells_total": 192,
+      "combos_evaluated": 453,
+      "combos_total": 9261,
+      "combo_budget": 3242,
+      "stopped": "patience",
+      "valid_found": 14,
+      "policy_calls": 10,
+      "policy_input_tokens": 74897,
+      "mode": "guided"
+    }
+  },
+  "search": {
+    "ext_max": 200,
+    "h_step": 10,
+    "v_step": 10,
+    "h_pairs": 3,
+    "v_pairs": 3,
+    "h_combos": 9261,
+    "v_combos": 9261,
+    "angle_step": 0.5,
+    "angle_mode": "first_strand",
+    "passes": 1,
+    "clearance_rule_px": 23.0,
+    "h_clearance_px": 117.8,
+    "h_mode": "guided",
+    "v_mode": "guided"
+  },
+  "timing": {
+    "generate_s": 0.0,
+    "h_align_s": 4.94,
+    "v_align_s": 0.0
+  }
+}

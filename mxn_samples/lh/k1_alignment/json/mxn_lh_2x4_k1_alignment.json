@@ -1,0 +1,237 @@
+{
+  "tag": "lh_2x4_k1",
+  "m": 2,
+  "n": 4,
+  "k": 1,
+  "hand": "lh",
+  "direction": "cw",
+  "engine": "site/dist/continuation-engine.js + site/jev_settings.JevSettings",
+  "jev": {
+    "configured": true,
+    "enabled": true,
+    "sdk": true,
+    "source": "saved"
+  },
+  "totals": {
+    "strands": 62,
+    "base": 18,
+    "continuation": 12,
+    "base_masks": 16,
+    "cont_masks": 16
+  },
+  "vertical_order": [
+    "5_4",
+    "5_5",
+    "6_4",
+    "6_5"
+  ],
+  "horizontal_order": [
+    "1_5",
+    "1_4",
+    "2_5",
+    "2_4",
+    "3_5",
+    "3_4",
+    "4_5",
+    "4_4"
+  ],
+  "base_masks": [
+    "5_2_1_3",
+    "5_2_2_3",
+    "5_2_3_3",
+    "5_2_4_3",
+    "6_2_1_3",
+    "6_2_2_3",
+    "6_2_3_3",
+    "6_2_4_3",
+    "5_3_1_2",
+    "5_3_2_2",
+    "5_3_3_2",
+    "5_3_4_2",
+    "6_3_1_2",
+    "6_3_2_2",
+    "6_3_3_2",
+    "6_3_4_2"
+  ],
+  "cont_masks": [
+    "5_4_1_5",
+    "5_4_2_5",
+    "5_4_3_5",
+    "5_4_4_5",
+    "5_5_1_4",
+    "5_5_2_4",
+    "5_5_3_4",
+    "5_5_4_4",
+    "6_4_1_5",
+    "6_4_2_5",
+    "6_4_3_5",
+    "6_4_4_5",
+    "6_5_1_4",
+    "6_5_2_4",
+    "6_5_3_4",
+    "6_5_4_4"
+  ],
+  "geometry": [
+    {
+      "name": "5_4",
+      "angle": 103.6,
+      "length": 507.25,
+      "group": "vertical"
+    },
+    {
+      "name": "5_5",
+      "angle": -76.4,
+      "length": 521.66,
+      "group": "vertical"
+    },
+    {
+      "name": "6_4",
+      "angle": 103.6,
+      "length": 521.66,
+      "group": "vertical"
+    },
+    {
+      "name": "6_5",
+      "angle": -76.4,
+      "length": 507.25,
+      "group": "vertical"
+    },
+    {
+      "name": "1_5",
+      "angle": -165.18,
+      "length": 395.97,
+      "group": "horizontal"
+    },
+    {
+      "name": "1_4",
+      "angle": 14.82,
+      "length": 371.64,
+      "group": "horizontal"
+    },
+    {
+      "name": "2_5",
+      "angle": -165.18,
+      "length": 410.31,
+      "group": "horizontal"
+    },
+    {
+      "name": "2_4",
+      "angle": 14.82,
+      "length": 390.98,
+      "group": "horizontal"
+    },
+    {
+      "name": "3_5",
+      "angle": -165.18,
+      "length": 390.98,
+      "group": "horizontal"
+    },
+    {
+      "name": "3_4",
+      "angle": 14.82,
+      "length": 410.31,
+      "group": "horizontal"
+    },
+    {
+      "name": "4_5",
+      "angle": -165.18,
+      "length": 371.64,
+      "group": "horizontal"
+    },
+    {
+      "name": "4_4",
+      "angle": 14.82,
+      "length": 395.97,
+      "group": "horizontal"
+    }
+  ],
+  "horizontal": {
+    "success": true,
+    "fallback": false,
+    "preserved": false,
+    "angle": -165.18,
+    "gap": 56.64727333226814,
+    "gap_variance": 0.10908588292351555,
+    "spread": 396.5309133258764,
+    "extensions": [
+      130,
+      70,
+      110,
+      90
+    ],
+    "message": "Found parallel configuration at -165.18\u00b0 (pair exts: (130, 70, 110, 90))",
+    "search": {
+      "policy": "jev",
+      "rounds": 9,
+      "rounds_by_kind": {
+        "start": 1,
+        "explore": 2,
+        "move": 6
+      },
+      "cells_explored": 3,
+      "cells_total": 768,
+      "combos_evaluated": 2106,
+      "combos_total": 194481,
+      "combo_budget": 68069,
+      "stopped": "patience",
+      "valid_found": 8,
+      "policy_calls": 9,
+      "policy_input_tokens": 85092,
+      "mode": "guided"
+    }
+  },
+  "vertical": {
+    "success": true,
+    "fallback": false,
+    "preserved": false,
+    "angle": 103.6,
+    "gap": 57.02010137709457,
+    "gap_variance": 0.4564489005771226,
+    "spread": 171.0603041312834,
+    "extensions": [
+      20,
+      0
+    ],
+    "message": "Found vertical parallel configuration at 103.60\u00b0 (pair exts: (20, 0))",
+    "search": {
+      "policy": "jev",
+      "rounds": 4,
+      "rounds_by_kind": {
+        "start": 1,
+        "explore": 3,
+        "move": 0
+      },
+      "cells_explored": 4,
+      "cells_total": 48,
+      "combos_evaluated": 100,
+      "combos_total": 441,
+      "combo_budget": 155,
+      "stopped": "patience",
+      "valid_found": 32,
+      "policy_calls": 4,
+      "policy_input_tokens": 18449,
+      "mode": "guided"
+    }
+  },
+  "search": {
+    "ext_max": 200,
+    "h_step": 10,
+    "v_step": 10,
+    "h_pairs": 4,
+    "v_pairs": 2,
+    "h_combos": 194481,
+    "v_combos": 441,
+    "angle_step": 0.5,
+    "angle_mode": "first_strand",
+    "passes": 1,
+    "clearance_rule_px": 23.0,
+    "h_clearance_px": 120.7,
+    "h_mode": "guided",
+    "v_mode": "guided"
+  },
+  "timing": {
+    "generate_s": 0.0,
+    "h_align_s": 3.64,
+    "v_align_s": 0.0
+  }
+}

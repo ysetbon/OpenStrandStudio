@@ -15,7 +15,8 @@ from functools import partial
 from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
 from translations import translations
-from save_load_manager import keep_masks_on_top
+from save_load_manager import keep_masks_on_top, assign_levels, strand_level
+from level_button import LevelRow
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea, QLabel,
     QInputDialog, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,
@@ -890,6 +891,20 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         """)
         self.add_new_strand_button.clicked.connect(self.request_new_strand)
 
+        # New Level shares a row with New Strand (and, on the Masks tab, with
+        # New Mask): a split button, left half green, right half purple.
+        # Equal halves, no side padding, as the Strands / Masks switch.
+        self.add_new_strand_button.setStyleSheet(self.add_new_strand_button.styleSheet() + """
+            QPushButton {
+                border-top-right-radius: 0px;
+                border-bottom-right-radius: 0px;
+                border-right: none;
+                padding: 5px 0px;
+            }
+        """)
+        self.new_level_button = self._make_new_level_button(_)
+        self.new_level_mask_button = self._make_new_level_button(_)
+
         # Delete Strand button
         self.delete_strand_button = QPushButton(_['delete_strand'])
         self.delete_strand_button.setStyleSheet("""
@@ -1026,7 +1041,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self.draw_names_button,
             self.lock_layers_button,
             self.add_new_strand_button,
+            self.new_level_button,
             self.new_mask_button,
+            self.new_level_mask_button,
             self.delete_strand_button,
             self.delete_mask_button,
             self.deselect_all_button,
@@ -1035,13 +1052,17 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         ):
             button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
+        # New Strand | New Level, and New Mask | New Level: one row each
+        self.new_strand_row = self._split_row(self.add_new_strand_button, self.new_level_button)
+        self.new_mask_row = self._split_row(self.new_mask_button, self.new_level_mask_button)
+
         # Add buttons to bottom panel in the desired order; each tab shows
         # only its own buttons (see _apply_layer_tab_filter)
         bottom_layout.addWidget(self.layer_tab_row)
         bottom_layout.addWidget(self.draw_names_button)
         bottom_layout.addWidget(self.lock_layers_button)
-        bottom_layout.addWidget(self.add_new_strand_button)
-        bottom_layout.addWidget(self.new_mask_button)
+        bottom_layout.addWidget(self.new_strand_row)
+        bottom_layout.addWidget(self.new_mask_row)
         bottom_layout.addWidget(self.delete_strand_button)
         bottom_layout.addWidget(self.delete_mask_button)
         bottom_layout.addWidget(self.deselect_all_button)
@@ -1140,6 +1161,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
         # Initialize variables for managing layers
         self.layer_buttons = []  # List to store layer buttons
+        self.level_rows = []  # The Level rows of the list (see level_button.py); not in layer_buttons
         self.current_set = 1  # Current set number
         self.set_counts = {}
         
@@ -1792,8 +1814,12 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self.lock_layers_button.setText(_['lock_layers'])
             
         self.add_new_strand_button.setText(_['add_new_strand'])
+        self.new_level_button.setText(_['new_level'])
+        self.new_level_mask_button.setText(_['new_level'])
+        for row in self.level_rows:
+            row.button.update()  # "Level 1" in the new language
         self.delete_strand_button.setText(_['delete_strand'])
-        
+
         # Handle deselect button text based on current lock mode state
         if hasattr(self, 'lock_mode') and self.lock_mode:
             self.deselect_all_button.setText(_['clear_all_locks'])
@@ -3002,7 +3028,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self.deselect_all_button.setEnabled(False)
         for button in (self.strands_tab_button, self.masks_tab_button,
                        self.new_mask_button, self.delete_mask_button,
-                       self.delete_all_masks_button):
+                       self.delete_all_masks_button,
+                       self.new_level_button, self.new_level_mask_button):
             button.setEnabled(False)
         if hasattr(self, 'group_layer_manager'):
             self.group_layer_manager.create_group_button.setEnabled(False)
@@ -3016,7 +3043,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self.lock_layers_button.setEnabled(True)
         self.deselect_all_button.setEnabled(True)
         for button in (self.strands_tab_button, self.masks_tab_button,
-                       self.new_mask_button, self.delete_all_masks_button):
+                       self.new_mask_button, self.delete_all_masks_button,
+                       self.new_level_button, self.new_level_mask_button):
             button.setEnabled(True)
         self.update_delete_mask_button_state()
         if hasattr(self, 'group_layer_manager'):
@@ -3243,6 +3271,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 self._cancel_pending_mask_selection()
                 QTimer.singleShot(0, self._end_mask_mode_off_masks_tab)
         masks = self.layer_tab == 'masks'
+        # Level rows go back between their layers first (they are in the
+        # list, but never in layer_buttons)
+        self._sync_level_widgets()
         for i, button in enumerate(self.layer_buttons):
             try:
                 if button.parent() is None:
@@ -3251,10 +3282,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             except RuntimeError:
                 continue
         for button in (self.draw_names_button, self.lock_layers_button,
-                       self.add_new_strand_button, self.delete_strand_button,
+                       self.new_strand_row, self.delete_strand_button,
                        self.delete_all_button):
             button.setVisible(not masks)
-        for button in (self.new_mask_button, self.delete_mask_button,
+        for button in (self.new_mask_row, self.delete_mask_button,
                        self.delete_all_masks_button):
             button.setVisible(masks)
         self._apply_layer_tab_style()
@@ -3943,8 +3974,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 self.undo_redo_manager.save_state(action='layer.delete_all', source='panel',
                                                   detail='before clearing')
 
-            # Clear all strands from canvas
+            # Clear all strands from canvas (and the levels with them)
             self.canvas.strands.clear()
+            self.canvas.level_count = 0
 
             # Clear selection state
             self.canvas.selected_strand = None

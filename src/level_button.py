@@ -10,11 +10,9 @@ Right-click opens Move up / Move down / Remove; dragging the row moves it
 like any layer (LayerPanel.dropEvent turns the new position into levels).
 """
 
-import re
-
 from PyQt5.QtCore import QEvent, QMimeData, QSize, Qt
-from PyQt5.QtGui import QColor, QDrag, QFont, QFontMetrics, QPainter, QPainterPath
-from PyQt5.QtWidgets import (QApplication, QHBoxLayout, QMenu, QPushButton, QSizePolicy,
+from PyQt5.QtGui import QColor, QDrag, QFont, QPainter, QPainterPath
+from PyQt5.QtWidgets import (QApplication, QMenu, QPushButton, QSizePolicy,
                              QVBoxLayout, QWidget)
 
 # Same width as NumberedLayerButton, a third less tall (40 -> 27).
@@ -116,59 +114,6 @@ class LevelButton(QPushButton):
         finally:
             QApplication.instance().setProperty("layer_drag_active", False)
         self._drag_start_position = None
-
-
-class SplitButtonRow(QWidget):
-    """Two buttons as the equal halves of one row: New Strand | New Level and
-    New Mask | New Level.
-
-    Each half takes half the row whatever its text. A text too long for its
-    half (a long translation, a narrow panel) gets a smaller font instead of
-    pushing the halves apart."""
-
-    MAX_FONT_PX = 14  # the bottom buttons' size
-    MIN_FONT_PX = 9
-
-    def __init__(self, left, right, parent=None):
-        """*left* and *right* become the two halves, in that order."""
-        super().__init__(parent)
-        self.buttons = (left, right)
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        for button in self.buttons:
-            # Ignored: the width comes from the stretch, not from the text
-            button.setSizePolicy(QSizePolicy.Ignored, button.sizePolicy().verticalPolicy())
-            layout.addWidget(button, 1)
-
-    def resizeEvent(self, event):
-        """A new width can change the font the texts fit in."""
-        super().resizeEvent(event)
-        self.fit_text()
-
-    def fit_text(self):
-        """Give both halves the largest font, up to 14 px, that both texts
-        fit in, so the two halves always read as one button."""
-        sizes = []
-        for button in self.buttons:
-            room = button.width() - 6  # borders and a little air
-            if room <= 0:
-                return  # not laid out yet; resizeEvent comes back
-            font = QFont(button.font())
-            font.setBold(True)
-            size = self.MAX_FONT_PX
-            while size > self.MIN_FONT_PX:
-                font.setPixelSize(size)
-                if QFontMetrics(font).horizontalAdvance(button.text()) <= room:
-                    break
-                size -= 1
-            sizes.append(size)
-        size = min(sizes)
-        for button in self.buttons:
-            style = button.styleSheet()
-            fitted = re.sub(r'font-size:\s*\d+px', 'font-size: {}px'.format(size), style)
-            if fitted != style:
-                button.setStyleSheet(fitted)
 
 
 class LevelRow(QWidget):

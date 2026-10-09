@@ -195,13 +195,17 @@ def test_new_level_adds_an_empty_row_on_top(window):
     assert_consistent(window)
 
 
-def test_split_buttons_on_both_tabs(window):
+def test_new_level_sits_in_the_new_row_on_both_tabs(window):
+    """New Level is the second button of the framed New row: New [Strand | Level]
+    on the Strands tab, New [Mask | Level] on the Masks tab (see
+    tests/test_action_group_rows.py for the rows themselves)."""
     lp = window.layer_panel
-    assert lp.new_strand_row.isVisible() and not lp.new_mask_row.isVisible()
-    assert abs(lp.add_new_strand_button.width() - lp.new_level_button.width()) <= 1
+    assert lp.new_strand_row.buttons == (lp.add_new_strand_button, lp.new_level_button)
+    assert lp.new_mask_row.buttons == (lp.new_mask_button, lp.new_level_mask_button)
+    assert lp.new_level_button.isVisible() and not lp.new_level_mask_button.isVisible()
     lp.set_layer_tab("masks")
     pump()
-    assert lp.new_mask_row.isVisible() and not lp.new_strand_row.isVisible()
+    assert lp.new_level_mask_button.isVisible() and not lp.new_level_button.isVisible()
     lp.new_level_mask_button.click()  # a level can be made from the Masks tab too
     pump()
     assert window.canvas.level_count == 1

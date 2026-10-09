@@ -16,7 +16,8 @@ from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
 from translations import translations
 from save_load_manager import keep_masks_on_top, assign_levels, strand_level
-from level_button import LevelRow, SplitButtonRow
+from level_button import LevelRow
+from action_group_row import ActionGroupRow
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea, QLabel,
     QInputDialog, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,
@@ -891,17 +892,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         """)
         self.add_new_strand_button.clicked.connect(self.request_new_strand)
 
-        # New Level shares a row with New Strand (and, on the Masks tab, with
-        # New Mask): a split button, left half green, right half purple.
-        # Equal halves, no side padding, as the Strands / Masks switch.
-        self.add_new_strand_button.setStyleSheet(self.add_new_strand_button.styleSheet() + """
-            QPushButton {
-                border-top-right-radius: 0px;
-                border-bottom-right-radius: 0px;
-                border-right: none;
-                padding: 5px 0px;
-            }
-        """)
+        # New Level: the purple half of the framed New [Strand | Level] row,
+        # and of New [Mask | Level] on the Masks tab (one button per tab)
         self.new_level_button = self._make_new_level_button(_)
         self.new_level_mask_button = self._make_new_level_button(_)
 
@@ -1052,22 +1044,30 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         ):
             button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
-        # New Strand | New Level, and New Mask | New Level: one row each
-        self.new_strand_row = self._split_row(self.add_new_strand_button, self.new_level_button)
-        self.new_mask_row = self._split_row(self.new_mask_button, self.new_level_mask_button)
+        # New [Strand | Level] and Delete [Strand | All], and the same for
+        # masks: a plain word and two short buttons in one framed row (see
+        # action_group_row.py), as tall as a plain bottom button
+        row_height = self.deselect_all_button.sizeHint().height()
+        self.new_strand_row = ActionGroupRow(
+            _['group_new'], (self.add_new_strand_button, self.new_level_button), row_height)
+        self.new_mask_row = ActionGroupRow(
+            _['group_new_masks'], (self.new_mask_button, self.new_level_mask_button), row_height)
+        self.delete_strand_row = ActionGroupRow(
+            _['group_delete'], (self.delete_strand_button, self.delete_all_button), row_height)
+        self.delete_mask_row = ActionGroupRow(
+            _['group_delete'], (self.delete_mask_button, self.delete_all_masks_button), row_height)
+        self._apply_group_row_texts(_)
 
         # Add buttons to bottom panel in the desired order; each tab shows
-        # only its own buttons (see _apply_layer_tab_filter)
+        # only its own rows (see _apply_layer_tab_filter)
         bottom_layout.addWidget(self.layer_tab_row)
         bottom_layout.addWidget(self.draw_names_button)
         bottom_layout.addWidget(self.lock_layers_button)
         bottom_layout.addWidget(self.new_strand_row)
         bottom_layout.addWidget(self.new_mask_row)
-        bottom_layout.addWidget(self.delete_strand_button)
-        bottom_layout.addWidget(self.delete_mask_button)
+        bottom_layout.addWidget(self.delete_strand_row)
+        bottom_layout.addWidget(self.delete_mask_row)
         bottom_layout.addWidget(self.deselect_all_button)
-        bottom_layout.addWidget(self.delete_all_button)
-        bottom_layout.addWidget(self.delete_all_masks_button)
 
         # Add scroll area and bottom panel to left layout
         self.left_layout.addWidget(self.scroll_area)
@@ -1456,6 +1456,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
         # The Masks tab buttons copy the restyled Strands buttons
         self._sync_mask_button_styles()
+        # The New / Delete rows: their word in the theme's text colour
+        for row in ('new_strand_row', 'new_mask_row', 'delete_strand_row', 'delete_mask_row'):
+            if hasattr(self, row):
+                getattr(self, row).set_theme(theme_name)
 
         # Connect the signal from the dialog to the handler in LayerPanel
         # self.layer_selection_dialog.edit_mask_requested.connect(self.request_edit_mask) # Moved from dialog init
@@ -1813,14 +1817,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         else:
             self.lock_layers_button.setText(_['lock_layers'])
             
-        self.add_new_strand_button.setText(_['add_new_strand'])
-        self.new_level_button.setText(_['new_level'])
-        self.new_level_mask_button.setText(_['new_level'])
-        self.new_strand_row.fit_text()
-        self.new_mask_row.fit_text()
+        self._apply_group_row_texts(_)
         for row in self.level_rows:
             row.button.update()  # "Level 1" in the new language
-        self.delete_strand_button.setText(_['delete_strand'])
 
         # Handle deselect button text based on current lock mode state
         if hasattr(self, 'lock_mode') and self.lock_mode:
@@ -1828,15 +1827,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         else:
             self.deselect_all_button.setText(_['deselect_all'])
 
-        self.delete_all_button.setText(_['delete_all'])
-
-        # Strands / Masks switch and the Masks tab buttons
+        # Strands / Masks switch (the Masks tab buttons are in the group rows)
         if hasattr(self, 'layer_tab_row'):
             self.strands_tab_button.setText(_['layer_tab_strands'])
             self.masks_tab_button.setText(_['layer_tab_masks'])
-            self.new_mask_button.setText(_['new_mask'])
-            self.delete_mask_button.setText(_['delete_mask'])
-            self.delete_all_masks_button.setText(_['delete_all'])
             if self.new_mask_button.isChecked():
                 self.notification_label.setText(_['new_mask_hint'])
             self._apply_layer_tab_style()
@@ -3166,9 +3160,33 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
     # Levels: storeys in the layer stack (level_button.py draws the rows;
     # save_load_manager.keep_masks_on_top orders the strands by level)
     # ------------------------------------------------------------------
+    def _apply_group_row_texts(self, _):
+        """Short words on the buttons of the New and Delete rows, their full
+        names as tooltips, the rows' words, and right-to-left in Hebrew."""
+        texts = (
+            (self.add_new_strand_button, 'group_strand', 'add_new_strand'),
+            (self.new_level_button, 'group_level', 'new_level'),
+            (self.new_mask_button, 'group_mask', 'new_mask'),
+            (self.new_level_mask_button, 'group_level', 'new_level'),
+            (self.delete_strand_button, 'group_strand', 'delete_strand'),
+            (self.delete_all_button, 'group_all', 'delete_all'),
+            (self.delete_mask_button, 'group_mask', 'delete_mask'),
+            (self.delete_all_masks_button, 'group_all', 'delete_all'),
+        )
+        for button, short, full in texts:
+            button.setText(_[short])
+            button.setToolTip(_[full])
+        direction = Qt.RightToLeft if self.language_code == 'he' else Qt.LeftToRight
+        for row, word in ((self.new_strand_row, 'group_new'),
+                          (self.new_mask_row, 'group_new_masks'),
+                          (self.delete_strand_row, 'group_delete'),
+                          (self.delete_mask_row, 'group_delete')):
+            row.setLayoutDirection(direction)
+            row.set_label(_[word])
+
     def _make_new_level_button(self, _):
-        """The purple New Level half of a split button (beside New Strand or
-        New Mask); the right half, so only its outer corners are rounded."""
+        """The purple Level button of a New row (beside Strand or Mask),
+        styled like New Strand; ActionGroupRow fits it into the row."""
         button = QPushButton(_['new_level'])
         button.setStyleSheet("""
             QPushButton {
@@ -3177,11 +3195,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 font-size: 14px;
                 color: black;
                 border: 1px solid #888;
-                border-top-left-radius: 0px;
-                border-bottom-left-radius: 0px;
-                border-top-right-radius: 4px;
-                border-bottom-right-radius: 4px;
-                padding: 5px 0px;
+                border-radius: 4px;
+                padding: 5px 10px;
             }
             QPushButton:hover {
                 background-color: #c9b9ee;
@@ -3197,12 +3212,6 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         """)
         button.clicked.connect(self.request_new_level)
         return button
-
-    @staticmethod
-    def _split_row(left, right):
-        """One row holding *left* and *right* as two equal halves, like the
-        Strands / Masks switch (see SplitButtonRow)."""
-        return SplitButtonRow(left, right)
 
     def level_text(self, key):
         """A level string in the panel's language (English if missing)."""
@@ -3466,13 +3475,11 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 button.setVisible(self._layer_tab_of(i) == self.layer_tab)
             except RuntimeError:
                 continue
-        for button in (self.draw_names_button, self.lock_layers_button,
-                       self.new_strand_row, self.delete_strand_button,
-                       self.delete_all_button):
-            button.setVisible(not masks)
-        for button in (self.new_mask_row, self.delete_mask_button,
-                       self.delete_all_masks_button):
-            button.setVisible(masks)
+        for widget in (self.draw_names_button, self.lock_layers_button,
+                       self.new_strand_row, self.delete_strand_row):
+            widget.setVisible(not masks)
+        for widget in (self.new_mask_row, self.delete_mask_row):
+            widget.setVisible(masks)
         self._apply_layer_tab_style()
         self.update_delete_mask_button_state()
 
@@ -3542,16 +3549,19 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             return
         # While mask mode is on, New Mask keeps its green and gets the
         # pressed half's dark border (padding trimmed so the size holds).
-        self.new_mask_button.setStyleSheet(self.add_new_strand_button.styleSheet() + """
+        base = ActionGroupRow.base_style  # without the group row's additions
+        self.new_mask_button.setStyleSheet(base(self.add_new_strand_button) + """
             QPushButton:checked {
                 border: 2px solid #3c3c3c;
                 padding: 4px 9px;
             }
         """)
-        self.delete_mask_button.setStyleSheet(self.delete_strand_button.styleSheet())
-        self.delete_all_masks_button.setStyleSheet(self.delete_all_button.styleSheet())
-        if hasattr(self, 'new_mask_row'):
-            self.new_mask_row.fit_text()  # the copied stylesheet carries New Strand's font size
+        self.delete_mask_button.setStyleSheet(base(self.delete_strand_button))
+        self.delete_all_masks_button.setStyleSheet(base(self.delete_all_button))
+        # A theme may have replaced the Strands buttons' styles too
+        for row in ('new_strand_row', 'new_mask_row', 'delete_strand_row', 'delete_mask_row'):
+            if hasattr(self, row):
+                getattr(self, row).restyle()
 
     def toggle_new_mask(self):
         """New Mask: start the canvas mask mode, where clicking two crossing

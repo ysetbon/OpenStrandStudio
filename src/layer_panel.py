@@ -16,7 +16,7 @@ from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
 from translations import translations
 from save_load_manager import keep_masks_on_top, assign_levels, strand_level
-from level_button import LevelRow
+from level_button import LevelRow, SplitButtonRow
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea, QLabel,
     QInputDialog, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,
@@ -1816,6 +1816,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self.add_new_strand_button.setText(_['add_new_strand'])
         self.new_level_button.setText(_['new_level'])
         self.new_level_mask_button.setText(_['new_level'])
+        self.new_strand_row.fit_text()
+        self.new_mask_row.fit_text()
         for row in self.level_rows:
             row.button.update()  # "Level 1" in the new language
         self.delete_strand_button.setText(_['delete_strand'])
@@ -3160,6 +3162,181 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         """The highest level, where a new strand lands (0 with no levels)."""
         return int(getattr(self.canvas, 'level_count', 0) or 0)
 
+    # ------------------------------------------------------------------
+    # Levels: storeys in the layer stack (level_button.py draws the rows;
+    # save_load_manager.keep_masks_on_top orders the strands by level)
+    # ------------------------------------------------------------------
+    def _make_new_level_button(self, _):
+        """The purple New Level half of a split button (beside New Strand or
+        New Mask); the right half, so only its outer corners are rounded."""
+        button = QPushButton(_['new_level'])
+        button.setStyleSheet("""
+            QPushButton {
+                background-color: #b7a3e6;
+                font-weight: bold;
+                font-size: 14px;
+                color: black;
+                border: 1px solid #888;
+                border-top-left-radius: 0px;
+                border-bottom-left-radius: 0px;
+                border-top-right-radius: 4px;
+                border-bottom-right-radius: 4px;
+                padding: 5px 0px;
+            }
+            QPushButton:hover {
+                background-color: #c9b9ee;
+            }
+            QPushButton:pressed {
+                background-color: #9b86d2;
+            }
+            QPushButton:disabled {
+                background-color: #D3D3D3;
+                color: #666666;
+                border: 1px solid #CCCCCC;
+            }
+        """)
+        button.clicked.connect(self.request_new_level)
+        return button
+
+    @staticmethod
+    def _split_row(left, right):
+        """One row holding *left* and *right* as two equal halves, like the
+        Strands / Masks switch (see SplitButtonRow)."""
+        return SplitButtonRow(left, right)
+
+    def level_text(self, key):
+        """A level string in the panel's language (English if missing)."""
+        texts = translations.get(self.language_code, translations['en'])
+        return texts.get(key, translations['en'][key])
+
+    def level_name(self, level):
+        """The name on a level row: "Level 1", "Level 2"..."""
+        return self.level_text('level_name').format(n=level)
+
+    def _plain_strands_on(self, level):
+        """The strands (not masks) on *level*, bottom of the stack first."""
+        top = self._top_level()
+        return [s for s in self.canvas.strands
+                if not isinstance(s, MaskedStrand) and strand_level(s, top) == level]
+
+    def _save_level_state(self, action, detail):
+        """One undo step for a level change."""
+        if getattr(self, 'undo_redo_manager', None):
+            self.undo_redo_manager.save_state(allow_empty=True, action=action,
+                                              source='panel', detail=detail)
+
+    def _after_level_change(self, action, detail):
+        """Re-order the strands by their new levels, rebuild the list with
+        its level rows, repaint and record the step."""
+        self.refresh()
+        if getattr(self.canvas, 'layer_state_manager', None):
+            self.canvas.layer_state_manager.save_current_state()
+        self.canvas.update()
+        self._save_level_state(action, detail)
+
+    def request_new_level(self):
+        """New Level: an empty level on top of the stack. Nothing drawn so
+        far moves; the strands made or attached next land on it."""
+        if not self.canvas:
+            return
+        top = self._top_level()
+        # A strand that has no level yet keeps the one it is shown on now
+        assign_levels(self.canvas.strands, top)
+        self.canvas.level_count = top + 1
+        self._sync_level_widgets()
+        self.canvas.update()
+        self._save_level_state('level.add', 'added ' + self.level_name(top + 1))
+
+    def can_move_level(self, level, up):
+        """Whether the row of *level* can step past one strand (Move up or
+        Move down). Never on the Masks tab: a mask's level comes from its
+        two strands, which that tab does not show."""
+        if self.layer_tab == 'masks' or not 1 <= level <= self._top_level():
+            return False
+        return bool(self._plain_strands_on(level if up else level - 1))
+
+    def move_level(self, level, up):
+        """Move the row of *level* past one strand. Up: the lowest strand of
+        the level goes to the level below. Down: the highest strand of the
+        level below comes onto this one."""
+        if not self.can_move_level(level, up):
+            return
+        if up:
+            strand = self._plain_strands_on(level)[0]
+            strand.level = level - 1
+        else:
+            strand = self._plain_strands_on(level - 1)[-1]
+            strand.level = level
+        self._after_level_change('level.move', '{} moved {} past {}'.format(
+            self.level_name(level), 'up' if up else 'down', strand.layer_name))
+
+    def remove_level(self, level):
+        """Remove *level*: its layers go to the level below, and the levels
+        above it are renumbered (Level 3 becomes Level 2)."""
+        top = self._top_level()
+        if not 1 <= level <= top:
+            return
+        for strand in self.canvas.strands:
+            if isinstance(strand, MaskedStrand):
+                continue
+            current = strand_level(strand, top)
+            strand.level = current - 1 if current >= level else current
+        self.canvas.level_count = top - 1
+        self._after_level_change('level.remove', 'removed ' + self.level_name(level))
+
+    def _sync_level_widgets(self):
+        """Put one level row per level into the list, each right under the
+        layers it carries (the list is top of the stack first), and drop the
+        rows of levels that no longer exist. Level rows are never in
+        layer_buttons, so layer_buttons[i] still matches canvas.strands[i]."""
+        if not hasattr(self, 'scroll_layout'):
+            return
+        count = self._top_level() if self.canvas is not None else 0
+        while len(self.level_rows) > count:
+            row = self.level_rows.pop()
+            self.scroll_layout.removeWidget(row)
+            row.setParent(None)
+            row.deleteLater()
+        while len(self.level_rows) < count:
+            self.level_rows.append(LevelRow(self, len(self.level_rows) + 1, self.scroll_content))
+        for number, row in enumerate(self.level_rows, 1):
+            row.set_level(number)
+        if count == 0:
+            return
+
+        strands = list(getattr(self.canvas, 'strands', None) or [])
+        buttons = list(self.layer_buttons)
+        if len(buttons) != len(strands):
+            # Part-way through a rebuild: place the rows on the next pass
+            for row in self.level_rows:
+                self.scroll_layout.removeWidget(row)
+                row.hide()
+            return
+
+        levels = [strand_level(s, count) for s in strands]
+        desired = []
+        index = len(strands) - 1
+        for level in range(count, 0, -1):
+            while index >= 0 and levels[index] >= level:
+                desired.append(buttons[index])
+                index -= 1
+            desired.append(self.level_rows[level - 1])
+        while index >= 0:
+            desired.append(buttons[index])
+            index -= 1
+
+        current = [self.scroll_layout.itemAt(i).widget() for i in range(self.scroll_layout.count())]
+        if current != desired:
+            while self.scroll_layout.count():
+                self.scroll_layout.takeAt(0)
+            for widget in desired:
+                if isinstance(widget, LevelRow):
+                    self.scroll_layout.addWidget(widget)  # full width, see LevelRow
+                else:
+                    self.scroll_layout.addWidget(widget, 0, Qt.AlignHCenter)
+        for row in self.level_rows:
+            row.show()
+
     def _layer_tab_of(self, index):
         """'masks' when layer *index* is a MaskedStrand, otherwise 'strands'."""
         strands = getattr(self.canvas, 'strands', None) or []
@@ -3373,6 +3550,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         """)
         self.delete_mask_button.setStyleSheet(self.delete_strand_button.styleSheet())
         self.delete_all_masks_button.setStyleSheet(self.delete_all_button.styleSheet())
+        if hasattr(self, 'new_mask_row'):
+            self.new_mask_row.fit_text()  # the copied stylesheet carries New Strand's font size
 
     def toggle_new_mask(self):
         """New Mask: start the canvas mask mode, where clicking two crossing
@@ -3996,6 +4175,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 button.setParent(None)
                 button.deleteLater()
             self.layer_buttons.clear()
+            self._sync_level_widgets()  # the level rows go with the levels
 
             # Reset set colors
             self.set_colors.clear()
@@ -4232,13 +4412,15 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # input handler on Windows that can leave the mouse captured and the
         # whole window ignoring input - so reorder once the release is over.
         strands = list(getattr(self.canvas, 'strands', None) or [])
-        if any(a is not b for a, b in zip(keep_masks_on_top(strands, (), self._top_level())[0], strands)):
+        top_level = int(getattr(self.canvas, 'level_count', 0) or 0)
+        if any(a is not b for a, b in zip(keep_masks_on_top(strands, (), top_level)[0], strands)):
             QTimer.singleShot(0, self._put_masks_back_on_top)
 
     def _put_masks_back_on_top(self):
         try:
             strands = list(getattr(self.canvas, 'strands', None) or [])
-            if any(a is not b for a, b in zip(keep_masks_on_top(strands, (), self._top_level())[0], strands)):
+            top_level = int(getattr(self.canvas, 'level_count', 0) or 0)
+            if any(a is not b for a, b in zip(keep_masks_on_top(strands, (), top_level)[0], strands)):
                 self.refresh()
         except RuntimeError:
             pass  # panel already deleted
@@ -4491,7 +4673,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         ordered_buttons = []
         for row in range(self.scroll_layout.count()):
             w = self.scroll_layout.itemAt(row).widget()
-            if w is not None:                       # should always be true
+            # Level rows share the list but are not layers
+            if w is not None and not isinstance(w, LevelRow):
                 ordered_buttons.append(w)
 
         # layout: top‑to‑bottom  →   logical list: bottom‑to‑top
@@ -4736,18 +4919,28 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 final_insert_index -= 1 # Adjust because takeAt shifted items up
 
             # --- Insert the widget directly (safer than re-using QLayoutItem) ---
-            self.scroll_layout.insertWidget(final_insert_index, widget_to_move, 0, Qt.AlignHCenter)
+            # A level row spans the list's width; a layer button is centred
+            if isinstance(widget_to_move, LevelRow):
+                self.scroll_layout.insertWidget(final_insert_index, widget_to_move)
+            else:
+                self.scroll_layout.insertWidget(final_insert_index, widget_to_move, 0, Qt.AlignHCenter)
             widget_to_move.show()
 
             # --- Rebuild canvas.strands based on NEW VISUAL order using the map ---
+            # Level rows are walked too: each strand ends up on as many
+            # levels as there are level rows under it.
             new_canvas_strands_visual_order = []
+            visual_rows = []
             success = True
             for i in range(self.scroll_layout.count()):
                 item = self.scroll_layout.itemAt(i)
                 button = item.widget() # Get the widget directly
-                if isinstance(button, NumberedLayerButton): # Check if it's the button
+                if isinstance(button, LevelRow):
+                    visual_rows.append(None)
+                elif isinstance(button, NumberedLayerButton): # Check if it's the button
                     if button in button_to_strand_map:
                         new_canvas_strands_visual_order.append(button_to_strand_map[button])
+                        visual_rows.append(button_to_strand_map[button])
                     else:
                         success = False
                         break
@@ -4761,7 +4954,15 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 self.refresh()
                 return
 
-            # --- Commit the new order (Reverse visual order for canvas) --- 
+            if self.level_rows:
+                rows_below = 0
+                for entry in reversed(visual_rows):
+                    if entry is None:
+                        rows_below += 1
+                    elif not isinstance(entry, MaskedStrand):
+                        entry.level = rows_below
+
+            # --- Commit the new order (Reverse visual order for canvas) ---
             self.canvas.strands = new_canvas_strands_visual_order[::-1]
             # Masks stay one block above every strand
             masks_moved = self.keep_masks_on_top()

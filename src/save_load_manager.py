@@ -710,9 +710,12 @@ def strand_level(strand, top_level=0):
     mask has no level of its own: it takes the higher level of its two
     strands, so it never paints over anything on a higher level."""
     if isinstance(strand, MaskedStrand):
+        # Read straight from the instance: MaskedStrand.__getattr__ looks
+        # missing names up through these two, so getattr on a mask that
+        # never had them recurses.
+        own = getattr(strand, '__dict__', {})
         levels = [strand_level(part, top_level)
-                  for part in (getattr(strand, 'first_selected_strand', None),
-                               getattr(strand, 'second_selected_strand', None))
+                  for part in (own.get('first_selected_strand'), own.get('second_selected_strand'))
                   if part is not None]
         return max(levels, default=0)
     level = getattr(strand, 'level', None)

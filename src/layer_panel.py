@@ -1456,6 +1456,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
         # The Masks tab buttons copy the restyled Strands buttons
         self._sync_mask_button_styles()
+        # The New / Delete rows: their word in the theme's text colour
+        for row in ('new_strand_row', 'new_mask_row', 'delete_strand_row', 'delete_mask_row'):
+            if hasattr(self, row):
+                getattr(self, row).set_theme(theme_name)
 
         # Connect the signal from the dialog to the handler in LayerPanel
         # self.layer_selection_dialog.edit_mask_requested.connect(self.request_edit_mask) # Moved from dialog init

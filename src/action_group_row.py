@@ -15,8 +15,10 @@ from PyQt5.QtWidgets import QFrame, QHBoxLayout, QLabel, QSizePolicy
 
 FONT_PX = 14          # the bottom buttons' size
 BUTTON_SIDE_PADDING = 4
-FRAME_COLOR = "#ffffff"
-LABEL_COLOR = "#303030"
+# The frame is an outline only: the panel's own background shows through in
+# every theme, so the word never looks like a button. The word takes the
+# theme's text colour.
+LABEL_COLORS = {"default": "#303030", "light": "#303030", "dark": "#e8e8e8"}
 
 
 class ActionGroupRow(QFrame):
@@ -36,16 +38,14 @@ class ActionGroupRow(QFrame):
         super().__init__(parent)
         self.setObjectName("actionGroupRow")
         self.setStyleSheet(
-            "QFrame#actionGroupRow { background-color: %s; border: 1px solid #888;"
-            " border-radius: 4px; }" % FRAME_COLOR)
+            "QFrame#actionGroupRow { background-color: transparent; border: 1px solid #888;"
+            " border-radius: 4px; }")
         layout = QHBoxLayout(self)
         layout.setContentsMargins(1, 1, 1, 1)
         layout.setSpacing(1)
 
         self.label = QLabel(label_text)
-        self.label.setStyleSheet(
-            "QLabel { font-weight: bold; font-size: %dpx; color: %s; background: transparent;"
-            " border: none; padding: 0px 1px 0px 3px; }" % (FONT_PX, LABEL_COLOR))
+        self.set_theme("default")
         # No indent or margin of Qt's own: the word starts at its 3 px padding
         self.label.setIndent(0)
         self.label.setMargin(0)
@@ -62,6 +62,13 @@ class ActionGroupRow(QFrame):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.setFixedHeight(height)
         self.restyle()
+
+    def set_theme(self, theme_name):
+        """The word in the theme's text colour (the frame has no fill)."""
+        color = LABEL_COLORS.get(theme_name, LABEL_COLORS["default"])
+        self.label.setStyleSheet(
+            "QLabel { font-weight: bold; font-size: %dpx; color: %s; background: transparent;"
+            " border: none; padding: 0px 1px 0px 3px; }" % (FONT_PX, color))
 
     @classmethod
     def base_style(cls, button):

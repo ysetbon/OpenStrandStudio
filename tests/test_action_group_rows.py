@@ -58,13 +58,18 @@ def bottom_rows(lp):
 
 
 def text_touches_edge(label):
-    """True when the painted word reaches the label's far edge (it is cut off)."""
-    # grabbed from the row: the label itself is transparent over the white frame
+    """True when the painted word reaches the inside edge of the label's
+    padding, where Qt clips it (the word is cut off)."""
+    # grabbed from the row: the label is transparent over the row's background
     image = label.parentWidget().grab(label.geometry()).toImage()
-    # the text is clipped at the inside of the label's padding
     inner = label.contentsRect()
-    edge = inner.left() if label.layoutDirection() == Qt.RightToLeft else inner.right()
-    return any(QColor(image.pixel(edge, y)).lightness() < 140 for y in range(image.height()))
+    rtl = label.layoutDirection() == Qt.RightToLeft
+    edge = inner.left() if rtl else inner.right()
+    # the background, from the padding column on the word's other side
+    blank = image.width() - 1 if rtl else 0
+    background = QColor(image.pixel(blank, image.height() // 2)).lightness()
+    return any(abs(QColor(image.pixel(edge, y)).lightness() - background) > 110
+               for y in range(image.height()))
 
 
 def tab_rows(lp, tab):
@@ -156,6 +161,11 @@ def test_a_theme_keeps_the_row_look(window, theme):
         for button in row.buttons:
             assert button.styleSheet().count(ActionGroupRow.MARK) == 1
             assert "font-size: 14px" in button.styleSheet()
+    # The word takes the theme's text colour; the frame has no fill of its own
+    from action_group_row import LABEL_COLORS
+    for row in tab_rows(lp, "strands") + tab_rows(lp, "masks"):
+        assert f"color: {LABEL_COLORS[theme]}" in row.label.styleSheet()
+        assert "background-color: transparent" in row.styleSheet()
     # New Mask still copies New Strand's green, and keeps its pressed border
     assert "lightgreen" in ActionGroupRow.base_style(lp.new_mask_button)
     assert "QPushButton:checked" in lp.new_mask_button.styleSheet()
@@ -171,3 +181,28 @@ def test_buttons_still_do_their_jobs(window):
     pump()
     assert window.canvas.level_count == count + 1
     assert not lp.delete_strand_button.isEnabled()  # nothing selected, as before
+
+
+@pytest.mark.parametrize("theme", ["default", "light", "dark"])
+def test_rows_show_the_panel_background_in_every_theme(window, theme):
+    """Inside the frame, beside the word, the pixels are the panel's own
+    background in each theme, and the word reads against it."""
+    lp = window.layer_panel
+    window.apply_theme(theme)
+    lp.set_layer_tab("strands")
+    pump(120)
+    bottom = lp.deselect_all_button.parentWidget()
+    image = bottom.grab().toImage()
+    row = lp.new_strand_row
+    # the panel's background: in the gap just above the row
+    top = row.geometry().top()
+    panel_bg = QColor(image.pixel(row.geometry().center().x(), top - 2))
+    # inside the frame, under the word's top padding
+    label_pos = row.label.mapTo(bottom, QPoint(0, 0))
+    inside = QColor(image.pixel(label_pos.x() + 2, top + 2))
+    assert abs(inside.lightness() - panel_bg.lightness()) <= 6, (theme, inside.name(), panel_bg.name())
+    # and the word contrasts with that background
+    text = QColor(row.label.styleSheet().split("color: ")[1][:7])
+    assert abs(text.lightness() - panel_bg.lightness()) >= 120, (theme, text.name(), panel_bg.name())
+    window.apply_theme("default")
+    pump()

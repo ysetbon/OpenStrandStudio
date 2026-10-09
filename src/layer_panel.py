@@ -16,7 +16,7 @@ from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
 from translations import translations
 from save_load_manager import keep_masks_on_top, assign_levels, strand_level
-from level_button import LevelRow, SplitButtonRow
+from level_button import LevelRow
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea, QLabel,
     QInputDialog, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,
@@ -891,17 +891,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         """)
         self.add_new_strand_button.clicked.connect(self.request_new_strand)
 
-        # New Level shares a row with New Strand (and, on the Masks tab, with
-        # New Mask): a split button, left half green, right half purple.
-        # Equal halves, no side padding, as the Strands / Masks switch.
-        self.add_new_strand_button.setStyleSheet(self.add_new_strand_button.styleSheet() + """
-            QPushButton {
-                border-top-right-radius: 0px;
-                border-bottom-right-radius: 0px;
-                border-right: none;
-                padding: 5px 0px;
-            }
-        """)
+        # New Level: its own full-width row, under New Strand on the Strands
+        # tab and under New Mask on the Masks tab (one button per tab)
         self.new_level_button = self._make_new_level_button(_)
         self.new_level_mask_button = self._make_new_level_button(_)
 
@@ -1052,17 +1043,15 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         ):
             button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
-        # New Strand | New Level, and New Mask | New Level: one row each
-        self.new_strand_row = self._split_row(self.add_new_strand_button, self.new_level_button)
-        self.new_mask_row = self._split_row(self.new_mask_button, self.new_level_mask_button)
-
         # Add buttons to bottom panel in the desired order; each tab shows
         # only its own buttons (see _apply_layer_tab_filter)
         bottom_layout.addWidget(self.layer_tab_row)
         bottom_layout.addWidget(self.draw_names_button)
         bottom_layout.addWidget(self.lock_layers_button)
-        bottom_layout.addWidget(self.new_strand_row)
-        bottom_layout.addWidget(self.new_mask_row)
+        bottom_layout.addWidget(self.add_new_strand_button)
+        bottom_layout.addWidget(self.new_level_button)
+        bottom_layout.addWidget(self.new_mask_button)
+        bottom_layout.addWidget(self.new_level_mask_button)
         bottom_layout.addWidget(self.delete_strand_button)
         bottom_layout.addWidget(self.delete_mask_button)
         bottom_layout.addWidget(self.deselect_all_button)
@@ -1816,8 +1805,6 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self.add_new_strand_button.setText(_['add_new_strand'])
         self.new_level_button.setText(_['new_level'])
         self.new_level_mask_button.setText(_['new_level'])
-        self.new_strand_row.fit_text()
-        self.new_mask_row.fit_text()
         for row in self.level_rows:
             row.button.update()  # "Level 1" in the new language
         self.delete_strand_button.setText(_['delete_strand'])
@@ -3167,8 +3154,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
     # save_load_manager.keep_masks_on_top orders the strands by level)
     # ------------------------------------------------------------------
     def _make_new_level_button(self, _):
-        """The purple New Level half of a split button (beside New Strand or
-        New Mask); the right half, so only its outer corners are rounded."""
+        """A purple New Level button, styled like New Strand: a full-width
+        row of its own, so its text keeps the panel's 14 px in every language."""
         button = QPushButton(_['new_level'])
         button.setStyleSheet("""
             QPushButton {
@@ -3177,11 +3164,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 font-size: 14px;
                 color: black;
                 border: 1px solid #888;
-                border-top-left-radius: 0px;
-                border-bottom-left-radius: 0px;
-                border-top-right-radius: 4px;
-                border-bottom-right-radius: 4px;
-                padding: 5px 0px;
+                border-radius: 4px;
+                padding: 5px 10px;
             }
             QPushButton:hover {
                 background-color: #c9b9ee;
@@ -3197,12 +3181,6 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         """)
         button.clicked.connect(self.request_new_level)
         return button
-
-    @staticmethod
-    def _split_row(left, right):
-        """One row holding *left* and *right* as two equal halves, like the
-        Strands / Masks switch (see SplitButtonRow)."""
-        return SplitButtonRow(left, right)
 
     def level_text(self, key):
         """A level string in the panel's language (English if missing)."""
@@ -3467,10 +3445,12 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             except RuntimeError:
                 continue
         for button in (self.draw_names_button, self.lock_layers_button,
-                       self.new_strand_row, self.delete_strand_button,
+                       self.add_new_strand_button, self.new_level_button,
+                       self.delete_strand_button,
                        self.delete_all_button):
             button.setVisible(not masks)
-        for button in (self.new_mask_row, self.delete_mask_button,
+        for button in (self.new_mask_button, self.new_level_mask_button,
+                       self.delete_mask_button,
                        self.delete_all_masks_button):
             button.setVisible(masks)
         self._apply_layer_tab_style()
@@ -3550,8 +3530,6 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         """)
         self.delete_mask_button.setStyleSheet(self.delete_strand_button.styleSheet())
         self.delete_all_masks_button.setStyleSheet(self.delete_all_button.styleSheet())
-        if hasattr(self, 'new_mask_row'):
-            self.new_mask_row.fit_text()  # the copied stylesheet carries New Strand's font size
 
     def toggle_new_mask(self):
         """New Mask: start the canvas mask mode, where clicking two crossing

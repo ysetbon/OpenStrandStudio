@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QPushButton, QStyle, QStyleOption, QDialog
 from PyQt5.QtCore import QObject, pyqtSignal, Qt, QTimer, QPoint, QEvent
 from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics, QColor, QBrush, QLinearGradient, QPalette, QIcon
 from render_utils import RenderUtils
-from save_load_manager import save_strands, load_strands, apply_loaded_strands
+from save_load_manager import save_strands, load_strands, apply_loaded_strands, strand_level
 # Import QTimer here to avoid UnboundLocalError
 from PyQt5.QtCore import QTimer
 # CollapsibleGroupWidget import removed — GroupPanel now uses QTreeWidget items
@@ -484,6 +484,26 @@ class UndoRedoManager(QObject):
             if self.max_step > self.current_step:
                 self.max_step = self.current_step
 
+    def _level_signature(self):
+        """(level count, each strand's level) of the canvas now; empty with
+        no levels, so files without levels compare exactly as before."""
+        count = int(getattr(self.canvas, 'level_count', 0) or 0)
+        if count <= 0:
+            return (0, ())
+        return (count, tuple((s.layer_name, strand_level(s, count))
+                             for s in self.canvas.strands if not isinstance(s, MaskedStrand)))
+
+    @staticmethod
+    def _level_signature_from_data(data):
+        """_level_signature of a saved state (save_load_manager writes
+        "level" and "level_count" only when a level exists)."""
+        count = int(data.get('level_count', 0) or 0)
+        if count <= 0:
+            return (0, ())
+        return (count, tuple((s.get('layer_name'), s.get('level', 0) or 0)
+                             for s in data.get('strands', [])
+                             if s.get('type') != 'MaskedStrand' and 'layer_name' in s))
+
     def _would_be_identical_save(self):
         """Check if the current state would be identical to the previous saved state."""
         if self.current_step <= 0:
@@ -527,6 +547,11 @@ class UndoRedoManager(QObject):
                 if current_layer_order != prev_layer_order:
                     return False
                 # --- END NEW CHECK ---
+
+                # Levels: moving a level row can leave the order as it was
+                # and change only which level a strand is on.
+                if self._level_signature() != self._level_signature_from_data(prev_data):
+                    return False
 
                 # --- NEW CHECK: Compare arrow properties for each strand ---
                 for i, strand in enumerate(self.canvas.strands):
@@ -1272,6 +1297,7 @@ class UndoRedoManager(QObject):
             # Store original lock state for comparison
             original_lock_mode = getattr(self.layer_panel, 'lock_mode', False) if hasattr(self.layer_panel, 'lock_mode') else False
             original_locked_layers = getattr(self.layer_panel, 'locked_layers', set()).copy() if hasattr(self.layer_panel, 'locked_layers') else set()
+            original_levels = self._level_signature()
             
             # Store original group names and contents for detailed comparison
             original_group_names = set(original_groups.keys())
@@ -1321,6 +1347,7 @@ class UndoRedoManager(QObject):
             if self.current_step == 0:
                 # Clear the canvas by removing all strands and groups
                 self.canvas.strands = []
+                self.canvas.level_count = 0
                 if hasattr(self.canvas, 'groups'):
                     self.canvas.groups = {}
                 if hasattr(self.canvas, 'clear_set_color_state'):
@@ -1436,6 +1463,10 @@ class UndoRedoManager(QObject):
                             has_visual_difference = True
                         
                         if current_locked_layers != original_locked_layers:
+                            has_visual_difference = True
+
+                        # A step that only changed levels is a real step
+                        if self._level_signature() != original_levels:
                             has_visual_difference = True
                         
                         # Check positions and other visual properties
@@ -1797,6 +1828,7 @@ class UndoRedoManager(QObject):
             # Store original lock state for comparison
             original_lock_mode = getattr(self.layer_panel, 'lock_mode', False) if hasattr(self.layer_panel, 'lock_mode') else False
             original_locked_layers = getattr(self.layer_panel, 'locked_layers', set()).copy() if hasattr(self.layer_panel, 'locked_layers') else set()
+            original_levels = self._level_signature()
             
             # Store original group names and contents for detailed comparison
             original_group_names = set(original_groups.keys())
@@ -1924,6 +1956,10 @@ class UndoRedoManager(QObject):
                             has_visual_difference = True
                         
                         if current_locked_layers != original_locked_layers:
+                            has_visual_difference = True
+
+                        # A step that only changed levels is a real step
+                        if self._level_signature() != original_levels:
                             has_visual_difference = True
                         
                         # Check positions and other visual properties

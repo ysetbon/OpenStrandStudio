@@ -4,6 +4,7 @@ New [Strand | Level] and Delete [Strand | All] on the Strands tab, New [Mask |
 Level] and Delete [Mask | All] on the Masks tab: a plain word, then two short
 buttons, all at the panel's 14 px bold. Runs the real MainWindow offscreen.
 """
+import math
 import os
 import sys
 import tempfile
@@ -59,13 +60,13 @@ def bottom_rows(lp):
 
 def text_touches_edge(label):
     """True when the painted word reaches the inside edge of the label's
-    padding, where Qt clips it (the word is cut off)."""
+    contents, where Qt clips its painting (the word is cut off)."""
     # grabbed from the row: the label is transparent over the row's background
     image = label.parentWidget().grab(label.geometry()).toImage()
     inner = label.contentsRect()
     rtl = label.layoutDirection() == Qt.RightToLeft
     edge = inner.left() if rtl else inner.right()
-    # the background, from the padding column on the word's other side
+    # the background, from the lead-in on the word's other side
     blank = image.width() - 1 if rtl else 0
     background = QColor(image.pixel(blank, image.height() // 2)).lightness()
     return any(abs(QColor(image.pixel(edge, y)).lightness() - background) > 110
@@ -118,10 +119,13 @@ def test_words_fit_at_14px_in_every_language(window, lang, tab, theme):
     _ = translations[lang]
     for row in tab_rows(lp, tab):
         assert row.isVisible()
-        # the word in its 14 px bold, plus the label's 3 + 1 px padding
+        # the word in its 14 px bold, plus its 3 + 1 px lead-in and tail
         label_need = ActionGroupRow.text_width(row.label, row.label.text()) + 4
         assert label_need <= row.label.width(), f"{lang}: word '{row.label.text()}' clipped"
         assert "font-size: 14px" in row.label.styleSheet() and "bold" in row.label.styleSheet()
+        # the 3 px lead-in sits before the word, on its reading side
+        m = row.label.contentsMargins()
+        assert (m.left(), m.right()) == ((0, 3) if lang == "he" else (3, 0)), lang
         assert not text_touches_edge(row.label), f"{lang}: word '{row.label.text()}' is cut off"
         for button in row.buttons:
             assert "font-size: 14px" in button.styleSheet(), f"{lang}: '{button.text()}' not 14 px"
@@ -205,4 +209,39 @@ def test_rows_show_the_panel_background_in_every_theme(window, theme):
     text = QColor(row.label.styleSheet().split("color: ")[1][:7])
     assert abs(text.lightness() - panel_bg.lightness()) >= 120, (theme, text.name(), panel_bg.name())
     window.apply_theme("default")
+    pump()
+
+
+@pytest.mark.parametrize("lang", sorted(translations))
+@pytest.mark.parametrize("theme", ["default", "light", "dark"])
+def test_rows_follow_the_mockup_layout_to_the_pixel(window, lang, theme):
+    """The layout rule the mockup uses: the word is its text plus 3 + 1 px
+    padding, 1 px gaps, and the two buttons share the rest in proportion to
+    what their words need (first rounded, second the remainder)."""
+    from action_group_row import GAP, WORD_PADDING
+    lp = window.layer_panel
+    window.apply_theme(theme)
+    window.set_language(lang)
+    for tab in ("strands", "masks"):
+        lp.set_layer_tab(tab)
+        pump()
+        for row in tab_rows(lp, tab):
+            inner = row.width() - 4  # 1 px border and 1 px padding each side
+            word = ActionGroupRow.text_width(row.label, row.label.text()) + WORD_PADDING
+            assert row.label.width() == word, (lang, row.label.text())
+            rest = inner - word - 2 * GAP
+            needs = [row.needed_width(b) for b in row.buttons]
+            first = int(math.floor(rest * needs[0] / float(sum(needs)) + 0.5))  # halves up
+            assert [b.width() for b in row.buttons] == [first, rest - first], (lang, tab)
+            # positions, left to right (right to left in Hebrew)
+            xs = [row.label.geometry(), row.buttons[0].geometry(), row.buttons[1].geometry()]
+            if row.layoutDirection() == Qt.RightToLeft:
+                xs = xs[::-1]
+            assert xs[0].left() == 2
+            assert xs[1].left() == xs[0].right() + 1 + GAP and xs[2].left() == xs[1].right() + 1 + GAP
+            assert xs[2].right() == row.width() - 3
+            assert all(b.height() == row.height() - 4 for b in row.buttons)
+    window.apply_theme("default")
+    window.set_language("en")
+    lp.set_layer_tab("strands")
     pump()

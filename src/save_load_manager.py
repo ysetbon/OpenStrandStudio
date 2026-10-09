@@ -300,17 +300,11 @@ def serialize_project_state(strands, groups, canvas):
     else:
         pass
 
-    # Levels (storeys in the layer stack). Files with no levels stay exactly
-    # as they always were: the keys below are only written once one exists.
-    level_count = int(getattr(canvas, 'level_count', 0) or 0)
-
     # Serialize strands with better error handling
     serialized_strands = []
     for i, strand in enumerate(strands):
         try:
             serialized = serialize_strand(strand, canvas, i)
-            if level_count > 0 and not isinstance(strand, MaskedStrand):
-                serialized["level"] = strand_level(strand, level_count)
             serialized_strands.append(serialized)
         except Exception as e:
             # Skip this strand if it can't be serialized
@@ -379,8 +373,6 @@ def serialize_project_state(strands, groups, canvas):
         "show_control_points": getattr(canvas, 'show_control_points', False),  # Add control points button state
         "shadow_overrides": shadow_overrides,  # Add shadow override settings
     }
-    if level_count > 0:
-        data["level_count"] = level_count  # Levels above the ground, empty ones included
     return data
 
 
@@ -702,54 +694,19 @@ def deserialize_strand(data, canvas, strand_dict=None, parent_strand=None):
     except Exception as e:
         return None
 
-def strand_level(strand, top_level=0):
-    """The level a layer sits on (see keep_masks_on_top).
-
-    A strand with no level yet (just created) lands on *top_level*, the
-    highest level, because new strands are always put on top of the stack. A
-    mask has no level of its own: it takes the higher level of its two
-    strands, so it never paints over anything on a higher level."""
-    if isinstance(strand, MaskedStrand):
-        levels = [strand_level(part, top_level)
-                  for part in (getattr(strand, 'first_selected_strand', None),
-                               getattr(strand, 'second_selected_strand', None))
-                  if part is not None]
-        return max(levels, default=0)
-    level = getattr(strand, 'level', None)
-    return top_level if level is None else level
-
-
-def assign_levels(strands, top_level):
-    """Put every strand that has no level yet on *top_level*."""
-    for strand in strands:
-        if not isinstance(strand, MaskedStrand) and getattr(strand, 'level', None) is None:
-            strand.level = top_level
-
-
-def keep_masks_on_top(strands, locked_layers=(), top_level=None):
-    """Order strands by level, with each level's masks above its strands.
+def keep_masks_on_top(strands, locked_layers=()):
+    """Order strands so every mask is drawn above every strand.
 
     A mask only says which of its two strands is on top where they cross;
     it works from anywhere above both of them, and stops working once one
     of them is drawn over it. Masks live in their own layer panel tab, so
     their place among the strands must not matter: strands keep their
-    order, masks keep theirs, and the masks come after the strands of
-    their level.
-
-    A level is a storey in the stack (see the Level button). Everything on
-    a higher level is drawn after everything on a lower one, masks of the
-    lower level included, so a mask never paints over a strand that is on a
-    higher level. With no levels (every layer on level 0) this is just
-    "all strands, then all masks".
-
-    *top_level* is where a strand with no level yet goes; None means the
-    highest level the strands already have. Returns (strands,
-    locked_layers) with the lock indices following their layers to the new
-    positions."""
-    if top_level is None:
-        top_level = max((getattr(s, 'level', None) or 0 for s in strands
-                         if not isinstance(s, MaskedStrand)), default=0)
-    ordered = sorted(strands, key=lambda s: (strand_level(s, top_level), isinstance(s, MaskedStrand)))
+    order, masks keep theirs, and the masks come after all the strands.
+    Returns (strands, locked_layers) with the lock indices following their
+    layers to the new positions."""
+    plain = [s for s in strands if not isinstance(s, MaskedStrand)]
+    masks = [s for s in strands if isinstance(s, MaskedStrand)]
+    ordered = plain + masks
     if all(a is b for a, b in zip(ordered, strands)):
         return list(strands), set(locked_layers)
     new_index = {id(s): i for i, s in enumerate(ordered)}
@@ -1065,23 +1022,7 @@ def load_strands_from_data(data, canvas):
 
     # Remove any None values (shouldn't be any if indexes are correct)
     strands = [s for s in strands if s is not None]
-
-    # Levels: a file with none puts every strand on level 0, the ground.
-    # (A mask has no level of its own; it follows its two strands.)
-    saved_levels = {d.get("layer_name"): d.get("level") for d in data.get("strands", []) if isinstance(d, dict)}
-    highest_level = 0
-    for strand in strands:
-        if isinstance(strand, MaskedStrand):
-            continue
-        level = saved_levels.get(strand.layer_name)
-        strand.level = level if isinstance(level, int) and level > 0 else 0
-        highest_level = max(highest_level, strand.level)
-    try:
-        saved_count = int(data.get("level_count", 0) or 0)
-    except (TypeError, ValueError):
-        saved_count = 0
-    canvas.level_count = max(saved_count, highest_level)
-
+    
     # Fourth pass: Validate has_circles based on actual attached strands
     for strand in strands:
         if hasattr(strand, 'has_circles') and isinstance(strand.has_circles, list) and len(strand.has_circles) == 2:

@@ -1285,7 +1285,6 @@ class StrandDrawingCanvas(QWidget):
     def initialize_properties(self):
         """Initialize all properties used in the StrandDrawingCanvas."""
         self.strands = []  # List to store all strands
-        self.level_count = 0  # Levels above the ground (the Level button); see save_load_manager.keep_masks_on_top
         self.current_strand = None  # Currently active strand
         self.strand_width = 46  # Width of strands
         self.strand_color = QColor(200, 170, 230, 255)   # Default color for strands
@@ -1648,7 +1647,6 @@ class StrandDrawingCanvas(QWidget):
         the next interaction). Zoom/pan and persistent preferences are kept.
         """
         self.strands = []
-        self.level_count = 0
         self.groups = {}
         self.clear_set_color_state()
 
@@ -5346,7 +5344,6 @@ class StrandDrawingCanvas(QWidget):
     def clear_strands(self):
         """Clear all strands from the canvas."""
         self.strands.clear()
-        self.level_count = 0
         self.clear_set_color_state()
         self.current_strand = None
         self.selected_strand_index = None

@@ -3124,7 +3124,11 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         multi-selection, selection) follows its layers. Returns True when
         the order changed; the caller then rebuilds the buttons."""
         strands = list(getattr(self.canvas, 'strands', None) or [])
-        ordered, locked = keep_masks_on_top(strands, self.locked_layers)
+        # A new strand goes on the top level, the same one saving gives it
+        # (an empty top level included), before the order is worked out.
+        top_level = self._top_level()
+        assign_levels(strands, top_level)
+        ordered, locked = keep_masks_on_top(strands, self.locked_layers, top_level)
         if all(a is b for a, b in zip(ordered, strands)):
             return False
         new_index = {id(s): i for i, s in enumerate(ordered)}
@@ -3151,6 +3155,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         if getattr(self.canvas, 'layer_state_manager', None):
             self.canvas.layer_state_manager.save_current_state()
         return True
+
+    def _top_level(self):
+        """The highest level, where a new strand lands (0 with no levels)."""
+        return int(getattr(self.canvas, 'level_count', 0) or 0)
 
     def _layer_tab_of(self, index):
         """'masks' when layer *index* is a MaskedStrand, otherwise 'strands'."""
@@ -4224,13 +4232,13 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # input handler on Windows that can leave the mouse captured and the
         # whole window ignoring input - so reorder once the release is over.
         strands = list(getattr(self.canvas, 'strands', None) or [])
-        if any(a is not b for a, b in zip(keep_masks_on_top(strands)[0], strands)):
+        if any(a is not b for a, b in zip(keep_masks_on_top(strands, (), self._top_level())[0], strands)):
             QTimer.singleShot(0, self._put_masks_back_on_top)
 
     def _put_masks_back_on_top(self):
         try:
             strands = list(getattr(self.canvas, 'strands', None) or [])
-            if any(a is not b for a, b in zip(keep_masks_on_top(strands)[0], strands)):
+            if any(a is not b for a, b in zip(keep_masks_on_top(strands, (), self._top_level())[0], strands)):
                 self.refresh()
         except RuntimeError:
             pass  # panel already deleted

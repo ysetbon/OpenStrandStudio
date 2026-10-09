@@ -351,10 +351,15 @@ def test_labels_fit_the_panel(window, lang):
         need = QFontMetrics(half.font()).horizontalAdvance(half.text())
         assert need <= half.width() - 4, f"{lang}: '{half.text()}' needs {need}px"
     assert abs(lp.strands_tab_button.width() - lp.masks_tab_button.width()) <= 1
-    column = lp.deselect_all_button.width()
-    for button in (lp.new_mask_button, lp.delete_mask_button, lp.delete_all_masks_button):
-        need = QFontMetrics(button.font()).horizontalAdvance(button.text())
-        assert need <= column - 22, f"{lang}: '{button.text()}' needs {need}px"
+    # The Masks tab's New and Delete rows: each short word fits its button
+    lp.set_layer_tab("masks")
+    pump()
+    for row in (lp.new_mask_row, lp.delete_mask_row):
+        for button in row.buttons:
+            need = row.needed_width(button)
+            assert need <= button.width(), f"{lang}: '{button.text()}' needs {need}px"
+    lp.set_layer_tab("strands")
+    pump()
     hint = translations[lang]["new_mask_hint"]
     assert QFontMetrics(lp.notification_label.font()).horizontalAdvance(hint) <= lp.left_panel.width()
 

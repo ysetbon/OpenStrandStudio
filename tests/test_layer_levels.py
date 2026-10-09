@@ -195,50 +195,20 @@ def test_new_level_adds_an_empty_row_on_top(window):
     assert_consistent(window)
 
 
-def _below(lp, upper, lower):
-    """*lower* is the next button in the bottom panel, right under *upper*."""
-    layout = lp.add_new_strand_button.parentWidget().layout()
-    return layout.indexOf(lower) == layout.indexOf(upper) + 1
-
-
-def _bold_14px(button):
-    return "font-size: 14px" in button.styleSheet() and "font-weight: bold" in button.styleSheet()
-
-
-def test_new_level_buttons_on_both_tabs(window):
-    """New Level is a full-width button of its own, right under New Strand (and
-    under New Mask on the Masks tab), in the panel's 14 px bold like the rest."""
+def test_new_level_sits_in_the_new_row_on_both_tabs(window):
+    """New Level is the second button of the framed New row: New [Strand | Level]
+    on the Strands tab, New [Mask | Level] on the Masks tab (see
+    tests/test_action_group_rows.py for the rows themselves)."""
     lp = window.layer_panel
-    assert lp.add_new_strand_button.isVisible() and lp.new_level_button.isVisible()
-    assert not lp.new_mask_button.isVisible() and not lp.new_level_mask_button.isVisible()
-    assert _below(lp, lp.add_new_strand_button, lp.new_level_button)
-    assert abs(lp.add_new_strand_button.width() - lp.new_level_button.width()) <= 1
-    assert lp.new_level_button.width() == lp.draw_names_button.width()
-    assert _bold_14px(lp.new_level_button) and _bold_14px(lp.add_new_strand_button)
+    assert lp.new_strand_row.buttons == (lp.add_new_strand_button, lp.new_level_button)
+    assert lp.new_mask_row.buttons == (lp.new_mask_button, lp.new_level_mask_button)
+    assert lp.new_level_button.isVisible() and not lp.new_level_mask_button.isVisible()
     lp.set_layer_tab("masks")
     pump()
-    assert lp.new_mask_button.isVisible() and lp.new_level_mask_button.isVisible()
-    assert not lp.add_new_strand_button.isVisible() and not lp.new_level_button.isVisible()
-    assert _below(lp, lp.new_mask_button, lp.new_level_mask_button)
-    assert abs(lp.new_mask_button.width() - lp.new_level_mask_button.width()) <= 1
+    assert lp.new_level_mask_button.isVisible() and not lp.new_level_button.isVisible()
     lp.new_level_mask_button.click()  # a level can be made from the Masks tab too
     pump()
     assert window.canvas.level_count == 1
-
-
-@pytest.mark.parametrize("code", ["es", "fr", "de", "it", "pt", "he", "ru", "fi", "sv", "ja", "zh"])
-def test_new_level_text_fits_in_every_language(window, code):
-    """No text in the New Strand / New Level pair needs a smaller font."""
-    from PyQt5.QtGui import QFont, QFontMetrics
-    lp = window.layer_panel
-    lp.language_code = code
-    lp.update_translations()
-    pump()
-    for button in (lp.add_new_strand_button, lp.new_level_button):
-        font = QFont(button.font())
-        font.setBold(True)
-        font.setPixelSize(14)
-        assert QFontMetrics(font).horizontalAdvance(button.text()) <= button.width() - 8, (code, button.text())
 
 
 def test_level_row_sits_under_the_layers_it_carries(window):

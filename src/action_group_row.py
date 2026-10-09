@@ -9,12 +9,16 @@ long translations fit without shrinking the text. The full names ("New
 Level", "Delete All") are the buttons' tooltips.
 """
 
-from PyQt5.QtCore import Qt
+import math
+
+from PyQt5.QtCore import QEvent, Qt
 from PyQt5.QtGui import QFont, QFontMetrics
 from PyQt5.QtWidgets import QFrame, QHBoxLayout, QLabel, QSizePolicy
 
 FONT_PX = 14          # the bottom buttons' size
 BUTTON_SIDE_PADDING = 4
+WORD_PADDING = 4      # the word's 3 px lead-in + 1 px tail
+GAP = 1               # between the word and the buttons, and between the buttons
 # The frame is an outline only: the panel's own background shows through in
 # every theme, so the word never looks like a button. The word takes the
 # theme's text colour.
@@ -42,22 +46,23 @@ class ActionGroupRow(QFrame):
             " border-radius: 4px; }")
         layout = QHBoxLayout(self)
         layout.setContentsMargins(1, 1, 1, 1)
-        layout.setSpacing(1)
+        layout.setSpacing(GAP)
 
         self.label = QLabel(label_text)
         self.set_theme("default")
-        # No indent or margin of Qt's own: the word starts at its 3 px padding
+        # No indent or margin of Qt's own; the word's 3 px lead-in and 1 px
+        # tail are its contents margins (see _place_word)
         self.label.setIndent(0)
         self.label.setMargin(0)
-        self.label.setContentsMargins(0, 0, 0, 0)
+        self._place_word()
         self.label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         self.label.setAlignment(Qt.AlignVCenter)
         layout.addWidget(self.label)
 
         self.buttons = tuple(buttons)
         for button in self.buttons:
-            # Ignored: the width comes from the stretch (the word's need)
-            button.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Expanding)
+            # Fixed: refit() sets each width from its word (see split_widths)
+            button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
             layout.addWidget(button)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.setFixedHeight(height)
@@ -68,7 +73,24 @@ class ActionGroupRow(QFrame):
         color = LABEL_COLORS.get(theme_name, LABEL_COLORS["default"])
         self.label.setStyleSheet(
             "QLabel { font-weight: bold; font-size: %dpx; color: %s; background: transparent;"
-            " border: none; padding: 0px 1px 0px 3px; }" % (FONT_PX, color))
+            " border: none; padding: 0px; }" % (FONT_PX, color))
+
+    def _place_word(self):
+        """3 px before the word, on its reading side (left, or right in a
+        right-to-left language), as CSS padding-inline does in the mockup.
+        The 1 px after it stays inside the label's contents: Qt clips a
+        label's painting there, and a bold last letter can overhang its
+        advance by a fraction of a pixel, which the mockup paints too."""
+        if self.layoutDirection() == Qt.RightToLeft:
+            self.label.setContentsMargins(0, 0, 3, 0)
+        else:
+            self.label.setContentsMargins(3, 0, 0, 0)
+
+    def changeEvent(self, event):
+        """Hebrew turns the row round; the word's lead-in follows."""
+        super().changeEvent(event)
+        if event.type() == QEvent.LayoutDirectionChange:
+            self._place_word()
 
     @classmethod
     def base_style(cls, button):
@@ -98,14 +120,42 @@ class ActionGroupRow(QFrame):
         """Width *button* needs for its text at 14 px bold, with its padding."""
         return self.text_width(button, button.text()) + 2 * BUTTON_SIDE_PADDING
 
+    def word_width(self):
+        """The word's box: its text in 14 px bold plus its 3 + 1 px padding."""
+        return self.text_width(self.label, self.label.text()) + WORD_PADDING
+
+    def inner_width(self):
+        """Width inside the frame's border and its 1 px padding."""
+        margins = self.layout().contentsMargins()
+        return self.contentsRect().width() - margins.left() - margins.right()
+
+    def split_widths(self, inner_width=None):
+        """The two buttons' widths: what the row has left after the word and
+        the gaps, shared in proportion to what each button's word needs.
+
+        The layout rule of the mockup, to the pixel: word = text + 4; first
+        button = rest * need1 / (need1 + need2), halves rounded up; second = the rest.
+        (CSS flex `need 1 0` shares the same way.)"""
+        if inner_width is None:
+            inner_width = self.inner_width()
+        rest = max(0, inner_width - self.word_width() - GAP * len(self.buttons))
+        needs = [self.needed_width(button) for button in self.buttons]
+        # halves round up, as in the mockup (Python's round() would go to even)
+        first = int(math.floor(rest * needs[0] / float(sum(needs)) + 0.5)) if sum(needs) else rest // 2
+        return [first, rest - first]
+
     def refit(self):
-        """Size the word to its text, then share the rest of the row between
-        the two buttons in proportion to their words."""
+        """Size the word to its text and split the rest between the buttons."""
         # Measured in the 14 px bold the stylesheet gives it (the widget's own
-        # font may not have it yet), plus its 3 + 1 px padding and 1 px of air:
-        # QLabel's size hint adds slack the row has none to spare for
-        self.label.setFixedWidth(self.text_width(self.label, self.label.text()) + 5)
-        layout = self.layout()
-        for button in self.buttons:
-            layout.setStretch(layout.indexOf(button), max(1, self.needed_width(button)))
-        layout.invalidate()
+        # font may not have it yet); QLabel's size hint adds slack the row has
+        # none to spare for
+        self.label.setFixedWidth(self.word_width())
+        if self.inner_width() > 0:
+            for button, width in zip(self.buttons, self.split_widths()):
+                button.setFixedWidth(width)
+        self.layout().invalidate()
+
+    def resizeEvent(self, event):
+        """A new row width (the panel was resized) re-splits the buttons."""
+        super().resizeEvent(event)
+        self.refit()

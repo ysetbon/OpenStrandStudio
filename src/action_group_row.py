@@ -22,7 +22,7 @@ LABEL_COLORS = {"default": "#303030", "light": "#303030", "dark": "#e8e8e8"}
 
 
 class ActionGroupRow(QFrame):
-    """One bottom-panel row: a white frame holding *label_text* and two
+    """One bottom-panel row: an outline (no fill) holding *label_text* and two
     *buttons*. *height* is the row height (that of a plain bottom button)."""
 
     # Appended to each button's own stylesheet, after a marker so it can be

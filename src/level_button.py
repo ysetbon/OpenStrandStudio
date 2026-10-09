@@ -10,7 +10,7 @@ Right-click opens Move up / Move down / Remove; dragging the row moves it
 like any layer (LayerPanel.dropEvent turns the new position into levels).
 """
 
-from PyQt5.QtCore import QMimeData, QPoint, QSize, Qt
+from PyQt5.QtCore import QEvent, QMimeData, QSize, Qt
 from PyQt5.QtGui import QColor, QDrag, QFont, QPainter, QPainterPath
 from PyQt5.QtWidgets import QApplication, QMenu, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
@@ -104,7 +104,13 @@ class LevelButton(QPushButton):
 
 
 class LevelRow(QWidget):
-    """A level's whole row: the button, centred, over the full-width line."""
+    """A level's whole row: the button, centred, over the full-width line.
+
+    The list's layout centres each item at its own width (layer buttons are
+    a fixed 146 px), so the row would otherwise be only as wide as its
+    button. It follows the list's visible width instead, through every
+    resize of the layer panel and the scrollbar coming and going, and paints
+    the line itself across that whole width."""
 
     def __init__(self, layer_panel, level, parent=None):
         super().__init__(parent)
@@ -114,21 +120,41 @@ class LevelRow(QWidget):
         self.setFixedHeight(LEVEL_BUTTON_SIZE.height() + LEVEL_LINE_HEIGHT)
 
         self.button = LevelButton(self, self)
-        self.line = QWidget(self)
-        self.line.setFixedHeight(LEVEL_LINE_HEIGHT)
-        self.line.setStyleSheet(f"background-color: {LEVEL_COLOR.name()};")
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         layout.addWidget(self.button, 0, Qt.AlignHCenter)
-        layout.addWidget(self.line)
+        layout.addSpacing(LEVEL_LINE_HEIGHT)  # the line, painted in paintEvent
+
+        viewport = self._viewport()
+        if viewport is not None:
+            viewport.installEventFilter(self)  # Qt drops it when this row is deleted
+            self._fit_width(viewport.width())
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_menu)
         self.button.setContextMenuPolicy(Qt.CustomContextMenu)
         self.button.customContextMenuRequested.connect(
             lambda pos: self.show_menu(self.button.mapTo(self, pos)))
+
+    def _viewport(self):
+        scroll_area = getattr(self.layer_panel, 'scroll_area', None)
+        return scroll_area.viewport() if scroll_area is not None else None
+
+    def _fit_width(self, width):
+        self.setFixedWidth(max(int(width), LEVEL_BUTTON_SIZE.width()))
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Resize and obj is self._viewport():
+            self._fit_width(event.size().width())
+        return False
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        painter = QPainter(self)
+        painter.fillRect(0, self.height() - LEVEL_LINE_HEIGHT, self.width(), LEVEL_LINE_HEIGHT, LEVEL_COLOR)
+        painter.end()
 
     def text(self):
         return self.layer_panel.level_name(self.level)

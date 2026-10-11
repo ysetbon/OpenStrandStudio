@@ -195,6 +195,23 @@ def test_new_strands_land_on_the_selected_level(window):
     assert next(s for s in saved["strands"] if s["layer_name"] == "5_1")["level"] == 1
 
 
+def test_a_paused_selection_does_not_take_new_strands(window):
+    lp = window.layer_panel
+    lift_3_4_and_2_4(window)
+    lp.new_level_button.click()  # empty Level 2 on top
+    pump()
+    lp.set_level_scope(1)
+    window.canvas.move_selected_only = True  # pauses the selected block
+    template = find(window, "1_1")
+    new = type(template)(QPointF(1080, 532), QPointF(1424, 532), 46)
+    new.layer_name, new.set_number = "5_1", 5
+    window.canvas.strands.append(new)
+    lp.on_strand_created(new)
+    pump(100)
+    window.canvas.move_selected_only = False
+    assert new.level == 2
+
+
 def test_undo_to_the_start_drops_folds(window):
     lp = window.layer_panel
     undo = lp.undo_redo_manager

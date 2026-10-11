@@ -3213,9 +3213,13 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
     def _landing_level(self):
         """Where a new strand lands: the selected level's block while one is
-        selected, otherwise the top level."""
+        selected, otherwise the top level. A selection paused by "move only
+        the selected strand" does not count: Attach can then start from any
+        strand, and the new one must not go under it."""
         top = self._top_level()
         scope = self.level_scope()
+        if getattr(self.canvas, 'move_selected_only', False):
+            return top
         return scope if scope is not None and 0 <= scope <= top else top
 
     # ------------------------------------------------------------------
@@ -3430,7 +3434,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         """The level of layer *index*, or None while the list is being rebuilt."""
         strands = getattr(self.canvas, 'strands', None) or []
         if 0 <= index < len(strands):
-            return strand_level(strands[index], self._landing_level())
+            return strand_level(strands[index], self._top_level())
         return None
 
     # --- the selected level's block -----------------------------------

@@ -87,6 +87,36 @@ def test_chevrons_inside_the_button_fold_the_blocks(window):
     assert_consistent(window)
 
 
+def test_the_selected_layers_block_can_be_folded(window):
+    lp = window.layer_panel
+    lift_3_4_and_2_4(window)
+    lp.select_layer(window.canvas.strands.index(find(window, "3_4")))
+    pump()
+    button = lp.level_rows[0].button
+    click(button, 5)
+    assert lp.is_level_folded(1) and "3_4" not in list_order(lp)
+    lp.refresh()  # a rebuild keeps the fold
+    pump()
+    assert lp.is_level_folded(1) and "3_4" not in list_order(lp)
+
+
+def test_undo_to_the_start_drops_the_level_colours(window):
+    """Undoing the first step clears the canvas; a level made after that
+    must not inherit a colour of the project that was there."""
+    lp = window.layer_panel
+    undo = lp.undo_redo_manager
+    undo.clear_history(save_current=False)
+    window.canvas.level_count = 1
+    window.canvas.level_colors = {1: "preset:rose"}
+    lp.refresh()
+    pump()
+    undo.save_state(allow_empty=True, action="test.first")
+    assert undo.current_step == 1
+    undo.undo()  # back to step 0, the empty canvas
+    pump(150)
+    assert window.canvas.level_count == 0 and not window.canvas.level_colors
+
+
 def test_selecting_a_folded_layer_unfolds_its_block(window):
     lp = window.layer_panel
     lift_3_4_and_2_4(window)

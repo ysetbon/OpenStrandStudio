@@ -1368,6 +1368,8 @@ class UndoRedoManager(QObject):
                 # Clear the canvas by removing all strands and groups
                 self.canvas.strands = []
                 self.canvas.level_count = 0
+                self.canvas.level_colors = {}
+                self.canvas.level_scope = None
                 if hasattr(self.canvas, 'groups'):
                     self.canvas.groups = {}
                 if hasattr(self.canvas, 'clear_set_color_state'):

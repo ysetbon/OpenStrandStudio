@@ -3738,9 +3738,6 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # Level rows go back between their layers first (they are in the
         # list, but never in layer_buttons)
         self._sync_level_widgets()
-        # The selected layer is never folded away: its block opens
-        if selected is not None and self.folded_levels:
-            self.folded_levels.discard(self._layer_level(selected))
         for i, button in enumerate(self.layer_buttons):
             try:
                 if button.parent() is None:

@@ -229,17 +229,19 @@ def _surviving_shadow(canvas, casting_strand, receiving_strand, casting_layer, r
     return current_shadow
 
 
-def _visible_shadow_px(canvas, casting_strand, receiving_strand, casting_layer, receiving_layer):
+def _visible_shadow_px(canvas, casting_strand, receiving_strand, casting_layer, receiving_layer, cache=None):
     """How many pixels of the pair's shadow the canvas would show: the Shadow
     Editor preview of the pair (its area within its clips, as the renderer
     works it out), minus the caster itself and every strand drawn after it.
     Measured by filling it, not with path operations, which Qt gets wrong on
-    some strand outlines."""
+    some strand outlines. *cache* is shared by every pair of one recompute,
+    so the mask geometry is worked out once rather than once per pair."""
     from PyQt5.QtCore import Qt
     from PyQt5.QtGui import QColor, QImage, QPainter
     import shader_utils
 
-    preview = shader_utils.shadow_preview(canvas, casting_strand, receiving_strand, casting_layer, receiving_layer)
+    preview = shader_utils.shadow_preview(canvas, casting_strand, receiving_strand, casting_layer, receiving_layer,
+                                          cache=cache)
     if preview is None:
         return 0
     area, clips = preview
@@ -337,6 +339,11 @@ def compute_auto_hidden_pairs(canvas):
     overrides = manager.get_shadow_overrides()
     max_blur_radius = 30.0
     results = []
+    # The scene does not change while the pairs are measured, so they share
+    # one scratch cache, as the strands of one paint do. A pair measured with
+    # its auto entry lifted (below) sees other overrides, and the shadow paths
+    # cached per caster depend on them, so it gets a cache of its own.
+    cache = {}
 
     for casting, fabric in candidate_receivers.items():
         cs = by_name.get(casting)
@@ -394,7 +401,8 @@ def compute_auto_hidden_pairs(canvas):
                 # residue, however much of its landing area is covered.
                 band = ((getattr(rs, 'width', 46) + 2 * getattr(rs, 'stroke_width', 4))
                         * float(getattr(canvas, 'max_blur_radius', max_blur_radius) or max_blur_radius) / 2.0)
-                if _visible_shadow_px(canvas, cs, rs, casting, receiving) >= AUTO_HIDE_MAX_VISIBLE_BAND * band:
+                pair_cache = cache if auto_entry is None else {}
+                if _visible_shadow_px(canvas, cs, rs, casting, receiving, pair_cache) >= AUTO_HIDE_MAX_VISIBLE_BAND * band:
                     continue
             finally:
                 if auto_entry is not None:
@@ -414,10 +422,17 @@ def recompute_auto_shadow_overrides(canvas):
     layers), then re-add {'visibility': False, 'auto': True} for every pair
     compute_auto_hidden_pairs flags. User-authored entries are untouched.
 
+    Skipped while shadows are off: nothing shows them, the work takes
+    seconds on a woven scene, and the shadow passes it measures with draw
+    nothing then, so it could not get the pairs right anyway. Turning
+    shadows on (StrandDrawingCanvas.toggle_shadow) recomputes them.
+
     Safe to call from any edit path — never raises. Returns True if the
     overrides changed."""
     manager = getattr(canvas, 'layer_state_manager', None)
     if manager is None:
+        return False
+    if not getattr(canvas, 'shadow_enabled', True):
         return False
     try:
         overrides = manager.get_shadow_overrides()

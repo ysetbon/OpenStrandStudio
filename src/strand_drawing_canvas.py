@@ -3131,6 +3131,12 @@ class StrandDrawingCanvas(QWidget):
                 self.main_window.toggle_shadow_button.setChecked(self.shadow_enabled)
                 pass
         
+        # Edits made while shadows were off skipped the auto shadow overrides;
+        # bring them up to date before the snapshot below records them.
+        if self.shadow_enabled:
+            from auto_shadow import recompute_auto_shadow_overrides
+            recompute_auto_shadow_overrides(self)
+
         # Persist in undo/redo history if available
         if hasattr(self, 'undo_redo_manager') and self.undo_redo_manager:
             # Force immediate save to capture this state change

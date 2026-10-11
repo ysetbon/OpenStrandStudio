@@ -1953,7 +1953,7 @@ def _caster_shadow_path(strand):
 
 
 def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur_radius=None,
-                       collect_only=False):
+                       collect_only=False, cache=None):
     """
     Draw shadow for a strand that overlaps with other strands.
     This function should be called before drawing the strand itself.
@@ -2019,8 +2019,10 @@ def draw_strand_shadow(painter, strand, shadow_color=None, num_steps=3, max_blur
     #     color_to_use.setAlpha(150)
 
     # A mask re-applies this strand's shadow paths later in the same paint (see
-    # draw_mask_lift_shadow); compute them only once.
-    cache = _frame_cache(painter)
+    # draw_mask_lift_shadow); compute them only once. Without a painter, a
+    # caller's *cache* (see shadow_preview) plays the paint's part.
+    if cache is None or painter is not None:
+        cache = _frame_cache(painter)
     collected_key = ('collected', id(strand), num_steps, float(max_blur_radius), color_to_use.rgba())
     if collect_only and collected_key in cache:
         return cache[collected_key]
@@ -3124,7 +3126,8 @@ def get_shadow_blocker_path(mask_strand, blur_px):
         return QPainterPath()
 
 
-def shadow_preview(canvas, casting_strand, receiving_strand, casting_layer, receiving_layer, painter=None):
+def shadow_preview(canvas, casting_strand, receiving_strand, casting_layer, receiving_layer, painter=None,
+                   cache=None):
     """Where the canvas draws the shadow *casting_layer* casts on
     *receiving_layer*, for the Shadow Editor's preview, as (area, clips), or
     None when it casts none there. Filled with the painter clipped to every
@@ -3141,7 +3144,8 @@ def shadow_preview(canvas, casting_strand, receiving_strand, casting_layer, rece
     stroke's self-overlapping outline, and can return nothing at all for a
     strand with an end circle.
     *painter* is the paint in progress, if any; the preview then reuses the
-    mask geometry that paint has already worked out.
+    mask geometry that paint has already worked out. Without one, *cache*
+    plays that part for callers previewing many pairs of an unchanged scene.
     """
     manager = getattr(canvas, 'layer_state_manager', None)
     if not manager or casting_strand is None or receiving_strand is None:
@@ -3151,7 +3155,8 @@ def shadow_preview(canvas, casting_strand, receiving_strand, casting_layer, rece
         return None
     max_blur_radius = float(getattr(canvas, 'max_blur_radius', 30.0) or 30.0)
     num_steps = getattr(canvas, 'num_steps', 3)
-    cache = _frame_cache(painter)
+    if cache is None or painter is not None:
+        cache = _frame_cache(painter)
 
     if hasattr(casting_strand, 'get_mask_path'):
         first = getattr(casting_strand, 'first_selected_strand', None)
@@ -3161,7 +3166,7 @@ def shadow_preview(canvas, casting_strand, receiving_strand, casting_layer, rece
                 or not casting_strand._intersection_shadow_visible()):
             return None
         collected = draw_strand_shadow(painter, first, None, num_steps=num_steps,
-                                       max_blur_radius=max_blur_radius, collect_only=True)
+                                       max_blur_radius=max_blur_radius, collect_only=True, cache=cache)
         if not collected or collected['lift_path'].isEmpty():
             return None
         clips = [_mask_lift_clip(casting_strand, max_blur_radius, cache)]
@@ -3197,7 +3202,7 @@ def shadow_preview(canvas, casting_strand, receiving_strand, casting_layer, rece
         # (its other crossings and its end circles too), so the parts of them
         # near the receiver land on it as well.
         collected = draw_strand_shadow(painter, casting_strand, None, num_steps=num_steps,
-                                       max_blur_radius=max_blur_radius, collect_only=True)
+                                       max_blur_radius=max_blur_radius, collect_only=True, cache=cache)
         if not collected:
             return None
         lifted_layer = casting_layer

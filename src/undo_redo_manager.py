@@ -3349,6 +3349,12 @@ def connect_to_move_mode(canvas, undo_redo_manager):
         undo_redo_manager: The UndoRedoManager instance
     """
     if hasattr(canvas, 'move_mode') and canvas.move_mode:
+        # Both setup_undo_redo and main.py connect the same manager; wrapping
+        # twice would run the release work (shadow recompute, save) twice.
+        if getattr(canvas.move_mode, '_release_connected_to', None) is undo_redo_manager:
+            return
+        canvas.move_mode._release_connected_to = undo_redo_manager
+
         # Store a reference to the undo_redo_manager in the canvas
         canvas.undo_redo_manager = undo_redo_manager
         

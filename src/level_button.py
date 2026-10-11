@@ -35,7 +35,7 @@ CHEVRON_ZONE_WIDTH = 30
 GROUND_ROW_HEIGHT = 10
 # Selection frame around a level's block
 FRAME_WIDTH = 2
-FRAME_RAIL_WIDTH = 6
+FRAME_RAIL_WIDTH = 3  # "Medium": 4 px of air before the buttons (LayerPanel.LAYER_LIST_SIDE_MARGIN is 7)
 
 # ----------------------------------------------------------------------
 # Colours. A level's colour is stored as "preset:<key>" (a colour family

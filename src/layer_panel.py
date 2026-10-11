@@ -3537,7 +3537,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         painter.save()
         if not over_rows:
             tint = QColor(color)
-            tint.setAlpha(20 if paused else (46 if self._level_theme() == 'dark' else 34))
+            tint.setAlpha(20 if paused else (41 if self._level_theme() == 'dark' else 31))
             painter.fillRect(0, top, width, bottom - top, tint)
             if not paused:
                 # The same rail on both sides, so the frame is as thick on

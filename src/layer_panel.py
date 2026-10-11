@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
     QScrollArea, QLabel, QSplitter, QInputDialog, QMenu, QAction, QWidgetAction, QToolTip, QFrame  # Add QMenu, QAction and QWidgetAction here
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPoint, QStandardPaths, QMimeData  ,QRect, QSize, QEvent# Added QMimeData
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPoint, QStandardPaths, QMimeData  ,QRect, QRectF, QSize, QEvent# Added QMimeData
 from PyQt5.QtGui import QColor, QPalette, QDrag, QGuiApplication, QCursor, QIcon, QPixmap # Added QDrag and QGuiApplication
 # --- Import Correct Drag/Drop Event Types --- 
 from PyQt5.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent, QPainter, QPen # Added Painter/Pen
@@ -15,8 +15,10 @@ from functools import partial
 from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
 from translations import translations
-from save_load_manager import keep_masks_on_top, assign_levels, strand_level
-from level_button import LevelRow
+from save_load_manager import (keep_masks_on_top, assign_levels, strand_level,
+                               mask_base_level, set_mask_level, landing_level)
+from level_button import (LevelRow, GroundRow, LEVEL_LINE_HEIGHT, FRAME_RAIL_WIDTH, FRAME_WIDTH,
+                          resolve_level_color, theme_key)
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea, QLabel,
     QInputDialog, QDialog, QListWidget, QListWidgetItem, QDialogButtonBox,
@@ -249,8 +251,27 @@ class DropTargetWidget(QWidget):
             QTimer.singleShot(0, self.layer_panel.refresh)
         
 
+    def event(self, event):
+        # The rows move after a layout pass; the level frame painted here
+        # must follow them.
+        if event.type() == QEvent.LayoutRequest:
+            QTimer.singleShot(0, self.update)
+            overlay = getattr(self.layer_panel, 'level_frame_overlay', None)
+            if overlay is not None:
+                QTimer.singleShot(0, overlay.update)
+        elif event.type() == QEvent.Resize:
+            overlay = getattr(self.layer_panel, 'level_frame_overlay', None)
+            if overlay is not None:
+                overlay.setGeometry(self.rect())
+        return super().event(event)
+
     def paintEvent(self, event):
         super().paintEvent(event)
+        # The selected level's block: its tint and rail under the rows (the
+        # frame's border is drawn over them by LevelFrameOverlay)
+        painter = QPainter(self)
+        self.layer_panel.paint_level_frame(painter, self.width(), over_rows=False)
+        painter.end()
         if self._drag_indicator_y is not None:
             painter = QPainter(self)
             # safe_info(f"[LayerPanel.paintEvent] Setting up UI painter for drag indicator")
@@ -260,6 +281,24 @@ class DropTargetWidget(QWidget):
             painter.drawLine(0, self._drag_indicator_y, self.width(), self._drag_indicator_y)
             painter.end()
 # --- End Custom Widget ---
+
+
+class LevelFrameOverlay(QWidget):
+    """The border of the selected level's frame, drawn over the rows of the
+    list so it stays visible (and closed) even when the list is no wider
+    than its layer buttons. Mouse events pass through it."""
+
+    def __init__(self, layer_panel, parent):
+        super().__init__(parent)
+        self.layer_panel = layer_panel
+        self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.setAttribute(Qt.WA_NoSystemBackground, True)
+        self.setGeometry(parent.rect())
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        self.layer_panel.paint_level_frame(painter, self.width(), over_rows=True)
+        painter.end()
 
 
 class TooltipButton(QPushButton):
@@ -804,6 +843,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # Use the custom DropTargetWidget
         self.scroll_content = DropTargetWidget(self)
         self.scroll_layout = QVBoxLayout(self.scroll_content)
+        # Border of the selected level's frame, over the rows (not in the layout)
+        self.level_frame_overlay = LevelFrameOverlay(self, self.scroll_content)
         self.scroll_layout.setAlignment(Qt.AlignHCenter | Qt.AlignBottom)
         # Ensure consistent vertical spacing between layer buttons across platforms
         self.scroll_layout.setSpacing(2)  # Small, uniform gap
@@ -1160,6 +1201,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # Initialize variables for managing layers
         self.layer_buttons = []  # List to store layer buttons
         self.level_rows = []  # The Level rows of the list (see level_button.py); not in layer_buttons
+        self.ground_row = None  # The ground line (level 0), when shown; not in layer_buttons
+        self.folded_levels = set()  # Levels whose block is folded (hidden); view state only
         self.current_set = 1  # Current set number
         self.set_counts = {}
         
@@ -1449,6 +1492,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # Update any existing tooltips with the new theme
         if hasattr(self, '_custom_tooltip_widget') and self._custom_tooltip_widget:
             self._custom_tooltip_widget.set_theme(theme_name)
+
+        # Level colours follow the theme
+        self.restyle_level_rows()
 
         self.mask_edit_label.hide() # Hide initially
 
@@ -2809,6 +2855,12 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             if hasattr(self.canvas, 'last_selected_strand_index'):
                 self.canvas.last_selected_strand_index = None
 
+        # Choosing a layer outside the selected level's block ends that
+        # selection, and a folded block opens to show the chosen layer
+        self._drop_scope_outside(index)
+        if self._layer_level(index) in self.folded_levels:
+            self.toggle_level_fold(self._layer_level(index))
+
         # Update layer button states and redraw the canvas
         self.update_layer_button_states()
         self.canvas.update()
@@ -3124,8 +3176,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         strands = list(getattr(self.canvas, 'strands', None) or [])
         # A new strand goes on the top level, the same one saving gives it
         # (an empty top level included), before the order is worked out.
+        # While a level's block is selected, it lands on that level instead.
         top_level = self._top_level()
-        assign_levels(strands, top_level)
+        assign_levels(strands, self._landing_level())
         ordered, locked = keep_masks_on_top(strands, self.locked_layers, top_level)
         if all(a is b for a, b in zip(ordered, strands)):
             return False
@@ -3157,6 +3210,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
     def _top_level(self):
         """The highest level, where a new strand lands (0 with no levels)."""
         return int(getattr(self.canvas, 'level_count', 0) or 0)
+
+    def _landing_level(self):
+        """Where a new strand lands (see save_load_manager.landing_level)."""
+        return landing_level(self.canvas)
 
     # ------------------------------------------------------------------
     # Levels: storeys in the layer stack (level_button.py draws the rows;
@@ -3197,7 +3254,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         return texts.get(key, translations['en'][key])
 
     def level_name(self, level):
-        """The name on a level row: "Level 1", "Level 2"..."""
+        """The name on a level row: "Level 1", "Level 2"... ("Level 0" is the ground)."""
         return self.level_text('level_name').format(n=level)
 
     def _plain_strands_on(self, level):
@@ -3205,6 +3262,12 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         top = self._top_level()
         return [s for s in self.canvas.strands
                 if not isinstance(s, MaskedStrand) and strand_level(s, top) == level]
+
+    def _masks_on(self, level):
+        """The masks on *level*, bottom of the stack first."""
+        top = self._top_level()
+        return [s for s in self.canvas.strands
+                if isinstance(s, MaskedStrand) and strand_level(s, top) == level]
 
     def _save_level_state(self, action, detail):
         """One undo step for a level change."""
@@ -3235,47 +3298,255 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self._save_level_state('level.add', 'added ' + self.level_name(top + 1))
 
     def can_move_level(self, level, up):
-        """Whether the row of *level* can step past one strand (Move up or
-        Move down). Never on the Masks tab: a mask's level comes from its
-        two strands, which that tab does not show."""
-        if self.layer_tab == 'masks' or not 1 <= level <= self._top_level():
+        """Whether the row of *level* can step past one layer (Move up or
+        Move down). On the Strands tab it passes a strand; on the Masks tab
+        a mask, which can never go below the level of its two strands."""
+        if not 1 <= level <= self._top_level():
             return False
+        if self.layer_tab == 'masks':
+            if up:
+                masks = self._masks_on(level)
+                return bool(masks) and mask_base_level(masks[0], self._top_level()) <= level - 1
+            return bool(self._masks_on(level - 1))
         return bool(self._plain_strands_on(level if up else level - 1))
 
     def move_level(self, level, up):
-        """Move the row of *level* past one strand. Up: the lowest strand of
-        the level goes to the level below. Down: the highest strand of the
-        level below comes onto this one."""
+        """Move the row of *level* past one layer of the current tab. Up: the
+        lowest layer of the level goes to the level below. Down: the highest
+        layer of the level below comes onto this one."""
         if not self.can_move_level(level, up):
             return
-        if up:
-            strand = self._plain_strands_on(level)[0]
-            strand.level = level - 1
+        top = self._top_level()
+        if self.layer_tab == 'masks':
+            if up:
+                layer = self._masks_on(level)[0]
+                set_mask_level(layer, level - 1, top)
+            else:
+                layer = self._masks_on(level - 1)[-1]
+                set_mask_level(layer, level, top)
+        elif up:
+            layer = self._plain_strands_on(level)[0]
+            layer.level = level - 1
         else:
-            strand = self._plain_strands_on(level - 1)[-1]
-            strand.level = level
+            layer = self._plain_strands_on(level - 1)[-1]
+            layer.level = level
         self._after_level_change('level.move', '{} moved {} past {}'.format(
-            self.level_name(level), 'up' if up else 'down', strand.layer_name))
+            self.level_name(level), 'up' if up else 'down', layer.layer_name))
 
     def remove_level(self, level):
         """Remove *level*: its layers go to the level below, and the levels
-        above it are renumbered (Level 3 becomes Level 2)."""
+        above it are renumbered (Level 3 becomes Level 2), colours, folds and
+        the selected block with them."""
         top = self._top_level()
         if not 1 <= level <= top:
             return
+        masks = [s for s in self.canvas.strands if isinstance(s, MaskedStrand)]
+        mask_levels = {id(m): strand_level(m, top) for m in masks}
         for strand in self.canvas.strands:
             if isinstance(strand, MaskedStrand):
                 continue
             current = strand_level(strand, top)
             strand.level = current - 1 if current >= level else current
+        for mask in masks:
+            current = mask_levels[id(mask)]
+            set_mask_level(mask, current - 1 if current >= level else current, top - 1)
+
+        def shifted(number):
+            return number - 1 if number > level else number
+
+        colors = getattr(self.canvas, 'level_colors', None) or {}
+        self.canvas.level_colors = {shifted(n): v for n, v in colors.items() if n != level}
+        self.folded_levels = {shifted(n) for n in self.folded_levels if n != level}
+        scope = self.level_scope()
+        if scope is not None:
+            self.canvas.level_scope = None if scope == level else shifted(scope)
         self.canvas.level_count = top - 1
         self._after_level_change('level.remove', 'removed ' + self.level_name(level))
 
+    # --- colours ------------------------------------------------------
+    def _level_theme(self):
+        return theme_key(getattr(self, 'current_theme', 'default'))
+
+    def level_color_value(self, level):
+        """The colour stored for *level* ("preset:<key>" or "#rrggbb"), or
+        None when it uses the default."""
+        colors = getattr(self.canvas, 'level_colors', None) or {}
+        return colors.get(level)
+
+    def level_color(self, level):
+        """The colour *level*'s row, line and frame are painted in."""
+        return resolve_level_color(self.level_color_value(level), self._level_theme(),
+                                   getattr(self.canvas, 'default_level_color', None))
+
+    def set_level_color(self, level, value):
+        """Recolor *level*: a stored value, or None for the default. One undo step."""
+        if not self.canvas:
+            return
+        colors = dict(getattr(self.canvas, 'level_colors', None) or {})
+        if value is None:
+            colors.pop(level, None)
+        else:
+            colors[level] = value
+        if colors == (getattr(self.canvas, 'level_colors', None) or {}):
+            return
+        self.canvas.level_colors = colors
+        self.restyle_level_rows()
+        self._save_level_state('level.color', '{} colour {}'.format(self.level_name(level), value or 'default'))
+
+    def restyle_level_rows(self):
+        """Repaint every level row and the frame in the current colours."""
+        for row in getattr(self, 'level_rows', []):
+            row.restyle()
+        if getattr(self, 'ground_row', None) is not None:
+            self.ground_row.restyle()
+        if hasattr(self, 'scroll_content'):
+            self.scroll_content.update()
+        overlay = getattr(self, 'level_frame_overlay', None)
+        if overlay is not None:
+            overlay.raise_()
+            overlay.update()
+
+    # --- folding ------------------------------------------------------
+    def is_level_folded(self, level):
+        """Whether the block *level* carries is folded (0: the ground's)."""
+        return level in self.folded_levels
+
+    def toggle_level_fold(self, level):
+        """Fold or unfold the block *level* carries. Folded layers are
+        hidden entirely; nothing about the design changes."""
+        if level < 0 or level > self._top_level():
+            return
+        if level in self.folded_levels:
+            self.folded_levels.discard(level)
+        else:
+            self.folded_levels.add(level)
+        self._apply_layer_tab_filter()
+        self.restyle_level_rows()
+
+    def _layer_level(self, index):
+        """The level of layer *index*, or None while the list is being rebuilt."""
+        strands = getattr(self.canvas, 'strands', None) or []
+        if 0 <= index < len(strands):
+            return strand_level(strands[index], self._top_level())
+        return None
+
+    # --- the selected level's block -----------------------------------
+    def level_scope(self):
+        """The level whose block is selected, or None."""
+        return getattr(self.canvas, 'level_scope', None) if self.canvas is not None else None
+
+    def set_level_scope(self, level):
+        """Select the block of *level* (None: no block). While one is
+        selected, Move, Attach and Rotate only find its strands, unless the
+        setting that limits move mode to the selected strand is on."""
+        if not self.canvas:
+            return
+        if level is not None and not (0 <= level <= self._top_level()):
+            level = None
+        if level == 0 and not (self.ground_line_shown() and self._top_level() > 0):
+            level = None  # the ground's block is selected through its line
+        self.canvas.level_scope = level
+        self.restyle_level_rows()
+        self.canvas.update()
+
+    def toggle_level_scope(self, level):
+        self.set_level_scope(None if self.level_scope() == level else level)
+
+    def _drop_scope_outside(self, index):
+        """Selecting a layer outside the selected block ends the selection."""
+        scope = self.level_scope()
+        if scope is not None and self._layer_level(index) not in (None, scope):
+            self.set_level_scope(None)
+
+    def _level_frame_span(self):
+        """(top, bottom) of the selected level's frame in the list, or None:
+        from the line of the level row above to the level's own line."""
+        scope = self.level_scope()
+        if scope is None:
+            return None
+        bottom_row = self.ground_row if scope == 0 else (
+            self.level_rows[scope - 1] if 0 < scope <= len(self.level_rows) else None)
+        if bottom_row is None or bottom_row.isHidden() or bottom_row.parent() is None:
+            return None
+        geometry = bottom_row.geometry()
+        if scope == 0:
+            line = bottom_row.line_rect()
+            bottom = geometry.y() + line.y() + line.height()
+        else:
+            bottom = geometry.y() + geometry.height()
+        above = self.level_rows[scope] if scope < len(self.level_rows) else None
+        if above is not None and not above.isHidden():
+            top = above.geometry().y() + above.height() - LEVEL_LINE_HEIGHT
+        else:
+            # The top level: from the first row of the list
+            top = bottom
+            for i in range(self.scroll_layout.count()):
+                widget = self.scroll_layout.itemAt(i).widget()
+                if widget is not None and not widget.isHidden():
+                    top = max(0, widget.geometry().y() - 3)
+                    break
+        return (top, bottom) if bottom > top else None
+
+    def paint_level_frame(self, painter, width, over_rows):
+        """Frame the selected level's block: a closed box from the line of
+        the level row above to the level's own line, in the level's colour.
+        Under the rows (*over_rows* False) go a tint and a rail down the left
+        side; over them goes the border, so it shows however narrow the list
+        is. A dashed, faded frame means the "move only the selected strand"
+        setting has paused the level selection."""
+        span = self._level_frame_span()
+        if span is None:
+            return
+        top, bottom = span
+        color = self.level_color(self.level_scope())
+        paused = bool(getattr(self.canvas, 'move_selected_only', False))
+        painter.save()
+        if not over_rows:
+            tint = QColor(color)
+            tint.setAlpha(20 if paused else (46 if self._level_theme() == 'dark' else 34))
+            painter.fillRect(0, top, width, bottom - top, tint)
+            if not paused:
+                painter.fillRect(0, top, FRAME_RAIL_WIDTH, bottom - top, color)
+        else:
+            if paused:
+                color.setAlpha(150)
+            pen = QPen(color, FRAME_WIDTH, Qt.DashLine if paused else Qt.SolidLine)
+            pen.setJoinStyle(Qt.MiterJoin)
+            painter.setPen(pen)
+            painter.setBrush(Qt.NoBrush)
+            half = FRAME_WIDTH / 2.0
+            painter.drawRect(QRectF(half, top + half, width - FRAME_WIDTH, bottom - top - FRAME_WIDTH))
+        painter.restore()
+
+    # --- the ground line ----------------------------------------------
+    def ground_line_shown(self):
+        """Whether the ground (level 0) gets its line under the bottom layer."""
+        return bool(getattr(self.canvas, 'show_ground_line', False)) if self.canvas is not None else False
+
+    def set_ground_line_shown(self, shown):
+        """Show or hide the ground line, and remember the choice in the
+        user's settings."""
+        if not self.canvas:
+            return
+        self.canvas.show_ground_line = bool(shown)
+        if not shown and self.level_scope() == 0:
+            self.set_level_scope(None)
+        self._sync_level_widgets()
+        self.restyle_level_rows()
+        dialog = getattr(self.parent_window, 'settings_dialog', None)
+        if dialog is not None and hasattr(dialog, 'save_settings_to_file'):
+            dialog.show_ground_line = bool(shown)
+            try:
+                dialog.save_settings_to_file()
+            except Exception:
+                pass  # the choice still holds for this session
+
     def _sync_level_widgets(self):
         """Put one level row per level into the list, each right under the
-        layers it carries (the list is top of the stack first), and drop the
-        rows of levels that no longer exist. Level rows are never in
-        layer_buttons, so layer_buttons[i] still matches canvas.strands[i]."""
+        layers it carries (the list is top of the stack first), then the
+        ground line when it is shown, and drop the rows of levels that no
+        longer exist. Level rows are never in layer_buttons, so
+        layer_buttons[i] still matches canvas.strands[i]."""
         if not hasattr(self, 'scroll_layout'):
             return
         count = self._top_level() if self.canvas is not None else 0
@@ -3288,14 +3559,30 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self.level_rows.append(LevelRow(self, len(self.level_rows) + 1, self.scroll_content))
         for number, row in enumerate(self.level_rows, 1):
             row.set_level(number)
+        want_ground = count > 0 and self.ground_line_shown()
+        if want_ground and self.ground_row is None:
+            self.ground_row = GroundRow(self, self.scroll_content)
+        elif not want_ground and self.ground_row is not None:
+            self.scroll_layout.removeWidget(self.ground_row)
+            self.ground_row.setParent(None)
+            self.ground_row.deleteLater()
+            self.ground_row = None
+        if self.canvas is not None:
+            # Folds and the selected block of levels that are gone (with no
+            # levels there is no chevron left to open the ground)
+            self.folded_levels = {n for n in self.folded_levels if n <= count} if count else set()
+            scope = self.level_scope()
+            if scope is not None and (scope > count or (scope == 0 and not want_ground)):
+                self.canvas.level_scope = None
         if count == 0:
             return
 
         strands = list(getattr(self.canvas, 'strands', None) or [])
         buttons = list(self.layer_buttons)
+        rows = self.level_rows + ([self.ground_row] if self.ground_row is not None else [])
         if len(buttons) != len(strands):
             # Part-way through a rebuild: place the rows on the next pass
-            for row in self.level_rows:
+            for row in rows:
                 self.scroll_layout.removeWidget(row)
                 row.hide()
             return
@@ -3311,18 +3598,21 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         while index >= 0:
             desired.append(buttons[index])
             index -= 1
+        if self.ground_row is not None:
+            desired.append(self.ground_row)
 
         current = [self.scroll_layout.itemAt(i).widget() for i in range(self.scroll_layout.count())]
         if current != desired:
             while self.scroll_layout.count():
                 self.scroll_layout.takeAt(0)
             for widget in desired:
-                if isinstance(widget, LevelRow):
+                if isinstance(widget, (LevelRow, GroundRow)):
                     self.scroll_layout.addWidget(widget)  # full width, see LevelRow
                 else:
                     self.scroll_layout.addWidget(widget, 0, Qt.AlignHCenter)
-        for row in self.level_rows:
+        for row in rows:
             row.show()
+        self.restyle_level_rows()
 
     def _layer_tab_of(self, index):
         """'masks' when layer *index* is a MaskedStrand, otherwise 'strands'."""
@@ -3450,7 +3740,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             try:
                 if button.parent() is None:
                     continue  # detached; showing it would open a window
-                button.setVisible(self._layer_tab_of(i) == self.layer_tab)
+                button.setVisible(self._layer_tab_of(i) == self.layer_tab
+                                  and self._layer_level(i) not in self.folded_levels)
             except RuntimeError:
                 continue
         for button in (self.draw_names_button, self.lock_layers_button,
@@ -4150,6 +4441,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             # Clear all strands from canvas (and the levels with them)
             self.canvas.strands.clear()
             self.canvas.level_count = 0
+            self.canvas.level_colors = {}
+            self.canvas.level_scope = None
+            self.folded_levels = set()
 
             # Clear selection state
             self.canvas.selected_strand = None
@@ -4302,6 +4596,12 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         ``preserve_layer_color`` is used by group duplication, where copied
         layers may intentionally differ from their set's canonical color.
         """
+        # A new strand lands on its level now, before it is placed and
+        # selected: the selected level's block while one is selected,
+        # otherwise the top level.
+        if (self.canvas is not None and not isinstance(strand, MaskedStrand)
+                and getattr(strand, 'level', None) is None):
+            strand.level = landing_level(self.canvas)
         
         # SUPER EXPLICIT DEBUG - log everything before processing
         if hasattr(strand, 'layer_name') and strand.layer_name:
@@ -4659,8 +4959,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         ordered_buttons = []
         for row in range(self.scroll_layout.count()):
             w = self.scroll_layout.itemAt(row).widget()
-            # Level rows share the list but are not layers
-            if w is not None and not isinstance(w, LevelRow):
+            # Level rows (and the ground line) share the list but are not layers
+            if w is not None and not isinstance(w, (LevelRow, GroundRow)):
                 ordered_buttons.append(w)
 
         # layout: top‑to‑bottom  →   logical list: bottom‑to‑top
@@ -4886,6 +5186,14 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                     if last_visible_index is not None:
                         target_visual_index = last_visible_index + 1
 
+            # The ground line stays under the bottom layer
+            if isinstance(self.scroll_layout.itemAt(source_index).widget(), GroundRow):
+                event.ignore()
+                return
+            if (self.ground_row is not None
+                    and target_visual_index > self.scroll_layout.indexOf(self.ground_row)):
+                target_visual_index = self.scroll_layout.indexOf(self.ground_row)
+
             # --- Move the widget in the layout (macOS-safe) ---
             item_to_move = self.scroll_layout.takeAt(source_index)
             if not item_to_move:
@@ -4923,6 +5231,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 button = item.widget() # Get the widget directly
                 if isinstance(button, LevelRow):
                     visual_rows.append(None)
+                elif isinstance(button, GroundRow):
+                    continue
                 elif isinstance(button, NumberedLayerButton): # Check if it's the button
                     if button in button_to_strand_map:
                         new_canvas_strands_visual_order.append(button_to_strand_map[button])
@@ -4941,11 +5251,21 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 return
 
             if self.level_rows:
+                # Each layer of the current tab ends up on as many levels as
+                # there are level rows under it. The other tab's layers keep
+                # theirs: on the Masks tab only masks move between levels (a
+                # mask never below its strands' level), on the Strands tab
+                # only strands.
+                on_masks_tab = self.layer_tab == 'masks'
+                top = self._top_level()
                 rows_below = 0
                 for entry in reversed(visual_rows):
                     if entry is None:
                         rows_below += 1
-                    elif not isinstance(entry, MaskedStrand):
+                    elif isinstance(entry, MaskedStrand):
+                        if on_masks_tab:
+                            set_mask_level(entry, rows_below, top)
+                    elif not on_masks_tab:
                         entry.level = rows_below
 
             # --- Commit the new order (Reverse visual order for canvas) ---

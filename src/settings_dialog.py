@@ -133,6 +133,10 @@ class SettingsDialog(QDialog):
         # Default strand and stroke color parameters
         self.default_strand_color = getattr(canvas, 'default_strand_color', QColor(200, 170, 230, 255))
         self.default_stroke_color = getattr(canvas, 'default_stroke_color', QColor(0, 0, 0, 255))
+        # Default level color: None follows the theme (see level_button.THEME_LEVEL_COLORS)
+        self.default_level_color = getattr(canvas, 'default_level_color', None)
+        # The ground line (Level 0) under the bottom layer of the layer panel
+        self.show_ground_line = getattr(canvas, 'show_ground_line', False)
         # Default strand width parameters
         self.default_strand_width = getattr(canvas, 'strand_width', 46)
         self.default_stroke_width = getattr(canvas, 'stroke_width', 4)
@@ -158,6 +162,8 @@ class SettingsDialog(QDialog):
             # Apply default strand and stroke color settings
             self.canvas.default_strand_color = self.default_strand_color
             self.canvas.default_stroke_color = self.default_stroke_color
+            self.canvas.default_level_color = self.default_level_color
+            self.canvas.show_ground_line = self.show_ground_line
             # Apply default strand width settings
             self.canvas.strand_width = self.default_strand_width
             self.canvas.stroke_width = self.default_stroke_width
@@ -646,7 +652,7 @@ class SettingsDialog(QDialog):
                 'arrow_head_stroke_width_label', 'arrow_gap_length_label',
                 'arrow_line_length_label', 'arrow_line_width_label',
                 'default_arrow_color_label', 'button_color_label',
-                'default_strand_color_label', 'default_stroke_color_label',
+                'default_strand_color_label', 'default_stroke_color_label', 'default_level_color_label',
                 'view_hide_control_points_label', 'default_transparent_start_circle_label',
             ]
             label_alignment = (Qt.AlignRight if is_rtl else Qt.AlignLeft) | Qt.AlignVCenter
@@ -1203,6 +1209,10 @@ class SettingsDialog(QDialog):
             self.default_stroke_color_label.updateGeometry()
             self.default_stroke_color_label.repaint()
 
+        # Default Level Color layout reorganization
+        if hasattr(self, 'default_level_color_container'):
+            self._layout_default_level_color_row(is_rtl)
+
         # Default Strand Width button layout reorganization
         if hasattr(self, 'default_strand_width_container') and hasattr(self, 'default_strand_width_button'):
             # Clear the layout and set proper spacing
@@ -1753,6 +1763,15 @@ class SettingsDialog(QDialog):
                                 self.default_stroke_color = QColor(r, g, b, a)
                             except Exception as e:
                                 pass
+                        elif line.startswith('DefaultLevelColor:'):
+                            value = line.split(':', 1)[1].strip()
+                            try:
+                                r, g, b, a = map(int, value.split(','))
+                                self.default_level_color = QColor(r, g, b, a)
+                            except Exception:
+                                self.default_level_color = None  # "theme"
+                        elif line.startswith('ShowGroundLine:'):
+                            self.show_ground_line = (line.split(':', 1)[1].strip().lower() == 'true')
                         elif line.startswith('DefaultStrandWidth:'):
                             try:
                                 self.default_strand_width = int(line.split(':', 1)[1].strip())
@@ -2660,6 +2679,28 @@ class SettingsDialog(QDialog):
 
         default_arrow_container_layout.addWidget(self.default_stroke_color_container)
         self.layer_panel_rows.append(self.default_stroke_color_container)
+
+        # Default Level Color - Label, swatch and a button back to the theme's colour
+        self.default_level_color_container = QWidget()
+        self.default_level_color_layout = QHBoxLayout(self.default_level_color_container)
+        self.default_level_color_container.setContentsMargins(0, 0, 0, 0)
+        self.default_level_color_layout.setContentsMargins(0, 0, 0, 0)
+        self.default_level_color_layout.setSpacing(15)
+        self.default_level_color_label = QLabel(_['default_level_color'] if 'default_level_color' in _ else 'Default Level Color:')
+        self.default_level_color_label.setTextFormat(Qt.PlainText)
+        self.default_level_color_label.setWordWrap(False)
+        self.default_level_color_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        self.default_level_color_label.setStyleSheet("QLabel { color: white; }" if self.current_theme == "dark" else "QLabel { color: black; }")
+        self.default_level_color_button = QPushButton()
+        self.style_color_swatch_button(self.default_level_color_button)
+        self.default_level_color_button.clicked.connect(self.choose_default_level_color)
+        self.default_level_color_reset_button = QPushButton("\u21BA")
+        self.style_color_swatch_button(self.default_level_color_reset_button)
+        self.default_level_color_reset_button.clicked.connect(lambda: self.set_default_level_color(None))
+        self.update_default_level_color_button()
+        self._layout_default_level_color_row()
+        default_arrow_container_layout.addWidget(self.default_level_color_container)
+        self.layer_panel_rows.append(self.default_level_color_container)
         
         # Default Strand Width - Button only
         self.default_strand_width_container = QWidget()
@@ -4072,10 +4113,14 @@ class SettingsDialog(QDialog):
             'default_arrow_color_button',
             'default_strand_color_button',
             'default_stroke_color_button',
+            'default_level_color_button',
+            'default_level_color_reset_button',
             'highlight_color_button',
         ):
             if hasattr(self, button_name):
                 self.style_color_swatch_button(getattr(self, button_name))
+        if hasattr(self, 'default_level_color_button'):
+            self.update_default_level_color_button()  # the theme's colour may have changed
 
         # Upgrade every spin box to the segmented [ - | value | + ] stepper
         # and restyle it for the current theme and text direction.
@@ -4852,6 +4897,9 @@ class SettingsDialog(QDialog):
             self.default_strand_color_label.setLayoutDirection(Qt.LeftToRight)
         
         self.default_stroke_color_label.setText(_['default_stroke_color'] if 'default_stroke_color' in _ else "Default Stroke Color:")
+        if hasattr(self, 'default_level_color_label'):
+            self.default_level_color_label.setText(_['default_level_color'] if 'default_level_color' in _ else "Default Level Color:")
+            self._layout_default_level_color_row()
         if self.is_rtl_language(self.current_language):
             self.default_stroke_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             self.default_stroke_color_label.setLayoutDirection(Qt.RightToLeft)
@@ -5481,6 +5529,8 @@ class SettingsDialog(QDialog):
                 file.write(f"DefaultArrowColor: {self.default_arrow_fill_color.red()},{self.default_arrow_fill_color.green()},{self.default_arrow_fill_color.blue()},{self.default_arrow_fill_color.alpha()}\n")
                 file.write(f"DefaultStrandColor: {self.default_strand_color.red()},{self.default_strand_color.green()},{self.default_strand_color.blue()},{self.default_strand_color.alpha()}\n")
                 file.write(f"DefaultStrokeColor: {self.default_stroke_color.red()},{self.default_stroke_color.green()},{self.default_stroke_color.blue()},{self.default_stroke_color.alpha()}\n")
+                file.write(f"DefaultLevelColor: {self._default_level_color_setting()}\n")
+                file.write(f"ShowGroundLine: {str(bool(self.show_ground_line)).lower()}\n")
                 file.write(f"DefaultStrandWidth: {self.default_strand_width}\n")
                 file.write(f"DefaultStrokeWidth: {self.default_stroke_width}\n")
                 file.write(f"DefaultWidthGridUnits: {self.default_width_grid_units}\n")
@@ -5521,6 +5571,8 @@ class SettingsDialog(QDialog):
                     local_file.write(f"DefaultArrowColor: {self.default_arrow_fill_color.red()},{self.default_arrow_fill_color.green()},{self.default_arrow_fill_color.blue()},{self.default_arrow_fill_color.alpha()}\n")
                     local_file.write(f"DefaultStrandColor: {self.default_strand_color.red()},{self.default_strand_color.green()},{self.default_strand_color.blue()},{self.default_strand_color.alpha()}\n")
                     local_file.write(f"DefaultStrokeColor: {self.default_stroke_color.red()},{self.default_stroke_color.green()},{self.default_stroke_color.blue()},{self.default_stroke_color.alpha()}\n")
+                    local_file.write(f"DefaultLevelColor: {self._default_level_color_setting()}\n")
+                    local_file.write(f"ShowGroundLine: {str(bool(self.show_ground_line)).lower()}\n")
                     local_file.write(f"DefaultStrandWidth: {self.default_strand_width}\n")
                     local_file.write(f"DefaultStrokeWidth: {self.default_stroke_width}\n")
                     local_file.write(f"DefaultWidthGridUnits: {self.default_width_grid_units}\n")
@@ -5608,6 +5660,8 @@ class SettingsDialog(QDialog):
                     'b': self.default_stroke_color.blue(),
                     'a': self.default_stroke_color.alpha()
                 },
+                'default_level_color': self._default_level_color_setting(),
+                'show_ground_line': bool(self.show_ground_line),
                 'default_strand_width': self.default_strand_width,
                 'default_stroke_width': self.default_stroke_width,
                 'default_width_grid_units': self.default_width_grid_units,
@@ -5781,6 +5835,21 @@ class SettingsDialog(QDialog):
                 sc = settings['default_stroke_color']
                 self.default_stroke_color = QColor(sc['r'], sc['g'], sc['b'], sc['a'])
                 self.update_default_stroke_color_button()
+
+            if 'default_level_color' in settings:
+                value = settings['default_level_color']
+                try:
+                    r, g, b, a = map(int, str(value).split(','))
+                    self.set_default_level_color(QColor(r, g, b, a), save=False)
+                except Exception:
+                    self.set_default_level_color(None, save=False)
+
+            if 'show_ground_line' in settings:
+                self.show_ground_line = bool(settings['show_ground_line'])
+                layer_panel = getattr(self.canvas, 'layer_panel', None) if self.canvas else None
+                if layer_panel is not None and hasattr(layer_panel, 'set_ground_line_shown'):
+                    layer_panel.canvas.show_ground_line = self.show_ground_line
+                    layer_panel._sync_level_widgets()
 
             if 'default_strand_width' in settings:
                 self.default_strand_width = settings['default_strand_width']
@@ -6729,6 +6798,80 @@ class SettingsDialog(QDialog):
                 if hasattr(self.canvas, 'force_redraw'):
                     self.canvas.force_redraw()
                 self.canvas.update()
+
+    def _default_level_color_setting(self):
+        """The DefaultLevelColor value: "theme" or r,g,b,a."""
+        color = self.default_level_color
+        if color is None or not QColor(color).isValid():
+            return 'theme'
+        return f"{color.red()},{color.green()},{color.blue()},{color.alpha()}"
+
+    def _layout_default_level_color_row(self, is_rtl=None):
+        """Label, swatch and reset button, mirrored for right-to-left
+        languages like the other colour rows."""
+        _ = translations.get(self.get_language_code(), translations['en'])
+        self.clear_layout(self.default_level_color_layout)
+        if is_rtl is None:
+            is_rtl = self.is_rtl_language(self.current_language)
+        self.default_level_color_container.setLayoutDirection(Qt.LeftToRight)
+        self.default_level_color_layout.setDirection(QBoxLayout.LeftToRight)
+        self.default_level_color_reset_button.setToolTip(
+            _['default_level_color_reset'] if 'default_level_color_reset' in _ else "Use the theme's level color")
+        if is_rtl:
+            self.default_level_color_layout.setSpacing(5)
+            self.default_level_color_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.default_level_color_label.setLayoutDirection(Qt.RightToLeft)
+            self.default_level_color_layout.addStretch()
+            self.default_level_color_layout.addWidget(self.default_level_color_reset_button)
+            self.default_level_color_layout.addWidget(self.default_level_color_button)
+            self.default_level_color_layout.addWidget(self.default_level_color_label)
+        else:
+            self.default_level_color_layout.setSpacing(15)
+            self.default_level_color_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            self.default_level_color_label.setLayoutDirection(Qt.LeftToRight)
+            self.default_level_color_layout.addWidget(self.default_level_color_label)
+            self.default_level_color_layout.addWidget(self.default_level_color_button)
+            self.default_level_color_layout.addWidget(self.default_level_color_reset_button)
+            self.default_level_color_layout.addStretch()
+        self.default_level_color_layout.invalidate()
+        self.default_level_color_layout.activate()
+
+    def update_default_level_color_button(self):
+        """Show the colour new levels get: the chosen one, or the theme's."""
+        from level_button import resolve_level_color
+        theme = getattr(self, 'current_theme', 'default')
+        if self.canvas is not None and getattr(self.canvas, 'layer_panel', None) is not None:
+            theme = getattr(self.canvas.layer_panel, 'current_theme', theme)
+        self.update_color_swatch_icon(self.default_level_color_button,
+                                      resolve_level_color(None, theme, self.default_level_color))
+        self.default_level_color_reset_button.setEnabled(self.default_level_color is not None)
+
+    def set_default_level_color(self, color, save=True):
+        """Use *color* (None: the theme's) for every level without a colour of its own."""
+        self.default_level_color = QColor(color) if color is not None else None
+        if self.canvas is not None:
+            self.canvas.default_level_color = self.default_level_color
+            layer_panel = getattr(self.canvas, 'layer_panel', None)
+            if layer_panel is not None and hasattr(layer_panel, 'restyle_level_rows'):
+                layer_panel.restyle_level_rows()
+        if hasattr(self, 'default_level_color_button'):
+            self.update_default_level_color_button()
+        if save:
+            self.save_settings_to_file()
+
+    def choose_default_level_color(self):
+        """Open a color dialog to choose the default level color."""
+        from level_button import resolve_level_color
+        self.set_qt_locale()
+        _ = translations.get(self.get_language_code(), translations['en'])
+        color_dialog = QColorDialog(self)
+        color_dialog.setCurrentColor(resolve_level_color(None, self.current_theme, self.default_level_color))
+        color_dialog.setOption(QColorDialog.DontUseNativeDialog)
+        self.translate_color_dialog(color_dialog, _)
+        if color_dialog.exec_():
+            color = color_dialog.currentColor()
+            if color.isValid():
+                self.set_default_level_color(color)
 
     def update_default_stroke_color_button(self):
         """Update the default stroke color button to reflect current color."""

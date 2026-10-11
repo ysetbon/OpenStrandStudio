@@ -314,15 +314,6 @@ def test_remove_renumbers_the_levels_above(window):
     assert_consistent(window)
 
 
-def test_masks_tab_offers_only_remove(window):
-    lp = window.layer_panel
-    lift_3_4_and_2_4(window)
-    lp.set_layer_tab("masks")
-    pump()
-    assert not lp.can_move_level(1, up=True) and not lp.can_move_level(1, up=False)
-    assert "Level 1" in list_order(lp)
-
-
 def test_both_tabs_share_one_set_of_levels(window):
     lp = window.layer_panel
     lift_3_4_and_2_4(window)

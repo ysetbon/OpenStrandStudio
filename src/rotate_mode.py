@@ -150,6 +150,9 @@ class RotateMode:
         """
         for strand in self.canvas.strands:
             if not getattr(strand, 'deleted', False):
+                # A level's block selected in the layer panel: only its strands
+                if hasattr(self.canvas, 'is_strand_in_level_scope') and not self.canvas.is_strand_in_level_scope(strand):
+                    continue
                 if self.try_rotate_strand(strand, pos):
                     return
 

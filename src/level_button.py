@@ -6,9 +6,11 @@ A level row looks like a layer button, as wide as one and a third lower
 bottom of the layers it carries. Layers below the lowest level row are on the
 ground (level 0), closed by the ground line once any level exists.
 
-Inside the button, the 30 px at each edge are chevrons: the left one folds
-the block the level carries (the layers right above the row), the right one
-the block under it, down to the next level row. A folded block is hidden
+Inside the button, the 30 px at each edge are fold controls (a bar with a
+chevron beside it, on the side of the layers it folds, pointing at the bar
+while they show): the left one folds the block the level carries (the layers
+right above the row), the right one the block under it, down to the next
+level row. A folded block is hidden
 entirely. On the Strands tab, a click on the name selects the level's block:
 the panel frames it and Move, Attach and Rotate only find its strands (see
 StrandDrawingCanvas.is_strand_in_level_scope). The Masks tab selects no
@@ -156,18 +158,31 @@ def _draw_outlined_text(painter, rect, text, pixel_size):
     painter.drawPath(path)
 
 
-def _draw_chevron(painter, center, pointing_up):
-    """A white chevron with a black outline, 10 px wide."""
-    dy = -2.5 if pointing_up else 2.5
+def _draw_fold_glyph(painter, center, content_above, folded):
+    """The fold control of one edge: a short bar (the level line) and a
+    chevron on the side where the folded layers are. Shown, the chevron
+    points at the bar (squash the layers onto it); folded, it points away
+    from it (spread them out again). It never reads as "level up / down"."""
+    sign = -1 if content_above else 1  # which side of the bar the layers are on
+    bar_y = center.y() - sign * 6
+    chev_y = center.y() + sign * 3
+    # Toward the bar: down when the layers are above it, up when below
+    toward_bar = -sign * 2.5
+    dy = -toward_bar if folded else toward_bar
     path = QPainterPath()
-    path.moveTo(center.x() - 5, center.y() - dy)
-    path.lineTo(center.x(), center.y() + dy)
-    path.lineTo(center.x() + 5, center.y() - dy)
+    path.moveTo(center.x() - 5, chev_y - dy)
+    path.lineTo(center.x(), chev_y + dy)
+    path.lineTo(center.x() + 5, chev_y - dy)
+    bar = QPainterPath()
+    bar.moveTo(center.x() - 6, bar_y)
+    bar.lineTo(center.x() + 6, bar_y)
     painter.setBrush(Qt.NoBrush)
-    painter.setPen(QPen(Qt.black, 4.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-    painter.drawPath(path)
-    painter.setPen(QPen(Qt.white, 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-    painter.drawPath(path)
+    for shape in (bar, path):
+        painter.setPen(QPen(Qt.black, 4.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        painter.drawPath(shape)
+    for shape in (bar, path):
+        painter.setPen(QPen(Qt.white, 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        painter.drawPath(shape)
 
 
 class LevelButton(QPushButton):
@@ -220,12 +235,11 @@ class LevelButton(QPushButton):
             x = 0 if self._hover_zone == 'above' else self.width() - CHEVRON_ZONE_WIDTH
             painter.fillRect(x, 0, CHEVRON_ZONE_WIDTH, self.height(), QColor(255, 255, 255, 55))
         mid_y = self.height() / 2.0
-        # Left: folds the block above (points up while it shows, down once folded)
-        _draw_chevron(painter, QPointF(CHEVRON_ZONE_WIDTH / 2.0, mid_y),
-                      pointing_up=not panel.is_level_folded(level))
-        # Right: folds the block below (points down while it shows)
-        _draw_chevron(painter, QPointF(self.width() - CHEVRON_ZONE_WIDTH / 2.0, mid_y),
-                      pointing_up=panel.is_level_folded(level - 1))
+        # Left: the block above; right: the block below
+        _draw_fold_glyph(painter, QPointF(CHEVRON_ZONE_WIDTH / 2.0, mid_y),
+                         content_above=True, folded=panel.is_level_folded(level))
+        _draw_fold_glyph(painter, QPointF(self.width() - CHEVRON_ZONE_WIDTH / 2.0, mid_y),
+                         content_above=False, folded=panel.is_level_folded(level - 1))
         name_rect = self.rect().adjusted(CHEVRON_ZONE_WIDTH, 1, -CHEVRON_ZONE_WIDTH, 1)
         _draw_outlined_text(painter, name_rect, self.row.text(), 14)
         if self.hasFocus():

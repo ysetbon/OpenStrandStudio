@@ -587,11 +587,12 @@ class MainWindow(QMainWindow):
     # When one row cannot fit every label, the buttons from this index on
     # (Save onward) move to a second row together with State and settings.
     TOOLBAR_SECOND_ROW_FROM = 8
-    # Floor for the layer panel on compact screens: the layer list's 158px
-    # (buttons + scrollbar gutter) plus enough for the group panel's
-    # "Create Group" button, whose longest translations need ~117px. The few
-    # px of headroom matter on macOS, where the same string measures wider.
-    COMPACT_LAYER_PANEL_FLOOR = 286
+    # Floor for the layer panel on compact screens: the layer list's 170px
+    # (buttons, 7px on each side for a level's frame, scrollbar gutter) plus
+    # enough for the group panel's "Create Group" button, whose longest
+    # translations need ~117px. The few px of headroom matter on macOS,
+    # where the same string measures wider.
+    COMPACT_LAYER_PANEL_FLOOR = 298
 
     def layer_panel_full_min_width(self):
         """Narrowest the layer panel can be with the group column expanded,

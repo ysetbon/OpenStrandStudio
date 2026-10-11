@@ -431,3 +431,31 @@ def test_level_menu_is_built_like_the_layer_menus(window, monkeypatch):
     row.show_menu(QPoint(5, 5))
     by_text = {a.defaultWidget().text(): a for a in menus[-1].actions() if not a.isSeparator()}
     assert by_text[lp.level_text("level_move_down")].isEnabled()
+
+
+def test_the_frame_is_as_thick_on_the_right_as_on_the_left(window):
+    from level_button import FRAME_RAIL_WIDTH
+    lp = window.layer_panel
+    lift_3_4_and_2_4(window)
+    lp.set_level_scope(1)
+    pump(150)
+    image = lp.scroll_content.grab().toImage()
+    button = lp.layer_buttons[window.canvas.strands.index(find(window, "3_4"))]
+    y = button.mapTo(lp.scroll_content, QPoint(0, button.height() // 2)).y()
+    width = lp.scroll_content.width()
+    color = lp.level_color(1).name()
+    left = sum(QColor(image.pixel(x, y)).name() == color for x in range(0, 10))
+    right = sum(QColor(image.pixel(x, y)).name() == color for x in range(width - 10, width))
+    assert left == right == FRAME_RAIL_WIDTH
+
+
+@pytest.mark.parametrize("tab", ["strands", "masks"])
+def test_the_list_keeps_room_for_the_frame_on_both_tabs(window, tab):
+    """The layer buttons with 7 px on each side, whether the list scrolls
+    (Strands) or not (Masks): the frame never covers a button."""
+    lp = window.layer_panel
+    lift_3_4_and_2_4(window)
+    lp.set_layer_tab(tab)
+    pump(200)
+    expected = lp.LAYER_LIST_BUTTON_WIDTH + 2 * lp.LAYER_LIST_SIDE_MARGIN
+    assert lp.scroll_area.viewport().width() == expected

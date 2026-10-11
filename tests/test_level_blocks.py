@@ -186,10 +186,25 @@ def test_new_strands_land_on_the_selected_level(window):
     template = find(window, "1_1")
     new = type(template)(QPointF(1080, 532), QPointF(1424, 532), 46)
     new.layer_name, new.set_number = "5_1", 5
-    window.canvas.strands.append(new)
-    lp.refresh()
-    pump()
+    window.canvas.strands.append(new)  # as the canvas does, then it tells the panel
+    lp.on_strand_created(new)
+    pump(100)
     assert new.level == 1
+    assert lp.level_scope() == 1  # selecting the new strand keeps the block selected
+    saved = serialize_project_state(window.canvas.strands, {}, window.canvas)
+    assert next(s for s in saved["strands"] if s["layer_name"] == "5_1")["level"] == 1
+
+
+def test_undo_to_the_start_drops_folds(window):
+    lp = window.layer_panel
+    undo = lp.undo_redo_manager
+    lift_3_4_and_2_4(window)
+    undo.clear_history(save_current=False)
+    lp.toggle_level_fold(0)
+    undo.save_state(allow_empty=True, action="test.first")
+    undo.undo()  # no levels left, so no chevron could open the ground again
+    pump(150)
+    assert not lp.folded_levels
 
 
 # --- colours -----------------------------------------------------------------

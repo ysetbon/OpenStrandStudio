@@ -3430,7 +3430,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         """The level of layer *index*, or None while the list is being rebuilt."""
         strands = getattr(self.canvas, 'strands', None) or []
         if 0 <= index < len(strands):
-            return strand_level(strands[index], self._top_level())
+            return strand_level(strands[index], self._landing_level())
         return None
 
     # --- the selected level's block -----------------------------------
@@ -3571,8 +3571,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self.ground_row.deleteLater()
             self.ground_row = None
         if self.canvas is not None:
-            # Folds, colours and the selected block of levels that are gone
-            self.folded_levels = {n for n in self.folded_levels if n <= count}
+            # Folds and the selected block of levels that are gone (with no
+            # levels there is no chevron left to open the ground)
+            self.folded_levels = {n for n in self.folded_levels if n <= count} if count else set()
             scope = self.level_scope()
             if scope is not None and (scope > count or (scope == 0 and not want_ground)):
                 self.canvas.level_scope = None
@@ -4598,6 +4599,12 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         ``preserve_layer_color`` is used by group duplication, where copied
         layers may intentionally differ from their set's canonical color.
         """
+        # A new strand lands on its level now, before it is placed and
+        # selected: the selected level's block while one is selected,
+        # otherwise the top level.
+        if (self.canvas is not None and not isinstance(strand, MaskedStrand)
+                and getattr(strand, 'level', None) is None):
+            strand.level = self._landing_level()
         
         # SUPER EXPLICIT DEBUG - log everything before processing
         if hasattr(strand, 'layer_name') and strand.layer_name:

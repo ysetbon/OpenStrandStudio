@@ -340,7 +340,9 @@ def compute_auto_hidden_pairs(canvas):
     max_blur_radius = 30.0
     results = []
     # The scene does not change while the pairs are measured, so they share
-    # one scratch cache, as the strands of one paint do.
+    # one scratch cache, as the strands of one paint do. A pair measured with
+    # its auto entry lifted (below) sees other overrides, and the shadow paths
+    # cached per caster depend on them, so it gets a cache of its own.
     cache = {}
 
     for casting, fabric in candidate_receivers.items():
@@ -399,7 +401,8 @@ def compute_auto_hidden_pairs(canvas):
                 # residue, however much of its landing area is covered.
                 band = ((getattr(rs, 'width', 46) + 2 * getattr(rs, 'stroke_width', 4))
                         * float(getattr(canvas, 'max_blur_radius', max_blur_radius) or max_blur_radius) / 2.0)
-                if _visible_shadow_px(canvas, cs, rs, casting, receiving, cache) >= AUTO_HIDE_MAX_VISIBLE_BAND * band:
+                pair_cache = cache if auto_entry is None else {}
+                if _visible_shadow_px(canvas, cs, rs, casting, receiving, pair_cache) >= AUTO_HIDE_MAX_VISIBLE_BAND * band:
                     continue
             finally:
                 if auto_entry is not None:

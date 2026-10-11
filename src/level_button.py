@@ -37,8 +37,9 @@ LEVEL_COLOR = QColor("#7a63b8")
 # Width of the fold control at the left of the level button
 FOLD_ZONE_WIDTH = 30
 # The ground line: a 4 px line in a row tall enough for its fold tab
-GROUND_ROW_HEIGHT = 22
-GROUND_TAB_SIZE = QSize(FOLD_ZONE_WIDTH, 20)
+GROUND_ROW_HEIGHT = 24
+# The tab draws its fold control at the level buttons' full size
+GROUND_TAB_SIZE = QSize(FOLD_ZONE_WIDTH, 22)
 # Selection frame around a level's block
 FRAME_WIDTH = 2
 FRAME_RAIL_WIDTH = 3  # "Medium": 4 px of air before the buttons (LayerPanel.LAYER_LIST_SIDE_MARGIN is 7)
@@ -472,8 +473,9 @@ class GroundRow(_FullWidthRow):
         painter.setPen(Qt.NoPen)
         painter.setBrush(color.lighter(118) if self._hover_zone == 'fold' else color)
         painter.drawRoundedRect(tab, 3, 3)
-        _draw_fold_glyph(painter, tab.center(), panel.is_level_folded(0), panel.level_block_size(0),
-                         scale=0.8)
+        # Centred on its own height (the stack sits 1 px low around its centre)
+        _draw_fold_glyph(painter, tab.center() - QPointF(0, 1), panel.is_level_folded(0),
+                         panel.level_block_size(0))
         painter.end()
 
     def event(self, event):

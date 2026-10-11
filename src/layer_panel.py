@@ -3549,28 +3549,23 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         the level row above to the level's own line, in the level's colour.
         Under the rows (*over_rows* False) go a tint and a rail down each
         side; over them goes the border, so it shows however narrow the list
-        is. A dashed, faded frame means the "move only the selected strand"
-        setting has paused the level selection."""
+        is."""
         span = self._level_frame_span()
         if span is None:
             return
         top, bottom = span
         color = self.level_color(self.level_scope())
-        paused = bool(getattr(self.canvas, 'move_selected_only', False))
         painter.save()
         if not over_rows:
             tint = QColor(color)
-            tint.setAlpha(20 if paused else (41 if self._level_theme() == 'dark' else 31))
+            tint.setAlpha(41 if self._level_theme() == 'dark' else 31)
             painter.fillRect(0, top, width, bottom - top, tint)
-            if not paused:
-                # The same rail on both sides, so the frame is as thick on
-                # the right as on the left (in either reading direction)
-                painter.fillRect(0, top, FRAME_RAIL_WIDTH, bottom - top, color)
-                painter.fillRect(width - FRAME_RAIL_WIDTH, top, FRAME_RAIL_WIDTH, bottom - top, color)
+            # The same rail on both sides, so the frame is as thick on
+            # the right as on the left (in either reading direction)
+            painter.fillRect(0, top, FRAME_RAIL_WIDTH, bottom - top, color)
+            painter.fillRect(width - FRAME_RAIL_WIDTH, top, FRAME_RAIL_WIDTH, bottom - top, color)
         else:
-            if paused:
-                color.setAlpha(150)
-            pen = QPen(color, FRAME_WIDTH, Qt.DashLine if paused else Qt.SolidLine)
+            pen = QPen(color, FRAME_WIDTH, Qt.SolidLine)
             pen.setJoinStyle(Qt.MiterJoin)
             painter.setPen(pen)
             painter.setBrush(Qt.NoBrush)

@@ -161,9 +161,11 @@ def test_clicking_the_name_selects_the_block_and_limits_the_tools(window):
     assert canvas.move_mode._is_strand_allowed_by_selection(inside)
     assert not canvas.move_mode._is_strand_allowed_by_selection(outside)
     assert not canvas.attach_mode._is_strand_in_level_scope(outside)
-    # "Move only the selected strand" wins: the level selection pauses
+    # "Move only the selected strand" wins in Move mode only: Attach and
+    # Rotate still keep to the level
     canvas.move_selected_only = True
-    assert canvas.is_strand_in_level_scope(outside)
+    assert not canvas.is_strand_in_level_scope(outside)
+    assert not canvas.attach_mode._is_strand_in_level_scope(outside)
     canvas.move_selected_only = False
     click(button, button.width() // 2)
     assert lp.level_scope() is None and canvas.is_strand_in_level_scope(outside)
@@ -185,6 +187,22 @@ def test_the_frame_is_drawn_in_the_level_colour(window):
     below = lp.layer_buttons[window.canvas.strands.index(find(window, "2_3"))]
     y = below.mapTo(lp.scroll_content, QPoint(0, below.height() // 2)).y()
     assert QColor(image.pixel(0, y)).name() != lp.level_color(1).name()
+
+
+def test_the_frame_stays_solid_with_move_only_selected(window):
+    """The setting only changes Move; the level stays selected for Attach
+    and Rotate, so its frame looks the same."""
+    lp = window.layer_panel
+    lift_3_4_and_2_4(window)
+    lp.set_level_scope(1)
+    pump(150)
+    before = lp.scroll_content.grab().toImage()
+    window.canvas.move_selected_only = True
+    lp.scroll_content.update()
+    pump(150)
+    after = lp.scroll_content.grab().toImage()
+    window.canvas.move_selected_only = False
+    assert after == before
 
 
 def test_choosing_a_layer_outside_the_block_ends_the_selection(window):
@@ -215,13 +233,13 @@ def test_new_strands_land_on_the_selected_level(window):
     assert next(s for s in saved["strands"] if s["layer_name"] == "5_1")["level"] == 1
 
 
-def test_a_paused_selection_does_not_take_new_strands(window):
+def test_move_only_selected_keeps_new_strands_on_the_level(window):
     lp = window.layer_panel
     lift_3_4_and_2_4(window)
     lp.new_level_button.click()  # empty Level 2 on top
     pump()
     lp.set_level_scope(1)
-    window.canvas.move_selected_only = True  # pauses the selected block
+    window.canvas.move_selected_only = True  # limits Move only, not where new strands land
     template = find(window, "1_1")
     new = type(template)(QPointF(1080, 532), QPointF(1424, 532), 46)
     new.layer_name, new.set_number = "5_1", 5
@@ -229,7 +247,7 @@ def test_a_paused_selection_does_not_take_new_strands(window):
     lp.on_strand_created(new)
     pump(100)
     window.canvas.move_selected_only = False
-    assert new.level == 2
+    assert new.level == 1
 
 
 def test_undo_to_the_start_drops_folds(window):

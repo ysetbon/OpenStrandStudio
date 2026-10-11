@@ -758,12 +758,10 @@ def set_mask_level(mask, level, top_level=0):
 
 def landing_level(canvas):
     """Where a new strand lands on *canvas*: the level whose block is
-    selected in the layer panel, otherwise the top level. A selection paused
-    by "move only the selected strand" does not count: Attach can then start
-    from any strand, and the new one must not go under it."""
+    selected in the layer panel, otherwise the top level."""
     top = int(getattr(canvas, 'level_count', 0) or 0)
     scope = getattr(canvas, 'level_scope', None)
-    if getattr(canvas, 'move_selected_only', False) or not isinstance(scope, int):
+    if not isinstance(scope, int):
         return top
     return scope if 0 <= scope <= top else top
 

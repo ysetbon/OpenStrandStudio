@@ -2359,7 +2359,8 @@ class StrandDrawingCanvas(QWidget):
                                     if not self.is_strand_in_selected_family(strand):
                                         continue
                                 # A selected level's block: only its strands can be used
-                                if not self.is_strand_in_level_scope(strand):
+                                # (the setting above takes precedence in Move mode)
+                                elif not self.is_strand_in_level_scope(strand):
                                     continue
 
                                 if hasattr(strand, 'start') and hasattr(strand, 'end'):
@@ -6138,10 +6139,11 @@ class StrandDrawingCanvas(QWidget):
     def is_strand_in_level_scope(self, strand):
         """Whether Move, Attach and Rotate may find *strand* while a level's
         block is selected in the layer panel: only that level's strands.
-        The "move only the selected strand" setting takes precedence and
-        pauses the level selection."""
+        In Move mode the "move only the selected strand" setting takes
+        precedence (MoveMode checks it first); Attach and Rotate always
+        keep to the level."""
         scope = getattr(self, 'level_scope', None)
-        if scope is None or getattr(self, 'move_selected_only', False):
+        if scope is None:
             return True
         from save_load_manager import strand_level
         return strand_level(strand, int(getattr(self, 'level_count', 0) or 0)) == scope
@@ -6263,7 +6265,8 @@ class StrandDrawingCanvas(QWidget):
                 if getattr(self, 'show_cp_selected_only', False) or (getattr(self, 'move_selected_only', False) and in_move_mode):
                     if not self.is_strand_in_selected_family(strand):
                         continue
-                if in_move_mode and not self.is_strand_in_level_scope(strand):
+                if (in_move_mode and not getattr(self, 'move_selected_only', False)
+                        and not self.is_strand_in_level_scope(strand)):
                     continue
 
                 # --- Determine if we should skip drawing CPs for this strand ---

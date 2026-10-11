@@ -3445,6 +3445,22 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         """Whether the block *level* carries is folded (0: the ground's)."""
         return level in self.folded_levels
 
+    def level_block_size(self, level):
+        """How many layers of the current tab the block of *level* holds:
+        the layers its fold control hides."""
+        if self.canvas is None:
+            return 0
+        strands = getattr(self.canvas, 'strands', None) or []
+        top = self._top_level()
+        tab = getattr(self, 'layer_tab', 'strands')
+        return sum(1 for i, strand in enumerate(strands)
+                   if strand_level(strand, top) == level and self._layer_tab_of(i) == tab)
+
+    def level_count_text(self, key, count):
+        """A level string about *count* layers ("Hide 3 layers", "Show 1
+        layer"): the key's "_one" form for a single layer."""
+        return self.level_text(key + '_one' if count == 1 else key).format(n=count)
+
     def toggle_level_fold(self, level):
         """Fold or unfold the block *level* carries. Folded layers are
         hidden entirely; nothing about the design changes."""
@@ -3596,7 +3612,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self.ground_row = None
         if self.canvas is not None:
             # Folds and the selected block of levels that are gone (with no
-            # levels there is no chevron left to open the ground)
+            # levels there is no fold tab left to open the ground)
             self.folded_levels = {n for n in self.folded_levels if n <= count} if count else set()
             scope = self.level_scope()
             if scope is not None and (scope > count or (scope == 0 and not want_ground)):

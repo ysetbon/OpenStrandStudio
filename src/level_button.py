@@ -10,7 +10,7 @@ Every line folds the layers resting on it, with one control at its left end:
 the 30 px at the left of the level button, and a small tab at the left of
 the ground line. The control is a little stack of layers on a line; once
 folded, the stack turns into the number of hidden layers. Pointing at it
-swaps the level's name for what a click does ("Hide 3 layers"). A folded
+swaps the level's name for what a click does ("Collapse" or "Expand"). A folded
 block is hidden entirely.
 
 On the Strands tab, a click on the name selects the level's block:
@@ -240,14 +240,13 @@ class LevelButton(QPushButton):
         folded = panel.is_level_folded(level)
         count = panel.level_block_size(level)
         _draw_fold_glyph(painter, QPointF(FOLD_ZONE_WIDTH / 2.0, self.height() / 2.0), folded, count)
+        name_rect = self.rect().adjusted(FOLD_ZONE_WIDTH, 1, -FOLD_ZONE_WIDTH, 1)
         if self._hover_zone == 'fold':
-            # Say what the click does, in place of the name
-            hint = panel.level_count_text('level_show_layers' if folded else 'level_hide_layers', count)
-            rect = self.rect().adjusted(FOLD_ZONE_WIDTH + 2, 1, -4, 1)
-            text, size = _fit_text(hint, rect.width(), 13, 9)
-            _draw_outlined_text(painter, rect, text, size)
+            # Say what the click does, in place of the name and at its size
+            hint = panel.level_text('level_expand' if folded else 'level_collapse')
+            text, size = _fit_text(hint, name_rect.width(), 14, 10)
+            _draw_outlined_text(painter, name_rect, text, size)
         else:
-            name_rect = self.rect().adjusted(FOLD_ZONE_WIDTH, 1, -FOLD_ZONE_WIDTH, 1)
             _draw_outlined_text(painter, name_rect, self.row.text(), 14)
         if self.hasFocus():
             painter.setPen(QPen(Qt.white, 1, Qt.DotLine))

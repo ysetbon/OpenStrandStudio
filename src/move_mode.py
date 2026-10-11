@@ -1798,6 +1798,9 @@ class MoveMode:
         strands keep their start/end squares and stay movable."""
         if getattr(self.canvas, 'move_selected_only', False):
             return self.canvas.is_strand_in_selected_family(strand)
+        # A level's block selected in the layer panel: only its strands
+        if hasattr(self.canvas, 'is_strand_in_level_scope') and not self.canvas.is_strand_in_level_scope(strand):
+            return False
         if for_control_points and getattr(self.canvas, 'show_cp_selected_only', False):
             return self.canvas.is_strand_in_selected_family(strand)
         return True

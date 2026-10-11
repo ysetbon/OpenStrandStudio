@@ -311,6 +311,8 @@ def serialize_project_state(strands, groups, canvas):
             serialized = serialize_strand(strand, canvas, i)
             if level_count > 0 and not isinstance(strand, MaskedStrand):
                 serialized["level"] = strand_level(strand, level_count)
+            elif level_count > 0 and mask_own_level(strand) is not None:
+                serialized["level"] = mask_own_level(strand)  # raised on the Masks tab
             serialized_strands.append(serialized)
         except Exception as e:
             # Skip this strand if it can't be serialized
@@ -381,6 +383,11 @@ def serialize_project_state(strands, groups, canvas):
     }
     if level_count > 0:
         data["level_count"] = level_count  # Levels above the ground, empty ones included
+        level_colors = {str(level): value
+                        for level, value in (getattr(canvas, 'level_colors', None) or {}).items()
+                        if isinstance(level, int) and 0 <= level <= level_count and isinstance(value, str)}
+        if level_colors:
+            data["level_colors"] = level_colors  # only the levels given a colour of their own
     return data
 
 
@@ -707,19 +714,46 @@ def strand_level(strand, top_level=0):
 
     A strand with no level yet (just created) lands on *top_level*, the
     highest level, because new strands are always put on top of the stack. A
-    mask has no level of its own: it takes the higher level of its two
-    strands, so it never paints over anything on a higher level."""
+    mask takes the higher level of its two strands, so it never paints over
+    anything on a higher level; moving levels on the Masks tab can raise it
+    higher still (see set_mask_level), never lower."""
     if isinstance(strand, MaskedStrand):
-        # Read straight from the instance: MaskedStrand.__getattr__ looks
-        # missing names up through these two, so getattr on a mask that
-        # never had them recurses.
-        own = getattr(strand, '__dict__', {})
-        levels = [strand_level(part, top_level)
-                  for part in (own.get('first_selected_strand'), own.get('second_selected_strand'))
-                  if part is not None]
-        return max(levels, default=0)
+        base = mask_base_level(strand, top_level)
+        own = mask_own_level(strand)
+        return base if own is None else max(base, own)
     level = getattr(strand, 'level', None)
     return top_level if level is None else level
+
+
+def mask_base_level(mask, top_level=0):
+    """The lowest level a mask can sit on: the higher level of its two
+    strands (below that, one of them would be drawn over it)."""
+    # Read straight from the instance: MaskedStrand.__getattr__ looks
+    # missing names up through these two, so getattr on a mask that
+    # never had them recurses.
+    own = getattr(mask, '__dict__', {})
+    levels = [strand_level(part, top_level)
+              for part in (own.get('first_selected_strand'), own.get('second_selected_strand'))
+              if part is not None]
+    return max(levels, default=0)
+
+
+def mask_own_level(mask):
+    """The level a mask was raised to on the Masks tab, or None when it just
+    follows its two strands. (Read from the instance, not through
+    MaskedStrand.__getattr__, which would hand back a strand's level.)"""
+    level = getattr(mask, '__dict__', {}).get('level')
+    return level if isinstance(level, int) and not isinstance(level, bool) else None
+
+
+def set_mask_level(mask, level, top_level=0):
+    """Put a mask on *level*, or as low as it can go (its strands' level)
+    when *level* is lower. A mask on its strands' level keeps no level of
+    its own, so it goes on following them."""
+    if level is None or level <= mask_base_level(mask, top_level):
+        mask.__dict__.pop('level', None)
+    else:
+        mask.__dict__['level'] = int(level)
 
 
 def assign_levels(strands, top_level):
@@ -1070,7 +1104,7 @@ def load_strands_from_data(data, canvas):
     strands = [s for s in strands if s is not None]
 
     # Levels: a file with none puts every strand on level 0, the ground.
-    # (A mask has no level of its own; it follows its two strands.)
+    # (A mask follows its two strands unless it was raised on the Masks tab.)
     saved_levels = {d.get("layer_name"): d.get("level") for d in data.get("strands", []) if isinstance(d, dict)}
     highest_level = 0
     for strand in strands:
@@ -1079,11 +1113,27 @@ def load_strands_from_data(data, canvas):
         level = saved_levels.get(strand.layer_name)
         strand.level = level if isinstance(level, int) and level > 0 else 0
         highest_level = max(highest_level, strand.level)
+    for strand in strands:
+        if isinstance(strand, MaskedStrand):
+            level = saved_levels.get(strand.layer_name)
+            set_mask_level(strand, level if isinstance(level, int) and level > 0 else None)
+            highest_level = max(highest_level, mask_own_level(strand) or 0)
     try:
         saved_count = int(data.get("level_count", 0) or 0)
     except (TypeError, ValueError):
         saved_count = 0
     canvas.level_count = max(saved_count, highest_level)
+    level_colors = {}
+    saved_colors = data.get("level_colors") or {}
+    if isinstance(saved_colors, dict):
+        for key, value in saved_colors.items():
+            try:
+                level = int(key)
+            except (TypeError, ValueError):
+                continue
+            if 0 <= level <= canvas.level_count and isinstance(value, str):
+                level_colors[level] = value
+    canvas.level_colors = level_colors
 
     # Fourth pass: Validate has_circles based on actual attached strands
     for strand in strands:

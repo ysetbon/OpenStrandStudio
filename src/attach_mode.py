@@ -798,6 +798,8 @@ class AttachMode(QObject):
                     continue
                 if self._is_strand_locked(strand):
                     continue
+                if not self._is_strand_in_level_scope(strand):
+                    continue
 
                 # Check start point (if no circle attached)
                 if not strand.has_circles[0]:
@@ -1032,6 +1034,12 @@ class AttachMode(QObject):
         except RuntimeError:
             return raw_pos
 
+    def _is_strand_in_level_scope(self, strand):
+        """Whether *strand* is in the level block selected in the layer panel
+        (always, when none is selected)."""
+        check = getattr(self.canvas, 'is_strand_in_level_scope', None)
+        return check(strand) if check is not None else True
+
     def handle_strand_attachment(self, pos):
         """Handle the attachment of a new strand to an existing one."""
         try:
@@ -1040,6 +1048,9 @@ class AttachMode(QObject):
 
             for strand in self.canvas.strands:
                 if not isinstance(strand, MaskedStrand) and not getattr(strand, 'is_hidden', False) and strand in self.canvas.strands:
+                    # A level's block selected in the layer panel: only its strands
+                    if not self._is_strand_in_level_scope(strand):
+                        continue
                     # Check if the strand has any free sides
                     if self.has_free_side(strand):
                         # Try to attach to the strand
@@ -1295,7 +1306,8 @@ class AttachMode(QObject):
         """Recursively try to attach to any of the attached strands."""
         try:
             for attached_strand in attached_strands:
-                if not getattr(attached_strand, 'is_hidden', False) and attached_strand in self.canvas.strands and self.has_free_side(attached_strand):
+                if (not getattr(attached_strand, 'is_hidden', False) and attached_strand in self.canvas.strands
+                        and self._is_strand_in_level_scope(attached_strand) and self.has_free_side(attached_strand)):
                     if self.try_attach_to_strand(attached_strand, pos, None):
                         return True
                     if self.try_attach_to_attached_strands(attached_strand.attached_strands, pos, None):

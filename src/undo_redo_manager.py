@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QPushButton, QStyle, QStyleOption, QDialog
 from PyQt5.QtCore import QObject, pyqtSignal, Qt, QTimer, QPoint, QEvent
 from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics, QColor, QBrush, QLinearGradient, QPalette, QIcon
 from render_utils import RenderUtils
-from save_load_manager import save_strands, load_strands, apply_loaded_strands, strand_level
+from save_load_manager import save_strands, load_strands, apply_loaded_strands, strand_level, mask_own_level
 # Import QTimer here to avoid UnboundLocalError
 from PyQt5.QtCore import QTimer
 # CollapsibleGroupWidget import removed — GroupPanel now uses QTreeWidget items
@@ -485,13 +485,20 @@ class UndoRedoManager(QObject):
                 self.max_step = self.current_step
 
     def _level_signature(self):
-        """(level count, each strand's level) of the canvas now; empty with
-        no levels, so files without levels compare exactly as before."""
+        """(level count, each strand's level, each raised mask's level, the
+        level colours) of the canvas now; empty with no levels, so files
+        without levels compare exactly as before."""
         count = int(getattr(self.canvas, 'level_count', 0) or 0)
         if count <= 0:
             return (0, ())
-        return (count, tuple((s.layer_name, strand_level(s, count))
-                             for s in self.canvas.strands if not isinstance(s, MaskedStrand)))
+        colors = getattr(self.canvas, 'level_colors', None) or {}
+        return (count,
+                tuple((s.layer_name, strand_level(s, count))
+                      for s in self.canvas.strands if not isinstance(s, MaskedStrand)),
+                tuple((s.layer_name, mask_own_level(s))
+                      for s in self.canvas.strands
+                      if isinstance(s, MaskedStrand) and mask_own_level(s) is not None),
+                tuple(sorted((int(k), v) for k, v in colors.items() if 0 <= int(k) <= count)))
 
     @staticmethod
     def _level_signature_from_data(data):
@@ -500,9 +507,22 @@ class UndoRedoManager(QObject):
         count = int(data.get('level_count', 0) or 0)
         if count <= 0:
             return (0, ())
-        return (count, tuple((s.get('layer_name'), s.get('level', 0) or 0)
-                             for s in data.get('strands', [])
-                             if s.get('type') != 'MaskedStrand' and 'layer_name' in s))
+        colors = {}
+        for key, value in (data.get('level_colors') or {}).items():
+            try:
+                level = int(key)
+            except (TypeError, ValueError):
+                continue
+            if 0 <= level <= count and isinstance(value, str):
+                colors[level] = value
+        return (count,
+                tuple((s.get('layer_name'), s.get('level', 0) or 0)
+                      for s in data.get('strands', [])
+                      if s.get('type') != 'MaskedStrand' and 'layer_name' in s),
+                tuple((s.get('layer_name'), s.get('level'))
+                      for s in data.get('strands', [])
+                      if s.get('type') == 'MaskedStrand' and isinstance(s.get('level'), int)),
+                tuple(sorted(colors.items())))
 
     def _would_be_identical_save(self):
         """Check if the current state would be identical to the previous saved state."""

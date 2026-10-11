@@ -1286,6 +1286,8 @@ class StrandDrawingCanvas(QWidget):
         """Initialize all properties used in the StrandDrawingCanvas."""
         self.strands = []  # List to store all strands
         self.level_count = 0  # Levels above the ground (the Level button); see save_load_manager.keep_masks_on_top
+        self.level_colors = {}  # level -> "preset:<key>" or "#rrggbb" (see level_button.resolve_level_color)
+        self.level_scope = None  # The level whose block is selected in the layer panel (see is_strand_in_level_scope)
         self.current_strand = None  # Currently active strand
         self.strand_width = 46  # Width of strands
         self.strand_color = QColor(200, 170, 230, 255)   # Default color for strands
@@ -1649,6 +1651,8 @@ class StrandDrawingCanvas(QWidget):
         """
         self.strands = []
         self.level_count = 0
+        self.level_colors = {}
+        self.level_scope = None
         self.groups = {}
         self.clear_set_color_state()
 
@@ -2354,6 +2358,9 @@ class StrandDrawingCanvas(QWidget):
                                 if getattr(self, 'move_selected_only', False):
                                     if not self.is_strand_in_selected_family(strand):
                                         continue
+                                # A selected level's block: only its strands can be used
+                                if not self.is_strand_in_level_scope(strand):
+                                    continue
 
                                 if hasattr(strand, 'start') and hasattr(strand, 'end'):
                                     # Check if a control point or strand point is being moved
@@ -5347,6 +5354,8 @@ class StrandDrawingCanvas(QWidget):
         """Clear all strands from the canvas."""
         self.strands.clear()
         self.level_count = 0
+        self.level_colors = {}
+        self.level_scope = None
         self.clear_set_color_state()
         self.current_strand = None
         self.selected_strand_index = None
@@ -6115,6 +6124,17 @@ class StrandDrawingCanvas(QWidget):
         finally:
             painter.restore()
 
+    def is_strand_in_level_scope(self, strand):
+        """Whether Move, Attach and Rotate may find *strand* while a level's
+        block is selected in the layer panel: only that level's strands.
+        The "move only the selected strand" setting takes precedence and
+        pauses the level selection."""
+        scope = getattr(self, 'level_scope', None)
+        if scope is None or getattr(self, 'move_selected_only', False):
+            return True
+        from save_load_manager import strand_level
+        return strand_level(strand, int(getattr(self, 'level_count', 0) or 0)) == scope
+
     def is_strand_in_selected_family(self, strand):
         """Centralized family check for move_selected_only and show_cp_selected_only.
         Returns True if the strand should be visible/interactive, False to hide/block it."""
@@ -6232,6 +6252,8 @@ class StrandDrawingCanvas(QWidget):
                 if getattr(self, 'show_cp_selected_only', False) or (getattr(self, 'move_selected_only', False) and in_move_mode):
                     if not self.is_strand_in_selected_family(strand):
                         continue
+                if in_move_mode and not self.is_strand_in_level_scope(strand):
+                    continue
 
                 # --- Determine if we should skip drawing CPs for this strand ---
                 should_skip = False

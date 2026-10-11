@@ -16,7 +16,7 @@ from masked_strand import MaskedStrand
 from attached_strand import AttachedStrand
 from translations import translations
 from save_load_manager import (keep_masks_on_top, assign_levels, strand_level,
-                               mask_base_level, set_mask_level)
+                               mask_base_level, set_mask_level, landing_level)
 from level_button import (LevelRow, GroundRow, LEVEL_LINE_HEIGHT, FRAME_RAIL_WIDTH, FRAME_WIDTH,
                           resolve_level_color, theme_key)
 from PyQt5.QtWidgets import (
@@ -3212,15 +3212,8 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         return int(getattr(self.canvas, 'level_count', 0) or 0)
 
     def _landing_level(self):
-        """Where a new strand lands: the selected level's block while one is
-        selected, otherwise the top level. A selection paused by "move only
-        the selected strand" does not count: Attach can then start from any
-        strand, and the new one must not go under it."""
-        top = self._top_level()
-        scope = self.level_scope()
-        if getattr(self.canvas, 'move_selected_only', False):
-            return top
-        return scope if scope is not None and 0 <= scope <= top else top
+        """Where a new strand lands (see save_load_manager.landing_level)."""
+        return landing_level(self.canvas)
 
     # ------------------------------------------------------------------
     # Levels: storeys in the layer stack (level_button.py draws the rows;
@@ -4608,7 +4601,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # otherwise the top level.
         if (self.canvas is not None and not isinstance(strand, MaskedStrand)
                 and getattr(strand, 'level', None) is None):
-            strand.level = self._landing_level()
+            strand.level = landing_level(self.canvas)
         
         # SUPER EXPLICIT DEBUG - log everything before processing
         if hasattr(strand, 'layer_name') and strand.layer_name:

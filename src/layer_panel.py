@@ -3445,6 +3445,22 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         """Whether the block *level* carries is folded (0: the ground's)."""
         return level in self.folded_levels
 
+    def level_block_size(self, level):
+        """How many layers of the current tab the block of *level* holds:
+        the layers its fold control hides."""
+        if self.canvas is None:
+            return 0
+        strands = getattr(self.canvas, 'strands', None) or []
+        top = self._top_level()
+        tab = getattr(self, 'layer_tab', 'strands')
+        return sum(1 for i, strand in enumerate(strands)
+                   if strand_level(strand, top) == level and self._layer_tab_of(i) == tab)
+
+    def level_count_text(self, key, count):
+        """A level string about *count* layers ("Hide 3 layers", "Show 1
+        layer"): the key's "_one" form for a single layer."""
+        return self.level_text(key + '_one' if count == 1 else key).format(n=count)
+
     def toggle_level_fold(self, level):
         """Fold or unfold the block *level* carries. Folded layers are
         hidden entirely; nothing about the design changes."""
@@ -3533,28 +3549,23 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         the level row above to the level's own line, in the level's colour.
         Under the rows (*over_rows* False) go a tint and a rail down each
         side; over them goes the border, so it shows however narrow the list
-        is. A dashed, faded frame means the "move only the selected strand"
-        setting has paused the level selection."""
+        is."""
         span = self._level_frame_span()
         if span is None:
             return
         top, bottom = span
         color = self.level_color(self.level_scope())
-        paused = bool(getattr(self.canvas, 'move_selected_only', False))
         painter.save()
         if not over_rows:
             tint = QColor(color)
-            tint.setAlpha(20 if paused else (41 if self._level_theme() == 'dark' else 31))
+            tint.setAlpha(41 if self._level_theme() == 'dark' else 31)
             painter.fillRect(0, top, width, bottom - top, tint)
-            if not paused:
-                # The same rail on both sides, so the frame is as thick on
-                # the right as on the left (in either reading direction)
-                painter.fillRect(0, top, FRAME_RAIL_WIDTH, bottom - top, color)
-                painter.fillRect(width - FRAME_RAIL_WIDTH, top, FRAME_RAIL_WIDTH, bottom - top, color)
+            # The same rail on both sides, so the frame is as thick on
+            # the right as on the left (in either reading direction)
+            painter.fillRect(0, top, FRAME_RAIL_WIDTH, bottom - top, color)
+            painter.fillRect(width - FRAME_RAIL_WIDTH, top, FRAME_RAIL_WIDTH, bottom - top, color)
         else:
-            if paused:
-                color.setAlpha(150)
-            pen = QPen(color, FRAME_WIDTH, Qt.DashLine if paused else Qt.SolidLine)
+            pen = QPen(color, FRAME_WIDTH, Qt.SolidLine)
             pen.setJoinStyle(Qt.MiterJoin)
             painter.setPen(pen)
             painter.setBrush(Qt.NoBrush)
@@ -3596,7 +3607,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self.ground_row = None
         if self.canvas is not None:
             # Folds and the selected block of levels that are gone (with no
-            # levels there is no chevron left to open the ground)
+            # levels there is no fold tab left to open the ground)
             self.folded_levels = {n for n in self.folded_levels if n <= count} if count else set()
             scope = self.level_scope()
             if scope is not None and (scope > count or (scope == 0 and not want_ground)):

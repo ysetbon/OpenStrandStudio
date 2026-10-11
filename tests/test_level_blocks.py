@@ -1,7 +1,8 @@
 """Level blocks: what a level row does beyond marking a storey.
 
-- the chevrons inside the level button fold the block above (the layers the
-  level carries) and the block below; folded layers are hidden entirely
+- every line has one fold control at its left end (the level button's left
+  edge, the ground line's tab) that folds the layers resting on it; folded
+  layers are hidden entirely
 - a click on the name selects the level's block: the panel frames it and
   Move, Attach and Rotate only find its strands, unless "move only the
   selected strand" is on
@@ -66,24 +67,44 @@ def drop_below(lp, source_widget, target_widget):
 
 # --- folding -----------------------------------------------------------------
 
-def test_chevrons_inside_the_button_fold_the_blocks(window):
+def test_each_line_folds_the_layers_resting_on_it(window):
     lp = window.layer_panel
     lift_3_4_and_2_4(window)
     before = [s.layer_name for s in window.canvas.strands]
     button = lp.level_rows[0].button
-    click(button, 5)  # left chevron: the layers Level 1 carries
+    click(button, 5)  # the fold control: the layers Level 1 carries
     assert lp.is_level_folded(1)
     assert "2_4" not in list_order(lp) and "3_4" not in list_order(lp)
     assert "2_3" in list_order(lp)
-    click(button, button.width() - 5)  # right chevron: the ground under it
+    # The right end is part of the name now: it selects, it never folds
+    click(button, button.width() - 5)
+    assert not lp.is_level_folded(0) and lp.level_scope() == 1
+    lp.set_level_scope(None)
+    ground = lp.ground_row
+    click(ground, ground.tab_rect().center().x())  # the ground line's tab
     assert lp.is_level_folded(0) and "2_3" not in list_order(lp)
     assert list_order(lp) == ["Level 1", "Level 0"]  # the rows, then the ground line
+    assert lp.level_scope() is None  # the tab folds, it does not select
     # Folding is only a view: nothing about the design changed
     assert [s.layer_name for s in window.canvas.strands] == before
     click(button, 5)
-    click(button, button.width() - 5)
+    click(ground, ground.tab_rect().center().x())
     assert not lp.folded_levels and "2_4" in list_order(lp) and "2_3" in list_order(lp)
     assert_consistent(window)
+
+
+def test_the_fold_control_counts_the_layers_it_hides(window):
+    lp = window.layer_panel
+    lift_3_4_and_2_4(window)
+    on_level_1 = [s for s in window.canvas.strands
+                  if not isinstance(s, MaskedStrand) and strand_level(s, 1) == 1]
+    assert lp.level_block_size(1) == len(on_level_1) == 2
+    assert lp.level_count_text("level_hide_layers", 2) == "Hide 2 layers"
+    assert lp.level_count_text("level_show_layers", 1) == "Show 1 layer"
+    # On the Masks tab the control folds masks, so it counts masks
+    lp.set_layer_tab("masks")
+    pump()
+    assert lp.level_block_size(0) == len([m for m in masks(window) if strand_level(m, 1) == 0])
 
 
 def test_the_selected_layers_block_can_be_folded(window):
@@ -140,9 +161,11 @@ def test_clicking_the_name_selects_the_block_and_limits_the_tools(window):
     assert canvas.move_mode._is_strand_allowed_by_selection(inside)
     assert not canvas.move_mode._is_strand_allowed_by_selection(outside)
     assert not canvas.attach_mode._is_strand_in_level_scope(outside)
-    # "Move only the selected strand" wins: the level selection pauses
+    # "Move only the selected strand" wins in Move mode only: Attach and
+    # Rotate still keep to the level
     canvas.move_selected_only = True
-    assert canvas.is_strand_in_level_scope(outside)
+    assert not canvas.is_strand_in_level_scope(outside)
+    assert not canvas.attach_mode._is_strand_in_level_scope(outside)
     canvas.move_selected_only = False
     click(button, button.width() // 2)
     assert lp.level_scope() is None and canvas.is_strand_in_level_scope(outside)
@@ -164,6 +187,22 @@ def test_the_frame_is_drawn_in_the_level_colour(window):
     below = lp.layer_buttons[window.canvas.strands.index(find(window, "2_3"))]
     y = below.mapTo(lp.scroll_content, QPoint(0, below.height() // 2)).y()
     assert QColor(image.pixel(0, y)).name() != lp.level_color(1).name()
+
+
+def test_the_frame_stays_solid_with_move_only_selected(window):
+    """The setting only changes Move; the level stays selected for Attach
+    and Rotate, so its frame looks the same."""
+    lp = window.layer_panel
+    lift_3_4_and_2_4(window)
+    lp.set_level_scope(1)
+    pump(150)
+    before = lp.scroll_content.grab().toImage()
+    window.canvas.move_selected_only = True
+    lp.scroll_content.update()
+    pump(150)
+    after = lp.scroll_content.grab().toImage()
+    window.canvas.move_selected_only = False
+    assert after == before
 
 
 def test_choosing_a_layer_outside_the_block_ends_the_selection(window):
@@ -194,13 +233,13 @@ def test_new_strands_land_on_the_selected_level(window):
     assert next(s for s in saved["strands"] if s["layer_name"] == "5_1")["level"] == 1
 
 
-def test_a_paused_selection_does_not_take_new_strands(window):
+def test_move_only_selected_keeps_new_strands_on_the_level(window):
     lp = window.layer_panel
     lift_3_4_and_2_4(window)
     lp.new_level_button.click()  # empty Level 2 on top
     pump()
     lp.set_level_scope(1)
-    window.canvas.move_selected_only = True  # pauses the selected block
+    window.canvas.move_selected_only = True  # limits Move only, not where new strands land
     template = find(window, "1_1")
     new = type(template)(QPointF(1080, 532), QPointF(1424, 532), 46)
     new.layer_name, new.set_number = "5_1", 5
@@ -208,7 +247,7 @@ def test_a_paused_selection_does_not_take_new_strands(window):
     lp.on_strand_created(new)
     pump(100)
     window.canvas.move_selected_only = False
-    assert new.level == 2
+    assert new.level == 1
 
 
 def test_undo_to_the_start_drops_folds(window):
@@ -218,7 +257,7 @@ def test_undo_to_the_start_drops_folds(window):
     undo.clear_history(save_current=False)
     lp.toggle_level_fold(0)
     undo.save_state(allow_empty=True, action="test.first")
-    undo.undo()  # no levels left, so no chevron could open the ground again
+    undo.undo()  # no levels left, so no fold tab could open the ground again
     pump(150)
     assert not lp.folded_levels
 
@@ -290,6 +329,10 @@ def test_every_language_has_the_level_strings():
     assert len(keys) == 18
     for code, texts in translations.items():
         assert all(k in texts for k in keys), code
+    counted = ["level_hide_layers", "level_hide_layers_one", "level_show_layers", "level_show_layers_one"]
+    for code, texts in translations.items():
+        assert all(k in texts for k in counted), code
+        assert "{n}" in texts["level_hide_layers"] and "{n}" in texts["level_show_layers"], code
 
 
 # --- the ground line -----------------------------------------------------------
@@ -300,7 +343,7 @@ def test_ground_line_closes_the_ground_block(window):
     layout = lp.scroll_layout
     assert isinstance(layout.itemAt(layout.count() - 1).widget(), GroundRow)
     assert_consistent(window)
-    click(lp.ground_row, 20)
+    click(lp.ground_row, lp.ground_row.width() - 20)  # the line, past the fold tab
     assert lp.level_scope() == 0
     assert window.canvas.is_strand_in_level_scope(find(window, "2_3"))
     assert not window.canvas.is_strand_in_level_scope(find(window, "3_4"))
@@ -468,7 +511,7 @@ def test_the_masks_tab_selects_no_level(window, monkeypatch):
     button = lp.level_rows[0].button
     click(button, button.width() // 2)
     assert lp.level_scope() is None
-    click(lp.ground_row, 20)
+    click(lp.ground_row, lp.ground_row.width() - 20)  # the line, past the fold tab
     assert lp.level_scope() is None
     lp.set_level_scope(1)
     assert lp.level_scope() is None
@@ -477,7 +520,7 @@ def test_the_masks_tab_selects_no_level(window, monkeypatch):
     lp.level_rows[0].show_menu(QPoint(5, 5))
     texts = [a.defaultWidget().text() for a in menus[0].actions() if not a.isSeparator()]
     assert lp.level_text("level_select_block") not in texts
-    # The chevrons still fold on the Masks tab
+    # The fold control still folds on the Masks tab
     click(button, 5)
     assert lp.is_level_folded(1)
     # Back on the Strands tab, a level can be selected again

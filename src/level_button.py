@@ -6,10 +6,14 @@ A level row looks like a layer button, as wide as one and a third lower
 bottom of the layers it carries. Layers below the lowest level row are on the
 ground (level 0), closed by the ground line once any level exists.
 
-Inside the button, the 30 px at each edge are chevrons: the left one folds
-the block the level carries (the layers right above the row), the right one
-the block under it, down to the next level row. A folded block is hidden
-entirely. On the Strands tab, a click on the name selects the level's block:
+Every line folds the layers resting on it, with one control at its left end:
+the 30 px at the left of the level button, and a small tab at the left of
+the ground line. The control is a little stack of layers on a line; once
+folded, the stack turns into the number of hidden layers. Pointing at it
+swaps the level's name for what a click does ("Hide 3 layers"). A folded
+block is hidden entirely.
+
+On the Strands tab, a click on the name selects the level's block:
 the panel frames it and Move, Attach and Rotate only find its strands (see
 StrandDrawingCanvas.is_strand_in_level_scope). The Masks tab selects no
 level, since those tools never act on masks.
@@ -19,8 +23,8 @@ dragging the row moves it like any layer (LayerPanel.dropEvent turns the new
 position into levels).
 """
 
-from PyQt5.QtCore import QEvent, QMimeData, QPointF, QSize, Qt, QTimer
-from PyQt5.QtGui import QColor, QDrag, QFont, QPainter, QPainterPath, QPen
+from PyQt5.QtCore import QEvent, QMimeData, QPointF, QRect, QRectF, QSize, Qt, QTimer
+from PyQt5.QtGui import QColor, QDrag, QFont, QFontMetrics, QPainter, QPainterPath, QPen
 from PyQt5.QtWidgets import (QApplication, QColorDialog, QMenu, QPushButton,
                              QSizePolicy, QToolTip, QVBoxLayout, QWidget,
                              QWidgetAction)
@@ -30,10 +34,11 @@ LEVEL_BUTTON_SIZE = QSize(146, 27)
 LEVEL_LINE_HEIGHT = 4
 # The Default theme's level purple (each theme has its own, see THEME_LEVEL_COLORS)
 LEVEL_COLOR = QColor("#7a63b8")
-# Width of the fold chevron at each edge of the level button
-CHEVRON_ZONE_WIDTH = 30
-# The ground line: a 4 px line in a row tall enough to click
-GROUND_ROW_HEIGHT = 10
+# Width of the fold control at the left of the level button
+FOLD_ZONE_WIDTH = 30
+# The ground line: a 4 px line in a row tall enough for its fold tab
+GROUND_ROW_HEIGHT = 22
+GROUND_TAB_SIZE = QSize(FOLD_ZONE_WIDTH, 20)
 # Selection frame around a level's block
 FRAME_WIDTH = 2
 FRAME_RAIL_WIDTH = 3  # "Medium": 4 px of air before the buttons (LayerPanel.LAYER_LIST_SIDE_MARGIN is 7)
@@ -156,23 +161,42 @@ def _draw_outlined_text(painter, rect, text, pixel_size):
     painter.drawPath(path)
 
 
-def _draw_chevron(painter, center, pointing_up):
-    """A white chevron with a black outline, 10 px wide."""
-    dy = -2.5 if pointing_up else 2.5
-    path = QPainterPath()
-    path.moveTo(center.x() - 5, center.y() - dy)
-    path.lineTo(center.x(), center.y() + dy)
-    path.lineTo(center.x() + 5, center.y() - dy)
+def _fit_text(text, width, largest, smallest, bold=True):
+    """(text, pixel size) for *text* in *width* px: the largest size from
+    *largest* down to *smallest* that fits, elided if even that is too wide."""
+    font = QFont()
+    font.setBold(bold)
+    for size in range(largest, smallest - 1, -1):
+        font.setPixelSize(size)
+        if QFontMetrics(font).horizontalAdvance(text) <= width:
+            return text, size
+    return QFontMetrics(font).elidedText(text, Qt.ElideRight, int(width)), smallest
+
+
+def _draw_fold_glyph(painter, center, folded, count, scale=1.0):
+    """A line's fold control: a little stack of two layers resting on a line
+    while they show; once folded, the stack becomes the number of hidden
+    layers. White strokes with a black outline, like the layer names."""
+    painter.save()
+    painter.translate(center)
+    painter.scale(scale, scale)
     painter.setBrush(Qt.NoBrush)
-    painter.setPen(QPen(Qt.black, 4.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-    painter.drawPath(path)
-    painter.setPen(QPen(Qt.white, 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-    painter.drawPath(path)
+    strokes = [(-7, 8, 7)]  # the line: (left, y, right)
+    if not folded:
+        strokes += [(-5, 1, 5), (-5, -6, 5)]
+    for color, width in ((Qt.black, 4.5), (Qt.white, 2)):
+        painter.setPen(QPen(color, width, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        for left, y, right in strokes:
+            painter.drawLine(QPointF(left, y), QPointF(right, y))
+    if folded:
+        text = str(count) if count < 100 else '99+'
+        _draw_outlined_text(painter, QRectF(-15, -6, 30, 12), text, 12)
+    painter.restore()
 
 
 class LevelButton(QPushButton):
-    """The 146 x 27 button of a level row: fold chevrons at both edges, the
-    level's name in between, filled with the level's colour."""
+    """The 146 x 27 button of a level row: the fold control at the left
+    edge, the level's name in the middle, filled with the level's colour."""
 
     def __init__(self, row, parent=None):
         """A button of *row*, which supplies its text, colour and menu."""
@@ -191,19 +215,13 @@ class LevelButton(QPushButton):
         self.setStyleSheet("QPushButton { background: transparent; border: none; }")
 
     def zone_at(self, x):
-        """'above' (left chevron), 'below' (right chevron) or 'name'."""
-        if x < CHEVRON_ZONE_WIDTH:
-            return 'above'
-        if x >= self.width() - CHEVRON_ZONE_WIDTH:
-            return 'below'
-        return 'name'
+        """'fold' (the control at the left edge) or 'name'."""
+        return 'fold' if x < FOLD_ZONE_WIDTH else 'name'
 
     def zone_tooltip(self, zone):
         panel, level = self.row.layer_panel, self.row.level
-        if zone == 'above':
+        if zone == 'fold':
             key = 'level_unfold_above' if panel.is_level_folded(level) else 'level_fold_above'
-        elif zone == 'below':
-            key = 'level_unfold_below' if panel.is_level_folded(level - 1) else 'level_fold_below'
         elif not panel.level_selection_allowed():
             return ''  # the Masks tab selects no level
         else:
@@ -216,18 +234,20 @@ class LevelButton(QPushButton):
         painter.setRenderHint(QPainter.Antialiasing, True)
         color = self.row.color()
         painter.fillRect(self.rect(), color.lighter(112) if self.underMouse() else color)
-        if self._hover_zone in ('above', 'below'):
-            x = 0 if self._hover_zone == 'above' else self.width() - CHEVRON_ZONE_WIDTH
-            painter.fillRect(x, 0, CHEVRON_ZONE_WIDTH, self.height(), QColor(255, 255, 255, 55))
-        mid_y = self.height() / 2.0
-        # Left: folds the block above (points up while it shows, down once folded)
-        _draw_chevron(painter, QPointF(CHEVRON_ZONE_WIDTH / 2.0, mid_y),
-                      pointing_up=not panel.is_level_folded(level))
-        # Right: folds the block below (points down while it shows)
-        _draw_chevron(painter, QPointF(self.width() - CHEVRON_ZONE_WIDTH / 2.0, mid_y),
-                      pointing_up=panel.is_level_folded(level - 1))
-        name_rect = self.rect().adjusted(CHEVRON_ZONE_WIDTH, 1, -CHEVRON_ZONE_WIDTH, 1)
-        _draw_outlined_text(painter, name_rect, self.row.text(), 14)
+        if self._hover_zone == 'fold':
+            painter.fillRect(0, 0, FOLD_ZONE_WIDTH, self.height(), QColor(255, 255, 255, 55))
+        folded = panel.is_level_folded(level)
+        count = panel.level_block_size(level)
+        _draw_fold_glyph(painter, QPointF(FOLD_ZONE_WIDTH / 2.0, self.height() / 2.0), folded, count)
+        if self._hover_zone == 'fold':
+            # Say what the click does, in place of the name
+            hint = panel.level_count_text('level_show_layers' if folded else 'level_hide_layers', count)
+            rect = self.rect().adjusted(FOLD_ZONE_WIDTH + 2, 1, -4, 1)
+            text, size = _fit_text(hint, rect.width(), 13, 9)
+            _draw_outlined_text(painter, rect, text, size)
+        else:
+            name_rect = self.rect().adjusted(FOLD_ZONE_WIDTH, 1, -FOLD_ZONE_WIDTH, 1)
+            _draw_outlined_text(painter, name_rect, self.row.text(), 14)
         if self.hasFocus():
             painter.setPen(QPen(Qt.white, 1, Qt.DotLine))
             painter.setBrush(Qt.NoBrush)
@@ -261,8 +281,8 @@ class LevelButton(QPushButton):
         super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
-        """A click (no drag) runs its zone: fold above, fold below, or
-        select the level's block."""
+        """A click (no drag) runs its zone: fold the level's block, or
+        select it."""
         clicked_zone = None
         if (event.button() == Qt.LeftButton and self._drag_start_position is not None
                 and self.rect().contains(event.pos())
@@ -274,16 +294,14 @@ class LevelButton(QPushButton):
         if clicked_zone is None:
             return
         panel, level = self.row.layer_panel, self.row.level
-        if clicked_zone == 'above':
+        if clicked_zone == 'fold':
             panel.toggle_level_fold(level)
-        elif clicked_zone == 'below':
-            panel.toggle_level_fold(level - 1)
         elif panel.level_selection_allowed():
             panel.toggle_level_scope(level)
 
     def mouseMoveEvent(self, event):
-        """Track the hovered chevron; start dragging the whole row once a
-        held mouse has moved far enough."""
+        """Track the hovered fold control; start dragging the whole row once
+        a held mouse has moved far enough."""
         zone = self.zone_at(event.pos().x())
         if zone != self._hover_zone:
             self._hover_zone = zone
@@ -409,47 +427,87 @@ class LevelRow(_FullWidthRow):
 class GroundRow(_FullWidthRow):
     """Level 0, the ground, as a single 4 px line under the bottom layer.
 
-    Shown whenever at least one level exists. A click selects the ground's block like a level row's name;
-    right-click opens the level menu."""
+    Shown whenever at least one level exists. Its fold tab at the left, in
+    line with the level buttons' fold controls, folds the ground's block; a
+    click anywhere else selects that block like a level row's name.
+    Right-click opens the level menu."""
 
     def __init__(self, layer_panel, parent=None):
         super().__init__(layer_panel, 0, parent)
         self.setFixedHeight(GROUND_ROW_HEIGHT)
-        self.setCursor(Qt.PointingHandCursor)
-        self.setAttribute(Qt.WA_Hover, True)
+        self.setMouseTracking(True)
+        self._hover_zone = None
 
     def line_rect(self):
         """Where the 4 px line is drawn: the middle of the row."""
         top = (self.height() - LEVEL_LINE_HEIGHT) // 2
-        return self.rect().adjusted(0, top, 0, -(self.height() - LEVEL_LINE_HEIGHT - top))
+        return QRect(0, top, self.width(), LEVEL_LINE_HEIGHT)
+
+    def tab_rect(self):
+        """The fold tab: under the level buttons' fold controls."""
+        x = (self.width() - LEVEL_BUTTON_SIZE.width()) // 2
+        y = (self.height() - GROUND_TAB_SIZE.height()) // 2
+        return QRect(x, y, GROUND_TAB_SIZE.width(), GROUND_TAB_SIZE.height())
+
+    def zone_at(self, pos):
+        """'fold' (the tab) or 'line'."""
+        return 'fold' if self.tab_rect().contains(pos) else 'line'
+
+    def _set_hover_zone(self, zone):
+        if zone != self._hover_zone:
+            self._hover_zone = zone
+            self.update()
+
+    def leaveEvent(self, event):
+        self._set_hover_zone(None)
+        super().leaveEvent(event)
 
     def paintEvent(self, event):
+        panel = self.layer_panel
         painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing, True)
         color = self.color()
-        painter.fillRect(self.line_rect(), color.lighter(118) if self.underMouse() else color)
+        painter.fillRect(self.line_rect(), color.lighter(118) if self._hover_zone == 'line' else color)
+        tab = QRectF(self.tab_rect())
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(color.lighter(118) if self._hover_zone == 'fold' else color)
+        painter.drawRoundedRect(tab, 3, 3)
+        _draw_fold_glyph(painter, tab.center(), panel.is_level_folded(0), panel.level_block_size(0),
+                         scale=0.8)
         painter.end()
 
     def event(self, event):
         if event.type() == QEvent.ToolTip:
             panel = self.layer_panel
-            text = panel.level_name(0)
-            if panel.level_selection_allowed():
-                key = 'level_deselect_block' if panel.level_scope() == 0 else 'level_select_block'
-                text = '{} · {}'.format(text, panel.level_text(key))
-            QToolTip.showText(event.globalPos(), text, self)
+            if self.zone_at(event.pos()) == 'fold':
+                text = panel.level_text('level_unfold_above' if panel.is_level_folded(0)
+                                        else 'level_fold_above')
+            else:
+                text = panel.level_name(0)
+                if panel.level_selection_allowed():
+                    key = 'level_deselect_block' if panel.level_scope() == 0 else 'level_select_block'
+                    text = '{} · {}'.format(text, panel.level_text(key))
+            if text:
+                QToolTip.showText(event.globalPos(), text, self)
+            else:
+                QToolTip.hideText()
             return True
-        if event.type() == QEvent.HoverEnter:
-            # Clicking selects the ground's block, except on the Masks tab
-            self.setCursor(Qt.PointingHandCursor if self.layer_panel.level_selection_allowed()
-                           else Qt.ArrowCursor)
-        if event.type() in (QEvent.HoverEnter, QEvent.HoverLeave):
-            self.update()
         return super().event(event)
 
+    def mouseMoveEvent(self, event):
+        zone = self.zone_at(event.pos())
+        self._set_hover_zone(zone)
+        # The line selects the ground's block, except on the Masks tab
+        clickable = zone != 'line' or self.layer_panel.level_selection_allowed()
+        self.setCursor(Qt.PointingHandCursor if clickable else Qt.ArrowCursor)
+        super().mouseMoveEvent(event)
+
     def mouseReleaseEvent(self, event):
-        if (event.button() == Qt.LeftButton and self.rect().contains(event.pos())
-                and self.layer_panel.level_selection_allowed()):
-            self.layer_panel.toggle_level_scope(0)
+        if event.button() == Qt.LeftButton and self.rect().contains(event.pos()):
+            if self.zone_at(event.pos()) == 'fold':
+                self.layer_panel.toggle_level_fold(0)
+            elif self.layer_panel.level_selection_allowed():
+                self.layer_panel.toggle_level_scope(0)
         super().mouseReleaseEvent(event)
 
     def text(self):

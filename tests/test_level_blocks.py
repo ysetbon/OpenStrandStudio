@@ -99,8 +99,6 @@ def test_the_fold_control_counts_the_layers_it_hides(window):
     on_level_1 = [s for s in window.canvas.strands
                   if not isinstance(s, MaskedStrand) and strand_level(s, 1) == 1]
     assert lp.level_block_size(1) == len(on_level_1) == 2
-    assert lp.level_count_text("level_hide_layers", 2) == "Hide 2 layers"
-    assert lp.level_count_text("level_show_layers", 1) == "Show 1 layer"
     # On the Masks tab the control folds masks, so it counts masks
     lp.set_layer_tab("masks")
     pump()
@@ -329,10 +327,8 @@ def test_every_language_has_the_level_strings():
     assert len(keys) == 18
     for code, texts in translations.items():
         assert all(k in texts for k in keys), code
-    counted = ["level_hide_layers", "level_hide_layers_one", "level_show_layers", "level_show_layers_one"]
     for code, texts in translations.items():
-        assert all(k in texts for k in counted), code
-        assert "{n}" in texts["level_hide_layers"] and "{n}" in texts["level_show_layers"], code
+        assert texts.get("level_collapse") and texts.get("level_expand"), code
 
 
 # --- the ground line -----------------------------------------------------------

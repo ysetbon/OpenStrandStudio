@@ -3456,11 +3456,6 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         return sum(1 for i, strand in enumerate(strands)
                    if strand_level(strand, top) == level and self._layer_tab_of(i) == tab)
 
-    def level_count_text(self, key, count):
-        """A level string about *count* layers ("Hide 3 layers", "Show 1
-        layer"): the key's "_one" form for a single layer."""
-        return self.level_text(key + '_one' if count == 1 else key).format(n=count)
-
     def toggle_level_fold(self, level):
         """Fold or unfold the block *level* carries. Folded layers are
         hidden entirely; nothing about the design changes."""

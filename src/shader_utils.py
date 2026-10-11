@@ -1423,7 +1423,18 @@ def _subtracted(path, cut):
     two strands do at a seamless joint, Qt's boolean operation can return
     nothing, or a path reaching past *path*: the cut moved by a hundredth of
     a pixel is subtracted then (and *path* kept whole if that fails too).
-    Only an empty result is checked point by point, which is costly."""
+    Only an empty result is checked point by point, which is costly.
+
+    A *cut* that meets *path* at most along an edge, so that their bounding
+    rectangles overlap by less than half a pixel, removes nothing and is not
+    subtracted at all. Qt can drop a whole piece of *path* next to such an
+    edge and still return a path inside its bounds, which the checks below
+    take for a good result: a mask piece lying in the next row of a weave,
+    its edge on the receiver's edge, wiped a strand's shadow off the
+    receiver between two columns."""
+    overlap = path.boundingRect().intersected(cut.boundingRect())
+    if overlap.width() < 0.5 or overlap.height() < 0.5:
+        return QPainterPath(path)
     bounds = path.boundingRect().adjusted(-0.5, -0.5, 0.5, 0.5)
     result = QPainterPath(path).subtracted(cut)
     if result.isEmpty():

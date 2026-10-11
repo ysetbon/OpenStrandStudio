@@ -9,6 +9,7 @@ went missing, so a bad result can only leave a shadow where it was before,
 never wipe it out.
 """
 
+import json
 import os
 import sys
 from pathlib import Path
@@ -110,3 +111,73 @@ def test_a_strand_continuing_another_at_a_joint_is_joined_to_it():
     elsewhere = SimpleNamespace(start=QPointF(100, 40), end=QPointF(200, 50))
     assert shader_utils._joined(continuation, (parent,))
     assert not shader_utils._joined(elsewhere, (parent,))
+
+
+def test_a_cut_meeting_the_path_along_an_edge_removes_nothing():
+    path = rect(100, 100, 200, 54)
+    for cut in (rect(150, 154, 40, 60),    # below, sharing the bottom edge
+                rect(300, 90, 50, 80),     # beside, sharing the right edge
+                rect(150, 153.8, 40, 60)): # overlapping by a hairline
+        result = shader_utils._subtracted(path, cut)
+        for x, y in ((110, 110), (170, 150), (290, 127)):
+            assert result.contains(QPointF(x, y))
+
+
+def woven_scene():
+    """tests/shadow_scenes/woven_2x2_top_diagonal.json by layer name: a 2x2
+    weave with masks at its crossings and 2_4, the top layer, laid across
+    it diagonally."""
+    path = Path(__file__).resolve().parent / "shadow_scenes" / "woven_2x2_top_diagonal.json"
+    data = json.loads(path.read_text(encoding="utf-8"))["states"][0]["data"]
+    from save_load_manager import load_strands_from_data
+    loader = SimpleNamespace(strands=[], groups={}, strand_colors={}, shadow_enabled=True,
+                             _suppress_layer_panel_refresh=True, _suppress_repaint=True,
+                             update=lambda: None)
+    strands = load_strands_from_data(data, loader)[0]
+    canvas = SimpleNamespace(strands=strands, shadow_enabled=True, shadow_selected_only=False,
+                             enable_third_control_point=True,
+                             layer_state_manager=EveryShadowShown([s.layer_name for s in strands]))
+    for strand in strands:
+        strand.canvas = canvas
+        strand.control_point_base_fraction = 1.0
+        strand.distance_multiplier = 2.0
+        strand.curve_response_exponent = 2.0
+    for strand in strands:
+        if not hasattr(strand, "get_mask_path"):
+            strand.update_shape()
+    return {strand.layer_name: strand for strand in strands}
+
+
+class EveryShadowShown:
+    def __init__(self, order):
+        self.order = order
+
+    def getOrder(self):
+        return list(self.order)
+
+    def getConnections(self):
+        return {}
+
+    def get_shadow_override(self, casting, receiving):
+        return None
+
+    def get_shadow_visibility(self, casting, receiving):
+        return True
+
+    def get_subtracted_layers(self, casting, receiving):
+        return []
+
+
+def test_a_mask_in_the_next_row_leaves_the_top_strands_shadow_alone():
+    """2_4 crosses 1_2 (y 337-391) between columns 3_3 and 4_3, over column
+    3_2, which 1_2 lies above. Mask 3_2_2_3 lifts 3_2 over 2_3 in the next
+    row down: its piece starts at y 391, on 1_2's bottom edge. Subtracting it
+    from 2_4's shadow on 1_2 lost the whole piece between the two columns,
+    so 2_4 cast no shadow on 1_2 there."""
+    strands = woven_scene()
+    collected = shader_utils.draw_strand_shadow(None, strands["2_4"], None, num_steps=2,
+                                                max_blur_radius=30.0, collect_only=True, cache={})
+    outline = collected["stroke_path"]
+    assert outline.contains(QPointF(1090, 375))   # left of column 3_3, as before
+    assert outline.contains(QPointF(1204, 385))   # over column 3_2, between the masks
+    assert outline.contains(QPointF(1300, 390))   # right of column 4_3

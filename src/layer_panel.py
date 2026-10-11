@@ -437,6 +437,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
     GROUP_TOGGLE_ICON_SIZE = 13  # px edge of the chevron PNG inside the 30x22 toggle (16 px, 20% smaller)
     # Fixed width of NumberedLayerButton (setFixedSize(146, 40)).
     LAYER_LIST_BUTTON_WIDTH = 146
+    # Room on each side of the layer buttons, so a selected level's frame
+    # (rail and border, see level_button.FRAME_RAIL_WIDTH) never covers them
+    LAYER_LIST_SIDE_MARGIN = 7
     # Pressed half of the Strands / Masks switch (both halves share it).
     # Mocha brown: no other layer panel button uses a brown.
     LAYER_TAB_COLOR = "#a47551"
@@ -850,6 +853,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self.scroll_layout.setSpacing(2)  # Small, uniform gap
         self.scroll_layout.setContentsMargins(0, 0, 0, 0)  # Remove layout margins
         self.scroll_area.setWidget(self.scroll_content)
+        # The list keeps one width whether the scrollbar shows or not (see
+        # _sync_list_gutter): same room for a level's frame on both tabs
+        self.scroll_area.verticalScrollBar().rangeChanged.connect(lambda *_: self._sync_list_gutter())
+        self.scroll_area.installEventFilter(self)
         # --- Drag and Drop is now handled by DropTargetWidget ---
         # self.scroll_content.setAcceptDrops(True)
         # self.scroll_content.dragEnterEvent = self.dragEnterEvent
@@ -1823,7 +1830,11 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         button.setIconSize(QSize(icon_edge, icon_edge))
 
     def eventFilter(self, watched, event):
-        if watched in self._managed_icon_buttons and event.type() == QEvent.Resize:
+        if watched is getattr(self, 'scroll_area', None):
+            if event.type() in (QEvent.LayoutDirectionChange, QEvent.StyleChange, QEvent.Show):
+                QTimer.singleShot(0, self._sync_list_gutter)
+            return super().eventFilter(watched, event)
+        if watched in getattr(self, '_managed_icon_buttons', ()) and event.type() == QEvent.Resize:
             self.update_layer_panel_button_icon_size(watched)
         return super().eventFilter(watched, event)
     
@@ -1909,16 +1920,39 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
         self._apply_group_panel_alignment()
 
-    def list_column_min_width(self):
-        """Narrowest the layer-list column can be: the fixed-width layer
-        buttons (1_1, 1_2, ...) plus a real scrollbar gutter, so a vertical
-        scrollbar never paints over the buttons or under the group column."""
+    def _scrollbar_extent(self):
+        """Width of the layer list's vertical scrollbar."""
         vbar = self.scroll_area.verticalScrollBar()
-        extent = max(
+        return max(
             vbar.sizeHint().width(),
             self.style().pixelMetric(QStyle.PM_ScrollBarExtent, None, vbar),
         )
-        return self.LAYER_LIST_BUTTON_WIDTH + extent + 2
+
+    def _sync_list_gutter(self):
+        """While the list's scrollbar is hidden, keep its gutter as empty
+        space on the scrollbar's side, so the visible list is always the
+        layer buttons plus LAYER_LIST_SIDE_MARGIN on each side (the Masks tab,
+        usually too short to scroll, looks exactly like the Strands tab)."""
+        area = getattr(self, 'scroll_area', None)
+        if area is None:
+            return
+        try:
+            vbar = area.verticalScrollBar()
+            gutter = 0 if vbar.maximum() > vbar.minimum() else self._scrollbar_extent()
+            if area.layoutDirection() == Qt.RightToLeft:
+                area.setViewportMargins(gutter, 0, 0, 0)
+            else:
+                area.setViewportMargins(0, 0, gutter, 0)
+        except RuntimeError:
+            pass  # panel already deleted
+
+    def list_column_min_width(self):
+        """Narrowest the layer-list column can be: the fixed-width layer
+        buttons (1_1, 1_2, ...) with LAYER_LIST_SIDE_MARGIN on each side,
+        plus a real scrollbar gutter, so a vertical scrollbar never paints
+        over the buttons or under the group column, and a selected level's
+        frame has the same room on both sides (Strands and Masks tabs)."""
+        return self.LAYER_LIST_BUTTON_WIDTH + 2 * self.LAYER_LIST_SIDE_MARGIN + self._scrollbar_extent()
 
     def full_minimum_width(self):
         """Narrowest the whole panel can be with the group column expanded:
@@ -3490,7 +3524,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
     def paint_level_frame(self, painter, width, over_rows):
         """Frame the selected level's block: a closed box from the line of
         the level row above to the level's own line, in the level's colour.
-        Under the rows (*over_rows* False) go a tint and a rail down the left
+        Under the rows (*over_rows* False) go a tint and a rail down each
         side; over them goes the border, so it shows however narrow the list
         is. A dashed, faded frame means the "move only the selected strand"
         setting has paused the level selection."""
@@ -3506,7 +3540,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             tint.setAlpha(20 if paused else (46 if self._level_theme() == 'dark' else 34))
             painter.fillRect(0, top, width, bottom - top, tint)
             if not paused:
+                # The same rail on both sides, so the frame is as thick on
+                # the right as on the left (in either reading direction)
                 painter.fillRect(0, top, FRAME_RAIL_WIDTH, bottom - top, color)
+                painter.fillRect(width - FRAME_RAIL_WIDTH, top, FRAME_RAIL_WIDTH, bottom - top, color)
         else:
             if paused:
                 color.setAlpha(150)

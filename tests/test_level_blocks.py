@@ -523,3 +523,37 @@ def test_attach_circles_only_on_the_selected_level(window, monkeypatch):
     lp.set_level_scope(1)
     canvas.grab()
     assert circles_at(inside) and not circles_at(outside)
+
+
+def test_rotate_only_grabs_the_selected_level(window):
+    """Rotate mode can only take a free end of the selected level's strands."""
+    lp = window.layer_panel
+    canvas = window.canvas
+    lift_3_4_and_2_4(window)
+    canvas.set_mode("rotate")
+    rotate = canvas.rotate_mode
+    lp.set_level_scope(1)
+
+    def free_end(name):
+        s = find(window, name)
+        return s, (s.start if not s.has_circles[0] else s.end)
+
+    def grab(point):
+        rotate.affected_strand = None
+        rotate.is_rotating = False
+        rotate.handle_strand_rotation(point)
+        grabbed = rotate.affected_strand
+        rotate.affected_strand = None
+        rotate.is_rotating = False
+        return grabbed
+
+    for name in ("1_1", "2_3", "1_3"):
+        strand, point = free_end(name)
+        if not all(strand.has_circles):
+            assert grab(point) is not strand, name
+    strand, point = free_end("3_4")
+    assert grab(point) is strand
+    lp.set_level_scope(None)  # with no level selected every free end can be taken again
+    strand, point = free_end("1_1")
+    if not all(strand.has_circles):
+        assert grab(point) is not None

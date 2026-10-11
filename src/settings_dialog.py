@@ -135,8 +135,6 @@ class SettingsDialog(QDialog):
         self.default_stroke_color = getattr(canvas, 'default_stroke_color', QColor(0, 0, 0, 255))
         # Default level color: None follows the theme (see level_button.THEME_LEVEL_COLORS)
         self.default_level_color = getattr(canvas, 'default_level_color', None)
-        # The ground line (Level 0) under the bottom layer of the layer panel
-        self.show_ground_line = getattr(canvas, 'show_ground_line', False)
         # Default strand width parameters
         self.default_strand_width = getattr(canvas, 'strand_width', 46)
         self.default_stroke_width = getattr(canvas, 'stroke_width', 4)
@@ -163,7 +161,6 @@ class SettingsDialog(QDialog):
             self.canvas.default_strand_color = self.default_strand_color
             self.canvas.default_stroke_color = self.default_stroke_color
             self.canvas.default_level_color = self.default_level_color
-            self.canvas.show_ground_line = self.show_ground_line
             # Apply default strand width settings
             self.canvas.strand_width = self.default_strand_width
             self.canvas.stroke_width = self.default_stroke_width
@@ -1770,8 +1767,6 @@ class SettingsDialog(QDialog):
                                 self.default_level_color = QColor(r, g, b, a)
                             except Exception:
                                 self.default_level_color = None  # "theme"
-                        elif line.startswith('ShowGroundLine:'):
-                            self.show_ground_line = (line.split(':', 1)[1].strip().lower() == 'true')
                         elif line.startswith('DefaultStrandWidth:'):
                             try:
                                 self.default_strand_width = int(line.split(':', 1)[1].strip())
@@ -5530,7 +5525,6 @@ class SettingsDialog(QDialog):
                 file.write(f"DefaultStrandColor: {self.default_strand_color.red()},{self.default_strand_color.green()},{self.default_strand_color.blue()},{self.default_strand_color.alpha()}\n")
                 file.write(f"DefaultStrokeColor: {self.default_stroke_color.red()},{self.default_stroke_color.green()},{self.default_stroke_color.blue()},{self.default_stroke_color.alpha()}\n")
                 file.write(f"DefaultLevelColor: {self._default_level_color_setting()}\n")
-                file.write(f"ShowGroundLine: {str(bool(self.show_ground_line)).lower()}\n")
                 file.write(f"DefaultStrandWidth: {self.default_strand_width}\n")
                 file.write(f"DefaultStrokeWidth: {self.default_stroke_width}\n")
                 file.write(f"DefaultWidthGridUnits: {self.default_width_grid_units}\n")
@@ -5572,7 +5566,6 @@ class SettingsDialog(QDialog):
                     local_file.write(f"DefaultStrandColor: {self.default_strand_color.red()},{self.default_strand_color.green()},{self.default_strand_color.blue()},{self.default_strand_color.alpha()}\n")
                     local_file.write(f"DefaultStrokeColor: {self.default_stroke_color.red()},{self.default_stroke_color.green()},{self.default_stroke_color.blue()},{self.default_stroke_color.alpha()}\n")
                     local_file.write(f"DefaultLevelColor: {self._default_level_color_setting()}\n")
-                    local_file.write(f"ShowGroundLine: {str(bool(self.show_ground_line)).lower()}\n")
                     local_file.write(f"DefaultStrandWidth: {self.default_strand_width}\n")
                     local_file.write(f"DefaultStrokeWidth: {self.default_stroke_width}\n")
                     local_file.write(f"DefaultWidthGridUnits: {self.default_width_grid_units}\n")
@@ -5661,7 +5654,6 @@ class SettingsDialog(QDialog):
                     'a': self.default_stroke_color.alpha()
                 },
                 'default_level_color': self._default_level_color_setting(),
-                'show_ground_line': bool(self.show_ground_line),
                 'default_strand_width': self.default_strand_width,
                 'default_stroke_width': self.default_stroke_width,
                 'default_width_grid_units': self.default_width_grid_units,
@@ -5843,13 +5835,6 @@ class SettingsDialog(QDialog):
                     self.set_default_level_color(QColor(r, g, b, a), save=False)
                 except Exception:
                     self.set_default_level_color(None, save=False)
-
-            if 'show_ground_line' in settings:
-                self.show_ground_line = bool(settings['show_ground_line'])
-                layer_panel = getattr(self.canvas, 'layer_panel', None) if self.canvas else None
-                if layer_panel is not None and hasattr(layer_panel, 'set_ground_line_shown'):
-                    layer_panel.canvas.show_ground_line = self.show_ground_line
-                    layer_panel._sync_level_widgets()
 
             if 'default_strand_width' in settings:
                 self.default_strand_width = settings['default_strand_width']

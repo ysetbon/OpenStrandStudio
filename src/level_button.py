@@ -4,7 +4,7 @@ A level row looks like a layer button, as wide as one and a third lower
 (146 x 27 against 146 x 40), named "Level 1", "Level 2" and so on, with a
 4 px line under it that runs the whole width of the list. It sits at the
 bottom of the layers it carries. Layers below the lowest level row are on the
-ground (level 0), which has no row unless the ground line is shown.
+ground (level 0), closed by the ground line once any level exists.
 
 Inside the button, the 30 px at each edge are chevrons: the left one folds
 the block the level carries (the layers right above the row), the right one
@@ -399,8 +399,7 @@ class LevelRow(_FullWidthRow):
 class GroundRow(_FullWidthRow):
     """Level 0, the ground, as a single 4 px line under the bottom layer.
 
-    Shown only when the user turns the ground line on (and some level
-    exists). A click selects the ground's block like a level row's name;
+    Shown whenever at least one level exists. A click selects the ground's block like a level row's name;
     right-click opens the level menu."""
 
     def __init__(self, layer_panel, parent=None):
@@ -508,8 +507,6 @@ def show_level_menu(panel, level, widget, global_pos):
     menu.addSeparator()
     _add_row(menu, panel, t('level_recolor'), theme,
              pick(lambda: show_level_color_menu(panel, level, widget, global_pos)))
-    _add_row(menu, panel, t('level_hide_ground_line' if panel.ground_line_shown() else 'level_show_ground_line'),
-             theme, pick(lambda: panel.set_ground_line_shown(not panel.ground_line_shown())))
     if level > 0:
         menu.addSeparator()
         _add_row(menu, panel, t('level_remove'), theme, pick(lambda: panel.remove_level(level)))

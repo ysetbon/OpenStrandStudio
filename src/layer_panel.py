@@ -3477,7 +3477,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             return
         if level is not None and not (0 <= level <= self._top_level()):
             level = None
-        if level == 0 and not (self.ground_line_shown() and self._top_level() > 0):
+        if level == 0 and not self.ground_line_shown():
             level = None  # the ground's block is selected through its line
         self.canvas.level_scope = level
         self.restyle_level_rows()
@@ -3557,26 +3557,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
     # --- the ground line ----------------------------------------------
     def ground_line_shown(self):
-        """Whether the ground (level 0) gets its line under the bottom layer."""
-        return bool(getattr(self.canvas, 'show_ground_line', False)) if self.canvas is not None else False
-
-    def set_ground_line_shown(self, shown):
-        """Show or hide the ground line, and remember the choice in the
-        user's settings."""
-        if not self.canvas:
-            return
-        self.canvas.show_ground_line = bool(shown)
-        if not shown and self.level_scope() == 0:
-            self.set_level_scope(None)
-        self._sync_level_widgets()
-        self.restyle_level_rows()
-        dialog = getattr(self.parent_window, 'settings_dialog', None)
-        if dialog is not None and hasattr(dialog, 'save_settings_to_file'):
-            dialog.show_ground_line = bool(shown)
-            try:
-                dialog.save_settings_to_file()
-            except Exception:
-                pass  # the choice still holds for this session
+        """Whether the ground (level 0) gets its line under the bottom layer:
+        always once at least one level exists, never before."""
+        return self.canvas is not None and self._top_level() > 0
 
     def _sync_level_widgets(self):
         """Put one level row per level into the list, each right under the
@@ -3596,7 +3579,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self.level_rows.append(LevelRow(self, len(self.level_rows) + 1, self.scroll_content))
         for number, row in enumerate(self.level_rows, 1):
             row.set_level(number)
-        want_ground = count > 0 and self.ground_line_shown()
+        want_ground = self.ground_line_shown()
         if want_ground and self.ground_row is None:
             self.ground_row = GroundRow(self, self.scroll_content)
         elif not want_ground and self.ground_row is not None:

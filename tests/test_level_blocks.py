@@ -7,7 +7,7 @@
   selected strand" is on
 - each level has a colour (the theme's purple by default, a Default Level
   Color from the settings, or one picked with Recolor), saved with the project
-- the ground (level 0) can get a line under the bottom layer
+- the ground (level 0) gets a line under the bottom layer once any level exists
 - on the Masks tab, Move up / Move down and dragging move masks between
   levels, never below their two strands' level
 - the level menu is built like the layers' menus
@@ -35,8 +35,7 @@ from translations import translations
 
 @pytest.fixture(autouse=True)
 def no_settings_file_writes(monkeypatch):
-    """Showing the ground line saves the user's settings; keep test runs
-    from writing them."""
+    """Keep test runs from writing the user's settings file."""
     from settings_dialog import SettingsDialog
     monkeypatch.setattr(SettingsDialog, "save_settings_to_file", lambda self: None)
 
@@ -78,7 +77,7 @@ def test_chevrons_inside_the_button_fold_the_blocks(window):
     assert "2_3" in list_order(lp)
     click(button, button.width() - 5)  # right chevron: the ground under it
     assert lp.is_level_folded(0) and "2_3" not in list_order(lp)
-    assert list_order(lp) == ["Level 1"]
+    assert list_order(lp) == ["Level 1", "Level 0"]  # the rows, then the ground line
     # Folding is only a view: nothing about the design changed
     assert [s.layer_name for s in window.canvas.strands] == before
     click(button, 5)
@@ -287,9 +286,8 @@ def test_custom_colours_stay_legible_on_the_panel():
 def test_every_language_has_the_level_strings():
     keys = [k for k in translations["en"] if k.startswith(("level_fold", "level_unfold", "level_select",
                                                            "level_deselect", "level_recolor", "level_color_",
-                                                           "level_show_ground", "level_hide_ground",
                                                            "default_level_color"))]
-    assert len(keys) == 20
+    assert len(keys) == 18
     for code, texts in translations.items():
         assert all(k in texts for k in keys), code
 
@@ -298,9 +296,7 @@ def test_every_language_has_the_level_strings():
 
 def test_ground_line_closes_the_ground_block(window):
     lp = window.layer_panel
-    lift_3_4_and_2_4(window)
-    lp.set_ground_line_shown(True)
-    pump()
+    lift_3_4_and_2_4(window)  # Level 1 exists, so the ground line shows
     layout = lp.scroll_layout
     assert isinstance(layout.itemAt(layout.count() - 1).widget(), GroundRow)
     assert_consistent(window)
@@ -314,15 +310,13 @@ def test_ground_line_closes_the_ground_block(window):
     assert find(window, "3_4").level == 0
     assert isinstance(layout.itemAt(layout.count() - 1).widget(), GroundRow)
     assert_consistent(window)
-    lp.set_ground_line_shown(False)
+    lp.remove_level(1)  # no level left: no ground line, no ground selection
     pump()
     assert lp.ground_row is None and lp.level_scope() is None
 
 
-def test_no_ground_line_without_levels(window):
+def test_the_ground_line_comes_with_the_first_level(window):
     lp = window.layer_panel
-    lp.set_ground_line_shown(True)
-    pump()
     assert lp.ground_row is None
     lp.new_level_button.click()
     pump()

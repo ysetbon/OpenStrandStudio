@@ -2942,6 +2942,11 @@ class StrandDrawingCanvas(QWidget):
                         if self._is_layer_locked(strand):
                             continue
 
+                        # A level's block selected in the layer panel: only its
+                        # strands can be attached to, so only they get circles
+                        if not self.is_strand_in_level_scope(strand):
+                            continue
+
                         # If a circle is pressed/selected, skip all other strands
                         if affected_strand is not None and strand != affected_strand:
                             continue

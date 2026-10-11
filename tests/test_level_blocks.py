@@ -485,3 +485,75 @@ def test_the_masks_tab_selects_no_level(window, monkeypatch):
     pump()
     click(button, button.width() // 2)
     assert lp.level_scope() == 1
+
+
+def test_attach_circles_only_on_the_selected_level(window, monkeypatch):
+    """In attach mode only the selected level's strands get attach circles,
+    the same strands Attach can use."""
+    from PyQt5.QtGui import QPainter
+    lp = window.layer_panel
+    canvas = window.canvas
+    lift_3_4_and_2_4(window)
+    canvas.set_mode("attach")
+    canvas.show_move_highlights = True
+    centres = []
+    original = QPainter.drawEllipse
+
+    def record(painter, *args):
+        rect = args[0] if args else None
+        if hasattr(rect, "width") and round(rect.width()) == 120:
+            centres.append((round(rect.center().x()), round(rect.center().y())))
+        return original(painter, *args)
+
+    monkeypatch.setattr(QPainter, "drawEllipse", record)
+
+    def circles_at(names):
+        found = set()
+        for name in names:
+            s = find(window, name)
+            for side, point in ((0, s.start), (1, s.end)):
+                if not s.has_circles[side] and (round(point.x()), round(point.y())) in centres:
+                    found.add(name)
+        return found
+
+    inside, outside = ("3_4", "2_4"), ("1_1", "1_2", "1_3", "2_2", "2_3")
+    canvas.grab()
+    assert circles_at(inside) and circles_at(outside)  # every level's free ends, before
+    centres.clear()
+    lp.set_level_scope(1)
+    canvas.grab()
+    assert circles_at(inside) and not circles_at(outside)
+
+
+def test_rotate_only_grabs_the_selected_level(window):
+    """Rotate mode can only take a free end of the selected level's strands."""
+    lp = window.layer_panel
+    canvas = window.canvas
+    lift_3_4_and_2_4(window)
+    canvas.set_mode("rotate")
+    rotate = canvas.rotate_mode
+    lp.set_level_scope(1)
+
+    def free_end(name):
+        s = find(window, name)
+        return s, (s.start if not s.has_circles[0] else s.end)
+
+    def grab(point):
+        rotate.affected_strand = None
+        rotate.is_rotating = False
+        rotate.handle_strand_rotation(point)
+        grabbed = rotate.affected_strand
+        rotate.affected_strand = None
+        rotate.is_rotating = False
+        return grabbed
+
+    for name in ("1_1", "2_3", "1_3"):
+        strand, point = free_end(name)
+        if not all(strand.has_circles):
+            assert grab(point) is not strand, name
+    strand, point = free_end("3_4")
+    assert grab(point) is strand
+    lp.set_level_scope(None)  # with no level selected every free end can be taken again
+    strand, point = free_end("1_1")
+    if not all(strand.has_circles):
+        assert grab(point) is not None

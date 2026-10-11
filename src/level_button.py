@@ -9,9 +9,10 @@ ground (level 0), closed by the ground line once any level exists.
 Inside the button, the 30 px at each edge are chevrons: the left one folds
 the block the level carries (the layers right above the row), the right one
 the block under it, down to the next level row. A folded block is hidden
-entirely. A click on the name selects the level's block: the panel frames it
-and Move, Attach and Rotate only find its strands (see
-StrandDrawingCanvas.is_strand_in_level_scope).
+entirely. On the Strands tab, a click on the name selects the level's block:
+the panel frames it and Move, Attach and Rotate only find its strands (see
+StrandDrawingCanvas.is_strand_in_level_scope). The Masks tab selects no
+level, since those tools never act on masks.
 
 Right-click opens the level menu, built like the layers' own menus;
 dragging the row moves it like any layer (LayerPanel.dropEvent turns the new
@@ -203,6 +204,8 @@ class LevelButton(QPushButton):
             key = 'level_unfold_above' if panel.is_level_folded(level) else 'level_fold_above'
         elif zone == 'below':
             key = 'level_unfold_below' if panel.is_level_folded(level - 1) else 'level_fold_below'
+        elif not panel.level_selection_allowed():
+            return ''  # the Masks tab selects no level
         else:
             key = 'level_deselect_block' if panel.level_scope() == level else 'level_select_block'
         return panel.level_text(key)
@@ -233,7 +236,11 @@ class LevelButton(QPushButton):
 
     def event(self, event):
         if event.type() == QEvent.ToolTip:
-            QToolTip.showText(event.globalPos(), self.zone_tooltip(self.zone_at(event.pos().x())), self)
+            text = self.zone_tooltip(self.zone_at(event.pos().x()))
+            if text:
+                QToolTip.showText(event.globalPos(), text, self)
+            else:
+                QToolTip.hideText()
             return True
         return super().event(event)
 
@@ -271,7 +278,7 @@ class LevelButton(QPushButton):
             panel.toggle_level_fold(level)
         elif clicked_zone == 'below':
             panel.toggle_level_fold(level - 1)
-        else:
+        elif panel.level_selection_allowed():
             panel.toggle_level_scope(level)
 
     def mouseMoveEvent(self, event):
@@ -280,6 +287,9 @@ class LevelButton(QPushButton):
         zone = self.zone_at(event.pos().x())
         if zone != self._hover_zone:
             self._hover_zone = zone
+            # The name selects the level's block, except on the Masks tab
+            clickable = zone != 'name' or self.row.layer_panel.level_selection_allowed()
+            self.setCursor(Qt.PointingHandCursor if clickable else Qt.ArrowCursor)
             self.update()
         if not (event.buttons() & Qt.LeftButton) or self._drag_start_position is None:
             return
@@ -422,16 +432,23 @@ class GroundRow(_FullWidthRow):
     def event(self, event):
         if event.type() == QEvent.ToolTip:
             panel = self.layer_panel
-            key = 'level_deselect_block' if panel.level_scope() == 0 else 'level_select_block'
-            QToolTip.showText(event.globalPos(),
-                              '{} · {}'.format(panel.level_name(0), panel.level_text(key)), self)
+            text = panel.level_name(0)
+            if panel.level_selection_allowed():
+                key = 'level_deselect_block' if panel.level_scope() == 0 else 'level_select_block'
+                text = '{} · {}'.format(text, panel.level_text(key))
+            QToolTip.showText(event.globalPos(), text, self)
             return True
+        if event.type() == QEvent.HoverEnter:
+            # Clicking selects the ground's block, except on the Masks tab
+            self.setCursor(Qt.PointingHandCursor if self.layer_panel.level_selection_allowed()
+                           else Qt.ArrowCursor)
         if event.type() in (QEvent.HoverEnter, QEvent.HoverLeave):
             self.update()
         return super().event(event)
 
     def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton and self.rect().contains(event.pos()):
+        if (event.button() == Qt.LeftButton and self.rect().contains(event.pos())
+                and self.layer_panel.level_selection_allowed()):
             self.layer_panel.toggle_level_scope(0)
         super().mouseReleaseEvent(event)
 
@@ -490,10 +507,11 @@ def show_level_menu(panel, level, widget, global_pos):
     def pick(fn):
         return lambda: chosen.append(fn)
 
-    scoped = panel.level_scope() == level
-    _add_row(menu, panel, t('level_deselect_block' if scoped else 'level_select_block'), theme,
-             pick(lambda: panel.toggle_level_scope(level)))
-    menu.addSeparator()
+    if panel.level_selection_allowed():  # not on the Masks tab
+        scoped = panel.level_scope() == level
+        _add_row(menu, panel, t('level_deselect_block' if scoped else 'level_select_block'), theme,
+                 pick(lambda: panel.toggle_level_scope(level)))
+        menu.addSeparator()
     _add_row(menu, panel, t('level_unfold_above' if panel.is_level_folded(level) else 'level_fold_above'),
              theme, pick(lambda: panel.toggle_level_fold(level)))
     if level > 0:

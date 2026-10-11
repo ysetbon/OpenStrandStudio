@@ -3469,11 +3469,18 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         """The level whose block is selected, or None."""
         return getattr(self.canvas, 'level_scope', None) if self.canvas is not None else None
 
+    def level_selection_allowed(self):
+        """A level's block can be selected on the Strands tab only: it limits
+        Move, Attach and Rotate, which never act on masks."""
+        return getattr(self, 'layer_tab', 'strands') != 'masks'
+
     def set_level_scope(self, level):
         """Select the block of *level* (None: no block). While one is
         selected, Move, Attach and Rotate only find its strands, unless the
         setting that limits move mode to the selected strand is on."""
         if not self.canvas:
+            return
+        if level is not None and not self.level_selection_allowed():
             return
         if level is not None and not (0 <= level <= self._top_level()):
             level = None
@@ -3496,7 +3503,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         """(top, bottom) of the selected level's frame in the list, or None:
         from the line of the level row above to the level's own line."""
         scope = self.level_scope()
-        if scope is None:
+        if scope is None or not self.level_selection_allowed():
             return None
         bottom_row = self.ground_row if scope == 0 else (
             self.level_rows[scope - 1] if 0 < scope <= len(self.level_rows) else None)
@@ -3753,6 +3760,10 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                 self._cancel_pending_mask_selection()
                 QTimer.singleShot(0, self._end_mask_mode_off_masks_tab)
         masks = self.layer_tab == 'masks'
+        if masks and self.canvas is not None and self.level_scope() is not None:
+            # The Masks tab selects no level, and a selection that tab cannot
+            # show must not go on limiting the canvas tools
+            self.canvas.level_scope = None
         # Level rows go back between their layers first (they are in the
         # list, but never in layer_buttons)
         self._sync_level_widgets()

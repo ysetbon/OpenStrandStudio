@@ -453,3 +453,35 @@ def test_the_list_keeps_room_for_the_frame_on_both_tabs(window, tab):
     pump(200)
     expected = lp.LAYER_LIST_BUTTON_WIDTH + 2 * lp.LAYER_LIST_SIDE_MARGIN
     assert lp.scroll_area.viewport().width() == expected
+
+
+def test_the_masks_tab_selects_no_level(window, monkeypatch):
+    """Move, Attach and Rotate never act on masks, so the Masks tab has no
+    level selection: switching to it drops one, the name and the ground
+    line do nothing there, and the menu offers no Select."""
+    lp = window.layer_panel
+    lift_3_4_and_2_4(window)
+    lp.set_level_scope(1)
+    lp.set_layer_tab("masks")
+    pump()
+    assert lp.level_scope() is None and window.canvas.is_strand_in_level_scope(find(window, "2_3"))
+    button = lp.level_rows[0].button
+    click(button, button.width() // 2)
+    assert lp.level_scope() is None
+    click(lp.ground_row, 20)
+    assert lp.level_scope() is None
+    lp.set_level_scope(1)
+    assert lp.level_scope() is None
+    menus = []
+    monkeypatch.setattr(QMenu, "exec_", lambda self, *a, **k: menus.append(self))
+    lp.level_rows[0].show_menu(QPoint(5, 5))
+    texts = [a.defaultWidget().text() for a in menus[0].actions() if not a.isSeparator()]
+    assert lp.level_text("level_select_block") not in texts
+    # The chevrons still fold on the Masks tab
+    click(button, 5)
+    assert lp.is_level_folded(1)
+    # Back on the Strands tab, a level can be selected again
+    lp.set_layer_tab("strands")
+    pump()
+    click(button, button.width() // 2)
+    assert lp.level_scope() == 1

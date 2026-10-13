@@ -20,6 +20,8 @@ IMAGE_DIR = 'guide_images/levels_masks'
 CANVAS_PICTURES = ('level_same', 'level_up')
 # The layer lists, one picture per theme
 PANEL_PICTURES = ('ground', 'levels')
+# The paint-order example: the drawing, and the real layer buttons and level rows
+ORDER_ROWS = ('ground', '1_1', '2_1', 'mask', 'level', '3_1')
 # The pictures hold 2 pixels for each point shown
 PIXEL_RATIO = 2
 
@@ -53,6 +55,9 @@ def picture_files(theme):
     files = {name: f'{IMAGE_DIR}/{name}_canvas.png' for name in CANVAS_PICTURES}
     files.update({f'{name}_panel': f'{IMAGE_DIR}/{name}_panel_{theme_key(theme)}.png'
                   for name in PANEL_PICTURES})
+    files['order_canvas'] = f'{IMAGE_DIR}/order_canvas.png'
+    files.update({f'order_{name}': f'{IMAGE_DIR}/order_{name}_{theme_key(theme)}.png'
+                  for name in ORDER_ROWS})
     return files
 
 
@@ -88,6 +93,37 @@ def _case(images, title, panel, canvas, caption, fill, ink, pal):
             f'<span style="color: {pal["muted"]}; font-size: 12px;">{caption}</span></td></tr></table>')
 
 
+def _order(images, S, pal):
+    """The paint order as a vertical list of the app's own layer buttons and
+    level rows, each strand and mask with its step number, beside a drawing
+    of the design."""
+    h = pal['text']
+
+    def level(name):
+        return (f'<tr><td></td><td colspan="2" style="padding: 10px 0 2px 4px;">{_img(images, name)}</td></tr>')
+
+    def step(number, name, text):
+        return (f'<tr><td width="24" align="center" style="vertical-align: top; padding-top: 9px; '
+                f'color: {pal["accent"]}; font-size: 17px; font-weight: bold;">{number}</td>'
+                f'<td style="vertical-align: top; padding: 4px 12px 4px 4px;">{_img(images, name)}</td>'
+                f'<td width="230" style="vertical-align: top; padding-top: 6px; color: {h};">{text}</td></tr>')
+
+    order = ('<table cellspacing="0" cellpadding="0">'
+             + level('order_ground')
+             + step(1, 'order_1_1', S['lm_ord_1'])
+             + step(2, 'order_2_1', S['lm_ord_2'])
+             + step(3, 'order_mask', S['lm_ord_3'])
+             + level('order_level')
+             + step(4, 'order_3_1', S['lm_ord_4'])
+             + '</table>')
+    drawing = (f'{_img(images, "order_canvas")}<br/>'
+               f'<span style="color: {pal["muted"]}; font-size: 12px;">{S["lm_cap_order"]}</span>')
+    return ('<table cellspacing="0" cellpadding="0" style="margin: 6px 0 10px 0;"><tr>'
+            f'<td style="vertical-align: top; padding-right: 22px;">{order}</td>'
+            f'<td width="{images["order_canvas"][1]}" style="vertical-align: top; padding-top: 8px;">{drawing}</td>'
+            '</tr></table>')
+
+
 def build_html(S, images, theme, rtl=False):
     """The guide's HTML. *S* maps the guide's keys to text; *images* maps a
     picture name (see picture_files) to (src, width, height) as shown."""
@@ -117,6 +153,8 @@ def build_html(S, images, theme, rtl=False):
 <table width="100%" cellspacing="0" cellpadding="10" style="margin: 10px 0 14px 0;">
 <tr><td bgcolor="{pal['callout']}" style="color: {pal['callout_text']};">{S['lm_callout_levels']}</td></tr></table>
 <h3>{S['lm_h_notes']}</h3>
-<p>{S['lm_note_mask_order']}</p>
+<p>{S['lm_note_order_intro']}</p>
+{_order(images, S, pal)}
+<p>{S['lm_note_mask_level']}</p>
 </body>
 '''

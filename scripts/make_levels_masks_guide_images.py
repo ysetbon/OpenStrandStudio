@@ -16,9 +16,12 @@ import copy
 import json
 import os
 import sys
+import tempfile
 import types
 
 os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
+# The window saves settings when it closes: keep them out of the user's own
+os.environ['APPDATA'] = tempfile.mkdtemp(prefix='oss_guide_settings_')
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, 'src')
 sys.path.insert(0, SRC)

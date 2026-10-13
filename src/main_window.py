@@ -285,6 +285,11 @@ class MainWindow(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QHBoxLayout(central_widget)
+        # Smaller bottom margin so the layer panel's bottom buttons sit lower.
+        # The top keeps the platform default, so the toolbar (State) and the
+        # Create Group button do not move.
+        margins = main_layout.contentsMargins()
+        main_layout.setContentsMargins(margins.left(), margins.top(), margins.right(), 4)
 
         # Create the horizontal layout for buttons (proportional sizing)
         button_layout = QHBoxLayout()

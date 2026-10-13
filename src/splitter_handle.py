@@ -16,7 +16,9 @@ class SplitterHandle(QWidget):
         :param parent: The parent widget (default is None)
         """
         super().__init__(parent)
-        self.setFixedHeight(10)  # Set a fixed height for the handle
+        # Thin, so the layer panel's top button row lines up with the State
+        # and Create Group buttons (see LayerPanel.top_header)
+        self.setFixedHeight(2)
         self.setCursor(Qt.SplitHCursor)  # Set the cursor to a horizontal split cursor
 
         # Override the parent's resize event if a parent is provided

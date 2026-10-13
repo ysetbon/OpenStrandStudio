@@ -491,15 +491,21 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # 2px top margin this leaves a 7px gap under the lowest layer button.
         self.left_layout.setSpacing(5)
 
-        # **Add the splitter handle at the top of the left layout**
+        # The splitter handle and the first button row share a header with no
+        # layout gap between them, so the row's top edge lines up with the
+        # State and Create Group buttons (both 2px below the window content).
+        self.top_header = QWidget()
+        top_header_layout = QVBoxLayout(self.top_header)
+        top_header_layout.setContentsMargins(0, 0, 0, 0)
+        top_header_layout.setSpacing(0)
         self.handle = SplitterHandle(self)
-        self.left_layout.addWidget(self.handle)
+        top_header_layout.addWidget(self.handle)
 
         # **Add the refresh button below the splitter handle**
         # Create top panel for the refresh button
         self.top_panel = QWidget()
         top_layout = QHBoxLayout(self.top_panel)
-        top_layout.setContentsMargins(5, 5, 5, 5)
+        top_layout.setContentsMargins(5, 0, 5, 5)
         top_layout.setAlignment(Qt.AlignHCenter)
 
         # Create the home/reset button (moved from 3rd row)
@@ -543,8 +549,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # Add the home/reset button to the top layout
         top_layout.addWidget(self.reset_states_button)
         
-        # Add top_panel to left_layout below the splitter handle
-        self.left_layout.addWidget(self.top_panel)
+        # Add top_panel below the splitter handle
+        top_header_layout.addWidget(self.top_panel)
+        self.left_layout.addWidget(self.top_header)
         
         # Setup undo/redo manager and buttons AFTER top_panel is added to the layout
         # Pass the determined base_path to setup_undo_redo
@@ -870,7 +877,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # Create bottom panel for control buttons
         bottom_panel = QWidget()
         bottom_layout = QVBoxLayout(bottom_panel)
-        bottom_layout.setContentsMargins(0, 2, 0, 5)
+        # 2px under Delete All; with the window's 4px bottom margin the
+        # stack ends 6px above the window edge
+        bottom_layout.setContentsMargins(0, 2, 0, 2)
         # Ensure consistent gap between control buttons across platforms
         bottom_layout.setSpacing(2)
         bottom_layout.setAlignment(Qt.AlignHCenter)

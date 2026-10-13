@@ -56,7 +56,7 @@ SettingsDialog.save_settings_to_file = lambda self: None  # never touch the user
 # The design
 # ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
-# A small design for the order of painting
+# A small design for the order of painting (one level, two strands, one mask)
 # ----------------------------------------------------------------------
 COLORS = {
     1: (200, 170, 230),  # the app's default purple
@@ -141,16 +141,10 @@ def project(strands, level_count=0):
 
 
 def order_design():
-    """1_1 and 2_1 cross on Ground, mask 1_1_2_1 puts 1_1 over 2_1, and 3_1
-    lies across 2_1's lower part on Level 1."""
+    """One level (Ground): 1_1 and 2_1 cross, and mask 1_1_2_1 puts 1_1 over 2_1."""
     first = strand("1_1", (90, 330), (590, 330))
     second = strand("2_1", (200, 520), (440, 140))
-    third = strand("3_1", (130, 440), (520, 440), level=1)
-    ground = [dict(first, level=0), dict(second, level=0)]
-    return project(ground + [mask("1_1", "2_1", [first, second]), third], level_count=1)
-
-
-ORDER_VIEW = QRect(60, 105, 560, 460)
+    return project([first, second, mask("1_1", "2_1", [first, second])])
 
 
 # A real design: a 1x1 knot (mxn_rh_stretch_1x1_continue_k_0)
@@ -321,22 +315,13 @@ def main(themes=('default', 'light', 'dark')):
         if number == 0:
             save(grab_canvas(win, KNOT_VIEW, zoom=2), 'level_up_canvas')
         save(grab_layer_list(win), f'levels_panel_{theme}')
-        # The order of painting: the real buttons and level rows, one picture each
+        # The order of painting: the Strands and Masks tabs, and each button for the array
         load(win, order_design())
-        if number == 0:
-            save(grab_canvas(win, ORDER_VIEW), 'order_canvas')
-        for name in ('1_1', '2_1', '3_1'):
+        save(grab_layer_list(win), f'order_strands_panel_{theme}')
+        save(grab_layer_list(win, 'masks'), f'order_masks_panel_{theme}')
+        for name in ('1_1', '2_1'):
             save(grab_widget(layer_button(win, name)), f'order_{name}_{theme}')
         save(grab_widget(layer_button(win, '1_1_2_1', 'masks')), f'order_mask_{theme}')
-        lp = win.layer_panel
-        lp.set_layer_tab('strands')
-        lp.refresh()
-        pump(120)
-        # The rows are as wide as the list, margins included: keep the part as wide as a button
-        for row, name in ((lp.level_rows[0], 'level'), (lp.ground_row, 'ground')):
-            row_image = grab_widget(row)
-            margin = (row.width() - 146) // 2 * 2
-            save(row_image.copy(margin, 0, 146 * 2, row_image.height()), f'order_{name}_{theme}')
         win._confirm_close_with_dirty_tabs = lambda *a, **k: True
         win.close()
         win.deleteLater()

@@ -20,8 +20,8 @@ IMAGE_DIR = 'guide_images/levels_masks'
 CANVAS_PICTURES = ('level_same', 'level_up')
 # The layer lists, one picture per theme
 PANEL_PICTURES = ('ground', 'levels')
-# The paint-order example: the drawing, and the real layer buttons and level rows
-ORDER_ROWS = ('ground', '1_1', '2_1', 'mask', 'level', '3_1')
+# The paint-order example: the two tabs, and each button for the array
+ORDER_PICTURES = ('strands_panel', 'masks_panel', '1_1', '2_1', 'mask')
 # The pictures hold 2 pixels for each point shown
 PIXEL_RATIO = 2
 
@@ -55,9 +55,8 @@ def picture_files(theme):
     files = {name: f'{IMAGE_DIR}/{name}_canvas.png' for name in CANVAS_PICTURES}
     files.update({f'{name}_panel': f'{IMAGE_DIR}/{name}_panel_{theme_key(theme)}.png'
                   for name in PANEL_PICTURES})
-    files['order_canvas'] = f'{IMAGE_DIR}/order_canvas.png'
     files.update({f'order_{name}': f'{IMAGE_DIR}/order_{name}_{theme_key(theme)}.png'
-                  for name in ORDER_ROWS})
+                  for name in ORDER_PICTURES})
     return files
 
 
@@ -94,34 +93,32 @@ def _case(images, title, panel, canvas, caption, fill, ink, pal):
 
 
 def _order(images, S, pal):
-    """The paint order as a vertical list of the app's own layer buttons and
-    level rows, each strand and mask with its step number, beside a drawing
-    of the design."""
+    """One level, Ground: the Strands tab and the Masks tab side by side, then
+    the order the app paints them in, as one row of the same buttons."""
     h = pal['text']
+    muted = pal['muted']
 
-    def level(name):
-        return (f'<tr><td></td><td colspan="2" style="padding: 10px 0 2px 4px;">{_img(images, name)}</td></tr>')
+    def tab(title, name):
+        return (f'<td style="vertical-align: top; padding-right: 28px;">'
+                f'<b style="color: {h};">{title}</b><br/>{_img(images, name)}</td>')
 
-    def step(number, name, text):
-        return (f'<tr><td width="24" align="center" style="vertical-align: top; padding-top: 9px; '
-                f'color: {pal["accent"]}; font-size: 17px; font-weight: bold;">{number}</td>'
-                f'<td style="vertical-align: top; padding: 4px 12px 4px 4px;">{_img(images, name)}</td>'
-                f'<td width="230" style="vertical-align: top; padding-top: 6px; color: {h};">{text}</td></tr>')
+    def item(number, name, kind):
+        return (f'<td align="center" style="vertical-align: top;">'
+                f'<span style="color: {pal["accent"]}; font-size: 17px; font-weight: bold;">{number}</span><br/>'
+                f'{_img(images, name)}<br/><span style="color: {muted}; font-size: 12px;">{kind}</span></td>')
 
-    order = ('<table cellspacing="0" cellpadding="0">'
-             + level('order_ground')
-             + step(1, 'order_1_1', S['lm_ord_1'])
-             + step(2, 'order_2_1', S['lm_ord_2'])
-             + step(3, 'order_mask', S['lm_ord_3'])
-             + level('order_level')
-             + step(4, 'order_3_1', S['lm_ord_4'])
-             + '</table>')
-    drawing = (f'{_img(images, "order_canvas")}<br/>'
-               f'<span style="color: {pal["muted"]}; font-size: 12px;">{S["lm_cap_order"]}</span>')
-    return ('<table cellspacing="0" cellpadding="0" style="margin: 6px 0 10px 0;"><tr>'
-            f'<td style="vertical-align: top; padding-right: 22px;">{order}</td>'
-            f'<td width="{images["order_canvas"][1]}" style="vertical-align: top; padding-top: 8px;">{drawing}</td>'
-            '</tr></table>')
+    arrow = (f'<td style="vertical-align: middle; padding: 16px 6px 0 6px;">'
+             f'<span style="color: {pal["accent"]}; font-size: 26px; font-weight: bold;">&#8594;</span></td>')
+    tabs = ('<table cellspacing="0" cellpadding="0" style="margin: 6px 0 12px 0;"><tr>'
+            + tab(S['layer_tab_strands'], 'order_strands_panel')
+            + tab(S['layer_tab_masks'], 'order_masks_panel')
+            + '</tr></table>')
+    array = ('<table cellspacing="0" cellpadding="0" style="margin: 4px 0 12px 0;"><tr>'
+             + item(1, 'order_1_1', S['lm_kind_strand']) + arrow
+             + item(2, 'order_2_1', S['lm_kind_strand']) + arrow
+             + item(3, 'order_mask', S['lm_kind_mask'])
+             + '</tr></table>')
+    return (tabs + f'<p><b style="color: {h};">{S["lm_paint_order"]}</b></p>' + array)
 
 
 def build_html(S, images, theme, rtl=False):

@@ -14,6 +14,8 @@ knows the picture files and lays out the page for QTextBrowser.
 Every sentence of the guide is a translation key that starts with "lm_".
 """
 
+import re
+
 IMAGE_DIR = 'guide_images/levels_masks'
 
 # The canvas pictures (the canvas paints the same ground in every theme)
@@ -50,13 +52,20 @@ def palette(theme):
     return PALETTES[theme_key(theme)]
 
 
-def picture_files(theme):
-    """{picture name: path relative to src} for *theme*."""
+# The pictures that show level rows, whose names the layer panel translates:
+# these have one file per language (English has no suffix)
+TRANSLATED_PICTURES = ('levels_panel', 'order_strands_panel', 'order_masks_panel')
+
+
+def picture_files(theme, language='en'):
+    """{picture name: path relative to src} for *theme* and *language*."""
+    theme = theme_key(theme)
     files = {name: f'{IMAGE_DIR}/{name}_canvas.png' for name in CANVAS_PICTURES}
-    files.update({f'{name}_panel': f'{IMAGE_DIR}/{name}_panel_{theme_key(theme)}.png'
-                  for name in PANEL_PICTURES})
-    files.update({f'order_{name}': f'{IMAGE_DIR}/order_{name}_{theme_key(theme)}.png'
-                  for name in ORDER_PICTURES})
+    files.update({f'{name}_panel': f'{IMAGE_DIR}/{name}_panel_{theme}.png' for name in PANEL_PICTURES})
+    files.update({f'order_{name}': f'{IMAGE_DIR}/order_{name}_{theme}.png' for name in ORDER_PICTURES})
+    if language and language != 'en':
+        for name in TRANSLATED_PICTURES:
+            files[name] = f'{IMAGE_DIR}/{name}_{theme}_{language}.png'
     return files
 
 
@@ -107,7 +116,7 @@ def _order(images, S, pal):
         return (f'<tr><td width="22" align="center" style="vertical-align: middle; color: {pal["accent"]}; '
                 f'font-size: 17px; font-weight: bold;">{number}</td>'
                 f'<td style="padding: 0 8px 0 4px;">{_img(images, name)}</td>'
-                f'<td width="56" style="vertical-align: middle; color: {muted}; font-size: 12px;">{kind}</td></tr>')
+                f'<td width="90" style="vertical-align: middle; color: {muted}; font-size: 12px;">{kind}</td></tr>')
 
     up = (f'<tr><td></td><td align="center" style="padding: 2px 0 2px 0;">'
           f'<span style="color: {pal["accent"]}; font-size: 30px; font-weight: bold;">&#8679;</span></td><td></td></tr>')
@@ -123,9 +132,22 @@ def _order(images, S, pal):
             + '</tr></table>')
 
 
+# A layer name such as 1_4 or 2_2_1_3: digits joined by underscores
+_LAYER_NAME = re.compile(r'\d+(?:_\d+)+|\d+×\d+')
+
+
+def _keep_names_ltr(text):
+    """Layer names in right-to-left text, kept left to right: without this
+    the bidi algorithm shows 1_4 as 4_1 (the underscore is neutral)."""
+    lrm = '\u200e'  # LEFT-TO-RIGHT MARK (QTextBrowser ignores embeddings)
+    return _LAYER_NAME.sub(lambda m: lrm + m.group(0).replace('_', lrm + '_' + lrm) + lrm, text)
+
+
 def build_html(S, images, theme, rtl=False):
     """The guide's HTML. *S* maps the guide's keys to text; *images* maps a
     picture name (see picture_files) to (src, width, height) as shown."""
+    if rtl:
+        S = {key: _keep_names_ltr(value) if isinstance(value, str) else value for key, value in S.items()}
     pal = palette(theme)
     h = pal['text']
     direction = ' dir="rtl"' if rtl else ''
@@ -145,13 +167,13 @@ def build_html(S, images, theme, rtl=False):
 <p style="color: {pal['muted']};">{S['lm_intro']}</p>
 <p>{S['lm_p_levels']}</p>
 <p>{S['lm_p_knot']}</p>
-{without}
+<a name="cases"></a>{without}
 {with_level}
 <h3>{S['lm_how_title']}</h3>
 <ol style="margin-top: 2px;"><li style="margin-bottom: 5px;">{S['lm_how_1']}</li><li>{S['lm_how_2']}</li></ol>
 <table width="100%" cellspacing="0" cellpadding="10" style="margin: 10px 0 14px 0;">
 <tr><td bgcolor="{pal['callout']}" style="color: {pal['callout_text']};">{S['lm_callout_levels']}</td></tr></table>
-<h3>{S['lm_h_notes']}</h3>
+<a name="notes"></a><h3>{S['lm_h_notes']}</h3>
 <p>{S['lm_note_order_intro']}</p>
 {_order(images, S, pal)}
 <p>{S['lm_note_mask_level']}</p>

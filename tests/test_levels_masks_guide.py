@@ -1,8 +1,8 @@
 """Settings > Levels & Masks guide: every language gets a complete page.
 
-Languages that have not translated the guide yet fall back to English, so the
-page builds with every key it needs, and every picture it shows exists (they
-are drawn by scripts/make_levels_masks_guide_images.py).
+Every language has every key of the guide, the page builds with them, and
+every picture it shows exists in every theme and language (they are drawn by
+scripts/make_levels_masks_guide_images.py).
 """
 import os
 import sys
@@ -21,7 +21,7 @@ class LevelsMasksGuideTest(unittest.TestCase):
         for language in translations:
             strings = guide.strings(translations, language)
             for theme in guide.PALETTES:
-                files = guide.picture_files(theme)
+                files = guide.picture_files(theme, language)
                 images = {name: (f'data:image/png;base64,{name}', 10, 10) for name in files}
                 html = guide.build_html(strings, images, theme, rtl=(language == 'he'))
                 self.assertIn(strings['lm_title'], html)
@@ -29,9 +29,16 @@ class LevelsMasksGuideTest(unittest.TestCase):
                     self.assertIn(images[name][0], html)
 
     def test_every_picture_exists(self):
-        for theme in guide.PALETTES:
-            for path in guide.picture_files(theme).values():
-                self.assertTrue(os.path.isfile(os.path.join(_SRC, path)), path)
+        for language in translations:
+            for theme in guide.PALETTES:
+                for path in guide.picture_files(theme, language).values():
+                    self.assertTrue(os.path.isfile(os.path.join(_SRC, path)), path)
+
+    def test_every_language_is_translated(self):
+        keys = [k for k in translations['en'] if k.startswith('lm_') or k == 'levels_masks_guide']
+        for language, strings in translations.items():
+            missing = [k for k in keys if k not in strings]
+            self.assertEqual(missing, [], language)
 
 
 if __name__ == '__main__':

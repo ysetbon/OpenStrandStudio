@@ -52,6 +52,10 @@ from settings_dialog import SettingsDialog  # noqa: E402
 
 SettingsDialog.save_settings_to_file = lambda self: None  # never touch the user's settings
 
+# The languages other than English (English pictures have no language suffix)
+from translations import translations  # noqa: E402
+LANGUAGES = [code for code in translations if code != 'en']
+
 # ----------------------------------------------------------------------
 # The design
 # ----------------------------------------------------------------------
@@ -326,10 +330,31 @@ def main(themes=('default', 'light', 'dark')):
         for name in ('1_1', '2_1'):
             save(grab_widget(layer_button(win, name)), f'order_{name}_{theme}')
         save(grab_widget(layer_button(win, '1_1_2_1', 'masks')), f'order_mask_{theme}')
-        win._confirm_close_with_dirty_tabs = lambda *a, **k: True
-        win.close()
-        win.deleteLater()
-        pump(60)
+        close_window(win)
+    # The pictures with level rows show their names ("Ground", "Level 1"),
+    # which the panel translates: one of each per language. Done after every
+    # English picture, since fonts loaded for other scripts can shift the
+    # anti-aliasing of later text by a shade.
+    for theme in themes:
+        win = open_window(theme)
+        for language in LANGUAGES:
+            win.set_language(language)
+            pump(120)
+            load(win, knot())
+            lift_1_4(win)
+            save(grab_layer_list(win), f'levels_panel_{theme}_{language}')
+            load(win, order_design())
+            save(grab_layer_list(win, ground_only=True), f'order_strands_panel_{theme}_{language}')
+            save(grab_layer_list(win, 'masks', ground_only=True), f'order_masks_panel_{theme}_{language}')
+        win.set_language('en')
+        close_window(win)
+
+
+def close_window(win):
+    win._confirm_close_with_dirty_tabs = lambda *a, **k: True
+    win.close()
+    win.deleteLater()
+    pump(60)
 
 
 if __name__ == '__main__':

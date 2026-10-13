@@ -6091,7 +6091,7 @@ class SettingsDialog(QDialog):
         import levels_masks_guide as guide
         strings = guide.strings(translations, self.current_language)
         images = {name: self.guide_picture_data_url(path, guide.PIXEL_RATIO)
-                  for name, path in guide.picture_files(self.current_theme).items()}
+                  for name, path in guide.picture_files(self.current_theme, self.current_language).items()}
         return guide.build_html(strings, images, self.current_theme,
                                 rtl=self.is_rtl_language(self.current_language))
 

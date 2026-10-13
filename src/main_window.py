@@ -183,7 +183,6 @@ class MainWindow(QMainWindow):
         self.layer_state_button.setText(_['layer_state'])
         self.toggle_control_points_button.setText(_['toggle_control_points'])
         self.toggle_shadow_button.setText(_['toggle_shadow'])
-        self.toggle_shadow_button.setToolTip(_['toggle_shadow_tooltip'])
         if hasattr(self, 'tabs_button'):
             self.tabs_button.setText(_['tabs'])
             self.tabs_button.setToolTip(_['tabs'])
@@ -358,7 +357,6 @@ class MainWindow(QMainWindow):
         self.toggle_shadow_button = QPushButton("Toggle Shadow")
         self.toggle_shadow_button.setCheckable(True)
         self.toggle_shadow_button.setChecked(False)  # Shadow is disabled by default
-        self.toggle_shadow_button.setToolTip("Enable/disable shadow effects for overlapping strands")
         self.toggle_shadow_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.toggle_shadow_button.setMaximumWidth(90)
 
@@ -3066,7 +3064,6 @@ class MainWindow(QMainWindow):
         self.layer_state_button.setText(_['layer_state'])
         self.toggle_control_points_button.setText(_['toggle_control_points'])
         self.toggle_shadow_button.setText(_['toggle_shadow'])
-        self.toggle_shadow_button.setToolTip(_['toggle_shadow_tooltip'])
         if hasattr(self, 'tabs_button'):
             self.tabs_button.setText(_['tabs'])
             self.tabs_button.setToolTip(_['tabs'])

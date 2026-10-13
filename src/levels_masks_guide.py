@@ -19,7 +19,7 @@ IMAGE_DIR = 'guide_images/levels_masks'
 # The canvas pictures (the canvas paints the same ground in every theme)
 CANVAS_PICTURES = ('stack', 'mask_before', 'mask_after', 'level_same', 'level_up')
 # The layer lists, one picture per theme
-PANEL_PICTURES = ('stack', 'weave', 'mask', 'levels')
+PANEL_PICTURES = ('stack', 'weave', 'mask', 'ground', 'levels')
 # The pictures hold 2 pixels for each point shown
 PIXEL_RATIO = 2
 
@@ -152,12 +152,18 @@ def build_html(S, images, theme, rtl=False):
 
 <h2><span class="step">3</span>&nbsp; {S['lm_h_levels']}</h2>
 <p>{S['lm_p_levels']}</p>
+<p>{S['lm_p_knot']}</p>
 {_pair(images, 'level_same', 'level_up', S['lm_cap_level_same'], S['lm_cap_level_up'], pal)}
+<p><b style="color: {h};">{S['lm_how_title']}</b></p>
+<ol style="margin-top: 2px;"><li style="margin-bottom: 5px;">{S['lm_how_1']}</li><li>{S['lm_how_2']}</li></ol>
 <p>{S['lm_p_levels_floors']}</p>
 <table cellspacing="0" cellpadding="0" style="margin: 4px 0 4px 0;">
-<tr><td rowspan="2" {panel_cell}>{_img(images, 'levels_panel')}</td>
-<td style="padding: 18px 0 0 0; vertical-align: top;">{floor(level_1, S['lm_paint_2'])}</td></tr>
-<tr><td style="padding: 0 0 22px 0; vertical-align: bottom;">{floor(S['level_ground'], S['lm_paint_1'])}</td></tr>
+<tr><td {panel_cell}><b style="color: {h};">{S['lm_no_level']}</b></td>
+<td {panel_cell}><b style="color: {h};">{S['lm_with_level']}</b></td><td></td></tr>
+<tr><td rowspan="2" {panel_cell}>{_img(images, 'ground_panel')}</td>
+<td rowspan="2" {panel_cell}>{_img(images, 'levels_panel')}</td>
+<td style="padding: 4px 0 0 0; vertical-align: top;">{floor(level_1, S['lm_paint_2'])}</td></tr>
+<tr><td style="padding: 0 0 6px 0; vertical-align: bottom;">{floor(S['level_ground'], S['lm_paint_1'])}</td></tr>
 </table>
 {_callout(S['lm_callout_levels'], pal)}
 

@@ -1,9 +1,10 @@
 """Render the pictures of the Settings > Levels & Masks guide with the app itself.
 
 Every picture is a real scene drawn by the real canvas and layer panel: the
-script builds each design as a project (strands, an attached strand, a mask,
-a level), loads it into an offscreen MainWindow, and grabs the canvas and the
-layer list in each theme. So the guide shows exactly what the app draws.
+script builds each design as a project (strands, an attached strand, a mask)
+or loads a saved one (the 1x1 knot in scripts/guide_designs/), adds the level
+with the layer panel's own New Level and Move down, and grabs the canvas and
+the layer list in each theme. So the guide shows exactly what the app draws.
 
 Run it again after a change to how strands, masks or the layer panel look:
 
@@ -142,28 +143,43 @@ UP = strand("2_1", (190, 520), (330, 150))
 DOWN = strand("2_2", (330, 150), (470, 520), attached_to="2_1")
 
 
-def hook(level=None):
-    """2_3 continues 2_2 at its end and loops back up over the masked
-    crossing (400, 330). It is joined to one of the mask's strands, so the
-    mask's piece is drawn over it unless 2_3 is on a higher level."""
-    return strand("2_3", (470, 520), (580, 190), attached_to="2_2", level=level,
-                  controls=((340, 560), (240, 380)))
-
-
 def scenes():
     weave = [ACROSS, UP, DOWN]
     lift = mask("1_1", "2_2", weave)
-    # 2_2 now has 2_3 attached at its end: a circle shows there
-    looped = [ACROSS, UP, dict(DOWN, has_circles=[True, True])]
     return {
         'stack': project([strand("1_1", (90, 330), (590, 330)),
                           strand("2_1", (120, 520), (330, 140)),
                           strand("3_1", (330, 140), (540, 520))]),
         'mask_before': project(weave),
         'mask_after': project(weave + [lift]),
-        'level_same': project(looped + [hook(), lift]),
-        'level_up': project([dict(s, level=0) for s in looped] + [hook(level=1), lift], level_count=1),
     }
+
+
+# The level section uses a real design: a 1x1 knot (mxn_rh_stretch_1x1_continue_k_0)
+# where 1_4 continues 1_3 and runs back over it, across the crossing that
+# mask 2_2_1_3 lifts. Saved here with every layer on the ground, as it was
+# before its level was added.
+KNOT = os.path.join(ROOT, 'scripts', 'guide_designs', 'mxn_rh_stretch_1x1_continue_k_0.json')
+KNOT_VIEW = QRect(1020, 250, 370, 290)
+# Where mask 2_2_1_3 cuts 1_4 when they share a level (2_2 crosses 1_3 and 1_4 there)
+KNOT_CUT = QPointF(1260, 364)
+
+
+def knot():
+    with open(KNOT, encoding='utf-8') as f:
+        return json.load(f)
+
+
+def lift_1_4(win):
+    """What the user does: New Level, then Move down on the Level 1 row,
+    which takes the top layer of the ground (1_4) onto Level 1."""
+    lp = win.layer_panel
+    lp.new_level_button.click()
+    pump()
+    lp.move_level(1, up=False)
+    pump(120)
+    on_level_1 = [s.layer_name for s in win.canvas.strands if getattr(s, 'level', 0) == 1]
+    assert on_level_1 == ['1_4'], on_level_1
 
 
 # The part of the canvas each picture shows (canvas coordinates)
@@ -202,27 +218,46 @@ def load(win, data):
         s.is_selected = False
     canvas.show_grid = False
     canvas.show_control_points = False
-    canvas.shadow_enabled = True
+    canvas.shadow_enabled = data.get('shadow_enabled', True)
     win.layer_panel.set_layer_tab('strands')
     win.layer_panel.refresh()
     pump(120)
 
 
-def grab_canvas(win, view=CANVAS_VIEW):
+def grab_canvas(win, view=CANVAS_VIEW, zoom=1.0, ring=None):
+    """The part *view* of the canvas (canvas coordinates) at *zoom*, framed.
+    *ring* circles a canvas point, to point at what the caption talks about."""
     canvas = win.canvas
-    canvas.zoom_factor = 1.0
-    canvas.pan_offset_x = canvas.width() / 2 - view.center().x()
-    canvas.pan_offset_y = canvas.height() / 2 - view.center().y()
+    # Big enough for the whole view (the offscreen screen is small), like
+    # json_to_png_exporter does
+    canvas.setFixedSize(int(view.width() * zoom) + 80, int(view.height() * zoom) + 80)
+    pump(80)
+    canvas.zoom_factor = zoom
+    centre = QPointF(view.center())
+    canvas.pan_offset_x = 0
+    canvas.pan_offset_y = 0
+    here = canvas.canvas_to_screen(centre)
+    canvas.pan_offset_x = canvas.width() / 2 - here.x()
+    canvas.pan_offset_y = canvas.height() / 2 - here.y()
     canvas.update()
     pump(80)
     image = canvas.grab().toImage()
     top_left = canvas.canvas_to_screen(QPointF(view.left(), view.top()))
-    image = image.copy(int(round(top_left.x())), int(round(top_left.y())), view.width(), view.height())
-    # A thin grey frame, so the white canvas stands out on a white page too
+    image = image.copy(int(round(top_left.x())), int(round(top_left.y())),
+                       int(round(view.width() * zoom)), int(round(view.height() * zoom)))
     painter = QPainter(image)
+    painter.setRenderHint(QPainter.Antialiasing)
+    if ring is not None:
+        centre = QPointF((ring.x() - view.left()) * zoom, (ring.y() - view.top()) * zoom)
+        painter.setPen(QPen(QColor('#E5484D'), 5))
+        painter.drawEllipse(centre, 38 * zoom, 38 * zoom)
+    # A thin grey frame, so the white canvas stands out on a white page too
     painter.setPen(QPen(QColor('#BDBDBD'), 2))
     painter.drawRect(QRectF(1, 1, image.width() - 2, image.height() - 2))
     painter.end()
+    canvas.zoom_factor = 1.0
+    canvas.setMinimumSize(0, 0)
+    canvas.setMaximumSize(16777215, 16777215)
     return image
 
 
@@ -267,12 +302,18 @@ def main(themes=('default', 'light', 'dark')):
             for name, data in designs.items():
                 load(win, data)
                 save(grab_canvas(win), f'{name}_canvas')
+            load(win, knot())
+            save(grab_canvas(win, KNOT_VIEW, zoom=2, ring=KNOT_CUT), 'level_same_canvas')
+            lift_1_4(win)
+            save(grab_canvas(win, KNOT_VIEW, zoom=2), 'level_up_canvas')
         load(win, designs['stack'])
         save(grab_layer_list(win), f'stack_panel_{theme}')
         load(win, designs['mask_after'])
         save(grab_layer_list(win), f'weave_panel_{theme}')
         save(grab_layer_list(win, 'masks'), f'mask_panel_{theme}')
-        load(win, designs['level_up'])
+        load(win, knot())
+        save(grab_layer_list(win), f'ground_panel_{theme}')
+        lift_1_4(win)
         save(grab_layer_list(win), f'levels_panel_{theme}')
         win._confirm_close_with_dirty_tabs = lambda *a, **k: True
         win.close()

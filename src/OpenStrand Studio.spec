@@ -10,6 +10,7 @@ a = Analysis(
         ('settings_icon.png', '.'),
         ('flags/*.png', 'flags/'),
         ('layer_panel_icons/*.png', 'layer_panel_icons/'),
+        ('guide_images/levels_masks/*.png', 'guide_images/levels_masks/'),
         ('mp4', 'mp4'),
         ('samples/*.json', 'samples/')
     ],

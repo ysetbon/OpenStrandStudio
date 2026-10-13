@@ -4,11 +4,11 @@ A level row looks like a layer button, as wide as one and a third lower
 (146 x 27 against 146 x 40), named "Level 1", "Level 2" and so on, with a
 4 px line under it that runs the whole width of the list. It sits at the
 bottom of the layers it carries. Layers below the lowest level row are on the
-ground (level 0), closed by the ground line once any level exists.
+ground (level 0), closed by the Ground row once any level exists: the same
+row, named "Ground", in the same colour, that never moves.
 
 Every line folds the layers resting on it, with one control at its left end:
-the 30 px at the left of the level button, and a small tab at the left of
-the ground line. The control is a little stack of layers on a line; once
+the 30 px at the left of the level button. The control is a little stack of layers on a line; once
 folded, the stack turns into the number of hidden layers. Pointing at it
 swaps the level's name for what a click does ("Collapse" or "Expand"). A folded
 block is hidden entirely.
@@ -36,10 +36,6 @@ LEVEL_LINE_HEIGHT = 4
 LEVEL_COLOR = QColor("#7a63b8")
 # Width of the fold control at the left of the level button
 FOLD_ZONE_WIDTH = 30
-# The ground line: a 4 px line in a row tall enough for its fold tab
-GROUND_ROW_HEIGHT = 24
-# The tab draws its fold control at the level buttons' full size
-GROUND_TAB_SIZE = QSize(FOLD_ZONE_WIDTH, 22)
 # Selection frame around a level's block
 FRAME_WIDTH = 2
 FRAME_RAIL_WIDTH = 3  # "Medium": 4 px of air before the buttons (LayerPanel.LAYER_LIST_SIDE_MARGIN is 7)
@@ -301,6 +297,8 @@ class LevelButton(QPushButton):
             return
         if (event.pos() - self._drag_start_position).manhattanLength() < QApplication.startDragDistance():
             return
+        if self.row.level == 0:
+            return  # the ground stays under the bottom layer
         panel = self.row.layer_panel
         index = panel.scroll_layout.indexOf(self.row)
         if index == -1:
@@ -366,11 +364,10 @@ class _FullWidthRow(QWidget):
         show_level_menu(self.layer_panel, self.level, self, self.mapToGlobal(pos))
 
 
-class LevelRow(_FullWidthRow):
-    """A level's whole row: the button, centred, over the full-width line."""
+class _ButtonRow(_FullWidthRow):
+    """A row with a level button, centred, over the full-width 4 px line."""
 
     def __init__(self, layer_panel, level, parent=None):
-        """The row of *level* (1, 2, ...) in *layer_panel*'s list."""
         super().__init__(layer_panel, level, parent)
         self.setFixedHeight(LEVEL_BUTTON_SIZE.height() + LEVEL_LINE_HEIGHT)
 
@@ -386,22 +383,20 @@ class LevelRow(_FullWidthRow):
         self.button.customContextMenuRequested.connect(
             lambda pos: self.show_menu(self.button.mapTo(self, pos)))
 
+    def line_rect(self):
+        """Where the 4 px line is drawn: the bottom of the row."""
+        return QRect(0, self.height() - LEVEL_LINE_HEIGHT, self.width(), LEVEL_LINE_HEIGHT)
+
     def paintEvent(self, event):
         """The 4 px line under the button, from edge to edge."""
         super().paintEvent(event)
         painter = QPainter(self)
-        painter.fillRect(0, self.height() - LEVEL_LINE_HEIGHT, self.width(), LEVEL_LINE_HEIGHT, self.color())
+        painter.fillRect(self.line_rect(), self.color())
         painter.end()
 
     def text(self):
-        """The row's name in the panel's language: "Level 1"..."""
+        """The row's name in the panel's language: "Level 1"... or "Ground"."""
         return self.layer_panel.level_name(self.level)
-
-    def set_level(self, level):
-        """Renumber the row (after a level below it was removed)."""
-        self.level = level
-        self.update()
-        self.button.update()
 
     def restyle(self):
         """Repaint in the current colour (theme or level colour changed)."""
@@ -409,85 +404,30 @@ class LevelRow(_FullWidthRow):
         self.button.update()
 
 
-class GroundRow(_FullWidthRow):
-    """Level 0, the ground, as a single 4 px line under the bottom layer.
+class LevelRow(_ButtonRow):
+    """A level's whole row: the button, centred, over the full-width line."""
 
-    Shown whenever at least one level exists. Its fold tab at the left, in
-    line with the level buttons' fold controls, folds the ground's block; a
-    click anywhere else selects that block like a level row's name.
-    Right-click opens the level menu."""
+    def __init__(self, layer_panel, level, parent=None):
+        """The row of *level* (1, 2, ...) in *layer_panel*'s list."""
+        super().__init__(layer_panel, level, parent)
+
+    def set_level(self, level):
+        """Renumber the row (after a level below it was removed)."""
+        self.level = level
+        self.update()
+        self.button.update()
+
+
+class GroundRow(_ButtonRow):
+    """Level 0, the ground, under the bottom layer: the same row as a level,
+    named "Ground", in the same level colour.
+
+    Shown whenever at least one level exists. Its button folds and selects
+    the ground's block like a level's; it never moves, so it cannot be
+    dragged. Right-click opens the level menu (no Move or Remove)."""
 
     def __init__(self, layer_panel, parent=None):
         super().__init__(layer_panel, 0, parent)
-        self.setFixedHeight(GROUND_ROW_HEIGHT)
-        self.setMouseTracking(True)
-        self._hover_zone = None
-
-    def line_rect(self):
-        """Where the 4 px line is drawn: the middle of the row."""
-        top = (self.height() - LEVEL_LINE_HEIGHT) // 2
-        return QRect(0, top, self.width(), LEVEL_LINE_HEIGHT)
-
-    def tab_rect(self):
-        """The fold tab: under the level buttons' fold controls."""
-        x = (self.width() - LEVEL_BUTTON_SIZE.width()) // 2
-        y = (self.height() - GROUND_TAB_SIZE.height()) // 2
-        return QRect(x, y, GROUND_TAB_SIZE.width(), GROUND_TAB_SIZE.height())
-
-    def zone_at(self, pos):
-        """'fold' (the tab) or 'line'."""
-        return 'fold' if self.tab_rect().contains(pos) else 'line'
-
-    def _set_hover_zone(self, zone):
-        if zone != self._hover_zone:
-            self._hover_zone = zone
-            self.update()
-
-    def leaveEvent(self, event):
-        self._set_hover_zone(None)
-        super().leaveEvent(event)
-
-    def paintEvent(self, event):
-        panel = self.layer_panel
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing, True)
-        color = self.color()
-        painter.fillRect(self.line_rect(), color.lighter(118) if self._hover_zone == 'line' else color)
-        tab = QRectF(self.tab_rect())
-        painter.setPen(Qt.NoPen)
-        painter.setBrush(color.lighter(118) if self._hover_zone == 'fold' else color)
-        painter.drawRoundedRect(tab, 3, 3)
-        # Centred on its own height (the stack sits 1 px low around its centre)
-        _draw_fold_glyph(painter, tab.center() - QPointF(0, 1), panel.is_level_folded(0),
-                         panel.level_block_size(0))
-        painter.end()
-
-    def event(self, event):
-        if event.type() == QEvent.ToolTip:
-            return True  # no hover tooltip on the ground line
-        return super().event(event)
-
-    def mouseMoveEvent(self, event):
-        zone = self.zone_at(event.pos())
-        self._set_hover_zone(zone)
-        # The line selects the ground's block, except on the Masks tab
-        clickable = zone != 'line' or self.layer_panel.level_selection_allowed()
-        self.setCursor(Qt.PointingHandCursor if clickable else Qt.ArrowCursor)
-        super().mouseMoveEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton and self.rect().contains(event.pos()):
-            if self.zone_at(event.pos()) == 'fold':
-                self.layer_panel.toggle_level_fold(0)
-            elif self.layer_panel.level_selection_allowed():
-                self.layer_panel.toggle_level_scope(0)
-        super().mouseReleaseEvent(event)
-
-    def text(self):
-        return self.layer_panel.level_name(0)
-
-    def restyle(self):
-        self.update()
 
 
 # ----------------------------------------------------------------------

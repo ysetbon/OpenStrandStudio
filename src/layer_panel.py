@@ -1208,7 +1208,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # Initialize variables for managing layers
         self.layer_buttons = []  # List to store layer buttons
         self.level_rows = []  # The Level rows of the list (see level_button.py); not in layer_buttons
-        self.ground_row = None  # The ground line (level 0), when shown; not in layer_buttons
+        self.ground_row = None  # The Ground row (level 0), when shown; not in layer_buttons
         self.folded_levels = set()  # Levels whose block is folded (hidden); view state only
         self.current_set = 1  # Current set number
         self.set_counts = {}
@@ -3288,7 +3288,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         return texts.get(key, translations['en'][key])
 
     def level_name(self, level):
-        """The name on a level row: "Level 1", "Level 2"... ("Level 0" is the ground)."""
+        """The name on a level row: "Level 1", "Level 2"... and "Ground" for level 0."""
+        if level == 0:
+            return self.level_text('level_ground')
         return self.level_text('level_name').format(n=level)
 
     def _plain_strands_on(self, level):
@@ -3521,11 +3523,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         if bottom_row is None or bottom_row.isHidden() or bottom_row.parent() is None:
             return None
         geometry = bottom_row.geometry()
-        if scope == 0:
-            line = bottom_row.line_rect()
-            bottom = geometry.y() + line.y() + line.height()
-        else:
-            bottom = geometry.y() + geometry.height()
+        bottom = geometry.y() + geometry.height()
         above = self.level_rows[scope] if scope < len(self.level_rows) else None
         if above is not None and not above.isHidden():
             top = above.geometry().y() + above.height() - LEVEL_LINE_HEIGHT
@@ -5223,7 +5221,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
                     if last_visible_index is not None:
                         target_visual_index = last_visible_index + 1
 
-            # The ground line stays under the bottom layer
+            # The Ground row stays under the bottom layer
             if isinstance(self.scroll_layout.itemAt(source_index).widget(), GroundRow):
                 event.ignore()
                 return

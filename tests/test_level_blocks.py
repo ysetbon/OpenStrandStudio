@@ -1,14 +1,15 @@
 """Level blocks: what a level row does beyond marking a storey.
 
 - every line has one fold control at its left end (the level button's left
-  edge, the ground line's tab) that folds the layers resting on it; folded
+  edge, the Ground row's too) that folds the layers resting on it; folded
   layers are hidden entirely
 - a click on the name selects the level's block: the panel frames it and
   Move, Attach and Rotate only find its strands, unless "move only the
   selected strand" is on
 - each level has a colour (the theme's purple by default, a Default Level
   Color from the settings, or one picked with Recolor), saved with the project
-- the ground (level 0) gets a line under the bottom layer once any level exists
+- the ground (level 0) gets a Ground row, built like a level row, under the
+  bottom layer once any level exists
 - on the Masks tab, Move up / Move down and dragging move masks between
   levels, never below their two strands' level
 - the level menu is built like the layers' menus
@@ -81,14 +82,14 @@ def test_each_line_folds_the_layers_resting_on_it(window):
     assert not lp.is_level_folded(0) and lp.level_scope() == 1
     lp.set_level_scope(None)
     ground = lp.ground_row
-    click(ground, ground.tab_rect().center().x())  # the ground line's tab
+    click(ground.button, 5)  # the Ground row's fold control
     assert lp.is_level_folded(0) and "2_3" not in list_order(lp)
-    assert list_order(lp) == ["Level 1", "Level 0"]  # the rows, then the ground line
-    assert lp.level_scope() is None  # the tab folds, it does not select
+    assert list_order(lp) == ["Level 1", "Ground"]  # the rows, then the Ground row
+    assert lp.level_scope() is None  # the fold control folds, it does not select
     # Folding is only a view: nothing about the design changed
     assert [s.layer_name for s in window.canvas.strands] == before
     click(button, 5)
-    click(ground, ground.tab_rect().center().x())
+    click(ground.button, 5)
     assert not lp.folded_levels and "2_4" in list_order(lp) and "2_3" in list_order(lp)
     assert_consistent(window)
 
@@ -329,32 +330,54 @@ def test_every_language_has_the_level_strings():
         assert all(k in texts for k in keys), code
     for code, texts in translations.items():
         assert texts.get("level_collapse") and texts.get("level_expand"), code
+        assert texts.get("level_ground"), code
 
 
-# --- the ground line -----------------------------------------------------------
+# --- the Ground row ------------------------------------------------------------
 
 def test_ground_line_closes_the_ground_block(window):
     lp = window.layer_panel
-    lift_3_4_and_2_4(window)  # Level 1 exists, so the ground line shows
+    lift_3_4_and_2_4(window)  # Level 1 exists, so the Ground row shows
     layout = lp.scroll_layout
     assert isinstance(layout.itemAt(layout.count() - 1).widget(), GroundRow)
     assert_consistent(window)
-    click(lp.ground_row, lp.ground_row.width() - 20)  # the line, past the fold tab
+    ground = lp.ground_row.button
+    click(ground, ground.width() // 2)  # the name selects the block, as on a level
     assert lp.level_scope() == 0
     assert window.canvas.is_strand_in_level_scope(find(window, "2_3"))
     assert not window.canvas.is_strand_in_level_scope(find(window, "3_4"))
-    # Dragging still works with the line in the list
+    # Dragging still works with the Ground row in the list
     drop_below(lp, lp.layer_buttons[window.canvas.strands.index(find(window, "3_4"))],
                lp.layer_buttons[window.canvas.strands.index(find(window, "2_3"))])
     assert find(window, "3_4").level == 0
     assert isinstance(layout.itemAt(layout.count() - 1).widget(), GroundRow)
     assert_consistent(window)
-    lp.remove_level(1)  # no level left: no ground line, no ground selection
+    lp.remove_level(1)  # no level left: no Ground row, no ground selection
     pump()
     assert lp.ground_row is None and lp.level_scope() is None
 
 
-def test_the_ground_line_comes_with_the_first_level(window):
+def test_the_ground_row_looks_like_a_level_row(window):
+    """Same button, line, height and colour as Level 1, named Ground, in
+    every theme, and Recolor works on it."""
+    lp = window.layer_panel
+    lift_3_4_and_2_4(window)
+    ground, level_1 = lp.ground_row, lp.level_rows[0]
+    assert ground.height() == level_1.height()
+    assert ground.button.size() == level_1.button.size()
+    assert ground.text() == lp.level_text("level_ground") == "Ground"
+    for theme in ("default", "light", "dark"):
+        window.apply_theme(theme)
+        pump(150)
+        assert lp.level_color(0) == lp.level_color(1) == QColor(THEME_LEVEL_COLORS[theme])
+        image = ground.grab().toImage()
+        assert QColor(image.pixel(0, ground.height() - 2)) == QColor(THEME_LEVEL_COLORS[theme])
+    lp.set_level_color(0, "preset:teal")  # Recolor works on it like on any level
+    assert lp.level_color(0) == preset_color("teal", lp.current_theme)
+    lp.set_level_color(0, None)
+
+
+def test_the_ground_row_comes_with_the_first_level(window):
     lp = window.layer_panel
     assert lp.ground_row is None
     lp.new_level_button.click()
@@ -496,8 +519,8 @@ def test_the_list_keeps_room_for_the_frame_on_both_tabs(window, tab):
 
 def test_the_masks_tab_selects_no_level(window, monkeypatch):
     """Move, Attach and Rotate never act on masks, so the Masks tab has no
-    level selection: switching to it drops one, the name and the ground
-    line do nothing there, and the menu offers no Select."""
+    level selection: switching to it drops one, the level and Ground
+    names do nothing there, and the menu offers no Select."""
     lp = window.layer_panel
     lift_3_4_and_2_4(window)
     lp.set_level_scope(1)
@@ -507,7 +530,7 @@ def test_the_masks_tab_selects_no_level(window, monkeypatch):
     button = lp.level_rows[0].button
     click(button, button.width() // 2)
     assert lp.level_scope() is None
-    click(lp.ground_row, lp.ground_row.width() - 20)  # the line, past the fold tab
+    click(lp.ground_row.button, lp.ground_row.button.width() // 2)  # the Ground name
     assert lp.level_scope() is None
     lp.set_level_scope(1)
     assert lp.level_scope() is None

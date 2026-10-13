@@ -1814,6 +1814,7 @@ class SettingsDialog(QDialog):
             _['save_load_settings_title'],  # Add Save/Load Settings category
             _['tutorial'],
             _['button_explanations'],  # Add Button Guide category
+            (_['levels_masks_guide'] if 'levels_masks_guide' in _ else 'Levels & Masks'),  # Levels & Masks visual guide
             _['history'],
             _['whats_new'],  # Add What's New category here
             (_['samples'] if 'samples' in _ else 'Samples'),
@@ -3415,6 +3416,15 @@ class SettingsDialog(QDialog):
         
         self.stacked_widget.addWidget(self.button_explanations_widget)
 
+        # Levels & Masks Guide Page (index 7): a visual explanation, drawn by levels_masks_guide
+        self.levels_masks_widget = QWidget()
+        levels_masks_layout = QVBoxLayout(self.levels_masks_widget)
+        self.levels_masks_text_browser = QTextBrowser()
+        self.levels_masks_text_browser.setOpenExternalLinks(False)
+        levels_masks_layout.addWidget(self.levels_masks_text_browser)
+        self.refresh_levels_masks_guide()
+        self.stacked_widget.addWidget(self.levels_masks_widget)
+
         # History Page (index 5)
         self.history_widget = QWidget()
         history_layout = QVBoxLayout(self.history_widget)
@@ -4496,6 +4506,7 @@ class SettingsDialog(QDialog):
         # Update button explanations HTML with new theme colors
         if hasattr(self, 'button_explanations_text_browser'):
             self.refresh_button_explanations_html()
+        self.refresh_levels_masks_guide()
         
         # Apply Shadow Color Settings
         if self.canvas:
@@ -4811,10 +4822,11 @@ class SettingsDialog(QDialog):
         self.categories_list.item(4).setText(_['save_load_settings_title'])  # Save/load settings category
         self.categories_list.item(5).setText(_['tutorial'])
         self.categories_list.item(6).setText(_['button_explanations']) # Update button guide category name
-        self.categories_list.item(7).setText(_['history']) # Update history category name
-        self.categories_list.item(8).setText(_['whats_new']) # Update what's new category name
-        self.categories_list.item(9).setText(_['samples'] if 'samples' in _ else 'Samples')
-        self.categories_list.item(10).setText(_['about']) # About remains last
+        self.categories_list.item(7).setText(_['levels_masks_guide'] if 'levels_masks_guide' in _ else 'Levels & Masks') # Levels & Masks guide
+        self.categories_list.item(8).setText(_['history']) # Update history category name
+        self.categories_list.item(9).setText(_['whats_new']) # Update what's new category name
+        self.categories_list.item(10).setText(_['samples'] if 'samples' in _ else 'Samples')
+        self.categories_list.item(11).setText(_['about']) # About remains last
         self.update_category_panel_width()
         # Update labels and buttons
         self.theme_label.setText(_['select_theme'])
@@ -5259,6 +5271,7 @@ class SettingsDialog(QDialog):
             # SVG content is already directly embedded in the HTML above
             
             self.button_explanations_text_browser.setHtml(button_html)
+        self.refresh_levels_masks_guide()
         # Update history page elements
         self.history_explanation_label.setText(_['history_explanation'])
         self.load_history_button.setText(_['load_selected_history'])
@@ -6052,6 +6065,40 @@ class SettingsDialog(QDialog):
             return f'data:image/png;base64,{b64}'
         except Exception:
             return ''
+
+    def svg_text_to_data_url(self, svg_text, width, height, scale=2):
+        """Render SVG text to a PNG data URL (drawn at *scale* times its size
+        so it stays sharp when QTextBrowser shows it at width x height)."""
+        try:
+            renderer = QSvgRenderer(QByteArray(svg_text.encode('utf-8')))
+            if not renderer.isValid():
+                return ''
+            pixmap = QPixmap(int(width * scale), int(height * scale))
+            pixmap.fill(Qt.transparent)
+            painter = QPainter(pixmap)
+            painter.setRenderHint(QPainter.Antialiasing)
+            renderer.render(painter)
+            painter.end()
+            buffer = QBuffer()
+            buffer.open(QBuffer.WriteOnly)
+            pixmap.save(buffer, 'PNG')
+            return 'data:image/png;base64,' + base64.b64encode(buffer.data()).decode('ascii')
+        except Exception:
+            return ''
+
+    def build_levels_masks_html(self):
+        """The Levels & Masks guide page in the current theme and language."""
+        import levels_masks_guide as guide
+        strings = guide.strings(translations, self.current_language)
+        svgs = guide.all_svgs(guide.svg_labels(strings), self.current_theme)
+        images = {name: self.svg_text_to_data_url(svg, *guide.SIZES[name]) for name, svg in svgs.items()}
+        return guide.build_html(strings, images, self.current_theme,
+                                rtl=self.is_rtl_language(self.current_language))
+
+    def refresh_levels_masks_guide(self):
+        """Rebuild the guide after a theme or language change."""
+        if hasattr(self, 'levels_masks_text_browser'):
+            self.levels_masks_text_browser.setHtml(self.build_levels_masks_html())
 
     def canvas_ground_color(self):
         """The background the canvas paints for the current theme.

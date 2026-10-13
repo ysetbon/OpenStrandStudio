@@ -93,32 +93,34 @@ def _case(images, title, panel, canvas, caption, fill, ink, pal):
 
 
 def _order(images, S, pal):
-    """One level, Ground: the Strands tab and the Masks tab side by side, then
-    the order the app paints them in, as one row of the same buttons."""
+    """One level, Ground: the Strands tab and the Masks tab as the panel shows
+    them, and beside them the order the app paints them in, bottom first like
+    the layer list: 1 1_1, then 2 2_1 on top of it, then 3 the mask."""
     h = pal['text']
     muted = pal['muted']
 
     def tab(title, name):
-        return (f'<td style="vertical-align: top; padding-right: 28px;">'
+        return (f'<td style="vertical-align: top; padding-right: 26px;">'
                 f'<b style="color: {h};">{title}</b><br/>{_img(images, name)}</td>')
 
     def item(number, name, kind):
-        return (f'<td align="center" style="vertical-align: top;">'
-                f'<span style="color: {pal["accent"]}; font-size: 17px; font-weight: bold;">{number}</span><br/>'
-                f'{_img(images, name)}<br/><span style="color: {muted}; font-size: 12px;">{kind}</span></td>')
+        return (f'<tr><td width="22" align="center" style="vertical-align: middle; color: {pal["accent"]}; '
+                f'font-size: 17px; font-weight: bold;">{number}</td>'
+                f'<td style="padding: 0 8px 0 4px;">{_img(images, name)}</td>'
+                f'<td width="56" style="vertical-align: middle; color: {muted}; font-size: 12px;">{kind}</td></tr>')
 
-    arrow = (f'<td style="vertical-align: middle; padding: 16px 6px 0 6px;">'
-             f'<span style="color: {pal["accent"]}; font-size: 26px; font-weight: bold;">&#8594;</span></td>')
-    tabs = ('<table cellspacing="0" cellpadding="0" style="margin: 6px 0 12px 0;"><tr>'
+    up = (f'<tr><td></td><td align="center" style="padding: 2px 0 2px 0;">'
+          f'<span style="color: {pal["accent"]}; font-size: 30px; font-weight: bold;">&#8679;</span></td><td></td></tr>')
+    order = ('<table cellspacing="0" cellpadding="0">'
+             + item(3, 'order_mask', S['lm_kind_mask']) + up
+             + item(2, 'order_2_1', S['lm_kind_strand']) + up
+             + item(1, 'order_1_1', S['lm_kind_strand'])
+             + '</table>')
+    return ('<table cellspacing="0" cellpadding="0" style="margin: 6px 0 10px 0;"><tr>'
             + tab(S['layer_tab_strands'], 'order_strands_panel')
             + tab(S['layer_tab_masks'], 'order_masks_panel')
+            + f'<td style="vertical-align: top;"><b style="color: {h};">{S["lm_paint_order"]}</b><br/>{order}</td>'
             + '</tr></table>')
-    array = ('<table cellspacing="0" cellpadding="0" style="margin: 4px 0 12px 0;"><tr>'
-             + item(1, 'order_1_1', S['lm_kind_strand']) + arrow
-             + item(2, 'order_2_1', S['lm_kind_strand']) + arrow
-             + item(3, 'order_mask', S['lm_kind_mask'])
-             + '</tr></table>')
-    return (tabs + f'<p><b style="color: {h};">{S["lm_paint_order"]}</b></p>' + array)
 
 
 def build_html(S, images, theme, rtl=False):
@@ -153,5 +155,6 @@ def build_html(S, images, theme, rtl=False):
 <p>{S['lm_note_order_intro']}</p>
 {_order(images, S, pal)}
 <p>{S['lm_note_mask_level']}</p>
+<p style="color: {pal['muted']};">{S['lm_ground_hidden']}</p>
 </body>
 '''

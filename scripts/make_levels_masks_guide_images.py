@@ -142,9 +142,11 @@ def project(strands, level_count=0):
 
 def order_design():
     """One level (Ground): 1_1 and 2_1 cross, and mask 1_1_2_1 puts 1_1 over 2_1."""
-    first = strand("1_1", (90, 330), (590, 330))
-    second = strand("2_1", (200, 520), (440, 140))
-    return project([first, second, mask("1_1", "2_1", [first, second])])
+    first = strand("1_1", (90, 330), (590, 330), level=0)
+    second = strand("2_1", (200, 520), (440, 140), level=0)
+    # One level exists so the panel shows the Ground row; the pictures leave
+    # out the empty Level 1 row above it (grab_layer_list ground_only)
+    return project([first, second, mask("1_1", "2_1", [first, second])], level_count=1)
 
 
 # A real design: a 1x1 knot (mxn_rh_stretch_1x1_continue_k_0)
@@ -249,16 +251,18 @@ def grab_canvas(win, view, zoom=1.0, ring=None):
     return image
 
 
-def grab_layer_list(win, tab='strands', scale=2):
+def grab_layer_list(win, tab='strands', scale=2, ground_only=False):
     """The layer list of *tab* as the panel shows it, cropped to its rows and
-    drawn at *scale* times its size (the canvas pictures are 2x as well)."""
+    drawn at *scale* times its size (the canvas pictures are 2x as well).
+    With *ground_only*, only the ground's block: its layers and Ground row."""
     lp = win.layer_panel
     lp.set_layer_tab(tab)
     lp.refresh()
     pump(120)
     content = lp.scroll_content
     rows = [w for w in (lp.scroll_layout.itemAt(i).widget() for i in range(lp.scroll_layout.count()))
-            if w is not None and w.isVisible()]
+            if w is not None and w.isVisible()
+            and not (ground_only and w in getattr(lp, 'level_rows', []))]
     pad = 6
     top = min(w.geometry().top() for w in rows) if rows else 0
     bottom = max(w.geometry().bottom() for w in rows) + 1 if rows else content.height()
@@ -317,8 +321,8 @@ def main(themes=('default', 'light', 'dark')):
         save(grab_layer_list(win), f'levels_panel_{theme}')
         # The order of painting: the Strands and Masks tabs, and each button for the array
         load(win, order_design())
-        save(grab_layer_list(win), f'order_strands_panel_{theme}')
-        save(grab_layer_list(win, 'masks'), f'order_masks_panel_{theme}')
+        save(grab_layer_list(win, ground_only=True), f'order_strands_panel_{theme}')
+        save(grab_layer_list(win, 'masks', ground_only=True), f'order_masks_panel_{theme}')
         for name in ('1_1', '2_1'):
             save(grab_widget(layer_button(win, name)), f'order_{name}_{theme}')
         save(grab_widget(layer_button(win, '1_1_2_1', 'masks')), f'order_mask_{theme}')

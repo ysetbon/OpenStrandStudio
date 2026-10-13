@@ -1767,10 +1767,13 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
 
     def set_button_tooltip(self, button, tooltip_text):
-        """Layer panel tooltips are disabled; keep the call site API as a no-op."""
+        """Set tooltip for custom TooltipButton with center alignment"""
+        # For TooltipButton instances, use the custom tooltip method
         if isinstance(button, TooltipButton):
-            button.set_custom_tooltip("")
-        button.setToolTip("")
+            button.set_custom_tooltip(tooltip_text)
+        else:
+            # Fallback for regular buttons (shouldn't happen)
+            button.setToolTip(tooltip_text)
 
     def get_layer_panel_icon_path(self, icon_filename):
         """Resolve a layer-panel icon path for both source and packaged builds."""
@@ -2405,6 +2408,16 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # Only show context menu if we're in multi-select mode
         if not self.multi_select_mode:
             return
+
+        # Right-click on a copy badge / paste chip explains it instead of
+        # opening the batch menu (hover tooltips were dropped as too chatty)
+        if index < len(self.layer_buttons):
+            button = self.layer_buttons[index]
+            if hasattr(button, 'strand_indicator_tooltip_at'):
+                tooltip = button.strand_indicator_tooltip_at(position)
+                if tooltip:
+                    QToolTip.showText(button.mapToGlobal(position), tooltip, button)
+                    return
 
         # If the clicked layer is not in the selection, add it
         if index not in self.multi_selected_layers:

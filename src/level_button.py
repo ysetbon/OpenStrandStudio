@@ -26,7 +26,7 @@ position into levels).
 from PyQt5.QtCore import QEvent, QMimeData, QPointF, QRect, QRectF, QSize, Qt, QTimer
 from PyQt5.QtGui import QColor, QDrag, QFont, QFontMetrics, QPainter, QPainterPath, QPen
 from PyQt5.QtWidgets import (QApplication, QColorDialog, QMenu, QPushButton,
-                             QSizePolicy, QToolTip, QVBoxLayout, QWidget,
+                             QSizePolicy, QVBoxLayout, QWidget,
                              QWidgetAction)
 
 # Same width as NumberedLayerButton, a third less tall (40 -> 27).
@@ -219,16 +219,6 @@ class LevelButton(QPushButton):
         """'fold' (the control at the left edge) or 'name'."""
         return 'fold' if x < FOLD_ZONE_WIDTH else 'name'
 
-    def zone_tooltip(self, zone):
-        panel, level = self.row.layer_panel, self.row.level
-        if zone == 'fold':
-            key = 'level_unfold_above' if panel.is_level_folded(level) else 'level_fold_above'
-        elif not panel.level_selection_allowed():
-            return ''  # the Masks tab selects no level
-        else:
-            key = 'level_deselect_block' if panel.level_scope() == level else 'level_select_block'
-        return panel.level_text(key)
-
     def paintEvent(self, event):
         panel, level = self.row.layer_panel, self.row.level
         painter = QPainter(self)
@@ -256,12 +246,7 @@ class LevelButton(QPushButton):
 
     def event(self, event):
         if event.type() == QEvent.ToolTip:
-            text = self.zone_tooltip(self.zone_at(event.pos().x()))
-            if text:
-                QToolTip.showText(event.globalPos(), text, self)
-            else:
-                QToolTip.hideText()
-            return True
+            return True  # no hover tooltip on level rows
         return super().event(event)
 
     def leaveEvent(self, event):
@@ -479,20 +464,7 @@ class GroundRow(_FullWidthRow):
 
     def event(self, event):
         if event.type() == QEvent.ToolTip:
-            panel = self.layer_panel
-            if self.zone_at(event.pos()) == 'fold':
-                text = panel.level_text('level_unfold_above' if panel.is_level_folded(0)
-                                        else 'level_fold_above')
-            else:
-                text = panel.level_name(0)
-                if panel.level_selection_allowed():
-                    key = 'level_deselect_block' if panel.level_scope() == 0 else 'level_select_block'
-                    text = '{} · {}'.format(text, panel.level_text(key))
-            if text:
-                QToolTip.showText(event.globalPos(), text, self)
-            else:
-                QToolTip.hideText()
-            return True
+            return True  # no hover tooltip on the ground line
         return super().event(event)
 
     def mouseMoveEvent(self, event):

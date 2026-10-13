@@ -1,10 +1,10 @@
 """Render the pictures of the Settings > Levels & Masks guide with the app itself.
 
 Every picture is a real scene drawn by the real canvas and layer panel: the
-script builds each design as a project (strands, an attached strand, a mask)
-or loads a saved one (the 1x1 knot in scripts/guide_designs/), adds the level
-with the layer panel's own New Level and Move down, and grabs the canvas and
-the layer list in each theme. So the guide shows exactly what the app draws.
+script loads the 1x1 design in scripts/guide_designs/ with every layer on the
+ground, grabs the canvas and the layer list, then adds the level with the
+layer panel's own New Level and Move down and grabs them again, in each
+theme. So the guide shows exactly what the app draws.
 
 Run it again after a change to how strands, masks or the layer panel look:
 
@@ -13,7 +13,6 @@ Run it again after a change to how strands, masks or the layer panel look:
 The PNGs go to src/guide_images/levels_masks/: the canvas pictures once, the
 layer lists once per theme. They are shown at half size (2x pixels).
 """
-import copy
 import json
 import os
 import sys
@@ -28,7 +27,7 @@ SRC = os.path.join(ROOT, 'src')
 sys.path.insert(0, SRC)
 OUT = os.path.join(SRC, 'guide_images', 'levels_masks')
 
-from PyQt5.QtCore import QPoint, QPointF, QRect, QRectF, QTimer, Qt  # noqa: E402
+from PyQt5.QtCore import QPoint, QPointF, QRect, QRectF, QTimer  # noqa: E402
 from PyQt5.QtGui import QColor, QImage, QPainter, QPen, QRegion  # noqa: E402
 from PyQt5.QtWidgets import QApplication, QWidget  # noqa: E402
 
@@ -53,109 +52,9 @@ from settings_dialog import SettingsDialog  # noqa: E402
 SettingsDialog.save_settings_to_file = lambda self: None  # never touch the user's settings
 
 # ----------------------------------------------------------------------
-# The designs
+# The design
 # ----------------------------------------------------------------------
-COLORS = {
-    1: (200, 170, 230),  # the app's default purple
-    2: (111, 195, 178),
-    3: (242, 193, 78),
-}
-
-_BASE = {
-    "width": 46, "stroke_color": {"r": 0, "g": 0, "b": 0, "a": 255}, "stroke_width": 4,
-    "width_in_grid_units": None, "elliptical_end_caps": False, "is_first_strand": False,
-    "is_start_side": True, "start_line_visible": True, "end_line_visible": True, "end_styles": [None, None],
-    "is_hidden": False, "start_extension_visible": False, "end_extension_visible": False,
-    "start_arrow_visible": False, "end_arrow_visible": False, "full_arrow_visible": False,
-    "shadow_only": False, "hide_shadow": False, "closed_connections": [False, False], "arrow_color": None,
-    "arrow_transparency": 100, "arrow_texture": "none", "arrow_shaft_style": "solid",
-    "arrow_head_visible": True, "arrow_casts_shadow": False, "knot_connections": {},
-    "circle_stroke_color": {"r": 0, "g": 0, "b": 0, "a": 255},
-    "start_circle_stroke_color": {"r": 0, "g": 0, "b": 0, "a": 255},
-    "end_circle_stroke_color": {"r": 0, "g": 0, "b": 0, "a": 255},
-    "control_point_center_locked": False,
-    "bias_control": {"triangle_bias": 0.5, "circle_bias": 0.5, "triangle_position": None, "circle_position": None},
-    "triangle_has_moved": False, "control_point2_shown": False, "control_point2_activated": False,
-}
-
-
-def _pt(p):
-    return {"x": float(p[0]), "y": float(p[1])}
-
-
-def _color(set_number):
-    r, g, b = COLORS[set_number]
-    return {"r": r, "g": g, "b": b, "a": 255}
-
-
-def strand(name, start, end, attached_to=None, level=None, controls=None):
-    """A strand from *start* to *end*, straight unless *controls* gives its
-    two control points. With *attached_to* it is an attached strand starting
-    at the end of that strand."""
-    set_number = int(name.split('_')[0])
-    c1, c2 = controls or (start, end)
-    data = copy.deepcopy(_BASE)
-    data.update({
-        "type": "AttachedStrand" if attached_to else "Strand",
-        "start": _pt(start), "end": _pt(end), "color": _color(set_number),
-        "layer_name": name, "set_number": set_number,
-        "has_circles": [True, False] if attached_to else [True, True],
-        "control_points": [_pt(c1), _pt(c2)],
-        "control_point_center": _pt(((start[0] + end[0]) / 2, (start[1] + end[1]) / 2)),
-    })
-    if attached_to:
-        data.update({"attached_to": attached_to, "attachment_side": 1, "angle": 0, "length": 0,
-                     "is_start_side": False})
-    if level is not None:
-        data["level"] = level
-    return data
-
-
-def mask(first, second, scene):
-    """The mask that puts *first* over *second* where they cross."""
-    a = next(s for s in scene if s["layer_name"] == first)
-    data = copy.deepcopy(_BASE)
-    data.update({
-        "type": "MaskedStrand", "start": a["start"], "end": a["end"], "color": a["color"],
-        "layer_name": f"{first}_{second}",
-        "set_number": int(first.split('_')[0] + second.split('_')[0]),
-        "has_circles": [False, False], "control_points": [None, None],
-        "control_point_center": a["control_point_center"], "deletion_rectangles": [],
-    })
-    return data
-
-
-def project(strands, level_count=0):
-    strands = [dict(s, index=i) for i, s in enumerate(strands)]
-    data = {"strands": strands, "groups": {}, "selected_strand_name": None, "locked_layers": [],
-            "lock_mode": False, "shadow_enabled": True, "show_control_points": False, "shadow_overrides": {}}
-    data["strand_colors"] = {str(n): _color(n) for n in {s["set_number"] for s in strands
-                                                      if s["type"] != "MaskedStrand"}}
-    if level_count:
-        data["level_count"] = level_count
-    return data
-
-
-# A straight 1_1 across, and 2_1 + 2_2 (attached at its end) making a peak
-# that crosses 1_1 twice. Mask 1_1_2_2 lifts 1_1 at the right-hand crossing.
-ACROSS = strand("1_1", (90, 330), (590, 330))
-UP = strand("2_1", (190, 520), (330, 150))
-DOWN = strand("2_2", (330, 150), (470, 520), attached_to="2_1")
-
-
-def scenes():
-    weave = [ACROSS, UP, DOWN]
-    lift = mask("1_1", "2_2", weave)
-    return {
-        'stack': project([strand("1_1", (90, 330), (590, 330)),
-                          strand("2_1", (120, 520), (330, 140)),
-                          strand("3_1", (330, 140), (540, 520))]),
-        'mask_before': project(weave),
-        'mask_after': project(weave + [lift]),
-    }
-
-
-# The level section uses a real design: a 1x1 knot (mxn_rh_stretch_1x1_continue_k_0)
+# A real design: a 1x1 knot (mxn_rh_stretch_1x1_continue_k_0)
 # where 1_4 continues 1_3 and runs back over it, across the crossing that
 # mask 2_2_1_3 lifts. Saved here with every layer on the ground, as it was
 # before its level was added.
@@ -180,10 +79,6 @@ def lift_1_4(win):
     pump(120)
     on_level_1 = [s.layer_name for s in win.canvas.strands if getattr(s, 'level', 0) == 1]
     assert on_level_1 == ['1_4'], on_level_1
-
-
-# The part of the canvas each picture shows (canvas coordinates)
-CANVAS_VIEW = QRect(60, 105, 560, 460)
 
 
 # ----------------------------------------------------------------------
@@ -224,7 +119,7 @@ def load(win, data):
     pump(120)
 
 
-def grab_canvas(win, view=CANVAS_VIEW, zoom=1.0, ring=None):
+def grab_canvas(win, view, zoom=1.0, ring=None):
     """The part *view* of the canvas (canvas coordinates) at *zoom*, framed.
     *ring* circles a canvas point, to point at what the caption talks about."""
     canvas = win.canvas
@@ -294,26 +189,16 @@ def save(image, name):
 
 
 def main(themes=('default', 'light', 'dark')):
-    designs = scenes()
     for number, theme in enumerate(themes):
         win = open_window(theme)
+        load(win, knot())
         if number == 0:
             # The canvas paints the same ground in every theme: one picture each
-            for name, data in designs.items():
-                load(win, data)
-                save(grab_canvas(win), f'{name}_canvas')
-            load(win, knot())
             save(grab_canvas(win, KNOT_VIEW, zoom=2, ring=KNOT_CUT), 'level_same_canvas')
-            lift_1_4(win)
-            save(grab_canvas(win, KNOT_VIEW, zoom=2), 'level_up_canvas')
-        load(win, designs['stack'])
-        save(grab_layer_list(win), f'stack_panel_{theme}')
-        load(win, designs['mask_after'])
-        save(grab_layer_list(win), f'weave_panel_{theme}')
-        save(grab_layer_list(win, 'masks'), f'mask_panel_{theme}')
-        load(win, knot())
         save(grab_layer_list(win), f'ground_panel_{theme}')
         lift_1_4(win)
+        if number == 0:
+            save(grab_canvas(win, KNOT_VIEW, zoom=2), 'level_up_canvas')
         save(grab_layer_list(win), f'levels_panel_{theme}')
         win._confirm_close_with_dirty_tabs = lambda *a, **k: True
         win.close()

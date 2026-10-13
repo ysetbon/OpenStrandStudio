@@ -10,6 +10,7 @@ a = Analysis(
         ('mov', 'mov'),  # Include .mov tutorial videos for Mac compatibility
         ('flags/*.png', 'flags/'),  # Include flag images
         ('layer_panel_icons/*.png', 'layer_panel_icons/'),  # Include layer-panel button icons
+        ('guide_images/levels_masks/*.png', 'guide_images/levels_masks/'),  # Settings > Levels & Masks pictures
         ('samples/*.json', 'samples/'),  # Include sample JSON files
         ('images/*.svg', 'images/')  # Include SVG images
     ],

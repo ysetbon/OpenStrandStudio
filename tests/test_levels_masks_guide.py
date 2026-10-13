@@ -1,7 +1,8 @@
 """Settings > Levels & Masks guide: every language gets a complete page.
 
 Languages that have not translated the guide yet fall back to English, so the
-page builds with every key it needs, and every drawing is valid SVG.
+page builds with every key it needs, and every picture it shows exists (they
+are drawn by scripts/make_levels_masks_guide_images.py).
 """
 import os
 import sys
@@ -20,21 +21,17 @@ class LevelsMasksGuideTest(unittest.TestCase):
         for language in translations:
             strings = guide.strings(translations, language)
             for theme in guide.PALETTES:
-                svgs = guide.all_svgs(guide.svg_labels(strings), theme)
-                images = {name: f'data:image/png;base64,{name}' for name in svgs}
+                files = guide.picture_files(theme)
+                images = {name: (f'data:image/png;base64,{name}', 10, 10) for name in files}
                 html = guide.build_html(strings, images, theme, rtl=(language == 'he'))
                 self.assertIn(strings['lm_title'], html)
-                for name in svgs:
-                    self.assertIn(images[name], html)
+                for name in files:
+                    self.assertIn(images[name][0], html)
 
-    def test_drawings_are_valid_svg(self):
-        from xml.dom import minidom
-        strings = guide.strings(translations, 'en')
+    def test_every_picture_exists(self):
         for theme in guide.PALETTES:
-            for name, svg in guide.all_svgs(guide.svg_labels(strings), theme).items():
-                minidom.parseString(svg)
-                width, height = guide.SIZES[name]
-                self.assertIn(f'viewBox="0 0 {width} {height}"', svg)
+            for path in guide.picture_files(theme).values():
+                self.assertTrue(os.path.isfile(os.path.join(_SRC, path)), path)
 
 
 if __name__ == '__main__':

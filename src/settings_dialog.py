@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, pyqtSignal, QUrl, QRectF, QRect, QTimer, QBuffer, QByteArray, QPointF, QLocale
 from PyQt5.QtSvg import QSvgRenderer
 import base64
-from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap, QPainterPath, QBrush, QFontMetrics, QPolygonF
+from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap, QImage, QPainterPath, QBrush, QFontMetrics, QPolygonF
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from translations import translations
@@ -6066,32 +6066,32 @@ class SettingsDialog(QDialog):
         except Exception:
             return ''
 
-    def svg_text_to_data_url(self, svg_text, width, height, scale=2):
-        """Render SVG text to a PNG data URL (drawn at *scale* times its size
-        so it stays sharp when QTextBrowser shows it at width x height)."""
-        try:
-            renderer = QSvgRenderer(QByteArray(svg_text.encode('utf-8')))
-            if not renderer.isValid():
-                return ''
-            pixmap = QPixmap(int(width * scale), int(height * scale))
-            pixmap.fill(Qt.transparent)
-            painter = QPainter(pixmap)
-            painter.setRenderHint(QPainter.Antialiasing)
-            renderer.render(painter)
-            painter.end()
-            buffer = QBuffer()
-            buffer.open(QBuffer.WriteOnly)
-            pixmap.save(buffer, 'PNG')
-            return 'data:image/png;base64,' + base64.b64encode(buffer.data()).decode('ascii')
-        except Exception:
-            return ''
+    def guide_picture_data_url(self, relative_path, pixel_ratio=2):
+        """A guide picture as (PNG data URL, width, height) for QTextBrowser.
+
+        The file holds *pixel_ratio* pixels per point shown. QTextBrowser
+        scales images without smoothing, so the picture is scaled here to the
+        screen's own pixel ratio first."""
+        image = QImage(self.get_asset_path(relative_path))
+        if image.isNull():
+            return '', 0, 0
+        width = round(image.width() / pixel_ratio)
+        height = round(image.height() / pixel_ratio)
+        screen_ratio = max(1.0, min(float(pixel_ratio), self.devicePixelRatioF()))
+        if screen_ratio < pixel_ratio:
+            image = image.scaled(round(width * screen_ratio), round(height * screen_ratio),
+                                 Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        buffer = QBuffer()
+        buffer.open(QBuffer.WriteOnly)
+        image.save(buffer, 'PNG')
+        return 'data:image/png;base64,' + base64.b64encode(buffer.data()).decode('ascii'), width, height
 
     def build_levels_masks_html(self):
         """The Levels & Masks guide page in the current theme and language."""
         import levels_masks_guide as guide
         strings = guide.strings(translations, self.current_language)
-        svgs = guide.all_svgs(guide.svg_labels(strings), self.current_theme)
-        images = {name: self.svg_text_to_data_url(svg, *guide.SIZES[name]) for name, svg in svgs.items()}
+        images = {name: self.guide_picture_data_url(path, guide.PIXEL_RATIO)
+                  for name, path in guide.picture_files(self.current_theme).items()}
         return guide.build_html(strings, images, self.current_theme,
                                 rtl=self.is_rtl_language(self.current_language))
 

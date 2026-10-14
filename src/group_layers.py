@@ -4356,42 +4356,6 @@ class GroupMoveDialog(QDialog):
 
 
 
-class LayerSelectionDialog(QDialog):
-    def __init__(self, layers, parent=None):
-        super().__init__(parent)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        
-        # Get language code from parent if available
-        language_code = 'en'
-        if parent and hasattr(parent, 'language_code'):
-            language_code = parent.language_code
-        elif parent and hasattr(parent, 'canvas') and hasattr(parent.canvas, 'language_code'):
-            language_code = parent.canvas.language_code
-        
-        _ = translations[language_code]
-        self.setWindowTitle("Select Layers for Group")
-        
-        self.layout = QVBoxLayout(self)
-        
-        self.layer_list = QListWidget()
-        for layer in layers:
-            # Exclude masked layers (those with names following the pattern x_y_z_w)
-            if len(layer.split('_')) != 4:
-                item = QListWidgetItem(layer)
-                item.setCheckState(Qt.Unchecked)
-                self.layer_list.addItem(item)
-        
-        self.layout.addWidget(self.layer_list)
-        
-        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        self.button_box.accepted.connect(self.accept)
-        self.button_box.rejected.connect(self.reject)
-        self.layout.addWidget(self.button_box)
-
-    def get_selected_layers(self):
-        return [self.layer_list.item(i).text() for i in range(self.layer_list.count()) 
-                if self.layer_list.item(i).checkState() == Qt.Checked]
-
 import json
 from PyQt5.QtCore import QPointF, Qt, pyqtSignal
 from PyQt5.QtGui import QColor

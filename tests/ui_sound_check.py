@@ -611,10 +611,7 @@ def check_dialogs(w, rec):
         ("Rotate group", lambda: GroupRotateDialog("SoundTest", group_panel=gp, parent=w)),
         ("Edit strand angles", lambda: StrandAngleEditDialog("SoundTest", group_data, canvas=canvas)),
     ]
-    # layer_panel.LayerSelectionDialog is only used by LayerPanel.create_group(), which
-    # nothing calls (groups are made from the group panel), and it cannot be built as is
-    record("Layer selection", "window", "not tested", "-", "-", True,
-           "unreachable: only LayerPanel.create_group() opens it and nothing calls that")
+
     for area, make in dialogs:
         try:
             opened = []

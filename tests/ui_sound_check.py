@@ -579,7 +579,6 @@ def check_dialogs(w, rec):
     from end_style_dialog import EndStyleDialog
     from group_layers import GroupMoveDialog, GroupRotateDialog, StrandAngleEditDialog
     from group_shadow_editor_dialog import GroupShadowEditorDialog
-    from layer_panel import LayerSelectionDialog
     from mask_grid_dialog import MaskGridDialog
     from numbered_layer_button import WidthConfigDialog
     from shadow_editor_dialog import ShadowEditorDialog
@@ -589,7 +588,9 @@ def check_dialogs(w, rec):
     gp.create_group("SoundTest", list(canvas.strands))
     pump(200)
     group_strands = list(canvas.strands)
-    group_data = gp.groups.get("SoundTest")
+    # the same data GroupPanel.edit_strand_angles hands the dialog
+    group_data = {"strands": group_strands, "layers": [s.layer_name for s in group_strands],
+                  "editable_layers": [s.layer_name for s in group_strands]}
 
     dialogs = [
         ("Shadow editor", lambda: ShadowEditorDialog(canvas, strand, parent=lp)),
@@ -601,8 +602,11 @@ def check_dialogs(w, rec):
         ("Move group", lambda: GroupMoveDialog(canvas, "SoundTest", parent=w)),
         ("Rotate group", lambda: GroupRotateDialog("SoundTest", group_panel=gp, parent=w)),
         ("Edit strand angles", lambda: StrandAngleEditDialog("SoundTest", group_data, canvas=canvas)),
-        ("Layer selection", lambda: LayerSelectionDialog([s.layer_name for s in canvas.strands], lp)),
     ]
+    # layer_panel.LayerSelectionDialog is only used by LayerPanel.create_group(), which
+    # nothing calls (groups are made from the group panel), and it cannot be built as is
+    record("Layer selection", "window", "not tested", "-", "-", True,
+           "unreachable: only LayerPanel.create_group() opens it and nothing calls that")
     for area, make in dialogs:
         try:
             opened = []
@@ -646,14 +650,21 @@ def check_settings(w, rec):
                     getattr(sd, "tutorial_widget", None)):
             skip_pages.add(title)
             continue
-        sweep_page(rec, w, sd, page, f"Settings: {title}")
+        def reopen(row=i):
+            click(w.settings_button)
+            pump(250)
+            lst.setCurrentRow(row)
+            sd.change_category(lst.item(row))  # the sidebar switches pages on itemClicked
+            pump(150)
+
+        sweep_page(rec, w, sd, page, f"Settings: {title}", reopen)
     record("Settings", "pages", "not swept", "-", sorted(skip_pages), True,
            "language buttons change the whole UI, samples replace the canvas, tutorials play video")
     sweep_dialog(rec, w, lambda: DefaultWidthConfigDialog(sd, sd), "Default width", "blue")
     run_check(rec, "Settings", "window", "close", lambda: sd.close(), exact=["dialog_close"])
 
 
-def sweep_page(rec, w, sd, page, area):
+def sweep_page(rec, w, sd, page, area, reopen):
     done = set()
     for _ in range(MAX_CONTROLS_PER_WINDOW):
         controls = [c for c in page.findChildren(QWidget)
@@ -690,8 +701,18 @@ def sweep_page(rec, w, sd, page, area):
                 run_check(rec, area, name, "toggle", lambda: click(c), f"toggle_green_{'off' if was else 'on'}")
                 run_check(rec, area, name, "toggle back", lambda: click(c), f"toggle_green_{'on' if was else 'off'}")
             else:
-                run_check(rec, area, name, "click", lambda: click(c), "ui_click",
-                          note="pop-ups it opens are dismissed by the test")
+                wait_between()
+                rec.clear()
+                click(c)
+                pump(200)
+                got = [cue for cue in rec.requested if cue not in HOVER_CUES]
+                if not sd.isVisible():
+                    record(area, name, "click (closes Settings)", "exactly dialog_close", got, got == ["dialog_close"],
+                           "a closing button plays only the close sound")
+                    reopen()
+                else:
+                    record(area, name, "click", "ui_click", got, "ui_click" in got,
+                           "pop-ups it opens are dismissed by the test")
             close_stray_dialogs(w, keep=(sd,))
         except RuntimeError:
             record(area, name, "use", "-", "-", True, "control removed by the action itself")

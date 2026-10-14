@@ -62,7 +62,7 @@ CUES = [
     ("drag_drop", 85, -14, "Placing a small plastic game piece down on a board, one soft muted thock, no bounce"),
     ("snap_grid", 25, -26, "An extremely short tiny dry tick, a single plastic ratchet tooth, very quiet"),
     # Attaching: a new strand pulled from an end and fixed on, the signature moment
-    ("attach_start", 140, -19, "A very soft muffled pluck of a thick wool yarn gently pulled, warm, round and low, a quiet soft thump with no swish, no hiss and no air"),
+    ("attach_start", 150, -17, "Two small magnets gently drawing together, a soft muted tick with a tiny pull before it, round and quiet"),
     ("attach_complete", 150, -12, "Two plastic connector pieces pressed together until they lock, a firm satisfying snap with a tiny bright plink after it"),
     ("new_strand", 200, -14, "A tiny cheerful magical sparkle, a quick bright glint of something brand new appearing, a soft pop followed by a short shimmering rising chime"),
     # Feedback
@@ -83,7 +83,7 @@ CUES = [
 CUE_BY_ID = {cue[0]: cue for cue in CUES}
 
 # Low-pass cutoff (Hz) for cues whose takes come back too bright or hissy
-LOWPASS = {"mode_move": 2500, "delete": 4500, "attach_start": 3000}
+LOWPASS = {"mode_move": 2500, "delete": 4500, "attach_start": 6000}
 
 # Cues that should not sound like plastic get their own style line
 STYLE_OVERRIDE = {

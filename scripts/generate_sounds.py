@@ -62,7 +62,7 @@ CUES = [
     ("drag_drop", 85, -14, "Placing a small plastic game piece down on a board, one soft muted thock, no bounce"),
     ("snap_grid", 25, -26, "An extremely short tiny dry tick, a single plastic ratchet tooth, very quiet"),
     # Attaching: a new strand pulled from an end and fixed on, the signature moment
-    ("attach_start", 160, -17, "One quick soft paintbrush stroke across paper, a gentle bristly swish of a wide soft brush, smooth and light"),
+    ("attach_start", 140, -19, "A very soft muffled pluck of a thick wool yarn gently pulled, warm, round and low, a quiet soft thump with no swish, no hiss and no air"),
     ("attach_complete", 150, -12, "Two plastic connector pieces pressed together until they lock, a firm satisfying snap with a tiny bright plink after it"),
     ("new_strand", 200, -14, "A tiny cheerful magical sparkle, a quick bright glint of something brand new appearing, a soft pop followed by a short shimmering rising chime"),
     # Feedback
@@ -83,12 +83,12 @@ CUES = [
 CUE_BY_ID = {cue[0]: cue for cue in CUES}
 
 # Low-pass cutoff (Hz) for cues whose takes come back too bright or hissy
-LOWPASS = {"mode_move": 2500, "delete": 4500, "attach_start": 4500}
+LOWPASS = {"mode_move": 2500, "delete": 4500, "attach_start": 3000}
 
 # Cues that should not sound like plastic get their own style line
 STYLE_OVERRIDE = {
     "new_strand": "playful and friendly, close-up, short, no music, no voice",
-    "attach_start": "soft, gentle and warm, close-up, dry, no reverb, no music, no voice",
+    "attach_start": "very soft, gentle and warm, close-up, dry, no reverb, no music, no voice",
     "bell_note": "clean, close-up, dry, no reverb, no music, no voice",
     "tab_switch": "playful and friendly, close-up, dry, no reverb, no music, no voice",
 }
@@ -175,6 +175,36 @@ def shape(samples, target_ms, peak_db):
     if peak > 0:
         out *= (10 ** (peak_db / 20)) / peak
     return out
+
+
+def tonal_only(samples, noise_keep=0.0, margin=1.0, n_fft=2048, hop=256, width=17):
+    """Split a sound into its tonal part (steady partials, e.g. a chime) and its noisy
+    part (hiss, crackle, clicks) by median filtering the spectrogram along time and
+    frequency, then keep the tonal part plus noise_keep of the noisy part."""
+    window = np.hanning(n_fft)
+    padded = np.concatenate([np.zeros(n_fft), samples, np.zeros(n_fft)])
+    frames = np.lib.stride_tricks.sliding_window_view(padded, n_fft)[::hop] * window
+    spec = np.fft.rfft(frames, axis=1)
+    mag = np.abs(spec)
+    half = width // 2
+
+    def median(a, axis):
+        a = np.moveaxis(a, axis, -1)
+        a = np.pad(a, [(0, 0)] * (a.ndim - 1) + [(half, half)], mode="edge")
+        return np.moveaxis(np.median(np.lib.stride_tricks.sliding_window_view(a, width, axis=-1), axis=-1), -1, axis)
+
+    steady = median(mag, 0)   # smooth over time: what stays put is tonal
+    spread = median(mag, 1)   # smooth over frequency: what is broadband is noise
+    tonal_mask = steady ** 2 / (steady ** 2 + (margin * spread) ** 2 + 1e-12)
+    mask = tonal_mask + noise_keep * (1 - tonal_mask)
+    frames_out = np.fft.irfft(spec * mask, n=n_fft, axis=1) * window
+    out = np.zeros(padded.size)
+    norm = np.zeros(padded.size)
+    for i, frame in enumerate(frames_out):
+        out[i * hop:i * hop + n_fft] += frame
+        norm[i * hop:i * hop + n_fft] += window ** 2
+    out = out / np.maximum(norm, 1e-8)
+    return out[n_fft:n_fft + samples.size]
 
 
 def soften(samples, lowpass_hz, treble_db, attack_ms):
@@ -302,10 +332,14 @@ def pick(takes_dir, choices):
             print(f"{name}.wav <- take {take}")
 
 
-def soften_take(raw_mp3, cue_id, out_path, lowpass_hz, treble_db, attack_ms, peak_db=None):
+def soften_take(raw_mp3, cue_id, out_path, lowpass_hz, treble_db, attack_ms, peak_db=None,
+                tonal=False, noise_keep=0.0, margin=1.0):
     """Write a softened version of one raw take, trimmed and normalized like process()."""
     _, ms, cue_peak, _ = CUE_BY_ID[cue_id]
-    samples = soften(decode(raw_mp3).astype(np.float64), lowpass_hz, treble_db, attack_ms)
+    samples = decode(raw_mp3).astype(np.float64)
+    if tonal:
+        samples = tonal_only(samples, noise_keep, margin)
+    samples = soften(samples, lowpass_hz, treble_db, attack_ms)
     write_wav(out_path, shape(samples, ms, cue_peak if peak_db is None else peak_db))
 
 
@@ -344,6 +378,9 @@ def main():
     f.add_argument("--treble", type=float, default=0, help="high-shelf gain in dB above 4 kHz, e.g. -6")
     f.add_argument("--attack-ms", type=float, default=0)
     f.add_argument("--peak", type=float, default=None, help="peak in dBFS (default: the cue's)")
+    f.add_argument("--tonal", action="store_true", help="remove the noisy part, keep the tonal part")
+    f.add_argument("--noise-keep", type=float, default=0.0, help="with --tonal: share of the noise to keep, 0-1")
+    f.add_argument("--margin", type=float, default=1.0, help="with --tonal: higher removes more")
 
     args = parser.parse_args()
     if args.command == "generate":
@@ -351,7 +388,8 @@ def main():
     elif args.command == "process":
         process(args.raw, args.out)
     elif args.command == "soften":
-        soften_take(args.raw_mp3, args.cue_id, args.out, args.lowpass, args.treble, args.attack_ms, args.peak)
+        soften_take(args.raw_mp3, args.cue_id, args.out, args.lowpass, args.treble, args.attack_ms, args.peak,
+                    args.tonal, args.noise_keep, args.margin)
     elif args.command == "pick":
         pick(args.takes_dir, args.choices)
     else:

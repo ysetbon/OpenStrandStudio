@@ -1794,9 +1794,12 @@ class MoveMode:
         """Family gating for the 'selected only' settings.
 
         move_selected_only restricts all move-mode interaction to the selected
-        strand. show_cp_selected_only only restricts control points: other
-        strands keep their start/end squares and stay movable."""
-        if getattr(self.canvas, 'move_selected_only', False):
+        strand, except while a level's block is selected: then Move keeps to
+        that level instead, like Attach and Rotate. show_cp_selected_only only
+        restricts control points: other strands keep their start/end squares
+        and stay movable."""
+        active = getattr(self.canvas, 'move_selected_only_active', None)
+        if active is not None and active():
             return self.canvas.is_strand_in_selected_family(strand)
         # A level's block selected in the layer panel: only its strands
         if hasattr(self.canvas, 'is_strand_in_level_scope') and not self.canvas.is_strand_in_level_scope(strand):

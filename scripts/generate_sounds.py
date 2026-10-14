@@ -5,10 +5,12 @@ Three steps:
     python scripts/generate_sounds.py generate --raw sounds_raw --takes 4
     python scripts/generate_sounds.py process  --raw sounds_raw --out sounds_takes
     python scripts/generate_sounds.py pick     --takes-dir sounds_takes ui_click=2 drag_drop=1 ...
+    python scripts/generate_sounds.py variants
 
 `generate` calls the API (skips takes that already exist), `process` trims each take
 to its target length and writes 44.1 kHz 16-bit mono WAVs, and `pick` copies the chosen
-take of each cue into src/sounds/<cue>.wav.
+take of each cue into src/sounds/<cue>.wav. `variants` derives the blue and green toggle
+sounds from the approved ui_toggle sounds.
 
 The API key is read from ELEVENLABS_API_KEY. When that variable is unset no key header is
 sent, which is what you want behind a proxy that injects the key itself.
@@ -59,20 +61,54 @@ CUES = [
     ("drag_drop", 85, -14, "Placing a small plastic game piece down on a board, one soft muted thock, no bounce"),
     ("snap_grid", 25, -26, "An extremely short tiny dry tick, a single plastic ratchet tooth, very quiet"),
     # Attaching: a new strand pulled from an end and fixed on, the signature moment
-    ("attach_start", 120, -15, "Pulling a plastic lacing cord through the hole of a bead, a quick stretchy rubbery pull that rises in pitch, like a cord being drawn out to attach it"),
+    ("attach_start", 150, -15, "Pulling a rope quickly through a hand, one short firm tug of a rope sliding and tightening, fibrous rope friction ending in a soft snap tight"),
     ("attach_complete", 150, -12, "Two plastic connector pieces pressed together until they lock, a firm satisfying snap with a tiny bright plink after it"),
-    ("new_strand", 150, -14, "A fresh strand of plastic lacing cord flicked out from a spool, a springy bouncy boing with a cheerful rising twang, a new string appearing"),
+    ("new_strand", 200, -14, "A tiny cheerful magical sparkle, a quick bright glint of something brand new appearing, a soft pop followed by a short shimmering rising chime"),
     # Feedback
     ("delete", 150, -18, "A small crumpled plastic wrapper dropped into a small empty plastic trash bin, one soft hollow plunk at the bottom, muffled, no hiss"),
-    ("undo", 90, -15, "Two quick round plastic boops stepping down in pitch, like a toy taking one step backwards, bouncy and clear"),
-    ("redo", 90, -15, "Two quick round plastic boops stepping up in pitch, like a toy taking one step forwards, bouncy and clear"),
+    # undo and redo are built from bell_note retuned to exact notes (see TWO_NOTE)
+    ("bell_note", 400, -15, "One single soft clear bell strike, a small toy glockenspiel bell struck once with a soft mallet, pure tone, short ring, one note only"),
+    ("undo", 260, -15, "bell: C then E"),
+    ("redo", 260, -15, "bell: E then C"),
     ("save_done", 200, -14, "Two gentle wooden toy xylophone notes going up, warm and clear, a calm job-done confirmation"),
     ("denied", 100, -16, "A soft hollow bonk of a rubber toy mallet tapping a hollow plastic block, low and short, gentle, not alarming"),
+    # Sub-windows, menus and small controls
+    ("dialog_open", 120, -18, "A small soft plastic lid flipping open, a gentle quick upward pop with a light airy lift"),
+    ("dialog_close", 100, -19, "A small soft plastic lid gently closing, a quick soft downward tap shut"),
+    ("menu_open", 60, -20, "A tiny soft flick of a small plastic card being fanned out, very quick and light"),
+    ("stepper_tick", 45, -17, "A small firm tick of a plastic toy counter clicking forward one step, short and precise"),
+    ("tab_switch", 80, -17, "A quick soft flip of a thick cardboard page in a children's board book, light and short"),
 ]
 CUE_BY_ID = {cue[0]: cue for cue in CUES}
 
 # Low-pass cutoff (Hz) for cues whose takes come back too bright or hissy
-LOWPASS = {"mode_move": 2500, "delete": 4500}
+LOWPASS = {"mode_move": 2500, "delete": 4500, "attach_start": 6000}
+
+# Cues that should not sound like plastic get their own style line
+STYLE_OVERRIDE = {
+    "new_strand": "playful and friendly, close-up, short, no music, no voice",
+    "bell_note": "clean, close-up, dry, no reverb, no music, no voice",
+    "tab_switch": "playful and friendly, close-up, dry, no reverb, no music, no voice",
+}
+
+# Pitch variants written next to each processed take: one recording, mirrored up and down
+PITCH_VARIANTS = {"stepper_tick": [("stepper_plus", 2), ("stepper_minus", -2)]}
+
+# Colour variants derived from approved sounds in src/sounds by the `variants` command,
+# so every toggle of one colour plays the same file and colours differ only slightly
+COLOR_VARIANTS = {
+    "toggle_blue_on": ("ui_toggle_on", -2),
+    "toggle_blue_off": ("ui_toggle_off", -2),
+    "toggle_green_on": ("ui_toggle_on", 2),
+    "toggle_green_off": ("ui_toggle_off", 2),
+}
+
+# Two-note cues built from one generated bell strike, retuned to exact pitches.
+# A synthesized bell is added as an extra take so there is always a clean option.
+NOTE_HZ = {"C6": 1046.50, "E6": 1318.51}
+TWO_NOTE_SOURCE = "bell_note"
+TWO_NOTE = {"undo": ("C6", "E6"), "redo": ("E6", "C6")}
+NOTE_GAP_MS = 90
 
 
 
@@ -83,7 +119,7 @@ def generate(raw_dir, takes, only, prompt_influence):
         headers["xi-api-key"] = api_key
 
     for cue_id, _ms, _peak, prompt in CUES:
-        if only and cue_id not in only:
+        if cue_id in TWO_NOTE or (only and cue_id not in only):
             continue
         cue_dir = os.path.join(raw_dir, cue_id)
         os.makedirs(cue_dir, exist_ok=True)
@@ -92,7 +128,7 @@ def generate(raw_dir, takes, only, prompt_influence):
             if os.path.exists(path):
                 continue
             body = json.dumps({
-                "text": f"{prompt}. {STYLE}",
+                "text": f"{prompt}. {STYLE_OVERRIDE.get(cue_id, STYLE)}",
                 "duration_seconds": 0.5,  # API minimum; trimmed to the target length later
                 "prompt_influence": prompt_influence,
             }).encode("utf-8")
@@ -148,11 +184,71 @@ def write_wav(path, samples):
         w.writeframes(data.tobytes())
 
 
+def pitch_shift(samples, semitones):
+    """Resample to shift pitch (and length) by the given number of semitones."""
+    return retune(samples, 1.0, 2 ** (semitones / 12))
+
+
+def strongest_pitch(samples):
+    """Frequency of the loudest partial in the first 200 ms after the attack."""
+    onset = int(np.argmax(np.abs(samples) > 0.1 * np.max(np.abs(samples))))
+    window = samples[onset:onset + int(0.2 * SAMPLE_RATE)]
+    window = window * np.hanning(window.size)
+    spectrum = np.abs(np.fft.rfft(window, n=1 << 16))
+    freqs = np.fft.rfftfreq(1 << 16, 1 / SAMPLE_RATE)
+    band = (freqs > 300) & (freqs < 5000)
+    return float(freqs[band][np.argmax(spectrum[band])])
+
+
+def retune(samples, from_hz, to_hz):
+    """Resample so the from_hz partial lands on to_hz."""
+    factor = to_hz / from_hz
+    positions = np.arange(0, samples.size - 1, factor)
+    return np.interp(positions, np.arange(samples.size), samples)
+
+
+def synth_bell(hz, seconds=0.35):
+    """A soft glockenspiel-like strike: a few slightly inharmonic partials with fast decay."""
+    t = np.arange(int(seconds * SAMPLE_RATE)) / SAMPLE_RATE
+    partials = [(1.0, 1.0, 9), (2.76, 0.35, 16), (5.40, 0.15, 24), (8.93, 0.06, 32)]
+    tone = sum(a * np.sin(2 * np.pi * hz * r * t) * np.exp(-d * t) for r, a, d in partials)
+    return tone * np.minimum(1.0, t / 0.002)
+
+
+def two_notes(note_a, note_b, gap_ms):
+    """Mix two strikes, the second starting gap_ms after the first."""
+    gap = int(gap_ms / 1000 * SAMPLE_RATE)
+    out = np.zeros(max(note_a.size, gap + note_b.size))
+    out[:note_a.size] += note_a
+    out[gap:gap + note_b.size] += note_b
+    return out
+
+
+def process_two_note(raw_dir, out_dir):
+    src_dir = os.path.join(raw_dir, TWO_NOTE_SOURCE)
+    takes = []
+    for name in sorted(os.listdir(src_dir)):
+        if name.endswith(".mp3"):
+            strike = decode(os.path.join(src_dir, name)).astype(np.float64)
+            onset = int(np.argmax(np.abs(strike) > 0.1 * np.max(np.abs(strike))))
+            takes.append((name[len("take"):-len(".mp3")], strike[onset:], strongest_pitch(strike)))
+    synth_take = str(len(takes) + 1)
+    for cue_id, (first, second) in TWO_NOTE.items():
+        _, ms, peak_db, _ = CUE_BY_ID[cue_id]
+        for take, strike, hz in takes:
+            mixed = two_notes(retune(strike, hz, NOTE_HZ[first]), retune(strike, hz, NOTE_HZ[second]), NOTE_GAP_MS)
+            write_wav(os.path.join(out_dir, f"{cue_id}_{take}.wav"), shape(mixed, ms, peak_db))
+            print(f"processed {cue_id} take {take} (bell at {hz:.0f} Hz -> {first} {second})")
+        mixed = two_notes(synth_bell(NOTE_HZ[first]), synth_bell(NOTE_HZ[second]), NOTE_GAP_MS)
+        write_wav(os.path.join(out_dir, f"{cue_id}_{synth_take}.wav"), shape(mixed, ms, peak_db))
+        print(f"processed {cue_id} take {synth_take} (synthesized bell {first} {second})")
+
+
 def process(raw_dir, out_dir):
     os.makedirs(out_dir, exist_ok=True)
     for cue_id, ms, peak_db, _prompt in CUES:
         cue_dir = os.path.join(raw_dir, cue_id)
-        if not os.path.isdir(cue_dir):
+        if cue_id in TWO_NOTE or not os.path.isdir(cue_dir):
             continue
         for name in sorted(os.listdir(cue_dir)):
             if not name.endswith(".mp3"):
@@ -161,17 +257,31 @@ def process(raw_dir, out_dir):
             shaped = shape(decode(os.path.join(cue_dir, name), LOWPASS.get(cue_id)), ms, peak_db)
             write_wav(os.path.join(out_dir, f"{cue_id}_{take}.wav"), shaped)
             print(f"processed {cue_id} take {take}")
+            for name, semitones in PITCH_VARIANTS.get(cue_id, []):
+                write_wav(os.path.join(out_dir, f"{name}_{take}.wav"), pitch_shift(shaped, semitones))
+    if os.path.isdir(os.path.join(raw_dir, TWO_NOTE_SOURCE)):
+        process_two_note(raw_dir, out_dir)
 
 
 def pick(takes_dir, choices):
     os.makedirs(SOUNDS_DIR, exist_ok=True)
     for choice in choices:
         cue_id, _, take = choice.partition("=")
-        if cue_id not in CUE_BY_ID or not take:
+        variant_names = {name for variants in PITCH_VARIANTS.values() for name, _ in variants}
+        if (cue_id not in CUE_BY_ID and cue_id not in variant_names) or not take:
             sys.exit(f"bad choice {choice!r}, expected cue_id=take")
-        src = os.path.join(takes_dir, f"{cue_id}_{take}.wav")
-        shutil.copyfile(src, os.path.join(SOUNDS_DIR, f"{cue_id}.wav"))
-        print(f"{cue_id}.wav <- take {take}")
+        # a cue with pitch variants ships as its variants, e.g. stepper_tick -> stepper_plus, stepper_minus
+        names = [name for name, _ in PITCH_VARIANTS.get(cue_id, [])] or [cue_id]
+        for name in names:
+            shutil.copyfile(os.path.join(takes_dir, f"{name}_{take}.wav"), os.path.join(SOUNDS_DIR, f"{name}.wav"))
+            print(f"{name}.wav <- take {take}")
+
+
+def variants():
+    for name, (source, semitones) in COLOR_VARIANTS.items():
+        samples = decode(os.path.join(SOUNDS_DIR, f"{source}.wav")).astype(np.float64)
+        write_wav(os.path.join(SOUNDS_DIR, f"{name}.wav"), pitch_shift(samples, semitones))
+        print(f"{name}.wav <- {source}.wav ({semitones:+d} semitones)")
 
 
 def main():
@@ -192,13 +302,17 @@ def main():
     k.add_argument("--takes-dir", default="sounds_takes")
     k.add_argument("choices", nargs="+", help="cue_id=take, e.g. ui_click=2")
 
+    sub.add_parser("variants", help="derive colour variants from approved sounds in src/sounds")
+
     args = parser.parse_args()
     if args.command == "generate":
         generate(args.raw, args.takes, set(args.only or []), args.prompt_influence)
     elif args.command == "process":
         process(args.raw, args.out)
-    else:
+    elif args.command == "pick":
         pick(args.takes_dir, args.choices)
+    else:
+        variants()
 
 
 if __name__ == "__main__":

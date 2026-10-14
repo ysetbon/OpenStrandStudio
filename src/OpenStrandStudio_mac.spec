@@ -12,7 +12,8 @@ a = Analysis(
         ('layer_panel_icons/*.png', 'layer_panel_icons/'),  # Include layer-panel button icons
         ('guide_images/levels_masks/*.png', 'guide_images/levels_masks/'),  # Settings > Levels & Masks pictures
         ('samples/*.json', 'samples/'),  # Include sample JSON files
-        ('images/*.svg', 'images/')  # Include SVG images
+        ('images/*.svg', 'images/'),  # Include SVG images
+        ('sounds/*.wav', 'sounds/')  # UI sound effects
     ],
     hiddenimports=['PyQt5', 'PyQt5.QtCore', 'PyQt5.QtGui', 'PyQt5.QtWidgets', 'PyQt5.QtSvg', 'PyQt5.QtMultimedia', 'PyQt5.QtMultimediaWidgets', 'PIL'],
     hookspath=[],

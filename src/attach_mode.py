@@ -2,6 +2,7 @@ from PyQt5.QtCore import QPointF, QTimer, pyqtSignal, QObject, QRect, QRectF, Qt
 from PyQt5.QtGui import QCursor, QPainter, QPixmap, QPainterPath, QColor
 from PyQt5.QtWidgets import QApplication
 from render_utils import RenderUtils
+import sound_manager
 import math
 import time
 
@@ -538,7 +539,7 @@ class AttachMode(QObject):
             if self.canvas.current_strand:
                 # If the strand has a non-zero length, create it
                 if self.canvas.current_strand.start != self.canvas.current_strand.end:
-                    # No-op: previously logged strand creation details
+                    sound_manager.play('attach_complete')
 
                     self.strand_created.emit(self.canvas.current_strand)
                     
@@ -819,6 +820,8 @@ class AttachMode(QObject):
 
             # Only update canvas if hover state changed
             if old_hovered_strand != self.hovered_strand or old_hovered_point != self.hovered_point:
+                if self.hovered_strand is not None:
+                    sound_manager.play('canvas_hover_point')
                 self.canvas.update()
         except RuntimeError:
             return
@@ -1167,6 +1170,7 @@ class AttachMode(QObject):
 
     def start_attachment(self, parent_strand, attach_point, side):
         """Start the attachment process for a new strand."""
+        sound_manager.play('attach_start')
         try:
             # Clear any previous selection/highlighting before starting attachment
             if self.canvas.selected_strand:

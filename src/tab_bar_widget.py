@@ -11,6 +11,7 @@ from PyQt5.QtGui import QPainter, QColor, QPen, QBrush, QPainterPath, QFont
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QSizePolicy
 
 from translations import translations
+import sound_manager
 
 
 # Theme tables (see implementation brief). Every color is theme-driven; no yellow.
@@ -88,6 +89,8 @@ class IconButton(QWidget):
     def __init__(self, kind, parent=None):
         super().__init__(parent)
         self.kind = kind  # 'duplicate' | 'close' | 'plus'
+        # New and duplicated tabs play the "new" sound, closing plays delete
+        sound_manager.set_cue(self, 'delete' if kind == 'close' else 'new_strand')
         self._hover = False
         self._color = QColor(0xF0, 0xF0, 0xF0)
         size = 22 if kind == 'plus' else 18
@@ -227,6 +230,8 @@ class TabChip(QWidget):
         self.label.setStyleSheet(
             "color: rgba(%d,%d,%d,%d); background: transparent;" % (
                 text_color.red(), text_color.green(), text_color.blue(), text_color.alpha()))
+
+        sound_manager.set_cue(self, 'tab_switch')
 
         self.dup_btn = IconButton('duplicate', self)
         self.dup_btn.set_color(text_color)

@@ -61,7 +61,7 @@ CUES = [
     ("drag_drop", 85, -14, "Placing a small plastic game piece down on a board, one soft muted thock, no bounce"),
     ("snap_grid", 25, -26, "An extremely short tiny dry tick, a single plastic ratchet tooth, very quiet"),
     # Attaching: a new strand pulled from an end and fixed on, the signature moment
-    ("attach_start", 150, -15, "Pulling a rope quickly through a hand, one short firm tug of a rope sliding and tightening, fibrous rope friction ending in a soft snap tight"),
+    ("attach_start", 150, -17, "A soft feather brushed quickly across soft felt, a gentle fuzzy airy swish rising slightly, like a soft cord being drawn out, warm and pleasant"),
     ("attach_complete", 150, -12, "Two plastic connector pieces pressed together until they lock, a firm satisfying snap with a tiny bright plink after it"),
     ("new_strand", 200, -14, "A tiny cheerful magical sparkle, a quick bright glint of something brand new appearing, a soft pop followed by a short shimmering rising chime"),
     # Feedback
@@ -82,11 +82,12 @@ CUES = [
 CUE_BY_ID = {cue[0]: cue for cue in CUES}
 
 # Low-pass cutoff (Hz) for cues whose takes come back too bright or hissy
-LOWPASS = {"mode_move": 2500, "delete": 4500, "attach_start": 6000}
+LOWPASS = {"mode_move": 2500, "delete": 4500, "attach_start": 4500}
 
 # Cues that should not sound like plastic get their own style line
 STYLE_OVERRIDE = {
     "new_strand": "playful and friendly, close-up, short, no music, no voice",
+    "attach_start": "soft, gentle and warm, close-up, dry, no reverb, no music, no voice",
     "bell_note": "clean, close-up, dry, no reverb, no music, no voice",
     "tab_switch": "playful and friendly, close-up, dry, no reverb, no music, no voice",
 }

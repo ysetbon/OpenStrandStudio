@@ -29,6 +29,8 @@ from PyQt5.QtWidgets import (QApplication, QColorDialog, QMenu, QPushButton,
                              QSizePolicy, QVBoxLayout, QWidget,
                              QWidgetAction)
 
+import sound_manager
+
 # Same width as NumberedLayerButton, a third less tall (40 -> 27).
 LEVEL_BUTTON_SIZE = QSize(146, 27)
 LEVEL_LINE_HEIGHT = 4
@@ -198,6 +200,7 @@ class LevelButton(QPushButton):
     def __init__(self, row, parent=None):
         """A button of *row*, which supplies its text, colour and menu."""
         super().__init__(parent)
+        sound_manager.set_cue(self, 'layer_select')
         self.row = row
         self.setFixedSize(LEVEL_BUTTON_SIZE)
         self.setCursor(Qt.PointingHandCursor)

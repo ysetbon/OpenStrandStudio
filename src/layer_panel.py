@@ -50,6 +50,7 @@ from undo_redo_manager import StrokeTextButton, setup_undo_redo
 from strand_data_menu import StrandDataClipboardMixin
 import os # Import os for path manipulation
 import sys # Import sys for platform check
+import sound_manager
 
 
 
@@ -1089,6 +1090,16 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self.delete_all_masks_button = QPushButton(_['delete_all'])
         self.delete_all_masks_button.clicked.connect(self.request_delete_all_masks)
         self._sync_mask_button_styles()
+
+        # UI sounds: anything new plays the "new" sound, anything removed the
+        # delete sound. New Strand plays from its clicked signal so the N key sounds too.
+        sound_manager.play_on_click(self.add_new_strand_button, 'new_strand')
+        sound_manager.set_cue(self.new_mask_button, 'new_strand')
+        for button in (self.delete_strand_button, self.delete_all_button,
+                       self.delete_mask_button, self.delete_all_masks_button):
+            sound_manager.set_cue(button, 'delete')
+        for button in (self.strands_tab_button, self.masks_tab_button):
+            sound_manager.set_cue(button, 'tab_switch')
 
         # Ensure control buttons expand evenly and stay centered
         for button in (

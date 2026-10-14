@@ -6,6 +6,7 @@ from PyQt5.QtGui import QCursor, QPen, QColor, QPainterPathStroker, QTransform, 
 from PyQt5.QtWidgets import QApplication, QWidget
 import PyQt5.QtGui as QtGui
 from render_utils import RenderUtils
+import sound_manager
 from strand import Strand
 from attached_strand import AttachedStrand
 from masked_strand import MaskedStrand
@@ -1606,6 +1607,8 @@ class MoveMode:
         
         # Store relevant state before resetting
         was_moving = self.is_moving
+        if was_moving:
+            sound_manager.play('drag_drop')
         final_pos = event.pos()
         # Capture selection state *before* reset
         selection_at_release_start = self.canvas.selected_strand or self.canvas.selected_attached_strand
@@ -2334,6 +2337,8 @@ class MoveMode:
 
         # Only update canvas if hover state changed
         if old_hovered_strand != self.hovered_strand or old_hovered_side != self.hovered_side:
+            if self.hovered_strand is not None:
+                sound_manager.play('canvas_hover_point')
             self.canvas.update()
 
     def can_move_side(self, strand, side, strand_index):
@@ -2450,6 +2455,7 @@ class MoveMode:
         self.affected_strand = strand
         self.selected_rectangle = area
         self.is_moving = True
+        sound_manager.play('drag_pickup')
         self._set_active_drag_cursor()
         # Reset position tracking for snap-to-grid optimization
         self._last_redrawn_pos = None
@@ -4060,6 +4066,7 @@ class MoveMode:
                             self.canvas.snap_to_grid_enabled and
                             self.moving_side not in ['bias_triangle', 'bias_circle'])
 
+        grid_snapped = False
         # At very high zoom out (300% = zoom_factor ~0.33), disable snapping unless Ctrl is pressed
         if self.canvas.zoom_factor < 0.35 and not force_grid_snap:
             # Very zoomed out - NO grid snapping
@@ -4067,6 +4074,7 @@ class MoveMode:
         elif (self.canvas.zoom_factor >= 0.8 or force_grid_snap) and user_snap_enabled:
             # Near normal zoom OR Ctrl held - use full grid snapping if enabled
             snapped_pos = self.canvas.snap_to_grid(adjusted_pos)
+            grid_snapped = True
         elif self.canvas.zoom_factor >= 0.5 and user_snap_enabled:
             # Moderately zoomed out - use very gentle snapping if enabled
             snapped_pos = adjusted_pos
@@ -4087,6 +4095,7 @@ class MoveMode:
         elif force_grid_snap:
             # Ctrl held but snap disabled in settings - still allow Ctrl override
             snapped_pos = self.canvas.snap_to_grid(adjusted_pos)
+            grid_snapped = True
         else:
             # Snap disabled by user or zoom level between 0.35-0.8 without snap enabled
             snapped_pos = adjusted_pos
@@ -4098,6 +4107,8 @@ class MoveMode:
         # Skip update if snapped position hasn't changed (optimization for snap-to-grid)
         if self.last_snapped_pos and snapped_pos == self.last_snapped_pos:
             return
+        if grid_snapped and self.last_snapped_pos is not None:
+            sound_manager.play('snap_grid')
 
         # Update target position for gradual movement
         self.target_pos = snapped_pos

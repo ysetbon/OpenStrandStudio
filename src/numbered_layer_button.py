@@ -10,6 +10,7 @@ from attached_strand import AttachedStrand
 import os  # Add os for icon path resolution
 import sys  # Add sys for platform detection
 import math  # Add math for angle calculations
+import sound_manager
 
 # Cache for the lock-mode padlock icons (loaded once per state)
 _lock_icon_pixmaps = {}
@@ -569,6 +570,7 @@ class NumberedLayerButton(QPushButton):
             layer_context (object): The layer context object that has the all_strands attribute.
         """
         super().__init__(parent)
+        sound_manager.set_cue(self, 'layer_select')
         self._text = text  # Store the text privately
         self.layer_name = text  # Store layer name for access by paintEvent
         self.count = count

@@ -13,7 +13,8 @@ a = Analysis(
         ('layer_panel_icons/*.png', 'layer_panel_icons/'),
         ('guide_images/levels_masks/*.png', 'guide_images/levels_masks/'),
         ('mp4', 'mp4'),
-        ('samples/*.json', 'samples/')
+        ('samples/*.json', 'samples/'),
+        ('sounds/*.wav', 'sounds/')
     ],
     hiddenimports=[],
     hookspath=[],

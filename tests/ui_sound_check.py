@@ -410,6 +410,9 @@ def expected_main_cue(w, b, checked_after):
         return "tab_switch"
     if isinstance(b, (NumberedLayerButton, LevelButton)):
         return "layer_select"
+    if b is w.layer_state_button:
+        # turns on to open the layer state window; closing that window turns it off again
+        return "ui_toggle_on"
     state = "on" if checked_after else "off"
     if b is w.toggle_control_points_button:
         return f"toggle_green_{state}"
@@ -470,7 +473,8 @@ def check_main_buttons(w, rec, tested):
             got = [cue for cue in rec.requested if cue not in HOVER_CUES]
             ok = expected in got
             record("Main window", name, "click", expected, got, ok)
-            if b.isCheckable() and expected.startswith(("ui_toggle", "toggle_green")) and b.isVisible():
+            if (b.isCheckable() and expected.startswith(("ui_toggle", "toggle_green")) and b.isVisible()
+                    and b is not w.layer_state_button):
                 run_check(rec, "Main window", name, "click again", lambda: click(b),
                           expected_main_cue(w, b, not checked))
         except RuntimeError:
@@ -661,6 +665,9 @@ def check_settings(w, rec):
     record("Settings", "pages", "not swept", "-", sorted(skip_pages), True,
            "language buttons change the whole UI, samples replace the canvas, tutorials play video")
     sweep_dialog(rec, w, lambda: DefaultWidthConfigDialog(sd, sd), "Default width", "blue")
+    if not sd.isVisible():
+        click(w.settings_button)
+        pump(250)
     run_check(rec, "Settings", "window", "close", lambda: sd.close(), exact=["dialog_close"])
 
 

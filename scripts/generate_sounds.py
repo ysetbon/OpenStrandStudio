@@ -10,7 +10,8 @@ Three steps:
 `generate` calls the API (skips takes that already exist), `process` trims each take
 to its target length and writes 44.1 kHz 16-bit mono WAVs, and `pick` copies the chosen
 take of each cue into src/sounds/<cue>.wav. `variants` derives the blue and green toggle
-sounds from the approved ui_toggle sounds.
+sounds from the approved ui_toggle sounds. `soften` takes the edge off one take
+without changing its pitch.
 
 The API key is read from ELEVENLABS_API_KEY. When that variable is unset no key header is
 sent, which is what you want behind a proxy that injects the key itself.
@@ -61,7 +62,7 @@ CUES = [
     ("drag_drop", 85, -14, "Placing a small plastic game piece down on a board, one soft muted thock, no bounce"),
     ("snap_grid", 25, -26, "An extremely short tiny dry tick, a single plastic ratchet tooth, very quiet"),
     # Attaching: a new strand pulled from an end and fixed on, the signature moment
-    ("attach_start", 150, -17, "A soft feather brushed quickly across soft felt, a gentle fuzzy airy swish rising slightly, like a soft cord being drawn out, warm and pleasant"),
+    ("attach_start", 160, -17, "One quick soft paintbrush stroke across paper, a gentle bristly swish of a wide soft brush, smooth and light"),
     ("attach_complete", 150, -12, "Two plastic connector pieces pressed together until they lock, a firm satisfying snap with a tiny bright plink after it"),
     ("new_strand", 200, -14, "A tiny cheerful magical sparkle, a quick bright glint of something brand new appearing, a soft pop followed by a short shimmering rising chime"),
     # Feedback
@@ -176,6 +177,29 @@ def shape(samples, target_ms, peak_db):
     return out
 
 
+def soften(samples, lowpass_hz, treble_db, attack_ms):
+    """Take the edge off a sound without changing its pitch: a high-frequency cut
+    plus a slower attack. Runs before shape(), which trims and normalizes."""
+    filters = [f"treble=g={treble_db}:f=4000"] if treble_db else []
+    if lowpass_hz:
+        filters.append(f"lowpass=f={lowpass_hz}:poles=2")
+    if filters:
+        pcm = subprocess.run(
+            ["ffmpeg", "-v", "error", "-f", "f32le", "-ar", str(SAMPLE_RATE), "-ac", "1", "-i", "-",
+             "-af", ",".join(filters), "-f", "f32le", "-"],
+            input=samples.astype(np.float32).tobytes(), check=True, capture_output=True,
+        ).stdout
+        samples = np.frombuffer(pcm, dtype=np.float32).astype(np.float64)
+    onset = int(np.argmax(np.abs(samples) > 0.1 * np.max(np.abs(samples))))
+    ramp = int(attack_ms / 1000 * SAMPLE_RATE)
+    if ramp:
+        start = max(0, onset - int(0.002 * SAMPLE_RATE))
+        end = min(samples.size, start + ramp)
+        samples = samples.copy()
+        samples[start:end] *= np.sin(np.linspace(0, np.pi / 2, end - start)) ** 2
+    return samples
+
+
 def write_wav(path, samples):
     data = np.clip(np.round(samples * 32767), -32768, 32767).astype("<i2")
     with wave.open(path, "wb") as w:
@@ -278,6 +302,13 @@ def pick(takes_dir, choices):
             print(f"{name}.wav <- take {take}")
 
 
+def soften_take(raw_mp3, cue_id, out_path, lowpass_hz, treble_db, attack_ms, peak_db=None):
+    """Write a softened version of one raw take, trimmed and normalized like process()."""
+    _, ms, cue_peak, _ = CUE_BY_ID[cue_id]
+    samples = soften(decode(raw_mp3).astype(np.float64), lowpass_hz, treble_db, attack_ms)
+    write_wav(out_path, shape(samples, ms, cue_peak if peak_db is None else peak_db))
+
+
 def variants():
     for name, (source, semitones) in COLOR_VARIANTS.items():
         samples = decode(os.path.join(SOUNDS_DIR, f"{source}.wav")).astype(np.float64)
@@ -305,11 +336,22 @@ def main():
 
     sub.add_parser("variants", help="derive colour variants from approved sounds in src/sounds")
 
+    f = sub.add_parser("soften", help="soften one raw take: high cut and slower attack, same pitch")
+    f.add_argument("raw_mp3")
+    f.add_argument("cue_id")
+    f.add_argument("out")
+    f.add_argument("--lowpass", type=int, default=0, help="low-pass cutoff in Hz (0 = none)")
+    f.add_argument("--treble", type=float, default=0, help="high-shelf gain in dB above 4 kHz, e.g. -6")
+    f.add_argument("--attack-ms", type=float, default=0)
+    f.add_argument("--peak", type=float, default=None, help="peak in dBFS (default: the cue's)")
+
     args = parser.parse_args()
     if args.command == "generate":
         generate(args.raw, args.takes, set(args.only or []), args.prompt_influence)
     elif args.command == "process":
         process(args.raw, args.out)
+    elif args.command == "soften":
+        soften_take(args.raw_mp3, args.cue_id, args.out, args.lowpass, args.treble, args.attack_ms, args.peak)
     elif args.command == "pick":
         pick(args.takes_dir, args.choices)
     else:

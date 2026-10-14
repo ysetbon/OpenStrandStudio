@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt, QPointF, QRectF, QPoint, pyqtSignal, QTimer
 from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QFont, QFontMetrics, QImage, QPolygonF, QPalette, QPainterPathStroker, QTransform
 from render_utils import RenderUtils
+import sound_manager
 from attach_mode import AttachMode
 from move_mode import MoveMode
 from mask_mode import MaskMode  # Add this import
@@ -4936,6 +4937,8 @@ class StrandDrawingCanvas(QWidget):
                 new_strand.set_color(self.strand_colors[self.new_strand_set_number])
                 new_strand.layer_name = f"{self.new_strand_set_number}_1"  # Main strand
                 new_strand.is_start_side = True
+                # Placing a new strand sounds like finishing an attach
+                sound_manager.play('attach_complete')
                 # Apply control point influence parameters from canvas settings
                 new_strand.curve_response_exponent = self.curve_response_exponent
                 new_strand.control_point_base_fraction = self.control_point_base_fraction

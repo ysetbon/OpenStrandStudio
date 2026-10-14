@@ -23,6 +23,7 @@ from save_load_manager import save_strands, load_strands, apply_loaded_strands
 from mask_mode import MaskMode
 from group_layers import GroupLayerManager, StrandAngleEditDialog
 from settings_dialog import SettingsDialog
+import sound_manager
 from translations import translations
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
                              QSplitter, QFileDialog, QSpacerItem, QSizePolicy)
@@ -124,8 +125,22 @@ class MainWindow(QMainWindow):
         app = QApplication.instance()
         if app:
             app.installEventFilter(self)
+            self._install_sounds()
 
         # Connection will be handled in setup_connections
+
+    def _install_sounds(self):
+        """UI sounds: one app-wide filter plays each control family's sound."""
+        for button in (self.view_button, self.select_strand_button, self.rotate_button, self.angle_adjust_button):
+            sound_manager.set_cue(button, 'mode_select')
+        sound_manager.set_cue(self.move_button, 'mode_move')
+        sound_manager.set_cue(self.attach_button, 'mode_attach')
+        # Settings checkboxes and the Control Points button are the green toggles
+        self.sound_filter = sound_manager.install(
+            self,
+            green_windows=(SettingsDialog,),
+            green_buttons=(self.toggle_control_points_button,),
+        )
 
     def showEvent(self, event):
         """Override showEvent to ensure proper window state"""
@@ -2960,6 +2975,8 @@ class MainWindow(QMainWindow):
         # Tabs feature: the active tab is now saved (clean) and titled after the file.
         if saved and hasattr(self, 'tab_manager'):
             self.tab_manager.mark_active_saved(filename)
+        if saved:
+            sound_manager.play('save_done')
         return saved
     def edit_group_angles(self, group_name):
         group_data = self.canvas._resolve_group_strands(group_name)

@@ -4,6 +4,7 @@ import json
 import glob
 import time  # Add time module for timestamp comparison
 import shutil
+import sound_manager
 from datetime import datetime
 from PyQt5.QtWidgets import QPushButton, QStyle, QStyleOption, QDialog
 from PyQt5.QtCore import QObject, pyqtSignal, Qt, QTimer, QPoint, QEvent
@@ -1289,6 +1290,7 @@ class UndoRedoManager(QObject):
         if self.current_step != before:
             self._journal('undo', reversed_action)
             self._update_button_states()
+            sound_manager.play('undo')
         return result
 
     def redo(self):
@@ -1299,6 +1301,7 @@ class UndoRedoManager(QObject):
             # Re-entering a state replays the action that made it.
             self._journal('redo', self.metadata_for_step(self.current_step))
             self._update_button_states()
+            sound_manager.play('redo')
         return result
 
     def _undo_impl(self):
@@ -2975,6 +2978,9 @@ class UndoRedoManager(QObject):
         # Connect button clicks
         self.undo_button.clicked.connect(self.undo)
         self.redo_button.clicked.connect(self.redo)
+        # undo()/redo() play their own sound, so the Z and X keys sound too
+        sound_manager.set_cue(self.undo_button, 'none')
+        sound_manager.set_cue(self.redo_button, 'none')
         
         # Initially disable both buttons until there are states to navigate
         self.undo_button.setEnabled(False)

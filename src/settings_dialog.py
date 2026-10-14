@@ -21,6 +21,7 @@ from shrinkable_dialog import (QWIDGETSIZE_MAX, allow_shrinking, cap_to_screen,
 import os
 import sys
 import subprocess
+import sound_manager
 import json
 from PyQt5.QtCore import QStandardPaths, QDateTime
 # Import StrokeTextButton for displaying icons
@@ -381,6 +382,7 @@ class SettingsDialog(QDialog):
                 'theme_layout', 'performance_layout', 
                 'third_control_layout', 'snap_to_grid_layout', 'snap_to_grid_attach_layout', 'show_highlights_layout', 'show_hover_highlights_layout', # 'extended_mask_layout',
                 'skip_close_tab_warning_layout', 'skip_quit_warning_layout',
+                'sound_enabled_layout', 'sound_volume_layout', 'sound_hover_layout',
                 'num_steps_layout', 'blur_radius_layout',
                 'curvature_bias_layout', 'base_fraction_layout',
                 'distance_mult_layout', 'curve_response_layout',
@@ -839,6 +841,9 @@ class SettingsDialog(QDialog):
                 self.skip_quit_warning_layout.addStretch()
             self.skip_quit_warning_layout.invalidate()
             self.skip_quit_warning_layout.activate()
+
+        if hasattr(self, 'sound_enabled_layout'):
+            self._arrange_sound_rows(is_rtl)
         
         # Show highlights layout reorganization (for move/attach mode indicator)
         if hasattr(self, 'show_highlights_layout') and hasattr(self, 'show_highlights_label') and hasattr(self, 'show_highlights_checkbox'):
@@ -1451,6 +1456,26 @@ class SettingsDialog(QDialog):
         
         
 
+    def _arrange_sound_rows(self, is_rtl):
+        """Lay out the three sound rows: label then control, mirrored for RTL."""
+        rows = (
+            (self.sound_enabled_layout, self.sound_enabled_label, self.sound_enabled_checkbox),
+            (self.sound_volume_layout, self.sound_volume_label, self.sound_volume_slider),
+            (self.sound_hover_layout, self.sound_hover_label, self.sound_hover_checkbox),
+        )
+        for layout, label, control in rows:
+            self.clear_layout(layout)
+            if is_rtl:
+                layout.addStretch()
+                layout.addWidget(control)
+                layout.addWidget(label)
+            else:
+                layout.addWidget(label)
+                layout.addWidget(control)
+                layout.addStretch()
+            layout.invalidate()
+            layout.activate()
+
     def clear_layout(self, layout):
         """Helper method to clear all widgets from a layout."""
         while layout.count():
@@ -1805,6 +1830,7 @@ class SettingsDialog(QDialog):
         self.categories_list = QListWidget()
         self.categories_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.categories_list.itemClicked.connect(self.change_category)
+        sound_manager.set_cue(self.categories_list.viewport(), 'tab_switch')
 
         categories = [
             _['general_settings'],
@@ -2281,6 +2307,31 @@ class SettingsDialog(QDialog):
             self.reset_curvature_layout.addWidget(self.reset_curvature_button)
             self.reset_curvature_layout.addStretch()
         general_layout.addLayout(self.reset_curvature_layout)
+
+        # Interface sounds: on/off, volume (previewed on release), hover sounds
+        sounds = sound_manager.manager()
+        self.sound_enabled_layout = QHBoxLayout()
+        self.sound_enabled_label = QLabel(_['sound_enabled'] if 'sound_enabled' in _ else "Play interface sounds")
+        self.sound_enabled_checkbox = QCheckBox()
+        self.sound_enabled_checkbox.setChecked(sounds.enabled)
+        general_layout.addLayout(self.sound_enabled_layout)
+
+        self.sound_volume_layout = QHBoxLayout()
+        self.sound_volume_label = QLabel(_['sound_volume'] if 'sound_volume' in _ else "Sound volume")
+        self.sound_volume_slider = QSlider(Qt.Horizontal)
+        self.sound_volume_slider.setRange(0, 100)
+        self.sound_volume_slider.setValue(sounds.volume)
+        self.sound_volume_slider.setFixedWidth(160)
+        self.sound_volume_slider.sliderReleased.connect(
+            lambda: sound_manager.manager().preview('ui_click', self.sound_volume_slider.value()))
+        general_layout.addLayout(self.sound_volume_layout)
+
+        self.sound_hover_layout = QHBoxLayout()
+        self.sound_hover_label = QLabel(_['sound_hover'] if 'sound_hover' in _ else "Play hover sounds")
+        self.sound_hover_checkbox = QCheckBox()
+        self.sound_hover_checkbox.setChecked(sounds.hover_enabled)
+        general_layout.addLayout(self.sound_hover_layout)
+        self._arrange_sound_rows(self.is_rtl_language(self.current_language))
 
         general_layout.addItem(spacer)
         general_layout.addWidget(self.apply_button)
@@ -4569,6 +4620,13 @@ class SettingsDialog(QDialog):
         if self.canvas:
             self.canvas.skip_close_tab_warning = self.skip_close_tab_warning
             self.canvas.skip_quit_warning = self.skip_quit_warning
+
+        # Apply interface sound settings
+        if hasattr(self, 'sound_enabled_checkbox'):
+            sounds = sound_manager.manager()
+            sounds.set_enabled(self.sound_enabled_checkbox.isChecked())
+            sounds.set_volume(self.sound_volume_slider.value())
+            sounds.set_hover_enabled(self.sound_hover_checkbox.isChecked())
         
         # Apply Show Move Highlights Setting
         self.show_move_highlights = self.show_highlights_checkbox.isChecked()
@@ -4843,6 +4901,10 @@ class SettingsDialog(QDialog):
             self.skip_close_tab_warning_label.setText(_['skip_close_tab_warning'] if 'skip_close_tab_warning' in _ else "Don't ask to save when closing a tab")
         if hasattr(self, 'skip_quit_warning_label'):
             self.skip_quit_warning_label.setText(_['skip_quit_warning'] if 'skip_quit_warning' in _ else "Don't ask to save when quitting")
+        if hasattr(self, 'sound_enabled_label'):
+            self.sound_enabled_label.setText(_['sound_enabled'] if 'sound_enabled' in _ else "Play interface sounds")
+            self.sound_volume_label.setText(_['sound_volume'] if 'sound_volume' in _ else "Sound volume")
+            self.sound_hover_label.setText(_['sound_hover'] if 'sound_hover' in _ else "Play hover sounds")
         if hasattr(self, 'snap_to_grid_attach_label'):
             self.snap_to_grid_attach_label.setText(_['enable_snap_to_grid_attach'] if 'enable_snap_to_grid_attach' in _ else "Enable snap to grid for attach/create mode")
         self.show_highlights_label.setText(_['show_move_highlights'] if 'show_move_highlights' in _ else "Show highlights in move modes")
@@ -5547,6 +5609,8 @@ class SettingsDialog(QDialog):
                 file.write(f"DefaultStrandWidth: {self.default_strand_width}\n")
                 file.write(f"DefaultStrokeWidth: {self.default_stroke_width}\n")
                 file.write(f"DefaultWidthGridUnits: {self.default_width_grid_units}\n")
+                for sound_line in sound_manager.manager().settings_lines():
+                    file.write(sound_line + "\n")
             # Settings saved to {file_path}
             
             # Create a copy in the root directory for easier viewing (optional)

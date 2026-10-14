@@ -52,26 +52,28 @@ CUES = [
     ("canvas_hover_point", 35, -24, "A very faint tiny bubbly blip, a small soft plastic bead touching another, gentle and high, very short"),
     # Modes: changing tool feels like turning a chunky toy selector
     ("mode_select", 110, -14, "A chunky plastic toy selector dial clicking into its next notch, one solid rounded click, satisfying and tight"),
-    ("mode_move", 120, -14, "A plastic slider on a toy pushed one notch, a short smooth glide ending in a soft click"),
+    ("mode_move", 130, -19, "Sliding a small plastic game piece across a smooth board, a soft low gliding move that settles gently, warm and muffled, no high frequencies, no click"),
     ("mode_attach", 120, -14, "A small plastic buckle clip snapping shut, one crisp rounded snap"),
     # Drag and move: picking up and placing a strand end
     ("drag_pickup", 70, -15, "Lifting a small plastic game piece off a board, a soft short pluck with a slight upward lift"),
     ("drag_drop", 85, -14, "Placing a small plastic game piece down on a board, one soft muted thock, no bounce"),
     ("snap_grid", 25, -26, "An extremely short tiny dry tick, a single plastic ratchet tooth, very quiet"),
     # Attaching: a new strand pulled from an end and fixed on, the signature moment
-    ("attach_start", 90, -15, "A plastic lacing cord quickly pulled taut, a short soft springy pluck rising in pitch"),
+    ("attach_start", 120, -15, "Pulling a plastic lacing cord through the hole of a bead, a quick stretchy rubbery pull that rises in pitch, like a cord being drawn out to attach it"),
     ("attach_complete", 150, -12, "Two plastic connector pieces pressed together until they lock, a firm satisfying snap with a tiny bright plink after it"),
-    ("new_strand", 110, -14, "A soft cheerful pop of a small plastic cap coming off, with a light rising plink, something new appearing"),
+    ("new_strand", 150, -14, "A fresh strand of plastic lacing cord flicked out from a spool, a springy bouncy boing with a cheerful rising twang, a new string appearing"),
     # Feedback
-    ("delete", 120, -15, "A short soft swipe of plastic sliding off a table ending in a small muffled thud, falling in pitch"),
-    ("undo_redo", 60, -17, "A very short soft plastic flick, a quick tiny chirp of a toy rewinding one step"),
+    ("delete", 150, -18, "A small crumpled plastic wrapper dropped into a small empty plastic trash bin, one soft hollow plunk at the bottom, muffled, no hiss"),
+    ("undo", 90, -15, "Two quick round plastic boops stepping down in pitch, like a toy taking one step backwards, bouncy and clear"),
+    ("redo", 90, -15, "Two quick round plastic boops stepping up in pitch, like a toy taking one step forwards, bouncy and clear"),
     ("save_done", 200, -14, "Two gentle wooden toy xylophone notes going up, warm and clear, a calm job-done confirmation"),
     ("denied", 100, -16, "A soft hollow bonk of a rubber toy mallet tapping a hollow plastic block, low and short, gentle, not alarming"),
 ]
 CUE_BY_ID = {cue[0]: cue for cue in CUES}
 
-# undo_redo is one recording played as two files, pitched down for undo and up for redo
-PITCH_VARIANTS = {"undo_redo": [("undo", -2), ("redo", 2)]}
+# Low-pass cutoff (Hz) for cues whose takes come back too bright or hissy
+LOWPASS = {"mode_move": 2500, "delete": 4500}
+
 
 
 def generate(raw_dir, takes, only, prompt_influence):
@@ -106,10 +108,11 @@ def generate(raw_dir, takes, only, prompt_influence):
             time.sleep(0.3)
 
 
-def decode(path):
-    """Decode any audio file to mono float32 at SAMPLE_RATE."""
+def decode(path, lowpass=None):
+    """Decode any audio file to mono float32 at SAMPLE_RATE, optionally low-passed."""
+    filters = ["-af", f"lowpass=f={lowpass}:poles=2,lowpass=f={lowpass}:poles=2"] if lowpass else []
     pcm = subprocess.run(
-        ["ffmpeg", "-v", "error", "-i", path, "-ac", "1", "-ar", str(SAMPLE_RATE), "-f", "f32le", "-"],
+        ["ffmpeg", "-v", "error", "-i", path, *filters, "-ac", "1", "-ar", str(SAMPLE_RATE), "-f", "f32le", "-"],
         check=True, capture_output=True,
     ).stdout
     return np.frombuffer(pcm, dtype=np.float32).copy()
@@ -145,13 +148,6 @@ def write_wav(path, samples):
         w.writeframes(data.tobytes())
 
 
-def pitch_shift(samples, semitones):
-    """Resample to shift pitch (and length) by the given number of semitones."""
-    factor = 2 ** (semitones / 12)
-    positions = np.arange(0, samples.size - 1, factor)
-    return np.interp(positions, np.arange(samples.size), samples)
-
-
 def process(raw_dir, out_dir):
     os.makedirs(out_dir, exist_ok=True)
     for cue_id, ms, peak_db, _prompt in CUES:
@@ -162,7 +158,7 @@ def process(raw_dir, out_dir):
             if not name.endswith(".mp3"):
                 continue
             take = name[len("take"):-len(".mp3")]
-            shaped = shape(decode(os.path.join(cue_dir, name)), ms, peak_db)
+            shaped = shape(decode(os.path.join(cue_dir, name), LOWPASS.get(cue_id)), ms, peak_db)
             write_wav(os.path.join(out_dir, f"{cue_id}_{take}.wav"), shaped)
             print(f"processed {cue_id} take {take}")
 
@@ -174,14 +170,8 @@ def pick(takes_dir, choices):
         if cue_id not in CUE_BY_ID or not take:
             sys.exit(f"bad choice {choice!r}, expected cue_id=take")
         src = os.path.join(takes_dir, f"{cue_id}_{take}.wav")
-        if cue_id in PITCH_VARIANTS:
-            samples = decode(src).astype(np.float64)
-            for name, semitones in PITCH_VARIANTS[cue_id]:
-                write_wav(os.path.join(SOUNDS_DIR, f"{name}.wav"), pitch_shift(samples, semitones))
-                print(f"{name}.wav <- {cue_id} take {take} ({semitones:+d} semitones)")
-        else:
-            shutil.copyfile(src, os.path.join(SOUNDS_DIR, f"{cue_id}.wav"))
-            print(f"{cue_id}.wav <- take {take}")
+        shutil.copyfile(src, os.path.join(SOUNDS_DIR, f"{cue_id}.wav"))
+        print(f"{cue_id}.wav <- take {take}")
 
 
 def main():

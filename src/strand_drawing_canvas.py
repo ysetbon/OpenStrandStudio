@@ -2355,11 +2355,11 @@ class StrandDrawingCanvas(QWidget):
                                 # Family filter: move_selected_only hides all selection areas for
                                 # non-family strands. show_cp_selected_only only hides their control
                                 # point squares (filtered below), keeping start/end squares visible.
-                                if getattr(self, 'move_selected_only', False):
+                                if self.move_selected_only_active():
                                     if not self.is_strand_in_selected_family(strand):
                                         continue
                                 # A selected level's block: only its strands can be used
-                                # (the setting above takes precedence in Move mode)
+                                # (the setting above gives way to it)
                                 elif not self.is_strand_in_level_scope(strand):
                                     continue
 
@@ -6139,14 +6139,20 @@ class StrandDrawingCanvas(QWidget):
     def is_strand_in_level_scope(self, strand):
         """Whether Move, Attach and Rotate may find *strand* while a level's
         block is selected in the layer panel: only that level's strands.
-        In Move mode the "move only the selected strand" setting takes
-        precedence (MoveMode checks it first); Attach and Rotate always
-        keep to the level."""
+        The "move only the selected strand" setting gives way to it (see
+        move_selected_only_active)."""
         scope = getattr(self, 'level_scope', None)
         if scope is None:
             return True
         from save_load_manager import strand_level
         return strand_level(strand, int(getattr(self, 'level_count', 0) or 0)) == scope
+
+    def move_selected_only_active(self):
+        """Whether "move only the selected strand" limits Move mode now: the
+        setting is on and no level's block is selected. A selected level
+        wins, so Move keeps to the level like Attach and Rotate; the setting
+        applies again once the level is deselected."""
+        return bool(getattr(self, 'move_selected_only', False)) and getattr(self, 'level_scope', None) is None
 
     def is_strand_in_selected_family(self, strand):
         """Centralized family check for move_selected_only and show_cp_selected_only.
@@ -6154,7 +6160,7 @@ class StrandDrawingCanvas(QWidget):
         from attached_strand import AttachedStrand
         from move_mode import MoveMode
 
-        check_move = getattr(self, 'move_selected_only', False)
+        check_move = self.move_selected_only_active()
         check_cp = getattr(self, 'show_cp_selected_only', False)
 
         if not check_move and not check_cp:
@@ -6262,11 +6268,11 @@ class StrandDrawingCanvas(QWidget):
                     continue
 
                 # Family filter: hide CPs for non-family strands when either toggle is active
-                if getattr(self, 'show_cp_selected_only', False) or (getattr(self, 'move_selected_only', False) and in_move_mode):
+                if getattr(self, 'show_cp_selected_only', False) or (self.move_selected_only_active() and in_move_mode):
                     if not self.is_strand_in_selected_family(strand):
                         continue
-                if (in_move_mode and not getattr(self, 'move_selected_only', False)
-                        and not self.is_strand_in_level_scope(strand)):
+                # A selected level's block: in Move mode only its strands show handles
+                if in_move_mode and not self.is_strand_in_level_scope(strand):
                     continue
 
                 # --- Determine if we should skip drawing CPs for this strand ---

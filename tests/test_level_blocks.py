@@ -4,8 +4,8 @@
   edge, the Ground row's too) that folds the layers resting on it; folded
   layers are hidden entirely
 - a click on the name selects the level's block: the panel frames it and
-  Move, Attach and Rotate only find its strands, unless "move only the
-  selected strand" is on
+  Move, Attach and Rotate only find its strands; "move only the selected
+  strand" gives way to it until the block is deselected
 - each level has a colour (the theme's purple by default, a Default Level
   Color from the settings, or one picked with Recolor), saved with the project
 - the ground (level 0) gets a Ground row, built like a level row, under the
@@ -160,14 +160,22 @@ def test_clicking_the_name_selects_the_block_and_limits_the_tools(window):
     assert canvas.move_mode._is_strand_allowed_by_selection(inside)
     assert not canvas.move_mode._is_strand_allowed_by_selection(outside)
     assert not canvas.attach_mode._is_strand_in_level_scope(outside)
-    # "Move only the selected strand" wins in Move mode only: Attach and
-    # Rotate still keep to the level
+    # "Move only the selected strand" gives way to the level: Move keeps to
+    # the level like Attach and Rotate, whichever strand is selected
     canvas.move_selected_only = True
-    assert not canvas.is_strand_in_level_scope(outside)
+    canvas.selected_strand = None
+    assert not canvas.move_selected_only_active()
+    assert canvas.move_mode._is_strand_allowed_by_selection(inside)
+    assert not canvas.move_mode._is_strand_allowed_by_selection(outside)
     assert not canvas.attach_mode._is_strand_in_level_scope(outside)
-    canvas.move_selected_only = False
     click(button, button.width() // 2)
     assert lp.level_scope() is None and canvas.is_strand_in_level_scope(outside)
+    # Deselected: the setting applies again (nothing selected, nothing moves)
+    canvas.selected_strand = None
+    assert canvas.move_selected_only_active()
+    assert not canvas.move_mode._is_strand_allowed_by_selection(inside)
+    canvas.move_selected_only = False
+    assert canvas.move_mode._is_strand_allowed_by_selection(outside)
 
 
 def test_the_frame_is_drawn_in_the_level_colour(window):
@@ -189,8 +197,8 @@ def test_the_frame_is_drawn_in_the_level_colour(window):
 
 
 def test_the_frame_stays_solid_with_move_only_selected(window):
-    """The setting only changes Move; the level stays selected for Attach
-    and Rotate, so its frame looks the same."""
+    """The setting gives way to the selected level, so its frame looks the
+    same."""
     lp = window.layer_panel
     lift_3_4_and_2_4(window)
     lp.set_level_scope(1)
@@ -238,7 +246,7 @@ def test_move_only_selected_keeps_new_strands_on_the_level(window):
     lp.new_level_button.click()  # empty Level 2 on top
     pump()
     lp.set_level_scope(1)
-    window.canvas.move_selected_only = True  # limits Move only, not where new strands land
+    window.canvas.move_selected_only = True  # never changes where new strands land
     template = find(window, "1_1")
     new = type(template)(QPointF(1080, 532), QPointF(1424, 532), 46)
     new.layer_name, new.set_number = "5_1", 5

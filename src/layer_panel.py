@@ -3498,8 +3498,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
     def set_level_scope(self, level):
         """Select the block of *level* (None: no block). While one is
-        selected, Move, Attach and Rotate only find its strands, unless the
-        setting that limits move mode to the selected strand is on."""
+        selected, Move, Attach and Rotate only find its strands; the
+        setting that limits move mode to the selected strand gives way to it
+        until the block is deselected."""
         if not self.canvas:
             return
         if level is not None and not self.level_selection_allowed():

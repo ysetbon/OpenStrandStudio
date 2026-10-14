@@ -3167,6 +3167,8 @@ class SettingsDialog(QDialog):
                 <td style="padding: 6px 4px;"><span class="button-name">{_['reset_states_desc'].split(' - ', 1)[0]}</span> — {_['reset_states_desc'].split(' - ', 1)[1]}</td>
             </tr>
         </table>
+        {self.level_scope_guide_html(_)}
+
         <h2>{_['layer_context_menu_title']}</h2>
         <p>{_['layer_context_menu_info']}</p>
 
@@ -4237,6 +4239,8 @@ class SettingsDialog(QDialog):
             </tr>
         </table>
         
+        {self.level_scope_guide_html(_)}
+
         <h2>{_['layer_context_menu_title']}</h2>
         <p>{_['layer_context_menu_info']}</p>
 
@@ -5052,6 +5056,8 @@ class SettingsDialog(QDialog):
                 </tr>
             </table>
             
+            {self.level_scope_guide_html(_)}
+
             <h2>{_['layer_context_menu_title']}</h2>
             <p>{_['layer_context_menu_info']}</p>
 
@@ -6041,6 +6047,24 @@ class SettingsDialog(QDialog):
         else:
             base_path = os.path.dirname(os.path.abspath(__file__))
         return os.path.join(base_path, relative_path)
+
+    def level_scope_guide_html(self, _):
+        """The Button Guide's "Selecting a Level" section: a click on a level
+        row's name selects its block (LayerPanel.toggle_level_scope), which
+        keeps Move, Attach and Rotate to its strands
+        (StrandDrawingCanvas.is_strand_in_level_scope)."""
+        names = {
+            'strands': _['layer_tab_strands'], 'masks': _['layer_tab_masks'],
+            'level': _['level_name'].format(n=1), 'ground': _['level_ground'],
+            'select': _['level_select_block'], 'move': _['move_mode'],
+            'attach': _['attach_mode'], 'rotate': _['rotate_mode'],
+        }
+        items = []
+        for key in ('level_scope_select_desc', 'level_scope_fold_desc', 'level_scope_modes_desc',
+                    'level_scope_new_desc'):
+            name, desc = (part.format(**names) for part in _[key].split(' - ', 1))
+            items.append(f'<li><span class="button-name">{name}</span> - {desc}</li>')
+        return f"<h2>{_['level_scope_guide_title']}</h2>\n<ul>\n" + '\n'.join(items) + '\n</ul>'
 
     def svg_to_data_url(self, relative_path, width, height):
         """Render an SVG to a PNG data URL for QTextBrowser if file URLs are blocked."""

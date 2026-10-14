@@ -173,53 +173,6 @@ class CustomTooltip(QFrame):
         if timeout > 0:
             self.timer.start(timeout)
 
-class LayerSelectionDialog(QDialog):
-    def __init__(self, layers, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Select Layers for Group")
-        self.layout = QVBoxLayout(self)
-        
-        self.layer_list = QListWidget()
-        for layer in layers:
-            item = QListWidgetItem(layer)
-            item.setCheckState(Qt.Unchecked)
-            self.layer_list.addItem(item)
-        
-        self.layout.addWidget(self.layer_list)
-        
-        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        self.button_box.accepted.connect(self.accept)
-        self.button_box.rejected.connect(self.reject)
-        self.layout.addWidget(self.button_box)
-        
-        # Add new signal for mask editing
-        self.edit_mask_requested = pyqtSignal(int)  # Signal when mask editing is requested
-        
-        # Create and configure the mask edit label with center alignment
-        self.mask_edit_label = QLabel()
-        self.mask_edit_label.setAlignment(Qt.AlignCenter)  # Center align the text
-        self.mask_edit_label.setStyleSheet("""
-            QLabel {
-                background-color: rgba(255, 255, 255, 0.9);
-                padding: 15px;
-                border-radius: 5px;
-                font-weight: bold;
-                color: #333333;
-                text-align: center;
-                min-width: 250px;  /* Ensure minimum width for centering */
-                qproperty-alignment: AlignCenter;  /* Force center alignment */
-                white-space: pre-line;  /* Preserve newlines while wrapping text */
-            }
-        """)
-        self.mask_edit_label.hide()
-        
-        # Add the label to the layout with proper alignment
-        self.left_layout.addWidget(self.mask_edit_label, 0, Qt.AlignHCenter | Qt.AlignTop)
-    def get_selected_layers(self):
-        return [self.layer_list.item(i).text() for i in range(self.layer_list.count()) 
-                if self.layer_list.item(i).checkState() == Qt.Checked]
-
-# --- Custom Widget for Drop Target Area ---
 class DropTargetWidget(QWidget):
     def __init__(self, layer_panel, parent=None):
         super().__init__(parent)
@@ -2271,28 +2224,6 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
     def request_draw_names(self):
         self.should_draw_names = not self.should_draw_names
         self.draw_names_requested.emit(self.should_draw_names)
-
-
-    def create_group(self):
-        group_name, ok = QInputDialog.getText(self, "Create Group", "Enter group name:")
-        if ok and group_name:
-            # Filter out masked layers
-            layers = [button.text() for button in self.layer_buttons if not self.is_masked_layer(button)]
-            dialog = LayerSelectionDialog(layers, self)
-            if dialog.exec_():
-                selected_layers = dialog.get_selected_layers()
-                for layer in selected_layers:
-                    self.group_layer_manager.group_panel.add_layer_to_group(layer, group_name)
-
-    def is_masked_layer(self, button):
-        # Check if the button text follows the masked layer naming convention
-        try:
-            index = self.layer_buttons.index(button)
-            if index < len(self.canvas.strands):
-                return isinstance(self.canvas.strands[index], MaskedStrand)
-        except (ValueError, IndexError, RuntimeError):
-            pass
-        return False
 
 
     def add_group(self, group_name, layers):

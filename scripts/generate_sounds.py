@@ -58,8 +58,8 @@ CUES = [
     ("mode_move", 130, -19, "Sliding a small plastic game piece across a smooth board, a soft low gliding move that settles gently, warm and muffled, no high frequencies, no click"),
     ("mode_attach", 120, -14, "A small plastic buckle clip snapping shut, one crisp rounded snap"),
     # Drag and move: picking up and placing a strand end
-    ("drag_pickup", 70, -15, "Lifting a small plastic game piece off a board, a soft short pluck with a slight upward lift"),
-    ("drag_drop", 85, -14, "Placing a small plastic game piece down on a board, one soft muted thock, no bounce"),
+    ("drag_pickup", 80, -15, "Fingers lifting a thick felt tab off a table, a soft muted tuck with a tiny upward lift, short"),
+    ("drag_drop", 90, -14, "A small rubber bead landing on a soft mat, a gentle falling boop with no bounce, short"),
     ("snap_grid", 25, -26, "An extremely short tiny dry tick, a single plastic ratchet tooth, very quiet"),
     # Attaching: a new strand pulled from an end and fixed on, the signature moment
     ("attach_start", 150, -17, "Two small magnets gently drawing together, a soft muted tick with a tiny pull before it, round and quiet"),
@@ -83,12 +83,14 @@ CUES = [
 CUE_BY_ID = {cue[0]: cue for cue in CUES}
 
 # Low-pass cutoff (Hz) for cues whose takes come back too bright or hissy
-LOWPASS = {"mode_move": 2500, "delete": 4500, "attach_start": 6000}
+LOWPASS = {"mode_move": 2500, "delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000}
 
 # Cues that should not sound like plastic get their own style line
 STYLE_OVERRIDE = {
     "new_strand": "playful and friendly, close-up, short, no music, no voice",
     "attach_start": "very soft, gentle and warm, close-up, dry, no reverb, no music, no voice",
+    "drag_pickup": "soft and gentle, close-up, dry, no reverb, no music, no voice",
+    "drag_drop": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "bell_note": "clean, close-up, dry, no reverb, no music, no voice",
     "tab_switch": "playful and friendly, close-up, dry, no reverb, no music, no voice",
 }

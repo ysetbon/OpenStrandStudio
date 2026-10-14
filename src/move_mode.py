@@ -4092,6 +4092,7 @@ class MoveMode:
             if (abs(adjusted_pos.x() - grid_x) < snap_threshold and
                 abs(adjusted_pos.y() - grid_y) < snap_threshold):
                 snapped_pos = QPointF(grid_x, grid_y)
+                grid_snapped = True
         elif force_grid_snap:
             # Ctrl held but snap disabled in settings - still allow Ctrl override
             snapped_pos = self.canvas.snap_to_grid(adjusted_pos)

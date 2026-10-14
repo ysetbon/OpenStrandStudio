@@ -40,8 +40,11 @@ if (__name__ == "__main__" and sys.platform.startswith("linux") and "DISPLAY" no
 if "DISPLAY" not in os.environ or not sys.platform.startswith("linux"):
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 SETTINGS_DIR = tempfile.mkdtemp(prefix="oss_sound_check_")
-os.environ["APPDATA"] = SETTINGS_DIR
-os.environ["HOME_SETTINGS_OVERRIDE"] = SETTINGS_DIR
+os.environ["APPDATA"] = SETTINGS_DIR  # where the app keeps its settings on Windows and Linux
+if sys.platform.startswith("darwin"):
+    # on macOS the app uses ~/Library/Application Support: point ~ at the temp folder
+    # so a run can never touch the real settings
+    os.environ["HOME"] = SETTINGS_DIR
 
 REPO = Path(__file__).resolve().parents[1]
 SRC = REPO / "src"
@@ -62,7 +65,8 @@ from PyQt5.QtWidgets import (QAbstractButton, QAbstractSlider, QApplication, QCh
                              QComboBox, QDialog, QFileDialog, QListWidget, QMenu, QMessageBox,
                              QPushButton, QToolButton, QWidget)
 
-USER_SETTINGS_COPY = REPO / "user_settings.txt"  # the settings dialog also writes this file
+# The settings dialog also writes a copy into the repository: back it up and restore it.
+USER_SETTINGS_COPY = REPO / "user_settings.txt"
 USER_SETTINGS_BACKUP = USER_SETTINGS_COPY.read_bytes() if USER_SETTINGS_COPY.exists() else None
 
 RESULTS = []
@@ -757,6 +761,24 @@ def check_menus_and_popups(w, rec):
     info.close()
 
 
+def check_padlock(w, rec):
+    from numbered_layer_button import NumberedLayerButton
+    lp = w.layer_panel
+    if not lp.lock_mode:
+        click(lp.lock_layers_button)
+        pump(300)
+
+    def layer():
+        return next(b for b in lp.findChildren(NumberedLayerButton) if b.isVisible())
+
+    run_check(rec, "Lock mode", "layer padlock", "click to lock",
+              lambda: click(layer(), layer().lock_button_rect().center()), "ui_toggle_on")
+    run_check(rec, "Lock mode", "layer padlock", "click to unlock",
+              lambda: click(layer(), layer().lock_button_rect().center()), "ui_toggle_off")
+    click(lp.lock_layers_button)
+    pump(300)
+
+
 def check_tabs(w, rec):
     from tab_bar_widget import IconButton, TabChip
     if not w.tabs_button.isChecked():
@@ -879,6 +901,7 @@ def run_checks(app):
                                        check_main_buttons(w, rec, set()),
                                        click(w.layer_panel.strands_tab_button), pump(200))),
         ("hover", lambda: check_hover(w, rec)),
+        ("padlock", lambda: check_padlock(w, rec)),
         ("menus", lambda: check_menus_and_popups(w, rec)),
         ("dialogs", lambda: check_dialogs(w, rec)),
         ("settings", lambda: check_settings(w, rec)),
@@ -922,6 +945,8 @@ def patched_exec(*_args, **_kwargs):
     finally:
         if USER_SETTINGS_BACKUP is not None:
             USER_SETTINGS_COPY.write_bytes(USER_SETTINGS_BACKUP)
+        elif USER_SETTINGS_COPY.exists():
+            USER_SETTINGS_COPY.unlink()
         shutil.rmtree(SETTINGS_DIR, ignore_errors=True)
         sys.stdout.flush()
     return code

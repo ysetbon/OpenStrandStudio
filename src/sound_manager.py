@@ -65,6 +65,9 @@ SETTING_HOVER = 'SoundHover'
 
 def sounds_dir():
     if getattr(sys, 'frozen', False):
+        # Same layout as the app's other bundled files (icons, flags, guide images)
+        if sys.platform.startswith('darwin'):
+            return os.path.join(os.path.dirname(sys.executable), '..', 'Resources', 'sounds')
         return os.path.join(sys._MEIPASS, 'sounds')
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sounds')
 

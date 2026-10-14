@@ -2824,6 +2824,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self.locked_layers.remove(index)
         else:
             self.locked_layers.add(index)
+        # The padlock is handled on press, before the button counts as clicked,
+        # so the app-wide sound filter never sees it: play the toggle here.
+        sound_manager.play('ui_toggle_on' if index in self.locked_layers else 'ui_toggle_off')
 
         self.update_layer_buttons_lock_state()
         self.lock_layers_changed.emit(self.locked_layers, self.lock_mode)

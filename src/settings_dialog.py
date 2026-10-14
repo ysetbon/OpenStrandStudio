@@ -2167,31 +2167,6 @@ class SettingsDialog(QDialog):
             self.skip_quit_warning_layout.addStretch()
         general_layout.addLayout(self.skip_quit_warning_layout)
 
-        # Interface sounds: on/off, volume (previewed on release), hover sounds
-        sounds = sound_manager.manager()
-        self.sound_enabled_layout = QHBoxLayout()
-        self.sound_enabled_label = QLabel(_['sound_enabled'] if 'sound_enabled' in _ else "Play interface sounds")
-        self.sound_enabled_checkbox = QCheckBox()
-        self.sound_enabled_checkbox.setChecked(sounds.enabled)
-        general_layout.addLayout(self.sound_enabled_layout)
-
-        self.sound_volume_layout = QHBoxLayout()
-        self.sound_volume_label = QLabel(_['sound_volume'] if 'sound_volume' in _ else "Sound volume")
-        self.sound_volume_slider = QSlider(Qt.Horizontal)
-        self.sound_volume_slider.setRange(0, 100)
-        self.sound_volume_slider.setValue(sounds.volume)
-        self.sound_volume_slider.setFixedWidth(160)
-        self.sound_volume_slider.sliderReleased.connect(
-            lambda: sound_manager.manager().preview('ui_click', self.sound_volume_slider.value()))
-        general_layout.addLayout(self.sound_volume_layout)
-
-        self.sound_hover_layout = QHBoxLayout()
-        self.sound_hover_label = QLabel(_['sound_hover'] if 'sound_hover' in _ else "Play hover sounds")
-        self.sound_hover_checkbox = QCheckBox()
-        self.sound_hover_checkbox.setChecked(sounds.hover_enabled)
-        general_layout.addLayout(self.sound_hover_layout)
-        self._arrange_sound_rows(self.is_rtl_language(self.current_language))
-
         # Add Shadow Blur Steps
         self.num_steps_layout = QHBoxLayout() # STORE AS INSTANCE ATTRIBUTE
         self.num_steps_label = QLabel(_['shadow_blur_steps'] if 'shadow_blur_steps' in _ else "Shadow Blur Steps:") # Will be translated later
@@ -2332,6 +2307,31 @@ class SettingsDialog(QDialog):
             self.reset_curvature_layout.addWidget(self.reset_curvature_button)
             self.reset_curvature_layout.addStretch()
         general_layout.addLayout(self.reset_curvature_layout)
+
+        # Interface sounds: on/off, volume (previewed on release), hover sounds
+        sounds = sound_manager.manager()
+        self.sound_enabled_layout = QHBoxLayout()
+        self.sound_enabled_label = QLabel(_['sound_enabled'] if 'sound_enabled' in _ else "Play interface sounds")
+        self.sound_enabled_checkbox = QCheckBox()
+        self.sound_enabled_checkbox.setChecked(sounds.enabled)
+        general_layout.addLayout(self.sound_enabled_layout)
+
+        self.sound_volume_layout = QHBoxLayout()
+        self.sound_volume_label = QLabel(_['sound_volume'] if 'sound_volume' in _ else "Sound volume")
+        self.sound_volume_slider = QSlider(Qt.Horizontal)
+        self.sound_volume_slider.setRange(0, 100)
+        self.sound_volume_slider.setValue(sounds.volume)
+        self.sound_volume_slider.setFixedWidth(160)
+        self.sound_volume_slider.sliderReleased.connect(
+            lambda: sound_manager.manager().preview('ui_click', self.sound_volume_slider.value()))
+        general_layout.addLayout(self.sound_volume_layout)
+
+        self.sound_hover_layout = QHBoxLayout()
+        self.sound_hover_label = QLabel(_['sound_hover'] if 'sound_hover' in _ else "Play hover sounds")
+        self.sound_hover_checkbox = QCheckBox()
+        self.sound_hover_checkbox.setChecked(sounds.hover_enabled)
+        general_layout.addLayout(self.sound_hover_layout)
+        self._arrange_sound_rows(self.is_rtl_language(self.current_language))
 
         general_layout.addItem(spacer)
         general_layout.addWidget(self.apply_button)

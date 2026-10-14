@@ -6058,11 +6058,10 @@ class SettingsDialog(QDialog):
             'level': _['level_name'].format(n=1), 'ground': _['level_ground'],
             'select': _['level_select_block'], 'move': _['move_mode'],
             'attach': _['attach_mode'], 'rotate': _['rotate_mode'],
-            'setting': _['move_selected_only'], 'general': _['general_settings'],
         }
         items = []
         for key in ('level_scope_select_desc', 'level_scope_fold_desc', 'level_scope_modes_desc',
-                    'level_scope_new_desc', 'level_scope_move_setting_desc'):
+                    'level_scope_new_desc'):
             name, desc = (part.format(**names) for part in _[key].split(' - ', 1))
             items.append(f'<li><span class="button-name">{name}</span> - {desc}</li>')
         return f"<h2>{_['level_scope_guide_title']}</h2>\n<ul>\n" + '\n'.join(items) + '\n</ul>'

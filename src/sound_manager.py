@@ -209,7 +209,7 @@ class UiSoundFilter(QObject):
         self.main_window = main_window
         self.green_windows = tuple(green_windows)
         self.green_buttons = list(green_buttons)
-        self._dialog_closed_at = 0.0
+        self._closed_since_click = []  # dialogs hidden since the last button release
 
     # -- helpers -----------------------------------------------------------
     @staticmethod
@@ -238,9 +238,13 @@ class UiSoundFilter(QObject):
         """Decide once the click has been handled, so toggles report their new state
         and a click that closed a dialog stays silent (dialog_close already played)."""
         was_checkable = button.isCheckable()
+        window = button.window()
+        self._closed_since_click = []
 
         def decide():
-            if time.monotonic() - self._dialog_closed_at < 0.25:
+            # The click closed the window it was in (OK, Cancel, Close): dialog_close
+            # already played. Any other window closing does not silence the click.
+            if any(closed is window for closed in self._closed_since_click):
                 return
             try:
                 cue = self._explicit_cue(button)
@@ -355,7 +359,7 @@ class UiSoundFilter(QObject):
 
     def _on_hide(self, obj):
         if isinstance(obj, QDialog):
-            self._dialog_closed_at = time.monotonic()
+            self._closed_since_click.append(obj)
             play('dialog_close')
 
 

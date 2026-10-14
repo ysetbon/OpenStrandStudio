@@ -66,6 +66,7 @@ USER_SETTINGS_COPY = REPO / "user_settings.txt"  # the settings dialog also writ
 USER_SETTINGS_BACKUP = USER_SETTINGS_COPY.read_bytes() if USER_SETTINGS_COPY.exists() else None
 
 RESULTS = []
+HOVER_CUES = {"ui_hover", "canvas_hover_point"}
 STEPPER_TEXT = {"+", "++", "-", "--", "−", "−−"}
 
 
@@ -170,6 +171,11 @@ def run_check(rec, area, control, action, fn, expected=None, exact=None, forbidd
         return False
     pump(110)
     got = list(rec.requested)
+    wanted = set(exact or ()) | ({expected} if isinstance(expected, str) else set(expected or ()))
+    if not wanted & HOVER_CUES:
+        # with a real pointer, a window closing or moving can leave the pointer on a
+        # button, which rightly plays its hover sound; that is not what is tested here
+        got = [c for c in got if c not in HOVER_CUES]
     if exact is not None:
         ok = got == list(exact)
     elif expected is None:
@@ -419,7 +425,7 @@ def main_window_buttons(w):
     out = []
     for b in w.findChildren(QAbstractButton):
         try:
-            if (b.window() is w and b.isVisible() and b.isEnabled() and id(b) not in skip
+            if (b.window() is w and b.isVisible() and id(b) not in skip
                     and not stepper_cue(b) and b.width() > 2):
                 out.append(b)
         except RuntimeError:
@@ -428,10 +434,14 @@ def main_window_buttons(w):
 
 
 def check_main_buttons(w, rec, tested):
-    for b in main_window_buttons(w):
-        if id(b) in tested:
-            continue
-        tested.add(id(b))
+    # The layer panel rebuilds its buttons after some clicks, so look them up again
+    # before every click instead of working from a list made at the start.
+    for _ in range(300):
+        pending = [b for b in main_window_buttons(w) if control_key(b) not in tested]
+        if not pending:
+            break
+        b = pending[0]
+        tested.add(control_key(b))
         name = label(b)
         if b is w.settings_button:
             run_check(rec, "Main window", name, "click", lambda: click(b), {"ui_click", "dialog_open"})
@@ -457,7 +467,7 @@ def check_main_buttons(w, rec, tested):
             checked = b.isChecked()  # the state the click produced, before any follow-up changes it
             pump(150)
             expected = expected_main_cue(w, b, checked)
-            got = list(rec.requested)
+            got = [cue for cue in rec.requested if cue not in HOVER_CUES]
             ok = expected in got
             record("Main window", name, "click", expected, got, ok)
             if b.isCheckable() and expected.startswith(("ui_toggle", "toggle_green")) and b.isVisible():
@@ -469,7 +479,7 @@ def check_main_buttons(w, rec, tested):
 
 
 def check_hover(w, rec):
-    for b in main_window_buttons(w):
+    for b in [b for b in main_window_buttons(w) if b.isEnabled()]:
         name = label(b)
         centre = b.mapToGlobal(b.rect().center())
         if QApplication.widgetAt(centre) is b:
@@ -537,7 +547,7 @@ def sweep_dialog(rec, w, make, area, colour):
                 rec.clear()
                 click(c)
                 pump(200)
-                got = list(rec.requested)
+                got = [cue for cue in rec.requested if cue not in HOVER_CUES]
                 still_open = False
                 try:
                     still_open = dialog.isVisible()

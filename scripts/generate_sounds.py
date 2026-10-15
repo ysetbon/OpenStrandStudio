@@ -61,9 +61,18 @@ CUES = [
     ("mode_move", 130, -16, "A small plastic game piece slid a short way across a smooth board and set down with a soft tick, short and muted"),
     ("mode_rotate", 110, -15, "A small plastic wheel spun once with a fingertip, two quick light rounded ticks"),
     ("mode_angle", 110, -15, "A small plastic knob twisted a quarter turn with one soft ratchet click, rounded and tight"),
-    # Toolbar action buttons: Load and Settings share one sound, Save as Image has its own take
+    # Toolbar action buttons: Load plays the stamp, Save as Image another take of it
     ("toolbar_action", 90, -15, "A small soft plastic toy stamp pressed down once, one short padded thunk with a tiny click"),
     ("toolbar_image", 90, -15, "A small soft plastic toy stamp pressed down once, one short padded thunk with a tiny click"),
+    # Toolbar toggles with their own on/off pair, written for what each button does
+    ("toggle_shadow_on", 110, -16, "A small plastic dimmer knob turned down, a short smooth soft glide falling in pitch"),
+    ("toggle_shadow_off", 110, -17, "A small plastic dimmer knob turned up, a short smooth soft glide rising in pitch"),
+    ("toggle_tabs_on", 90, -15, "A small plastic file folder tab flipped up, one quick light flick upward, short"),
+    ("toggle_tabs_off", 90, -16, "A small plastic file folder tab flipped back down, one quick soft flick downward, short"),
+    ("layer_state_on", 100, -15, "A small plastic toy magnifying glass swung out of its case, a quick light rising swivel click"),
+    ("layer_state_off", 100, -16, "A small plastic toy magnifying glass folded back into its case, a quick soft falling swivel click"),
+    # Settings: the gear button
+    ("toolbar_settings", 110, -15, "Two small plastic cogs meshing and clicking once, a short rounded tick-tock"),
     # Drag and move: picking up and placing a strand end
     ("drag_pickup", 80, -15, "Fingers lifting a thick felt tab off a table, a soft muted tuck with a tiny upward lift, short"),
     ("drag_drop", 90, -14, "A small rubber bead landing on a soft mat, a gentle falling boop with no bounce, short"),

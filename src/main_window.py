@@ -139,8 +139,11 @@ class MainWindow(QMainWindow):
             self.rotate_button: 'mode_rotate',
             self.angle_adjust_button: 'mode_angle',
             self.load_button: 'toolbar_action',
-            self.settings_button: 'toolbar_action',
+            self.settings_button: 'toolbar_settings',
             self.save_image_button: 'toolbar_image',
+            self.toggle_shadow_button: 'toggle_shadow_{state}',
+            self.tabs_button: 'toggle_tabs_{state}',
+            self.layer_state_button: 'layer_state_{state}',
         }
         for button, cue in toolbar_cues.items():
             sound_manager.set_cue(button, cue)

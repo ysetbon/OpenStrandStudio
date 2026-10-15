@@ -417,8 +417,12 @@ def expected_main_cue(w, b, checked_after):
         return "layer_select"
     if b is w.layer_state_button:
         # turns on to open the layer state window; closing that window turns it off again
-        return "ui_toggle_on"
+        return "layer_state_on"
     state = "on" if checked_after else "off"
+    if b is w.toggle_shadow_button:
+        return f"toggle_shadow_{state}"
+    if b is w.tabs_button:
+        return f"toggle_tabs_{state}"
     if b is w.toggle_control_points_button:
         return f"toggle_green_{state}"
     if b.isCheckable():
@@ -452,7 +456,7 @@ def check_main_buttons(w, rec, tested):
         tested.add(control_key(b))
         name = label(b)
         if b is w.settings_button:
-            run_check(rec, "Main window", name, "click", lambda: click(b), {"toolbar_action", "dialog_open"})
+            run_check(rec, "Main window", name, "click", lambda: click(b), {"toolbar_settings", "dialog_open"})
             close_stray_dialogs(w)
             continue
         if b in (w.layer_panel.delete_all_button, w.layer_panel.delete_all_masks_button,
@@ -636,7 +640,7 @@ def check_dialogs(w, rec):
 
 def check_settings(w, rec):
     from settings_dialog import DefaultWidthConfigDialog
-    run_check(rec, "Settings", "settings button", "click", lambda: click(w.settings_button), {"toolbar_action", "dialog_open"})
+    run_check(rec, "Settings", "settings button", "click", lambda: click(w.settings_button), {"toolbar_settings", "dialog_open"})
     sd = w.settings_dialog
     WATCHER.keep.add(id(sd))
     pump(200)

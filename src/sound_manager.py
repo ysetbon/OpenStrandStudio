@@ -10,7 +10,8 @@ Two ways sounds get triggered:
     dragging on the canvas, attaching a strand, undo/redo and saving.
 
 A widget can override the filter with the dynamic property "soundCue": a cue
-name, or "none" when the sound is played elsewhere (e.g. from its clicked
+name, a toggle's pair as "name_{state}" (played as name_on / name_off),
+or "none" when the sound is played elsewhere (e.g. from its clicked
 signal, so keyboard shortcuts that call click() sound too).
 """
 
@@ -41,7 +42,10 @@ CUES = {
     'canvas_hover_point': 80,
     'mode_view': 60, 'mode_select': 60, 'mode_move': 60, 'mode_attach': 60,
     'mode_rotate': 60, 'mode_angle': 60,
-    'toolbar_action': 40, 'toolbar_image': 40,
+    'toolbar_action': 40, 'toolbar_image': 40, 'toolbar_settings': 40,
+    'toggle_shadow_on': 40, 'toggle_shadow_off': 40,
+    'toggle_tabs_on': 40, 'toggle_tabs_off': 40,
+    'layer_state_on': 40, 'layer_state_off': 40,
     'drag_pickup': 60, 'drag_drop': 60,
     'snap_grid': 60,
     'attach_start': 60, 'attach_complete': 60,
@@ -186,7 +190,8 @@ def play(cue):
 
 
 def set_cue(widget, cue):
-    """Give one widget a fixed cue, or "none" to keep the filter quiet for it."""
+    """Give one widget a fixed cue, "name_{state}" for a toggle's on/off pair,
+    or "none" to keep the filter quiet for it."""
     widget.setProperty('soundCue', cue)
 
 
@@ -253,7 +258,9 @@ class UiSoundFilter(QObject):
                 return
             try:
                 cue = self._explicit_cue(button)
-                if cue is None:
+                if cue is not None and '{state}' in cue:
+                    cue = cue.format(state='on' if button.isChecked() else 'off')
+                elif cue is None:
                     if was_checkable or isinstance(button, QCheckBox):
                         cue = self._toggle_cue(button, button.isChecked())
                     else:

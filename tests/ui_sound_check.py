@@ -401,9 +401,10 @@ def expected_main_cue(w, b, checked_after):
     from level_button import LevelButton
     from numbered_layer_button import NumberedLayerButton
     lp = w.layer_panel
-    modes = {id(w.view_button): "mode_select", id(w.select_strand_button): "mode_select",
-             id(w.rotate_button): "mode_select", id(w.angle_adjust_button): "mode_select",
-             id(w.move_button): "mode_move", id(w.attach_button): "mode_attach"}
+    modes = {id(w.view_button): "mode_view", id(w.select_strand_button): "mode_select",
+             id(w.rotate_button): "mode_rotate", id(w.angle_adjust_button): "mode_angle",
+             id(w.move_button): "mode_move", id(w.attach_button): "mode_attach",
+             id(w.load_button): "toolbar_action", id(w.save_image_button): "toolbar_image"}
     if id(b) in modes:
         return modes[id(b)]
     if b in (lp.add_new_strand_button, lp.new_mask_button):
@@ -451,7 +452,7 @@ def check_main_buttons(w, rec, tested):
         tested.add(control_key(b))
         name = label(b)
         if b is w.settings_button:
-            run_check(rec, "Main window", name, "click", lambda: click(b), {"ui_click", "dialog_open"})
+            run_check(rec, "Main window", name, "click", lambda: click(b), {"toolbar_action", "dialog_open"})
             close_stray_dialogs(w)
             continue
         if b in (w.layer_panel.delete_all_button, w.layer_panel.delete_all_masks_button,
@@ -635,7 +636,7 @@ def check_dialogs(w, rec):
 
 def check_settings(w, rec):
     from settings_dialog import DefaultWidthConfigDialog
-    run_check(rec, "Settings", "settings button", "click", lambda: click(w.settings_button), {"ui_click", "dialog_open"})
+    run_check(rec, "Settings", "settings button", "click", lambda: click(w.settings_button), {"toolbar_action", "dialog_open"})
     sd = w.settings_dialog
     WATCHER.keep.add(id(sd))
     pump(200)

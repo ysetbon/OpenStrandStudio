@@ -53,10 +53,17 @@ CUES = [
     # Hover: barely there
     ("ui_hover", 30, -26, "An extremely faint tiny tick, a fingernail lightly brushing a plastic button, airy, almost silent, very short"),
     ("canvas_hover_point", 35, -24, "A very faint tiny bubbly blip, a small soft plastic bead touching another, gentle and high, very short"),
-    # Modes: changing tool feels like turning a chunky toy selector
-    ("mode_select", 110, -14, "A chunky plastic toy selector dial clicking into its next notch, one solid rounded click, satisfying and tight"),
-    ("mode_move", 130, -19, "Sliding a small plastic game piece across a smooth board, a soft low gliding move that settles gently, warm and muffled, no high frequencies, no click"),
-    ("mode_attach", 120, -14, "A small plastic buckle clip snapping shut, one crisp rounded snap"),
+    # Mode buttons on the toolbar. View and Select share one prompt (Select is pitched up,
+    # see PITCH), and so do Rotate and Angle Adjust.
+    ("mode_view", 100, -15, "A thick plastic card tapped flat on a soft desk, one quick padded tap, short and tidy"),
+    ("mode_select", 100, -15, "A thick plastic card tapped flat on a soft desk, one quick padded tap, short and tidy"),
+    ("mode_attach", 120, -14, "A plastic pen cap pushed onto a pen, one short snug soft click"),
+    ("mode_move", 130, -16, "A small plastic game piece slid a short way across a smooth board and set down with a soft tick, short and muted"),
+    ("mode_rotate", 110, -15, "A small plastic wheel spun once with a fingertip, two quick light rounded ticks"),
+    ("mode_angle", 110, -15, "A small plastic knob twisted a quarter turn with one soft ratchet click, rounded and tight"),
+    # Toolbar action buttons: Load and Settings share one sound, Save as Image has its own take
+    ("toolbar_action", 90, -15, "A small soft plastic toy stamp pressed down once, one short padded thunk with a tiny click"),
+    ("toolbar_image", 90, -15, "A small soft plastic toy stamp pressed down once, one short padded thunk with a tiny click"),
     # Drag and move: picking up and placing a strand end
     ("drag_pickup", 80, -15, "Fingers lifting a thick felt tab off a table, a soft muted tuck with a tiny upward lift, short"),
     ("drag_drop", 90, -14, "A small rubber bead landing on a soft mat, a gentle falling boop with no bounce, short"),
@@ -83,7 +90,7 @@ CUES = [
 CUE_BY_ID = {cue[0]: cue for cue in CUES}
 
 # Low-pass cutoff (Hz) for cues whose takes come back too bright or hissy
-LOWPASS = {"mode_move": 2500, "delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000}
+LOWPASS = {"delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000}
 
 # Cues that should not sound like plastic get their own style line
 STYLE_OVERRIDE = {
@@ -94,6 +101,9 @@ STYLE_OVERRIDE = {
     "bell_note": "clean, close-up, dry, no reverb, no music, no voice",
     "tab_switch": "playful and friendly, close-up, dry, no reverb, no music, no voice",
 }
+
+# Semitones a cue is shifted by before trimming, so twin buttons sound related but distinct
+PITCH = {"mode_select": 2, "mode_angle": 2}
 
 # Pitch variants written next to each processed take: one recording, mirrored up and down
 PITCH_VARIANTS = {"stepper_tick": [("stepper_plus", 2), ("stepper_minus", -2)]}
@@ -311,7 +321,10 @@ def process(raw_dir, out_dir):
             if not name.endswith(".mp3"):
                 continue
             take = name[len("take"):-len(".mp3")]
-            shaped = shape(decode(os.path.join(cue_dir, name), LOWPASS.get(cue_id)), ms, peak_db)
+            samples = decode(os.path.join(cue_dir, name), LOWPASS.get(cue_id))
+            if cue_id in PITCH:
+                samples = pitch_shift(samples, PITCH[cue_id])
+            shaped = shape(samples, ms, peak_db)
             write_wav(os.path.join(out_dir, f"{cue_id}_{take}.wav"), shaped)
             print(f"processed {cue_id} take {take}")
             for name, semitones in PITCH_VARIANTS.get(cue_id, []):

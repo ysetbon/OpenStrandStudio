@@ -131,10 +131,19 @@ class MainWindow(QMainWindow):
 
     def _install_sounds(self):
         """UI sounds: one app-wide filter plays each control family's sound."""
-        for button in (self.view_button, self.select_strand_button, self.rotate_button, self.angle_adjust_button):
-            sound_manager.set_cue(button, 'mode_select')
-        sound_manager.set_cue(self.move_button, 'mode_move')
-        sound_manager.set_cue(self.attach_button, 'mode_attach')
+        toolbar_cues = {
+            self.view_button: 'mode_view',
+            self.select_strand_button: 'mode_select',
+            self.attach_button: 'mode_attach',
+            self.move_button: 'mode_move',
+            self.rotate_button: 'mode_rotate',
+            self.angle_adjust_button: 'mode_angle',
+            self.load_button: 'toolbar_action',
+            self.settings_button: 'toolbar_action',
+            self.save_image_button: 'toolbar_image',
+        }
+        for button, cue in toolbar_cues.items():
+            sound_manager.set_cue(button, cue)
         # Settings checkboxes and the Control Points button are the green toggles
         self.sound_filter = sound_manager.install(
             self,

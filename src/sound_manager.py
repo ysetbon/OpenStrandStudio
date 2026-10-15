@@ -46,6 +46,7 @@ CUES = {
     'toggle_shadow_on': 40, 'toggle_shadow_off': 40,
     'toggle_tabs_on': 40, 'toggle_tabs_off': 40,
     'layer_state_on': 40, 'layer_state_off': 40,
+    'toggle_points_on': 40, 'toggle_points_off': 40,
     'drag_pickup': 60, 'drag_drop': 60,
     'snap_grid': 60,
     'attach_start': 60, 'attach_complete': 60,

@@ -144,15 +144,12 @@ class MainWindow(QMainWindow):
             self.toggle_shadow_button: 'toggle_shadow_{state}',
             self.tabs_button: 'toggle_tabs_{state}',
             self.layer_state_button: 'layer_state_{state}',
+            self.toggle_control_points_button: 'toggle_points_{state}',
         }
         for button, cue in toolbar_cues.items():
             sound_manager.set_cue(button, cue)
-        # Settings checkboxes and the Control Points button are the green toggles
-        self.sound_filter = sound_manager.install(
-            self,
-            green_windows=(SettingsDialog,),
-            green_buttons=(self.toggle_control_points_button,),
-        )
+        # Settings checkboxes are the green toggles
+        self.sound_filter = sound_manager.install(self, green_windows=(SettingsDialog,))
 
     def showEvent(self, event):
         """Override showEvent to ensure proper window state"""

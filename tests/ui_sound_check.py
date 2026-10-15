@@ -424,7 +424,7 @@ def expected_main_cue(w, b, checked_after):
     if b is w.tabs_button:
         return f"toggle_tabs_{state}"
     if b is w.toggle_control_points_button:
-        return f"toggle_green_{state}"
+        return f"toggle_points_{state}"
     if b.isCheckable():
         return f"ui_toggle_{state}"
     return "ui_click"
@@ -482,7 +482,7 @@ def check_main_buttons(w, rec, tested):
             got = [cue for cue in rec.requested if cue not in HOVER_CUES]
             ok = expected in got
             record("Main window", name, "click", expected, got, ok)
-            if (b.isCheckable() and expected.startswith(("ui_toggle", "toggle_green")) and b.isVisible()
+            if (b.isCheckable() and expected.startswith(("ui_toggle", "toggle_")) and b.isVisible()
                     and b is not w.layer_state_button):
                 run_check(rec, "Main window", name, "click again", lambda: click(b),
                           expected_main_cue(w, b, not checked))

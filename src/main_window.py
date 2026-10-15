@@ -2094,6 +2094,8 @@ class MainWindow(QMainWindow):
             
             # Set up dialog to handle close events properly
             dialog.closeEvent = lambda event: self.handle_dialog_close(event)
+            # Closing the window turns the State button off, so it plays State's off sound
+            dialog.setProperty('soundClose', 'layer_state_off')
             
             # Retrieve the current state from the LayerStateManager
             order = self.layer_state_manager.getOrder()

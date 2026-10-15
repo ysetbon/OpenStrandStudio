@@ -638,6 +638,15 @@ def check_dialogs(w, rec):
         close_stray_dialogs(w)
 
 
+def check_layer_state(w, rec):
+    """State turns on and opens its window; the window is modal, so it closes before State
+    can be clicked again, and closing it plays State's off sound instead of dialog_close."""
+    close_stray_dialogs(w)
+    run_check(rec, "Main window", "State", "click, then its window closes", lambda: click(w.layer_state_button),
+              {"layer_state_on", "dialog_open", "layer_state_off"}, forbidden=("dialog_close",))
+    close_stray_dialogs(w)
+
+
 def check_settings(w, rec):
     from settings_dialog import DefaultWidthConfigDialog
     run_check(rec, "Settings", "settings button", "click", lambda: click(w.settings_button), {"toolbar_settings", "dialog_open"})
@@ -906,6 +915,7 @@ def run_checks(app):
         ("padlock", lambda: check_padlock(w, rec)),
         ("menus", lambda: check_menus_and_popups(w, rec)),
         ("dialogs", lambda: check_dialogs(w, rec)),
+        ("layer state", lambda: check_layer_state(w, rec)),
         ("settings", lambda: check_settings(w, rec)),
         ("tabs", lambda: check_tabs(w, rec)),
         ("save", lambda: check_save(w, rec)),

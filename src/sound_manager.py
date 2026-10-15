@@ -11,7 +11,8 @@ Two ways sounds get triggered:
 
 A widget can override the filter with the dynamic property "soundCue": a cue
 name, a toggle's pair as "name_{state}" (played as name_on / name_off),
-or "none" when the sound is played elsewhere (e.g. from its clicked
+or "none" when the sound is played elsewhere. A dialog can swap its open or
+close sound with the properties "soundOpen" and "soundClose" (e.g. from its clicked
 signal, so keyboard shortcuts that call click() sound too).
 """
 
@@ -365,7 +366,7 @@ class UiSoundFilter(QObject):
             icon = obj.icon()
             play('denied' if icon in (QMessageBox.Warning, QMessageBox.Critical) else 'dialog_open')
         elif isinstance(obj, QDialog):
-            play('dialog_open')
+            self._play_dialog_cue(obj, 'soundOpen', 'dialog_open')
         elif isinstance(obj, QMenu):
             if not isinstance(obj.parentWidget(), QMenu):  # submenus open on hover: stay quiet
                 play('menu_open')
@@ -373,7 +374,14 @@ class UiSoundFilter(QObject):
     def _on_hide(self, obj):
         if isinstance(obj, QDialog):
             self._closed_since_click.append(obj)
-            play('dialog_close')
+            self._play_dialog_cue(obj, 'soundClose', 'dialog_close')
+
+    @staticmethod
+    def _play_dialog_cue(dialog, prop, default):
+        cue = dialog.property(prop)
+        cue = cue if isinstance(cue, str) and cue else default
+        if cue != 'none':
+            play(cue)
 
 
 def install(main_window, **kwargs):

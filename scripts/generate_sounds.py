@@ -54,12 +54,15 @@ CUES = [
     ("ui_hover", 30, -26, "An extremely faint tiny tick, a fingernail lightly brushing a plastic button, airy, almost silent, very short"),
     ("canvas_hover_point", 35, -24, "A very faint tiny bubbly blip, a small soft plastic bead touching another, gentle and high, very short"),
     # Mode buttons on the toolbar. View opens like a window, Select is a finger on the table
-    # and Attach sticks like tape; their off sounds are the on sounds reversed (see REVERSED).
+    # and Attach sticks like tape. View and Select turn off with their on sounds reversed (see
+    # REVERSED); Attach turns off with the tape peeled away.
     # Rotate and Angle Adjust share one prompt (Angle is pitched up, see PITCH).
     ("mode_view", 150, -16, "A small wooden window shutter swung open, one quick soft swing ending in a light tap"),
     ("mode_select", 90, -15, "A fingertip tapping once gently on a wooden table, one soft muted tap, short"),
     # softened after picking: soften --lowpass 2500 --treble -8 --attack-ms 8 --peak -18
     ("mode_attach", 140, -18, "A short strip of sticky tape pressed down onto paper and smoothed with a fingertip, a short soft sticky press"),
+    # softened after picking, like mode_attach: soften --lowpass 2500 --treble -8 --attack-ms 8 --peak -18
+    ("mode_attach_off", 140, -18, "A short strip of sticky tape peeled gently off paper, one short soft peel, quiet"),
     ("mode_move", 130, -16, "A small plastic game piece slid a short way across a smooth board and set down with a soft tick, short and muted"),
     ("mode_rotate", 110, -15, "A small plastic wheel spun once with a fingertip, two quick light rounded ticks"),
     ("mode_angle", 110, -15, "A small plastic knob twisted a quarter turn with one soft ratchet click, rounded and tight"),
@@ -108,6 +111,7 @@ LOWPASS = {"mode_view": 7000, "mode_select": 7000, "mode_attach": 7000, "delete"
 
 # Cues that should not sound like plastic get their own style line
 STYLE_OVERRIDE = {
+    "mode_attach_off": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "mode_attach": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "mode_select": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "mode_view": "soft and gentle, close-up, dry, no reverb, no music, no voice",
@@ -135,8 +139,7 @@ COLOR_VARIANTS = {
 }
 
 # Off sounds made by playing an approved on sound backwards and lower, written by the `variants` command
-REVERSED = {"mode_view_off": ("mode_view", -5), "mode_select_off": ("mode_select", -5),
-            "mode_attach_off": ("mode_attach", -5)}
+REVERSED = {"mode_view_off": ("mode_view", -5), "mode_select_off": ("mode_select", -5)}
 REVERSED_PEAK_DB = -17
 
 # Two-note cues built from one generated bell strike, retuned to exact pitches.

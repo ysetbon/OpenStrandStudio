@@ -152,6 +152,11 @@ class MainWindow(QMainWindow):
             self.rotate_button: 'mode_rotate',
             self.angle_adjust_button: 'mode_angle',
         }
+        # one timer, so a quick second mode click replaces the first click's pending sound
+        self._mode_cue_timer = QTimer(self)
+        self._mode_cue_timer.setSingleShot(True)
+        self._mode_cue_timer.timeout.connect(lambda: sound_manager.play(self._pending_mode_cue))
+        self._pending_mode_cue = None
         for button, cue in mode_cues.items():
             sound_manager.set_cue(button, 'none')
             button.pressed.connect(self._remember_mode_for_sound)
@@ -161,18 +166,30 @@ class MainWindow(QMainWindow):
 
     # Modes whose toolbar button has an off sound, played when another mode button is clicked
     MODE_OFF_CUES = {'view': 'mode_view_off', 'select': 'mode_select_off', 'attach': 'mode_attach_off'}
+    MODE_ON_CUES = {'view': 'mode_view', 'select': 'mode_select', 'attach': 'mode_attach',
+                    'move': 'mode_move', 'rotate': 'mode_rotate', 'angle_adjust': 'mode_angle'}
     MODE_OFF_GAP_MS = 70
 
     def _remember_mode_for_sound(self):
         self._mode_before_click = self.current_mode
 
     def _play_mode_sound(self, cue):
-        """A mode button was clicked: the mode being left plays its off sound, then the new one its on sound."""
-        off = self.MODE_OFF_CUES.get(getattr(self, '_mode_before_click', None))
+        """A mode button was clicked: the mode being left plays its off sound, then the new one its on sound.
+
+        Runs after the button's own handler, so current_mode is the mode the click produced: Angle
+        Adjust with no strand selected stays in, or falls back to, another mode, which then plays.
+        A click that leaves the mode unchanged plays only the button's own sound."""
+        before = getattr(self, '_mode_before_click', None)
         self._mode_before_click = None
-        if off and off != cue + '_off':
+        self._mode_cue_timer.stop()
+        after = self.current_mode
+        if after != before:
+            cue = self.MODE_ON_CUES.get(after, cue)
+        off = self.MODE_OFF_CUES.get(before) if after != before else None
+        if off:
             sound_manager.play(off)
-            QTimer.singleShot(self.MODE_OFF_GAP_MS, lambda: sound_manager.play(cue))
+            self._pending_mode_cue = cue
+            self._mode_cue_timer.start(self.MODE_OFF_GAP_MS)
         else:
             sound_manager.play(cue)
 

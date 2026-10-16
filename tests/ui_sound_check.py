@@ -659,6 +659,33 @@ def check_mode_off_sounds(w, rec):
         else:
             run_check(rec, "Mode switching", name, f"click, leaving {before}", lambda b=button: click(b), on,
                       forbidden=OFF)
+
+    # Two quick mode clicks: the first click's delayed sound must not play after the second
+    click(w.view_button)
+    pump(200)
+    run_check(rec, "Mode switching", "Select, then Attach at once", "two clicks within the off-sound gap",
+              lambda: (click(w.select_strand_button), click(w.attach_button)),
+              exact=["mode_view_off", "mode_select_off", "mode_attach"])
+
+    # Angle Adjust with no strand selected does not enter Angle Adjust: the mode the app falls
+    # back to plays, and an off sound plays only if a mode was really left
+    click(w.view_button)
+    pump(200)
+    w.canvas.deselect_all_strands()
+    pump(100)
+    wait_between()
+    rec.clear()
+    click(w.angle_adjust_button)
+    pump(150)
+    got = [c for c in rec.requested if c not in HOVER_CUES]
+    after = w.current_mode
+    expected = ([] if after == "view" else ["mode_view_off", w.MODE_ON_CUES[after]]) if after != "angle_adjust" else None
+    if after == "view":
+        ok = "mode_view_off" not in got
+    else:
+        ok = expected is not None and got == expected
+    record("Mode switching", "Angle Adjust, no strand selected", f"click, leaving view (ends in {after})",
+           "no off sound" if after == "view" else ", ".join(expected or ["-"]), got, ok)
     click(w.attach_button)
     pump(200)
 

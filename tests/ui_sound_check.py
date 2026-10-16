@@ -664,11 +664,13 @@ def check_mode_off_sounds(w, rec):
             run_check(rec, "Mode switching", name, f"click, leaving {before}", lambda b=button: click(b), on,
                       forbidden=OFF)
 
-    # Two quick mode clicks: the first click's delayed sound must not play after the second
+    # Two quick mode clicks: the first click's delayed sound must not play after the second.
+    # A real second click arrives through the event loop, so let it run briefly in between
+    # (10 ms, well inside the 70 ms gap before Select's own sound).
     click(w.view_button)
     pump(200)
     run_check(rec, "Mode switching", "Select, then Attach at once", "two clicks within the off-sound gap",
-              lambda: (click(w.select_strand_button), click(w.attach_button)),
+              lambda: (click(w.select_strand_button), pump(10), click(w.attach_button)),
               exact=["mode_view_off", "mode_select_off", "mode_attach"])
 
     # Angle Adjust with a strand selected enters Angle Adjust and plays its own sound

@@ -142,8 +142,8 @@ class MainWindow(QMainWindow):
         }
         for button, cue in toolbar_cues.items():
             sound_manager.set_cue(button, cue)
-        # Mode buttons play their own sound from here, so leaving View, Select or Attach
-        # can play that mode's off sound first
+        # Mode buttons work out their own sound, so leaving View, Select or Attach can play
+        # that mode's off sound first
         mode_cues = {
             self.view_button: 'mode_view',
             self.select_strand_button: 'mode_select',
@@ -158,9 +158,8 @@ class MainWindow(QMainWindow):
         self._mode_cue_timer.timeout.connect(lambda: sound_manager.play(self._pending_mode_cue))
         self._pending_mode_cue = None
         for button, cue in mode_cues.items():
-            sound_manager.set_cue(button, 'none')
             button.pressed.connect(self._remember_mode_for_sound)
-            button.clicked.connect(lambda _checked=False, cue=cue: self._play_mode_sound(cue))
+            sound_manager.set_cue_resolver(button, lambda cue=cue: self._play_mode_sound(cue))
         # Settings checkboxes are the green toggles
         self.sound_filter = sound_manager.install(self, green_windows=(SettingsDialog,))
 
@@ -176,13 +175,17 @@ class MainWindow(QMainWindow):
     def _play_mode_sound(self, cue):
         """A mode button was clicked: the mode being left plays its off sound, then the new one its on sound.
 
-        Runs after the button's own handler, so current_mode is the mode the click produced: Angle
+        Runs once the click has been handled, so current_mode is the mode the click produced: Angle
         Adjust with no strand selected stays in, or falls back to, another mode, which then plays.
+        With a strand selected, Angle Adjust's dialog is open at this point and its mode only
+        switches when the dialog closes, so a checked Angle Adjust button counts as entering it.
         A click that leaves the mode unchanged plays only the button's own sound."""
         before = getattr(self, '_mode_before_click', None)
         self._mode_before_click = None
         self._mode_cue_timer.stop()
         after = self.current_mode
+        if after == before and cue == 'mode_angle' and self.angle_adjust_button.isChecked():
+            after = 'angle_adjust'
         if after != before:
             cue = self.MODE_ON_CUES.get(after, cue)
         off = self.MODE_OFF_CUES.get(before) if after != before else None

@@ -677,8 +677,19 @@ def check_mode_off_sounds(w, rec):
     if w.canvas.strands:
         w.select_strand(0)
         pump(150)
-        run_check(rec, "Mode switching", "Angle Adjust, strand selected", "click, leaving attach",
-                  lambda: click(w.angle_adjust_button), exact=["mode_attach_off", "mode_angle"])
+        # its dialog opens on the click, so the sounds must play then, not once it closes
+        wait_between()
+        rec.clear()
+        click(w.angle_adjust_button)
+        pump(150)
+        got = [c for c in rec.requested if c not in HOVER_CUES]
+        modes = [c for c in got if c.startswith("mode_")]
+        # the test closes the dialog within a few ms, so only the off sound (played at once) is
+        # checked against it; the on sound follows 70 ms later
+        ok = modes == ["mode_attach_off", "mode_angle"] and (
+            "dialog_close" not in got or got.index("mode_attach_off") < got.index("dialog_close"))
+        record("Mode switching", "Angle Adjust, strand selected", "click, leaving attach",
+               "mode_attach_off (before its dialog closes), mode_angle", got, ok)
         close_stray_dialogs(w)
         click(w.attach_button)
         pump(200)

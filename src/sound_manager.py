@@ -19,6 +19,7 @@ signal, so keyboard shortcuts that call click() sound too).
 import os
 import sys
 import time
+import weakref
 
 from PyQt5.QtCore import QObject, QEvent, Qt, QTimer, QUrl
 from PyQt5.QtWidgets import (
@@ -192,6 +193,17 @@ def play(cue):
     manager().play(cue)
 
 
+# button -> function that plays the button's sound itself, once its click has been handled
+_RESOLVERS = weakref.WeakKeyDictionary()
+
+
+def set_cue_resolver(button, resolver):
+    """Let a button work out its own sound after each click: resolver() is called right after
+    the click's handlers have run (or, when a handler opens a modal dialog, as the dialog opens)
+    and plays whatever fits."""
+    _RESOLVERS[button] = resolver
+
+
 def set_cue(widget, cue):
     """Give one widget a fixed cue, "name_{state}" for a toggle's on/off pair,
     or "none" to keep the filter quiet for it."""
@@ -258,6 +270,10 @@ class UiSoundFilter(QObject):
             # The click closed the window it was in (OK, Cancel, Close): dialog_close
             # already played. Any other window closing does not silence the click.
             if any(closed is window for closed in self._closed_since_click):
+                return
+            resolver = _RESOLVERS.get(button)
+            if resolver is not None:
+                resolver()
                 return
             try:
                 cue = self._explicit_cue(button)
@@ -335,6 +351,9 @@ class UiSoundFilter(QObject):
     def _on_release(self, obj):
         if isinstance(obj, QAbstractButton):
             if not obj.isEnabled() or not obj.isDown() or self._stepper_cue(obj):
+                return
+            if obj in _RESOLVERS:
+                self._play_after_click(obj)
                 return
             cue = self._explicit_cue(obj)
             if cue == 'none':

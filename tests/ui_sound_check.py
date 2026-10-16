@@ -743,11 +743,20 @@ def check_mode_off_sounds(w, rec):
 
 def check_row_hover(rec, area, view, cue):
     """Rows of a list or tree hover once per row."""
+    if hasattr(view, "expandAll"):
+        view.expandAll()
+        pump(100)
     rows = []
-    for r in range(view.model().rowCount()):
-        rect = view.visualRect(view.model().index(r, 0))
-        if rect.isValid() and view.viewport().rect().contains(rect.center()):
-            rows.append(rect)
+
+    def walk(parent):
+        for r in range(view.model().rowCount(parent)):
+            index = view.model().index(r, 0, parent)
+            rect = view.visualRect(index)
+            if rect.isValid() and view.viewport().rect().contains(rect.center()):
+                rows.append(rect)
+            walk(index)
+
+    walk(view.rootIndex())
     if len(rows) < 2:
         record(area, "rows", "hover", cue, "-", False, f"only {len(rows)} visible rows to hover")
         return

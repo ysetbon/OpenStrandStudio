@@ -436,7 +436,8 @@ class UiSoundFilter(QObject):
         """Hover cue of the area a widget sits in, or of its window."""
         source = widget
         widget = widget if include_self else widget.parentWidget()
-        while widget is not None:
+        # stop at the window: a sub-window opened from the group panel is not part of it
+        while widget is not None and not widget.isWindow():
             area = widget.property('hoverArea')
             if isinstance(area, str) and area:
                 return area

@@ -475,10 +475,14 @@ def check_main_buttons(w, rec, tested):
         wait_between()
         rec.clear()
         try:
+            mode_before = w.current_mode
             click(b)
             checked = b.isChecked()  # the state the click produced, before any follow-up changes it
             pump(150)
             expected = expected_main_cue(w, b, checked)
+            if b is w.angle_adjust_button and w.current_mode not in ("angle_adjust", mode_before):
+                # no strand selected: the app falls back to another mode, and that mode plays
+                expected = w.MODE_ON_CUES[w.current_mode]
             got = [cue for cue in rec.requested if cue not in HOVER_CUES]
             ok = expected in got
             record("Main window", name, "click", expected, got, ok)
@@ -666,6 +670,18 @@ def check_mode_off_sounds(w, rec):
     run_check(rec, "Mode switching", "Select, then Attach at once", "two clicks within the off-sound gap",
               lambda: (click(w.select_strand_button), click(w.attach_button)),
               exact=["mode_view_off", "mode_select_off", "mode_attach"])
+
+    # Angle Adjust with a strand selected enters Angle Adjust and plays its own sound
+    click(w.attach_button)
+    pump(200)
+    if w.canvas.strands:
+        w.select_strand(0)
+        pump(150)
+        run_check(rec, "Mode switching", "Angle Adjust, strand selected", "click, leaving attach",
+                  lambda: click(w.angle_adjust_button), exact=["mode_attach_off", "mode_angle"])
+        close_stray_dialogs(w)
+        click(w.attach_button)
+        pump(200)
 
     # Angle Adjust with no strand selected does not enter Angle Adjust: the mode the app falls
     # back to plays, and an off sound plays only if a mode was really left

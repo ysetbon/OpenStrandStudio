@@ -71,8 +71,9 @@ CUES = [
     ("toggle_tabs_off", 90, -16, "A small plastic file folder tab flipped back down, one quick soft flick downward, short"),
     ("layer_state_on", 100, -15, "A small plastic toy magnifying glass swung out of its case, a quick light rising swivel click"),
     ("layer_state_off", 100, -16, "A small plastic toy magnifying glass folded back into its case, a quick soft falling swivel click"),
-    # Control Points: small round handles appearing; its off sound is derived (see COLOR_VARIANTS)
+    # Control Points: small round handles appearing and going away
     ("toggle_points_on", 100, -15, "Two tiny round bubbles popping up to the surface, two quick light round blips rising in pitch"),
+    ("toggle_points_off", 100, -16, "Two tiny round bubbles sinking away, two quick soft round blips falling in pitch"),
     # Settings: the gear button
     ("toolbar_settings", 110, -15, "Two small plastic cogs meshing and clicking once, a short rounded tick-tock"),
     # Drag and move: picking up and placing a strand end
@@ -119,15 +120,13 @@ PITCH = {"mode_select": 2, "mode_angle": 2}
 # Pitch variants written next to each processed take: one recording, mirrored up and down
 PITCH_VARIANTS = {"stepper_tick": [("stepper_plus", 2), ("stepper_minus", -2)]}
 
-# Variants derived from approved sounds in src/sounds by the `variants` command, so every
-# toggle of one colour plays the same file and colours differ only slightly. Control Points
-# turning off is its on sound a major third (4 semitones) lower.
+# Colour variants derived from approved sounds in src/sounds by the `variants` command,
+# so every toggle of one colour plays the same file and colours differ only slightly
 COLOR_VARIANTS = {
     "toggle_blue_on": ("ui_toggle_on", -2),
     "toggle_blue_off": ("ui_toggle_off", -2),
     "toggle_green_on": ("ui_toggle_on", 2),
     "toggle_green_off": ("ui_toggle_off", 2),
-    "toggle_points_off": ("toggle_points_on", -4),
 }
 
 # Two-note cues built from one generated bell strike, retuned to exact pitches.

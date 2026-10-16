@@ -58,8 +58,8 @@ CUES = [
     # Rotate and Angle Adjust share one prompt (Angle is pitched up, see PITCH).
     ("mode_view", 150, -16, "A small wooden window shutter swung open, one quick soft swing ending in a light tap"),
     ("mode_select", 90, -15, "A fingertip tapping once gently on a wooden table, one soft muted tap, short"),
-    # softened after picking: soften --lowpass 4500 --treble -4 --attack-ms 3 --peak -16
-    ("mode_attach", 140, -16, "A short strip of sticky tape pressed down onto paper and smoothed with a fingertip, a short soft sticky press"),
+    # softened after picking: soften --lowpass 2500 --treble -8 --attack-ms 8 --peak -18
+    ("mode_attach", 140, -18, "A short strip of sticky tape pressed down onto paper and smoothed with a fingertip, a short soft sticky press"),
     ("mode_move", 130, -16, "A small plastic game piece slid a short way across a smooth board and set down with a soft tick, short and muted"),
     ("mode_rotate", 110, -15, "A small plastic wheel spun once with a fingertip, two quick light rounded ticks"),
     ("mode_angle", 110, -15, "A small plastic knob twisted a quarter turn with one soft ratchet click, rounded and tight"),
@@ -134,8 +134,9 @@ COLOR_VARIANTS = {
     "toggle_green_off": ("ui_toggle_off", 2),
 }
 
-# Off sounds made by playing an approved on sound backwards, written by the `variants` command
-REVERSED = {"mode_view_off": "mode_view", "mode_select_off": "mode_select", "mode_attach_off": "mode_attach"}
+# Off sounds made by playing an approved on sound backwards and lower, written by the `variants` command
+REVERSED = {"mode_view_off": ("mode_view", -5), "mode_select_off": ("mode_select", -5),
+            "mode_attach_off": ("mode_attach", -5)}
 REVERSED_PEAK_DB = -17
 
 # Two-note cues built from one generated bell strike, retuned to exact pitches.
@@ -379,11 +380,14 @@ def soften_take(raw_mp3, cue_id, out_path, lowpass_hz, treble_db, attack_ms, pea
     write_wav(out_path, shape(samples, ms, cue_peak if peak_db is None else peak_db))
 
 
-def reverse(samples, peak_db):
-    """Play a sound backwards: trim the silence that ends up in front, add tiny fades, normalize."""
+def reverse(samples, semitones, peak_db):
+    """Play a sound backwards and shift its pitch: trim the silence that ends up in front,
+    add tiny fades, normalize."""
     out = samples[::-1].astype(np.float64)
     loud = np.nonzero(np.abs(out) > 0.02 * np.max(np.abs(out)))[0]
     out = out[loud[0]:loud[-1] + 1].copy()
+    if semitones:
+        out = pitch_shift(out, semitones)
     fade_in, fade_out = int(0.002 * SAMPLE_RATE), int(0.003 * SAMPLE_RATE)
     out[:fade_in] *= np.linspace(0.0, 1.0, fade_in)
     out[-fade_out:] *= np.linspace(1.0, 0.0, fade_out)
@@ -395,10 +399,10 @@ def variants():
         samples = decode(os.path.join(SOUNDS_DIR, f"{source}.wav")).astype(np.float64)
         write_wav(os.path.join(SOUNDS_DIR, f"{name}.wav"), pitch_shift(samples, semitones))
         print(f"{name}.wav <- {source}.wav ({semitones:+d} semitones)")
-    for name, source in REVERSED.items():
+    for name, (source, semitones) in REVERSED.items():
         samples = decode(os.path.join(SOUNDS_DIR, f"{source}.wav")).astype(np.float64)
-        write_wav(os.path.join(SOUNDS_DIR, f"{name}.wav"), reverse(samples, REVERSED_PEAK_DB))
-        print(f"{name}.wav <- {source}.wav reversed")
+        write_wav(os.path.join(SOUNDS_DIR, f"{name}.wav"), reverse(samples, semitones, REVERSED_PEAK_DB))
+        print(f"{name}.wav <- {source}.wav reversed, {semitones:+d} semitones")
 
 
 def main():

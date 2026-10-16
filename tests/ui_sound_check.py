@@ -70,8 +70,8 @@ USER_SETTINGS_COPY = REPO / "user_settings.txt"
 USER_SETTINGS_BACKUP = USER_SETTINGS_COPY.read_bytes() if USER_SETTINGS_COPY.exists() else None
 
 RESULTS = []
-HOVER_CUES = {"ui_hover", "hover_mode", "hover_toggle", "hover_action", "hover_layer",
-              "hover_attach_point", "hover_move_point"}
+HOVER_CUES = {"hover_toolbar", "hover_panel_top", "hover_layer", "hover_panel_bottom", "hover_group",
+              "hover_dialog", "hover_menu", "hover_settings", "hover_attach_point", "hover_move_point"}
 STEPPER_TEXT = {"+", "++", "-", "--", "−", "−−"}
 
 
@@ -497,21 +497,19 @@ def check_main_buttons(w, rec, tested):
 
 
 def expected_hover_cue(w, b):
+    """Each area of the main window has its own hover sound (all takes of one prompt)."""
     from level_button import LevelButton
     from numbered_layer_button import NumberedLayerButton
-    kinds = {
-        "hover_mode": (w.view_button, w.select_strand_button, w.attach_button, w.move_button,
-                       w.rotate_button, w.angle_adjust_button),
-        "hover_toggle": (w.toggle_grid_button, w.toggle_control_points_button, w.toggle_shadow_button,
-                         w.tabs_button, w.layer_state_button),
-        "hover_action": (w.save_button, w.load_button, w.save_image_button, w.settings_button),
-    }
-    for cue, buttons in kinds.items():
-        if any(b is x for x in buttons):
-            return cue
+    lp = w.layer_panel
     if isinstance(b, (NumberedLayerButton, LevelButton)):
         return "hover_layer"
-    return "ui_hover"
+    areas = [((lp.top_header, lp.zoom_panel, lp.refresh_panel), "hover_panel_top"),
+             ((lp.delete_strand_button.parentWidget(),), "hover_panel_bottom"),
+             ((lp.right_panel,), "hover_group")]
+    for containers, cue in areas:
+        if any(c.isAncestorOf(b) for c in containers):
+            return cue
+    return "hover_toolbar"
 
 
 def check_hover(w, rec):
@@ -533,6 +531,7 @@ def sweep_dialog(rec, w, make, area, colour):
     WATCHER.keep.add(id(dialog))
     dialog.show()
     pump(250)
+    hover = "hover_settings" if type(dialog).__name__ == "SettingsDialog" else "hover_dialog"
     done = set()
     closed_checked = False
     for _ in range(MAX_CONTROLS_PER_WINDOW):
@@ -548,6 +547,9 @@ def sweep_dialog(rec, w, make, area, colour):
         done.add(control_key(c))
         name = label(c)
         try:
+            if isinstance(c, QAbstractButton):
+                run_check(rec, area, name, "pointer enters it", lambda: QApplication.sendEvent(c, QEvent(QEvent.Enter)),
+                          hover)
             if isinstance(c, QCheckBox):
                 was = c.isChecked()
                 run_check(rec, area, name, "tick", lambda: click(c, checkbox_pos(c)),
@@ -739,6 +741,37 @@ def check_mode_off_sounds(w, rec):
     pump(200)
 
 
+def check_row_hover(rec, area, view, cue):
+    """Rows of a list or tree hover once per row."""
+    rows = []
+    for r in range(view.model().rowCount()):
+        rect = view.visualRect(view.model().index(r, 0))
+        if rect.isValid() and view.viewport().rect().contains(rect.center()):
+            rows.append(rect)
+    if len(rows) < 2:
+        record(area, "rows", "hover", cue, "-", False, f"only {len(rows)} visible rows to hover")
+        return
+    QTest.mouseMove(view.viewport(), QPoint(1, view.viewport().height() - 1))
+    pump(100)
+    run_check(rec, area, "a row", "pointer reaches it", lambda: QTest.mouseMove(view.viewport(), rows[0].center()), cue)
+    wait_between()
+    rec.clear()
+    QTest.mouseMove(view.viewport(), rows[0].center() + QPoint(4, 0))
+    pump(110)
+    record(area, "the same row", "pointer moves within it", f"no {cue}", list(rec.requested),
+           cue not in rec.requested, "one hover per row, not one per mouse move")
+    run_check(rec, area, "the next row", "pointer reaches it", lambda: QTest.mouseMove(view.viewport(), rows[1].center()), cue)
+
+
+def check_group_rows(w, rec):
+    from PyQt5.QtWidgets import QAbstractItemView
+    view = next((v for v in w.layer_panel.right_panel.findChildren(QAbstractItemView) if v.isVisible()), None)
+    if view is None:
+        record("Group panel", "group tree", "hover", "hover_group", "-", False, "no visible group tree")
+        return
+    check_row_hover(rec, "Group panel", view, "hover_group")
+
+
 def check_layer_state(w, rec):
     """State turns on and opens its window; the window is modal, so it closes before State
     can be clicked again, and closing it plays State's off sound instead of dialog_close."""
@@ -754,6 +787,11 @@ def check_settings(w, rec):
     sd = w.settings_dialog
     WATCHER.keep.add(id(sd))
     pump(200)
+    button = next((b for b in sd.findChildren(QPushButton) if b.isVisible() and b.isEnabled()), None)
+    if button is not None:
+        run_check(rec, "Settings", label(button), "pointer enters it",
+                  lambda: QApplication.sendEvent(button, QEvent(QEvent.Enter)), "hover_settings")
+    check_row_hover(rec, "Settings sidebar", sd.categories_list, "hover_settings")
     lst = sd.categories_list
     skip_pages = set()
     for i in range(lst.count()):
@@ -859,6 +897,20 @@ def check_menus_and_popups(w, rec):
     menu.addAction("second item")
     WATCHER.keep.add(id(menu))
     run_check(rec, "Menus", "a QMenu", "open", lambda: menu.popup(w.mapToGlobal(QPoint(200, 200))), "menu_open")
+    first, second = menu.actions()[0], menu.actions()[1]
+    # Qt ignores the first mouse move after a menu opens, so move once before checking
+    QTest.mouseMove(menu, menu.actionGeometry(second).center())
+    pump(150)
+    run_check(rec, "Menus", "a QMenu item", "pointer reaches it",
+              lambda: QTest.mouseMove(menu, menu.actionGeometry(first).center()), "hover_menu")
+    wait_between()
+    rec.clear()
+    QTest.mouseMove(menu, menu.actionGeometry(first).center() + QPoint(3, 0))
+    pump(110)
+    record("Menus", "the same item", "pointer moves within it", "no hover_menu", list(rec.requested),
+           "hover_menu" not in rec.requested, "one hover per item, not one per mouse move")
+    run_check(rec, "Menus", "the next item", "pointer reaches it",
+              lambda: QTest.mouseMove(menu, menu.actionGeometry(second).center()), "hover_menu")
     action = menu.actions()[0]
     run_check(rec, "Menus", "a QMenu item", "pick it", lambda: click(menu, menu.actionGeometry(action).center()), "ui_click")
     WATCHER.keep.discard(id(menu))
@@ -1017,6 +1069,7 @@ def run_checks(app):
         ("menus", lambda: check_menus_and_popups(w, rec)),
         ("dialogs", lambda: check_dialogs(w, rec)),
         ("mode off sounds", lambda: check_mode_off_sounds(w, rec)),
+        ("group rows", lambda: check_group_rows(w, rec)),
         ("layer state", lambda: check_layer_state(w, rec)),
         ("settings", lambda: check_settings(w, rec)),
         ("tabs", lambda: check_tabs(w, rec)),

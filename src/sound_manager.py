@@ -23,7 +23,7 @@ import weakref
 
 from PyQt5.QtCore import QObject, QEvent, Qt, QTimer, QUrl
 from PyQt5.QtWidgets import (
-    QAbstractButton, QAbstractSlider, QApplication, QCheckBox, QComboBox,
+    QAbstractButton, QAbstractItemView, QAbstractSlider, QApplication, QCheckBox, QComboBox,
     QDialog, QMenu, QMessageBox,
 )
 
@@ -40,8 +40,8 @@ CUES = {
     'toggle_blue_on': 40, 'toggle_blue_off': 40,
     'toggle_green_on': 40, 'toggle_green_off': 40,
     'layer_select': 40,
-    'ui_hover': 80,
-    'hover_mode': 80, 'hover_toggle': 80, 'hover_action': 80, 'hover_layer': 80,
+    'hover_toolbar': 80, 'hover_panel_top': 80, 'hover_layer': 80, 'hover_panel_bottom': 80,
+    'hover_group': 80, 'hover_dialog': 80, 'hover_menu': 80, 'hover_settings': 80,
     'hover_attach_point': 80, 'hover_move_point': 80,
     'mode_view': 60, 'mode_select': 60, 'mode_move': 60, 'mode_attach': 60,
     'mode_view_off': 60, 'mode_select_off': 60, 'mode_attach_off': 60,
@@ -64,7 +64,8 @@ CUES = {
     'stepper_plus': 70, 'stepper_minus': 70,
     'tab_switch': 60,
 }
-HOVER_CUES = {'ui_hover', 'hover_mode', 'hover_toggle', 'hover_action', 'hover_layer',
+HOVER_CUES = {'hover_toolbar', 'hover_panel_top', 'hover_layer', 'hover_panel_bottom',
+              'hover_group', 'hover_dialog', 'hover_menu', 'hover_settings',
               'hover_attach_point', 'hover_move_point'}
 # Layer panel buttons whose hover is the layer one (matched by class name, so this module
 # does not import the layer panel)
@@ -210,8 +211,13 @@ def set_cue_resolver(button, resolver):
 
 
 def set_hover_cue(widget, cue):
-    """Give one main-window button its own hover sound instead of ui_hover."""
+    """Give one button its own hover sound."""
     widget.setProperty('hoverCue', cue)
+
+
+def set_hover_area(container, cue):
+    """Every button inside this widget hovers with this sound, including buttons added later."""
+    container.setProperty('hoverArea', cue)
 
 
 def set_cue(widget, cue):
@@ -239,12 +245,16 @@ class UiSoundFilter(QObject):
     STEPPER_PLUS = {'+', '++'}
     STEPPER_MINUS = {'-', '--', '−', '−−'}
 
-    def __init__(self, main_window, green_windows=(), green_buttons=(), parent=None):
+    def __init__(self, main_window, green_windows=(), green_buttons=(), dialog_hover=None, parent=None):
         super().__init__(parent)
         self.main_window = main_window
         self.green_windows = tuple(green_windows)
         self.green_buttons = list(green_buttons)
+        # dialog class -> hover cue for its buttons; other dialogs use hover_dialog
+        self.dialog_hover = dict(dialog_hover or {})
         self._closed_since_click = []  # dialogs hidden since the last button release
+        self._menu_last_action = weakref.WeakKeyDictionary()  # menu -> action last hovered
+        self._view_last_row = weakref.WeakKeyDictionary()  # list/tree view -> row last hovered
 
     # -- helpers -----------------------------------------------------------
     @staticmethod
@@ -334,6 +344,10 @@ class UiSoundFilter(QObject):
                 self._on_release(obj)
             elif etype == QEvent.Enter:
                 self._on_enter(obj)
+            elif etype in (QEvent.MouseMove, QEvent.HoverMove):
+                self._on_view_move(obj, event)
+            elif etype == QEvent.Leave and isinstance(obj.parentWidget(), QAbstractItemView):
+                self._view_last_row.pop(obj.parentWidget(), None)
             elif etype == QEvent.Show and not event.spontaneous():
                 self._on_show(obj)
             elif etype == QEvent.Hide and not event.spontaneous():
@@ -388,11 +402,63 @@ class UiSoundFilter(QObject):
     def _on_enter(self, obj):
         if not isinstance(obj, QAbstractButton) or not obj.isEnabled():
             return
-        if obj.window() is self.main_window:
-            cue = obj.property('hoverCue')
-            if not (isinstance(cue, str) and cue):
-                cue = 'hover_layer' if type(obj).__name__ in LAYER_BUTTON_CLASSES else 'ui_hover'
+        cue = self._hover_cue(obj)
+        if cue:
             play(cue)
+
+    def _on_view_move(self, viewport, event):
+        """Rows of lists and trees (groups and their layers, the Settings sidebar) hover like
+        buttons: one sound each time the pointer reaches another row."""
+        view = viewport.parentWidget()
+        if not isinstance(view, QAbstractItemView) or view.viewport() is not viewport:
+            return
+        index = view.indexAt(event.pos())
+        row = (index.row(), index.internalId()) if index.isValid() else None
+        if self._view_last_row.get(view) == row:
+            return
+        self._view_last_row[view] = row
+        if row is not None:
+            cue = self._area_cue(view, include_self=True)
+            if cue:
+                play(cue)
+
+    def _hover_cue(self, button):
+        """The button's own hover, else its area's (the nearest parent marked with set_hover_area),
+        else its window's: hover_settings or hover_dialog in sub-windows."""
+        cue = button.property('hoverCue')
+        if isinstance(cue, str) and cue:
+            return cue
+        if type(button).__name__ in LAYER_BUTTON_CLASSES:
+            return 'hover_layer'
+        return self._area_cue(button)
+
+    def _area_cue(self, widget, include_self=False):
+        """Hover cue of the area a widget sits in, or of its window."""
+        source = widget
+        widget = widget if include_self else widget.parentWidget()
+        while widget is not None:
+            area = widget.property('hoverArea')
+            if isinstance(area, str) and area:
+                return area
+            widget = widget.parentWidget()
+        window = source.window()
+        if window is self.main_window:
+            return None if include_self else 'hover_toolbar'
+        if isinstance(window, QDialog):
+            for cls, dialog_cue in self.dialog_hover.items():
+                if isinstance(window, cls):
+                    return dialog_cue
+            return 'hover_dialog'
+        return None
+
+    def _on_menu_hover(self, menu, action):
+        """A menu item became highlighted: one hover per item, not one per mouse move."""
+        if action is None or action.isSeparator() or not action.isEnabled():
+            return
+        if self._menu_last_action.get(menu) is action:
+            return
+        self._menu_last_action[menu] = action
+        play('hover_menu')
 
     def _on_show(self, obj):
         if isinstance(obj, QMessageBox):
@@ -401,6 +467,10 @@ class UiSoundFilter(QObject):
         elif isinstance(obj, QDialog):
             self._play_dialog_cue(obj, 'soundOpen', 'dialog_open')
         elif isinstance(obj, QMenu):
+            if not obj.property('_soundHoverHooked'):
+                obj.setProperty('_soundHoverHooked', True)
+                obj.hovered.connect(lambda action, menu=obj: self._on_menu_hover(menu, action))
+            self._menu_last_action.pop(obj, None)
             if not isinstance(obj.parentWidget(), QMenu):  # submenus open on hover: stay quiet
                 play('menu_open')
 

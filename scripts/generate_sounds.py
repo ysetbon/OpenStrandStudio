@@ -52,7 +52,13 @@ CUES = [
     ("layer_select", 45, -16, "One tiny tick of a plastic bead tapped on a plastic tray, high and light, very short"),
     # Hover: barely there
     ("ui_hover", 30, -26, "An extremely faint tiny tick, a fingernail lightly brushing a plastic button, airy, almost silent, very short"),
-    ("canvas_hover_point", 35, -24, "A very faint tiny bubbly blip, a small soft plastic bead touching another, gentle and high, very short"),
+    # Hover on main-window buttons and canvas points: a whisper of what each one's click is made of
+    ("hover_mode", 35, -26, "A fingertip grazing a smooth wooden tabletop, one tiny faint soft tap, almost silent, very short"),
+    ("hover_toggle", 30, -26, "A fingertip resting on a small plastic switch without flipping it, one tiny faint tick, almost silent, very short"),
+    ("hover_action", 35, -26, "A fingertip resting on the handle of a small rubber stamp, one tiny faint soft pat, almost silent, very short"),
+    ("hover_layer", 30, -26, "A small plastic bead brushing the edge of a plastic tray, one tiny faint tick, almost silent, very short"),
+    ("hover_attach_point", 40, -24, "A fingertip lightly touching a strip of sticky tape, one tiny faint soft sticky touch, very short"),
+    ("hover_move_point", 40, -24, "A fingertip lightly brushing a sheet of paper, one tiny faint papery touch, very short"),
     # Mode buttons on the toolbar. View opens like a window, Select is a finger on the table
     # and Attach sticks like tape. View and Select turn off with their on sounds reversed (see
     # REVERSED); Attach turns off with the tape peeled away.
@@ -108,10 +114,16 @@ CUES = [
 CUE_BY_ID = {cue[0]: cue for cue in CUES}
 
 # Low-pass cutoff (Hz) for cues whose takes come back too bright or hissy
-LOWPASS = {"mode_move": 7000, "mode_rotate": 7000, "mode_view": 7000, "mode_select": 7000, "mode_attach": 7000, "delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000}
+LOWPASS = {"hover_mode": 7000, "hover_toggle": 7000, "hover_action": 7000, "hover_layer": 7000, "hover_attach_point": 7000, "hover_move_point": 7000, "mode_move": 7000, "mode_rotate": 7000, "mode_view": 7000, "mode_select": 7000, "mode_attach": 7000, "delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000}
 
 # Cues that should not sound like plastic get their own style line
 STYLE_OVERRIDE = {
+    "hover_move_point": "extremely quiet and soft, close-up, dry, no reverb, no music, no voice",
+    "hover_attach_point": "extremely quiet and soft, close-up, dry, no reverb, no music, no voice",
+    "hover_layer": "extremely quiet and soft, close-up, dry, no reverb, no music, no voice",
+    "hover_action": "extremely quiet and soft, close-up, dry, no reverb, no music, no voice",
+    "hover_toggle": "extremely quiet and soft, close-up, dry, no reverb, no music, no voice",
+    "hover_mode": "extremely quiet and soft, close-up, dry, no reverb, no music, no voice",
     "mode_move": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "mode_rotate": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "mode_attach_off": "soft and gentle, close-up, dry, no reverb, no music, no voice",

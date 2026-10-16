@@ -142,6 +142,18 @@ class MainWindow(QMainWindow):
         }
         for button, cue in toolbar_cues.items():
             sound_manager.set_cue(button, cue)
+        # Hover: each kind of toolbar button whispers its own click material
+        hover_cues = {
+            'hover_mode': (self.view_button, self.select_strand_button, self.attach_button,
+                           self.move_button, self.rotate_button, self.angle_adjust_button),
+            'hover_toggle': (self.toggle_grid_button, self.toggle_control_points_button,
+                             self.toggle_shadow_button, self.tabs_button, self.layer_state_button),
+            'hover_action': (self.save_button, self.load_button, self.save_image_button,
+                             self.settings_button),
+        }
+        for cue, buttons in hover_cues.items():
+            for button in buttons:
+                sound_manager.set_hover_cue(button, cue)
         # Mode buttons work out their own sound, so leaving View, Select or Attach can play
         # that mode's off sound first
         mode_cues = {

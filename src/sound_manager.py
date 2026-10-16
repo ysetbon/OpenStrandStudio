@@ -41,7 +41,8 @@ CUES = {
     'toggle_green_on': 40, 'toggle_green_off': 40,
     'layer_select': 40,
     'ui_hover': 80,
-    'canvas_hover_point': 80,
+    'hover_mode': 80, 'hover_toggle': 80, 'hover_action': 80, 'hover_layer': 80,
+    'hover_attach_point': 80, 'hover_move_point': 80,
     'mode_view': 60, 'mode_select': 60, 'mode_move': 60, 'mode_attach': 60,
     'mode_view_off': 60, 'mode_select_off': 60, 'mode_attach_off': 60,
     'mode_rotate': 60, 'mode_angle': 60,
@@ -63,7 +64,11 @@ CUES = {
     'stepper_plus': 70, 'stepper_minus': 70,
     'tab_switch': 60,
 }
-HOVER_CUES = {'ui_hover', 'canvas_hover_point'}
+HOVER_CUES = {'ui_hover', 'hover_mode', 'hover_toggle', 'hover_action', 'hover_layer',
+              'hover_attach_point', 'hover_move_point'}
+# Layer panel buttons whose hover is the layer one (matched by class name, so this module
+# does not import the layer panel)
+LAYER_BUTTON_CLASSES = {'NumberedLayerButton', 'LevelButton'}
 SLIDER_TICK_CUE = 'snap_grid'
 SLIDER_TICK_GAP_MS = 40
 
@@ -202,6 +207,11 @@ def set_cue_resolver(button, resolver):
     the click's handlers have run (or, when a handler opens a modal dialog, as the dialog opens)
     and plays whatever fits."""
     _RESOLVERS[button] = resolver
+
+
+def set_hover_cue(widget, cue):
+    """Give one main-window button its own hover sound instead of ui_hover."""
+    widget.setProperty('hoverCue', cue)
 
 
 def set_cue(widget, cue):
@@ -379,7 +389,10 @@ class UiSoundFilter(QObject):
         if not isinstance(obj, QAbstractButton) or not obj.isEnabled():
             return
         if obj.window() is self.main_window:
-            play('ui_hover')
+            cue = obj.property('hoverCue')
+            if not (isinstance(cue, str) and cue):
+                cue = 'hover_layer' if type(obj).__name__ in LAYER_BUTTON_CLASSES else 'ui_hover'
+            play(cue)
 
     def _on_show(self, obj):
         if isinstance(obj, QMessageBox):

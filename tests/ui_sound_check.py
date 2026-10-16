@@ -70,7 +70,8 @@ USER_SETTINGS_COPY = REPO / "user_settings.txt"
 USER_SETTINGS_BACKUP = USER_SETTINGS_COPY.read_bytes() if USER_SETTINGS_COPY.exists() else None
 
 RESULTS = []
-HOVER_CUES = {"ui_hover", "canvas_hover_point"}
+HOVER_CUES = {"ui_hover", "hover_mode", "hover_toggle", "hover_action", "hover_layer",
+              "hover_attach_point", "hover_move_point"}
 STEPPER_TEXT = {"+", "++", "-", "--", "−", "−−"}
 
 
@@ -343,7 +344,7 @@ def check_canvas(w, rec):
     end_pt = at(strand.end)
     run_check(rec, "Canvas", "attach circle", "hover over a strand end",
               lambda: (mouse(canvas, QEvent.MouseMove, end_pt + QPoint(40, 40)), pump(60),
-                       mouse(canvas, QEvent.MouseMove, end_pt)), "canvas_hover_point")
+                       mouse(canvas, QEvent.MouseMove, end_pt)), "hover_attach_point")
     before = len(canvas.strands)
     target = end_pt + QPoint(0, 4 * int(grid * canvas.zoom_factor))
     run_check(rec, "Canvas", "attach circle", "press on a strand end", lambda: mouse(canvas, QEvent.MouseButtonPress, end_pt),
@@ -366,7 +367,7 @@ def check_canvas(w, rec):
     point = at(attached.end)
     run_check(rec, "Canvas", "strand end", "hover over a point you can grab",
               lambda: (mouse(canvas, QEvent.MouseMove, point + QPoint(60, -60)), pump(60),
-                       mouse(canvas, QEvent.MouseMove, point)), "canvas_hover_point")
+                       mouse(canvas, QEvent.MouseMove, point)), "hover_move_point")
     run_check(rec, "Canvas", "strand end", "press to grab", lambda: mouse(canvas, QEvent.MouseButtonPress, point),
               "drag_pickup")
     step = int(grid * canvas.zoom_factor)
@@ -495,16 +496,35 @@ def check_main_buttons(w, rec, tested):
         close_stray_dialogs(w)
 
 
+def expected_hover_cue(w, b):
+    from level_button import LevelButton
+    from numbered_layer_button import NumberedLayerButton
+    kinds = {
+        "hover_mode": (w.view_button, w.select_strand_button, w.attach_button, w.move_button,
+                       w.rotate_button, w.angle_adjust_button),
+        "hover_toggle": (w.toggle_grid_button, w.toggle_control_points_button, w.toggle_shadow_button,
+                         w.tabs_button, w.layer_state_button),
+        "hover_action": (w.save_button, w.load_button, w.save_image_button, w.settings_button),
+    }
+    for cue, buttons in kinds.items():
+        if any(b is x for x in buttons):
+            return cue
+    if isinstance(b, (NumberedLayerButton, LevelButton)):
+        return "hover_layer"
+    return "ui_hover"
+
+
 def check_hover(w, rec):
     for b in [b for b in main_window_buttons(w) if b.isEnabled()]:
         name = label(b)
+        cue = expected_hover_cue(w, b)
         centre = b.mapToGlobal(b.rect().center())
         if QApplication.widgetAt(centre) is b:
             run_check(rec, "Hover", name, "move the pointer onto it",
-                      lambda: (QTest.mouseMove(w, QPoint(1, 1)), pump(30), QTest.mouseMove(b)), "ui_hover")
+                      lambda: (QTest.mouseMove(w, QPoint(1, 1)), pump(30), QTest.mouseMove(b)), cue)
         else:
             run_check(rec, "Hover", name, "pointer enters it", lambda: QApplication.sendEvent(b, QEvent(QEvent.Enter)),
-                      "ui_hover", note="scrolled out of view or covered, so the Enter event is sent directly")
+                      cue, note="scrolled out of view or covered, so the Enter event is sent directly")
 
 
 def sweep_dialog(rec, w, make, area, colour):

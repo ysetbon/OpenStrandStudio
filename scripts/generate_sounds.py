@@ -56,15 +56,16 @@ CUES = [
     # Mode buttons on the toolbar. View opens like a window, Select is a finger on the table
     # and Attach sticks like tape. View and Select turn off with their on sounds reversed (see
     # REVERSED); Attach turns off with the tape peeled away.
-    # Rotate and Angle Adjust share one prompt (Angle is pitched up, see PITCH).
+    # Move slides like paper and Rotate rolls like a ball. Angle Adjust is an earlier ratchet knob
+    # prompt, pitched up (see PITCH).
     ("mode_view", 150, -16, "A small wooden window shutter swung open, one quick soft swing ending in a light tap"),
     ("mode_select", 90, -15, "A fingertip tapping once gently on a wooden table, one soft muted tap, short"),
     # softened after picking: soften --lowpass 2500 --treble -8 --attack-ms 8 --peak -18
     ("mode_attach", 140, -18, "A short strip of sticky tape pressed down onto paper and smoothed with a fingertip, a short soft sticky press"),
     # softened after picking, like mode_attach: soften --lowpass 2500 --treble -8 --attack-ms 8 --peak -18
     ("mode_attach_off", 140, -18, "A short strip of sticky tape peeled gently off paper, one short soft peel, quiet"),
-    ("mode_move", 130, -16, "A small plastic game piece slid a short way across a smooth board and set down with a soft tick, short and muted"),
-    ("mode_rotate", 110, -15, "A small plastic wheel spun once with a fingertip, two quick light rounded ticks"),
+    ("mode_move", 180, -16, "A stiff sheet of card paper slid quickly across a wooden desk, one clear short papery swish"),
+    ("mode_rotate", 180, -16, "A small rubber ball rolling briefly across a smooth floor, a short soft rolling purr"),
     ("mode_angle", 110, -15, "A small plastic knob twisted a quarter turn with one soft ratchet click, rounded and tight"),
     # Toolbar action buttons: Load plays the stamp, Save as Image another take of it
     ("toolbar_action", 90, -15, "A small soft plastic toy stamp pressed down once, one short padded thunk with a tiny click"),
@@ -107,10 +108,12 @@ CUES = [
 CUE_BY_ID = {cue[0]: cue for cue in CUES}
 
 # Low-pass cutoff (Hz) for cues whose takes come back too bright or hissy
-LOWPASS = {"mode_view": 7000, "mode_select": 7000, "mode_attach": 7000, "delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000}
+LOWPASS = {"mode_move": 7000, "mode_rotate": 7000, "mode_view": 7000, "mode_select": 7000, "mode_attach": 7000, "delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000}
 
 # Cues that should not sound like plastic get their own style line
 STYLE_OVERRIDE = {
+    "mode_move": "soft and gentle, close-up, dry, no reverb, no music, no voice",
+    "mode_rotate": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "mode_attach_off": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "mode_attach": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "mode_select": "soft and gentle, close-up, dry, no reverb, no music, no voice",

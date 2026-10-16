@@ -638,6 +638,31 @@ def check_dialogs(w, rec):
         close_stray_dialogs(w)
 
 
+def check_mode_off_sounds(w, rec):
+    """Leaving View, Select or Attach by clicking another mode button plays that mode's off
+    sound first; leaving the other modes plays only the new mode's sound."""
+    OFF = ("mode_view_off", "mode_select_off", "mode_attach_off")
+    click(w.move_button)
+    pump(200)
+    steps = [
+        (w.view_button, "View", "mode_view", None),
+        (w.select_strand_button, "Select", "mode_select", "mode_view_off"),
+        (w.attach_button, "Attach", "mode_attach", "mode_select_off"),
+        (w.view_button, "View", "mode_view", "mode_attach_off"),
+        (w.move_button, "Move", "mode_move", "mode_view_off"),
+        (w.rotate_button, "Rotate", "mode_rotate", None),
+    ]
+    for button, name, on, off in steps:
+        before = w.current_mode
+        if off:
+            run_check(rec, "Mode switching", name, f"click, leaving {before}", lambda b=button: click(b), exact=[off, on])
+        else:
+            run_check(rec, "Mode switching", name, f"click, leaving {before}", lambda b=button: click(b), on,
+                      forbidden=OFF)
+    click(w.attach_button)
+    pump(200)
+
+
 def check_layer_state(w, rec):
     """State turns on and opens its window; the window is modal, so it closes before State
     can be clicked again, and closing it plays State's off sound instead of dialog_close."""
@@ -915,6 +940,7 @@ def run_checks(app):
         ("padlock", lambda: check_padlock(w, rec)),
         ("menus", lambda: check_menus_and_popups(w, rec)),
         ("dialogs", lambda: check_dialogs(w, rec)),
+        ("mode off sounds", lambda: check_mode_off_sounds(w, rec)),
         ("layer state", lambda: check_layer_state(w, rec)),
         ("settings", lambda: check_settings(w, rec)),
         ("tabs", lambda: check_tabs(w, rec)),

@@ -10,7 +10,7 @@ Three steps:
 `generate` calls the API (skips takes that already exist), `process` trims each take
 to its target length and writes 44.1 kHz 16-bit mono WAVs, and `pick` copies the chosen
 take of each cue into src/sounds/<cue>.wav. `variants` derives the blue and green toggle
-sounds from the approved ui_toggle sounds. `soften` takes the edge off one take
+sounds from the approved ui_toggle sounds, and the mode off sounds by reversing the on sounds. `soften` takes the edge off one take
 without changing its pitch.
 
 The API key is read from ELEVENLABS_API_KEY. When that variable is unset no key header is
@@ -53,11 +53,13 @@ CUES = [
     # Hover: barely there
     ("ui_hover", 30, -26, "An extremely faint tiny tick, a fingernail lightly brushing a plastic button, airy, almost silent, very short"),
     ("canvas_hover_point", 35, -24, "A very faint tiny bubbly blip, a small soft plastic bead touching another, gentle and high, very short"),
-    # Mode buttons on the toolbar. View and Select share one prompt (Select is pitched up,
-    # see PITCH), and so do Rotate and Angle Adjust.
-    ("mode_view", 100, -15, "A thick plastic card tapped flat on a soft desk, one quick padded tap, short and tidy"),
-    ("mode_select", 100, -15, "A thick plastic card tapped flat on a soft desk, one quick padded tap, short and tidy"),
-    ("mode_attach", 120, -14, "A plastic pen cap pushed onto a pen, one short snug soft click"),
+    # Mode buttons on the toolbar. View opens like a window, Select is a finger on the table
+    # and Attach sticks like tape; their off sounds are the on sounds reversed (see REVERSED).
+    # Rotate and Angle Adjust share one prompt (Angle is pitched up, see PITCH).
+    ("mode_view", 150, -16, "A small wooden window shutter swung open, one quick soft swing ending in a light tap"),
+    ("mode_select", 90, -15, "A fingertip tapping once gently on a wooden table, one soft muted tap, short"),
+    # softened after picking: soften --lowpass 4500 --treble -4 --attack-ms 3 --peak -16
+    ("mode_attach", 140, -16, "A short strip of sticky tape pressed down onto paper and smoothed with a fingertip, a short soft sticky press"),
     ("mode_move", 130, -16, "A small plastic game piece slid a short way across a smooth board and set down with a soft tick, short and muted"),
     ("mode_rotate", 110, -15, "A small plastic wheel spun once with a fingertip, two quick light rounded ticks"),
     ("mode_angle", 110, -15, "A small plastic knob twisted a quarter turn with one soft ratchet click, rounded and tight"),
@@ -102,10 +104,13 @@ CUES = [
 CUE_BY_ID = {cue[0]: cue for cue in CUES}
 
 # Low-pass cutoff (Hz) for cues whose takes come back too bright or hissy
-LOWPASS = {"delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000}
+LOWPASS = {"mode_view": 7000, "mode_select": 7000, "mode_attach": 7000, "delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000}
 
 # Cues that should not sound like plastic get their own style line
 STYLE_OVERRIDE = {
+    "mode_attach": "soft and gentle, close-up, dry, no reverb, no music, no voice",
+    "mode_select": "soft and gentle, close-up, dry, no reverb, no music, no voice",
+    "mode_view": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "new_strand": "playful and friendly, close-up, short, no music, no voice",
     "attach_start": "very soft, gentle and warm, close-up, dry, no reverb, no music, no voice",
     "drag_pickup": "soft and gentle, close-up, dry, no reverb, no music, no voice",
@@ -115,7 +120,7 @@ STYLE_OVERRIDE = {
 }
 
 # Semitones a cue is shifted by before trimming, so twin buttons sound related but distinct
-PITCH = {"mode_select": 2, "mode_angle": 2}
+PITCH = {"mode_angle": 2}
 
 # Pitch variants written next to each processed take: one recording, mirrored up and down
 PITCH_VARIANTS = {"stepper_tick": [("stepper_plus", 2), ("stepper_minus", -2)]}
@@ -128,6 +133,10 @@ COLOR_VARIANTS = {
     "toggle_green_on": ("ui_toggle_on", 2),
     "toggle_green_off": ("ui_toggle_off", 2),
 }
+
+# Off sounds made by playing an approved on sound backwards, written by the `variants` command
+REVERSED = {"mode_view_off": "mode_view", "mode_select_off": "mode_select", "mode_attach_off": "mode_attach"}
+REVERSED_PEAK_DB = -17
 
 # Two-note cues built from one generated bell strike, retuned to exact pitches.
 # A synthesized bell is added as an extra take so there is always a clean option.
@@ -370,11 +379,26 @@ def soften_take(raw_mp3, cue_id, out_path, lowpass_hz, treble_db, attack_ms, pea
     write_wav(out_path, shape(samples, ms, cue_peak if peak_db is None else peak_db))
 
 
+def reverse(samples, peak_db):
+    """Play a sound backwards: trim the silence that ends up in front, add tiny fades, normalize."""
+    out = samples[::-1].astype(np.float64)
+    loud = np.nonzero(np.abs(out) > 0.02 * np.max(np.abs(out)))[0]
+    out = out[loud[0]:loud[-1] + 1].copy()
+    fade_in, fade_out = int(0.002 * SAMPLE_RATE), int(0.003 * SAMPLE_RATE)
+    out[:fade_in] *= np.linspace(0.0, 1.0, fade_in)
+    out[-fade_out:] *= np.linspace(1.0, 0.0, fade_out)
+    return out / np.max(np.abs(out)) * 10 ** (peak_db / 20)
+
+
 def variants():
     for name, (source, semitones) in COLOR_VARIANTS.items():
         samples = decode(os.path.join(SOUNDS_DIR, f"{source}.wav")).astype(np.float64)
         write_wav(os.path.join(SOUNDS_DIR, f"{name}.wav"), pitch_shift(samples, semitones))
         print(f"{name}.wav <- {source}.wav ({semitones:+d} semitones)")
+    for name, source in REVERSED.items():
+        samples = decode(os.path.join(SOUNDS_DIR, f"{source}.wav")).astype(np.float64)
+        write_wav(os.path.join(SOUNDS_DIR, f"{name}.wav"), reverse(samples, REVERSED_PEAK_DB))
+        print(f"{name}.wav <- {source}.wav reversed")
 
 
 def main():

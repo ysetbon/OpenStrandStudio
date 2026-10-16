@@ -132,12 +132,6 @@ class MainWindow(QMainWindow):
     def _install_sounds(self):
         """UI sounds: one app-wide filter plays each control family's sound."""
         toolbar_cues = {
-            self.view_button: 'mode_view',
-            self.select_strand_button: 'mode_select',
-            self.attach_button: 'mode_attach',
-            self.move_button: 'mode_move',
-            self.rotate_button: 'mode_rotate',
-            self.angle_adjust_button: 'mode_angle',
             self.load_button: 'toolbar_action',
             self.settings_button: 'toolbar_settings',
             self.save_image_button: 'toolbar_image',
@@ -148,8 +142,39 @@ class MainWindow(QMainWindow):
         }
         for button, cue in toolbar_cues.items():
             sound_manager.set_cue(button, cue)
+        # Mode buttons play their own sound from here, so leaving View, Select or Attach
+        # can play that mode's off sound first
+        mode_cues = {
+            self.view_button: 'mode_view',
+            self.select_strand_button: 'mode_select',
+            self.attach_button: 'mode_attach',
+            self.move_button: 'mode_move',
+            self.rotate_button: 'mode_rotate',
+            self.angle_adjust_button: 'mode_angle',
+        }
+        for button, cue in mode_cues.items():
+            sound_manager.set_cue(button, 'none')
+            button.pressed.connect(self._remember_mode_for_sound)
+            button.clicked.connect(lambda _checked=False, cue=cue: self._play_mode_sound(cue))
         # Settings checkboxes are the green toggles
         self.sound_filter = sound_manager.install(self, green_windows=(SettingsDialog,))
+
+    # Modes whose toolbar button has an off sound, played when another mode button is clicked
+    MODE_OFF_CUES = {'view': 'mode_view_off', 'select': 'mode_select_off', 'attach': 'mode_attach_off'}
+    MODE_OFF_GAP_MS = 70
+
+    def _remember_mode_for_sound(self):
+        self._mode_before_click = self.current_mode
+
+    def _play_mode_sound(self, cue):
+        """A mode button was clicked: the mode being left plays its off sound, then the new one its on sound."""
+        off = self.MODE_OFF_CUES.get(getattr(self, '_mode_before_click', None))
+        self._mode_before_click = None
+        if off and off != cue + '_off':
+            sound_manager.play(off)
+            QTimer.singleShot(self.MODE_OFF_GAP_MS, lambda: sound_manager.play(cue))
+        else:
+            sound_manager.play(cue)
 
     def showEvent(self, event):
         """Override showEvent to ensure proper window state"""

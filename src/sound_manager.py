@@ -42,6 +42,7 @@ CUES = {
     'ui_hover': 80,
     'canvas_hover_point': 80,
     'mode_view': 60, 'mode_select': 60, 'mode_move': 60, 'mode_attach': 60,
+    'mode_view_off': 60, 'mode_select_off': 60, 'mode_attach_off': 60,
     'mode_rotate': 60, 'mode_angle': 60,
     'toolbar_action': 40, 'toolbar_image': 40, 'toolbar_settings': 40,
     'toggle_shadow_on': 40, 'toggle_shadow_off': 40,

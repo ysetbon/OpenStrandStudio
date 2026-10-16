@@ -10,13 +10,16 @@ Two ways sounds get triggered:
     dragging on the canvas, attaching a strand, undo/redo and saving.
 
 A widget can override the filter with the dynamic property "soundCue": a cue
-name, or "none" when the sound is played elsewhere (e.g. from its clicked
+name, a toggle's pair as "name_{state}" (played as name_on / name_off),
+or "none" when the sound is played elsewhere. A dialog can swap its open or
+close sound with the properties "soundOpen" and "soundClose" (e.g. from its clicked
 signal, so keyboard shortcuts that call click() sound too).
 """
 
 import os
 import sys
 import time
+import weakref
 
 from PyQt5.QtCore import QObject, QEvent, Qt, QTimer, QUrl
 from PyQt5.QtWidgets import (
@@ -39,7 +42,14 @@ CUES = {
     'layer_select': 40,
     'ui_hover': 80,
     'canvas_hover_point': 80,
-    'mode_select': 60, 'mode_move': 60, 'mode_attach': 60,
+    'mode_view': 60, 'mode_select': 60, 'mode_move': 60, 'mode_attach': 60,
+    'mode_view_off': 60, 'mode_select_off': 60, 'mode_attach_off': 60,
+    'mode_rotate': 60, 'mode_angle': 60,
+    'toolbar_action': 40, 'toolbar_image': 40, 'toolbar_settings': 40,
+    'toggle_shadow_on': 40, 'toggle_shadow_off': 40,
+    'toggle_tabs_on': 40, 'toggle_tabs_off': 40,
+    'layer_state_on': 40, 'layer_state_off': 40,
+    'toggle_points_on': 40, 'toggle_points_off': 40,
     'drag_pickup': 60, 'drag_drop': 60,
     'snap_grid': 60,
     'attach_start': 60, 'attach_complete': 60,
@@ -183,8 +193,20 @@ def play(cue):
     manager().play(cue)
 
 
+# button -> function that plays the button's sound itself, once its click has been handled
+_RESOLVERS = weakref.WeakKeyDictionary()
+
+
+def set_cue_resolver(button, resolver):
+    """Let a button work out its own sound after each click: resolver() is called right after
+    the click's handlers have run (or, when a handler opens a modal dialog, as the dialog opens)
+    and plays whatever fits."""
+    _RESOLVERS[button] = resolver
+
+
 def set_cue(widget, cue):
-    """Give one widget a fixed cue, or "none" to keep the filter quiet for it."""
+    """Give one widget a fixed cue, "name_{state}" for a toggle's on/off pair,
+    or "none" to keep the filter quiet for it."""
     widget.setProperty('soundCue', cue)
 
 
@@ -249,9 +271,15 @@ class UiSoundFilter(QObject):
             # already played. Any other window closing does not silence the click.
             if any(closed is window for closed in self._closed_since_click):
                 return
+            resolver = _RESOLVERS.get(button)
+            if resolver is not None:
+                resolver()
+                return
             try:
                 cue = self._explicit_cue(button)
-                if cue is None:
+                if cue is not None and '{state}' in cue:
+                    cue = cue.format(state='on' if button.isChecked() else 'off')
+                elif cue is None:
                     if was_checkable or isinstance(button, QCheckBox):
                         cue = self._toggle_cue(button, button.isChecked())
                     else:
@@ -324,6 +352,9 @@ class UiSoundFilter(QObject):
         if isinstance(obj, QAbstractButton):
             if not obj.isEnabled() or not obj.isDown() or self._stepper_cue(obj):
                 return
+            if obj in _RESOLVERS:
+                self._play_after_click(obj)
+                return
             cue = self._explicit_cue(obj)
             if cue == 'none':
                 return
@@ -355,7 +386,7 @@ class UiSoundFilter(QObject):
             icon = obj.icon()
             play('denied' if icon in (QMessageBox.Warning, QMessageBox.Critical) else 'dialog_open')
         elif isinstance(obj, QDialog):
-            play('dialog_open')
+            self._play_dialog_cue(obj, 'soundOpen', 'dialog_open')
         elif isinstance(obj, QMenu):
             if not isinstance(obj.parentWidget(), QMenu):  # submenus open on hover: stay quiet
                 play('menu_open')
@@ -363,7 +394,14 @@ class UiSoundFilter(QObject):
     def _on_hide(self, obj):
         if isinstance(obj, QDialog):
             self._closed_since_click.append(obj)
-            play('dialog_close')
+            self._play_dialog_cue(obj, 'soundClose', 'dialog_close')
+
+    @staticmethod
+    def _play_dialog_cue(dialog, prop, default):
+        cue = dialog.property(prop)
+        cue = cue if isinstance(cue, str) and cue else default
+        if cue != 'none':
+            play(cue)
 
 
 def install(main_window, **kwargs):

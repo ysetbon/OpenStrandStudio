@@ -131,16 +131,70 @@ class MainWindow(QMainWindow):
 
     def _install_sounds(self):
         """UI sounds: one app-wide filter plays each control family's sound."""
-        for button in (self.view_button, self.select_strand_button, self.rotate_button, self.angle_adjust_button):
-            sound_manager.set_cue(button, 'mode_select')
-        sound_manager.set_cue(self.move_button, 'mode_move')
-        sound_manager.set_cue(self.attach_button, 'mode_attach')
-        # Settings checkboxes and the Control Points button are the green toggles
-        self.sound_filter = sound_manager.install(
-            self,
-            green_windows=(SettingsDialog,),
-            green_buttons=(self.toggle_control_points_button,),
-        )
+        toolbar_cues = {
+            self.load_button: 'toolbar_action',
+            self.settings_button: 'toolbar_settings',
+            self.save_image_button: 'toolbar_image',
+            self.toggle_shadow_button: 'toggle_shadow_{state}',
+            self.tabs_button: 'toggle_tabs_{state}',
+            self.layer_state_button: 'layer_state_{state}',
+            self.toggle_control_points_button: 'toggle_points_{state}',
+        }
+        for button, cue in toolbar_cues.items():
+            sound_manager.set_cue(button, cue)
+        # Mode buttons work out their own sound, so leaving View, Select or Attach can play
+        # that mode's off sound first
+        mode_cues = {
+            self.view_button: 'mode_view',
+            self.select_strand_button: 'mode_select',
+            self.attach_button: 'mode_attach',
+            self.move_button: 'mode_move',
+            self.rotate_button: 'mode_rotate',
+            self.angle_adjust_button: 'mode_angle',
+        }
+        # one timer, so a quick second mode click replaces the first click's pending sound
+        self._mode_cue_timer = QTimer(self)
+        self._mode_cue_timer.setSingleShot(True)
+        self._mode_cue_timer.timeout.connect(lambda: sound_manager.play(self._pending_mode_cue))
+        self._pending_mode_cue = None
+        for button, cue in mode_cues.items():
+            button.pressed.connect(self._remember_mode_for_sound)
+            sound_manager.set_cue_resolver(button, lambda cue=cue: self._play_mode_sound(cue))
+        # Settings checkboxes are the green toggles
+        self.sound_filter = sound_manager.install(self, green_windows=(SettingsDialog,))
+
+    # Modes whose toolbar button has an off sound, played when another mode button is clicked
+    MODE_OFF_CUES = {'view': 'mode_view_off', 'select': 'mode_select_off', 'attach': 'mode_attach_off'}
+    MODE_ON_CUES = {'view': 'mode_view', 'select': 'mode_select', 'attach': 'mode_attach',
+                    'move': 'mode_move', 'rotate': 'mode_rotate', 'angle_adjust': 'mode_angle'}
+    MODE_OFF_GAP_MS = 70
+
+    def _remember_mode_for_sound(self):
+        self._mode_before_click = self.current_mode
+
+    def _play_mode_sound(self, cue):
+        """A mode button was clicked: the mode being left plays its off sound, then the new one its on sound.
+
+        Runs once the click has been handled, so current_mode is the mode the click produced: Angle
+        Adjust with no strand selected stays in, or falls back to, another mode, which then plays.
+        With a strand selected, Angle Adjust's dialog is open at this point and its mode only
+        switches when the dialog closes, so a checked Angle Adjust button counts as entering it.
+        A click that leaves the mode unchanged plays only the button's own sound."""
+        before = getattr(self, '_mode_before_click', None)
+        self._mode_before_click = None
+        self._mode_cue_timer.stop()
+        after = self.current_mode
+        if after == before and cue == 'mode_angle' and self.angle_adjust_button.isChecked():
+            after = 'angle_adjust'
+        if after != before:
+            cue = self.MODE_ON_CUES.get(after, cue)
+        off = self.MODE_OFF_CUES.get(before) if after != before else None
+        if off:
+            sound_manager.play(off)
+            self._pending_mode_cue = cue
+            self._mode_cue_timer.start(self.MODE_OFF_GAP_MS)
+        else:
+            sound_manager.play(cue)
 
     def showEvent(self, event):
         """Override showEvent to ensure proper window state"""
@@ -2085,6 +2139,8 @@ class MainWindow(QMainWindow):
             
             # Set up dialog to handle close events properly
             dialog.closeEvent = lambda event: self.handle_dialog_close(event)
+            # Closing the window turns the State button off, so it plays State's off sound
+            dialog.setProperty('soundClose', 'layer_state_off')
             
             # Retrieve the current state from the LayerStateManager
             order = self.layer_state_manager.getOrder()

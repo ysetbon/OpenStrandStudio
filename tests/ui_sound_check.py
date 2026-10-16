@@ -401,9 +401,10 @@ def expected_main_cue(w, b, checked_after):
     from level_button import LevelButton
     from numbered_layer_button import NumberedLayerButton
     lp = w.layer_panel
-    modes = {id(w.view_button): "mode_select", id(w.select_strand_button): "mode_select",
-             id(w.rotate_button): "mode_select", id(w.angle_adjust_button): "mode_select",
-             id(w.move_button): "mode_move", id(w.attach_button): "mode_attach"}
+    modes = {id(w.view_button): "mode_view", id(w.select_strand_button): "mode_select",
+             id(w.rotate_button): "mode_rotate", id(w.angle_adjust_button): "mode_angle",
+             id(w.move_button): "mode_move", id(w.attach_button): "mode_attach",
+             id(w.load_button): "toolbar_action", id(w.save_image_button): "toolbar_image"}
     if id(b) in modes:
         return modes[id(b)]
     if b in (lp.add_new_strand_button, lp.new_mask_button):
@@ -416,10 +417,14 @@ def expected_main_cue(w, b, checked_after):
         return "layer_select"
     if b is w.layer_state_button:
         # turns on to open the layer state window; closing that window turns it off again
-        return "ui_toggle_on"
+        return "layer_state_on"
     state = "on" if checked_after else "off"
+    if b is w.toggle_shadow_button:
+        return f"toggle_shadow_{state}"
+    if b is w.tabs_button:
+        return f"toggle_tabs_{state}"
     if b is w.toggle_control_points_button:
-        return f"toggle_green_{state}"
+        return f"toggle_points_{state}"
     if b.isCheckable():
         return f"ui_toggle_{state}"
     return "ui_click"
@@ -451,7 +456,7 @@ def check_main_buttons(w, rec, tested):
         tested.add(control_key(b))
         name = label(b)
         if b is w.settings_button:
-            run_check(rec, "Main window", name, "click", lambda: click(b), {"ui_click", "dialog_open"})
+            run_check(rec, "Main window", name, "click", lambda: click(b), {"toolbar_settings", "dialog_open"})
             close_stray_dialogs(w)
             continue
         if b in (w.layer_panel.delete_all_button, w.layer_panel.delete_all_masks_button,
@@ -470,14 +475,18 @@ def check_main_buttons(w, rec, tested):
         wait_between()
         rec.clear()
         try:
+            mode_before = w.current_mode
             click(b)
             checked = b.isChecked()  # the state the click produced, before any follow-up changes it
             pump(150)
             expected = expected_main_cue(w, b, checked)
+            if b is w.angle_adjust_button and w.current_mode not in ("angle_adjust", mode_before):
+                # no strand selected: the app falls back to another mode, and that mode plays
+                expected = w.MODE_ON_CUES[w.current_mode]
             got = [cue for cue in rec.requested if cue not in HOVER_CUES]
             ok = expected in got
             record("Main window", name, "click", expected, got, ok)
-            if (b.isCheckable() and expected.startswith(("ui_toggle", "toggle_green")) and b.isVisible()
+            if (b.isCheckable() and expected.startswith(("ui_toggle", "toggle_")) and b.isVisible()
                     and b is not w.layer_state_button):
                 run_check(rec, "Main window", name, "click again", lambda: click(b),
                           expected_main_cue(w, b, not checked))
@@ -633,9 +642,93 @@ def check_dialogs(w, rec):
         close_stray_dialogs(w)
 
 
+def check_mode_off_sounds(w, rec):
+    """Leaving View, Select or Attach by clicking another mode button plays that mode's off
+    sound first; leaving the other modes plays only the new mode's sound."""
+    OFF = ("mode_view_off", "mode_select_off", "mode_attach_off")
+    click(w.move_button)
+    pump(200)
+    steps = [
+        (w.view_button, "View", "mode_view", None),
+        (w.select_strand_button, "Select", "mode_select", "mode_view_off"),
+        (w.attach_button, "Attach", "mode_attach", "mode_select_off"),
+        (w.view_button, "View", "mode_view", "mode_attach_off"),
+        (w.move_button, "Move", "mode_move", "mode_view_off"),
+        (w.rotate_button, "Rotate", "mode_rotate", None),
+    ]
+    for button, name, on, off in steps:
+        before = w.current_mode
+        if off:
+            run_check(rec, "Mode switching", name, f"click, leaving {before}", lambda b=button: click(b), exact=[off, on])
+        else:
+            run_check(rec, "Mode switching", name, f"click, leaving {before}", lambda b=button: click(b), on,
+                      forbidden=OFF)
+
+    # Two quick mode clicks: the first click's delayed sound must not play after the second
+    click(w.view_button)
+    pump(200)
+    run_check(rec, "Mode switching", "Select, then Attach at once", "two clicks within the off-sound gap",
+              lambda: (click(w.select_strand_button), click(w.attach_button)),
+              exact=["mode_view_off", "mode_select_off", "mode_attach"])
+
+    # Angle Adjust with a strand selected enters Angle Adjust and plays its own sound
+    click(w.attach_button)
+    pump(200)
+    if w.canvas.strands:
+        w.select_strand(0)
+        pump(150)
+        # its dialog opens on the click, so the sounds must play then, not once it closes
+        wait_between()
+        rec.clear()
+        click(w.angle_adjust_button)
+        pump(150)
+        got = [c for c in rec.requested if c not in HOVER_CUES]
+        modes = [c for c in got if c.startswith("mode_")]
+        # the test closes the dialog within a few ms, so only the off sound (played at once) is
+        # checked against it; the on sound follows 70 ms later
+        ok = modes == ["mode_attach_off", "mode_angle"] and (
+            "dialog_close" not in got or got.index("mode_attach_off") < got.index("dialog_close"))
+        record("Mode switching", "Angle Adjust, strand selected", "click, leaving attach",
+               "mode_attach_off (before its dialog closes), mode_angle", got, ok)
+        close_stray_dialogs(w)
+        click(w.attach_button)
+        pump(200)
+
+    # Angle Adjust with no strand selected does not enter Angle Adjust: the mode the app falls
+    # back to plays, and an off sound plays only if a mode was really left
+    click(w.view_button)
+    pump(200)
+    w.canvas.deselect_all_strands()
+    pump(100)
+    wait_between()
+    rec.clear()
+    click(w.angle_adjust_button)
+    pump(150)
+    got = [c for c in rec.requested if c not in HOVER_CUES]
+    after = w.current_mode
+    expected = ([] if after == "view" else ["mode_view_off", w.MODE_ON_CUES[after]]) if after != "angle_adjust" else None
+    if after == "view":
+        ok = "mode_view_off" not in got
+    else:
+        ok = expected is not None and got == expected
+    record("Mode switching", "Angle Adjust, no strand selected", f"click, leaving view (ends in {after})",
+           "no off sound" if after == "view" else ", ".join(expected or ["-"]), got, ok)
+    click(w.attach_button)
+    pump(200)
+
+
+def check_layer_state(w, rec):
+    """State turns on and opens its window; the window is modal, so it closes before State
+    can be clicked again, and closing it plays State's off sound instead of dialog_close."""
+    close_stray_dialogs(w)
+    run_check(rec, "Main window", "State", "click, then its window closes", lambda: click(w.layer_state_button),
+              {"layer_state_on", "dialog_open", "layer_state_off"}, forbidden=("dialog_close",))
+    close_stray_dialogs(w)
+
+
 def check_settings(w, rec):
     from settings_dialog import DefaultWidthConfigDialog
-    run_check(rec, "Settings", "settings button", "click", lambda: click(w.settings_button), {"ui_click", "dialog_open"})
+    run_check(rec, "Settings", "settings button", "click", lambda: click(w.settings_button), {"toolbar_settings", "dialog_open"})
     sd = w.settings_dialog
     WATCHER.keep.add(id(sd))
     pump(200)
@@ -901,6 +994,8 @@ def run_checks(app):
         ("padlock", lambda: check_padlock(w, rec)),
         ("menus", lambda: check_menus_and_popups(w, rec)),
         ("dialogs", lambda: check_dialogs(w, rec)),
+        ("mode off sounds", lambda: check_mode_off_sounds(w, rec)),
+        ("layer state", lambda: check_layer_state(w, rec)),
         ("settings", lambda: check_settings(w, rec)),
         ("tabs", lambda: check_tabs(w, rec)),
         ("save", lambda: check_save(w, rec)),

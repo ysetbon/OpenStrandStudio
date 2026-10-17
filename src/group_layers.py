@@ -4397,6 +4397,7 @@ class GroupLayerManager:
         # Create the 'Create Group' button
         self.create_group_button = QPushButton(_['create_group'])
         self.create_group_button.clicked.connect(self.create_group)
+        self.create_group_button.setProperty('soundCue', 'group_new')
         
         # Make the button with fixed width for better centering
         self.create_group_button.setFixedWidth(140)  # Fixed width for consistent centering

@@ -2,6 +2,7 @@ from PyQt5.QtCore import QObject, pyqtSignal, QPointF, Qt
 from PyQt5.QtGui import QColor
 from render_utils import RenderUtils
 from selection_utils import draw_selection_overlay, find_strands_at_point
+import sound_manager
 
 class SelectMode(QObject):
     strand_selected = pyqtSignal(int)
@@ -26,6 +27,7 @@ class SelectMode(QObject):
         pos = event.pos()
 
         strands_at_point = self.find_strands_at_point(pos)
+        had_selection = any(strand.is_selected for strand in self.canvas.strands)
 
         # Deselect all strands before selecting a new one
         for strand in self.canvas.strands:
@@ -42,6 +44,14 @@ class SelectMode(QObject):
         else:
             # Deselect if clicking on an empty area
             self.strand_selected.emit(-1)
+
+        # A tap on paper selects a strand; letting go of a selection on the empty canvas
+        # sounds only when something was selected
+        if event.button() == Qt.LeftButton:
+            if strands_at_point:
+                sound_manager.play('strand_select')
+            elif had_selection:
+                sound_manager.play('strand_deselect')
 
         # Redraw the canvas to update the visual state
         self.canvas.update()
@@ -61,6 +71,8 @@ class SelectMode(QObject):
 
         # Only update if hover state changed
         if old_hovered != self.hovered_strand:
+            if self.hovered_strand is not None:
+                sound_manager.play('hover_strand')  # once per strand reached
             self.canvas.update()
 
     def mouseReleaseEvent(self, event):

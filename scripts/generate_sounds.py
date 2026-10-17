@@ -118,6 +118,14 @@ CUES = [
     ("menu_open", 60, -20, "A tiny soft flick of a small plastic card being fanned out, very quick and light"),
     ("stepper_tick", 45, -17, "A small firm tick of a plastic toy counter clicking forward one step, short and precise"),
     ("tab_switch", 80, -17, "A quick soft flip of a thick cardboard page in a children's board book, light and short"),
+    # Select mode on the canvas: a fingertip on the lacing cord selects a strand (its hover is a
+    # quiet echo of it, see ECHOES), a bead let go clears the selection
+    ("strand_select", 45, -16, "A fingertip pressing once on a flat plastic lacing cord lying on a table, one tiny soft plastic tick, very short"),
+    ("strand_deselect", 45, -17, "One tiny soft tick of a plastic bead let go from two fingers, a little lower and duller, very short"),
+    # Group panel: Create Group gathers beads; folding the column slides a drawer shut, unfolding opens it
+    ("group_new", 200, -14, "A tiny cheerful sparkle of a few small beads gathered together into a little cup, a soft clustered pop followed by a short shimmering chime"),
+    ("group_panel_off", 120, -16, "A small wooden drawer slid shut smoothly, one short soft slide ending in a light tap"),
+    ("group_panel_on", 120, -16, "A small wooden drawer slid open smoothly, one short soft slide with a light lift at the end"),
 ]
 CUE_BY_ID = {cue[0]: cue for cue in CUES}
 
@@ -140,6 +148,9 @@ STYLE_OVERRIDE = {
     "drag_drop": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "bell_note": "clean, close-up, dry, no reverb, no music, no voice",
     "tab_switch": "playful and friendly, close-up, dry, no reverb, no music, no voice",
+    "group_new": "playful and friendly, close-up, short, no music, no voice",
+    "group_panel_off": "soft and gentle, close-up, dry, no reverb, no music, no voice",
+    "group_panel_on": "soft and gentle, close-up, dry, no reverb, no music, no voice",
 }
 
 # Semitones a cue is shifted by before trimming, so twin buttons sound related but distinct
@@ -155,11 +166,24 @@ COLOR_VARIANTS = {
     "toggle_blue_off": ("ui_toggle_off", -2),
     "toggle_green_on": ("ui_toggle_on", 2),
     "toggle_green_off": ("ui_toggle_off", 2),
+    # Level rows: close cousins of the layer button's click and hover
+    "level_select": ("layer_select", -2),
+    "level_fold": ("layer_select", 2),
+    "hover_level": ("hover_layer", -2),
+    "hover_level_fold": ("hover_layer", 2),
+    # The level right-click menus: close cousins of the other menus
+    "menu_open_level": ("menu_open", -2),
+    "hover_menu_level": ("hover_menu", -2),
+    "menu_pick_level": ("ui_click", -2),
 }
 
 # Off sounds made by playing an approved on sound backwards and lower, written by the `variants` command
 REVERSED = {"mode_view_off": ("mode_view", -5), "mode_select_off": ("mode_select", -5)}
 REVERSED_PEAK_DB = -17
+
+# Hovers made from an approved click played very quietly and shifted, written by the `variants` command:
+# name -> (source, semitones, peak dBFS)
+ECHOES = {"hover_strand": ("strand_select", -2, -24)}
 
 # Two-note cues built from one generated bell strike, retuned to exact pitches.
 # A synthesized bell is added as an extra take so there is always a clean option.
@@ -425,6 +449,10 @@ def variants():
         samples = decode(os.path.join(SOUNDS_DIR, f"{source}.wav")).astype(np.float64)
         write_wav(os.path.join(SOUNDS_DIR, f"{name}.wav"), reverse(samples, semitones, REVERSED_PEAK_DB))
         print(f"{name}.wav <- {source}.wav reversed, {semitones:+d} semitones")
+    for name, (source, semitones, peak_db) in ECHOES.items():
+        samples = pitch_shift(decode(os.path.join(SOUNDS_DIR, f"{source}.wav")).astype(np.float64), semitones)
+        write_wav(os.path.join(SOUNDS_DIR, f"{name}.wav"), samples / np.max(np.abs(samples)) * 10 ** (peak_db / 20))
+        print(f"{name}.wav <- {source}.wav, {semitones:+d} semitones, peak {peak_db} dBFS")
 
 
 def main():

@@ -22,6 +22,7 @@ Covered:
 """
 import json
 import os
+import re
 import runpy
 import shutil
 import sys
@@ -63,15 +64,15 @@ from PyQt5.QtMultimedia import QSoundEffect  # noqa: E402
 from PyQt5.QtTest import QTest  # noqa: E402
 from PyQt5.QtWidgets import (QAbstractButton, QAbstractSlider, QApplication, QCheckBox,  # noqa: E402
                              QComboBox, QDialog, QFileDialog, QListWidget, QMenu, QMessageBox,
-                             QPushButton, QToolButton, QWidget)
+                             QPushButton, QToolButton, QWidget, QWidgetAction)
 
 # The settings dialog also writes a copy into the repository: back it up and restore it.
 USER_SETTINGS_COPY = REPO / "user_settings.txt"
 USER_SETTINGS_BACKUP = USER_SETTINGS_COPY.read_bytes() if USER_SETTINGS_COPY.exists() else None
 
 RESULTS = []
-HOVER_CUES = {"hover_toolbar", "hover_panel_top", "hover_layer", "hover_panel_bottom", "hover_group",
-              "hover_dialog", "hover_menu", "hover_menu_group", "hover_settings", "hover_attach_point",
+HOVER_CUES = {"hover_toolbar", "hover_panel_top", "hover_layer", "hover_level", "hover_level_fold", "hover_panel_bottom", "hover_group",
+              "hover_dialog", "hover_menu", "hover_menu_group", "hover_menu_level", "hover_settings", "hover_strand", "hover_attach_point",
               "hover_move_point"}
 STEPPER_TEXT = {"+", "++", "-", "--", "−", "−−"}
 
@@ -382,6 +383,54 @@ def check_canvas(w, rec):
     run_check(rec, "Canvas", "strand end", "release",
               lambda: mouse(canvas, QEvent.MouseButtonRelease, point + QPoint(step * 5, 0), buttons=Qt.NoButton),
               "drag_drop")
+    dropped = point + QPoint(step * 5, 0)
+
+    def no_hover(control, action, fn, note):
+        """run_check ignores hover sounds when it expects silence; here the hover is the point."""
+        wait_between()
+        rec.clear()
+        fn()
+        pump(110)
+        record("Canvas", control, action, "no hover_move_point", list(rec.requested),
+               "hover_move_point" not in rec.requested, note)
+
+    no_hover("dropped strand end", "pointer moves a little, still on it",
+             lambda: (mouse(canvas, QEvent.MouseMove, dropped + QPoint(2, 1)), pump(40),
+                      mouse(canvas, QEvent.MouseMove, dropped + QPoint(3, 2))),
+             "the point was just dropped: no second hover until the pointer leaves it")
+    run_check(rec, "Canvas", "dropped strand end", "pointer leaves it and comes back",
+              lambda: (mouse(canvas, QEvent.MouseMove, dropped + QPoint(60, -60)), pump(60),
+                       mouse(canvas, QEvent.MouseMove, dropped)), "hover_move_point")
+
+    # A control point dropped back onto its strand's start point: the start point does not hover either
+    points_were_shown = canvas.show_control_points
+    if not points_were_shown:
+        click(w.toggle_control_points_button)
+        pump(150)
+    cp = at(attached.control_point1)
+    away = cp + QPoint(3 * step, -3 * step)
+
+    def drag_point(a, b):
+        mouse(canvas, QEvent.MouseButtonPress, a)
+        for i in range(1, 6):
+            mouse(canvas, QEvent.MouseMove, a + (b - a) * i / 5, buttons=Qt.LeftButton)
+            pump(50)
+        mouse(canvas, QEvent.MouseButtonRelease, b, buttons=Qt.NoButton)
+        pump(100)
+
+    drag_point(cp, away)
+    mouse(canvas, QEvent.MouseMove, away + QPoint(0, 8 * step))  # leave every point
+    pump(60)
+    start_pt = at(attached.start)
+    run_check(rec, "Canvas", "control point", "drag it onto the start point and let go",
+              lambda: drag_point(away, start_pt), "drag_drop")
+    no_hover("control point on the start point", "pointer moves around on it",
+             lambda: [(mouse(canvas, QEvent.MouseMove, start_pt + QPoint(dx, dy)), pump(30))
+                      for dx, dy in ((2, 1), (8, -4), (-6, 6))],
+             "neither the control point nor the start point under it hovers after the drop")
+    if not points_were_shown:
+        click(w.toggle_control_points_button)
+        pump(150)
 
     # 4. keyboard shortcuts
     run_check(rec, "Keyboard", "Z", "undo the move", lambda: QTest.keyClick(canvas, Qt.Key_Z), "undo")
@@ -415,7 +464,16 @@ def expected_main_cue(w, b, checked_after):
         return "delete"
     if b in (lp.strands_tab_button, lp.masks_tab_button):
         return "tab_switch"
-    if isinstance(b, (NumberedLayerButton, LevelButton)):
+    if isinstance(b, LevelButton):
+        # a level name cannot be selected on the Masks tab, so the click does nothing there
+        return "level_select" if lp.level_selection_allowed() else None
+    if b in (lp.group_layer_manager.create_group_button, lp.group_rail.create_tile):
+        return "group_new"
+    if b is lp.group_toggle_button:
+        return "group_panel_off" if lp.group_panel_collapsed else "group_panel_on"
+    if lp.group_rail.isAncestorOf(b):
+        return "group_panel_on"  # a group tile unfolds the panel
+    if isinstance(b, NumberedLayerButton):
         return "layer_select"
     if b is w.layer_state_button:
         # turns on to open the layer state window; closing that window turns it off again
@@ -486,9 +544,9 @@ def check_main_buttons(w, rec, tested):
                 # no strand selected: the app falls back to another mode, and that mode plays
                 expected = w.MODE_ON_CUES[w.current_mode]
             got = [cue for cue in rec.requested if cue not in HOVER_CUES]
-            ok = expected in got
-            record("Main window", name, "click", expected, got, ok)
-            if (b.isCheckable() and expected.startswith(("ui_toggle", "toggle_")) and b.isVisible()
+            ok = expected in got if expected else not got
+            record("Main window", name, "click", expected or "silence", got, ok)
+            if (expected and b.isCheckable() and expected.startswith(("ui_toggle", "toggle_")) and b.isVisible()
                     and b is not w.layer_state_button):
                 run_check(rec, "Main window", name, "click again", lambda: click(b),
                           expected_main_cue(w, b, not checked))
@@ -502,7 +560,9 @@ def expected_hover_cue(w, b):
     from level_button import LevelButton
     from numbered_layer_button import NumberedLayerButton
     lp = w.layer_panel
-    if isinstance(b, (NumberedLayerButton, LevelButton)):
+    if isinstance(b, LevelButton):
+        return "hover_level"  # the hover moves onto the name, not the fold control
+    if isinstance(b, NumberedLayerButton):
         return "hover_layer"
     areas = [((lp.top_header, lp.zoom_panel, lp.refresh_panel), "hover_panel_top"),
              ((lp.delete_strand_button.parentWidget(),), "hover_panel_bottom"),
@@ -782,6 +842,157 @@ def check_group_rows(w, rec):
     check_row_hover(rec, "Group panel", view, "hover_group")
 
 
+def check_levels(w, rec):
+    """Level rows sound like close cousins of layer buttons: the name and the fold control
+    at its left edge each have their own hover and click."""
+    from level_button import FOLD_ZONE_WIDTH, LevelButton
+    lp = w.layer_panel
+    if not any(b.isVisible() for b in lp.findChildren(LevelButton)):
+        click(lp.new_level_button)
+        pump(400)
+    button = next((b for b in lp.findChildren(LevelButton) if b.isVisible() and b.row.level > 0), None)
+    if button is None:
+        record("Levels", "level row", "create", "a level row", "-", False, "New Level made no level row")
+        return
+    lp.scroll_area.ensureWidgetVisible(button)
+    pump(150)
+    name_pt = QPoint(FOLD_ZONE_WIDTH + (button.width() - FOLD_ZONE_WIDTH) // 2, button.height() // 2)
+    fold_pt = QPoint(FOLD_ZONE_WIDTH // 2, button.height() // 2)
+    QTest.mouseMove(w, QPoint(1, 1))
+    pump(150)
+    run_check(rec, "Levels", "level name", "pointer enters it", lambda: QTest.mouseMove(button, name_pt), "hover_level")
+    run_check(rec, "Levels", "fold control", "pointer moves onto it", lambda: QTest.mouseMove(button, fold_pt),
+              "hover_level_fold")
+    run_check(rec, "Levels", "level name", "pointer moves back onto it", lambda: QTest.mouseMove(button, name_pt),
+              "hover_level")
+    run_check(rec, "Levels", "fold control", "click (collapse)", lambda: click(button, fold_pt), "level_fold")
+    run_check(rec, "Levels", "fold control", "click (expand)", lambda: click(button, fold_pt), "level_fold")
+    if lp.level_selection_allowed():
+        run_check(rec, "Levels", "level name", "click (select the level)", lambda: click(button, name_pt), "level_select")
+        run_check(rec, "Levels", "level name", "click again", lambda: click(button, name_pt), "level_select")
+
+
+def check_level_menu(w, rec):
+    """The level right-click menu opens, hovers and picks with its own sounds, close cousins
+    of the other menus' sounds; the Recolor menu it opens sounds the same."""
+    from level_button import LevelButton
+    lp = w.layer_panel
+    button = next((b for b in lp.findChildren(LevelButton) if b.isVisible() and b.row.level > 0), None)
+    if button is None:
+        record("Level menu", "level row", "right-click", "a level row", "-", False, "no level row to right-click")
+        return
+    lp.scroll_area.ensureWidgetVisible(button)
+    pump(150)
+
+    def row(menu, key):
+        text = lp.level_text(key)
+        return next((a for a in menu.actions() if isinstance(a, QWidgetAction) and a.defaultWidget() is not None
+                     and a.defaultWidget().text() == text), None)
+
+    def when_menu_opens(after, then):
+        """Run *then* with the next menu that pops up (not *after*) while it is open."""
+        def poll(tries=50):
+            menu = QApplication.activePopupWidget()
+            if isinstance(menu, QMenu) and menu is not after and menu.isVisible():
+                then(menu)
+                menu.close()
+            elif tries:
+                QTimer.singleShot(20, lambda: poll(tries - 1))
+        QTimer.singleShot(0, poll)
+
+    def check_open_and_hover(menu, name):
+        record("Level menu", name, "opens", "menu_open_level", list(rec.requested),
+               "menu_open_level" in rec.requested and "menu_open" not in rec.requested)
+        items = [a for a in menu.actions() if a.isEnabled() and not a.isSeparator()]
+        for action in items[:2]:
+            text = action.defaultWidget().text() if isinstance(action, QWidgetAction) else action.text()
+            run_check(rec, "Level menu", f"{name} item '{' '.join(re.sub('<[^>]+>|&nbsp;', ' ', text).split())}'", "pointer reaches it",
+                      lambda a=action: menu.setActiveAction(a), "hover_menu_level", forbidden=("hover_menu",))
+
+    def right_click():
+        centre = button.rect().center()
+        QApplication.sendEvent(button, QContextMenuEvent(QContextMenuEvent.Mouse, centre, button.mapToGlobal(centre)))
+        pump(150)
+
+    def open_and_pick(key, then=None):
+        """Open the level menu, check it, pick the row *key*; *then* checks a menu the pick opens."""
+        def inside(menu):
+            check_open_and_hover(menu, "level menu")
+            action = row(menu, key)
+            if action is None:
+                record("Level menu", key, "pick it", "menu_pick_level", "-", False, "row not found")
+                return
+            if then is not None:
+                when_menu_opens(menu, then)
+            run_check(rec, "Level menu", lp.level_text(key), "pick it",
+                      lambda: click(menu, menu.actionGeometry(action).center()), "menu_pick_level",
+                      forbidden=("ui_click",))
+        wait_between()
+        rec.clear()
+        when_menu_opens(None, inside)
+        right_click()
+
+    WATCHER.timer.stop()  # the test closes these menus itself
+    try:
+        folded = lp.is_level_folded(button.row.level)
+        open_and_pick('level_unfold_above' if folded else 'level_fold_above')
+        open_and_pick('level_fold_above' if folded else 'level_unfold_above')  # back as it was
+
+        def recolor(menu):
+            check_open_and_hover(menu, "Recolor menu")
+        open_and_pick('level_recolor', then=recolor)
+    finally:
+        WATCHER.timer.start(40)
+    close_stray_dialogs(w)
+
+
+def check_select_mode(w, rec):
+    """Select mode is one click long: a click on a strand selects it and a click on the empty
+    canvas clears the selection, then the app goes back to Attach."""
+    canvas = w.canvas
+    empty = QPoint(3, 3)
+
+    def top(point):
+        hits = canvas.select_mode.find_strands_at_point(canvas.screen_to_canvas(QPointF(point)))
+        return hits[0][0] if hits else None
+
+    # a spot where the same strand stays on top for a few pixels, away from crossings and masks
+    on_strand = next((pt for s in canvas.strands if not getattr(s, "is_hidden", False)
+                      for pt in (canvas.canvas_to_screen(s.start + (s.end - s.start) * (i / 20)).toPoint() for i in range(1, 20))
+                      if top(pt) is not None and top(pt) is top(pt + QPoint(2, 1)) is top(pt + QPoint(3, 2))), None)
+    if on_strand is None:
+        record("Select mode", "strand", "hover", "a strand to hover", "-", False, "no clear spot on any strand")
+        return
+
+    def tap(pos):
+        if canvas.current_mode is not canvas.select_mode:
+            canvas.set_mode("select")
+            pump(50)
+        mouse(canvas, QEvent.MouseButtonPress, pos)
+        mouse(canvas, QEvent.MouseButtonRelease, pos, buttons=Qt.NoButton)
+
+    canvas.set_mode("select")
+    pump(50)
+    mouse(canvas, QEvent.MouseMove, empty)
+    pump(60)
+    run_check(rec, "Select mode", "a strand", "pointer reaches it",
+              lambda: mouse(canvas, QEvent.MouseMove, on_strand), "hover_strand")
+    wait_between()
+    rec.clear()
+    mouse(canvas, QEvent.MouseMove, on_strand + QPoint(2, 1))
+    pump(110)
+    record("Select mode", "the same strand", "pointer moves along it", "no hover_strand", list(rec.requested),
+           "hover_strand" not in rec.requested, "one hover per strand, not one per mouse move")
+    run_check(rec, "Select mode", "a strand", "pointer leaves and comes back",
+              lambda: (mouse(canvas, QEvent.MouseMove, empty), pump(60), mouse(canvas, QEvent.MouseMove, on_strand)),
+              "hover_strand")
+    run_check(rec, "Select mode", "a strand", "click", lambda: tap(on_strand), "strand_select")
+    run_check(rec, "Select mode", "empty canvas", "click (a strand was selected)", lambda: tap(empty),
+              "strand_deselect")
+    run_check(rec, "Select mode", "empty canvas", "click (nothing selected)", lambda: tap(empty), None,
+              note="nothing to clear, so it stays silent")
+
+
 def check_layer_state(w, rec):
     """State turns on and opens its window; the window is modal, so it closes before State
     can be clicked again, and closing it plays State's off sound instead of dialog_close."""
@@ -923,7 +1134,7 @@ def check_menus_and_popups(w, rec):
               lambda: QTest.mouseMove(menu, menu.actionGeometry(second).center()), "hover_menu")
     # A row made of its own buttons (like Dash: Show Start Dash | Show End Dash): the row is
     # silent, each button hovers
-    from PyQt5.QtWidgets import QHBoxLayout, QLabel, QWidgetAction
+    from PyQt5.QtWidgets import QHBoxLayout, QLabel
     row = QWidget()
     row_layout = QHBoxLayout(row)
     row_layout.addWidget(QLabel("Dash"))
@@ -955,10 +1166,11 @@ def check_menus_and_popups(w, rec):
     WATCHER.keep.add(id(group_menu))
     group_menu.popup(w.mapToGlobal(QPoint(260, 260)))
     pump(150)
-    QTest.mouseMove(group_menu, group_menu.actionGeometry(g2).center())
+    # highlight the items directly: a synthetic pointer move into a fresh popup is sometimes ignored
+    group_menu.setActiveAction(g2)
     pump(150)
     run_check(rec, "Menus", "a group menu item", "pointer reaches it",
-              lambda: QTest.mouseMove(group_menu, group_menu.actionGeometry(g1).center()), "hover_menu_group")
+              lambda: group_menu.setActiveAction(g1), "hover_menu_group")
     WATCHER.keep.discard(id(group_menu))
     group_menu.close()
     warn = QMessageBox(QMessageBox.Warning, "Warning", "Something was blocked", parent=w)
@@ -1065,7 +1277,7 @@ def check_settings_behaviour(w, rec):
 def check_coverage(rec, audio_ok):
     import sound_manager
     never = sorted(set(sound_manager.CUES) - rec.ever)
-    record("Coverage", "all 30 sounds", "each one played by a real action", "none missing", never or "none missing",
+    record("Coverage", f"all {len(sound_manager.CUES)} sounds", "each one played by a real action", "none missing", never or "none missing",
            not never)
     if audio_ok:
         silent = sorted(rec.ever - rec.audible)
@@ -1116,6 +1328,9 @@ def run_checks(app):
         ("dialogs", lambda: check_dialogs(w, rec)),
         ("mode off sounds", lambda: check_mode_off_sounds(w, rec)),
         ("group rows", lambda: check_group_rows(w, rec)),
+        ("levels", lambda: check_levels(w, rec)),
+        ("level menu", lambda: check_level_menu(w, rec)),
+        ("select mode", lambda: check_select_mode(w, rec)),
         ("layer state", lambda: check_layer_state(w, rec)),
         ("settings", lambda: check_settings(w, rec)),
         ("tabs", lambda: check_tabs(w, rec)),

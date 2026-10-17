@@ -1137,6 +1137,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self.group_toggle_button.setCursor(Qt.PointingHandCursor)
         self.group_toggle_button.setFocusPolicy(Qt.NoFocus)
         self.group_toggle_button.clicked.connect(self.toggle_group_panel)
+        # Folding the column slides a drawer shut, unfolding slides it open
+        sound_manager.set_cue_resolver(self.group_toggle_button, lambda: sound_manager.play(
+            'group_panel_off' if self.group_panel_collapsed else 'group_panel_on'))
         self.group_toggle_row = QWidget()
         toggle_layout = QHBoxLayout(self.group_toggle_row)
         toggle_layout.setContentsMargins(0, 4, 0, 6)

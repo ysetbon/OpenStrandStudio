@@ -383,6 +383,14 @@ def check_canvas(w, rec):
     run_check(rec, "Canvas", "strand end", "release",
               lambda: mouse(canvas, QEvent.MouseButtonRelease, point + QPoint(step * 5, 0), buttons=Qt.NoButton),
               "drag_drop")
+    dropped = point + QPoint(step * 5, 0)
+    run_check(rec, "Canvas", "dropped strand end", "pointer moves a little, still on it",
+              lambda: (mouse(canvas, QEvent.MouseMove, dropped + QPoint(2, 1)), pump(40),
+                       mouse(canvas, QEvent.MouseMove, dropped + QPoint(3, 2))), None,
+              note="the point was just dropped: no second hover until the pointer leaves it")
+    run_check(rec, "Canvas", "dropped strand end", "pointer leaves it and comes back",
+              lambda: (mouse(canvas, QEvent.MouseMove, dropped + QPoint(60, -60)), pump(60),
+                       mouse(canvas, QEvent.MouseMove, dropped)), "hover_move_point")
 
     # 4. keyboard shortcuts
     run_check(rec, "Keyboard", "Z", "undo the move", lambda: QTest.keyClick(canvas, Qt.Key_Z), "undo")

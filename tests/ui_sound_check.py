@@ -70,7 +70,7 @@ USER_SETTINGS_COPY = REPO / "user_settings.txt"
 USER_SETTINGS_BACKUP = USER_SETTINGS_COPY.read_bytes() if USER_SETTINGS_COPY.exists() else None
 
 RESULTS = []
-HOVER_CUES = {"hover_toolbar", "hover_panel_top", "hover_layer", "hover_panel_bottom", "hover_group",
+HOVER_CUES = {"hover_toolbar", "hover_panel_top", "hover_layer", "hover_level", "hover_level_fold", "hover_panel_bottom", "hover_group",
               "hover_dialog", "hover_menu", "hover_menu_group", "hover_settings", "hover_attach_point",
               "hover_move_point"}
 STEPPER_TEXT = {"+", "++", "-", "--", "−", "−−"}
@@ -415,7 +415,9 @@ def expected_main_cue(w, b, checked_after):
         return "delete"
     if b in (lp.strands_tab_button, lp.masks_tab_button):
         return "tab_switch"
-    if isinstance(b, (NumberedLayerButton, LevelButton)):
+    if isinstance(b, LevelButton):
+        return "level_select"
+    if isinstance(b, NumberedLayerButton):
         return "layer_select"
     if b is w.layer_state_button:
         # turns on to open the layer state window; closing that window turns it off again
@@ -502,7 +504,9 @@ def expected_hover_cue(w, b):
     from level_button import LevelButton
     from numbered_layer_button import NumberedLayerButton
     lp = w.layer_panel
-    if isinstance(b, (NumberedLayerButton, LevelButton)):
+    if isinstance(b, LevelButton):
+        return "hover_level"  # the hover moves onto the name, not the fold control
+    if isinstance(b, NumberedLayerButton):
         return "hover_layer"
     areas = [((lp.top_header, lp.zoom_panel, lp.refresh_panel), "hover_panel_top"),
              ((lp.delete_strand_button.parentWidget(),), "hover_panel_bottom"),
@@ -780,6 +784,36 @@ def check_group_rows(w, rec):
         record("Group panel", "group tree", "hover", "hover_group", "-", False, "no visible group tree")
         return
     check_row_hover(rec, "Group panel", view, "hover_group")
+
+
+def check_levels(w, rec):
+    """Level rows sound like close cousins of layer buttons: the name and the fold control
+    at its left edge each have their own hover and click."""
+    from level_button import FOLD_ZONE_WIDTH, LevelButton
+    lp = w.layer_panel
+    if not any(b.isVisible() for b in lp.findChildren(LevelButton)):
+        click(lp.new_level_button)
+        pump(400)
+    button = next((b for b in lp.findChildren(LevelButton) if b.isVisible() and b.row.level > 0), None)
+    if button is None:
+        record("Levels", "level row", "create", "a level row", "-", False, "New Level made no level row")
+        return
+    lp.scroll_area.ensureWidgetVisible(button)
+    pump(150)
+    name_pt = QPoint(FOLD_ZONE_WIDTH + (button.width() - FOLD_ZONE_WIDTH) // 2, button.height() // 2)
+    fold_pt = QPoint(FOLD_ZONE_WIDTH // 2, button.height() // 2)
+    QTest.mouseMove(w, QPoint(1, 1))
+    pump(150)
+    run_check(rec, "Levels", "level name", "pointer enters it", lambda: QTest.mouseMove(button, name_pt), "hover_level")
+    run_check(rec, "Levels", "fold control", "pointer moves onto it", lambda: QTest.mouseMove(button, fold_pt),
+              "hover_level_fold")
+    run_check(rec, "Levels", "level name", "pointer moves back onto it", lambda: QTest.mouseMove(button, name_pt),
+              "hover_level")
+    run_check(rec, "Levels", "fold control", "click (collapse)", lambda: click(button, fold_pt), "level_fold")
+    run_check(rec, "Levels", "fold control", "click (expand)", lambda: click(button, fold_pt), "level_fold")
+    if lp.level_selection_allowed():
+        run_check(rec, "Levels", "level name", "click (select the level)", lambda: click(button, name_pt), "level_select")
+        run_check(rec, "Levels", "level name", "click again", lambda: click(button, name_pt), "level_select")
 
 
 def check_layer_state(w, rec):
@@ -1116,6 +1150,7 @@ def run_checks(app):
         ("dialogs", lambda: check_dialogs(w, rec)),
         ("mode off sounds", lambda: check_mode_off_sounds(w, rec)),
         ("group rows", lambda: check_group_rows(w, rec)),
+        ("levels", lambda: check_levels(w, rec)),
         ("layer state", lambda: check_layer_state(w, rec)),
         ("settings", lambda: check_settings(w, rec)),
         ("tabs", lambda: check_tabs(w, rec)),

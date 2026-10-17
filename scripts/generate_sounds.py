@@ -155,6 +155,11 @@ COLOR_VARIANTS = {
     "toggle_blue_off": ("ui_toggle_off", -2),
     "toggle_green_on": ("ui_toggle_on", 2),
     "toggle_green_off": ("ui_toggle_off", 2),
+    # Level rows: close cousins of the layer button's click and hover
+    "level_select": ("layer_select", -2),
+    "level_fold": ("layer_select", 2),
+    "hover_level": ("hover_layer", -2),
+    "hover_level_fold": ("hover_layer", 2),
 }
 
 # Off sounds made by playing an approved on sound backwards and lower, written by the `variants` command

@@ -41,6 +41,7 @@ CUES = {
     'toggle_green_on': 40, 'toggle_green_off': 40,
     'layer_select': 40,
     'hover_toolbar': 80, 'hover_panel_top': 80, 'hover_layer': 80, 'hover_panel_bottom': 80,
+    'hover_level': 80, 'hover_level_fold': 80, 'level_select': 40, 'level_fold': 40,
     'hover_group': 80, 'hover_dialog': 80, 'hover_menu': 80, 'hover_menu_group': 80, 'hover_settings': 80,
     'hover_attach_point': 80, 'hover_move_point': 80,
     'mode_view': 60, 'mode_select': 60, 'mode_move': 60, 'mode_attach': 60,
@@ -65,11 +66,12 @@ CUES = {
     'tab_switch': 60,
 }
 HOVER_CUES = {'hover_toolbar', 'hover_panel_top', 'hover_layer', 'hover_panel_bottom',
+              'hover_level', 'hover_level_fold',
               'hover_group', 'hover_dialog', 'hover_menu', 'hover_menu_group', 'hover_settings',
               'hover_attach_point', 'hover_move_point'}
 # Layer panel buttons whose hover is the layer one (matched by class name, so this module
 # does not import the layer panel)
-LAYER_BUTTON_CLASSES = {'NumberedLayerButton', 'LevelButton'}
+LAYER_BUTTON_CLASSES = {'NumberedLayerButton'}
 SLIDER_TICK_CUE = 'snap_grid'
 SLIDER_TICK_GAP_MS = 40
 
@@ -427,7 +429,7 @@ class UiSoundFilter(QObject):
         else its window's: hover_settings or hover_dialog in sub-windows."""
         cue = button.property('hoverCue')
         if isinstance(cue, str) and cue:
-            return cue
+            return None if cue == 'none' else cue
         if type(button).__name__ in LAYER_BUTTON_CLASSES:
             return 'hover_layer'
         return self._area_cue(button)

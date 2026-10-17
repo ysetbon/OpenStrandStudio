@@ -65,13 +65,13 @@ CUES = {
     'dialog_open': 120, 'dialog_close': 120,
     'menu_open': 80,
     'menu_open_level': 80, 'hover_menu_level': 80, 'menu_pick_level': 40,
-    'strand_select': 40, 'strand_deselect': 40,
+    'strand_select': 40, 'strand_deselect': 40, 'hover_strand': 80,
     'group_new': 80, 'group_panel_off': 80, 'group_panel_on': 80,
     'stepper_plus': 70, 'stepper_minus': 70,
     'tab_switch': 60,
 }
 HOVER_CUES = {'hover_toolbar', 'hover_panel_top', 'hover_layer', 'hover_panel_bottom',
-              'hover_level', 'hover_level_fold',
+              'hover_level', 'hover_level_fold', 'hover_strand',
               'hover_group', 'hover_dialog', 'hover_menu', 'hover_menu_group', 'hover_menu_level', 'hover_settings',
               'hover_attach_point', 'hover_move_point'}
 # Layer panel buttons whose hover is the layer one (matched by class name, so this module

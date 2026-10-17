@@ -72,7 +72,7 @@ USER_SETTINGS_BACKUP = USER_SETTINGS_COPY.read_bytes() if USER_SETTINGS_COPY.exi
 
 RESULTS = []
 HOVER_CUES = {"hover_toolbar", "hover_panel_top", "hover_layer", "hover_level", "hover_level_fold", "hover_panel_bottom", "hover_group",
-              "hover_dialog", "hover_menu", "hover_menu_group", "hover_menu_level", "hover_settings", "hover_attach_point",
+              "hover_dialog", "hover_menu", "hover_menu_group", "hover_menu_level", "hover_settings", "hover_strand", "hover_attach_point",
               "hover_move_point"}
 STEPPER_TEXT = {"+", "++", "-", "--", "−", "−−"}
 
@@ -950,12 +950,19 @@ def check_select_mode(w, rec):
     """Select mode is one click long: a click on a strand selects it and a click on the empty
     canvas clears the selection, then the app goes back to Attach."""
     canvas = w.canvas
-    strand = next((s for s in canvas.strands if not getattr(s, "is_hidden", False)), None)
-    if strand is None:
-        record("Select mode", "strand", "click", "a strand", "-", False, "no strand on the canvas")
-        return
-    on_strand = canvas.canvas_to_screen((strand.start + strand.end) / 2).toPoint()
     empty = QPoint(3, 3)
+
+    def top(point):
+        hits = canvas.select_mode.find_strands_at_point(canvas.screen_to_canvas(QPointF(point)))
+        return hits[0][0] if hits else None
+
+    # a spot where the same strand stays on top for a few pixels, away from crossings and masks
+    on_strand = next((pt for s in canvas.strands if not getattr(s, "is_hidden", False)
+                      for pt in (canvas.canvas_to_screen(s.start + (s.end - s.start) * (i / 20)).toPoint() for i in range(1, 20))
+                      if top(pt) is not None and top(pt) is top(pt + QPoint(2, 1)) is top(pt + QPoint(3, 2))), None)
+    if on_strand is None:
+        record("Select mode", "strand", "hover", "a strand to hover", "-", False, "no clear spot on any strand")
+        return
 
     def tap(pos):
         if canvas.current_mode is not canvas.select_mode:
@@ -964,6 +971,21 @@ def check_select_mode(w, rec):
         mouse(canvas, QEvent.MouseButtonPress, pos)
         mouse(canvas, QEvent.MouseButtonRelease, pos, buttons=Qt.NoButton)
 
+    canvas.set_mode("select")
+    pump(50)
+    mouse(canvas, QEvent.MouseMove, empty)
+    pump(60)
+    run_check(rec, "Select mode", "a strand", "pointer reaches it",
+              lambda: mouse(canvas, QEvent.MouseMove, on_strand), "hover_strand")
+    wait_between()
+    rec.clear()
+    mouse(canvas, QEvent.MouseMove, on_strand + QPoint(2, 1))
+    pump(110)
+    record("Select mode", "the same strand", "pointer moves along it", "no hover_strand", list(rec.requested),
+           "hover_strand" not in rec.requested, "one hover per strand, not one per mouse move")
+    run_check(rec, "Select mode", "a strand", "pointer leaves and comes back",
+              lambda: (mouse(canvas, QEvent.MouseMove, empty), pump(60), mouse(canvas, QEvent.MouseMove, on_strand)),
+              "hover_strand")
     run_check(rec, "Select mode", "a strand", "click", lambda: tap(on_strand), "strand_select")
     run_check(rec, "Select mode", "empty canvas", "click (a strand was selected)", lambda: tap(empty),
               "strand_deselect")

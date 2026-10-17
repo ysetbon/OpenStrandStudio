@@ -118,8 +118,9 @@ CUES = [
     ("menu_open", 60, -20, "A tiny soft flick of a small plastic card being fanned out, very quick and light"),
     ("stepper_tick", 45, -17, "A small firm tick of a plastic toy counter clicking forward one step, short and precise"),
     ("tab_switch", 80, -17, "A quick soft flip of a thick cardboard page in a children's board book, light and short"),
-    # Select mode on the canvas: a tap on paper selects a strand, a bead let go clears the selection
-    ("strand_select", 45, -16, "One tiny soft tap of a fingertip on a sheet of thick paper lying on a table, light and very short"),
+    # Select mode on the canvas: a fingertip on the lacing cord selects a strand (its hover is a
+    # quiet echo of it, see ECHOES), a bead let go clears the selection
+    ("strand_select", 45, -16, "A fingertip pressing once on a flat plastic lacing cord lying on a table, one tiny soft plastic tick, very short"),
     ("strand_deselect", 45, -17, "One tiny soft tick of a plastic bead let go from two fingers, a little lower and duller, very short"),
     # Group panel: Create Group gathers beads; folding the column slides a drawer shut, unfolding opens it
     ("group_new", 200, -14, "A tiny cheerful sparkle of a few small beads gathered together into a little cup, a soft clustered pop followed by a short shimmering chime"),
@@ -179,6 +180,10 @@ COLOR_VARIANTS = {
 # Off sounds made by playing an approved on sound backwards and lower, written by the `variants` command
 REVERSED = {"mode_view_off": ("mode_view", -5), "mode_select_off": ("mode_select", -5)}
 REVERSED_PEAK_DB = -17
+
+# Hovers made from an approved click played very quietly and shifted, written by the `variants` command:
+# name -> (source, semitones, peak dBFS)
+ECHOES = {"hover_strand": ("strand_select", -2, -24)}
 
 # Two-note cues built from one generated bell strike, retuned to exact pitches.
 # A synthesized bell is added as an extra take so there is always a clean option.
@@ -444,6 +449,10 @@ def variants():
         samples = decode(os.path.join(SOUNDS_DIR, f"{source}.wav")).astype(np.float64)
         write_wav(os.path.join(SOUNDS_DIR, f"{name}.wav"), reverse(samples, semitones, REVERSED_PEAK_DB))
         print(f"{name}.wav <- {source}.wav reversed, {semitones:+d} semitones")
+    for name, (source, semitones, peak_db) in ECHOES.items():
+        samples = pitch_shift(decode(os.path.join(SOUNDS_DIR, f"{source}.wav")).astype(np.float64), semitones)
+        write_wav(os.path.join(SOUNDS_DIR, f"{name}.wav"), samples / np.max(np.abs(samples)) * 10 ** (peak_db / 20))
+        print(f"{name}.wav <- {source}.wav, {semitones:+d} semitones, peak {peak_db} dBFS")
 
 
 def main():

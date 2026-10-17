@@ -71,6 +71,8 @@ class SelectMode(QObject):
 
         # Only update if hover state changed
         if old_hovered != self.hovered_strand:
+            if self.hovered_strand is not None:
+                sound_manager.play('hover_strand')  # once per strand reached
             self.canvas.update()
 
     def mouseReleaseEvent(self, event):

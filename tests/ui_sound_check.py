@@ -416,7 +416,8 @@ def expected_main_cue(w, b, checked_after):
     if b in (lp.strands_tab_button, lp.masks_tab_button):
         return "tab_switch"
     if isinstance(b, LevelButton):
-        return "level_select"
+        # a level name cannot be selected on the Masks tab, so the click does nothing there
+        return "level_select" if lp.level_selection_allowed() else None
     if isinstance(b, NumberedLayerButton):
         return "layer_select"
     if b is w.layer_state_button:
@@ -488,9 +489,9 @@ def check_main_buttons(w, rec, tested):
                 # no strand selected: the app falls back to another mode, and that mode plays
                 expected = w.MODE_ON_CUES[w.current_mode]
             got = [cue for cue in rec.requested if cue not in HOVER_CUES]
-            ok = expected in got
-            record("Main window", name, "click", expected, got, ok)
-            if (b.isCheckable() and expected.startswith(("ui_toggle", "toggle_")) and b.isVisible()
+            ok = expected in got if expected else not got
+            record("Main window", name, "click", expected or "silence", got, ok)
+            if (expected and b.isCheckable() and expected.startswith(("ui_toggle", "toggle_")) and b.isVisible()
                     and b is not w.layer_state_button):
                 run_check(rec, "Main window", name, "click again", lambda: click(b),
                           expected_main_cue(w, b, not checked))

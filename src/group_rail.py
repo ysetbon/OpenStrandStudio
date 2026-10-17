@@ -45,6 +45,7 @@ class GroupRail(QWidget):
         self.create_tile.setFixedSize(self.TILE_WIDTH, self.CREATE_TILE_HEIGHT)
         self.create_tile.setCursor(Qt.PointingHandCursor)
         self.create_tile.clicked.connect(self.create_requested)
+        self.create_tile.setProperty('soundCue', 'group_new')  # sounds like Create Group
         layout.addWidget(self.create_tile, 0, Qt.AlignHCenter)
 
         # One tile per group, in tree order, inside a vertical-only scroller.
@@ -138,6 +139,7 @@ class GroupRail(QWidget):
             tile.setCursor(Qt.PointingHandCursor)
             tile.setFocusPolicy(Qt.NoFocus)
             tile.clicked.connect(lambda _checked=False, n=name: self.group_activated.emit(n))
+            tile.setProperty('soundCue', 'group_panel_on')  # a tile unfolds the panel
             self.tiles_layout.addWidget(tile, 0, Qt.AlignHCenter)
             self._tiles.append(tile)
         self._style_tiles()

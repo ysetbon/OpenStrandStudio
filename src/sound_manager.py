@@ -65,6 +65,8 @@ CUES = {
     'dialog_open': 120, 'dialog_close': 120,
     'menu_open': 80,
     'menu_open_level': 80, 'hover_menu_level': 80, 'menu_pick_level': 40,
+    'strand_select': 40, 'strand_deselect': 40,
+    'group_new': 80, 'group_panel_off': 80, 'group_panel_on': 80,
     'stepper_plus': 70, 'stepper_minus': 70,
     'tab_switch': 60,
 }

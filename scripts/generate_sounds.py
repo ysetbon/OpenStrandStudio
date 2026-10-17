@@ -118,6 +118,13 @@ CUES = [
     ("menu_open", 60, -20, "A tiny soft flick of a small plastic card being fanned out, very quick and light"),
     ("stepper_tick", 45, -17, "A small firm tick of a plastic toy counter clicking forward one step, short and precise"),
     ("tab_switch", 80, -17, "A quick soft flip of a thick cardboard page in a children's board book, light and short"),
+    # Select mode on the canvas: a tap on paper selects a strand, a bead let go clears the selection
+    ("strand_select", 45, -16, "One tiny soft tap of a fingertip on a sheet of thick paper lying on a table, light and very short"),
+    ("strand_deselect", 45, -17, "One tiny soft tick of a plastic bead let go from two fingers, a little lower and duller, very short"),
+    # Group panel: Create Group gathers beads; folding the column slides a drawer shut, unfolding opens it
+    ("group_new", 200, -14, "A tiny cheerful sparkle of a few small beads gathered together into a little cup, a soft clustered pop followed by a short shimmering chime"),
+    ("group_panel_off", 120, -16, "A small wooden drawer slid shut smoothly, one short soft slide ending in a light tap"),
+    ("group_panel_on", 120, -16, "A small wooden drawer slid open smoothly, one short soft slide with a light lift at the end"),
 ]
 CUE_BY_ID = {cue[0]: cue for cue in CUES}
 
@@ -140,6 +147,9 @@ STYLE_OVERRIDE = {
     "drag_drop": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "bell_note": "clean, close-up, dry, no reverb, no music, no voice",
     "tab_switch": "playful and friendly, close-up, dry, no reverb, no music, no voice",
+    "group_new": "playful and friendly, close-up, short, no music, no voice",
+    "group_panel_off": "soft and gentle, close-up, dry, no reverb, no music, no voice",
+    "group_panel_on": "soft and gentle, close-up, dry, no reverb, no music, no voice",
 }
 
 # Semitones a cue is shifted by before trimming, so twin buttons sound related but distinct

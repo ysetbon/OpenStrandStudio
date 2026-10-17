@@ -467,6 +467,12 @@ def expected_main_cue(w, b, checked_after):
     if isinstance(b, LevelButton):
         # a level name cannot be selected on the Masks tab, so the click does nothing there
         return "level_select" if lp.level_selection_allowed() else None
+    if b in (lp.group_layer_manager.create_group_button, lp.group_rail.create_tile):
+        return "group_new"
+    if b is lp.group_toggle_button:
+        return "group_panel_off" if lp.group_panel_collapsed else "group_panel_on"
+    if lp.group_rail.isAncestorOf(b):
+        return "group_panel_on"  # a group tile unfolds the panel
     if isinstance(b, NumberedLayerButton):
         return "layer_select"
     if b is w.layer_state_button:
@@ -940,6 +946,31 @@ def check_level_menu(w, rec):
     close_stray_dialogs(w)
 
 
+def check_select_mode(w, rec):
+    """Select mode is one click long: a click on a strand selects it and a click on the empty
+    canvas clears the selection, then the app goes back to Attach."""
+    canvas = w.canvas
+    strand = next((s for s in canvas.strands if not getattr(s, "is_hidden", False)), None)
+    if strand is None:
+        record("Select mode", "strand", "click", "a strand", "-", False, "no strand on the canvas")
+        return
+    on_strand = canvas.canvas_to_screen((strand.start + strand.end) / 2).toPoint()
+    empty = QPoint(3, 3)
+
+    def tap(pos):
+        if canvas.current_mode is not canvas.select_mode:
+            canvas.set_mode("select")
+            pump(50)
+        mouse(canvas, QEvent.MouseButtonPress, pos)
+        mouse(canvas, QEvent.MouseButtonRelease, pos, buttons=Qt.NoButton)
+
+    run_check(rec, "Select mode", "a strand", "click", lambda: tap(on_strand), "strand_select")
+    run_check(rec, "Select mode", "empty canvas", "click (a strand was selected)", lambda: tap(empty),
+              "strand_deselect")
+    run_check(rec, "Select mode", "empty canvas", "click (nothing selected)", lambda: tap(empty), None,
+              note="nothing to clear, so it stays silent")
+
+
 def check_layer_state(w, rec):
     """State turns on and opens its window; the window is modal, so it closes before State
     can be clicked again, and closing it plays State's off sound instead of dialog_close."""
@@ -1277,6 +1308,7 @@ def run_checks(app):
         ("group rows", lambda: check_group_rows(w, rec)),
         ("levels", lambda: check_levels(w, rec)),
         ("level menu", lambda: check_level_menu(w, rec)),
+        ("select mode", lambda: check_select_mode(w, rec)),
         ("layer state", lambda: check_layer_state(w, rec)),
         ("settings", lambda: check_settings(w, rec)),
         ("tabs", lambda: check_tabs(w, rec)),

@@ -24,7 +24,7 @@ import weakref
 from PyQt5.QtCore import QObject, QEvent, Qt, QTimer, QUrl
 from PyQt5.QtWidgets import (
     QAbstractButton, QAbstractItemView, QAbstractSlider, QApplication, QCheckBox, QComboBox,
-    QDialog, QMenu, QMessageBox,
+    QDialog, QMenu, QMessageBox, QWidgetAction,
 )
 
 try:
@@ -41,7 +41,7 @@ CUES = {
     'toggle_green_on': 40, 'toggle_green_off': 40,
     'layer_select': 40,
     'hover_toolbar': 80, 'hover_panel_top': 80, 'hover_layer': 80, 'hover_panel_bottom': 80,
-    'hover_group': 80, 'hover_dialog': 80, 'hover_menu': 80, 'hover_settings': 80,
+    'hover_group': 80, 'hover_dialog': 80, 'hover_menu': 80, 'hover_menu_group': 80, 'hover_settings': 80,
     'hover_attach_point': 80, 'hover_move_point': 80,
     'mode_view': 60, 'mode_select': 60, 'mode_move': 60, 'mode_attach': 60,
     'mode_view_off': 60, 'mode_select_off': 60, 'mode_attach_off': 60,
@@ -65,7 +65,7 @@ CUES = {
     'tab_switch': 60,
 }
 HOVER_CUES = {'hover_toolbar', 'hover_panel_top', 'hover_layer', 'hover_panel_bottom',
-              'hover_group', 'hover_dialog', 'hover_menu', 'hover_settings',
+              'hover_group', 'hover_dialog', 'hover_menu', 'hover_menu_group', 'hover_settings',
               'hover_attach_point', 'hover_move_point'}
 # Layer panel buttons whose hover is the layer one (matched by class name, so this module
 # does not import the layer panel)
@@ -443,6 +443,8 @@ class UiSoundFilter(QObject):
                 return area
             widget = widget.parentWidget()
         window = source.window()
+        if isinstance(window, QMenu):  # a button inside a menu row, e.g. Show Start Dash
+            return self._menu_cue(window)
         if window is self.main_window:
             return None if include_self else 'hover_toolbar'
         if isinstance(window, QDialog):
@@ -453,13 +455,29 @@ class UiSoundFilter(QObject):
         return None
 
     def _on_menu_hover(self, menu, action):
-        """A menu item became highlighted: one hover per item, not one per mouse move."""
+        """A menu item became highlighted: one hover per item, not one per mouse move.
+        A row made of its own buttons (Dash: Show Start Dash, Show End Dash) stays quiet
+        here; each of its buttons hovers when the pointer reaches it."""
         if action is None or action.isSeparator() or not action.isEnabled():
             return
         if self._menu_last_action.get(menu) is action:
             return
         self._menu_last_action[menu] = action
-        play('hover_menu')
+        if isinstance(action, QWidgetAction):
+            widget = action.defaultWidget()
+            if widget is not None and widget.findChildren(QAbstractButton):
+                return
+        play(self._menu_cue(menu))
+
+    @staticmethod
+    def _menu_cue(menu):
+        """A menu's hover: its own "hoverCue" property, else its parent menu's, else hover_menu."""
+        while isinstance(menu, QMenu):
+            cue = menu.property('hoverCue')
+            if isinstance(cue, str) and cue:
+                return cue
+            menu = menu.parentWidget()
+        return 'hover_menu'
 
     def _on_show(self, obj):
         if isinstance(obj, QMessageBox):

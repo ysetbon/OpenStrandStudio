@@ -328,6 +328,7 @@ class CollapsibleGroupWidget(QWidget):
 
             # Create menu with parent for proper C++ object ownership
             context_menu = QMenu(self.group_button)
+            context_menu.setProperty('hoverCue', 'hover_menu_group')  # group menus hover apart from layer menus
             
             # Check if RTL language
             is_rtl = self.is_rtl_language(self.language_code)
@@ -1428,6 +1429,7 @@ class GroupPanel(QWidget):
             # self.window() always points to the stable, fully-shown top-level.
             parent_widget = self.window() or self
             menu = QMenu(parent_widget)
+            menu.setProperty('hoverCue', 'hover_menu_group')  # group menus hover apart from layer menus
             menu.setLayoutDirection(Qt.RightToLeft if is_rtl else Qt.LeftToRight)
             menu.setStyleSheet(self._group_context_menu_stylesheet(is_rtl))
             menu.setMinimumWidth(self._group_context_menu_width(menu, menu_labels))

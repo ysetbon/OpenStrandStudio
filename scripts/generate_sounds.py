@@ -43,6 +43,10 @@ SOUNDS_DIR = os.path.join(REPO_ROOT, "src", "sounds")
 # and toy-like, close and dry. No metal, no electronic beeps, nothing harsh or sci-fi.
 STYLE = "soft rounded plastic, playful and friendly, close-up, dry, no reverb, no music, no voice"
 
+# Every button hover, in each area of the app, is a take of this one prompt, so they all sound
+# almost the same; each area has its own take.
+HOVER_PROMPT = "An extremely faint tiny tick, a fingernail lightly brushing a plastic button, airy, almost silent, very short"
+
 # id, target length (ms), target peak (dBFS), prompt (STYLE is appended)
 CUES = [
     # Buttons: the flat coloured pill buttons
@@ -51,8 +55,17 @@ CUES = [
     ("ui_toggle_off", 80, -15, "A small plastic toggle switch flicked off, two quick light clicks going down in pitch, a little softer and duller"),
     ("layer_select", 45, -16, "One tiny tick of a plastic bead tapped on a plastic tray, high and light, very short"),
     # Hover: barely there
-    ("ui_hover", 30, -26, "An extremely faint tiny tick, a fingernail lightly brushing a plastic button, airy, almost silent, very short"),
-    ("canvas_hover_point", 35, -24, "A very faint tiny bubbly blip, a small soft plastic bead touching another, gentle and high, very short"),
+    ("hover_toolbar", 30, -26, HOVER_PROMPT),
+    ("hover_panel_top", 30, -26, HOVER_PROMPT),
+    ("hover_layer", 30, -26, HOVER_PROMPT),
+    ("hover_panel_bottom", 30, -26, HOVER_PROMPT),
+    ("hover_group", 30, -26, HOVER_PROMPT),
+    ("hover_dialog", 30, -26, HOVER_PROMPT),
+    ("hover_menu", 30, -26, HOVER_PROMPT),
+    ("hover_settings", 30, -26, HOVER_PROMPT),
+    # Canvas points: a whisper of what the mode's click is made of
+    ("hover_attach_point", 40, -24, "A fingertip lightly touching a strip of sticky tape, one tiny faint soft sticky touch, very short"),
+    ("hover_move_point", 40, -24, "A fingertip lightly brushing a sheet of paper, one tiny faint papery touch, very short"),
     # Mode buttons on the toolbar. View opens like a window, Select is a finger on the table
     # and Attach sticks like tape. View and Select turn off with their on sounds reversed (see
     # REVERSED); Attach turns off with the tape peeled away.
@@ -108,10 +121,12 @@ CUES = [
 CUE_BY_ID = {cue[0]: cue for cue in CUES}
 
 # Low-pass cutoff (Hz) for cues whose takes come back too bright or hissy
-LOWPASS = {"mode_move": 7000, "mode_rotate": 7000, "mode_view": 7000, "mode_select": 7000, "mode_attach": 7000, "delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000}
+LOWPASS = {"hover_attach_point": 7000, "hover_move_point": 7000, "mode_move": 7000, "mode_rotate": 7000, "mode_view": 7000, "mode_select": 7000, "mode_attach": 7000, "delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000}
 
 # Cues that should not sound like plastic get their own style line
 STYLE_OVERRIDE = {
+    "hover_move_point": "extremely quiet and soft, close-up, dry, no reverb, no music, no voice",
+    "hover_attach_point": "extremely quiet and soft, close-up, dry, no reverb, no music, no voice",
     "mode_move": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "mode_rotate": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "mode_attach_off": "soft and gentle, close-up, dry, no reverb, no music, no voice",

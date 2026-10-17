@@ -142,6 +142,19 @@ class MainWindow(QMainWindow):
         }
         for button, cue in toolbar_cues.items():
             sound_manager.set_cue(button, cue)
+        # Hover: one sound per area of the window, all from the same faint tick
+        for button in (self.view_button, self.select_strand_button, self.attach_button,
+                       self.move_button, self.rotate_button, self.angle_adjust_button,
+                       self.toggle_grid_button, self.toggle_control_points_button,
+                       self.toggle_shadow_button, self.tabs_button, self.layer_state_button,
+                       self.save_button, self.load_button, self.save_image_button,
+                       self.settings_button):
+            sound_manager.set_hover_cue(button, 'hover_toolbar')
+        panel = self.layer_panel
+        for area in (panel.top_header, panel.zoom_panel, panel.refresh_panel):
+            sound_manager.set_hover_area(area, 'hover_panel_top')
+        sound_manager.set_hover_area(panel.delete_strand_button.parentWidget(), 'hover_panel_bottom')
+        sound_manager.set_hover_area(panel.right_panel, 'hover_group')
         # Mode buttons work out their own sound, so leaving View, Select or Attach can play
         # that mode's off sound first
         mode_cues = {
@@ -161,7 +174,8 @@ class MainWindow(QMainWindow):
             button.pressed.connect(self._remember_mode_for_sound)
             sound_manager.set_cue_resolver(button, lambda cue=cue: self._play_mode_sound(cue))
         # Settings checkboxes are the green toggles
-        self.sound_filter = sound_manager.install(self, green_windows=(SettingsDialog,))
+        self.sound_filter = sound_manager.install(
+            self, green_windows=(SettingsDialog,), dialog_hover={SettingsDialog: 'hover_settings'})
 
     # Modes whose toolbar button has an off sound, played when another mode button is clicked
     MODE_OFF_CUES = {'view': 'mode_view_off', 'select': 'mode_select_off', 'attach': 'mode_attach_off'}

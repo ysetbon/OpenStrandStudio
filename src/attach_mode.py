@@ -821,7 +821,7 @@ class AttachMode(QObject):
             # Only update canvas if hover state changed
             if old_hovered_strand != self.hovered_strand or old_hovered_point != self.hovered_point:
                 if self.hovered_strand is not None:
-                    sound_manager.play('canvas_hover_point')
+                    sound_manager.play('hover_attach_point')
                 self.canvas.update()
         except RuntimeError:
             return

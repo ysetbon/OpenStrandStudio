@@ -160,6 +160,10 @@ COLOR_VARIANTS = {
     "level_fold": ("layer_select", 2),
     "hover_level": ("hover_layer", -2),
     "hover_level_fold": ("hover_layer", 2),
+    # The level right-click menus: close cousins of the other menus
+    "menu_open_level": ("menu_open", -2),
+    "hover_menu_level": ("hover_menu", -2),
+    "menu_pick_level": ("ui_click", -2),
 }
 
 # Off sounds made by playing an approved on sound backwards and lower, written by the `variants` command

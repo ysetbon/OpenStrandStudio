@@ -22,6 +22,7 @@ Covered:
 """
 import json
 import os
+import re
 import runpy
 import shutil
 import sys
@@ -63,7 +64,7 @@ from PyQt5.QtMultimedia import QSoundEffect  # noqa: E402
 from PyQt5.QtTest import QTest  # noqa: E402
 from PyQt5.QtWidgets import (QAbstractButton, QAbstractSlider, QApplication, QCheckBox,  # noqa: E402
                              QComboBox, QDialog, QFileDialog, QListWidget, QMenu, QMessageBox,
-                             QPushButton, QToolButton, QWidget)
+                             QPushButton, QToolButton, QWidget, QWidgetAction)
 
 # The settings dialog also writes a copy into the repository: back it up and restore it.
 USER_SETTINGS_COPY = REPO / "user_settings.txt"
@@ -71,7 +72,7 @@ USER_SETTINGS_BACKUP = USER_SETTINGS_COPY.read_bytes() if USER_SETTINGS_COPY.exi
 
 RESULTS = []
 HOVER_CUES = {"hover_toolbar", "hover_panel_top", "hover_layer", "hover_level", "hover_level_fold", "hover_panel_bottom", "hover_group",
-              "hover_dialog", "hover_menu", "hover_menu_group", "hover_settings", "hover_attach_point",
+              "hover_dialog", "hover_menu", "hover_menu_group", "hover_menu_level", "hover_settings", "hover_attach_point",
               "hover_move_point"}
 STEPPER_TEXT = {"+", "++", "-", "--", "−", "−−"}
 
@@ -817,6 +818,80 @@ def check_levels(w, rec):
         run_check(rec, "Levels", "level name", "click again", lambda: click(button, name_pt), "level_select")
 
 
+def check_level_menu(w, rec):
+    """The level right-click menu opens, hovers and picks with its own sounds, close cousins
+    of the other menus' sounds; the Recolor menu it opens sounds the same."""
+    from level_button import LevelButton
+    lp = w.layer_panel
+    button = next((b for b in lp.findChildren(LevelButton) if b.isVisible() and b.row.level > 0), None)
+    if button is None:
+        record("Level menu", "level row", "right-click", "a level row", "-", False, "no level row to right-click")
+        return
+    lp.scroll_area.ensureWidgetVisible(button)
+    pump(150)
+
+    def row(menu, key):
+        text = lp.level_text(key)
+        return next((a for a in menu.actions() if isinstance(a, QWidgetAction) and a.defaultWidget() is not None
+                     and a.defaultWidget().text() == text), None)
+
+    def when_menu_opens(after, then):
+        """Run *then* with the next menu that pops up (not *after*) while it is open."""
+        def poll(tries=50):
+            menu = QApplication.activePopupWidget()
+            if isinstance(menu, QMenu) and menu is not after and menu.isVisible():
+                then(menu)
+                menu.close()
+            elif tries:
+                QTimer.singleShot(20, lambda: poll(tries - 1))
+        QTimer.singleShot(0, poll)
+
+    def check_open_and_hover(menu, name):
+        record("Level menu", name, "opens", "menu_open_level", list(rec.requested),
+               "menu_open_level" in rec.requested and "menu_open" not in rec.requested)
+        items = [a for a in menu.actions() if a.isEnabled() and not a.isSeparator()]
+        for action in items[:2]:
+            text = action.defaultWidget().text() if isinstance(action, QWidgetAction) else action.text()
+            run_check(rec, "Level menu", f"{name} item '{' '.join(re.sub('<[^>]+>|&nbsp;', ' ', text).split())}'", "pointer reaches it",
+                      lambda a=action: menu.setActiveAction(a), "hover_menu_level", forbidden=("hover_menu",))
+
+    def right_click():
+        centre = button.rect().center()
+        QApplication.sendEvent(button, QContextMenuEvent(QContextMenuEvent.Mouse, centre, button.mapToGlobal(centre)))
+        pump(150)
+
+    def open_and_pick(key, then=None):
+        """Open the level menu, check it, pick the row *key*; *then* checks a menu the pick opens."""
+        def inside(menu):
+            check_open_and_hover(menu, "level menu")
+            action = row(menu, key)
+            if action is None:
+                record("Level menu", key, "pick it", "menu_pick_level", "-", False, "row not found")
+                return
+            if then is not None:
+                when_menu_opens(menu, then)
+            run_check(rec, "Level menu", lp.level_text(key), "pick it",
+                      lambda: click(menu, menu.actionGeometry(action).center()), "menu_pick_level",
+                      forbidden=("ui_click",))
+        wait_between()
+        rec.clear()
+        when_menu_opens(None, inside)
+        right_click()
+
+    WATCHER.timer.stop()  # the test closes these menus itself
+    try:
+        folded = lp.is_level_folded(button.row.level)
+        open_and_pick('level_unfold_above' if folded else 'level_fold_above')
+        open_and_pick('level_fold_above' if folded else 'level_unfold_above')  # back as it was
+
+        def recolor(menu):
+            check_open_and_hover(menu, "Recolor menu")
+        open_and_pick('level_recolor', then=recolor)
+    finally:
+        WATCHER.timer.start(40)
+    close_stray_dialogs(w)
+
+
 def check_layer_state(w, rec):
     """State turns on and opens its window; the window is modal, so it closes before State
     can be clicked again, and closing it plays State's off sound instead of dialog_close."""
@@ -958,7 +1033,7 @@ def check_menus_and_popups(w, rec):
               lambda: QTest.mouseMove(menu, menu.actionGeometry(second).center()), "hover_menu")
     # A row made of its own buttons (like Dash: Show Start Dash | Show End Dash): the row is
     # silent, each button hovers
-    from PyQt5.QtWidgets import QHBoxLayout, QLabel, QWidgetAction
+    from PyQt5.QtWidgets import QHBoxLayout, QLabel
     row = QWidget()
     row_layout = QHBoxLayout(row)
     row_layout.addWidget(QLabel("Dash"))
@@ -990,10 +1065,11 @@ def check_menus_and_popups(w, rec):
     WATCHER.keep.add(id(group_menu))
     group_menu.popup(w.mapToGlobal(QPoint(260, 260)))
     pump(150)
-    QTest.mouseMove(group_menu, group_menu.actionGeometry(g2).center())
+    # highlight the items directly: a synthetic pointer move into a fresh popup is sometimes ignored
+    group_menu.setActiveAction(g2)
     pump(150)
     run_check(rec, "Menus", "a group menu item", "pointer reaches it",
-              lambda: QTest.mouseMove(group_menu, group_menu.actionGeometry(g1).center()), "hover_menu_group")
+              lambda: group_menu.setActiveAction(g1), "hover_menu_group")
     WATCHER.keep.discard(id(group_menu))
     group_menu.close()
     warn = QMessageBox(QMessageBox.Warning, "Warning", "Something was blocked", parent=w)
@@ -1100,7 +1176,7 @@ def check_settings_behaviour(w, rec):
 def check_coverage(rec, audio_ok):
     import sound_manager
     never = sorted(set(sound_manager.CUES) - rec.ever)
-    record("Coverage", "all 30 sounds", "each one played by a real action", "none missing", never or "none missing",
+    record("Coverage", f"all {len(sound_manager.CUES)} sounds", "each one played by a real action", "none missing", never or "none missing",
            not never)
     if audio_ok:
         silent = sorted(rec.ever - rec.audible)
@@ -1152,6 +1228,7 @@ def run_checks(app):
         ("mode off sounds", lambda: check_mode_off_sounds(w, rec)),
         ("group rows", lambda: check_group_rows(w, rec)),
         ("levels", lambda: check_levels(w, rec)),
+        ("level menu", lambda: check_level_menu(w, rec)),
         ("layer state", lambda: check_layer_state(w, rec)),
         ("settings", lambda: check_settings(w, rec)),
         ("tabs", lambda: check_tabs(w, rec)),

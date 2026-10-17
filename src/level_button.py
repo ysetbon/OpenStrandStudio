@@ -464,6 +464,10 @@ class GroundRow(_ButtonRow):
 # ----------------------------------------------------------------------
 def _new_menu(panel, parent, theme):
     menu = QMenu(parent)
+    # Level menus sound like close cousins of the other menus
+    menu.setProperty('soundOpen', 'menu_open_level')
+    menu.setProperty('hoverCue', 'hover_menu_level')
+    menu.setProperty('soundPick', 'menu_pick_level')
     if getattr(panel, 'language_code', None) == 'he':
         menu.setLayoutDirection(Qt.RightToLeft)
     try:

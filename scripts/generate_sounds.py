@@ -62,6 +62,7 @@ CUES = [
     ("hover_group", 30, -26, HOVER_PROMPT),
     ("hover_dialog", 30, -26, HOVER_PROMPT),
     ("hover_menu", 30, -26, HOVER_PROMPT),
+    ("hover_menu_group", 30, -26, HOVER_PROMPT),
     ("hover_settings", 30, -26, HOVER_PROMPT),
     # Canvas points: a whisper of what the mode's click is made of
     ("hover_attach_point", 40, -24, "A fingertip lightly touching a strip of sticky tape, one tiny faint soft sticky touch, very short"),

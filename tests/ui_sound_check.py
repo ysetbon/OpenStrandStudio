@@ -71,7 +71,8 @@ USER_SETTINGS_BACKUP = USER_SETTINGS_COPY.read_bytes() if USER_SETTINGS_COPY.exi
 
 RESULTS = []
 HOVER_CUES = {"hover_toolbar", "hover_panel_top", "hover_layer", "hover_panel_bottom", "hover_group",
-              "hover_dialog", "hover_menu", "hover_settings", "hover_attach_point", "hover_move_point"}
+              "hover_dialog", "hover_menu", "hover_menu_group", "hover_settings", "hover_attach_point",
+              "hover_move_point"}
 STEPPER_TEXT = {"+", "++", "-", "--", "−", "−−"}
 
 
@@ -920,10 +921,46 @@ def check_menus_and_popups(w, rec):
            "hover_menu" not in rec.requested, "one hover per item, not one per mouse move")
     run_check(rec, "Menus", "the next item", "pointer reaches it",
               lambda: QTest.mouseMove(menu, menu.actionGeometry(second).center()), "hover_menu")
+    # A row made of its own buttons (like Dash: Show Start Dash | Show End Dash): the row is
+    # silent, each button hovers
+    from PyQt5.QtWidgets import QHBoxLayout, QLabel, QWidgetAction
+    row = QWidget()
+    row_layout = QHBoxLayout(row)
+    row_layout.addWidget(QLabel("Dash"))
+    start_btn, end_btn = QPushButton("Show Start Dash"), QPushButton("Show End Dash")
+    row_layout.addWidget(start_btn)
+    row_layout.addWidget(end_btn)
+    row_action = QWidgetAction(menu)
+    row_action.setDefaultWidget(row)
+    menu.addAction(row_action)
+    pump(100)
+    wait_between()
+    rec.clear()
+    menu.setActiveAction(row_action)
+    pump(110)
+    record("Menus", "a row of buttons", "pointer reaches the row", "no row hover",
+           list(rec.requested), "hover_menu" not in rec.requested, "its buttons hover instead")
+    run_check(rec, "Menus", "Show Start Dash", "pointer enters it",
+              lambda: QApplication.sendEvent(start_btn, QEvent(QEvent.Enter)), "hover_menu")
+    run_check(rec, "Menus", "Show End Dash", "pointer enters it",
+              lambda: QApplication.sendEvent(end_btn, QEvent(QEvent.Enter)), "hover_menu")
     action = menu.actions()[0]
     run_check(rec, "Menus", "a QMenu item", "pick it", lambda: click(menu, menu.actionGeometry(action).center()), "ui_click")
     WATCHER.keep.discard(id(menu))
     menu.close()
+    # Group menus hover with their own sound
+    group_menu = QMenu(w)
+    group_menu.setProperty("hoverCue", "hover_menu_group")
+    g1, g2 = group_menu.addAction("Move Group"), group_menu.addAction("Rotate Group")
+    WATCHER.keep.add(id(group_menu))
+    group_menu.popup(w.mapToGlobal(QPoint(260, 260)))
+    pump(150)
+    QTest.mouseMove(group_menu, group_menu.actionGeometry(g2).center())
+    pump(150)
+    run_check(rec, "Menus", "a group menu item", "pointer reaches it",
+              lambda: QTest.mouseMove(group_menu, group_menu.actionGeometry(g1).center()), "hover_menu_group")
+    WATCHER.keep.discard(id(group_menu))
+    group_menu.close()
     warn = QMessageBox(QMessageBox.Warning, "Warning", "Something was blocked", parent=w)
     WATCHER.keep.add(id(warn))
     run_check(rec, "Pop-ups", "warning", "shows", lambda: warn.show(), "denied")

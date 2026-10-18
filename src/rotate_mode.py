@@ -1,5 +1,5 @@
-from PyQt5.QtCore import QPointF, QRectF, QTimer
-from PyQt5.QtGui import QCursor
+from PyQt5.QtCore import QPointF, QRectF, QTimer, Qt
+from PyQt5.QtGui import QCursor, QColor, QImage, QPainter, QPen, QPicture, QPolygonF
 from PyQt5.QtWidgets import QApplication
 import math
 
@@ -8,6 +8,20 @@ import sound_manager
 from strand import Strand
 from attached_strand import AttachedStrand
 from masked_strand import MaskedStrand
+from render_utils import RenderUtils
+
+# Triangle drawn on every end that can rotate (centre to corner, canvas units).
+# It reaches about as far as Attach mode's circles and Move mode's squares (120 across).
+TRIANGLE_RADIUS = 70
+# Compass dial round the pivot while rotating (canvas units, like the other mode shapes).
+DIAL_RADIUS = 90
+DIAL_DEAD_ZONE = 8      # pointer this close to the pivot gives no usable angle
+FINE_SPEED = 0.25       # inside the dial the end turns at a quarter of the pointer's speed
+BEFORE_OPACITY = 0.5    # the strand where it started, shown under the strands
+
+HOVER_PRESSED_COLOR = QColor(255, 230, 160, 140)  # same yellow as Attach mode's hovered circle
+END_COLOR = QColor(0, 0, 255, 60)                 # same blue as Attach mode's end circle
+DIAL_DIRECTION_COLOR = QColor(0, 255, 0)          # same green line AngleAdjustMode draws
 
 class RotateMode:
     def __init__(self, canvas):
@@ -36,6 +50,13 @@ class RotateMode:
         self.pivot_point = None  # The fixed point of the strand
         self.target_pos = None  # Target position for gradual movement
         self.hovered_end = None  # (strand, side) of the rotatable end under the pointer
+        self.start_angle = 0.0  # Angle from the pivot to the rotating end when the grab began
+        self.total_delta = 0.0  # How far the end has turned since the grab (radians)
+        self.fine = False  # True while the pointer is inside the dial (quarter speed, no easing)
+        self.target_angle = None  # Angle the end is heading to
+        self.last_raw_angle = None  # Pointer angle at the previous move, for fine control
+        self.before_picture = None  # The grabbed strand as it was drawn when the grab began
+        self._before_layer = None  # (key, QImage) of before_picture painted for the current view
 
     def setup_timer(self):
         """Set up the timer for gradual movement."""
@@ -81,8 +102,9 @@ class RotateMode:
             event (QMouseEvent): The mouse event.
         """
         if self.is_rotating and self.rotating_point:
-            new_pos = event.pos()
-            self.target_pos = self.calculate_new_position(new_pos)
+            # Unrounded position: inside the dial a pixel near the pivot is a large angle
+            new_pos = event.localPos()
+            self.target_pos = self.target_from_pointer(new_pos)
             
             # Start the timer if it's not already running
             if not self.move_timer.isActive():
@@ -91,22 +113,48 @@ class RotateMode:
             self.update_hovered_end(event.pos())
 
     def update_hovered_end(self, pos):
-        """Play the hover sound once when the pointer reaches a strand end that can rotate."""
-        hovered = None
-        for strand in self.canvas.strands:
-            if getattr(strand, 'deleted', False) or isinstance(strand, MaskedStrand):
-                continue
-            if hasattr(self.canvas, 'is_strand_in_level_scope') and not self.canvas.is_strand_in_level_scope(strand):
-                continue
-            for side in (0, 1):
-                if self.get_end_rectangle(strand, side).contains(pos) and not strand.has_circles[side]:
-                    hovered = (strand, side)
-                    break
-            if hovered:
-                break
-        if hovered and (self.hovered_end is None or hovered[0] is not self.hovered_end[0] or hovered[1] != self.hovered_end[1]):
+        """Track the rotatable end under the pointer: repaint its triangle and play the hover sound once."""
+        hovered = self.end_at(pos)
+        changed = (hovered is None) != (self.hovered_end is None) or (
+            hovered is not None and (hovered[0] is not self.hovered_end[0] or hovered[1] != self.hovered_end[1]))
+        if hovered and changed:
             sound_manager.play('hover_rotate_point')
         self.hovered_end = hovered
+        if changed:
+            self.canvas.update()
+
+    def can_rotate_strand(self, strand):
+        """Whether Rotate mode shows triangles on, and lets the user grab, this strand's ends."""
+        if getattr(strand, 'deleted', False) or isinstance(strand, MaskedStrand) or getattr(strand, 'is_hidden', False):
+            return False
+        if hasattr(self.canvas, '_is_layer_locked') and self.canvas._is_layer_locked(strand):
+            return False
+        # A level's block selected in the layer panel: only its strands
+        if hasattr(self.canvas, 'is_strand_in_level_scope') and not self.canvas.is_strand_in_level_scope(strand):
+            return False
+        return True
+
+    def end_at(self, pos):
+        """
+        Find the rotatable strand end whose triangle contains the position.
+
+        Strands later in the list are drawn on top, so they are checked first.
+
+        Args:
+            pos (QPointF): The position to check (canvas coordinates).
+
+        Returns:
+            tuple: (strand, side), or None.
+        """
+        for strand in reversed(self.canvas.strands):
+            if not self.can_rotate_strand(strand):
+                continue
+            for side in (1, 0):
+                if strand.has_circles[side]:
+                    continue  # attached end: can't rotate
+                if self.get_end_triangle(strand, side).containsPoint(QPointF(pos), Qt.OddEvenFill):
+                    return strand, side
+        return None
 
     def mouseReleaseEvent(self, event):
         """
@@ -133,7 +181,15 @@ class RotateMode:
         self.original_length = 0
         self.pivot_point = None
         self.target_pos = None
+        self.total_delta = 0.0
+        self.fine = False
+        self.target_angle = None
+        self.last_raw_angle = None
+        self.before_picture = None
+        self._before_layer = None
         self.move_timer.stop()
+        # Hover was not tracked during the drag: show whichever triangle is under the pointer now
+        self.update_hovered_end(event.pos())
         self.canvas.update()
 
     def gradual_move(self):
@@ -146,8 +202,8 @@ class RotateMode:
         current_to_target = self.target_pos - self.rotating_point
         distance = math.sqrt(current_to_target.x() ** 2 + current_to_target.y() ** 2)
         
-        # If we're close enough to the target, snap to it
-        if distance < 1.0:
+        # If we're close enough to the target, snap to it; inside the dial there is no easing
+        if distance < 1.0 or self.fine:
             new_pos = self.target_pos
             self.move_timer.stop()
         else:
@@ -173,17 +229,13 @@ class RotateMode:
         Args:
             pos (QPointF): The position of the mouse click.
         """
-        for strand in self.canvas.strands:
-            if not getattr(strand, 'deleted', False):
-                # A level's block selected in the layer panel: only its strands
-                if hasattr(self.canvas, 'is_strand_in_level_scope') and not self.canvas.is_strand_in_level_scope(strand):
-                    continue
-                if self.try_rotate_strand(strand, pos):
-                    return
+        for strand in reversed(self.canvas.strands):
+            if self.try_rotate_strand(strand, pos):
+                return
 
     def try_rotate_strand(self, strand, pos):
         """
-        Try to rotate a strand if the position is within its end rectangles and the end can have new strands attached.
+        Try to rotate a strand if the position is within one of its end triangles and that end has no strand attached.
 
         Args:
             strand (Strand): The strand to try rotating.
@@ -192,19 +244,15 @@ class RotateMode:
         Returns:
             bool: True if the strand was rotated, False otherwise.
         """
-        # Skip if strand is masked
-        if isinstance(strand, MaskedStrand):
+        if not self.can_rotate_strand(strand):
             return False
 
-        start_rect = self.get_end_rectangle(strand, 0)
-        end_rect = self.get_end_rectangle(strand, 1)
-
-        if start_rect.contains(pos) and not strand.has_circles[0]:
-            self.start_rotation(strand, 0, start_rect)
-            return True
-        elif end_rect.contains(pos) and not strand.has_circles[1]:
-            self.start_rotation(strand, 1, end_rect)
-            return True
+        for side in (1, 0):
+            if strand.has_circles[side]:
+                continue
+            if self.get_end_triangle(strand, side).containsPoint(QPointF(pos), Qt.OddEvenFill):
+                self.start_rotation(strand, side, self.get_end_rectangle(strand, side))
+                return True
         return False
 
     def has_attached_strand_at_end(self, strand, side):
@@ -241,6 +289,54 @@ class RotateMode:
         self.original_length = self.calculate_strand_length(strand)
         self.pivot_point = strand.end if side == 0 else strand.start
         self.target_pos = self.rotating_point
+        self.start_angle = self.angle_from_pivot(self.rotating_point)
+        self.total_delta = 0.0
+        self.fine = False
+        self.target_angle = self.start_angle
+        self.last_raw_angle = None
+        self.before_picture = self.record_before_strand(strand)
+        self._before_layer = None
+
+    def record_before_strand(self, strand):
+        """
+        Record the strand exactly as the canvas draws it now, to show where it started.
+
+        Args:
+            strand (Strand): The strand being grabbed.
+
+        Returns:
+            QPicture: The recorded drawing, or None if it could not be recorded.
+        """
+        picture = QPicture()
+        painter = QPainter(picture)
+        try:
+            RenderUtils.setup_painter(painter, enable_high_quality=True)
+            strand.draw(painter, skip_painter_setup=True)
+        except Exception:
+            return None
+        finally:
+            painter.end()
+        return picture
+
+    def get_end_triangle(self, strand, side):
+        """
+        Get the triangle Rotate mode draws on a strand end, pointing away from the pivot.
+
+        Args:
+            strand (Strand): The strand to get the triangle for.
+            side (int): Which side of the strand (0 for start, 1 for end).
+
+        Returns:
+            QPolygonF: The triangle, centred on the strand end.
+        """
+        tip = strand.end if side == 1 else strand.start
+        base = strand.start if side == 1 else strand.end
+        angle = math.atan2(tip.y() - base.y(), tip.x() - base.x())
+        return QPolygonF([
+            QPointF(tip.x() + TRIANGLE_RADIUS * math.cos(angle + k * 2 * math.pi / 3),
+                    tip.y() + TRIANGLE_RADIUS * math.sin(angle + k * 2 * math.pi / 3))
+            for k in range(3)
+        ])
 
     def get_end_rectangle(self, strand, side):
         """
@@ -291,6 +387,46 @@ class RotateMode:
         
         return QPointF(new_x, new_y)
 
+    def angle_from_pivot(self, point):
+        """Angle (radians, canvas coordinates) from the pivot to a point."""
+        return math.atan2(point.y() - self.pivot_point.y(), point.x() - self.pivot_point.x())
+
+    def dial_radius(self):
+        """Radius of the compass dial, kept inside short strands."""
+        return min(DIAL_RADIUS, self.original_length * 0.7)
+
+    def target_from_pointer(self, pos):
+        """
+        Turn the pointer position into the target for the rotating end.
+
+        Outside the dial the end follows the pointer's angle. Inside it the end
+        turns by a quarter of the pointer's change in angle, for fine control.
+
+        Args:
+            pos (QPointF): The pointer position (canvas coordinates).
+
+        Returns:
+            QPointF: The target position, at the strand's original length.
+        """
+        raw = self.angle_from_pivot(pos)
+        distance = math.hypot(pos.x() - self.pivot_point.x(), pos.y() - self.pivot_point.y())
+        if distance < self.dial_radius():
+            if distance < DIAL_DEAD_ZONE:
+                self.last_raw_angle = raw
+                return self.target_pos
+            if not self.fine or self.last_raw_angle is None:
+                # Just entered the dial: carry on from where the end is
+                self.fine = True
+                self.target_angle = self.angle_from_pivot(self.rotating_point)
+                self.last_raw_angle = raw
+            self.target_angle += FINE_SPEED * math.remainder(raw - self.last_raw_angle, 2 * math.pi)
+        else:
+            self.fine = False
+            self.target_angle = raw
+        self.last_raw_angle = raw
+        return QPointF(self.pivot_point.x() + self.original_length * math.cos(self.target_angle),
+                       self.pivot_point.y() + self.original_length * math.sin(self.target_angle))
+
     def update_strand_position(self, new_pos):
         """
         Update the position of the affected strand and its control points.
@@ -327,6 +463,7 @@ class RotateMode:
         old_vector = old_start - old_end if self.rotating_side == 0 else old_end - old_start
         new_vector = self.affected_strand.start - self.affected_strand.end if self.rotating_side == 0 else self.affected_strand.end - self.affected_strand.start
         rotation_angle = math.atan2(new_vector.y(), new_vector.x()) - math.atan2(old_vector.y(), old_vector.x())
+        self.total_delta += math.remainder(rotation_angle, 2 * math.pi)
 
         # Update control points based on the rotation
         self.rotate_control_point(self.affected_strand.control_point1, rotation_angle)
@@ -446,6 +583,153 @@ class RotateMode:
                     # Update the shape of the attached strand
                     attached_strand.update_shape()
                     attached_strand.update_side_line()
+
+    def draw(self, painter):
+        """
+        Draw Rotate mode's shapes: the compass dial while rotating, and the end triangles.
+
+        Called by the canvas after the strands, in canvas coordinates.
+
+        Args:
+            painter (QPainter): The canvas painter.
+        """
+        painter.save()
+        try:
+            if self.is_rotating and self.pivot_point is not None and self.rotating_point is not None:
+                self.draw_dial(painter)
+            if getattr(self.canvas, 'show_move_highlights', True):
+                self.draw_end_triangles(painter)
+        finally:
+            painter.restore()
+
+    def draw_end_triangles(self, painter):
+        """Draw a triangle on every end that can rotate, coloured like Attach mode's circles."""
+        pen = QPen(Qt.black, 2)
+        pen.setJoinStyle(Qt.MiterJoin)
+        painter.setPen(pen)
+        show_hover = getattr(self.canvas, 'show_hover_highlights', True)
+        for strand in self.canvas.strands:
+            if not self.can_rotate_strand(strand):
+                continue
+            for side in (0, 1):
+                if strand.has_circles[side]:
+                    continue  # attached end: can't rotate
+                pressed = self.is_rotating and strand is self.affected_strand and side == self.rotating_side
+                if self.is_rotating and not pressed:
+                    continue  # like Attach mode, only the pressed shape stays while dragging
+                hovered = (show_hover and self.hovered_end is not None and self.hovered_end[0] is strand
+                           and self.hovered_end[1] == side)
+                if pressed or (hovered and not self.is_rotating):
+                    color = QColor(HOVER_PRESSED_COLOR)
+                elif side == 0:
+                    color = QColor(self.canvas.highlight_color)
+                    color.setAlpha(60)
+                else:
+                    color = QColor(END_COLOR)
+                painter.setBrush(RenderUtils.create_smooth_brush(color))
+                painter.drawPolygon(self.get_end_triangle(strand, side))
+
+    def draw_dial(self, painter):
+        """Draw the compass dial round the pivot: zone, angle turned, ring, ticks, start marker and direction."""
+        center = QPointF(self.pivot_point)
+        radius = self.dial_radius()
+        box = QRectF(center.x() - radius, center.y() - radius, radius * 2, radius * 2)
+
+        # Zone: strong yellow while the pointer is inside it (fine control), faint otherwise
+        painter.setPen(Qt.NoPen)
+        zone = QColor(HOVER_PRESSED_COLOR)
+        zone.setAlpha(140 if self.fine else 35)
+        painter.setBrush(RenderUtils.create_smooth_brush(zone))
+        painter.drawEllipse(center, radius, radius)
+
+        # Angle turned since the grab (Qt angles: 1/16 degree, counter-clockwise on screen)
+        if abs(self.total_delta) > 1e-4:
+            change = QColor(self.canvas.highlight_color)
+            change.setAlpha(38)
+            painter.setBrush(RenderUtils.create_smooth_brush(change))
+            if abs(self.total_delta) >= 2 * math.pi:
+                painter.drawEllipse(center, radius, radius)
+            else:
+                start16 = int(round(-math.degrees(self.start_angle) * 16))
+                span16 = int(round(-math.degrees(self.total_delta) * 16))
+                painter.drawPie(box, start16, span16)
+                painter.setPen(RenderUtils.create_smooth_pen(QColor(self.canvas.highlight_color), 2))
+                painter.setBrush(Qt.NoBrush)
+                painter.drawArc(box, start16, span16)
+
+        # Ring and ticks every 15 degrees, longer every 90
+        painter.setBrush(Qt.NoBrush)
+        painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2))
+        painter.drawEllipse(center, radius, radius)
+        for degrees in range(0, 360, 15):
+            angle = math.radians(degrees)
+            major = degrees % 90 == 0
+            outer = radius + (16 if major else 8)
+            painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 2 if major else 1.5))
+            painter.drawLine(QPointF(center.x() + radius * math.cos(angle), center.y() + radius * math.sin(angle)),
+                             QPointF(center.x() + outer * math.cos(angle), center.y() + outer * math.sin(angle)))
+
+        # Start marker: a small white triangle outside the ring at the angle the grab began
+        out = QPointF(math.cos(self.start_angle), math.sin(self.start_angle))
+        normal = QPointF(-out.y(), out.x())
+        base = center + out * (radius + 4)
+        painter.setPen(RenderUtils.create_smooth_pen(Qt.black, 1.5))
+        painter.setBrush(RenderUtils.create_smooth_brush(QColor(Qt.white)))
+        painter.drawPolygon(QPolygonF([base, base + out * 14 + normal * 8, base + out * 14 - normal * 8]))
+
+        # Current direction
+        painter.setPen(RenderUtils.create_smooth_pen(DIAL_DIRECTION_COLOR, 2))
+        painter.drawLine(center, QPointF(self.rotating_point))
+
+    def draw_under(self, painter):
+        """
+        Show the grabbed strand where it started, at half opacity, under the strands.
+
+        Called by the canvas after the grid and before the strands, in canvas coordinates.
+
+        Args:
+            painter (QPainter): The canvas painter.
+        """
+        if not self.is_rotating or self.before_picture is None:
+            return
+        layer = self._before_strand_layer(painter)
+        if layer is None:
+            return
+        painter.save()
+        try:
+            # One layer at reduced opacity, so the outline and fill don't darken each other
+            painter.resetTransform()
+            painter.setOpacity(BEFORE_OPACITY)
+            painter.drawImage(QPointF(0, 0), layer)
+        finally:
+            painter.restore()
+
+    def _before_strand_layer(self, painter):
+        """Paint the recorded strand into an image matching the painter's device and view, cached per view."""
+        device = painter.device()
+        dpr = device.devicePixelRatioF() if hasattr(device, 'devicePixelRatioF') else 1.0
+        width = max(1, int(math.ceil(self.canvas.width() * dpr)))
+        height = max(1, int(math.ceil(self.canvas.height() * dpr)))
+        transform = painter.transform()
+        key = (width, height, dpr, transform.m11(), transform.m12(), transform.m21(),
+               transform.m22(), transform.dx(), transform.dy())
+        if self._before_layer is not None and self._before_layer[0] == key:
+            return self._before_layer[1]
+
+        layer = QImage(width, height, QImage.Format_ARGB32_Premultiplied)
+        if layer.isNull():
+            return None
+        layer.setDevicePixelRatio(dpr)
+        layer.fill(Qt.transparent)
+        layer_painter = QPainter(layer)
+        try:
+            RenderUtils.setup_painter(layer_painter, enable_high_quality=True)
+            layer_painter.setTransform(transform)
+            layer_painter.drawPicture(0, 0, self.before_picture)
+        finally:
+            layer_painter.end()
+        self._before_layer = (key, layer)
+        return layer
 
     def cleanup_deleted_strands(self):
         """Remove deleted strands and update references after strand deletion."""

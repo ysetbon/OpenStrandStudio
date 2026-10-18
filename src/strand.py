@@ -1552,17 +1552,20 @@ class Strand:
             
             # Create control points for smooth bezier segments
             # These ensure the curve passes smoothly through all 5 control points
+            # Keep the curve from folding back past an end that has its control point on it
+            start_reach = self._end_safe_reach(frac2 * (0.5 + bias_triangle), p1, p0)
+            end_reach = self._end_safe_reach(frac2 * (0.5 + bias_circle), p3, p4)
             cp1 = QPointF(
                 p0.x() + (p1.x() - p0.x()) * frac1_biased,
                 p0.y() + (p1.y() - p0.y()) * frac1_biased
             )
             cp2 = QPointF(
-                p2.x() - center_tangent.x() * dist2 * frac2 * (0.5 + bias_triangle),
-                p2.y() - center_tangent.y() * dist2 * frac2 * (0.5 + bias_triangle)
+                p2.x() - center_tangent.x() * dist2 * start_reach,
+                p2.y() - center_tangent.y() * dist2 * start_reach
             )
             cp3 = QPointF(
-                p2.x() + center_tangent.x() * dist3 * frac2 * (0.5 + bias_circle),
-                p2.y() + center_tangent.y() * dist3 * frac2 * (0.5 + bias_circle)
+                p2.x() + center_tangent.x() * dist3 * end_reach,
+                p2.y() + center_tangent.y() * dist3 * end_reach
             )
             cp4 = QPointF(
                 p4.x() + (p3.x() - p4.x()) * frac2_biased,
@@ -1650,17 +1653,20 @@ class Strand:
                 
                 # Create control points for smooth bezier segments
                 # These ensure the curve passes smoothly through all 5 control points
+                # Keep the curve from folding back past an end that has its control point on it
+                start_reach = self._end_safe_reach(frac2, p1, p0)
+                end_reach = self._end_safe_reach(frac2, p3, p4)
                 cp1 = QPointF(
                     p0.x() + (p1.x() - p0.x()) * frac1,
                     p0.y() + (p1.y() - p0.y()) * frac1
                 )
                 cp2 = QPointF(
-                    p2.x() - center_tangent.x() * dist2 * frac2,
-                    p2.y() - center_tangent.y() * dist2 * frac2
+                    p2.x() - center_tangent.x() * dist2 * start_reach,
+                    p2.y() - center_tangent.y() * dist2 * start_reach
                 )
                 cp3 = QPointF(
-                    p2.x() + center_tangent.x() * dist3 * frac2,
-                    p2.y() + center_tangent.y() * dist3 * frac2
+                    p2.x() + center_tangent.x() * dist3 * end_reach,
+                    p2.y() + center_tangent.y() * dist3 * end_reach
                 )
                 cp4 = QPointF(
                     p4.x() + (p3.x() - p4.x()) * frac2,
@@ -1676,6 +1682,20 @@ class Strand:
         # Path already ends at the correct point
             
         return path
+
+    # Largest inner-handle reach allowed toward an end whose control point sits on it.
+    # With the triangle on the start (or the circle on the end) that end's outer handle
+    # collapses onto the end point, so a reach above 1.0 pushes the curve past the end
+    # and back; Qt strokes that fold as a half-disc with the end line cut through it.
+    END_HANDLE_MAX_REACH = 0.95
+
+    @staticmethod
+    def _end_safe_reach(reach, handle, end_point):
+        """Cap reach when handle is within 1 px of end_point."""
+        if (abs(handle.x() - end_point.x()) < 1.0 and
+                abs(handle.y() - end_point.y()) < 1.0):
+            return min(reach, Strand.END_HANDLE_MAX_REACH)
+        return reach
 
     def _build_curve_profile(self):
         """
@@ -1754,17 +1774,20 @@ class Strand:
             frac1_biased = frac1 * (0.5 + bias_triangle)
             frac2_biased = frac2 * (0.5 + bias_circle)
 
+            # Keep the curve from folding back past an end that has its control point on it
+            start_reach = self._end_safe_reach(frac2 * (0.5 + bias_triangle), p1, p0)
+            end_reach = self._end_safe_reach(frac2 * (0.5 + bias_circle), p3, p4)
             cp1 = QPointF(
                 p0.x() + (p1.x() - p0.x()) * frac1_biased,
                 p0.y() + (p1.y() - p0.y()) * frac1_biased
             )
             cp2 = QPointF(
-                p2.x() - center_tangent.x() * dist2 * frac2 * (0.5 + bias_triangle),
-                p2.y() - center_tangent.y() * dist2 * frac2 * (0.5 + bias_triangle)
+                p2.x() - center_tangent.x() * dist2 * start_reach,
+                p2.y() - center_tangent.y() * dist2 * start_reach
             )
             cp3 = QPointF(
-                p2.x() + center_tangent.x() * dist3 * frac2 * (0.5 + bias_circle),
-                p2.y() + center_tangent.y() * dist3 * frac2 * (0.5 + bias_circle)
+                p2.x() + center_tangent.x() * dist3 * end_reach,
+                p2.y() + center_tangent.y() * dist3 * end_reach
             )
             cp4 = QPointF(
                 p4.x() + (p3.x() - p4.x()) * frac2_biased,
@@ -1849,17 +1872,20 @@ class Strand:
         frac1_biased = frac1 * (0.5 + bias_triangle)
         frac2_biased = frac2 * (0.5 + bias_circle)
 
+        # Keep the curve from folding back past an end that has its control point on it
+        start_reach = self._end_safe_reach(frac2 * (0.5 + bias_triangle), p1, p0)
+        end_reach = self._end_safe_reach(frac2 * (0.5 + bias_circle), p3, p4)
         cp1 = QPointF(
             p0.x() + (p1.x() - p0.x()) * frac1_biased,
             p0.y() + (p1.y() - p0.y()) * frac1_biased
         )
         cp2 = QPointF(
-            p2.x() - center_tangent.x() * dist2 * frac2 * (0.5 + bias_triangle),
-            p2.y() - center_tangent.y() * dist2 * frac2 * (0.5 + bias_triangle)
+            p2.x() - center_tangent.x() * dist2 * start_reach,
+            p2.y() - center_tangent.y() * dist2 * start_reach
         )
         cp3 = QPointF(
-            p2.x() + center_tangent.x() * dist3 * frac2 * (0.5 + bias_circle),
-            p2.y() + center_tangent.y() * dist3 * frac2 * (0.5 + bias_circle)
+            p2.x() + center_tangent.x() * dist3 * end_reach,
+            p2.y() + center_tangent.y() * dist3 * end_reach
         )
         cp4 = QPointF(
             p4.x() + (p3.x() - p4.x()) * frac2_biased,

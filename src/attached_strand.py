@@ -2124,17 +2124,20 @@ class AttachedStrand(Strand):
             
             # Create control points for smooth bezier segments
             # These ensure the curve passes smoothly through all 5 control points
+            # Keep the curve from folding back past an end that has its control point on it
+            start_reach = self._end_safe_reach(fraction * (0.5 + bias_triangle), p1, p0)
+            end_reach = self._end_safe_reach(fraction * (0.5 + bias_circle), p3, p4)
             cp1 = QPointF(
                 p0.x() + (p1.x() - p0.x()) * frac1_biased,
                 p0.y() + (p1.y() - p0.y()) * frac1_biased
             )
             cp2 = QPointF(
-                p2.x() - center_tangent_normalized.x() * dist_p1_p2 * fraction * (0.5 + bias_triangle),
-                p2.y() - center_tangent_normalized.y() * dist_p1_p2 * fraction * (0.5 + bias_triangle)
+                p2.x() - center_tangent_normalized.x() * dist_p1_p2 * start_reach,
+                p2.y() - center_tangent_normalized.y() * dist_p1_p2 * start_reach
             )
             cp3 = QPointF(
-                p2.x() + center_tangent_normalized.x() * dist_p2_p3 * fraction * (0.5 + bias_circle),
-                p2.y() + center_tangent_normalized.y() * dist_p2_p3 * fraction * (0.5 + bias_circle)
+                p2.x() + center_tangent_normalized.x() * dist_p2_p3 * end_reach,
+                p2.y() + center_tangent_normalized.y() * dist_p2_p3 * end_reach
             )
             cp4 = QPointF(
                 p4.x() + (p3.x() - p4.x()) * frac2_biased,
@@ -2238,17 +2241,20 @@ class AttachedStrand(Strand):
                 
                 # Create control points for smooth bezier segments
                 # These ensure the curve passes smoothly through all 5 control points
+                # Keep the curve from folding back past an end that has its control point on it
+                start_reach = self._end_safe_reach(frac2 * (0.5 + bias_triangle), p1, p0)
+                end_reach = self._end_safe_reach(frac2 * (0.5 + bias_circle), p3, p4)
                 cp1 = QPointF(
                     p0.x() + (p1.x() - p0.x()) * frac1_biased,
                     p0.y() + (p1.y() - p0.y()) * frac1_biased
                 )
                 cp2 = QPointF(
-                    p2.x() - center_tangent.x() * dist2 * frac2 * (0.5 + bias_triangle),
-                    p2.y() - center_tangent.y() * dist2 * frac2 * (0.5 + bias_triangle)
+                    p2.x() - center_tangent.x() * dist2 * start_reach,
+                    p2.y() - center_tangent.y() * dist2 * start_reach
                 )
                 cp3 = QPointF(
-                    p2.x() + center_tangent.x() * dist3 * frac2 * (0.5 + bias_circle),
-                    p2.y() + center_tangent.y() * dist3 * frac2 * (0.5 + bias_circle)
+                    p2.x() + center_tangent.x() * dist3 * end_reach,
+                    p2.y() + center_tangent.y() * dist3 * end_reach
                 )
                 cp4 = QPointF(
                     p4.x() + (p3.x() - p4.x()) * frac2_biased,
@@ -2373,17 +2379,20 @@ class AttachedStrand(Strand):
             
             # Create control points for smooth bezier segments
             # These ensure the curve passes smoothly through all 5 control points
+            # Keep the curve from folding back past an end that has its control point on it
+            start_reach = self._end_safe_reach(fraction * (0.5 + bias_triangle), p1, p0)
+            end_reach = self._end_safe_reach(fraction * (0.5 + bias_circle), p3, p4)
             cp1 = QPointF(
                 p0.x() + (p1.x() - p0.x()) * frac1_biased,
                 p0.y() + (p1.y() - p0.y()) * frac1_biased
             )
             cp2 = QPointF(
-                p2.x() - center_tangent_normalized.x() * dist_p1_p2 * fraction * (0.5 + bias_triangle),
-                p2.y() - center_tangent_normalized.y() * dist_p1_p2 * fraction * (0.5 + bias_triangle)
+                p2.x() - center_tangent_normalized.x() * dist_p1_p2 * start_reach,
+                p2.y() - center_tangent_normalized.y() * dist_p1_p2 * start_reach
             )
             cp3 = QPointF(
-                p2.x() + center_tangent_normalized.x() * dist_p2_p3 * fraction * (0.5 + bias_circle),
-                p2.y() + center_tangent_normalized.y() * dist_p2_p3 * fraction * (0.5 + bias_circle)
+                p2.x() + center_tangent_normalized.x() * dist_p2_p3 * end_reach,
+                p2.y() + center_tangent_normalized.y() * dist_p2_p3 * end_reach
             )
             cp4 = QPointF(
                 p4.x() + (p3.x() - p4.x()) * frac2_biased,
@@ -2487,17 +2496,20 @@ class AttachedStrand(Strand):
                 
                 # Create control points for smooth bezier segments
                 # These ensure the curve passes smoothly through all 5 control points
+                # Keep the curve from folding back past an end that has its control point on it
+                start_reach = self._end_safe_reach(frac2 * (0.5 + bias_triangle), p1, p0)
+                end_reach = self._end_safe_reach(frac2 * (0.5 + bias_circle), p3, p4)
                 cp1 = QPointF(
                     p0.x() + (p1.x() - p0.x()) * frac1_biased,
                     p0.y() + (p1.y() - p0.y()) * frac1_biased
                 )
                 cp2 = QPointF(
-                    p2.x() - center_tangent.x() * dist2 * frac2 * (0.5 + bias_triangle),
-                    p2.y() - center_tangent.y() * dist2 * frac2 * (0.5 + bias_triangle)
+                    p2.x() - center_tangent.x() * dist2 * start_reach,
+                    p2.y() - center_tangent.y() * dist2 * start_reach
                 )
                 cp3 = QPointF(
-                    p2.x() + center_tangent.x() * dist3 * frac2 * (0.5 + bias_circle),
-                    p2.y() + center_tangent.y() * dist3 * frac2 * (0.5 + bias_circle)
+                    p2.x() + center_tangent.x() * dist3 * end_reach,
+                    p2.y() + center_tangent.y() * dist3 * end_reach
                 )
                 cp4 = QPointF(
                     p4.x() + (p3.x() - p4.x()) * frac2_biased,

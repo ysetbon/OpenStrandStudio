@@ -1053,6 +1053,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             sound_manager.set_cue(button, 'delete')
         for button in (self.strands_tab_button, self.masks_tab_button):
             sound_manager.set_cue(button, 'tab_switch')
+            sound_manager.set_hover_cue(button, 'hover_tab')
 
         # Ensure control buttons expand evenly and stay centered
         for button in (

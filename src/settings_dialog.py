@@ -1831,6 +1831,7 @@ class SettingsDialog(QDialog):
         self.categories_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.categories_list.itemClicked.connect(self.change_category)
         sound_manager.set_cue(self.categories_list.viewport(), 'tab_switch')
+        sound_manager.set_hover_area(self.categories_list, 'hover_tab')
 
         categories = [
             _['general_settings'],

@@ -123,7 +123,17 @@ CUES = [
     # Dropdown lists (the language list of flags): skimming past small plastic cards, then setting one down
     ("hover_dropdown", 30, -26, "An extremely faint tiny tick of a fingertip skimming past the edge of a small plastic card in a stack, airy, almost silent, very short"),
     ("dropdown_pick", 50, -15, "One small soft snap of a little plastic card pressed down into a slot, short crisp tap with no tail"),
-    ("tab_switch", 80, -17, "A quick soft flip of a thick cardboard page in a children's board book, light and short"),
+    # Tabs: the layer panel's Strands / Masks tabs, the document tabs over the canvas and the Settings
+    # sidebar are all small plastic file folder tabs (tab_switch was a board-book page flip before)
+    ("tab_switch", 80, -17, "A small plastic file folder tab pressed flat so it clicks into place, one soft tap with a tiny slide under it, light and short"),
+    ("hover_tab", 30, -26, "An extremely faint tiny tick of a fingertip brushing the edge of a small plastic file folder tab, airy, almost silent, very short"),
+    # tab_new has three prompts in the style of new_strand and group_new (a sparkle of the new thing);
+    # tab_new.wav is take 2 of tab_new_c
+    ("tab_new", 200, -14, "A tiny cheerful sparkle of a brand new plastic file folder tab popping up beside the others, a soft pop followed by a short shimmering rising chime"),
+    ("tab_new_b", 200, -14, "A tiny cheerful glint of a fresh blank card slid out of a stack and set down, a soft slide and pop followed by a short bright chime"),
+    ("tab_new_c", 200, -14, "A tiny cheerful sparkle of a small page added to a binder, a soft click of the rings closing followed by a short shimmering chime"),
+    ("tab_duplicate", 110, -16, "Two identical thin plastic file folder tabs snapped down side by side, a quick soft double tick, light and tidy"),
+    ("tab_close", 100, -17, "A small plastic file folder tab pushed back down and slid into a stack, a quick soft slide ending in a muffled tap"),
     # Select mode on the canvas: a fingertip on the lacing cord selects a strand (its hover is a
     # quiet echo of it, see ECHOES), a bead let go clears the selection
     ("strand_select", 45, -16, "A fingertip pressing once on a flat plastic lacing cord lying on a table, one tiny soft plastic tick, very short"),
@@ -154,6 +164,11 @@ STYLE_OVERRIDE = {
     "drag_drop": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "bell_note": "clean, close-up, dry, no reverb, no music, no voice",
     "tab_switch": "playful and friendly, close-up, dry, no reverb, no music, no voice",
+    "tab_new": "playful and friendly, close-up, short, no music, no voice",
+    "tab_new_b": "playful and friendly, close-up, short, no music, no voice",
+    "tab_new_c": "playful and friendly, close-up, short, no music, no voice",
+    "tab_duplicate": "playful and friendly, close-up, dry, no reverb, no music, no voice",
+    "tab_close": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "group_new": "playful and friendly, close-up, short, no music, no voice",
     "group_panel_off": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "group_panel_on": "soft and gentle, close-up, dry, no reverb, no music, no voice",
@@ -179,6 +194,8 @@ COLOR_VARIANTS = {
     "hover_level_fold": ("hover_layer", 2),
     # A dropdown's arrow section: the Settings hover, pitched apart from the buttons
     "hover_combo": ("hover_settings", 2),
+    # The small icon buttons on a document tab (duplicate, close, +): the tab hover, pitched apart from it
+    "hover_tab_button": ("hover_tab", 2),
     # The level right-click menus: close cousins of the other menus
     "menu_open_level": ("menu_open", -2),
     "hover_menu_level": ("hover_menu", -2),

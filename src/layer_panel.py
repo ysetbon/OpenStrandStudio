@@ -272,7 +272,7 @@ class TooltipButton(QPushButton):
     def mousePressEvent(self, event):
         """Handle mouse press events"""
         if event.button() == Qt.RightButton:
-            sound_manager.play('menu_open')
+            sound_manager.play('right_click')
             if self.custom_tooltip:
                 # Find the LayerPanel to get the panel's position and size
                 layer_panel = None

@@ -1929,6 +1929,10 @@ class StrandDrawingCanvas(QWidget):
             if self.show_grid:
                 self.draw_grid(painter)
 
+            # Let the current mode paint under the strands (Rotate mode: the strand where it started)
+            if hasattr(self.current_mode, 'draw_under'):
+                self.current_mode.draw_under(painter)
+
             # Reduced high-frequency logging for performance
             # logging.info(f"Painting {len(self.strands)} strands")
 

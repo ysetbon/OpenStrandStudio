@@ -64,6 +64,7 @@ CUES = {
     'denied': 150,
     'dialog_open': 120, 'dialog_close': 120,
     'menu_open': 80,
+    'hover_dropdown': 80, 'dropdown_pick': 40,
     'menu_open_level': 80, 'hover_menu_level': 80, 'menu_pick_level': 40,
     'strand_select': 40, 'strand_deselect': 40, 'hover_strand': 80,
     'group_new': 80, 'group_panel_off': 80, 'group_panel_on': 80,
@@ -73,7 +74,7 @@ CUES = {
 HOVER_CUES = {'hover_toolbar', 'hover_panel_top', 'hover_layer', 'hover_panel_bottom',
               'hover_level', 'hover_level_fold', 'hover_strand',
               'hover_group', 'hover_dialog', 'hover_menu', 'hover_menu_group', 'hover_menu_level', 'hover_settings',
-              'hover_attach_point', 'hover_move_point', 'hover_combo'}
+              'hover_attach_point', 'hover_move_point', 'hover_combo', 'hover_dropdown'}
 # Layer panel buttons whose hover is the layer one (matched by class name, so this module
 # does not import the layer panel)
 LAYER_BUTTON_CLASSES = {'NumberedLayerButton'}
@@ -400,7 +401,7 @@ class UiSoundFilter(QObject):
         # A value picked from a dropdown's popup list
         window = obj.window()
         if window is not None and window.metaObject().className() == 'QComboBoxPrivateContainer':
-            play('ui_click')
+            play('dropdown_pick')
             return
         # An item chosen from a context menu
         if isinstance(obj, QMenu):
@@ -467,8 +468,8 @@ class UiSoundFilter(QObject):
                 return area
             widget = widget.parentWidget()
         window = source.window()
-        if window.metaObject().className() == 'QComboBoxPrivateContainer' and window.parentWidget() is not None:
-            window = window.parentWidget().window()  # a dropdown's list hovers like its dialog
+        if window.metaObject().className() == 'QComboBoxPrivateContainer':  # a dropdown's open list
+            return 'hover_dropdown'
         if isinstance(window, QMenu):  # a button inside a menu row, e.g. Show Start Dash
             return self._menu_prop(window, 'hoverCue', 'hover_menu')
         if window is self.main_window:

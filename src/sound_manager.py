@@ -69,12 +69,14 @@ CUES = {
     'strand_select': 40, 'strand_deselect': 40, 'hover_strand': 80,
     'group_new': 80, 'group_panel_off': 80, 'group_panel_on': 80,
     'stepper_plus': 70, 'stepper_minus': 70,
-    'tab_switch': 60,
+    'tab_switch': 60, 'hover_tab': 80, 'hover_tab_button': 80,
+    'tab_new': 60, 'tab_duplicate': 60, 'tab_close': 60,
 }
 HOVER_CUES = {'hover_toolbar', 'hover_panel_top', 'hover_layer', 'hover_panel_bottom',
               'hover_level', 'hover_level_fold', 'hover_strand',
               'hover_group', 'hover_dialog', 'hover_menu', 'hover_menu_group', 'hover_menu_level', 'hover_settings',
-              'hover_attach_point', 'hover_move_point', 'hover_combo', 'hover_dropdown'}
+              'hover_attach_point', 'hover_move_point', 'hover_combo', 'hover_dropdown',
+              'hover_tab', 'hover_tab_button'}
 # Layer panel buttons whose hover is the layer one (matched by class name, so this module
 # does not import the layer panel)
 LAYER_BUTTON_CLASSES = {'NumberedLayerButton'}
@@ -414,7 +416,13 @@ class UiSoundFilter(QObject):
             play(cue)
 
     def _on_enter(self, obj):
-        if not isinstance(obj, QAbstractButton) or not obj.isEnabled():
+        if not obj.isEnabled():
+            return
+        if not isinstance(obj, QAbstractButton):
+            # custom-painted controls (the document tabs) opt in with set_hover_cue
+            cue = obj.property('hoverCue')
+            if isinstance(cue, str) and cue and cue != 'none':
+                play(cue)
             return
         cue = self._hover_cue(obj)
         if cue:

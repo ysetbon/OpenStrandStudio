@@ -89,8 +89,8 @@ class IconButton(QWidget):
     def __init__(self, kind, parent=None):
         super().__init__(parent)
         self.kind = kind  # 'duplicate' | 'close' | 'plus'
-        # New and duplicated tabs play the "new" sound, closing plays delete
-        sound_manager.set_cue(self, 'delete' if kind == 'close' else 'new_strand')
+        sound_manager.set_cue(self, {'plus': 'tab_new', 'duplicate': 'tab_duplicate', 'close': 'tab_close'}[kind])
+        sound_manager.set_hover_cue(self, 'hover_tab_button')
         self._hover = False
         self._color = QColor(0xF0, 0xF0, 0xF0)
         size = 22 if kind == 'plus' else 18
@@ -232,6 +232,7 @@ class TabChip(QWidget):
                 text_color.red(), text_color.green(), text_color.blue(), text_color.alpha()))
 
         sound_manager.set_cue(self, 'tab_switch')
+        sound_manager.set_hover_cue(self, 'hover_tab')
 
         self.dup_btn = IconButton('duplicate', self)
         self.dup_btn.set_color(text_color)

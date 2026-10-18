@@ -120,6 +120,9 @@ CUES = [
     ("dialog_close", 100, -19, "A small soft plastic lid gently closing, a quick soft downward tap shut"),
     ("menu_open", 60, -20, "A tiny soft flick of a small plastic card being fanned out, very quick and light"),
     ("stepper_tick", 45, -17, "A small firm tick of a plastic toy counter clicking forward one step, short and precise"),
+    # Dropdown lists (the language list of flags): skimming past small plastic cards, then setting one down
+    ("hover_dropdown", 30, -26, "An extremely faint tiny tick of a fingertip skimming past the edge of a small plastic card in a stack, airy, almost silent, very short"),
+    ("dropdown_pick", 50, -15, "One small soft snap of a little plastic card pressed down into a slot, short crisp tap with no tail"),
     ("tab_switch", 80, -17, "A quick soft flip of a thick cardboard page in a children's board book, light and short"),
     # Select mode on the canvas: a fingertip on the lacing cord selects a strand (its hover is a
     # quiet echo of it, see ECHOES), a bead let go clears the selection

@@ -3,6 +3,8 @@ from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication
 import math
 
+import sound_manager
+
 from strand import Strand
 from attached_strand import AttachedStrand
 from masked_strand import MaskedStrand
@@ -66,6 +68,7 @@ class RotateMode:
         pos = event.pos()
         self.handle_strand_rotation(pos)
         if self.is_rotating:
+            sound_manager.play('rotate_grab')
             self.last_update_pos = pos
             self.target_pos = pos
 
@@ -92,6 +95,7 @@ class RotateMode:
             event (QMouseEvent): The mouse event.
         """
         if self.is_rotating:  # Only save state if we were actually rotating
+            sound_manager.play('rotate_release')
             # Save state for undo/redo after rotation
             if hasattr(self.canvas, 'layer_panel') and hasattr(self.canvas.layer_panel, 'undo_redo_manager'):
                 self.canvas.layer_panel.undo_redo_manager.save_state(

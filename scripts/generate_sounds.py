@@ -102,6 +102,9 @@ CUES = [
     # Drag and move: picking up and placing a strand end
     ("drag_pickup", 80, -15, "Fingers lifting a thick felt tab off a table, a soft muted tuck with a tiny upward lift, short"),
     ("drag_drop", 90, -14, "A small rubber bead landing on a soft mat, a gentle falling boop with no bounce, short"),
+    # Rotate mode: grabbing a strand end and letting go (take A3 and C4 of the rotate prompts)
+    ("rotate_grab", 80, -15, "A small plastic dial knob grabbed between two fingertips with one soft ratchet click, rounded and tight, short"),
+    ("rotate_release", 90, -14, "A small rubber ball coming to rest on a soft mat, a gentle soft thud with a tiny rolling stop, short"),
     ("snap_grid", 25, -26, "An extremely short tiny dry tick, a single plastic ratchet tooth, very quiet"),
     # Attaching: a new strand pulled from an end and fixed on, the signature moment
     ("attach_start", 150, -17, "Two small magnets gently drawing together, a soft muted tick with a tiny pull before it, round and quiet"),
@@ -146,7 +149,7 @@ CUES = [
 CUE_BY_ID = {cue[0]: cue for cue in CUES}
 
 # Low-pass cutoff (Hz) for cues whose takes come back too bright or hissy
-LOWPASS = {"hover_attach_point": 7000, "hover_move_point": 7000, "mode_move": 7000, "mode_rotate": 7000, "mode_view": 7000, "mode_select": 7000, "mode_attach": 7000, "delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000}
+LOWPASS = {"hover_attach_point": 7000, "hover_move_point": 7000, "mode_move": 7000, "mode_rotate": 7000, "mode_view": 7000, "mode_select": 7000, "mode_attach": 7000, "delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000, "rotate_grab": 6000, "rotate_release": 6000}
 
 # Cues that should not sound like plastic get their own style line
 STYLE_OVERRIDE = {
@@ -162,6 +165,8 @@ STYLE_OVERRIDE = {
     "attach_start": "very soft, gentle and warm, close-up, dry, no reverb, no music, no voice",
     "drag_pickup": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "drag_drop": "soft and gentle, close-up, dry, no reverb, no music, no voice",
+    "rotate_grab": "soft and gentle, close-up, dry, no reverb, no music, no voice",
+    "rotate_release": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "bell_note": "clean, close-up, dry, no reverb, no music, no voice",
     "tab_switch": "playful and friendly, close-up, dry, no reverb, no music, no voice",
     "tab_new": "playful and friendly, close-up, short, no music, no voice",

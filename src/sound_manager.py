@@ -37,7 +37,7 @@ except ImportError:  # QtMultimedia missing: the app runs silently
 
 # cue -> minimum gap in ms between two plays of the same cue
 CUES = {
-    'ui_click': 40,
+    'ui_click': 40, 'right_click': 40,
     'ui_toggle_on': 40, 'ui_toggle_off': 40,
     'toggle_blue_on': 40, 'toggle_blue_off': 40,
     'toggle_green_on': 40, 'toggle_green_off': 40,

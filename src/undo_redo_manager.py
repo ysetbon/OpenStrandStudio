@@ -222,7 +222,7 @@ class StrokeTextButton(QPushButton):
     def mousePressEvent(self, event):
         """Handle mouse press events"""
         if event.button() == Qt.RightButton:
-            
+            sound_manager.play('right_click')
             if self.custom_tooltip:
                 # Import CustomTooltip here to avoid circular imports
                 from layer_panel import CustomTooltip
@@ -242,7 +242,7 @@ class StrokeTextButton(QPushButton):
                     panel_size = layer_panel.size()
                     
                     # Simple 4th row calculation: 3 rows down from panel top
-                    fourth_row_y = panel_global_pos.y() + 190  # 3 rows * 40px + 3 gaps * 5px
+                    fourth_row_y = panel_global_pos.y() + 150  # moved up so it sits right under the buttons
                     
                     # Find the center X based on hide button and refresh button positions
                     # Get the hide button (multi_select_button) and refresh button positions

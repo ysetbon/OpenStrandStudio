@@ -450,6 +450,8 @@ class UiSoundFilter(QObject):
                 return area
             widget = widget.parentWidget()
         window = source.window()
+        if window.metaObject().className() == 'QComboBoxPrivateContainer' and window.parentWidget() is not None:
+            window = window.parentWidget().window()  # a dropdown's list hovers like its dialog
         if isinstance(window, QMenu):  # a button inside a menu row, e.g. Show Start Dash
             return self._menu_prop(window, 'hoverCue', 'hover_menu')
         if window is self.main_window:

@@ -70,6 +70,8 @@ CUES = [
     # Canvas points: a whisper of what the mode's click is made of
     ("hover_attach_point", 40, -24, "A fingertip lightly touching a strip of sticky tape, one tiny faint soft sticky touch, very short"),
     ("hover_move_point", 40, -24, "A fingertip lightly brushing a sheet of paper, one tiny faint papery touch, very short"),
+    # Rotate mode's end: take B4 of the dial prompt, picked at -21 dBFS (3 dB louder than the other point hovers)
+    ("hover_rotate_point", 40, -21, "A fingertip lightly brushing the ridged edge of a small round plastic dial knob, one tiny faint ridged touch, very short"),
     # Mode buttons on the toolbar. View opens like a window, Select is a finger on the table
     # and Attach sticks like tape. View and Select turn off with their on sounds reversed (see
     # REVERSED); Attach turns off with the tape peeled away.
@@ -149,12 +151,13 @@ CUES = [
 CUE_BY_ID = {cue[0]: cue for cue in CUES}
 
 # Low-pass cutoff (Hz) for cues whose takes come back too bright or hissy
-LOWPASS = {"hover_attach_point": 7000, "hover_move_point": 7000, "mode_move": 7000, "mode_rotate": 7000, "mode_view": 7000, "mode_select": 7000, "mode_attach": 7000, "delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000, "rotate_grab": 6000, "rotate_release": 6000}
+LOWPASS = {"hover_attach_point": 7000, "hover_move_point": 7000, "hover_rotate_point": 7000, "mode_move": 7000, "mode_rotate": 7000, "mode_view": 7000, "mode_select": 7000, "mode_attach": 7000, "delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000, "rotate_grab": 6000, "rotate_release": 6000}
 
 # Cues that should not sound like plastic get their own style line
 STYLE_OVERRIDE = {
     "hover_move_point": "extremely quiet and soft, close-up, dry, no reverb, no music, no voice",
     "hover_attach_point": "extremely quiet and soft, close-up, dry, no reverb, no music, no voice",
+    "hover_rotate_point": "extremely quiet and soft, close-up, dry, no reverb, no music, no voice",
     "mode_move": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "mode_rotate": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "mode_attach_off": "soft and gentle, close-up, dry, no reverb, no music, no voice",

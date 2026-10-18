@@ -45,7 +45,7 @@ CUES = {
     'hover_toolbar': 80, 'hover_panel_top': 80, 'hover_layer': 80, 'hover_panel_bottom': 80,
     'hover_level': 80, 'hover_level_fold': 80, 'level_select': 40, 'level_fold': 40,
     'hover_group': 80, 'hover_dialog': 80, 'hover_menu': 80, 'hover_menu_group': 80, 'hover_settings': 80,
-    'hover_attach_point': 80, 'hover_move_point': 80, 'hover_combo': 80,
+    'hover_attach_point': 80, 'hover_move_point': 80, 'hover_rotate_point': 80, 'hover_combo': 80,
     'mode_view': 60, 'mode_select': 60, 'mode_move': 60, 'mode_attach': 60,
     'mode_view_off': 60, 'mode_select_off': 60, 'mode_attach_off': 60,
     'mode_rotate': 60, 'mode_angle': 60,
@@ -76,7 +76,7 @@ CUES = {
 HOVER_CUES = {'hover_toolbar', 'hover_panel_top', 'hover_layer', 'hover_panel_bottom',
               'hover_level', 'hover_level_fold', 'hover_strand',
               'hover_group', 'hover_dialog', 'hover_menu', 'hover_menu_group', 'hover_menu_level', 'hover_settings',
-              'hover_attach_point', 'hover_move_point', 'hover_combo', 'hover_dropdown',
+              'hover_attach_point', 'hover_move_point', 'hover_rotate_point', 'hover_combo', 'hover_dropdown',
               'hover_tab', 'hover_tab_button'}
 # Layer panel buttons whose hover is the layer one (matched by class name, so this module
 # does not import the layer panel)

@@ -35,6 +35,7 @@ class RotateMode:
         self.original_length = 0  # The original length of the strand
         self.pivot_point = None  # The fixed point of the strand
         self.target_pos = None  # Target position for gradual movement
+        self.hovered_end = None  # (strand, side) of the rotatable end under the pointer
 
     def setup_timer(self):
         """Set up the timer for gradual movement."""
@@ -86,6 +87,26 @@ class RotateMode:
             # Start the timer if it's not already running
             if not self.move_timer.isActive():
                 self.move_timer.start(16)  # ~60 FPS
+        elif not self.is_rotating:
+            self.update_hovered_end(event.pos())
+
+    def update_hovered_end(self, pos):
+        """Play the hover sound once when the pointer reaches a strand end that can rotate."""
+        hovered = None
+        for strand in self.canvas.strands:
+            if getattr(strand, 'deleted', False) or isinstance(strand, MaskedStrand):
+                continue
+            if hasattr(self.canvas, 'is_strand_in_level_scope') and not self.canvas.is_strand_in_level_scope(strand):
+                continue
+            for side in (0, 1):
+                if self.get_end_rectangle(strand, side).contains(pos) and not strand.has_circles[side]:
+                    hovered = (strand, side)
+                    break
+            if hovered:
+                break
+        if hovered and (self.hovered_end is None or hovered[0] is not self.hovered_end[0] or hovered[1] != self.hovered_end[1]):
+            sound_manager.play('hover_rotate_point')
+        self.hovered_end = hovered
 
     def mouseReleaseEvent(self, event):
         """

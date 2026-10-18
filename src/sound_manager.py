@@ -26,7 +26,7 @@ import weakref
 from PyQt5.QtCore import QObject, QEvent, Qt, QTimer, QUrl
 from PyQt5.QtWidgets import (
     QAbstractButton, QAbstractItemView, QAbstractSlider, QApplication, QCheckBox, QComboBox,
-    QDialog, QMenu, QMessageBox, QWidgetAction,
+    QDialog, QMenu, QMessageBox, QStyle, QStyleOptionComboBox, QWidgetAction,
 )
 
 try:
@@ -45,7 +45,7 @@ CUES = {
     'hover_toolbar': 80, 'hover_panel_top': 80, 'hover_layer': 80, 'hover_panel_bottom': 80,
     'hover_level': 80, 'hover_level_fold': 80, 'level_select': 40, 'level_fold': 40,
     'hover_group': 80, 'hover_dialog': 80, 'hover_menu': 80, 'hover_menu_group': 80, 'hover_settings': 80,
-    'hover_attach_point': 80, 'hover_move_point': 80,
+    'hover_attach_point': 80, 'hover_move_point': 80, 'hover_combo': 80,
     'mode_view': 60, 'mode_select': 60, 'mode_move': 60, 'mode_attach': 60,
     'mode_view_off': 60, 'mode_select_off': 60, 'mode_attach_off': 60,
     'mode_rotate': 60, 'mode_angle': 60,
@@ -64,6 +64,7 @@ CUES = {
     'denied': 150,
     'dialog_open': 120, 'dialog_close': 120,
     'menu_open': 80,
+    'hover_dropdown': 80, 'dropdown_pick': 40,
     'menu_open_level': 80, 'hover_menu_level': 80, 'menu_pick_level': 40,
     'strand_select': 40, 'strand_deselect': 40, 'hover_strand': 80,
     'group_new': 80, 'group_panel_off': 80, 'group_panel_on': 80,
@@ -73,7 +74,7 @@ CUES = {
 HOVER_CUES = {'hover_toolbar', 'hover_panel_top', 'hover_layer', 'hover_panel_bottom',
               'hover_level', 'hover_level_fold', 'hover_strand',
               'hover_group', 'hover_dialog', 'hover_menu', 'hover_menu_group', 'hover_menu_level', 'hover_settings',
-              'hover_attach_point', 'hover_move_point'}
+              'hover_attach_point', 'hover_move_point', 'hover_combo', 'hover_dropdown'}
 # Layer panel buttons whose hover is the layer one (matched by class name, so this module
 # does not import the layer panel)
 LAYER_BUTTON_CLASSES = {'NumberedLayerButton'}
@@ -262,6 +263,7 @@ class UiSoundFilter(QObject):
         self._closed_since_click = []  # dialogs hidden since the last button release
         self._menu_last_action = weakref.WeakKeyDictionary()  # menu -> action last hovered
         self._view_last_row = weakref.WeakKeyDictionary()  # list/tree view -> row last hovered
+        self._combo_in_arrow = weakref.WeakKeyDictionary()  # dropdown -> pointer is on its arrow section
 
     # -- helpers -----------------------------------------------------------
     @staticmethod
@@ -352,7 +354,12 @@ class UiSoundFilter(QObject):
             elif etype == QEvent.Enter:
                 self._on_enter(obj)
             elif etype in (QEvent.MouseMove, QEvent.HoverMove):
-                self._on_view_move(obj, event)
+                if isinstance(obj, QComboBox):
+                    self._on_combo_move(obj, event.pos())
+                else:
+                    self._on_view_move(obj, event)
+            elif etype == QEvent.Leave and isinstance(obj, QComboBox):
+                self._combo_in_arrow.pop(obj, None)
             elif etype == QEvent.Leave and isinstance(obj.parentWidget(), QAbstractItemView):
                 self._view_last_row.pop(obj.parentWidget(), None)
             elif etype == QEvent.Show and not event.spontaneous():
@@ -394,7 +401,7 @@ class UiSoundFilter(QObject):
         # A value picked from a dropdown's popup list
         window = obj.window()
         if window is not None and window.metaObject().className() == 'QComboBoxPrivateContainer':
-            play('ui_click')
+            play('dropdown_pick')
             return
         # An item chosen from a context menu
         if isinstance(obj, QMenu):
@@ -412,6 +419,17 @@ class UiSoundFilter(QObject):
         cue = self._hover_cue(obj)
         if cue:
             play(cue)
+
+    def _on_combo_move(self, combo, pos):
+        """A dropdown's arrow section lights up on hover like a button, so it hovers like one:
+        one sound each time the pointer reaches it."""
+        option = QStyleOptionComboBox()
+        combo.initStyleOption(option)
+        arrow = combo.style().subControlRect(QStyle.CC_ComboBox, option, QStyle.SC_ComboBoxArrow, combo)
+        inside = combo.isEnabled() and arrow.contains(pos)
+        if inside and not self._combo_in_arrow.get(combo):
+            play('hover_combo')
+        self._combo_in_arrow[combo] = inside
 
     def _on_view_move(self, viewport, event):
         """Rows of lists and trees (groups and their layers, the Settings sidebar) hover like
@@ -450,6 +468,8 @@ class UiSoundFilter(QObject):
                 return area
             widget = widget.parentWidget()
         window = source.window()
+        if window.metaObject().className() == 'QComboBoxPrivateContainer':  # a dropdown's open list
+            return 'hover_dropdown'
         if isinstance(window, QMenu):  # a button inside a menu row, e.g. Show Start Dash
             return self._menu_prop(window, 'hoverCue', 'hover_menu')
         if window is self.main_window:

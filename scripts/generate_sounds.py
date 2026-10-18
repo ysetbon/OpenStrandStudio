@@ -128,7 +128,7 @@ CUES = [
     ("tab_switch", 80, -17, "A small plastic file folder tab pressed flat so it clicks into place, one soft tap with a tiny slide under it, light and short"),
     ("hover_tab", 30, -26, "An extremely faint tiny tick of a fingertip brushing the edge of a small plastic file folder tab, airy, almost silent, very short"),
     # tab_new has three prompts in the style of new_strand and group_new (a sparkle of the new thing);
-    # whichever take is picked is copied to tab_new.wav
+    # tab_new.wav is take 2 of tab_new_c
     ("tab_new", 200, -14, "A tiny cheerful sparkle of a brand new plastic file folder tab popping up beside the others, a soft pop followed by a short shimmering rising chime"),
     ("tab_new_b", 200, -14, "A tiny cheerful glint of a fresh blank card slid out of a stack and set down, a soft slide and pop followed by a short bright chime"),
     ("tab_new_c", 200, -14, "A tiny cheerful sparkle of a small page added to a binder, a soft click of the rings closing followed by a short shimmering chime"),

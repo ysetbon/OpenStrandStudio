@@ -13,7 +13,9 @@ A widget can override the filter with the dynamic property "soundCue": a cue
 name, a toggle's pair as "name_{state}" (played as name_on / name_off),
 or "none" when the sound is played elsewhere. A dialog can swap its open or
 close sound with the properties "soundOpen" and "soundClose" (e.g. from its clicked
-signal, so keyboard shortcuts that call click() sound too).
+signal, so keyboard shortcuts that call click() sound too). A menu can swap its
+open, item hover and item pick sounds with "soundOpen", "hoverCue" and "soundPick";
+a submenu takes its parent menu's.
 """
 
 import os
@@ -41,6 +43,7 @@ CUES = {
     'toggle_green_on': 40, 'toggle_green_off': 40,
     'layer_select': 40,
     'hover_toolbar': 80, 'hover_panel_top': 80, 'hover_layer': 80, 'hover_panel_bottom': 80,
+    'hover_level': 80, 'hover_level_fold': 80, 'level_select': 40, 'level_fold': 40,
     'hover_group': 80, 'hover_dialog': 80, 'hover_menu': 80, 'hover_menu_group': 80, 'hover_settings': 80,
     'hover_attach_point': 80, 'hover_move_point': 80,
     'mode_view': 60, 'mode_select': 60, 'mode_move': 60, 'mode_attach': 60,
@@ -61,15 +64,19 @@ CUES = {
     'denied': 150,
     'dialog_open': 120, 'dialog_close': 120,
     'menu_open': 80,
+    'menu_open_level': 80, 'hover_menu_level': 80, 'menu_pick_level': 40,
+    'strand_select': 40, 'strand_deselect': 40, 'hover_strand': 80,
+    'group_new': 80, 'group_panel_off': 80, 'group_panel_on': 80,
     'stepper_plus': 70, 'stepper_minus': 70,
     'tab_switch': 60,
 }
 HOVER_CUES = {'hover_toolbar', 'hover_panel_top', 'hover_layer', 'hover_panel_bottom',
-              'hover_group', 'hover_dialog', 'hover_menu', 'hover_menu_group', 'hover_settings',
+              'hover_level', 'hover_level_fold', 'hover_strand',
+              'hover_group', 'hover_dialog', 'hover_menu', 'hover_menu_group', 'hover_menu_level', 'hover_settings',
               'hover_attach_point', 'hover_move_point'}
 # Layer panel buttons whose hover is the layer one (matched by class name, so this module
 # does not import the layer panel)
-LAYER_BUTTON_CLASSES = {'NumberedLayerButton', 'LevelButton'}
+LAYER_BUTTON_CLASSES = {'NumberedLayerButton'}
 SLIDER_TICK_CUE = 'snap_grid'
 SLIDER_TICK_GAP_MS = 40
 
@@ -393,7 +400,7 @@ class UiSoundFilter(QObject):
         if isinstance(obj, QMenu):
             action = obj.activeAction()
             if action is not None and action.isEnabled() and action.menu() is None and not action.isSeparator():
-                play('ui_click')
+                play(self._menu_prop(obj, 'soundPick', 'ui_click'))
             return
         cue = self._explicit_cue(obj)
         if cue and cue != 'none':
@@ -427,7 +434,7 @@ class UiSoundFilter(QObject):
         else its window's: hover_settings or hover_dialog in sub-windows."""
         cue = button.property('hoverCue')
         if isinstance(cue, str) and cue:
-            return cue
+            return None if cue == 'none' else cue
         if type(button).__name__ in LAYER_BUTTON_CLASSES:
             return 'hover_layer'
         return self._area_cue(button)
@@ -444,7 +451,7 @@ class UiSoundFilter(QObject):
             widget = widget.parentWidget()
         window = source.window()
         if isinstance(window, QMenu):  # a button inside a menu row, e.g. Show Start Dash
-            return self._menu_cue(window)
+            return self._menu_prop(window, 'hoverCue', 'hover_menu')
         if window is self.main_window:
             return None if include_self else 'hover_toolbar'
         if isinstance(window, QDialog):
@@ -467,17 +474,18 @@ class UiSoundFilter(QObject):
             widget = action.defaultWidget()
             if widget is not None and widget.findChildren(QAbstractButton):
                 return
-        play(self._menu_cue(menu))
+        play(self._menu_prop(menu, 'hoverCue', 'hover_menu'))
 
     @staticmethod
-    def _menu_cue(menu):
-        """A menu's hover: its own "hoverCue" property, else its parent menu's, else hover_menu."""
+    def _menu_prop(menu, prop, default):
+        """A menu's sound property (hoverCue, soundOpen, soundPick): its own, else its
+        parent menu's, else *default*."""
         while isinstance(menu, QMenu):
-            cue = menu.property('hoverCue')
+            cue = menu.property(prop)
             if isinstance(cue, str) and cue:
                 return cue
             menu = menu.parentWidget()
-        return 'hover_menu'
+        return default
 
     def _on_show(self, obj):
         if isinstance(obj, QMessageBox):
@@ -491,7 +499,7 @@ class UiSoundFilter(QObject):
                 obj.hovered.connect(lambda action, menu=obj: self._on_menu_hover(menu, action))
             self._menu_last_action.pop(obj, None)
             if not isinstance(obj.parentWidget(), QMenu):  # submenus open on hover: stay quiet
-                play('menu_open')
+                play(self._menu_prop(obj, 'soundOpen', 'menu_open'))
 
     def _on_hide(self, obj):
         if isinstance(obj, QDialog):

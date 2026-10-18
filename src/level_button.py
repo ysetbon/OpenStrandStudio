@@ -24,7 +24,7 @@ position into levels).
 """
 
 from PyQt5.QtCore import QEvent, QMimeData, QPointF, QRect, QRectF, QSize, Qt, QTimer
-from PyQt5.QtGui import QColor, QDrag, QFont, QFontMetrics, QPainter, QPainterPath, QPen
+from PyQt5.QtGui import QColor, QCursor, QDrag, QFont, QFontMetrics, QPainter, QPainterPath, QPen
 from PyQt5.QtWidgets import (QApplication, QColorDialog, QMenu, QPushButton,
                              QSizePolicy, QVBoxLayout, QWidget,
                              QWidgetAction)
@@ -200,7 +200,11 @@ class LevelButton(QPushButton):
     def __init__(self, row, parent=None):
         """A button of *row*, which supplies its text, colour and menu."""
         super().__init__(parent)
-        sound_manager.set_cue(self, 'layer_select')
+        # Level sounds are close cousins of the layer ones; the fold control
+        # and the name each have their own click and hover
+        sound_manager.set_cue_resolver(self, self._play_click_sound)
+        sound_manager.set_hover_cue(self, 'none')
+        self._clicked_zone = None
         self.row = row
         self.setFixedSize(LEVEL_BUTTON_SIZE)
         self.setCursor(Qt.PointingHandCursor)
@@ -217,6 +221,18 @@ class LevelButton(QPushButton):
     def zone_at(self, x):
         """'fold' (the control at the left edge) or 'name'."""
         return 'fold' if x < FOLD_ZONE_WIDTH else 'name'
+
+    @staticmethod
+    def _play_hover_sound(zone):
+        sound_manager.play('hover_level_fold' if zone == 'fold' else 'hover_level')
+
+    def _play_click_sound(self):
+        """Called by the sound filter once a click has been handled."""
+        zone, self._clicked_zone = self._clicked_zone, None
+        if zone == 'fold':
+            sound_manager.play('level_fold')
+        elif zone == 'name':
+            sound_manager.play('level_select')
 
     def paintEvent(self, event):
         panel, level = self.row.layer_panel, self.row.level
@@ -254,6 +270,11 @@ class LevelButton(QPushButton):
         super().leaveEvent(event)
 
     def enterEvent(self, event):
+        if self.isEnabled():
+            pos = self.mapFromGlobal(QCursor.pos())
+            # an Enter without the pointer over the row counts as the name
+            self._hover_zone = self.zone_at(pos.x()) if self.rect().contains(pos) else 'name'
+            self._play_hover_sound(self._hover_zone)
         self.update()
         super().enterEvent(event)
 
@@ -279,8 +300,10 @@ class LevelButton(QPushButton):
             return
         panel, level = self.row.layer_panel, self.row.level
         if clicked_zone == 'fold':
+            self._clicked_zone = 'fold'
             panel.toggle_level_fold(level)
         elif panel.level_selection_allowed():
+            self._clicked_zone = 'name'
             panel.toggle_level_scope(level)
 
     def mouseMoveEvent(self, event):
@@ -288,6 +311,8 @@ class LevelButton(QPushButton):
         a held mouse has moved far enough."""
         zone = self.zone_at(event.pos().x())
         if zone != self._hover_zone:
+            if self._hover_zone is not None and not (event.buttons() & Qt.LeftButton):
+                self._play_hover_sound(zone)  # moved between the fold control and the name
             self._hover_zone = zone
             # The name selects the level's block, except on the Masks tab
             clickable = zone != 'name' or self.row.layer_panel.level_selection_allowed()
@@ -439,6 +464,10 @@ class GroundRow(_ButtonRow):
 # ----------------------------------------------------------------------
 def _new_menu(panel, parent, theme):
     menu = QMenu(parent)
+    # Level menus sound like close cousins of the other menus
+    menu.setProperty('soundOpen', 'menu_open_level')
+    menu.setProperty('hoverCue', 'hover_menu_level')
+    menu.setProperty('soundPick', 'menu_pick_level')
     if getattr(panel, 'language_code', None) == 'he':
         menu.setLayoutDirection(Qt.RightToLeft)
     try:

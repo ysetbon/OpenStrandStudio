@@ -52,7 +52,8 @@ CUES = [
     # Buttons: the flat coloured pill buttons
     ("ui_click", 50, -14, "One tiny click of a fingertip pressing a small smooth plastic toy button, short crisp tap with no tail"),
     # Right-click on a top button: a softer, lower sibling of ui_click that opens its explanation
-    ("right_click", 55, -18, "One very soft muted tap of the pad of a fingertip gently pressing a small rounded rubbery plastic toy button, cushioned and quiet, lower and rounder than a normal click, no sharp edge, very short with no tail"),
+    # softened after picking: soften --lowpass 3000 --treble -8 --attack-ms 6 --peak -18
+    ("right_click", 55, -18, "One tiny soft click of a fingertip pressing a small smooth plastic toy button from underneath, a little lower and rounder than a normal click, short gentle tap with no tail"),
     ("ui_toggle_on", 80, -15, "A small plastic toggle switch flicked on, two quick light clicks going up in pitch, bright and tidy"),
     ("ui_toggle_off", 80, -15, "A small plastic toggle switch flicked off, two quick light clicks going down in pitch, a little softer and duller"),
     ("layer_select", 45, -16, "One tiny tick of a plastic bead tapped on a plastic tray, high and light, very short"),

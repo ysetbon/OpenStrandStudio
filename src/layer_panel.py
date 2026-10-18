@@ -272,7 +272,7 @@ class TooltipButton(QPushButton):
     def mousePressEvent(self, event):
         """Handle mouse press events"""
         if event.button() == Qt.RightButton:
-            
+            sound_manager.play('menu_open')
             if self.custom_tooltip:
                 # Find the LayerPanel to get the panel's position and size
                 layer_panel = None
@@ -288,8 +288,8 @@ class TooltipButton(QPushButton):
                     panel_global_pos = layer_panel.mapToGlobal(QPoint(0, 0))
                     panel_size = layer_panel.size()
                     
-                    # Simple 4th row calculation: 3 rows down from panel top
-                    fourth_row_y = panel_global_pos.y() + 190  # 3 rows * 40px + 3 gaps * 5px
+                    # Anchor the tooltip right under the pressed button
+                    below_button_y = self.mapToGlobal(QPoint(0, self.height())).y() + 2
                     
                     # Find the center X based on hide button and refresh button positions
                     # Get the hide button (multi_select_button) and refresh button positions
@@ -327,7 +327,7 @@ class TooltipButton(QPushButton):
                         tooltip_width = self._custom_tooltip_widget.width()
                         tooltip_pos = QPoint(
                             center_x - tooltip_width // 2,
-                            fourth_row_y
+                            below_button_y
                         )
                         
                         self._custom_tooltip_widget.showAt(tooltip_pos, timeout=0)  # No auto-hide

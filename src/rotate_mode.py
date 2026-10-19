@@ -463,7 +463,9 @@ class RotateMode:
         old_vector = old_start - old_end if self.rotating_side == 0 else old_end - old_start
         new_vector = self.affected_strand.start - self.affected_strand.end if self.rotating_side == 0 else self.affected_strand.end - self.affected_strand.start
         rotation_angle = math.atan2(new_vector.y(), new_vector.x()) - math.atan2(old_vector.y(), old_vector.x())
-        self.total_delta += math.remainder(rotation_angle, 2 * math.pi)
+        turn = math.remainder(rotation_angle, 2 * math.pi)
+        self.total_delta += turn
+        self.play_pin_sound(math.degrees(math.atan2(old_vector.y(), old_vector.x())), math.degrees(turn))
 
         # Update control points based on the rotation
         self.rotate_control_point(self.affected_strand.control_point1, rotation_angle)
@@ -479,6 +481,15 @@ class RotateMode:
         
         # Always update the canvas - paintEvent will handle selective drawing
         self.canvas.update()
+
+    def play_pin_sound(self, old_degrees, delta_degrees):
+        """Tick when the end's angle reaches a pin on the dial ring (every 15 degrees; 0, 90, 180 and -90 are the long pins)."""
+        old_pin = math.floor(old_degrees / 15)
+        new_pin = math.floor((old_degrees + delta_degrees) / 15)
+        if old_pin == new_pin:
+            return
+        pin_degrees = (new_pin if delta_degrees > 0 else old_pin) * 15
+        sound_manager.play('dial_pin_quarter' if pin_degrees % 90 == 0 else 'dial_pin')
 
     def update_control_points_proportionally(self, old_start, old_end, new_start, new_end):
         """

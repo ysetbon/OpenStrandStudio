@@ -1,8 +1,16 @@
-# OpenStrand Studio - Version 2.0
+# OpenStrand Studio - Version 2.1
 
 An advanced diagramming tool for creating tutorials involving strand manipulation (knots, hitches, etc.)
 with dynamic masking that automatically adjusts the over-under effects between strands,
 making complex patterns clear and easy to understand.
+
+## What's New in Version 2.1
+
+### ✨ New Features and Fixes
+
+- **Interface Sounds**: Every button, menu, tab and list now plays a short sound, and each mode has its own sound when you turn it on and off. Each area of the app has its own soft hover sound. In Rotate mode you hear a sound when you grab and release a strand end, and a tick at each mark of the dial. At the bottom of General Settings, use Play interface sounds, Sound volume and Play hover sounds to turn the sounds off, change their volume or turn off only the hover sounds.
+- **Rotate Mode Triangles and Dial**: Triangles now mark every strand end you can rotate: red at strand starts, blue at strand ends and yellow under the pointer. While you drag, a dial with a mark every 15° appears around the pivot and shades how far you have turned. Inside the dial the end turns more slowly, for fine control. A faded copy of the strand stays where it started until you let go.
+- **Fixes**: Strand ends no longer fold back on themselves at a high Control Point Influence. A strand no longer loses its shadow where a mask only touches it along an edge. Releasing a strand is faster while shadows are off.
 
 ## What's New in Version 2.0
 
@@ -68,8 +76,8 @@ To update later: `git pull`, then run it again.
 
 | | Command (from the repository root) | Output |
 |---|---|---|
-| **macOS** | `bash src/build_mac_2_0.sh` (add `--dmg` for a disk image; `PYTHON=python3.13 bash ...` to pick an interpreter) | `src/installer_output/OpenStrandStudio_2_0.pkg` |
-| **Windows** | `cd src` then `.\build_with_venv.bat`, then open `src\inno setup\OpenStrand Studio2_0.iss` in [Inno Setup](https://jrsoftware.org/isdl.php) and click **Compile** | `src\dist\OpenStrandStudioSetup_<date>_2_0.exe` |
+| **macOS** | `bash src/build_mac_2_1.sh` (add `--dmg` for a disk image; `PYTHON=python3.13 bash ...` to pick an interpreter) | `src/installer_output/OpenStrandStudio_2_1.pkg` |
+| **Windows** | `cd src` then `.\build_with_venv.bat`, then open `src\inno setup\OpenStrand Studio2_1.iss` in [Inno Setup](https://jrsoftware.org/isdl.php) and click **Compile** | `src\dist\OpenStrandStudioSetup_<date>_2_1.exe` |
 
 The version-specific scripts are generated, not hand-edited: for a new release, edit the CONFIG section of `scripts/make_release_files.py`
 and run it (see `src/RELEASE_HOWTO.md`). More detail and troubleshooting: `src/INSTALL_GUIDE_Windows.md` and `src/INSTALL_GUIDE_mac.md`.
@@ -97,4 +105,4 @@ Created by Yonatan Setbon
 
 ---
 
-© 2026 OpenStrand Studio - Version 2.0
+© 2026 OpenStrand Studio - Version 2.1

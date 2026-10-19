@@ -27,18 +27,91 @@ import re, os, sys
 # =============================================================================
 # CONFIG — edit this section for each release
 # =============================================================================
-OLD_VERSION = '1.112'          # version the source files belong to
-NEW_VERSION = '2.0'          # version to generate
-OLD_DATE_SH = '27_September_2026'   # APP_DATE in the old .sh files
-NEW_DATE_SH = '04_October_2026'
-OLD_DATE_ISS = '27_Sep_2026'   # MyAppDate in the old .iss
-NEW_DATE_ISS = '04_Oct_2026'
+OLD_VERSION = '2.0'          # version the source files belong to
+NEW_VERSION = '2.1'          # version to generate
+OLD_DATE_SH = '04_October_2026'   # APP_DATE in the old .sh files
+NEW_DATE_SH = '19_October_2026'
+OLD_DATE_ISS = '04_Oct_2026'   # MyAppDate in the old .iss
+NEW_DATE_ISS = '19_Oct_2026'
 
 # What's-new bullets per language: list of (title, text). Same bullets are
 # used for the Windows installer, the macOS installer pages, and the in-app
 # "What's New?" dialog (translations.py). Write plain unicode text everywhere;
 # Hebrew entity-encoding for the .sh files is handled automatically.
 BULLETS = {
+ 'en': [
+  ('Interface Sounds', 'Every button, menu, tab and list now plays a short sound, and each mode has its own sound when you turn it on and off. Each area of the app has its own soft hover sound. In Rotate mode you hear a sound when you grab and release a strand end, and a tick at each mark of the dial. At the bottom of General Settings, use Play interface sounds, Sound volume and Play hover sounds to turn the sounds off, change their volume or turn off only the hover sounds.'),
+  ('Rotate Mode Triangles and Dial', 'Triangles now mark every strand end you can rotate: red at strand starts, blue at strand ends and yellow under the pointer. While you drag, a dial with a mark every 15° appears around the pivot and shades how far you have turned. Inside the dial the end turns more slowly, for fine control. A faded copy of the strand stays where it started until you let go.'),
+  ('Fixes', 'Strand ends no longer fold back on themselves at a high Control Point Influence. A strand no longer loses its shadow where a mask only touches it along an edge. Releasing a strand is faster while shadows are off.'),
+ ],
+ 'fr': [
+  ("Sons de l'interface", "Chaque bouton, menu, onglet et liste joue maintenant un petit son, et chaque mode a son propre son quand vous l'activez et le désactivez. Chaque zone de l'application a son propre son discret au survol. En mode Pivoter, un son accompagne la prise et le relâchement d'une extrémité de brin, et un tic marque chaque graduation du cadran. En bas des Paramètres généraux, utilisez « Jouer les sons de l'interface », « Volume des sons » et « Jouer les sons au survol » pour couper les sons, régler leur volume ou couper seulement les sons au survol."),
+  ('Triangles et cadran en mode Pivoter', "Des triangles marquent maintenant chaque extrémité de brin que vous pouvez faire pivoter : rouges au début des brins, bleus à leur fin et jaunes sous le pointeur. Pendant le glissement, un cadran gradué tous les 15° apparaît autour du pivot et colore l'angle parcouru. À l'intérieur du cadran, l'extrémité tourne plus lentement, pour un réglage fin. Une copie estompée du brin reste à sa position de départ jusqu'à ce que vous relâchiez."),
+  ('Corrections', "Les extrémités des brins ne se replient plus sur elles-mêmes avec une forte Influence du Point de Contrôle. Un brin ne perd plus son ombre là où un masque ne le touche que par un bord. Relâcher un brin est plus rapide quand les ombres sont désactivées."),
+ ],
+ 'de': [
+  ('Oberflächenklänge', 'Jede Schaltfläche, jedes Menü, jeder Tab und jede Liste spielt jetzt einen kurzen Klang, und jeder Modus hat einen eigenen Klang beim Ein- und Ausschalten. Jeder Bereich der App hat einen eigenen leisen Klang beim Überfahren. Im Modus Drehen hören Sie einen Klang, wenn Sie ein Strangende greifen und loslassen, und ein Ticken an jeder Markierung der Skala. Unten in den Einstellungen schalten Sie mit „Oberflächenklänge abspielen“, „Lautstärke der Klänge“ und „Klänge beim Überfahren abspielen“ die Klänge aus, ändern ihre Lautstärke oder schalten nur die Klänge beim Überfahren aus.'),
+  ('Dreiecke und Skala im Modus Drehen', 'Dreiecke markieren jetzt jedes Strangende, das Sie drehen können: rot am Anfang eines Strangs, blau am Ende und gelb unter dem Mauszeiger. Beim Ziehen erscheint um den Drehpunkt eine Skala mit einer Markierung alle 15°, die farbig zeigt, wie weit Sie gedreht haben. Innerhalb der Skala dreht sich das Ende langsamer, für feine Einstellungen. Eine blasse Kopie des Strangs bleibt an seiner Ausgangsposition, bis Sie loslassen.'),
+  ('Fehlerbehebungen', 'Strangenden klappen bei hohem Kontrollpunkt-Einfluss nicht mehr auf sich selbst zurück. Ein Strang verliert seinen Schatten nicht mehr dort, wo eine Maske ihn nur an einer Kante berührt. Das Loslassen eines Strangs ist schneller, wenn Schatten ausgeschaltet sind.'),
+ ],
+ 'it': [
+  ("Suoni dell'interfaccia", "Ogni pulsante, menu, scheda ed elenco ora riproduce un breve suono, e ogni modalità ha il suo suono quando la attivi e la disattivi. Ogni area dell'app ha il suo suono leggero al passaggio del mouse. In modalità Ruota senti un suono quando afferri e rilasci l'estremità di un trefolo, e un tic a ogni tacca del quadrante. In fondo a Impostazioni Generali, usa «Riproduci i suoni dell'interfaccia», «Volume dei suoni» e «Riproduci i suoni al passaggio del mouse» per disattivare i suoni, cambiarne il volume o disattivare solo i suoni al passaggio del mouse."),
+  ('Triangoli e quadrante in modalità Ruota', "Dei triangoli ora segnano ogni estremità di trefolo che puoi ruotare: rossi all'inizio dei trefoli, blu alla fine e gialli sotto il puntatore. Mentre trascini, attorno al perno appare un quadrante con una tacca ogni 15° che colora l'angolo percorso. Dentro il quadrante l'estremità ruota più lentamente, per una regolazione fine. Una copia sbiadita del trefolo resta nella posizione di partenza finché non rilasci."),
+  ('Correzioni', "Le estremità dei trefoli non si ripiegano più su se stesse con un'alta Influenza Punto di Controllo. Un trefolo non perde più la sua ombra dove una maschera lo tocca solo lungo un bordo. Rilasciare un trefolo è più veloce quando le ombre sono disattivate."),
+ ],
+ 'es': [
+  ('Sonidos de la interfaz', 'Cada botón, menú, pestaña y lista reproduce ahora un sonido corto, y cada modo tiene su propio sonido al activarlo y desactivarlo. Cada zona de la aplicación tiene su propio sonido suave al pasar el cursor. En el modo Rotar oirás un sonido al agarrar y soltar el extremo de un cordón, y un tic en cada marca del dial. Al final de Configuración General, usa «Reproducir sonidos de la interfaz», «Volumen de los sonidos» y «Reproducir sonidos al pasar el cursor» para apagar los sonidos, cambiar su volumen o apagar solo los sonidos al pasar el cursor.'),
+  ('Triángulos y dial en el modo Rotar', 'Ahora unos triángulos marcan cada extremo de cordón que puedes girar: rojos al inicio de los cordones, azules al final y amarillos bajo el puntero. Mientras arrastras, aparece alrededor del pivote un dial con una marca cada 15° que sombrea cuánto has girado. Dentro del dial el extremo gira más despacio, para un ajuste fino. Una copia atenuada del cordón se queda donde empezó hasta que sueltas.'),
+  ('Correcciones', 'Los extremos de los cordones ya no se doblan sobre sí mismos con una Influencia del Punto de Control alta. Un cordón ya no pierde su sombra donde una máscara solo lo toca por un borde. Soltar un cordón es más rápido cuando las sombras están desactivadas.'),
+ ],
+ 'pt': [
+  ('Sons da interface', 'Cada botão, menu, separador e lista toca agora um som curto, e cada modo tem o seu próprio som ao ligá-lo e desligá-lo. Cada área da aplicação tem o seu próprio som suave ao passar o cursor. No modo Girar ouve um som ao agarrar e largar a ponta de uma mecha, e um tique em cada marca do mostrador. No fim de Configurações Gerais, use «Reproduzir sons da interface», «Volume dos sons» e «Reproduzir sons ao passar o cursor» para desligar os sons, mudar o volume ou desligar apenas os sons ao passar o cursor.'),
+  ('Triângulos e mostrador no modo Girar', 'Agora há triângulos a marcar cada ponta de mecha que pode girar: vermelhos no início das mechas, azuis no fim e amarelos sob o cursor. Enquanto arrasta, aparece à volta do pivô um mostrador com uma marca a cada 15° que sombreia quanto já girou. Dentro do mostrador a ponta gira mais devagar, para um ajuste fino. Uma cópia esbatida da mecha fica onde começou até largar.'),
+  ('Correções', 'As pontas das mechas já não se dobram sobre si mesmas com uma Influência do Ponto de Controle alta. Uma mecha já não perde a sua sombra onde uma máscara só lhe toca por uma aresta. Largar uma mecha é mais rápido quando as sombras estão desligadas.'),
+ ],
+ 'he': [
+  ('צלילי ממשק', 'כל כפתור, תפריט, לשונית ורשימה משמיעים עכשיו צליל קצר, ולכל מצב יש צליל משלו כשמפעילים ומכבים אותו. לכל אזור באפליקציה יש צליל רך משלו במעבר עכבר. במצב סיבוב נשמע צליל כשתופסים ומשחררים קצה של חוט, ותקתוק בכל סימון על החוגה. בתחתית ההגדרות הכלליות, השתמשו ב״השמע צלילי ממשק״, ״עוצמת הצלילים״ ו״השמע צלילים במעבר עכבר״ כדי לכבות את הצלילים, לשנות את עוצמתם או לכבות רק את צלילי מעבר העכבר.'),
+  ('משולשים וחוגה במצב סיבוב', 'משולשים מסמנים עכשיו כל קצה חוט שאפשר לסובב: אדום בתחילת חוט, כחול בסופו וצהוב מתחת לסמן. בזמן הגרירה מופיעה סביב נקודת הציר חוגה עם סימון כל 15°, שצובעת כמה סובבתם. בתוך החוגה הקצה מסתובב לאט יותר, לכוונון עדין. עותק דהוי של החוט נשאר במקום שבו התחיל עד שמשחררים.'),
+  ('תיקונים', 'קצוות של חוטים כבר לא מתקפלים לאחור על עצמם כשהשפעת נקודת הבקרה גבוהה. חוט כבר לא מאבד את הצל שלו במקום שבו מסכה נוגעת בו רק לאורך קצה. שחרור חוט מהיר יותר כשהצללים כבויים.'),
+ ],
+ 'ru': [
+  ('Звуки интерфейса', 'Каждая кнопка, меню, вкладка и список теперь издают короткий звук, а у каждого режима есть свой звук включения и выключения. У каждой области приложения свой тихий звук при наведении. В режиме «Вращать» слышен звук, когда вы берёте и отпускаете конец пряди, и щелчок на каждой отметке шкалы. Внизу общих настроек с помощью «Воспроизводить звуки интерфейса», «Громкость звуков» и «Воспроизводить звуки при наведении» можно выключить звуки, изменить их громкость или выключить только звуки при наведении.'),
+  ('Треугольники и шкала в режиме «Вращать»', 'Треугольники теперь отмечают каждый конец пряди, который можно повернуть: красные в начале прядей, синие в конце и жёлтые под указателем. Во время перетаскивания вокруг точки поворота появляется шкала с отметкой каждые 15°, которая закрашивает пройденный угол. Внутри шкалы конец поворачивается медленнее, для точной настройки. Бледная копия пряди остаётся на исходном месте, пока вы не отпустите.'),
+  ('Исправления', 'Концы прядей больше не загибаются назад при сильном влиянии контрольных точек. Прядь больше не теряет тень там, где маска касается её только краем. Отпускание пряди работает быстрее, когда тени выключены.'),
+ ],
+ 'fi': [
+  ('Käyttöliittymän äänet', 'Jokainen painike, valikko, välilehti ja luettelo soittaa nyt lyhyen äänen, ja jokaisella tilalla on oma äänensä, kun se otetaan käyttöön ja poistetaan käytöstä. Sovelluksen jokaisella alueella on oma hiljainen äänensä osoitettaessa. Kierrä-tilassa kuuluu ääni, kun tartut säikeen päähän ja päästät irti, ja naksahdus asteikon jokaisen merkin kohdalla. Yleisten asetusten alareunassa voit valinnoilla Toista käyttöliittymän äänet, Äänten voimakkuus ja Toista äänet osoitettaessa mykistää äänet, muuttaa niiden voimakkuutta tai mykistää vain osoitusäänet.'),
+  ('Kolmiot ja asteikko Kierrä-tilassa', 'Kolmiot merkitsevät nyt jokaisen säikeen pään, jota voit kiertää: punainen säikeen alussa, sininen lopussa ja keltainen osoittimen alla. Vetäessäsi kiertopisteen ympärille ilmestyy asteikko, jossa on merkki 15°:n välein ja joka värittää, kuinka paljon olet kiertänyt. Asteikon sisällä pää kiertyy hitaammin tarkkaa säätöä varten. Säikeestä jää haalea kopio sen alkuperäiselle paikalle, kunnes päästät irti.'),
+  ('Korjaukset', 'Säikeiden päät eivät enää taitu takaisin itsensä päälle, kun ohjauspisteen vaikutus on suuri. Säie ei enää menetä varjoaan kohdasta, jossa maski koskettaa sitä vain reunalta. Säikeen päästäminen irti on nopeampaa, kun varjot ovat pois päältä.'),
+ ],
+ 'sv': [
+  ('Gränssnittsljud', 'Varje knapp, meny, flik och lista spelar nu ett kort ljud, och varje läge har ett eget ljud när du slår på och stänger av det. Varje del av appen har ett eget mjukt ljud vid hovring. I läget Rotera hörs ett ljud när du tar tag i och släpper en strängände, och ett tick vid varje markering på skalan. Längst ned i Allmänna inställningar använder du Spela gränssnittsljud, Ljudvolym och Spela ljud vid hovring för att stänga av ljuden, ändra volymen eller stänga av bara hovringsljuden.'),
+  ('Trianglar och skala i läget Rotera', 'Trianglar markerar nu varje strängände som du kan rotera: röda i början av strängar, blå i slutet och gula under pekaren. Medan du drar visas en skala runt vridpunkten med en markering var 15:e grad, och den färgar hur långt du har vridit. Innanför skalan vrids änden långsammare, för finjustering. En blek kopia av strängen ligger kvar där den började tills du släpper.'),
+  ('Åtgärdade fel', 'Strängändar viker sig inte längre tillbaka över sig själva vid högt inflytande för kontrollpunkterna. En sträng tappar inte längre sin skugga där en mask bara rör vid den längs en kant. Att släppa en sträng går snabbare när skuggorna är avstängda.'),
+ ],
+ 'ja': [
+  ('インターフェース音', 'すべてのボタン、メニュー、タブ、リストで短い音が鳴るようになり、各モードにはオンとオフでそれぞれ専用の音があります。アプリのエリアごとに、ホバー時の控えめな音も用意されています。回転モードでは、ストランドの端をつかむときと離すときに音が鳴り、ダイヤルの目盛りごとにカチッと鳴ります。一般設定の一番下にある「インターフェース音を再生」「効果音の音量」「ホバー時に音を再生」で、音をオフにしたり、音量を変えたり、ホバー音だけをオフにしたりできます。'),
+  ('回転モードの三角形とダイヤル', '回転できるストランドの端に三角形が表示されるようになりました: ストランドの始点は赤、終点は青、ポインターの下は黄色です。ドラッグ中は回転の中心の周りに15°ごとの目盛りが付いたダイヤルが現れ、回した角度に色が付きます。ダイヤルの内側では端がゆっくり回るので、細かく調整できます。マウスを離すまで、ストランドの薄いコピーが元の位置に残ります。'),
+  ('修正', '制御点の影響を強くしたときに、ストランドの端が折り返してしまう問題を修正しました。マスクが端だけで接している場所で、ストランドの影が消えなくなりました。影がオフのときは、ストランドを離す操作が速くなりました。'),
+ ],
+ 'zh': [
+  ('界面音效', '每个按钮、菜单、标签页和列表现在都会播放简短的音效，每种模式在开启和关闭时也有各自的音效。应用的每个区域都有自己轻柔的悬停音效。在旋转模式中，抓起和松开绳股端点时会有音效，转到表盘的每个刻度时会有滴答声。在常规设置的底部，可以用“播放界面音效”“音效音量”和“悬停时播放音效”来关闭音效、调整音量，或只关闭悬停音效。'),
+  ('旋转模式的三角形和表盘', '现在每个可以旋转的绳股端点都会显示三角形: 绳股起点为红色，终点为蓝色，指针下方为黄色。拖动时，枢轴周围会出现每 15° 一个刻度的表盘，并为已转过的角度着色。在表盘内侧，端点转得更慢，便于精细调整。松开之前，绳股的淡色副本会留在原来的位置。'),
+  ('修复', '控制点影响力较高时，绳股端点不再向回折叠。遮罩只沿边缘接触绳股时，绳股不再丢失阴影。关闭阴影时，松开绳股的速度更快。'),
+ ],
+}
+
+# Optional one-paragraph note shown above the bullets (why this version number).
+# Leave as {} for a normal release.
+INTRO = {}
+
+# The previous release's bullets and note. The in-app "What's New?" dialog
+# lists them under the new ones (SHOW_OLD_IN_APP); the installers show only
+# the new bullets, and OLD_INTRO is removed from the macOS .sh welcome pages.
+# For the next release, move BULLETS/INTRO here and write the new ones above.
+SHOW_OLD_IN_APP = True
+
+OLD_BULLETS = {
  'en': [
   ('Strands and Masks Tabs', 'The layer list is now split into two tabs, Strands and Masks, with a switch just above Draw Names. The Masks tab has its own New Mask, Delete Mask, Deselect All and Delete All buttons, and New Mask replaces the Mask button in the toolbar. Delete All on this tab removes only the masks, after a confirmation, in one undo step. Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you.'),
   ('Fixed Shadow Issues', 'Fixed shadow issues from older versions. Shadows for masks now behave more naturally.'),
@@ -101,9 +174,7 @@ BULLETS = {
  ],
 }
 
-# Optional one-paragraph note shown above the bullets (why this version number).
-# Leave as {} for a normal release.
-INTRO = {
+OLD_INTRO = {
  'en': "Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots, and masks are a big part of weaving, so this is a major step for OpenStrand Studio.",
  'fr': "Pourquoi 2.0 ? Les masques sont maintenant beaucoup plus naturels à utiliser. Le tissage est essentiel pour faire des nœuds, et les masques en sont une grande partie : c'est une étape majeure pour OpenStrand Studio.",
  'de': "Warum 2.0? Masken fühlen sich jetzt viel natürlicher an. Weben ist entscheidend beim Knüpfen von Knoten, und Masken sind ein großer Teil davon – ein wichtiger Schritt für OpenStrand Studio.",
@@ -157,20 +228,31 @@ def li_block_sh(lang):
         lines.append(li)
     return '\n'.join(lines)
 
-def intro_sh(lang):
-    if lang not in INTRO:
+def intro_sh(lang, intro=None):
+    intro = INTRO if intro is None else intro
+    if lang not in intro:
         return ''
-    p = '<p>%s</p>\n    ' % INTRO[lang]
+    p = '<p>%s</p>\n    ' % intro[lang]
     return he_entities(p) if lang == 'he' else p
 
-def intro_translations(lang):
-    if lang not in INTRO:
+def intro_translations(lang, intro=None):
+    intro = INTRO if intro is None else intro
+    if lang not in intro:
         return ''
-    return '            <p style="font-size:14px;">%s</p>\n' % INTRO[lang]
+    return '            <p style="font-size:14px;">%s</p>\n' % intro[lang]
 
-def li_block_translations(lang):
+def li_block_translations(lang, bullets=None):
+    bullets = BULLETS if bullets is None else bullets
     return '\n'.join('            <li style="font-size:14px;"><b>%s:</b> %s</li>' % (t, x)
-                     for t, x in BULLETS[lang])
+                     for t, x in bullets[lang])
+
+def old_section_translations(lang, h2):
+    """The previous release's notes, listed under the new ones in the app."""
+    if not SHOW_OLD_IN_APP:
+        return ''
+    return ('\n\n            <h3>%s %s</h3>\n%s%s'
+            % (h2, OLD_VERSION, intro_translations(lang, OLD_INTRO),
+               li_block_translations(lang, OLD_BULLETS)))
 
 def iss_bullets(lang):
     return '%n'.join('• %s: %s' % (t, x) for t, x in BULLETS[lang])
@@ -190,6 +272,10 @@ def gen_sh(src_name, dst_name):
     text = read(os.path.join(SRC, src_name))
     text = text.replace(OLD_VERSION, NEW_VERSION).replace(OLD_U, NEW_U)
     text = text.replace(OLD_DATE_SH, NEW_DATE_SH)
+
+    # The old note sits just before its <ul>; the new one (if any) is added below
+    for lang in OLD_INTRO:
+        text = text.replace(intro_sh(lang, OLD_INTRO), '')
 
     counts = {k: 0 for k in BULLETS}
     def repl(m):
@@ -293,7 +379,8 @@ for lang, (h2, cp) in TR.items():
         re.escape('<p style="font-size:14px;">%s %s</p>' % (cp, OLD_VERSION)), re.S)
     def repl(m):
         return ('<h2>%s %s</h2>\n\n%s\n\n%s<p style="font-size:14px;">%s %s</p>'
-                % (h2, NEW_VERSION, intro_translations(lang) + li_block_translations(lang), m.group(1), cp, NEW_VERSION))
+                % (h2, NEW_VERSION, intro_translations(lang) + li_block_translations(lang)
+                   + old_section_translations(lang, h2), m.group(1), cp, NEW_VERSION))
     text, n = pattern.subn(repl, text)
     n_total += n
     if n not in (0, 1):

@@ -24,6 +24,28 @@ The masked layer feature is essential for creating intricate, overlapping design
 
 ------
 
+## Version 2.1 (Released: 19/10/2026)
+
+### New Features and Improvements:
+
+1. **Interface Sounds:**
+   - Every button, menu, tab and list now plays a short sound, and each mode has its own sound when you turn it on and off.
+   - Each area of the app has its own soft hover sound.
+   - In Rotate mode you hear a sound when you grab and release a strand end, and a tick at each mark of the dial.
+   - At the bottom of General Settings, use Play interface sounds, Sound volume and Play hover sounds to turn the sounds off, change their volume or turn off only the hover sounds.
+
+2. **Rotate Mode Triangles and Dial:**
+   - Triangles now mark every strand end you can rotate: red at strand starts, blue at strand ends and yellow under the pointer.
+   - While you drag, a dial with a mark every 15° appears around the pivot and shades how far you have turned. Inside the dial the end turns more slowly, for fine control.
+   - A faded copy of the strand stays where it started until you let go.
+
+3. **Fixes:**
+   - Strand ends no longer fold back on themselves at a high Control Point Influence.
+   - A strand no longer loses its shadow where a mask only touches it along an edge.
+   - Releasing a strand is faster while shadows are off.
+
+------
+
 ## Version 2.0 (Released: 04/10/2026)
 
 Why 2.0? Masks now feel much more natural to use. Weaving is key to tying knots, and masks are a big part of weaving, so this is a major step for OpenStrand Studio.
@@ -772,6 +794,28 @@ Pour utiliser cette fonctionnalité :
 3. Relâchez la touche Contrôle pour créer le calque masqué
 
 La fonctionnalité de calque masqué est essentielle pour créer des designs complexes et superposés et c'est l'un des outils les plus puissants d'OpenStrand Studio. Assurez-vous d'expérimenter avec cette fonctionnalité pour libérer tout le potentiel de vos designs de brins !
+
+------
+
+## Version 2.1 (Sortie : 19/10/2026)
+
+### Nouvelles Fonctionnalités et Améliorations :
+
+1. **Sons de l'interface:**
+   - Chaque bouton, menu, onglet et liste joue maintenant un petit son, et chaque mode a son propre son quand vous l'activez et le désactivez.
+   - Chaque zone de l'application a son propre son discret au survol.
+   - En mode Pivoter, un son accompagne la prise et le relâchement d'une extrémité de brin, et un tic marque chaque graduation du cadran.
+   - En bas des Paramètres généraux, utilisez « Jouer les sons de l'interface », « Volume des sons » et « Jouer les sons au survol » pour couper les sons, régler leur volume ou couper seulement les sons au survol.
+
+2. **Triangles et cadran en mode Pivoter:**
+   - Des triangles marquent maintenant chaque extrémité de brin que vous pouvez faire pivoter : rouges au début des brins, bleus à leur fin et jaunes sous le pointeur.
+   - Pendant le glissement, un cadran gradué tous les 15° apparaît autour du pivot et colore l'angle parcouru. À l'intérieur du cadran, l'extrémité tourne plus lentement, pour un réglage fin.
+   - Une copie estompée du brin reste à sa position de départ jusqu'à ce que vous relâchiez.
+
+3. **Corrections:**
+   - Les extrémités des brins ne se replient plus sur elles-mêmes avec une forte Influence du Point de Contrôle.
+   - Un brin ne perd plus son ombre là où un masque ne le touche que par un bord.
+   - Relâcher un brin est plus rapide quand les ombres sont désactivées.
 
 ------
 

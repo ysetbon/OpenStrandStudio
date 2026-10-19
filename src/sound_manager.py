@@ -30,9 +30,12 @@ from PyQt5.QtWidgets import (
 )
 
 try:
-    from PyQt5.QtMultimedia import QSoundEffect
+    from PyQt5.QtMultimedia import QAudioDeviceInfo, QAudio, QSoundEffect
 except ImportError:  # QtMultimedia missing: the app runs silently
     QSoundEffect = None
+    QAudioDeviceInfo = None
+
+DEVICE_POLL_MS = 1500  # how often to check whether the Windows output device changed
 
 
 # cue -> minimum gap in ms between two plays of the same cue
@@ -120,6 +123,28 @@ class SoundManager(QObject):
         self._load_settings()
         if QSoundEffect is None:
             return
+        self._device_key = self._output_devices()
+        self._build_effects()
+        # Qt5 has no "output device changed" signal, and a QSoundEffect stays on the device it
+        # was created for, so poll and rebuild the effects when the default device changes.
+        self._device_timer = QTimer(self)
+        self._device_timer.timeout.connect(self._check_output_device)
+        self._device_timer.start(DEVICE_POLL_MS)
+
+    @staticmethod
+    def _output_devices():
+        try:
+            default = QAudioDeviceInfo.defaultOutputDevice().deviceName()
+            names = tuple(d.deviceName() for d in QAudioDeviceInfo.availableDevices(QAudio.AudioOutput))
+        except Exception:
+            return None
+        return default, names
+
+    def _build_effects(self):
+        for effect in self._effects.values():
+            effect.stop()
+            effect.deleteLater()
+        self._effects = {}
         folder = sounds_dir()
         for cue in CUES:
             path = os.path.join(folder, f'{cue}.wav')
@@ -128,6 +153,12 @@ class SoundManager(QObject):
                 effect.setSource(QUrl.fromLocalFile(path))
                 self._effects[cue] = effect
         self._apply_volume()
+
+    def _check_output_device(self):
+        key = self._output_devices()
+        if key is not None and key != self._device_key:
+            self._device_key = key
+            self._build_effects()
 
     def _load_settings(self):
         path = settings_file_path()

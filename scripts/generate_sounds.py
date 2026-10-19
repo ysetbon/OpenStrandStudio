@@ -107,6 +107,9 @@ CUES = [
     # Rotate mode: grabbing a strand end and letting go (take A3 and C4 of the rotate prompts)
     ("rotate_grab", 80, -15, "A small plastic dial knob grabbed between two fingertips with one soft ratchet click, rounded and tight, short"),
     ("rotate_release", 90, -14, "A small rubber ball coming to rest on a soft mat, a gentle soft thud with a tiny rolling stop, short"),
+    # Rotate mode's dial pins: take C2 of the glass bead and peg prompt. The quarter pins (0, 90, 180, -90) play a copy
+    # written by the `variants` command so the two can be swapped for different takes later
+    ("dial_pin", 30, -24, "A small glass bead tapping one tiny wooden peg on a peg board, one extremely short tiny tock, very quiet"),
     ("snap_grid", 25, -26, "An extremely short tiny dry tick, a single plastic ratchet tooth, very quiet"),
     # Attaching: a new strand pulled from an end and fixed on, the signature moment
     ("attach_start", 150, -17, "Two small magnets gently drawing together, a soft muted tick with a tiny pull before it, round and quiet"),
@@ -151,7 +154,7 @@ CUES = [
 CUE_BY_ID = {cue[0]: cue for cue in CUES}
 
 # Low-pass cutoff (Hz) for cues whose takes come back too bright or hissy
-LOWPASS = {"hover_attach_point": 7000, "hover_move_point": 7000, "hover_rotate_point": 7000, "mode_move": 7000, "mode_rotate": 7000, "mode_view": 7000, "mode_select": 7000, "mode_attach": 7000, "delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000, "rotate_grab": 6000, "rotate_release": 6000}
+LOWPASS = {"hover_attach_point": 7000, "hover_move_point": 7000, "hover_rotate_point": 7000, "mode_move": 7000, "mode_rotate": 7000, "mode_view": 7000, "mode_select": 7000, "mode_attach": 7000, "delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000, "rotate_grab": 6000, "rotate_release": 6000, "dial_pin": 7000}
 
 # Cues that should not sound like plastic get their own style line
 STYLE_OVERRIDE = {
@@ -168,6 +171,7 @@ STYLE_OVERRIDE = {
     "attach_start": "very soft, gentle and warm, close-up, dry, no reverb, no music, no voice",
     "drag_pickup": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "drag_drop": "soft and gentle, close-up, dry, no reverb, no music, no voice",
+    "dial_pin": "extremely quiet and soft, close-up, dry, no reverb, no music, no voice",
     "rotate_grab": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "rotate_release": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "bell_note": "clean, close-up, dry, no reverb, no music, no voice",
@@ -208,6 +212,8 @@ COLOR_VARIANTS = {
     "menu_open_level": ("menu_open", -2),
     "hover_menu_level": ("hover_menu", -2),
     "menu_pick_level": ("ui_click", -2),
+    # Rotate mode's quarter pins (0, 90, 180, -90 degrees): the same take as the other pins for now
+    "dial_pin_quarter": ("dial_pin", 0),
 }
 
 # Off sounds made by playing an approved on sound backwards and lower, written by the `variants` command

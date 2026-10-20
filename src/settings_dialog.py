@@ -13,6 +13,7 @@ from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from translations import translations
 from save_load_manager import load_strands, apply_loaded_strands
+from project_settings import capture_project_settings, read_project_settings, apply_project_settings
 # Reads the provenance recorded with each undo/redo state, for the History page.
 from undo_redo_metadata import describe as describe_history, read_metadata as read_history_metadata
 from segmented_spin_box import upgrade_and_style_all, upgrade_spinbox, style_segmented_spinbox
@@ -143,6 +144,11 @@ class SettingsDialog(QDialog):
         
         # Store the undo/redo manager
         self.undo_redo_manager = undo_redo_manager
+
+        # The drawing settings saved in user_settings.txt, which a new tab starts
+        # with after a project brought its own (see project_settings.py). Taken
+        # the first time a project's settings replace them, then on every save.
+        self.app_project_settings = None
         
         # Try to load settings from file first
         self.load_settings_from_file()
@@ -5619,6 +5625,8 @@ class SettingsDialog(QDialog):
                 for sound_line in sound_manager.manager().settings_lines():
                     file.write(sound_line + "\n")
             # Settings saved to {file_path}
+            if self.canvas:
+                self.app_project_settings = capture_project_settings(self.canvas, self)
             
             # Create a copy in the root directory for easier viewing (optional)
             try:
@@ -7613,6 +7621,15 @@ class SettingsDialog(QDialog):
                 parent = self.parent_window if hasattr(self, 'parent_window') else self.parent()
                 if not parent:
                     return
+
+                # A sample saved with drawing settings opens with them, like an opened project.
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        sample_settings = read_project_settings(json.load(f))
+                except Exception:
+                    sample_settings = None
+                if sample_settings is not None:
+                    apply_project_settings(parent.canvas, sample_settings, self)
 
                 # Try to import full history first if available
                 undo_mgr = getattr(getattr(parent, 'layer_panel', None), 'undo_redo_manager', None)

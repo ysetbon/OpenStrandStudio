@@ -11,6 +11,7 @@ from PyQt5.QtCore import QObject, pyqtSignal, Qt, QTimer, QPoint, QEvent
 from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics, QColor, QBrush, QLinearGradient, QPalette, QIcon
 from render_utils import RenderUtils
 from save_load_manager import save_strands, load_strands, apply_loaded_strands, strand_level, mask_own_level
+from project_settings import PROJECT_SETTINGS_KEY
 # Import QTimer here to avoid UnboundLocalError
 from PyQt5.QtCore import QTimer
 # CollapsibleGroupWidget import removed — GroupPanel now uses QTreeWidget items
@@ -3157,17 +3158,21 @@ class UndoRedoManager(QObject):
         if self.redo_button and hasattr(self.redo_button, 'set_theme'):
             self.redo_button.set_theme(theme_name)
 
-    def export_history(self, filepath):
+    def export_history(self, filepath, project_settings=None):
         """Export the entire undo/redo history to a single JSON file.
 
         The generated file contains a list of *all* state JSON blobs together
         with bookkeeping information so that the history can be reconstructed
         later via `import_history()`.  This allows a project to be saved and,
         when re-opened, have the full undo/redo stack available.
+        ``project_settings`` (see project_settings.py) is stored once at the top
+        level of the file, not in the individual states.
         """
         payload = self.export_history_payload()
         if payload is None:
             return False
+        if project_settings is not None:
+            payload[PROJECT_SETTINGS_KEY] = project_settings
         try:
             # Finally write the consolidated history file.
             with open(filepath, "w", encoding="utf-8") as out_f:

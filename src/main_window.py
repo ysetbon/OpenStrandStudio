@@ -2669,6 +2669,12 @@ class MainWindow(QMainWindow):
         # Let other events pass through
         return super().eventFilter(obj, event)
 
+    def _click_with_sound(self, button):
+        """Click a layer panel button from its shortcut, with the sound a mouse click plays."""
+        if getattr(self, 'sound_filter', None) is not None:
+            self.sound_filter.play_click(button)
+        button.click()
+
     def keyPressEvent(self, event):
         """Handle key press events, specifically Escape to exit mask edit mode."""
         
@@ -2686,7 +2692,7 @@ class MainWindow(QMainWindow):
             if event.key() == Qt.Key_1 and event.modifiers() == Qt.NoModifier:
                 if hasattr(self, 'layer_panel') and self.layer_panel:
                     # Simulate button click to respect enabled/disabled state
-                    self.layer_panel.draw_names_button.click()
+                    self._click_with_sound(self.layer_panel.draw_names_button)
                     event.accept()
                     return
 
@@ -2695,7 +2701,7 @@ class MainWindow(QMainWindow):
                 if hasattr(self, 'layer_panel') and self.layer_panel:
                     # Use click() to properly toggle the checkable button state
                     # which toggle_lock_mode relies on
-                    self.layer_panel.lock_layers_button.click()
+                    self._click_with_sound(self.layer_panel.lock_layers_button)
                     event.accept()
                     return
             
@@ -2703,7 +2709,7 @@ class MainWindow(QMainWindow):
             if event.key() == Qt.Key_D and event.modifiers() == Qt.NoModifier:
                 if hasattr(self, 'layer_panel') and self.layer_panel:
                     # Simulate button click to respect enabled/disabled state
-                    self.layer_panel.delete_strand_button.click()
+                    self._click_with_sound(self.layer_panel.delete_strand_button)
                     event.accept()
                     return
 
@@ -2711,7 +2717,7 @@ class MainWindow(QMainWindow):
             if event.key() == Qt.Key_A and event.modifiers() == Qt.NoModifier:
                 if hasattr(self, 'layer_panel') and self.layer_panel:
                     # Simulate button click to respect enabled/disabled state
-                    self.layer_panel.deselect_all_button.click()
+                    self._click_with_sound(self.layer_panel.deselect_all_button)
                     event.accept()
                     return
 

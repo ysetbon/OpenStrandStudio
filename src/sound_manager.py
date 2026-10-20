@@ -168,6 +168,8 @@ class SoundManager(QObject):
         self._device_timer = QTimer(self)
         self._device_timer.timeout.connect(self._check_output_device)
         self._device_timer.start(DEVICE_POLL_MS)
+        if self.enabled and self.volume:
+            self._keep_awake()  # wake the speakers now, so the first sounds play in full too
 
     @staticmethod
     def _reload(effect):
@@ -281,8 +283,10 @@ class SoundManager(QObject):
         effect = self._effects.get(cue)
         if effect is None:
             return
-        effect.setVolume(max(0, min(100, int(volume))) / 100.0)
-        self._keep_awake()
+        volume = max(0, min(100, int(volume)))
+        effect.setVolume(volume / 100.0)
+        if volume:
+            self._keep_awake()
         effect.play()
         QTimer.singleShot(400, self._apply_volume)
 

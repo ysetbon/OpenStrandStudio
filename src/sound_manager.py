@@ -93,7 +93,7 @@ SETTING_HOVER = 'SoundHover'
 # Output device
 DEVICE_POLL_MS = 1500  # how often to look for a new default output device
 STUCK_MS = 2000  # a sound still playing this long after its last play lost its device
-KEEP_AWAKE_S = 120  # how long the device keeps streaming silence after the last sound
+KEEP_AWAKE_S = 4 * 60 * 60  # how long the device keeps streaming silence after the last sound
 
 
 def sounds_dir():
@@ -117,7 +117,11 @@ def settings_file_path():
 class _Silence(QIODevice):
     """Silence streamed between sounds. Monitor speakers (HDMI, DisplayPort) fall asleep after
     a moment without audio and swallow the start of the next sound, which for a short UI
-    sound is most or all of it."""
+    sound is most or all of it. Some take pure zeros for no audio, so 50 times a second one
+    sample is the smallest step above zero (1/32768 of full scale, -90 dB), which no one hears."""
+
+    # 16-bit mono at 44.1 kHz: +1, then -1 1/50 s later
+    TICKS = b'\x01\x00' + bytes(1762) + b'\xff\xff' + bytes(1762)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -126,7 +130,10 @@ class _Silence(QIODevice):
 
     def readData(self, maxlen):
         # out of data once the time is up: the output goes idle and is stopped
-        return bytes(maxlen) if time.monotonic() < self.until else b''
+        if time.monotonic() >= self.until:
+            return b''
+        start = self.pos() % len(self.TICKS)
+        return (self.TICKS * (2 + maxlen // len(self.TICKS)))[start:start + maxlen]
 
     def writeData(self, data):
         return 0
@@ -140,6 +147,8 @@ class SoundManager(QObject):
         self.hover_enabled = True
         self._effects = {}
         self._last_played = {}
+        self._silence = _Silence(self)
+        self._silence_output = None
         self._load_settings()
         if QSoundEffect is None:
             return
@@ -151,8 +160,6 @@ class SoundManager(QObject):
                 effect.setSource(QUrl.fromLocalFile(path))
                 self._effects[cue] = effect
         self._apply_volume()
-        self._silence = _Silence(self)
-        self._silence_output = None
         self._silence_moved = (0, 0.0)  # its last processedUSecs() and when that changed
         # On macOS a sound keeps the output device that was the default when it loaded (on
         # Windows Qt opens the current default for every play), and Qt5 has no signal for a
@@ -177,11 +184,13 @@ class SoundManager(QObject):
         self._drop_silence()
         for effect in self._effects.values():
             self._reload(effect)
+        if time.monotonic() < self._silence.until:
+            self._keep_awake(self._silence.until)  # keep the new device awake until the same time
 
-    def _keep_awake(self):
-        """Stream silence until KEEP_AWAKE_S from now, so the next sound plays in full."""
+    def _keep_awake(self, until=None):
+        """Stream silence until KEEP_AWAKE_S from now (or until), so the next sound plays in full."""
         now = time.monotonic()
-        self._silence.until = now + KEEP_AWAKE_S
+        self._silence.until = now + KEEP_AWAKE_S if until is None else until
         output = self._silence_output
         if output is not None and output.state() != QAudio.StoppedState:
             done = output.processedUSecs()
@@ -201,6 +210,7 @@ class SoundManager(QObject):
             self._silence_output = QAudioOutput(fmt, self)
             self._silence_output.stateChanged.connect(self._on_silence_state)
         self._silence_moved = (0, now)
+        self._silence.seek(0)  # start on a whole sample
         self._silence_output.start(self._silence)
         if self._silence_output.state() == QAudio.StoppedState:
             self._drop_silence()  # no device to open; try again with the next sound
@@ -254,10 +264,14 @@ class SoundManager(QObject):
 
     def set_enabled(self, enabled):
         self.enabled = bool(enabled)
+        if not self.enabled:
+            self._silence.until = 0  # sounds off: let the device (and the computer) sleep
 
     def set_volume(self, volume):
         self.volume = max(0, min(100, int(volume)))
         self._apply_volume()
+        if self.volume == 0:
+            self._silence.until = 0
 
     def set_hover_enabled(self, enabled):
         self.hover_enabled = bool(enabled)

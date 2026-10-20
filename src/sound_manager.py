@@ -23,19 +23,16 @@ import sys
 import time
 import weakref
 
-from PyQt5.QtCore import QObject, QEvent, Qt, QTimer, QUrl
+from PyQt5.QtCore import QIODevice, QObject, QEvent, Qt, QTimer, QUrl
 from PyQt5.QtWidgets import (
     QAbstractButton, QAbstractItemView, QAbstractSlider, QApplication, QCheckBox, QComboBox,
     QDialog, QMenu, QMessageBox, QStyle, QStyleOptionComboBox, QWidgetAction,
 )
 
 try:
-    from PyQt5.QtMultimedia import QAudioDeviceInfo, QAudio, QSoundEffect
+    from PyQt5.QtMultimedia import QAudio, QAudioDeviceInfo, QAudioFormat, QAudioOutput, QSoundEffect
 except ImportError:  # QtMultimedia missing: the app runs silently
     QSoundEffect = None
-    QAudioDeviceInfo = None
-
-DEVICE_POLL_MS = 1500  # how often to check whether the Windows output device changed
 
 
 # cue -> minimum gap in ms between two plays of the same cue
@@ -93,6 +90,11 @@ SETTING_ENABLED = 'SoundEnabled'
 SETTING_VOLUME = 'SoundVolume'
 SETTING_HOVER = 'SoundHover'
 
+# Output device
+DEVICE_POLL_MS = 1500  # how often to look for a new default output device
+STUCK_MS = 2000  # a sound still playing this long after its last play lost its device
+KEEP_AWAKE_S = 120  # how long the device keeps streaming silence after the last sound
+
 
 def sounds_dir():
     if getattr(sys, 'frozen', False):
@@ -112,6 +114,24 @@ def settings_file_path():
     return os.path.join(base, app_name, 'user_settings.txt')
 
 
+class _Silence(QIODevice):
+    """Silence streamed between sounds. Monitor speakers (HDMI, DisplayPort) fall asleep after
+    a moment without audio and swallow the start of the next sound, which for a short UI
+    sound is most or all of it."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.until = 0.0
+        self.open(QIODevice.ReadOnly | QIODevice.Unbuffered)
+
+    def readData(self, maxlen):
+        # out of data once the time is up: the output goes idle and is stopped
+        return bytes(maxlen) if time.monotonic() < self.until else b''
+
+    def writeData(self, data):
+        return 0
+
+
 class SoundManager(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -123,28 +143,6 @@ class SoundManager(QObject):
         self._load_settings()
         if QSoundEffect is None:
             return
-        self._device_key = self._output_devices()
-        self._build_effects()
-        # Qt5 has no "output device changed" signal, and a QSoundEffect stays on the device it
-        # was created for, so poll and rebuild the effects when the default device changes.
-        self._device_timer = QTimer(self)
-        self._device_timer.timeout.connect(self._check_output_device)
-        self._device_timer.start(DEVICE_POLL_MS)
-
-    @staticmethod
-    def _output_devices():
-        try:
-            default = QAudioDeviceInfo.defaultOutputDevice().deviceName()
-            names = tuple(d.deviceName() for d in QAudioDeviceInfo.availableDevices(QAudio.AudioOutput))
-        except Exception:
-            return None
-        return default, names
-
-    def _build_effects(self):
-        for effect in self._effects.values():
-            effect.stop()
-            effect.deleteLater()
-        self._effects = {}
         folder = sounds_dir()
         for cue in CUES:
             path = os.path.join(folder, f'{cue}.wav')
@@ -153,12 +151,72 @@ class SoundManager(QObject):
                 effect.setSource(QUrl.fromLocalFile(path))
                 self._effects[cue] = effect
         self._apply_volume()
+        self._silence = _Silence(self)
+        self._silence_output = None
+        self._silence_moved = (0, 0.0)  # its last processedUSecs() and when that changed
+        # On macOS a sound keeps the output device that was the default when it loaded (on
+        # Windows Qt opens the current default for every play), and Qt5 has no signal for a
+        # new default, so look for one.
+        self._device = QAudioDeviceInfo.defaultOutputDevice()
+        self._device_timer = QTimer(self)
+        self._device_timer.timeout.connect(self._check_output_device)
+        self._device_timer.start(DEVICE_POLL_MS)
+
+    @staticmethod
+    def _reload(effect):
+        """Give an effect a new audio output, on the current default device."""
+        source = effect.source()
+        effect.setSource(QUrl())
+        effect.setSource(source)
 
     def _check_output_device(self):
-        key = self._output_devices()
-        if key is not None and key != self._device_key:
-            self._device_key = key
-            self._build_effects()
+        device = QAudioDeviceInfo.defaultOutputDevice()
+        if device.isNull() or device == self._device:
+            return
+        self._device = device
+        self._drop_silence()
+        for effect in self._effects.values():
+            self._reload(effect)
+
+    def _keep_awake(self):
+        """Stream silence until KEEP_AWAKE_S from now, so the next sound plays in full."""
+        now = time.monotonic()
+        self._silence.until = now + KEEP_AWAKE_S
+        output = self._silence_output
+        if output is not None and output.state() != QAudio.StoppedState:
+            done = output.processedUSecs()
+            if done != self._silence_moved[0]:
+                self._silence_moved = (done, now)
+            if now - self._silence_moved[1] < 1:
+                return
+            self._drop_silence()  # stopped moving: its device went away
+        if self._silence_output is None:
+            fmt = QAudioFormat()
+            fmt.setSampleRate(44100)
+            fmt.setChannelCount(1)
+            fmt.setSampleSize(16)
+            fmt.setCodec('audio/pcm')
+            fmt.setByteOrder(QAudioFormat.LittleEndian)
+            fmt.setSampleType(QAudioFormat.SignedInt)
+            self._silence_output = QAudioOutput(fmt, self)
+            self._silence_output.stateChanged.connect(self._on_silence_state)
+        self._silence_moved = (0, now)
+        self._silence_output.start(self._silence)
+        if self._silence_output.state() == QAudio.StoppedState:
+            self._drop_silence()  # no device to open; try again with the next sound
+
+    def _on_silence_state(self, state):
+        # the signal can arrive late (PulseAudio sends it from its own thread)
+        output = self._silence_output
+        if output is not None and output.state() == QAudio.IdleState:
+            output.stop()
+
+    def _drop_silence(self):
+        if self._silence_output is not None:
+            self._silence_output.stateChanged.disconnect(self._on_silence_state)
+            self._silence_output.stop()  # deleting a running output can crash Qt's PulseAudio backend
+            self._silence_output.deleteLater()
+            self._silence_output = None
 
     def _load_settings(self):
         path = settings_file_path()
@@ -210,6 +268,7 @@ class SoundManager(QObject):
         if effect is None:
             return
         effect.setVolume(max(0, min(100, int(volume))) / 100.0)
+        self._keep_awake()
         effect.play()
         QTimer.singleShot(400, self._apply_volume)
 
@@ -222,9 +281,15 @@ class SoundManager(QObject):
         if effect is None:
             return
         now = time.monotonic() * 1000
-        if now - self._last_played.get(cue, -1e9) < CUES.get(cue, 40):
+        last = self._last_played.get(cue, -1e9)
+        if now - last < CUES.get(cue, 40):
             return
         self._last_played[cue] = now
+        if effect.isPlaying() and now - last > STUCK_MS:
+            # its output lost the device mid-sound and never finished, which would keep
+            # this sound silent from now on
+            self._reload(effect)
+        self._keep_awake()
         effect.play()
 
 

@@ -467,10 +467,14 @@ class RotateMode:
         self.total_delta += turn
         self.play_pin_sound(math.degrees(math.atan2(old_vector.y(), old_vector.x())), math.degrees(turn))
 
-        # Update control points based on the rotation
-        self.rotate_control_point(self.affected_strand.control_point1, rotation_angle)
-        self.rotate_control_point(self.affected_strand.control_point2, rotation_angle)
-        
+        # Update control points based on the rotation. One that sat on the moved end is now that
+        # same point (the strand's start setter shares it), so it has already moved: turning it
+        # again would turn the end two or three times as far, skipping pin ticks
+        moved_end = self.affected_strand.start if self.rotating_side == 0 else self.affected_strand.end
+        for control_point in (self.affected_strand.control_point1, self.affected_strand.control_point2):
+            if control_point is not moved_end:
+                self.rotate_control_point(control_point, rotation_angle)
+
         # Also rotate the control_point_center if it exists
         if hasattr(self.affected_strand, 'control_point_center'):
             self.rotate_control_point(self.affected_strand.control_point_center, rotation_angle)
@@ -484,12 +488,18 @@ class RotateMode:
 
     def play_pin_sound(self, old_degrees, delta_degrees):
         """Tick when the end's angle reaches a pin on the dial ring (every 15 degrees; 0, 90, 180 and -90 are the long pins)."""
-        old_pin = math.floor(old_degrees / 15)
-        new_pin = math.floor((old_degrees + delta_degrees) / 15)
+        # Round toward where the angle came from, so reaching a pin ticks and leaving it does not
+        new_degrees = old_degrees + delta_degrees
+        if delta_degrees > 0:
+            old_pin, new_pin = math.floor(old_degrees / 15), math.floor(new_degrees / 15)
+        else:
+            old_pin, new_pin = math.ceil(old_degrees / 15), math.ceil(new_degrees / 15)
         if old_pin == new_pin:
             return
-        pin_degrees = (new_pin if delta_degrees > 0 else old_pin) * 15
-        sound_manager.play('dial_pin_quarter' if pin_degrees % 90 == 0 else 'dial_pin')
+        # One tick per move; a long pin among the pins passed wins (every 6th pin is 90 degrees)
+        step = 1 if new_pin > old_pin else -1
+        long_pin = any(pin % 6 == 0 for pin in range(old_pin + step, new_pin + step, step))
+        sound_manager.play('dial_pin_quarter' if long_pin else 'dial_pin')
 
     def update_control_points_proportionally(self, old_start, old_end, new_start, new_end):
         """

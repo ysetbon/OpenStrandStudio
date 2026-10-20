@@ -92,6 +92,7 @@ SETTING_HOVER = 'SoundHover'
 
 # Output device
 DEVICE_POLL_MS = 1500  # how often to look for a new default output device
+WATCH_DEVICE = sys.platform == 'darwin'  # whether to look at all (see SoundManager.__init__)
 STUCK_MS = 2000  # a sound still playing this long after its last play lost its device
 KEEP_AWAKE_S = 4 * 60 * 60  # how long the device keeps streaming silence after the last sound
 
@@ -161,13 +162,16 @@ class SoundManager(QObject):
                 self._effects[cue] = effect
         self._apply_volume()
         self._silence_moved = (0, 0.0)  # its last processedUSecs() and when that changed
-        # On macOS a sound keeps the output device that was the default when it loaded (on
-        # Windows Qt opens the current default for every play), and Qt5 has no signal for a
-        # new default, so look for one.
+        # On macOS a sound keeps the output device that was the default when it loaded, and Qt5
+        # has no signal for a new default, so look for one (now and then, and before each sound).
+        # Elsewhere sounds follow the default by themselves: on Windows Qt opens the current
+        # default for every play and only ever reports "Default Output Device", so looking there
+        # finds nothing and costs a round of driver queries; PulseAudio moves the streams itself.
         self._device = QAudioDeviceInfo.defaultOutputDevice()
         self._device_timer = QTimer(self)
         self._device_timer.timeout.connect(self._check_output_device)
-        self._device_timer.start(DEVICE_POLL_MS)
+        if WATCH_DEVICE:
+            self._device_timer.start(DEVICE_POLL_MS)
         if self.enabled and self.volume:
             self._keep_awake()  # wake the speakers now, so the first sounds play in full too
 
@@ -284,6 +288,8 @@ class SoundManager(QObject):
         if effect is None:
             return
         volume = max(0, min(100, int(volume)))
+        if WATCH_DEVICE:
+            self._check_output_device()
         effect.setVolume(volume / 100.0)
         if volume:
             self._keep_awake()
@@ -303,6 +309,8 @@ class SoundManager(QObject):
         if now - last < CUES.get(cue, 40):
             return
         self._last_played[cue] = now
+        if WATCH_DEVICE:
+            self._check_output_device()  # a switch since the last look: move the sounds first
         if effect.isPlaying() and now - last > STUCK_MS:
             # its output lost the device mid-sound and never finished, which would keep
             # this sound silent from now on

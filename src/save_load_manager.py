@@ -6,6 +6,7 @@ from strand import Strand
 from attached_strand import AttachedStrand
 from masked_strand import MaskedStrand
 from end_style import serialize_end_styles, deserialize_end_styles
+from project_settings import PROJECT_SETTINGS_KEY
 import sys
 
 
@@ -391,8 +392,10 @@ def serialize_project_state(strands, groups, canvas):
     return data
 
 
-def save_strands(strands, groups, filename, canvas):
+def save_strands(strands, groups, filename, canvas, project_settings=None):
     data = serialize_project_state(strands, groups, canvas)
+    if project_settings is not None:
+        data[PROJECT_SETTINGS_KEY] = project_settings  # project files only, never undo states
 
     try:
         with open(filename, 'w') as f:

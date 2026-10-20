@@ -15,6 +15,7 @@ from PyQt5.QtCore import QObject, pyqtSignal, Qt
 from PyQt5.QtWidgets import QMessageBox
 
 from save_load_manager import serialize_project_state, apply_project_state
+from project_settings import capture_project_settings, apply_project_settings
 from translations import translations
 
 
@@ -26,6 +27,9 @@ class TabSession:
     dirty: bool = False
     project_state: Optional[dict] = None
     history_payload: Optional[dict] = None
+    # The drawing settings (curvature, shadow, arrows, ...) this tab uses. None
+    # for a tab never shown yet: it starts from the app's own settings.
+    project_settings: Optional[dict] = None
     # When set, this is an unsaved "Untitled N" tab whose title is derived from
     # the current language (so it re-translates when the language changes). Tabs
     # with a file or a custom (renamed/duplicated) title leave this as None.
@@ -90,6 +94,10 @@ class TabManager(QObject):
         lp = getattr(self.main_window, 'layer_panel', None)
         return getattr(lp, 'undo_redo_manager', None)
 
+    @property
+    def settings_dialog(self):
+        return getattr(self.main_window, 'settings_dialog', None)
+
     def find(self, tab_id):
         for t in self.tabs:
             if t.id == tab_id:
@@ -135,6 +143,11 @@ class TabManager(QObject):
             except Exception:
                 active.project_state = None
                 ok = False
+            try:
+                active.project_settings = capture_project_settings(
+                    self.canvas, self.settings_dialog)
+            except Exception:
+                pass  # the tab keeps the settings it had
         finally:
             self._busy = prev_busy
         return ok
@@ -154,6 +167,21 @@ class TabManager(QObject):
         return False
 
     # -------------------------------------------------------------- restoring
+    def _apply_session_settings(self, session):
+        """Switch the drawing settings to the ones ``session`` uses, or to the
+        app's own settings for a tab that has none yet. Done before the strands
+        are loaded so they are built with the right curvature and shadow."""
+        dialog = self.settings_dialog
+        settings = session.project_settings if session is not None else None
+        if settings is None and dialog is not None:
+            settings = getattr(dialog, 'app_project_settings', None)
+        if settings is None:
+            return
+        try:
+            apply_project_settings(self.canvas, settings, dialog)
+        except Exception:
+            pass
+
     def restore_session(self, tab_id):
         """Load the given tab's serialized state back into the live canvas."""
         session = self.find(tab_id)
@@ -162,6 +190,7 @@ class TabManager(QObject):
         prev_busy = self._busy
         self._busy = True
         try:
+            self._apply_session_settings(session)
             undo = self.undo_mgr
             payload = session.history_payload
             loaded = False
@@ -278,6 +307,7 @@ class TabManager(QObject):
         session = self._make_untitled_session()
         self.tabs.append(session)
         self.active_tab_id = session.id
+        self._apply_session_settings(session)
         self._load_empty_workspace()
         self.changed.emit()
 
@@ -296,6 +326,7 @@ class TabManager(QObject):
             dirty=True,
             project_state=copy.deepcopy(src.project_state),
             history_payload=copy.deepcopy(src.history_payload),
+            project_settings=copy.deepcopy(src.project_settings),
         )
         idx = self.tabs.index(src)
         self.tabs.insert(idx + 1, session)
@@ -380,6 +411,7 @@ class TabManager(QObject):
             fresh = self._make_untitled_session()
             self.tabs.append(fresh)
             self.active_tab_id = fresh.id
+            self._apply_session_settings(fresh)
             self._load_empty_workspace()
         elif closing_active:
             # Closed the tab that was live: fall back to a neighbor.

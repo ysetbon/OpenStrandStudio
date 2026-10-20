@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import json
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
     QSplitter, QFileDialog, QScrollArea, QMessageBox
@@ -20,6 +21,7 @@ from layer_panel import LayerPanel
 from attached_strand import AttachedStrand
 from masked_strand import MaskedStrand
 from save_load_manager import save_strands, load_strands, apply_loaded_strands
+from project_settings import capture_project_settings, read_project_settings, apply_project_settings
 from mask_mode import MaskMode
 from group_layers import GroupLayerManager, StrandAngleEditDialog
 from settings_dialog import SettingsDialog
@@ -2046,16 +2048,30 @@ class MainWindow(QMainWindow):
         if not filename:
             return
 
+        try:
+            with open(filename, 'r', encoding='utf-8') as f:
+                file_data = json.load(f)
+        except Exception:
+            file_data = None
+
+        # Switch to the drawing settings saved with the project before its strands
+        # are built, so curves and shadows come out as they were saved. Older
+        # files have none and keep the current settings.
+        project_settings = read_project_settings(file_data)
+        previous_settings = None
+        if project_settings is not None:
+            previous_settings = capture_project_settings(self.canvas, self.settings_dialog)
+            apply_project_settings(self.canvas, project_settings, self.settings_dialog)
 
         # First try to treat the file as a full history export
         undo_mgr = getattr(self.layer_panel, 'undo_redo_manager', None)
         history_loaded = False
-        if undo_mgr:
+        if undo_mgr and isinstance(file_data, dict):
             try:
                 # Reset shadow button before loading history so it aligns with loaded state
                 self.toggle_shadow_button.setChecked(False)
                 self.canvas.shadow_enabled = False
-                history_loaded = undo_mgr.import_history(filename)
+                history_loaded = undo_mgr.import_history_payload(file_data)
             except Exception as e:
                 pass
                 history_loaded = False
@@ -2130,7 +2146,9 @@ class MainWindow(QMainWindow):
                 self.tab_manager.mark_active_saved(filename)
 
         except Exception as e:
-            pass
+            # Nothing was loaded: the open project keeps its own settings.
+            if previous_settings is not None:
+                apply_project_settings(self.canvas, previous_settings, self.settings_dialog)
             # You might want to show an error dialog to the user here
 
     def show_layer_state_log(self):
@@ -3036,14 +3054,17 @@ class MainWindow(QMainWindow):
         # restored on load.  If that fails for any reason we fall back to
         # saving just the current canvas state (previous behaviour).
         undo_mgr = getattr(self.layer_panel, 'undo_redo_manager', None)
+        # The drawing settings go into the file so it opens looking the same.
+        project_settings = capture_project_settings(self.canvas, self.settings_dialog)
         saved = False
-        if undo_mgr and undo_mgr.export_history(filename):
+        if undo_mgr and undo_mgr.export_history(filename, project_settings=project_settings):
             saved = True
         else:
             # Fallback: save only the current snapshot
             try:
                 groups = self.group_layer_manager.get_group_data()
-                save_strands(self.canvas.strands, groups, filename, self.canvas)
+                save_strands(self.canvas.strands, groups, filename, self.canvas,
+                             project_settings=project_settings)
                 saved = True
             except Exception:
                 saved = False

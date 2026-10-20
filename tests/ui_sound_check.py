@@ -16,11 +16,13 @@ Covered:
   * every button in the main window and the layer panel (click and hover)
   * every sub-window: open/close and every checkbox, toggle, slider,
     dropdown, +/- stepper and button inside it
-  * canvas: drawing a new strand, attaching, dragging, grid snapping, hover
-  * keyboard shortcuts, tabs, right-click menus, warnings, saving
+  * canvas: drawing a new strand, attaching, dragging, rotating past the
+    dial's pins, grid snapping, hover
+  * keyboard shortcuts, tabs, right-clicks and right-click menus, warnings, saving
   * the Sound settings (off, volume 0, hover off) and repeat limits
 """
 import json
+import math
 import os
 import re
 import runpy
@@ -64,7 +66,8 @@ from PyQt5.QtMultimedia import QSoundEffect  # noqa: E402
 from PyQt5.QtTest import QTest  # noqa: E402
 from PyQt5.QtWidgets import (QAbstractButton, QAbstractSlider, QApplication, QCheckBox,  # noqa: E402
                              QComboBox, QDialog, QFileDialog, QListWidget, QMenu, QMessageBox,
-                             QPushButton, QToolButton, QWidget, QWidgetAction)
+                             QPushButton, QStyle, QStyleOptionComboBox, QToolButton, QWidget,
+                             QWidgetAction)
 
 # The settings dialog also writes a copy into the repository: back it up and restore it.
 USER_SETTINGS_COPY = REPO / "user_settings.txt"
@@ -73,7 +76,7 @@ USER_SETTINGS_BACKUP = USER_SETTINGS_COPY.read_bytes() if USER_SETTINGS_COPY.exi
 RESULTS = []
 HOVER_CUES = {"hover_toolbar", "hover_panel_top", "hover_layer", "hover_level", "hover_level_fold", "hover_panel_bottom", "hover_group",
               "hover_dialog", "hover_menu", "hover_menu_group", "hover_menu_level", "hover_settings", "hover_strand", "hover_attach_point",
-              "hover_move_point"}
+              "hover_move_point", "hover_rotate_point", "hover_combo", "hover_dropdown", "hover_tab", "hover_tab_button"}
 STEPPER_TEXT = {"+", "++", "-", "--", "−", "−−"}
 
 
@@ -235,6 +238,61 @@ def click(widget, pos=None):
     if pos is None:
         pos = widget.rect().center()
     QTest.mouseClick(widget, Qt.LeftButton, Qt.NoModifier, pos)
+
+
+OPEN_LISTS = {}  # dropdown -> its open list, kept open for the pick check until close_dropdown()
+
+
+def dropdown_arrow(combo):
+    """Centre of a dropdown's arrow section."""
+    option = QStyleOptionComboBox()
+    combo.initStyleOption(option)
+    arrow = combo.style().subControlRect(QStyle.CC_ComboBox, option, QStyle.SC_ComboBoxArrow, combo)
+    return arrow.center() if arrow.isValid() else combo.rect().center()
+
+
+def open_dropdown(combo):
+    """Click a dropdown's arrow like a user: press, then release in place. The list opens on
+    the press, so the release lands in it, as it does with a real pointer. (Only the arrow opens
+    an editable dropdown.)"""
+    pos = dropdown_arrow(combo) if combo.isEditable() else combo.rect().center()
+    QTest.mousePress(combo, Qt.LeftButton, Qt.NoModifier, pos)
+    popup = QApplication.activePopupWidget()
+    if popup is not None and WATCHER is not None:
+        # Qt created the list, so PyQt gives it a new wrapper with a new id() once nothing
+        # holds this one: hold it while its id is in keep
+        WATCHER.keep.add(id(popup))
+        OPEN_LISTS[combo] = popup
+    pump(120)
+    target = popup if popup is not None else combo
+    receiver = target.childAt(target.mapFromGlobal(combo.mapToGlobal(pos))) or target
+    QTest.mouseRelease(receiver, Qt.LeftButton, Qt.NoModifier, receiver.mapFromGlobal(combo.mapToGlobal(pos)))
+
+
+def close_dropdown(combo):
+    combo.hidePopup()
+    popup = OPEN_LISTS.pop(combo, None)
+    if popup is not None and WATCHER is not None:
+        WATCHER.keep.discard(id(popup))
+
+
+def check_dropdown(rec, area, name, combo):
+    """Use a dropdown like a user: point at its arrow, open the list, point at the current
+    value and pick it."""
+    run_check(rec, area, name, "pointer reaches the arrow",
+              lambda: (QTest.mouseMove(combo.window(), QPoint(1, 1)), pump(30), QTest.mouseMove(combo, dropdown_arrow(combo))),
+              "hover_combo")
+    run_check(rec, area, name, "open", lambda: open_dropdown(combo), exact=["menu_open"],
+              note="the opening click picks nothing")
+    view = combo.view()
+    rect = view.visualRect(combo.model().index(combo.currentIndex(), 0))
+    if view.isVisible() and rect.isValid():
+        run_check(rec, area, name, "pointer reaches the current value", lambda: QTest.mouseMove(view.viewport(), rect.center()),
+                  "hover_dropdown")
+        pump(QApplication.doubleClickInterval() + 100)  # Qt ignores a release right after it opens
+        run_check(rec, area, name, "pick the current value", lambda: click(view.viewport(), rect.center()),
+                  exact=["dropdown_pick"])
+    close_dropdown(combo)
 
 
 def checkbox_pos(cb):
@@ -432,6 +490,11 @@ def check_canvas(w, rec):
         click(w.toggle_control_points_button)
         pump(150)
 
+    # 3b. rotate mode, then back to Move mode
+    check_rotate(w, rec)
+    click(w.move_button)
+    pump(200)
+
     # 4. keyboard shortcuts
     run_check(rec, "Keyboard", "Z", "undo the move", lambda: QTest.keyClick(canvas, Qt.Key_Z), "undo")
     run_check(rec, "Keyboard", "X", "redo the move", lambda: QTest.keyClick(canvas, Qt.Key_X), "redo")
@@ -446,6 +509,69 @@ def check_canvas(w, rec):
     run_check(rec, "Keyboard", "N", "new strand shortcut", lambda: QTest.keyClick(w, Qt.Key_N), "new_strand")
     w.canvas.set_mode("select")
     pump(100)
+
+
+def check_rotate(w, rec):
+    """Rotate mode: a free strand end's triangle hovers, grabs and lets go with its own sounds,
+    and turning the end ticks at each pin of the dial it reaches (every 15 degrees), with a
+    longer tick at 0, 90, 180 and -90 degrees."""
+    canvas = w.canvas
+    rm = canvas.rotate_mode
+    click(w.rotate_button)
+    pump(200)
+    end = next(((s, side) for s in canvas.strands if rm.can_rotate_strand(s)
+                for side in (1, 0) if not s.has_circles[side]), None)
+    if end is None:
+        record("Rotate mode", "strand end", "grab", "a free strand end", "-", False, "no strand end to rotate")
+        return
+    strand, side = end
+    tip, pivot = (strand.end, strand.start) if side == 1 else (strand.start, strand.end)
+    radius = math.hypot(tip.x() - pivot.x(), tip.y() - pivot.y())
+    start = math.degrees(math.atan2(tip.y() - pivot.y(), tip.x() - pivot.x()))
+
+    def at(degrees):
+        """The screen point at this angle on the circle the end turns on."""
+        a = math.radians(degrees)
+        return canvas.canvas_to_screen(QPointF(pivot.x() + radius * math.cos(a),
+                                               pivot.y() + radius * math.sin(a))).toPoint()
+
+    def turn(a, b):
+        """Drag the end from angle a to angle b in steps of at most 10 degrees, so each step
+        reaches at most one pin, and let the eased end catch up with the pointer after each."""
+        steps = max(1, math.ceil(abs(b - a) / 10))
+        for i in range(1, steps + 1):
+            mouse(canvas, QEvent.MouseMove, at(a + (b - a) * i / steps), buttons=Qt.LeftButton)
+            pump(300)
+
+    grab = at(start)
+    run_check(rec, "Rotate mode", "strand end", "pointer reaches its triangle",
+              lambda: (mouse(canvas, QEvent.MouseMove, grab + QPoint(40, 40)), pump(60),
+                       mouse(canvas, QEvent.MouseMove, grab)), "hover_rotate_point")
+    run_check(rec, "Rotate mode", "strand end", "press to grab", lambda: mouse(canvas, QEvent.MouseButtonPress, grab),
+              "rotate_grab")
+    long_pin = 90 * (math.floor(start / 90) + 1)  # the next long pin up from where the end starts
+    run_check(rec, "Rotate mode", "strand end", "turn it onto a long pin", lambda: turn(start, long_pin + 3),
+              "dial_pin_quarter")
+    run_check(rec, "Rotate mode", "strand end", "turn it past the next pin", lambda: turn(long_pin + 3, long_pin + 20),
+              "dial_pin", forbidden=("dial_pin_quarter",))
+    run_check(rec, "Rotate mode", "strand end", "let go",
+              lambda: mouse(canvas, QEvent.MouseButtonRelease, at(long_pin + 20), buttons=Qt.NoButton), "rotate_release")
+
+
+def check_right_click(w, rec):
+    """A right-click on a top layer panel button or on Undo/Redo plays its own sound (and shows
+    the button's explanation)."""
+    from layer_panel import TooltipButton
+    lp = w.layer_panel
+    um = lp.undo_redo_manager
+    buttons = [b for b in lp.findChildren(TooltipButton) if b.isVisible() and b.isEnabled()][:1]
+    buttons += [b for b in (um.undo_button, um.redo_button) if b.isVisible() and b.isEnabled()]
+    for b in buttons:
+        run_check(rec, "Right-click", label(b), "right-click", lambda b=b: QTest.mouseClick(b, Qt.RightButton),
+                  exact=["right_click"])
+    for t in QApplication.topLevelWidgets():  # the explanations hide on a timer; hide them now
+        if type(t).__name__ == "CustomTooltip":
+            t.hide()
 
 
 def expected_main_cue(w, b, checked_after):
@@ -564,6 +690,8 @@ def expected_hover_cue(w, b):
         return "hover_level"  # the hover moves onto the name, not the fold control
     if isinstance(b, NumberedLayerButton):
         return "hover_layer"
+    if b is lp.strands_tab_button or b is lp.masks_tab_button:
+        return "hover_tab"
     areas = [((lp.top_header, lp.zoom_panel, lp.refresh_panel), "hover_panel_top"),
              ((lp.delete_strand_button.parentWidget(),), "hover_panel_bottom"),
              ((lp.right_panel,), "hover_group")]
@@ -624,14 +752,7 @@ def sweep_dialog(rec, w, make, area, colour):
                           if c.orientation() == Qt.Horizontal else QPoint(c.width() // 2, 4)), "snap_grid")
                 c.setValue(value)
             elif isinstance(c, QComboBox):
-                run_check(rec, area, name, "open", lambda: QTest.mousePress(c, Qt.LeftButton), "menu_open")
-                view = c.view()
-                index = c.model().index(c.currentIndex(), 0)
-                rect = view.visualRect(index)
-                if view.isVisible() and rect.isValid():
-                    run_check(rec, area, name, "pick the current value",
-                              lambda: click(view.viewport(), rect.center()), "ui_click")
-                c.hidePopup()
+                check_dropdown(rec, area, name, c)
             elif stepper_cue(c):
                 run_check(rec, area, name, "click", lambda: click(c), stepper_cue(c))
             elif c.isCheckable():
@@ -882,6 +1003,9 @@ def check_level_menu(w, rec):
         record("Level menu", "level row", "right-click", "a level row", "-", False, "no level row to right-click")
         return
     lp.scroll_area.ensureWidgetVisible(button)
+    # keep the pointer off the place the menus open: a row under it lights up, and sounds, as a
+    # menu opens, before the check highlights it
+    QTest.mouseMove(w, QPoint(1, 1))
     pump(150)
 
     def row(menu, key):
@@ -1012,7 +1136,7 @@ def check_settings(w, rec):
     if button is not None:
         run_check(rec, "Settings", label(button), "pointer enters it",
                   lambda: QApplication.sendEvent(button, QEvent(QEvent.Enter)), "hover_settings")
-    check_row_hover(rec, "Settings sidebar", sd.categories_list, "hover_settings")
+    check_row_hover(rec, "Settings sidebar", sd.categories_list, "hover_tab")
     lst = sd.categories_list
     skip_pages = set()
     for i in range(lst.count()):
@@ -1069,13 +1193,7 @@ def sweep_page(rec, w, sd, page, area, reopen):
                           "snap_grid")
                 c.setValue(value)
             elif isinstance(c, QComboBox):
-                run_check(rec, area, name, "open", lambda: QTest.mousePress(c, Qt.LeftButton), "menu_open")
-                view = c.view()
-                rect = view.visualRect(c.model().index(c.currentIndex(), 0))
-                if view.isVisible() and rect.isValid():
-                    run_check(rec, area, name, "pick the current value", lambda: click(view.viewport(), rect.center()),
-                              "ui_click")
-                c.hidePopup()
+                check_dropdown(rec, area, name, c)
             elif stepper_cue(c):
                 run_check(rec, area, name, "click", lambda: click(c), stepper_cue(c))
             elif c.isCheckable():
@@ -1211,7 +1329,13 @@ def check_tabs(w, rec):
         record("Tabs", "tab bar", "shown", "visible", "hidden", False)
         return
     plus = edge.plus_btn
-    run_check(rec, "Tabs", "+ (new tab)", "click", lambda: click(plus), "new_strand")
+
+    def hover(button, name):
+        run_check(rec, "Tabs", name, "pointer enters it",
+                  lambda: (QTest.mouseMove(w, QPoint(1, 1)), pump(30), QTest.mouseMove(button)), "hover_tab_button")
+
+    hover(plus, "+ (new tab)")
+    run_check(rec, "Tabs", "+ (new tab)", "click", lambda: click(plus), "tab_new")
     pump(300)
     chips = [c for c in edge.findChildren(TabChip) if c.isVisible()]
     if len(chips) >= 2:
@@ -1221,11 +1345,13 @@ def check_tabs(w, rec):
         chips = [c for c in edge.findChildren(TabChip) if c.isVisible()]
     dup = next((b for b in edge.findChildren(IconButton) if b.kind == "duplicate" and b.isVisible()), None)
     if dup is not None:
-        run_check(rec, "Tabs", "duplicate tab", "click", lambda: click(dup), "new_strand")
+        hover(dup, "duplicate tab")
+        run_check(rec, "Tabs", "duplicate tab", "click", lambda: click(dup), "tab_duplicate")
         pump(300)
     close = next((b for b in reversed(edge.findChildren(IconButton)) if b.kind == "close" and b.isVisible()), None)
     if close is not None:
-        run_check(rec, "Tabs", "close tab", "click", lambda: click(close), "delete",
+        hover(close, "close tab")
+        run_check(rec, "Tabs", "close tab", "click", lambda: click(close), "tab_close",
                   note="any 'unsaved changes' prompt is dismissed by the test")
         pump(300)
 
@@ -1317,6 +1443,7 @@ def run_checks(app):
     steps = [
         ("files", lambda: check_files(m)),
         ("canvas", lambda: check_canvas(w, rec)),
+        ("right-click", lambda: check_right_click(w, rec)),
         ("sample", lambda: load_sample(w)),
         ("main buttons", lambda: check_main_buttons(w, rec, set())),
         ("masks tab buttons", lambda: (click(w.layer_panel.masks_tab_button), pump(200),

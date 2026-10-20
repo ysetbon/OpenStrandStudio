@@ -172,7 +172,10 @@ class SoundManager(QObject):
                     if key == SETTING_ENABLED:
                         self.enabled = value == 'true'
                     elif key == SETTING_VOLUME:
-                        self.volume = max(0, min(100, int(float(value))))
+                        try:
+                            self.volume = max(0, min(100, int(float(value))))
+                        except (ValueError, OverflowError):
+                            pass  # a hand-edited bad value keeps the default; later lines still load
                     elif key == SETTING_HOVER:
                         self.hover_enabled = value == 'true'
         except (OSError, ValueError):
@@ -299,6 +302,7 @@ class UiSoundFilter(QObject):
         self._menu_last_action = weakref.WeakKeyDictionary()  # menu -> action last hovered
         self._view_last_row = weakref.WeakKeyDictionary()  # list/tree view -> row last hovered
         self._combo_in_arrow = weakref.WeakKeyDictionary()  # dropdown -> pointer is on its arrow section
+        self._combo_list_open = weakref.WeakSet()  # dropdowns whose list is open
 
     # -- helpers -----------------------------------------------------------
     @staticmethod
@@ -376,6 +380,23 @@ class UiSoundFilter(QObject):
         button.setProperty('_soundHooked', True)
         button.clicked.connect(lambda *_: play(cue))
 
+    def _hook_combo(self, combo):
+        # activated() is a value chosen by the user; only one chosen from the open list
+        # sounds, not the wheel or arrow keys on a closed dropdown
+        if combo.property('_soundHooked'):
+            return
+        combo.setProperty('_soundHooked', True)
+        combo.activated.connect(lambda _index, combo=combo: self._on_combo_activated(combo))
+
+    def _on_combo_activated(self, combo):
+        if combo in self._combo_list_open:
+            play('dropdown_pick')
+
+    def play_click(self, button):
+        """The sound a mouse click on button plays, for keyboard shortcuts that call click()."""
+        if button.isEnabled():
+            self._play_after_click(button)
+
     # -- event filter ------------------------------------------------------
     def eventFilter(self, obj, event):
         etype = event.type()
@@ -385,7 +406,7 @@ class UiSoundFilter(QObject):
             if etype == QEvent.MouseButtonPress and event.button() == Qt.LeftButton:
                 self._on_press(obj)
             elif etype == QEvent.MouseButtonRelease and event.button() == Qt.LeftButton:
-                self._on_release(obj)
+                self._on_release(obj, event.pos())
             elif etype == QEvent.Enter:
                 self._on_enter(obj)
             elif etype in (QEvent.MouseMove, QEvent.HoverMove):
@@ -408,8 +429,6 @@ class UiSoundFilter(QObject):
     def _on_press(self, obj):
         if isinstance(obj, QAbstractSlider):
             self._hook_slider(obj)
-        elif isinstance(obj, QComboBox) and obj.isEnabled():
-            play('menu_open')
         elif isinstance(obj, QAbstractButton) and obj.isEnabled() and self._explicit_cue(obj) is None:
             cue = self._stepper_cue(obj)
             if cue is None:
@@ -421,7 +440,7 @@ class UiSoundFilter(QObject):
                 # one sound per press for custom press-and-hold steppers
                 play(cue)
 
-    def _on_release(self, obj):
+    def _on_release(self, obj, pos):
         if isinstance(obj, QAbstractButton):
             if not obj.isEnabled() or not obj.isDown() or self._stepper_cue(obj):
                 return
@@ -433,20 +452,21 @@ class UiSoundFilter(QObject):
                 return
             self._play_after_click(obj)
             return
-        # A value picked from a dropdown's popup list
-        window = obj.window()
-        if window is not None and window.metaObject().className() == 'QComboBoxPrivateContainer':
-            play('dropdown_pick')
-            return
         # An item chosen from a context menu
         if isinstance(obj, QMenu):
             action = obj.activeAction()
             if action is not None and action.isEnabled() and action.menu() is None and not action.isSeparator():
                 play(self._menu_prop(obj, 'soundPick', 'ui_click'))
             return
+        # Custom controls (the document tabs) act only on a release over them, like buttons,
+        # and a list (the Settings sidebar) only on a release over one of its rows
         cue = self._explicit_cue(obj)
-        if cue and cue != 'none':
-            play(cue)
+        if not cue or cue == 'none' or not obj.rect().contains(pos):
+            return
+        view = obj.parentWidget()
+        if isinstance(view, QAbstractItemView) and view.viewport() is obj and not view.indexAt(pos).isValid():
+            return
+        play(cue)
 
     def _on_enter(self, obj):
         if not obj.isEnabled():
@@ -549,7 +569,13 @@ class UiSoundFilter(QObject):
         return default
 
     def _on_show(self, obj):
-        if isinstance(obj, QMessageBox):
+        if obj.metaObject().className() == 'QComboBoxPrivateContainer':  # a dropdown's list opened
+            combo = obj.parentWidget()
+            if isinstance(combo, QComboBox):
+                self._hook_combo(combo)
+                self._combo_list_open.add(combo)
+            play('menu_open')
+        elif isinstance(obj, QMessageBox):
             icon = obj.icon()
             play('denied' if icon in (QMessageBox.Warning, QMessageBox.Critical) else 'dialog_open')
         elif isinstance(obj, QDialog):
@@ -563,7 +589,12 @@ class UiSoundFilter(QObject):
                 play(self._menu_prop(obj, 'soundOpen', 'menu_open'))
 
     def _on_hide(self, obj):
-        if isinstance(obj, QDialog):
+        if obj.metaObject().className() == 'QComboBoxPrivateContainer':
+            # the list hides just before activated() reports the chosen value
+            combo = obj.parentWidget()
+            if isinstance(combo, QComboBox):
+                QTimer.singleShot(0, lambda: self._combo_list_open.discard(combo))
+        elif isinstance(obj, QDialog):
             self._closed_since_click.append(obj)
             self._play_dialog_cue(obj, 'soundClose', 'dialog_close')
 

@@ -1829,7 +1829,9 @@ class SettingsDialog(QDialog):
         # Left side: categories list
         self.categories_list = QListWidget()
         self.categories_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.categories_list.itemClicked.connect(self.change_category)
+        # The page follows the highlighted category, also when a press slides to another
+        # category or the arrow keys move the highlight
+        self.categories_list.currentRowChanged.connect(self.show_category_page)
         sound_manager.set_cue(self.categories_list.viewport(), 'tab_switch')
         sound_manager.set_hover_area(self.categories_list, 'hover_tab')
 
@@ -4869,6 +4871,10 @@ class SettingsDialog(QDialog):
     def change_category(self, item):
         index = self.categories_list.row(item)
         self.stacked_widget.setCurrentIndex(index)
+
+    def show_category_page(self, row):
+        if row >= 0 and hasattr(self, 'stacked_widget'):
+            self.stacked_widget.setCurrentIndex(row)
 
     def update_translations(self):
         if hasattr(self, 'parent_window') and hasattr(self.parent_window, 'language_code'):

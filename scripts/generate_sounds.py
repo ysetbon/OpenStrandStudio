@@ -12,8 +12,8 @@ Three steps:
 to its target length and writes 44.1 kHz 16-bit mono WAVs, and `pick` copies the chosen
 take of each cue into src/sounds/<cue>.wav. `variants` derives the blue and green toggle
 sounds from the approved ui_toggle sounds, and the mode off sounds by reversing the on sounds.
-`levels` sets the final peak of the hover sounds (run it last, after `pick` and `variants`). `soften` takes the edge off one take
-without changing its pitch.
+`levels` sets the final peak of each tuned sound (run it last, after `pick` and `variants`).
+`soften` takes the edge off one take without changing its pitch.
 
 The API key is read from ELEVENLABS_API_KEY. When that variable is unset no key header is
 sent, which is what you want behind a proxy that injects the key itself.
@@ -226,16 +226,30 @@ REVERSED_PEAK_DB = -17
 # name -> (source, semitones, peak dBFS)
 ECHOES = {"hover_strand": ("strand_select", -2, -24)}
 
-# Final peak (dBFS) of each hover sound, set by the `levels` command after everything else so the hovers
-# can be tuned apart from the prompts' target peaks above. Raised by 2 to 7 dB from the original -24 / -26.
+# Final peak (dBFS) of each sound, set by the `levels` command after everything else so the levels
+# can be tuned apart from the prompts' target peaks above. Each is the earlier peak plus a trim of
+# 1 to 7 dB. Sounds not listed (attach_complete, drag_drop, rotate_release) keep the peak they
+# were generated with.
 FINAL_PEAKS = {
-    "hover_toolbar": -19, "hover_panel_top": -19, "hover_panel_bottom": -19,
-    "hover_layer": -20, "hover_level": -20.3, "hover_level_fold": -19.2,
-    "hover_group": -20, "hover_tab": -22, "hover_tab_button": -23.8,
-    "hover_dialog": -22, "hover_settings": -20,
-    "hover_menu": -21, "hover_menu_group": -21, "hover_menu_level": -21,
-    "hover_combo": -20.9, "hover_dropdown": -20,
+    "hover_toolbar": -19, "hover_panel_top": -19, "hover_panel_bottom": -19, "hover_layer": -20,
+    "hover_level": -20.3, "hover_level_fold": -19.2, "hover_group": -20, "hover_tab": -22,
+    "hover_tab_button": -23.8, "hover_dialog": -22, "hover_settings": -20, "hover_menu": -21,
+    "hover_menu_group": -21, "hover_menu_level": -21, "hover_combo": -20.9, "hover_dropdown": -20,
     "hover_strand": -20, "hover_attach_point": -22, "hover_move_point": -22, "hover_rotate_point": -15,
+    "dial_pin": -20, "dial_pin_quarter": -20, "snap_grid": -21, "menu_open": -17, "menu_open_level": -17.8,
+    "dialog_open": -17, "dialog_close": -18, "save_done": -13, "denied": -14, "ui_click": -11,
+    "right_click": -15, "ui_toggle_on": -12, "ui_toggle_off": -12, "toggle_blue_on": -13.5,
+    "toggle_blue_off": -14.8, "toggle_green_on": -13.2, "toggle_green_off": -13.6, "toggle_shadow_on": -14,
+    "toggle_tabs_on": -13, "toggle_shadow_off": -15, "toggle_tabs_off": -13, "layer_state_on": -13,
+    "layer_state_off": -14, "toggle_points_on": -13, "toggle_points_off": -15, "toolbar_action": -13,
+    "toolbar_image": -14, "toolbar_settings": -13, "mode_view": -15, "mode_select": -13,
+    "mode_attach": -17, "mode_move": -11, "mode_rotate": -13, "mode_angle": -13, "mode_view_off": -15,
+    "mode_select_off": -11, "mode_attach_off": -12, "layer_select": -13, "level_select": -14.2,
+    "level_fold": -13.9, "new_strand": -13, "delete": -16, "group_new": -12, "group_panel_on": -14,
+    "group_panel_off": -13, "tab_switch": -13, "tab_new": -12, "tab_duplicate": -13, "tab_close": -14,
+    "undo": -13, "redo": -13, "dropdown_pick": -11, "menu_pick_level": -10.4, "stepper_plus": -14.3,
+    "stepper_minus": -14.3, "strand_select": -12, "strand_deselect": -13, "attach_start": -14,
+    "drag_pickup": -11, "rotate_grab": -12,
 }
 
 # Two-note cues built from one generated bell strike, retuned to exact pitches.
@@ -536,7 +550,7 @@ def main():
     k.add_argument("choices", nargs="+", help="cue_id=take, e.g. ui_click=2")
 
     sub.add_parser("variants", help="derive colour variants from approved sounds in src/sounds")
-    sub.add_parser("levels", help="set the final peak of the hover sounds in src/sounds")
+    sub.add_parser("levels", help="set the final peak of each tuned sound in src/sounds")
 
     f = sub.add_parser("soften", help="soften one raw take: high cut and slower attack, same pitch")
     f.add_argument("raw_mp3")

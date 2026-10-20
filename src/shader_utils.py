@@ -1651,16 +1651,22 @@ def _pair_shadow(strand, other_strand, shadow_path, canvas, layer_order, masked_
         return None
 
     # Both strands are components of the same visible mask: the mask owns
-    # their crossing.
-    part_of_same_visible_mask = False
-    for masked_info in masked_strands_map.values():
-        components = masked_info['components']
-        if this_layer in components and other_layer in components:
-            if not getattr(masked_info['masked_strand'], 'is_hidden', False):
-                part_of_same_visible_mask = True
-                break
-    if part_of_same_visible_mask and mask_lift is None:
-        return None
+    # their crossing. Where the user erased parts of the mask, the second
+    # strand stays on top and casts there as at any crossing, only not near
+    # the mask's piece, where the first strand lies above it (see _zone_of).
+    lifted_over_caster = QPainterPath()
+    if mask_lift is None:
+        for masked_info in masked_strands_map.values():
+            components = masked_info['components']
+            mask_strand = masked_info['masked_strand']
+            if (this_layer not in components or other_layer not in components
+                    or getattr(mask_strand, 'is_hidden', False)):
+                continue
+            if _whole_mask(mask_strand):
+                return None
+            zone = _zone_of(mask_strand, max_blur_radius, cache)
+            lifted_over_caster = zone if lifted_over_caster.isEmpty() else \
+                QPainterPath(lifted_over_caster).united(zone)
 
     # Quick reject using bounding rectangles
     try:
@@ -1749,6 +1755,8 @@ def _pair_shadow(strand, other_strand, shadow_path, canvas, layer_order, masked_
             # Only cut when needed: every boolean operation merges the
             # region's overlapping pieces, and the soft edge follows them.
             intersection = QPainterPath(intersection).intersected(lift[0])
+        if not lifted_over_caster.isEmpty():
+            intersection = _subtracted_checked(intersection, lifted_over_caster)
 
         # Skip shadow if there's no actual intersection between the paths
         if intersection.isEmpty():
@@ -1852,6 +1860,10 @@ def _pair_shadow(strand, other_strand, shadow_path, canvas, layer_order, masked_
             receiver_clip = _clip_off_lifted_strands(
                 other_stroke_path, canvas, lifted_near_masks, layers_between, cache)
             receiver_clip = _clip_off_hidden_rows(receiver_clip, canvas, this_layer, layers_between, cache)
+            if not lifted_over_caster.isEmpty():
+                # The blurred edge stays off the lifted part of the receiver too.
+                receiver_clip = _subtracted_checked(receiver_clip, lifted_over_caster)
+                receiver_clip.setFillRule(Qt.WindingFill)
         return {'outline': current_intersection_shadow, 'fill': current_fill_shadow,
                 'lift': lift[1] if lift is not None else None, 'receiver_path': other_stroke_path,
                 'clip': receiver_clip, 'clip_blocker': clip_blocker_path}

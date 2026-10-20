@@ -1,0 +1,677 @@
+{
+ "zigzag_chain_four_levels": {
+  "about": "An attached chain 1_1 > 1_2 > 1_3 > 1_4 zigzags under the straight 2_1, one crossing per level. Each level has its own mask: kept, right half erased, fully erased, kept.",
+  "checks": [
+   {
+    "mask": "1_1_2_1",
+    "crossing": 1,
+    "part": "lifted",
+    "caster": "2_1",
+    "receiver": "1_1",
+    "box": [
+     97,
+     237,
+     253,
+     363
+    ],
+    "exclude": [],
+    "expect": "zero"
+   },
+   {
+    "mask": "1_2_2_1",
+    "crossing": 1,
+    "part": "right",
+    "caster": "2_1",
+    "receiver": "1_2",
+    "box": [
+     325,
+     237,
+     403,
+     363
+    ],
+    "exclude": [],
+    "expect": "like_twin",
+    "tolerance": 0.03
+   },
+   {
+    "mask": "1_2_2_1",
+    "crossing": 1,
+    "part": "lifted",
+    "caster": "2_1",
+    "receiver": "1_2",
+    "box": [
+     247,
+     237,
+     325,
+     363
+    ],
+    "exclude": [],
+    "expect": "zero"
+   },
+   {
+    "mask": "1_3_2_1",
+    "crossing": 1,
+    "part": "erase",
+    "caster": "2_1",
+    "receiver": "1_3",
+    "box": [
+     397,
+     237,
+     553,
+     363
+    ],
+    "exclude": [],
+    "expect": "like_twin",
+    "tolerance": 0.01
+   },
+   {
+    "mask": "1_4_2_1",
+    "crossing": 1,
+    "part": "lifted",
+    "caster": "2_1",
+    "receiver": "1_4",
+    "box": [
+     547,
+     237,
+     703,
+     363
+    ],
+    "exclude": [],
+    "expect": "zero"
+   }
+  ],
+  "masks": [
+   "1_1_2_1",
+   "1_2_2_1",
+   "1_3_2_1",
+   "1_4_2_1"
+  ]
+ },
+ "weave_four_sets": {
+  "about": "Two horizontals (1_1, 2_1) under two verticals (3_1, 4_1). Masks lift the horizontals at two crossings; one has its top half erased, the other its left half. A diagonal 5_1 lies over everything.",
+  "checks": [
+   {
+    "mask": "1_1_3_1",
+    "crossing": 1,
+    "part": "top",
+    "caster": "3_1",
+    "receiver": "1_1",
+    "box": [
+     187,
+     157,
+     313,
+     220
+    ],
+    "exclude": [],
+    "expect": "like_twin",
+    "tolerance": 0.03
+   },
+   {
+    "mask": "1_1_3_1",
+    "crossing": 1,
+    "part": "lifted",
+    "caster": "3_1",
+    "receiver": "1_1",
+    "box": [
+     187,
+     220,
+     313,
+     283
+    ],
+    "exclude": [],
+    "expect": "zero"
+   },
+   {
+    "mask": "2_1_4_1",
+    "crossing": 1,
+    "part": "left",
+    "caster": "4_1",
+    "receiver": "2_1",
+    "box": [
+     487,
+     377,
+     550,
+     503
+    ],
+    "exclude": [],
+    "expect": "like_twin",
+    "tolerance": 0.03
+   },
+   {
+    "mask": "2_1_4_1",
+    "crossing": 1,
+    "part": "lifted",
+    "caster": "4_1",
+    "receiver": "2_1",
+    "box": [
+     550,
+     377,
+     613,
+     503
+    ],
+    "exclude": [],
+    "expect": "zero"
+   },
+   {
+    "mask": "1_1_4_1",
+    "crossing": 1,
+    "part": "lifted",
+    "caster": "4_1",
+    "receiver": "1_1",
+    "box": [
+     487,
+     157,
+     613,
+     283
+    ],
+    "exclude": [],
+    "expect": "zero"
+   }
+  ],
+  "masks": [
+   "1_1_3_1",
+   "2_1_4_1",
+   "1_1_4_1"
+  ]
+ },
+ "curved_s_three_crossings": {
+  "about": "Both strands are curves with pulled control points: the Z-shaped 1_1 crosses the S-bent 2_1 three times, the middle one a long, nearly parallel run. The mask erases that run and keeps the top and bottom crossings.",
+  "checks": [
+   {
+    "mask": "1_1_2_1",
+    "crossing": 1,
+    "part": "erase",
+    "caster": "2_1",
+    "receiver": "1_1",
+    "box": [
+     299,
+     160,
+     549,
+     469
+    ],
+    "exclude": [
+     [
+      326,
+      56,
+      466,
+      191
+     ],
+     [
+      418,
+      422,
+      553,
+      559
+     ]
+    ],
+    "expect": "like_twin",
+    "tolerance": 0.01
+   },
+   {
+    "mask": "1_1_2_1",
+    "crossing": 2,
+    "part": "lifted",
+    "caster": "2_1",
+    "receiver": "1_1",
+    "box": [
+     326,
+     56,
+     466,
+     191
+    ],
+    "exclude": [
+     [
+      299,
+      160,
+      549,
+      469
+     ],
+     [
+      418,
+      422,
+      553,
+      559
+     ]
+    ],
+    "expect": "zero"
+   },
+   {
+    "mask": "1_1_2_1",
+    "crossing": 3,
+    "part": "lifted",
+    "caster": "2_1",
+    "receiver": "1_1",
+    "box": [
+     418,
+     422,
+     553,
+     559
+    ],
+    "exclude": [
+     [
+      299,
+      160,
+      549,
+      469
+     ],
+     [
+      326,
+      56,
+      466,
+      191
+     ]
+    ],
+    "expect": "zero"
+   }
+  ],
+  "masks": [
+   "1_1_2_1"
+  ]
+ },
+ "two_rects_one_mask": {
+  "about": "One mask, two deletion rectangles: the left crossing loses its left half, the right crossing is erased whole.",
+  "checks": [
+   {
+    "mask": "1_1_2_1",
+    "crossing": 1,
+    "part": "left",
+    "caster": "2_1",
+    "receiver": "1_1",
+    "box": [
+     157,
+     237,
+     223,
+     363
+    ],
+    "exclude": [
+     [
+      511,
+      237,
+      643,
+      363
+     ]
+    ],
+    "expect": "like_twin",
+    "tolerance": 0.03
+   },
+   {
+    "mask": "1_1_2_1",
+    "crossing": 1,
+    "part": "lifted",
+    "caster": "2_1",
+    "receiver": "1_1",
+    "box": [
+     223,
+     237,
+     289,
+     363
+    ],
+    "exclude": [
+     [
+      511,
+      237,
+      643,
+      363
+     ]
+    ],
+    "expect": "zero"
+   },
+   {
+    "mask": "1_1_2_1",
+    "crossing": 2,
+    "part": "erase",
+    "caster": "2_1",
+    "receiver": "1_1",
+    "box": [
+     511,
+     237,
+     643,
+     363
+    ],
+    "exclude": [
+     [
+      157,
+      237,
+      289,
+      363
+     ]
+    ],
+    "expect": "like_twin",
+    "tolerance": 0.01
+   }
+  ],
+  "masks": [
+   "1_1_2_1"
+  ]
+ },
+ "conflicting_masks": {
+  "about": "Two masks on the same pair: 1_1_2_1 lifts 1_1 at the left crossing (right one erased), 2_1_1_1 lifts 2_1 at the right crossing (left one erased). 2_1 is already above 1_1 in the layer order.",
+  "checks": [
+   {
+    "mask": "1_1_2_1",
+    "crossing": 1,
+    "part": "lifted",
+    "caster": "2_1",
+    "receiver": "1_1",
+    "box": [
+     157,
+     237,
+     289,
+     363
+    ],
+    "exclude": [
+     [
+      511,
+      237,
+      643,
+      363
+     ]
+    ],
+    "expect": "zero"
+   },
+   {
+    "mask": "2_1_1_1",
+    "crossing": 1,
+    "part": "erase",
+    "caster": "2_1",
+    "receiver": "1_1",
+    "box": [
+     157,
+     237,
+     289,
+     363
+    ],
+    "exclude": [
+     [
+      511,
+      237,
+      643,
+      363
+     ]
+    ],
+    "expect": "zero",
+    "note": "1_1_2_1 still lifts 1_1 here"
+   }
+  ],
+  "masks": [
+   "1_1_2_1",
+   "2_1_1_1"
+  ]
+ },
+ "thick_over_thin": {
+  "about": "A thin 1_1 (width 18) under a thick 2_1 (width 96); the mask keeps the left crossing and erases the right one.",
+  "checks": [
+   {
+    "mask": "1_1_2_1",
+    "crossing": 1,
+    "part": "lifted",
+    "caster": "2_1",
+    "receiver": "1_1",
+    "box": [
+     170,
+     212,
+     277,
+     388
+    ],
+    "exclude": [
+     [
+      523,
+      212,
+      630,
+      388
+     ]
+    ],
+    "expect": "zero"
+   },
+   {
+    "mask": "1_1_2_1",
+    "crossing": 2,
+    "part": "erase",
+    "caster": "2_1",
+    "receiver": "1_1",
+    "box": [
+     523,
+     212,
+     630,
+     388
+    ],
+    "exclude": [
+     [
+      170,
+      212,
+      277,
+      388
+     ]
+    ],
+    "expect": "like_twin",
+    "tolerance": 0.01
+   }
+  ],
+  "masks": [
+   "1_1_2_1"
+  ]
+ },
+ "end_inside_crossing": {
+  "about": "1_1 ends inside 2_1: its end lies in the erased crossing.",
+  "checks": [
+   {
+    "mask": "1_1_2_1",
+    "crossing": 1,
+    "part": "lifted",
+    "caster": "2_1",
+    "receiver": "1_1",
+    "box": [
+     157,
+     237,
+     289,
+     363
+    ],
+    "exclude": [
+     [
+      512,
+      261,
+      641,
+      363
+     ]
+    ],
+    "expect": "zero"
+   },
+   {
+    "mask": "1_1_2_1",
+    "crossing": 2,
+    "part": "erase",
+    "caster": "2_1",
+    "receiver": "1_1",
+    "box": [
+     512,
+     261,
+     641,
+     363
+    ],
+    "exclude": [
+     [
+      157,
+      237,
+      289,
+      363
+     ]
+    ],
+    "expect": "like_twin",
+    "tolerance": 0.01
+   }
+  ],
+  "masks": [
+   "1_1_2_1"
+  ]
+ },
+ "joint_inside_crossing": {
+  "about": "The joint between 1_1 and its attached 1_2 sits inside the erased crossing with 2_1.",
+  "checks": [
+   {
+    "mask": "1_2_2_1",
+    "crossing": 1,
+    "part": "erase",
+    "caster": "2_1",
+    "receiver": "1_2",
+    "box": [
+     367,
+     237,
+     532,
+     357
+    ],
+    "exclude": [],
+    "expect": "like_twin",
+    "tolerance": 0.01
+   },
+   {
+    "mask": "1_1_3_1",
+    "crossing": 1,
+    "part": "lifted",
+    "caster": "3_1",
+    "receiver": "1_1",
+    "box": [
+     207,
+     84,
+     333,
+     270
+    ],
+    "exclude": [],
+    "expect": "zero"
+   }
+  ],
+  "masks": [
+   "1_2_2_1",
+   "1_1_3_1"
+  ]
+ },
+ "first_already_above": {
+  "about": "1_1 is already above 2_1 in the layer order; the mask erases the right crossing.",
+  "checks": [
+   {
+    "mask": "1_1_2_1",
+    "crossing": 0,
+    "part": "whole scene",
+    "caster": "2_1",
+    "receiver": "1_1",
+    "box": [
+     0,
+     0,
+     800,
+     700
+    ],
+    "exclude": [],
+    "expect": "zero",
+    "note": "2_1 lies below 1_1"
+   }
+  ],
+  "masks": [
+   "1_1_2_1"
+  ]
+ },
+ "caster_hide_shadow": {
+  "about": "Like a plain erased crossing, but 2_1 has Hide Shadow switched on.",
+  "checks": [
+   {
+    "mask": "1_1_2_1",
+    "crossing": 1,
+    "part": "lifted",
+    "caster": "2_1",
+    "receiver": "1_1",
+    "box": [
+     157,
+     237,
+     289,
+     363
+    ],
+    "exclude": [
+     [
+      511,
+      237,
+      643,
+      363
+     ]
+    ],
+    "expect": "zero",
+    "note": "2_1 has Hide Shadow on"
+   },
+   {
+    "mask": "1_1_2_1",
+    "crossing": 2,
+    "part": "erase",
+    "caster": "2_1",
+    "receiver": "1_1",
+    "box": [
+     511,
+     237,
+     643,
+     363
+    ],
+    "exclude": [
+     [
+      157,
+      237,
+      289,
+      363
+     ]
+    ],
+    "expect": "zero",
+    "note": "2_1 has Hide Shadow on"
+   }
+  ],
+  "masks": [
+   "1_1_2_1"
+  ]
+ },
+ "subtracted_layer": {
+  "about": "At the erased crossing, the Shadow Editor subtracts 3_1 from 2_1's shadow on 1_1; 3_1 runs right beside the crossing.",
+  "checks": [
+   {
+    "mask": "1_1_2_1",
+    "crossing": 1,
+    "part": "lifted",
+    "caster": "2_1",
+    "receiver": "1_1",
+    "box": [
+     157,
+     237,
+     289,
+     363
+    ],
+    "exclude": [
+     [
+      511,
+      237,
+      643,
+      363
+     ]
+    ],
+    "expect": "zero"
+   },
+   {
+    "mask": "1_1_2_1",
+    "crossing": 2,
+    "part": "erase",
+    "caster": "2_1",
+    "receiver": "1_1",
+    "box": [
+     511,
+     237,
+     643,
+     363
+    ],
+    "exclude": [
+     [
+      157,
+      237,
+      289,
+      363
+     ]
+    ],
+    "expect": "like_twin",
+    "tolerance": 0.01
+   }
+  ],
+  "masks": [
+   "1_1_2_1"
+  ]
+ }
+}

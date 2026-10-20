@@ -6,11 +6,13 @@ Three steps:
     python scripts/generate_sounds.py process  --raw sounds_raw --out sounds_takes
     python scripts/generate_sounds.py pick     --takes-dir sounds_takes ui_click=2 drag_drop=1 ...
     python scripts/generate_sounds.py variants
+    python scripts/generate_sounds.py levels
 
 `generate` calls the API (skips takes that already exist), `process` trims each take
 to its target length and writes 44.1 kHz 16-bit mono WAVs, and `pick` copies the chosen
 take of each cue into src/sounds/<cue>.wav. `variants` derives the blue and green toggle
-sounds from the approved ui_toggle sounds, and the mode off sounds by reversing the on sounds. `soften` takes the edge off one take
+sounds from the approved ui_toggle sounds, and the mode off sounds by reversing the on sounds.
+`levels` sets the final peak of the hover sounds (run it last, after `pick` and `variants`). `soften` takes the edge off one take
 without changing its pitch.
 
 The API key is read from ELEVENLABS_API_KEY. When that variable is unset no key header is
@@ -70,7 +72,7 @@ CUES = [
     # Canvas points: a whisper of what the mode's click is made of
     ("hover_attach_point", 40, -24, "A fingertip lightly touching a strip of sticky tape, one tiny faint soft sticky touch, very short"),
     ("hover_move_point", 40, -24, "A fingertip lightly brushing a sheet of paper, one tiny faint papery touch, very short"),
-    # Rotate mode's end: take B4 of the dial prompt, picked at -21 dBFS (3 dB louder than the other point hovers)
+    # Rotate mode's end: take B4 of the dial prompt (final level: see FINAL_PEAKS)
     ("hover_rotate_point", 40, -21, "A fingertip lightly brushing the ridged edge of a small round plastic dial knob, one tiny faint ridged touch, very short"),
     # Mode buttons on the toolbar. View opens like a window, Select is a finger on the table
     # and Attach sticks like tape. View and Select turn off with their on sounds reversed (see
@@ -223,6 +225,18 @@ REVERSED_PEAK_DB = -17
 # Hovers made from an approved click played very quietly and shifted, written by the `variants` command:
 # name -> (source, semitones, peak dBFS)
 ECHOES = {"hover_strand": ("strand_select", -2, -24)}
+
+# Final peak (dBFS) of each hover sound, set by the `levels` command after everything else so the hovers
+# can be tuned apart from the prompts' target peaks above. Raised by 2 to 7 dB from the original -24 / -26.
+FINAL_PEAKS = {
+    "hover_toolbar": -19, "hover_panel_top": -19, "hover_panel_bottom": -19,
+    "hover_layer": -20, "hover_level": -20.3, "hover_level_fold": -19.2,
+    "hover_group": -20, "hover_tab": -22, "hover_tab_button": -23.8,
+    "hover_dialog": -22, "hover_settings": -20,
+    "hover_menu": -21, "hover_menu_group": -21, "hover_menu_level": -21,
+    "hover_combo": -20.9, "hover_dropdown": -20,
+    "hover_strand": -20, "hover_attach_point": -22, "hover_move_point": -22, "hover_rotate_point": -15,
+}
 
 # Two-note cues built from one generated bell strike, retuned to exact pitches.
 # A synthesized bell is added as an extra take so there is always a clean option.
@@ -494,6 +508,15 @@ def variants():
         print(f"{name}.wav <- {source}.wav, {semitones:+d} semitones, peak {peak_db} dBFS")
 
 
+def levels():
+    """Scale each sound in FINAL_PEAKS to its final peak (safe to run again)."""
+    for name, peak_db in FINAL_PEAKS.items():
+        path = os.path.join(SOUNDS_DIR, f"{name}.wav")
+        samples = decode(path).astype(np.float64)
+        write_wav(path, samples / np.max(np.abs(samples)) * 10 ** (peak_db / 20))
+        print(f"{name}.wav peak {peak_db} dBFS")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -513,6 +536,7 @@ def main():
     k.add_argument("choices", nargs="+", help="cue_id=take, e.g. ui_click=2")
 
     sub.add_parser("variants", help="derive colour variants from approved sounds in src/sounds")
+    sub.add_parser("levels", help="set the final peak of the hover sounds in src/sounds")
 
     f = sub.add_parser("soften", help="soften one raw take: high cut and slower attack, same pitch")
     f.add_argument("raw_mp3")
@@ -536,6 +560,8 @@ def main():
                     args.tonal, args.noise_keep, args.margin)
     elif args.command == "pick":
         pick(args.takes_dir, args.choices)
+    elif args.command == "levels":
+        levels()
     else:
         variants()
 

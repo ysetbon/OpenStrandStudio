@@ -14,6 +14,14 @@ half_ scenes) a straight 1_1 crosses 2_1 once near x=360. Mask 1_1_2_1 is
 erased at the right crossing unless the scene's name says otherwise. Each
 erased crossing is measured against the same crossing in a scene without
 the mask: an erased crossing is an ordinary crossing.
+
+tests/shadow_scenes/erased_mask/challenge/: harder scenes (attached chains
+four levels deep, a four-set weave, curves crossing three times, two
+deletion rectangles on one mask, two masks on one pair, mixed widths, a
+strand end or a joint inside the erased crossing, Hide Shadow, a layer
+subtracted in the Shadow Editor), each with its twin without masks
+(<name>.no_masks.json). manifest.json lists, per crossing, the box to
+measure, the neighbouring crossings to leave out of it, and what to expect.
 """
 
 import json
@@ -102,11 +110,12 @@ def erased_rect(mask):
     return path
 
 
-def shaded_pixels(name, caster="2_1", receiver="1_1", box=(0, 0, 800, 700)):
-    """Pixels inside *box* the caster's shadow on the receiver covers, painted
-    as the Shadow Editor's preview paints it (clipped by the painter, which
-    gets Qt's boolean operations out of the measurement)."""
-    canvas, strands = scene(f"erased_mask/{name}")
+def shaded_pixels(name, caster="2_1", receiver="1_1", box=(0, 0, 800, 700), exclude=()):
+    """Pixels inside *box*, outside the *exclude* boxes, the caster's shadow
+    on the receiver covers, painted as the Shadow Editor's preview paints it
+    (clipped by the painter, which gets Qt's boolean operations out of the
+    measurement)."""
+    canvas, strands = scene(name if "/" in name else f"erased_mask/{name}")
     preview = shadow(canvas, strands, caster, receiver)
     if preview is None:
         return 0
@@ -119,6 +128,10 @@ def shaded_pixels(name, caster="2_1", receiver="1_1", box=(0, 0, 800, 700)):
     for clip in clips:
         painter.setClipPath(clip, Qt.IntersectClip)
     painter.fillPath(area, QColor(0, 0, 0))
+    painter.setClipping(False)
+    painter.setCompositionMode(QPainter.CompositionMode_Clear)
+    for ex0, ey0, ex1, ey1 in exclude:
+        painter.fillRect(QRectF(ex0, ey0, ex1 - ex0, ey1 - ey0), QColor(0, 0, 0))
     painter.end()
     alpha = image.constBits().asstring(image.byteCount())[3::4]
     return sum(1 for value in alpha if value)
@@ -191,3 +204,26 @@ def test_no_shadow_where_none_belongs(name):
 
 def test_a_hidden_mask_lifts_nothing():
     assert shaded_pixels("mask_hidden") == shaded_pixels("no_mask") > 1000
+
+
+CHALLENGE = "erased_mask/challenge"
+CHECKS = [(name, check) for name, info in
+          json.loads((SCENES / CHALLENGE / "manifest.json").read_text(encoding="utf-8")).items()
+          for check in info["checks"]]
+
+
+@pytest.mark.parametrize("name, check", CHECKS, ids=[
+    f"{name}-{check['mask']}-x{check['crossing']}-{check['part']}" for name, check in CHECKS])
+def test_challenge_scenes(name, check):
+    measure = lambda scene_name: shaded_pixels(f"{CHALLENGE}/{scene_name}", check["caster"], check["receiver"],
+                                               tuple(check["box"]), check["exclude"])
+    got = measure(name)
+    if check["expect"] == "zero":
+        assert got == 0
+    else:
+        # A crossing erased only in part keeps its lifted part within blur
+        # reach of the erased part, which trims the soft tip of the shadow
+        # where it passes the deletion rectangle's edge.
+        expected = measure(f"{name}.no_masks")
+        assert expected > 500
+        assert abs(got - expected) <= check["tolerance"] * expected

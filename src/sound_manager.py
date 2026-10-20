@@ -272,12 +272,16 @@ class SoundManager(QObject):
         self.enabled = bool(enabled)
         if not self.enabled:
             self._silence.until = 0  # sounds off: let the device (and the computer) sleep
+        elif self.volume and self._effects:
+            self._keep_awake()  # sounds on: wake the speakers before the next one
 
     def set_volume(self, volume):
         self.volume = max(0, min(100, int(volume)))
         self._apply_volume()
         if self.volume == 0:
             self._silence.until = 0
+        elif self.enabled and self._effects:
+            self._keep_awake()
 
     def set_hover_enabled(self, enabled):
         self.hover_enabled = bool(enabled)

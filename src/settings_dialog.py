@@ -4597,6 +4597,13 @@ class SettingsDialog(QDialog):
         previous_third_control_point = self.enable_third_control_point
         # Get new setting from checkbox
         self.enable_third_control_point = self.third_control_checkbox.isChecked()
+
+        # Both settings below can reshape curves: note where the erased boxes sit
+        settings_box_anchors = []
+        if self.canvas and (previous_third_control_point != self.enable_third_control_point or
+                            self.curvature_bias_checkbox.isChecked() != self.enable_curvature_bias_control):
+            settings_box_anchors = [(strand, strand.capture_box_anchors()) for strand in self.canvas.strands
+                                    if hasattr(strand, 'capture_box_anchors')]
         
         if self.canvas:
             # Set the new value in canvas
@@ -4611,6 +4618,8 @@ class SettingsDialog(QDialog):
         if self.canvas:
             # Set the new value in canvas
             self.canvas.enable_curvature_bias_control = self.enable_curvature_bias_control
+        for masked_strand, anchors in settings_box_anchors:
+            masked_strand.carry_boxes(anchors)
         
         # Apply Snap to Grid Setting
         self.snap_to_grid_enabled = self.snap_to_grid_checkbox.isChecked()
@@ -4689,16 +4698,8 @@ class SettingsDialog(QDialog):
 
             # Check if the third control point setting changed
             if previous_third_control_point != self.enable_third_control_point:
-                # Reset all masked strands if the canvas has strands
-                if hasattr(self.canvas, 'strands'):
-                    for i, strand in enumerate(self.canvas.strands):
-                        # Check if this is a masked strand
-                        if hasattr(strand, '__class__') and strand.__class__.__name__ == 'MaskedStrand':
-                            # Call the canvas's reset_mask method - this is the same one called
-                            # when right-clicking on a layer in the layer panel
-                            self.canvas.reset_mask(i)
                 
-                # Force redraw to show/hide third control point and reset masks
+                # Force redraw to show/hide third control point
                 self.canvas.update()
                 
                 # Force a full refresh of the canvas 

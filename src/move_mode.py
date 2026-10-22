@@ -1546,6 +1546,8 @@ class MoveMode:
         self.selected_rectangle = None
         self.last_update_pos = None
         self.accumulated_delta = QPointF(0, 0)
+        for masked_strand in getattr(self, '_box_anchors', None) or {}:
+            masked_strand.calculate_center_point()
         self._box_anchors = None
         self.last_snapped_pos = None
         self.target_pos = None
@@ -2104,7 +2106,7 @@ class MoveMode:
                 if not center_is_locked:
                     strand.control_point_center_locked = True
                     for masked_strand, anchors in (getattr(self, '_box_anchors', None) or {}).items():
-                        masked_strand.carry_boxes(anchors)
+                        masked_strand.carry_boxes(anchors, refresh_center=False)
                 if hasattr(self.canvas, 'truly_moving_strands'):
                     self.canvas.truly_moving_strands = [strand]
                 else:
@@ -2836,7 +2838,8 @@ class MoveMode:
         # Erased boxes ride on the crossing they erase: use the anchors noted
         # when this drag started, or note them now, before anything moves
         box_anchors = getattr(self, '_box_anchors', None)
-        if box_anchors is None:
+        in_drag = box_anchors is not None
+        if not in_drag:
             box_anchors = self._capture_box_anchors(
                 [self.affected_strand] + list(truly_moving_strands_read_only))
 
@@ -3027,7 +3030,8 @@ class MoveMode:
         # Carry every erased box along with its own crossing (endpoints,
         # control points and bias controls alike)
         for masked_strand, anchors in box_anchors.items():
-            masked_strand.carry_boxes(anchors)
+            # The drag works out the stored centres once, when it ends
+            masked_strand.carry_boxes(anchors, refresh_center=not in_drag)
             affected_strands.add(masked_strand)
 
         # ... (calculate update_rect)
@@ -4013,7 +4017,7 @@ class MoveMode:
                     if hasattr(self.bias_control_strand, 'update_side_line'):
                         self.bias_control_strand.update_side_line()
                     for masked_strand, anchors in (getattr(self, '_box_anchors', None) or {}).items():
-                        masked_strand.carry_boxes(anchors)
+                        masked_strand.carry_boxes(anchors, refresh_center=False)
                     self.canvas.update()
                     return
         

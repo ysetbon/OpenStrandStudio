@@ -979,8 +979,11 @@ class MaskedStrand(Strand):
         self.update_mask_path()
         
 
-    def update_mask_path(self):
-        """Update the custom mask path based on current strand and rectangle positions."""
+    def update_mask_path(self, recalculate_center=True):
+        """Update the custom mask path based on current strand and rectangle positions.
+
+        recalculate_center=False leaves the stored centre points alone, for
+        callers that update them once when they are done."""
         # Check if we should skip center recalculation (used during loading)
         skip_recalculation = hasattr(self, 'skip_center_recalculation') and self.skip_center_recalculation
         
@@ -1038,7 +1041,9 @@ class MaskedStrand(Strand):
                 delattr(self, attr)
 
         # Skip center point recalculation for absolute coordinates
-        if using_absolute_coords:
+        if not recalculate_center:
+            pass
+        elif using_absolute_coords:
             # Do nothing with center point, keep deletion rectangles exactly as loaded
             pass
         # Skip center point recalculation if requested (during loading)
@@ -1169,12 +1174,16 @@ class MaskedStrand(Strand):
         """Where each deletion box sits on the crossing it erases. Take this
         before a component strand changes shape; pass it to carry_boxes()."""
         pieces = self._overlap_pieces() if self.deletion_rectangles else []
+        # Every piece is followed from step to step, so a box whose crossing
+        # disappears is never handed to a neighbouring crossing
+        track = [{'centre': piece['centre'], 'size': piece['size']} for piece in pieces]
         anchors = []
         for rect in self.deletion_rectangles:
             if not pieces or not all(key in rect for key in self.BOX_CORNERS):
                 anchors.append(None)
                 continue
             piece = self._box_piece(rect, pieces)
+            index = next(i for i, candidate in enumerate(pieces) if candidate is piece)
             (ax, ay), (bx, by) = piece['direction1'], piece['direction2']
             distances = {}
             for key in self.BOX_CORNERS:
@@ -1182,24 +1191,45 @@ class MaskedStrand(Strand):
                 vy = rect[key][1] - piece['centre'].y()
                 # Signed distances from the first and the second centre line
                 distances[key] = (ax * vy - ay * vx, bx * vy - by * vx)
-            # centre and size follow the piece from step to step; distances stay
-            anchors.append({'centre': piece['centre'], 'size': piece['size'], 'distances': distances})
+            anchors.append({'track': track, 'piece': index, 'distances': distances})
         return anchors
 
-    def carry_boxes(self, anchors):
-        """Rebuild each deletion box on its crossing, then refresh the mask."""
-        if len(anchors) == len(self.deletion_rectangles):
-            pieces = self._overlap_pieces() if any(anchors) else []
+    @staticmethod
+    def _follow_pieces(track, pieces):
+        """Pair each followed piece with its continuation among pieces,
+        nearest pairs first, and update the track. Returns {track index: piece};
+        a followed piece left without a partner has gone, and a new piece
+        nothing continues is followed from now on."""
+        pairs = []
+        for i, entry in enumerate(track):
+            for j, piece in enumerate(pieces):
+                distance = math.hypot(piece['centre'].x() - entry['centre'].x(),
+                                      piece['centre'].y() - entry['centre'].y())
+                if distance <= max(80.0, 2.0 * entry['size']):
+                    pairs.append((distance, i, j))
+        matched, used = {}, set()
+        for distance, i, j in sorted(pairs):
+            if i not in matched and j not in used:
+                matched[i] = pieces[j]
+                used.add(j)
+        for i, piece in matched.items():
+            track[i]['centre'], track[i]['size'] = piece['centre'], piece['size']
+        track.extend({'centre': piece['centre'], 'size': piece['size']}
+                     for j, piece in enumerate(pieces) if j not in used)
+        return matched
+
+    def carry_boxes(self, anchors, refresh_center=True):
+        """Rebuild each deletion box on its crossing, then refresh the mask.
+
+        The stored centre points are only read when saving; a drag passes
+        refresh_center=False and calls calculate_center_point() once at the end."""
+        live = [anchor for anchor in anchors if anchor]
+        if live and len(anchors) == len(self.deletion_rectangles):
+            matched = self._follow_pieces(live[0]['track'], self._overlap_pieces())
             for rect, anchor in zip(self.deletion_rectangles, anchors):
-                if anchor is None or not pieces:
-                    continue
-                last = anchor['centre']
-                piece = min(pieces, key=lambda p: (p['centre'].x() - last.x()) ** 2 +
-                                                  (p['centre'].y() - last.y()) ** 2)
-                jump = math.hypot(piece['centre'].x() - last.x(), piece['centre'].y() - last.y())
-                if jump > max(80.0, 2.0 * anchor['size']):
-                    continue  # Its crossing is gone: leave the box where it is
-                anchor['centre'], anchor['size'] = piece['centre'], piece['size']
+                piece = matched.get(anchor['piece']) if anchor else None
+                if piece is None:
+                    continue  # Its crossing is gone for now: leave the box where it is
                 (ax, ay), (bx, by) = piece['direction1'], piece['direction2']
                 det = ax * by - ay * bx
                 if abs(det) < self.MIN_CROSSING_SIN:
@@ -1207,8 +1237,11 @@ class MaskedStrand(Strand):
                 for key, (d1, d2) in anchor['distances'].items():
                     rect[key] = (piece['centre'].x() + (bx * d1 - ax * d2) / det,
                                  piece['centre'].y() + (by * d1 - ay * d2) / det)
-        self.update_mask_path()
-        self.calculate_center_point()
+        self.update_mask_path(recalculate_center=refresh_center)
+        if refresh_center and (getattr(self, 'skip_center_recalculation', False) or
+                               getattr(self, 'using_absolute_coords', False)):
+            # update_mask_path kept the centre stored in the file; work out the real one
+            self.calculate_center_point()
 
     def box_anchor_key(self):
         """What anchors depend on besides the curve settings: both strands'

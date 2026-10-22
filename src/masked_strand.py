@@ -1067,7 +1067,159 @@ class MaskedStrand(Strand):
             if hasattr(self, 'control_point_center'):
                 self.base_center_point = QPointF(self.control_point_center)
                 self.edited_center_point = QPointF(self.control_point_center)
-        
+
+
+    # --- Erased boxes follow their own crossing ---------------------------
+    # A mask covers every overlap of its two strands, so it can span several
+    # crossings, and each deletion box erases one of them. When a strand
+    # moves, each box rides on the overlap piece it sits on: every corner
+    # keeps its signed distance from both strands' centre lines there. The
+    # pieces are measured without the boxes cut out: measured with them, a
+    # box that uncovers part of its crossing would shift the measurement
+    # towards itself and so drag itself further along.
+    #
+    # Take the anchors once, before a drag changes anything, and hand the
+    # same anchors to every carry_boxes() call of that drag. Each call
+    # rebuilds the boxes from where they sat at the start, so nothing adds
+    # up over the steps and dragging back puts them exactly where they were.
+
+    BOX_CORNERS = ('top_left', 'top_right', 'bottom_left', 'bottom_right')
+    # Nearly parallel strands stretch a box at most 1 / MIN_CROSSING_SIN times
+    MIN_CROSSING_SIN = 0.05
+
+    @staticmethod
+    def _centre_line_points(strand):
+        points = []
+        for polygon in strand.get_path().toSubpathPolygons():
+            points.extend(polygon.at(i) for i in range(polygon.count()))
+        return points
+
+    @staticmethod
+    def _direction_near(points, point):
+        """Unit direction of the centre-line segment closest to point."""
+        best, best_distance = None, float('inf')
+        for a, b in zip(points, points[1:]):
+            dx, dy = b.x() - a.x(), b.y() - a.y()
+            length_sq = dx * dx + dy * dy
+            if length_sq < 1e-12:
+                continue
+            t = ((point.x() - a.x()) * dx + (point.y() - a.y()) * dy) / length_sq
+            t = max(0.0, min(1.0, t))
+            distance = (point.x() - a.x() - t * dx) ** 2 + (point.y() - a.y() - t * dy) ** 2
+            if distance < best_distance:
+                best, best_distance = (dx, dy), distance
+        if best is None:
+            return None
+        length = math.hypot(best[0], best[1])
+        return (best[0] / length, best[1] / length)
+
+    def _overlap_pieces(self):
+        """Each separate overlap of the two strands: its centre, outline and
+        both strands' directions there."""
+        if not self.first_selected_strand or not self.second_selected_strand:
+            return []
+        outlines = []
+        for polygon in self.get_base_mask_path().toSubpathPolygons():
+            count = polygon.count()
+            area = sum_x = sum_y = 0.0
+            for i in range(count):
+                p, q = polygon.at(i), polygon.at((i + 1) % count)
+                cross = p.x() * q.y() - q.x() * p.y()
+                area += cross
+                sum_x += (p.x() + q.x()) * cross
+                sum_y += (p.y() + q.y()) * cross
+            area /= 2.0
+            if abs(area) >= 1.0:
+                outlines.append((area, QPointF(sum_x / (6.0 * area), sum_y / (6.0 * area)), polygon))
+        if not outlines:
+            return []
+        # Holes wind the other way round from the pieces themselves
+        outer_sign = math.copysign(1.0, max(outlines, key=lambda o: abs(o[0]))[0])
+        line1 = self._centre_line_points(self.first_selected_strand)
+        line2 = self._centre_line_points(self.second_selected_strand)
+        pieces = []
+        for area, centre, polygon in outlines:
+            if math.copysign(1.0, area) != outer_sign:
+                continue
+            direction1 = self._direction_near(line1, centre)
+            direction2 = self._direction_near(line2, centre)
+            if direction1 and direction2:
+                pieces.append({'centre': centre, 'outline': polygon, 'size': math.sqrt(abs(area)),
+                               'direction1': direction1, 'direction2': direction2})
+        return pieces
+
+    def _box_piece(self, rect, pieces):
+        """The overlap piece a box erases: the one it covers most, else the nearest."""
+        xs = [rect[key][0] for key in self.BOX_CORNERS]
+        ys = [rect[key][1] for key in self.BOX_CORNERS]
+        left, right, top, bottom = min(xs), max(xs), min(ys), max(ys)
+        samples = [QPointF(left + (right - left) * (i + 0.5) / 5, top + (bottom - top) * (j + 0.5) / 5)
+                   for i in range(5) for j in range(5)]
+        best, best_count = None, 0
+        for piece in pieces:
+            count = sum(1 for sample in samples if piece['outline'].containsPoint(sample, Qt.OddEvenFill))
+            if count > best_count:
+                best, best_count = piece, count
+        if best is None:
+            cx, cy = (left + right) / 2, (top + bottom) / 2
+            best = min(pieces, key=lambda p: (p['centre'].x() - cx) ** 2 + (p['centre'].y() - cy) ** 2)
+        return best
+
+    def capture_box_anchors(self):
+        """Where each deletion box sits on the crossing it erases. Take this
+        before a component strand changes shape; pass it to carry_boxes()."""
+        pieces = self._overlap_pieces() if self.deletion_rectangles else []
+        anchors = []
+        for rect in self.deletion_rectangles:
+            if not pieces or not all(key in rect for key in self.BOX_CORNERS):
+                anchors.append(None)
+                continue
+            piece = self._box_piece(rect, pieces)
+            (ax, ay), (bx, by) = piece['direction1'], piece['direction2']
+            distances = {}
+            for key in self.BOX_CORNERS:
+                vx = rect[key][0] - piece['centre'].x()
+                vy = rect[key][1] - piece['centre'].y()
+                # Signed distances from the first and the second centre line
+                distances[key] = (ax * vy - ay * vx, bx * vy - by * vx)
+            # centre and size follow the piece from step to step; distances stay
+            anchors.append({'centre': piece['centre'], 'size': piece['size'], 'distances': distances})
+        return anchors
+
+    def carry_boxes(self, anchors):
+        """Rebuild each deletion box on its crossing, then refresh the mask."""
+        if len(anchors) == len(self.deletion_rectangles):
+            pieces = self._overlap_pieces() if any(anchors) else []
+            for rect, anchor in zip(self.deletion_rectangles, anchors):
+                if anchor is None or not pieces:
+                    continue
+                last = anchor['centre']
+                piece = min(pieces, key=lambda p: (p['centre'].x() - last.x()) ** 2 +
+                                                  (p['centre'].y() - last.y()) ** 2)
+                jump = math.hypot(piece['centre'].x() - last.x(), piece['centre'].y() - last.y())
+                if jump > max(80.0, 2.0 * anchor['size']):
+                    continue  # Its crossing is gone: leave the box where it is
+                anchor['centre'], anchor['size'] = piece['centre'], piece['size']
+                (ax, ay), (bx, by) = piece['direction1'], piece['direction2']
+                det = ax * by - ay * bx
+                if abs(det) < self.MIN_CROSSING_SIN:
+                    det = math.copysign(self.MIN_CROSSING_SIN, det if det else 1.0)
+                for key, (d1, d2) in anchor['distances'].items():
+                    rect[key] = (piece['centre'].x() + (bx * d1 - ax * d2) / det,
+                                 piece['centre'].y() + (by * d1 - ay * d2) / det)
+        self.update_mask_path()
+        self.calculate_center_point()
+
+    def box_anchor_key(self):
+        """What anchors depend on besides the curve settings: both strands'
+        points and the number of boxes. Take anchors again once it changes."""
+        key = [len(self.deletion_rectangles)]
+        for strand in (self.first_selected_strand, self.second_selected_strand):
+            for name in ('start', 'end', 'control_point1', 'control_point2', 'control_point_center'):
+                point = getattr(strand, name, None)
+                key.append((point.x(), point.y()) if point is not None else None)
+            key.append(getattr(strand, 'control_point_center_locked', False))
+        return tuple(key)
 
     def set_color(self, color):
         """Set the color of the masked strand while preserving second strand's color."""

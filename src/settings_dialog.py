@@ -6468,6 +6468,21 @@ class SettingsDialog(QDialog):
         
         # Apply to canvas immediately (same as reset button)
         if self.canvas:
+            # Curves change shape, moving their crossings: erased boxes go
+            # along. One slider move keeps its anchors over all its steps;
+            # they are noted again once the strands or the boxes changed
+            noted = getattr(self, '_curvature_box_anchors', {})
+            self._curvature_box_anchors = {}
+            box_anchors = []
+            for strand in self.canvas.strands:
+                if hasattr(strand, 'capture_box_anchors'):
+                    key = strand.box_anchor_key()
+                    entry = noted.get(id(strand))
+                    if entry is None or entry[0] != key:
+                        entry = (key, strand.capture_box_anchors())
+                    self._curvature_box_anchors[id(strand)] = entry
+                    box_anchors.append((strand, entry[1]))
+
             self.canvas.control_point_base_fraction = base_fraction_value
             self.canvas.distance_multiplier = distance_mult_value
             self.canvas.curve_response_exponent = curve_response_value
@@ -6509,6 +6524,9 @@ class SettingsDialog(QDialog):
                 
                 # Update all attached strands recursively
                 self.update_attached_strands_curvature(strand, base_fraction_value, distance_mult_value, curve_response_value)
+
+            for masked_strand, anchors in box_anchors:
+                masked_strand.carry_boxes(anchors)
             
             # Clear render buffer to force recreation
             if hasattr(self.canvas, 'render_buffer'):

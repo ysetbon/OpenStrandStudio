@@ -3101,13 +3101,15 @@ class MainWindow(QMainWindow):
             self.layer_panel._suppress_lock_mode_temporarily = False
 
     def exit_mask_edit_mode(self):
-        """Handle exiting mask edit mode."""
-        self.update_mode("select")
-        self.select_strand_button.setChecked(True)
-        self.update_button_states("select")
-
-        # NEW: Re-enable mainwindow buttons if they were disabled for mask edit
+        """Handle exiting mask edit mode: back to the mode Edit Mask was
+        started from (Select when that mode can't simply be resumed)."""
+        # Re-enable first, so the mode below sets its own button states
         self.enable_all_mainwindow_buttons()
+
+        mode = getattr(self, 'mode_before_mask_edit', None)
+        if mode not in ('attach', 'move', 'select', 'view', 'rotate', 'mask'):
+            mode = 'select'
+        self.update_mode(mode)
 
     def set_language(self, language_code):
         """Set the application language and update all UI elements."""
@@ -3233,6 +3235,7 @@ class MainWindow(QMainWindow):
     def disable_all_mainwindow_buttons(self):
         """Disable all main window buttons so they cannot be pressed."""
         for button in [
+            self.view_button,
             self.attach_button,
             self.move_button,
             self.rotate_button,
@@ -3251,6 +3254,7 @@ class MainWindow(QMainWindow):
     def enable_all_mainwindow_buttons(self):
         """Re-enable all main window buttons."""
         for button in [
+            self.view_button,
             self.attach_button,
             self.move_button,
             self.rotate_button,

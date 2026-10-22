@@ -4254,6 +4254,15 @@ class StrandDrawingCanvas(QWidget):
             self.setCursor(Qt.ClosedHandCursor)
             event.accept()
             return
+
+        # Edit Mask owns the left button in every mode: View mode and the
+        # Pan hand would otherwise take the press and pan instead of erase.
+        if self.mask_edit_mode and event.button() == Qt.LeftButton:
+            self.erase_start_pos = canvas_pos
+            self.current_erase_rect = None
+            self.update()
+            event.accept()
+            return
         
         # Handle pan mode
         if self.pan_mode and event.button() == Qt.LeftButton:
@@ -4267,6 +4276,8 @@ class StrandDrawingCanvas(QWidget):
         # Exit pan mode on right-click when pan mode is active
         if self.pan_mode and event.button() == Qt.RightButton:
             self.exit_pan_mode()
+            if self.mask_edit_mode:
+                self.setCursor(Qt.CrossCursor)
             event.accept()
             return
 
@@ -4289,14 +4300,6 @@ class StrandDrawingCanvas(QWidget):
             self.setCursor(Qt.ClosedHandCursor)
             # Update the pan button in layer panel
             self._update_pan_button_icon(True)
-            event.accept()
-            return
-
-        if self.mask_edit_mode and event.button() == Qt.LeftButton:
-            self.erase_start_pos = canvas_pos
-            pass
-            self.current_erase_rect = None
-            self.update()
             event.accept()
             return
 
@@ -4426,6 +4429,19 @@ class StrandDrawingCanvas(QWidget):
             event.accept()
             return
         
+        # Edit Mask's erase box, before any mode's left-button panning
+        if self.mask_edit_mode and event.buttons() & Qt.LeftButton and self.erase_start_pos:
+            # Update the current erase rectangle
+            self.current_erase_rect = QRectF(
+                min(self.erase_start_pos.x(), canvas_pos.x()),
+                min(self.erase_start_pos.y(), canvas_pos.y()),
+                abs(canvas_pos.x() - self.erase_start_pos.x()),
+                abs(canvas_pos.y() - self.erase_start_pos.y())
+            )
+            self.update()  # Force a redraw to show the rectangle
+            event.accept()
+            return
+
         # Handle pan mode dragging
         if self.pan_mode and event.buttons() & Qt.LeftButton and self.pan_start_pos:
             # Allow panning at any zoom level
@@ -4513,19 +4529,6 @@ class StrandDrawingCanvas(QWidget):
             event.accept()
             return
 
-        if self.mask_edit_mode and event.buttons() & Qt.LeftButton and self.erase_start_pos:
-            # Update the current erase rectangle
-            self.current_erase_rect = QRectF(
-                min(self.erase_start_pos.x(), canvas_pos.x()),
-                min(self.erase_start_pos.y(), canvas_pos.y()),
-                abs(canvas_pos.x() - self.erase_start_pos.x()),
-                abs(canvas_pos.y() - self.erase_start_pos.y())
-            )
-            pass
-            self.update()  # Force a redraw to show the rectangle
-            event.accept()
-            return
-
         if self.is_drawing_new_strand and self.new_strand_start_point is not None:
             self.new_strand_end_point = self.snap_to_grid_for_attach(canvas_pos)
             self.update()
@@ -4562,10 +4565,54 @@ class StrandDrawingCanvas(QWidget):
         if event.button() == Qt.MiddleButton:
             self.pan_start_pos = None
             self.pan_start_offset = None
-            self.setCursor(Qt.ArrowCursor)
+            self.setCursor(Qt.CrossCursor if self.mask_edit_mode else Qt.ArrowCursor)
             event.accept()
             return
         
+        # Edit Mask's release, before any mode's left-button handling: the
+        # erase box is applied, and a plain click is never passed on.
+        if self.mask_edit_mode and event.button() == Qt.LeftButton:
+            if self.current_erase_rect and self.editing_masked_strand:
+                # Save the deletion rectangle information
+                if not hasattr(self.editing_masked_strand, 'deletion_rectangles'):
+                    self.editing_masked_strand.deletion_rectangles = []
+                
+                # Store the rectangle coordinates by corners instead of x/y/width/height
+                rect_data = {
+                    'top_left': (
+                        self.current_erase_rect.topLeft().x(),
+                        self.current_erase_rect.topLeft().y()
+                    ),
+                    'top_right': (
+                        self.current_erase_rect.topRight().x(),
+                        self.current_erase_rect.topRight().y()
+                    ),
+                    'bottom_left': (
+                        self.current_erase_rect.bottomLeft().x(),
+                        self.current_erase_rect.bottomLeft().y()
+                    ),
+                    'bottom_right': (
+                        self.current_erase_rect.bottomRight().x(),
+                        self.current_erase_rect.bottomRight().y()
+                    )
+                }
+                self.editing_masked_strand.deletion_rectangles.append(rect_data)
+            
+                # Create and apply the erase path
+                erase_path = QPainterPath()
+                erase_path.addRect(self.current_erase_rect)
+            
+                if self.mask_edit_path and self.editing_masked_strand:
+                    self.mask_edit_path = self.mask_edit_path.subtracted(erase_path)
+                    self.editing_masked_strand.set_custom_mask(self.mask_edit_path)
+                
+            # Clear the current rectangle
+            self.current_erase_rect = None
+            self.erase_start_pos = None
+            self.update()
+            event.accept()
+            return
+
         # Handle pan mode release
         if self.pan_mode and event.button() == Qt.LeftButton:
             self.pan_start_pos = None
@@ -4601,49 +4648,6 @@ class StrandDrawingCanvas(QWidget):
             else:
                 self.unsetCursor()
             self._update_pan_button_icon(False)
-            event.accept()
-            return
-
-        if self.mask_edit_mode and event.button() == Qt.LeftButton and self.current_erase_rect:
-            # Save the deletion rectangle information
-            if not hasattr(self.editing_masked_strand, 'deletion_rectangles'):
-                self.editing_masked_strand.deletion_rectangles = []
-                
-            # Store the rectangle coordinates by corners instead of x/y/width/height
-            rect_data = {
-                'top_left': (
-                    self.current_erase_rect.topLeft().x(),
-                    self.current_erase_rect.topLeft().y()
-                ),
-                'top_right': (
-                    self.current_erase_rect.topRight().x(),
-                    self.current_erase_rect.topRight().y()
-                ),
-                'bottom_left': (
-                    self.current_erase_rect.bottomLeft().x(),
-                    self.current_erase_rect.bottomLeft().y()
-                ),
-                'bottom_right': (
-                    self.current_erase_rect.bottomRight().x(),
-                    self.current_erase_rect.bottomRight().y()
-                )
-            }
-            self.editing_masked_strand.deletion_rectangles.append(rect_data)
-            pass
-            
-            # Create and apply the erase path
-            erase_path = QPainterPath()
-            erase_path.addRect(self.current_erase_rect)
-            
-            if self.mask_edit_path and self.editing_masked_strand:
-                self.mask_edit_path = self.mask_edit_path.subtracted(erase_path)
-                self.editing_masked_strand.set_custom_mask(self.mask_edit_path)
-                pass
-            
-            # Clear the current rectangle
-            self.current_erase_rect = None
-            self.erase_start_pos = None
-            self.update()
             event.accept()
             return
 
@@ -7469,6 +7473,8 @@ class StrandDrawingCanvas(QWidget):
             # Get the parent window directly through the stored reference
             if hasattr(self, 'parent_window'):
                 self.parent_window.exit_mask_edit_mode()
+            if self.pan_mode:
+                self.setCursor(Qt.OpenHandCursor)
             
             # Emit signal to notify layer panel
             self.mask_edit_exited.emit()

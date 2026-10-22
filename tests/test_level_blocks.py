@@ -94,6 +94,33 @@ def test_each_line_folds_the_layers_resting_on_it(window):
     assert_consistent(window)
 
 
+def test_each_tab_folds_its_own_levels(window):
+    """Folding Level 1 on the Masks tab leaves the Strands tab open, and
+    the other way round."""
+    lp = window.layer_panel
+    lift_3_4_and_2_4(window)
+    button = lp.level_rows[0].button
+    lp.set_layer_tab("masks")
+    pump()
+    click(button, 5)
+    assert lp.is_level_folded(1)
+    lp.set_layer_tab("strands")
+    pump()
+    assert not lp.is_level_folded(1)
+    assert "2_4" in list_order(lp) and "3_4" in list_order(lp)
+    click(button, 5)
+    assert lp.is_level_folded(1) and "2_4" not in list_order(lp)
+    lp.set_layer_tab("masks")
+    pump()
+    assert lp.is_level_folded(1)
+    click(button, 5)
+    assert not lp.is_level_folded(1)
+    lp.set_layer_tab("strands")
+    pump()
+    assert lp.is_level_folded(1) and "2_4" not in list_order(lp)
+    assert_consistent(window)
+
+
 def test_the_fold_control_counts_the_layers_it_hides(window):
     lp = window.layer_panel
     lift_3_4_and_2_4(window)

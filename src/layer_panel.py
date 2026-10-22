@@ -1186,7 +1186,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         self.layer_buttons = []  # List to store layer buttons
         self.level_rows = []  # The Level rows of the list (see level_button.py); not in layer_buttons
         self.ground_row = None  # The Ground row (level 0), when shown; not in layer_buttons
-        self.folded_levels = set()  # Levels whose block is folded (hidden); view state only
+        # Levels whose block is folded (hidden), per tab: folding on the
+        # Masks tab leaves the Strands tab as it was. View state only.
+        self.folded_levels_by_tab = {'strands': set(), 'masks': set()}
         self.current_set = 1  # Current set number
         self.set_counts = {}
         
@@ -2850,8 +2852,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         # Choosing a layer outside the selected level's block ends that
         # selection, and a folded block opens to show the chosen layer
         self._drop_scope_outside(index)
-        if self._layer_level(index) in self.folded_levels:
-            self.toggle_level_fold(self._layer_level(index))
+        tab = self._layer_tab_of(index)
+        if self._layer_level(index) in self.folded_levels_by_tab[tab]:
+            self.toggle_level_fold(self._layer_level(index), tab)
 
         # Update layer button states and redraw the canvas
         self.update_layer_button_states()
@@ -3015,6 +3018,9 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
             self.disable_controls()
             if self.parent_window:
+                # Esc goes back to this mode (see MainWindow.exit_mask_edit_mode)
+                self.parent_window.mode_before_mask_edit = getattr(
+                    self.parent_window, 'current_mode', None)
                 self.parent_window.disable_all_mainwindow_buttons()
 
             self.canvas.enter_mask_edit_mode(strand_index)
@@ -3350,7 +3356,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
 
         colors = getattr(self.canvas, 'level_colors', None) or {}
         self.canvas.level_colors = {shifted(n): v for n, v in colors.items() if n != level}
-        self.folded_levels = {shifted(n) for n in self.folded_levels if n != level}
+        self._map_folded_levels(lambda folded: {shifted(n) for n in folded if n != level})
         scope = self.level_scope()
         if scope is not None:
             self.canvas.level_scope = None if scope == level else shifted(scope)
@@ -3401,8 +3407,19 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             overlay.update()
 
     # --- folding ------------------------------------------------------
+    @property
+    def folded_levels(self):
+        """The folded levels of the current tab."""
+        return self.folded_levels_by_tab[getattr(self, 'layer_tab', 'strands')]
+
+    def _map_folded_levels(self, change):
+        """Apply *change* (old set -> new set) to the folds of both tabs."""
+        for tab, folded in self.folded_levels_by_tab.items():
+            self.folded_levels_by_tab[tab] = change(folded)
+
     def is_level_folded(self, level):
-        """Whether the block *level* carries is folded (0: the ground's)."""
+        """Whether the block *level* carries is folded (0: the ground's) on
+        the current tab."""
         return level in self.folded_levels
 
     def level_block_size(self, level):
@@ -3416,15 +3433,17 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         return sum(1 for i, strand in enumerate(strands)
                    if strand_level(strand, top) == level and self._layer_tab_of(i) == tab)
 
-    def toggle_level_fold(self, level):
-        """Fold or unfold the block *level* carries. Folded layers are
-        hidden entirely; nothing about the design changes."""
+    def toggle_level_fold(self, level, tab=None):
+        """Fold or unfold the block *level* carries on *tab* (default: the
+        current tab). Folded layers are hidden entirely; nothing about the
+        design changes."""
         if level < 0 or level > self._top_level():
             return
-        if level in self.folded_levels:
-            self.folded_levels.discard(level)
+        folded = self.folded_levels_by_tab[tab or getattr(self, 'layer_tab', 'strands')]
+        if level in folded:
+            folded.discard(level)
         else:
-            self.folded_levels.add(level)
+            folded.add(level)
         self._apply_layer_tab_filter()
         self.restyle_level_rows()
 
@@ -3560,7 +3579,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         if self.canvas is not None:
             # Folds and the selected block of levels that are gone (with no
             # levels there is no fold tab left to open the ground)
-            self.folded_levels = {n for n in self.folded_levels if n <= count} if count else set()
+            self._map_folded_levels(lambda folded: {n for n in folded if n <= count} if count else set())
             scope = self.level_scope()
             if scope is not None and (scope > count or (scope == 0 and not want_ground)):
                 self.canvas.level_scope = None
@@ -4437,7 +4456,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
             self.canvas.level_count = 0
             self.canvas.level_colors = {}
             self.canvas.level_scope = None
-            self.folded_levels = set()
+            self._map_folded_levels(lambda folded: set())
 
             # Clear selection state
             self.canvas.selected_strand = None

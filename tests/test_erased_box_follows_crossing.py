@@ -34,10 +34,12 @@ from PyQt5.QtWidgets import QApplication
 APP = QApplication.instance() or QApplication([])
 
 import save_load_manager
+from angle_adjust_mode import AngleAdjustMode
 from move_mode import MoveMode
 from strand_drawing_canvas import StrandDrawingCanvas
 
 TWISTED_PAIRS = ROOT / "src" / "samples" / "twisted_pairs.json"
+FIVE_RINGS = ROOT / "knot_samples" / "links" / "json" / "five_ring_chain.json"
 HALF_ERASED = ROOT / "tests" / "shadow_scenes" / "erased_mask" / "half_erased_crossing.json"
 CORNERS = ("top_left", "top_right", "bottom_right", "bottom_left")
 
@@ -139,3 +141,37 @@ def test_first_drag_after_opening_does_not_jump():
     moved = strand(canvas, "2_1")
     drag(canvas, mode, moved, 0, [(moved.start.x() + 0.5, moved.start.y())])
     assert math.dist(before, tuple(mask.deletion_rectangles[0]["top_left"])) < 1.0
+
+
+def test_box_stays_off_a_neighbouring_crossing():
+    # Mask 1_1_2_1 covers two crossings 118 px apart and the box erases the
+    # upper one. Dragging 2_1's triangle makes that crossing vanish for a
+    # while; the box must wait for it instead of jumping to the other one.
+    canvas, mode = load(FIVE_RINGS)
+    mask = strand(canvas, "1_1_2_1")
+    before = [tuple(mask.deletion_rectangles[0][key]) for key in CORNERS]
+    moved = strand(canvas, "2_1")
+    start = QPointF(moved.control_point1)
+    out = line(start, (40, 28))
+    drag(canvas, mode, moved, "control_point1", out + out[-2::-1] + [(start.x(), start.y())])
+    after = [tuple(mask.deletion_rectangles[0][key]) for key in CORNERS]
+    assert max(math.dist(a, b) for a, b in zip(before, after)) < 1e-6
+
+
+def test_angle_tool_carries_boxes_and_cancel_restores_them():
+    canvas, _ = load(HALF_ERASED, curve=(3.25, 3.6, 2.6))
+    mask = strand(canvas, "1_1_2_1")
+    before_share = erased_share(mask, mask.deletion_rectangles[0])
+    before = [tuple(mask.deletion_rectangles[0][key]) for key in CORNERS]
+    tool = AngleAdjustMode(canvas)
+    tool.prompt_for_adjustments = lambda: None  # the dialog's sliders call the methods below
+    with contextlib.redirect_stdout(io.StringIO()):
+        tool.activate(strand(canvas, "1_1"))
+        for k in range(1, 11):
+            tool.rotate_strand(tool.initial_angle + 1.5 * k)
+        tool.set_strand_length(tool.initial_length * 1.25)
+    assert abs(erased_share(mask, mask.deletion_rectangles[0]) - before_share) < 0.05
+    with contextlib.redirect_stdout(io.StringIO()):
+        tool.cancel_adjustment()
+    after = [tuple(mask.deletion_rectangles[0][key]) for key in CORNERS]
+    assert max(math.dist(a, b) for a, b in zip(before, after)) < 1e-6

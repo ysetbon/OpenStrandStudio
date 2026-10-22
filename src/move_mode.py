@@ -1546,6 +1546,9 @@ class MoveMode:
         self.selected_rectangle = None
         self.last_update_pos = None
         self.accumulated_delta = QPointF(0, 0)
+        for masked_strand in getattr(self, '_box_anchors', None) or {}:
+            masked_strand.calculate_center_point()
+        self._box_anchors = None
         self.last_snapped_pos = None
         self.target_pos = None
         
@@ -2098,9 +2101,12 @@ class MoveMode:
                 self.start_movement(strand, 'control_point_center', control_point_center_rect, pos)
                 # Mark that we're moving a control point
                 self.is_moving_control_point = True
-                # Lock the center when it's manually moved
+                # Lock the center when it's manually moved. Locking switches
+                # the curve to the third-control-point shape, so carry the boxes
                 if not center_is_locked:
                     strand.control_point_center_locked = True
+                    for masked_strand, anchors in (getattr(self, '_box_anchors', None) or {}).items():
+                        masked_strand.carry_boxes(anchors, refresh_center=False)
                 if hasattr(self.canvas, 'truly_moving_strands'):
                     self.canvas.truly_moving_strands = [strand]
                 else:
@@ -2593,6 +2599,10 @@ class MoveMode:
         
         # Store the list on the canvas for use in optimized_paint_event
         self.canvas.truly_moving_strands = truly_moving_strands
+
+        # Note where every erased box sits on its crossing; each step of this
+        # drag rebuilds the boxes from these (see MaskedStrand.carry_boxes)
+        self._box_anchors = self._capture_box_anchors([strand] + list(truly_moving_strands))
         # Explicitly set is_selected for all moving strands to ensure highlighting
         for s in truly_moving_strands:
             s.is_selected = True
@@ -2721,6 +2731,17 @@ class MoveMode:
         return (abs(point1.x() - point2.x()) <= tolerance and
                 abs(point1.y() - point2.y()) <= tolerance)
 
+    def _capture_box_anchors(self, moving_strands):
+        """Box anchors of every mask built from one of moving_strands, taken
+        before they move (see MaskedStrand.carry_boxes)."""
+        anchors = {}
+        for strand in self.canvas.strands:
+            if (isinstance(strand, MaskedStrand) and strand not in moving_strands and
+                    (strand.first_selected_strand in moving_strands or
+                     strand.second_selected_strand in moving_strands)):
+                anchors[strand] = strand.capture_box_anchors()
+        return anchors
+
     def update_strand_position(self, new_pos):
         """
         Update the position of the affected strand's point.
@@ -2813,7 +2834,14 @@ class MoveMode:
         if self.moving_side == 0 or self.moving_side == 1:
             original_start = QPointF(self.affected_strand.start)
             original_end = QPointF(self.affected_strand.end)
- 
+
+        # Erased boxes ride on the crossing they erase: use the anchors noted
+        # when this drag started, or note them now, before anything moves
+        box_anchors = getattr(self, '_box_anchors', None)
+        in_drag = box_anchors is not None
+        if not in_drag:
+            box_anchors = self._capture_box_anchors(
+                [self.affected_strand] + list(truly_moving_strands_read_only))
 
         if self.moving_side == 'control_point1':
             # Move the first control point
@@ -2997,62 +3025,14 @@ class MoveMode:
                         moving_strand.update_side_line()
                 # --- End fixed movement logic ---
 
-                # --- NEW: Update deletion rectangles for any MaskedStrand that uses moved strands ---
-                # Collect all strands that were moved (primary + connected)
-                all_moved_strands = [self.affected_strand] + list(truly_moving_strands_read_only)
-
-                # Track which MaskedStrands we've already updated to avoid double-updating
-                updated_masked_strands = set()
-
-                # Find all MaskedStrands that contain any of the moved strands
-                for other_strand in self.canvas.strands:
-                    if isinstance(other_strand, MaskedStrand) and other_strand not in updated_masked_strands:
-                        for moved_strand in all_moved_strands:
-                            is_first = (hasattr(other_strand, 'first_selected_strand') and
-                                       other_strand.first_selected_strand == moved_strand)
-                            is_second = (hasattr(other_strand, 'second_selected_strand') and
-                                        other_strand.second_selected_strand == moved_strand)
-
-                            if is_first or is_second:
-                                # Save the OLD center point BEFORE recalculating
-                                old_center = None
-                                if hasattr(other_strand, 'edited_center_point') and other_strand.edited_center_point:
-                                    old_center = QPointF(other_strand.edited_center_point)
-                                elif hasattr(other_strand, 'base_center_point') and other_strand.base_center_point:
-                                    old_center = QPointF(other_strand.base_center_point)
-
-                                # Update the mask path and recalculate center based on new strand positions
-                                if hasattr(other_strand, 'update_mask_path'):
-                                    other_strand.update_mask_path()
-                                if hasattr(other_strand, 'calculate_center_point'):
-                                    other_strand.calculate_center_point()
-
-                                # Get the NEW center point AFTER recalculating
-                                new_center = None
-                                if hasattr(other_strand, 'edited_center_point') and other_strand.edited_center_point:
-                                    new_center = other_strand.edited_center_point
-                                elif hasattr(other_strand, 'base_center_point') and other_strand.base_center_point:
-                                    new_center = other_strand.base_center_point
-
-                                # Calculate delta based on how the CENTER moved
-                                if old_center and new_center:
-                                    dx = new_center.x() - old_center.x()
-                                    dy = new_center.y() - old_center.y()
-
-                                    # Translate deletion rectangles by the center delta
-                                    if hasattr(other_strand, 'deletion_rectangles') and other_strand.deletion_rectangles:
-                                        for rect in other_strand.deletion_rectangles:
-                                            rect['top_left'] = (rect['top_left'][0] + dx, rect['top_left'][1] + dy)
-                                            rect['top_right'] = (rect['top_right'][0] + dx, rect['top_right'][1] + dy)
-                                            rect['bottom_left'] = (rect['bottom_left'][0] + dx, rect['bottom_left'][1] + dy)
-                                            rect['bottom_right'] = (rect['bottom_right'][0] + dx, rect['bottom_right'][1] + dy)
-
-                                affected_strands.add(other_strand)
-                                updated_masked_strands.add(other_strand)
-                                break  # Don't check other moved strands for this mask
-                # --- End MaskedStrand deletion rectangle update ---
-
             # ... (update selection rectangle and selection state)
+
+        # Carry every erased box along with its own crossing (endpoints,
+        # control points and bias controls alike)
+        for masked_strand, anchors in box_anchors.items():
+            # The drag works out the stored centres once, when it ends
+            masked_strand.carry_boxes(anchors, refresh_center=not in_drag)
+            affected_strands.add(masked_strand)
 
         # ... (calculate update_rect)
 
@@ -4036,6 +4016,8 @@ class MoveMode:
                     self.bias_control_strand.update_shape()
                     if hasattr(self.bias_control_strand, 'update_side_line'):
                         self.bias_control_strand.update_side_line()
+                    for masked_strand, anchors in (getattr(self, '_box_anchors', None) or {}).items():
+                        masked_strand.carry_boxes(anchors, refresh_center=False)
                     self.canvas.update()
                     return
         

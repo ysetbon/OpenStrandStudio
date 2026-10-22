@@ -68,7 +68,32 @@ class AngleAdjustMode:
         self.max_length = max(10, int(self.original_length * 2))
         
         self.find_attached_strands()
+        moving = self._strand_and_attached()
+        # Cancel puts every one of these back exactly as it was
+        self._initial_shapes = [(strand, QPointF(strand.start), QPointF(strand.end),
+                                 QPointF(strand.control_point1), QPointF(strand.control_point2),
+                                 QPointF(strand.control_point_center), strand.control_point_center_locked)
+                                for strand in moving]
+        # Note where the erased boxes sit on every mask built from them
+        # (see MaskedStrand.carry_boxes)
+        self._box_anchors = [(masked, masked.capture_box_anchors()) for masked in self.canvas.strands
+                             if hasattr(masked, 'capture_box_anchors') and
+                             (masked.first_selected_strand in moving or masked.second_selected_strand in moving)]
         self.prompt_for_adjustments()
+
+    def _strand_and_attached(self):
+        """The active strand and every strand attached to it, all the way down."""
+        moving, todo = [], [self.active_strand]
+        while todo:
+            strand = todo.pop()
+            if strand not in moving:
+                moving.append(strand)
+                todo.extend(getattr(strand, 'attached_strands', []))
+        return moving
+
+    def _carry_boxes(self):
+        for masked, anchors in getattr(self, '_box_anchors', None) or []:
+            masked.carry_boxes(anchors)
 
     def find_attached_strands(self):
         """Previously expected (attached_strand, attach_type) but now just uses attached_strand."""
@@ -356,6 +381,7 @@ class AngleAdjustMode:
 
         # Update attached strands
         self.update_attached_strands(old_end, new_end)
+        self._carry_boxes()
 
     def rotate_control_points_to_new_angle(self, new_angle):
         """Rotate control points when the angle is changed."""
@@ -531,6 +557,7 @@ class AngleAdjustMode:
 
         # Update attached strands
         self.update_attached_strands(old_end, new_end)
+        self._carry_boxes()
         
         # Update the canvas
         # Only update the canvas if draw_only_affected_strand is disabled
@@ -604,11 +631,17 @@ class AngleAdjustMode:
 
     def cancel_adjustment(self):
         if self.active_strand:
-            # Restore the strand to its initial state
-            self.active_strand.start = self.initial_start
-            self.active_strand.end = self.initial_end
-            self.active_strand.update_shape()
-            self.active_strand.update_side_line()
+            # Restore the strand, and the strands attached to it, to their initial state
+            for strand, start, end, cp1, cp2, center, center_locked in getattr(self, '_initial_shapes', []):
+                strand.start = QPointF(start)
+                strand.end = QPointF(end)
+                strand.control_point1 = QPointF(cp1)
+                strand.control_point2 = QPointF(cp2)
+                strand.control_point_center = QPointF(center)
+                strand.control_point_center_locked = center_locked
+                strand.update_shape()
+                strand.update_side_line()
+            self._carry_boxes()
 
             # Deactivate the angle adjust mode
             self.canvas.is_angle_adjusting = False

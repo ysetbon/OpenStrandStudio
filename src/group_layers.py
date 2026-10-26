@@ -18,6 +18,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon, QIntValidator
 from strand import Strand
 from masked_strand import MaskedStrand  # Add this import
+from save_load_manager import set_mask_level, strand_level
 from numbered_layer_button import HoverLabel
 
 
@@ -2738,6 +2739,7 @@ class GroupPanel(QWidget):
 
                 # Regular strand
                 new_strand = self.duplicate_regular_strand(original_strand, old_to_new_set_mapping)
+                self.copy_strand_level(original_strand, new_strand)
                 print(f"    Duplicated: {getattr(original_strand, 'layer_name', '?')} -> {getattr(new_strand, 'layer_name', '?')}")
 
                 duplicated_strands.append(new_strand)
@@ -2755,6 +2757,7 @@ class GroupPanel(QWidget):
             print(f"\n  Phase 2: Duplicating attached strands...")
             for original_attached_strand in attached_strands_to_process:
                 new_strand = self.duplicate_attached_strand(original_attached_strand, old_to_new_set_mapping, strand_mapping)
+                self.copy_strand_level(original_attached_strand, new_strand)
                 print(f"    Duplicated: {getattr(original_attached_strand, 'layer_name', '?')} -> {getattr(new_strand, 'layer_name', '?')}")
                 duplicated_strands.append(new_strand)
                 strand_mapping[original_attached_strand] = new_strand
@@ -2783,6 +2786,8 @@ class GroupPanel(QWidget):
                     )
                 else:
                     print(f"    Successfully duplicated: {getattr(original_masked_strand, 'layer_name', '?')} -> {getattr(new_strand, 'layer_name', '?')}")
+                # After phases 1 and 2, so its two strands already carry their levels
+                self.copy_strand_level(original_masked_strand, new_strand)
 
                 duplicated_strands.append(new_strand)
                 strand_mapping[original_masked_strand] = new_strand
@@ -3327,6 +3332,20 @@ class GroupPanel(QWidget):
             new_strand.canvas = self.canvas
         
         return new_strand
+
+    def copy_strand_level(self, original, new_strand):
+        """Put a duplicated layer on the level of the layer it copies, so a
+        duplicated group keeps its storeys instead of landing on the top
+        level like a newly drawn strand. A mask is put on its original's
+        level, which is never below its two (already copied) strands."""
+        if new_strand is None:
+            return
+        top = int(getattr(self.canvas, 'level_count', 0) or 0)
+        level = strand_level(original, top)
+        if isinstance(new_strand, MaskedStrand):
+            set_mask_level(new_strand, level, top)
+        else:
+            new_strand.level = level
 
     def copy_strand_properties(self, original, new_strand):
         """Copy common strand properties from original to new strand."""

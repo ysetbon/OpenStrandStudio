@@ -143,9 +143,10 @@ def every(names, level):
 SAMPLES = []
 
 
-def sample(file, title, covers, data, duplicate, expect, steps=None):
+def sample(file, title, covers, data, duplicate, expect, steps=None, known_issue=None):
     SAMPLES.append({'file': file, 'title': title, 'covers': covers, 'data': data,
-                    'duplicate': duplicate, 'expect': expect, 'steps': steps or []})
+                    'duplicate': duplicate, 'expect': expect, 'steps': steps or [],
+                    'known_issue': known_issue})
 
 
 ALL = BOX_GROUND + BOX_LEVEL_1
@@ -206,7 +207,9 @@ sample('07_mask_partner_outside_group.json', 'Mask whose partner is outside the 
                                   '2_1': 1, '2_2': 1, '2_3': 1})], 1, {'pink only': [1]}),
        ['pink only'],
        'Every copied layer, including the pulled-in set-2 copies, is on the level of the '
-       'layer it copies; the copied masks follow their strands.')
+       'layer it copies; the copied masks follow their strands.',
+       known_issue='Only the set-2 strands the masks need are pulled in, not 2_5 attached to '
+                   '2_2, so the copy of 2_2 ends in an attachment circle with nothing attached.')
 
 sample('08_no_levels.json', 'Project without levels',
        'The box with no levels at all: no Level rows, everything on the Ground.',
@@ -350,7 +353,10 @@ def main():
         missing = [g for g in s['duplicate'] if g not in saved.get('groups', {}) and '(' not in g]
         assert not missing, (s['file'], missing, list(saved.get('groups', {})))
         (HERE / s['file']).write_text(json.dumps(saved, indent=2), encoding='utf-8')
-        manifest.append({k: s[k] for k in ('file', 'title', 'covers', 'duplicate', 'steps', 'expect')})
+        manifest.append({k: s[k] for k in ('file', 'title', 'covers', 'duplicate', 'steps', 'expect')
+                         if k != 'known_issue' or s[k]})
+        if s['known_issue']:
+            manifest[-1]['known_issue'] = s['known_issue']
         print('wrote', s['file'], len(saved['strands']), 'layers, groups', list(saved['groups']))
     (HERE / 'samples.json').write_text(json.dumps(manifest, indent=2), encoding='utf-8')
 

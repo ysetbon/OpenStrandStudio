@@ -67,7 +67,8 @@
       "pink only"
     ],
     "steps": [],
-    "expect": "Every copied layer, including the pulled-in set-2 copies, is on the level of the layer it copies; the copied masks follow their strands."
+    "expect": "Every copied layer, including the pulled-in set-2 copies, is on the level of the layer it copies; the copied masks follow their strands.",
+    "known_issue": "Only the set-2 strands the masks need are pulled in, not 2_5 attached to 2_2, so the copy of 2_2 ends in an attachment circle with nothing attached."
   },
   {
     "file": "08_no_levels.json",

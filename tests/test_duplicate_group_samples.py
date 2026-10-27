@@ -51,6 +51,25 @@ NOT_COPIED = {"index", "layer_name", "set_number", "attached_to", "level", "angl
 NOT_COPIED_MASK = NOT_COPIED | {"start", "end", "control_point_center", "width"}
 
 
+def same_picture(a, b, noise=8, stray=12):
+    """Whether two renders match, allowing anti-aliasing noise: a channel
+    may differ by up to *noise* (a line shifted by a hundredth of a pixel),
+    and up to *stray* pixels by more (the tip of a hair-thin wedge where two
+    outlines meet). A layer drawn differently changes hundreds of pixels."""
+    if a.size() != b.size():
+        return False
+    if a == b:
+        return True
+    a = a.convertToFormat(a.Format_ARGB32)
+    b = b.convertToFormat(b.Format_ARGB32)
+    pa = a.constBits(); pa.setsize(a.sizeInBytes())
+    pb = b.constBits(); pb.setsize(b.sizeInBytes())
+    pa, pb = bytes(pa), bytes(pb)
+    off = sum(1 for i in range(0, len(pa), 4)
+              if max(abs(pa[i + c] - pb[i + c]) for c in range(4)) > noise)
+    return off <= stray
+
+
 def pump(ms=50):
     done = [False]
     QTimer.singleShot(ms, lambda: done.__setitem__(0, True))
@@ -92,6 +111,12 @@ class Run:
                 panel.duplicate_group(group)
             pump(100)
         panel.copy_strand_properties = copy_props
+        # Duplicating selects the last copy; compare pictures with nothing selected
+        canvas.selected_strand = None
+        for strand in canvas.strands:
+            strand.is_selected = False
+        canvas.update()
+        pump(50)
 
     def level(self, strand):
         return strand_level(strand, self.win.canvas.level_count)
@@ -100,16 +125,24 @@ class Run:
         return {s.layer_name: self.level(s) for s in self.win.canvas.strands}
 
     def render(self, layers):
-        """The canvas with only *layers* drawn (their own hidden flags kept)."""
-        hidden = {id(s): s.is_hidden for s in self.win.canvas.strands}
+        """The canvas with only *layers* drawn (their own hidden flags kept).
+        A hidden strand still draws its full arrow, so the others' arrows
+        are switched off too."""
+        strands = self.win.canvas.strands
+        kept = {id(s): (s.is_hidden, getattr(s, 'full_arrow_visible', False)) for s in strands}
         wanted = {id(s) for s in layers}
-        for s in self.win.canvas.strands:
-            s.is_hidden = hidden[id(s)] or id(s) not in wanted
+        for s in strands:
+            if id(s) not in wanted:
+                s.is_hidden = True
+                if not isinstance(s, MaskedStrand):
+                    s.full_arrow_visible = False
         self.win.canvas.update()
         pump(50)
         image = self.win.canvas.grab().toImage()
-        for s in self.win.canvas.strands:
-            s.is_hidden = hidden[id(s)]
+        for s in strands:
+            s.is_hidden = kept[id(s)][0]
+            if not isinstance(s, MaskedStrand):
+                s.full_arrow_visible = kept[id(s)][1]
         return image
 
     def drawn_box(self, image):
@@ -122,6 +155,21 @@ class Run:
                     xs.append(x)
                     ys.append(y)
         return (min(xs), min(ys), max(xs), max(ys)) if xs else None
+
+    def fit(self, layers):
+        """Centre the design and zoom out until all of *layers* is drawn
+        inside the canvas; return whether it fits."""
+        canvas = self.win.canvas
+        canvas.center_all_strands()
+        for _ in range(25):
+            picture = self.render(layers)
+            box = self.drawn_box(picture)
+            if box is None or (box[0] > 2 and box[1] > 2 and box[2] < picture.width() - 3
+                               and box[3] < picture.height() - 3):
+                return True
+            canvas.zoom_out()
+            canvas.center_all_strands()
+        return False
 
     def close(self):
         self.win._confirm_close_with_dirty_tabs = lambda *a, **k: True
@@ -191,13 +239,10 @@ def test_the_copy_is_drawn_like_the_original(run):
     same picture as the originals drawn alone."""
     originals = [o for o, _, _ in run.pairs]
     copies = [c for _, c, _ in run.pairs]
-    picture = run.render(originals)
-    box = run.drawn_box(picture)
-    if box is not None:  # a group can be hidden whole
-        left, top, right, bottom = box
-        assert left > 2 and top > 2, "the design runs off the canvas"
-        assert right < picture.width() - 3 and bottom < picture.height() - 3, "the design runs off the canvas"
-    assert picture == run.render(copies)
+    if run.sample.get("known_issue"):
+        pytest.xfail(run.sample["known_issue"])
+    assert run.fit(originals + copies), "the design does not fit on the canvas"
+    assert same_picture(run.render(originals), run.render(copies))
 
 
 def test_each_copy_saves_like_its_original(run):

@@ -202,14 +202,14 @@ sample('06_mask_across_two_levels.json', 'Mask between two levels',
 
 sample('07_mask_partner_outside_group.json', 'Mask whose partner is outside the group',
        'Group "pink only" holds set 1 alone, but masks 2_2_1_3 and 2_4_1_5 also use set 2 '
-       '(on Level 1). Duplicating pulls the missing set-2 strands into the copy.',
+       '(on Level 1). Duplicating pulls the set-2 strands the masks need into the copy, with '
+       'the strands attached to them (2_5 on 2_2).',
        project([box(2, 1, levels={**every(BOX_GROUND, 0), **every(BOX_LEVEL_1, 1),
                                   '2_1': 1, '2_2': 1, '2_3': 1})], 1, {'pink only': [1]}),
        ['pink only'],
        'Every copied layer, including the pulled-in set-2 copies, is on the level of the '
-       'layer it copies; the copied masks follow their strands.',
-       known_issue='Only the set-2 strands the masks need are pulled in, not 2_5 attached to '
-                   '2_2, so the copy of 2_2 ends in an attachment circle with nothing attached.')
+       'layer it copies; the copied masks follow their strands; the copy of 2_2 carries the '
+       'copy of 2_5, so it draws like the original.')
 
 sample('08_no_levels.json', 'Project without levels',
        'The box with no levels at all: no Level rows, everything on the Ground.',

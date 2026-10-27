@@ -62,13 +62,12 @@
   {
     "file": "07_mask_partner_outside_group.json",
     "title": "Mask whose partner is outside the group",
-    "covers": "Group \"pink only\" holds set 1 alone, but masks 2_2_1_3 and 2_4_1_5 also use set 2 (on Level 1). Duplicating pulls the missing set-2 strands into the copy.",
+    "covers": "Group \"pink only\" holds set 1 alone, but masks 2_2_1_3 and 2_4_1_5 also use set 2 (on Level 1). Duplicating pulls the set-2 strands the masks need into the copy, with the strands attached to them (2_5 on 2_2).",
     "duplicate": [
       "pink only"
     ],
     "steps": [],
-    "expect": "Every copied layer, including the pulled-in set-2 copies, is on the level of the layer it copies; the copied masks follow their strands.",
-    "known_issue": "Only the set-2 strands the masks need are pulled in, not 2_5 attached to 2_2, so the copy of 2_2 ends in an attachment circle with nothing attached."
+    "expect": "Every copied layer, including the pulled-in set-2 copies, is on the level of the layer it copies; the copied masks follow their strands; the copy of 2_2 carries the copy of 2_5, so it draws like the original."
   },
   {
     "file": "08_no_levels.json",

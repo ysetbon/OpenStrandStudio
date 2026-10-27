@@ -105,8 +105,10 @@ class Run:
             return copy_props(original, new_strand)
 
         panel.copy_strand_properties = recording
+        self.members = []  # every layer of the duplicated groups, as they were
         for group in sample["duplicate"]:
             assert group in panel.groups, f"{group} not in {list(panel.groups)}"
+            self.members += panel.resolve_group_data(group)["strands"]
             with contextlib.redirect_stdout(io.StringIO()):  # duplicate_group logs every layer
                 panel.duplicate_group(group)
             pump(100)
@@ -187,11 +189,27 @@ def run(request):
 
 def test_every_layer_of_the_group_is_copied(run):
     assert run.pairs, "nothing was duplicated"
+    copied = {id(o) for o, _, _ in run.pairs}
+    missing = [m.layer_name for m in run.members if id(m) not in copied]
+    assert not missing, f"not copied: {missing}"
     copies = [c for _, c, _ in run.pairs]
     assert all(c is not None for c in copies)
     assert all(c in run.win.canvas.strands for c in copies)
     names = [c.layer_name for c in copies]
     assert len(names) == len(set(names))
+
+
+def test_every_copy_carries_what_its_original_carries(run):
+    """A copy has as many strands attached to it as its original, so no copy
+    ends in an attachment circle with nothing on it."""
+    copy_of = {id(o): c for o, c, _ in run.pairs}
+    for original, copy, _ in run.pairs:
+        if isinstance(original, MaskedStrand):
+            continue
+        children = getattr(original, 'attached_strands', None) or []
+        expected = [copy_of.get(id(child)) for child in children]
+        assert None not in expected, f"{original.layer_name}: a child was not copied"
+        assert list(getattr(copy, 'attached_strands', None) or []) == expected, copy.layer_name
 
 
 def test_each_copy_is_on_the_level_of_the_layer_it_copies(run):

@@ -2657,7 +2657,22 @@ class GroupPanel(QWidget):
             # Process all strands in the group
             for strand in original_strands:
                 collect_component_strands(strand)
-            
+
+            # A strand pulled in for a mask brings the strands attached to it,
+            # or its copy would end in an attachment circle with nothing on it
+            def collect_attached_children(strand, depth=0):
+                if depth > 50:  # Prevent runaway recursion on a broken chain
+                    return
+                for child in list(getattr(strand, 'attached_strands', None) or []):
+                    if child not in original_strands and id(child) not in processed_components:
+                        additional_strands.append(child)
+                        processed_components.add(id(child))
+                        print(f"  Adding attached strand: {getattr(child, 'layer_name', '?')} of pulled-in {getattr(strand, 'layer_name', '?')}")
+                        collect_attached_children(child, depth + 1)
+
+            for strand in list(additional_strands):
+                collect_attached_children(strand)
+
             # Add any missing component strands to the list
             if additional_strands:
                 original_strands = list(original_strands) + additional_strands

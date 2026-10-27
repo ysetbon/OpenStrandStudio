@@ -18,6 +18,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon, QIntValidator
 from strand import Strand
 from masked_strand import MaskedStrand  # Add this import
+from save_load_manager import set_mask_level, strand_level
 from numbered_layer_button import HoverLabel
 
 
@@ -2656,7 +2657,22 @@ class GroupPanel(QWidget):
             # Process all strands in the group
             for strand in original_strands:
                 collect_component_strands(strand)
-            
+
+            # A strand pulled in for a mask brings the strands attached to it,
+            # or its copy would end in an attachment circle with nothing on it
+            def collect_attached_children(strand, depth=0):
+                if depth > 50:  # Prevent runaway recursion on a broken chain
+                    return
+                for child in list(getattr(strand, 'attached_strands', None) or []):
+                    if child not in original_strands and id(child) not in processed_components:
+                        additional_strands.append(child)
+                        processed_components.add(id(child))
+                        print(f"  Adding attached strand: {getattr(child, 'layer_name', '?')} of pulled-in {getattr(strand, 'layer_name', '?')}")
+                        collect_attached_children(child, depth + 1)
+
+            for strand in list(additional_strands):
+                collect_attached_children(strand)
+
             # Add any missing component strands to the list
             if additional_strands:
                 original_strands = list(original_strands) + additional_strands
@@ -2738,6 +2754,7 @@ class GroupPanel(QWidget):
 
                 # Regular strand
                 new_strand = self.duplicate_regular_strand(original_strand, old_to_new_set_mapping)
+                self.copy_strand_level(original_strand, new_strand)
                 print(f"    Duplicated: {getattr(original_strand, 'layer_name', '?')} -> {getattr(new_strand, 'layer_name', '?')}")
 
                 duplicated_strands.append(new_strand)
@@ -2751,10 +2768,23 @@ class GroupPanel(QWidget):
                 if self.canvas:
                     self.canvas.add_strand(new_strand)
 
-            # Second pass: duplicate AttachedStrands now that parent strands exist
+            # Second pass: duplicate AttachedStrands now that parent strands exist.
+            # Parents first: on a lower level a child comes before its parent
+            # in the stack, and without its parent's copy it would lose its
+            # attachment (the stack order is put back afterwards).
+            def attachment_depth(strand):
+                depth, seen = 0, set()
+                while isinstance(getattr(strand, 'parent', None), AttachedStrand) and id(strand) not in seen:
+                    seen.add(id(strand))
+                    strand = strand.parent
+                    depth += 1
+                return depth
+
+            attached_strands_to_process.sort(key=attachment_depth)
             print(f"\n  Phase 2: Duplicating attached strands...")
             for original_attached_strand in attached_strands_to_process:
                 new_strand = self.duplicate_attached_strand(original_attached_strand, old_to_new_set_mapping, strand_mapping)
+                self.copy_strand_level(original_attached_strand, new_strand)
                 print(f"    Duplicated: {getattr(original_attached_strand, 'layer_name', '?')} -> {getattr(new_strand, 'layer_name', '?')}")
                 duplicated_strands.append(new_strand)
                 strand_mapping[original_attached_strand] = new_strand
@@ -2783,6 +2813,8 @@ class GroupPanel(QWidget):
                     )
                 else:
                     print(f"    Successfully duplicated: {getattr(original_masked_strand, 'layer_name', '?')} -> {getattr(new_strand, 'layer_name', '?')}")
+                # After phases 1 and 2, so its two strands already carry their levels
+                self.copy_strand_level(original_masked_strand, new_strand)
 
                 duplicated_strands.append(new_strand)
                 strand_mapping[original_masked_strand] = new_strand
@@ -2794,7 +2826,14 @@ class GroupPanel(QWidget):
                 # Add to canvas strands using proper method to set canvas reference
                 if self.canvas:
                     self.canvas.add_strand(new_strand)
-            
+
+            # The copies were added strands first, then attached strands, then
+            # masks; stack them like their originals so the copy draws the same
+            if self.canvas:
+                self.stack_copies_like_originals(strand_mapping)
+                position = {id(s): i for i, s in enumerate(self.canvas.strands)}
+                duplicated_strands.sort(key=lambda s: position.get(id(s), len(position)))
+
             # Add strands to layer panel
             # Note: Strands have already been added to canvas.strands in the duplication loops above
             # Now we need to create their layer buttons
@@ -3328,6 +3367,33 @@ class GroupPanel(QWidget):
         
         return new_strand
 
+    def copy_strand_level(self, original, new_strand):
+        """Put a duplicated layer on the level of the layer it copies, so a
+        duplicated group keeps its storeys instead of landing on the top
+        level like a newly drawn strand. A mask is put on its original's
+        level, which is never below its two (already copied) strands."""
+        if new_strand is None:
+            return
+        top = int(getattr(self.canvas, 'level_count', 0) or 0)
+        level = strand_level(original, top)
+        if isinstance(new_strand, MaskedStrand):
+            set_mask_level(new_strand, level, top)
+        else:
+            new_strand.level = level
+
+    def stack_copies_like_originals(self, strand_mapping):
+        """Reorder the copies in canvas.strands (original -> copy in
+        *strand_mapping*) into the order of their originals, keeping the
+        places the copies hold. Layers that are not copies do not move."""
+        strands = self.canvas.strands
+        position = {id(s): i for i, s in enumerate(strands)}
+        pairs = [(o, c) for o, c in strand_mapping.items()
+                 if c is not None and id(c) in position]
+        slots = sorted(position[id(c)] for _, c in pairs)
+        in_order = [c for o, c in sorted(pairs, key=lambda p: position.get(id(p[0]), len(strands)))]
+        for slot, copy_strand in zip(slots, in_order):
+            strands[slot] = copy_strand
+
     def copy_strand_properties(self, original, new_strand):
         """Copy common strand properties from original to new strand."""
         try:
@@ -3426,8 +3492,26 @@ class GroupPanel(QWidget):
                 new_strand.start_arrow_visible = original.start_arrow_visible
             if hasattr(original, 'end_arrow_visible'):
                 new_strand.end_arrow_visible = original.end_arrow_visible
-        
-            # Copy extension visibility properties  
+
+            # Copy the arrow's look
+            if hasattr(original, 'arrow_color'):
+                new_strand.arrow_color = QColor(original.arrow_color) if original.arrow_color is not None else None
+            for name in ('arrow_transparency', 'arrow_texture', 'arrow_shaft_style',
+                         'arrow_head_visible', 'arrow_casts_shadow'):
+                if hasattr(original, name):
+                    setattr(new_strand, name, getattr(original, name))
+
+            # Copy the width in grid units, the end caps' shape and closed ends
+            if hasattr(original, 'width_in_grid_units'):
+                new_strand.width_in_grid_units = original.width_in_grid_units
+            if hasattr(original, 'elliptical_end_caps'):
+                new_strand.elliptical_end_caps = original.elliptical_end_caps
+            if getattr(original, 'closed_connections', None) is not None:
+                new_strand.closed_connections = list(original.closed_connections)
+            if hasattr(original, 'is_first_strand'):
+                new_strand.is_first_strand = original.is_first_strand
+
+            # Copy extension visibility properties
             if hasattr(original, 'start_extension_visible'):
                 new_strand.start_extension_visible = original.start_extension_visible
             if hasattr(original, 'end_extension_visible'):

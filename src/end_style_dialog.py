@@ -161,7 +161,7 @@ class ShapeGrid(QWidget):
 
     def resizeEvent(self, event):
         needed = len(self._buttons) * (self.BUTTON[0] + 6)
-        self._reflow(6 if event.size().width() >= needed else 3)
+        self._reflow(6 if self.width() >= needed else 3)  # not event.size(): see level_button._FullWidthRow.eventFilter
         super().resizeEvent(event)
 
 

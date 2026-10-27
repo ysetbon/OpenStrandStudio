@@ -2799,7 +2799,14 @@ class GroupPanel(QWidget):
                 # Add to canvas strands using proper method to set canvas reference
                 if self.canvas:
                     self.canvas.add_strand(new_strand)
-            
+
+            # The copies were added strands first, then attached strands, then
+            # masks; stack them like their originals so the copy draws the same
+            if self.canvas:
+                self.stack_copies_like_originals(strand_mapping)
+                position = {id(s): i for i, s in enumerate(self.canvas.strands)}
+                duplicated_strands.sort(key=lambda s: position.get(id(s), len(position)))
+
             # Add strands to layer panel
             # Note: Strands have already been added to canvas.strands in the duplication loops above
             # Now we need to create their layer buttons
@@ -3346,6 +3353,19 @@ class GroupPanel(QWidget):
             set_mask_level(new_strand, level, top)
         else:
             new_strand.level = level
+
+    def stack_copies_like_originals(self, strand_mapping):
+        """Reorder the copies in canvas.strands (original -> copy in
+        *strand_mapping*) into the order of their originals, keeping the
+        places the copies hold. Layers that are not copies do not move."""
+        strands = self.canvas.strands
+        position = {id(s): i for i, s in enumerate(strands)}
+        pairs = [(o, c) for o, c in strand_mapping.items()
+                 if c is not None and id(c) in position]
+        slots = sorted(position[id(c)] for _, c in pairs)
+        in_order = [c for o, c in sorted(pairs, key=lambda p: position.get(id(p[0]), len(strands)))]
+        for slot, copy_strand in zip(slots, in_order):
+            strands[slot] = copy_strand
 
     def copy_strand_properties(self, original, new_strand):
         """Copy common strand properties from original to new strand."""

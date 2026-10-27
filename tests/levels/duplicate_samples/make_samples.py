@@ -294,6 +294,35 @@ for n, name in enumerate(SHIPPED, start=15):
            'the copied masks follow their strands.')
 
 
+def styled_box():
+    """The box with arrows, an extension, a curve, a closed end and an erased
+    mask box switched on, on both levels."""
+    strands = box(2, 1)
+    by = {s['layer_name']: s for s in strands}
+    red = {'r': 220, 'g': 40, 'b': 40, 'a': 255}
+    by['2_1'].update(full_arrow_visible=True, arrow_color=red, arrow_texture='stripes',
+                     arrow_shaft_style='dots', arrow_transparency=80, arrow_casts_shadow=True)
+    by['1_1'].update(start_arrow_visible=True, end_extension_visible=True)
+    by['2_4'].update(end_arrow_visible=True, arrow_shaft_style='tiles', arrow_head_visible=False)
+    by['1_3'].update(control_points=[{'x': 1220.0, 'y': 300.0}, {'x': 1270.0, 'y': 430.0}],
+                     triangle_has_moved=True)
+    by['2_5'].update(closed_connections=[False, True])
+    by['2_2_1_3']['deletion_rectangles'] = [{
+        'top_left': [1238.0, 344.0], 'top_right': [1282.0, 344.0],
+        'bottom_left': [1238.0, 384.0], 'bottom_right': [1282.0, 384.0]}]
+    return strands
+
+
+sample('23_styled_layers.json', 'Arrows, curve, closed end, erased box',
+       'The box with a full red striped arrow on 2_1 and a start arrow plus an end '
+       'extension on 1_1 (Ground), an end arrow without a head on 2_4 (Level 1), '
+       'a curved 1_3, a closed end on 2_5, and an erased box in mask 2_2_1_3.',
+       project([styled_box()], 1, {'box': [1, 2]}),
+       ['box'],
+       'The copy looks exactly like the original: same arrows, extension, curve, closed end '
+       'and erased box, on the same levels.')
+
+
 # ------------------------------------------------------------- write them
 
 def normalised(data):
@@ -304,6 +333,8 @@ def normalised(data):
         # Raised masks: the loader applies the "level" key itself; strands too.
         saved = serialize_project_state(win.canvas.strands,
                                         win.group_layer_manager.get_group_data(), win.canvas)
+        for group in saved.get('groups', {}).values():  # a set: keep the files stable
+            group['main_strands'] = sorted(group.get('main_strands', []))
         return saved
     finally:
         win._confirm_close_with_dirty_tabs = lambda *a, **k: True

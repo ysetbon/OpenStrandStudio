@@ -34,12 +34,21 @@ from PyQt5.QtWidgets import QApplication
 from main_window import MainWindow
 from masked_strand import MaskedStrand
 from save_load_manager import (apply_project_state, keep_masks_on_top, mask_base_level,
-                               mask_own_level, serialize_project_state, set_mask_level,
-                               strand_level)
+                               mask_own_level, serialize_project_state, serialize_strand,
+                               set_mask_level, strand_level)
 
 APP = QApplication.instance() or QApplication([])
 SAMPLES_DIR = Path(__file__).resolve().parent / "levels" / "duplicate_samples"
 SAMPLES = json.loads((SAMPLES_DIR / "samples.json").read_text(encoding="utf-8"))
+# Big enough for every sample to be drawn whole. Set before the window is
+# shown: the level rows follow later resizes of the layer list.
+WINDOW_SIZE = (2800, 2000)
+# Saved values a copy does not share with its original: its names and
+# level (checked on their own), and values worked out again from the
+# geometry (an attached strand's angle and length; a mask's ends, centre
+# and width come from its two strands).
+NOT_COPIED = {"index", "layer_name", "set_number", "attached_to", "level", "angle", "length"}
+NOT_COPIED_MASK = NOT_COPIED | {"start", "end", "control_point_center", "width"}
 
 
 def pump(ms=50):
@@ -59,8 +68,8 @@ class Run:
         apply_project_state(canvas, json.loads((SAMPLES_DIR / sample["file"]).read_text(encoding="utf-8")))
         canvas.selected_strand = None
         self.win.layer_panel.refresh()
+        self.win.resize(*WINDOW_SIZE)
         self.win.show()
-        self.win.resize(1600, 900)
         pump(150)
         self.top = canvas.level_count
         if any("Level 1" in step for step in sample["steps"]):
@@ -102,6 +111,17 @@ class Run:
         for s in self.win.canvas.strands:
             s.is_hidden = hidden[id(s)]
         return image
+
+    def drawn_box(self, image):
+        """Where *image* differs from the empty canvas: (left, top, right, bottom)."""
+        empty = self.render([])
+        xs, ys = [], []
+        for y in range(0, image.height(), 2):
+            for x in range(0, image.width(), 2):
+                if image.pixel(x, y) != empty.pixel(x, y):
+                    xs.append(x)
+                    ys.append(y)
+        return (min(xs), min(ys), max(xs), max(ys)) if xs else None
 
     def close(self):
         self.win._confirm_close_with_dirty_tabs = lambda *a, **k: True
@@ -171,7 +191,33 @@ def test_the_copy_is_drawn_like_the_original(run):
     same picture as the originals drawn alone."""
     originals = [o for o, _, _ in run.pairs]
     copies = [c for _, c, _ in run.pairs]
-    assert run.render(originals) == run.render(copies)
+    picture = run.render(originals)
+    box = run.drawn_box(picture)
+    if box is not None:  # a group can be hidden whole
+        left, top, right, bottom = box
+        assert left > 2 and top > 2, "the design runs off the canvas"
+        assert right < picture.width() - 3 and bottom < picture.height() - 3, "the design runs off the canvas"
+    assert picture == run.render(copies)
+
+
+def test_each_copy_saves_like_its_original(run):
+    """Everything the file keeps about a layer (colours, widths, end caps,
+    arrows, curves, circles, closed ends, erased boxes...) is copied, apart
+    from its names and the values worked out again from the geometry. An
+    attached copy is attached to the copy of its original's parent."""
+    canvas = run.win.canvas
+    copy_of = {id(o): c for o, c, _ in run.pairs}
+    for original, copy, _ in run.pairs:
+        a = serialize_strand(original, canvas)
+        b = serialize_strand(copy, canvas)
+        skip = NOT_COPIED_MASK if isinstance(original, MaskedStrand) else NOT_COPIED
+        differ = {k: (a.get(k), b.get(k)) for k in set(a) | set(b)
+                  if k not in skip and json.dumps(a.get(k), sort_keys=True, default=str)
+                  != json.dumps(b.get(k), sort_keys=True, default=str)}
+        assert not differ, f"{original.layer_name} -> {copy.layer_name}: {differ}"
+        if "attached_to" in a:
+            parent = copy_of.get(id(original.parent))
+            assert parent is not None and b.get("attached_to") == parent.layer_name, copy.layer_name
 
 
 def test_saving_and_reopening_keeps_every_level(run):

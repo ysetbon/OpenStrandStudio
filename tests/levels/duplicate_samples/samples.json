@@ -223,5 +223,15 @@
     ],
     "steps": [],
     "expect": "Every copied set is on the same level as the set it copies; the copied masks follow their strands."
+  },
+  {
+    "file": "23_styled_layers.json",
+    "title": "Arrows, curve, closed end, erased box",
+    "covers": "The box with a full red striped arrow on 2_1 and a start arrow plus an end extension on 1_1 (Ground), an end arrow without a head on 2_4 (Level 1), a curved 1_3, a closed end on 2_5, and an erased box in mask 2_2_1_3.",
+    "duplicate": [
+      "box"
+    ],
+    "steps": [],
+    "expect": "The copy looks exactly like the original: same arrows, extension, curve, closed end and erased box, on the same levels."
   }
 ]

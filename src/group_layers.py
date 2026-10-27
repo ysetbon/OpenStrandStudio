@@ -2753,7 +2753,19 @@ class GroupPanel(QWidget):
                 if self.canvas:
                     self.canvas.add_strand(new_strand)
 
-            # Second pass: duplicate AttachedStrands now that parent strands exist
+            # Second pass: duplicate AttachedStrands now that parent strands exist.
+            # Parents first: on a lower level a child comes before its parent
+            # in the stack, and without its parent's copy it would lose its
+            # attachment (the stack order is put back afterwards).
+            def attachment_depth(strand):
+                depth, seen = 0, set()
+                while isinstance(getattr(strand, 'parent', None), AttachedStrand) and id(strand) not in seen:
+                    seen.add(id(strand))
+                    strand = strand.parent
+                    depth += 1
+                return depth
+
+            attached_strands_to_process.sort(key=attachment_depth)
             print(f"\n  Phase 2: Duplicating attached strands...")
             for original_attached_strand in attached_strands_to_process:
                 new_strand = self.duplicate_attached_strand(original_attached_strand, old_to_new_set_mapping, strand_mapping)
@@ -3465,8 +3477,26 @@ class GroupPanel(QWidget):
                 new_strand.start_arrow_visible = original.start_arrow_visible
             if hasattr(original, 'end_arrow_visible'):
                 new_strand.end_arrow_visible = original.end_arrow_visible
-        
-            # Copy extension visibility properties  
+
+            # Copy the arrow's look
+            if hasattr(original, 'arrow_color'):
+                new_strand.arrow_color = QColor(original.arrow_color) if original.arrow_color is not None else None
+            for name in ('arrow_transparency', 'arrow_texture', 'arrow_shaft_style',
+                         'arrow_head_visible', 'arrow_casts_shadow'):
+                if hasattr(original, name):
+                    setattr(new_strand, name, getattr(original, name))
+
+            # Copy the width in grid units, the end caps' shape and closed ends
+            if hasattr(original, 'width_in_grid_units'):
+                new_strand.width_in_grid_units = original.width_in_grid_units
+            if hasattr(original, 'elliptical_end_caps'):
+                new_strand.elliptical_end_caps = original.elliptical_end_caps
+            if getattr(original, 'closed_connections', None) is not None:
+                new_strand.closed_connections = list(original.closed_connections)
+            if hasattr(original, 'is_first_strand'):
+                new_strand.is_first_strand = original.is_first_strand
+
+            # Copy extension visibility properties
             if hasattr(original, 'start_extension_visible'):
                 new_strand.start_extension_visible = original.start_extension_visible
             if hasattr(original, 'end_extension_visible'):

@@ -19,19 +19,19 @@ Runs the real MainWindow offscreen on tests/levels/continue_2x2.json.
 import json
 
 import pytest
-from PyQt5.QtCore import QMimeData, QPoint, QPointF, Qt
-from PyQt5.QtGui import QColor, QDropEvent
+from PyQt5.QtCore import QEvent, QMimeData, QPoint, QPointF, QRect, Qt
+from PyQt5.QtGui import QColor, QDropEvent, QPaintEvent
 from PyQt5.QtTest import QTest
 from PyQt5.QtWidgets import QMenu, QWidgetAction
 
 from test_layer_levels import (assert_consistent, find, lift_3_4_and_2_4, list_order,  # noqa: F401
                                pump, window)
-from level_button import (GroundRow, LevelRow, PANEL_BACKGROUNDS, THEME_LEVEL_COLORS,
+from level_button import (LEVEL_BUTTON_SIZE, GroundRow, LevelRow, PANEL_BACKGROUNDS, THEME_LEVEL_COLORS,
                           contrast_ratio, legible_color, preset_color)
 from masked_strand import MaskedStrand
 from numbered_layer_button import HoverLabel, build_menu_stylesheet
-from save_load_manager import (load_strands_from_data, mask_own_level, serialize_project_state,
-                               strand_level)
+from save_load_manager import (apply_project_state, load_strands_from_data, mask_own_level,
+                               serialize_project_state, strand_level)
 from translations import translations
 
 
@@ -495,6 +495,54 @@ def test_raised_masks_are_saved(window):
     loaded = load_strands_from_data(data, window.canvas)
     again = next(s for s in loaded[0] if s.layer_name == top_mask.layer_name)
     assert mask_own_level(again) == 1
+
+
+# --- resizing -------------------------------------------------------------------
+
+def level_and_ground_rows(lp):
+    return list(lp.level_rows) + ([lp.ground_row] if lp.ground_row is not None else [])
+
+
+def test_rows_follow_the_list_through_window_resizes(window):
+    """A project with levels, loaded like a saved one, survives resizing the
+    shown window to very different sizes; the rows stay as wide as the list."""
+    lp = window.layer_panel
+    lift_3_4_and_2_4(window)
+    state = json.loads(json.dumps(serialize_project_state(window.canvas.strands, window.canvas.groups,
+                                                          window.canvas)))
+    assert state["level_count"] == 1
+    apply_project_state(window.canvas, state)
+    lp.refresh()
+    pump(100)
+    assert len(level_and_ground_rows(lp)) == 2  # Level 1 and Ground
+    for width, height in ((3000, 2200), (1200, 800), (2400, 1400), (900, 650), (3000, 2200)):
+        window.resize(width, height)
+        pump(100)
+        panel = window.splitter.sizes()[1]
+        window.splitter.setSizes([window.width() - panel - 120, panel + 120])  # drag the panel wider
+        pump(100)
+        viewport = lp.scroll_area.viewport()
+        for row in level_and_ground_rows(lp):
+            assert row.width() == max(viewport.width(), LEVEL_BUTTON_SIZE.width()), (width, height)
+
+
+def test_a_stale_event_wrapper_does_not_break_the_rows(window):
+    """PyQt can hand an eventFilter a stale wrapper of another event class: a
+    QPaintEvent that reports Resize. The row takes the width from the list."""
+    lp = window.layer_panel
+    lift_3_4_and_2_4(window)
+    pump()
+
+    class StalePaintEvent(QPaintEvent):
+        def type(self):
+            return QEvent.Resize
+
+    viewport = lp.scroll_area.viewport()
+    event = StalePaintEvent(QRect(0, 0, 10, 10))
+    for row in level_and_ground_rows(lp):
+        row.setFixedWidth(LEVEL_BUTTON_SIZE.width() + 50)
+        assert row.eventFilter(viewport, event) is False
+        assert row.width() == max(viewport.width(), LEVEL_BUTTON_SIZE.width())
 
 
 # --- the menu --------------------------------------------------------------------

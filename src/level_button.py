@@ -380,8 +380,11 @@ class _FullWidthRow(QWidget):
 
     def eventFilter(self, obj, event):
         """Follow every resize of the list: panel dragged, scrollbar shown."""
+        # The width comes from the viewport, not event.size(): PyQt can hand
+        # an eventFilter a stale wrapper of another event class (a
+        # QPaintEvent reporting Resize), and raising here aborts the app.
         if event.type() == QEvent.Resize and obj is self._viewport():
-            self._fit_width(event.size().width())
+            self._fit_width(obj.width())
         return False
 
     def color(self):

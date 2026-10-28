@@ -125,9 +125,9 @@ class MoveMode:
         # Hover tracking for visual feedback
         self.hovered_strand = None  # The strand being hovered over
         self.hovered_side = None  # Which side is being hovered (0, 1, 'control_point1', 'control_point2', 'control_point_center')
-        # After a point is grabbed, the point under the pointer stays quiet until
-        # the pointer has left every point
-        self._hover_sound_held = False
+        # (strand, side) pairs that were just grabbed: they stay quiet under the pointer
+        # after the drop until the pointer moves to another point or off every point
+        self._quiet_points = []
 
     def setup_timer(self):
         """Set up the timer for gradual movement."""
@@ -2344,14 +2344,29 @@ class MoveMode:
                     self.hovered_side = 1
                     break
 
-        if self.hovered_strand is None:
-            self._hover_sound_held = False
+        quiet = any(strand is self.hovered_strand and side == self.hovered_side
+                    for strand, side in self._quiet_points)
+        if not quiet:
+            self._quiet_points = []
 
         # Only update canvas if hover state changed
         if old_hovered_strand != self.hovered_strand or old_hovered_side != self.hovered_side:
-            if self.hovered_strand is not None and not self._hover_sound_held:
+            if self.hovered_strand is not None and not quiet:
                 sound_manager.play('hover_move_point')
             self.canvas.update()
+
+    def _grabbed_points(self, strand, side):
+        """The grabbed point, plus for a strand end every other strand end sitting on it
+        (they are joined and move with it)."""
+        points = [(strand, side)]
+        if side not in (0, 1):
+            return points
+        point = strand.start if side == 0 else strand.end
+        for other in self._iter_hover_candidate_strands():
+            for other_side, other_point in ((0, other.start), (1, other.end)):
+                if (other is not strand or other_side != side) and other_point == point:
+                    points.append((other, other_side))
+        return points
 
     def can_move_side(self, strand, side, strand_index):
         """
@@ -2390,7 +2405,7 @@ class MoveMode:
         # Clear hover state when starting movement
         self.hovered_strand = None
         self.hovered_side = None
-        self._hover_sound_held = True
+        self._quiet_points = self._grabbed_points(strand, side)
 
         # Ensure canvas is fully updated before starting movement
         # This is important when movement starts immediately after creating an attached strand

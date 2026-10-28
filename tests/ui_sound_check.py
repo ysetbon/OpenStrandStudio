@@ -482,10 +482,15 @@ def check_canvas(w, rec):
     start_pt = at(attached.start)
     run_check(rec, "Canvas", "control point", "drag it onto the start point and let go",
               lambda: drag_point(away, start_pt), "drag_drop")
-    no_hover("control point on the start point", "pointer moves around on it",
+    no_hover("control point on the start point", "pointer moves around on the control point",
              lambda: [(mouse(canvas, QEvent.MouseMove, start_pt + QPoint(dx, dy)), pump(30))
                       for dx, dy in ((2, 1), (8, -4), (-6, 6))],
-             "neither the control point nor the start point under it hovers after the drop")
+             "the control point was just dropped: no second hover while the pointer stays on it")
+    # Past the control point's 50-unit square but still in the start point's 120-unit one
+    off_cp = int(40 * canvas.zoom_factor)
+    run_check(rec, "Canvas", "start point under the dropped control point", "pointer moves onto it",
+              lambda: mouse(canvas, QEvent.MouseMove, start_pt + QPoint(off_cp, off_cp)), "hover_move_point",
+              note="a different point than the one dropped hovers right away")
     if not points_were_shown:
         click(w.toggle_control_points_button)
         pump(150)

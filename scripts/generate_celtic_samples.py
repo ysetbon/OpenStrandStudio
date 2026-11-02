@@ -20,12 +20,14 @@ from types import SimpleNamespace
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from generate_creative_samples import (Scene, QApplication, serialize_project_state,
                                        validate, AppPreview, woven, MaskedStrand)
-from generate_knot_samples import OUT, CENTRE, circle, rounded_polygon
-from sample_geometry import parametric
+from generate_knot_samples import OUT, CENTRE, circle, rounded_polygon, turks_head
+from sample_geometry import parametric, spline
 
 # Old-metal and enamel tones of insular and Viking-age metalwork.
 ANTIQUE_GOLD, BRONZE, IRON, OXBLOOD, FOREST, SLATE = (
     '#c9a227', '#a8692f', '#3f4a56', '#8e2b2b', '#2f6b4f', '#2d4b6e')
+# Indian bridal tones: sindoor red, zari gold and emerald.
+BRIDAL_RED, ZARI_GOLD, EMERALD = '#a3162c', '#d4a72c', '#1d6b50'
 
 
 def squared(r_of_theta, squareness, turn=0.0):
@@ -66,6 +68,14 @@ def lissajous_panel(centre, half_w, half_h, a, b, phase, squareness=.35):
     return parametric(point, 0, math.tau, closed=True, steps=12000)
 
 
+def paisley(centre, scale=1.0):
+    """A paisley (buta) outline whose tip curls back and crosses itself once."""
+    landmarks = [(20, 260), (190, 170), (250, 0), (190, -170), (60, -280), (-80, -320),
+                 (-180, -290), (-215, -210), (-170, -140), (-100, -160), (-95, -230),
+                 (-150, -250), (-215, -160), (-235, -30), (-200, 120), (-120, 230)]
+    return spline([(centre[0] + scale * x, centre[1] + scale * y) for x, y in landmarks], closed=True)
+
+
 def scenes(only=None):
     def wanted(name):
         return only is None or name in only
@@ -96,6 +106,28 @@ def scenes(only=None):
         s.category = 'celtic'
         s.cord(shield_knot(CENTRE, 70, 330, .2), SLATE, 'Shield', 28, closed=True)
         s.cord(circle(CENTRE, 205), ANTIQUE_GOLD, 'Ring', 22, closed=True)
+        s.interlace(woven())
+        yield s
+
+    if wanted('bridal_lotus_mandala'):
+        # Celtic interlace on an Indian lotus: eight gold petals, an emerald ring, a red carrick mat.
+        s = Scene('bridal_lotus_mandala')
+        s.category = 'celtic'
+        s.cord(turks_head(3, 8, 195, 335), ZARI_GOLD, 'Lotus petals', 22, closed=True)
+        s.cord(circle(CENTRE, 260), EMERALD, 'Ring', 18, closed=True)
+        s.cord(turks_head(3, 4, 55, 145), BRIDAL_RED, 'Heart knot', 22, closed=True)
+        s.interlace(woven())
+        yield s
+
+    if wanted('bridal_paisley'):
+        # A paisley whose curled tip crosses itself, holding a triquetra.
+        s = Scene('bridal_paisley')
+        s.category = 'celtic'
+        cx, cy = CENTRE
+        s.cord(paisley((cx, cy + 10)), BRIDAL_RED, 'Paisley', 24, closed=True)
+        knot_centre = (cx + 5, cy + 45)
+        s.cord(turks_head(2, 3, 60, 165, centre=knot_centre), ZARI_GOLD, 'Triquetra', 18, closed=True)
+        s.cord(circle(knot_centre, 139), EMERALD, 'Ring', 14, closed=True)
         s.interlace(woven())
         yield s
 

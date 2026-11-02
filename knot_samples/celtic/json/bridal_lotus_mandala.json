@@ -50,7 +50,7 @@
       "shadow_only": false,
       "hide_shadow": false,
       "closed_connections": [
-        false,
+        true,
         false
       ],
       "arrow_color": null,
@@ -147,7 +147,7 @@
       "shadow_only": false,
       "hide_shadow": false,
       "closed_connections": [
-        false,
+        true,
         false
       ],
       "arrow_color": null,
@@ -1457,7 +1457,7 @@
       "hide_shadow": false,
       "closed_connections": [
         false,
-        false
+        true
       ],
       "arrow_color": null,
       "arrow_transparency": 100,
@@ -4083,7 +4083,7 @@
       "hide_shadow": false,
       "closed_connections": [
         false,
-        false
+        true
       ],
       "arrow_color": null,
       "arrow_transparency": 100,
@@ -4183,7 +4183,7 @@
       "shadow_only": false,
       "hide_shadow": false,
       "closed_connections": [
-        false,
+        true,
         false
       ],
       "arrow_color": null,
@@ -4382,7 +4382,7 @@
       "hide_shadow": false,
       "closed_connections": [
         false,
-        false
+        true
       ],
       "arrow_color": null,
       "arrow_transparency": 100,
@@ -4667,7 +4667,7 @@
       "hide_shadow": false,
       "closed_connections": [
         false,
-        false
+        true
       ],
       "arrow_color": null,
       "arrow_transparency": 100,
@@ -4699,8 +4699,8 @@
         null
       ],
       "control_point_center": {
-        "x": 521.9438231015425,
-        "y": 406.3560613670193
+        "x": 522.1283655940598,
+        "y": 405.54384527250915
       },
       "control_point_center_locked": false,
       "triangle_has_moved": false,
@@ -4942,7 +4942,7 @@
       "shadow_only": false,
       "hide_shadow": false,
       "closed_connections": [
-        false,
+        true,
         false
       ],
       "arrow_color": null,
@@ -5494,7 +5494,7 @@
       "shadow_only": false,
       "hide_shadow": false,
       "closed_connections": [
-        false,
+        true,
         false
       ],
       "arrow_color": null,
@@ -5586,7 +5586,7 @@
       "shadow_only": false,
       "hide_shadow": false,
       "closed_connections": [
-        false,
+        true,
         false
       ],
       "arrow_color": null,
@@ -5619,8 +5619,8 @@
         null
       ],
       "control_point_center": {
-        "x": 822.0127468527589,
-        "y": 258.07630409273924
+        "x": 821.3136714762186,
+        "y": 257.5485526946406
       },
       "control_point_center_locked": false,
       "triangle_has_moved": false,
@@ -5678,7 +5678,7 @@
       "shadow_only": false,
       "hide_shadow": false,
       "closed_connections": [
-        false,
+        true,
         false
       ],
       "arrow_color": null,
@@ -5770,7 +5770,7 @@
       "shadow_only": false,
       "hide_shadow": false,
       "closed_connections": [
-        false,
+        true,
         false
       ],
       "arrow_color": null,
@@ -6047,7 +6047,7 @@
       "hide_shadow": false,
       "closed_connections": [
         false,
-        false
+        true
       ],
       "arrow_color": null,
       "arrow_transparency": 100,
@@ -6079,8 +6079,8 @@
         null
       ],
       "control_point_center": {
-        "x": 801.525872678129,
-        "y": 243.6765336604178
+        "x": 802.4283182198108,
+        "y": 244.25496597068437
       },
       "control_point_center_locked": false,
       "triangle_has_moved": false,
@@ -6139,7 +6139,7 @@
       "hide_shadow": false,
       "closed_connections": [
         false,
-        false
+        true
       ],
       "arrow_color": null,
       "arrow_transparency": 100,
@@ -6231,7 +6231,7 @@
       "hide_shadow": false,
       "closed_connections": [
         false,
-        false
+        true
       ],
       "arrow_color": null,
       "arrow_transparency": 100,

@@ -12,13 +12,13 @@ Eight knotwork designs in the style of Celtic and Viking-age interlace, as edita
 
 The two bridal designs use sindoor red, zari gold and emerald, the colours of Indian wedding embroidery. `images/bridal_concept_sheet.png` shows them side by side.
 
-Three ornaments after classic Celtic line-art borders, also in the bridal colours:
+Three ornaments after classic Celtic line-art borders, in metallic thread tones with one colour per cord: classic gold and silver, pinkish silver, and amethyst purple with champagne gold:
 
 | File | Design | Layers | Masks |
 | --- | --- | --- | --- |
 | `infinity_knot` | Double infinity: two parallel infinity signs, each outside in one lobe and inside in the other, crossing in the middle | 14 | 2 |
 | `loop_oval` | Loop oval: two rows of round loops, pointing out, whose inner arcs interlace into a lattice | 69 | 30 |
-| `tailed_knot` | Knot with tails: a 3 × 2 Lissajous knot threaded by a long infinity whose lobes form the tails | 26 | 9 |
+| `tailed_knot` | Knot with tails: a 3 × 2 Lissajous knot threaded by a long infinity whose lobes form the tails; the infinity is steepened at its middle so no crossings crowd at the centre | 31 | 8 |
 
 `images/ornaments_sheet.png` shows the three ornaments.
 

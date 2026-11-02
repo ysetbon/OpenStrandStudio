@@ -28,6 +28,9 @@ ANTIQUE_GOLD, BRONZE, IRON, OXBLOOD, FOREST, SLATE = (
     '#c9a227', '#a8692f', '#3f4a56', '#8e2b2b', '#2f6b4f', '#2d4b6e')
 # Indian bridal tones: sindoor red, zari gold and emerald.
 BRIDAL_RED, ZARI_GOLD, EMERALD = '#a3162c', '#d4a72c', '#1d6b50'
+# Metallic thread tones for the ornaments, one per cord.
+CLASSIC_GOLD, SILVER, ROSE_SILVER, AMETHYST, CHAMPAGNE_GOLD = (
+    '#d4af37', '#b4b9c2', '#d3a6b3', '#8d6aa8', '#e3c27a')
 
 
 def squared(r_of_theta, squareness, turn=0.0):
@@ -136,6 +139,21 @@ def lemniscate(centre, reach, height=1.0, offset=0.0):
     return parametric(point, 0, math.tau, closed=True, steps=6000)
 
 
+def infinity_tails(centre, reach, height, steep=1.6):
+    """A long, slim infinity whose middle is steepened so it crosses itself at a wide angle.
+
+    The lobes stay flat (height times the lemniscate), but near the centre the
+    curve is scaled up to (1 + steep) times as tall, so the self-crossing is
+    not a shallow X.
+    """
+    def point(u):
+        s = 1 + math.sin(u) ** 2
+        x = reach * math.cos(u) / s
+        y = height * reach * math.sin(u) * math.cos(u) / s
+        return centre[0] + x, centre[1] + y * (1 + steep * math.exp(-(x / (0.3 * reach)) ** 2))
+    return parametric(point, 0, math.tau, closed=True, steps=6000)
+
+
 def loop_oval(centre, loops=5, step=18, size=120, gap=35):
     """Two rows of round loops, loops pointing out, whose inner arcs interlace in the middle.
 
@@ -229,25 +247,27 @@ def scenes(only=None):
         # Two infinity signs side by side: each is outside in one lobe and inside in the other.
         s = Scene('infinity_knot')
         s.category = 'celtic'
-        s.cord(lemniscate(CENTRE, 400, 1.5, 50), ZARI_GOLD, 'Infinity A', 24, closed=True)
-        s.cord(lemniscate(CENTRE, 400, 1.5, -50), BRIDAL_RED, 'Infinity B', 24, closed=True)
+        s.cord(lemniscate(CENTRE, 400, 1.5, 50), CLASSIC_GOLD, 'Infinity A', 24, closed=True)
+        s.cord(lemniscate(CENTRE, 400, 1.5, -50), SILVER, 'Infinity B', 24, closed=True)
         s.interlace(woven())
         yield s
 
     if wanted('loop_oval'):
         s = Scene('loop_oval')
         s.category = 'celtic'
-        s.cord(loop_oval(CENTRE, step=29, size=192, gap=56), BRIDAL_RED, 'Loops', 18, closed=True)
+        s.cord(loop_oval(CENTRE, step=29, size=192, gap=56), ROSE_SILVER, 'Loops', 18, closed=True)
         s.interlace(woven())
         yield s
 
     if wanted('tailed_knot'):
         # A 3 x 2 Lissajous knot threaded by a long infinity whose lobes are its tails.
+        # Phase pi/8 and the steepened middle keep every crossing at least
+        # 57 px (x 1.2 here) from the next, so none of them crowd at the centre.
         s = Scene('tailed_knot')
         s.category = 'celtic'
-        s.cord(parametric(lambda t: (CENTRE[0] + 200 * math.sin(3 * t + math.pi / 12), CENTRE[1] + 230 * math.sin(2 * t)),
-                          0, math.tau, closed=True, steps=8000), EMERALD, 'Knot', 20, closed=True)
-        s.cord(lemniscate(CENTRE, 560, .25), ZARI_GOLD, 'Tails', 18, closed=True)
+        s.cord(parametric(lambda t: (CENTRE[0] + 240 * math.sin(3 * t + math.pi / 8), CENTRE[1] + 336 * math.sin(2 * t)),
+                          0, math.tau, closed=True, steps=8000), AMETHYST, 'Knot', 20, closed=True)
+        s.cord(infinity_tails(CENTRE, 720, .2), CHAMPAGNE_GOLD, 'Tails', 18, closed=True)
         s.interlace(woven())
         yield s
 

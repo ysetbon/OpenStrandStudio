@@ -377,7 +377,7 @@ class Scene:
             print(f'{self.name}: {len(points)-2} -> {len(chain)-1} attachments; crossing order preserved', flush=True)
 
     def cord(self, poly, color, group, width, closed=False, tolerance=None, bend_error=None,
-             second_color=None, split=None, hidden_ends=()):
+             second_color=None, split=None, hidden_ends=(), on_top=False):
         """Register a designed centerline; fit() turns it into one attached chain.
 
         With second_color, samples after index split use that color; the
@@ -390,7 +390,7 @@ class Scene:
                                tolerance=FIT_TOLERANCE if tolerance is None else tolerance,
                                bend_error=FIT_BEND_ERROR if bend_error is None else bend_error,
                                second_color=second_color, split=split, chain=None,
-                               hidden_ends=hidden_ends))
+                               hidden_ends=hidden_ends, on_top=on_top))
 
     def dense_crossings(self):
         """Crossings of the designed centerlines, positioned by sample index."""
@@ -423,7 +423,10 @@ class Scene:
         for c, cord in enumerate(self.cords):
             if cord['closed']:
                 under, hits = self.covered_points(rule, c)
-                assert under, (self.name, 'a closed cord needs a crossing to hide its join under')
+                # A ring nothing lies over keeps its join where its outline
+                # starts: a seam with both end lines hidden.
+                assert under or cord['on_top'], (self.name, 'a closed cord needs a crossing to hide its join under')
+            if cord['closed'] and under:
                 # Keep the join away from its neighbours' crossings.
                 def room(item):
                     return min((dist(item[3], h['point']) for h in hits if dist(item[3], h['point']) > 1), default=1e9)
@@ -513,14 +516,22 @@ class Scene:
             # across it, split into pieces; keep joins where nothing else
             # runs within the width of a shadow.
             need = width/2+max(o['width'] for o in self.cords)/2+SHADOW_REACH
-            key = (self.name, c, tuple(sorted(cord['forced'])))
-            if key not in _SPAN_FITS:
-                _SPAN_FITS[key] = NATIVE.fit(poly, cord['closed'], cord['tolerance'],
-                               forced=cord['forced'], avoid=avoid,
-                               min_length=width*1.5, max_bend_error=cord['bend_error'],
-                               free_ends=not cord['closed'],
-                               cost=lambda k: JOIN_CROWDING_COST*max(0.0, 1-room[k]/need))
-            spans = _SPAN_FITS[key]
+            while True:
+                key = (self.name, c, tuple(sorted(cord['forced'])))
+                if key not in _SPAN_FITS:
+                    _SPAN_FITS[key] = NATIVE.fit(poly, cord['closed'], cord['tolerance'],
+                                   forced=cord['forced'], avoid=avoid,
+                                   min_length=width*1.5, max_bend_error=cord['bend_error'],
+                                   free_ends=not cord['closed'],
+                                   cost=lambda k: JOIN_CROWDING_COST*max(0.0, 1-room[k]/need))
+                spans = _SPAN_FITS[key]
+                if not cord['closed'] or len(spans) >= 3:
+                    break
+                # One strand cannot close on itself (two would fold back):
+                # join a ring at thirds of its length, clear of crossings.
+                n = len(poly)-1
+                free = [k for k in range(1, n) if k not in avoid] or list(range(1, n))
+                cord['forced'] |= {min(free, key=lambda k: abs(k-n*f)) for f in (1/3, 2/3)}
             cubics = [tuple(QPointF(*p) for p in curve) for _, _, curve in spans]
             ends = [cubics[0][0]]+[q[3] for q in cubics]
             root = cord.get('root', 0)
@@ -666,6 +677,17 @@ class Scene:
                         continue
                     centre = polygon.boundingRect().center()
                     near = [h for h in hits if polygon.containsPoint(QPointF(*h['point']), Qt.OddEvenFill)]
+                    (ca, ia), (cb, ib) = self.cord_of(a), self.cord_of(b)
+                    # Another pair's crossing can lie in the same overlap;
+                    # the two strands' own crossing decides.
+                    own = [h for h in near if set(h['cords']) == {ca, cb}]
+                    near = own or near
+                    if not own and getattr(getattr(self, 'rule', None), 'pairwise', False):
+                        # The strokes touch where the centerlines do not
+                        # cross; a rule that judges any pair of cords decides.
+                        hit = dict(point=(centre.x(), centre.y()), cords=(ca, cb), positions=(ia, ib))
+                        relations.append((a, b, self.rule(self, [hit])[0], polygon))
+                        continue
                     if not near:
                         near = [h for h in hits if dist(h['point'], (centre.x(), centre.y())) < a.width*1.4]
                     if not near:
@@ -726,6 +748,7 @@ class Scene:
 
         rule(scene, hits) returns, for each hit, True when its first side is over.
         """
+        self.rule = rule
         if any(cord['chain'] is None for cord in self.cords):
             self.plan(rule)
             self.fit()
@@ -780,16 +803,41 @@ class Scene:
             mask.deletion_rectangles = rectangles
             assert not mask.get_mask_path().isEmpty(), (self.name, over.layer_name, under.layer_name)
             self.strands.append(mask)
-        # A mask is painted above everything; nothing else may pass through it.
+        # A mask is painted above every strand. A strand that belongs over the
+        # mask's upper strand there, such as an eye ring over a woven face, is
+        # lifted back on top by a later mask of its own over that strand.
+        above = {}
+        for a, b, a_over, _ in relations:
+            above.setdefault((id(a), id(b)), []).append(a_over)
+            above.setdefault((id(b), id(a)), []).append(not a_over)
         masks = [s for s in self.strands if isinstance(s, MaskedStrand)]
-        for mask in masks:
+        by_pair = {(id(m.first_selected_strand), id(m.second_selected_strand)): m for m in masks}
+        queue = list(masks)
+        while queue:
+            mask = queue.pop(0)
+            top = mask.first_selected_strand
             region = mask.get_mask_path()
             for s in regular:
-                if s in (mask.first_selected_strand, mask.second_selected_strand):
+                if s in (top, mask.second_selected_strand):
                     continue
-                if self.adjacent(s, mask.first_selected_strand) or self.adjacent(s, mask.second_selected_strand):
+                if self.adjacent(s, top) or self.adjacent(s, mask.second_selected_strand):
                     continue
-                if not region.intersected(outlines[id(s)]).isEmpty():
+                if region.intersected(outlines[id(s)]).isEmpty():
+                    continue
+                if above.get((id(s), id(top))) and all(above[(id(s), id(top))]):
+                    lift = by_pair.get((id(s), id(top)))
+                    if lift is None:
+                        lift = by_pair[(id(s), id(top))] = MaskedStrand(s, top)
+                        assert not lift.get_mask_path().isEmpty(), (self.name, s.layer_name, top.layer_name)
+                    elif self.strands.index(lift) > self.strands.index(mask):
+                        continue
+                    else:
+                        self.strands.remove(lift)
+                    self.strands.append(lift)
+                    queue.append(lift)
+                elif any(above.get((id(s), id(top)), [])):
+                    # Over the upper strand in one place and under it in
+                    # another: no single lift fixes that.
                     c = region.boundingRect().center()
                     self.warnings.append(('crowded crossing', mask.layer_name, s.layer_name, round(c.x()), round(c.y())))
         return hits
@@ -1015,6 +1063,11 @@ def scenes(only=None):
     def wanted(name):
         return only is None or name in only
 
+    if wanted('woven_owl'):
+        s = Scene('woven_owl')
+        woven_owl(s)
+        yield s
+
     if wanted('woven_heart'):
         s = Scene('woven_heart')
         centre = (600, 300)
@@ -1086,6 +1139,105 @@ def scenes(only=None):
                   colors=(ROYAL_BLUE, ROYAL_BLUE))
         s.interlace(woven())
         yield s
+
+
+def layered(levels, weave=None):
+    """Higher level is over; equal levels in weave alternate as a checkerboard.
+
+    levels maps a cord to its level; weave maps a cord to (axis, index), and
+    a row crosses over a column where the two indices sum to an even number.
+    """
+    def rule(scene, hits):
+        out = []
+        for h in hits:
+            a, b = h['cords']
+            if a == b:
+                out.append(True)
+            elif levels[a] != levels[b]:
+                out.append(levels[a] > levels[b])
+            else:
+                (axis_a, i), (axis_b, j) = weave[a], weave[b]
+                assert axis_a != axis_b, (scene.name, 'parallel cords cross', a, b)
+                row_over = (i+j) % 2 == 0
+                out.append(row_over == (axis_a == 'row'))
+        return out
+    rule.pairwise = True    # it can judge any two cords, crossing or not
+    return rule
+
+
+def egg(centre, a, b, flare=.06):
+    """Half width at height y of an egg, wider at the bottom, and its outline."""
+    cx, cy = centre
+
+    def half_width(y):
+        s = max(-1.0, min(1.0, (y-cy)/b))
+        return a*math.sqrt(1-s*s)*(1+flare*s)
+    outline = parametric(lambda t: (cx+a*math.cos(t)*(1+flare*math.sin(t)), cy+b*math.sin(t)),
+                         0, math.tau, closed=True)
+    return half_width, outline
+
+
+def tucked_lace(fn, t0, t1, inside, reach=7.0):
+    """The part of the curve fn inside the outline, running reach px past it
+    at both ends so the ends tuck under the outline."""
+    poly = parametric(fn, t0, t1)
+    first = next(k for k, p in enumerate(poly) if inside(p))
+    last = len(poly)-1-next(k for k, p in enumerate(reversed(poly)) if inside(p))
+    step = int(round(reach/2.0))
+    return poly[max(0, first-step):last+step+1]
+
+
+def woven_owl(s):
+    """An owl's body: a checkerboard-woven egg with eye rings and a beak on top."""
+    cx, cy, a, b = 600, 540, 250, 320
+    half_width, outline = egg((cx, cy), a, b)
+    inside = lambda p: abs(p[0]-cx) < half_width(p[1])
+    cream, white, orange, yellow = '#f1e6d0', '#fbf8f1', '#ec6f24', '#f3b829'
+    brown, black = '#6b3416', '#1d120b'
+    levels, weave = {}, {}
+
+    def add(level, *args, axis=None, index=None, **kw):
+        levels[len(s.cords)] = level
+        if axis:
+            weave[len(s.cords)] = (axis, index)
+        s.cord(*args, **kw)
+
+    # The weave: rows bow down a little and columns bulge out, like a ball.
+    rows = {-6: orange, -5: yellow, -4: cream, -3: cream, -2: cream, -1: cream, 0: cream,
+            1: orange, 2: yellow, 3: orange, 4: yellow, 5: orange, 6: yellow}
+    for k, color in rows.items():
+        y0 = cy+40*k
+        lace = tucked_lace(lambda x: (x, y0+14*(1-((x-cx)/a)**2)), cx-a-40, cx+a+40, inside)
+        add(1, lace, color, 'Body weave', 30, hidden_ends=(0, 1), axis='row', index=k,
+            tolerance=2, bend_error=8)
+    for j in range(-4, 5):
+        x0 = cx+40*j
+        lace = tucked_lace(lambda y: (x0+18*(j/6.25)*(1-((y-cy)/b)**2), y), cy-b-40, cy+b+40, inside)
+        add(1, lace, cream, 'Body weave', 30, hidden_ends=(0, 1), axis='column', index=j,
+            tolerance=2, bend_error=8)
+    add(2, outline, cream, 'Body outline', 28, closed=True)
+    # Ear tufts lie over the top of the outline, which hides its join; a
+    # smaller yellow loop fills each one.
+    for side in (-1, 1):
+        corners = [(cx+side*122, 300), (cx+side*212, 206), (cx+side*178, 330)]
+        middle = tuple(sum(c[i] for c in corners)/3 for i in (0, 1))
+        add(3, spline(corners, closed=True), orange, 'Ear tufts', 24, closed=True, on_top=True)
+        inner = [(middle[0]+(x-middle[0])*.45, middle[1]+(y-middle[1])*.45) for x, y in corners]
+        add(4, spline(inner, closed=True), yellow, 'Ear tufts', 20, closed=True, on_top=True)
+    # The face: white eye rings, brown irises with dark pupils, an orange beak.
+    for side in (-1, 1):
+        ex, ey = cx+side*88, 420
+        ring = parametric(lambda t: (ex+66*math.cos(t), ey+66*math.sin(t)), 0, math.tau, closed=True)
+        add(4, ring, white, 'Eyes', 24, closed=True)
+        iris = parametric(lambda t: (ex+28*math.cos(t), ey+28*math.sin(t)), 0, math.tau, closed=True)
+        add(5, iris, brown, 'Eyes', 26, closed=True, on_top=True)
+        pupil = parametric(lambda t: (ex+9*math.cos(t), ey+9*math.sin(t)), 0, math.tau, closed=True)
+        add(6, pupil, black, 'Eyes', 18, closed=True, on_top=True)
+    # The beak's wide top covers the inner sides of both eye rings.
+    beak = spline([(cx, 438), (cx+30, 446), (cx+14, 500), (cx, 548), (cx-14, 500), (cx-30, 446)],
+                  closed=True)
+    add(5, beak, orange, 'Beak', 18, closed=True, on_top=True)
+    s.interlace(layered(levels, weave))
 
 
 def validate(data):

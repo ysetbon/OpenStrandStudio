@@ -1,6 +1,6 @@
 # Celtic and Norse knotwork samples
 
-Eight knotwork designs in the style of Celtic and Viking-age interlace, as editable OpenStrandStudio projects. Each one comes with a picture of the real canvas, shadows included. Every cord alternates over and under along its whole length, which is the rule all Celtic and Norse interlace follows.
+Ten knotwork designs in the style of Celtic and Viking-age interlace, as editable OpenStrandStudio projects. Each one comes with a picture of the real canvas, shadows included. Every cord alternates over and under along its whole length, which is the rule all Celtic and Norse interlace follows.
 
 | File | Design | Layers | Masks |
 | --- | --- | --- | --- |
@@ -21,6 +21,24 @@ Three ornaments after classic Celtic line-art borders, in metallic thread tones 
 | `tailed_knot` | Knot with tails: a 3 × 2 Lissajous knot threaded by a long infinity whose lobes form the tails; the infinity is steepened at its middle so no crossings crowd at the centre | 31 | 8 |
 
 `images/ornaments_sheet.png` shows the three ornaments with shadows turned off; their own pictures keep the shadows.
+
+Two plaits, three strands each in classic gold, silver and pinkish silver:
+
+| File | Design | Layers | Masks |
+| --- | --- | --- | --- |
+| `plait_border` | Three-strand plait border: three sine waves a third of a period apart; every crossing is at least 72° and 90 px from the next | 42 | 9 |
+| `plait_ring` | The same plait closed into a ring (radius 900 + 75 sin 20θ) | 164 | 41 |
+
+## Presentation board
+
+`presentation/bridal_embroidery_board.jpg` (and `.pdf`) is a client board for a Celtic × Indian bridal embroidery commission, on a deep maroon silk ground. It contains:
+
+- The bridal medallion: the plait ring around the lotus mandala, four paisleys and four shield knots.
+- The plait border.
+- A motif library.
+- A thread palette with suggested stitches.
+
+`scripts/build_celtic_board.py` rebuilds it. It recolours each project into thread tones that read on maroon, and captures it with shadows off at 2400 px. Each design is rendered on white and on black; the two renders give every pixel's true transparency, so pale silver threads stay solid.
 
 `images/contact_sheet.png` shows the Valknut, knot panel and shield knot next to the box stitch sample (`src/samples/box_stitch.json`).
 

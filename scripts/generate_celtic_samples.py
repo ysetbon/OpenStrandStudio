@@ -271,6 +271,30 @@ def scenes(only=None):
         s.interlace(woven())
         yield s
 
+    if wanted('plait_border'):
+        # A three-strand Celtic plait: three sine waves a third of a period
+        # apart, every crossing at least 72 degrees and 90 px from the next.
+        s = Scene('plait_border')
+        s.category = 'celtic'
+        period, swing = 300, 75
+        for k, (color, label) in enumerate([(CLASSIC_GOLD, 'Gold'), (SILVER, 'Silver'), (ROSE_SILVER, 'Rose silver')]):
+            s.cord(parametric(lambda x, k=k: (150 + x, CENTRE[1] + swing * math.sin(math.tau * x / period + math.tau * k / 3)),
+                              0, period * 5, steps=6000), color, label, 22)
+        s.interlace(woven())
+        yield s
+
+    if wanted('plait_ring'):
+        # The same plait closed into a ring: radius r = 900 + 75 sin(20 theta + k 2pi/3).
+        s = Scene('plait_ring')
+        s.category = 'celtic'
+        for k, (color, label) in enumerate([(CLASSIC_GOLD, 'Gold'), (SILVER, 'Silver'), (ROSE_SILVER, 'Rose silver')]):
+            def point(t, k=k):
+                r = 900 + 75 * math.sin(20 * t + math.tau * k / 3)
+                return CENTRE[0] + r * math.cos(t), CENTRE[1] + r * math.sin(t)
+            s.cord(parametric(point, 0, math.tau, closed=True, steps=12000), color, label, 22, closed=True)
+        s.interlace(woven())
+        yield s
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)

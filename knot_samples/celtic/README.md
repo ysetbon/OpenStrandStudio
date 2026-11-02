@@ -20,7 +20,7 @@ Three ornaments after classic Celtic line-art borders, in metallic thread tones 
 | `loop_oval` | Loop oval: two rows of round loops, pointing out, whose inner arcs interlace into a lattice | 69 | 30 |
 | `tailed_knot` | Knot with tails: a 3 × 2 Lissajous knot threaded by a long infinity whose lobes form the tails; the infinity is steepened at its middle so no crossings crowd at the centre | 31 | 8 |
 
-`images/ornaments_sheet.png` shows the three ornaments.
+`images/ornaments_sheet.png` shows the three ornaments with shadows turned off; their own pictures keep the shadows.
 
 `images/contact_sheet.png` shows the Valknut, knot panel and shield knot next to the box stitch sample (`src/samples/box_stitch.json`).
 

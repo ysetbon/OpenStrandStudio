@@ -8,7 +8,7 @@ Three knotwork designs in the style of Celtic and Viking-age interlace, as edita
 | `celtic_knot_panel` | Celtic knot panel: a single cord, a 3 × 4 Lissajous figure woven alternately | 24 | 9 |
 | `shield_knot` | Shield knot: a four-lobed Carrick mat threaded by a gold ring | 29 | 9 |
 
-`images/contact_sheet.png` shows the three designs next to the box stitch sample (`src/samples/box_stitch.json`) with its shadows.
+`images/contact_sheet.png` shows the three designs next to the box stitch sample (`src/samples/box_stitch.json`).
 
 Regenerate the projects and pictures from the repository root with:
 

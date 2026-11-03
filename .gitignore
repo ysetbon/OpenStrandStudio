@@ -42,3 +42,6 @@ src/dist/
 venv/
 build_env/
 src/build_env/
+
+# openstrand command output (see .claude/skills/openstrand-designer)
+designs/

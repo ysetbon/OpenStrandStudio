@@ -399,6 +399,7 @@ class DraggableTabEdge(QWidget):
         self._anchor = 'bottom_center'
         self._pos_ratio = None  # (center_x_ratio, center_y_ratio) when free
         self._snap_target = None  # anchor the magnet is grabbing during a drag
+        self._snap_heard = None  # anchor the last magnet sound was for (moving itself is silent)
 
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setFixedHeight(TAB_EDGE_HEIGHT)
@@ -629,8 +630,11 @@ class DraggableTabEdge(QWidget):
             self._dragging = True
             self._drag_offset = event.pos()
             self._snap_target = None
+            # A docked edge is already on its magnet: only pulling it off makes a sound
+            self._snap_heard = self._anchor
             self.setCursor(Qt.ClosedHandCursor)  # "grabbing" while dragging
             self._show_snap_overlay()
+            sound_manager.play('tab_edge_grab')
             event.accept()
 
     def mouseMoveEvent(self, event):
@@ -659,6 +663,9 @@ class DraggableTabEdge(QWidget):
                 self._store_ratio()
 
             self._snap_overlay.update_state(self._snap_targets_rects(), self._snap_target, self.theme_name)
+            if self._snap_target != self._snap_heard:
+                sound_manager.play('tab_edge_snap' if self._snap_target else 'tab_edge_unsnap')
+                self._snap_heard = self._snap_target
             event.accept()
         else:
             self._update_hover_cursor(event.pos())
@@ -673,10 +680,12 @@ class DraggableTabEdge(QWidget):
                 self._anchor = self._snap_target
                 self._pos_ratio = None
                 self.reposition()
+                sound_manager.play('tab_edge_dock')
             else:
                 # Free position: remember it as a ratio.
                 self._anchor = None
                 self._store_ratio()
+                sound_manager.play('tab_edge_drop')
             self._snap_target = None
             self._snap_overlay.hide()
         self._update_hover_cursor(event.pos())

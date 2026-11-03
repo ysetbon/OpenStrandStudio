@@ -144,6 +144,13 @@ CUES = [
     ("tab_new_c", 200, -14, "A tiny cheerful sparkle of a small page added to a binder, a soft click of the rings closing followed by a short shimmering chime"),
     ("tab_duplicate", 110, -16, "Two identical thin plastic file folder tabs snapped down side by side, a quick soft double tick, light and tidy"),
     ("tab_close", 100, -17, "A small plastic file folder tab pushed back down and slid into a stack, a quick soft slide ending in a muffled tap"),
+    # The document tab bar over the canvas, dragged by its grip strip: picked up, grabbed by a magnet
+    # target, let go freely or docked on a target. Moving it is silent. Picked takes: grab C2, snap A2,
+    # drop B3, dock C3; tab_edge_unsnap (pulled off a target) is the snap reversed, see REVERSED
+    ("tab_edge_grab", 90, -11, "A small plastic suction handle pressed onto glass and held, one soft round suction tap with a tiny cling, short"),
+    ("tab_edge_snap", 110, -12, "A small round magnet snapping onto a steel plate, one soft clean magnetic clack with a tiny rebound, short"),
+    ("tab_edge_drop", 100, -14, "A small plastic file folder tab placed flat on a desk, one soft settled tap, short"),
+    ("tab_edge_dock", 120, -12, "A small wooden peg dropped into its hole on a peg board, a soft hollow tock that settles, short"),
     # Select mode on the canvas: a fingertip on the lacing cord selects a strand (its hover is a
     # quiet echo of it, see ECHOES), a bead let go clears the selection
     ("strand_select", 45, -16, "A fingertip pressing once on a flat plastic lacing cord lying on a table, one tiny soft plastic tick, very short"),
@@ -156,7 +163,8 @@ CUES = [
 CUE_BY_ID = {cue[0]: cue for cue in CUES}
 
 # Low-pass cutoff (Hz) for cues whose takes come back too bright or hissy
-LOWPASS = {"hover_attach_point": 7000, "hover_move_point": 7000, "hover_rotate_point": 7000, "mode_move": 7000, "mode_rotate": 7000, "mode_view": 7000, "mode_select": 7000, "mode_attach": 7000, "delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000, "rotate_grab": 6000, "rotate_release": 6000, "dial_pin": 7000}
+LOWPASS = {"hover_attach_point": 7000, "hover_move_point": 7000, "hover_rotate_point": 7000, "mode_move": 7000, "mode_rotate": 7000, "mode_view": 7000, "mode_select": 7000, "mode_attach": 7000, "delete": 4500, "attach_start": 6000, "drag_pickup": 6000, "drag_drop": 6000, "rotate_grab": 6000, "rotate_release": 6000, "dial_pin": 7000,
+           "tab_edge_grab": 6000, "tab_edge_snap": 6000, "tab_edge_drop": 6000, "tab_edge_dock": 6000}
 
 # Cues that should not sound like plastic get their own style line
 STYLE_OVERRIDE = {
@@ -183,6 +191,10 @@ STYLE_OVERRIDE = {
     "tab_new_c": "playful and friendly, close-up, short, no music, no voice",
     "tab_duplicate": "playful and friendly, close-up, dry, no reverb, no music, no voice",
     "tab_close": "soft and gentle, close-up, dry, no reverb, no music, no voice",
+    "tab_edge_grab": "soft and gentle, close-up, dry, no reverb, no music, no voice",
+    "tab_edge_snap": "soft and gentle, close-up, dry, no reverb, no music, no voice",
+    "tab_edge_drop": "soft and gentle, close-up, dry, no reverb, no music, no voice",
+    "tab_edge_dock": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "group_new": "playful and friendly, close-up, short, no music, no voice",
     "group_panel_off": "soft and gentle, close-up, dry, no reverb, no music, no voice",
     "group_panel_on": "soft and gentle, close-up, dry, no reverb, no music, no voice",
@@ -219,7 +231,8 @@ COLOR_VARIANTS = {
 }
 
 # Off sounds made by playing an approved on sound backwards and lower, written by the `variants` command
-REVERSED = {"mode_view_off": ("mode_view", -5), "mode_select_off": ("mode_select", -5)}
+REVERSED = {"mode_view_off": ("mode_view", -5), "mode_select_off": ("mode_select", -5),
+            "tab_edge_unsnap": ("tab_edge_snap", -3)}
 REVERSED_PEAK_DB = -17
 
 # Hovers made from an approved click played very quietly and shifted, written by the `variants` command:

@@ -251,10 +251,11 @@ def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch
     import claude_settings
     monkeypatch.setenv("APPDATA", str(tmp_path))
     assert claude_settings.load() == {"api_key": "", "model": "claude-sonnet-5-5", "web": True, "max_cost": 2.0,
-                                      "spent": 0.0, "spent_since": ""}
+                                      "spent": 0.0, "spent_since": "", "panel_open": False, "show_button": True}
     claude_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5", web=False, max_cost=5)
     assert claude_settings.load() == {"api_key": "sk-ant-test-1234567890", "model": "claude-haiku-5-5",
-                                      "web": False, "max_cost": 5.0, "spent": 0.0, "spent_since": ""}
+                                      "web": False, "max_cost": 5.0, "spent": 0.0, "spent_since": "",
+                                      "panel_open": False, "show_button": True}
     claude_settings.save(max_cost=1000)
     assert claude_settings.load()["max_cost"] == claude_settings.MAX_COST_RANGE[1]
     if os.name == "posix":
@@ -276,9 +277,12 @@ def test_cli_agent_without_a_key_says_where_to_add_it(tmp_path):
 
 # ------------------------------------------------------------------ app
 @pytest.fixture(scope="module")
-def window():
+def window(tmp_path_factory):
     from PyQt5.QtWidgets import QApplication
     app = QApplication.instance() or QApplication([])
+    # Claude saves whether it is open, and what it cost, in the settings folder.
+    old_appdata = os.environ.get("APPDATA")
+    os.environ["APPDATA"] = str(tmp_path_factory.mktemp("appdata"))
     cwd = os.getcwd()
     os.chdir(ROOT / "src")
     try:
@@ -292,6 +296,10 @@ def window():
     yield w
     w._confirm_close_with_dirty_tabs = lambda *a, **k: True
     w.close()
+    if old_appdata is None:
+        os.environ.pop("APPDATA", None)
+    else:
+        os.environ["APPDATA"] = old_appdata
 
 
 def test_a_claude_design_opens_in_a_new_tab_with_layers_and_groups(window, tmp_path):
@@ -311,19 +319,65 @@ def test_a_claude_design_opens_in_a_new_tab_with_layers_and_groups(window, tmp_p
     assert len(snapshot["strands"]) == len(expected["strands"])
 
 
-def test_the_header_arrow_folds_the_panel(window):
+def test_the_claude_button_shows_and_hides_claude_over_the_canvas(window, monkeypatch, tmp_path):
+    import claude_settings
     from PyQt5.QtCore import Qt
-    panel = window.claude_panel
+    from PyQt5.QtTest import QTest
+    from PyQt5.QtWidgets import QApplication
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel, button = window.claude_panel, window.claude_button
     panel.set_open(False)
-    assert panel.toggle_button.arrowType() == Qt.RightArrow
-    panel.toggle_button.click()
-    assert panel.body.isVisibleTo(panel) and panel.toggle_button.arrowType() == Qt.DownArrow
-    panel.toggle_button.click()
-    assert not panel.body.isVisibleTo(panel)
-    panel.retranslate('he')
-    assert panel.toggle_button.arrowType() == Qt.LeftArrow  # points along right-to-left text
-    panel.retranslate('en')
-    assert panel.toggle_button.arrowType() == Qt.RightArrow
+    assert button.isVisible() and not button.isChecked() and not panel.isVisible()
+    # It sits with State and Settings at the end of the toolbar, as a twin of Settings.
+    row = window.toolbar_button_layout if not window._toolbar_two_rows else window.toolbar_button_layout_2
+    order = [row.itemAt(i).widget() for i in range(row.count()) if row.itemAt(i).widget()]
+    assert order[-3:] == [window.layer_state_button, button, window.settings_button]
+    assert button.size() == window.settings_button.size() and button.toolTip() == ""
+
+    # Pressed, Claude floats over the bottom of the visible canvas; the canvas keeps its size.
+    size = window.canvas.size()
+    button.click()
+    QApplication.processEvents()
+    assert panel.isVisible() and button.isChecked() and window.canvas.size() == size
+    assert panel.parentWidget() is window.canvas
+    area = panel.visible_canvas()
+    assert area.contains(panel.geometry()) and panel.geometry().bottom() == area.bottom() - panel.MARGIN
+    assert claude_settings.load()["panel_open"] is True  # remembered for next time
+
+    # Pressed again, nothing is left on screen; Ctrl+J does the same both ways.
+    button.click()
+    assert not panel.isVisible() and claude_settings.load()["panel_open"] is False
+    window.activateWindow()
+    QTest.keyClick(window.windowHandle(), Qt.Key_J, Qt.ControlModifier)
+    assert panel.isVisible() and button.isChecked()
+    QTest.keyClick(window.windowHandle(), Qt.Key_J, Qt.ControlModifier)
+    assert not panel.isVisible() and not button.isChecked()
+
+    # Settings > Claude can hide it altogether: no button, and Ctrl+J does nothing.
+    window.set_claude_available(False)
+    assert not button.isVisible() and claude_settings.load()["show_button"] is True  # the page saves it
+    QTest.keyClick(window.windowHandle(), Qt.Key_J, Qt.ControlModifier)
+    assert not panel.isVisible()
+    window.set_claude_available(True)
+    assert button.isVisible() and not panel.isVisible()  # back as it was left: hidden
+
+
+def test_the_claude_button_shows_a_run_while_claude_is_hidden(window, monkeypatch, tmp_path):
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel, button = window.claude_panel, window.claude_button
+    panel.set_open(False)
+    monkeypatch.setattr(panel, "running", lambda: True)
+    panel.activity_changed.emit()
+    assert button.spin.isActive()  # an arc turns around the button
+    panel.set_open(True)
+    assert not button.spin.isActive()  # Claude is in view, so the button stays still
+    panel.set_open(False)
+    monkeypatch.setattr(panel, "running", lambda: False)
+    panel.design_waiting = True
+    panel.activity_changed.emit()
+    assert not button.spin.isActive() and button.grab().toImage().pixelColor(26, 6).green() > 150  # the dot
+    panel.set_open(True)
+    assert panel.design_waiting is False
 
 
 def test_the_prompt_box_is_a_chat_box(window, monkeypatch):
@@ -479,8 +533,13 @@ def test_the_settings_page_saves_key_and_model(monkeypatch, tmp_path):
     page.web_check.setChecked(False)
     page.limit_spin.setValue(4.5)
     assert claude_settings.load()["web"] is False and claude_settings.load()["max_cost"] == 4.5
+    shown = []
+    page.show_button_changed.connect(shown.append)
+    assert page.show_check.isChecked()
+    page.show_check.setChecked(False)
+    assert shown == [False] and claude_settings.load()["show_button"] is False
     page.retranslate("he")
-    assert page.model_combo.count() == 2
+    assert page.model_combo.count() == 2 and not page.show_check.isChecked()
     assert not page.web_check.isChecked() and page.limit_spin.value() == 4.5
 
 

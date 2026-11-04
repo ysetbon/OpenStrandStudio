@@ -607,3 +607,57 @@ _SPENDING = {
 }
 for _language, _strings in _SPENDING.items():
     CLAUDE_TRANSLATIONS[_language].update(_strings)
+
+# Settings > Claude: whether the Claude button shows at all.
+_SHOW_BUTTON = {
+    'en': {
+        'claude_show_button': 'Show the Claude button next to Settings',
+        'claude_show_button_hint': 'Off, the Claude button and Claude are hidden and Ctrl+J does nothing, until you turn this on again.',
+    },
+    'fr': {
+        'claude_show_button': 'Afficher le bouton Claude à côté des Paramètres',
+        'claude_show_button_hint': 'Désactivé, le bouton Claude et Claude sont masqués et Ctrl+J ne fait rien, jusqu’à ce que vous le réactiviez.',
+    },
+    'de': {
+        'claude_show_button': 'Claude-Schaltfläche neben den Einstellungen anzeigen',
+        'claude_show_button_hint': 'Aus: Die Claude-Schaltfläche und Claude sind ausgeblendet und Strg+J bewirkt nichts, bis Sie dies wieder einschalten.',
+    },
+    'it': {
+        'claude_show_button': 'Mostra il pulsante Claude accanto a Impostazioni',
+        'claude_show_button_hint': 'Se disattivato, il pulsante Claude e Claude sono nascosti e Ctrl+J non fa nulla, finché non lo riattivi.',
+    },
+    'es': {
+        'claude_show_button': 'Mostrar el botón de Claude junto a Ajustes',
+        'claude_show_button_hint': 'Desactivado, el botón de Claude y Claude se ocultan y Ctrl+J no hace nada, hasta que lo vuelvas a activar.',
+    },
+    'pt': {
+        'claude_show_button': 'Mostrar o botão do Claude ao lado das Definições',
+        'claude_show_button_hint': 'Desligado, o botão do Claude e o Claude ficam ocultos e Ctrl+J não faz nada, até voltar a ligar.',
+    },
+    'he': {
+        'claude_show_button': 'הצג את כפתור Claude ליד ההגדרות',
+        'claude_show_button_hint': 'כשהאפשרות כבויה, כפתור Claude ו־Claude מוסתרים ו־Ctrl+J לא עושה דבר, עד שתפעיל אותה שוב.',
+    },
+    'ru': {
+        'claude_show_button': 'Показывать кнопку Claude рядом с настройками',
+        'claude_show_button_hint': 'Если выключено, кнопка Claude и Claude скрыты, а Ctrl+J ничего не делает, пока вы не включите это снова.',
+    },
+    'fi': {
+        'claude_show_button': 'Näytä Claude-painike asetusten vieressä',
+        'claude_show_button_hint': 'Pois päältä Claude-painike ja Claude ovat piilossa eikä Ctrl+J tee mitään, kunnes otat tämän taas käyttöön.',
+    },
+    'sv': {
+        'claude_show_button': 'Visa Claude-knappen bredvid Inställningar',
+        'claude_show_button_hint': 'Av: Claude-knappen och Claude är dolda och Ctrl+J gör ingenting, tills du slår på det igen.',
+    },
+    'ja': {
+        'claude_show_button': '設定の横に Claude ボタンを表示する',
+        'claude_show_button_hint': 'オフにすると、再びオンにするまで Claude ボタンと Claude は表示されず、Ctrl+J も働きません。',
+    },
+    'zh': {
+        'claude_show_button': '在设置旁显示 Claude 按钮',
+        'claude_show_button_hint': '关闭后，Claude 按钮和 Claude 将隐藏，Ctrl+J 也不起作用，直到重新开启。',
+    },
+}
+for _language, _strings in _SHOW_BUTTON.items():
+    CLAUDE_TRANSLATIONS[_language].update(_strings)

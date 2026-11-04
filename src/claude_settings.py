@@ -53,10 +53,13 @@ def _money(value):
 
 
 def load():
-    """{'api_key', 'model', 'web', 'max_cost', 'spent', 'spent_since'}; empty key when none is saved.
+    """{'api_key', 'model', 'web', 'max_cost', 'spent', 'spent_since', 'panel_open', 'show_button'};
+    empty key when none is saved.
 
     spent is what every request has cost in all, in USD, since spent_since
-    (an ISO date, empty before the first request)."""
+    (an ISO date, empty before the first request). panel_open is whether
+    Claude was showing when the app last closed; show_button is False when
+    Settings > Claude hides Claude altogether."""
     data = {}
     try:
         with open(settings_path(), 'r', encoding='utf-8') as f:
@@ -71,10 +74,11 @@ def load():
     return {'api_key': str(data.get('api_key') or '').strip(), 'model': model,
             'web': data.get('web', True) is not False,
             'max_cost': _cost(data.get('max_cost', DEFAULT_MAX_COST)),
-            'spent': _money(data.get('spent')), 'spent_since': str(data.get('spent_since') or '')}
+            'spent': _money(data.get('spent')), 'spent_since': str(data.get('spent_since') or ''),
+            'panel_open': data.get('panel_open') is True, 'show_button': data.get('show_button', True) is not False}
 
 
-def save(api_key=None, model=None, web=None, max_cost=None):
+def save(api_key=None, model=None, web=None, max_cost=None, panel_open=None, show_button=None):
     """Update the saved settings given. An empty key removes the key."""
     current = load()
     if api_key is not None:
@@ -87,6 +91,10 @@ def save(api_key=None, model=None, web=None, max_cost=None):
         current['web'] = bool(web)
     if max_cost is not None:
         current['max_cost'] = _cost(max_cost)
+    if panel_open is not None:
+        current['panel_open'] = bool(panel_open)
+    if show_button is not None:
+        current['show_button'] = bool(show_button)
     return _write(current)
 
 
@@ -112,7 +120,8 @@ def _write(current):
     path = settings_path()
     os.makedirs(os.path.dirname(path), exist_ok=True)
     payload = {'model': current['model'], 'web': current['web'], 'max_cost': current['max_cost'],
-               'spent': current['spent'], 'spent_since': current['spent_since']}
+               'spent': current['spent'], 'spent_since': current['spent_since'],
+               'panel_open': current['panel_open'], 'show_button': current['show_button']}
     if current['api_key']:
         payload['api_key'] = current['api_key']
     # Create the file readable by its owner only before writing the key.

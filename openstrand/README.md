@@ -69,17 +69,22 @@ python -m openstrand agent "make the gold ribbons red" --start designs/bracelet.
 
 ### In the app
 
-A **Claude** bar sits under the canvas. Open it, describe a design (attach a
-reference image if you have one) and press Send. The agent runs in its own
-background process, so the app stays responsive; each step shows in the panel
-with the color of the matching app button. The finished design opens in a new
-tab through the same loader as Load, so its strands, masks, groups and layer
-panel are exactly as in a saved project. With **Start from the canvas** on,
-the current canvas goes to Claude as the design to change.
+The **Claude** button, next to Settings, shows and hides Claude (so does
+Ctrl+J). Claude floats over the bottom of the canvas, so the drawing never
+moves. Describe a design (Enter sends, Shift+Enter starts a new line; attach a
+reference image if you have one). The agent runs in its own background
+process, so the app stays responsive; each step shows with the color of the
+matching app button, and while Claude is hidden an arc turns around its button.
+The finished design opens in a new tab through the same loader as Load, so its
+strands, masks, groups and layer panel are exactly as in a saved project. With
+**Start from the canvas** on, the current canvas goes to Claude as the design
+to change. The app remembers whether Claude was showing.
 
 Settings > Claude holds the API key (on this computer only, in `claude.json`
-in the OpenStrand settings folder, never in projects) and the model. For now
-the panel works when the app runs from source; the installed app needs the
-openstrand package bundled first.
+in the OpenStrand settings folder, never in projects), the model, web search,
+the spending limit per request, and what Claude has cost in all with a Reset
+button. Its first switch hides the Claude button altogether. For now Claude
+works when the app runs from source; the installed app needs the openstrand
+package bundled first.
 
 Tests: `python -m pytest tests/test_openstrand_cli.py tests/test_claude_agent.py`

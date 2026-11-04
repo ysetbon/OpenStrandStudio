@@ -1,4 +1,5 @@
-"""The Claude panel under the canvas, and the Settings > Claude page.
+"""Claude in the app: the box floating over the canvas, the Claude button
+next to Settings that shows and hides it, and the Settings > Claude page.
 
 The panel sends a request to the openstrand agent (python -m openstrand agent),
 which runs in its own background process with the user's API key and model
@@ -16,9 +17,11 @@ import shutil
 import sys
 import time
 
-from PyQt5.QtCore import QDate, QLocale, QProcess, QProcessEnvironment, Qt, pyqtSignal
+from PyQt5.QtCore import (QDate, QEvent, QLocale, QPoint, QProcess, QProcessEnvironment, QRect, QRectF,
+                          Qt, QTimer, pyqtSignal)
+from PyQt5.QtGui import QColor, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import (QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QHBoxLayout, QLabel,
-                             QLineEdit, QPushButton, QSizePolicy, QTextBrowser, QTextEdit, QToolButton, QVBoxLayout,
+                             QLineEdit, QPushButton, QSizePolicy, QTextBrowser, QTextEdit, QVBoxLayout,
                              QWidget)
 
 import claude_settings
@@ -132,17 +135,25 @@ class PromptBox(QTextEdit):
 
 
 class ClaudePanel(QWidget):
-    """A slim bar under the canvas that opens into the conversation with Claude."""
+    """Claude, floating over the bottom of the canvas: the conversation, the
+    chat box and its buttons. The Claude button next to Settings shows and
+    hides it."""
 
     design_ready = pyqtSignal(str)  # path of the finished project file
     spending_changed = pyqtSignal()  # a request's cost was added to the saved total
+    open_changed = pyqtSignal(bool)  # Claude was shown or hidden
+    activity_changed = pyqtSignal()  # a run started or ended: the Claude button shows it
+    MARGIN = 12  # px between Claude and the canvas edges
 
-    def __init__(self, main_window, language_code='en'):
-        super().__init__(main_window)
+    def __init__(self, main_window, canvas=None, language_code='en'):
+        # Claude floats over the bottom of the canvas: a child of the canvas,
+        # so the canvas keeps its size and the drawing never moves.
+        super().__init__(canvas if canvas is not None else main_window)
         self.main_window = main_window
         self.language = language_code
         self.process = None
         self.run_cost, self.total_before = 0.0, claude_settings.load()['spent']
+        self.design_waiting = False  # a design opened while Claude was hidden
         self.image_path = None
         self.out_dir = None
         self.prompt = ''
@@ -150,43 +161,28 @@ class ClaudePanel(QWidget):
         self.stdout_buffer = b''
         self.stderr_text = ''
         self._build()
-        self.set_open(False)
+        saved = claude_settings.load()
+        self.setVisible(saved['show_button'] and saved['panel_open'])
         self.retranslate(language_code)
 
     # ------------------------------------------------------------------ UI
     def _build(self):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        self.header = QWidget(self)
-        header = QHBoxLayout(self.header)
-        header.setContentsMargins(8, 3, 8, 3)
-        header.setSpacing(8)
-        self.toggle_button = QToolButton(self.header)
-        self.toggle_button.setAutoRaise(True)
-        self.toggle_button.clicked.connect(lambda: self.set_open(not self.body.isVisibleTo(self)))
-        self.title_label = QLabel('Claude', self.header)
-        self.title_label.setStyleSheet('font-weight: bold; color: #d97757;')
-        self.status_label = QLabel(self.header)
-        self.status_label.setStyleSheet('color: gray;')
-        header.addWidget(self.toggle_button)
-        header.addWidget(self.title_label)
-        header.addStretch()
-        header.addWidget(self.status_label)
-        layout.addWidget(self.header)
-
-        self.body = QWidget(self)
-        body = QVBoxLayout(self.body)
-        body.setContentsMargins(8, 0, 8, 8)
+        self.setObjectName('claudePanel')
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.apply_theme(getattr(self.main_window, 'current_theme', 'default'))
+        self.body = self
+        body = QVBoxLayout(self)
+        body.setContentsMargins(8, 8, 8, 8)
         body.setSpacing(6)
-        self.transcript = QTextBrowser(self.body)
+        # The conversation shows above the box once there is one.
+        self.transcript = QTextBrowser(self)
         self.transcript.setOpenExternalLinks(True)
-        self.transcript.setMinimumHeight(120)
-        self.transcript.setMaximumHeight(220)
+        self.transcript.setMinimumHeight(60)
+        self.transcript.setMaximumHeight(150)
+        self.transcript.hide()
         body.addWidget(self.transcript)
 
-        self.image_row = QWidget(self.body)
+        self.image_row = QWidget(self)
         image_row = QHBoxLayout(self.image_row)
         image_row.setContentsMargins(0, 0, 0, 0)
         self.image_label = QLabel(self.image_row)
@@ -197,40 +193,126 @@ class ClaudePanel(QWidget):
         image_row.addStretch()
         body.addWidget(self.image_row)
 
-        self.prompt_edit = PromptBox(self.body)
+        self.prompt_edit = PromptBox(self)
         self.prompt_edit.submitted.connect(self.send)
-        self.attach_button = QPushButton(self.body)
+        self.attach_button = QPushButton(self)
         self.attach_button.clicked.connect(self.choose_image)
-        self.use_canvas_check = QCheckBox(self.body)
+        self.use_canvas_check = QCheckBox(self)
         self.use_canvas_check.setChecked(True)  # an empty canvas sends nothing
-        self.send_button = QPushButton(self.body)
+        self.status_label = QLabel(self)
+        self.status_label.setStyleSheet('color: gray;')
+        self.send_button = QPushButton(self)
         self.send_button.setStyleSheet('QPushButton { background: #d97757; color: #1f1e1d; font-weight: bold; padding: 4px 14px; }')
         self.send_button.clicked.connect(self.send_or_stop)
         # A chat box: the text across the whole width, growing upward as
-        # lines are added, with the buttons on a row under it.
+        # lines are added, with the buttons and the cost on a row under it.
         body.addWidget(self.prompt_edit)
         row = QHBoxLayout()
         row.setSpacing(6)
         row.addWidget(self.attach_button)
         row.addWidget(self.use_canvas_check)
         row.addStretch()
+        row.addWidget(self.status_label)
         row.addWidget(self.send_button)
         body.addLayout(row)
-        layout.addWidget(self.body)
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+
+    # Its own colors for each app theme: as a child of the canvas it would
+    # otherwise take the canvas background (white in every theme).
+    THEMES = {
+        'dark': dict(bg='#2C2C2C', fg='#FFFFFF', border='#5A5A5A', button='#3A3A3A', hover='#474747',
+                     log='#262626', log_border='#3F3F3F'),
+        'light': dict(bg='#FFFFFF', fg='#000000', border='#B8B8B8', button='#ECECEC', hover='#DCDCDC',
+                      log='#FAFAFA', log_border='#D0D0D0'),
+        'default': dict(bg='#ECECEC', fg='#000000', border='#A8A8A8', button='#E0E0E0', hover='#D2D2D2',
+                        log='#FFFFFF', log_border='#C8C8C8'),
+    }
+
+    def apply_theme(self, theme_name):
+        c = self.THEMES.get(str(theme_name).lower(), self.THEMES['default'])
+        self.setStyleSheet(f"""
+            QWidget#claudePanel {{ background-color: {c['bg']}; border: 1px solid {c['border']}; border-radius: 10px; }}
+            #claudePanel QWidget {{ background-color: {c['bg']}; color: {c['fg']}; }}
+            #claudePanel QLabel, #claudePanel QCheckBox {{ background-color: transparent; color: {c['fg']}; }}
+            #claudePanel QPushButton {{ background-color: {c['button']}; color: {c['fg']}; border: none;
+                                        border-radius: 4px; padding: 5px 10px; }}
+            #claudePanel QPushButton:hover {{ background-color: {c['hover']}; }}
+            #claudePanel QTextBrowser {{ background-color: {c['log']}; color: {c['fg']};
+                                         border: 1px solid {c['log_border']}; border-radius: 6px; }}
+        """)
+
+    def is_open(self):
+        return self.isVisibleTo(self.parentWidget())
 
     def set_open(self, opened):
-        self.body.setVisible(opened)
-        self.update_arrow()
+        """Show or hide Claude, and remember it for the next time the app opens."""
+        opened = bool(opened)
         if opened:
+            self.design_waiting = False
+        self.setVisible(opened)
+        if opened:
+            self.place()
+            self.raise_()
             self.prompt_edit.setFocus()
+        if claude_settings.load()['panel_open'] != opened:
+            claude_settings.save(panel_open=opened)
+        self.open_changed.emit(opened)
+        self.activity_changed.emit()
 
-    def update_arrow(self):
-        """Down while open; folded, it points along the text (left in Hebrew)."""
-        opened = self.body.isVisibleTo(self)
-        folded = Qt.LeftArrow if self.language == 'he' else Qt.RightArrow
-        self.toggle_button.setArrowType(Qt.DownArrow if opened else folded)
-        self.toggle_button.setToolTip(_tr(self.language, 'claude_hide_panel' if opened else 'claude_show_panel'))
+    def place(self):
+        """Across the bottom of the canvas, as tall as what it holds, never taller than the canvas."""
+        canvas = self.parentWidget()
+        if canvas is None:
+            return
+        area = self.visible_canvas()
+        m = self.MARGIN
+        width = max(240, area.width() - 2 * m)
+        layout = self.layout()
+        height = layout.totalHeightForWidth(width) if layout.hasHeightForWidth() else -1
+        if height < 0:
+            height = layout.totalSizeHint().height()
+        height = min(height, max(80, area.height() - 2 * m))
+        self.setGeometry(area.left() + m, area.bottom() + 1 - m - height, width, height)
+
+    def visible_canvas(self):
+        """The part of the canvas on screen: it has a minimum width, so a narrow
+        column hides some of it under the layer panel."""
+        canvas = self.parentWidget()
+        area = canvas.rect()
+        widget = canvas.parentWidget()
+        while widget is not None:
+            corner = canvas.mapFrom(widget, QPoint(0, 0))
+            area = area.intersected(QRect(corner, widget.size()))
+            if widget.isWindow():
+                break
+            widget = widget.parentWidget()
+        return area if area.width() > 0 and area.height() > 0 else canvas.rect()
+
+    def watch_layout(self):
+        """Follow the canvas and the widgets around it as they resize."""
+        widget = self.parentWidget()
+        while widget is not None:
+            widget.installEventFilter(self)
+            if widget.isWindow():
+                break
+            widget = widget.parentWidget()
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Resize and self.isVisible():
+            self.place()
+        return False
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.watch_layout()  # the canvas is in its column by now
+        self.place()
+
+    def event(self, event):
+        # The box grew a line, the conversation appeared, a picture was attached.
+        if event.type() == QEvent.LayoutRequest and self.isVisible():
+            result = super().event(event)
+            self.place()
+            return result
+        return super().event(event)
 
     def retranslate(self, language_code):
         self.language = language_code
@@ -242,7 +324,6 @@ class ClaudePanel(QWidget):
         self.use_canvas_check.setText(t('claude_use_canvas'))
         self.send_button.setText(t('claude_stop') if self.running() else t('claude_send'))
         self.setLayoutDirection(Qt.RightToLeft if language_code == 'he' else Qt.LeftToRight)
-        self.update_arrow()
         self.set_image(self.image_path)
 
     def set_image(self, path):
@@ -259,6 +340,7 @@ class ClaudePanel(QWidget):
 
     # ---------------------------------------------------------- transcript
     def add_html(self, fragment):
+        self.transcript.show()
         self.transcript.append(fragment)
         bar = self.transcript.verticalScrollBar()
         bar.setValue(bar.maximum())
@@ -334,6 +416,7 @@ class ClaudePanel(QWidget):
         self.prompt_edit.clear()
         self.set_image(None)
         self.status_label.setText(_tr(self.language, 'claude_working'))
+        self.activity_changed.emit()
         self.send_button.setText(_tr(self.language, 'claude_stop'))
         self.process.start(program, args)
 
@@ -356,6 +439,7 @@ class ClaudePanel(QWidget):
         self.send_button.setText(_tr(self.language, 'claude_send'))
         self.status_label.setText('')
         self.add_note(_tr(self.language, 'claude_failed').format(error=self.process.errorString()), '#c0392b')
+        self.activity_changed.emit()
 
     def write_canvas(self, path):
         """Save what is on the canvas now as the agent's starting design; None when empty."""
@@ -413,6 +497,12 @@ class ClaudePanel(QWidget):
             self.done_event = event
 
     def finished(self, *_):
+        try:
+            self._finish()
+        finally:
+            self.activity_changed.emit()  # the Claude button stops turning
+
+    def _finish(self):
         self.read_events(flush=True)
         self.read_errors()
         self.send_button.setText(_tr(self.language, 'claude_send'))
@@ -436,11 +526,126 @@ class ClaudePanel(QWidget):
             named = os.path.join(self.out_dir, design_name(self.prompt) + '.json')
             shutil.copyfile(project, named)
             self.add_note(_tr(self.language, 'claude_opened').format(name=os.path.basename(named)))
+            self.design_waiting = not self.is_open()
             self.design_ready.emit(named)
 
 
+class ClaudeButton(QPushButton):
+    """The Claude button next to Settings: shows and hides Claude.
+
+    The Claude app icon at the size of the Settings button, drawn here so it
+    answers the mouse the way Claude's own buttons do: lighter under the
+    pointer, a little smaller and darker while pressed, and, while Claude is
+    open, darker with a light ring. While Claude is hidden it also shows what
+    Claude is doing: an arc turns around it during a run, and a green dot
+    waits on it when a design has opened."""
+
+    ORANGE = QColor('#D97757')
+    HOVER = QColor('#E3896B')
+    PRESSED = QColor('#C2613F')
+    OPEN = QColor('#B9583A')
+    RADIUS = 7  # corner radius of the 32 px square, as the Claude app icon
+
+    def __init__(self, panel, parent=None):
+        super().__init__(parent)
+        self.panel = panel
+        self.setObjectName('claudeButton')
+        self.setCheckable(True)
+        self.setFixedSize(32, 32)
+        self.setAccessibleName('Claude')
+        self.setAttribute(Qt.WA_Hover, True)
+        self.setCursor(Qt.PointingHandCursor)
+        self.mark = QPixmap(resource_path('claude_mark_white.png'))
+        self.angle = 0
+        self.spin = QTimer(self)
+        self.spin.setInterval(50)
+        self.spin.timeout.connect(self.turn)
+        self.setChecked(panel.is_open())
+        self.toggled.connect(panel.set_open)
+        panel.open_changed.connect(self.follow)
+        panel.activity_changed.connect(self.show_activity)
+
+    def follow(self, opened):
+        self.blockSignals(True)
+        self.setChecked(opened)
+        self.blockSignals(False)
+        self.show_activity()
+
+    def busy(self):
+        return self.panel.running() and not self.panel.is_open()
+
+    def show_activity(self):
+        if self.busy():
+            self.spin.start()
+        else:
+            self.spin.stop()
+        self.update()
+
+    def turn(self):
+        self.angle = (self.angle - 24) % 360
+        self.update()
+
+    def enterEvent(self, event):
+        super().enterEvent(event)
+        self.update()
+
+    def leaveEvent(self, event):
+        super().leaveEvent(event)
+        self.update()
+
+    def color(self):
+        if self.isDown():
+            return self.PRESSED
+        if self.isChecked():
+            return self.OPEN
+        if self.underMouse():
+            return self.HOVER
+        return self.ORANGE
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform)
+        square = QRectF(self.rect())
+        if self.isDown():  # pressed in: a touch smaller
+            square = square.adjusted(1.5, 1.5, -1.5, -1.5)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(self.color())
+        painter.drawRoundedRect(square, self.RADIUS, self.RADIUS)
+        if self.isChecked():  # Claude is open
+            painter.setPen(QPen(QColor(255, 255, 255, 170), 1.5))
+            painter.setBrush(Qt.NoBrush)
+            painter.drawRoundedRect(square.adjusted(1.5, 1.5, -1.5, -1.5), self.RADIUS - 1.5, self.RADIUS - 1.5)
+        if not self.mark.isNull():
+            inset = square.width() * 0.17
+            painter.drawPixmap(square.adjusted(inset, inset, -inset, -inset), self.mark, QRectF(self.mark.rect()))
+        else:
+            painter.setPen(Qt.white)
+            painter.drawText(square, Qt.AlignCenter, '✳')
+        if self.busy():
+            pen = QPen(QColor(255, 255, 255, 230), 2.5)
+            pen.setCapStyle(Qt.RoundCap)
+            painter.setPen(pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawArc(QRectF(self.rect()).adjusted(2.5, 2.5, -2.5, -2.5), self.angle * 16, 100 * 16)
+        if self.panel.design_waiting and not self.panel.is_open():
+            painter.setPen(QPen(QColor('#1f1e1d'), 1.5))
+            painter.setBrush(QColor('#4fc06f'))
+            painter.drawEllipse(QRectF(self.width() - 11, 1, 10, 10))
+        painter.end()
+
+
+def resource_path(name):
+    """A file next to this module, or in the bundle of a frozen build."""
+    base = getattr(sys, '_MEIPASS', None) or os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base, name)
+
+
 class ClaudeSettingsPage(QWidget):
-    """Settings > Claude: the Anthropic API key and the model."""
+    """Settings > Claude: whether Claude shows, the Anthropic API key, the
+    model, web search, the spending limit and what Claude has cost."""
+
+    show_button_changed = pyqtSignal(bool)  # the main window shows or hides the Claude button
 
     def __init__(self, language_code='en', parent=None):
         super().__init__(parent)
@@ -449,6 +654,14 @@ class ClaudeSettingsPage(QWidget):
         self.intro = QLabel(self)
         self.intro.setWordWrap(True)
         layout.addWidget(self.intro)
+
+        self.show_check = QCheckBox(self)
+        self.show_check.toggled.connect(self.set_show_button)
+        layout.addWidget(self.show_check)
+        self.show_hint = QLabel(self)
+        self.show_hint.setWordWrap(True)
+        self.show_hint.setStyleSheet('color: gray;')
+        layout.addWidget(self.show_hint)
 
         self.key_label = QLabel(self)
         layout.addWidget(self.key_label)
@@ -553,6 +766,11 @@ class ClaudeSettingsPage(QWidget):
         self.limit_spin.setValue(saved['max_cost'])
         self.limit_spin.blockSignals(False)
         self.show_saved(saved['api_key'])
+        self.show_check.setText(t('claude_show_button'))
+        self.show_hint.setText(t('claude_show_button_hint'))
+        self.show_check.blockSignals(True)
+        self.show_check.setChecked(saved['show_button'])
+        self.show_check.blockSignals(False)
         self.reset_spent_button.setText(t('claude_spent_reset'))
         self.spent_hint.setText(t('claude_spent_hint'))
         self.show_spending()
@@ -576,6 +794,10 @@ class ClaudeSettingsPage(QWidget):
     def reset_spending(self):
         claude_settings.reset_spending()
         self.show_spending()
+
+    def set_show_button(self, shown):
+        claude_settings.save(show_button=shown)
+        self.show_button_changed.emit(bool(shown))
 
     def show_saved(self, key):
         t = lambda k: _tr(self.language, k)

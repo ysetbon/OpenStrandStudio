@@ -22,7 +22,8 @@ from layer_panel import LayerPanel
 from attached_strand import AttachedStrand
 from masked_strand import MaskedStrand
 from save_load_manager import save_strands, load_strands, apply_loaded_strands, serialize_project_state
-from claude_panel import ClaudePanel
+import claude_settings
+from claude_panel import ClaudeButton, ClaudePanel
 from project_settings import capture_project_settings, read_project_settings, apply_project_settings
 from mask_mode import MaskMode
 from group_layers import GroupLayerManager, StrandAngleEditDialog
@@ -106,6 +107,11 @@ class MainWindow(QMainWindow):
             # settings dialog) has taken over.
             self.group_panel_shortcut.setContext(Qt.WindowShortcut)
             self.group_panel_shortcut.activated.connect(self.layer_panel.toggle_group_panel)
+
+        # Ctrl+J shows and hides Claude, like the Claude button.
+        self.claude_shortcut = QShortcut(QKeySequence("Ctrl+J"), self)
+        self.claude_shortcut.setContext(Qt.WindowShortcut)
+        self.claude_shortcut.activated.connect(self.toggle_claude)
         # Log initial state
         self.layer_state_manager.save_initial_state()
         self.layer_state_manager.log_layer_state()
@@ -138,6 +144,7 @@ class MainWindow(QMainWindow):
         toolbar_cues = {
             self.load_button: 'toolbar_action',
             self.settings_button: 'toolbar_settings',
+            self.claude_button: 'toolbar_settings',
             self.save_image_button: 'toolbar_image',
             self.toggle_shadow_button: 'toggle_shadow_{state}',
             self.tabs_button: 'toggle_tabs_{state}',
@@ -152,7 +159,7 @@ class MainWindow(QMainWindow):
                        self.toggle_grid_button, self.toggle_control_points_button,
                        self.toggle_shadow_button, self.tabs_button, self.layer_state_button,
                        self.save_button, self.load_button, self.save_image_button,
-                       self.settings_button):
+                       self.settings_button, self.claude_button):
             sound_manager.set_hover_cue(button, 'hover_toolbar')
         panel = self.layer_panel
         for area in (panel.top_header, panel.zoom_panel, panel.refresh_panel):
@@ -490,6 +497,14 @@ class MainWindow(QMainWindow):
         self.layer_state_button.clicked.connect(self.show_layer_state_log)
         button_layout.addWidget(self.layer_state_button)
 
+        # Claude: a button next to Settings shows and hides Claude, which
+        # floats over the bottom of the canvas so the drawing never moves.
+        self.claude_panel = ClaudePanel(self, self.canvas, self.language_code)
+        self.claude_panel.design_ready.connect(self.open_claude_design)
+        self.claude_button = ClaudeButton(self.claude_panel)
+        self.claude_button.setVisible(claude_settings.load()['show_button'])
+        button_layout.addWidget(self.claude_button, 0)
+
         # Settings button (fixed size, no stretch)
         button_layout.addWidget(self.settings_button, 0)
 
@@ -521,10 +536,6 @@ class MainWindow(QMainWindow):
 
         left_layout.addWidget(button_container)
         left_layout.addWidget(self.canvas)
-        # Claude: a slim bar under the canvas that opens into the agent panel.
-        self.claude_panel = ClaudePanel(self, self.language_code)
-        self.claude_panel.design_ready.connect(self.open_claude_design)
-        left_layout.addWidget(self.claude_panel)
         self.splitter.addWidget(self.left_widget)
         self.splitter.addWidget(self.layer_panel)
 
@@ -754,13 +765,17 @@ class MainWindow(QMainWindow):
             self.toggle_grid_button, self.angle_adjust_button,
             self.save_button, self.load_button, self.save_image_button,
             self.toggle_control_points_button, self.toggle_shadow_button,
-            self.tabs_button, self.layer_state_button, self.settings_button,
+            self.tabs_button, self.layer_state_button, self.claude_button, self.settings_button,
         ]
+
+    def _toolbar_row_end(self):
+        """The buttons kept together at the far end of the last row."""
+        return [self.layer_state_button, self.claude_button, self.settings_button]
 
     def _toolbar_single_row_width(self):
         """Width one row needs to show every label at its natural size with
         the tightest gaps."""
-        widgets = self._toolbar_row_widgets()
+        widgets = [w for w in self._toolbar_row_widgets() if not w.isHidden()]
         margins = self.toolbar_button_layout.contentsMargins()
         return (margins.left() + margins.right()
                 + sum(w.sizeHint().width() for w in widgets)
@@ -798,21 +813,21 @@ class MainWindow(QMainWindow):
                 layout.takeAt(0)
         split = self.TOOLBAR_SECOND_ROW_FROM if two_rows else len(widgets)
         first, second = widgets[:split], widgets[split:]
-        # Each row keeps the original shape: buttons, a stretch, then State
-        # and the settings button at the far end of the last row.
-        state, settings = widgets[-2], widgets[-1]
+        # Each row keeps the original shape: buttons, a stretch, then State,
+        # Claude and the settings button at the far end of the last row.
+        end = self._toolbar_row_end()
         for w in first:
-            if w is not state and w is not settings:
+            if w not in end:
                 row1.addWidget(w)
         row1.addStretch()
         target = row2 if two_rows else row1
         for w in second:
-            if w is not state and w is not settings:
+            if w not in end:
                 target.addWidget(w)
         if two_rows:
             row2.addStretch()
-        target.addWidget(state)
-        target.addWidget(settings, 0)
+        for w in end:
+            target.addWidget(w, 0)
         self.toolbar_container.setFixedHeight(
             self.TOOLBAR_ROW_HEIGHT * (2 if two_rows else 1))
         self._apply_toolbar_spacing()
@@ -1042,6 +1057,8 @@ class MainWindow(QMainWindow):
     def apply_theme(self, theme_name):
         # Store the current theme
         self.current_theme = theme_name
+        if hasattr(self, 'claude_panel'):
+            self.claude_panel.apply_theme(theme_name)
         
         if theme_name == "dark":
             style_sheet = """
@@ -2746,6 +2763,23 @@ class MainWindow(QMainWindow):
             elif isinstance(widget, QComboBox) and widget.isEditable():
                 return True
         return False
+
+    def toggle_claude(self):
+        """Ctrl+J: show or hide Claude, unless Settings > Claude has hidden it."""
+        if self.claude_button.isVisible():
+            self.claude_panel.set_open(not self.claude_panel.is_open())
+
+    def set_claude_available(self, shown):
+        """Settings > Claude: show the Claude button, or hide it and Claude with it."""
+        self.claude_button.setVisible(shown)
+        if shown:
+            # Back the way it was left: shown or hidden.
+            self.claude_panel.set_open(claude_settings.load()['panel_open'])
+        else:
+            self.claude_panel.hide()  # keeps the remembered open/closed state
+            self.claude_button.follow(False)
+        self._toolbar_two_rows = None  # measure the toolbar again
+        self._apply_toolbar_rows()
 
     def _click_with_sound(self, button):
         """Click a layer panel button from its shortcut, with the sound a mouse click plays."""

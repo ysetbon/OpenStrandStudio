@@ -8,6 +8,7 @@ a = Analysis(
     datas=[
         ('box_stitch.icns', '.'), 
         ('settings_icon.png', '.'),
+        ('claude_mark_white.png', '.'),
         ('flags/*.png', 'flags/'),
         ('layer_panel_icons/*.png', 'layer_panel_icons/'),
         ('guide_images/levels_masks/*.png', 'guide_images/levels_masks/'),

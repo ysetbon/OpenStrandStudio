@@ -310,7 +310,7 @@ def test_a_claude_design_opens_in_a_new_tab_with_layers_and_groups(window, tmp_p
     assert len(snapshot["strands"]) == len(expected["strands"])
 
 
-def test_the_prompt_box_types_every_key_and_enter_sends(window, monkeypatch):
+def test_the_prompt_box_is_a_chat_box(window, monkeypatch):
     from PyQt5.QtCore import Qt
     from PyQt5.QtTest import QTest
     from PyQt5.QtWidgets import QApplication
@@ -322,8 +322,8 @@ def test_the_prompt_box_types_every_key_and_enter_sends(window, monkeypatch):
         button.setEnabled(True)  # as if there were history to undo and redo
     monkeypatch.setattr(window.layer_panel, "toggle_pan_mode", lambda: pans.append(1))
     monkeypatch.setattr(panel, "send", lambda: sent.append(panel.prompt_edit.text()))
-    panel.prompt_edit.returnPressed.disconnect()
-    panel.prompt_edit.returnPressed.connect(panel.send)
+    panel.prompt_edit.submitted.disconnect()
+    panel.prompt_edit.submitted.connect(panel.send)
     panel.set_open(True)
     window.activateWindow()
     panel.prompt_edit.clear()
@@ -334,8 +334,30 @@ def test_the_prompt_box_types_every_key_and_enter_sends(window, monkeypatch):
         QTest.keyClick(window.windowHandle(), Qt.Key_Space if key == " " else key)
     assert panel.prompt_edit.text() == "a zx"
     assert clicks == [] and pans == []
+
+    # Shift+Enter starts a new line and the box grows to show it.
+    one_line = panel.prompt_edit.height()
+    QTest.keyClick(window.windowHandle(), Qt.Key_Return, Qt.ShiftModifier)
+    QTest.keyClicks(panel.prompt_edit, "in teal")
+    QApplication.processEvents()
+    assert panel.prompt_edit.text() == "a zx\nin teal" and sent == []
+    two_lines = panel.prompt_edit.height()
+    assert two_lines > one_line
+
+    # It stops growing after MAX_LINES and scrolls instead.
+    for _ in range(20):
+        QTest.keyClick(panel.prompt_edit, Qt.Key_Return, Qt.ShiftModifier)
+    QApplication.processEvents()
+    tallest = panel.prompt_edit.height()
+    assert two_lines < tallest < 10 * panel.prompt_edit.line_height() + 30
+    panel.prompt_edit.setText("a zx\nin teal")
+    QApplication.processEvents()
+    assert panel.prompt_edit.height() == two_lines
+
+    # Enter (and the keypad Enter) sends.
     QTest.keyClick(window.windowHandle(), Qt.Key_Return)
-    assert sent == ["a zx"]
+    QTest.keyClick(panel.prompt_edit, Qt.Key_Enter, Qt.KeypadModifier)
+    assert sent == ["a zx\nin teal"] * 2
 
     # Away from text boxes the shortcuts still work.
     window.canvas.setFocus()

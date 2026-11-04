@@ -18,7 +18,7 @@ import time
 
 from PyQt5.QtCore import QProcess, QProcessEnvironment, Qt, pyqtSignal
 from PyQt5.QtWidgets import (QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QHBoxLayout, QLabel,
-                             QLineEdit, QPushButton, QSizePolicy, QTextBrowser, QToolButton, QVBoxLayout,
+                             QLineEdit, QPushButton, QSizePolicy, QTextBrowser, QTextEdit, QToolButton, QVBoxLayout,
                              QWidget)
 
 import claude_settings
@@ -64,6 +64,66 @@ def design_name(prompt):
     """A file name from the request: '5x3 bracelet in teal' -> '5x3_bracelet_in_teal'."""
     words = re.findall(r'[\w×]+', prompt.lower(), re.UNICODE)[:6]
     return '_'.join(words).replace('×', 'x')[:48] or 'claude_design'
+
+
+class PromptBox(QTextEdit):
+    """The chat box: Enter sends, Shift+Enter starts a new line, and the box
+    grows with what is typed up to MAX_LINES, then scrolls."""
+    submitted = pyqtSignal()
+    MAX_LINES = 8
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAcceptRichText(False)  # pasted text arrives plain
+        self.setTabChangesFocus(True)
+        self.setLineWrapMode(QTextEdit.WidgetWidth)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.setObjectName('claudePrompt')
+        self.setStyleSheet('QTextEdit#claudePrompt { border: 1px solid palette(mid); border-radius: 8px;'
+                           ' padding: 4px 6px; }'  # colors come from the app's theme
+                           'QTextEdit#claudePrompt:focus { border-color: #d97757; }')
+        self.document().setDocumentMargin(2)
+        self.document().contentsChanged.connect(self.fit_height)
+        self.fit_height()
+
+    # The QLineEdit calls the rest of the panel and the tests use.
+    def text(self):
+        return self.toPlainText()
+
+    def setText(self, text):
+        self.setPlainText(text)
+        self.moveCursor(self.textCursor().End)
+
+    def keyPressEvent(self, event):
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+            if event.modifiers() & Qt.ShiftModifier:
+                self.textCursor().insertText('\n')
+            else:
+                self.submitted.emit()
+            event.accept()
+            return
+        super().keyPressEvent(event)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.fit_height()
+
+    def line_height(self):
+        return self.fontMetrics().lineSpacing()
+
+    def fit_height(self):
+        doc = self.document()
+        doc.setTextWidth(self.viewport().width())
+        # Whatever the style puts around the text: frame, border, padding.
+        frame = self.height() - self.viewport().height()
+        content = doc.size().height()
+        most = self.MAX_LINES * self.line_height() + 2 * doc.documentMargin()
+        height = int(min(max(content, self.line_height() + 2 * doc.documentMargin()), most)) + frame
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded if content > most else Qt.ScrollBarAlwaysOff)
+        if height != self.height():
+            self.setFixedHeight(height)
+        self.ensureCursorVisible()
 
 
 class ClaudePanel(QWidget):
@@ -133,10 +193,8 @@ class ClaudePanel(QWidget):
         image_row.addStretch()
         body.addWidget(self.image_row)
 
-        row = QHBoxLayout()
-        row.setSpacing(6)
-        self.prompt_edit = QLineEdit(self.body)
-        self.prompt_edit.returnPressed.connect(self.send)
+        self.prompt_edit = PromptBox(self.body)
+        self.prompt_edit.submitted.connect(self.send)
         self.attach_button = QPushButton(self.body)
         self.attach_button.clicked.connect(self.choose_image)
         self.use_canvas_check = QCheckBox(self.body)
@@ -144,9 +202,14 @@ class ClaudePanel(QWidget):
         self.send_button = QPushButton(self.body)
         self.send_button.setStyleSheet('QPushButton { background: #d97757; color: #1f1e1d; font-weight: bold; padding: 4px 14px; }')
         self.send_button.clicked.connect(self.send_or_stop)
-        row.addWidget(self.prompt_edit, 1)
+        # A chat box: the text across the whole width, growing upward as
+        # lines are added, with the buttons on a row under it.
+        body.addWidget(self.prompt_edit)
+        row = QHBoxLayout()
+        row.setSpacing(6)
         row.addWidget(self.attach_button)
         row.addWidget(self.use_canvas_check)
+        row.addStretch()
         row.addWidget(self.send_button)
         body.addLayout(row)
         layout.addWidget(self.body)
@@ -164,6 +227,7 @@ class ClaudePanel(QWidget):
         t = lambda key: _tr(language_code, key)
         self.hint_label.setText(t('claude_panel_hint'))
         self.prompt_edit.setPlaceholderText(t('claude_prompt_placeholder'))
+        self.prompt_edit.setToolTip(t('claude_prompt_keys'))
         self.attach_button.setText(t('claude_attach'))
         self.remove_image_button.setText(t('claude_remove_image'))
         self.use_canvas_check.setText(t('claude_use_canvas'))

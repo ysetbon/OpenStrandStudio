@@ -1,11 +1,13 @@
 """Build the knot Claude's working line shows: a closed overhand knot drawn
-step by step, strand after strand, by OpenStrand Studio's own canvas.
+step by step, strand after strand, by OpenStrand Studio's own canvas, then
+untied from the other end, so the loop comes back to where it began.
 
 The knot is a real project made with `openstrand draw` (8 attached strands,
 3 crossings, 2 masks). Each frame is that project cut short: the strands
 drawn so far, the one being drawn grown part of the way along its curve, and
 the masks of crossings whose two strands are both there, as when the knot is
-drawn by hand in the app. The frames are rendered by the app's canvas onto a
+drawn by hand in the app. Once finished it unties: the cord leaves from its
+first end, strand after strand along the same path, until nothing is left. The frames are rendered by the app's canvas onto a
 transparent ground.
 
     python scripts/build_knot_spinner.py            # writes src/claude_knot.png (+ .json)
@@ -31,6 +33,7 @@ SPEC = {"name": "closed overhand", "cords": [{
                [460, 480], [440, 360], [560, 300], [700, 420], [780, 640], [600, 700]]}]}
 GROWTH = (1 / 3, 2 / 3, 1.0)   # each strand appears in three steps along its curve
 STEP_MS, HOLD_MS, EMPTY_MS = 110, 1400, 220
+ATTACHED_ONLY = ('attached_to', 'attachment_side', 'angle', 'length')
 
 
 def split(p0, p1, p2, p3, t):
@@ -47,6 +50,59 @@ def point(p):
 
 def as_dict(p):
     return {'x': p[0], 'y': p[1]}
+
+
+def rest(p0, p1, p2, p3, t):
+    """The part of a cubic Bezier curve after t (de Casteljau)."""
+    q3, q2, q1, q0 = split(p3, p2, p1, p0, 1 - t)
+    return q0, q1, q2, q3
+
+
+def receded(strand, t):
+    """The strand with its first part, up to t, gone: its start is now loose."""
+    s = copy.deepcopy(strand)
+    cps = s['control_points']
+    p0, a, b, p3 = rest(point(s['start']), point(cps[0]), point(cps[1]), point(s['end']), t)
+    s['start'], s['control_points'] = as_dict(p0), [as_dict(a), as_dict(b)]
+    s['control_point_center'] = as_dict(((a[0] + b[0]) / 2, (a[1] + b[1]) / 2))
+    s['has_circles'] = [False, s['has_circles'][1]]
+    return s
+
+
+def as_first(strand):
+    """An attached strand whose parent is gone becomes the cord's first strand."""
+    s = copy.deepcopy(strand)
+    s['type'], s['is_first_strand'] = 'Strand', True
+    for key in ATTACHED_ONLY:
+        s.pop(key, None)
+    s['has_circles'] = [False, s['has_circles'][1]]
+    return s
+
+
+def untie_frames(project):
+    """The finished knot untied from its first end: each strand leaves in three
+    steps, in the order it was drawn, until nothing is left."""
+    strands = [s for s in project['strands'] if s['type'] != 'MaskedStrand']
+    masks = [s for s in project['strands'] if s['type'] == 'MaskedStrand']
+    names = [s['layer_name'] for s in strands]
+    out = []
+    for k in range(len(strands)):
+        for t in GROWTH:
+            if t >= 1:
+                left = [copy.deepcopy(s) for s in strands[k + 1:]]
+            else:
+                left = [receded(strands[k], t)] + [copy.deepcopy(s) for s in strands[k + 1:]]
+            if left:
+                left[0] = as_first(left[0])
+            for s in left:
+                s['closed_connections'] = [False, False]
+            there = {s['layer_name'] for s in left}
+            kept = [m for m in masks if all(n in there for n in mask_parts(m['layer_name'], names))]
+            frame = dict(project, strands=left + copy.deepcopy(kept), groups={})
+            for i, s in enumerate(frame['strands']):
+                s['index'] = i
+            out.append(frame)
+    return out
 
 
 def grown(strand, t):
@@ -151,11 +207,11 @@ def main():
     from openstrand import draw
     full, report = draw.build(SPEC)
     assert 'conflicts: 0' in report, report
-    frames = frames_of(full)
-    images = render_frames(frames + [full], full, args.size)
-    images = images[:-1]  # the last grown frame is the finished knot itself
+    build, untie = frames_of(full), untie_frames(full)
+    # The last untie frame is empty: it stays a blank cell, the pause before it starts again.
+    images = render_frames(build + untie[:-1], full, args.size)
     durations = [STEP_MS] * len(images)
-    durations[-1] = HOLD_MS
+    durations[len(build) - 1] = HOLD_MS  # the finished knot
     from PyQt5.QtGui import QImage, QPainter
     from PyQt5.QtCore import Qt
     strip = QImage(args.size * (len(images) + 1), args.size, QImage.Format_ARGB32_Premultiplied)
@@ -163,13 +219,13 @@ def main():
     painter = QPainter(strip)
     for i, im in enumerate(images):
         painter.drawImage(i * args.size, 0, im)
-    painter.end()  # the last cell stays empty: the pause before it starts again
+    painter.end()  # the last cell stays empty: the cord has gone, and it starts again
     durations.append(EMPTY_MS)
     strip.save(args.out)
     Path(args.out).with_suffix('.json').write_text(json.dumps(
         {'frame': args.size, 'durations_ms': durations,
-         'about': 'A closed overhand knot drawn strand by strand by OpenStrand Studio '
-                  '(scripts/build_knot_spinner.py).'}, indent=1) + '\n', encoding='utf-8')
+         'about': 'A closed overhand knot drawn strand by strand by OpenStrand Studio, then '
+                  'untied from its first end (scripts/build_knot_spinner.py).'}, indent=1) + '\n', encoding='utf-8')
     if args.frames:
         Path(args.frames).mkdir(parents=True, exist_ok=True)
         for i, im in enumerate(images):

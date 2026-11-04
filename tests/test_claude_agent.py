@@ -808,7 +808,7 @@ def test_the_working_line_draws_the_knot_while_claude_works(window):
     import json as _json
     line = window.claude_panel.working
     info = _json.loads((ROOT / "src" / "claude_knot.json").read_text())
-    assert len(line.frames) == len(info["durations_ms"]) == 25
+    assert len(line.frames) == len(info["durations_ms"]) == 48
     line.start("Thinking…")
     assert line.isVisibleTo(window.claude_panel) and line.timer.isActive() and line.frame == 0
     line.tick()
@@ -899,6 +899,16 @@ def test_the_knot_spinner_is_a_real_closed_overhand_drawn_strand_by_strand():
         for mask in (s for s in frame["strands"] if s["type"] == "MaskedStrand"):
             assert all(part in names for part in spinner.mask_parts(mask["layer_name"], sorted(names)))
         assert [s["index"] for s in frame["strands"]] == list(range(len(frame["strands"])))
+    # Then it unties from its first end, strand after strand, down to nothing.
+    untie = spinner.untie_frames(full)
+    assert len(untie) == 3 * len(strands) and untie[-1]["strands"] == []
+    for frame in untie[:-1]:
+        cords = [s for s in frame["strands"] if s["type"] != "MaskedStrand"]
+        assert cords[0]["type"] == "Strand" and "attached_to" not in cords[0]  # the new first strand
+        names = {s["layer_name"] for s in cords}
+        assert all(s.get("attached_to", names and next(iter(names))) in names for s in cords)
+        assert [s["index"] for s in frame["strands"]] == list(range(len(frame["strands"])))
+    assert untie[0]["strands"][0]["start"] != strands[0]["start"]  # its first end has moved along
     # A strand being drawn ends where its curve is cut, with no joint at its loose end.
     first = frames[0]["strands"][0]
     assert first["has_circles"][1] is False and first["end"] != strands[0]["end"]

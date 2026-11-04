@@ -841,11 +841,13 @@ def test_plan_mode_ends_with_build_this_plan(window, monkeypatch, tmp_path):
     panel = window.claude_panel
     panel.set_mode("ask")
     panel.set_mode("plan")
-    run_events(panel, [{"type": "text", "text": "1. Two circles of 180 px, linked. 2. Teal and gold."},
+    run_events(panel, [{"type": "text", "text": "1. Two circles of 180 px, linked.\n2. Teal and gold."},
                        {"type": "done", "ok": True, "error": None, "project": None, "cost": 0.02,
                         "model": "claude-sonnet-5-5", "plan": True}], tmp_path)
     card = panel.entries[-1]
     assert card["kind"] == "plan" and "Build this plan" in panel.transcript.toPlainText()
+    assert "<br>2. Teal and gold." in panel.transcript.toHtml().replace("\n", "") or \
+        "2. Teal and gold." in panel.transcript.toPlainText().splitlines()[-2]
     sent = []
     monkeypatch.setattr(panel, "send", lambda prompt=None, shown=None: sent.append((prompt, shown)))
     panel.follow_link(QUrl(f"os:plan/{panel.entries.index(card)}"))

@@ -74,6 +74,11 @@ def money(value):
     return f'${value:.2f}' if value >= 1 else f'${value:.3f}'
 
 
+def lines(text):
+    """Text for the transcript's HTML, keeping its line breaks (numbered plans, paragraphs)."""
+    return html.escape(text.strip()).replace('\n', '<br>')
+
+
 def short_url(url):
     """'animatedknots.com/butterfly-stitch' from a full link."""
     url = re.sub(r'^https?://(www\.)?', '', url or '')
@@ -564,7 +569,7 @@ class ClaudePanel(QWidget):
                     f' color:{c["user_fg"]};">&nbsp;{esc(e["text"])}&nbsp;</span></p>')
         if kind == 'claude':
             return (f'<p style="margin:5px 0;"><span style="color:#D97757; font-size:9px;">●</span>&nbsp; '
-                    f'{esc(e["text"])}</p>')
+                    f'{lines(e["text"])}</p>')
         if kind == 'note':
             return f'<p style="margin:4px 0; color:{e.get("color") or c["muted"]};">{esc(e["text"])}</p>'
         if kind == 'html':
@@ -627,7 +632,7 @@ class ClaudePanel(QWidget):
             out = (f'<a href="os:think/{i}/{j}" style="color:{c["muted"]}; text-decoration:none;">'
                    f'<i>{esc(t("claude_step_thought"))}</i>&nbsp; {arrow}</a>')
             if step['open']:
-                out += f'<br><i style="color:{c["muted"]};">{esc(step["text"])}</i>'
+                out += f'<br><i style="color:{c["muted"]};">{lines(step["text"])}</i>'
             return out
         if kind in ('search', 'fetch'):
             return f'<span style="color:{c["muted"]};">{esc(self.step_label(step))}</span>'

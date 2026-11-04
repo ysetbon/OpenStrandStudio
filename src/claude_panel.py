@@ -58,9 +58,11 @@ def _tr(language, key):
 
 
 def agent_command(prompt, model, out_dir, images=(), start=None, web=True, max_cost=None, effort=None,
-                  plan=False, app=False):
+                  plan=False, app=False, history=None):
     """The program and arguments that run one agent request."""
     args = ['-m', 'openstrand', 'agent', prompt, '--model', model, '--out-dir', out_dir, '--json-events']
+    if history:  # the session so far: Claude remembers it
+        args += ['--history', history]
     if app:  # the app answers its tab tools through the bridge
         args.append('--app')
     if not web:
@@ -317,6 +319,11 @@ class ClaudePanel(QWidget):
         self.stderr_text = ''
         self.entries = []  # the conversation: drawn as HTML each time it changes
         self.bridge = None  # set by the main window: Claude's tab tools run through it
+        # The session: what was asked and answered so far, sent with each request
+        # so Claude remembers it. "New session" (or /clear, /new) starts again.
+        self.history = []
+        self.shown_prompt = ''
+        self.run_design = None
         self.session_spent = 0.0  # since the app opened; held to the session limit
         self.mode = claude_settings.load()['mode']  # 'ask', 'auto', or 'plan' (never saved)
         self.last_mode = self.mode
@@ -401,6 +408,10 @@ class ClaudePanel(QWidget):
         self.effort_button.setMenu(self.effort_menu)
         self.session_label = QLabel(self)
         self.session_label.setObjectName('claudeSession')
+        self.new_button = QToolButton(self)
+        self.new_button.setObjectName('claudePick')
+        self.new_button.clicked.connect(self.new_session)
+        status.addWidget(self.new_button)
         status.addWidget(self.mode_button)
         status.addStretch()
         status.addWidget(self.model_button)
@@ -779,6 +790,8 @@ class ClaudePanel(QWidget):
         t = lambda key: _tr(self.language, key)
         c = self.colors
         saved = claude_settings.load()
+        self.new_button.setText('＋ ' + t('claude_new_session'))
+        self.new_button.setEnabled(not self.running())
         glyph, color, key = self.MODE_LOOK[self.mode]
         self.mode_button.setText(f'{glyph} {t(key)}  ·  {t("claude_mode_cycle")}')
         self.mode_button.setStyleSheet(f'QToolButton {{ color: {c[color]}; }}')
@@ -839,6 +852,10 @@ class ClaudePanel(QWidget):
     def send(self, prompt=None, shown=None):
         typed = prompt is None
         prompt = (self.prompt_edit.text() if typed else prompt).strip()
+        if typed and prompt.lower() in ('/clear', '/new'):  # as in Claude Code
+            self.prompt_edit.clear()
+            self.new_session()
+            return
         if not prompt or self.running():
             return
         self.set_open(True)
@@ -861,12 +878,18 @@ class ClaudePanel(QWidget):
         start = None
         if self.use_canvas_check.isChecked():
             start = self.write_canvas(os.path.join(self.out_dir, 'canvas.json'))
+        history = None
+        if self.history:
+            history = os.path.join(self.out_dir, 'history.json')
+            with open(history, 'w', encoding='utf-8') as f:
+                json.dump(self.history, f)
+        self.shown_prompt, self.run_design = (shown or prompt), None
         # One request may spend its own limit, but never past what the session has left.
         program, args = agent_command(prompt, settings['model'], self.out_dir,
                                       [self.image_path] if self.image_path else [], start,
                                       web=settings['web'], max_cost=min(settings['max_cost'], left),
                                       effort=settings['effort'], plan=self.mode == 'plan',
-                                      app=self.bridge is not None)
+                                      app=self.bridge is not None, history=history)
         env = QProcessEnvironment.systemEnvironment()
         env.insert('ANTHROPIC_API_KEY', settings['api_key'])
         env.insert('QT_QPA_PLATFORM', 'offscreen')
@@ -893,6 +916,7 @@ class ClaudePanel(QWidget):
         self.activity_changed.emit()
         self.send_button.setText(_tr(self.language, 'claude_stop'))
         self.process.start(program, args)
+        self.new_button.setEnabled(False)  # not while Claude works
 
     def cost_line(self):
         """'this request $0.041 · total $1.27': the total never starts again from zero."""
@@ -1020,8 +1044,40 @@ class ClaudePanel(QWidget):
     def finished(self, *_):
         try:
             self._finish()
+            self.remember_turn()
         finally:
+            self.new_button.setEnabled(True)
             self.activity_changed.emit()  # the Claude button stops turning
+
+    def remember_turn(self):
+        """Keep this request and Claude's answer for the next one in the session."""
+        event = self.done_event or {}
+        answer = '\n\n'.join(self.run_texts) or event.get('text') or event.get('error') or ''
+        design = self.run_design
+        if event.get('opened_tabs'):
+            design = 'opened in tabs: ' + ', '.join(event['opened_tabs'])
+        elif self.run_mode == 'plan':
+            design = 'a plan, nothing built yet'
+        self.history.append({'user': self.shown_prompt or self.prompt, 'claude': answer, 'design': design})
+
+    def new_session(self):
+        """Start again from nothing: no conversation, nothing Claude remembers,
+        the session's spending back to $0. The canvas stays as it is; untick
+        "Start from the canvas" to leave it out too."""
+        if self.running():
+            return
+        self.entries.clear()
+        self.history.clear()
+        self.session_spent = self.run_cost = 0.0
+        self.design_waiting = False
+        self.status_label.setText('')
+        self.set_image(None)
+        if self.bridge is not None:
+            self.bridge.forget()
+        self.add_note(_tr(self.language, 'claude_new_session_note'))
+        self.show_session()
+        self.activity_changed.emit()
+        self.prompt_edit.setFocus()
 
     def _finish(self):
         self.read_events(flush=True)
@@ -1059,6 +1115,7 @@ class ClaudePanel(QWidget):
         if project and os.path.exists(project):
             named = os.path.join(self.out_dir, design_name(self.prompt) + '.json')
             shutil.copyfile(project, named)
+            self.run_design = os.path.basename(named)
             png = event.get('png')
             picture = None
             if png and os.path.exists(png):

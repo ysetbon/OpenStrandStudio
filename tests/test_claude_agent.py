@@ -319,7 +319,7 @@ def unfolded(panel):
 
 def run_events(panel, events, tmp_path, prompt="two linked rings"):
     """Feed a finished run through the panel as the agent process would."""
-    panel.out_dir, panel.prompt = str(tmp_path), prompt
+    panel.out_dir, panel.prompt, panel.shown_prompt = str(tmp_path), prompt, prompt  # as send() sets them
     panel.run_cost, panel.total_before, panel.run_texts = 0.0, 0.0, []
     panel.run_mode = panel.mode
     panel.done_event = None
@@ -621,6 +621,9 @@ FAKE_STEPS = [
     {"content": [{"type": "text", "text": "Five tabs, one per step, from the tail to the finished figure 8."}],
      "stop_reason": "end_turn"},
 ]
+
+
+FAKE_TALK = [{"content": [{"type": "text", "text": "A crimson figure 8 with open ends."}], "stop_reason": "end_turn"}]
 
 
 @pytest.fixture
@@ -1132,3 +1135,76 @@ def test_claude_sits_above_the_tab_strip(window, monkeypatch, tmp_path):
     QApplication.processEvents()
     panel.place()
     assert panel.geometry().bottom() == panel.visible_canvas().bottom() - panel.MARGIN
+
+
+# ----------------------------------------------------- sessions and memory
+def test_the_request_carries_the_session_so_far():
+    from openstrand.agent import HISTORY_TURNS, with_history
+    turns = [{"user": f"request {n}", "claude": f"answer {n}", "design": f"d{n}.json"} for n in range(12)]
+    text = with_history("now add tabs", turns)
+    assert text.startswith("Earlier in this conversation") and text.endswith("Now the person asks:\nnow add tabs")
+    assert "request 11" in text and "d11.json" in text and "request 3" not in text  # the last few turns only
+    assert text.count("The person asked") == HISTORY_TURNS
+    sys.path.insert(0, str(ROOT / "src"))
+    from claude_panel import agent_command
+    _, args = agent_command("x", "claude-haiku-5-5", "out", history="out/history.json")
+    assert args[args.index("--history") + 1] == "out/history.json"
+    assert "--history" not in agent_command("x", "claude-haiku-5-5", "out")[1]
+
+
+def test_new_session_starts_from_nothing(window, monkeypatch, tmp_path):
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel = window.claude_panel
+    panel.set_mode("auto")
+    panel.new_session()
+    run_events(panel, [{"type": "text", "text": "A crimson figure 8."},
+                       {"type": "usage", "cost": 0.05},
+                       {"type": "done", "ok": True, "error": None, "project": None, "cost": 0.05,
+                        "model": "claude-haiku-5-5"}], tmp_path, prompt="a figure 8")
+    assert panel.history[-1] == {"user": "a figure 8", "claude": "A crimson figure 8.", "design": None}
+    assert panel.session_spent > 0 and "＋ New session" == panel.new_button.text()
+    panel.new_button.click()
+    assert panel.history == [] and panel.session_spent == 0
+    assert [e["kind"] for e in panel.entries] == ["note"]
+    assert "New session: Claude starts with no earlier messages." in panel.transcript.toPlainText()
+    # /clear and /new in the box do the same, as in Claude Code.
+    run_events(panel, [{"type": "text", "text": "Hi."}, {"type": "done", "ok": True, "error": None,
+                        "project": None, "cost": 0.0, "model": "claude-haiku-5-5"}], tmp_path, prompt="hello")
+    for command in ("/clear", "/new"):
+        panel.history.append({"user": "x", "claude": "y", "design": None})
+        panel.prompt_edit.setText(command)
+        panel.send()
+        assert panel.history == [] and panel.prompt_edit.text() == ""
+
+
+@pytest.mark.parametrize("fake_api", [FAKE_TALK], indirect=True)
+def test_claude_remembers_the_session_until_a_new_one(window, fake_api, monkeypatch, tmp_path):
+    import claude_settings
+    from PyQt5.QtWidgets import QApplication
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    claude_settings.save(api_key="sk-ant-test-key", model="claude-haiku-5-5", web=False)
+    panel = window.claude_panel
+    panel.set_mode("auto")
+    panel.use_canvas_check.setChecked(False)
+    panel.new_session()
+
+    def ask(text):
+        panel.prompt_edit.setText(text)
+        panel.send()
+        assert not panel.new_button.isEnabled()  # not while Claude works
+        deadline = time.time() + 120
+        while panel.running() and time.time() < deadline:
+            QApplication.processEvents()
+            time.sleep(0.05)
+        QApplication.processEvents()
+        return fake_api[-1]["body"]["messages"][0]["content"][-1]["text"]
+    first = ask("make a paracord figure 8 knot with open ends")
+    assert first == "make a paracord figure 8 knot with open ends"  # nothing earlier yet
+    second = ask("now add a tab for each step")
+    assert second.startswith("Earlier in this conversation")
+    assert "make a paracord figure 8 knot with open ends" in second and "A crimson figure 8 with open ends." in second
+    assert second.endswith("Now the person asks:\nnow add a tab for each step")
+    panel.new_button.click()
+    third = ask("a heart")
+    assert third == "a heart"  # a new session: from nothing
+    panel.use_canvas_check.setChecked(True)

@@ -417,12 +417,16 @@ class Agent:
             self.on_event({'type': 'search_result', 'name': kind.replace('_tool_result', ''),
                            'ok': error is None, 'error': error, 'results': found})
 
-    def run(self, prompt, images=(), start=None):
+    def run(self, prompt, images=(), start=None, history=None):
         """Build what prompt asks for. Returns the 'done' event.
 
         start is a project dict to begin from, such as what is on the
         person's canvas; the agent can describe, change or replace it.
+        history is the session so far ([{'user', 'claude', 'design'}], oldest
+        first), so the person can refer back to it; a new session sends none.
         """
+        if history:
+            prompt = with_history(prompt, history)
         if start is not None:
             self.workspace.store(start)
             prompt = ('The design on my canvas right now is already loaded as the current design '
@@ -532,6 +536,21 @@ class Agent:
             event['project'] = event['png'] = None
         self.on_event(event)
         return event
+
+
+HISTORY_TURNS = 8
+
+
+def with_history(prompt, history):
+    """The request with the session's earlier turns before it, kept short."""
+    lines = ['Earlier in this conversation, oldest first (the person may refer to it):']
+    for turn in history[-HISTORY_TURNS:]:
+        lines.append(f"- The person asked: {str(turn.get('user', ''))[:600]}")
+        if turn.get('claude'):
+            lines.append(f"  You answered: {str(turn['claude'])[:900]}")
+        if turn.get('design'):
+            lines.append(f"  The design: {turn['design']}")
+    return '\n'.join(lines) + '\n\nNow the person asks:\n' + prompt
 
 
 def print_events(event, as_json=False):

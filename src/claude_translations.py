@@ -949,3 +949,21 @@ _BRIDGE = {
 }
 for _language, _strings in _BRIDGE.items():
     CLAUDE_TRANSLATIONS[_language].update(_strings)
+
+# A new session: Claude starts again from nothing.
+_NEW_SESSION = {
+    'en': {'claude_new_session': 'New session', 'claude_new_session_note': 'New session: Claude starts with no earlier messages.'},
+    'fr': {'claude_new_session': 'Nouvelle session', 'claude_new_session_note': 'Nouvelle session : Claude repart sans les messages précédents.'},
+    'de': {'claude_new_session': 'Neue Sitzung', 'claude_new_session_note': 'Neue Sitzung: Claude beginnt ohne frühere Nachrichten.'},
+    'it': {'claude_new_session': 'Nuova sessione', 'claude_new_session_note': 'Nuova sessione: Claude riparte senza i messaggi precedenti.'},
+    'es': {'claude_new_session': 'Nueva sesión', 'claude_new_session_note': 'Nueva sesión: Claude empieza sin los mensajes anteriores.'},
+    'pt': {'claude_new_session': 'Nova sessão', 'claude_new_session_note': 'Nova sessão: o Claude começa sem as mensagens anteriores.'},
+    'he': {'claude_new_session': 'סשן חדש', 'claude_new_session_note': 'סשן חדש: Claude מתחיל בלי ההודעות הקודמות.'},
+    'ru': {'claude_new_session': 'Новый сеанс', 'claude_new_session_note': 'Новый сеанс: Claude начинает без прежних сообщений.'},
+    'fi': {'claude_new_session': 'Uusi istunto', 'claude_new_session_note': 'Uusi istunto: Claude aloittaa ilman aiempia viestejä.'},
+    'sv': {'claude_new_session': 'Ny session', 'claude_new_session_note': 'Ny session: Claude börjar utan tidigare meddelanden.'},
+    'ja': {'claude_new_session': '新しいセッション', 'claude_new_session_note': '新しいセッション：Claude はこれまでのメッセージなしで始めます。'},
+    'zh': {'claude_new_session': '新会话', 'claude_new_session_note': '新会话：Claude 将不带之前的消息重新开始。'},
+}
+for _language, _strings in _NEW_SESSION.items():
+    CLAUDE_TRANSLATIONS[_language].update(_strings)

@@ -197,7 +197,8 @@ def cmd_agent(args):
                          on_event=lambda e: agent.print_events(e, args.json_events),
                          quiet=lambda: quiet(not args.verbose))
     try:
-        result = runner.run(args.prompt, images=args.image or [], start=start)
+        history = json.loads(Path(args.history).read_text(encoding='utf-8')) if args.history else None
+        result = runner.run(args.prompt, images=args.image or [], start=start, history=history)
     except anthropic.AuthenticationError:
         raise ValueError('the Anthropic API key was refused: check it in Settings > Claude') from None
     except anthropic.APIConnectionError:
@@ -275,6 +276,7 @@ def build_parser():
     agent_cmd.add_argument('--no-web', action='store_true', help='do not let Claude search or read the web')
     agent_cmd.add_argument('--effort', default='high', choices=['low', 'medium', 'high', 'xhigh', 'max'],
                            help='how hard Claude thinks (default high; higher costs more)')
+    agent_cmd.add_argument('--history', help="the session so far, a JSON list of {user, claude, design}")
     agent_cmd.add_argument('--app', action='store_true',
                            help="started by OpenStrand Studio: its tabs become tools, answered on stdin")
     agent_cmd.add_argument('--plan', action='store_true',

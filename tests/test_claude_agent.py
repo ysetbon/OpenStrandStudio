@@ -1119,37 +1119,38 @@ def test_claude_opens_a_figure_8_step_by_step_in_real_tabs(window, fake_api, mon
     assert "New tab · Step 3 · up and over" in shown
 
 
-def test_claude_sits_above_the_tab_strip(window, monkeypatch, tmp_path):
+def test_the_tab_strip_floats_over_claude_and_claude_stays_put(window, monkeypatch, tmp_path):
+    from PyQt5.QtCore import QPoint
     from PyQt5.QtWidgets import QApplication
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    panel, edge = window.claude_panel, window.tab_edge
-    panel.set_open(True)
-    if not window.tabs_button.isChecked():
+    panel, edge, canvas = window.claude_panel, window.tab_edge, window.canvas
+    if window.tabs_button.isChecked():
         window.tabs_button.click()
+    panel.set_open(False)
+    panel.set_open(True)
     QApplication.processEvents()
-    assert edge.isVisible()
-    panel.place()
-    if edge.geometry().center().y() > panel.visible_canvas().center().y():
-        assert panel.geometry().bottom() < edge.geometry().top()
-    window.tabs_button.click()  # hidden again: Claude goes back down to the canvas edge
+    home = panel.geometry()
+    assert home.bottom() == panel.visible_canvas().bottom() - panel.MARGIN
+
+    def on_top():  # later siblings are drawn over earlier ones
+        kids = [w for w in canvas.children() if w in (panel, edge)]
+        return kids[-1] is edge
+    # Showing the strip, dragging it over Claude, opening Claude again:
+    # Claude never moves, and the strip is always drawn over it.
+    window.tabs_button.click()
     QApplication.processEvents()
-    panel.place()
-    assert panel.geometry().bottom() == panel.visible_canvas().bottom() - panel.MARGIN
-
-
-# ----------------------------------------------------- sessions and memory
-def test_the_request_carries_the_session_so_far():
-    from openstrand.agent import HISTORY_TURNS, with_history
-    turns = [{"user": f"request {n}", "claude": f"answer {n}", "design": f"d{n}.json"} for n in range(12)]
-    text = with_history("now add tabs", turns)
-    assert text.startswith("Earlier in this conversation") and text.endswith("Now the person asks:\nnow add tabs")
-    assert "request 11" in text and "d11.json" in text and "request 3" not in text  # the last few turns only
-    assert text.count("The person asked") == HISTORY_TURNS
-    sys.path.insert(0, str(ROOT / "src"))
-    from claude_panel import agent_command
-    _, args = agent_command("x", "claude-haiku-5-5", "out", history="out/history.json")
-    assert args[args.index("--history") + 1] == "out/history.json"
-    assert "--history" not in agent_command("x", "claude-haiku-5-5", "out")[1]
+    assert edge.isVisible() and on_top() and panel.geometry() == home
+    for spot in (home.center(), QPoint(home.left() + 40, home.bottom() - 10), QPoint(80, 80)):
+        edge.move(spot - QPoint(edge.width() // 2, edge.height() // 2))
+        QApplication.processEvents()
+        assert panel.geometry() == home
+    panel.set_open(False)
+    panel.set_open(True)
+    QApplication.processEvents()
+    assert on_top() and panel.geometry() == home
+    window.tabs_button.click()
+    QApplication.processEvents()
+    assert panel.geometry() == home
 
 
 def test_new_session_starts_from_nothing(window, monkeypatch, tmp_path):

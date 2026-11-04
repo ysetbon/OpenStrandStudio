@@ -467,7 +467,7 @@ class ClaudePanel(QWidget):
         self.setVisible(opened)
         if opened:
             self.place()
-            self.raise_()
+            self.stack()
             self.prompt_edit.setFocus()
         if claude_settings.load()['panel_open'] != opened:
             claude_settings.save(panel_open=opened)
@@ -486,15 +486,9 @@ class ClaudePanel(QWidget):
         height = layout.totalHeightForWidth(width) if layout.hasHeightForWidth() else -1
         if height < 0:
             height = layout.totalSizeHint().height()
+        # Always the bottom of the canvas: Claude never moves for the tab strip,
+        # which floats over it (see stack).
         bottom = area.bottom() + 1 - m
-        edge = getattr(self.main_window, 'tab_edge', None)
-        if edge is not None and edge.isVisible():
-            # The tab strip floats over the canvas too: when it is in the lower
-            # half, in Claude's way, Claude sits just above it.
-            g = edge.geometry()
-            if (g.center().y() > area.center().y() and g.top() < bottom
-                    and g.right() > area.left() + m and g.left() < area.left() + m + width):
-                bottom = g.top() - 6
         height = min(height, max(80, bottom - area.top() - m))
         self.setGeometry(area.left() + m, bottom - height, width, height)
 
@@ -513,11 +507,7 @@ class ClaudePanel(QWidget):
         return area if area.width() > 0 and area.height() > 0 else canvas.rect()
 
     def watch_layout(self):
-        """Follow the canvas and the widgets around it as they resize, and the
-        tab strip as it shows, hides or is dragged."""
-        edge = getattr(self.main_window, 'tab_edge', None)
-        if edge is not None:
-            edge.installEventFilter(self)
+        """Follow the canvas and the widgets around it as they resize."""
         widget = self.parentWidget()
         while widget is not None:
             widget.installEventFilter(self)
@@ -526,11 +516,17 @@ class ClaudePanel(QWidget):
             widget = widget.parentWidget()
 
     def eventFilter(self, obj, event):
-        if self.isVisible() and (event.type() == QEvent.Resize or (
-                obj is getattr(self.main_window, 'tab_edge', None)
-                and event.type() in (QEvent.Move, QEvent.Show, QEvent.Hide))):
+        if event.type() == QEvent.Resize and self.isVisible():
             self.place()
         return False
+
+    def stack(self):
+        """Above the canvas's other overlays, but under the tab strip: the
+        strip floats over Claude and can be dragged anywhere, Claude stays put."""
+        self.raise_()
+        edge = getattr(self.main_window, 'tab_edge', None)
+        if edge is not None and edge.isVisible():
+            edge.raise_()
 
     def showEvent(self, event):
         super().showEvent(event)

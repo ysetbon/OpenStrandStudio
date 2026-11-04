@@ -11,17 +11,18 @@ the agent as its starting design.
 """
 import html
 import json
+import math
 import os
 import re
 import shutil
 import sys
 import time
 
-from PyQt5.QtCore import (QDate, QEvent, QLocale, QPoint, QProcess, QProcessEnvironment, QRect, QRectF,
-                          Qt, QTimer, pyqtSignal)
-from PyQt5.QtGui import QColor, QPainter, QPen, QPixmap
-from PyQt5.QtWidgets import (QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QHBoxLayout, QLabel,
-                             QLineEdit, QPushButton, QSizePolicy, QTextBrowser, QTextEdit, QVBoxLayout,
+from PyQt5.QtCore import (QDate, QEvent, QLocale, QPoint, QPointF, QProcess, QProcessEnvironment, QRect,
+                          QRectF, Qt, QTimer, QUrl, pyqtSignal)
+from PyQt5.QtGui import QColor, QDesktopServices, QPainter, QPainterPath, QPen, QPixmap
+from PyQt5.QtWidgets import (QAction, QActionGroup, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog,
+                             QHBoxLayout, QLabel, QLineEdit, QMenu, QPushButton, QToolButton, QSizePolicy, QTextBrowser, QTextEdit, QVBoxLayout,
                              QWidget)
 
 import claude_settings
@@ -49,11 +50,16 @@ def _tr(language, key):
     return table.get(key) or translations['en'].get(key, key)
 
 
-def agent_command(prompt, model, out_dir, images=(), start=None, web=True, max_cost=None):
+def agent_command(prompt, model, out_dir, images=(), start=None, web=True, max_cost=None, effort=None,
+                  plan=False):
     """The program and arguments that run one agent request."""
     args = ['-m', 'openstrand', 'agent', prompt, '--model', model, '--out-dir', out_dir, '--json-events']
     if not web:
         args.append('--no-web')
+    if effort:
+        args += ['--effort', effort]
+    if plan:
+        args.append('--plan')
     if max_cost is not None:
         args += ['--max-cost', f'{max_cost:.2f}']
     for image in images:
@@ -68,6 +74,12 @@ def money(value):
     return f'${value:.2f}' if value >= 1 else f'${value:.3f}'
 
 
+def short_url(url):
+    """'animatedknots.com/butterfly-stitch' from a full link."""
+    url = re.sub(r'^https?://(www\.)?', '', url or '')
+    return url if len(url) <= 48 else url[:47] + '…'
+
+
 def design_name(prompt):
     """A file name from the request: '5x3 bracelet in teal' -> '5x3_bracelet_in_teal'."""
     words = re.findall(r'[\w×]+', prompt.lower(), re.UNICODE)[:6]
@@ -78,6 +90,7 @@ class PromptBox(QTextEdit):
     """The chat box: Enter sends, Shift+Enter starts a new line, and the box
     grows with what is typed up to MAX_LINES, then scrolls."""
     submitted = pyqtSignal()
+    cycle_mode = pyqtSignal()  # Shift+Tab, as in Claude Code
     MAX_LINES = 8
 
     def __init__(self, parent=None):
@@ -102,6 +115,13 @@ class PromptBox(QTextEdit):
     def setText(self, text):
         self.setPlainText(text)
         self.moveCursor(self.textCursor().End)
+
+    def event(self, event):
+        # Shift+Tab switches the mode; caught before Qt moves the focus with it.
+        if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Backtab:
+            self.cycle_mode.emit()
+            return True
+        return super().event(event)
 
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key_Return, Qt.Key_Enter):
@@ -134,6 +154,94 @@ class PromptBox(QTextEdit):
         self.ensureCursorVisible()
 
 
+class WorkingLine(QWidget):
+    """Claude at work, the OpenStrand way: a small trefoil cord turns while a
+    bright stretch runs along it, as if it were being pulled through; then
+    what Claude is doing and the seconds so far."""
+
+    SIZE = 20  # px of the knot
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedHeight(24)
+        self.label = ''
+        self.started = time.monotonic()
+        self.phase = 0.0
+        self.text_color = QColor('#FFFFFF')
+        self.muted = QColor('#9A9A9A')
+        # The trefoil: x = sin t + 2 sin 2t, y = cos t - 2 cos 2t, fitted to SIZE.
+        n = 150
+        self.points = []
+        for i in range(n):
+            t = 2 * math.pi * i / n
+            x, y = math.sin(t) + 2 * math.sin(2 * t), math.cos(t) - 2 * math.cos(2 * t)
+            self.points.append(QPointF(x, y))
+        self.timer = QTimer(self)
+        self.timer.setInterval(40)
+        self.timer.timeout.connect(self.tick)
+        self.hide()
+
+    def start(self, label):
+        self.label, self.started = label, time.monotonic()
+        self.show()
+        self.timer.start()
+
+    def set_label(self, label):
+        self.label = label
+        self.update()
+
+    def stop(self):
+        self.timer.stop()
+        self.hide()
+
+    def tick(self):
+        self.phase = (self.phase + 0.012) % 1.0
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        box = self.SIZE
+        painter.save()
+        painter.translate(2 + box / 2, self.height() / 2)
+        painter.rotate(self.phase * 120)  # a slow turn
+        painter.scale(box / 6.4, box / 6.4)
+        orange = QColor('#D97757')
+        dim = QColor(orange)
+        dim.setAlpha(110)
+        path = QPainterPath(self.points[0])
+        for p in self.points[1:]:
+            path.lineTo(p)
+        path.closeSubpath()
+        pen = QPen(dim, 0.55)
+        pen.setCapStyle(Qt.RoundCap)
+        pen.setJoinStyle(Qt.RoundJoin)
+        painter.setPen(pen)
+        painter.drawPath(path)
+        # The bright stretch running along the cord.
+        n = len(self.points)
+        head = int(self.phase * 3 * n) % n
+        run = QPainterPath(self.points[(head - 50) % n])
+        for k in range(-49, 1):
+            run.lineTo(self.points[(head + k) % n])
+        pen = QPen(orange, 0.85)
+        pen.setCapStyle(Qt.RoundCap)
+        pen.setJoinStyle(Qt.RoundJoin)
+        painter.setPen(pen)
+        painter.drawPath(run)
+        painter.restore()
+        seconds = int(time.monotonic() - self.started)
+        x = box + 12
+        painter.setPen(self.text_color)
+        metrics = painter.fontMetrics()
+        label = metrics.elidedText(self.label, Qt.ElideRight, max(40, self.width() - x - 60))
+        painter.drawText(QRectF(x, 0, self.width() - x, self.height()), Qt.AlignVCenter, label)
+        painter.setPen(self.muted)
+        painter.drawText(QRectF(x + metrics.horizontalAdvance(label) + 10, 0, 60, self.height()),
+                         Qt.AlignVCenter, f'{seconds}s')
+        painter.end()
+
+
 class ClaudePanel(QWidget):
     """Claude, floating over the bottom of the canvas: the conversation, the
     chat box and its buttons. The Claude button next to Settings shows and
@@ -160,6 +268,12 @@ class ClaudePanel(QWidget):
         self.done_event = None
         self.stdout_buffer = b''
         self.stderr_text = ''
+        self.entries = []  # the conversation: drawn as HTML each time it changes
+        self.session_spent = 0.0  # since the app opened; held to the session limit
+        self.mode = claude_settings.load()['mode']  # 'ask', 'auto', or 'plan' (never saved)
+        self.last_mode = self.mode
+        self.run_mode = self.mode
+        self.run_texts = []
         self._build()
         saved = claude_settings.load()
         self.setVisible(saved['show_button'] and saved['panel_open'])
@@ -176,11 +290,14 @@ class ClaudePanel(QWidget):
         body.setSpacing(6)
         # The conversation shows above the box once there is one.
         self.transcript = QTextBrowser(self)
-        self.transcript.setOpenExternalLinks(True)
+        self.transcript.setOpenLinks(False)  # its links fold steps, open designs, build plans
+        self.transcript.anchorClicked.connect(self.follow_link)
         self.transcript.setMinimumHeight(60)
-        self.transcript.setMaximumHeight(150)
+        self.transcript.setMaximumHeight(170)
         self.transcript.hide()
         body.addWidget(self.transcript)
+        self.working = WorkingLine(self)
+        body.addWidget(self.working)
 
         self.image_row = QWidget(self)
         image_row = QHBoxLayout(self.image_row)
@@ -195,6 +312,7 @@ class ClaudePanel(QWidget):
 
         self.prompt_edit = PromptBox(self)
         self.prompt_edit.submitted.connect(self.send)
+        self.prompt_edit.cycle_mode.connect(self.cycle_mode)
         self.attach_button = QPushButton(self)
         self.attach_button.clicked.connect(self.choose_image)
         self.use_canvas_check = QCheckBox(self)
@@ -216,19 +334,53 @@ class ClaudePanel(QWidget):
         row.addWidget(self.send_button)
         body.addLayout(row)
 
+        # The status line, as in Claude Code: the mode on the left (Shift+Tab
+        # switches it), then the model, the effort and the session's spending.
+        status = QHBoxLayout()
+        status.setSpacing(10)
+        self.mode_button = QToolButton(self)
+        self.mode_button.setObjectName('claudeMode')
+        self.mode_button.clicked.connect(self.cycle_mode)
+        self.model_button = QToolButton(self)
+        self.model_button.setObjectName('claudePick')
+        self.model_button.setPopupMode(QToolButton.InstantPopup)
+        self.model_menu = QMenu(self.model_button)
+        self.model_button.setMenu(self.model_menu)
+        self.effort_button = QToolButton(self)
+        self.effort_button.setObjectName('claudePick')
+        self.effort_button.setPopupMode(QToolButton.InstantPopup)
+        self.effort_menu = QMenu(self.effort_button)
+        self.effort_button.setMenu(self.effort_menu)
+        self.session_label = QLabel(self)
+        self.session_label.setObjectName('claudeSession')
+        status.addWidget(self.mode_button)
+        status.addStretch()
+        status.addWidget(self.model_button)
+        status.addWidget(self.effort_button)
+        status.addWidget(self.session_label)
+        body.addLayout(status)
+
     # Its own colors for each app theme: as a child of the canvas it would
     # otherwise take the canvas background (white in every theme).
     THEMES = {
         'dark': dict(bg='#2C2C2C', fg='#FFFFFF', border='#5A5A5A', button='#3A3A3A', hover='#474747',
-                     log='#262626', log_border='#3F3F3F'),
+                     log='#262626', log_border='#3F3F3F', muted='#9A9A9A', user_bg='#393937',
+                     user_fg='#F5F4EF', ok='#4FC06F', bad='#E05A4B', auto='#B39DF0', plan='#3CC2B0'),
         'light': dict(bg='#FFFFFF', fg='#000000', border='#B8B8B8', button='#ECECEC', hover='#DCDCDC',
-                      log='#FAFAFA', log_border='#D0D0D0'),
+                      log='#FAFAFA', log_border='#D0D0D0', muted='#6F6F6F', user_bg='#ECE9E2',
+                      user_fg='#1F1E1D', ok='#2F9E4F', bad='#C0392B', auto='#7457D6', plan='#16897A'),
         'default': dict(bg='#ECECEC', fg='#000000', border='#A8A8A8', button='#E0E0E0', hover='#D2D2D2',
-                        log='#FFFFFF', log_border='#C8C8C8'),
+                        log='#FFFFFF', log_border='#C8C8C8', muted='#6F6F6F', user_bg='#E2DED6',
+                        user_fg='#1F1E1D', ok='#2F9E4F', bad='#C0392B', auto='#7457D6', plan='#16897A'),
     }
 
     def apply_theme(self, theme_name):
         c = self.THEMES.get(str(theme_name).lower(), self.THEMES['default'])
+        self.colors = c
+        if hasattr(self, 'working'):
+            self.working.text_color, self.working.muted = QColor(c['fg']), QColor(c['muted'])
+            self.render_transcript()
+            self.refresh_controls()
         self.setStyleSheet(f"""
             QWidget#claudePanel {{ background-color: {c['bg']}; border: 1px solid {c['border']}; border-radius: 10px; }}
             #claudePanel QWidget {{ background-color: {c['bg']}; color: {c['fg']}; }}
@@ -238,6 +390,11 @@ class ClaudePanel(QWidget):
             #claudePanel QPushButton:hover {{ background-color: {c['hover']}; }}
             #claudePanel QTextBrowser {{ background-color: {c['log']}; color: {c['fg']};
                                          border: 1px solid {c['log_border']}; border-radius: 6px; }}
+            #claudePanel QToolButton {{ background-color: transparent; border: none; padding: 1px 2px;
+                                        color: {c['muted']}; font-size: 12px; }}
+            #claudePanel QToolButton:hover {{ color: {c['fg']}; }}
+            #claudePanel QToolButton::menu-indicator {{ image: none; width: 0px; }}
+            #claudePanel QLabel#claudeSession {{ color: {c['muted']}; font-size: 12px; }}
         """)
 
     def is_open(self):
@@ -325,6 +482,8 @@ class ClaudePanel(QWidget):
         self.send_button.setText(t('claude_stop') if self.running() else t('claude_send'))
         self.setLayoutDirection(Qt.RightToLeft if language_code == 'he' else Qt.LeftToRight)
         self.set_image(self.image_path)
+        self.refresh_controls()
+        self.render_transcript()
 
     def set_image(self, path):
         self.image_path = path
@@ -339,29 +498,236 @@ class ClaudePanel(QWidget):
             self.set_image(path)
 
     # ---------------------------------------------------------- transcript
-    def add_html(self, fragment):
-        self.transcript.show()
-        self.transcript.append(fragment)
-        bar = self.transcript.verticalScrollBar()
-        bar.setValue(bar.maximum())
+    # The conversation is a list of entries, drawn as HTML each time it
+    # changes, so step groups fold and open like Claude Code's: while Claude
+    # works its steps show in a box under a live line; once it has answered
+    # they fold into one line ("6 steps · 50s ›") that opens again on a click.
+    def add_entry(self, entry):
+        self.entries.append(entry)
+        self.render_transcript()
 
     def add_user(self, text):
-        self.add_html(f'<p style="margin:6px 0;"><span style="background:#393937; color:#f5f4ef;">'
-                      f'&nbsp;{html.escape(text)}&nbsp;</span></p>')
+        self.close_group()
+        self.add_entry({'kind': 'user', 'text': text})
 
     def add_claude(self, text):
-        self.add_html(f'<p style="margin:4px 0;"><b style="color:#d97757;">✳</b> {html.escape(text)}</p>')
+        self.close_group()
+        self.add_entry({'kind': 'claude', 'text': text})
 
-    def add_note(self, text, color='gray'):
-        self.add_html(f'<p style="margin:4px 0; color:{color};">{html.escape(text)}</p>')
+    def add_note(self, text, color=None):
+        self.add_entry({'kind': 'note', 'text': text, 'color': color})
 
-    def add_tool(self, name, ok, summary):
-        key, bg, fg = TOOL_CHIPS.get(name, (None, *OTHER_CHIP))
-        label = _tr(self.language, key) if key else name
-        mark = '<span style="color:#2f9e4f;">✓</span>' if ok else '<span style="color:#c0392b;">✗</span>'
-        self.add_html(f'<p style="margin:2px 0 2px 16px;">{mark} '
-                      f'<span style="background:{bg}; color:{fg}; font-weight:bold;">&nbsp;{html.escape(label)}&nbsp;</span> '
-                      f'{html.escape(summary)}</p>')
+    def add_html(self, fragment):  # older callers
+        self.add_entry({'kind': 'html', 'html': fragment})
+
+    def open_group(self):
+        last = self.entries[-1] if self.entries else None
+        if last and last['kind'] == 'group' and last['end'] is None:
+            return last
+        group = {'kind': 'group', 'steps': [], 'start': time.monotonic(), 'end': None, 'open': True,
+                 'toggled': False}
+        self.entries.append(group)
+        return group
+
+    def add_step(self, step):
+        self.open_group()['steps'].append(step)
+        self.render_transcript()
+
+    def close_group(self):
+        last = self.entries[-1] if self.entries else None
+        if last and last['kind'] == 'group' and last['end'] is None:
+            last['end'] = time.monotonic()
+            for step in last['steps']:
+                step['running'] = False
+            if not last['toggled']:
+                last['open'] = False  # folded once Claude has answered
+            self.render_transcript()
+
+    def render_transcript(self):
+        if not hasattr(self, 'transcript'):
+            return
+        bar = self.transcript.verticalScrollBar()
+        at_end = bar.value() >= bar.maximum() - 4
+        keep = bar.value()
+        c = self.colors
+        body = ''.join(self.entry_html(i, e, c) for i, e in enumerate(self.entries))
+        self.transcript.setHtml(f'<div style="color:{c["fg"]};">{body}</div>')
+        self.transcript.setVisible(bool(self.entries))
+        bar.setValue(bar.maximum() if at_end else keep)
+
+    def entry_html(self, i, e, c):
+        t = lambda key: _tr(self.language, key)
+        esc = html.escape
+        kind = e['kind']
+        if kind == 'user':
+            return (f'<p style="margin:6px 0 4px 0;"><span style="background-color:{c["user_bg"]};'
+                    f' color:{c["user_fg"]};">&nbsp;{esc(e["text"])}&nbsp;</span></p>')
+        if kind == 'claude':
+            return (f'<p style="margin:5px 0;"><span style="color:#D97757; font-size:9px;">●</span>&nbsp; '
+                    f'{esc(e["text"])}</p>')
+        if kind == 'note':
+            return f'<p style="margin:4px 0; color:{e.get("color") or c["muted"]};">{esc(e["text"])}</p>'
+        if kind == 'html':
+            return e['html']
+        if kind == 'design':
+            picture = ''
+            if e.get('png') and os.path.exists(e['png']):
+                picture = (f'<td valign="middle"><img src="{QUrl.fromLocalFile(e["png"]).toString()}"'
+                           f' width="96"></td>')
+            action = (f'<span style="color:{c["muted"]};">{esc(t("claude_opened_short"))}</span>' if e['opened']
+                      else f'<a href="os:open/{i}" style="color:#D97757; font-weight:bold;'
+                           f' text-decoration:none;">{esc(t("claude_open_design"))} ›</a>')
+            return (f'<table cellspacing="0" cellpadding="6" style="margin:4px 0 4px 18px;'
+                    f' border:1px solid {c["log_border"]};"><tr>{picture}<td valign="middle">'
+                    f'{esc(t("claude_design_ready").format(name=e["name"]))}<br>{action}</td></tr></table>')
+        if kind == 'plan':
+            if e['built']:
+                return f'<p style="margin:4px 0 4px 18px; color:{c["muted"]};">{esc(t("claude_plan_built"))}</p>'
+            return (f'<p style="margin:6px 0 6px 18px;"><a href="os:plan/{i}" style="color:{c["plan"]};'
+                    f' font-weight:bold; text-decoration:none;">▶ {esc(t("claude_build_plan"))}</a></p>')
+        # A group of steps.
+        steps = e['steps']
+        if e['end'] is None:
+            current = self.step_label(steps[-1], running=True) if steps else t('claude_working')
+            head = f'<span style="color:#D97757; font-size:9px;">●</span>&nbsp; {esc(current)}'
+        else:
+            seconds = max(1, int(round(e['end'] - e['start'])))
+            head = esc(t('claude_steps').format(count=len(steps), seconds=seconds))
+        arrow = '⌄' if e['open'] else '›'
+        out = (f'<p style="margin:5px 0 2px 0;"><a href="os:group/{i}" style="color:{c["muted"]};'
+               f' text-decoration:none;">{head}&nbsp; {arrow}</a></p>')
+        if e['open'] and steps:
+            rows = ''.join(f'<tr><td style="border-bottom:1px solid {c["log_border"]};">'
+                           f'{self.step_html(i, j, s, c)}</td></tr>' for j, s in enumerate(steps))
+            out += (f'<table width="100%" cellspacing="0" cellpadding="5" style="margin:0 0 4px 18px;'
+                    f' border:1px solid {c["log_border"]}; border-collapse:collapse;">{rows}</table>')
+        return out
+
+    def step_label(self, step, running=False):
+        t = lambda key: _tr(self.language, key)
+        kind = step['kind']
+        if kind == 'thinking':
+            return t('claude_thinking') + ('…' if running else '')
+        if kind == 'search':
+            return t('claude_searching' if running else 'claude_step_searched').format(query=step['text'])
+        if kind == 'fetch':
+            return t('claude_reading' if running else 'claude_step_read').format(url=short_url(step['text']))
+        name = step['name']
+        if step.get('running') and name in SLOW_TOOLS:
+            return t('claude_drawing')
+        key = TOOL_CHIPS.get(name, (None,))[0]
+        return (t(key) if key else name) + (f': {step["summary"]}' if step.get('summary') else '…')
+
+    def step_html(self, i, j, step, c):
+        t = lambda key: _tr(self.language, key)
+        esc = html.escape
+        kind = step['kind']
+        if kind == 'thinking':
+            arrow = '⌄' if step['open'] else '›'
+            out = (f'<a href="os:think/{i}/{j}" style="color:{c["muted"]}; text-decoration:none;">'
+                   f'<i>{esc(t("claude_step_thought"))}</i>&nbsp; {arrow}</a>')
+            if step['open']:
+                out += f'<br><i style="color:{c["muted"]};">{esc(step["text"])}</i>'
+            return out
+        if kind in ('search', 'fetch'):
+            return f'<span style="color:{c["muted"]};">{esc(self.step_label(step))}</span>'
+        key, bg, fg = TOOL_CHIPS.get(step['name'], (None, *OTHER_CHIP))
+        label = t(key) if key else step['name']
+        if step.get('running'):
+            mark = f'<span style="color:#D97757;">●</span>'
+        elif step.get('ok'):
+            mark = f'<span style="color:{c["ok"]};">✓</span>'
+        else:
+            mark = f'<span style="color:{c["bad"]};">✗</span>'
+        detail = step.get('summary') or ('…' if step.get('running') else '')
+        return (f'{mark}&nbsp; <span style="background-color:{bg}; color:{fg}; font-weight:bold;">'
+                f'&nbsp;{esc(label)}&nbsp;</span>&nbsp; <span style="color:{c["muted"]};">{esc(detail)}</span>')
+
+    def follow_link(self, url):
+        link = url.toString()
+        if not link.startswith('os:'):
+            QDesktopServices.openUrl(url)
+            return
+        what, *ids = link[3:].split('/')
+        try:
+            ids = [int(n) for n in ids]
+            entry = self.entries[ids[0]]
+        except (ValueError, IndexError):
+            return
+        if what == 'group':
+            entry['open'], entry['toggled'] = not entry['open'], True
+        elif what == 'think':
+            step = entry['steps'][ids[1]]
+            step['open'] = not step['open']
+        elif what == 'open' and not entry['opened']:
+            entry['opened'] = True
+            self.design_ready.emit(entry['path'])
+        elif what == 'plan' and not entry['built'] and not self.running():
+            self.build_plan(entry)
+            return
+        self.render_transcript()
+
+    # -------------------------------------------------------- status line
+    MODE_LOOK = {'ask': ('⏵', 'muted', 'claude_mode_ask'), 'auto': ('⏵⏵', 'auto', 'claude_mode_auto'),
+                 'plan': ('⏸', 'plan', 'claude_mode_plan')}
+
+    def cycle_mode(self):
+        """Shift+Tab, as in Claude Code: ask before opening, open automatically, plan."""
+        order = ('ask', 'auto', 'plan')
+        self.set_mode(order[(order.index(self.mode) + 1) % len(order)])
+
+    def set_mode(self, mode):
+        self.mode = mode
+        if mode != 'plan':
+            self.last_mode = mode
+            claude_settings.save(mode=mode)  # plan mode is never kept
+        self.refresh_controls()
+
+    def refresh_controls(self):
+        """The status line from the saved settings: mode, model, effort, session."""
+        if not hasattr(self, 'mode_button'):
+            return
+        t = lambda key: _tr(self.language, key)
+        c = self.colors
+        saved = claude_settings.load()
+        glyph, color, key = self.MODE_LOOK[self.mode]
+        self.mode_button.setText(f'{glyph} {t(key)}  ·  {t("claude_mode_cycle")}')
+        self.mode_button.setStyleSheet(f'QToolButton {{ color: {c[color]}; }}')
+        names = dict(claude_settings.MODELS)
+        self.model_menu.clear()
+        group = QActionGroup(self.model_menu)
+        for model, label_key in claude_settings.MODELS:
+            action = QAction(t(label_key), self.model_menu, checkable=True)
+            action.setChecked(model == saved['model'])
+            action.triggered.connect(lambda _=False, m=model: self.choose(model=m))
+            group.addAction(action)
+            self.model_menu.addAction(action)
+        self.model_button.setText(('Sonnet 5.5' if 'sonnet' in saved['model'] else 'Haiku 5.5') + ' ▾')
+        self.effort_menu.clear()
+        group = QActionGroup(self.effort_menu)
+        for effort in claude_settings.EFFORTS:
+            action = QAction(t(f'claude_effort_{effort}'), self.effort_menu, checkable=True)
+            action.setChecked(effort == saved['effort'])
+            action.triggered.connect(lambda _=False, e=effort: self.choose(effort=e))
+            group.addAction(action)
+            self.effort_menu.addAction(action)
+        self.effort_button.setText(t(f'claude_effort_{saved["effort"]}') + ' ▾')
+        self.show_session()
+
+    def choose(self, **change):
+        claude_settings.save(**change)
+        self.refresh_controls()
+
+    def session_left(self):
+        return claude_settings.load()['session_limit'] - self.session_spent
+
+    def show_session(self):
+        limit = claude_settings.load()['session_limit']
+        spent = self.session_spent + self.run_cost
+        self.session_label.setText(_tr(self.language, 'claude_session').format(spent=money(spent),
+                                                                                  limit=money(limit)))
+        near = spent >= 0.8 * limit
+        self.session_label.setStyleSheet(f'color: {self.colors["bad"] if near else self.colors["muted"]};')
 
     # ------------------------------------------------------------- running
     def running(self):
@@ -374,8 +740,16 @@ class ClaudePanel(QWidget):
         else:
             self.send()
 
-    def send(self):
-        prompt = self.prompt_edit.text().strip()
+    def build_plan(self, entry):
+        """Build the plan Claude wrote in plan mode, in the mode used before it."""
+        entry['built'] = True
+        self.set_mode(self.last_mode)
+        prompt = (entry['prompt'] + '\n\nBuild it now, following this plan, which I approved:\n' + entry['plan'])
+        self.send(prompt=prompt, shown=_tr(self.language, 'claude_build_plan'))
+
+    def send(self, prompt=None, shown=None):
+        typed = prompt is None
+        prompt = (self.prompt_edit.text() if typed else prompt).strip()
         if not prompt or self.running():
             return
         self.set_open(True)
@@ -386,6 +760,11 @@ class ClaudePanel(QWidget):
         if not settings['api_key']:
             self.add_note(_tr(self.language, 'claude_need_key'), '#c0392b')
             return
+        left = settings['session_limit'] - self.session_spent
+        if left < 0.05:
+            self.add_note(_tr(self.language, 'claude_session_reached').format(
+                limit=money(settings['session_limit'])), self.colors['bad'])
+            return
         self.prompt = prompt
         stamp = time.strftime('%Y%m%d-%H%M%S')
         self.out_dir = os.path.join(claude_settings.settings_directory(), 'claude_designs', stamp)
@@ -393,9 +772,11 @@ class ClaudePanel(QWidget):
         start = None
         if self.use_canvas_check.isChecked():
             start = self.write_canvas(os.path.join(self.out_dir, 'canvas.json'))
+        # One request may spend its own limit, but never past what the session has left.
         program, args = agent_command(prompt, settings['model'], self.out_dir,
                                       [self.image_path] if self.image_path else [], start,
-                                      web=settings['web'], max_cost=settings['max_cost'])
+                                      web=settings['web'], max_cost=min(settings['max_cost'], left),
+                                      effort=settings['effort'], plan=self.mode == 'plan')
         env = QProcessEnvironment.systemEnvironment()
         env.insert('ANTHROPIC_API_KEY', settings['api_key'])
         env.insert('QT_QPA_PLATFORM', 'offscreen')
@@ -412,10 +793,13 @@ class ClaudePanel(QWidget):
         # What this request has cost so far; the total keeps counting from
         # everything earlier requests cost, saved in claude.json.
         self.run_cost, self.total_before = 0.0, claude_settings.load()['spent']
-        self.add_user(prompt + (f'  [{os.path.basename(self.image_path)}]' if self.image_path else ''))
-        self.prompt_edit.clear()
+        self.run_mode, self.run_texts = self.mode, []
+        self.add_user((shown or prompt) + (f'  [{os.path.basename(self.image_path)}]' if self.image_path else ''))
+        if typed:
+            self.prompt_edit.clear()
         self.set_image(None)
         self.status_label.setText(_tr(self.language, 'claude_working'))
+        self.working.start(_tr(self.language, 'claude_thinking') + '…')
         self.activity_changed.emit()
         self.send_button.setText(_tr(self.language, 'claude_stop'))
         self.process.start(program, args)
@@ -430,14 +814,17 @@ class ClaudePanel(QWidget):
         if self.run_cost:
             claude_settings.add_spending(self.run_cost)
             self.total_before += self.run_cost
+            self.session_spent += self.run_cost
             self.run_cost = 0.0
             self.spending_changed.emit()
+        self.show_session()
 
     def failed_to_start(self, error):
         if error != QProcess.FailedToStart:
             return  # a crash or kill still ends in finished()
         self.send_button.setText(_tr(self.language, 'claude_send'))
         self.status_label.setText('')
+        self.working.stop()
         self.add_note(_tr(self.language, 'claude_failed').format(error=self.process.errorString()), '#c0392b')
         self.activity_changed.emit()
 
@@ -473,26 +860,43 @@ class ClaudePanel(QWidget):
 
     def handle_event(self, event):
         kind = event.get('type')
+        t = lambda key: _tr(self.language, key)
         if kind == 'text':
-            self.add_claude(event.get('text', ''))
+            text = event.get('text', '')
+            self.run_texts.append(text)
+            self.add_claude(text)
+            self.working.set_label(t('claude_working'))
         elif kind == 'thinking':
             text = event.get('text', '')
-            text = text if len(text) <= 600 else text[:600].rsplit(' ', 1)[0] + '…'
-            self.add_html(f'<p style="margin:2px 0 2px 16px; color:gray;"><i>'
-                          f"{html.escape(_tr(self.language, 'claude_thinking'))}: {html.escape(text)}</i></p>")
+            text = text if len(text) <= 2000 else text[:2000].rsplit(' ', 1)[0] + '…'
+            self.add_step({'kind': 'thinking', 'text': text, 'open': False})
+            self.working.set_label(t('claude_thinking') + '…')
         elif kind == 'search':
-            key = 'claude_reading' if event.get('name') == 'web_fetch' else 'claude_searching'
-            value = event.get('query', '')
-            self.add_note(_tr(self.language, key).format(query=value, url=value))
+            fetch = event.get('name') == 'web_fetch'
+            step = {'kind': 'fetch' if fetch else 'search', 'text': event.get('query', '')}
+            self.add_step(step)
+            self.working.set_label(self.step_label(step, running=True))
         elif kind == 'note':
             self.add_note(event.get('text', ''))
-        elif kind == 'tool_start' and event.get('name') in SLOW_TOOLS:
-            self.add_note(_tr(self.language, 'claude_drawing'))
+        elif kind == 'tool_start':
+            step = {'kind': 'tool', 'name': event.get('name', ''), 'running': True, 'ok': None, 'summary': ''}
+            self.add_step(step)
+            self.working.set_label(self.step_label(step, running=True))
         elif kind == 'tool_end':
-            self.add_tool(event.get('name', ''), event.get('ok', False), event.get('summary', ''))
+            name = event.get('name', '')
+            group = self.open_group()
+            step = next((s for s in reversed(group['steps'])
+                         if s['kind'] == 'tool' and s['name'] == name and s.get('running')), None)
+            if step is None:
+                step = {'kind': 'tool', 'name': name}
+                group['steps'].append(step)
+            step.update(running=False, ok=bool(event.get('ok')), summary=event.get('summary', ''))
+            self.render_transcript()
+            self.working.set_label(t('claude_working'))
         elif kind == 'usage':
             self.run_cost = max(self.run_cost, float(event.get('cost') or 0))
-            self.status_label.setText(f"{_tr(self.language, 'claude_working')} · {self.cost_line()}")
+            self.status_label.setText(self.cost_line())
+            self.show_session()
         elif kind == 'done':
             self.done_event = event
 
@@ -505,6 +909,8 @@ class ClaudePanel(QWidget):
     def _finish(self):
         self.read_events(flush=True)
         self.read_errors()
+        self.working.stop()
+        self.close_group()
         self.send_button.setText(_tr(self.language, 'claude_send'))
         event = self.done_event
         if event is not None:
@@ -517,17 +923,30 @@ class ClaudePanel(QWidget):
             self.status_label.setText(line if spent else '')
             self.add_note(_tr(self.language, 'claude_failed').format(error=message.removeprefix('error: ')), '#c0392b')
             return
-        model = 'Sonnet 5.5' if 'sonnet' in event.get('model', '') else 'Haiku 5.5'
-        self.status_label.setText(f"{model} · {line}")
+        self.status_label.setText(line)  # the model is on the status line below
         if event.get('error'):
             self.add_note(_tr(self.language, 'claude_failed').format(error=event['error']), '#c0392b')
+        if event.get('plan') or self.run_mode == 'plan':
+            if self.run_texts and not event.get('error'):
+                self.add_entry({'kind': 'plan', 'prompt': self.prompt, 'plan': '\n\n'.join(self.run_texts),
+                                'built': False})
+            return
         project = event.get('project')
         if project and os.path.exists(project):
             named = os.path.join(self.out_dir, design_name(self.prompt) + '.json')
             shutil.copyfile(project, named)
-            self.add_note(_tr(self.language, 'claude_opened').format(name=os.path.basename(named)))
+            png = event.get('png')
+            picture = None
+            if png and os.path.exists(png):
+                picture = named[:-5] + '.png'
+                shutil.copyfile(png, picture)
             self.design_waiting = not self.is_open()
-            self.design_ready.emit(named)
+            if self.run_mode == 'ask':  # wait for "Open in new tab"
+                self.add_entry({'kind': 'design', 'path': named, 'png': picture, 'opened': False,
+                                'name': os.path.basename(named)})
+            else:
+                self.add_note(_tr(self.language, 'claude_opened').format(name=os.path.basename(named)))
+                self.design_ready.emit(named)
 
 
 class ClaudeButton(QPushButton):
@@ -646,6 +1065,7 @@ class ClaudeSettingsPage(QWidget):
     model, web search, the spending limit and what Claude has cost."""
 
     show_button_changed = pyqtSignal(bool)  # the main window shows or hides the Claude button
+    settings_changed = pyqtSignal()  # model, effort or limits: the Claude status line follows
 
     def __init__(self, language_code='en', parent=None):
         super().__init__(parent)
@@ -695,6 +1115,16 @@ class ClaudeSettingsPage(QWidget):
         self.model_combo.currentIndexChanged.connect(self.save_model)
         layout.addWidget(self.model_combo)
 
+        self.effort_label = QLabel(self)
+        layout.addWidget(self.effort_label)
+        self.effort_combo = QComboBox(self)
+        self.effort_combo.currentIndexChanged.connect(self.save_effort)
+        layout.addWidget(self.effort_combo)
+        self.effort_hint = QLabel(self)
+        self.effort_hint.setWordWrap(True)
+        self.effort_hint.setStyleSheet('color: gray;')
+        layout.addWidget(self.effort_hint)
+
         self.web_check = QCheckBox(self)
         self.web_check.toggled.connect(lambda on: claude_settings.save(web=on))
         layout.addWidget(self.web_check)
@@ -710,11 +1140,24 @@ class ClaudeSettingsPage(QWidget):
         self.limit_spin.setDecimals(2)
         self.limit_spin.setSingleStep(0.50)
         self.limit_spin.setPrefix('$')
-        self.limit_spin.valueChanged.connect(lambda value: claude_settings.save(max_cost=value))
+        self.limit_spin.valueChanged.connect(lambda value: self.changed_setting(max_cost=value))
         limit_row.addWidget(self.limit_label)
         limit_row.addWidget(self.limit_spin)
         limit_row.addStretch()
         layout.addLayout(limit_row)
+
+        session_row = QHBoxLayout()
+        self.session_limit_label = QLabel(self)
+        self.session_spin = QDoubleSpinBox(self)
+        self.session_spin.setRange(*claude_settings.SESSION_LIMIT_RANGE)
+        self.session_spin.setDecimals(2)
+        self.session_spin.setSingleStep(1.00)
+        self.session_spin.setPrefix('$')
+        self.session_spin.valueChanged.connect(lambda value: self.changed_setting(session_limit=value))
+        session_row.addWidget(self.session_limit_label)
+        session_row.addWidget(self.session_spin)
+        session_row.addStretch()
+        layout.addLayout(session_row)
 
         # What Claude has cost in all on this computer, kept across requests.
         spent_row = QHBoxLayout()
@@ -756,6 +1199,9 @@ class ClaudeSettingsPage(QWidget):
             self.model_combo.addItem(t(key), model)
         self.model_combo.setCurrentIndex(max(0, self.model_combo.findData(saved['model'])))
         self.model_combo.blockSignals(False)
+        self.effort_label.setText(t('claude_effort_label'))
+        self.effort_hint.setText(t('claude_effort_hint'))
+        self.session_limit_label.setText(t('claude_session_limit_label'))
         self.web_check.setText(t('claude_web_label'))
         self.web_hint.setText(t('claude_web_hint'))
         self.limit_label.setText(t('claude_limit_label'))
@@ -765,6 +1211,7 @@ class ClaudeSettingsPage(QWidget):
         self.limit_spin.blockSignals(True)
         self.limit_spin.setValue(saved['max_cost'])
         self.limit_spin.blockSignals(False)
+        self.show_choices()
         self.show_saved(saved['api_key'])
         self.show_check.setText(t('claude_show_button'))
         self.show_hint.setText(t('claude_show_button_hint'))
@@ -779,6 +1226,24 @@ class ClaudeSettingsPage(QWidget):
     def showEvent(self, event):
         super().showEvent(event)
         self.show_spending()  # requests may have run since the page was built
+        self.show_choices()  # the status line may have changed the model or effort
+
+    def show_choices(self):
+        """Model, effort and the session limit as saved."""
+        t = lambda key: _tr(self.language, key)
+        saved = claude_settings.load()
+        for combo in (self.model_combo, self.effort_combo):
+            combo.blockSignals(True)
+        self.model_combo.setCurrentIndex(max(0, self.model_combo.findData(saved['model'])))
+        self.effort_combo.clear()
+        for effort in claude_settings.EFFORTS:
+            self.effort_combo.addItem(t(f'claude_effort_{effort}'), effort)
+        self.effort_combo.setCurrentIndex(max(0, self.effort_combo.findData(saved['effort'])))
+        for combo in (self.model_combo, self.effort_combo):
+            combo.blockSignals(False)
+        self.session_spin.blockSignals(True)
+        self.session_spin.setValue(saved['session_limit'])
+        self.session_spin.blockSignals(False)
 
     def show_spending(self):
         saved = claude_settings.load()
@@ -822,7 +1287,16 @@ class ClaudeSettingsPage(QWidget):
         self.show_saved('')
         self.key_status.setText(_tr(self.language, 'claude_key_removed'))
 
+    def changed_setting(self, **change):
+        claude_settings.save(**change)
+        self.settings_changed.emit()
+
+    def save_effort(self, index):
+        effort = self.effort_combo.itemData(index)
+        if effort:
+            self.changed_setting(effort=effort)
+
     def save_model(self, index):
         model = self.model_combo.itemData(index)
         if model:
-            claude_settings.save(model=model)
+            self.changed_setting(model=model)

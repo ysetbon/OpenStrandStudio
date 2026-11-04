@@ -78,6 +78,19 @@ published, or a heart, about a minute. Call it once and wait.
 
 """
 
+# Plan mode: research and plan, build nothing. Only tools that look are offered.
+PLAN_TOOLS = ('search_samples', 'describe')
+PLAN_INSTRUCTIONS = """Plan mode is on: the person wants a plan before anything is built. The
+tools that build are not available, so do not try to build. Research as much as
+you need (samples, the web, the current design), then answer with a short plan
+in plain words, as a numbered list: what the design is and how it is built in
+the real world; the cords and how each runs; where they cross and which goes
+over; the colors; and how you will build it (which sample or make_ tool, or
+draw_design and the curve for each cord). End with any question the person
+should answer before you build. No markdown headings or bold.
+
+"""
+
 TOOLS = [
     {
         'name': 'search_samples',
@@ -298,7 +311,7 @@ class Agent:
     """Runs one request: the loop of Claude calls and tool calls."""
 
     def __init__(self, client, out_dir, model=DEFAULT_MODEL, on_event=None, max_rounds=24, max_cost=2.00,
-                 quiet=None, web=True, effort='high'):
+                 quiet=None, web=True, effort='high', plan=False):
         if model not in PRICES:
             raise ValueError(f"model must be one of {', '.join(PRICES)}")
         if effort not in EFFORTS:
@@ -310,6 +323,7 @@ class Agent:
         self.model = model
         self.web = web
         self.effort = effort
+        self.plan = plan  # plan mode: research and plan, build nothing
         self.workspace = Workspace(out_dir)
         self.on_event = on_event or (lambda event: None)
         self.max_rounds = max_rounds
@@ -320,12 +334,14 @@ class Agent:
                       'cache_creation_input_tokens': 0, 'cache_read_input_tokens': 0}
 
     def system(self):
-        text = (INSTRUCTIONS + 'The guide:\n\n' + GUIDE.read_text(encoding='utf-8')
+        text = (INSTRUCTIONS + (PLAN_INSTRUCTIONS if self.plan else '')
+                + 'The guide:\n\n' + GUIDE.read_text(encoding='utf-8')
                 + '\n\n' + DRAWING.read_text(encoding='utf-8'))
         return [{'type': 'text', 'text': text, 'cache_control': {'type': 'ephemeral'}}]
 
     def tools(self):
-        return TOOLS + (WEB_TOOLS[self.model] if self.web else [])
+        tools = [t for t in TOOLS if t['name'] in PLAN_TOOLS] if self.plan else TOOLS
+        return tools + (WEB_TOOLS[self.model] if self.web else [])
 
     def call(self, messages):
         params = dict(model=self.model, max_tokens=20000, system=self.system(), tools=self.tools(),
@@ -437,7 +453,10 @@ class Agent:
                  'text': said[-1] if said else '',
                  'project': str(ws.project_path) if ws.data is not None else None,
                  'png': str(ws.png_path) if ws.rendered_version == ws.version and ws.data is not None else None,
-                 'cost': round(self.cost, 4), 'model': self.model, 'searches': self.searches, **self.usage}
+                 'cost': round(self.cost, 4), 'model': self.model, 'searches': self.searches,
+                 'plan': self.plan, **self.usage}
+        if self.plan:  # a plan builds nothing, whatever is in the workspace
+            event['project'] = event['png'] = None
         self.on_event(event)
         return event
 

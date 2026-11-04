@@ -3614,6 +3614,8 @@ class SettingsDialog(QDialog):
         # Its switch shows or hides the Claude button in the main window.
         if hasattr(self.parent_window, 'set_claude_available'):
             self.claude_settings_page.show_button_changed.connect(self.parent_window.set_claude_available)
+        if hasattr(self.parent_window, 'claude_panel'):
+            self.claude_settings_page.settings_changed.connect(self.parent_window.claude_panel.refresh_controls)
 
         # About Page (index 5) - LAST
         self.about_widget = QWidget()

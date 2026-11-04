@@ -188,7 +188,8 @@ def cmd_agent(args):
     if not args.max_cost > 0:
         raise ValueError('--max-cost must be more than 0')
     runner = agent.Agent(client, out_dir, model=model, max_cost=args.max_cost, web=not args.no_web,
-                         effort=args.effort, on_event=lambda e: agent.print_events(e, args.json_events),
+                         effort=args.effort, plan=args.plan,
+                         on_event=lambda e: agent.print_events(e, args.json_events),
                          quiet=lambda: quiet(not args.verbose))
     try:
         result = runner.run(args.prompt, images=args.image or [], start=start)
@@ -269,6 +270,8 @@ def build_parser():
     agent_cmd.add_argument('--no-web', action='store_true', help='do not let Claude search or read the web')
     agent_cmd.add_argument('--effort', default='high', choices=['low', 'medium', 'high', 'xhigh', 'max'],
                            help='how hard Claude thinks (default high; higher costs more)')
+    agent_cmd.add_argument('--plan', action='store_true',
+                           help='plan mode: research and write a plan, build nothing')
     agent_cmd.add_argument('--json-events', action='store_true', help='print one JSON event per line (for the app)')
 
     render = command('render', "draw a project to PNG with the app's real canvas", cmd_render)

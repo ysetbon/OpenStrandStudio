@@ -18,6 +18,12 @@ MODELS = [
 DEFAULT_MODEL = MODELS[0][0]
 DEFAULT_MAX_COST = 2.00     # USD one request may spend before it stops
 MAX_COST_RANGE = (0.10, 20.00)
+DEFAULT_SESSION_LIMIT = 10.00  # USD all requests may spend before the app is restarted
+SESSION_LIMIT_RANGE = (0.50, 500.00)
+EFFORTS = ('low', 'medium', 'high', 'xhigh', 'max')  # how long Claude may think
+DEFAULT_EFFORT = 'high'
+MODES = ('ask', 'auto')  # ask before opening a design, or open it at once (plan mode is never kept)
+DEFAULT_MODE = 'auto'
 FILE_NAME = 'claude.json'
 
 
@@ -37,11 +43,17 @@ def settings_path():
 
 
 def _cost(value):
+    return _range(value, MAX_COST_RANGE, DEFAULT_MAX_COST)
+
+
+def _range(value, limits, default):
     try:
         value = float(value)
     except (TypeError, ValueError):
-        return DEFAULT_MAX_COST
-    return min(max(value, MAX_COST_RANGE[0]), MAX_COST_RANGE[1])
+        return default
+    if value != value:  # NaN
+        return default
+    return min(max(value, limits[0]), limits[1])
 
 
 def _money(value):
@@ -75,10 +87,15 @@ def load():
             'web': data.get('web', True) is not False,
             'max_cost': _cost(data.get('max_cost', DEFAULT_MAX_COST)),
             'spent': _money(data.get('spent')), 'spent_since': str(data.get('spent_since') or ''),
-            'panel_open': data.get('panel_open') is True, 'show_button': data.get('show_button', True) is not False}
+            'panel_open': data.get('panel_open') is True, 'show_button': data.get('show_button', True) is not False,
+            'effort': data.get('effort') if data.get('effort') in EFFORTS else DEFAULT_EFFORT,
+            'session_limit': _range(data.get('session_limit', DEFAULT_SESSION_LIMIT), SESSION_LIMIT_RANGE,
+                                    DEFAULT_SESSION_LIMIT),
+            'mode': data.get('mode') if data.get('mode') in MODES else DEFAULT_MODE}
 
 
-def save(api_key=None, model=None, web=None, max_cost=None, panel_open=None, show_button=None):
+def save(api_key=None, model=None, web=None, max_cost=None, panel_open=None, show_button=None,
+         effort=None, session_limit=None, mode=None):
     """Update the saved settings given. An empty key removes the key."""
     current = load()
     if api_key is not None:
@@ -95,6 +112,14 @@ def save(api_key=None, model=None, web=None, max_cost=None, panel_open=None, sho
         current['panel_open'] = bool(panel_open)
     if show_button is not None:
         current['show_button'] = bool(show_button)
+    if effort is not None:
+        if effort not in EFFORTS:
+            raise ValueError(f'unknown effort {effort}')
+        current['effort'] = effort
+    if session_limit is not None:
+        current['session_limit'] = _range(session_limit, SESSION_LIMIT_RANGE, DEFAULT_SESSION_LIMIT)
+    if mode is not None and mode in MODES:
+        current['mode'] = mode
     return _write(current)
 
 
@@ -121,7 +146,8 @@ def _write(current):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     payload = {'model': current['model'], 'web': current['web'], 'max_cost': current['max_cost'],
                'spent': current['spent'], 'spent_since': current['spent_since'],
-               'panel_open': current['panel_open'], 'show_button': current['show_button']}
+               'panel_open': current['panel_open'], 'show_button': current['show_button'],
+               'effort': current['effort'], 'session_limit': current['session_limit'], 'mode': current['mode']}
     if current['api_key']:
         payload['api_key'] = current['api_key']
     # Create the file readable by its owner only before writing the key.

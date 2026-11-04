@@ -5,6 +5,7 @@ harness sends, how it runs the tools, and that a finished design loads into
 the real main window (canvas, layer panel, groups) through the Load path.
 """
 import json
+import re
 import os
 import stat
 import subprocess
@@ -251,11 +252,13 @@ def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch
     import claude_settings
     monkeypatch.setenv("APPDATA", str(tmp_path))
     assert claude_settings.load() == {"api_key": "", "model": "claude-sonnet-5-5", "web": True, "max_cost": 2.0,
-                                      "spent": 0.0, "spent_since": "", "panel_open": False, "show_button": True}
+                                      "spent": 0.0, "spent_since": "", "panel_open": False, "show_button": True,
+                                      "effort": "high", "session_limit": 10.0, "mode": "auto"}
     claude_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5", web=False, max_cost=5)
     assert claude_settings.load() == {"api_key": "sk-ant-test-1234567890", "model": "claude-haiku-5-5",
                                       "web": False, "max_cost": 5.0, "spent": 0.0, "spent_since": "",
-                                      "panel_open": False, "show_button": True}
+                                      "panel_open": False, "show_button": True,
+                                      "effort": "high", "session_limit": 10.0, "mode": "auto"}
     claude_settings.save(max_cost=1000)
     assert claude_settings.load()["max_cost"] == claude_settings.MAX_COST_RANGE[1]
     if os.name == "posix":
@@ -300,6 +303,29 @@ def window(tmp_path_factory):
         os.environ.pop("APPDATA", None)
     else:
         os.environ["APPDATA"] = old_appdata
+
+
+def unfolded(panel):
+    """The transcript's text with every step group and thought opened."""
+    for entry in panel.entries:
+        if entry["kind"] == "group":
+            entry["open"] = True
+            for step in entry["steps"]:
+                if step["kind"] == "thinking":
+                    step["open"] = True
+    panel.render_transcript()
+    return panel.transcript.toPlainText()
+
+
+def run_events(panel, events, tmp_path, prompt="two linked rings"):
+    """Feed a finished run through the panel as the agent process would."""
+    panel.out_dir, panel.prompt = str(tmp_path), prompt
+    panel.run_cost, panel.total_before, panel.run_texts = 0.0, 0.0, []
+    panel.run_mode = panel.mode
+    panel.done_event = None
+    for event in events:
+        panel.handle_event(event)
+    panel.finished()
 
 
 def test_a_claude_design_opens_in_a_new_tab_with_layers_and_groups(window, tmp_path):
@@ -453,9 +479,9 @@ def test_the_panel_turns_events_into_a_transcript_and_opens_the_result(window, t
         panel.handle_event(event)
     panel.finished()
     assert opened and opened[-1].endswith("two_linked_rings_in_teal.json")
-    shown = panel.transcript.toPlainText()
+    shown = unfolded(panel)
     assert "Two linked rings." in shown and "hopf_link" in shown
-    assert "Sonnet 5.5" in panel.status_label.text()
+    assert panel.status_label.text().startswith("this request $0.012")
 
 
 def test_the_panel_asks_for_a_key_before_sending(window, monkeypatch, tmp_path):
@@ -497,7 +523,7 @@ def test_the_panel_total_keeps_counting_and_settings_show_it(window, monkeypatch
     panel.handle_event({"type": "done", "ok": True, "error": None, "project": None, "cost": 0.06,
                         "model": "claude-haiku-5-5"})
     panel.finished()
-    assert panel.status_label.text() == "Haiku 5.5 · this request $0.060 · total $1.26"
+    assert panel.status_label.text() == "this request $0.060 · total $1.26"
     assert claude_settings.load()["spent"] == pytest.approx(1.26)
 
     # A second request is stopped part way: what it spent still counts, once.
@@ -645,10 +671,10 @@ def test_the_panel_runs_the_agent_in_the_background_and_opens_its_design(window,
     vertical = [s for s in window.canvas.strands if s.layer_name.split("_")[0] in {"4", "5", "6", "7", "8"}
                 and type(s).__name__ != "MaskedStrand"]
     assert vertical and all(s.color.name() == "#257d98" for s in vertical)
-    shown = panel.transcript.toPlainText()
-    assert "teal vertical ribbons" in shown and "Sonnet 5.5" in panel.status_label.text()
+    shown = unfolded(panel)
+    assert "teal vertical ribbons" in shown
     # The search and the thinking show in the panel, and both went back to the API unchanged.
-    assert "Searching the web: 5x3 bracelet weave" in shown and "A bracelet weave is an MxN stitch." in shown
+    assert "Searched the web: 5x3 bracelet weave" in shown and "A bracelet weave is an MxN stitch." in shown
     echoed = [b["type"] for b in fake_api[1]["body"]["messages"][1]["content"]]
     assert echoed[:3] == ["thinking", "server_tool_use", "web_search_tool_result"]
     # The search is priced in: 3 replies of tokens plus one $0.01 search.
@@ -678,8 +704,8 @@ def test_a_drawing_by_claude_opens_with_its_groups_in_the_layer_panel(window, fa
     assert body["model"] == "claude-haiku-5-5" and not [t for t in body["tools"] if "web" in t.get("name", "")]
     assert len(window.canvas.strands) == len(project.read(opened[-1])["strands"])
     assert {"Left ring", "Right ring"} <= set(window.group_layer_manager.get_group_data())
-    shown = panel.transcript.toPlainText()
-    assert "Drawing" in shown and "Two linked rings" in shown
+    shown = unfolded(panel)
+    assert "New Strand" in shown and "Two linked rings" in shown
 
 
 @pytest.mark.parametrize("package, expected", [
@@ -695,3 +721,158 @@ def test_cli_agent_says_how_to_install_the_anthropic_package(tmp_path, package, 
                             capture_output=True, text=True, timeout=120)
     assert result.returncode == 1
     assert expected in result.stderr and "-m pip install" in result.stderr and "anthropic>=2.4" in result.stderr
+
+
+# --------------------------------------------- Claude Code-style controls
+def test_agent_command_carries_effort_and_plan():
+    import sys as _sys
+    _sys.path.insert(0, str(ROOT / "src"))
+    from claude_panel import agent_command
+    _, args = agent_command("a heart", "claude-haiku-5-5", "out", effort="max", plan=True, max_cost=1.5)
+    assert args[args.index("--effort") + 1] == "max" and "--plan" in args
+    assert args[args.index("--max-cost") + 1] == "1.50"
+    _, args = agent_command("a heart", "claude-haiku-5-5", "out")
+    assert "--plan" not in args and "--effort" not in args
+
+
+def test_plan_mode_offers_only_tools_that_look():
+    from types import SimpleNamespace
+    from openstrand import agent
+    runner = agent.Agent(SimpleNamespace(), ROOT / "designs", plan=True, web=True)
+    names = [t["name"] for t in runner.tools()]
+    assert set(names) == {"search_samples", "describe", "web_search", "web_fetch"}
+    assert "Plan mode is on" in runner.system()[0]["text"]
+    builder = agent.Agent(SimpleNamespace(), ROOT / "designs")
+    assert "draw_design" in [t["name"] for t in builder.tools()]
+    assert "Plan mode is on" not in builder.system()[0]["text"]
+
+
+def test_the_status_line_switches_mode_model_and_effort(window, monkeypatch, tmp_path):
+    import claude_settings
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtTest import QTest
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel = window.claude_panel
+    panel.set_open(True)
+    panel.set_mode("ask")
+    assert "ask before opening designs" in panel.mode_button.text()
+    # Shift+Tab in the box cycles ask -> open automatically -> plan, like Claude Code.
+    panel.prompt_edit.setFocus()
+    QTest.keyClick(panel.prompt_edit, Qt.Key_Backtab, Qt.ShiftModifier)
+    assert panel.mode == "auto" and claude_settings.load()["mode"] == "auto"
+    assert panel.prompt_edit.hasFocus()  # Shift+Tab switched the mode, not the focus
+    panel.mode_button.click()
+    assert panel.mode == "plan" and "plan mode" in panel.mode_button.text()
+    assert claude_settings.load()["mode"] == "auto"  # plan mode is never kept
+    panel.cycle_mode()
+    assert panel.mode == "ask"
+    panel.set_mode("auto")
+    # The model and effort menus save the choice and the status line shows it.
+    haiku = [a for a in panel.model_menu.actions() if "Haiku" in a.text()][0]
+    haiku.trigger()
+    assert claude_settings.load()["model"] == "claude-haiku-5-5" and panel.model_button.text().startswith("Haiku 5.5")
+    top = [a for a in panel.effort_menu.actions() if a.text() == "Max effort"][0]
+    top.trigger()
+    assert claude_settings.load()["effort"] == "max" and panel.effort_button.text().startswith("Max effort")
+    assert re.fullmatch(r"session \$\d+\.\d+ of \$10\.00", panel.session_label.text())
+
+
+def test_steps_fold_into_one_line_once_claude_answers(window, monkeypatch, tmp_path):
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel = window.claude_panel
+    panel.set_mode("auto")
+    panel.entries.clear()
+    panel.handle_event({"type": "thinking", "text": "Two rings that link like a chain."})
+    panel.handle_event({"type": "search", "name": "web_search", "query": "hopf link"})
+    panel.handle_event({"type": "tool_start", "name": "draw_design"})
+    group = panel.entries[-1]
+    assert group["kind"] == "group" and group["open"] and group["steps"][-1]["running"]
+    panel.handle_event({"type": "tool_end", "name": "draw_design", "ok": True, "summary": "2 cords, 2 crossings"})
+    assert [s["kind"] for s in group["steps"]] == ["thinking", "search", "tool"] and group["steps"][-1]["ok"]
+    panel.handle_event({"type": "text", "text": "Two linked rings."})
+    assert not group["open"] and group["end"] is not None  # folded: "3 steps · 1s ›"
+    shown = panel.transcript.toPlainText()
+    assert "3 steps" in shown and "hopf link" not in shown and "Two linked rings." in shown
+    # A click opens the group, and another click opens the thought.
+    from PyQt5.QtCore import QUrl
+    index = panel.entries.index(group)
+    panel.follow_link(QUrl(f"os:group/{index}"))
+    shown = panel.transcript.toPlainText()
+    assert "Searched the web: hopf link" in shown and "2 cords, 2 crossings" in shown
+    assert "Two rings that link" not in shown
+    panel.follow_link(QUrl(f"os:think/{index}/0"))
+    assert "Two rings that link like a chain." in panel.transcript.toPlainText()
+
+
+def test_the_working_line_turns_while_claude_works(window):
+    line = window.claude_panel.working
+    line.start("Thinking…")
+    assert line.isVisibleTo(window.claude_panel) and line.timer.isActive()
+    before = line.phase
+    line.tick()
+    assert line.phase != before and line.grab().width() > 0
+    line.stop()
+    assert not line.timer.isActive() and not line.isVisibleTo(window.claude_panel)
+
+
+def test_ask_mode_waits_for_open_in_new_tab(window, monkeypatch, tmp_path):
+    from PyQt5.QtCore import QUrl
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel = window.claude_panel
+    panel.set_mode("ask")
+    opened = []
+    panel.design_ready.connect(opened.append)
+    design = tmp_path / "design.json"
+    design.write_text((ROOT / "knot_samples/links/json/hopf_link.json").read_text(), encoding="utf-8")
+    run_events(panel, [{"type": "text", "text": "Two linked rings."},
+                       {"type": "done", "ok": True, "error": None, "project": str(design), "cost": 0.01,
+                        "model": "claude-sonnet-5-5"}], tmp_path)
+    card = panel.entries[-1]
+    assert card["kind"] == "design" and not opened
+    assert "Design ready: two_linked_rings.json" in panel.transcript.toPlainText()
+    panel.follow_link(QUrl(f"os:open/{panel.entries.index(card)}"))
+    assert opened and opened[-1].endswith("two_linked_rings.json") and card["opened"]
+    panel.set_mode("auto")
+
+
+def test_plan_mode_ends_with_build_this_plan(window, monkeypatch, tmp_path):
+    from PyQt5.QtCore import QUrl
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel = window.claude_panel
+    panel.set_mode("ask")
+    panel.set_mode("plan")
+    run_events(panel, [{"type": "text", "text": "1. Two circles of 180 px, linked. 2. Teal and gold."},
+                       {"type": "done", "ok": True, "error": None, "project": None, "cost": 0.02,
+                        "model": "claude-sonnet-5-5", "plan": True}], tmp_path)
+    card = panel.entries[-1]
+    assert card["kind"] == "plan" and "Build this plan" in panel.transcript.toPlainText()
+    sent = []
+    monkeypatch.setattr(panel, "send", lambda prompt=None, shown=None: sent.append((prompt, shown)))
+    panel.follow_link(QUrl(f"os:plan/{panel.entries.index(card)}"))
+    prompt, shown = sent[-1]
+    assert prompt.startswith("two linked rings") and "Two circles of 180 px" in prompt
+    assert shown == "Build this plan" and card["built"]
+    assert panel.mode == "ask"  # back to the mode used before planning
+    panel.set_mode("auto")
+
+
+def test_the_session_limit_stops_new_requests(window, monkeypatch, tmp_path):
+    import claude_settings
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    claude_settings.save(api_key="sk-ant-test-key", session_limit=1.0)
+    panel = window.claude_panel
+    started = []
+    monkeypatch.setattr("claude_panel.QProcess.start", lambda self, program, args: started.append(args))
+    panel.session_spent = 0.75
+    panel.prompt_edit.setText("a heart")
+    panel.send()
+    args = started[-1]
+    assert args[args.index("--max-cost") + 1] == "0.25"  # never past what the session has left
+    panel.process = None
+    panel.working.stop()
+    panel.session_spent = 1.0
+    panel.prompt_edit.setText("another heart")
+    panel.send()
+    assert len(started) == 1
+    assert "This session has spent its $1.00 limit" in panel.transcript.toPlainText()
+    panel.session_spent = 0.0

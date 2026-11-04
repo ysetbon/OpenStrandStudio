@@ -26,6 +26,7 @@ MAX_POINTS = 400
 MAX_LENGTH = 30000          # px of centerline over all cords, so a fit stays in minutes
 BOUNDS = (-1000, 4000)      # every coordinate stays in this range
 WIDTH_RANGE = (8, 60)
+FLAT_ANGLE = 8              # crossings flatter than this are cords lying on each other
 DEFAULT_WIDTH = 24
 SPACING = 4.0               # px between centerline samples (the samples use 2; 4 fits about 4x faster)
 
@@ -268,10 +269,14 @@ def build(spec):
         if not isinstance(cord, dict):
             raise DrawError(f'cord {k + 1} must be an object')
         poly, closed = centerline(cord, k)
-        lengths += sum(math.dist(a, b) for a, b in zip(poly, poly[1:]))
+        length = sum(math.dist(a, b) for a, b in zip(poly, poly[1:]))
+        lengths += length
         width = _number(cord.get('width', DEFAULT_WIDTH), f'cord {k + 1} width')
         if not WIDTH_RANGE[0] <= width <= WIDTH_RANGE[1]:
             raise DrawError(f'cord {k + 1}: width must be between {WIDTH_RANGE[0]} and {WIDTH_RANGE[1]}')
+        if length < 3 * width:
+            raise DrawError(f'cord {k + 1} is only {length:.0f} px long; make it at least three times its '
+                            f'width ({3 * width:.0f} px) so it reads as a cord')
         color = colors.parse(str(cord.get('color', 'teal')))
         second = colors.parse(str(cord['second_color'])) if cord.get('second_color') else None
         group = str(cord.get('label') or f'Cord {k + 1}')[:40]
@@ -285,6 +290,13 @@ def build(spec):
     dense = scene.dense_crossings()
     crossed = {c for h in dense for c in h['cords']}
     shallow = _shallow_crossings(scene, dense)
+    flat = [c for c in shallow if c[1] < FLAT_ANGLE]
+    if flat:
+        (x, y), angle, a, b = flat[0]
+        who = f'cord {a + 1} runs along itself' if a == b else f'cords {a + 1} and {b + 1} run along each other'
+        raise DrawError(f'{who} near ({x:.0f}, {y:.0f}), meeting at {angle:.0f} degrees: one cord is lying on '
+                        'top of another. Keep cords apart, or let them cross at 40 degrees or more '
+                        '(a closed curve that goes round twice does this: draw it once).')
     for k, cord in enumerate(scene.cords):
         if cord['closed'] and k not in crossed:
             raise DrawError(f"cord {k + 1} ({cord['group']}) is closed but crosses nothing: its two ends "

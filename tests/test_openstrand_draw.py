@@ -80,6 +80,16 @@ def test_bad_cords_say_what_to_change(cord, message):
         draw.centerline(cord, 0)
 
 
+@pytest.mark.parametrize("cords, message", [
+    ([{"x": "600", "y": "400", "t1": "2*pi"}], "only 0 px long"),
+    ([{"points": [[600, 400], [603, 401]]}], "at least three times"),
+    ([{"x": "600+150*cos(t)", "y": "400+150*sin(t)", "t1": "4*pi", "closed": True}], "runs along itself"),
+])
+def test_degenerate_cords_are_refused_with_a_reason(cords, message):
+    with pytest.raises(draw.DrawError, match=message):
+        draw.build({"cords": cords})
+
+
 def test_a_closed_cord_that_crosses_nothing_is_named():
     with pytest.raises(draw.DrawError, match=r"cord 2 \(Lonely\) is closed but crosses nothing"):
         draw.build({"cords": [

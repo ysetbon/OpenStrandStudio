@@ -517,3 +517,93 @@ _RESEARCH_AND_DRAWING = {
 }
 for _language, _strings in _RESEARCH_AND_DRAWING.items():
     CLAUDE_TRANSLATIONS[_language].update(_strings)
+
+# What Claude has cost: the panel's running total and Settings > Claude.
+_SPENDING = {
+    'en': {
+        'claude_cost_line': 'this request {request} · total {total}',
+        'claude_spent': 'Spent with Claude: {total} since {date}',
+        'claude_spent_none': 'Nothing spent with Claude yet.',
+        'claude_spent_reset': 'Reset',
+        'claude_spent_hint': "Counted on this computer from Anthropic's prices, including stopped requests. Your bill is in the Anthropic Console.",
+    },
+    'fr': {
+        'claude_cost_line': 'cette demande {request} · total {total}',
+        'claude_spent': 'Dépensé avec Claude : {total} depuis le {date}',
+        'claude_spent_none': 'Rien dépensé avec Claude pour l’instant.',
+        'claude_spent_reset': 'Remettre à zéro',
+        'claude_spent_hint': 'Calculé sur cet ordinateur d’après les tarifs d’Anthropic, demandes arrêtées comprises. Votre facture se trouve dans la console Anthropic.',
+    },
+    'de': {
+        'claude_cost_line': 'diese Anfrage {request} · gesamt {total}',
+        'claude_spent': 'Mit Claude ausgegeben: {total} seit {date}',
+        'claude_spent_none': 'Noch nichts mit Claude ausgegeben.',
+        'claude_spent_reset': 'Zurücksetzen',
+        'claude_spent_hint': 'Auf diesem Computer nach den Preisen von Anthropic berechnet, abgebrochene Anfragen eingeschlossen. Ihre Rechnung finden Sie in der Anthropic Console.',
+    },
+    'it': {
+        'claude_cost_line': 'questa richiesta {request} · totale {total}',
+        'claude_spent': 'Speso con Claude: {total} dal {date}',
+        'claude_spent_none': 'Ancora nulla speso con Claude.',
+        'claude_spent_reset': 'Azzera',
+        'claude_spent_hint': 'Calcolato su questo computer in base ai prezzi di Anthropic, comprese le richieste interrotte. La fattura è nella Console Anthropic.',
+    },
+    'es': {
+        'claude_cost_line': 'esta solicitud {request} · total {total}',
+        'claude_spent': 'Gastado con Claude: {total} desde el {date}',
+        'claude_spent_none': 'Todavía no has gastado nada con Claude.',
+        'claude_spent_reset': 'Poner a cero',
+        'claude_spent_hint': 'Calculado en este ordenador con los precios de Anthropic, incluidas las solicitudes detenidas. Tu factura está en la consola de Anthropic.',
+    },
+    'pt': {
+        'claude_cost_line': 'este pedido {request} · total {total}',
+        'claude_spent': 'Gasto com o Claude: {total} desde {date}',
+        'claude_spent_none': 'Ainda nada gasto com o Claude.',
+        'claude_spent_reset': 'Zerar',
+        'claude_spent_hint': 'Calculado neste computador com os preços da Anthropic, incluindo pedidos interrompidos. A sua fatura está na consola da Anthropic.',
+    },
+    'he': {
+        'claude_cost_line': 'בקשה זו {request} · סה״כ {total}',
+        'claude_spent': 'הוצאה על Claude: {total} מאז {date}',
+        'claude_spent_none': 'עדיין לא הייתה הוצאה על Claude.',
+        'claude_spent_reset': 'איפוס',
+        'claude_spent_hint': 'מחושב במחשב הזה לפי המחירים של Anthropic, כולל בקשות שנעצרו. החשבון שלך נמצא ב־Anthropic Console.',
+    },
+    'ru': {
+        'claude_cost_line': 'этот запрос {request} · всего {total}',
+        'claude_spent': 'Потрачено на Claude: {total} с {date}',
+        'claude_spent_none': 'На Claude пока ничего не потрачено.',
+        'claude_spent_reset': 'Сбросить',
+        'claude_spent_hint': 'Считается на этом компьютере по ценам Anthropic, включая остановленные запросы. Ваш счёт — в Anthropic Console.',
+    },
+    'fi': {
+        'claude_cost_line': 'tämä pyyntö {request} · yhteensä {total}',
+        'claude_spent': 'Käytetty Claudeen: {total} alkaen {date}',
+        'claude_spent_none': 'Claudeen ei ole vielä käytetty mitään.',
+        'claude_spent_reset': 'Nollaa',
+        'claude_spent_hint': 'Laskettu tällä tietokoneella Anthropicin hinnoilla, keskeytetyt pyynnöt mukaan lukien. Laskusi on Anthropic Consolessa.',
+    },
+    'sv': {
+        'claude_cost_line': 'denna begäran {request} · totalt {total}',
+        'claude_spent': 'Spenderat med Claude: {total} sedan {date}',
+        'claude_spent_none': 'Inget spenderat med Claude ännu.',
+        'claude_spent_reset': 'Nollställ',
+        'claude_spent_hint': 'Räknat på den här datorn efter Anthropics priser, inklusive stoppade förfrågningar. Din faktura finns i Anthropic Console.',
+    },
+    'ja': {
+        'claude_cost_line': '今回 {request} · 合計 {total}',
+        'claude_spent': 'Claude の利用額: {date} から {total}',
+        'claude_spent_none': 'Claude の利用額はまだありません。',
+        'claude_spent_reset': 'リセット',
+        'claude_spent_hint': 'このコンピューターで Anthropic の料金をもとに計算しています（停止したリクエストを含む）。請求額は Anthropic Console で確認できます。',
+    },
+    'zh': {
+        'claude_cost_line': '本次 {request} · 总计 {total}',
+        'claude_spent': 'Claude 花费：自 {date} 起共 {total}',
+        'claude_spent_none': '尚未在 Claude 上产生花费。',
+        'claude_spent_reset': '清零',
+        'claude_spent_hint': '在这台电脑上按 Anthropic 的价格计算，包括已停止的请求。实际账单请见 Anthropic Console。',
+    },
+}
+for _language, _strings in _SPENDING.items():
+    CLAUDE_TRANSLATIONS[_language].update(_strings)

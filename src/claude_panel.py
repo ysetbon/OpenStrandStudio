@@ -16,7 +16,7 @@ import shutil
 import sys
 import time
 
-from PyQt5.QtCore import QProcess, QProcessEnvironment, Qt, pyqtSignal
+from PyQt5.QtCore import QDate, QLocale, QProcess, QProcessEnvironment, Qt, pyqtSignal
 from PyQt5.QtWidgets import (QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QHBoxLayout, QLabel,
                              QLineEdit, QPushButton, QSizePolicy, QTextBrowser, QTextEdit, QToolButton, QVBoxLayout,
                              QWidget)
@@ -58,6 +58,11 @@ def agent_command(prompt, model, out_dir, images=(), start=None, web=True, max_c
     if start:
         args += ['--start', start]
     return sys.executable, args
+
+
+def money(value):
+    """$0.041 for small amounts, $12.50 once it is over a dollar."""
+    return f'${value:.2f}' if value >= 1 else f'${value:.3f}'
 
 
 def design_name(prompt):
@@ -130,12 +135,14 @@ class ClaudePanel(QWidget):
     """A slim bar under the canvas that opens into the conversation with Claude."""
 
     design_ready = pyqtSignal(str)  # path of the finished project file
+    spending_changed = pyqtSignal()  # a request's cost was added to the saved total
 
     def __init__(self, main_window, language_code='en'):
         super().__init__(main_window)
         self.main_window = main_window
         self.language = language_code
         self.process = None
+        self.run_cost, self.total_before = 0.0, claude_settings.load()['spent']
         self.image_path = None
         self.out_dir = None
         self.prompt = ''
@@ -320,12 +327,28 @@ class ClaudePanel(QWidget):
         self.process.finished.connect(self.finished)
         self.process.errorOccurred.connect(self.failed_to_start)
         self.done_event, self.stdout_buffer, self.stderr_text = None, b'', ''
+        # What this request has cost so far; the total keeps counting from
+        # everything earlier requests cost, saved in claude.json.
+        self.run_cost, self.total_before = 0.0, claude_settings.load()['spent']
         self.add_user(prompt + (f'  [{os.path.basename(self.image_path)}]' if self.image_path else ''))
         self.prompt_edit.clear()
         self.set_image(None)
         self.status_label.setText(_tr(self.language, 'claude_working'))
         self.send_button.setText(_tr(self.language, 'claude_stop'))
         self.process.start(program, args)
+
+    def cost_line(self):
+        """'this request $0.041 · total $1.27': the total never starts again from zero."""
+        return _tr(self.language, 'claude_cost_line').format(
+            request=money(self.run_cost), total=money(self.total_before + self.run_cost))
+
+    def save_spending(self):
+        """Add this request to the saved total once, finished, stopped or failed."""
+        if self.run_cost:
+            claude_settings.add_spending(self.run_cost)
+            self.total_before += self.run_cost
+            self.run_cost = 0.0
+            self.spending_changed.emit()
 
     def failed_to_start(self, error):
         if error != QProcess.FailedToStart:
@@ -384,7 +407,8 @@ class ClaudePanel(QWidget):
         elif kind == 'tool_end':
             self.add_tool(event.get('name', ''), event.get('ok', False), event.get('summary', ''))
         elif kind == 'usage':
-            self.status_label.setText(f"{_tr(self.language, 'claude_working')}  ${event.get('cost', 0):.3f}")
+            self.run_cost = max(self.run_cost, float(event.get('cost') or 0))
+            self.status_label.setText(f"{_tr(self.language, 'claude_working')} · {self.cost_line()}")
         elif kind == 'done':
             self.done_event = event
 
@@ -393,14 +417,18 @@ class ClaudePanel(QWidget):
         self.read_errors()
         self.send_button.setText(_tr(self.language, 'claude_send'))
         event = self.done_event
+        if event is not None:
+            self.run_cost = max(self.run_cost, float(event.get('cost') or 0))
+        spent, line = self.run_cost, self.cost_line()
+        self.save_spending()
         if event is None:
             lines = [l for l in self.stderr_text.splitlines() if l.strip()]
             message = lines[-1] if lines else 'the agent stopped without an answer'
-            self.status_label.setText('')
+            self.status_label.setText(line if spent else '')
             self.add_note(_tr(self.language, 'claude_failed').format(error=message.removeprefix('error: ')), '#c0392b')
             return
         model = 'Sonnet 5.5' if 'sonnet' in event.get('model', '') else 'Haiku 5.5'
-        self.status_label.setText(f"{model} · ${event.get('cost', 0):.3f}")
+        self.status_label.setText(f"{model} · {line}")
         if event.get('error'):
             self.add_note(_tr(self.language, 'claude_failed').format(error=event['error']), '#c0392b')
         project = event.get('project')
@@ -475,6 +503,21 @@ class ClaudeSettingsPage(QWidget):
         limit_row.addStretch()
         layout.addLayout(limit_row)
 
+        # What Claude has cost in all on this computer, kept across requests.
+        spent_row = QHBoxLayout()
+        self.spent_label = QLabel(self)
+        self.spent_label.setStyleSheet('font-weight: bold;')
+        self.reset_spent_button = QPushButton(self)
+        self.reset_spent_button.clicked.connect(self.reset_spending)
+        spent_row.addWidget(self.spent_label)
+        spent_row.addWidget(self.reset_spent_button)
+        spent_row.addStretch()
+        layout.addLayout(spent_row)
+        self.spent_hint = QLabel(self)
+        self.spent_hint.setWordWrap(True)
+        self.spent_hint.setStyleSheet('color: gray;')
+        layout.addWidget(self.spent_hint)
+
         self.storage = QLabel(self)
         self.storage.setWordWrap(True)
         self.storage.setStyleSheet('color: gray;')
@@ -510,7 +553,29 @@ class ClaudeSettingsPage(QWidget):
         self.limit_spin.setValue(saved['max_cost'])
         self.limit_spin.blockSignals(False)
         self.show_saved(saved['api_key'])
+        self.reset_spent_button.setText(t('claude_spent_reset'))
+        self.spent_hint.setText(t('claude_spent_hint'))
+        self.show_spending()
         self.setLayoutDirection(Qt.RightToLeft if language_code == 'he' else Qt.LeftToRight)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.show_spending()  # requests may have run since the page was built
+
+    def show_spending(self):
+        saved = claude_settings.load()
+        t = lambda k: _tr(self.language, k)
+        if saved['spent'] or saved['spent_since']:
+            since = QDate.fromString(saved['spent_since'], Qt.ISODate)
+            when = QLocale(self.language).toString(since, QLocale.ShortFormat) if since.isValid() else ''
+            self.spent_label.setText(t('claude_spent').format(total=money(saved['spent']), date=when))
+        else:
+            self.spent_label.setText(t('claude_spent_none'))
+        self.reset_spent_button.setEnabled(saved['spent'] > 0)
+
+    def reset_spending(self):
+        claude_settings.reset_spending()
+        self.show_spending()
 
     def show_saved(self, key):
         t = lambda k: _tr(self.language, k)

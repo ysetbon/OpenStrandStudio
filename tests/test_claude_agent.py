@@ -250,10 +250,11 @@ def test_other_api_errors_are_not_swallowed(tmp_path):
 def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch):
     import claude_settings
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    assert claude_settings.load() == {"api_key": "", "model": "claude-sonnet-5-5", "web": True, "max_cost": 2.0}
+    assert claude_settings.load() == {"api_key": "", "model": "claude-sonnet-5-5", "web": True, "max_cost": 2.0,
+                                      "spent": 0.0, "spent_since": ""}
     claude_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5", web=False, max_cost=5)
     assert claude_settings.load() == {"api_key": "sk-ant-test-1234567890", "model": "claude-haiku-5-5",
-                                      "web": False, "max_cost": 5.0}
+                                      "web": False, "max_cost": 5.0, "spent": 0.0, "spent_since": ""}
     claude_settings.save(max_cost=1000)
     assert claude_settings.load()["max_cost"] == claude_settings.MAX_COST_RANGE[1]
     if os.name == "posix":
@@ -383,6 +384,7 @@ def test_the_prompt_box_is_a_chat_box(window, monkeypatch):
 
 
 def test_the_panel_turns_events_into_a_transcript_and_opens_the_result(window, tmp_path, monkeypatch):
+    monkeypatch.setenv("APPDATA", str(tmp_path))  # the run's cost is saved in the settings folder
     panel = window.claude_panel
     opened = []
     panel.design_ready.connect(opened.append)
@@ -409,6 +411,54 @@ def test_the_panel_asks_for_a_key_before_sending(window, monkeypatch, tmp_path):
     panel.send()
     assert panel.process is None or not panel.running()
     assert "Settings > Claude" in panel.transcript.toPlainText()
+
+
+def test_spending_adds_up_across_requests_until_reset(tmp_path, monkeypatch):
+    import datetime
+    import claude_settings
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    assert claude_settings.add_spending(0.25) == 0.25
+    assert claude_settings.add_spending(0.5) == 0.75
+    for nothing in (0, -3, "x", float("nan"), None):
+        assert claude_settings.add_spending(nothing) == 0.75
+    claude_settings.save(api_key="sk-ant-test-1234567890", model="claude-haiku-5-5")  # keeps the total
+    saved = claude_settings.load()
+    assert saved["spent"] == 0.75 and saved["spent_since"] == datetime.date.today().isoformat()
+    claude_settings.reset_spending()
+    assert claude_settings.load()["spent"] == 0.0 and claude_settings.load()["api_key"]
+
+
+def test_the_panel_total_keeps_counting_and_settings_show_it(window, monkeypatch, tmp_path):
+    import claude_settings
+    from claude_panel import ClaudeSettingsPage
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    claude_settings.add_spending(1.2)  # earlier requests
+    panel = window.claude_panel
+    panel.out_dir, panel.prompt = str(tmp_path), "a heart"
+
+    # A first request: the total rises live from what was spent before.
+    panel.run_cost, panel.total_before = 0.0, claude_settings.load()["spent"]
+    panel.handle_event({"type": "usage", "cost": 0.04})
+    assert panel.status_label.text().endswith("this request $0.040 · total $1.24")
+    panel.handle_event({"type": "done", "ok": True, "error": None, "project": None, "cost": 0.06,
+                        "model": "claude-haiku-5-5"})
+    panel.finished()
+    assert panel.status_label.text() == "Haiku 5.5 · this request $0.060 · total $1.26"
+    assert claude_settings.load()["spent"] == pytest.approx(1.26)
+
+    # A second request is stopped part way: what it spent still counts, once.
+    panel.run_cost, panel.total_before = 0.0, claude_settings.load()["spent"]
+    panel.done_event = None
+    panel.handle_event({"type": "usage", "cost": 0.03})
+    panel.finished()
+    panel.finished()
+    assert claude_settings.load()["spent"] == pytest.approx(1.29)
+
+    page = ClaudeSettingsPage("en")
+    assert page.spent_label.text().startswith("Spent with Claude: $1.29 since ")
+    page.reset_spending()
+    assert claude_settings.load()["spent"] == 0.0 and not page.reset_spent_button.isEnabled()
+    assert page.spent_label.text().startswith("Spent with Claude: $0.000 since ")
 
 
 def test_the_settings_page_saves_key_and_model(monkeypatch, tmp_path):

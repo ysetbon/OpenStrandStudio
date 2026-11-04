@@ -310,6 +310,41 @@ def test_a_claude_design_opens_in_a_new_tab_with_layers_and_groups(window, tmp_p
     assert len(snapshot["strands"]) == len(expected["strands"])
 
 
+def test_the_prompt_box_types_every_key_and_enter_sends(window, monkeypatch):
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtTest import QTest
+    from PyQt5.QtWidgets import QApplication
+    panel, manager = window.claude_panel, window.layer_panel.undo_redo_manager
+    clicks, pans, sent = [], [], []
+    for name in ("undo_button", "redo_button"):
+        button = getattr(manager, name)
+        monkeypatch.setattr(button, "click", lambda name=name: clicks.append(name))
+        button.setEnabled(True)  # as if there were history to undo and redo
+    monkeypatch.setattr(window.layer_panel, "toggle_pan_mode", lambda: pans.append(1))
+    monkeypatch.setattr(panel, "send", lambda: sent.append(panel.prompt_edit.text()))
+    panel.prompt_edit.returnPressed.disconnect()
+    panel.prompt_edit.returnPressed.connect(panel.send)
+    panel.set_open(True)
+    window.activateWindow()
+    panel.prompt_edit.clear()
+    panel.prompt_edit.setFocus()
+    QApplication.processEvents()
+
+    for key in "a zx":  # through the window, the way real typing arrives
+        QTest.keyClick(window.windowHandle(), Qt.Key_Space if key == " " else key)
+    assert panel.prompt_edit.text() == "a zx"
+    assert clicks == [] and pans == []
+    QTest.keyClick(window.windowHandle(), Qt.Key_Return)
+    assert sent == ["a zx"]
+
+    # Away from text boxes the shortcuts still work.
+    window.canvas.setFocus()
+    QApplication.processEvents()
+    QTest.keyClick(window.windowHandle(), Qt.Key_Space)
+    QTest.keyClick(window.windowHandle(), "z")
+    assert pans == [1] and clicks == ["undo_button"]
+
+
 def test_the_panel_turns_events_into_a_transcript_and_opens_the_result(window, tmp_path, monkeypatch):
     panel = window.claude_panel
     opened = []

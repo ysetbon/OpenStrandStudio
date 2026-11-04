@@ -10,6 +10,7 @@ from PyQt5.QtCore import Qt, QSize, pyqtSlot, pyqtSignal, QTimer, QEvent
 from PyQt5.QtGui import QIcon, QFont, QImage, QPainter, QColor, QKeySequence
 from PyQt5.QtWidgets import QShortcut
 from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QLineEdit, QTextEdit, QPlainTextEdit, QAbstractSpinBox, QComboBox
 from layer_state_manager import LayerStateManager
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
                              QSplitter, QFileDialog, QSpacerItem, QSizePolicy,
@@ -2689,6 +2690,11 @@ class MainWindow(QMainWindow):
         if event.type() == QEvent.Resize and obj is getattr(self, 'left_widget', None):
             self._apply_toolbar_rows()
         if event.type() in (QEvent.KeyPress, QEvent.KeyRelease, QEvent.ShortcutOverride):
+            # Typing in a text box (the Claude prompt, a layer rename, a
+            # number field) keeps every key: Space types a space, Z and X
+            # type letters instead of undoing.
+            if self._typing_into(obj):
+                return super().eventFilter(obj, event)
             # Handle undo/redo keyboard shortcuts globally
             if event.type() == QEvent.KeyPress:
                 # Prevent auto-repeat: only trigger on first press, not when holding keys
@@ -2729,6 +2735,17 @@ class MainWindow(QMainWindow):
 
         # Let other events pass through
         return super().eventFilter(obj, event)
+
+    @staticmethod
+    def _typing_into(obj):
+        """Whether a key event for obj belongs to a text field the person is typing in."""
+        for widget in (obj, QApplication.focusWidget()):
+            if isinstance(widget, (QLineEdit, QTextEdit, QPlainTextEdit, QAbstractSpinBox)):
+                if not widget.isReadOnly():
+                    return True
+            elif isinstance(widget, QComboBox) and widget.isEditable():
+                return True
+        return False
 
     def _click_with_sound(self, button):
         """Click a layer panel button from its shortcut, with the sound a mouse click plays."""

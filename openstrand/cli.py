@@ -131,6 +131,48 @@ def cmd_render(args):
     print(f'rendered {out} · {image.width()}x{image.height()}')
 
 
+def api_key():
+    """The Anthropic API key: ANTHROPIC_API_KEY, else the one saved in the app's settings."""
+    key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
+    if not key:
+        try:
+            import claude_settings
+            key = claude_settings.load().get('api_key', '')
+        except Exception:
+            key = ''
+    if not key:
+        raise ValueError('no Anthropic API key: set ANTHROPIC_API_KEY, or add it in '
+                         'OpenStrand Studio under Settings > Claude')
+    return key
+
+
+def cmd_agent(args):
+    import anthropic
+    from . import agent
+    model = agent.MODELS.get(args.model, args.model)
+    client = anthropic.Anthropic(api_key=api_key())
+    start = project.read(args.start) if args.start else None
+    for image in args.image or []:
+        if not Path(image).is_file():
+            raise ValueError(f'{image}: no such image')
+    out_dir = Path(args.out_dir or 'designs')
+    runner = agent.Agent(client, out_dir, model=model, max_cost=args.max_cost,
+                         on_event=lambda e: agent.print_events(e, args.json_events),
+                         quiet=lambda: quiet(not args.verbose))
+    try:
+        result = runner.run(args.prompt, images=args.image or [], start=start)
+    except anthropic.AuthenticationError:
+        raise ValueError('the Anthropic API key was refused: check it in Settings > Claude') from None
+    except anthropic.APIConnectionError:
+        raise ValueError('cannot reach the Anthropic API: check the internet connection') from None
+    except anthropic.RateLimitError:
+        raise ValueError('the Anthropic API is busy (rate limit): try again in a minute') from None
+    except anthropic.APIStatusError as e:
+        raise ValueError(f'the Anthropic API returned {e.status_code}: {e.message}') from None
+    if not result['ok']:
+        raise SystemExit(1)  # the 'done' event already said why
+
+
 def build_parser():
     p = argparse.ArgumentParser(prog='openstrand', description='Make, check, recolor and render OpenStrand Studio projects.')
     p.add_argument('--version', action='version', version=f'openstrand {__version__}')
@@ -181,6 +223,15 @@ def build_parser():
     which.add_argument('--set', help='the sets to recolor with --color, e.g. 1 or 1,2,3')
     recolor.add_argument('--color', help='the color for --set')
     recolor.add_argument('--out', help='write here instead of changing the file')
+
+    agent_cmd = command('agent', 'ask Claude to build or change a design (needs an Anthropic API key)', cmd_agent)
+    agent_cmd.add_argument('prompt', help='what to make, in plain words')
+    agent_cmd.add_argument('--image', action='append', help='a reference image (PNG, JPEG, GIF, WebP); repeatable')
+    agent_cmd.add_argument('--model', default='sonnet', help='sonnet (Claude Sonnet 5.5, default) or haiku (Claude Haiku 5.5)')
+    agent_cmd.add_argument('--start', help='a project to start from, such as the current canvas')
+    agent_cmd.add_argument('--out-dir', help='folder for design.json and design.png (default designs/)')
+    agent_cmd.add_argument('--max-cost', type=float, default=1.00, help='stop when one request has cost this many USD (default 1.00)')
+    agent_cmd.add_argument('--json-events', action='store_true', help='print one JSON event per line (for the app)')
 
     render = command('render', "draw a project to PNG with the app's real canvas", cmd_render)
     render.add_argument('file')

@@ -37,4 +37,42 @@ exit with status 1. `--verbose` shows the app's own console output.
 Rendering opens a hidden window with fresh settings, so your own OpenStrand
 settings are never read or changed. Without a display it draws offscreen.
 
-Tests: `python -m pytest tests/test_openstrand_cli.py`
+## Claude agent
+
+`openstrand agent` asks Claude to build or change a design with the commands
+above. Claude reads the request (and any reference image), calls the tools,
+looks at each render, fixes what is off and stops when it is right. The loop
+is in `openstrand/agent.py`; the guide in
+`.claude/skills/openstrand-designer/guide.md` is its built-in knowledge.
+
+```
+python -m openstrand agent "5x3 right hand bracelet in teal and gold"
+python -m openstrand agent "make this" --image photo.jpg --model haiku
+python -m openstrand agent "make the gold ribbons red" --start designs/bracelet.json
+```
+
+- Needs your own Anthropic API key: `ANTHROPIC_API_KEY`, or the key saved in
+  the app under Settings > Claude. You pay Anthropic for what it uses; each
+  run prints its cost and stops at `--max-cost` (default $1.00).
+- `--model sonnet` (Claude Sonnet 5.5, default) or `--model haiku`
+  (Claude Haiku 5.5, faster and much cheaper).
+- Results go to `--out-dir` (default `designs/`): `design.json` and `design.png`.
+- `--json-events` prints one JSON line per step; the app's Claude panel reads
+  these.
+
+### In the app
+
+A **Claude** bar sits under the canvas. Open it, describe a design (attach a
+reference image if you have one) and press Send. The agent runs in its own
+background process, so the app stays responsive; each step shows in the panel
+with the color of the matching app button. The finished design opens in a new
+tab through the same loader as Load, so its strands, masks, groups and layer
+panel are exactly as in a saved project. With **Start from the canvas** on,
+the current canvas goes to Claude as the design to change.
+
+Settings > Claude holds the API key (on this computer only, in `claude.json`
+in the OpenStrand settings folder, never in projects) and the model. For now
+the panel works when the app runs from source; the installed app needs the
+openstrand package bundled first.
+
+Tests: `python -m pytest tests/test_openstrand_cli.py tests/test_claude_agent.py`

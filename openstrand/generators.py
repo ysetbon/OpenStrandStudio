@@ -31,7 +31,11 @@ def application():
     Kept in a module global: a QApplication nobody holds is destroyed at once.
     """
     global _APP
+    from PyQt5 import sip
     from PyQt5.QtWidgets import QApplication
+    # Leave Qt's objects alone when Python exits: destroying the hidden
+    # render window after the QApplication crashed the process at exit.
+    sip.setdestroyonexit(False)
     _APP = QApplication.instance() or _APP or QApplication([])
     return _APP
 

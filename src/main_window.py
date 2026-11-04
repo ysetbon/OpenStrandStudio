@@ -20,7 +20,8 @@ from strand_drawing_canvas import StrandDrawingCanvas
 from layer_panel import LayerPanel
 from attached_strand import AttachedStrand
 from masked_strand import MaskedStrand
-from save_load_manager import save_strands, load_strands, apply_loaded_strands
+from save_load_manager import save_strands, load_strands, apply_loaded_strands, serialize_project_state
+from claude_panel import ClaudePanel
 from project_settings import capture_project_settings, read_project_settings, apply_project_settings
 from mask_mode import MaskMode
 from group_layers import GroupLayerManager, StrandAngleEditDialog
@@ -274,6 +275,8 @@ class MainWindow(QMainWindow):
 
         # Update settings button tooltip or text
         self.settings_button.setToolTip(_['settings'])
+        if hasattr(self, 'claude_panel'):
+            self.claude_panel.retranslate(self.language_code)
         self.layer_state_manager = LayerStateManager()
         self.layer_state_manager.set_canvas(self.canvas)
         self.layer_state_manager.set_layer_panel(self.layer_panel)
@@ -517,6 +520,10 @@ class MainWindow(QMainWindow):
 
         left_layout.addWidget(button_container)
         left_layout.addWidget(self.canvas)
+        # Claude: a slim bar under the canvas that opens into the agent panel.
+        self.claude_panel = ClaudePanel(self, self.language_code)
+        self.claude_panel.design_ready.connect(self.open_claude_design)
+        left_layout.addWidget(self.claude_panel)
         self.splitter.addWidget(self.left_widget)
         self.splitter.addWidget(self.layer_panel)
 
@@ -2047,7 +2054,12 @@ class MainWindow(QMainWindow):
         filename, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "JSON Files (*.json)")
         if not filename:
             return
+        self.load_project_file(filename)
 
+    def load_project_file(self, filename):
+        """Load a project or history file into the active tab: canvas, layer
+        panel, groups, masks, shadows, locks and a fresh undo baseline. Shared
+        by Load and by the Claude panel, which opens its designs this way."""
         try:
             with open(filename, 'r', encoding='utf-8') as f:
                 file_data = json.load(f)
@@ -2084,7 +2096,7 @@ class MainWindow(QMainWindow):
             self.canvas.update()
             if hasattr(self, 'tab_manager'):
                 self.tab_manager.mark_active_saved(filename)
-            return
+            return True
 
         # --- Fallback: load as simple snapshot (previous behaviour) ---
         try:
@@ -2144,12 +2156,33 @@ class MainWindow(QMainWindow):
             # Tabs feature: the active tab now mirrors the loaded file (clean).
             if hasattr(self, 'tab_manager'):
                 self.tab_manager.mark_active_saved(filename)
+            return True
 
         except Exception as e:
             # Nothing was loaded: the open project keeps its own settings.
             if previous_settings is not None:
                 apply_project_settings(self.canvas, previous_settings, self.settings_dialog)
             # You might want to show an error dialog to the user here
+            return False
+
+    def claude_canvas_snapshot(self):
+        """The current canvas as a project dict: what Claude starts from when
+        the panel's "Start from the canvas" is on."""
+        groups = self.group_layer_manager.get_group_data() if hasattr(self, 'group_layer_manager') else {}
+        return serialize_project_state(self.canvas.strands, groups, self.canvas)
+
+    def open_claude_design(self, path):
+        """Open a design Claude made in a new tab, through the same loader as
+        Load, so the work in the current tab stays as it is."""
+        if hasattr(self, 'tab_manager'):
+            before = self.tab_manager.active_tab_id
+            self.tab_manager.new_tab()
+            if self.tab_manager.active_tab_id == before:
+                return False  # the current tab could not be kept; nothing replaced
+        loaded = self.load_project_file(path)
+        if loaded:
+            self.canvas.center_all_strands()  # as the home button: bring the design into view
+        return loaded
 
     def show_layer_state_log(self):
         """Display the current layer state information."""

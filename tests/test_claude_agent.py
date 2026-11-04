@@ -354,3 +354,18 @@ def test_the_panel_runs_the_agent_in_the_background_and_opens_its_design(window,
     assert vertical and all(s.color.name() == "#257d98" for s in vertical)
     shown = panel.transcript.toPlainText()
     assert "teal vertical ribbons" in shown and "Sonnet 5.5" in panel.status_label.text()
+
+
+@pytest.mark.parametrize("package, expected", [
+    ("raise ImportError('no anthropic here')\n", "not installed for this Python"),
+    ("__version__ = '1.9.0'\n", "too old"),
+])
+def test_cli_agent_says_how_to_install_the_anthropic_package(tmp_path, package, expected):
+    fake = tmp_path / "site" / "anthropic"
+    fake.mkdir(parents=True)
+    (fake / "__init__.py").write_text(package, encoding="utf-8")
+    env = dict(os.environ, PYTHONPATH=str(tmp_path / "site"), ANTHROPIC_API_KEY="sk-ant-test")
+    result = subprocess.run([sys.executable, "-m", "openstrand", "agent", "a heart"], cwd=ROOT, env=env,
+                            capture_output=True, text=True, timeout=120)
+    assert result.returncode == 1
+    assert expected in result.stderr and "-m pip install" in result.stderr and "anthropic>=2.4" in result.stderr

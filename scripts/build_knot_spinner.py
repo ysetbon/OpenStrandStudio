@@ -5,8 +5,9 @@ untied from the other end, so the loop comes back to where it began.
 The knot is a real project made with `openstrand draw` (8 attached strands,
 3 crossings, 2 masks). Each frame is that project cut short: the strands
 drawn so far, the one being drawn grown part of the way along its curve, and
-the masks of crossings whose two strands are both there, as when the knot is
-drawn by hand in the app. Once finished it unties: the cord leaves from its
+the masks of crossings whose two strands are both there, much as when the knot is
+drawn by hand in the app, except that a crossing shows its finished over and
+under as soon as both its strands appear. Once finished it unties: the cord leaves from its
 first end, strand after strand along the same path, until nothing is left. The frames are rendered by the app's canvas onto a
 transparent ground.
 
@@ -132,7 +133,10 @@ def frames_of(project):
             if len(done) < len(names):  # the loop is not closed yet
                 for s in drawn:
                     s['closed_connections'] = [False, False]
-            kept = [m for m in masks if all(n in done for n in mask_parts(m['layer_name'], names))]
+            # Every crossing on screen shows the finished knot's over and under,
+            # even while one of its strands is still being drawn.
+            there = {s['layer_name'] for s in drawn}
+            kept = [m for m in masks if all(n in there for n in mask_parts(m['layer_name'], names))]
             frame = dict(project, strands=drawn + copy.deepcopy(kept), groups={})
             for i, s in enumerate(frame['strands']):  # the loader places each strand by its index
                 s['index'] = i
@@ -148,7 +152,7 @@ def mask_parts(mask_name, names):
     return (mask_name,)
 
 
-def render_frames(frames, full, size):
+def render_frames(frames, full, size, mapping=None):
     from openstrand.generators import application
     application()
     from PyQt5.QtCore import QPoint, QRectF, Qt
@@ -192,9 +196,53 @@ def render_frames(frames, full, size):
         edge = min(canvas.width(), canvas.height())
         square = image.copy((canvas.width() - edge) // 2, (canvas.height() - edge) // 2, edge, edge)
         images.append(square.scaled(size, size, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+    if mapping is not None:  # where a point of the design lands in the frames
+        edge = min(canvas.width(), canvas.height())
+        mapping['to_image'] = lambda x, y: (
+            ((x - bounds.center().x()) * zoom + edge / 2) * size / edge,
+            ((y - bounds.center().y()) * zoom + edge / 2) * size / edge)
     window._confirm_close_with_dirty_tabs = lambda *a, **k: True
     window.close()
     return images
+
+
+def loose_ends(frame, full):
+    """Points where a strand in the frame stops short of the finished knot."""
+    whole = {s['layer_name']: s for s in full['strands'] if s['type'] != 'MaskedStrand'}
+    out = []
+    for s in frame['strands']:
+        if s['type'] == 'MaskedStrand':
+            continue
+        for key in ('start', 'end'):
+            if point(s[key]) != point(whole[s['layer_name']][key]):
+                out.append(point(s[key]))
+    return out
+
+
+def check_crossings(frames, images, full, crossings, to_image, radius=9, limit=8.0):
+    """Every crossing on screen looks as in the finished knot: the same strand
+    over, the same shadow. Skips a crossing a strand does not yet fully cover,
+    or where a cut end lies on it. Returns the faults found."""
+    ref = images[-1]
+
+    def patch(im, cx, cy):
+        return [im.pixelColor(x, y) for y in range(int(cy) - radius, int(cy) + radius)
+                for x in range(int(cx) - radius, int(cx) + radius)]
+    faults = []
+    for i, (frame, im) in enumerate(zip(frames, images)):
+        ends = [to_image(*p) for p in loose_ends(frame, full)]
+        for x, y in crossings:
+            cx, cy = to_image(x, y)
+            if any((ex - cx) ** 2 + (ey - cy) ** 2 < (3 * radius) ** 2 for ex, ey in ends):
+                continue
+            a, b = patch(im, cx, cy), patch(ref, cx, cy)
+            if sum(c.alpha() > 200 for c in a) < 0.97 * sum(c.alpha() > 200 for c in b):
+                continue
+            diff = sum(abs(p.red() - q.red()) + abs(p.green() - q.green()) + abs(p.blue() - q.blue())
+                       for p, q in zip(a, b)) / (3 * len(a))
+            if diff > limit:
+                faults.append((i, (round(x), round(y)), round(diff, 1)))
+    return faults
 
 
 def main():
@@ -205,15 +253,25 @@ def main():
     parser.add_argument('--frames', help='also write each frame as a PNG into this folder')
     args = parser.parse_args()
     from openstrand import draw
+    from PyQt5.QtCore import Qt
     full, report = draw.build(SPEC)
     assert 'conflicts: 0' in report, report
+    crossings = [tuple(float(v) for v in line.split('(')[1].split(')')[0].split(','))
+                 for line in report.splitlines() if 'crossing at' in line]
     build, untie = frames_of(full), untie_frames(full)
     # The last untie frame is empty: it stays a blank cell, the pause before it starts again.
-    images = render_frames(build + untie[:-1], full, args.size)
+    shown = build + untie[:-1]
+    mapping = {}
+    images = render_frames(shown + [full], full, max(args.size, 256), mapping)
+    faults = check_crossings(shown + [full], images, full, crossings, mapping['to_image'])
+    if faults:
+        raise SystemExit(f'over and under differs from the finished knot (frame, crossing, difference): {faults}')
+    print(f'checked {len(crossings)} crossings in {len(shown)} frames: over and under as in the finished knot')
+    images = [im.scaled(args.size, args.size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+              for im in images[:-1]]
     durations = [STEP_MS] * len(images)
     durations[len(build) - 1] = HOLD_MS  # the finished knot
     from PyQt5.QtGui import QImage, QPainter
-    from PyQt5.QtCore import Qt
     strip = QImage(args.size * (len(images) + 1), args.size, QImage.Format_ARGB32_Premultiplied)
     strip.fill(Qt.transparent)
     painter = QPainter(strip)

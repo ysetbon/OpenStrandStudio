@@ -899,6 +899,14 @@ def test_the_knot_spinner_is_a_real_closed_overhand_drawn_strand_by_strand():
         for mask in (s for s in frame["strands"] if s["type"] == "MaskedStrand"):
             assert all(part in names for part in spinner.mask_parts(mask["layer_name"], sorted(names)))
         assert [s["index"] for s in frame["strands"]] == list(range(len(frame["strands"])))
+    # A crossing shows its finished over and under as soon as both its strands
+    # appear: the mask is there while the second strand is still being drawn.
+    for frame in frames + spinner.untie_frames(full):
+        names = {s["layer_name"] for s in frame["strands"] if s["type"] != "MaskedStrand"}
+        masks = {s["layer_name"] for s in frame["strands"] if s["type"] == "MaskedStrand"}
+        for mask in (s for s in full["strands"] if s["type"] == "MaskedStrand"):
+            parts = spinner.mask_parts(mask["layer_name"], [s["layer_name"] for s in strands])
+            assert (mask["layer_name"] in masks) == all(p in names for p in parts)
     # Then it unties from its first end, strand after strand, down to nothing.
     untie = spinner.untie_frames(full)
     assert len(untie) == 3 * len(strands) and untie[-1]["strands"] == []

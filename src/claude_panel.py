@@ -39,6 +39,13 @@ TOOL_CHIPS = {
     'load_sample': ('load', '#a07a6a', '#1a1a1a'),
     'search_samples': ('load', '#a07a6a', '#1a1a1a'),
     'render': ('save_image', '#8a3a55', '#ffffff'),
+    'make_steps': ('add_new_strand', '#93e993', '#1a1a1a'),
+    # The app's own tabs, through the bridge: the colors of the Tabs button.
+    'list_tabs': ('tabs', '#a04f9a', '#ffffff'),
+    'read_tab': ('tabs', '#a04f9a', '#ffffff'),
+    'open_in_new_tab': ('tabs', '#a04f9a', '#ffffff'),
+    'rename_tab': ('tabs', '#a04f9a', '#ffffff'),
+    'switch_tab': ('tabs', '#a04f9a', '#ffffff'),
 }
 OTHER_CHIP = ('#d4d4d4', '#1a1a1a')
 # Tools that can take up to a minute: the panel says so when they start.
@@ -51,9 +58,11 @@ def _tr(language, key):
 
 
 def agent_command(prompt, model, out_dir, images=(), start=None, web=True, max_cost=None, effort=None,
-                  plan=False):
+                  plan=False, app=False):
     """The program and arguments that run one agent request."""
     args = ['-m', 'openstrand', 'agent', prompt, '--model', model, '--out-dir', out_dir, '--json-events']
+    if app:  # the app answers its tab tools through the bridge
+        args.append('--app')
     if not web:
         args.append('--no-web')
     if effort:
@@ -307,6 +316,7 @@ class ClaudePanel(QWidget):
         self.stdout_buffer = b''
         self.stderr_text = ''
         self.entries = []  # the conversation: drawn as HTML each time it changes
+        self.bridge = None  # set by the main window: Claude's tab tools run through it
         self.session_spent = 0.0  # since the app opened; held to the session limit
         self.mode = claude_settings.load()['mode']  # 'ask', 'auto', or 'plan' (never saved)
         self.last_mode = self.mode
@@ -465,8 +475,17 @@ class ClaudePanel(QWidget):
         height = layout.totalHeightForWidth(width) if layout.hasHeightForWidth() else -1
         if height < 0:
             height = layout.totalSizeHint().height()
-        height = min(height, max(80, area.height() - 2 * m))
-        self.setGeometry(area.left() + m, area.bottom() + 1 - m - height, width, height)
+        bottom = area.bottom() + 1 - m
+        edge = getattr(self.main_window, 'tab_edge', None)
+        if edge is not None and edge.isVisible():
+            # The tab strip floats over the canvas too: when it is in the lower
+            # half, in Claude's way, Claude sits just above it.
+            g = edge.geometry()
+            if (g.center().y() > area.center().y() and g.top() < bottom
+                    and g.right() > area.left() + m and g.left() < area.left() + m + width):
+                bottom = g.top() - 6
+        height = min(height, max(80, bottom - area.top() - m))
+        self.setGeometry(area.left() + m, bottom - height, width, height)
 
     def visible_canvas(self):
         """The part of the canvas on screen: it has a minimum width, so a narrow
@@ -483,7 +502,11 @@ class ClaudePanel(QWidget):
         return area if area.width() > 0 and area.height() > 0 else canvas.rect()
 
     def watch_layout(self):
-        """Follow the canvas and the widgets around it as they resize."""
+        """Follow the canvas and the widgets around it as they resize, and the
+        tab strip as it shows, hides or is dragged."""
+        edge = getattr(self.main_window, 'tab_edge', None)
+        if edge is not None:
+            edge.installEventFilter(self)
         widget = self.parentWidget()
         while widget is not None:
             widget.installEventFilter(self)
@@ -492,7 +515,9 @@ class ClaudePanel(QWidget):
             widget = widget.parentWidget()
 
     def eventFilter(self, obj, event):
-        if event.type() == QEvent.Resize and self.isVisible():
+        if self.isVisible() and (event.type() == QEvent.Resize or (
+                obj is getattr(self.main_window, 'tab_edge', None)
+                and event.type() in (QEvent.Move, QEvent.Show, QEvent.Hide))):
             self.place()
         return False
 
@@ -618,6 +643,19 @@ class ClaudePanel(QWidget):
             return (f'<table cellspacing="0" cellpadding="6" style="margin:4px 0 4px 18px;'
                     f' border:1px solid {c["log_border"]};"><tr>{picture}<td valign="middle">'
                     f'{esc(t("claude_design_ready").format(name=e["name"]))}<br>{action}</td></tr></table>')
+        if kind == 'confirm':
+            action, current, new = e['what']
+            key = 'claude_confirm_rename' if action == 'rename_tab' else 'claude_confirm_switch'
+            text = esc(t(key).format(old=current, new=new))
+            if e['state'] is None:
+                choice = (f'<a href="os:allow/{i}" style="color:#D97757; font-weight:bold; text-decoration:none;">'
+                          f'{esc(t("claude_allow"))}</a>&nbsp;&nbsp;&nbsp;<a href="os:deny/{i}" '
+                          f'style="color:{c["muted"]}; text-decoration:none;">{esc(t("claude_deny"))}</a>')
+            else:
+                word = {'allowed': 'claude_allowed', 'denied': 'claude_denied'}.get(e['state'], 'claude_stopped')
+                choice = f'<span style="color:{c["muted"]};">{esc(t(word))}</span>'
+            return (f'<table cellspacing="0" cellpadding="6" style="margin:4px 0 4px 18px;'
+                    f' border:1px solid {c["log_border"]};"><tr><td>{text}<br>{choice}</td></tr></table>')
         if kind == 'plan':
             if e['built']:
                 return f'<p style="margin:4px 0 4px 18px; color:{c["muted"]};">{esc(t("claude_plan_built"))}</p>'
@@ -699,7 +737,20 @@ class ClaudePanel(QWidget):
             step['open'] = not step['open']
         elif what == 'open' and not entry['opened']:
             entry['opened'] = True
-            self.design_ready.emit(entry['path'])
+            if entry.get('title') and self.bridge is not None:
+                try:
+                    self.bridge.open_in_new_tab(entry['path'], entry['title'])
+                except Exception as e:
+                    self.add_note(_tr(self.language, 'claude_failed').format(error=e), self.colors['bad'])
+            else:
+                self.design_ready.emit(entry['path'])
+        elif what in ('allow', 'deny') and entry['state'] is None:
+            allowed = what == 'allow'
+            entry['state'] = 'allowed' if allowed else 'denied'
+            if self.bridge is not None:
+                reply = self.bridge.decide(entry['id'], allowed)
+                if reply is not None:
+                    self.answer(reply)
         elif what == 'plan' and not entry['built'] and not self.running():
             self.build_plan(entry)
             return
@@ -814,7 +865,8 @@ class ClaudePanel(QWidget):
         program, args = agent_command(prompt, settings['model'], self.out_dir,
                                       [self.image_path] if self.image_path else [], start,
                                       web=settings['web'], max_cost=min(settings['max_cost'], left),
-                                      effort=settings['effort'], plan=self.mode == 'plan')
+                                      effort=settings['effort'], plan=self.mode == 'plan',
+                                      app=self.bridge is not None)
         env = QProcessEnvironment.systemEnvironment()
         env.insert('ANTHROPIC_API_KEY', settings['api_key'])
         env.insert('QT_QPA_PLATFORM', 'offscreen')
@@ -935,8 +987,35 @@ class ClaudePanel(QWidget):
             self.run_cost = max(self.run_cost, float(event.get('cost') or 0))
             self.status_label.setText(self.cost_line())
             self.show_session()
+        elif kind == 'app_call':
+            self.app_call(event)
         elif kind == 'done':
             self.done_event = event
+
+    # ------------------------------------------------------------- bridge
+    def app_call(self, call):
+        """A request from Claude's app tools: the bridge runs it with the app's own code."""
+        if self.bridge is None:
+            reply = {'id': call.get('id'), 'ok': False, 'error': 'the app bridge is not available'}
+        else:
+            reply = self.bridge.handle(call)
+        if reply is not None:  # None: the person decides with Allow or Deny
+            self.answer(reply)
+
+    def answer(self, reply):
+        if self.running():
+            self.process.write((json.dumps(reply) + '\n').encode('utf-8'))
+
+    def add_design_card(self, path, title):
+        """Ask mode: a design Claude wants in a tab of its own, opened when the person says so."""
+        png = path[:-5] + '.png'
+        self.add_entry({'kind': 'design', 'path': path, 'png': png if os.path.exists(png) else None,
+                        'opened': False, 'name': title, 'title': title})
+
+    def add_confirm_card(self, call_id, what):
+        self.design_waiting = self.design_waiting or not self.is_open()
+        self.add_entry({'kind': 'confirm', 'id': call_id, 'what': what, 'state': None})
+        self.activity_changed.emit()
 
     def finished(self, *_):
         try:
@@ -947,6 +1026,11 @@ class ClaudePanel(QWidget):
     def _finish(self):
         self.read_events(flush=True)
         self.read_errors()
+        if self.bridge is not None:
+            self.bridge.forget()
+        for entry in self.entries:
+            if entry['kind'] == 'confirm' and entry['state'] is None:
+                entry['state'] = 'expired'  # Claude has stopped; nothing waits any more
         self.working.stop()
         self.close_group()
         self.send_button.setText(_tr(self.language, 'claude_send'))
@@ -970,6 +1054,8 @@ class ClaudePanel(QWidget):
                                 'built': False})
             return
         project = event.get('project')
+        if event.get('opened_tabs'):
+            project = None  # Claude opened its tabs itself, through the bridge
         if project and os.path.exists(project):
             named = os.path.join(self.out_dir, design_name(self.prompt) + '.json')
             shutil.copyfile(project, named)

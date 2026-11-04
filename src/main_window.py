@@ -23,6 +23,7 @@ from attached_strand import AttachedStrand
 from masked_strand import MaskedStrand
 from save_load_manager import save_strands, load_strands, apply_loaded_strands, serialize_project_state
 import claude_settings
+from claude_bridge import AppBridge
 from claude_panel import ClaudeButton, ClaudePanel
 from project_settings import capture_project_settings, read_project_settings, apply_project_settings
 from mask_mode import MaskMode
@@ -501,6 +502,8 @@ class MainWindow(QMainWindow):
         # floats over the bottom of the canvas so the drawing never moves.
         self.claude_panel = ClaudePanel(self, self.canvas, self.language_code)
         self.claude_panel.design_ready.connect(self.open_claude_design)
+        # Claude's tab tools run here, with the app's own code (src/claude_bridge.py).
+        self.claude_panel.bridge = AppBridge(self, self.claude_panel)
         self.claude_button = ClaudeButton(self.claude_panel)
         self.claude_button.setVisible(claude_settings.load()['show_button'])
         button_layout.addWidget(self.claude_button, 0)

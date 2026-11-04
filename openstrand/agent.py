@@ -173,6 +173,18 @@ TOOLS = [
         'description': "Draw the current design with the app's real canvas and return the picture to look at.",
         'input_schema': {'type': 'object', 'properties': {}},
     },
+    {
+        'name': 'make_steps',
+        'description': ('Turn the current design into tying steps: step k shows the cord drawn so far along its '
+                        'path, every crossing with its finished over and under, and an arrow on the working end '
+                        'showing where the cord goes next; the last step is the whole design. Each step is saved '
+                        'as its own design ("step 1", "step 2", ...) that can open in its own tab. Default: one '
+                        'step per strand, at most six.'),
+        'input_schema': {'type': 'object', 'properties': {
+            'count': {'type': 'integer', 'minimum': 2, 'maximum': 12, 'description': 'how many steps'},
+            'arrows': {'type': 'boolean', 'description': 'arrow on the working end (default true)'},
+        }},
+    },
 ]
 
 
@@ -217,6 +229,7 @@ class Workspace:
         self.version = 0
         self.rendered_version = -1
         self._preview = None
+        self.steps = []  # [(title, path)] from make_steps
 
     def need(self):
         if self.data is None:
@@ -300,6 +313,18 @@ class Workspace:
             if found:
                 return f'{len(found)} problems', 'problems:\n' + '\n'.join(found)
             return 'valid', f'valid: {project.summary(self.data)}'
+        if name == 'make_steps':
+            from . import steps
+            made = steps.make(self.need(), count=args.get('count'), arrows=args.get('arrows', True) is not False)
+            self.steps = []
+            for number, (title, data) in enumerate(made, start=1):
+                path = self.out_dir / f'step_{number}.json'
+                project.write(data, path)
+                self.steps.append((title, path))
+            names = ', '.join(f'step {n}' for n in range(1, len(made) + 1))
+            return (f'{len(made)} steps',
+                    f'made {len(made)} steps ({names}); the last is the whole design. Each can open in its own '
+                    'tab with open_in_new_tab if you are running in the app.')
         if name == 'render':
             path = self.render()
             data = base64.standard_b64encode(path.read_bytes()).decode('ascii')
@@ -311,7 +336,7 @@ class Agent:
     """Runs one request: the loop of Claude calls and tool calls."""
 
     def __init__(self, client, out_dir, model=DEFAULT_MODEL, on_event=None, max_rounds=24, max_cost=2.00,
-                 quiet=None, web=True, effort='high', plan=False):
+                 quiet=None, web=True, effort='high', plan=False, app=None):
         if model not in PRICES:
             raise ValueError(f"model must be one of {', '.join(PRICES)}")
         if effort not in EFFORTS:
@@ -324,6 +349,8 @@ class Agent:
         self.web = web
         self.effort = effort
         self.plan = plan  # plan mode: research and plan, build nothing
+        self.app = app  # an AppClient when the app started the agent: its tabs become tools
+        self.opened_tabs = []  # titles of tabs opened by open_in_new_tab
         self.workspace = Workspace(out_dir)
         self.on_event = on_event or (lambda event: None)
         self.max_rounds = max_rounds
@@ -334,13 +361,17 @@ class Agent:
                       'cache_creation_input_tokens': 0, 'cache_read_input_tokens': 0}
 
     def system(self):
-        text = (INSTRUCTIONS + (PLAN_INSTRUCTIONS if self.plan else '')
+        from .app_tools import APP_INSTRUCTIONS
+        text = (INSTRUCTIONS + (APP_INSTRUCTIONS if self.app else '') + (PLAN_INSTRUCTIONS if self.plan else '')
                 + 'The guide:\n\n' + GUIDE.read_text(encoding='utf-8')
                 + '\n\n' + DRAWING.read_text(encoding='utf-8'))
         return [{'type': 'text', 'text': text, 'cache_control': {'type': 'ephemeral'}}]
 
     def tools(self):
-        tools = [t for t in TOOLS if t['name'] in PLAN_TOOLS] if self.plan else TOOLS
+        from .app_tools import APP_TOOLS, LOOK_ONLY
+        tools = [t for t in TOOLS if t['name'] in PLAN_TOOLS] if self.plan else list(TOOLS)
+        if self.app is not None:
+            tools += [t for t in APP_TOOLS if t['name'] in LOOK_ONLY] if self.plan else APP_TOOLS
         return tools + (WEB_TOOLS[self.model] if self.web else [])
 
     def call(self, messages):
@@ -433,10 +464,16 @@ class Agent:
     def tool(self, block):
         args = block.input if isinstance(block.input, dict) else {}
         self.on_event({'type': 'tool_start', 'name': block.name, 'input': args})
+        from .app_tools import APP_TOOL_NAMES, AppError
         try:
-            with self.quiet():
-                summary, content = self.workspace.run(block.name, args)
-        except (ToolError, ValueError, KeyError, TypeError) as e:
+            if block.name in APP_TOOL_NAMES:
+                if self.app is None:
+                    raise ToolError('this tool works only when OpenStrand Studio started you')
+                summary, content = self.app_tool(block.name, args)
+            else:
+                with self.quiet():
+                    summary, content = self.workspace.run(block.name, args)
+        except (ToolError, AppError, ValueError, KeyError, TypeError) as e:
             message = str(e) if not isinstance(e, KeyError) else f'missing argument {e}'
             self.on_event({'type': 'tool_end', 'name': block.name, 'ok': False, 'summary': message})
             return {'type': 'tool_result', 'tool_use_id': block.id, 'content': message, 'is_error': True}
@@ -447,6 +484,42 @@ class Agent:
         self.on_event({'type': 'tool_end', 'name': block.name, 'ok': True, 'summary': summary})
         return {'type': 'tool_result', 'tool_use_id': block.id, 'content': content}
 
+    def app_tool(self, name, args):
+        """A tool the running app does with its own code, through the bridge."""
+        ws = self.workspace
+        if name == 'open_in_new_tab':
+            which = str(args.get('design', 'current')).strip().lower()
+            title = str(args.get('title') or '').strip()[:60] or 'Claude design'
+            if which in ('current', 'design', ''):
+                ws.need()
+                path = ws.project_path
+            else:
+                number = which.replace('step', '').strip()
+                if not number.isdigit() or not 1 <= int(number) <= len(ws.steps):
+                    raise ToolError(f'no {which}: make_steps made {len(ws.steps)} steps')
+                path = ws.steps[int(number) - 1][1]
+            result = self.app.call(name, {'path': str(path), 'title': title})
+            if result.get('opened'):
+                self.opened_tabs.append(title)
+                return f'New tab · {title}', f'opened in a new tab titled "{title}"'
+            return f'{title} · waiting for the person', result.get('note') or 'shown to the person to open'
+        if name == 'read_tab':
+            result = self.app.call(name, {'tab_id': str(args.get('tab_id', ''))})
+            data = project.read(result['file'])
+            ws.store(data)
+            return (f"Read tab {result.get('title', '')} · {project.summary(data)}",
+                    f"tab \"{result.get('title', '')}\" is now the current design: {project.summary(data)}")
+        if name in ('rename_tab', 'switch_tab'):
+            call = {'tab_id': str(args.get('tab_id', ''))}
+            if name == 'rename_tab':
+                call['title'] = str(args.get('title') or '').strip()[:60]
+            result = self.app.call(name, call)
+            note = result.get('note') or 'done'
+            return f"{name.replace('_', ' ').capitalize()} · {result.get('title', '')}", note
+        result = self.app.call(name, {})
+        tabs = result.get('tabs', [])
+        return f'{len(tabs)} tabs', json.dumps(tabs)
+
     def finish(self, said, error=None):
         ws = self.workspace
         event = {'type': 'done', 'ok': error is None, 'error': error,
@@ -454,7 +527,7 @@ class Agent:
                  'project': str(ws.project_path) if ws.data is not None else None,
                  'png': str(ws.png_path) if ws.rendered_version == ws.version and ws.data is not None else None,
                  'cost': round(self.cost, 4), 'model': self.model, 'searches': self.searches,
-                 'plan': self.plan, **self.usage}
+                 'plan': self.plan, 'opened_tabs': self.opened_tabs, **self.usage}
         if self.plan:  # a plan builds nothing, whatever is in the workspace
             event['project'] = event['png'] = None
         self.on_event(event)

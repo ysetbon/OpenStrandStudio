@@ -847,3 +847,105 @@ _STATUS_LINE = {
 }
 for _language, _strings in _STATUS_LINE.items():
     CLAUDE_TRANSLATIONS[_language].update(_strings)
+
+# The bridge: Claude asks before changing a tab in ask mode.
+_BRIDGE = {
+    'en': {
+        'claude_confirm_rename': 'Claude wants to rename the tab “{old}” to “{new}”.',
+        'claude_confirm_switch': 'Claude wants to show the tab “{old}”.',
+        'claude_allow': 'Allow',
+        'claude_deny': 'Deny',
+        'claude_allowed': 'Allowed',
+        'claude_denied': 'Declined',
+    },
+    'fr': {
+        'claude_confirm_rename': 'Claude veut renommer l’onglet « {old} » en « {new} ».',
+        'claude_confirm_switch': 'Claude veut afficher l’onglet « {old} ».',
+        'claude_allow': 'Autoriser',
+        'claude_deny': 'Refuser',
+        'claude_allowed': 'Autorisé',
+        'claude_denied': 'Refusé',
+    },
+    'de': {
+        'claude_confirm_rename': 'Claude möchte den Tab „{old}“ in „{new}“ umbenennen.',
+        'claude_confirm_switch': 'Claude möchte den Tab „{old}“ anzeigen.',
+        'claude_allow': 'Erlauben',
+        'claude_deny': 'Ablehnen',
+        'claude_allowed': 'Erlaubt',
+        'claude_denied': 'Abgelehnt',
+    },
+    'it': {
+        'claude_confirm_rename': 'Claude vuole rinominare la scheda «{old}» in «{new}».',
+        'claude_confirm_switch': 'Claude vuole mostrare la scheda «{old}».',
+        'claude_allow': 'Consenti',
+        'claude_deny': 'Rifiuta',
+        'claude_allowed': 'Consentito',
+        'claude_denied': 'Rifiutato',
+    },
+    'es': {
+        'claude_confirm_rename': 'Claude quiere cambiar el nombre de la pestaña «{old}» a «{new}».',
+        'claude_confirm_switch': 'Claude quiere mostrar la pestaña «{old}».',
+        'claude_allow': 'Permitir',
+        'claude_deny': 'Rechazar',
+        'claude_allowed': 'Permitido',
+        'claude_denied': 'Rechazado',
+    },
+    'pt': {
+        'claude_confirm_rename': 'O Claude quer mudar o nome do separador «{old}» para «{new}».',
+        'claude_confirm_switch': 'O Claude quer mostrar o separador «{old}».',
+        'claude_allow': 'Permitir',
+        'claude_deny': 'Recusar',
+        'claude_allowed': 'Permitido',
+        'claude_denied': 'Recusado',
+    },
+    'he': {
+        'claude_confirm_rename': 'Claude רוצה לשנות את שם הכרטיסייה „{old}” ל־„{new}”.',
+        'claude_confirm_switch': 'Claude רוצה להציג את הכרטיסייה „{old}”.',
+        'claude_allow': 'אפשר',
+        'claude_deny': 'דחה',
+        'claude_allowed': 'אושר',
+        'claude_denied': 'נדחה',
+    },
+    'ru': {
+        'claude_confirm_rename': 'Claude хочет переименовать вкладку «{old}» в «{new}».',
+        'claude_confirm_switch': 'Claude хочет показать вкладку «{old}».',
+        'claude_allow': 'Разрешить',
+        'claude_deny': 'Отклонить',
+        'claude_allowed': 'Разрешено',
+        'claude_denied': 'Отклонено',
+    },
+    'fi': {
+        'claude_confirm_rename': 'Claude haluaa nimetä välilehden ”{old}” nimellä ”{new}”.',
+        'claude_confirm_switch': 'Claude haluaa näyttää välilehden ”{old}”.',
+        'claude_allow': 'Salli',
+        'claude_deny': 'Hylkää',
+        'claude_allowed': 'Sallittu',
+        'claude_denied': 'Hylätty',
+    },
+    'sv': {
+        'claude_confirm_rename': 'Claude vill byta namn på fliken ”{old}” till ”{new}”.',
+        'claude_confirm_switch': 'Claude vill visa fliken ”{old}”.',
+        'claude_allow': 'Tillåt',
+        'claude_deny': 'Neka',
+        'claude_allowed': 'Tillåtet',
+        'claude_denied': 'Nekat',
+    },
+    'ja': {
+        'claude_confirm_rename': 'Claude はタブ「{old}」の名前を「{new}」に変えようとしています。',
+        'claude_confirm_switch': 'Claude はタブ「{old}」を表示しようとしています。',
+        'claude_allow': '許可',
+        'claude_deny': '拒否',
+        'claude_allowed': '許可しました',
+        'claude_denied': '拒否しました',
+    },
+    'zh': {
+        'claude_confirm_rename': 'Claude 想把标签页“{old}”重命名为“{new}”。',
+        'claude_confirm_switch': 'Claude 想显示标签页“{old}”。',
+        'claude_allow': '允许',
+        'claude_deny': '拒绝',
+        'claude_allowed': '已允许',
+        'claude_denied': '已拒绝',
+    },
+}
+for _language, _strings in _BRIDGE.items():
+    CLAUDE_TRANSLATIONS[_language].update(_strings)

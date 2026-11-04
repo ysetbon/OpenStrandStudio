@@ -34,50 +34,10 @@ SPEC = {"name": "closed overhand", "cords": [{
                [460, 480], [440, 360], [560, 300], [700, 420], [780, 640], [600, 700]]}]}
 GROWTH = (1 / 3, 2 / 3, 1.0)   # each strand appears in three steps along its curve
 STEP_MS, HOLD_MS, EMPTY_MS = 110, 1400, 220
-ATTACHED_ONLY = ('attached_to', 'attachment_side', 'angle', 'length')
 
 
-def split(p0, p1, p2, p3, t):
-    """The first part, up to t, of a cubic Bezier curve (de Casteljau)."""
-    lerp = lambda a, b: (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
-    a, b, c = lerp(p0, p1), lerp(p1, p2), lerp(p2, p3)
-    d, e = lerp(a, b), lerp(b, c)
-    return p0, a, d, lerp(d, e)
-
-
-def point(p):
-    return (p['x'], p['y'])
-
-
-def as_dict(p):
-    return {'x': p[0], 'y': p[1]}
-
-
-def rest(p0, p1, p2, p3, t):
-    """The part of a cubic Bezier curve after t (de Casteljau)."""
-    q3, q2, q1, q0 = split(p3, p2, p1, p0, 1 - t)
-    return q0, q1, q2, q3
-
-
-def receded(strand, t):
-    """The strand with its first part, up to t, gone: its start is now loose."""
-    s = copy.deepcopy(strand)
-    cps = s['control_points']
-    p0, a, b, p3 = rest(point(s['start']), point(cps[0]), point(cps[1]), point(s['end']), t)
-    s['start'], s['control_points'] = as_dict(p0), [as_dict(a), as_dict(b)]
-    s['control_point_center'] = as_dict(((a[0] + b[0]) / 2, (a[1] + b[1]) / 2))
-    s['has_circles'] = [False, s['has_circles'][1]]
-    return s
-
-
-def as_first(strand):
-    """An attached strand whose parent is gone becomes the cord's first strand."""
-    s = copy.deepcopy(strand)
-    s['type'], s['is_first_strand'] = 'Strand', True
-    for key in ATTACHED_ONLY:
-        s.pop(key, None)
-    s['has_circles'] = [False, s['has_circles'][1]]
-    return s
+from openstrand.steps import (as_dict, as_first, grown, mask_parts, point, receded, rest,  # noqa: E402,F401
+                              split)
 
 
 def untie_frames(project):
@@ -106,20 +66,6 @@ def untie_frames(project):
     return out
 
 
-def grown(strand, t):
-    """The strand drawn part of the way, its loose end without a joint."""
-    s = copy.deepcopy(strand)
-    if t >= 1:
-        return s
-    cps = s['control_points']
-    p0, a, b, p3 = split(point(s['start']), point(cps[0]), point(cps[1]), point(s['end']), t)
-    s['end'], s['control_points'] = as_dict(p3), [as_dict(a), as_dict(b)]
-    s['control_point_center'] = as_dict(((a[0] + b[0]) / 2, (a[1] + b[1]) / 2))
-    s['has_circles'] = [s['has_circles'][0], False]
-    s['closed_connections'] = [s['closed_connections'][0], False]
-    return s
-
-
 def frames_of(project):
     """Partial projects, in drawing order, ending with the whole knot."""
     strands = [s for s in project['strands'] if s['type'] != 'MaskedStrand']
@@ -142,14 +88,6 @@ def frames_of(project):
                 s['index'] = i
             out.append(frame)
     return out
-
-
-def mask_parts(mask_name, names):
-    """'1_1_1_6' -> ('1_1', '1_6'), matched against the strand names."""
-    for n in names:
-        if mask_name.startswith(n + '_') and mask_name[len(n) + 1:] in names:
-            return n, mask_name[len(n) + 1:]
-    return (mask_name,)
 
 
 def render_frames(frames, full, size, mapping=None):

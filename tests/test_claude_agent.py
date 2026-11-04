@@ -602,6 +602,27 @@ FAKE_DRAWING = [
 ]
 
 
+FIGURE_8 = {"name": "figure 8 knot", "cords": [{"label": "Figure 8", "color": "crimson", "width": 26, "points": [
+    [200, 200], [380, 260], [560, 380], [620, 540], [520, 660], [400, 600], [420, 450], [560, 320],
+    [600, 180], [480, 120], [400, 220], [480, 420], [640, 560], [820, 620]]}]}
+STEP_TITLES = ["Step 1 · the tail", "Step 2 · first loop", "Step 3 · up and over",
+               "Step 4 · through the top loop", "Step 5 · the figure 8"]
+FAKE_STEPS = [
+    {"content": [{"type": "tool_use", "id": "toolu_1", "name": "draw_design", "input": FIGURE_8}],
+     "stop_reason": "tool_use"},
+    {"content": [{"type": "tool_use", "id": "toolu_2", "name": "make_steps", "input": {"count": 5}}],
+     "stop_reason": "tool_use"},
+    {"content": [{"type": "tool_use", "id": "toolu_3", "name": "list_tabs", "input": {}}], "stop_reason": "tool_use"},
+] + [
+    {"content": [{"type": "tool_use", "id": f"toolu_{4 + n}", "name": "open_in_new_tab",
+                  "input": {"design": f"step {n + 1}", "title": STEP_TITLES[n]}}], "stop_reason": "tool_use"}
+    for n in range(5)
+] + [
+    {"content": [{"type": "text", "text": "Five tabs, one per step, from the tail to the finished figure 8."}],
+     "stop_reason": "end_turn"},
+]
+
+
 @pytest.fixture
 def fake_api(monkeypatch, request):
     """A local stand-in for the Messages API, reached through the real SDK."""
@@ -920,3 +941,194 @@ def test_the_knot_spinner_is_a_real_closed_overhand_drawn_strand_by_strand():
     # A strand being drawn ends where its curve is cut, with no joint at its loose end.
     first = frames[0]["strands"][0]
     assert first["has_circles"][1] is False and first["end"] != strands[0]["end"]
+
+
+# ------------------------------------------------- steps and the app bridge
+@pytest.fixture(scope="module")
+def figure8():
+    from openstrand import draw
+    data, report = draw.build(FIGURE_8)
+    assert "4 crossings in all" in report and "conflicts: 0" in report
+    return data
+
+
+def test_steps_follow_the_cord_tail_to_tail(figure8):
+    from openstrand import check, steps
+    strands = [s for s in figure8["strands"] if s["type"] != "MaskedStrand"]
+    path = steps.cord_path(strands)
+    assert len(path) == len(strands) and len({s["layer_name"] for s, _ in path}) == len(strands)
+    # Neighbours along the path share an end: it is one continuous cord.
+    ends = lambda s, forward: ((s["start"], s["end"]) if forward else (s["end"], s["start"]))
+    for (a, fa), (b, fb) in zip(path, path[1:]):
+        assert ends(a, fa)[1] == ends(b, fb)[0]
+    made = steps.make(figure8, count=5)
+    assert [t for t, _ in made] == [f"Step {n} of 5" for n in range(1, 6)]
+    assert made[-1][1] == figure8  # the whole design, groups and all
+    sizes = [sum(s["type"] != "MaskedStrand" for s in d["strands"]) for _, d in made]
+    assert sizes == sorted(sizes) and sizes[-1] == len(strands)
+    for _, data in made[:-1]:
+        assert check.problems(data) == []
+        cords = [s for s in data["strands"] if s["type"] != "MaskedStrand"]
+        names = {s["layer_name"] for s in cords}
+        assert all(s.get("attached_to", next(iter(names))) in names for s in cords)  # nothing hangs off a missing strand
+        arrows = [s for s in cords if s.get("end_arrow_visible") or s.get("start_arrow_visible")]
+        assert len(arrows) == 1  # one working end
+    with pytest.raises(steps.StepsError):
+        steps.make(figure8, count=40)
+
+
+def test_the_app_client_waits_for_its_own_answer():
+    import os as _os
+    from openstrand.app_tools import AppClient, AppError
+    read_end, write_end = _os.pipe()
+    writer = _os.fdopen(write_end, "w")
+    sent = []
+
+    def emit(event):  # the app answers: a stray line, then the reply
+        sent.append(event)
+        writer.write(json.dumps({"id": 999, "ok": True}) + "\n")
+        if event["name"] == "list_tabs":
+            writer.write(json.dumps({"id": event["id"], "ok": True, "result": {"tabs": [{"id": "a"}]}}) + "\n")
+        else:
+            writer.write(json.dumps({"id": event["id"], "ok": False, "error": "plan mode is on"}) + "\n")
+        writer.flush()
+    client = AppClient(emit, stream=_os.fdopen(read_end), timeout=5)
+    assert client.call("list_tabs", {}) == {"tabs": [{"id": "a"}]}
+    assert sent[0] == {"type": "app_call", "id": 1, "name": "list_tabs", "args": {}}
+    with pytest.raises(AppError, match="plan mode"):
+        client.call("rename_tab", {"tab_id": "a", "title": "x"})
+    writer.close()
+
+
+def test_the_agent_offers_app_tools_only_from_the_app(tmp_path):
+    from types import SimpleNamespace
+    from openstrand import agent
+    from openstrand.app_tools import APP_TOOL_NAMES
+    names = lambda runner: {t["name"] for t in runner.tools()}
+    assert not names(agent.Agent(SimpleNamespace(), tmp_path)) & APP_TOOL_NAMES
+    app = SimpleNamespace(call=lambda name, args: {})
+    assert APP_TOOL_NAMES <= names(agent.Agent(SimpleNamespace(), tmp_path, app=app))
+    looking = names(agent.Agent(SimpleNamespace(), tmp_path, app=app, plan=True))
+    assert looking & APP_TOOL_NAMES == {"list_tabs", "read_tab"}
+    assert "running inside the person's OpenStrand Studio" in agent.Agent(
+        SimpleNamespace(), tmp_path, app=app).system()[0]["text"]
+
+
+def test_open_in_new_tab_sends_the_step_file(tmp_path, figure8):
+    from types import SimpleNamespace
+    from openstrand import agent
+    calls = []
+    app = SimpleNamespace(call=lambda name, args: calls.append((name, args)) or {"opened": True})
+    runner = agent.Agent(SimpleNamespace(), tmp_path, app=app)
+    runner.workspace.store(figure8)
+    runner.workspace.run("make_steps", {"count": 3})
+    summary, _ = runner.app_tool("open_in_new_tab", {"design": "step 2", "title": "Step 2 · loop"})
+    assert calls[-1] == ("open_in_new_tab", {"path": str(tmp_path / "step_2.json"), "title": "Step 2 · loop"})
+    assert summary == "New tab · Step 2 · loop" and runner.opened_tabs == ["Step 2 · loop"]
+    with pytest.raises(agent.ToolError, match="3 steps"):
+        runner.app_tool("open_in_new_tab", {"design": "step 9", "title": "x"})
+
+
+def test_the_bridge_runs_the_real_tab_code(window, monkeypatch, tmp_path, figure8):
+    from openstrand import project as _project
+    panel, tm = window.claude_panel, window.tab_manager
+    bridge = panel.bridge
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    run = tmp_path / "run"
+    run.mkdir()
+    panel.out_dir = str(run)
+    step = run / "step_1.json"
+    _project.write(figure8, step)
+    replies = []
+    monkeypatch.setattr(panel, "answer", replies.append)
+
+    panel.run_mode = "auto"
+    before = len(tm.tabs)
+    reply = bridge.handle({"id": 1, "name": "open_in_new_tab", "args": {"path": str(step), "title": "Step 1 · tail"}})
+    assert reply["ok"] and reply["result"]["opened"] and len(tm.tabs) == before + 1
+    active = tm.get_active()
+    assert tm.title_for(active) == "Step 1 · tail" and len(window.canvas.strands) == len(figure8["strands"])
+    listed = bridge.handle({"id": 2, "name": "list_tabs"})["result"]["tabs"]
+    assert {"id": active.id, "title": "Step 1 · tail", "active": True,
+            "strands": len(figure8["strands"]), "unsaved": active.dirty} in listed
+    read = bridge.handle({"id": 3, "name": "read_tab", "args": {"tab_id": active.id}})["result"]
+    assert len(_project.read(read["file"])["strands"]) == len(figure8["strands"])
+    # Nothing from outside this request's folder opens.
+    outside = tmp_path / "elsewhere.json"
+    _project.write(figure8, outside)
+    refused = bridge.handle({"id": 4, "name": "open_in_new_tab", "args": {"path": str(outside), "title": "x"}})
+    assert not refused["ok"] and "only designs made in this request" in refused["error"]
+    assert not bridge.handle({"id": 5, "name": "close_tab", "args": {}})["ok"]
+
+    # Plan mode looks only.
+    panel.run_mode = "plan"
+    assert "plan mode" in bridge.handle({"id": 6, "name": "rename_tab",
+                                         "args": {"tab_id": active.id, "title": "x"}})["error"]
+    assert bridge.handle({"id": 7, "name": "list_tabs"})["ok"]
+
+    # Ask mode: a design waits as a card; a rename waits for Allow or Deny.
+    panel.run_mode = "ask"
+    count = len(tm.tabs)
+    card = bridge.handle({"id": 8, "name": "open_in_new_tab", "args": {"path": str(step), "title": "Step 1 · again"}})
+    assert card["ok"] and not card["result"]["opened"] and len(tm.tabs) == count
+    assert panel.entries[-1]["kind"] == "design" and panel.entries[-1]["title"] == "Step 1 · again"
+    assert bridge.handle({"id": 9, "name": "rename_tab", "args": {"tab_id": active.id, "title": "Tail"}}) is None
+    confirm = panel.entries[-1]
+    assert confirm["kind"] == "confirm" and "rename the tab “Step 1 · tail” to “Tail”" in panel.transcript.toPlainText()
+    from PyQt5.QtCore import QUrl
+    panel.follow_link(QUrl(f"os:allow/{panel.entries.index(confirm)}"))
+    assert replies[-1]["ok"] and tm.title_for(active) == "Tail" and confirm["state"] == "allowed"
+    assert bridge.handle({"id": 10, "name": "switch_tab", "args": {"tab_id": tm.tabs[0].id}}) is None
+    panel.follow_link(QUrl(f"os:deny/{panel.entries.index(panel.entries[-1])}"))
+    assert not replies[-1]["ok"] and "declined" in replies[-1]["error"] and tm.active_tab_id == active.id
+    panel.run_mode = "auto"
+
+
+@pytest.mark.parametrize("fake_api", [FAKE_STEPS], indirect=True)
+def test_claude_opens_a_figure_8_step_by_step_in_real_tabs(window, fake_api, monkeypatch, tmp_path):
+    import claude_settings
+    from PyQt5.QtWidgets import QApplication
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    claude_settings.save(api_key="sk-ant-test-key", model="claude-haiku-5-5", web=False)
+    panel, tm = window.claude_panel, window.tab_manager
+    panel.set_mode("auto")
+    before = len(tm.tabs)
+    panel.prompt_edit.setText("make a paracord figure 8 knot with open ends, and a tab for each step")
+    panel.send()
+    deadline = time.time() + 300
+    while panel.running() and time.time() < deadline:
+        QApplication.processEvents()
+        time.sleep(0.05)
+    QApplication.processEvents()
+    shown = unfolded(panel)
+    assert "Five tabs, one per step" in shown, shown
+    # The tab tools went to Claude, and five real tabs opened with Claude's titles, in order.
+    assert "open_in_new_tab" in {t["name"] for t in fake_api[0]["body"]["tools"]}
+    assert [tm.title_for(s) for s in tm.tabs[before:]] == STEP_TITLES
+    assert tm.title_for(tm.get_active()) == "Step 5 · the figure 8"
+    figure_8_strands = len(window.canvas.strands)
+    tm.switch_to_tab(tm.tabs[before].id)
+    QApplication.processEvents()
+    assert 0 < len(window.canvas.strands) < figure_8_strands  # step 1: the cord so far
+    # list_tabs reached Claude with the real tabs, and the finished design did not open again.
+    listed = json.loads(fake_api[3]["body"]["messages"][-1]["content"][0]["content"])
+    assert len(listed) == before and any(t["active"] for t in listed)
+    assert "New tab · Step 3 · up and over" in shown
+
+
+def test_claude_sits_above_the_tab_strip(window, monkeypatch, tmp_path):
+    from PyQt5.QtWidgets import QApplication
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel, edge = window.claude_panel, window.tab_edge
+    panel.set_open(True)
+    if not window.tabs_button.isChecked():
+        window.tabs_button.click()
+    QApplication.processEvents()
+    assert edge.isVisible()
+    panel.place()
+    if edge.geometry().center().y() > panel.visible_canvas().center().y():
+        assert panel.geometry().bottom() < edge.geometry().top()
+    window.tabs_button.click()  # hidden again: Claude goes back down to the canvas edge
+    QApplication.processEvents()
+    panel.place()
+    assert panel.geometry().bottom() == panel.visible_canvas().bottom() - panel.MARGIN

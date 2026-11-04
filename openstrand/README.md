@@ -87,4 +87,23 @@ button. Its first switch hides the Claude button altogether. For now Claude
 works when the app runs from source; the installed app needs the openstrand
 package bundled first.
 
+### Claude and the app's tabs (the bridge)
+
+The agent runs in its own process, so it cannot touch the app's windows. When
+the app starts it (`--app`), Claude also gets tools that act on the running
+app: `list_tabs`, `read_tab`, `open_in_new_tab`, `rename_tab` and
+`switch_tab`. Each call goes out as a JSON line (`{"type": "app_call", ...}`);
+the panel hands it to `AppBridge` (`src/claude_bridge.py`), which runs it on
+the app's main thread with the app's own code (the real `TabManager`, the
+same loader as Load) and answers on the agent's stdin
+(`openstrand/app_tools.py`, `AppClient`). Only those actions exist, only
+designs made in the request can open, and the panel's mode decides: plan
+mode only looks, ask mode shows a card or an Allow / Deny for each change,
+auto does it.
+
+`make_steps` (`openstrand/steps.py`) turns a design into tying steps: the cord
+drawn so far along its path, every crossing with its finished over and under,
+and an arrow on the working end. With the bridge, Claude opens each step in a
+tab of its own ("Step 1 · first loop", ...).
+
 Tests: `python -m pytest tests/test_openstrand_cli.py tests/test_claude_agent.py`

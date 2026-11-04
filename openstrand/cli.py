@@ -187,8 +187,13 @@ def cmd_agent(args):
     out_dir = Path(args.out_dir or 'designs')
     if not args.max_cost > 0:
         raise ValueError('--max-cost must be more than 0')
+    app = None
+    if args.app:  # started by OpenStrand Studio: its tabs are tools, answered on stdin
+        from .app_tools import AppClient
+        args.json_events = True
+        app = AppClient(lambda e: agent.print_events(e, True))
     runner = agent.Agent(client, out_dir, model=model, max_cost=args.max_cost, web=not args.no_web,
-                         effort=args.effort, plan=args.plan,
+                         effort=args.effort, plan=args.plan, app=app,
                          on_event=lambda e: agent.print_events(e, args.json_events),
                          quiet=lambda: quiet(not args.verbose))
     try:
@@ -270,6 +275,8 @@ def build_parser():
     agent_cmd.add_argument('--no-web', action='store_true', help='do not let Claude search or read the web')
     agent_cmd.add_argument('--effort', default='high', choices=['low', 'medium', 'high', 'xhigh', 'max'],
                            help='how hard Claude thinks (default high; higher costs more)')
+    agent_cmd.add_argument('--app', action='store_true',
+                           help="started by OpenStrand Studio: its tabs become tools, answered on stdin")
     agent_cmd.add_argument('--plan', action='store_true',
                            help='plan mode: research and write a plan, build nothing')
     agent_cmd.add_argument('--json-events', action='store_true', help='print one JSON event per line (for the app)')

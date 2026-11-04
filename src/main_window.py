@@ -2181,8 +2181,18 @@ class MainWindow(QMainWindow):
                 return False  # the current tab could not be kept; nothing replaced
         loaded = self.load_project_file(path)
         if loaded:
-            self.canvas.center_all_strands()  # as the home button: bring the design into view
+            self.fit_design_in_view()
         return loaded
+
+    def fit_design_in_view(self):
+        """Zoom out until the whole design shows (never in), then center it as
+        the home button does."""
+        canvas = self.canvas
+        bounds = canvas.get_bounding_rect()
+        if bounds.width() > 0 and bounds.height() > 0 and canvas.width() > 120 and canvas.height() > 120:
+            fit = min((canvas.width() - 60) / bounds.width(), (canvas.height() - 60) / bounds.height())
+            canvas.zoom_factor = max(canvas.min_zoom, min(canvas.zoom_factor, fit))
+        canvas.center_all_strands()
 
     def show_layer_state_log(self):
         """Display the current layer state information."""

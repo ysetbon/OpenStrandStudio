@@ -65,6 +65,21 @@ def cmd_make(args):
     _write_design(args, data, warnings, source, name)
 
 
+def cmd_draw(args):
+    from . import draw
+    text = sys.stdin.read() if args.spec == '-' else Path(args.spec).read_text(encoding='utf-8')
+    try:
+        spec = json.loads(text)
+    except json.JSONDecodeError as e:
+        raise ValueError(f'{args.spec}: not valid JSON ({e.msg}, line {e.lineno})') from None
+    with quiet(not args.verbose):
+        data, report = draw.build(spec)
+    out = Path(args.out or 'drawn.json')
+    project.write(data, out)
+    print(f'wrote {out} · {project.summary(data)}')
+    print(report)
+
+
 def cmd_samples(args):
     from . import generators
     names = [n for n in generators.samples() if not args.filter or args.filter.lower() in n.lower()]
@@ -170,8 +185,10 @@ def cmd_agent(args):
         if not Path(image).is_file():
             raise ValueError(f'{image}: no such image')
     out_dir = Path(args.out_dir or 'designs')
-    runner = agent.Agent(client, out_dir, model=model, max_cost=args.max_cost,
-                         on_event=lambda e: agent.print_events(e, args.json_events),
+    if not args.max_cost > 0:
+        raise ValueError('--max-cost must be more than 0')
+    runner = agent.Agent(client, out_dir, model=model, max_cost=args.max_cost, web=not args.no_web,
+                         effort=args.effort, on_event=lambda e: agent.print_events(e, args.json_events),
                          quiet=lambda: quiet(not args.verbose))
     try:
         result = runner.run(args.prompt, images=args.image or [], start=start)
@@ -220,6 +237,10 @@ def build_parser():
         d.add_argument('--out', help='project file to write (default: a name from the design)')
         d.add_argument('--verbose', action='store_true', help=argparse.SUPPRESS)
 
+    drawn = command('draw', 'draw a design from your own cords (points, x(t)/y(t) curves or shapes)', cmd_draw)
+    drawn.add_argument('spec', help='a JSON file with {"cords": [...]}, or - to read it from stdin')
+    drawn.add_argument('--out', help='project file to write (default drawn.json)')
+
     samples = command('samples', 'list the ready-made designs', cmd_samples)
     samples.add_argument('filter', nargs='?', help='only names containing this text')
 
@@ -244,7 +265,10 @@ def build_parser():
     agent_cmd.add_argument('--model', default='sonnet', help='sonnet (Claude Sonnet 5.5, default) or haiku (Claude Haiku 5.5)')
     agent_cmd.add_argument('--start', help='a project to start from, such as the current canvas')
     agent_cmd.add_argument('--out-dir', help='folder for design.json and design.png (default designs/)')
-    agent_cmd.add_argument('--max-cost', type=float, default=1.00, help='stop when one request has cost this many USD (default 1.00)')
+    agent_cmd.add_argument('--max-cost', type=float, default=2.00, help='stop when one request has cost this many USD (default 2.00)')
+    agent_cmd.add_argument('--no-web', action='store_true', help='do not let Claude search or read the web')
+    agent_cmd.add_argument('--effort', default='high', choices=['low', 'medium', 'high', 'xhigh', 'max'],
+                           help='how hard Claude thinks (default high; higher costs more)')
     agent_cmd.add_argument('--json-events', action='store_true', help='print one JSON event per line (for the app)')
 
     render = command('render', "draw a project to PNG with the app's real canvas", cmd_render)

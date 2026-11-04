@@ -14,6 +14,8 @@ MODELS = [
     ('claude-haiku-5-5', 'claude_model_haiku'),
 ]
 DEFAULT_MODEL = MODELS[0][0]
+DEFAULT_MAX_COST = 2.00     # USD one request may spend before it stops
+MAX_COST_RANGE = (0.10, 20.00)
 FILE_NAME = 'claude.json'
 
 
@@ -32,22 +34,34 @@ def settings_path():
     return os.path.join(settings_directory(), FILE_NAME)
 
 
+def _cost(value):
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return DEFAULT_MAX_COST
+    return min(max(value, MAX_COST_RANGE[0]), MAX_COST_RANGE[1])
+
+
 def load():
-    """{'api_key': str, 'model': str}; empty key when none is saved."""
+    """{'api_key', 'model', 'web', 'max_cost'}; empty key when none is saved."""
     data = {}
     try:
         with open(settings_path(), 'r', encoding='utf-8') as f:
             data = json.load(f)
     except (OSError, ValueError):
         data = {}
+    if not isinstance(data, dict):
+        data = {}
     model = data.get('model')
     if model not in [m for m, _ in MODELS]:
         model = DEFAULT_MODEL
-    return {'api_key': str(data.get('api_key') or '').strip(), 'model': model}
+    return {'api_key': str(data.get('api_key') or '').strip(), 'model': model,
+            'web': data.get('web', True) is not False,
+            'max_cost': _cost(data.get('max_cost', DEFAULT_MAX_COST))}
 
 
-def save(api_key=None, model=None):
-    """Update the saved key and/or model. An empty key removes it."""
+def save(api_key=None, model=None, web=None, max_cost=None):
+    """Update the saved settings given. An empty key removes the key."""
     current = load()
     if api_key is not None:
         current['api_key'] = api_key.strip()
@@ -55,9 +69,13 @@ def save(api_key=None, model=None):
         if model not in [m for m, _ in MODELS]:
             raise ValueError(f'unknown model {model}')
         current['model'] = model
+    if web is not None:
+        current['web'] = bool(web)
+    if max_cost is not None:
+        current['max_cost'] = _cost(max_cost)
     path = settings_path()
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    payload = {'model': current['model']}
+    payload = {'model': current['model'], 'web': current['web'], 'max_cost': current['max_cost']}
     if current['api_key']:
         payload['api_key'] = current['api_key']
     # Create the file readable by its owner only before writing the key.

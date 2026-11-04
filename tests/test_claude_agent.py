@@ -96,24 +96,41 @@ def test_agent_builds_checks_and_renders_a_design(tmp_path):
     assert result["cost"] == pytest.approx(5 * (1000 * 2 + 200 * 10) / 1e6)
 
 
-def test_sonnet_requests_use_fallback_cached_guide_and_medium_effort(tmp_path):
+def test_sonnet_requests_use_fallback_cached_guides_web_tools_and_visible_thinking(tmp_path):
     client = ScriptedClient(bracelet_script())
     agent.Agent(client, tmp_path, model="claude-sonnet-5-5").run("bracelet")
     kind, params = client.calls[0]
     assert kind == "beta" and params["fallbacks"] == "default"
     assert params["betas"] == [agent.FALLBACK_BETA]
     assert params["model"] == "claude-sonnet-5-5"
-    assert params["output_config"] == {"effort": "medium"}
+    assert params["output_config"] == {"effort": "high"}
+    assert params["thinking"] == {"type": "adaptive", "display": "summarized"}
+    assert params["max_tokens"] <= 21333  # above that the SDK insists on streaming
     assert params["system"][0]["cache_control"] == {"type": "ephemeral"}
-    assert "Turk's heads" in params["system"][0]["text"]  # the guide is in the prompt
+    system = params["system"][0]["text"]
+    assert "Turk's heads" in system and "Drawing your own designs" in system  # both guides
+    assert "web_search" in system and "first principles" in system
+    types = [t.get("type") for t in params["tools"]]
+    assert "web_search_20260209" in types and "web_fetch_20260209" in types
+    assert "draw_design" in [t.get("name") for t in params["tools"]]
     assert "temperature" not in params and "tool_choice" not in params
 
 
-def test_haiku_requests_have_no_fallback(tmp_path):
+def test_haiku_requests_have_no_fallback_and_basic_web_tools(tmp_path):
     client = ScriptedClient(bracelet_script())
     agent.Agent(client, tmp_path, model="claude-haiku-5-5").run("bracelet")
     kind, params = client.calls[0]
     assert kind == "messages" and "fallbacks" not in params and params["model"] == "claude-haiku-5-5"
+    types = [t.get("type") for t in params["tools"]]
+    assert "web_search_20250305" in types and "web_fetch_20250910" in types
+
+
+def test_without_web_the_web_tools_are_left_out(tmp_path):
+    client = ScriptedClient(bracelet_script())
+    agent.Agent(client, tmp_path, model="claude-sonnet-5-5", web=False, effort="medium").run("bracelet")
+    params = client.calls[0][1]
+    assert not [t for t in params["tools"] if "web" in t.get("name", "")]
+    assert params["output_config"] == {"effort": "medium"}
 
 
 def test_conversation_is_append_only_and_renders_go_back_as_images(tmp_path):
@@ -162,13 +179,83 @@ def test_start_design_is_loaded_and_described(tmp_path):
     assert result["project"]
 
 
+def test_agent_draws_its_own_design_and_reports_thinking_and_searches(tmp_path):
+    with_search = SimpleNamespace(input_tokens=1000, output_tokens=200, cache_creation_input_tokens=0,
+                                  cache_read_input_tokens=0,
+                                  server_tool_use=SimpleNamespace(web_search_requests=2))
+    first = SimpleNamespace(stop_reason="tool_use", usage=with_search, content=[
+        SimpleNamespace(type="thinking", thinking="Rings that overlap will link.", signature="s"),
+        SimpleNamespace(type="server_tool_use", id="srv1", name="web_search", input={"query": "hopf link"}),
+        SimpleNamespace(type="web_search_tool_result", tool_use_id="srv1", content=[SimpleNamespace(type="r")]),
+        SimpleNamespace(type="server_tool_use", id="srv2", name="web_fetch", input={"url": "https://x.org"}),
+        SimpleNamespace(type="web_fetch_tool_result", tool_use_id="srv2",
+                        content=SimpleNamespace(type="web_fetch_tool_error", error_code="url_not_accessible")),
+        SimpleNamespace(type="tool_use", id="t1", name="draw_design", input={"name": "rings", "cords": [
+            {"shape": "circle", "center": [480, 400], "radius": 180, "label": "Left"},
+            {"shape": "circle", "center": [720, 400], "radius": 180, "label": "Right"}]})])
+    client = ScriptedClient([first, reply(tool("t2", "render")), reply(text("Linked rings."), stop="end_turn")])
+    events = []
+    result = agent.Agent(client, tmp_path, model="claude-sonnet-5-5", on_event=events.append).run("rings")
+
+    assert result["ok"] and result["searches"] == 2
+    assert {"type": "thinking", "text": "Rings that overlap will link."} in events
+    assert {"type": "search", "name": "web_search", "query": "hopf link"} in events
+    assert {"type": "search", "name": "web_fetch", "query": "https://x.org"} in events
+    fetched = [e for e in events if e["type"] == "search_result" and e["name"] == "web_fetch"][0]
+    assert not fetched["ok"] and fetched["error"] == "url_not_accessible"
+    report = client.calls[1][1]["messages"][-1]["content"][0]["content"]
+    assert "2 crossings in all" in report and "render" in report
+    assert set(project.describe(project.read(result["project"]))["groups"]) == {"Left", "Right"}
+    assert result["cost"] == pytest.approx(3 * (1000 * 2 + 200 * 10) / 1e6 + 2 * agent.WEB_SEARCH_PRICE)
+
+
+def test_a_drawing_problem_goes_back_to_claude(tmp_path):
+    client = ScriptedClient([
+        reply(tool("t1", "draw_design", cords=[{"shape": "circle", "center": [600, 400], "radius": 100}])),
+        reply(text("That needs a crossing."), stop="end_turn")])
+    agent.Agent(client, tmp_path, model="claude-haiku-5-5").run("a ring")
+    result = client.calls[1][1]["messages"][-1]["content"][0]
+    assert result["is_error"] and "crosses nothing" in result["content"]
+
+
+def test_web_tools_switched_off_by_the_organization_are_dropped_with_a_note(tmp_path):
+    class NoWebClient(ScriptedClient):
+        def _create_beta(self, **params):
+            if any(t.get("name") == "web_search" for t in params["tools"]):
+                error = Exception("tools.10.web_search_20260209: web search is not enabled for this organization")
+                error.status_code = 400
+                raise error
+            return super()._create_beta(**params)
+
+    client = NoWebClient([reply(text("Done."), stop="end_turn")])
+    events = []
+    result = agent.Agent(client, tmp_path, model="claude-sonnet-5-5", on_event=events.append).run("x")
+    assert result["ok"] and len(client.calls) == 1
+    assert not [t for t in client.calls[0][1]["tools"] if "web" in t.get("name", "")]
+    assert any(e["type"] == "note" and "Web search" in e["text"] for e in events)
+
+
+def test_other_api_errors_are_not_swallowed(tmp_path):
+    class Broken(ScriptedClient):
+        def _create_beta(self, **params):
+            error = Exception("overloaded")
+            error.status_code = 529
+            raise error
+
+    with pytest.raises(Exception, match="overloaded"):
+        agent.Agent(Broken([]), tmp_path, model="claude-sonnet-5-5").run("x")
+
+
 # -------------------------------------------------------------- settings
 def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch):
     import claude_settings
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    assert claude_settings.load() == {"api_key": "", "model": "claude-sonnet-5-5"}
-    claude_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5")
-    assert claude_settings.load() == {"api_key": "sk-ant-test-1234567890", "model": "claude-haiku-5-5"}
+    assert claude_settings.load() == {"api_key": "", "model": "claude-sonnet-5-5", "web": True, "max_cost": 2.0}
+    claude_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5", web=False, max_cost=5)
+    assert claude_settings.load() == {"api_key": "sk-ant-test-1234567890", "model": "claude-haiku-5-5",
+                                      "web": False, "max_cost": 5.0}
+    claude_settings.save(max_cost=1000)
+    assert claude_settings.load()["max_cost"] == claude_settings.MAX_COST_RANGE[1]
     if os.name == "posix":
         assert stat.S_IMODE(os.stat(claude_settings.settings_path()).st_mode) == 0o600
     with pytest.raises(ValueError):
@@ -267,13 +354,22 @@ def test_the_settings_page_saves_key_and_model(monkeypatch, tmp_path):
     assert claude_settings.load()["model"] == "claude-haiku-5-5"
     page.remove_key()
     assert claude_settings.load()["api_key"] == ""
+    page.web_check.setChecked(False)
+    page.limit_spin.setValue(4.5)
+    assert claude_settings.load()["web"] is False and claude_settings.load()["max_cost"] == 4.5
     page.retranslate("he")
     assert page.model_combo.count() == 2
+    assert not page.web_check.isChecked() and page.limit_spin.value() == 4.5
 
 
 # ------------------------------------------------------- end to end, no key
 FAKE_REPLIES = [
-    {"content": [{"type": "thinking", "thinking": "", "signature": "sig-1"},
+    {"content": [{"type": "thinking", "thinking": "A bracelet weave is an MxN stitch.", "signature": "sig-1"},
+                 {"type": "server_tool_use", "id": "srvtoolu_1", "name": "web_search",
+                  "input": {"query": "5x3 bracelet weave"}},
+                 {"type": "web_search_tool_result", "tool_use_id": "srvtoolu_1",
+                  "content": [{"type": "web_search_result", "url": "https://example.com/weave",
+                               "title": "Bracelet weaves", "encrypted_content": "abc", "page_age": None}]},
                  {"type": "text", "text": "A 5x3 right-hand stitch."},
                  {"type": "tool_use", "id": "toolu_1", "name": "make_mxn", "input": {"m": 5, "n": 3, "hand": "rh"}}],
      "stop_reason": "tool_use"},
@@ -285,9 +381,22 @@ FAKE_REPLIES = [
      "stop_reason": "end_turn"},
 ]
 
+FAKE_DRAWING = [
+    {"content": [{"type": "thinking", "thinking": "Two overlapping circles link like a chain.", "signature": "s"},
+                 {"type": "tool_use", "id": "toolu_1", "name": "draw_design", "input": {
+                     "name": "linked rings", "cords": [
+                         {"shape": "circle", "center": [480, 400], "radius": 180, "color": "teal",
+                          "label": "Left ring"},
+                         {"shape": "circle", "center": [720, 400], "radius": 180, "color": "gold",
+                          "label": "Right ring"}]}}],
+     "stop_reason": "tool_use"},
+    {"content": [{"type": "tool_use", "id": "toolu_2", "name": "render", "input": {}}], "stop_reason": "tool_use"},
+    {"content": [{"type": "text", "text": "Two linked rings, teal and gold."}], "stop_reason": "end_turn"},
+]
+
 
 @pytest.fixture
-def fake_api(monkeypatch):
+def fake_api(monkeypatch, request):
     """A local stand-in for the Messages API, reached through the real SDK."""
     import threading
     from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -299,11 +408,14 @@ def fake_api(monkeypatch):
             # The SDK sends the key as x-api-key or as a bearer token.
             key = self.headers.get("x-api-key") or (self.headers.get("authorization") or "").removeprefix("Bearer ")
             requests.append({"beta": self.headers.get("anthropic-beta"), "key": key, "body": body})
-            reply = FAKE_REPLIES[min(len(requests) - 1, len(FAKE_REPLIES) - 1)]
+            replies = getattr(request, "param", FAKE_REPLIES)
+            reply = replies[min(len(requests) - 1, len(replies) - 1)]
+            searches = sum(1 for b in reply["content"] if b["type"] == "server_tool_use")
             out = json.dumps({"id": f"msg_{len(requests)}", "type": "message", "role": "assistant",
                               "model": body["model"], "stop_sequence": None,
                               "usage": {"input_tokens": 1200, "output_tokens": 300,
-                                        "cache_creation_input_tokens": 0, "cache_read_input_tokens": 900},
+                                        "cache_creation_input_tokens": 0, "cache_read_input_tokens": 900,
+                                        "server_tool_use": {"web_search_requests": searches}},
                               **reply}).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -354,6 +466,39 @@ def test_the_panel_runs_the_agent_in_the_background_and_opens_its_design(window,
     assert vertical and all(s.color.name() == "#257d98" for s in vertical)
     shown = panel.transcript.toPlainText()
     assert "teal vertical ribbons" in shown and "Sonnet 5.5" in panel.status_label.text()
+    # The search and the thinking show in the panel, and both went back to the API unchanged.
+    assert "Searching the web: 5x3 bracelet weave" in shown and "A bracelet weave is an MxN stitch." in shown
+    echoed = [b["type"] for b in fake_api[1]["body"]["messages"][1]["content"]]
+    assert echoed[:3] == ["thinking", "server_tool_use", "web_search_tool_result"]
+    # The search is priced in: 3 replies of tokens plus one $0.01 search.
+    tokens = 3 * (1200 * 2 + 300 * 10 + 900 * 0.2) / 1e6
+    assert f"${tokens + 0.01:.3f}" in panel.status_label.text()
+
+
+@pytest.mark.parametrize("fake_api", [FAKE_DRAWING], indirect=True)
+def test_a_drawing_by_claude_opens_with_its_groups_in_the_layer_panel(window, fake_api, monkeypatch, tmp_path):
+    import claude_settings
+    from PyQt5.QtWidgets import QApplication
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    claude_settings.save(api_key="sk-ant-test-key", model="claude-haiku-5-5", web=False, max_cost=0.5)
+    panel = window.claude_panel
+    opened = []
+    panel.design_ready.connect(opened.append)
+    panel.prompt_edit.setText("two linked rings")
+    panel.send()
+    deadline = time.time() + 300
+    while panel.running() and time.time() < deadline:
+        QApplication.processEvents()
+        time.sleep(0.05)
+    QApplication.processEvents()
+
+    assert opened, panel.transcript.toPlainText()
+    body = fake_api[0]["body"]
+    assert body["model"] == "claude-haiku-5-5" and not [t for t in body["tools"] if "web" in t.get("name", "")]
+    assert len(window.canvas.strands) == len(project.read(opened[-1])["strands"])
+    assert {"Left ring", "Right ring"} <= set(window.group_layer_manager.get_group_data())
+    shown = panel.transcript.toPlainText()
+    assert "Drawing" in shown and "Two linked rings" in shown
 
 
 @pytest.mark.parametrize("package, expected", [

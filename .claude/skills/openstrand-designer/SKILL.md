@@ -6,12 +6,14 @@ description: Build OpenStrand Studio projects (.json) from a text request or a r
 # OpenStrand designer
 
 You make OpenStrand Studio projects by running the `openstrand` command from
-the repository root. Never write strand coordinates or project JSON by hand:
-the command builds designs with the app's own code, so they open correctly.
+the repository root. Never write project files or strand data by hand: give
+the command a design (a sample, a generator, or your own cord centerlines for
+`draw`) and it builds the strands with the app's own code, so they open
+correctly.
 
 Read `guide.md` (next to this file) before the first design in a session. It
 explains sets, over and under, Turk's heads, MxN stitches and the words people
-use for them.
+use for them. `drawing.md` explains how to draw any design yourself.
 
 ## Steps
 
@@ -21,6 +23,10 @@ use for them.
    the hand, the colors.
 2. **Look for a starting point.** `python -m openstrand samples <word>` lists
    ready-made designs. Prefer a sample or a published size when one fits.
+   When nothing fits, design it: search the web for what it is and how it is
+   built (or reason it out when the web has nothing), plan the cords and
+   crossings, write them as a JSON design (see `drawing.md`) and run
+   `python -m openstrand draw design.json --out designs/x.json`.
 3. **Build it.** Save every design under `designs/` (ignored by git):
    ```
    python -m openstrand make turks_head --leads 3 --bights 5 --color gold --out designs/mat.json
@@ -51,9 +57,10 @@ use for them.
 
 ## When the command cannot do it
 
-If the request needs something no command offers (a design kind, a width or
-spacing option, joining two designs), build the closest thing, say plainly
-what is missing, and add one line to `gaps.md` next to this file:
+Most shapes can be drawn with `openstrand draw`. If the request needs
+something even drawing cannot do (an option the commands lack, editing one
+strand of an existing design), build the closest thing, say plainly what is
+missing, and add one line to `gaps.md` next to this file:
 
 ```
 - <date> · <what was asked> · <what the command could not do>

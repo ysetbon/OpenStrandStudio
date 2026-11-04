@@ -17,8 +17,9 @@ import sys
 import time
 
 from PyQt5.QtCore import QProcess, QProcessEnvironment, Qt, pyqtSignal
-from PyQt5.QtWidgets import (QCheckBox, QComboBox, QFileDialog, QHBoxLayout, QLabel, QLineEdit,
-                             QPushButton, QSizePolicy, QTextBrowser, QToolButton, QVBoxLayout, QWidget)
+from PyQt5.QtWidgets import (QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QHBoxLayout, QLabel,
+                             QLineEdit, QPushButton, QSizePolicy, QTextBrowser, QToolButton, QVBoxLayout,
+                             QWidget)
 
 import claude_settings
 from translations import translations
@@ -30,11 +31,14 @@ TOOL_CHIPS = {
     'make_turks_head': ('add_new_strand', '#93e993', '#1a1a1a'),
     'make_mxn': ('add_new_strand', '#93e993', '#1a1a1a'),
     'make_heart': ('add_new_strand', '#93e993', '#1a1a1a'),
+    'draw_design': ('add_new_strand', '#93e993', '#1a1a1a'),
     'load_sample': ('load', '#a07a6a', '#1a1a1a'),
     'search_samples': ('load', '#a07a6a', '#1a1a1a'),
     'render': ('save_image', '#8a3a55', '#ffffff'),
 }
 OTHER_CHIP = ('#d4d4d4', '#1a1a1a')
+# Tools that can take up to a minute: the panel says so when they start.
+SLOW_TOOLS = {'draw_design', 'make_heart', 'make_turks_head'}
 
 
 def _tr(language, key):
@@ -42,9 +46,13 @@ def _tr(language, key):
     return table.get(key) or translations['en'].get(key, key)
 
 
-def agent_command(prompt, model, out_dir, images=(), start=None):
+def agent_command(prompt, model, out_dir, images=(), start=None, web=True, max_cost=None):
     """The program and arguments that run one agent request."""
     args = ['-m', 'openstrand', 'agent', prompt, '--model', model, '--out-dir', out_dir, '--json-events']
+    if not web:
+        args.append('--no-web')
+    if max_cost is not None:
+        args += ['--max-cost', f'{max_cost:.2f}']
     for image in images:
         args += ['--image', image]
     if start:
@@ -231,7 +239,8 @@ class ClaudePanel(QWidget):
         if self.use_canvas_check.isChecked():
             start = self.write_canvas(os.path.join(self.out_dir, 'canvas.json'))
         program, args = agent_command(prompt, settings['model'], self.out_dir,
-                                      [self.image_path] if self.image_path else [], start)
+                                      [self.image_path] if self.image_path else [], start,
+                                      web=settings['web'], max_cost=settings['max_cost'])
         env = QProcessEnvironment.systemEnvironment()
         env.insert('ANTHROPIC_API_KEY', settings['api_key'])
         env.insert('QT_QPA_PLATFORM', 'offscreen')
@@ -293,6 +302,19 @@ class ClaudePanel(QWidget):
         kind = event.get('type')
         if kind == 'text':
             self.add_claude(event.get('text', ''))
+        elif kind == 'thinking':
+            text = event.get('text', '')
+            text = text if len(text) <= 600 else text[:600].rsplit(' ', 1)[0] + '…'
+            self.add_html(f'<p style="margin:2px 0 2px 16px; color:gray;"><i>'
+                          f"{html.escape(_tr(self.language, 'claude_thinking'))}: {html.escape(text)}</i></p>")
+        elif kind == 'search':
+            key = 'claude_reading' if event.get('name') == 'web_fetch' else 'claude_searching'
+            value = event.get('query', '')
+            self.add_note(_tr(self.language, key).format(query=value, url=value))
+        elif kind == 'note':
+            self.add_note(event.get('text', ''))
+        elif kind == 'tool_start' and event.get('name') in SLOW_TOOLS:
+            self.add_note(_tr(self.language, 'claude_drawing'))
         elif kind == 'tool_end':
             self.add_tool(event.get('name', ''), event.get('ok', False), event.get('summary', ''))
         elif kind == 'usage':
@@ -366,6 +388,27 @@ class ClaudeSettingsPage(QWidget):
         self.model_combo.currentIndexChanged.connect(self.save_model)
         layout.addWidget(self.model_combo)
 
+        self.web_check = QCheckBox(self)
+        self.web_check.toggled.connect(lambda on: claude_settings.save(web=on))
+        layout.addWidget(self.web_check)
+        self.web_hint = QLabel(self)
+        self.web_hint.setWordWrap(True)
+        self.web_hint.setStyleSheet('color: gray;')
+        layout.addWidget(self.web_hint)
+
+        limit_row = QHBoxLayout()
+        self.limit_label = QLabel(self)
+        self.limit_spin = QDoubleSpinBox(self)
+        self.limit_spin.setRange(*claude_settings.MAX_COST_RANGE)
+        self.limit_spin.setDecimals(2)
+        self.limit_spin.setSingleStep(0.50)
+        self.limit_spin.setPrefix('$')
+        self.limit_spin.valueChanged.connect(lambda value: claude_settings.save(max_cost=value))
+        limit_row.addWidget(self.limit_label)
+        limit_row.addWidget(self.limit_spin)
+        limit_row.addStretch()
+        layout.addLayout(limit_row)
+
         self.storage = QLabel(self)
         self.storage.setWordWrap(True)
         self.storage.setStyleSheet('color: gray;')
@@ -391,6 +434,15 @@ class ClaudeSettingsPage(QWidget):
             self.model_combo.addItem(t(key), model)
         self.model_combo.setCurrentIndex(max(0, self.model_combo.findData(saved['model'])))
         self.model_combo.blockSignals(False)
+        self.web_check.setText(t('claude_web_label'))
+        self.web_hint.setText(t('claude_web_hint'))
+        self.limit_label.setText(t('claude_limit_label'))
+        self.web_check.blockSignals(True)
+        self.web_check.setChecked(saved['web'])
+        self.web_check.blockSignals(False)
+        self.limit_spin.blockSignals(True)
+        self.limit_spin.setValue(saved['max_cost'])
+        self.limit_spin.blockSignals(False)
         self.show_saved(saved['api_key'])
         self.setLayoutDirection(Qt.RightToLeft if language_code == 'he' else Qt.LeftToRight)
 

@@ -12,6 +12,7 @@ python -m openstrand make turks_head --leads 3 --bights 5 --color gold --out des
 python -m openstrand make mxn --m 4 --n 3 --hand lh --stretch --out designs/bracelet.json
 python -m openstrand make heart --color crimson --out designs/heart.json
 python -m openstrand make sample hopf_link --out designs/rings.json
+python -m openstrand draw my_design.json --out designs/mine.json
 python -m openstrand samples turks
 python -m openstrand info designs/bracelet.json
 python -m openstrand recolor designs/bracelet.json --set 4,5,6,7 --color red
@@ -25,6 +26,7 @@ python -m openstrand render designs/bracelet.json --out designs/bracelet.png
 | `make mxn` | An MxN stitch from `mxn_samples/` (m, n from 1 to 8, lh or rh, `--stretch`). |
 | `make heart` | A ribbon heart from one cord (fitted, about a minute). |
 | `make sample NAME` | A ready-made design from `knot_samples/` or `mxn_samples/`. |
+| `draw SPEC` | Your own design from cords given as points, x(t)/y(t) curves or shapes; woven over and under, with a report of every crossing. See `.claude/skills/openstrand-designer/drawing.md`. |
 | `samples [TEXT]` | Lists the ready-made designs. |
 | `info FILE` | Sets, colors, which way each set runs, strands, masks, size. `--json` for machines. |
 | `validate FILE` | Loads the project with the app's loader and lists problems. |
@@ -40,10 +42,13 @@ settings are never read or changed. Without a display it draws offscreen.
 ## Claude agent
 
 `openstrand agent` asks Claude to build or change a design with the commands
-above. Claude reads the request (and any reference image), calls the tools,
-looks at each render, fixes what is off and stops when it is right. The loop
-is in `openstrand/agent.py`; the guide in
-`.claude/skills/openstrand-designer/guide.md` is its built-in knowledge.
+above. Claude reads the request (and any reference image), uses a sample or a
+generator when one fits, and otherwise designs it: it searches the web for
+what the thing is and how it is built (or reasons it out when nothing turns
+up), plans the cords and crossings, draws them, looks at each render, fixes
+what is off and stops when it is right. The loop is in `openstrand/agent.py`;
+`guide.md` and `drawing.md` in `.claude/skills/openstrand-designer/` are its
+built-in knowledge.
 
 ```
 python -m openstrand agent "5x3 right hand bracelet in teal and gold"
@@ -53,7 +58,9 @@ python -m openstrand agent "make the gold ribbons red" --start designs/bracelet.
 
 - Needs your own Anthropic API key: `ANTHROPIC_API_KEY`, or the key saved in
   the app under Settings > Claude. You pay Anthropic for what it uses; each
-  run prints its cost and stops at `--max-cost` (default $1.00).
+  run prints its cost and stops at `--max-cost` (default $2.00).
+- Web search and fetch are on (`--no-web` turns them off); each search costs
+  about $0.01. Claude thinks at `--effort high` by default.
 - `--model sonnet` (Claude Sonnet 5.5, default) or `--model haiku`
   (Claude Haiku 5.5, faster and much cheaper).
 - Results go to `--out-dir` (default `designs/`): `design.json` and `design.png`.

@@ -1,9 +1,10 @@
 """A Claude agent that builds OpenStrand Studio projects with the openstrand tools.
 
 The agent loop is ours: Claude reads the request (and any reference image),
-calls the tools below, looks at each render, and stops when the design is
-right. Everything it does is reported through on_event, one dict per step,
-so a terminal or the app's Claude panel can show progress.
+researches it on the web when it needs to, plans a structure, builds it from
+samples, generators or its own drawing, looks at each render, and stops when
+the design is right. Everything it does is reported through on_event, one
+dict per step, so a terminal or the app's Claude panel can show progress.
 
 Runs with the user's own Anthropic API key (ANTHROPIC_API_KEY).
 """
@@ -17,6 +18,7 @@ from . import ROOT, colors, edit, generators, project
 
 MODELS = {'sonnet': 'claude-sonnet-5-5', 'haiku': 'claude-haiku-5-5'}
 DEFAULT_MODEL = MODELS['sonnet']
+EFFORTS = ('low', 'medium', 'high', 'xhigh', 'max')
 
 # USD per million tokens: input, output, cache write (5 min), cache read.
 # Haiku 5.5's prices are for prompts up to 100K tokens, which these stay under.
@@ -24,35 +26,55 @@ PRICES = {
     'claude-sonnet-5-5': (2.00, 10.00, 2.50, 0.20),
     'claude-haiku-5-5': (0.10, 0.50, 0.125, 0.01),
 }
+WEB_SEARCH_PRICE = 0.01  # USD per search ($10 per 1,000)
+
 # Server-side fallback re-runs a declined Sonnet request on another model;
 # Haiku has none.
 FALLBACK_BETA = 'server-side-fallback-2026-07-01'
 
-GUIDE = ROOT / '.claude' / 'skills' / 'openstrand-designer' / 'guide.md'
+# Web tools run on Anthropic's servers. Sonnet 5.5 has the versions that
+# filter results before they reach the context; Haiku 5.5 the basic ones.
+WEB_TOOLS = {
+    'claude-sonnet-5-5': [{'type': 'web_search_20260209', 'name': 'web_search', 'max_uses': 6},
+                          {'type': 'web_fetch_20260209', 'name': 'web_fetch', 'max_uses': 6}],
+    'claude-haiku-5-5': [{'type': 'web_search_20250305', 'name': 'web_search', 'max_uses': 6},
+                         {'type': 'web_fetch_20250910', 'name': 'web_fetch', 'max_uses': 6}],
+}
+
+SKILL = ROOT / '.claude' / 'skills' / 'openstrand-designer'
+GUIDE = SKILL / 'guide.md'
+DRAWING = SKILL / 'drawing.md'
 
 INSTRUCTIONS = """You design OpenStrand Studio projects for the person you are talking to.
 OpenStrand Studio is a desktop app for drawing knots, mats, stitches and other
-woven strand designs. You build every design with the tools; never invent
-coordinates or project JSON.
+woven strand designs. Every design you make goes through the tools, so it opens
+in the app with real strands, masks and groups.
 
 How to work:
-1. Work out what the person wants from their words and any reference image,
-   using the guide below. Describe an image in the guide's terms first (kind
-   of design, leads and bights or ribbons, hand, colors).
-2. Start from a published sample when one fits (search_samples).
-3. Build it, then set the colors. describe tells you which sets run vertical
-   and which horizontal.
-4. Call validate, then render, and look at the picture. Compare it with the
-   request: counts, colors, over and under.
-5. Fix what is wrong and render again. Stop after four renders.
-6. Finish with two or three short sentences: what you made, the colors, and
-   anything you could not do. Plain words, no markdown, no lists.
+1. Understand the request from the words and any reference image. Describe an
+   image in the guide's terms first (kind of design, loops, crossings, colors).
+2. If a published sample or a make_ tool fits, use it: it is the fastest and
+   cleanest result.
+3. Otherwise design it yourself:
+   - Research: when you do not know exactly what the thing is or how it is
+     tied or woven, search the web (web_search) and read a good page
+     (web_fetch): its structure, how many strands, how they cross, what it
+     looks like when finished.
+   - If the web has nothing useful, reason it out from first principles: what
+     the name suggests, how similar knots and stitches are built. Say what you
+     assumed.
+   - Plan the structure in OpenStrand terms: how many cords, where each runs,
+     where they cross, which goes over.
+   - Draw it with draw_design, using the drawing guide below. Read the report:
+     crossings, conflicts and warnings.
+4. Call render and look at the picture. Compare it with the request and with
+   what you learned: counts, shape, colors, over and under. Fix what is off and
+   draw or render again. Stop after five renders.
+5. Finish with two or three short sentences: what you made, how it is built,
+   and anything you could not do or had to assume. Plain words, no markdown.
 
-If the request needs something the tools cannot do, build the closest design
-and say plainly what is missing. Making a Turk's head size that is not a
-published sample, or a heart, takes about a minute: call it once and wait.
-
-The guide:
+Drawing takes a few seconds to a minute; making a Turk's head size that is not
+published, or a heart, about a minute. Call it once and wait.
 
 """
 
@@ -97,6 +119,24 @@ TOOLS = [
             'color': {'type': 'string', 'description': 'color name or hex; default crimson'}}},
     },
     {
+        'name': 'draw_design',
+        'description': 'Draw your own design from cord centerlines; it replaces the current design. '
+                       'Each cord is points it passes through ({"points": [[x, y], ...]}), a parametric '
+                       'curve ({"x": "...t...", "y": "...t...", "t0": 0, "t1": "2*pi"}) or a shape '
+                       '({"shape": "circle", "center": [x, y], "radius": r}; also ellipse, polygon, heart, '
+                       'turks_head), plus optional closed, color, width, label, second_color, tucked. '
+                       'Every crossing gets over and under, alternating along each cord. Send the whole '
+                       'design every time. Returns a report: crossings, which cord is on top, conflicts '
+                       'and warnings. See "Drawing your own designs" in the guide.',
+        'input_schema': {'type': 'object', 'properties': {
+            'name': {'type': 'string', 'description': 'what the design is'},
+            'weave': {'type': 'string', 'enum': ['alternate', 'alternate_under_first']},
+            'cords': {'type': 'array', 'minItems': 1, 'maxItems': 12,
+                      'items': {'type': 'object', 'description': 'one cord: points, x/y, or shape, '
+                                                                 'plus style'}}},
+            'required': ['cords']},
+    },
+    {
         'name': 'describe',
         'description': 'Describe the current design: each set with its color and which way it runs '
                        '(vertical, horizontal), strands, masks, size.',
@@ -137,13 +177,19 @@ def image_block(path):
     return {'type': 'image', 'source': {'type': 'base64', 'media_type': media, 'data': data}}
 
 
+def _searches(usage):
+    server = getattr(usage, 'server_tool_use', None)
+    return (getattr(server, 'web_search_requests', 0) or 0) if server is not None else 0
+
+
 def cost_of(model, usage):
-    """USD for one response's usage."""
+    """USD for one response's usage, web searches included."""
     p_in, p_out, p_write, p_read = PRICES.get(model, PRICES[DEFAULT_MODEL])
     get = lambda name: getattr(usage, name, 0) or 0
-    return (get('input_tokens') * p_in + get('output_tokens') * p_out
-            + get('cache_creation_input_tokens') * p_write
-            + get('cache_read_input_tokens') * p_read) / 1_000_000
+    return ((get('input_tokens') * p_in + get('output_tokens') * p_out
+             + get('cache_creation_input_tokens') * p_write
+             + get('cache_read_input_tokens') * p_read) / 1_000_000
+            + _searches(usage) * WEB_SEARCH_PRICE)
 
 
 class Workspace:
@@ -161,7 +207,7 @@ class Workspace:
 
     def need(self):
         if self.data is None:
-            raise ToolError('there is no design yet: make one or load a sample first')
+            raise ToolError('there is no design yet: make, draw or load one first')
         return self.data
 
     def store(self, data):
@@ -213,6 +259,12 @@ class Workspace:
             data, warnings, _ = generators.heart(colors.parse(args.get('color') or 'crimson'))
             self.store(data)
             return f'Heart · {project.summary(data)}', f'made a ribbon heart: {project.summary(data)}'
+        if name == 'draw_design':
+            from . import draw
+            data, report = draw.build(args)
+            self.store(data)
+            title = str(args.get('name') or 'drawing')[:40]
+            return f'{title} · {project.summary(data)}', report + '\nNow render it and look at the result.'
         if name == 'describe':
             info = project.describe(self.need())
             lines = [f"{info['strands']} strands, {info['masks']} masks, size {info['size'][0]}x{info['size'][1]}"]
@@ -245,39 +297,78 @@ class Workspace:
 class Agent:
     """Runs one request: the loop of Claude calls and tool calls."""
 
-    def __init__(self, client, out_dir, model=DEFAULT_MODEL, on_event=None, max_rounds=12, max_cost=1.00,
-                 quiet=None):
+    def __init__(self, client, out_dir, model=DEFAULT_MODEL, on_event=None, max_rounds=24, max_cost=2.00,
+                 quiet=None, web=True, effort='high'):
         if model not in PRICES:
             raise ValueError(f"model must be one of {', '.join(PRICES)}")
+        if effort not in EFFORTS:
+            raise ValueError(f"effort must be one of {', '.join(EFFORTS)}")
         self.client = client
         # Wraps every tool call; the CLI passes one that hides the app's own
         # console output, so it cannot mix with the events.
         self.quiet = quiet or contextlib.nullcontext
         self.model = model
+        self.web = web
+        self.effort = effort
         self.workspace = Workspace(out_dir)
         self.on_event = on_event or (lambda event: None)
         self.max_rounds = max_rounds
         self.max_cost = max_cost
         self.cost = 0.0
+        self.searches = 0
         self.usage = {'input_tokens': 0, 'output_tokens': 0,
                       'cache_creation_input_tokens': 0, 'cache_read_input_tokens': 0}
 
     def system(self):
-        return [{'type': 'text', 'text': INSTRUCTIONS + GUIDE.read_text(encoding='utf-8'),
-                 'cache_control': {'type': 'ephemeral'}}]
+        text = (INSTRUCTIONS + 'The guide:\n\n' + GUIDE.read_text(encoding='utf-8')
+                + '\n\n' + DRAWING.read_text(encoding='utf-8'))
+        return [{'type': 'text', 'text': text, 'cache_control': {'type': 'ephemeral'}}]
+
+    def tools(self):
+        return TOOLS + (WEB_TOOLS[self.model] if self.web else [])
 
     def call(self, messages):
-        params = dict(model=self.model, max_tokens=16000, system=self.system(), tools=TOOLS,
-                      messages=messages, output_config={'effort': 'medium'})
-        if self.model == MODELS['sonnet']:
-            return self.client.beta.messages.create(betas=[FALLBACK_BETA], fallbacks='default', **params)
-        return self.client.messages.create(**params)
+        params = dict(model=self.model, max_tokens=20000, system=self.system(), tools=self.tools(),
+                      messages=messages, thinking={'type': 'adaptive', 'display': 'summarized'},
+                      output_config={'effort': self.effort})
+        try:
+            if self.model == MODELS['sonnet']:
+                return self.client.beta.messages.create(betas=[FALLBACK_BETA], fallbacks='default', **params)
+            return self.client.messages.create(**params)
+        except Exception as e:
+            # An organization can switch the web tools off for its API keys:
+            # carry on without them rather than fail the request.
+            text = str(e)
+            if self.web and getattr(e, 'status_code', None) == 400 and ('web_search' in text or 'web_fetch' in text):
+                self.web = False
+                self.on_event({'type': 'note', 'text': 'Web search is not available for this API key '
+                                                        '(an organization setting in the Anthropic Console); '
+                                                        'continuing without it.'})
+                return self.call(messages)
+            raise
 
     def count(self, response):
         for key in self.usage:
             self.usage[key] += getattr(response.usage, key, 0) or 0
+        self.searches += _searches(response.usage)
         self.cost += cost_of(self.model, response.usage)
-        self.on_event({'type': 'usage', 'cost': round(self.cost, 4), **self.usage})
+        self.on_event({'type': 'usage', 'cost': round(self.cost, 4), 'searches': self.searches, **self.usage})
+
+    def report(self, block):
+        """Events for the parts of a response people want to follow."""
+        kind = block.type
+        if kind == 'thinking' and (getattr(block, 'thinking', '') or '').strip():
+            self.on_event({'type': 'thinking', 'text': block.thinking.strip()})
+        elif kind == 'server_tool_use':
+            args = block.input if isinstance(block.input, dict) else {}
+            self.on_event({'type': 'search', 'name': block.name,
+                           'query': args.get('query') or args.get('url') or ''})
+        elif kind in ('web_search_tool_result', 'web_fetch_tool_result'):
+            content = getattr(block, 'content', None)
+            error = getattr(content, 'error_code', None) if not isinstance(content, list) else None
+            found = len(content) if isinstance(content, list) else None
+            self.on_event({'type': 'search_result', 'name': kind.replace('_tool_result', ''),
+                           'ok': error is None, 'error': error, 'results': found})
 
     def run(self, prompt, images=(), start=None):
         """Build what prompt asks for. Returns the 'done' event.
@@ -304,12 +395,14 @@ class Agent:
                     if block.type == 'text' and block.text.strip():
                         said.append(block.text.strip())
                         self.on_event({'type': 'text', 'text': block.text.strip()})
+                    else:
+                        self.report(block)
                 if response.stop_reason == 'refusal':
                     return self.finish(said, error='Claude declined this request.')
                 if response.stop_reason == 'max_tokens':
                     return self.finish(said, error='Claude ran out of room for its answer.')
                 if response.stop_reason == 'pause_turn':
-                    continue
+                    continue  # a long server-side search: send the turn back to resume it
                 if response.stop_reason != 'tool_use':
                     return self.finish(said)
                 results = [self.tool(block) for block in response.content if block.type == 'tool_use']
@@ -344,7 +437,7 @@ class Agent:
                  'text': said[-1] if said else '',
                  'project': str(ws.project_path) if ws.data is not None else None,
                  'png': str(ws.png_path) if ws.rendered_version == ws.version and ws.data is not None else None,
-                 'cost': round(self.cost, 4), 'model': self.model, **self.usage}
+                 'cost': round(self.cost, 4), 'model': self.model, 'searches': self.searches, **self.usage}
         self.on_event(event)
         return event
 
@@ -357,9 +450,18 @@ def print_events(event, as_json=False):
     kind = event['type']
     if kind == 'text':
         print(f"claude: {event['text']}", flush=True)
+    elif kind == 'thinking':
+        print(f"  (thinking) {event['text']}", flush=True)
+    elif kind == 'search':
+        print(f"  … {event['name']} {event['query']}".rstrip(), flush=True)
+    elif kind == 'search_result':
+        found = f"{event['results']} results" if event['results'] is not None else 'done'
+        print(f"  {'✓' if event['ok'] else '✗'} {event['name']}: {found if event['ok'] else event['error']}", flush=True)
+    elif kind == 'note':
+        print(f"note: {event['text']}", flush=True)
     elif kind == 'tool_start':
         args = ' '.join(f'{k}={v}' for k, v in event['input'].items())
-        print(f"  … {event['name']} {args}".rstrip(), flush=True)
+        print(f"  … {event['name']} {args[:200]}".rstrip(), flush=True)
     elif kind == 'tool_end':
         print(f"  {'✓' if event['ok'] else '✗'} {event['summary']}", flush=True)
     elif kind == 'done':
@@ -367,4 +469,5 @@ def print_events(event, as_json=False):
             print(f"error: {event['error']}", flush=True)
         if event['project']:
             print(f"wrote {event['project']}", flush=True)
-        print(f"cost ${event['cost']:.4f} · {event['model']}", flush=True)
+        searches = f" · {event['searches']} web searches" if event.get('searches') else ''
+        print(f"cost ${event['cost']:.4f} · {event['model']}{searches}", flush=True)

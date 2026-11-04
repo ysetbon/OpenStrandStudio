@@ -1,0 +1,31 @@
+{
+ "frame": 96,
+ "durations_ms": [
+  110,
+  110,
+  110,
+  110,
+  110,
+  110,
+  110,
+  110,
+  110,
+  110,
+  110,
+  110,
+  110,
+  110,
+  110,
+  110,
+  110,
+  110,
+  110,
+  110,
+  110,
+  110,
+  110,
+  1400,
+  220
+ ],
+ "about": "A closed overhand knot drawn strand by strand by OpenStrand Studio (scripts/build_knot_spinner.py)."
+}

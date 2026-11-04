@@ -159,16 +159,34 @@ class PromptBox(QTextEdit):
         self.ensureCursorVisible()
 
 
-class WorkingLine(QWidget):
-    """Claude at work, the OpenStrand way: a small trefoil cord turns while a
-    bright stretch runs along it, as if it were being pulled through; then
-    what Claude is doing and the seconds so far."""
+def load_knot():
+    """The working line's knot: a closed overhand knot drawn strand by strand
+    by OpenStrand Studio (scripts/build_knot_spinner.py), as frames and how
+    long each shows. Empty when the files are missing."""
+    try:
+        with open(resource_path('claude_knot.json'), encoding='utf-8') as f:
+            info = json.load(f)
+        strip = QPixmap(resource_path('claude_knot.png'))
+        size, durations = int(info['frame']), [int(d) for d in info['durations_ms']]
+    except (OSError, ValueError, KeyError, TypeError):
+        return [], []
+    if strip.isNull() or strip.width() < size * len(durations):
+        return [], []
+    return [strip.copy(i * size, 0, size, size) for i in range(len(durations))], durations
 
-    SIZE = 20  # px of the knot
+
+class WorkingLine(QWidget):
+    """Claude at work, the OpenStrand way: a closed overhand knot drawn strand
+    by strand, over and over, then what Claude is doing and the seconds so
+    far. (Without its frames it falls back to a turning trefoil.)"""
+
+    SIZE = 28  # px of the knot
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedHeight(24)
+        self.setFixedHeight(32)
+        self.frames, self.durations = load_knot()
+        self.frame = 0
         self.label = ''
         self.started = time.monotonic()
         self.phase = 0.0
@@ -188,8 +206,9 @@ class WorkingLine(QWidget):
 
     def start(self, label):
         self.label, self.started = label, time.monotonic()
+        self.frame = 0
         self.show()
-        self.timer.start()
+        self.timer.start(self.durations[0] if self.durations else 40)
 
     def set_label(self, label):
         self.label = label
@@ -201,12 +220,25 @@ class WorkingLine(QWidget):
 
     def tick(self):
         self.phase = (self.phase + 0.012) % 1.0
+        if self.frames:
+            self.frame = (self.frame + 1) % len(self.frames)
+            self.timer.setInterval(self.durations[self.frame])
         self.update()
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform)
         box = self.SIZE
+        if self.frames:
+            pixmap = self.frames[self.frame]
+            painter.drawPixmap(QRectF(2, (self.height() - box) / 2, box, box), pixmap, QRectF(pixmap.rect()))
+        else:
+            self.draw_trefoil(painter, box)
+        self.draw_label(painter, box)
+        painter.end()
+
+    def draw_trefoil(self, painter, box):
         painter.save()
         painter.translate(2 + box / 2, self.height() / 2)
         painter.rotate(self.phase * 120)  # a slow turn
@@ -235,6 +267,8 @@ class WorkingLine(QWidget):
         painter.setPen(pen)
         painter.drawPath(run)
         painter.restore()
+
+    def draw_label(self, painter, box):
         seconds = int(time.monotonic() - self.started)
         x = box + 12
         painter.setPen(self.text_color)
@@ -244,7 +278,6 @@ class WorkingLine(QWidget):
         painter.setPen(self.muted)
         painter.drawText(QRectF(x + metrics.horizontalAdvance(label) + 10, 0, 60, self.height()),
                          Qt.AlignVCenter, f'{seconds}s')
-        painter.end()
 
 
 class ClaudePanel(QWidget):

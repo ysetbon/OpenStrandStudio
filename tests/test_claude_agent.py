@@ -804,13 +804,16 @@ def test_steps_fold_into_one_line_once_claude_answers(window, monkeypatch, tmp_p
     assert "Two rings that link like a chain." in panel.transcript.toPlainText()
 
 
-def test_the_working_line_turns_while_claude_works(window):
+def test_the_working_line_draws_the_knot_while_claude_works(window):
+    import json as _json
     line = window.claude_panel.working
+    info = _json.loads((ROOT / "src" / "claude_knot.json").read_text())
+    assert len(line.frames) == len(info["durations_ms"]) == 25
     line.start("Thinking…")
-    assert line.isVisibleTo(window.claude_panel) and line.timer.isActive()
-    before = line.phase
+    assert line.isVisibleTo(window.claude_panel) and line.timer.isActive() and line.frame == 0
     line.tick()
-    assert line.phase != before and line.grab().width() > 0
+    assert line.frame == 1 and line.timer.interval() == info["durations_ms"][1]
+    assert line.grab().width() > 0
     line.stop()
     assert not line.timer.isActive() and not line.isVisibleTo(window.claude_panel)
 
@@ -878,3 +881,24 @@ def test_the_session_limit_stops_new_requests(window, monkeypatch, tmp_path):
     assert len(started) == 1
     assert "This session has spent its $1.00 limit" in panel.transcript.toPlainText()
     panel.session_spent = 0.0
+
+
+def test_the_knot_spinner_is_a_real_closed_overhand_drawn_strand_by_strand():
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import build_knot_spinner as spinner
+    from openstrand import check, draw
+    full, report = draw.build(spinner.SPEC)
+    assert "3 crossings in all" in report and "conflicts: 0" in report and check.problems(full) == []
+    frames = spinner.frames_of(full)
+    strands = [s for s in full["strands"] if s["type"] != "MaskedStrand"]
+    assert len(frames) == 3 * len(strands)
+    last = frames[-1]
+    assert [s["layer_name"] for s in last["strands"]] == [s["layer_name"] for s in full["strands"]]
+    for frame in frames:
+        names = {s["layer_name"] for s in frame["strands"] if s["type"] != "MaskedStrand"}
+        for mask in (s for s in frame["strands"] if s["type"] == "MaskedStrand"):
+            assert all(part in names for part in spinner.mask_parts(mask["layer_name"], sorted(names)))
+        assert [s["index"] for s in frame["strands"]] == list(range(len(frame["strands"])))
+    # A strand being drawn ends where its curve is cut, with no joint at its loose end.
+    first = frames[0]["strands"][0]
+    assert first["has_circles"][1] is False and first["end"] != strands[0]["end"]

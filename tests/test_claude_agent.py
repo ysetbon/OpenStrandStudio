@@ -310,6 +310,21 @@ def test_a_claude_design_opens_in_a_new_tab_with_layers_and_groups(window, tmp_p
     assert len(snapshot["strands"]) == len(expected["strands"])
 
 
+def test_the_header_arrow_folds_the_panel(window):
+    from PyQt5.QtCore import Qt
+    panel = window.claude_panel
+    panel.set_open(False)
+    assert panel.toggle_button.arrowType() == Qt.RightArrow
+    panel.toggle_button.click()
+    assert panel.body.isVisibleTo(panel) and panel.toggle_button.arrowType() == Qt.DownArrow
+    panel.toggle_button.click()
+    assert not panel.body.isVisibleTo(panel)
+    panel.retranslate('he')
+    assert panel.toggle_button.arrowType() == Qt.LeftArrow  # points along right-to-left text
+    panel.retranslate('en')
+    assert panel.toggle_button.arrowType() == Qt.RightArrow
+
+
 def test_the_prompt_box_is_a_chat_box(window, monkeypatch):
     from PyQt5.QtCore import Qt
     from PyQt5.QtTest import QTest

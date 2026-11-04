@@ -158,16 +158,13 @@ class ClaudePanel(QWidget):
         header.setSpacing(8)
         self.toggle_button = QToolButton(self.header)
         self.toggle_button.setAutoRaise(True)
-        self.toggle_button.clicked.connect(lambda: self.set_open(not self.body.isVisible()))
+        self.toggle_button.clicked.connect(lambda: self.set_open(not self.body.isVisibleTo(self)))
         self.title_label = QLabel('Claude', self.header)
         self.title_label.setStyleSheet('font-weight: bold; color: #d97757;')
-        self.hint_label = QLabel(self.header)
-        self.hint_label.setStyleSheet('color: gray;')
         self.status_label = QLabel(self.header)
         self.status_label.setStyleSheet('color: gray;')
         header.addWidget(self.toggle_button)
         header.addWidget(self.title_label)
-        header.addWidget(self.hint_label)
         header.addStretch()
         header.addWidget(self.status_label)
         layout.addWidget(self.header)
@@ -217,23 +214,28 @@ class ClaudePanel(QWidget):
 
     def set_open(self, opened):
         self.body.setVisible(opened)
-        self.toggle_button.setArrowType(Qt.DownArrow if opened else Qt.UpArrow)
-        self.toggle_button.setToolTip(_tr(self.language, 'claude_hide_panel' if opened else 'claude_show_panel'))
+        self.update_arrow()
         if opened:
             self.prompt_edit.setFocus()
+
+    def update_arrow(self):
+        """Down while open; folded, it points along the text (left in Hebrew)."""
+        opened = self.body.isVisibleTo(self)
+        folded = Qt.LeftArrow if self.language == 'he' else Qt.RightArrow
+        self.toggle_button.setArrowType(Qt.DownArrow if opened else folded)
+        self.toggle_button.setToolTip(_tr(self.language, 'claude_hide_panel' if opened else 'claude_show_panel'))
 
     def retranslate(self, language_code):
         self.language = language_code
         t = lambda key: _tr(language_code, key)
-        self.hint_label.setText(t('claude_panel_hint'))
         self.prompt_edit.setPlaceholderText(t('claude_prompt_placeholder'))
         self.prompt_edit.setToolTip(t('claude_prompt_keys'))
         self.attach_button.setText(t('claude_attach'))
         self.remove_image_button.setText(t('claude_remove_image'))
         self.use_canvas_check.setText(t('claude_use_canvas'))
         self.send_button.setText(t('claude_stop') if self.running() else t('claude_send'))
-        self.toggle_button.setToolTip(t('claude_hide_panel' if self.body.isVisible() else 'claude_show_panel'))
         self.setLayoutDirection(Qt.RightToLeft if language_code == 'he' else Qt.LeftToRight)
+        self.update_arrow()
         self.set_image(self.image_path)
 
     def set_image(self, path):

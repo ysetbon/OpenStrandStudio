@@ -818,6 +818,8 @@ def with_history(prompt, history):
             lines.append(f"  You answered: {str(turn['claude'])[:900]}")
         if turn.get('design'):
             lines.append(f"  The design: {turn['design']}")
+        if turn.get('tools'):
+            lines.append('  Tools you ran (how each ended, its time): ' + '; '.join(map(str, turn['tools']))[:900])
     return '\n'.join(lines) + '\n\nNow the person asks:\n' + prompt
 
 

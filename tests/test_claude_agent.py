@@ -844,6 +844,80 @@ def test_steps_fold_into_one_line_once_claude_answers(window, monkeypatch, tmp_p
     assert "Two rings that link like a chain." in panel.transcript.toPlainText()
 
 
+def test_a_long_tool_shows_its_progress_with_a_picture_and_time_left(window, monkeypatch, tmp_path):
+    from PyQt5.QtCore import QUrl
+    from openstrand.progress import picture
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel = window.claude_panel
+    panel.set_mode("auto")
+    panel.entries.clear()
+    panel.handle_event({"type": "tool_start", "name": "tie_knot", "input": {"knot": "overhand"}})
+    step = panel.running_step("tie_knot")
+    assert step is not None and step["key"] and panel.tick.isActive()
+    step["start"] -= 10  # it has run ten seconds
+    cord = [(100 + 4 * k, 300 + 40 * ((k // 10) % 2), 5.0 if 20 < k < 30 else 0.0) for k in range(80)]
+    panel.handle_event({"type": "tool_progress", "name": "tie_knot", "stage": "draw_step", "step": 3, "steps": 5,
+                        "fraction": 0.5, "frame": picture([cord], 24, "#257d98")})
+    assert step["fraction"] == 0.5 and step["frame"] and step["eta"] is not None
+    shown = panel.transcript.toPlainText()
+    assert "Tie knot" in shown and "drawing step 3 of 5" in shown
+    assert re.search(r"50% · about \d+s left · 10s", shown)  # ten seconds for half: about ten more
+    html_text = panel.transcript.toHtml()
+    assert f'claude-frame:{step["key"]}' in html_text and f'claude-bar:{step["key"]}' in html_text
+    picture_shown = panel.transcript.document().resource(3, QUrl(f'claude-frame:{step["key"]}'))
+    assert picture_shown is not None and not picture_shown.isNull()  # 3: QTextDocument.ImageResource
+    assert panel.working.progress[0] == 0.5 and "50%" in panel.working.progress[1]
+    assert panel.working.label == "Tie knot · drawing step 3 of 5"
+    assert panel.working.grab().width() > 0
+    # A tool that cannot tell how far it is: a sliding bar, never a made-up percent.
+    panel.handle_event({"type": "tool_progress", "name": "tie_knot", "stage": "draw_step", "step": 4,
+                        "steps": 5, "fraction": None})
+    assert step["fraction"] == 0.5  # the bar never goes back
+    panel.handle_event({"type": "tool_end", "name": "tie_knot", "ok": True, "summary": "Overhand knot · 5 steps"})
+    assert not step["running"] and step["seconds"] >= 10 and panel.working.progress is None
+    assert "Overhand knot · 5 steps · 10s" in panel.transcript.toPlainText()  # what it took, once done
+    gone = panel.transcript.document().resource(3, QUrl(f'claude-frame:{step["key"]}'))
+    assert gone is None or gone.isNull()  # the picture is freed
+    panel.refresh_running()
+    assert not panel.tick.isActive()  # nothing runs: the second hand stops
+
+
+def test_stop_folds_the_steps_says_stopped_once_and_claude_hears_of_it(window, monkeypatch, tmp_path):
+    from types import SimpleNamespace
+    from PyQt5.QtCore import QProcess
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel = window.claude_panel
+    panel.set_mode("auto")
+    panel.entries.clear()
+    panel.history.clear()
+    panel.out_dir, panel.prompt, panel.shown_prompt = str(tmp_path), "an overhand tutorial", "an overhand tutorial"
+    panel.run_cost, panel.total_before, panel.run_texts, panel.done_event = 0.0, 0.0, [], None
+    panel.stdout_buffer, panel.stderr_text, panel.stopping = b"", "", False
+    panel.add_user("an overhand tutorial")
+    panel.handle_event({"type": "tool_start", "name": "identify_knot", "input": {}})
+    killed = []
+    panel.process = SimpleNamespace(state=lambda: QProcess.Running, kill=lambda: killed.append(True),
+                                    readAllStandardOutput=lambda: b"", readAllStandardError=lambda: b"",
+                                    write=lambda data: None)
+    panel.send_or_stop()
+    panel.finished()
+    panel.process = None
+    assert killed
+    group = [e for e in panel.entries if e["kind"] == "group"][-1]
+    assert group["end"] is not None and not group["open"]  # folded, not left "running"
+    assert group["steps"][-1]["stopped"] and not group["steps"][-1]["running"]
+    shown = panel.transcript.toPlainText()
+    assert shown.count("Stopped.") == 1 and "Claude stopped" not in shown
+    assert panel.history[-1]["tools"] and "identify_knot (stopped by the person" in panel.history[-1]["tools"][0]
+
+
+def test_claude_hears_which_tools_ran_and_how_they_ended():
+    from openstrand.agent import with_history
+    text = with_history("why so slow?", [{"user": "an overhand tutorial", "claude": "",
+                                          "tools": ["tie_knot (stopped by the person, 339 s)"]}])
+    assert "Tools you ran" in text and "tie_knot (stopped by the person, 339 s)" in text
+
+
 def test_the_working_line_draws_the_knot_while_claude_works(window):
     import json as _json
     line = window.claude_panel.working

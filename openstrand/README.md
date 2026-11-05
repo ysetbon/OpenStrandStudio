@@ -149,6 +149,24 @@ designs made in the request can open, and the panel's mode decides: plan
 mode only looks, ask mode shows a card or an Allow / Deny for each change,
 auto does it.
 
+The agent reads its stdin only while a call waits for the app's answer, and
+loads numpy before it starts reading. On Windows a read left waiting holds the
+pipe, and a DLL that looks at the standard handles as it loads (numpy's do)
+waits for it: that is how the knot tools once hung in the app for good.
+
+### Progress
+
+A long tool says how far it has got (`openstrand/progress.py`): the fraction
+done, what it is doing, and about once a second a small picture of the cord it
+works on. `tie_knot` shows the cord laid out and pulled tight, then each step
+as it is drawn; `draw_design` shows the design while it fits the strands (it
+cannot know its total, so its bar slides). The panel draws the picture with a
+bar, the time left and the tool's own time on its row, and the bar under the
+conversation too; a finished tool's row says how long it took, and Stop marks
+the tool stopped. The events go out on the agent's real stdout, kept aside,
+since tools run with stdout pointed at nothing to hide the app's chatter. In a
+terminal, `openstrand agent` prints a line per stage.
+
 `make_steps` (`openstrand/steps.py`) turns a design into tying steps: the cord
 drawn so far along its path, every crossing with its finished over and under,
 and an arrow on the working end. With the bridge, Claude opens each step in a

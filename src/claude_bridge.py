@@ -287,9 +287,20 @@ class AppBridge:
         canvas = self.window.canvas
         if 'control_point_center' in points and not getattr(canvas, 'enable_third_control_point', False):
             raise BridgeError('the third control point is off in Settings: move control_point1 and control_point2')
-        locked = getattr(getattr(canvas, 'layer_panel', None), 'locked_layers', set()) or set()
-        if getattr(getattr(canvas, 'layer_panel', None), 'lock_mode', False) and canvas.strands.index(strand) in locked:
-            raise BridgeError(f'{strand.layer_name} is locked in the layer panel')
+        # Move mode's own rules for what a drag may move.
+        move = canvas.move_mode
+        if getattr(move, 'is_moving', False):
+            raise BridgeError('the person is dragging a strand right now: try again once they let go')
+        if getattr(canvas, 'mask_edit_mode', False):
+            raise BridgeError('Edit Mask is on in the tab: ask the person to leave it first')
+        if getattr(strand, 'is_hidden', False):
+            raise BridgeError(f'{strand.layer_name} is hidden in the layer panel: it must be shown first')
+        index = canvas.strands.index(strand)
+        for key in points:
+            side = {'start': 0, 'end': 1}.get(key, 'control_point1')  # every handle follows the control points' rule
+            if not move.can_move_side(strand, side, index):
+                raise BridgeError(f'{strand.layer_name}: its {key} cannot move: the strand, or a strand sharing '
+                                  'that point, is locked in the layer panel (lock mode)')
 
     def edit_strand(self, args, session):
         """Move points of one strand with Move mode's own code, as a drag does:
@@ -299,8 +310,9 @@ class AppBridge:
         canvas = self.window.canvas
         strand = self.strand(args.get('strand'))
         move = canvas.move_mode
-        kept = (move.affected_strand, move.moving_side, getattr(canvas, 'truly_moving_strands', None),
-                getattr(move, '_box_anchors', None))
+        # A move deselects the strand it moves: the person's selection, to put back after.
+        selection = (canvas.selected_strand, canvas.selected_attached_strand,
+                     [(s, s.is_selected) for s in canvas.strands])
         sides = {'start': 0, 'end': 1}
         # Ends first, then the handles, so a handle lands where it is asked even if an end moved.
         order = sorted(args['points'], key=lambda k: 0 if k in sides else 1)
@@ -326,7 +338,13 @@ class AppBridge:
                 for masked in move._box_anchors or {}:
                     masked.calculate_center_point()
         finally:
-            move.affected_strand, move.moving_side, canvas.truly_moving_strands, move._box_anchors = kept
+            # Ended as a mouse release ends a drag: the app's own reset clears what the move
+            # left on the canvas (the moving strands, drawing caches, the connection cache),
+            # then the selection comes back as it was before.
+            move.reset_movement_state()
+            for one, was in selection[2]:
+                one.is_selected = was
+            canvas.selected_strand, canvas.selected_attached_strand = selection[0], selection[1]
         canvas.update()
         manager = getattr(canvas, 'undo_redo_manager', None)
         if manager is not None:

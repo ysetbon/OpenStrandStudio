@@ -792,3 +792,73 @@ def test_claude_reads_the_tab_as_it_is_now_its_history_and_moves_a_strand(window
         reply = bridge.handle({"id": 9, "name": "edit_strand",
                                "args": dict({"tab_id": tab.id, "strand": parent.layer_name}, **args)})
         assert not reply["ok"] and message in reply["error"]
+
+
+def test_a_strand_edit_ends_like_a_drop_and_the_layer_panel_still_selects(window, monkeypatch, tmp_path):
+    """After Claude moved a strand, clicking a layer raised "argument of type 'NoneType' is not
+    iterable": the edit left canvas.truly_moving_strands = None where the app expects no attribute
+    or a list. An edit must leave the canvas as a mouse release leaves it, the selection included."""
+    from PyQt5.QtWidgets import QApplication
+    panel, tm, canvas = window.claude_panel, window.tab_manager, window.canvas
+    bridge = panel.bridge
+    run = tmp_path / "run"
+    run.mkdir()
+    panel.out_dir = str(run)
+    design = run / "overhand.json"
+    design.write_text((ROOT / "tests" / "mask_tools" / "tight_overhand.json").read_text(encoding="utf-8"),
+                      encoding="utf-8")
+    monkeypatch.setattr(panel, "answer", lambda reply: None)
+    panel.run_mode = "auto"
+    assert bridge.handle({"id": 1, "name": "open_in_new_tab", "args": {"path": str(design), "title": "Fresh"}})["ok"]
+    tab = tm.get_active()
+    QApplication.processEvents()
+    transient = ("truly_moving_strands", "affected_strands_for_drawing", "active_strand_update_rect")
+    for name in transient:   # as in an app where nothing has been dragged yet
+        if hasattr(canvas, name):
+            delattr(canvas, name)
+    live = {s.layer_name: s for s in canvas.strands if not hasattr(s, "get_mask_path")}
+    index = lambda name: canvas.strands.index(live[name])
+    window.layer_panel.select_layer(index("1_2"))   # the person has 1_2 selected
+    selected = (canvas.selected_strand, canvas.selected_attached_strand)
+    assert live["1_2"] in selected and live["1_2"].is_selected
+
+    def edit(strand, points):
+        return bridge.handle({"id": 7, "name": "edit_strand", "args": {
+            "tab_id": tab.id, "strand": strand, "points": points, "version": bridge.version(tab)}})
+
+    cp = live["1_6"].control_point1
+    assert edit("1_6", {"control_point1": [cp.x() + 5, cp.y() - 4]})["ok"]
+    # Nothing a drag leaves behind is left on the canvas, and the selection is the person's.
+    for name in transient:
+        assert not hasattr(canvas, name), name
+    assert (canvas.selected_strand, canvas.selected_attached_strand) == selected
+    assert live["1_2"].is_selected and not live["1_6"].is_selected
+    assert canvas.move_mode.affected_strand is None and not canvas.move_mode.is_moving
+    # The layer panel selects as before (this raised TypeError).
+    window.layer_panel.select_layer(index("1_4"))
+    assert live["1_4"] in (canvas.selected_strand, canvas.selected_attached_strand)
+    canvas.update()
+    QApplication.processEvents()   # and the canvas paints
+
+    # A joint moved from the attached strand's side: the parent's end follows it.
+    start = live["1_4"].start
+    assert edit("1_4", {"start": [start.x() - 6, start.y() + 5]})["ok"]
+    assert abs(live["1_3"].end.x() - live["1_4"].start.x()) < 0.6 and abs(live["1_3"].end.y() - live["1_4"].start.y()) < 0.6
+
+    # Move mode's rules: not mid-drag, not a hidden strand, not an end shared with a locked layer.
+    canvas.move_mode.is_moving = True
+    reply = edit("1_6", {"control_point1": [cp.x(), cp.y()]})
+    canvas.move_mode.is_moving = False
+    assert not reply["ok"] and "dragging" in reply["error"]
+    live["1_5"].is_hidden = True
+    reply = edit("1_5", {"control_point1": [cp.x(), cp.y()]})
+    live["1_5"].is_hidden = False
+    assert not reply["ok"] and "hidden" in reply["error"]
+    canvas.move_mode.set_locked_layers({index("1_3")}, True)
+    try:
+        reply = edit("1_4", {"start": [start.x(), start.y()]})   # 1_4's start is 1_3's end: locked
+        assert not reply["ok"] and "cannot move" in reply["error"]
+        assert edit("1_4", {"control_point1": [live["1_4"].control_point1.x() + 1,
+                                               live["1_4"].control_point1.y()]})["ok"]   # its handles still move
+    finally:
+        canvas.move_mode.set_locked_layers(set(), False)

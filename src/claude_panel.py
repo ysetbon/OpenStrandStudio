@@ -670,6 +670,8 @@ class ClaudePanel(QWidget):
     def set_open(self, opened):
         """Show or hide Claude, and remember it for the next time the app opens."""
         opened = bool(opened)
+        if not opened:
+            self.preview.hide_frame()  # its own window: it would stay up with Claude hidden
         if opened:
             self.design_waiting = False
         self.setVisible(opened)
@@ -1498,6 +1500,7 @@ class ClaudePanel(QWidget):
         "Start from the canvas" to leave it out too."""
         if self.running():
             return
+        self.preview.hide_frame()
         self.entries.clear()
         self.history.clear()
         self.session_spent = self.run_cost = 0.0

@@ -780,7 +780,7 @@ def test_plan_mode_offers_only_tools_that_look():
     from openstrand import agent
     runner = agent.Agent(SimpleNamespace(), ROOT / "designs", plan=True, web=True)
     names = [t["name"] for t in runner.tools()]
-    assert set(names) == {"search_samples", "describe", "knot_library", "identify_knot", "web_search", "web_fetch"}
+    assert set(names) == {"search_samples", "describe", "knot_library", "identify_knot", "check_masks", "web_search", "web_fetch"}
     assert "Plan mode is on" in runner.system()[0]["text"]
     builder = agent.Agent(SimpleNamespace(), ROOT / "designs")
     assert "draw_design" in [t["name"] for t in builder.tools()]

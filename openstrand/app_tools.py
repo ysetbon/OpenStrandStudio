@@ -56,13 +56,29 @@ APP_TOOLS = [
         'description': "Show one of the person's tabs.",
         'input_schema': {'type': 'object', 'properties': {'tab_id': {'type': 'string'}}, 'required': ['tab_id']},
     },
+    {
+        'name': 'edit_mask_in_tab',
+        'description': ("Change one mask in the person's tab, in place, with the app's own code (one undo step; "
+                        'in ask mode the person allows it first). The tab must be the one showing and read with '
+                        'read_tab first. Same ops and arguments as edit_mask (erase with at, covers, around or '
+                        'box; reset; swap; delete; create): the edit is worked out on your copy, checked, then '
+                        'done in the tab, and your copy becomes the edited design.'),
+        'input_schema': {'type': 'object', 'properties': {
+            'tab_id': {'type': 'string', 'description': 'from list_tabs'},
+            'op': {'type': 'string', 'enum': ['erase', 'reset', 'swap', 'delete', 'create']},
+            'mask': {'type': 'string'}, 'covers': {'type': 'string'},
+            'at': {'type': 'array', 'items': {'type': 'number'}},
+            'around': {'type': 'array', 'items': {'type': 'number'}}, 'box': {'type': 'array'},
+            'first': {'type': 'string'}, 'second': {'type': 'string'},
+        }, 'required': ['tab_id', 'op']},
+    },
 ]
 APP_TOOL_NAMES = {t['name'] for t in APP_TOOLS}
 LOOK_ONLY = {'list_tabs', 'read_tab'}  # what plan mode offers
 
 APP_INSTRUCTIONS = """You are running inside the person's OpenStrand Studio, so you also have tools that
-act on the app itself: list_tabs, read_tab, open_in_new_tab, rename_tab and
-switch_tab, run by the app's own code. OpenStrand Studio has tabs (one design
+act on the app itself: list_tabs, read_tab, open_in_new_tab, rename_tab,
+switch_tab and edit_mask_in_tab, run by the app's own code. OpenStrand Studio has tabs (one design
 each), layers grouped in the layer panel, masks for over and under, levels,
 arrows on strand ends, end styles, shadows and colors by set.
 
@@ -72,6 +88,14 @@ arrows on strand ends, end styles, shadows and colors by set.
   step-by-step instructions, make the design, call make_steps, then open the
   steps the same way.
 - To work on what is in a tab, read_tab it first; it becomes the current design.
+- After tie_knot, call check_masks, fix each problem with edit_mask (preview
+  first when unsure), then render and look before opening the steps.
+- When the person points at a mask in their tab (a strand cut off, the wrong
+  strand on top at a crossing): read_tab it, check_masks, then either
+  edit_mask and open_in_new_tab the fixed design (their tab stays as it is),
+  or, when they want their own tab fixed, edit_mask_in_tab (switch_tab to it
+  first; it is one undo step). Use the names and coordinates check_masks
+  gives, never guessed ones.
 - Never say the app cannot do something before checking your tools. If no
   tool does it, do the closest thing you can and tell the person the clicks
   for the rest.

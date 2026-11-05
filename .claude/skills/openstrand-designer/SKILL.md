@@ -75,6 +75,35 @@ the path; alternating by default). The checks name the knot the path makes; if
 it is not the knot you meant, fix the path or the pattern. `identify` names the
 knot any project shows; use it instead of judging over and under by eye.
 
+## Masks in tight and crowded designs
+
+A mask says which strand is on top where two cross. In a knot pulled tight
+the parts of the cord touch and the joints between strands sit inside
+crossings, so a mask can paint over a strand that lies beside its crossing, or
+a crossing can show half one way and half the other. The same happens in any
+crowded design: stretched MxN stitches, Turk's heads with a small inner radius,
+cords drawn close together. `tie` already fixes what is safe in its finished
+steps and prints `masks: fixed ...` and `masks: left ...`. For anything else,
+or what is left:
+```
+python -m openstrand masks designs/x.json                     # every mask, every problem, with coordinates
+python -m openstrand masks designs/x.json --repair            # fix what is safe
+python -m openstrand edit-mask designs/x.json erase --mask 1_1_2_1 --covers 3_1 --preview
+python -m openstrand edit-mask designs/x.json erase --mask 1_13_1_6 --at 497,386
+python -m openstrand edit-mask designs/x.json create --first 1_3 --second 1_6
+python -m openstrand edit-mask designs/x.json swap --mask 1_10_1_5 --preview
+python -m openstrand edit-mask designs/x.json reset --mask 1_1_2_1
+```
+Each problem names the edit that fixes it; run that one, with `--preview`
+first when unsure, and use the names and coordinates `masks` gives, never
+guessed ones. `erase` takes `--at` (a place `masks` listed), `--covers` (a
+strand to uncover), `--around` (a mask's whole piece at one crossing) or
+`--box x0,y0,x1,y1`; the boxes are shaped along a strand's outline, and an
+erase that would leave a cut is refused. `create` and `swap` trim the new
+mask where it would paint the wrong way. After each edit the command checks
+again and names the knot. Then render and look at each place you changed. A
+place reported as "no single mask edit fixes it" stays as it is: say so.
+
 ## When the command cannot do it
 
 Most shapes can be drawn with `openstrand draw`. If the request needs

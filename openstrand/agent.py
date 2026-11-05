@@ -90,13 +90,31 @@ Knots tied in a cord (overhand, figure-eight, stevedore and the like):
 - To check any design is the knot it should be, call identify_knot rather than
   judging the picture.
 
+Masks (which strand is on top at a crossing) in tight and crowded designs:
+- A tight knot's parts touch and its joints sit inside crossings, so a mask
+  can paint over a strand beside its crossing, or a crossing can show half one
+  way, half the other. tie_knot already fixes what is safe and lists what is
+  left per step ("masks fixed", "masks left"). The same happens in any crowded
+  design: stretched MxN stitches, Turk's heads with a small inner radius,
+  designs whose cords lie close together.
+- After tie_knot (and after drawing or loading anything crowded), call
+  check_masks. For each problem it lists, call the edit_mask it names, with
+  preview: true first when unsure; use its coordinates and names, never guess
+  them. Prefer covers (uncover a strand) and around (one crossing) over a box:
+  the tool shapes those along the strand's outline. Then render and look
+  closely at each place you changed. Stop when check_masks finds nothing, or
+  say what is left and why (some places need the strands moved apart).
+- Where a problem says neither the design nor a mask says which strand goes
+  over, the check reads it from what most of the crossing shows: compare with
+  the render and with what the person asked before you change it.
+
 Drawing takes a few seconds to a minute; making a Turk's head size that is not
 published, or a heart, about a minute. Call it once and wait.
 
 """
 
 # Plan mode: research and plan, build nothing. Only tools that look are offered.
-PLAN_TOOLS = ('search_samples', 'describe', 'knot_library', 'identify_knot')
+PLAN_TOOLS = ('search_samples', 'describe', 'knot_library', 'identify_knot', 'check_masks')
 PLAN_INSTRUCTIONS = """Plan mode is on: the person wants a plan before anything is built. The
 tools that build are not available, so do not try to build. Research as much as
 you need (samples, the web, the current design), then answer with a short plan
@@ -206,6 +224,45 @@ TOOLS = [
         'input_schema': {'type': 'object', 'properties': {}},
     },
     {
+        'name': 'check_masks',
+        'description': ('Check the masks of the current design, measured with the app\'s own paths and clipping: '
+                        'every mask (its two strands, which is on top, its centre, its erase boxes) and every '
+                        'problem, located with canvas coordinates: a mask piece painting over a strand that should '
+                        'show (covers_strand), part of a crossing showing the strand that should be under '
+                        '(wrong_way), a mask covering two crossings of its strands where one should be the other way '
+                        '(two_crossings), a crossing drawn the other way round from the design (wrong_crossing). '
+                        'Each problem names the edit_mask call that fixes it. Changes nothing. Needed after '
+                        'tie_knot (tight knots: parts touch, joints sit inside crossings) and for any crowded '
+                        'design: tight knots, stretched MxN stitches, Turk\'s heads with small inner radius.'),
+        'input_schema': {'type': 'object', 'properties': {}},
+    },
+    {
+        'name': 'edit_mask',
+        'description': ('Change one mask of the current design with the app\'s own code, then check again '
+                        '(identify and check_masks) and report. op: "erase" adds erase boxes, shaped by the tool '
+                        'to follow a strand\'s outline; give one of: at [x, y] (a problem check_masks listed '
+                        'there: just that place is erased), covers (a strand: the mask is erased where it paints '
+                        'over it), around [x, y] (the mask\'s whole piece at that crossing), box ([x0, y0, x1, '
+                        'y1] or four [x, y] corners) when you know the exact area. "reset" is Reset Mask (every '
+                        'erase box gone). "swap" puts the other strand on top (delete and create reversed; its '
+                        'erase boxes go). "delete" removes the mask. "create" masks two strands (first on top of '
+                        'second). create and swap trim the new mask at once wherever it would paint the wrong '
+                        'way. preview: true shows the result and the check after it without keeping it. '
+                        'Otherwise the edited design becomes the current design.'),
+        'input_schema': {'type': 'object', 'properties': {
+            'op': {'type': 'string', 'enum': ['erase', 'reset', 'swap', 'delete', 'create']},
+            'mask': {'type': 'string', 'description': 'the mask name, as check_masks lists it, e.g. "1_1_1_6"'},
+            'at': {'type': 'array', 'items': {'type': 'number'},
+                   'description': 'erase: [x, y] where check_masks listed a problem of this mask'},
+            'covers': {'type': 'string', 'description': 'erase: the strand the mask should stop covering'},
+            'around': {'type': 'array', 'items': {'type': 'number'}, 'description': 'erase: [x, y] of a crossing'},
+            'box': {'type': 'array', 'description': 'erase: [x0, y0, x1, y1] or four [x, y] corners'},
+            'first': {'type': 'string', 'description': 'create: the strand on top'},
+            'second': {'type': 'string', 'description': 'create: the strand under it'},
+            'preview': {'type': 'boolean', 'description': 'show what the edit would do, keep nothing'}},
+            'required': ['op']},
+    },
+    {
         'name': 'describe',
         'description': 'Describe the current design: each set with its color and which way it runs '
                        '(vertical, horizontal), strands, masks, size.',
@@ -282,18 +339,21 @@ class Workspace:
         self.project_path = self.out_dir / 'design.json'
         self.png_path = self.out_dir / 'design.png'
         self.data = None
+        self.tab = None
         self.version = 0
         self.rendered_version = -1
         self._preview = None
         self.steps = []  # [(title, path)] from make_steps
+        self.last_edit = None  # the design edit_mask made last (kept or previewed)
 
     def need(self):
         if self.data is None:
             raise ToolError('there is no design yet: make, draw or load one first')
         return self.data
 
-    def store(self, data):
+    def store(self, data, tab=None):
         self.data = data
+        self.tab = tab  # the tab this design was read from, while it is unchanged
         self.version += 1
         project.write(data, self.project_path)
 
@@ -310,6 +370,29 @@ class Workspace:
         if self._preview is not None:
             self._preview.close()
             self._preview = None
+
+    def edit_mask(self, args, store=True):
+        """One mask edit on the current design: (summary, text); the edited
+        design becomes the current one unless previewed (it is in last_edit)."""
+        from . import identify, masks
+        op = str(args.get('op') or '')
+        try:
+            new, done = masks.edit(self.need(), op, mask=args.get('mask'), first=args.get('first'),
+                                   second=args.get('second'), box=args.get('box'), covers=args.get('covers'),
+                                   around=args.get('around'), at=args.get('at'))
+            found = masks.check(new)
+        except masks.MaskError as e:
+            raise ToolError(str(e)) from None
+        preview = bool(args.get('preview'))
+        if store and not preview:
+            self.store(new)
+        count = len(found['problems'])
+        head = ('Preview, not kept: ' if preview else '') + done
+        text = '\n'.join([head, 'Knot: ' + identify.summary(new), found['text']]
+                         + ([] if preview else ['This is now the current design: render it and look.']))
+        summary = f"{'Preview · ' if preview else ''}{done[:60]} · {count} problem{'s' if count != 1 else ''} left"
+        self.last_edit = new
+        return summary, text
 
     def run(self, name, args):
         """Do one tool call. Returns (summary for people, content for Claude)."""
@@ -377,10 +460,28 @@ class Workspace:
                 lines.append('WARNING: not every stage is the same knot; tell the person which step is off.')
             for number, step in enumerate(made['steps'], start=1):
                 lines.append(f"step {number}: {step['caption']}")
+                found = step.get('masks')
+                if found:
+                    for text in found['fixed']:
+                        lines.append(f'  masks fixed: {text}')
+                    for p in found['left']:
+                        lines.append(f"  masks left: {p['text']}")
+                    if not found['fixed'] and not found['left']:
+                        lines.append('  masks: no problems')
             lines.append(f'Saved as "step 1" to "step {len(made["steps"])}"; the current design is the tight '
                          'knot. In the app, open each step with open_in_new_tab, in order, titled by what it '
                          'does, e.g. "Step 1 · first loop".')
             return f"{made['title']} · {len(made['steps'])} steps", '\n'.join(lines)
+        if name == 'check_masks':
+            from . import masks
+            try:
+                found = masks.check(self.need())
+            except masks.MaskError as e:
+                raise ToolError(str(e)) from None
+            count = len(found['problems'])
+            return (f"{len(found['masks'])} masks · {count} problem{'s' if count != 1 else ''}", found['text'])
+        if name == 'edit_mask':
+            return self.edit_mask(args)
         if name == 'knot_library':
             from . import tying
             lines = [f'{title} ("{key}"): {crossings} crossings, {kind}; also called {", ".join(aliases)}. {about}'
@@ -609,9 +710,11 @@ class Agent:
         if name == 'read_tab':
             result = self.app.call(name, {'tab_id': str(args.get('tab_id', ''))})
             data = project.read(result['file'])
-            ws.store(data)
+            ws.store(data, tab=str(args.get('tab_id', '')))
             return (f"Read tab {result.get('title', '')} · {project.summary(data)}",
                     f"tab \"{result.get('title', '')}\" is now the current design: {project.summary(data)}")
+        if name == 'edit_mask_in_tab':
+            return self.edit_mask_in_tab(args)
         if name in ('rename_tab', 'switch_tab'):
             call = {'tab_id': str(args.get('tab_id', ''))}
             if name == 'rename_tab':
@@ -623,6 +726,34 @@ class Agent:
         tabs = result.get('tabs', [])
         return f'{len(tabs)} tabs', json.dumps(tabs)
 
+    def edit_mask_in_tab(self, args):
+        """Work the edit out on the copy read from the tab, then have the app do it there."""
+        from . import masks
+        ws = self.workspace
+        tab = str(args.get('tab_id', ''))
+        if ws.data is None or ws.tab != tab:
+            raise ToolError('read_tab this tab first (and change nothing else before editing it)')
+        before = ws.data
+        with self.quiet():
+            summary, text = ws.edit_mask(dict(args, preview=True), store=False)
+        after = ws.last_edit
+        call = {'tab_id': tab, 'op': args.get('op'), 'mask': args.get('mask'),
+                'first': args.get('first'), 'second': args.get('second')}
+        if args.get('op') == 'erase':
+            call['boxes'] = _new_boxes(before, after, str(args.get('mask')))
+            if not call['boxes']:
+                raise ToolError('the erase added no box')
+        elif args.get('op') in ('create', 'swap'):
+            # The new mask is trimmed on Claude's copy: the same boxes go to the tab.
+            made = (f"{args.get('first')}_{args.get('second')}" if args.get('op') == 'create'
+                    else _swapped(before, str(args.get('mask'))))
+            call['boxes'] = _new_boxes(before, after, made)
+        result = self.app.call('edit_mask', call)
+        ws.store(after, tab=tab)
+        note = result.get('note') or 'done'
+        return (f'In the tab · {note}',
+                f"{note} in the tab (one undo step there).\n" + text.replace('Preview, not kept: ', '', 1))
+
     def finish(self, said, error=None):
         ws = self.workspace
         event = {'type': 'done', 'ok': error is None, 'error': error,
@@ -633,8 +764,33 @@ class Agent:
                  'plan': self.plan, 'opened_tabs': self.opened_tabs, **self.usage}
         if self.plan:  # a plan builds nothing, whatever is in the workspace
             event['project'] = event['png'] = None
+        if ws.tab is not None:
+            # The design is the person's own tab (read, or changed in place
+            # with edit_mask_in_tab): it is there already, not a new design.
+            event['project'] = event['png'] = None
+            event['in_tab'] = ws.tab
         self.on_event(event)
         return event
+
+
+def _swapped(data, name):
+    """The name a mask has once swapped: its two strands the other way round."""
+    from .steps import mask_parts
+    names = [s['layer_name'] for s in data['strands'] if s.get('type') != 'MaskedStrand']
+    parts = mask_parts(name, names)
+    return f'{parts[1]}_{parts[0]}' if len(parts) == 2 else name
+
+
+def _new_boxes(before, after, name):
+    """The erase boxes a mask has in after and not in before."""
+    def boxes(data):
+        for s in data['strands']:
+            if s.get('type') == 'MaskedStrand' and s.get('layer_name') == name:
+                return [{k: [float(v) for v in r[k]] for k in ('top_left', 'top_right', 'bottom_left', 'bottom_right')}
+                        for r in s.get('deletion_rectangles') or [] if 'top_left' in r]
+        return []
+    old = boxes(before)
+    return [b for b in boxes(after) if b not in old]
 
 
 HISTORY_TURNS = 8

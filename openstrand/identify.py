@@ -3,8 +3,9 @@
 Each cord is followed along its attached strands; every strand's curve is
 sampled as the app draws it (the native two-handle curve with the design's
 curve settings); where two parts cross, the one on top is the first strand of
-the crossing's mask when there is one, else the strand later in the layer
-order. From that, invariants gives each cord's knot type.
+the crossing's mask when there is one and the crossing is not in one of its
+erase boxes, else the strand later in the layer order. From that, invariants
+gives each cord's knot type.
 
     from openstrand import identify
     for cord in identify.cords(project_data):
@@ -79,12 +80,14 @@ def cords(project):
         return []
     names = [s['layer_name'] for s in strands]
     layer = {s['layer_name']: k for k, s in enumerate(project['strands'])}
-    on_top = {}
+    on_top, erased = {}, {}
     for m in masks:
         parts = mask_parts(m['layer_name'], names)
         if len(parts) == 2:
             on_top[(parts[0], parts[1])] = parts[0]
             on_top[(parts[1], parts[0])] = parts[0]
+            boxes = [b for b in (_corners(r) for r in m.get('deletion_rectangles') or []) if b]
+            erased[(parts[0], parts[1])] = erased[(parts[1], parts[0])] = boxes
     curve = _curve(project)
     lines, owners, closed = [], [], []
     for chain in _chains(strands):
@@ -109,7 +112,11 @@ def cords(project):
         a, b = c['cords']
         sa = _owner_at(lines[a], owners[a], c['positions'][0], closed[a])
         sb = _owner_at(lines[b], owners[b], c['positions'][1], closed[b])
-        top = on_top.get((sa, sb)) or (sa if layer.get(sa, 0) > layer.get(sb, 0) else sb)
+        top = on_top.get((sa, sb))
+        if top is not None and any(_inside(c['point'], box) for box in erased.get((sa, sb), ())):
+            top = None                  # erased there: the layer order shows
+        if top is None:
+            top = sa if layer.get(sa, 0) > layer.get(sb, 0) else sb
         if a != b:
             between[a] += 1
             between[b] += 1
@@ -126,6 +133,29 @@ def cords(project):
                         with_others=between[k], alexander=knot['alexander'], knot=knot['knot'],
                         meaning=knot['meaning'], cord=np.c_[line, z]))
     return out
+
+
+def _corners(rect):
+    """An erase box's corners in order round it, as MaskedStrand reads them."""
+    try:
+        if 'top_left' in rect and 'bottom_right' in rect:
+            keys = ('top_left', 'top_right', 'bottom_right', 'bottom_left')
+            fallback = {'top_right': 'bottom_right', 'bottom_left': 'top_left'}
+            return [tuple(float(v) for v in rect.get(k, rect.get(fallback.get(k, k)))) for k in keys]
+        x, y, w, h = (float(rect[k]) for k in ('x', 'y', 'width', 'height'))
+        return [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def _inside(point, polygon):
+    """Whether a point lies inside a polygon (ray casting)."""
+    x, y = point[0], point[1]
+    inside = False
+    for (x0, y0), (x1, y1) in zip(polygon, polygon[1:] + polygon[:1]):
+        if (y0 > y) != (y1 > y) and x < x0 + (y - y0) * (x1 - x0) / (y1 - y0):
+            inside = not inside
+    return inside
 
 
 def cord_of(project):

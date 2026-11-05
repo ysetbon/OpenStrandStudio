@@ -853,6 +853,7 @@ _BRIDGE = {
     'en': {
         'claude_confirm_rename': 'Claude wants to rename the tab “{old}” to “{new}”.',
         'claude_confirm_switch': 'Claude wants to show the tab “{old}”.',
+        'claude_confirm_mask': 'Claude wants to change a mask in the tab “{old}”: {new}.',
         'claude_allow': 'Allow',
         'claude_deny': 'Deny',
         'claude_allowed': 'Allowed',
@@ -861,6 +862,7 @@ _BRIDGE = {
     'fr': {
         'claude_confirm_rename': 'Claude veut renommer l’onglet « {old} » en « {new} ».',
         'claude_confirm_switch': 'Claude veut afficher l’onglet « {old} ».',
+        'claude_confirm_mask': 'Claude veut modifier un masque dans l’onglet « {old} » : {new}.',
         'claude_allow': 'Autoriser',
         'claude_deny': 'Refuser',
         'claude_allowed': 'Autorisé',
@@ -869,6 +871,7 @@ _BRIDGE = {
     'de': {
         'claude_confirm_rename': 'Claude möchte den Tab „{old}“ in „{new}“ umbenennen.',
         'claude_confirm_switch': 'Claude möchte den Tab „{old}“ anzeigen.',
+        'claude_confirm_mask': 'Claude möchte im Tab „{old}“ eine Maske ändern: {new}.',
         'claude_allow': 'Erlauben',
         'claude_deny': 'Ablehnen',
         'claude_allowed': 'Erlaubt',
@@ -877,6 +880,7 @@ _BRIDGE = {
     'it': {
         'claude_confirm_rename': 'Claude vuole rinominare la scheda «{old}» in «{new}».',
         'claude_confirm_switch': 'Claude vuole mostrare la scheda «{old}».',
+        'claude_confirm_mask': 'Claude vuole modificare una maschera nella scheda «{old}»: {new}.',
         'claude_allow': 'Consenti',
         'claude_deny': 'Rifiuta',
         'claude_allowed': 'Consentito',
@@ -885,6 +889,7 @@ _BRIDGE = {
     'es': {
         'claude_confirm_rename': 'Claude quiere cambiar el nombre de la pestaña «{old}» a «{new}».',
         'claude_confirm_switch': 'Claude quiere mostrar la pestaña «{old}».',
+        'claude_confirm_mask': 'Claude quiere cambiar una máscara en la pestaña «{old}»: {new}.',
         'claude_allow': 'Permitir',
         'claude_deny': 'Rechazar',
         'claude_allowed': 'Permitido',
@@ -893,6 +898,7 @@ _BRIDGE = {
     'pt': {
         'claude_confirm_rename': 'O Claude quer mudar o nome do separador «{old}» para «{new}».',
         'claude_confirm_switch': 'O Claude quer mostrar o separador «{old}».',
+        'claude_confirm_mask': 'O Claude quer alterar uma máscara no separador «{old}»: {new}.',
         'claude_allow': 'Permitir',
         'claude_deny': 'Recusar',
         'claude_allowed': 'Permitido',
@@ -901,6 +907,7 @@ _BRIDGE = {
     'he': {
         'claude_confirm_rename': 'Claude רוצה לשנות את שם הכרטיסייה „{old}” ל־„{new}”.',
         'claude_confirm_switch': 'Claude רוצה להציג את הכרטיסייה „{old}”.',
+        'claude_confirm_mask': 'Claude רוצה לשנות מסכה בכרטיסייה „{old}”: {new}.',
         'claude_allow': 'אפשר',
         'claude_deny': 'דחה',
         'claude_allowed': 'אושר',
@@ -909,6 +916,7 @@ _BRIDGE = {
     'ru': {
         'claude_confirm_rename': 'Claude хочет переименовать вкладку «{old}» в «{new}».',
         'claude_confirm_switch': 'Claude хочет показать вкладку «{old}».',
+        'claude_confirm_mask': 'Claude хочет изменить маску на вкладке «{old}»: {new}.',
         'claude_allow': 'Разрешить',
         'claude_deny': 'Отклонить',
         'claude_allowed': 'Разрешено',
@@ -917,6 +925,7 @@ _BRIDGE = {
     'fi': {
         'claude_confirm_rename': 'Claude haluaa nimetä välilehden ”{old}” nimellä ”{new}”.',
         'claude_confirm_switch': 'Claude haluaa näyttää välilehden ”{old}”.',
+        'claude_confirm_mask': 'Claude haluaa muuttaa maskia välilehdellä ”{old}”: {new}.',
         'claude_allow': 'Salli',
         'claude_deny': 'Hylkää',
         'claude_allowed': 'Sallittu',
@@ -925,6 +934,7 @@ _BRIDGE = {
     'sv': {
         'claude_confirm_rename': 'Claude vill byta namn på fliken ”{old}” till ”{new}”.',
         'claude_confirm_switch': 'Claude vill visa fliken ”{old}”.',
+        'claude_confirm_mask': 'Claude vill ändra en mask på fliken ”{old}”: {new}.',
         'claude_allow': 'Tillåt',
         'claude_deny': 'Neka',
         'claude_allowed': 'Tillåtet',
@@ -933,6 +943,7 @@ _BRIDGE = {
     'ja': {
         'claude_confirm_rename': 'Claude はタブ「{old}」の名前を「{new}」に変えようとしています。',
         'claude_confirm_switch': 'Claude はタブ「{old}」を表示しようとしています。',
+        'claude_confirm_mask': 'Claude はタブ「{old}」のマスクを変更しようとしています: {new}。',
         'claude_allow': '許可',
         'claude_deny': '拒否',
         'claude_allowed': '許可しました',
@@ -941,6 +952,7 @@ _BRIDGE = {
     'zh': {
         'claude_confirm_rename': 'Claude 想把标签页“{old}”重命名为“{new}”。',
         'claude_confirm_switch': 'Claude 想显示标签页“{old}”。',
+        'claude_confirm_mask': 'Claude 想修改标签页“{old}”中的遮罩：{new}。',
         'claude_allow': '允许',
         'claude_deny': '拒绝',
         'claude_allowed': '已允许',

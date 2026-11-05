@@ -57,6 +57,11 @@ its length) or `alternate_under_first`.
    long way and their shading smears; the report warns below 25 degrees.
 3. **Space crossings** at least two cord widths apart, and keep a third cord
    out of the spot where two cross: the report calls that a crowded crossing.
+   A cord given heights (a tight knot) has one at every crossing, so for it
+   the report ends with the mask check instead: the exact places where a mask
+   or a crossing is drawn wrong, each with the edit that fixes it
+   (`openstrand masks`, `openstrand edit-mask`, or `check_masks` and
+   `edit_mask` for Claude).
 4. **Read the report** after each draw: crossings per cord, which cord is on
    top at each crossing, over/under conflicts (places where alternation
    cannot hold), and warnings. Then render and look.

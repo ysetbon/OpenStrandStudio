@@ -652,7 +652,8 @@ class ClaudePanel(QWidget):
                     f'{esc(t("claude_design_ready").format(name=e["name"]))}<br>{action}</td></tr></table>')
         if kind == 'confirm':
             action, current, new = e['what']
-            key = 'claude_confirm_rename' if action == 'rename_tab' else 'claude_confirm_switch'
+            key = {'rename_tab': 'claude_confirm_rename', 'edit_mask': 'claude_confirm_mask'}.get(
+                action, 'claude_confirm_switch')
             text = esc(t(key).format(old=current, new=new))
             if e['state'] is None:
                 choice = (f'<a href="os:allow/{i}" style="color:#D97757; font-weight:bold; text-decoration:none;">'

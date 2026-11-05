@@ -112,8 +112,76 @@ def cmd_tie(args):
         path = out / f'{stem}_step_{n}.json'
         project.write(step['data'], path)
         print(f'wrote {path} · {step["caption"]}')
+        for line in mask_lines(step.get('masks')):
+            print('  ' + line)
     if not made['ok']:
         raise SystemExit('error: not every stage is the same knot (see the checks above)')
+
+
+def mask_lines(found):
+    """What tie's mask check fixed and left in one step, as lines."""
+    if not found:
+        return []
+    lines = [f'masks: fixed: {text}' for text in found['fixed']]
+    lines += [f"masks: left: {p['text']}" for p in found['left']]
+    return lines
+
+
+def cmd_masks(args):
+    from . import masks
+    data = project.read(args.file)
+    done = None
+    with quiet(not args.verbose):
+        if args.repair:
+            data, done, _left = masks.repair(data, create_masks=args.create)
+        report = masks.check(data)
+    if done is not None:
+        out = Path(args.out or args.file)
+        project.write(data, out)
+        print(f"wrote {out} · {len(done)} fixed, {len(report['problems'])} left")
+        for text in done:
+            print('fixed: ' + text)
+    if args.json:
+        print(json.dumps({'masks': report['masks'], 'problems': report['problems']}, indent=2))
+    else:
+        print(report['text'])
+
+
+def cmd_edit_mask(args):
+    from . import identify, masks
+    data = project.read(args.file)
+    numbers = lambda text, what: _numbers(text, what)
+    box = numbers(args.box, '--box') if args.box else None
+    around = numbers(args.around, '--around') if args.around else None
+    at = numbers(args.at, '--at') if args.at else None
+    if box is not None and len(box) not in (4, 8):
+        raise ValueError('--box is x0,y0,x1,y1 or the four corners x,y,x,y,x,y,x,y')
+    if box is not None and len(box) == 8:
+        box = [box[k:k + 2] for k in range(0, 8, 2)]
+    if around is not None and len(around) != 2:
+        raise ValueError('--around is x,y')
+    if at is not None and len(at) != 2:
+        raise ValueError('--at is x,y')
+    with quiet(not args.verbose):
+        new, done = masks.edit(data, args.op, mask=args.mask, first=args.first, second=args.second,
+                               box=box, covers=args.covers, around=around, at=at, trim=not args.no_trim)
+        report = masks.check(new)
+        knot = identify.summary(new)
+    if args.preview:
+        print(f'preview (nothing written): {done}')
+    else:
+        out = Path(args.out or args.file)
+        project.write(new, out)
+        print(f'wrote {out} · {done}')
+    print(knot)
+    print(report['text'])
+
+
+def _numbers(text, what):
+    try:
+        return [float(v) for v in str(text).split(',')]
+    except ValueError:
+        raise ValueError(f'{what} takes numbers separated by commas, like 600,400') from None
 
 
 def cmd_identify(args):
@@ -302,6 +370,31 @@ def build_parser():
     tie.add_argument('--width', type=float, default=24, help='cord width in px, 16-60 (default 24)')
     tie.add_argument('--moves', type=int, help='tying pictures before the knot is drawn up (default up to 4)')
     tie.add_argument('--out-dir', help='folder for the step files (default: here)')
+
+    masks_cmd = command('masks', "list a project's masks and what is wrong with them, with coordinates", cmd_masks)
+    masks_cmd.add_argument('file')
+    masks_cmd.add_argument('--repair', action='store_true',
+                           help='fix what is safe (erase a mask where it hides a strand that should show)')
+    masks_cmd.add_argument('--create', action='store_true',
+                           help='with --repair, also make masks the design calls for')
+    masks_cmd.add_argument('--out', help='with --repair, write here instead of changing the file')
+    masks_cmd.add_argument('--json', action='store_true', help='print the masks and problems as JSON')
+
+    edit_mask = command('edit-mask', "change one mask with the app's own code, then check again", cmd_edit_mask)
+    edit_mask.add_argument('file')
+    edit_mask.add_argument('op', choices=['erase', 'reset', 'swap', 'delete', 'create'])
+    edit_mask.add_argument('--mask', help='the mask (as "openstrand masks" lists it)')
+    edit_mask.add_argument('--at', help='erase: the place x,y where "openstrand masks" listed a problem of it')
+    edit_mask.add_argument('--covers', help='erase: where the mask paints over this strand')
+    edit_mask.add_argument('--around', help='erase: the mask\'s piece at the crossing nearest x,y')
+    edit_mask.add_argument('--box', help='erase: x0,y0,x1,y1 or four corners x,y,x,y,x,y,x,y')
+    edit_mask.add_argument('--first', help='create: the strand on top')
+    edit_mask.add_argument('--second', help='create: the strand under it')
+    edit_mask.add_argument('--no-trim', action='store_true',
+                           help='create, swap: keep the new mask whole (by default it is erased where it would '
+                                'paint the wrong way)')
+    edit_mask.add_argument('--preview', action='store_true', help='show the result, write nothing')
+    edit_mask.add_argument('--out', help='write here instead of changing the file')
 
     identify_cmd = command('identify', 'which knot a project shows, read from its strands and masks', cmd_identify)
     identify_cmd.add_argument('file')

@@ -322,8 +322,9 @@ def _shape(cord, what):
 _BUILDS = itertools.count(1)
 
 
-def build(spec):
-    """Fit and weave a design. Returns (project dict, report text)."""
+def build(spec, mask_check=True):
+    """Fit and weave a design. Returns (project dict, report text). A design
+    with heights gets the mask check at the end of its report (mask_check)."""
     from .generators import application, _serialize
     if not isinstance(spec, dict):
         raise DrawError('the design must be an object with a "cords" list')
@@ -421,7 +422,44 @@ def build(spec):
     scene = best[1]
     data = _serialize(scene)
     data['project_settings'] = project_settings()
-    return data, report(scene, time.monotonic() - started, shallow)
+    data['design_crossings'] = design_crossings(scene)
+    text = report(scene, time.monotonic() - started, shallow)
+    if mask_check and any(cord.get('heights') is not None for cord in scene.cords):
+        text += '\n' + mask_findings(data)
+    return data, text
+
+
+def mask_findings(data, limit=12):
+    """For a design whose cords lie close (given heights, as a tight knot):
+    where a mask or a crossing is drawn wrong, as masks.check finds it. This
+    replaces the crowded-crossing warnings, which such a design has at every
+    crossing."""
+    from . import masks
+    try:
+        found = masks.check(data)['problems']
+    except masks.MaskError as e:
+        return f'mask check: {e}'
+    if not found:
+        return 'mask check: no problems (every crossing shows the strand on top all over)'
+    lines = [f'mask check: {len(found)} place{"s" if len(found) != 1 else ""} drawn wrong '
+             '(check_masks lists them, edit_mask fixes them):']
+    lines += ['  ' + p['text'] for p in found[:limit]]
+    if len(found) > limit:
+        lines.append(f'  … and {len(found) - limit} more')
+    return '\n'.join(lines)
+
+
+def design_crossings(scene):
+    """Which strand the design puts on top at each crossing, kept in the
+    project (masks.check reads it to tell a crossing drawn the wrong way)."""
+    out = []
+    for h in getattr(scene, 'hits', []):
+        a, b = h['strands']
+        top, under = (a, b) if h['over'] else (b, a)
+        x, y = h['point']
+        out.append({'point': [round(float(x), 2), round(float(y), 2)],
+                    'over': top.layer_name, 'under': under.layer_name})
+    return out
 
 
 JOIN_ROOM = (1.0, 0.6, 0.4)     # how far joins keep from crossings, as a share of the usual
@@ -557,7 +595,7 @@ def report(scene, seconds, shallow=()):
                      'smears. Cross at 40 degrees or more, or move them apart.')
     for w in scene.warnings:
         if w and w[0] == 'crowded crossing' and tight:
-            continue                    # a tight knot's parts lie close round every crossing
+            continue                    # at every crossing of a tight knot: build adds the mask check instead
         if w and w[0] == 'crowded crossing' and len(w) >= 5:
             lines.append(f'warning: crowded crossing near ({w[-2]}, {w[-1]}): another strand passes through '
                          'the spot where two cords cross, so its over/under is unclear. Spread the crossings '

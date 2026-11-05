@@ -400,15 +400,26 @@ def tie(knot=None, points=None, pattern=None, width=DEFAULT_WIDTH, color='#d9775
     for n, (step_title, caption, cord, tip) in enumerate(made, start=1):
         cords = _centred([cord])
         shift = cords[0][0, :2] - cord[0, :2]
-        entry = dict(title=step_title, caption=caption, data=None, report='')
+        entry = dict(title=step_title, caption=caption, data=None, report='', masks=None)
         if build:
-            data, report = draw.build(design(cords[0], width, color, f'{title} step {n}'))
+            # The finished steps are checked and fixed below, the others need no mask check.
+            data, report = draw.build(design(cords[0], width, color, f'{title} step {n}'), mask_check=False)
             if tip is not None:
                 _arrow(data, tuple(np.asarray(tip) + shift))
             entry.update(data=data, report=report)
             if n >= len(made) - 2:      # the finished knot, drawn up, tight: read back from the app's strands
-                from . import identify
-                found = identify.cords(data)
+                from . import identify, masks
+                # Its parts touch and its joints sit in crossings, so a mask can
+                # land on a strand beside its crossing, or a crossing can show
+                # half one way: fix what is safe, keep what is left to report.
+                fixed_data, fixed, left = masks.repair(data, create_masks=True)
+                found = identify.cords(fixed_data)
+                if fixed and (len(found) != 1 or tuple(found[0]['alexander']) != tuple(knot_type['alexander'])):
+                    left = masks.check(data)['problems']     # a fix that changes the knot is no fix
+                    fixed, found = [], identify.cords(data)
+                else:
+                    data = fixed_data
+                entry.update(data=data, masks=dict(fixed=fixed, left=left))
                 knot = found[0] if len(found) == 1 else dict(knot=None, alexander=None, crossings=None)
                 checks.append(dict(stage=f'step {n} as drawn in the app', crossings=knot['crossings'],
                                    alexander=knot['alexander'], knot=knot['knot']))

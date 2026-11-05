@@ -10,6 +10,11 @@ What a designer needs to know to turn a request into `openstrand` commands.
   a chain (`1_2`, `1_3`, ...). Set 2 is `2_1`, `2_2`, ... One set has one color.
 - **Masks** make over and under: where two strands cross, a mask hides the one
   underneath. A well woven design alternates over, under, over along every cord.
+  A mask is named by its two strands, the one on top first (`1_1_2_1`: 1_1
+  over 2_1), and can have erase boxes (Edit Mask) that take part of it away.
+  Where cords touch (a knot pulled tight, a stretched stitch, a Turk's head
+  with a small inner radius) a mask can cover a strand beside its crossing:
+  check_masks finds such places and edit_mask fixes them.
 - **Groups** name parts of a design ("Turk's head", "Gold lacing") in the app's
   layer panel.
 - Files: the app saves plain projects and history files (with undo states).

@@ -13,9 +13,11 @@ import contextlib
 import json
 import mimetypes
 import sys
+import time
 from pathlib import Path
 
 from . import ROOT, colors, edit, generators, project
+from .debuglog import short
 
 MODELS = {'sonnet': 'claude-sonnet-5-5', 'haiku': 'claude-haiku-5-5'}
 DEFAULT_MODEL = MODELS['sonnet']
@@ -541,7 +543,7 @@ class Agent:
     """Runs one request: the loop of Claude calls and tool calls."""
 
     def __init__(self, client, out_dir, model=DEFAULT_MODEL, on_event=None, max_rounds=24, max_cost=2.00,
-                 quiet=None, web=True, effort='high', plan=False, app=None):
+                 quiet=None, web=True, effort='high', plan=False, app=None, log=None):
         if model not in PRICES:
             raise ValueError(f"model must be one of {', '.join(PRICES)}")
         if effort not in EFFORTS:
@@ -555,6 +557,8 @@ class Agent:
         self.effort = effort
         self.plan = plan  # plan mode: research and plan, build nothing
         self.app = app  # an AppClient when the app started the agent: its tabs become tools
+        from .debuglog import NoLog
+        self.log = log or NoLog()  # the step-by-step log (debuglog.Log), for debugging a request
         self.opened_tabs = []  # titles of tabs opened by open_in_new_tab
         self.workspace = Workspace(out_dir)
         self.on_event = on_event or (lambda event: None)
@@ -593,10 +597,12 @@ class Agent:
             text = str(e)
             if self.web and getattr(e, 'status_code', None) == 400 and ('web_search' in text or 'web_fetch' in text):
                 self.web = False
+                self.log('web tools refused for this API key: continuing without them')
                 self.on_event({'type': 'note', 'text': 'Web search is not available for this API key '
                                                         '(an organization setting in the Anthropic Console); '
                                                         'continuing without it.'})
                 return self.call(messages)
+            self.log(f'the Anthropic API failed: {type(e).__name__}: {short(e)}')
             raise
 
     def count(self, response):
@@ -641,9 +647,19 @@ class Agent:
         messages = [{'role': 'user', 'content': content}]
         said = []
         try:
-            for _ in range(self.max_rounds):
-                response = self.call(messages)
+            for round_ in range(1, self.max_rounds + 1):
+                self.log(f'round {round_}: asking {self.model} (effort {self.effort}, {len(messages)} messages)')
+                asked = time.monotonic()
+                with self.log.waiting(f"Claude's answer (round {round_})"):
+                    response = self.call(messages)
                 self.count(response)
+                usage = response.usage
+                parts = [b.type if b.type != 'tool_use' else f'tool_use:{b.name}' for b in response.content]
+                self.log(f'round {round_}: answered in {time.monotonic() - asked:.1f}s, stop {response.stop_reason}, '
+                         f'{getattr(usage, "input_tokens", 0) or 0} in + '
+                         f'{getattr(usage, "cache_read_input_tokens", 0) or 0} cached / '
+                         f'{getattr(usage, "output_tokens", 0) or 0} out tokens, request so far ${self.cost:.3f}; '
+                         f'{", ".join(parts) or "empty"}')
                 # Append the whole turn, thinking blocks included: the API
                 # needs them back unchanged.
                 messages.append({'role': 'assistant', 'content': response.content})
@@ -676,10 +692,24 @@ class Agent:
         from .progress import Progress
         name = block.name
         self.workspace.progress = Progress(lambda event: self.on_event(dict(event, name=name)))
+        self.log(f'tool {name} starts: {short(json.dumps(args), 400)}')
+        began = time.monotonic()
+        result = None
         try:
-            return self._tool(block, args)
+            with self.log.waiting(f'tool {name} to finish'):
+                result = self._tool(block, args)
+            return result
         finally:
             self.workspace.progress = None
+            took = time.monotonic() - began
+            if result is None:
+                self.log(f'tool {name} crashed after {took:.1f}s')
+            elif result.get('is_error'):
+                self.log(f'tool {name} failed after {took:.1f}s: {short(result["content"])}')
+            else:
+                content = result['content']
+                said = content if isinstance(content, str) else f'{len(content)} block(s)'
+                self.log(f'tool {name} done in {took:.1f}s: {short(said)}')
 
     def _tool(self, block, args):
         from .app_tools import APP_TOOL_NAMES, AppError
@@ -769,6 +799,7 @@ class Agent:
                 f"{note} in the tab (one undo step there).\n" + text.replace('Preview, not kept: ', '', 1))
 
     def finish(self, said, error=None):
+        self.log(f'request ends: {error or "answered"} (cost ${self.cost:.3f}, {self.searches} web searches)')
         ws = self.workspace
         event = {'type': 'done', 'ok': error is None, 'error': error,
                  'text': said[-1] if said else '',

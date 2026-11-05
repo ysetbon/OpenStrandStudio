@@ -75,7 +75,8 @@ def _tr(language, key):
 def agent_command(prompt, model, out_dir, images=(), start=None, web=True, max_cost=None, effort=None,
                   plan=False, app=False, history=None):
     """The program and arguments that run one agent request."""
-    args = ['-m', 'openstrand', 'agent', prompt, '--model', model, '--out-dir', out_dir, '--json-events']
+    # --log: the agent's step-by-step log on stderr, which the panel prints in the terminal (terminal_log).
+    args = ['-m', 'openstrand', 'agent', prompt, '--model', model, '--out-dir', out_dir, '--json-events', '--log']
     if history:  # the session so far: Claude remembers it
         args += ['--history', history]
     if app:  # the app answers its tab tools through the bridge
@@ -185,6 +186,20 @@ def frame_image(frame, size=FRAME_SIZE, ratio=2.0):
             stroke(painter, path(over['points']), cords[k].get('color') or ACCENT, Qt.FlatCap)
     painter.end()
     return image
+
+
+LOG_PREFIX = 'log '  # the agent's log lines (openstrand/debuglog.py)
+
+
+def terminal_log(text):
+    """A line in the terminal the app was started from, for debugging Claude."""
+    out = sys.__stderr__
+    if out is None:  # no console (pythonw, a packaged app)
+        return
+    try:
+        print(f'[Claude] {text}', file=out, flush=True)
+    except (OSError, ValueError):
+        pass
 
 
 def money(value):
@@ -1193,6 +1208,7 @@ class ClaudePanel(QWidget):
 
     def send_or_stop(self):
         if self.running():
+            terminal_log('Stop pressed: ending the agent')
             self.stopping = True
             self.stop_steps()
             self.close_group()
@@ -1275,6 +1291,7 @@ class ClaudePanel(QWidget):
         self.working.start(_tr(self.language, 'claude_thinking') + '…')
         self.activity_changed.emit()
         self.send_button.setText(_tr(self.language, 'claude_stop'))
+        terminal_log(f'request starts: {prompt[:80]!r}; its files and agent.log are in {self.out_dir}')
         self.process.start(program, args)
         self.new_button.setEnabled(False)  # not while Claude works
 
@@ -1339,8 +1356,16 @@ class ClaudePanel(QWidget):
             self.handle_event(event)
 
     def read_errors(self):
-        if self.process is not None:
-            self.stderr_text += bytes(self.process.readAllStandardError()).decode('utf-8', 'replace')
+        if self.process is None:
+            return
+        new = bytes(self.process.readAllStandardError()).decode('utf-8', 'replace')
+        # Complete lines go to the terminal as they come: the agent's log, and any error.
+        start = self.stderr_text.rfind('\n') + 1
+        self.stderr_text += new
+        complete = self.stderr_text[start:self.stderr_text.rfind('\n') + 1] if '\n' in new else ''
+        for line in complete.splitlines():
+            if line.strip():
+                terminal_log(line[len(LOG_PREFIX):] if line.startswith(LOG_PREFIX) else line)
 
     def handle_event(self, event):
         kind = event.get('type')
@@ -1422,6 +1447,9 @@ class ClaudePanel(QWidget):
         self.activity_changed.emit()
 
     def finished(self, *_):
+        if self.process is not None and hasattr(self.process, 'exitCode'):
+            terminal_log(f'the agent process ended (exit code {self.process.exitCode()}'
+                         f'{", stopped by the person" if self.stopping else ""})')
         try:
             self._finish()
             self.remember_turn()
@@ -1501,7 +1529,7 @@ class ClaudePanel(QWidget):
         if event is None:
             self.status_label.setText(line if spent else '')
             if not self.stopping:  # stopped by the person: "Stopped." says it already
-                lines = [l for l in self.stderr_text.splitlines() if l.strip()]
+                lines = [l for l in self.stderr_text.splitlines() if l.strip() and not l.startswith(LOG_PREFIX)]
                 message = lines[-1] if lines else 'the agent stopped without an answer'
                 self.add_note(_tr(self.language, 'claude_failed').format(error=message.removeprefix('error: ')),
                               '#c0392b')

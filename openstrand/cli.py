@@ -9,6 +9,7 @@ import json
 import re
 import os
 import sys
+import time
 from pathlib import Path
 
 from . import __version__, colors, project
@@ -322,15 +323,23 @@ def cmd_agent(args):
         raise ValueError('--max-cost must be more than 0')
     app = None
     events = event_stream()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    from .debuglog import Log
+    log = Log(out_dir / 'agent.log', to_stderr=args.log)
+    log(f'agent starts: model {model}, effort {args.effort}, web {not args.no_web}, plan {args.plan}, '
+        f'app {args.app}, max ${args.max_cost:.2f}, folder {out_dir.resolve()}')
+    log(f'python {sys.version.split()[0]} on {sys.platform}, {sys.executable}')
     if args.app:  # started by OpenStrand Studio: its tabs are tools, answered on stdin
+        began = time.monotonic()
         preload()
+        log(f'numpy loaded in {time.monotonic() - began:.1f}s (before stdin is read)')
         from .app_tools import AppClient
         args.json_events = True
-        app = AppClient(lambda e: agent.print_events(e, True, out=events))
+        app = AppClient(lambda e: agent.print_events(e, True, out=events), log=log)
     runner = agent.Agent(client, out_dir, model=model, max_cost=args.max_cost, web=not args.no_web,
                          effort=args.effort, plan=args.plan, app=app,
                          on_event=lambda e: agent.print_events(e, args.json_events, out=events),
-                         quiet=lambda: quiet(not args.verbose))
+                         quiet=lambda: quiet(not args.verbose), log=log)
     try:
         history = json.loads(Path(args.history).read_text(encoding='utf-8')) if args.history else None
         result = runner.run(args.prompt, images=args.image or [], start=start, history=history)
@@ -456,6 +465,8 @@ def build_parser():
     agent_cmd.add_argument('--plan', action='store_true',
                            help='plan mode: research and write a plan, build nothing')
     agent_cmd.add_argument('--json-events', action='store_true', help='print one JSON event per line (for the app)')
+    agent_cmd.add_argument('--log', action='store_true',
+                           help="print the step-by-step log on stderr (it is always in the folder's agent.log)")
 
     render = command('render', "draw a project to PNG with the app's real canvas", cmd_render)
     render.add_argument('file')

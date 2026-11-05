@@ -14,6 +14,7 @@ and answers with one JSON line on stdin:
 The app decides what is allowed: in plan mode only looking, in ask mode the
 person confirms changes.
 """
+import contextlib
 import json
 import queue
 import sys
@@ -119,8 +120,9 @@ class AppClient:
     C runtime they bring checks the standard handles as it starts), so with a
     read always waiting, the first knot tool hung for good."""
 
-    def __init__(self, emit, stream=None, timeout=600):
+    def __init__(self, emit, stream=None, timeout=600, log=None):
         self.emit = emit  # writes one event line on stdout
+        self.log = log  # the step-by-step log (debuglog.Log), or None
         self.timeout = timeout  # the person may take a while to confirm
         self.stream = stream if stream is not None else sys.stdin
         self.wanted = threading.Semaphore(0)  # one release: read one line
@@ -154,15 +156,24 @@ class AppClient:
         self.next_id += 1
         call_id = self.next_id
         self.emit({'type': 'app_call', 'id': call_id, 'name': name, 'args': args})
-        deadline = time.monotonic() + self.timeout
-        while True:
-            line = self._line(deadline, name).strip()
-            try:
-                reply = json.loads(line) if line else None
-            except ValueError:
-                continue
-            if isinstance(reply, dict) and reply.get('id') == call_id:
-                break
+        asked = time.monotonic()
+        deadline = asked + self.timeout
+        if self.log:
+            self.log(f'asking the app #{call_id}: {name} {json.dumps(args)[:200]}')
+        waiting = (self.log.waiting(f'the app to answer {name} #{call_id} (in ask mode it waits for Allow or Deny)')
+                   if self.log else contextlib.nullcontext())
+        with waiting:
+            while True:
+                line = self._line(deadline, name).strip()
+                try:
+                    reply = json.loads(line) if line else None
+                except ValueError:
+                    continue
+                if isinstance(reply, dict) and reply.get('id') == call_id:
+                    break
+        if self.log:
+            self.log(f'the app answered #{call_id} in {time.monotonic() - asked:.1f}s: '
+                     f'{"ok" if reply.get("ok") else "refused: " + str(reply.get("error"))[:160]}')
         if not reply.get('ok'):
             raise AppError(reply.get('error') or f'the app could not do {name}')
         return reply.get('result') or {}

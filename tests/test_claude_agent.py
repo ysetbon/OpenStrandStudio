@@ -1166,6 +1166,56 @@ def test_the_app_client_reads_stdin_only_while_a_call_waits():
     stdin.lines.put("")  # the app closes the pipe
 
 
+def test_the_log_says_what_a_request_still_waits_for(tmp_path):
+    from openstrand.app_tools import AppClient
+    from openstrand.debuglog import Log
+    log = Log(tmp_path / "agent.log")
+    log("round 1: asking claude-sonnet-5-5")
+    with log.waiting("Claude's answer (round 1)", every=0.05):
+        time.sleep(0.2)
+    read_end, write_end = os.pipe()
+    writer = os.fdopen(write_end, "w")
+
+    def emit(event):
+        writer.write(json.dumps({"id": event["id"], "ok": True, "result": {}}) + "\n")
+        writer.flush()
+    AppClient(emit, stream=os.fdopen(read_end), timeout=5, log=log).call("list_tabs", {})
+    lines = (tmp_path / "agent.log").read_text(encoding="utf-8").splitlines()
+    assert all(line.startswith("log ") for line in lines)
+    assert "round 1: asking claude-sonnet-5-5" in lines[0]
+    assert any("still waiting for Claude's answer (round 1)" in line for line in lines)
+    assert any("asking the app #1: list_tabs" in line for line in lines)
+    assert any("the app answered #1 in" in line and line.endswith("ok") for line in lines)
+
+
+def test_the_panel_prints_the_agent_log_in_the_terminal_and_keeps_errors_apart(window, monkeypatch, tmp_path):
+    import io
+    from types import SimpleNamespace
+    from PyQt5.QtCore import QProcess
+    import claude_panel
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    assert "--log" in claude_panel.agent_command("a heart", "claude-haiku-5-5", str(tmp_path))[1]
+    terminal = io.StringIO()
+    monkeypatch.setattr(sys, "__stderr__", terminal)
+    panel = window.claude_panel
+    panel.entries.clear()
+    chunks = [b"log 10:00:01 +    0.2s  round 1: asking claude-sonnet-5-5\nlog 10:00:4", b"0 +   39.0s  ... still",
+              b" waiting for Claude's answer (round 1): 30s\nerror: the Anthropic API returned 529: overloaded\n"]
+    panel.process = SimpleNamespace(state=lambda: QProcess.NotRunning, readAllStandardError=lambda: chunks.pop(0) if chunks else b"",
+                                    readAllStandardOutput=lambda: b"")
+    panel.stderr_text, panel.stopping, panel.done_event = "", False, None
+    panel.out_dir = str(tmp_path)
+    for _ in range(3):
+        panel.read_errors()
+    shown = terminal.getvalue().splitlines()
+    assert shown[0].startswith("[Claude] 10:00:01") and "round 1: asking" in shown[0]
+    assert "still waiting for Claude's answer (round 1): 30s" in shown[1]  # a line split across reads, whole
+    assert shown[2] == "[Claude] error: the Anthropic API returned 529: overloaded"
+    panel._finish()
+    panel.process = None
+    assert "Claude stopped: the Anthropic API returned 529: overloaded" in panel.transcript.toPlainText()
+
+
 def test_the_agent_offers_app_tools_only_from_the_app(tmp_path):
     from types import SimpleNamespace
     from openstrand import agent
@@ -1307,6 +1357,12 @@ def test_claude_ties_a_figure_eight_into_real_tabs_checked_at_every_step(window,
     assert "Figure-eight knot: figure-eight, 4 crossings." in result
     assert "pulled tight: figure-eight" in result and "step 6 as drawn in the app: figure-eight" in result
     assert "WARNING" not in result
+    # Behind the scenes: the request's log says each round, tool and app answer, and how long each took.
+    log = (Path(panel.out_dir) / "agent.log").read_text(encoding="utf-8")
+    assert "agent starts:" in log and "numpy loaded in" in log
+    assert re.search(r"round 1: answered in [\d.]+s, stop tool_use", log)
+    assert re.search(r"tool tie_knot done in [\d.]+s", log) and re.search(r"the app answered #\d+ in", log)
+    assert "request ends: answered" in log
     # Six real tabs, in order, with Claude's titles; each holds its step as the app loaded it.
     assert [tm.title_for(t) for t in tm.tabs[before:]] == TIE_TITLES
     knots = []

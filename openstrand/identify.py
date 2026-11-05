@@ -124,8 +124,21 @@ def cords(project):
         knot = invariants.describe(np.c_[line, z], closed[k])
         out.append(dict(strands=len(set(owners[k])), closed=closed[k], crossings=len(visits) // 2,
                         with_others=between[k], alexander=knot['alexander'], knot=knot['knot'],
-                        meaning=knot['meaning']))
+                        meaning=knot['meaning'], cord=np.c_[line, z]))
     return out
+
+
+def cord_of(project):
+    """The one open cord of a design, as (x, y, height) points along it with its
+    over and under as heights, ready for tying.tie(cord=...)."""
+    found = cords(project)
+    if len(found) != 1:
+        raise ValueError(f'the design has {len(found)} cords; tying works on a design of one cord')
+    if found[0]['closed']:
+        raise ValueError('the cord is closed (its ends are joined): tying needs two ends to pull')
+    if found[0]['crossings'] == 0:
+        raise ValueError('the cord never crosses itself: there is no knot in it')
+    return found[0]['cord']
 
 
 def _owner_at(line, owner, position, closed):

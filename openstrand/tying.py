@@ -165,11 +165,16 @@ def _dense(points, spacing=4.0):
     return np.array(spline([tuple(p[:2]) for p in points], spacing=spacing))
 
 
-def shapes(points, pattern, width, expect=None):
-    """Lay a rough path out loose, then pull it tight: (loose, history, tight, checks)."""
-    poly = _dense(points)
-    z, _ = simulate.heights_from_pattern(poly, pattern, width)
-    rough = np.c_[poly, z]
+def shapes(points, pattern, width, expect=None, cord=None):
+    """Lay a rough path out loose, then pull it tight: (loose, history, tight, checks).
+    cord: a ready path of (x, y, height) instead of points and pattern."""
+    if cord is not None:
+        rough = simulate.resample(np.asarray(cord, dtype=float), 4.0)
+        rough[:, 2] = np.sign(rough[:, 2]) * np.minimum(np.abs(rough[:, 2]), 1.0) * simulate.LEVEL * width
+    else:
+        poly = _dense(points)
+        z, _ = simulate.heights_from_pattern(poly, pattern, width)
+        rough = np.c_[poly, z]
     knot = invariants.describe(rough)
     if expect is not None and tuple(knot['alexander']) != tuple(expect):
         raise TyingError(f"the path makes {knot['knot'] or 'a knot with Alexander polynomial ' + str(knot['alexander'])}, "
@@ -351,7 +356,7 @@ def _arrow(data, tip):
 
 
 def tie(knot=None, points=None, pattern=None, width=DEFAULT_WIDTH, color='#d97757', count=None,
-        titles=None, expect=None, build=True):
+        titles=None, expect=None, build=True, cord=None):
     """The steps to tie a knot: from the library by name, or from a rough path.
 
     Returns dict(title, knot, alexander, crossings, checks, steps) with
@@ -362,7 +367,7 @@ def tie(knot=None, points=None, pattern=None, width=DEFAULT_WIDTH, color='#d9775
     if not MIN_WIDTH <= width <= draw.WIDTH_RANGE[1]:
         raise TyingError(f'width must be between {MIN_WIDTH} and {draw.WIDTH_RANGE[1]} px: a tight knot in a '
                          'thinner cord is too fine for its strands to follow')
-    if knot is not None and points is None:
+    if knot is not None and points is None and cord is None:
         key = find(knot)
         if key is None:
             names = ', '.join(r['title'] for r in LIBRARY.values())
@@ -375,10 +380,11 @@ def tie(knot=None, points=None, pattern=None, width=DEFAULT_WIDTH, color='#d9775
                                                                   ('pulled tight', tight))]
         title = recipe['title']
     else:
-        if not isinstance(points, list) or len(points) < 4:
+        if cord is None and (not isinstance(points, list) or len(points) < 4):
             raise TyingError('points: the path of the cord, at least 4 [x, y] points from the standing end')
-        pattern = pattern or alternating(points)
-        loose, history, tight, made = shapes(points, pattern, width, expect)
+        if cord is None:
+            pattern = pattern or alternating(points)
+        loose, history, tight, made = shapes(points, pattern, width, expect, cord=cord)
         snug = _snug(history, tight)
         d = made['knot']
         checks = [dict(stage='as drawn', crossings=d['crossings'], alexander=d['alexander'], knot=d['knot'])]

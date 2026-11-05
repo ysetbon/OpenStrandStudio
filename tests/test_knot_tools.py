@@ -303,3 +303,18 @@ def test_the_command_ties_lists_and_identifies(tmp_path):
     assert "3 crossings with itself: overhand knot (3_1)" in named.stdout
     wrong = run("tie", "bowline")
     assert wrong.returncode == 1 and "not in the knot library" in wrong.stderr
+
+
+def test_the_knot_in_a_design_is_tied_as_drawn(tmp_path):
+    from openstrand.agent import ToolError, Workspace
+    drawn, _ = draw.build({"cords": [{"points": FIGURE_8, "width": 26, "color": "crimson"}]})
+    ws = Workspace(tmp_path)
+    ws.store(drawn)
+    summary, text = ws.run("tie_knot", {"from_design": True})
+    assert "as drawn: figure-eight" in text and "pulled tight: figure-eight" in text and "WARNING" not in text
+    assert len(ws.steps) == 6
+    rings, _ = draw.build({"cords": [{"shape": "circle", "center": [480, 400], "radius": 180},
+                                     {"shape": "circle", "center": [720, 400], "radius": 180}]})
+    ws.store(rings)
+    with pytest.raises(ToolError, match="2 cords"):
+        ws.run("tie_knot", {"from_design": True})

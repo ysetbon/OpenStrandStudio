@@ -82,6 +82,11 @@ Knots tied in a cord (overhand, figure-eight, stevedore and the like):
   does, a few cord widths between parts) and its over/under pattern. Read the
   checks: they name the knot the path makes. If it is not the knot you meant,
   fix the path or the pattern and try again.
+- For the knot in a design the person already has (in the app: read_tab it
+  first), call tie_knot with from_design: it keeps that knot's over and under.
+- tie_knot pulls the two ends apart, as for stopper knots. For a loop knot
+  (bowline) or a bend joining two cords, say it is not supported yet and draw
+  it with draw_design.
 - To check any design is the knot it should be, call identify_knot rather than
   judging the picture.
 
@@ -168,15 +173,20 @@ TOOLS = [
                         'touches itself, no gaps. Every stage is checked to be the knot asked for, from its '
                         'crossings, also as drawn in the app. Library knots by name (knot_library lists them); '
                         'any other knot from its path: rough [x, y] points from the standing end to the working '
-                        'end, crossing itself where the knot does, and its over/under pattern. Saves the steps '
-                        'as "step 1", "step 2", ... (open them with open_in_new_tab) and makes the tight knot '
-                        'the current design. Library knots take seconds; a path about half a minute.'),
+                        'end, crossing itself where the knot does, and its over/under pattern; or the knot in '
+                        'the current design (from_design, e.g. after read_tab). The knot is tightened by pulling '
+                        'its two ends apart, as for stopper knots; not for loop knots (bowline) or bends that '
+                        'join two cords. Saves the steps as "step 1", "step 2", ... (open them with '
+                        'open_in_new_tab) and makes the tight knot the current design. Library knots take '
+                        'seconds; a path or a design about half a minute.'),
         'input_schema': {'type': 'object', 'properties': {
             'knot': {'type': 'string', 'description': 'a library knot, e.g. "figure-eight", "overhand"'},
             'points': {'type': 'array', 'items': {'type': 'array', 'items': {'type': 'number'}},
                        'description': 'for a knot not in the library: its path, standing end first'},
             'pattern': {'type': 'string', 'description': 'with points: O or U for each crossing the path '
                                                          'passes, in order along it (default alternating)'},
+            'from_design': {'type': 'boolean', 'description': 'tie the knot of the current design (one open '
+                                                              'cord), keeping its over and under'},
             'color': {'type': 'string', 'description': 'color name or hex; default teal'},
             'width': {'type': 'number', 'description': 'cord width in px, 16-60; default 24'},
             'moves': {'type': 'integer', 'minimum': 1, 'maximum': 6,
@@ -339,10 +349,18 @@ class Workspace:
             return f'{title} · {project.summary(data)}', report + '\nNow render it and look at the result.'
         if name == 'tie_knot':
             from . import tying
+            cord = None
+            if args.get('from_design'):
+                from . import identify
+                try:
+                    cord = identify.cord_of(self.need())
+                except ValueError as e:
+                    raise ToolError(str(e)) from None
             try:
-                made = tying.tie(knot=args.get('knot'), points=args.get('points'), pattern=args.get('pattern'),
-                                 width=args.get('width') or tying.DEFAULT_WIDTH,
-                                 color=colors.parse(args.get('color') or 'teal'), count=args.get('moves'))
+                made = tying.tie(knot=args.get('knot') if cord is None else None, points=args.get('points'),
+                                 pattern=args.get('pattern'), width=args.get('width') or tying.DEFAULT_WIDTH,
+                                 color=colors.parse(args.get('color') or 'teal'), count=args.get('moves'),
+                                 cord=cord)
             except (tying.TyingError, ImportError) as e:
                 raise ToolError(str(e)) from None
             self.steps = []

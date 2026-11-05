@@ -141,10 +141,12 @@ The agent runs in its own process, so it cannot touch the app's windows. When
 the app starts it (`--app`), Claude also gets tools that act on the running
 app: `list_tabs`, `read_tab`, `read_tab_step`, `open_in_new_tab`, `rename_tab`,
 `switch_tab`, `edit_mask_in_tab` and `edit_strand_in_tab`. Each call goes out as a JSON line (`{"type": "app_call", ...}`);
-the panel hands it to `AppBridge` (`src/claude_bridge.py`), which runs it on
+the panel hands it to `AppBridge` (`src/claude_bridge/`, one module per area: tabs,
+strands, masks, layers, groups, window), which runs it on
 the app's main thread with the app's own code (the real `TabManager`, the
 same loader as Load) and answers on the agent's stdin
-(`openstrand/app_tools.py`, `AppClient`). Only those actions exist, only
+(`openstrand/app/client.py`, `AppClient`; the tools Claude sees are in `openstrand/app/`,
+by the same areas). Only those actions exist, only
 designs made in the request can open, and the panel's mode decides: plan
 mode only looks, ask mode shows a card or an Allow / Deny for each change,
 auto does it.

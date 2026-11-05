@@ -333,7 +333,7 @@ def cmd_agent(args):
         began = time.monotonic()
         preload()
         log(f'numpy loaded in {time.monotonic() - began:.1f}s (before stdin is read)')
-        from .app_tools import AppClient
+        from .app import AppClient
         args.json_events = True
         app = AppClient(lambda e: agent.print_events(e, True, out=events), log=log)
     runner = agent.Agent(client, out_dir, model=model, max_cost=args.max_cost, web=not args.no_web,

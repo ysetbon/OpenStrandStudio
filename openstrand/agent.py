@@ -18,6 +18,7 @@ from pathlib import Path
 
 from . import ROOT, colors, edit, generators, project
 from .debuglog import short
+from .errors import ToolError  # agent.ToolError: what a tool raises for Claude
 
 MODELS = {'sonnet': 'claude-sonnet-5-5', 'haiku': 'claude-haiku-5-5'}
 DEFAULT_MODEL = MODELS['sonnet']
@@ -306,9 +307,6 @@ TOOLS = [
 ]
 
 
-class ToolError(Exception):
-    """A tool call that cannot be done; its message goes back to Claude."""
-
 
 def image_block(path):
     """A user-message image block for a PNG, JPEG, GIF or WebP file."""
@@ -572,14 +570,14 @@ class Agent:
                       'cache_creation_input_tokens': 0, 'cache_read_input_tokens': 0}
 
     def system(self):
-        from .app_tools import APP_INSTRUCTIONS
+        from .app import APP_INSTRUCTIONS
         text = (INSTRUCTIONS + (APP_INSTRUCTIONS if self.app else '') + (PLAN_INSTRUCTIONS if self.plan else '')
                 + 'The guide:\n\n' + GUIDE.read_text(encoding='utf-8')
                 + '\n\n' + DRAWING.read_text(encoding='utf-8'))
         return [{'type': 'text', 'text': text, 'cache_control': {'type': 'ephemeral'}}]
 
     def tools(self):
-        from .app_tools import APP_TOOLS, LOOK_ONLY
+        from .app import APP_TOOLS, LOOK_ONLY
         tools = [t for t in TOOLS if t['name'] in PLAN_TOOLS] if self.plan else list(TOOLS)
         if self.app is not None:
             tools += [t for t in APP_TOOLS if t['name'] in LOOK_ONLY] if self.plan else APP_TOOLS
@@ -714,7 +712,7 @@ class Agent:
                 self.log(f'tool {name} done in {took:.1f}s: {short(said)}')
 
     def _tool(self, block, args):
-        from .app_tools import APP_TOOL_NAMES, AppError
+        from .app import APP_TOOL_NAMES, AppError
         try:
             if block.name in APP_TOOL_NAMES:
                 if self.app is None:
@@ -735,109 +733,9 @@ class Agent:
         return {'type': 'tool_result', 'tool_use_id': block.id, 'content': content}
 
     def app_tool(self, name, args):
-        """A tool the running app does with its own code, through the bridge."""
-        ws = self.workspace
-        if name == 'open_in_new_tab':
-            which = str(args.get('design', 'current')).strip().lower()
-            title = str(args.get('title') or '').strip()[:60] or 'Claude design'
-            if which in ('current', 'design', ''):
-                ws.need()
-                path = ws.project_path
-            else:
-                number = which.replace('step', '').strip()
-                if not number.isdigit() or not 1 <= int(number) <= len(ws.steps):
-                    raise ToolError(f'no {which}: make_steps made {len(ws.steps)} steps')
-                path = ws.steps[int(number) - 1][1]
-            result = self.app.call(name, {'path': str(path), 'title': title})
-            if result.get('opened'):
-                self.opened_tabs.append(title)
-                return f'New tab · {title}', f'opened in a new tab titled "{title}"'
-            return f'{title} · waiting for the person', result.get('note') or 'shown to the person to open'
-        if name == 'read_tab':
-            tab = str(args.get('tab_id', ''))
-            result = self.app.call(name, {'tab_id': tab})
-            data = project.read(result['file'])
-            ws.store(data, tab=tab, tab_version=result.get('version'))
-            return (f"Read tab {result.get('title', '')} · {project.summary(data)}",
-                    f"tab \"{result.get('title', '')}\" as it is now (version {result.get('version')}) is the "
-                    f"current design: {project.summary(data)}\n{project.detail(data)}\n"
-                    + history_text(result.get('history')))
-        if name == 'read_tab_step':
-            tab, step = str(args.get('tab_id', '')), args.get('step')
-            result = self.app.call(name, {'tab_id': tab, 'step': step})
-            data = project.read(result['file'])
-            ws.store(data)  # a copy of a past step: not the tab as it is, so no tab edits from it
-            what = f" ({result['what']})" if result.get('what') else ''
-            return (f"Tab {result.get('title', '')} at step {result.get('step')} · {project.summary(data)}",
-                    f"tab \"{result.get('title', '')}\" as it was at undo step {result.get('step')}{what} is now the "
-                    f"current design (a copy; the tab is at step {result.get('current_step')} of "
-                    f"{result.get('max_step')} and does not change): {project.summary(data)}\n{project.detail(data)}")
-        if name == 'edit_strand_in_tab':
-            return self.edit_strand_in_tab(args)
-        if name == 'edit_mask_in_tab':
-            return self.edit_mask_in_tab(args)
-        if name in ('rename_tab', 'switch_tab'):
-            call = {'tab_id': str(args.get('tab_id', ''))}
-            if name == 'rename_tab':
-                call['title'] = str(args.get('title') or '').strip()[:60]
-            result = self.app.call(name, call)
-            note = result.get('note') or 'done'
-            return f"{name.replace('_', ' ').capitalize()} · {result.get('title', '')}", note
-        result = self.app.call(name, {})
-        tabs = result.get('tabs', [])
-        return f'{len(tabs)} tabs', json.dumps(tabs)
-
-    def edit_strand_in_tab(self, args):
-        """Move points of a strand in the tab, then read the tab back: the copy is the tab again."""
-        from . import identify
-        ws = self.workspace
-        tab = str(args.get('tab_id', ''))
-        if ws.data is None or ws.tab != tab:
-            raise ToolError('read_tab this tab first (and change nothing else before editing it)')
-        points = args.get('points')
-        if not isinstance(points, dict) or not points:
-            raise ToolError('points: e.g. {"control_point1": [x, y]}')
-        result = self.app.call('edit_strand', {'tab_id': tab, 'strand': str(args.get('strand', '')),
-                                               'points': points, 'version': ws.tab_version})
-        if not result.get('now'):  # ask mode: the person decides; nothing changed yet
-            return f"{args.get('strand')} · waiting for the person", result.get('note') or 'shown to the person'
-        fresh = self.app.call('read_tab', {'tab_id': tab})
-        data = project.read(fresh['file'])
-        ws.store(data, tab=tab, tab_version=fresh.get('version'))
-        now = ', '.join(f'{k} {v}' for k, v in result['now'].items())
-        return (f"In the tab · {result.get('note', 'moved')}",
-                f"{result.get('note', 'moved')} in the tab (one undo step there). {result.get('strand')} now: {now}.\n"
-                f"Knot: {identify.summary(data)}\nThe tab is the current design again (version "
-                f"{fresh.get('version')}): render it and look.")
-
-    def edit_mask_in_tab(self, args):
-        """Work the edit out on the copy read from the tab, then have the app do it there."""
-        from . import masks
-        ws = self.workspace
-        tab = str(args.get('tab_id', ''))
-        if ws.data is None or ws.tab != tab:
-            raise ToolError('read_tab this tab first (and change nothing else before editing it)')
-        before = ws.data
-        with self.quiet():
-            summary, text = ws.edit_mask(dict(args, preview=True), store=False)
-        after = ws.last_edit
-        call = {'tab_id': tab, 'op': args.get('op'), 'mask': args.get('mask'),
-                'first': args.get('first'), 'second': args.get('second')}
-        if args.get('op') == 'erase':
-            call['boxes'] = _new_boxes(before, after, str(args.get('mask')))
-            if not call['boxes']:
-                raise ToolError('the erase added no box')
-        elif args.get('op') in ('create', 'swap'):
-            # The new mask is trimmed on Claude's copy: the same boxes go to the tab.
-            made = (f"{args.get('first')}_{args.get('second')}" if args.get('op') == 'create'
-                    else _swapped(before, str(args.get('mask'))))
-            call['boxes'] = _new_boxes(before, after, made)
-        call['version'] = ws.tab_version
-        result = self.app.call('edit_mask', call)
-        ws.store(after, tab=tab, tab_version=result.get('version'))
-        note = result.get('note') or 'done'
-        return (f'In the tab · {note}',
-                f"{note} in the tab (one undo step there).\n" + text.replace('Preview, not kept: ', '', 1))
+        """A tool the running app does with its own code, through the bridge (openstrand/app/)."""
+        from .app import HANDLERS
+        return HANDLERS[name](self, args)
 
     def finish(self, said, error=None):
         self.log(f'request ends: {error or "answered"} (cost ${self.cost:.3f}, {self.searches} web searches)')
@@ -857,37 +755,6 @@ class Agent:
             event['in_tab'] = ws.tab
         self.on_event(event)
         return event
-
-
-def _swapped(data, name):
-    """The name a mask has once swapped: its two strands the other way round."""
-    from .steps import mask_parts
-    names = [s['layer_name'] for s in data['strands'] if s.get('type') != 'MaskedStrand']
-    parts = mask_parts(name, names)
-    return f'{parts[1]}_{parts[0]}' if len(parts) == 2 else name
-
-
-def _new_boxes(before, after, name):
-    """The erase boxes a mask has in after and not in before."""
-    def boxes(data):
-        for s in data['strands']:
-            if s.get('type') == 'MaskedStrand' and s.get('layer_name') == name:
-                return [{k: [float(v) for v in r[k]] for k in ('top_left', 'top_right', 'bottom_left', 'bottom_right')}
-                        for r in s.get('deletion_rectangles') or [] if 'top_left' in r]
-        return []
-    old = boxes(before)
-    return [b for b in boxes(after) if b not in old]
-
-
-def history_text(history):
-    """A tab's undo history for Claude: which step it is at, what made each step."""
-    if not history or not history.get('steps'):
-        return 'undo history: none kept'
-    lines = [f"undo history (at step {history.get('current_step')} of {history.get('max_step')}; later steps "
-             'were undone and can be redone; read_tab_step loads any of them):']
-    for step in history['steps'][-40:]:
-        lines.append(f"  step {step['step']}{' (now)' if step.get('current') else ''}: {step.get('what') or '-'}")
-    return '\n'.join(lines)
 
 
 HISTORY_TURNS = 8

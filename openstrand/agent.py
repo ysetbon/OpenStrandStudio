@@ -109,8 +109,9 @@ Masks (which strand is on top at a crossing) in tight and crowded designs:
   over, the check reads it from what most of the crossing shows: compare with
   the render and with what the person asked before you change it.
 
-Drawing takes a few seconds to a minute; making a Turk's head size that is not
-published, or a heart, about a minute. Call it once and wait.
+Drawing, tying a knot, making a heart or a Turk's head size that is not
+published each take a few seconds; the person sees the tool's progress. Call it
+once and wait.
 
 """
 
@@ -144,7 +145,7 @@ TOOLS = [
     {
         'name': 'make_turks_head',
         'description': "Make a woven Turk's head ring knot. Leads (2-7) and bights (2-13) must share "
-                       "no common factor. Published sizes are instant; others take about a minute.",
+                       "no common factor. Published sizes are instant; others take a few seconds.",
         'input_schema': {'type': 'object', 'properties': {
             'leads': {'type': 'integer', 'description': 'turns around the ring'},
             'bights': {'type': 'integer', 'description': 'loops on the rim'},
@@ -163,7 +164,7 @@ TOOLS = [
     },
     {
         'name': 'make_heart',
-        'description': 'Make a ribbon heart from one cord, its ends crossing below the tip. Takes about a minute.',
+        'description': 'Make a ribbon heart from one cord, its ends crossing below the tip. Takes a few seconds.',
         'input_schema': {'type': 'object', 'properties': {
             'color': {'type': 'string', 'description': 'color name or hex; default crimson'}}},
     },

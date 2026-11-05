@@ -35,7 +35,7 @@ use for them. `drawing.md` explains how to draw any design yourself.
    python -m openstrand make sample hopf_link --out designs/rings.json
    ```
    A Turk's head size that is not published, or a heart, is fitted from
-   scratch and takes up to a minute or two. Wait for it.
+   scratch and takes a few seconds. Wait for it.
 4. **Set the colors.** `python -m openstrand info designs/x.json` lists the
    sets, their colors and which way each runs (vertical, horizontal). Then:
    ```

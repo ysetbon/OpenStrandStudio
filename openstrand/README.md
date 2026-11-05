@@ -28,7 +28,7 @@ python -m openstrand render designs/bracelet.json --out designs/bracelet.png
 | --- | --- |
 | `make turks_head` | A Turk's head ring knot, woven over and under. Published sizes are copied; others are fitted (a minute or two). |
 | `make mxn` | An MxN stitch from `mxn_samples/` (m, n from 1 to 8, lh or rh, `--stretch`). |
-| `make heart` | A ribbon heart from one cord (fitted, about a minute). |
+| `make heart` | A ribbon heart from one cord (fitted, a few seconds). |
 | `make sample NAME` | A ready-made design from `knot_samples/` or `mxn_samples/`. |
 | `draw SPEC` | Your own design from cords given as points, x(t)/y(t) curves or shapes; woven over and under, with a report of every crossing. See `.claude/skills/openstrand-designer/drawing.md`. |
 | `tie KNOT` | Tying steps for a knot, one project per step: the cord laid move by move with an arrow on the working end, drawn up, then pulled tight. Worked out by simulating a real cord (`simulate.py`), every stage checked to be that knot (`invariants.py`, `identify.py`). `--list` for the library; `--path FILE` for any other knot. |

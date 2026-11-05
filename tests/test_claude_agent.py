@@ -1019,6 +1019,37 @@ def test_the_app_client_waits_for_its_own_answer():
     writer.close()
 
 
+def test_the_app_client_reads_stdin_only_while_a_call_waits():
+    """No read may be left waiting on stdin while a tool runs: on Windows it
+    holds the pipe, and loading numpy's DLLs (they check the standard handles)
+    then waits for it, so the first knot tool hung for good."""
+    import queue as _queue
+    import threading as _threading
+    import time as _time
+    from openstrand.app_tools import AppClient
+
+    class Stdin:
+        def __init__(self):
+            self.waiting, self.lines = _threading.Event(), _queue.Queue()
+
+        def readline(self):
+            self.waiting.set()
+            line = self.lines.get()
+            self.waiting.clear()
+            return line
+
+    stdin = Stdin()
+    client = AppClient(lambda event: stdin.lines.put(json.dumps({"id": event["id"], "ok": True}) + "\n"),
+                       stream=stdin, timeout=5)
+    _time.sleep(0.2)
+    assert not stdin.waiting.is_set()  # started: nothing read yet
+    assert client.call("list_tabs", {}) == {}
+    _time.sleep(0.2)
+    assert not stdin.waiting.is_set()  # answered: nothing left waiting while tools run
+    assert client.call("list_tabs", {}) == {}
+    stdin.lines.put("")  # the app closes the pipe
+
+
 def test_the_agent_offers_app_tools_only_from_the_app(tmp_path):
     from types import SimpleNamespace
     from openstrand import agent

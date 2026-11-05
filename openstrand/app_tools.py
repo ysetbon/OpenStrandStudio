@@ -18,6 +18,7 @@ import json
 import queue
 import sys
 import threading
+import time
 
 APP_TOOLS = [
     {
@@ -110,40 +111,57 @@ class AppError(Exception):
 
 
 class AppClient:
-    """Asks the running app to do something, and waits for its answer."""
+    """Asks the running app to do something, and waits for its answer.
+
+    stdin is read only while a call waits for its answer, one line at a time.
+    On Windows a read left waiting on the pipe holds the pipe: anything else
+    that looks at it waits for that read to end. Loading numpy's DLLs does (the
+    C runtime they bring checks the standard handles as it starts), so with a
+    read always waiting, the first knot tool hung for good."""
 
     def __init__(self, emit, stream=None, timeout=600):
         self.emit = emit  # writes one event line on stdout
         self.timeout = timeout  # the person may take a while to confirm
-        self.replies = queue.Queue()
+        self.stream = stream if stream is not None else sys.stdin
+        self.wanted = threading.Semaphore(0)  # one release: read one line
+        self.lines = queue.Queue()
+        self.closed = False
         self.next_id = 0
-        stream = stream if stream is not None else sys.stdin
-        threading.Thread(target=self._read, args=(stream,), daemon=True).start()
+        threading.Thread(target=self._read, daemon=True).start()
 
-    def _read(self, stream):
-        for line in stream:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                self.replies.put(json.loads(line))
-            except ValueError:
-                continue
-        self.replies.put(None)  # the app closed the pipe
+    def _read(self):
+        while True:
+            self.wanted.acquire()
+            line = self.stream.readline()
+            self.lines.put(line)
+            if not line:  # the app closed the pipe
+                return
+
+    def _line(self, deadline, name):
+        if self.closed:
+            raise AppError('the app is no longer listening')
+        self.wanted.release()
+        try:
+            line = self.lines.get(timeout=max(0.0, deadline - time.monotonic()))
+        except queue.Empty:
+            raise AppError(f'the app did not answer {name} in time') from None
+        if not line:
+            self.closed = True
+            raise AppError('the app is no longer listening')
+        return line
 
     def call(self, name, args):
         self.next_id += 1
         call_id = self.next_id
         self.emit({'type': 'app_call', 'id': call_id, 'name': name, 'args': args})
+        deadline = time.monotonic() + self.timeout
         while True:
+            line = self._line(deadline, name).strip()
             try:
-                reply = self.replies.get(timeout=self.timeout)
-            except queue.Empty:
-                raise AppError(f'the app did not answer {name} in time') from None
-            if reply is None:
-                self.replies.put(None)
-                raise AppError('the app is no longer listening')
-            if reply.get('id') == call_id:
+                reply = json.loads(line) if line else None
+            except ValueError:
+                continue
+            if isinstance(reply, dict) and reply.get('id') == call_id:
                 break
         if not reply.get('ok'):
             raise AppError(reply.get('error') or f'the app could not do {name}')

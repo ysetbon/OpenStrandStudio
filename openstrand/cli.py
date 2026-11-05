@@ -37,6 +37,27 @@ def quiet(enabled=True):
             os.close(fd)
 
 
+def preload():
+    """Load numpy for the knot tools now, before anything reads stdin. On
+    Windows its DLLs look at the standard handles as they load, and wait
+    for any read left on them (see AppClient)."""
+    try:
+        import numpy  # noqa: F401
+    except ImportError:
+        pass  # the knot tools say how to install it when one is used
+
+
+def event_stream():
+    """Where the agent's events go: the real stdout, kept apart from it. A
+    tool runs inside quiet(), which points stdout at nothing to hide the
+    app's chatter; its progress events must still get out while it works."""
+    try:
+        sys.stdout.flush()
+        return os.fdopen(os.dup(sys.stdout.fileno()), 'w', encoding='utf-8', newline='\n', buffering=1)
+    except (AttributeError, OSError, ValueError):  # no real stdout (a test capturing it)
+        return sys.stdout
+
+
 def _write_design(args, data, warnings, source, default_name):
     out = Path(args.out or default_name)
     project.write(data, out)
@@ -300,13 +321,15 @@ def cmd_agent(args):
     if not args.max_cost > 0:
         raise ValueError('--max-cost must be more than 0')
     app = None
+    events = event_stream()
     if args.app:  # started by OpenStrand Studio: its tabs are tools, answered on stdin
+        preload()
         from .app_tools import AppClient
         args.json_events = True
-        app = AppClient(lambda e: agent.print_events(e, True))
+        app = AppClient(lambda e: agent.print_events(e, True, out=events))
     runner = agent.Agent(client, out_dir, model=model, max_cost=args.max_cost, web=not args.no_web,
                          effort=args.effort, plan=args.plan, app=app,
-                         on_event=lambda e: agent.print_events(e, args.json_events),
+                         on_event=lambda e: agent.print_events(e, args.json_events, out=events),
                          quiet=lambda: quiet(not args.verbose))
     try:
         history = json.loads(Path(args.history).read_text(encoding='utf-8')) if args.history else None

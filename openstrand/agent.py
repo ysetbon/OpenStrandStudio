@@ -12,6 +12,7 @@ import base64
 import contextlib
 import json
 import mimetypes
+import sys
 from pathlib import Path
 
 from . import ROOT, colors, edit, generators, project
@@ -195,8 +196,9 @@ TOOLS = [
                         'the current design (from_design, e.g. after read_tab). The knot is tightened by pulling '
                         'its two ends apart, as for stopper knots; not for loop knots (bowline) or bends that '
                         'join two cords. Saves the steps as "step 1", "step 2", ... (open them with '
-                        'open_in_new_tab) and makes the tight knot the current design. Library knots take '
-                        'seconds; a path or a design about half a minute.'),
+                        'open_in_new_tab) and makes the tight knot the current design. Library knots take a '
+                        'second or two; a path or a design a few seconds (a path drawn larger than it needs is '
+                        'shrunk to a laid-out size first). The person sees its progress live.'),
         'input_schema': {'type': 'object', 'properties': {
             'knot': {'type': 'string', 'description': 'a library knot, e.g. "figure-eight", "overhand"'},
             'points': {'type': 'array', 'items': {'type': 'array', 'items': {'type': 'number'}},
@@ -345,6 +347,7 @@ class Workspace:
         self._preview = None
         self.steps = []  # [(title, path)] from make_steps
         self.last_edit = None  # the design edit_mask made last (kept or previewed)
+        self.progress = None  # set while a tool runs: tells the person how far it has got
 
     def need(self):
         if self.data is None:
@@ -426,7 +429,7 @@ class Workspace:
             return f'Heart · {project.summary(data)}', f'made a ribbon heart: {project.summary(data)}'
         if name == 'draw_design':
             from . import draw
-            data, report = draw.build(args)
+            data, report = draw.build(args, progress=self.progress)
             self.store(data)
             title = str(args.get('name') or 'drawing')[:40]
             return f'{title} · {project.summary(data)}', report + '\nNow render it and look at the result.'
@@ -443,7 +446,7 @@ class Workspace:
                 made = tying.tie(knot=args.get('knot') if cord is None else None, points=args.get('points'),
                                  pattern=args.get('pattern'), width=args.get('width') or tying.DEFAULT_WIDTH,
                                  color=colors.parse(args.get('color') or 'teal'), count=args.get('moves'),
-                                 cord=cord)
+                                 cord=cord, progress=self.progress)
             except (tying.TyingError, ImportError) as e:
                 raise ToolError(str(e)) from None
             self.steps = []
@@ -669,6 +672,15 @@ class Agent:
     def tool(self, block):
         args = block.input if isinstance(block.input, dict) else {}
         self.on_event({'type': 'tool_start', 'name': block.name, 'input': args})
+        from .progress import Progress
+        name = block.name
+        self.workspace.progress = Progress(lambda event: self.on_event(dict(event, name=name)))
+        try:
+            return self._tool(block, args)
+        finally:
+            self.workspace.progress = None
+
+    def _tool(self, block, args):
         from .app_tools import APP_TOOL_NAMES, AppError
         try:
             if block.name in APP_TOOL_NAMES:
@@ -809,32 +821,56 @@ def with_history(prompt, history):
     return '\n'.join(lines) + '\n\nNow the person asks:\n' + prompt
 
 
-def print_events(event, as_json=False):
-    """Show agent events in a terminal: JSON lines for programs, short lines for people."""
+# What a terminal says for each progress stage (the app translates them itself).
+STAGES = {'lay_out': 'laying the cord out', 'tighten': 'pulling the knot tight',
+          'draw_step': 'drawing step {step} of {steps}', 'draw': 'fitting strands to the cords'}
+_last_progress = {}
+
+
+def stage_text(event):
+    text = STAGES.get(event.get('stage'), event.get('stage') or 'working')
+    try:
+        return text.format(**event)
+    except (KeyError, IndexError, ValueError):
+        return text
+
+
+def print_events(event, as_json=False, out=None):
+    """Show agent events in a terminal: JSON lines for programs, short lines for people.
+    out: where to write (default stdout)."""
+    out = out or sys.stdout
     if as_json:
-        print(json.dumps(event), flush=True)
+        print(json.dumps(event), file=out, flush=True)
         return
+    print_ = lambda text: print(text, file=out, flush=True)
     kind = event['type']
+    if kind == 'tool_progress':
+        # One line when the stage changes or another tenth is done, not one per event.
+        key = (event.get('name'), stage_text(event), int(10 * (event.get('fraction') or 0)))
+        if key != _last_progress.get('key'):
+            _last_progress['key'] = key
+            print_(f"    {int(100 * (event.get('fraction') or 0)):3d}% {stage_text(event)}")
+        return
     if kind == 'text':
-        print(f"claude: {event['text']}", flush=True)
+        print_(f"claude: {event['text']}")
     elif kind == 'thinking':
-        print(f"  (thinking) {event['text']}", flush=True)
+        print_(f"  (thinking) {event['text']}")
     elif kind == 'search':
-        print(f"  … {event['name']} {event['query']}".rstrip(), flush=True)
+        print_(f"  … {event['name']} {event['query']}".rstrip())
     elif kind == 'search_result':
         found = f"{event['results']} results" if event['results'] is not None else 'done'
-        print(f"  {'✓' if event['ok'] else '✗'} {event['name']}: {found if event['ok'] else event['error']}", flush=True)
+        print_(f"  {'✓' if event['ok'] else '✗'} {event['name']}: {found if event['ok'] else event['error']}")
     elif kind == 'note':
-        print(f"note: {event['text']}", flush=True)
+        print_(f"note: {event['text']}")
     elif kind == 'tool_start':
         args = ' '.join(f'{k}={v}' for k, v in event['input'].items())
-        print(f"  … {event['name']} {args[:200]}".rstrip(), flush=True)
+        print_(f"  … {event['name']} {args[:200]}".rstrip())
     elif kind == 'tool_end':
-        print(f"  {'✓' if event['ok'] else '✗'} {event['summary']}", flush=True)
+        print_(f"  {'✓' if event['ok'] else '✗'} {event['summary']}")
     elif kind == 'done':
         if event['error']:
-            print(f"error: {event['error']}", flush=True)
+            print_(f"error: {event['error']}")
         if event['project']:
-            print(f"wrote {event['project']}", flush=True)
+            print_(f"wrote {event['project']}")
         searches = f" · {event['searches']} web searches" if event.get('searches') else ''
-        print(f"cost ${event['cost']:.4f} · {event['model']}{searches}", flush=True)
+        print_(f"cost ${event['cost']:.4f} · {event['model']}{searches}")

@@ -50,6 +50,24 @@ def _segments(cord, closed):
     return a, b, s
 
 
+def box_pairs(lo, hi, block=512):
+    """Pairs i < j of boxes (lower and upper corners) that overlap, in (i, j)
+    order. Worked out a block of rows at a time: a long cord has millions of
+    pairs, too many to list all at once."""
+    m = len(lo)
+    found_i, found_j = [np.zeros(0, dtype=np.intp)], [np.zeros(0, dtype=np.intp)]
+    for start in range(0, m - 1, block):
+        rows = np.arange(start, min(m, start + block))
+        cols = np.arange(start + 1, m)
+        hit = ((lo[rows, None, 0] <= hi[None, cols, 0]) & (lo[None, cols, 0] <= hi[rows, None, 0])
+               & (lo[rows, None, 1] <= hi[None, cols, 1]) & (lo[None, cols, 1] <= hi[rows, None, 1])
+               & (cols[None, :] > rows[:, None]))
+        r, c = np.nonzero(hit)
+        found_i.append(rows[r])
+        found_j.append(cols[c])
+    return np.concatenate(found_i), np.concatenate(found_j)
+
+
 def crossings(cords, closed=None):
     """Every place where two parts of the cords cross in the picture.
 
@@ -75,10 +93,7 @@ def crossings(cords, closed=None):
     S0, S1 = np.concatenate(s0), np.concatenate(s1)
     counts = {c: int((own == c).sum()) for c in range(len(cords))}
     lo, hi = np.minimum(A[:, :2], B[:, :2]), np.maximum(A[:, :2], B[:, :2])
-    m = len(A)
-    i, j = np.triu_indices(m, 1)
-    box = ((lo[i, 0] <= hi[j, 0]) & (lo[j, 0] <= hi[i, 0]) & (lo[i, 1] <= hi[j, 1]) & (lo[j, 1] <= hi[i, 1]))
-    i, j = i[box], j[box]
+    i, j = box_pairs(lo, hi)
     same = own[i] == own[j]
     gap = np.abs(idx[i] - idx[j])
     wrap = np.array([closed[c] for c in own[i]], dtype=bool) & (gap == np.array([counts[c] for c in own[i]]) - 1)

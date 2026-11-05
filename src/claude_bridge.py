@@ -10,16 +10,23 @@ Only the actions in ACTIONS exist, each a few lines over the app's own code:
 the real TabManager, the same loader as Load, the canvas snapshot. What runs
 follows the panel's mode:
 
-- plan: Claude may look (list_tabs, read_tab), nothing changes;
-- ask: a design waits as a card the person opens; a rename, a switch or a
-  mask edit waits for the person's Allow or Deny in the conversation;
+- plan: Claude may look (list_tabs, read_tab, read_tab_step), nothing changes;
+- ask: a design waits as a card the person opens; a rename, a switch, a
+  mask or strand edit waits for the person's Allow or Deny in the conversation;
 - auto: it happens.
+
+Every tab has a version: a fingerprint of its strands and groups. read_tab
+gives it, and an edit names the version it was worked out on; when the
+person has changed the tab since, the edit is refused and Claude reads the
+tab again, so it never edits a picture of the tab that is out of date.
 """
+import hashlib
 import json
 import os
 
-LOOK = {'list_tabs', 'read_tab'}
-CHANGE = {'open_in_new_tab', 'rename_tab', 'switch_tab', 'edit_mask'}
+LOOK = {'list_tabs', 'read_tab', 'read_tab_step'}
+CHANGE = {'open_in_new_tab', 'rename_tab', 'switch_tab', 'edit_mask', 'edit_strand'}
+POINTS = ('start', 'end', 'control_point1', 'control_point2', 'control_point_center')
 MASK_OPS = ('erase', 'reset', 'swap', 'delete', 'create')
 ACTIONS = LOOK | CHANGE
 MAX_TITLE = 60
@@ -52,10 +59,14 @@ class AppBridge:
                     return self.ok(call_id, {'opened': False, 'title': title,
                                              'note': f'"{title}" waits as a card the person opens'})
                 return self.ok(call_id, self.open_in_new_tab(path, title))
-            if name in ('rename_tab', 'switch_tab', 'edit_mask'):
+            if name in ('rename_tab', 'switch_tab', 'edit_mask', 'edit_strand'):
                 session = self.session(args.get('tab_id'))
+                if name in ('edit_mask', 'edit_strand'):
+                    self.check_fresh(args, session)
                 if name == 'edit_mask':
                     self.check_mask_edit(args, session)
+                if name == 'edit_strand':
+                    self.check_strand_edit(args, session)
                 if mode == 'ask':
                     self.pending[call_id] = call
                     self.panel.add_confirm_card(call_id, self.describe(call, session))
@@ -63,6 +74,8 @@ class AppBridge:
                 return self.ok(call_id, self.do(call))
             if name == 'list_tabs':
                 return self.ok(call_id, {'tabs': self.list_tabs()})
+            if name == 'read_tab_step':
+                return self.ok(call_id, self.read_tab_step(args.get('tab_id'), args.get('step')))
             return self.ok(call_id, self.read_tab(args.get('tab_id')))
         except BridgeError as e:
             return self.fail(call_id, str(e))
@@ -112,9 +125,99 @@ class AppBridge:
                 strands = len(getattr(self.window.canvas, 'strands', []))
             else:
                 strands = len((session.project_state or {}).get('strands', []))
+            history = self.history(session)
             out.append({'id': session.id, 'title': tm.title_for(session), 'active': active,
-                        'strands': strands, 'unsaved': bool(session.dirty)})
+                        'strands': strands, 'unsaved': bool(session.dirty),
+                        'version': self.version(session),
+                        'undo_steps': history['max_step'], 'at_step': history['current_step']})
         return out
+
+    # ----------------------------------------------------- versions, history
+    def tab_data(self, session):
+        """The tab's design now: the live canvas for the tab showing, else its kept state."""
+        if session.id == self.tabs.active_tab_id:
+            return self.window.claude_canvas_snapshot()
+        return session.project_state
+
+    @staticmethod
+    def fingerprint(data):
+        """A short fingerprint of a design's strands and groups (not of what is selected)."""
+        body = json.dumps({'strands': (data or {}).get('strands') or [], 'groups': (data or {}).get('groups') or {}},
+                          sort_keys=True, default=str)
+        return hashlib.sha1(body.encode('utf-8')).hexdigest()[:12]
+
+    def version(self, session):
+        return self.fingerprint(self.tab_data(session))
+
+    def check_fresh(self, args, session):
+        """An edit worked out on the tab as Claude read it: refused if the tab changed since."""
+        expected = args.get('version')
+        if expected and expected != self.version(session):
+            raise BridgeError(f'"{self.tabs.title_for(session)}" changed since you read it (the person edited it, '
+                              'or undid or redid a step): read_tab it again before editing')
+
+    def history(self, session):
+        """The tab's undo history: {current_step, max_step, steps: [{step, what, current}]}."""
+        if session.id == self.tabs.active_tab_id:
+            manager = getattr(self.window.canvas, 'undo_redo_manager', None)
+            if manager is None or not hasattr(manager, 'get_history_entries'):
+                return {'current_step': 0, 'max_step': 0, 'steps': []}
+            steps = [{'step': e['step'], 'what': e.get('description') or '', 'current': e['is_current']}
+                     for e in manager.get_history_entries()]
+            return {'current_step': manager.current_step, 'max_step': manager.max_step, 'steps': steps}
+        payload = session.history_payload or {}
+        current = payload.get('current_step', 0)
+        steps = []
+        for state in payload.get('states') or []:
+            data = state.get('data') or {}
+            meta = data.get('undo_metadata') or {}  # undo_redo_metadata.METADATA_KEY
+            steps.append({'step': state.get('step'), 'what': self.describe_meta(meta),
+                          'current': state.get('step') == current})
+        return {'current_step': current, 'max_step': payload.get('max_step', len(steps)), 'steps': steps}
+
+    @staticmethod
+    def describe_meta(meta):
+        try:
+            from undo_redo_metadata import describe
+            return describe(meta) if meta else ''
+        except Exception:
+            return ''
+
+    def step_data(self, session, step):
+        """The design as it was at one step of the tab's undo history."""
+        if session.id == self.tabs.active_tab_id:
+            manager = getattr(self.window.canvas, 'undo_redo_manager', None)
+            if manager is None:
+                raise BridgeError('this tab keeps no undo history')
+            if not 1 <= step <= manager.max_step:
+                raise BridgeError(f'the tab has undo steps 1 to {manager.max_step}')
+            path = manager._get_state_filename(step)
+            if not os.path.isfile(path):
+                raise BridgeError(f'undo step {step} is no longer kept')
+            with open(path, encoding='utf-8') as f:
+                return json.load(f)
+        for state in (session.history_payload or {}).get('states') or []:
+            if state.get('step') == step:
+                return state.get('data')
+        raise BridgeError(f'"{self.tabs.title_for(session)}" keeps no undo step {step}')
+
+    def read_tab_step(self, tab_id, step):
+        """One past (or undone) step of a tab, as a design file Claude reads. The tab is unchanged."""
+        session = self.session(tab_id)
+        try:
+            step = int(step)
+        except (TypeError, ValueError):
+            raise BridgeError('step is a number from the tab\'s history (read_tab lists them)') from None
+        data = self.step_data(session, step)
+        if not data or not data.get('strands'):
+            raise BridgeError(f'undo step {step} has no design in it')
+        path = os.path.join(self.run_folder(), f'tab_{session.id}_step_{step}.json')
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(data, f)
+        history = self.history(session)
+        what = next((s['what'] for s in history['steps'] if s['step'] == step), '')
+        return {'file': path, 'title': self.tabs.title_for(session), 'step': step, 'what': what,
+                'current_step': history['current_step'], 'max_step': history['max_step']}
 
     def read_tab(self, tab_id):
         tm = self.tabs
@@ -133,7 +236,8 @@ class AppBridge:
         path = os.path.join(self.run_folder(), f'tab_{session.id}.json')
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(data, f)
-        return {'file': path, 'title': tm.title_for(session)}
+        return {'file': path, 'title': tm.title_for(session), 'version': self.fingerprint(data),
+                'history': self.history(session)}
 
     def open_in_new_tab(self, path, title):
         """The same way as Claude's finished designs: a new tab, then Load's own loader."""
@@ -147,9 +251,15 @@ class AppBridge:
     def do(self, call):
         name, args = call['name'], call.get('args') or {}
         session = self.session(args.get('tab_id'))
-        if name == 'edit_mask':
-            self.check_mask_edit(args, session)
-            return self.edit_mask(args, session)
+        if name in ('edit_mask', 'edit_strand'):
+            self.check_fresh(args, session)  # again: the person may have edited it while deciding
+            if name == 'edit_mask':
+                self.check_mask_edit(args, session)
+                result = self.edit_mask(args, session)
+            else:
+                self.check_strand_edit(args, session)
+                result = self.edit_strand(args, session)
+            return dict(result, version=self.version(session))
         if name == 'rename_tab':
             title = self.title(args.get('title'))
             self.set_title(session, title)
@@ -157,6 +267,75 @@ class AppBridge:
         if not self.tabs.switch_to_tab(session.id):
             raise BridgeError('the app could not switch tabs')
         return {'tab_id': session.id, 'title': self.tabs.title_for(session), 'note': 'switched'}
+
+    # ------------------------------------------------------------- strands
+    def check_strand_edit(self, args, session):
+        """A strand edit moves points of one strand of the tab showing."""
+        if session.id != self.tabs.active_tab_id:
+            raise BridgeError(f'"{self.tabs.title_for(session)}" is not the tab showing: switch_tab to it first')
+        strand = self.strand(args.get('strand'))
+        points = args.get('points')
+        if not isinstance(points, dict) or not points:
+            raise BridgeError(f'points: which points to move and where, e.g. {{"control_point1": [x, y]}}; '
+                              f'points are {", ".join(POINTS)}')
+        for key, value in points.items():
+            if key not in POINTS:
+                raise BridgeError(f'{key} is not a point of a strand: {", ".join(POINTS)}')
+            if not (isinstance(value, (list, tuple)) and len(value) == 2
+                    and all(isinstance(v, (int, float)) for v in value)):
+                raise BridgeError(f'{key}: give [x, y]')
+        canvas = self.window.canvas
+        if 'control_point_center' in points and not getattr(canvas, 'enable_third_control_point', False):
+            raise BridgeError('the third control point is off in Settings: move control_point1 and control_point2')
+        locked = getattr(getattr(canvas, 'layer_panel', None), 'locked_layers', set()) or set()
+        if getattr(getattr(canvas, 'layer_panel', None), 'lock_mode', False) and canvas.strands.index(strand) in locked:
+            raise BridgeError(f'{strand.layer_name} is locked in the layer panel')
+
+    def edit_strand(self, args, session):
+        """Move points of one strand with Move mode's own code, as a drag does:
+        strands attached at a moved end follow, erase boxes follow their
+        crossing. One undo step."""
+        from PyQt5.QtCore import QPointF
+        canvas = self.window.canvas
+        strand = self.strand(args.get('strand'))
+        move = canvas.move_mode
+        kept = (move.affected_strand, move.moving_side, getattr(canvas, 'truly_moving_strands', None),
+                getattr(move, '_box_anchors', None))
+        sides = {'start': 0, 'end': 1}
+        # Ends first, then the handles, so a handle lands where it is asked even if an end moved.
+        order = sorted(args['points'], key=lambda k: 0 if k in sides else 1)
+        try:
+            for key in order:
+                x, y = args['points'][key]
+                if key == 'control_point_center':
+                    strand.control_point_center_locked = True
+                if key == 'control_point2' and hasattr(strand, 'control_point2_shown'):
+                    strand.control_point2_shown = True
+                side = sides.get(key, key)
+                move.affected_strand, move.moving_side = strand, side
+                # As a drag starts (start_movement): which strands meet at the moved point,
+                # from connections taken from the strands as they are now.
+                manager = getattr(canvas, 'layer_state_manager', None)
+                if manager is not None:
+                    manager.save_current_state()
+                move.build_connection_cache()
+                moving = move.gather_moving_strands(strand, side) if side in (0, 1) else [strand]
+                canvas.truly_moving_strands = moving
+                move._box_anchors = move._capture_box_anchors([strand] + list(moving))
+                move.update_strand_position(QPointF(float(x), float(y)))
+                for masked in move._box_anchors or {}:
+                    masked.calculate_center_point()
+        finally:
+            move.affected_strand, move.moving_side, canvas.truly_moving_strands, move._box_anchors = kept
+        canvas.update()
+        manager = getattr(canvas, 'undo_redo_manager', None)
+        if manager is not None:
+            manager._last_save_time = 0
+            manager.save_state(action='strand.claude_move', source='claude', targets=[strand.layer_name])
+        p = lambda q: [round(q.x(), 1), round(q.y(), 1)]
+        now = {k: p(getattr(strand, k)) for k in POINTS if getattr(strand, k, None) is not None}
+        return {'tab_id': session.id, 'strand': strand.layer_name, 'now': now,
+                'note': f'moved {", ".join(order)} of {strand.layer_name}'}
 
     # --------------------------------------------------------------- masks
     def check_mask_edit(self, args, session):
@@ -295,6 +474,10 @@ class AppBridge:
                     'swap': f"swap mask {args.get('mask')}", 'delete': f"delete mask {args.get('mask')}",
                     'create': f"mask {args.get('first')} over {args.get('second')}"}[args['op']]
             return ('edit_mask', tm.title_for(session), what)
+        if call['name'] == 'edit_strand':
+            args = call.get('args') or {}
+            return ('edit_strand', tm.title_for(session),
+                    f"{args.get('strand')}: {', '.join((args.get('points') or {}).keys())}")
         if call['name'] == 'rename_tab':
             return ('rename_tab', tm.title_for(session), self.title((call.get('args') or {}).get('title')))
         return ('switch_tab', tm.title_for(session), '')

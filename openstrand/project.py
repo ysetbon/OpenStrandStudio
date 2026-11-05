@@ -85,3 +85,31 @@ def summary(data):
     sets = len(info['sets'])
     return (f"{sets} set{'s' if sets != 1 else ''} · {info['strands']} strands · "
             f"{info['masks']} mask{'s' if info['masks'] != 1 else ''}")
+
+
+def detail(data):
+    """Every strand and mask, one line each, with exact coordinates: what Claude
+    needs to reason about a design's geometry (and to move points in a tab)."""
+    from .steps import mask_parts
+    pt = lambda p: f"[{p['x']:.1f}, {p['y']:.1f}]" if isinstance(p, dict) and 'x' in p else '-'
+    names = [s['layer_name'] for s in data['strands'] if s.get('type') != 'MaskedStrand']
+    lines = []
+    for s in data['strands']:
+        if s.get('type') == 'MaskedStrand':
+            parts = mask_parts(s['layer_name'], names)
+            over = f'{parts[0]} over {parts[1]}' if len(parts) == 2 else '?'
+            boxes = len(s.get('deletion_rectangles') or [])
+            lines.append(f"mask {s['layer_name']}: {over}"
+                         + (f", {boxes} erase box{'es' if boxes != 1 else ''}" if boxes else ''))
+            continue
+        cps = s.get('control_points') or []
+        line = (f"strand {s['layer_name']}: start {pt(s.get('start'))}, end {pt(s.get('end'))}, "
+                f"control_point1 {pt(cps[0] if len(cps) > 0 else None)}, "
+                f"control_point2 {pt(cps[1] if len(cps) > 1 else None)}")
+        if s.get('control_point_center_locked') and s.get('control_point_center'):
+            line += f", control_point_center {pt(s['control_point_center'])}"
+        line += f", width {s.get('width')}"
+        if s.get('attached_to'):
+            line += f", attached to {s['attached_to']} at its {'start' if s.get('attachment_side') == 0 else 'end'}"
+        lines.append(line)
+    return '\n'.join(lines)

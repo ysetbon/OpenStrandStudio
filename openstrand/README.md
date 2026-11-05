@@ -139,8 +139,8 @@ package bundled first.
 
 The agent runs in its own process, so it cannot touch the app's windows. When
 the app starts it (`--app`), Claude also gets tools that act on the running
-app: `list_tabs`, `read_tab`, `open_in_new_tab`, `rename_tab`, `switch_tab`
-and `edit_mask_in_tab`. Each call goes out as a JSON line (`{"type": "app_call", ...}`);
+app: `list_tabs`, `read_tab`, `read_tab_step`, `open_in_new_tab`, `rename_tab`,
+`switch_tab`, `edit_mask_in_tab` and `edit_strand_in_tab`. Each call goes out as a JSON line (`{"type": "app_call", ...}`);
 the panel hands it to `AppBridge` (`src/claude_bridge.py`), which runs it on
 the app's main thread with the app's own code (the real `TabManager`, the
 same loader as Load) and answers on the agent's stdin
@@ -148,6 +148,16 @@ same loader as Load) and answers on the agent's stdin
 designs made in the request can open, and the panel's mode decides: plan
 mode only looks, ask mode shows a card or an Allow / Deny for each change,
 auto does it.
+
+`read_tab` gives the tab as it is at that moment: every strand with its start,
+end and control points, every mask, the tab's undo history, and a version (a
+fingerprint of its strands and groups). The person keeps working while Claude
+does, so an edit in the tab names the version it was worked out on, and the
+bridge refuses it when the tab changed since: Claude reads it again.
+`read_tab_step` loads any step of the tab's undo history (before the person's
+latest change, or a step they undid) as a copy. `edit_strand_in_tab` moves a
+strand's ends and handles with Move mode's own code, as a drag does (strands
+joined at a moved end follow, erase boxes follow their crossing), one undo step.
 
 The agent reads its stdin only while a call waits for the app's answer, and
 loads numpy before it starts reading. On Windows a read left waiting holds the

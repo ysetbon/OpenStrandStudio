@@ -25,16 +25,30 @@ APP_TOOLS = [
     {
         'name': 'list_tabs',
         'description': ("The person's open tabs in OpenStrand Studio: id, title, which one is active, how many "
-                        'strands each has, and whether it has unsaved changes.'),
+                        'strands each has, whether it has unsaved changes, its version (changes whenever the '
+                        'person edits it) and its undo history (how many steps, which one it is at).'),
         'input_schema': {'type': 'object', 'properties': {}},
     },
     {
         'name': 'read_tab',
-        'description': ("Load the design in one of the person's tabs as the current design, to describe, change, "
-                        'or make steps from. Nothing in the tab changes.'),
+        'description': ("Load the design in one of the person's tabs as the current design, as it is right now, "
+                        'to describe, change, or make steps from. Gives every strand (name, start, end, control '
+                        'points, width, what it is attached to) and mask, the tab\'s version, and its undo history '
+                        '(each step and what made it). Nothing in the tab changes. Read it again whenever the person '
+                        'may have changed it since (they edit, undo and redo while you work).'),
         'input_schema': {'type': 'object', 'properties': {
             'tab_id': {'type': 'string', 'description': 'from list_tabs'},
         }, 'required': ['tab_id']},
+    },
+    {
+        'name': 'read_tab_step',
+        'description': ("Load one step of a tab's undo history as the current design (a copy: the tab does not "
+                        'change): what the tab looked like before the person\'s latest changes, or a step they '
+                        'undid. read_tab lists the steps and what made each. Gives the same detail as read_tab.'),
+        'input_schema': {'type': 'object', 'properties': {
+            'tab_id': {'type': 'string', 'description': 'from list_tabs'},
+            'step': {'type': 'integer', 'description': 'a step number from read_tab\'s history'},
+        }, 'required': ['tab_id', 'step']},
     },
     {
         'name': 'open_in_new_tab',
@@ -74,13 +88,29 @@ APP_TOOLS = [
             'first': {'type': 'string'}, 'second': {'type': 'string'},
         }, 'required': ['tab_id', 'op']},
     },
+    {
+        'name': 'edit_strand_in_tab',
+        'description': ("Move points of one strand in the person's tab, in place, with the app's Move mode code "
+                        '(as a drag): strands attached at a moved end follow, erase boxes follow their crossing; one '
+                        'undo step; in ask mode the person allows it first. The tab must be the one showing and '
+                        'read with read_tab since its last change (otherwise it is refused: read it again). points: '
+                        'any of start, end, control_point1, control_point2, control_point_center (the third control '
+                        'point, when on in Settings), each [x, y] in canvas coordinates as read_tab gives them. '
+                        'Answers with the strand\'s points now and the knot the tab shows, and your copy becomes '
+                        'the edited tab. To make a strand symmetrical, mirror its points about the axis you want.'),
+        'input_schema': {'type': 'object', 'properties': {
+            'tab_id': {'type': 'string', 'description': 'from list_tabs'},
+            'strand': {'type': 'string', 'description': 'the strand name, e.g. "1_6"'},
+            'points': {'type': 'object', 'description': 'e.g. {"control_point1": [612, 380], "end": [700, 402]}'},
+        }, 'required': ['tab_id', 'strand', 'points']},
+    },
 ]
 APP_TOOL_NAMES = {t['name'] for t in APP_TOOLS}
-LOOK_ONLY = {'list_tabs', 'read_tab'}  # what plan mode offers
+LOOK_ONLY = {'list_tabs', 'read_tab', 'read_tab_step'}  # what plan mode offers
 
 APP_INSTRUCTIONS = """You are running inside the person's OpenStrand Studio, so you also have tools that
-act on the app itself: list_tabs, read_tab, open_in_new_tab, rename_tab,
-switch_tab and edit_mask_in_tab, run by the app's own code. OpenStrand Studio has tabs (one design
+act on the app itself: list_tabs, read_tab, read_tab_step, open_in_new_tab, rename_tab,
+switch_tab, edit_mask_in_tab and edit_strand_in_tab, run by the app's own code. OpenStrand Studio has tabs (one design
 each), layers grouped in the layer panel, masks for over and under, levels,
 arrows on strand ends, end styles, shadows and colors by set.
 
@@ -90,6 +120,14 @@ arrows on strand ends, end styles, shadows and colors by set.
   step-by-step instructions, make the design, call make_steps, then open the
   steps the same way.
 - To work on what is in a tab, read_tab it first; it becomes the current design.
+  The person keeps working while you do: when they may have changed the tab, or
+  an edit is refused because the tab changed, read_tab it again. Use the strand
+  names and points read_tab gives, never ones from earlier in the conversation.
+- To see the tab before a change, or a step the person undid, read_tab_step
+  with a step from read_tab's history.
+- To change a strand's shape in the person's tab (make it symmetrical, move an
+  end or a handle), edit_strand_in_tab with the points worked out from read_tab;
+  then render and check the knot it reports is still the right one.
 - After tie_knot, call check_masks, fix each problem with edit_mask (preview
   first when unsure), then render and look before opening the steps.
 - When the person points at a mask in their tab (a strand cut off, the wrong

@@ -1082,3 +1082,21 @@ _PROGRESS = {
 }
 for _language, _strings in _PROGRESS.items():
     CLAUDE_TRANSLATIONS[_language].update(_strings)
+
+# Moving a strand's points in the person's tab (edit_strand_in_tab).
+_STRAND_EDIT = {
+    'en': {'claude_tool_edit_strand': 'Edit strand', 'claude_confirm_strand': 'Claude wants to move points of strand {new} in tab “{old}”.'},
+    'fr': {'claude_tool_edit_strand': 'Modifier le brin', 'claude_confirm_strand': 'Claude veut déplacer des points du brin {new} dans l’onglet « {old} ».'},
+    'de': {'claude_tool_edit_strand': 'Strang bearbeiten', 'claude_confirm_strand': 'Claude möchte Punkte des Strangs {new} im Tab „{old}“ verschieben.'},
+    'it': {'claude_tool_edit_strand': 'Modifica filo', 'claude_confirm_strand': 'Claude vuole spostare punti del filo {new} nella scheda “{old}”.'},
+    'es': {'claude_tool_edit_strand': 'Editar hebra', 'claude_confirm_strand': 'Claude quiere mover puntos de la hebra {new} en la pestaña “{old}”.'},
+    'pt': {'claude_tool_edit_strand': 'Editar fio', 'claude_confirm_strand': 'O Claude quer mover pontos do fio {new} na aba “{old}”.'},
+    'he': {'claude_tool_edit_strand': 'עריכת חוט', 'claude_confirm_strand': 'Claude רוצה להזיז נקודות של החוט {new} בלשונית „{old}”.'},
+    'ru': {'claude_tool_edit_strand': 'Изменить нить', 'claude_confirm_strand': 'Claude хочет передвинуть точки нити {new} во вкладке «{old}».'},
+    'fi': {'claude_tool_edit_strand': 'Muokkaa nauhaa', 'claude_confirm_strand': 'Claude haluaa siirtää nauhan {new} pisteitä välilehdellä ”{old}”.'},
+    'sv': {'claude_tool_edit_strand': 'Redigera tråd', 'claude_confirm_strand': 'Claude vill flytta punkter på tråden {new} i fliken ”{old}”.'},
+    'ja': {'claude_tool_edit_strand': 'ストランドを編集', 'claude_confirm_strand': 'Claude がタブ「{old}」のストランド {new} の点を動かそうとしています。'},
+    'zh': {'claude_tool_edit_strand': '编辑线条', 'claude_confirm_strand': 'Claude 想移动标签页“{old}”中线条 {new} 的点。'},
+}
+for _language, _strings in _STRAND_EDIT.items():
+    CLAUDE_TRANSLATIONS[_language].update(_strings)

@@ -1225,7 +1225,7 @@ def test_the_agent_offers_app_tools_only_from_the_app(tmp_path):
     app = SimpleNamespace(call=lambda name, args: {})
     assert APP_TOOL_NAMES <= names(agent.Agent(SimpleNamespace(), tmp_path, app=app))
     looking = names(agent.Agent(SimpleNamespace(), tmp_path, app=app, plan=True))
-    assert looking & APP_TOOL_NAMES == {"list_tabs", "read_tab"}
+    assert looking & APP_TOOL_NAMES == {"list_tabs", "read_tab", "read_tab_step"}  # plan mode only looks
     assert "running inside the person's OpenStrand Studio" in agent.Agent(
         SimpleNamespace(), tmp_path, app=app).system()[0]["text"]
 
@@ -1265,8 +1265,12 @@ def test_the_bridge_runs_the_real_tab_code(window, monkeypatch, tmp_path, figure
     active = tm.get_active()
     assert tm.title_for(active) == "Step 1 · tail" and len(window.canvas.strands) == len(figure8["strands"])
     listed = bridge.handle({"id": 2, "name": "list_tabs"})["result"]["tabs"]
-    assert {"id": active.id, "title": "Step 1 · tail", "active": True,
-            "strands": len(figure8["strands"]), "unsaved": active.dirty} in listed
+    entry = next(t for t in listed if t["id"] == active.id)
+    assert {k: entry[k] for k in ("id", "title", "active", "strands", "unsaved")} == {
+        "id": active.id, "title": "Step 1 · tail", "active": True,
+        "strands": len(figure8["strands"]), "unsaved": active.dirty}
+    # Its version (changes whenever the person edits it) and where it is in its undo history.
+    assert entry["version"] == bridge.version(active) and entry["at_step"] <= entry["undo_steps"]
     read = bridge.handle({"id": 3, "name": "read_tab", "args": {"tab_id": active.id}})["result"]
     assert len(_project.read(read["file"])["strands"]) == len(figure8["strands"])
     # Nothing from outside this request's folder opens.

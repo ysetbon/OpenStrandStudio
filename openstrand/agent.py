@@ -345,6 +345,7 @@ class Workspace:
         self.png_path = self.out_dir / 'design.png'
         self.data = None
         self.tab = None
+        self.tab_version = None
         self.version = 0
         self.rendered_version = -1
         self._preview = None
@@ -357,9 +358,10 @@ class Workspace:
             raise ToolError('there is no design yet: make, draw or load one first')
         return self.data
 
-    def store(self, data, tab=None):
+    def store(self, data, tab=None, tab_version=None):
         self.data = data
         self.tab = tab  # the tab this design was read from, while it is unchanged
+        self.tab_version = tab_version  # that tab's version when read: edits are refused if it changed
         self.version += 1
         project.write(data, self.project_path)
 
@@ -752,11 +754,26 @@ class Agent:
                 return f'New tab · {title}', f'opened in a new tab titled "{title}"'
             return f'{title} · waiting for the person', result.get('note') or 'shown to the person to open'
         if name == 'read_tab':
-            result = self.app.call(name, {'tab_id': str(args.get('tab_id', ''))})
+            tab = str(args.get('tab_id', ''))
+            result = self.app.call(name, {'tab_id': tab})
             data = project.read(result['file'])
-            ws.store(data, tab=str(args.get('tab_id', '')))
+            ws.store(data, tab=tab, tab_version=result.get('version'))
             return (f"Read tab {result.get('title', '')} · {project.summary(data)}",
-                    f"tab \"{result.get('title', '')}\" is now the current design: {project.summary(data)}")
+                    f"tab \"{result.get('title', '')}\" as it is now (version {result.get('version')}) is the "
+                    f"current design: {project.summary(data)}\n{project.detail(data)}\n"
+                    + history_text(result.get('history')))
+        if name == 'read_tab_step':
+            tab, step = str(args.get('tab_id', '')), args.get('step')
+            result = self.app.call(name, {'tab_id': tab, 'step': step})
+            data = project.read(result['file'])
+            ws.store(data)  # a copy of a past step: not the tab as it is, so no tab edits from it
+            what = f" ({result['what']})" if result.get('what') else ''
+            return (f"Tab {result.get('title', '')} at step {result.get('step')} · {project.summary(data)}",
+                    f"tab \"{result.get('title', '')}\" as it was at undo step {result.get('step')}{what} is now the "
+                    f"current design (a copy; the tab is at step {result.get('current_step')} of "
+                    f"{result.get('max_step')} and does not change): {project.summary(data)}\n{project.detail(data)}")
+        if name == 'edit_strand_in_tab':
+            return self.edit_strand_in_tab(args)
         if name == 'edit_mask_in_tab':
             return self.edit_mask_in_tab(args)
         if name in ('rename_tab', 'switch_tab'):
@@ -769,6 +786,29 @@ class Agent:
         result = self.app.call(name, {})
         tabs = result.get('tabs', [])
         return f'{len(tabs)} tabs', json.dumps(tabs)
+
+    def edit_strand_in_tab(self, args):
+        """Move points of a strand in the tab, then read the tab back: the copy is the tab again."""
+        from . import identify
+        ws = self.workspace
+        tab = str(args.get('tab_id', ''))
+        if ws.data is None or ws.tab != tab:
+            raise ToolError('read_tab this tab first (and change nothing else before editing it)')
+        points = args.get('points')
+        if not isinstance(points, dict) or not points:
+            raise ToolError('points: e.g. {"control_point1": [x, y]}')
+        result = self.app.call('edit_strand', {'tab_id': tab, 'strand': str(args.get('strand', '')),
+                                               'points': points, 'version': ws.tab_version})
+        if not result.get('now'):  # ask mode: the person decides; nothing changed yet
+            return f"{args.get('strand')} · waiting for the person", result.get('note') or 'shown to the person'
+        fresh = self.app.call('read_tab', {'tab_id': tab})
+        data = project.read(fresh['file'])
+        ws.store(data, tab=tab, tab_version=fresh.get('version'))
+        now = ', '.join(f'{k} {v}' for k, v in result['now'].items())
+        return (f"In the tab · {result.get('note', 'moved')}",
+                f"{result.get('note', 'moved')} in the tab (one undo step there). {result.get('strand')} now: {now}.\n"
+                f"Knot: {identify.summary(data)}\nThe tab is the current design again (version "
+                f"{fresh.get('version')}): render it and look.")
 
     def edit_mask_in_tab(self, args):
         """Work the edit out on the copy read from the tab, then have the app do it there."""
@@ -792,8 +832,9 @@ class Agent:
             made = (f"{args.get('first')}_{args.get('second')}" if args.get('op') == 'create'
                     else _swapped(before, str(args.get('mask'))))
             call['boxes'] = _new_boxes(before, after, made)
+        call['version'] = ws.tab_version
         result = self.app.call('edit_mask', call)
-        ws.store(after, tab=tab)
+        ws.store(after, tab=tab, tab_version=result.get('version'))
         note = result.get('note') or 'done'
         return (f'In the tab · {note}',
                 f"{note} in the tab (one undo step there).\n" + text.replace('Preview, not kept: ', '', 1))
@@ -836,6 +877,17 @@ def _new_boxes(before, after, name):
         return []
     old = boxes(before)
     return [b for b in boxes(after) if b not in old]
+
+
+def history_text(history):
+    """A tab's undo history for Claude: which step it is at, what made each step."""
+    if not history or not history.get('steps'):
+        return 'undo history: none kept'
+    lines = [f"undo history (at step {history.get('current_step')} of {history.get('max_step')}; later steps "
+             'were undone and can be redone; read_tab_step loads any of them):']
+    for step in history['steps'][-40:]:
+        lines.append(f"  step {step['step']}{' (now)' if step.get('current') else ''}: {step.get('what') or '-'}")
+    return '\n'.join(lines)
 
 
 HISTORY_TURNS = 8

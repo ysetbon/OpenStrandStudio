@@ -18,6 +18,7 @@ Every result is read back the way the app reads it: loaded with
 load_strands_from_data (masks.Design), named by identify, and, for the fix,
 looked at in a real render of the app (AppPreview) at the place it fixed.
 """
+import re
 import copy
 import json
 import os
@@ -709,3 +710,85 @@ def test_claude_fixes_a_mask_in_the_person_s_own_tab(window, monkeypatch, tmp_pa
     window.canvas.undo_redo_manager.undo()
     QApplication.processEvents()
     assert live_mask(window, "1_1_2_1").deletion_rectangles == []
+
+
+def test_claude_reads_the_tab_as_it_is_now_its_history_and_moves_a_strand(window, monkeypatch, tmp_path):
+    from PyQt5.QtCore import QPointF
+    from PyQt5.QtWidgets import QApplication
+    from openstrand import agent, project
+    from openstrand.app_tools import AppError
+    panel, tm, canvas = window.claude_panel, window.tab_manager, window.canvas
+    bridge = panel.bridge
+    run = tmp_path / "run"
+    run.mkdir()
+    panel.out_dir = str(run)
+    design = run / "overhand.json"
+    design.write_text((ROOT / "tests" / "mask_tools" / "tight_overhand.json").read_text(encoding="utf-8"),
+                      encoding="utf-8")
+    monkeypatch.setattr(panel, "answer", lambda reply: None)
+    panel.run_mode = "auto"
+    assert bridge.handle({"id": 1, "name": "open_in_new_tab", "args": {"path": str(design), "title": "Overhand"}})["ok"]
+    tab = tm.get_active()
+    QApplication.processEvents()
+
+    def call(name, args):          # the agent's AppClient, answered by the real bridge
+        reply = bridge.handle({"id": 100, "name": name, "args": args})
+        if not reply["ok"]:
+            raise AppError(reply["error"])
+        return reply["result"]
+    runner = agent.Agent(SimpleNamespace(), tmp_path / "out", app=SimpleNamespace(call=call))
+    listed = next(t for t in call("list_tabs", {})["tabs"] if t["id"] == tab.id)
+    assert listed["version"] and "undo_steps" in listed
+
+    # read_tab: the tab as it is now, every strand's points, its version and undo history.
+    _, text = runner.app_tool("read_tab", {"tab_id": tab.id})
+    ws = runner.workspace
+    assert ws.tab_version == listed["version"] and f"version {ws.tab_version}" in text
+    assert "undo history (at step" in text and re.search(r"strand 1_\d+: start \[[-\d.]+, [-\d.]+\]", text)
+    child = next(s for s in ws.data["strands"] if s.get("attached_to") and s.get("attachment_side") == 1
+                 and s.get("type") != "MaskedStrand")
+    live = lambda name: next(s for s in canvas.strands if s.layer_name == name and not hasattr(s, "get_mask_path"))
+    parent = live(child["attached_to"])
+    before_step = canvas.undo_redo_manager.current_step
+
+    # The person moves a handle meanwhile: Claude's edit, worked out on its old copy, is refused.
+    assert bridge.handle({"id": 2, "name": "edit_strand", "args": {
+        "tab_id": tab.id, "strand": parent.layer_name,
+        "points": {"control_point1": [parent.control_point1.x() + 6, parent.control_point1.y()]}}})["ok"]
+    end = [parent.end.x() + 9.0, parent.end.y() - 7.0]
+    with pytest.raises(AppError, match="changed since you read it"):
+        runner.app_tool("edit_strand_in_tab", {"tab_id": tab.id, "strand": parent.layer_name, "points": {"end": end}})
+    assert parent.end != QPointF(*end)
+
+    # Read again, then the edit goes through with Move mode's code: the attached strand follows.
+    runner.app_tool("read_tab", {"tab_id": tab.id})
+    summary, text = runner.app_tool("edit_strand_in_tab", {"tab_id": tab.id, "strand": parent.layer_name,
+                                                           "points": {"end": end}})
+    assert summary.startswith("In the tab") and "Knot:" in text
+    assert abs(parent.end.x() - end[0]) < 0.6 and abs(parent.end.y() - end[1]) < 0.6
+    follower = live(child["layer_name"])
+    assert abs(follower.start.x() - parent.end.x()) < 0.6 and abs(follower.start.y() - parent.end.y()) < 0.6
+    assert ws.tab_version == bridge.version(tab)  # the copy is the tab again
+    after_step = canvas.undo_redo_manager.current_step
+    assert after_step == before_step + 2  # the person's move and Claude's: one undo step each
+
+    # Past steps: the tab before Claude's edit, read without changing the tab.
+    _, text = runner.app_tool("read_tab_step", {"tab_id": tab.id, "step": after_step - 1})
+    old = next(s for s in ws.data["strands"] if s["layer_name"] == parent.layer_name)
+    assert abs(old["end"]["x"] - (end[0] - 9.0)) < 0.6 and ws.tab is None  # a copy: no tab edits from it
+    assert f"undo step {after_step - 1}" in text
+    with pytest.raises(agent.ToolError, match="read_tab this tab first"):
+        runner.app_tool("edit_strand_in_tab", {"tab_id": tab.id, "strand": parent.layer_name, "points": {"end": end}})
+    # Undo: the tab goes back, its version changes, and the undone step can still be read.
+    canvas.undo_redo_manager.undo()
+    QApplication.processEvents()
+    assert call("list_tabs", {})["tabs"][-1]["at_step"] == after_step - 1
+    runner.app_tool("read_tab_step", {"tab_id": tab.id, "step": after_step})
+    redone = next(s for s in ws.data["strands"] if s["layer_name"] == parent.layer_name)
+    assert abs(redone["end"]["x"] - end[0]) < 0.6
+    # Bad requests say what is wrong.
+    for args, message in [({"points": {"middle": [1, 2]}}, "not a point"), ({"points": {"end": "x"}}, "give"),
+                          ({"strand": "9_9", "points": {"end": [1, 2]}}, "no strand 9_9")]:
+        reply = bridge.handle({"id": 9, "name": "edit_strand",
+                               "args": dict({"tab_id": tab.id, "strand": parent.layer_name}, **args)})
+        assert not reply["ok"] and message in reply["error"]

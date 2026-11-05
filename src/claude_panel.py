@@ -52,6 +52,7 @@ TOOL_CHIPS = {
     # The layer panel's right-click menu, the group panel, the main window and Settings.
     'edit_layers_in_tab': ('claude_tool_layers', '#a04f9a', '#ffffff'),
     'edit_groups_in_tab': ('claude_tool_groups', '#a04f9a', '#ffffff'),
+    'show_group': ('claude_tool_groups', '#a04f9a', '#ffffff'),
     'app_window': ('claude_tool_window', '#a04f9a', '#ffffff'),
     'app_settings': ('claude_tool_settings', '#a04f9a', '#ffffff'),
     # Knots and masks: tie_knot makes a design, the others look and fix.

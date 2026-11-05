@@ -671,6 +671,7 @@ class Analysis:
             self.lifted.setdefault(m.first_selected_strand.layer_name, []).append(m)
         self._parts = {}
         self._problems = None
+        self._unsure = []
         self._decide()
 
     # -- the two sides of a crossing, in its box
@@ -848,6 +849,11 @@ class Analysis:
         order = {k: n for n, k in enumerate(KINDS)}
         found = [f for f in found if f is not None]
         found.sort(key=lambda f: (order[f['kind']], -f['area']))
+        # Where nothing says which strand goes over (no design crossings, no
+        # mask of the two strands), the crossing is read from the drawing
+        # itself: a guess, so such places are listed apart, not as problems.
+        self._unsure = [f for f in found if f.get('source') == 'drawing' and f['kind'] in ('wrong_way', 'wrong_crossing')]
+        found = [f for f in found if f not in self._unsure]
         self._problems = found
         # Suggest an erase only where one fits: shaped boxes that take the
         # place out without cutting into the rest of the piece.
@@ -1205,12 +1211,13 @@ def check(data):
 
 def _report(analysis):
     problems = _plain(analysis.problems())
+    unsure = _plain(analysis._unsure)
     masks = analysis.masks_list()
-    return dict(masks=masks, problems=problems, crossings=len(analysis.crossings),
-                intent=sorted({c.source for c in analysis.crossings}), text=summary(masks, problems))
+    return dict(masks=masks, problems=problems, unsure=unsure, crossings=len(analysis.crossings),
+                intent=sorted({c.source for c in analysis.crossings}), text=summary(masks, problems, unsure=unsure))
 
 
-def summary(masks, problems, limit=30):
+def summary(masks, problems, limit=30, unsure=()):
     lines = [f'{len(masks)} masks:']
     for m in masks:
         boxes = '; '.join(f'({b[0]:.0f}, {b[1]:.0f})-({b[2]:.0f}, {b[3]:.0f})' for b in m['boxes'] if b) or 'none'
@@ -1226,6 +1233,12 @@ def summary(masks, problems, limit=30):
             lines.append('  ' + p['text'])
         if len(problems) > limit:
             lines.append(f'  … and {len(problems) - limit} more')
+    if unsure:
+        places = '; '.join(f"({p['at'][0]:.0f}, {p['at'][1]:.0f}) {p['shows']} on top" for p in unsure[:12])
+        more = f' and {len(unsure) - 12} more' if len(unsure) > 12 else ''
+        lines.append(f'{len(unsure)} place{"s" if len(unsure) != 1 else ""} it cannot judge: neither the design nor a '
+                     'mask of the two strands says which goes over there, and the crossing shows both ways. Look at '
+                     f'them on the render before changing anything: {places}{more}.')
     return '\n'.join(lines)
 
 

@@ -479,7 +479,8 @@ class Workspace:
             except masks.MaskError as e:
                 raise ToolError(str(e)) from None
             count = len(found['problems'])
-            return (f"{len(found['masks'])} masks · {count} problem{'s' if count != 1 else ''}", found['text'])
+            unsure = f" · {len(found['unsure'])} unsure" if found['unsure'] else ''
+            return (f"{len(found['masks'])} masks · {count} problem{'s' if count != 1 else ''}{unsure}", found['text'])
         if name == 'edit_mask':
             return self.edit_mask(args)
         if name == 'knot_library':

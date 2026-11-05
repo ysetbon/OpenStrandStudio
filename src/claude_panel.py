@@ -49,6 +49,11 @@ TOOL_CHIPS = {
     'edit_mask_in_tab': ('claude_tool_edit_mask', '#a04f9a', '#ffffff'),
     'read_tab_step': ('tabs', '#a04f9a', '#ffffff'),
     'edit_strand_in_tab': ('claude_tool_edit_strand', '#a04f9a', '#ffffff'),
+    # The layer panel's right-click menu, the group panel, the main window and Settings.
+    'edit_layers_in_tab': ('claude_tool_layers', '#a04f9a', '#ffffff'),
+    'edit_groups_in_tab': ('claude_tool_groups', '#a04f9a', '#ffffff'),
+    'app_window': ('claude_tool_window', '#a04f9a', '#ffffff'),
+    'app_settings': ('claude_tool_settings', '#a04f9a', '#ffffff'),
     # Knots and masks: tie_knot makes a design, the others look and fix.
     'tie_knot': ('claude_tool_tie_knot', '#93e993', '#1a1a1a'),
     'check_masks': ('claude_tool_check_masks', '#d4d4d4', '#1a1a1a'),
@@ -892,7 +897,9 @@ class ClaudePanel(QWidget):
         if kind == 'confirm':
             action, current, new = e['what']
             key = {'rename_tab': 'claude_confirm_rename', 'edit_mask': 'claude_confirm_mask',
-                   'edit_strand': 'claude_confirm_strand'}.get(
+                   'edit_strand': 'claude_confirm_strand', 'edit_layers': 'claude_confirm_layers',
+                   'edit_groups': 'claude_confirm_groups', 'window': 'claude_confirm_window',
+                   'settings': 'claude_confirm_settings'}.get(
                 action, 'claude_confirm_switch')
             text = esc(t(key).format(old=current, new=new))
             if e['state'] is None:

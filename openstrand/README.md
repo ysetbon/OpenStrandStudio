@@ -140,9 +140,11 @@ package bundled first.
 The agent runs in its own process, so it cannot touch the app's windows. When
 the app starts it (`--app`), Claude also gets tools that act on the running
 app: `list_tabs`, `read_tab`, `read_tab_step`, `open_in_new_tab`, `rename_tab`,
-`switch_tab`, `edit_mask_in_tab` and `edit_strand_in_tab`. Each call goes out as a JSON line (`{"type": "app_call", ...}`);
+`switch_tab`, `edit_mask_in_tab`, `edit_strand_in_tab`, `edit_layers_in_tab`,
+`edit_groups_in_tab`, `show_group`, `app_window`, `read_settings` and
+`app_settings`. Each call goes out as a JSON line (`{"type": "app_call", ...}`);
 the panel hands it to `AppBridge` (`src/claude_bridge/`, one module per area: tabs,
-strands, masks, layers, groups, window), which runs it on
+strands, masks, layers, groups, window, settings), which runs it on
 the app's main thread with the app's own code (the real `TabManager`, the
 same loader as Load) and answers on the agent's stdin
 (`openstrand/app/client.py`, `AppClient`; the tools Claude sees are in `openstrand/app/`,
@@ -160,6 +162,29 @@ bridge refuses it when the tab changed since: Claude reads it again.
 latest change, or a step they undid) as a copy. `edit_strand_in_tab` moves a
 strand's ends and handles with Move mode's own code, as a drag does (strands
 joined at a moved end follow, erase boxes follow their crossing), one undo step.
+
+The other areas are the app's own panels and buttons, called the way a click
+calls them:
+
+- `edit_layers_in_tab`: the layer panel's right-click menu (hide, shadows,
+  colors, widths, side lines, arrows, dashes, circles, full arrows, end styles,
+  fold the start edge, close the knot, copy and paste strand data).
+- `edit_groups_in_tab` and `show_group`: the group panel (create, rename,
+  delete, move, snap, rotate, strand angles, shadows, mask grid, duplicate).
+- `app_window`: the main window. View ops (zoom, center, grid, layer names,
+  the tab edge, the Strands/Masks switch, modes, select) change only what the
+  person sees and run in any mode; edit ops (undo, redo, control points,
+  shadows, New Strand from a start to an end, delete, Delete All, New Level,
+  locks, clearing the history) change the tab; `save` and `save_image` write
+  a file to a path.
+- `read_settings` and `app_settings`: the Settings dialog, set through its own
+  widgets and the code its OK button runs, so the dialog shows what Claude set
+  (dark mode is `{"theme": "dark"}`). Settings make no undo step; the reply
+  gives the old values.
+
+Where a button asks first (Delete All) or opens a dialog (Save, Image, a color,
+the default width), the bridge answers that dialog with Claude's request
+without showing it (`base.patched`), and the button's own code runs on.
 
 The agent reads its stdin only while a call waits for the app's answer, and
 loads numpy before it starts reading. On Windows a read left waiting holds the

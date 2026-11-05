@@ -1,6 +1,26 @@
 """What every area of the bridge shares: errors, how an action is declared,
 and the lookups and the undo step its code needs."""
+from contextlib import contextmanager
 from dataclasses import dataclass
+
+_MISSING = object()
+
+
+@contextmanager
+def patched(owner, name, value):
+    """owner.name is value while the block runs, then as it was. Used to answer one of
+    the app's own dialogs (a Yes, a file name, a color) without showing it, so the
+    code behind the dialog runs as it does when the person answers."""
+    own = vars(owner)
+    old = own.get(name, _MISSING)
+    setattr(owner, name, value)
+    try:
+        yield
+    finally:
+        if old is _MISSING:
+            delattr(owner, name)
+        else:
+            setattr(owner, name, old)
 
 
 class BridgeError(Exception):
@@ -75,6 +95,18 @@ class BridgeBase:
             if s.layer_name == str(name or ''):
                 return s
         raise BridgeError(f'there is no layer {name} in this tab')
+
+    def settle(self, before, timeout=0.3):
+        """Let the app's own undo save happen now where it saves a moment later (a new
+        strand's step comes 50 ms after the strand): the step is there before Claude's
+        next request, so an undo right after undoes it."""
+        import time
+        from PyQt5.QtWidgets import QApplication
+        manager = getattr(self.canvas, 'undo_redo_manager', None)
+        end = time.monotonic() + timeout
+        while manager is not None and manager.current_step == before and time.monotonic() < end:
+            QApplication.processEvents()
+            time.sleep(0.005)
 
     def save_undo(self, action, targets):
         """One undo step for what Claude just did, named so the history says so."""

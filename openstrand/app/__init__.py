@@ -11,7 +11,8 @@ stdout, and the app runs it with its own code and answers on stdin.
 - masks.py    edit masks in a tab
 - layers.py   the layer panel's right-click menu
 - groups.py   the group panel
-- window.py   the main window's buttons and settings
+- window.py   the main window's buttons: toolbar, beside the canvas, under the layer panel
+- settings.py the Settings dialog: read, set, show a page
 
 Each area declares TOOLS (the schemas Claude sees), LOOK_ONLY (the ones plan
 mode offers), INSTRUCTIONS (its part of what Claude is told) and HANDLERS
@@ -19,10 +20,10 @@ mode offers), INSTRUCTIONS (its part of what Claude is told) and HANDLERS
 Claude)). The app decides what is allowed: in plan mode only looking, in ask
 mode the person confirms changes.
 """
-from . import groups, layers, masks, strands, tabs, window
+from . import groups, layers, masks, settings, strands, tabs, window
 from .client import AppClient, AppError
 
-AREAS = (tabs, strands, masks, layers, groups, window)
+AREAS = (tabs, strands, masks, layers, groups, window, settings)
 APP_TOOLS = [tool for area in AREAS for tool in area.TOOLS]
 APP_TOOL_NAMES = {tool['name'] for tool in APP_TOOLS}
 LOOK_ONLY = set().union(*(area.LOOK_ONLY for area in AREAS))  # what plan mode offers

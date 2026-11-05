@@ -55,6 +55,7 @@ TOOL_CHIPS = {
     'show_group': ('claude_tool_groups', '#a04f9a', '#ffffff'),
     'app_window': ('claude_tool_window', '#a04f9a', '#ffffff'),
     'app_settings': ('claude_tool_settings', '#a04f9a', '#ffffff'),
+    'read_settings': ('claude_tool_settings', '#a04f9a', '#ffffff'),
     # Knots and masks: tie_knot makes a design, the others look and fix.
     'tie_knot': ('claude_tool_tie_knot', '#93e993', '#1a1a1a'),
     'check_masks': ('claude_tool_check_masks', '#d4d4d4', '#1a1a1a'),

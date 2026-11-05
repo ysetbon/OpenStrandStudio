@@ -77,8 +77,10 @@ def upgrade_spinbox(spinbox):
 
     minus_button = QToolButton(spinbox)
     minus_button.setText('−')  # proper minus sign
+    minus_button.setObjectName('segmented_minus')
     plus_button = QToolButton(spinbox)
     plus_button.setText('+')
+    plus_button.setObjectName('segmented_plus')
     for button in (minus_button, plus_button):
         button.setFocusPolicy(Qt.NoFocus)
         button.setFixedWidth(_BUTTON_WIDTH)
@@ -101,14 +103,28 @@ def upgrade_spinbox(spinbox):
     spinbox._segmented_layout = layout
 
 
+def _segmented_parts(spinbox):
+    """The layout and the -/+ buttons upgrade_spinbox put in the spin box.
+
+    They are kept on the Python wrapper, but a spin box Qt made itself (the ones
+    inside a QColorDialog) can come back from findChildren with a new wrapper
+    that lacks them while it still says 'segmented': find them again by name."""
+    if getattr(spinbox, '_segmented_layout', None) is None:
+        spinbox._segmented_layout = spinbox.layout()
+        spinbox._segmented_minus = spinbox.findChild(QToolButton, 'segmented_minus')
+        spinbox._segmented_plus = spinbox.findChild(QToolButton, 'segmented_plus')
+    return spinbox._segmented_layout, spinbox._segmented_minus, spinbox._segmented_plus
+
+
 def style_segmented_spinbox(spinbox, theme_name, is_rtl=False):
     """Apply theme + direction styling to an upgraded spin box."""
     if not spinbox.property('segmented'):
         return
     c = _THEME_COLORS.get(theme_name, _THEME_COLORS['default'])
 
-    spinbox._segmented_layout.setDirection(
-        QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
+    layout, minus, plus = _segmented_parts(spinbox)
+    if layout is not None:
+        layout.setDirection(QBoxLayout.RightToLeft if is_rtl else QBoxLayout.LeftToRight)
 
     spinbox.setStyleSheet(f"""
         QAbstractSpinBox {{
@@ -128,8 +144,9 @@ def style_segmented_spinbox(spinbox, theme_name, is_rtl=False):
 
     minus_side = 'right' if is_rtl else 'left'
     plus_side = 'left' if is_rtl else 'right'
-    for button, side in ((spinbox._segmented_minus, minus_side),
-                         (spinbox._segmented_plus, plus_side)):
+    for button, side in ((minus, minus_side), (plus, plus_side)):
+        if button is None:
+            continue
         separator_side = 'left' if side == 'right' else 'right'
         button.setStyleSheet(f"""
             QToolButton {{

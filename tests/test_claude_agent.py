@@ -1225,7 +1225,7 @@ def test_the_agent_offers_app_tools_only_from_the_app(tmp_path):
     app = SimpleNamespace(call=lambda name, args: {})
     assert APP_TOOL_NAMES <= names(agent.Agent(SimpleNamespace(), tmp_path, app=app))
     looking = names(agent.Agent(SimpleNamespace(), tmp_path, app=app, plan=True))
-    assert looking & APP_TOOL_NAMES == {"list_tabs", "read_tab", "read_tab_step"}  # plan mode only looks
+    assert looking & APP_TOOL_NAMES == {"list_tabs", "read_tab", "read_tab_step", "read_settings"}  # only looks
     assert "running inside the person's OpenStrand Studio" in agent.Agent(
         SimpleNamespace(), tmp_path, app=app).system()[0]["text"]
 

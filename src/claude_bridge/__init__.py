@@ -13,6 +13,9 @@ Each action is a few lines over the app's own code, one module per area:
 - masks.py    erase, reset, swap, delete, create masks (the canvas's mask code)
 - layers.py   everything the layer panel's right-click menu does
 - groups.py   everything the group panel does
+- window.py   the main window's toolbar, the buttons beside the canvas and under
+              the layer panel (view, undo/redo, new strand, delete, lock, save...)
+- settings.py the Settings dialog: read, set through its widgets and OK, show a page
 - core.py     AppBridge: runs a request by its Action, following the panel's mode
 - base.py     BridgeError, Action, and what every area shares
 

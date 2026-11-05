@@ -3,13 +3,16 @@ from .base import BridgeBase, BridgeError
 from .groups import GroupActions
 from .layers import LayerActions
 from .masks import MaskActions
+from .settings import SettingsActions
 from .strands import StrandActions
 from .tabs import TabActions
+from .window import WindowActions
 
-AREAS = (TabActions, StrandActions, MaskActions, LayerActions, GroupActions)
+AREAS = (TabActions, StrandActions, MaskActions, LayerActions, GroupActions, WindowActions, SettingsActions)
 
 
-class AppBridge(TabActions, StrandActions, MaskActions, LayerActions, GroupActions, BridgeBase):
+class AppBridge(TabActions, StrandActions, MaskActions, LayerActions, GroupActions, WindowActions, SettingsActions,
+                BridgeBase):
     ACTIONS = {name: spec for area in AREAS for name, spec in area.ACTIONS.items()}
 
     def handle(self, call):

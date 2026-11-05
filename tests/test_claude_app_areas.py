@@ -1,6 +1,7 @@
-"""Claude's tools for the layer panel's right-click menu and the group panel,
-run end to end: the agent's tool, the bridge, the app's own code in a real
-window. Each change is checked on the live strands, as one undo step."""
+"""Claude's tools for the layer panel's right-click menu, the group panel, the
+main window's buttons and the Settings dialog, run end to end: the agent's
+tool, the bridge, the app's own code in a real window. Each change is checked
+on the live app (and as its undo steps)."""
 import os
 import sys
 import tempfile
@@ -245,3 +246,225 @@ def test_bad_group_requests_say_what_is_wrong(tab):
         groups(tab, "delete", "Nope")
     with pytest.raises(AppError, match="no set 7"):
         groups(tab, "create", "H", sets=["7"])
+
+
+# ------------------------------------------------------------- main window
+def window_op(tab, op, **more):
+    return tab.runner.app_tool("app_window", dict({"tab_id": tab.id, "op": op}, **more))
+
+
+def test_claude_uses_the_view_buttons_without_touching_the_design(tab):
+    from PyQt5.QtCore import QPointF
+    canvas, panel = tab.canvas, tab.window.layer_panel
+    before, version = tab.steps(), tab.runner.workspace.tab_version
+    window_op(tab, "zoom", value="reset")
+    summary, text = window_op(tab, "zoom", value="in", steps=2)
+    assert round(canvas.zoom_factor, 4) == 1.21 and "zoom 121 %" in text
+    # A percent zooms about the middle of the view: what is there stays there.
+    middle = QPointF(canvas.width() / 2, canvas.height() / 2)
+    under = canvas.screen_to_canvas(middle)
+    window_op(tab, "zoom", value=250)
+    again = canvas.canvas_to_screen(under)
+    assert canvas.zoom_factor == 2.5 and abs(again.x() - middle.x()) < 0.01 and abs(again.y() - middle.y()) < 0.01
+    # Fit on one strand: up close, in the middle.
+    one = live(canvas, "1_3")
+    window_op(tab, "zoom", value="fit", layers=["1_3"])
+    box = tab.bridge.layers_box(["1_3"])
+    middle_of = canvas.canvas_to_screen(QPointF((box[0] + box[2]) / 2, (box[1] + box[3]) / 2))
+    assert abs(middle_of.x() - canvas.width() / 2) < 0.5 and abs(middle_of.y() - canvas.height() / 2) < 0.5
+    window_op(tab, "center")
+    window_op(tab, "zoom", value="fit")
+    # The toggles, as their buttons leave them.
+    shown = canvas.show_grid
+    window_op(tab, "grid", value=not shown)
+    assert canvas.show_grid is (not shown) and tab.window.toggle_grid_button.isChecked() is shown
+    window_op(tab, "grid", value=shown)
+    window_op(tab, "names", value=True)
+    assert canvas.should_draw_names and panel.should_draw_names
+    window_op(tab, "names", value=False)
+    window_op(tab, "layer_tab", value="masks")
+    assert panel.layer_tab == "masks" and panel.masks_tab_button.isChecked()
+    window_op(tab, "layer_tab", value="strands")
+    assert panel.layer_tab == "strands" and panel.strands_tab_button.isChecked()
+    window_op(tab, "mode", value="move")
+    assert tab.window.current_mode == "move"
+    window_op(tab, "mode", value="attach")
+    summary, text = window_op(tab, "select", layer="1_2")
+    assert canvas.selected_strand.layer_name == "1_2" and "selected 1_2" in text
+    window_op(tab, "deselect")
+    assert canvas.selected_strand is None
+    # Nothing of the design changed: no step, the same version.
+    assert tab.steps() == before and tab.bridge.version(tab.window.tab_manager.get_active()) == version
+    assert one in canvas.strands
+    from openstrand.app import AppError
+    for op, more, message in [("zoom", {"value": 1000}, "10 to 500"), ("select", {"layer": "9_9"}, "no layer 9_9"),
+                              ("mode", {"value": "fly"}, "mode: value"), ("grid", {"value": "yes"}, "true or false")]:
+        with pytest.raises(AppError, match=message):
+            window_op(tab, op, **more)
+
+
+def test_claude_draws_undoes_deletes_and_locks_with_the_window_buttons(tab):
+    from openstrand.app import AppError
+    canvas, panel = tab.canvas, tab.window.layer_panel
+    before = tab.steps()
+    summary, text = window_op(tab, "new_strand", start=[100, 100], end=[300, 140])
+    made = next(s for s in canvas.strands if s.layer_name.endswith("_1") and s.layer_name != "1_1")
+    # Saved as the app saves a strand drawn by hand (its step comes a moment after the strand;
+    # the app records it twice, and one Undo takes back both, as for the person).
+    assert tab.steps() > before and made.layer_name in text
+    assert any(s["layer_name"] == made.layer_name for s in tab.runner.workspace.data["strands"])  # read back
+    window_op(tab, "undo")
+    assert made not in canvas.strands and tab.steps() == before
+    window_op(tab, "redo")
+    assert any(s.layer_name == made.layer_name for s in canvas.strands) and tab.steps() > before
+    # The toolbar's Points and Shadow, their buttons following.
+    window_op(tab, "points", value=False)
+    assert canvas.show_control_points is False and not tab.window.toggle_control_points_button.isChecked()
+    window_op(tab, "points", value=True)
+    window_op(tab, "shadow", value=not canvas.shadow_enabled)
+    assert tab.window.toggle_shadow_button.isChecked() is bool(canvas.shadow_enabled)
+    # Lock 1_1: lock mode on, that layer locked; then off.
+    window_op(tab, "lock", value=True, layers=["1_1"])
+    one = canvas.strands.index(live(canvas, "1_1"))
+    assert panel.lock_mode and panel.locked_layers == {one}
+    with pytest.raises(AppError, match="locked"):
+        window_op(tab, "delete", layers=["1_1"])
+    window_op(tab, "lock", value=False)
+    assert not panel.lock_mode
+    # Delete the new set; a strand joined at both ends cannot be deleted.
+    window_op(tab, "delete", layers=[made.layer_name])
+    assert not any(s.layer_name.split("_")[0] == made.layer_name.split("_")[0] for s in canvas.strands)
+    joined = next(s for s in canvas.strands if not hasattr(s, "get_mask_path") and all(s.has_circles)
+                  and not getattr(s, "knot_connections", None))
+    with pytest.raises(AppError, match="cannot be deleted"):
+        window_op(tab, "delete", layers=[joined.layer_name])
+    levels = canvas.level_count
+    window_op(tab, "new_level")
+    assert canvas.level_count == levels + 1
+    # Delete All on the Masks tab, answered Yes; one undo brings them back.
+    masks = [s.layer_name for s in canvas.strands if hasattr(s, "get_mask_path")]
+    assert masks
+    window_op(tab, "delete_all", value="masks")
+    assert not any(hasattr(s, "get_mask_path") for s in canvas.strands)
+    window_op(tab, "undo")
+    assert sorted(s.layer_name for s in canvas.strands if hasattr(s, "get_mask_path")) == sorted(masks)
+    # The person changes the tab: Claude's next edit is refused until it reads again.
+    live(canvas, "1_1").start.setX(live(canvas, "1_1").start.x() + 5)
+    with pytest.raises(AppError, match="changed since you read it"):
+        window_op(tab, "new_level")
+    tab.runner.app_tool("read_tab", {"tab_id": tab.id})
+    window_op(tab, "undo")
+
+
+def test_claude_saves_the_tab_and_the_view_as_files(tab, tmp_path):
+    import json
+    from openstrand.app import AppError
+    from PyQt5.QtGui import QImage
+    session = tab.window.tab_manager.get_active()
+    path = tmp_path / "saved.json"
+    summary, text = window_op(tab, "save", path=str(path))
+    data = json.loads(path.read_text(encoding="utf-8"))
+    assert data["type"] == "OpenStrandStudioHistory" and session.file_path == str(path)
+    window_op(tab, "save")  # its own file now: no path, no overwrite needed
+    image = tmp_path / "view"
+    summary, text = window_op(tab, "save_image", path=str(image))
+    picture = QImage(str(image) + ".png")
+    assert picture.width() == tab.canvas.width() * 4 and picture.height() == tab.canvas.height() * 4
+    other = tmp_path / "other.json"
+    other.write_text("{}", encoding="utf-8")
+    for more, message in [({"path": str(other)}, "exists: give overwrite"), ({"path": "saved.json"}, "full path"),
+                          ({"path": str(tmp_path / "nope" / "a.json")}, "no folder"),
+                          ({"path": str(tmp_path / "a.txt")}, "ending in .json")]:
+        with pytest.raises(AppError, match=message):
+            window_op(tab, "save", **more)
+    window_op(tab, "save", path=str(other), overwrite=True)
+    assert json.loads(other.read_text(encoding="utf-8"))["type"] == "OpenStrandStudioHistory"
+
+
+# ---------------------------------------------------------------- settings
+@pytest.fixture()
+def kept_settings(tab):
+    """The settings as they were, and the repo's copy of the settings file, put back after."""
+    copy = ROOT / "user_settings.txt"
+    text = copy.read_bytes() if copy.exists() else None
+    dialog = tab.window.settings_dialog
+    keys = ("theme", "control_points_selected_only", "shadow_color", "default_strand_width", "sounds",
+            "curve_shape", "language")
+    old = {key: tab.bridge.setting_value(key) for key in keys}
+    yield old
+    reply = tab.bridge.handle({"id": 9, "name": "settings", "args": {"values": old}})  # the old values set back
+    dialog.hide()
+    assert reply["ok"], reply
+    assert {key: tab.bridge.setting_value(key) for key in keys} == old
+    if text is not None:
+        copy.write_bytes(text)
+
+
+def test_claude_reads_and_changes_settings_as_the_dialog_does(tab, kept_settings):
+    from PyQt5.QtGui import QColor
+    canvas, dialog = tab.canvas, tab.window.settings_dialog
+    summary, text = tab.runner.app_tool("read_settings", {})
+    assert "control_points_selected_only = " in text and "[selected_strand]" in text and "theme = " in text
+    steps = tab.steps()
+    # Control points of the selected strand only: the checkbox and the canvas, as OK leaves them.
+    summary, text = tab.runner.app_tool("app_settings", {"op": "set", "values": {"control_points_selected_only": True}})
+    assert canvas.show_cp_selected_only and dialog.show_cp_selected_only_checkbox.isChecked()
+    assert "Old values" in text and tab.steps() == steps
+    # Dark mode: the window, the canvas and the dialog's own combobox.
+    tab.runner.app_tool("app_settings", {"op": "set", "values": {"theme": "dark"}})
+    assert tab.window.current_theme == "dark" and dialog.theme_combobox.currentData() == "dark"
+    # A color through its chooser: every strand's shadow too.
+    tab.runner.app_tool("app_settings", {"op": "set", "values": {"shadow_color": "#11223344"}})
+    assert canvas.default_shadow_color == QColor(0x11, 0x22, 0x33, 0x44)
+    assert all(s.shadow_color == QColor(0x11, 0x22, 0x33, 0x44) for s in canvas.strands if hasattr(s, "shadow_color"))
+    # Default Strand Width: 6 grid squares, half of it the color.
+    tab.runner.app_tool("app_settings", {"op": "set", "values": {"default_strand_width": {"squares": 6,
+                                                                                          "color_percent": 50}}})
+    assert (canvas.strand_width, canvas.stroke_width) == (69, 34)
+    from openstrand.app import AppError
+    for values, message in [({"third_control_point": False, "curvature_bias": True}, "needs third_control_point"),
+                            ({"nope": 1}, "no setting nope"), ({"shadow_blur_steps": 1000}, "1..100"),
+                            ({"theme": "pink"}, "default / light / dark"), ({"sounds": "on"}, "true/false")]:
+        with pytest.raises((AppError, Exception), match=message):
+            tab.runner.app_tool("app_settings", {"op": "set", "values": values})
+    tab.runner.app_tool("app_settings", {"op": "show", "page": "selected_strand"})
+    assert dialog.isVisible() and dialog.categories_list.currentRow() == 2
+
+
+def test_settings_and_window_changes_wait_for_the_person_in_ask_mode(tab, kept_settings):
+    panel, bridge = tab.window.claude_panel, tab.bridge
+    sounds = tab.bridge.setting_value("sounds")
+    panel.run_mode = "ask"
+    try:
+        assert bridge.handle({"id": 41, "name": "settings", "args": {"values": {"sounds": not sounds}}}) is None
+        card = panel.entries[-1]
+        assert card["kind"] == "confirm" and card["what"][0] == "settings" and "sounds" in card["what"][2]
+        assert tab.bridge.setting_value("sounds") is sounds  # nothing yet
+        assert bridge.decide(41, True)["ok"] and tab.bridge.setting_value("sounds") is (not sounds)
+        version = tab.runner.workspace.tab_version
+        call = {"id": 42, "name": "window", "args": {"tab_id": tab.id, "op": "new_level", "version": version}}
+        assert bridge.handle(call) is None and panel.entries[-1]["what"][0] == "window"
+        assert "add a new level" in panel.entries[-1]["what"][2]
+        assert bridge.decide(42, False)["error"] == "the person declined this change"
+        # The view needs no Allow: it changes nothing of the design.
+        assert bridge.handle({"id": 43, "name": "window_view", "args": {"op": "zoom", "value": "reset"}})["ok"]
+    finally:
+        panel.run_mode = "auto"
+
+
+def test_settings_restyle_after_a_color_dialog(window):
+    """A color chooser leaves its QColorDialog under Settings; Qt made its spin boxes, so their
+    Python side (the -/+ buttons' layout) is gone by the next restyle. Changing the theme then
+    raised AttributeError: '_segmented_layout' (and in a slot, aborted the app)."""
+    import gc
+    from PyQt5.QtWidgets import QColorDialog
+    from segmented_spin_box import upgrade_and_style_all
+    dialog = window.settings_dialog
+    left = QColorDialog(dialog)  # what a chooser leaves behind
+    try:
+        upgrade_and_style_all(dialog, "dark")
+        gc.collect()
+        upgrade_and_style_all(dialog, "default")
+    finally:
+        left.setParent(None)
+        left.deleteLater()

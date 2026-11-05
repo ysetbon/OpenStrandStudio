@@ -8455,3 +8455,8 @@ ESC で終了''',
         'color_vs_stroke_label': '颜色与描边的分配(总粗细固定):',
     },
 }
+
+# The Claude panel and Settings > Claude strings live in their own file.
+from claude_translations import CLAUDE_TRANSLATIONS as _CLAUDE_TRANSLATIONS
+for _language, _strings in _CLAUDE_TRANSLATIONS.items():
+    translations.setdefault(_language, {}).update(_strings)

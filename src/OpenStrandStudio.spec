@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('box_stitch.ico', '.'), ('box_stitch.png', '.'), ('settings_icon.png', '.'), ('flags', 'flags'), ('layer_panel_icons', 'layer_panel_icons'), ('guide_images', 'guide_images'), ('mp4', 'mp4'), ('samples', 'samples'), ('images/*.svg', 'images'), ('sounds/*.wav', 'sounds')],
+    datas=[('box_stitch.ico', '.'), ('box_stitch.png', '.'), ('settings_icon.png', '.'), ('claude_mark_white.png', '.'), ('claude_knot.png', '.'), ('claude_knot.json', '.'), ('flags', 'flags'), ('layer_panel_icons', 'layer_panel_icons'), ('guide_images', 'guide_images'), ('mp4', 'mp4'), ('samples', 'samples'), ('images/*.svg', 'images'), ('sounds/*.wav', 'sounds')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

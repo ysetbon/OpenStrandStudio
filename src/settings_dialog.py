@@ -12,6 +12,7 @@ from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap, QImage, Q
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from translations import translations
+from claude_panel import ClaudeSettingsPage
 from save_load_manager import load_strands, apply_loaded_strands
 from project_settings import capture_project_settings, read_project_settings, apply_project_settings
 # Reads the provenance recorded with each undo/redo state, for the History page.
@@ -1853,6 +1854,7 @@ class SettingsDialog(QDialog):
             _['history'],
             _['whats_new'],  # Add What's New category here
             (_['samples'] if 'samples' in _ else 'Samples'),
+            _['claude_settings_category'],  # Claude: API key and model
             _['about']  # Keep About as the last item
         ]
 
@@ -3606,6 +3608,15 @@ class SettingsDialog(QDialog):
         self.stacked_widget.addWidget(self.samples_widget)
 
 
+        # Claude Page: the Anthropic API key and the model
+        self.claude_settings_page = ClaudeSettingsPage(self.current_language, self)
+        self.stacked_widget.addWidget(self.claude_settings_page)
+        # Its switch shows or hides the Claude button in the main window.
+        if hasattr(self.parent_window, 'set_claude_available'):
+            self.claude_settings_page.show_button_changed.connect(self.parent_window.set_claude_available)
+        if hasattr(self.parent_window, 'claude_panel'):
+            self.claude_settings_page.settings_changed.connect(self.parent_window.claude_panel.refresh_controls)
+
         # About Page (index 5) - LAST
         self.about_widget = QWidget()
         about_layout = QVBoxLayout(self.about_widget)
@@ -4902,7 +4913,10 @@ class SettingsDialog(QDialog):
         self.categories_list.item(8).setText(_['history']) # Update history category name
         self.categories_list.item(9).setText(_['whats_new']) # Update what's new category name
         self.categories_list.item(10).setText(_['samples'] if 'samples' in _ else 'Samples')
-        self.categories_list.item(11).setText(_['about']) # About remains last
+        self.categories_list.item(11).setText(_['claude_settings_category'])
+        self.categories_list.item(12).setText(_['about']) # About remains last
+        if hasattr(self, 'claude_settings_page'):
+            self.claude_settings_page.retranslate(self.current_language)
         self.update_category_panel_width()
         # Update labels and buttons
         self.theme_label.setText(_['select_theme'])

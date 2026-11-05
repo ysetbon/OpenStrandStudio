@@ -625,6 +625,22 @@ FAKE_STEPS = [
 
 FAKE_TALK = [{"content": [{"type": "text", "text": "A crimson figure 8 with open ends."}], "stop_reason": "end_turn"}]
 
+TIE_TITLES = ["Step 1 · first loop", "Step 2 · round the standing part", "Step 3 · back across",
+              "Step 4 · through the loop", "Step 5 · draw it up", "Step 6 · pull tight"]
+FAKE_TIE = [
+    {"content": [{"type": "tool_use", "id": "toolu_1", "name": "knot_library", "input": {}}], "stop_reason": "tool_use"},
+    {"content": [{"type": "tool_use", "id": "toolu_2", "name": "tie_knot",
+                  "input": {"knot": "figure 8", "color": "crimson"}}], "stop_reason": "tool_use"},
+] + [
+    {"content": [{"type": "tool_use", "id": f"toolu_{3 + n}", "name": "open_in_new_tab",
+                  "input": {"design": f"step {n + 1}", "title": TIE_TITLES[n]}}], "stop_reason": "tool_use"}
+    for n in range(6)
+] + [
+    {"content": [{"type": "tool_use", "id": "toolu_9", "name": "identify_knot", "input": {}}], "stop_reason": "tool_use"},
+    {"content": [{"type": "text", "text": "Six tabs: a figure-eight tied step by step, then pulled tight."}],
+     "stop_reason": "end_turn"},
+]
+
 
 @pytest.fixture
 def fake_api(monkeypatch, request):
@@ -764,7 +780,7 @@ def test_plan_mode_offers_only_tools_that_look():
     from openstrand import agent
     runner = agent.Agent(SimpleNamespace(), ROOT / "designs", plan=True, web=True)
     names = [t["name"] for t in runner.tools()]
-    assert set(names) == {"search_samples", "describe", "web_search", "web_fetch"}
+    assert set(names) == {"search_samples", "describe", "knot_library", "identify_knot", "web_search", "web_fetch"}
     assert "Plan mode is on" in runner.system()[0]["text"]
     builder = agent.Agent(SimpleNamespace(), ROOT / "designs")
     assert "draw_design" in [t["name"] for t in builder.tools()]
@@ -1117,6 +1133,47 @@ def test_claude_opens_a_figure_8_step_by_step_in_real_tabs(window, fake_api, mon
     listed = json.loads(fake_api[3]["body"]["messages"][-1]["content"][0]["content"])
     assert len(listed) == before and any(t["active"] for t in listed)
     assert "New tab · Step 3 · up and over" in shown
+
+
+@pytest.mark.parametrize("fake_api", [FAKE_TIE], indirect=True)
+def test_claude_ties_a_figure_eight_into_real_tabs_checked_at_every_step(window, fake_api, monkeypatch, tmp_path):
+    import claude_settings
+    from PyQt5.QtWidgets import QApplication
+    from openstrand import identify
+    from save_load_manager import serialize_strand
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    claude_settings.save(api_key="sk-ant-test-key", model="claude-haiku-5-5", web=False)
+    panel, tm = window.claude_panel, window.tab_manager
+    panel.set_mode("auto")
+    before = len(tm.tabs)
+    panel.prompt_edit.setText("show me how to tie a figure 8 knot, a tab per step, and pull it tight at the end")
+    panel.send()
+    deadline = time.time() + 300
+    while panel.running() and time.time() < deadline:
+        QApplication.processEvents()
+        time.sleep(0.05)
+    QApplication.processEvents()
+    shown = unfolded(panel)
+    assert "Six tabs" in shown, shown
+    # What tie_knot told Claude: every stage checked, also as the app draws it.
+    result = fake_api[2]["body"]["messages"][-1]["content"][0]["content"]
+    assert "Figure-eight knot: figure-eight, 4 crossings." in result
+    assert "pulled tight: figure-eight" in result and "step 6 as drawn in the app: figure-eight" in result
+    assert "WARNING" not in result
+    # Six real tabs, in order, with Claude's titles; each holds its step as the app loaded it.
+    assert [tm.title_for(t) for t in tm.tabs[before:]] == TIE_TITLES
+    knots = []
+    for tab in tm.tabs[before:]:
+        tm.switch_to_tab(tab.id)
+        QApplication.processEvents()
+        data = {"strands": [serialize_strand(s, window.canvas) for s in window.canvas.strands],
+                "project_settings": {"version": 1, "control_point_base_fraction": 1.0,
+                                     "distance_multiplier": 2.0, "curve_response_exponent": 2.0}}
+        knots.append(identify.cords(data)[0]["knot"])
+    assert knots == ["unknot", "unknot", "unknot", "figure-eight", "figure-eight", "figure-eight"]
+    # identify_knot on the current design (the tight knot) went back to Claude too.
+    checked = fake_api[9]["body"]["messages"][-1]["content"][0]["content"]
+    assert "4 crossings with itself: figure eight knot (4_1)" in checked
 
 
 def test_the_tab_strip_floats_over_claude_and_claude_stays_put(window, monkeypatch, tmp_path):

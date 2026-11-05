@@ -13,6 +13,8 @@ python -m openstrand make mxn --m 4 --n 3 --hand lh --stretch --out designs/brac
 python -m openstrand make heart --color crimson --out designs/heart.json
 python -m openstrand make sample hopf_link --out designs/rings.json
 python -m openstrand draw my_design.json --out designs/mine.json
+python -m openstrand tie figure-eight --color crimson --out-dir designs/figure8
+python -m openstrand identify designs/figure8/figure_eight_knot_step_6.json
 python -m openstrand samples turks
 python -m openstrand info designs/bracelet.json
 python -m openstrand recolor designs/bracelet.json --set 4,5,6,7 --color red
@@ -27,6 +29,8 @@ python -m openstrand render designs/bracelet.json --out designs/bracelet.png
 | `make heart` | A ribbon heart from one cord (fitted, about a minute). |
 | `make sample NAME` | A ready-made design from `knot_samples/` or `mxn_samples/`. |
 | `draw SPEC` | Your own design from cords given as points, x(t)/y(t) curves or shapes; woven over and under, with a report of every crossing. See `.claude/skills/openstrand-designer/drawing.md`. |
+| `tie KNOT` | Tying steps for a knot, one project per step: the cord laid move by move with an arrow on the working end, drawn up, then pulled tight. Worked out by simulating a real cord (`simulate.py`), every stage checked to be that knot (`invariants.py`, `identify.py`). `--list` for the library; `--path FILE` for any other knot. |
+| `identify FILE` | Which knot each cord of a project makes, read from its strands, masks and layers the way the app draws them. |
 | `samples [TEXT]` | Lists the ready-made designs. |
 | `info FILE` | Sets, colors, which way each set runs, strands, masks, size. `--json` for machines. |
 | `validate FILE` | Loads the project with the app's loader and lists problems. |

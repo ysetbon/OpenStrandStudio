@@ -73,13 +73,25 @@ How to work:
 5. Finish with two or three short sentences: what you made, how it is built,
    and anything you could not do or had to assume. Plain words, no markdown.
 
+Knots tied in a cord (overhand, figure-eight, stevedore and the like):
+- To show how a knot is tied, or a knot pulled tight, use tie_knot. It works
+  the steps out by simulating a real cord and checks every step is the right
+  knot, so never draw tying steps or a tightened knot by hand.
+- A knot not in knot_library: research how it is tied, then give tie_knot its
+  path (rough points from the standing end, crossing itself where the knot
+  does, a few cord widths between parts) and its over/under pattern. Read the
+  checks: they name the knot the path makes. If it is not the knot you meant,
+  fix the path or the pattern and try again.
+- To check any design is the knot it should be, call identify_knot rather than
+  judging the picture.
+
 Drawing takes a few seconds to a minute; making a Turk's head size that is not
 published, or a heart, about a minute. Call it once and wait.
 
 """
 
 # Plan mode: research and plan, build nothing. Only tools that look are offered.
-PLAN_TOOLS = ('search_samples', 'describe')
+PLAN_TOOLS = ('search_samples', 'describe', 'knot_library', 'identify_knot')
 PLAN_INSTRUCTIONS = """Plan mode is on: the person wants a plan before anything is built. The
 tools that build are not available, so do not try to build. Research as much as
 you need (samples, the web, the current design), then answer with a short plan
@@ -148,6 +160,40 @@ TOOLS = [
                       'items': {'type': 'object', 'description': 'one cord: points, x/y, or shape, '
                                                                  'plus style'}}},
             'required': ['cords']},
+    },
+    {
+        'name': 'tie_knot',
+        'description': ('Steps to tie a knot, worked out by simulating a real cord: the cord laid out move by '
+                        'move with an arrow on the working end, then drawn up, then pulled tight until it '
+                        'touches itself, no gaps. Every stage is checked to be the knot asked for, from its '
+                        'crossings, also as drawn in the app. Library knots by name (knot_library lists them); '
+                        'any other knot from its path: rough [x, y] points from the standing end to the working '
+                        'end, crossing itself where the knot does, and its over/under pattern. Saves the steps '
+                        'as "step 1", "step 2", ... (open them with open_in_new_tab) and makes the tight knot '
+                        'the current design. Library knots take seconds; a path about half a minute.'),
+        'input_schema': {'type': 'object', 'properties': {
+            'knot': {'type': 'string', 'description': 'a library knot, e.g. "figure-eight", "overhand"'},
+            'points': {'type': 'array', 'items': {'type': 'array', 'items': {'type': 'number'}},
+                       'description': 'for a knot not in the library: its path, standing end first'},
+            'pattern': {'type': 'string', 'description': 'with points: O or U for each crossing the path '
+                                                         'passes, in order along it (default alternating)'},
+            'color': {'type': 'string', 'description': 'color name or hex; default teal'},
+            'width': {'type': 'number', 'description': 'cord width in px, 16-60; default 24'},
+            'moves': {'type': 'integer', 'minimum': 1, 'maximum': 6,
+                      'description': 'tying pictures before the knot is drawn up (default: up to 4)'}}},
+    },
+    {
+        'name': 'knot_library',
+        'description': 'The knots tie_knot knows by name: the names people use, crossings, what each is for.',
+        'input_schema': {'type': 'object', 'properties': {}},
+    },
+    {
+        'name': 'identify_knot',
+        'description': ('Which knot the current design shows, read from its strands, masks and layers the way '
+                        'the app draws them: per cord its crossings and its knot type (an open cord is named '
+                        'as if its ends were joined high above it, as for a tied rope). Use it to check that a '
+                        'design really is the knot it should be, instead of judging by eye.'),
+        'input_schema': {'type': 'object', 'properties': {}},
     },
     {
         'name': 'describe',
@@ -291,6 +337,41 @@ class Workspace:
             self.store(data)
             title = str(args.get('name') or 'drawing')[:40]
             return f'{title} · {project.summary(data)}', report + '\nNow render it and look at the result.'
+        if name == 'tie_knot':
+            from . import tying
+            try:
+                made = tying.tie(knot=args.get('knot'), points=args.get('points'), pattern=args.get('pattern'),
+                                 width=args.get('width') or tying.DEFAULT_WIDTH,
+                                 color=colors.parse(args.get('color') or 'teal'), count=args.get('moves'))
+            except (tying.TyingError, ImportError) as e:
+                raise ToolError(str(e)) from None
+            self.steps = []
+            for number, step in enumerate(made['steps'], start=1):
+                path = self.out_dir / f'step_{number}.json'
+                project.write(step['data'], path)
+                self.steps.append((step['title'], path))
+            self.store(made['steps'][-1]['data'])
+            name_ = made['knot'] or f"a knot with Alexander polynomial {made['alexander']}"
+            lines = [f"{made['title']}: {name_}, {made['crossings']} crossings."]
+            lines.append('Checks (knot type at each stage): ' + '; '.join(
+                f"{c['stage']}: {c['knot'] or c['alexander']}" for c in made['checks']))
+            if not made['ok']:
+                lines.append('WARNING: not every stage is the same knot; tell the person which step is off.')
+            for number, step in enumerate(made['steps'], start=1):
+                lines.append(f"step {number}: {step['caption']}")
+            lines.append(f'Saved as "step 1" to "step {len(made["steps"])}"; the current design is the tight '
+                         'knot. In the app, open each step with open_in_new_tab, in order, titled by what it '
+                         'does, e.g. "Step 1 · first loop".')
+            return f"{made['title']} · {len(made['steps'])} steps", '\n'.join(lines)
+        if name == 'knot_library':
+            from . import tying
+            lines = [f'{title} ("{key}"): {crossings} crossings, {kind}; also called {", ".join(aliases)}. {about}'
+                     for key, title, crossings, kind, aliases, about in tying.library()]
+            return f'{len(lines)} knots', '\n'.join(lines)
+        if name == 'identify_knot':
+            from . import identify
+            text = identify.summary(self.need())
+            return text.splitlines()[0][:80], text
         if name == 'describe':
             info = project.describe(self.need())
             lines = [f"{info['strands']} strands, {info['masks']} masks, size {info['size'][0]}x{info['size'][1]}"]

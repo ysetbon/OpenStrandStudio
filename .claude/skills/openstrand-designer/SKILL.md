@@ -55,6 +55,26 @@ use for them. `drawing.md` explains how to draw any design yourself.
 7. **Report.** Give the project path, the picture, and the recipe: the exact
    commands that made it. Mention that the file opens in OpenStrand Studio.
 
+## Knots tied in a cord
+
+For how to tie a knot (overhand, figure-eight, double overhand, stevedore,
+triple overhand), or a knot pulled tight, do not draw it: `tie` simulates a real
+cord, tying it move by move and pulling it tight until it touches itself. It
+checks every stage is the knot asked for, from its crossings and as drawn in
+the app. Each step is its own project file:
+```
+python -m openstrand tie --list
+python -m openstrand tie figure-eight --color crimson --out-dir designs/figure8
+python -m openstrand tie --path designs/my_knot_path.json --out-dir designs/mine
+python -m openstrand identify designs/x.json
+```
+A knot not in the library is given as its path: rough `[x, y]` points from
+the standing end to the working end, crossing itself where the knot does, with
+a few cord widths between parts, and `"pattern"` (O or U at each crossing along
+the path; alternating by default). The checks name the knot the path makes; if
+it is not the knot you meant, fix the path or the pattern. `identify` names the
+knot any project shows; use it instead of judging over and under by eye.
+
 ## When the command cannot do it
 
 Most shapes can be drawn with `openstrand draw`. If the request needs

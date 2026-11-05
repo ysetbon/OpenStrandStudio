@@ -6,6 +6,7 @@ with exit status 1, so a person or an agent can read the outcome directly.
 import argparse
 import contextlib
 import json
+import re
 import os
 import sys
 from pathlib import Path
@@ -78,6 +79,49 @@ def cmd_draw(args):
     project.write(data, out)
     print(f'wrote {out} · {project.summary(data)}')
     print(report)
+
+
+def cmd_tie(args):
+    from . import tying
+    if args.list:
+        for key, title, crossings, kind, aliases, about in tying.library():
+            print(f'{key:<16} {title}: {crossings} crossings, {kind}; also {", ".join(aliases)}')
+        return
+    points = None
+    if args.path:
+        text = Path(args.path).read_text(encoding='utf-8')
+        try:
+            points = json.loads(text)
+        except json.JSONDecodeError as e:
+            raise ValueError(f'{args.path}: not valid JSON ({e.msg}, line {e.lineno})') from None
+        if isinstance(points, dict):
+            args.pattern = args.pattern or points.get('pattern')
+            points = points.get('points')
+    if not args.knot and points is None:
+        raise ValueError('name a knot (see: openstrand tie --list) or give --path with its points')
+    color = colors.parse(args.color) if args.color else colors.NAMES['teal']
+    with quiet(not args.verbose):
+        made = tying.tie(knot=args.knot, points=points, pattern=args.pattern, width=args.width,
+                         color=color, count=args.moves)
+    out = Path(args.out_dir or '.')
+    out.mkdir(parents=True, exist_ok=True)
+    stem = re.sub(r'[^a-z0-9]+', '_', made['title'].lower()).strip('_') or 'knot'
+    print(f"{made['title']}: {made['knot'] or made['alexander']}, {made['crossings']} crossings")
+    print('checks: ' + '; '.join(f"{c['stage']}: {c['knot'] or c['alexander']}" for c in made['checks']))
+    for n, step in enumerate(made['steps'], start=1):
+        path = out / f'{stem}_step_{n}.json'
+        project.write(step['data'], path)
+        print(f'wrote {path} · {step["caption"]}')
+    if not made['ok']:
+        raise SystemExit('error: not every stage is the same knot (see the checks above)')
+
+
+def cmd_identify(args):
+    from . import identify
+    data = project.read(args.file)
+    with quiet(not args.verbose):
+        text = identify.summary(data)
+    print(text)
 
 
 def cmd_samples(args):
@@ -247,6 +291,20 @@ def build_parser():
     drawn = command('draw', 'draw a design from your own cords (points, x(t)/y(t) curves or shapes)', cmd_draw)
     drawn.add_argument('spec', help='a JSON file with {"cords": [...]}, or - to read it from stdin')
     drawn.add_argument('--out', help='project file to write (default drawn.json)')
+
+    tie = command('tie', 'tying steps for a knot, simulated with a real cord and checked to be that knot', cmd_tie)
+    tie.add_argument('knot', nargs='?', help='a library knot, e.g. figure-eight (see --list)')
+    tie.add_argument('--list', action='store_true', help='list the library knots')
+    tie.add_argument('--path', help='a JSON file with the path of a knot not in the library: '
+                                    '[[x, y], ...] or {"points": [...], "pattern": "OUOU..."}')
+    tie.add_argument('--pattern', help='over (O) / under (U) at each crossing along the path (default alternating)')
+    tie.add_argument('--color', help='name or hex (default teal)')
+    tie.add_argument('--width', type=float, default=24, help='cord width in px, 16-60 (default 24)')
+    tie.add_argument('--moves', type=int, help='tying pictures before the knot is drawn up (default up to 4)')
+    tie.add_argument('--out-dir', help='folder for the step files (default: here)')
+
+    identify_cmd = command('identify', 'which knot a project shows, read from its strands and masks', cmd_identify)
+    identify_cmd.add_argument('file')
 
     samples = command('samples', 'list the ready-made designs', cmd_samples)
     samples.add_argument('filter', nargs='?', help='only names containing this text')

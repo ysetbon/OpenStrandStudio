@@ -4,11 +4,16 @@ A design is a list of cords. Each cord is a centerline, given as points the
 cord passes through, as a parametric curve x(t), y(t), or as a ready shape.
 The sample generators' fitter turns each centerline into a chain of attached
 strands, and every crossing gets over and under: alternating along each cord
-by default. This is what lets a person, or Claude, design something no
-template covers.
+by default, or, for cords given "heights" (one number per point, how high
+the cord lies there), the higher part on top, the way a real cord lies. This
+is what lets a person, or Claude, design something no template covers.
+
+Every design carries the curve settings it was fitted for (project_settings),
+so it opens the same whatever the person's own Settings are.
 
     {"cords": [
         {"points": [[300, 400], [600, 250], [900, 400]], "color": "teal"},
+        {"points": [[300, 250], [600, 400], [900, 250]], "heights": [0, 30, 0]},
         {"x": "600 + 200*cos(t)", "y": "400 + 200*sin(t)", "t1": "2*pi", "closed": true},
         {"shape": "circle", "center": [600, 400], "radius": 150, "color": "gold"}
     ]}
@@ -141,8 +146,10 @@ def _point(p, what):
 
 
 # --------------------------------------------------------------- centerlines
-def centerline(cord, index):
-    """The cord's centerline as a polyline sampled every SPACING px, and whether it is closed."""
+def centerline(cord, index, with_heights=False):
+    """The cord's centerline as a polyline sampled every SPACING px and whether
+    it is closed; with_heights adds its heights along the polyline (None when
+    the cord gives none)."""
     from sample_geometry import parametric, resample, spline
     what = f'cord {index + 1}'
     closed = _flag(cord.get('closed', False), f'{what} "closed"')
@@ -167,7 +174,9 @@ def centerline(cord, index):
         else:
             corners = pts + ([pts[0]] if closed else [])
             poly = resample(corners, SPACING)
+        heights = _heights(cord, what, cord['points'], pts, poly, closed)
     elif kind == 'x':
+        heights = None
         if 'y' not in cord:
             raise DrawError(f'{what}: a parametric cord needs both "x" and "y"')
         fx, fy = expression(cord['x']), expression(cord['y'])
@@ -180,13 +189,79 @@ def centerline(cord, index):
             raise DrawError(f'{what}: steps must be between 100 and 20000')
         poly = parametric(lambda t: (fx(t=t), fy(t=t)), t0, t1, closed=closed, steps=steps, spacing=SPACING)
     else:
+        heights = None
         poly = _shape(cord, what)
         closed = True
+    if heights is None and 'heights' in cord:
+        raise DrawError(f'{what}: "heights" go with "points" (one height per point)')
     for x, y in poly:
         if not (BOUNDS[0] <= x <= BOUNDS[1] and BOUNDS[0] <= y <= BOUNDS[1]):
             raise DrawError(f'{what} goes to ({x:.0f}, {y:.0f}); keep every point between '
                             f'{BOUNDS[0]} and {BOUNDS[1]} (the samples use about 0-1200 by 0-800)')
-    return poly, closed
+    return (poly, closed, heights) if with_heights else (poly, closed)
+
+
+def _heights(cord, what, given, pts, poly, closed):
+    """Heights at every sample of the polyline, from one height per point."""
+    if 'heights' not in cord:
+        return None
+    heights = cord['heights']
+    if not isinstance(heights, list) or len(heights) != len(given):
+        raise DrawError(f'{what}: "heights" must list one number per point ({len(given)})')
+    values = [_number(h, f'{what} height {k + 1}') for k, h in enumerate(heights)]
+    if closed and len(values) == len(pts) + 1:
+        values = values[:-1]        # the closing point was dropped above
+    # Where each point lies along the polyline: the curve passes through them in order.
+    found, start = [], 0
+    for k, (x, y) in enumerate(pts):
+        reach = 12 + (math.dist(pts[k - 1], (x, y)) * 3 / SPACING if k else 12)
+        stop = min(len(poly), start + int(reach))
+        best = min(range(start, max(stop, start + 1)), key=lambda i: (poly[i][0] - x) ** 2 + (poly[i][1] - y) ** 2)
+        found.append(best)
+        start = best
+    if closed:
+        found.append(len(poly) - 1)
+        values.append(values[0])
+    out, j = [], 0
+    for i in range(len(poly)):
+        while j < len(found) - 2 and found[j + 1] <= i:
+            j += 1
+        a, b = found[j], found[j + 1] if j + 1 < len(found) else found[j]
+        t = 0.0 if b == a else min(1.0, max(0.0, (i - a) / (b - a)))
+        out.append(values[j] + (values[min(j + 1, len(values) - 1)] - values[j]) * t)
+    return out
+
+
+def by_height(fallback):
+    """Over/under from the cords' heights: at each crossing the part lying
+    higher goes over. Crossings of cords without heights, or at the same
+    height, follow the fallback rule."""
+    def rule(scene, hits):
+        base = fallback(scene, hits)
+        out, decided = [], 0
+        for k, h in enumerate(hits):
+            z = []
+            for side in (0, 1):
+                c = h['cords'][side]
+                heights = scene.cords[c].get('heights')
+                if heights is None:
+                    break
+                position = h['positions'][side]
+                if 'strands' in h:
+                    position = scene.poly_index(c, position)
+                n = len(heights) - 1
+                position = min(max(position, 0.0), n)
+                i = min(int(position), n - 1)
+                z.append(heights[i] + (heights[i + 1] - heights[i]) * (position - i))
+            if len(z) == 2 and abs(z[0] - z[1]) > 1e-6:
+                out.append(z[0] > z[1])
+                decided += 1
+            else:
+                out.append(base[k])
+        if decided == len(hits):
+            scene.woven_conflicts = 0
+        return out
+    return rule
 
 
 def _shape(cord, what):
@@ -262,13 +337,11 @@ def build(spec):
     import generate_creative_samples as g
 
     started = time.monotonic()
-    # A fresh name per build: the fitter caches its fits by scene name.
-    scene = g.Scene(f"drawn_{next(_BUILDS)}_{spec.get('name') or 'design'}")
-    tucked, lengths = set(), 0.0
+    tucked, lengths, made = set(), 0.0, []
     for k, cord in enumerate(cords):
         if not isinstance(cord, dict):
             raise DrawError(f'cord {k + 1} must be an object')
-        poly, closed = centerline(cord, k)
+        poly, closed, heights = centerline(cord, k, with_heights=True)
         length = sum(math.dist(a, b) for a, b in zip(poly, poly[1:]))
         lengths += length
         width = _number(cord.get('width', DEFAULT_WIDTH), f'cord {k + 1} width')
@@ -280,13 +353,27 @@ def build(spec):
         color = colors.parse(str(cord.get('color', 'teal')))
         second = colors.parse(str(cord['second_color'])) if cord.get('second_color') else None
         group = str(cord.get('label') or f'Cord {k + 1}')[:40]
-        scene.cord(poly, color, group, width, closed=closed,
-                   second_color=second, split='auto' if second else None)
+        made.append((poly, color, group, width, closed, second, heights))
         if _flag(cord.get('tucked', False), f'cord {k + 1} "tucked"'):
             tucked.add(k)
     if lengths > MAX_LENGTH:
         raise DrawError(f'the cords are {lengths:.0f} px long together; keep them under {MAX_LENGTH} px '
                         '(shorter or fewer cords), so drawing takes minutes, not hours')
+
+    def scene_for(room, unders=None):
+        # A fresh name per build: the fitter caches its fits by scene name.
+        scene = g.Scene(f"drawn_{next(_BUILDS)}_{spec.get('name') or 'design'}")
+        for k, (poly, color, group, width, closed, second, heights) in enumerate(made):
+            scene.cord(poly, color, group, width, closed=closed,
+                       second_color=second, split='auto' if second else None)
+            scene.cords[-1]['join_room'] = room
+            if heights is not None:
+                scene.cords[-1]['heights'] = list(heights)
+            if unders and not closed:
+                scene.cords[-1]['joins'] = sorted(unders.get(k, ()))
+        return scene
+
+    scene = scene_for(1.0)
     dense = scene.dense_crossings()
     crossed = {c for h in dense for c in h['cords']}
     shallow = _shallow_crossings(scene, dense)
@@ -302,12 +389,107 @@ def build(spec):
             raise DrawError(f"cord {k + 1} ({cord['group']}) is closed but crosses nothing: its two ends "
                             'meet hidden under a crossing, so a closed cord must cross another cord or '
                             'itself. Move or resize it so it crosses, or make it open ("closed": false).')
-    try:
-        scene.interlace(g.woven(start_over=weave == 'alternate', tucked=tucked))
-    except AssertionError as e:
-        raise DrawError(_explain(e)) from None
+    rule = g.woven(start_over=weave == 'alternate', tucked=tucked)
+    if any(heights is not None for *_, heights in made):
+        rule = by_height(rule)
+    # Joins stay clear of crossings, so the strands' end circles and shadows
+    # never show there. A tight knot has crossings everywhere: when that
+    # leaves no room to follow the design, let joins come closer.
+    limit = min(FIT_LIMIT, FIT_SHARE * min(width for _, _, _, width, *_ in made))
+    # Last resort, for a tight knot: joins right where a cord passes under,
+    # hidden by the part on top, so every stretch between them is short.
+    unders = _under_passes(scene, dense, rule)
+    tries = [(room, None) for room in JOIN_ROOM] + ([(JOIN_ROOM[-1], unders)] if unders else [])
+    best, error = None, None
+    for n, (room, joins) in enumerate(tries):
+        if n:
+            scene = scene_for(room, joins)
+        try:
+            scene.interlace(rule)
+        except AssertionError as e:
+            error = e
+            continue
+        # Close to the design, every crossing of the design still there, and
+        # each drawn with the part on top that the design puts on top.
+        score = (len(scene.hits) != len(dense), len(wrong_crossings(scene)), fit_error(scene))
+        if best is None or score < best[0]:
+            best = (score, scene)
+        if score[0] == 0 and score[1] == 0 and score[2] <= limit:
+            break
+    if best is None:
+        raise DrawError(_explain(error)) from None
+    scene = best[1]
     data = _serialize(scene)
+    data['project_settings'] = project_settings()
     return data, report(scene, time.monotonic() - started, shallow)
+
+
+JOIN_ROOM = (1.0, 0.6, 0.4)     # how far joins keep from crossings, as a share of the usual
+
+
+def _under_passes(scene, dense, rule):
+    """Per cord, the sample indices where it passes under another part."""
+    out = {}
+    for h, first_over in zip(dense, rule(scene, dense)):
+        side = 1 if first_over else 0
+        out.setdefault(h['cords'][side], set()).add(int(round(h['positions'][side])))
+    return out
+FIT_LIMIT = 8.0                 # px: a fit further than this from the design is tried again
+FIT_SHARE = 0.3                 # or further than this share of the narrowest cord
+
+
+def wrong_crossings(scene):
+    """Crossings the strands would draw the other way round: the part on top
+    is the first strand of the pair's mask (outside its erased corners), else
+    the strand later in the layer order, as the app paints them."""
+    from masked_strand import MaskedStrand
+    order = {id(s): k for k, s in enumerate(scene.strands)}
+    masks = {}
+    for s in scene.strands:
+        if isinstance(s, MaskedStrand):
+            masks[(id(s.first_selected_strand), id(s.second_selected_strand))] = s
+            masks[(id(s.second_selected_strand), id(s.first_selected_strand))] = s
+    wrong = []
+    for h in getattr(scene, 'hits', []):
+        a, b = h['strands']
+        want = a if h['over'] else b
+        top = None
+        mask = masks.get((id(a), id(b)))
+        if mask is not None:
+            x, y = h['point']
+            erased = any(r['top_left'][0] <= x <= r['top_right'][0] and r['top_left'][1] <= y <= r['bottom_left'][1]
+                         for r in (getattr(mask, 'deletion_rectangles', None) or []))
+            if not erased:
+                top = mask.first_selected_strand
+        if top is None:
+            top = a if order.get(id(a), -1) > order.get(id(b), -1) else b
+        if top is not want:
+            wrong.append(h['point'])
+    return wrong
+
+
+def fit_error(scene):
+    """How far (px) the fitted strands stray from the designed centerlines at worst."""
+    from sample_geometry import segment_distance
+    worst = 0.0
+    for cord in scene.cords:
+        poly = cord['poly']
+        for strand, (i, j) in zip(cord.get('chain') or [], cord.get('spans') or []):
+            path = strand.get_path()
+            piece = poly[max(i - 2, 0):min(j + 3, len(poly))]
+            for k in range(1, 24):
+                q = path.pointAtPercent(k / 24)
+                q = (q.x(), q.y())
+                worst = max(worst, min(segment_distance(q, a, b) for a, b in zip(piece, piece[1:])))
+    return worst
+
+
+def project_settings():
+    """The curve settings the fitter fits strands for, as the app saves them in
+    a project: opening the design applies them, so its curves come out as
+    fitted whatever the person's own Settings are."""
+    from generate_creative_samples import CURVE_SETTINGS
+    return {'version': 1, **CURVE_SETTINGS}
 
 
 def _shallow_crossings(scene, hits, limit=25):
@@ -344,6 +526,7 @@ def report(scene, seconds, shallow=()):
     """What was built, for a person or Claude to check against the plan."""
     from masked_strand import MaskedStrand
     lines = []
+    tight = any(cord.get('heights') is not None for cord in scene.cords)
     hits = getattr(scene, 'hits', [])
     for k, cord in enumerate(scene.cords):
         visits = [h for h in hits if k in h['cords']]
@@ -373,14 +556,22 @@ def report(scene, seconds, shallow=()):
                      f'cord {a + 1} and cord {b + 1}: nearly parallel cords overlap and their shading '
                      'smears. Cross at 40 degrees or more, or move them apart.')
     for w in scene.warnings:
+        if w and w[0] == 'crowded crossing' and tight:
+            continue                    # a tight knot's parts lie close round every crossing
         if w and w[0] == 'crowded crossing' and len(w) >= 5:
             lines.append(f'warning: crowded crossing near ({w[-2]}, {w[-1]}): another strand passes through '
                          'the spot where two cords cross, so its over/under is unclear. Spread the crossings '
                          'there further apart (two cord widths or more).')
+        elif w and w[0] == 'overlap without crossing' and tight:
+            continue                    # parts of a tight knot lie against each other
         elif w and w[0] == 'overlap without crossing' and len(w) >= 5:
             lines.append(f'warning: near ({w[-2]}, {w[-1]}) two parts of the design touch without crossing; '
                          'move them apart or let them cross.')
         else:
             lines.append('warning: ' + ' '.join(map(str, w)))
+    for x, y in wrong_crossings(scene):
+        lines.append(f'warning: the crossing at ({x:.0f}, {y:.0f}) is drawn the other way round: the two '
+                     'strands there also cross nearby the other way, too close to split them. Move the '
+                     'two crossings further apart.')
     lines.append(f'built in {seconds:.0f} s')
     return '\n'.join(lines)

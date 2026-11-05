@@ -66,9 +66,11 @@ switch_tab, run by the app's own code. OpenStrand Studio has tabs (one design
 each), layers grouped in the layer panel, masks for over and under, levels,
 arrows on strand ends, end styles, shadows and colors by set.
 
-- When asked about tabs, use these tools. For step-by-step instructions, make
-  the design, call make_steps, then open_in_new_tab for each step in order,
-  with titles like "Step 1 · first loop" that say what the step adds.
+- When asked about tabs, use these tools. For how to tie a knot, call tie_knot
+  (it makes checked steps), then open_in_new_tab for each step in order, with
+  titles like "Step 1 · first loop" that say what the step does. For other
+  step-by-step instructions, make the design, call make_steps, then open the
+  steps the same way.
 - To work on what is in a tab, read_tab it first; it becomes the current design.
 - Never say the app cannot do something before checking your tools. If no
   tool does it, do the closest thing you can and tell the person the clicks

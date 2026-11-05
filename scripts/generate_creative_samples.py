@@ -431,12 +431,16 @@ class Scene:
                 poly = cord['poly'][:-1]
                 k = int(round(position)) % len(poly)
                 cord['poly'] = poly[k:]+poly[:k]+[poly[k]]
+                if cord.get('heights') is not None:     # heights stay with their points
+                    heights = cord['heights'][:-1]
+                    cord['heights'] = heights[k:]+heights[:k]+[heights[k]]
             if cord['split'] == 'auto':
                 under, _ = self.covered_points(rule, c)
                 middle = (len(cord['poly'])-1)/2
                 # The one nearest the middle balances colors.
                 cord['split'] = int(round(min(under, key=lambda u: abs(u[0]-middle))[0]))
             cord['forced'] = {cord['split']} if cord['split'] is not None else set()
+            cord['forced'] |= set(cord.get('joins', ()))   # joins asked for, e.g. under crossings
 
     def unfit(self):
         """Drop the fitted chains so fit() rebuilds them."""
@@ -503,7 +507,7 @@ class Scene:
                     sine = abs(a[0]*b[1]-a[1]*b[0])
                     cosine = abs(a[0]*b[0]+a[1]*b[1])
                     half = (max(width, other['width'])+8)/2
-                    reach = min(half*(cosine+1)/max(sine, .2)+6, width*4)
+                    reach = min(half*(cosine+1)/max(sine, .2)+6, width*4)*cord.get('join_room', 1.0)
                     for k in ([u, v] if same else [u]):
                         avoid.update(range(int(k-reach/spacing), int(k+reach/spacing)+2))
             split = cord['split']

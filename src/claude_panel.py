@@ -21,7 +21,7 @@ import time
 from PyQt5.QtCore import (QDate, QEvent, QLocale, QPoint, QPointF, QProcess, QProcessEnvironment, QRect,
                           QRectF, Qt, QTimer, QUrl, pyqtSignal)
 from PyQt5.QtGui import QColor, QDesktopServices, QImage, QPainter, QPainterPath, QPen, QPixmap, QTextDocument
-from PyQt5.QtWidgets import (QAction, QActionGroup, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog,
+from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog,
                              QHBoxLayout, QLabel, QLineEdit, QMenu, QPushButton, QToolButton, QSizePolicy, QTextBrowser, QTextEdit, QVBoxLayout,
                              QWidget)
 
@@ -59,6 +59,10 @@ ACCENT = '#D97757'  # Claude's orange: the running mark and the progress bars
 # A running tool's row: the picture of what it works on, and its progress bar (px).
 FRAME_SIZE = (132, 78)
 BAR_SIZE = (170, 8)
+# The picture under the mouse, larger: about 2.7 times the row's, the same
+# shape, big enough to follow every crossing and small enough to leave the
+# conversation in view.
+PREVIEW_SIZE = (360, 213)
 # Tools that can take up to a minute: the panel says so when they start.
 SLOW_TOOLS = {'draw_design', 'make_heart', 'make_turks_head'}
 
@@ -161,9 +165,12 @@ def frame_image(frame, size=FRAME_SIZE, ratio=2.0):
         return made
 
     def stroke(painter, made, color, cap):
-        for pen_color, width in ((QColor(color).darker(175), pen_width + 1.6), (QColor(color), pen_width)):
+        # The edge with cap; the body round-ended, so a redrawn over part
+        # covers the seam where it ends (same color as the cord under it).
+        for pen_color, width, end in ((QColor(color).darker(175), pen_width + 1.6, cap),
+                                      (QColor(color), pen_width, Qt.RoundCap)):
             pen = QPen(pen_color, width)
-            pen.setCapStyle(cap)
+            pen.setCapStyle(end)
             pen.setJoinStyle(Qt.RoundJoin)
             painter.setPen(pen)
             painter.drawPath(made)
@@ -284,6 +291,44 @@ def load_knot():
     if strip.isNull() or strip.width() < size * len(durations):
         return [], []
     return [strip.copy(i * size, 0, size, size) for i in range(len(durations))], durations
+
+
+class FramePreview(QLabel):
+    """A running tool's picture, larger, while the mouse is over it in the
+    conversation. Drawn again from each new frame, so it moves with the tool."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent, Qt.ToolTip | Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_ShowWithoutActivating)
+        self.setAlignment(Qt.AlignCenter)
+        self.key = None  # the step whose picture it shows
+
+    def style_for(self, colors):
+        self.setStyleSheet(f"QLabel {{ background-color: {colors['log']}; border: 1px solid {colors['border']};"
+                           " border-radius: 8px; padding: 6px; }")
+
+    def show_frame(self, key, frame, cursor):
+        """frame: the tool's picture data; cursor: the mouse, in screen coordinates."""
+        self.key = key
+        self.setPixmap(QPixmap.fromImage(frame_image(frame, PREVIEW_SIZE)))
+        self.adjustSize()
+        # Above the mouse (Claude sits at the bottom of the canvas), kept on screen.
+        screen = QApplication.screenAt(cursor) or QApplication.primaryScreen()
+        area = screen.availableGeometry() if screen is not None else QRect(0, 0, 10000, 10000)
+        x = min(max(area.left(), cursor.x() - self.width() // 2), area.right() - self.width())
+        y = cursor.y() - self.height() - 16
+        if y < area.top():
+            y = cursor.y() + 20
+        self.move(x, y)
+        self.show()
+        self.raise_()
+
+    def update_frame(self, frame):
+        self.setPixmap(QPixmap.fromImage(frame_image(frame, PREVIEW_SIZE)))
+
+    def hide_frame(self):
+        self.key = None
+        self.hide()
 
 
 class WorkingLine(QWidget):
@@ -486,6 +531,11 @@ class ClaudePanel(QWidget):
         self.transcript = QTextBrowser(self)
         self.transcript.setOpenLinks(False)  # its links fold steps, open designs, build plans
         self.transcript.anchorClicked.connect(self.follow_link)
+        # A running tool's picture grows under the mouse (FramePreview).
+        self.preview = FramePreview(self)
+        self.preview.style_for(self.colors)
+        self.transcript.viewport().setMouseTracking(True)
+        self.transcript.viewport().installEventFilter(self)
         self.transcript.setMinimumHeight(60)
         self.transcript.setMaximumHeight(170)
         self.transcript.hide()
@@ -578,6 +628,7 @@ class ClaudePanel(QWidget):
         if hasattr(self, 'working'):
             self.working.text_color, self.working.muted = QColor(c['fg']), QColor(c['muted'])
             self.working.track = QColor(c['log_border'])
+            self.preview.style_for(c)
             self.render_transcript()
             self.refresh_controls()
         self.setStyleSheet(f"""
@@ -656,9 +707,30 @@ class ClaudePanel(QWidget):
             widget = widget.parentWidget()
 
     def eventFilter(self, obj, event):
+        if hasattr(self, 'transcript') and obj is self.transcript.viewport():
+            if event.type() == QEvent.MouseMove:
+                self.hover(self.transcript.anchorAt(event.pos()), event.globalPos())
+            elif event.type() == QEvent.Leave:
+                self.preview.hide_frame()
+            return False
         if event.type() == QEvent.Resize and self.isVisible():
             self.place()
         return False
+
+    def hover(self, anchor, cursor):
+        """Over a running tool's picture: show it larger; anywhere else: hide it."""
+        step = None
+        if anchor.startswith('os:frame/'):
+            try:
+                i, j = (int(n) for n in anchor[len('os:frame/'):].split('/'))
+                step = self.entries[i]['steps'][j]
+            except (ValueError, IndexError, KeyError):
+                step = None
+        if step is None or not step.get('running') or not step.get('frame_data'):
+            self.preview.hide_frame()
+            return
+        if self.preview.key != step['key']:
+            self.preview.show_frame(step['key'], step['frame_data'], cursor)
 
     def stack(self):
         """Above the canvas's other overlays, but under the tab strip: the
@@ -892,7 +964,7 @@ class ClaudePanel(QWidget):
         out = (f'{mark}&nbsp; <span style="background-color:{bg}; color:{fg}; font-weight:bold;">'
                f'&nbsp;{esc(label)}&nbsp;</span>&nbsp; <span style="color:{c["muted"]};">{esc(detail)}</span>')
         if step.get('running'):
-            out += self.progress_html(step, c)
+            out += self.progress_html(step, c, i, j)
         return out
 
     # ------------------------------------------------------------ progress
@@ -900,7 +972,7 @@ class ClaudePanel(QWidget):
     # of what it works on, about once a second, and the fraction done. Its
     # row shows them with a bar, how much is left and its time so far; the
     # working line under the transcript shows the bar too.
-    def progress_html(self, step, c):
+    def progress_html(self, step, c, i=None, j=None):
         t = lambda key: _tr(self.language, key)
         elapsed = time.monotonic() - step.get('start', time.monotonic())
         if not (step.get('stage') or step.get('frame')) and elapsed < 2:
@@ -912,8 +984,10 @@ class ClaudePanel(QWidget):
             bar_image(step.get('fraction'), c['log_border'], ACCENT, phase=elapsed / 4))  # redrawn every second
         picture = ''
         if step.get('frame'):
-            picture = (f'<td valign="middle" style="padding-right:10px;"><img src="claude-frame:{step["key"]}"'
-                       f' width="{FRAME_SIZE[0]}" height="{FRAME_SIZE[1]}"></td>')
+            image = (f'<img src="claude-frame:{step["key"]}" width="{FRAME_SIZE[0]}" height="{FRAME_SIZE[1]}">')
+            if i is not None:  # the mouse over it shows it larger (hover)
+                image = f'<a href="os:frame/{i}/{j}" style="text-decoration:none;">{image}</a>'
+            picture = f'<td valign="middle" style="padding-right:10px;">{image}</td>'
         return (f'<table cellspacing="0" cellpadding="0" style="margin:4px 0 2px 22px;"><tr>{picture}'
                 f'<td valign="middle"><img src="{bar}" width="{BAR_SIZE[0]}" height="{BAR_SIZE[1]}"><br>'
                 f'<span style="color:{c["muted"]};">{html.escape(" · ".join(words))}</span></td></tr></table>')
@@ -979,7 +1053,9 @@ class ClaudePanel(QWidget):
             if image is not None:
                 self.transcript.document().addResource(
                     QTextDocument.ImageResource, QUrl(f'claude-frame:{step["key"]}'), image)
-                step['frame'] = True
+                step['frame'], step['frame_data'] = True, event['frame']
+                if self.preview.key == step['key']:  # open under the mouse: it moves on too
+                    self.preview.update_frame(event['frame'])
         self.render_transcript()
         self.show_working(step)
 
@@ -1000,6 +1076,9 @@ class ClaudePanel(QWidget):
 
     def release_pictures(self, step):
         """A finished tool's row shows no picture: free it."""
+        step.pop('frame_data', None)
+        if self.preview.key is not None and self.preview.key == step.get('key'):
+            self.preview.hide_frame()
         if step.get('key') is not None:
             for kind in ('claude-frame', 'claude-bar'):
                 self.transcript.document().addResource(QTextDocument.ImageResource,
@@ -1011,6 +1090,8 @@ class ClaudePanel(QWidget):
             QDesktopServices.openUrl(url)
             return
         what, *ids = link[3:].split('/')
+        if what == 'frame':
+            return  # a tool's picture: the mouse over it shows it larger, a click does nothing
         try:
             ids = [int(n) for n in ids]
             entry = self.entries[ids[0]]

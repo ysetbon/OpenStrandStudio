@@ -882,6 +882,48 @@ def test_a_long_tool_shows_its_progress_with_a_picture_and_time_left(window, mon
     assert not panel.tick.isActive()  # nothing runs: the second hand stops
 
 
+def test_the_mouse_over_a_tool_s_picture_shows_it_larger_and_it_keeps_moving(window, monkeypatch, tmp_path):
+    from PyQt5.QtCore import QEvent, QPoint, QPointF, Qt
+    from PyQt5.QtGui import QMouseEvent
+    from PyQt5.QtWidgets import QApplication
+    from openstrand.progress import picture
+    import claude_panel
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel = window.claude_panel
+    panel.set_open(True)
+    panel.entries.clear()
+    panel.handle_event({"type": "tool_start", "name": "tie_knot", "input": {}})
+    step = panel.running_step("tie_knot")
+    frame = lambda k: picture([[(100 + 4 * n, 300 + k * (n % 9), 0.0) for n in range(60)]], 24, "#257d98")
+    panel.handle_event({"type": "tool_progress", "name": "tie_knot", "stage": "lay_out", "fraction": 0.2,
+                        "frame": frame(1)})
+    assert 'href="os:frame/' in panel.transcript.toHtml()
+    QApplication.processEvents()
+    # Find the picture in the conversation and move the mouse over it.
+    viewport = panel.transcript.viewport()
+    spot = next((QPoint(x, y) for y in range(0, viewport.height(), 3) for x in range(0, viewport.width(), 3)
+                 if panel.transcript.anchorAt(QPoint(x, y)).startswith("os:frame/")), None)
+    assert spot is not None
+    move = QMouseEvent(QEvent.MouseMove, QPointF(spot), QPointF(viewport.mapToGlobal(spot)),
+                       Qt.NoButton, Qt.NoButton, Qt.NoModifier)
+    panel.eventFilter(viewport, move)
+    preview = panel.preview
+    assert preview.isVisible() and preview.key == step["key"]
+    size = preview.pixmap().deviceIndependentSize() if hasattr(preview.pixmap(), "deviceIndependentSize") \
+        else preview.pixmap().size() / preview.pixmap().devicePixelRatio()
+    assert (round(size.width()), round(size.height())) == claude_panel.PREVIEW_SIZE
+    before = preview.pixmap().toImage()
+    panel.handle_event({"type": "tool_progress", "name": "tie_knot", "stage": "tighten", "fraction": 0.6,
+                        "frame": frame(4)})
+    assert preview.isVisible() and preview.pixmap().toImage() != before  # the new frame, still large
+    panel.eventFilter(viewport, QEvent(QEvent.Leave))
+    assert not preview.isVisible()
+    panel.eventFilter(viewport, move)
+    assert preview.isVisible()
+    panel.handle_event({"type": "tool_end", "name": "tie_knot", "ok": True, "summary": "done"})
+    assert not preview.isVisible() and "frame_data" not in step  # the tool ended: no picture to show
+
+
 def test_stop_folds_the_steps_says_stopped_once_and_claude_hears_of_it(window, monkeypatch, tmp_path):
     from types import SimpleNamespace
     from PyQt5.QtCore import QProcess

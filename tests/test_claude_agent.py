@@ -924,6 +924,63 @@ def test_the_mouse_over_a_tool_s_picture_shows_it_larger_and_it_keeps_moving(win
     assert not preview.isVisible() and "frame_data" not in step  # the tool ended: no picture to show
 
 
+def test_finished_tools_show_a_picture_where_one_says_something(tmp_path):
+    """In the app, a tool that made, changed, checked or read a design ends with its
+    picture, cut to the design; tools that answer with words get none."""
+    from types import SimpleNamespace
+    from PyQt5.QtGui import QImage
+    from openstrand import agent, draw
+    events = []
+    runner = agent.Agent(SimpleNamespace(), tmp_path, app=SimpleNamespace(call=lambda name, args: {}),
+                         on_event=events.append)
+    data, _ = draw.build({"cords": [{"points": [[100, 300], [300, 200], [500, 300]], "color": "teal"}]})
+    try:
+        runner.workspace.store(data)
+        path = runner.tool_image("recolor", {})
+        assert path and Path(path).exists()
+        image = QImage(path)
+        assert 300 < image.width() < 700 and image.height() < image.width()  # the design, not the whole canvas
+        assert runner.tool_image("identify_knot", {}) == path  # the same design: drawn once
+        assert runner.tool_image("describe", {}) is None and runner.tool_image("list_tabs", {}) is None
+        runner.app = None  # the command line: nobody shows pictures
+        assert runner.tool_image("recolor", {}) is None
+    finally:
+        runner.workspace.close()
+
+
+def test_a_finished_tool_keeps_its_picture_and_app_tools_picture_the_canvas(window, monkeypatch, tmp_path):
+    from PyQt5.QtCore import QUrl
+    from PyQt5.QtGui import QColor, QImage
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel = window.claude_panel
+    panel.set_open(True)
+    panel.entries.clear()
+    panel.out_dir = str(tmp_path)
+    # The agent's picture of the design it made.
+    made = tmp_path / "made.png"
+    picture = QImage(400, 200, QImage.Format_ARGB32)
+    picture.fill(QColor("#257d98"))
+    picture.save(str(made))
+    panel.handle_event({"type": "tool_start", "name": "make_heart", "input": {}})
+    step = panel.running_step("make_heart")
+    panel.handle_event({"type": "tool_end", "name": "make_heart", "ok": True, "summary": "Heart", "image": str(made)})
+    assert step["picture"] == str(made) and f'claude-frame:{step["key"]}' in panel.transcript.toHtml()
+    shown = panel.transcript.document().resource(3, QUrl(f'claude-frame:{step["key"]}'))
+    assert shown is not None and not shown.isNull()
+    # An app tool: the canvas as the tool left it, without Claude floating over it.
+    panel.handle_event({"type": "tool_start", "name": "app_window", "input": {"op": "zoom"}})
+    step = panel.running_step("app_window")
+    panel.handle_event({"type": "tool_end", "name": "app_window", "ok": True, "summary": "zoom 100 %"})
+    grabbed = QImage(step["picture"])
+    assert grabbed.size() == window.canvas.size()
+    # Words only (a list), or a failed tool: no picture.
+    for name, ok in (("list_tabs", True), ("app_window", False)):
+        panel.handle_event({"type": "tool_start", "name": name, "input": {}})
+        step = panel.running_step(name)
+        panel.handle_event({"type": "tool_end", "name": name, "ok": ok, "summary": ""})
+        assert "picture" not in step
+
+
 def test_stop_folds_the_steps_says_stopped_once_and_claude_hears_of_it(window, monkeypatch, tmp_path):
     from types import SimpleNamespace
     from PyQt5.QtCore import QProcess

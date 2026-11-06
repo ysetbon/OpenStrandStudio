@@ -20,7 +20,8 @@ import time
 
 from PyQt5.QtCore import (QDate, QEvent, QLocale, QPoint, QPointF, QProcess, QProcessEnvironment, QRect,
                           QRectF, Qt, QTimer, QUrl, pyqtSignal)
-from PyQt5.QtGui import QColor, QDesktopServices, QImage, QPainter, QPainterPath, QPen, QPixmap, QTextDocument
+from PyQt5.QtGui import (QColor, QDesktopServices, QImage, QPainter, QPainterPath, QPen, QPixmap, QRegion,
+                         QTextDocument)
 from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog,
                              QHBoxLayout, QLabel, QLineEdit, QMenu, QPushButton, QToolButton, QSizePolicy, QTextBrowser, QTextEdit, QVBoxLayout,
                              QWidget)
@@ -72,6 +73,12 @@ BAR_SIZE = (170, 8)
 # shape, big enough to follow every crossing and small enough to leave the
 # conversation in view.
 PREVIEW_SIZE = (360, 213)
+# App tools whose finished row shows the app as they left it (the agent sends the
+# picture for its own tools, see openstrand.agent.IMAGE_TOOLS): the canvas after an
+# edit or a view change, the group panel, the window after a setting (the settings
+# dialog when it was opened). Lists and readings get no picture.
+CANVAS_TOOLS = {'open_in_new_tab', 'switch_tab', 'edit_strand_in_tab', 'edit_mask_in_tab', 'edit_layers_in_tab',
+                'edit_groups_in_tab', 'app_window'}
 # Tools that can take up to a minute: the panel says so when they start.
 SLOW_TOOLS = {'draw_design', 'make_heart', 'make_turks_head'}
 
@@ -195,6 +202,29 @@ def frame_image(frame, size=FRAME_SIZE, ratio=2.0):
             stroke(painter, path(over['points']), cords[k].get('color') or ACCENT, Qt.FlatCap)
     painter.end()
     return image
+
+
+def fitted_image(source, size=FRAME_SIZE, ratio=2.0):
+    """A finished tool's picture (a PNG's path, or a QImage), fitted into size, its
+    shape kept, centred on a clear background."""
+    image = QImage(int(size[0] * ratio), int(size[1] * ratio), QImage.Format_ARGB32_Premultiplied)
+    image.setDevicePixelRatio(ratio)
+    image.fill(Qt.transparent)
+    picture = source if isinstance(source, QImage) else QImage(str(source or ''))
+    if picture.isNull():
+        return image
+    scaled = picture.scaled(int(size[0] * ratio), int(size[1] * ratio), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    scaled.setDevicePixelRatio(ratio)
+    painter = QPainter(image)
+    painter.setRenderHint(QPainter.SmoothPixmapTransform)
+    painter.drawImage(QPointF((size[0] - scaled.width() / ratio) / 2, (size[1] - scaled.height() / ratio) / 2), scaled)
+    painter.end()
+    return image
+
+
+def picture_image(source, size):
+    """Any tool picture drawn at size: a progress frame (a dict) or a finished picture."""
+    return frame_image(source, size) if isinstance(source, dict) else fitted_image(source, size)
 
 
 LOG_PREFIX = 'log '  # the agent's log lines (openstrand/debuglog.py)
@@ -332,9 +362,10 @@ class FramePreview(QLabel):
                            " border-radius: 8px; padding: 6px; }")
 
     def show_frame(self, key, frame, cursor):
-        """frame: the tool's picture data; cursor: the mouse, in screen coordinates."""
+        """frame: the tool's picture (progress data, or a finished picture's path);
+        cursor: the mouse, in screen coordinates."""
         self.key = key
-        self.setPixmap(QPixmap.fromImage(frame_image(frame, PREVIEW_SIZE)))
+        self.setPixmap(QPixmap.fromImage(picture_image(frame, PREVIEW_SIZE)))
         self.adjustSize()
         # Above the mouse (Claude sits at the bottom of the canvas), kept on screen.
         screen = QApplication.screenAt(cursor) or QApplication.primaryScreen()
@@ -348,7 +379,7 @@ class FramePreview(QLabel):
         self.raise_()
 
     def update_frame(self, frame):
-        self.setPixmap(QPixmap.fromImage(frame_image(frame, PREVIEW_SIZE)))
+        self.setPixmap(QPixmap.fromImage(picture_image(frame, PREVIEW_SIZE)))
 
     def hide_frame(self):
         self.key = None
@@ -752,11 +783,13 @@ class ClaudePanel(QWidget):
                 step = self.entries[i]['steps'][j]
             except (ValueError, IndexError, KeyError):
                 step = None
-        if step is None or not step.get('running') or not step.get('frame_data'):
+        shown = step.get('frame_data') if step is not None and step.get('running') else \
+            (step or {}).get('picture')
+        if step is None or not shown:
             self.preview.hide_frame()
             return
         if self.preview.key != step['key']:
-            self.preview.show_frame(step['key'], step['frame_data'], cursor)
+            self.preview.show_frame(step['key'], shown, cursor)
 
     def stack(self):
         """Above the canvas's other overlays, but under the tab strip: the
@@ -994,6 +1027,10 @@ class ClaudePanel(QWidget):
                f'&nbsp;{esc(label)}&nbsp;</span>&nbsp; <span style="color:{c["muted"]};">{esc(detail)}</span>')
         if step.get('running'):
             out += self.progress_html(step, c, i, j)
+        elif step.get('picture'):
+            image = (f'<a href="os:frame/{i}/{j}" style="text-decoration:none;"><img src="claude-frame:{step["key"]}"'
+                     f' width="{FRAME_SIZE[0]}" height="{FRAME_SIZE[1]}"></a>')
+            out += f'<table cellspacing="0" cellpadding="0" style="margin:4px 0 2px 22px;"><tr><td>{image}</td></tr></table>'
         return out
 
     # ------------------------------------------------------------ progress
@@ -1104,7 +1141,8 @@ class ClaudePanel(QWidget):
             self.show_working(step)
 
     def release_pictures(self, step):
-        """A finished tool's row shows no picture: free it."""
+        """A finished tool's progress picture and bar are freed (attach_picture then puts
+        its finished picture in, when it has one)."""
         step.pop('frame_data', None)
         if self.preview.key is not None and self.preview.key == step.get('key'):
             self.preview.hide_frame()
@@ -1112,6 +1150,49 @@ class ClaudePanel(QWidget):
             for kind in ('claude-frame', 'claude-bar'):
                 self.transcript.document().addResource(QTextDocument.ImageResource,
                                                        QUrl(f'{kind}:{step["key"]}'), QImage())
+
+    def attach_picture(self, step, event):
+        """The finished tool's picture in its row: what the agent sent (the design it
+        made, changed, checked or read), or the app as the tool left it."""
+        path = event.get('image')
+        if not path and event.get('ok'):
+            try:
+                path = self.grab_for(step)
+            except (RuntimeError, AttributeError) as e:  # a window gone or not there: no picture
+                terminal_log(f'no picture for {step.get("name")}: {e}')
+                path = None
+        if not path or not os.path.exists(path) or step.get('key') is None:
+            return
+        step['picture'] = path
+        self.transcript.document().addResource(QTextDocument.ImageResource, QUrl(f'claude-frame:{step["key"]}'),
+                                               fitted_image(path))
+
+    def grab_for(self, step):
+        """The app as an app tool left it, saved in this request's folder: the canvas
+        (without Claude floating over it), the group panel, or the window after a
+        setting. None for the tools that only list or read."""
+        name, window = step.get('name'), self.main_window
+        if name in CANVAS_TOOLS:
+            canvas = window.canvas
+            image = QImage(canvas.size(), QImage.Format_ARGB32_Premultiplied)
+            image.fill(Qt.transparent)
+            painter = QPainter(image)
+            canvas.render(painter, QPoint(), QRegion(), QWidget.RenderFlags(QWidget.DrawWindowBackground))
+            painter.end()
+        elif name == 'show_group':
+            image = window.group_layer_manager.group_panel.grab().toImage()
+        elif name == 'app_settings':
+            dialog = getattr(window, 'settings_dialog', None)
+            shown = (step.get('input') or {}).get('op') == 'show' and dialog is not None and dialog.isVisible()
+            image = (dialog if shown else window).grab().toImage()
+        else:
+            return None
+        if image.isNull() or not self.out_dir:
+            return None
+        folder = os.path.join(self.out_dir, 'frames')
+        os.makedirs(folder, exist_ok=True)
+        path = os.path.join(folder, f'app_{step["key"]}.png')
+        return path if image.save(path) else None
 
     def follow_link(self, url):
         link = url.toString()
@@ -1404,7 +1485,7 @@ class ClaudePanel(QWidget):
         elif kind == 'tool_start':
             self.step_keys += 1
             step = {'kind': 'tool', 'name': event.get('name', ''), 'running': True, 'ok': None, 'summary': '',
-                    'start': time.monotonic(), 'key': self.step_keys}
+                    'start': time.monotonic(), 'key': self.step_keys, 'input': event.get('input') or {}}
             self.add_step(step)
             self.working.clear_progress()
             self.working.set_label(self.step_label(step, running=True))
@@ -1423,6 +1504,7 @@ class ClaudePanel(QWidget):
             if step.get('start') is not None:
                 step['seconds'] = time.monotonic() - step['start']
             self.release_pictures(step)
+            self.attach_picture(step, event)
             self.render_transcript()
             self.working.clear_progress()
             self.working.set_label(t('claude_working'))

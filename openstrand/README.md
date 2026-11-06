@@ -204,6 +204,18 @@ the tool stopped. The events go out on the agent's real stdout, kept aside,
 since tools run with stdout pointed at nothing to hide the app's chatter. In a
 terminal, `openstrand agent` prints a line per stage.
 
+A finished tool keeps a picture on its row when one says something; the mouse
+over it shows it larger. In the app, the tools that make, change, check or read
+a design (`load_sample`, `make_*`, `draw_design`, `tie_knot`, `edit_mask`, a
+preview included, `recolor`, `make_steps`, `render`, `identify_knot`,
+`check_masks`, `read_tab`, `read_tab_step`) end with the design drawn by the
+app's real canvas, cut to the design (`Workspace.snapshot`, once per version).
+The panel pictures the app tools itself: the canvas as an edit, a tab switch or
+a view change left it (without Claude floating over it), the group panel for
+`show_group`, the window (or the Settings page shown) for `app_settings`. Tools
+that answer with words (`search_samples`, `knot_library`, `describe`,
+`validate`, `list_tabs`, `rename_tab`, `read_settings`) have none.
+
 `make_steps` (`openstrand/steps.py`) turns a design into tying steps: the cord
 drawn so far along its path, every crossing with its finished over and under,
 and an arrow on the working end. With the bridge, Claude opens each step in a

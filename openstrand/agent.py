@@ -347,6 +347,7 @@ class Workspace:
         self.version = 0
         self.rendered_version = -1
         self._preview = None
+        self._shot, self._shots = None, 0  # (version, path) of the current design's last picture; pictures made
         self.steps = []  # [(title, path)] from make_steps
         self.last_edit = None  # the design edit_mask made last (kept or previewed)
         self.progress = None  # set while a tool runs: tells the person how far it has got
@@ -371,6 +372,41 @@ class Workspace:
         self._preview.capture(self.need(), self.png_path)
         self.rendered_version = self.version
         return self.png_path
+
+    def snapshot(self, data=None):
+        """A picture of a design (the current one by default) for the tool's row in the
+        app: drawn with the app's real canvas, cut to the design with a margin. The
+        current design is drawn once per version. Returns the PNG's path."""
+        from PyQt5.QtCore import QRect
+        from PyQt5.QtGui import QImage
+        current = data is None
+        data = self.need() if current else data
+        if current and self._shot is not None and self._shot[0] == self.version and self._shot[1].exists():
+            return self._shot[1]
+        from generate_creative_samples import AppPreview
+        generators.application()
+        if self._preview is None:
+            self._preview = AppPreview()
+        frames = self.out_dir / 'frames'
+        frames.mkdir(exist_ok=True)
+        self._shots += 1
+        path = frames / f'tool_{self._shots}.png'
+        self._preview.capture(data, path)
+        canvas = self._preview.window.canvas
+        bounds, zoom = canvas.get_bounding_rect(), canvas.zoom_factor
+        w, h = canvas.width(), canvas.height()
+        # Where the design's box lands on the canvas (the canvas's own transform).
+        x0 = (bounds.left() - w / 2) * zoom + w / 2 + canvas.pan_offset_x
+        y0 = (bounds.top() - h / 2) * zoom + h / 2 + canvas.pan_offset_y
+        widest = max([getattr(s, 'width', 0) + 2 * getattr(s, 'stroke_width', 0) for s in canvas.strands] or [0])
+        pad = widest * zoom / 2 + 12
+        box = QRect(int(x0 - pad), int(y0 - pad), int(bounds.width() * zoom + 2 * pad),
+                    int(bounds.height() * zoom + 2 * pad)).intersected(QRect(0, 0, w, h))
+        if box.width() > 8 and box.height() > 8:
+            QImage(str(path)).copy(box).save(str(path))
+        if current:
+            self._shot = (self.version, path)
+        return path
 
     def close(self):
         if self._preview is not None:
@@ -729,8 +765,29 @@ class Agent:
             message = f'{type(e).__name__}: {e}'
             self.on_event({'type': 'tool_end', 'name': block.name, 'ok': False, 'summary': message})
             return {'type': 'tool_result', 'tool_use_id': block.id, 'content': message, 'is_error': True}
-        self.on_event({'type': 'tool_end', 'name': block.name, 'ok': True, 'summary': summary})
+        end = {'type': 'tool_end', 'name': block.name, 'ok': True, 'summary': summary}
+        image = self.tool_image(block.name, args)
+        if image:
+            end['image'] = image
+        self.on_event(end)
         return {'type': 'tool_result', 'tool_use_id': block.id, 'content': content}
+
+    def tool_image(self, name, args):
+        """The picture for a finished tool's row, where one says something: the design it
+        made, changed, checked or read (a mask edit's preview when previewed). Tools that
+        answer with words (lists, descriptions, settings) get none; the app pictures the
+        tools that act on its own windows itself. A picture that fails never fails the tool."""
+        ws = self.workspace
+        if name not in IMAGE_TOOLS or ws.data is None or self.app is None:  # only the app shows them
+            return None
+        try:
+            with self.quiet():
+                if name == 'edit_mask' and args.get('preview') and ws.last_edit is not None:
+                    return str(ws.snapshot(ws.last_edit))
+                return str(ws.snapshot())
+        except Exception as e:  # noqa: BLE001
+            self.log(f'no picture for {name}: {type(e).__name__}: {e}')
+            return None
 
     def app_tool(self, name, args):
         """A tool the running app does with its own code, through the bridge (openstrand/app/)."""
@@ -756,6 +813,10 @@ class Agent:
         self.on_event(event)
         return event
 
+
+# Tools whose finished row shows the design they made, changed, checked or read.
+IMAGE_TOOLS = {'load_sample', 'make_turks_head', 'make_mxn', 'make_heart', 'draw_design', 'tie_knot', 'edit_mask',
+               'recolor', 'make_steps', 'render', 'identify_knot', 'check_masks', 'read_tab', 'read_tab_step'}
 
 HISTORY_TURNS = 8
 

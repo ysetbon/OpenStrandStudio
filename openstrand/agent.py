@@ -20,16 +20,16 @@ from . import ROOT, colors, edit, generators, project
 from .debuglog import short
 from .errors import ToolError  # agent.ToolError: what a tool raises for Claude
 
-MODELS = {'sonnet': 'claude-sonnet-5-5', 'haiku': 'claude-haiku-5-5'}
-DEFAULT_MODEL = MODELS['sonnet']
+from . import providers
+
+# Every model the agent runs on (openstrand/providers.py): Claude, GPT, Grok, Kimi, DeepSeek, Qwen.
+MODELS = dict(providers.ALIASES)  # 'sonnet', 'haiku', 'grok', ... -> the model id
+DEFAULT_MODEL = providers.DEFAULT_MODEL
 EFFORTS = ('low', 'medium', 'high', 'xhigh', 'max')
 
 # USD per million tokens: input, output, cache write (5 min), cache read.
 # Haiku 5.5's prices are for prompts up to 100K tokens, which these stay under.
-PRICES = {
-    'claude-sonnet-5-5': (2.00, 10.00, 2.50, 0.20),
-    'claude-haiku-5-5': (0.10, 0.50, 0.125, 0.01),
-}
+PRICES = providers.PRICES
 WEB_SEARCH_PRICE = 0.01  # USD per search ($10 per 1,000)
 
 # Server-side fallback re-runs a declined Sonnet request on another model;
@@ -589,7 +589,9 @@ class Agent:
         # console output, so it cannot mix with the events.
         self.quiet = quiet or contextlib.nullcontext
         self.model = model
-        self.web = web
+        self.label = providers.MODELS[model].label
+        # Web search and fetch are Anthropic's server tools: Claude only.
+        self.web = web and providers.provider_of(model).api == 'anthropic'
         self.effort = effort
         self.plan = plan  # plan mode: research and plan, build nothing
         self.app = app  # an AppClient when the app started the agent: its tabs become tools
@@ -617,7 +619,7 @@ class Agent:
         tools = [t for t in TOOLS if t['name'] in PLAN_TOOLS] if self.plan else list(TOOLS)
         if self.app is not None:
             tools += [t for t in APP_TOOLS if t['name'] in LOOK_ONLY] if self.plan else APP_TOOLS
-        return tools + (WEB_TOOLS[self.model] if self.web else [])
+        return tools + (WEB_TOOLS.get(self.model, []) if self.web else [])
 
     def call(self, messages):
         params = dict(model=self.model, max_tokens=20000, system=self.system(), tools=self.tools(),
@@ -638,7 +640,7 @@ class Agent:
                                                         '(an organization setting in the Anthropic Console); '
                                                         'continuing without it.'})
                 return self.call(messages)
-            self.log(f'the Anthropic API failed: {type(e).__name__}: {short(e)}')
+            self.log(f'the {providers.provider_of(self.model).name} API failed: {type(e).__name__}: {short(e)}')
             raise
 
     def count(self, response):
@@ -686,7 +688,7 @@ class Agent:
             for round_ in range(1, self.max_rounds + 1):
                 self.log(f'round {round_}: asking {self.model} (effort {self.effort}, {len(messages)} messages)')
                 asked = time.monotonic()
-                with self.log.waiting(f"Claude's answer (round {round_})"):
+                with self.log.waiting(f"{self.label}'s answer (round {round_})"):
                     response = self.call(messages)
                 self.count(response)
                 usage = response.usage
@@ -706,9 +708,9 @@ class Agent:
                     else:
                         self.report(block)
                 if response.stop_reason == 'refusal':
-                    return self.finish(said, error='Claude declined this request.')
+                    return self.finish(said, error=f'{self.label} declined this request.')
                 if response.stop_reason == 'max_tokens':
-                    return self.finish(said, error='Claude ran out of room for its answer.')
+                    return self.finish(said, error=f'{self.label} ran out of room for its answer.')
                 if response.stop_reason == 'pause_turn':
                     continue  # a long server-side search: send the turn back to resume it
                 if response.stop_reason != 'tool_use':

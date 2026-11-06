@@ -251,14 +251,22 @@ def test_other_api_errors_are_not_swallowed(tmp_path):
 def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch):
     import claude_settings
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    assert claude_settings.load() == {"api_key": "", "model": "claude-sonnet-5-5", "web": True, "max_cost": 2.0,
-                                      "spent": 0.0, "spent_since": "", "panel_open": False, "show_button": True,
-                                      "effort": "high", "session_limit": 10.0, "mode": "auto"}
+    assert claude_settings.load() == {"api_key": "", "keys": {}, "model": "claude-sonnet-5-5", "web": True,
+                                      "max_cost": 2.0, "spent": 0.0, "spent_since": "", "panel_open": False,
+                                      "show_button": True, "effort": "high", "session_limit": 10.0, "mode": "auto"}
     claude_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5", web=False, max_cost=5)
-    assert claude_settings.load() == {"api_key": "sk-ant-test-1234567890", "model": "claude-haiku-5-5",
+    assert claude_settings.load() == {"api_key": "sk-ant-test-1234567890",
+                                      "keys": {"anthropic": "sk-ant-test-1234567890"}, "model": "claude-haiku-5-5",
                                       "web": False, "max_cost": 5.0, "spent": 0.0, "spent_since": "",
                                       "panel_open": False, "show_button": True,
                                       "effort": "high", "session_limit": 10.0, "mode": "auto"}
+    # Every provider has its key; the model can be any provider's.
+    claude_settings.save(provider_key=("xai", " xai-test-123456789 "), model="grok-4.7")
+    saved = claude_settings.load()
+    assert saved["keys"] == {"anthropic": "sk-ant-test-1234567890", "xai": "xai-test-123456789"}
+    assert saved["model"] == "grok-4.7" and claude_settings.provider_of("grok-4.7") == "xai"
+    claude_settings.save(provider_key=("xai", ""))
+    assert claude_settings.load()["keys"] == {"anthropic": "sk-ant-test-1234567890"}
     claude_settings.save(max_cost=1000)
     assert claude_settings.load()["max_cost"] == claude_settings.MAX_COST_RANGE[1]
     if os.name == "posix":
@@ -275,7 +283,14 @@ def test_cli_agent_without_a_key_says_where_to_add_it(tmp_path):
     env.pop("ANTHROPIC_API_KEY", None)
     result = subprocess.run([sys.executable, "-m", "openstrand", "agent", "a heart"], cwd=ROOT, env=env,
                             capture_output=True, text=True, timeout=120)
-    assert result.returncode == 1 and "Settings > Claude" in result.stderr
+    assert result.returncode == 1 and "Settings > Models" in result.stderr and "ANTHROPIC_API_KEY" in result.stderr
+    env.pop("XAI_API_KEY", None)
+    result = subprocess.run([sys.executable, "-m", "openstrand", "agent", "a heart", "--model", "grok"], cwd=ROOT,
+                            env=env, capture_output=True, text=True, timeout=120)
+    assert result.returncode == 1 and "no xAI (Grok) API key: set XAI_API_KEY" in result.stderr
+    result = subprocess.run([sys.executable, "-m", "openstrand", "agent", "a heart", "--model", "gpt-9"], cwd=ROOT,
+                            env=env, capture_output=True, text=True, timeout=120)
+    assert result.returncode == 1 and "unknown model gpt-9" in result.stderr
 
 
 # ------------------------------------------------------------------ app
@@ -490,7 +505,7 @@ def test_the_panel_asks_for_a_key_before_sending(window, monkeypatch, tmp_path):
     panel.prompt_edit.setText("a heart")
     panel.send()
     assert panel.process is None or not panel.running()
-    assert "Settings > Claude" in panel.transcript.toPlainText()
+    assert "Settings > Models" in panel.transcript.toPlainText()
 
 
 def test_spending_adds_up_across_requests_until_reset(tmp_path, monkeypatch):
@@ -565,7 +580,7 @@ def test_the_settings_page_saves_key_and_model(monkeypatch, tmp_path):
     page.show_check.setChecked(False)
     assert shown == [False] and claude_settings.load()["show_button"] is False
     page.retranslate("he")
-    assert page.model_combo.count() == 2 and not page.show_check.isChecked()
+    assert page.model_combo.count() == len(claude_settings.MODELS) and not page.show_check.isChecked()
     assert not page.web_check.isChecked() and page.limit_spin.value() == 4.5
 
 
@@ -810,7 +825,7 @@ def test_the_status_line_switches_mode_model_and_effort(window, monkeypatch, tmp
     # The model and effort menus save the choice and the status line shows it.
     haiku = [a for a in panel.model_menu.actions() if "Haiku" in a.text()][0]
     haiku.trigger()
-    assert claude_settings.load()["model"] == "claude-haiku-5-5" and panel.model_button.text().startswith("Haiku 5.5")
+    assert claude_settings.load()["model"] == "claude-haiku-5-5" and panel.model_button.text().startswith("Claude Haiku 5.5")
     top = [a for a in panel.effort_menu.actions() if a.text() == "Max effort"][0]
     top.trigger()
     assert claude_settings.load()["effort"] == "max" and panel.effort_button.text().startswith("Max effort")

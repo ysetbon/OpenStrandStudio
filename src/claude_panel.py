@@ -1264,13 +1264,22 @@ class ClaudePanel(QWidget):
         names = dict(claude_settings.MODELS)
         self.model_menu.clear()
         group = QActionGroup(self.model_menu)
-        for model, label_key in claude_settings.MODELS:
-            action = QAction(t(label_key), self.model_menu, checkable=True)
+        provider = None
+        for model, label in claude_settings.MODELS:
+            if claude_settings.provider_of(model) != provider:  # each provider's models together
+                if provider is not None:
+                    self.model_menu.addSeparator()
+                provider = claude_settings.provider_of(model)
+                spec = claude_settings.PROVIDERS.get(provider)
+                keyed = provider in saved['keys'] or (spec is not None and os.environ.get(spec.env))
+            # Which provider runs it, and whether its key is still missing (Settings > Models).
+            where = (spec.name if spec else provider) + ('' if keyed else f', {t("models_no_key")}')
+            action = QAction(f'{label}   ({where})', self.model_menu, checkable=True)
             action.setChecked(model == saved['model'])
             action.triggered.connect(lambda _=False, m=model: self.choose(model=m))
             group.addAction(action)
             self.model_menu.addAction(action)
-        self.model_button.setText(('Sonnet 5.5' if 'sonnet' in saved['model'] else 'Haiku 5.5') + ' ▾')
+        self.model_button.setText(names.get(saved['model'], saved['model']) + ' ▾')
         self.effort_menu.clear()
         group = QActionGroup(self.effort_menu)
         for effort in claude_settings.EFFORTS:
@@ -1333,8 +1342,13 @@ class ClaudePanel(QWidget):
             self.add_note(_tr(self.language, 'claude_source_only'), '#c0392b')
             return
         settings = claude_settings.load()
-        if not settings['api_key']:
-            self.add_note(_tr(self.language, 'claude_need_key'), '#c0392b')
+        provider = claude_settings.provider_of(settings['model'])
+        spec = claude_settings.PROVIDERS.get(provider)
+        key_env = spec.env if spec else 'ANTHROPIC_API_KEY'
+        key = settings['keys'].get(provider, '')
+        if not key and not os.environ.get(key_env, '').strip():
+            self.add_note(_tr(self.language, 'models_need_key').format(provider=spec.name if spec else 'Anthropic'),
+                          '#c0392b')
             return
         left = settings['session_limit'] - self.session_spent
         if left < 0.05:
@@ -1361,7 +1375,8 @@ class ClaudePanel(QWidget):
                                       effort=settings['effort'], plan=self.mode == 'plan',
                                       app=self.bridge is not None, history=history)
         env = QProcessEnvironment.systemEnvironment()
-        env.insert('ANTHROPIC_API_KEY', settings['api_key'])
+        if key:  # the chosen model's provider: its key, as its own environment variable
+            env.insert(key_env, key)
         env.insert('QT_QPA_PLATFORM', 'offscreen')
         env.insert('PYTHONUNBUFFERED', '1')
         env.insert('PYTHONIOENCODING', 'utf-8')
@@ -1660,21 +1675,65 @@ class ClaudePanel(QWidget):
                 self.design_ready.emit(named)
 
 
-class ClaudeButton(QPushButton):
-    """The Claude button next to Settings: shows and hides Claude.
+def knot_mark_path():
+    """The button's mark, in a 24 px box: one cord, its ends up, crossing itself
+    above a loop (an overhand loop), as OpenStrand draws a strand. Returns the
+    whole cord and the part that goes over at the crossing."""
+    a, b, c, d = QPointF(2.5, 3.5), QPointF(7.0, 7.0), QPointF(12.5, 10.5), QPointF(16.0, 14.0)
+    whole = QPainterPath(a)  # from the left end down over the crossing,
+    whole.cubicTo(b, c, d)
+    whole.cubicTo(QPointF(19.0, 17.5), QPointF(17.5, 21.2), QPointF(12.0, 21.2))  # round the loop
+    whole.cubicTo(QPointF(6.5, 21.2), QPointF(5.0, 17.5), QPointF(8.0, 14.0))
+    whole.cubicTo(QPointF(11.5, 10.5), QPointF(17.0, 7.0), QPointF(21.5, 3.5))  # and up under it to the right end
+    # The first curve from a third of the way along (de Casteljau): the part over the crossing.
+    t = 0.3
+    mix = lambda p, q: p + (q - p) * t  # noqa: E731
+    ab, bc, cd = mix(a, b), mix(b, c), mix(c, d)
+    abc, bcd = mix(ab, bc), mix(bc, cd)
+    over = QPainterPath(mix(abc, bcd))
+    over.cubicTo(bcd, cd, d)
+    return whole, over
 
-    The Claude app icon at the size of the Settings button, drawn here so it
-    answers the mouse the way Claude's own buttons do: lighter under the
-    pointer, a little smaller and darker while pressed, and, while Claude is
-    open, darker with a light ring. While Claude is hidden it also shows what
-    Claude is doing: an arc turns around it during a run, and a green dot
+
+def paint_knot_mark(painter, box, fill=QColor('#A65400'), outline=QColor('#111111'), width=4.2, stroke=0.9):
+    """The mark in box (a QRectF): the cord with its outline, the part from the left end
+    redrawn on top where it crosses, so it reads over and under as in the app."""
+    whole, over = knot_mark_path()
+    scale = min(box.width(), box.height()) / 24.0
+    painter.save()
+    painter.translate(box.center().x() - 12 * scale, box.center().y() - 12 * scale)
+    painter.scale(scale, scale)
+
+    def cord(path, body_cap):
+        for color, size, cap in ((outline, width + 2 * stroke, Qt.FlatCap), (fill, width, body_cap)):
+            pen = QPen(color, size)
+            pen.setCapStyle(cap)
+            pen.setJoinStyle(Qt.RoundJoin)
+            painter.setPen(pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(path)
+    cord(whole, Qt.FlatCap)  # the ends cut square, as a strand's ends
+    cord(over, Qt.RoundCap)  # over at the crossing; its round body ends hide the seams
+    painter.restore()
+
+
+class ClaudeButton(QPushButton):
+    """The assistant's button next to Settings: shows and hides the assistant.
+
+    A small OpenStrand knot (the assistant runs on many providers' models, so the
+    button is the app's own mark, not one provider's), drawn here so it answers the
+    mouse: a little darker under the pointer, smaller while pressed and, while the
+    assistant is open, a ring in the cord's color. While it is hidden it also shows
+    what the assistant is doing: an arc turns around it during a run, and a green dot
     waits on it when a design has opened."""
 
-    ORANGE = QColor('#D97757')
-    HOVER = QColor('#E3896B')
-    PRESSED = QColor('#C2613F')
-    OPEN = QColor('#B9583A')
-    RADIUS = 7  # corner radius of the 32 px square, as the Claude app icon
+    FACE = QColor('#FFFFFF')
+    HOVER = QColor('#F1ECE6')
+    PRESSED = QColor('#E3DAD0')
+    OPEN = QColor('#FBEBDD')
+    EDGE = QColor('#C9C2BA')
+    CORD = QColor('#A65400')
+    RADIUS = 7  # corner radius of the 32 px square
 
     def __init__(self, panel, parent=None):
         super().__init__(parent)
@@ -1682,10 +1741,9 @@ class ClaudeButton(QPushButton):
         self.setObjectName('claudeButton')
         self.setCheckable(True)
         self.setFixedSize(32, 32)
-        self.setAccessibleName('Claude')
+        self.setAccessibleName('Assistant')
         self.setAttribute(Qt.WA_Hover, True)
         self.setCursor(Qt.PointingHandCursor)
-        self.mark = QPixmap(resource_path('claude_mark_white.png'))
         self.angle = 0
         self.spin = QTimer(self)
         self.spin.setInterval(50)
@@ -1730,30 +1788,21 @@ class ClaudeButton(QPushButton):
             return self.OPEN
         if self.underMouse():
             return self.HOVER
-        return self.ORANGE
+        return self.FACE
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setRenderHint(QPainter.SmoothPixmapTransform)
-        square = QRectF(self.rect())
+        square = QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5)
         if self.isDown():  # pressed in: a touch smaller
             square = square.adjusted(1.5, 1.5, -1.5, -1.5)
-        painter.setPen(Qt.NoPen)
+        painter.setPen(QPen(self.CORD if self.isChecked() else self.EDGE, 1.5 if self.isChecked() else 1.0))
         painter.setBrush(self.color())
         painter.drawRoundedRect(square, self.RADIUS, self.RADIUS)
-        if self.isChecked():  # Claude is open
-            painter.setPen(QPen(QColor(255, 255, 255, 170), 1.5))
-            painter.setBrush(Qt.NoBrush)
-            painter.drawRoundedRect(square.adjusted(1.5, 1.5, -1.5, -1.5), self.RADIUS - 1.5, self.RADIUS - 1.5)
-        if not self.mark.isNull():
-            inset = square.width() * 0.17
-            painter.drawPixmap(square.adjusted(inset, inset, -inset, -inset), self.mark, QRectF(self.mark.rect()))
-        else:
-            painter.setPen(Qt.white)
-            painter.drawText(square, Qt.AlignCenter, '✳')
+        inset = square.width() * 0.12
+        paint_knot_mark(painter, square.adjusted(inset, inset, -inset, -inset), fill=self.CORD)
         if self.busy():
-            pen = QPen(QColor(255, 255, 255, 230), 2.5)
+            pen = QPen(self.CORD, 2.5)
             pen.setCapStyle(Qt.RoundCap)
             painter.setPen(pen)
             painter.setBrush(Qt.NoBrush)
@@ -1794,8 +1843,16 @@ class ClaudeSettingsPage(QWidget):
         self.show_hint.setStyleSheet('color: gray;')
         layout.addWidget(self.show_hint)
 
+        provider_row = QHBoxLayout()
         self.key_label = QLabel(self)
-        layout.addWidget(self.key_label)
+        self.provider_combo = QComboBox(self)
+        for provider in claude_settings.PROVIDERS.values():
+            self.provider_combo.addItem(provider.name, provider.key)
+        self.provider_combo.currentIndexChanged.connect(lambda _: self.show_provider())
+        provider_row.addWidget(self.key_label)
+        provider_row.addWidget(self.provider_combo)
+        provider_row.addStretch()
+        layout.addLayout(provider_row)
         key_row = QHBoxLayout()
         self.key_edit = QLineEdit(self)
         self.key_edit.setEchoMode(QLineEdit.Password)
@@ -1895,26 +1952,26 @@ class ClaudeSettingsPage(QWidget):
     def retranslate(self, language_code):
         self.language = language_code
         t = lambda key: _tr(language_code, key)
-        self.intro.setText(t('claude_settings_intro'))
-        self.key_label.setText(t('claude_api_key_label'))
+        self.intro.setText(t('models_settings_intro'))
+        self.key_label.setText(t('models_key_label'))
         self.show_button.setText(t('claude_hide_key') if self.show_button.isChecked() else t('claude_show_key'))
         self.save_button.setText(t('claude_save_key'))
         self.remove_button.setText(t('claude_remove_key'))
-        self.get_key.setText(t('claude_get_key'))
         self.model_label.setText(t('claude_model_label'))
         self.storage.setText(t('claude_key_storage'))
         saved = claude_settings.load()
         self.model_combo.blockSignals(True)
         self.model_combo.clear()
-        for model, key in claude_settings.MODELS:
-            self.model_combo.addItem(t(key), model)
+        for model, label in claude_settings.MODELS:
+            spec = claude_settings.PROVIDERS.get(claude_settings.provider_of(model))
+            self.model_combo.addItem(f'{label}  ·  {spec.name}' if spec else label, model)
         self.model_combo.setCurrentIndex(max(0, self.model_combo.findData(saved['model'])))
         self.model_combo.blockSignals(False)
         self.effort_label.setText(t('claude_effort_label'))
         self.effort_hint.setText(t('claude_effort_hint'))
         self.session_limit_label.setText(t('claude_session_limit_label'))
         self.web_check.setText(t('claude_web_label'))
-        self.web_hint.setText(t('claude_web_hint'))
+        self.web_hint.setText(t('claude_web_hint') + ' ' + t('models_web_claude_only'))
         self.limit_label.setText(t('claude_limit_label'))
         self.web_check.blockSignals(True)
         self.web_check.setChecked(saved['web'])
@@ -1923,7 +1980,7 @@ class ClaudeSettingsPage(QWidget):
         self.limit_spin.setValue(saved['max_cost'])
         self.limit_spin.blockSignals(False)
         self.show_choices()
-        self.show_saved(saved['api_key'])
+        self.show_provider(claude_settings.provider_of(saved['model']))
         self.show_check.setText(t('claude_show_button'))
         self.show_hint.setText(t('claude_show_button_hint'))
         self.show_check.blockSignals(True)
@@ -1975,6 +2032,23 @@ class ClaudeSettingsPage(QWidget):
         claude_settings.save(show_button=shown)
         self.show_button_changed.emit(bool(shown))
 
+    def provider(self):
+        return self.provider_combo.currentData() or 'anthropic'
+
+    def show_provider(self, provider=None):
+        """The key field for one provider: its saved key, what its keys look like, where to get one."""
+        if provider is not None:
+            self.provider_combo.blockSignals(True)
+            self.provider_combo.setCurrentIndex(max(0, self.provider_combo.findData(provider)))
+            self.provider_combo.blockSignals(False)
+        spec = claude_settings.PROVIDERS.get(self.provider())
+        self.key_edit.setPlaceholderText(spec.key_hint if spec else 'sk-ant-…')
+        if spec and spec.keys_url:
+            host = spec.keys_url.split('//', 1)[-1].split('/', 1)[0]
+            self.get_key.setText(_tr(self.language, 'models_get_key').format(
+                link=f'<a href="{spec.keys_url}">{host}</a>'))
+        self.show_saved(claude_settings.load()['keys'].get(self.provider(), ''))
+
     def show_saved(self, key):
         t = lambda k: _tr(self.language, k)
         self.key_status.setText(t('claude_key_saved').format(key=claude_settings.masked(key)) if key
@@ -1989,13 +2063,15 @@ class ClaudeSettingsPage(QWidget):
         key = self.key_edit.text().strip()
         if not key:
             return
-        claude_settings.save(api_key=key)
+        claude_settings.save(provider_key=(self.provider(), key))
         self.key_edit.clear()
         self.show_saved(key)
+        self.settings_changed.emit()  # the model menu says which providers have a key
 
     def remove_key(self):
-        claude_settings.save(api_key='')
+        claude_settings.save(provider_key=(self.provider(), ''))
         self.show_saved('')
+        self.settings_changed.emit()
         self.key_status.setText(_tr(self.language, 'claude_key_removed'))
 
     def changed_setting(self, **change):
@@ -2011,3 +2087,4 @@ class ClaudeSettingsPage(QWidget):
         model = self.model_combo.itemData(index)
         if model:
             self.changed_setting(model=model)
+            self.show_provider(claude_settings.provider_of(model))  # where this model's key goes

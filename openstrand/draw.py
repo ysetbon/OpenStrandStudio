@@ -322,9 +322,10 @@ def _shape(cord, what):
 _BUILDS = itertools.count(1)
 
 
-def build(spec, mask_check=True):
+def build(spec, mask_check=True, progress=None):
     """Fit and weave a design. Returns (project dict, report text). A design
-    with heights gets the mask check at the end of its report (mask_check)."""
+    with heights gets the mask check at the end of its report (mask_check).
+    progress (see openstrand.progress) is shown the design while it works."""
     from .generators import application, _serialize
     if not isinstance(spec, dict):
         raise DrawError('the design must be an object with a "cords" list')
@@ -357,6 +358,13 @@ def build(spec, mask_check=True):
         made.append((poly, color, group, width, closed, second, heights))
         if _flag(cord.get('tucked', False), f'cord {k + 1} "tucked"'):
             tucked.add(k)
+    if progress is not None:
+        import numpy as np
+        from .progress import picture
+        progress(None, 'draw', lambda: picture(
+            [np.c_[np.asarray(poly)[:, :2], heights] if heights is not None else np.asarray(poly)[:, :2]
+             for poly, _, _, _, _, _, heights in made],
+            max(m[3] for m in made), [str(m[1]) for m in made], [m[4] for m in made]))
     if lengths > MAX_LENGTH:
         raise DrawError(f'the cords are {lengths:.0f} px long together; keep them under {MAX_LENGTH} px '
                         '(shorter or fewer cords), so drawing takes minutes, not hours')

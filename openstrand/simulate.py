@@ -394,9 +394,7 @@ class Rope:
         P = self.P
         mid = (P[self.A, :2] + P[self.B, :2]) / 2
         reach = 1.6 * self.width + 2 * self.h
-        diff = mid[:, None, :] - mid[None, :, :]
-        near = (diff ** 2).sum(-1) < reach * reach
-        i, j = np.nonzero(np.triu(near, 1))
+        i, j = _near_pairs(mid, reach)
         skip = int(math.ceil(math.pi * MIN_BEND * self.width / self.h)) + 1
         keep = self._gap(i, j) > skip
         self._pairs = (i[keep], j[keep])
@@ -580,6 +578,22 @@ class Rope:
         return out
 
 
+def _near_pairs(points, reach, block=512):
+    """Pairs i < j of points closer than reach, in (i, j) order, a block of
+    rows at a time (a long cord has too many pairs to hold at once)."""
+    m = len(points)
+    x, y = points[:, 0], points[:, 1]
+    found_i, found_j = [np.zeros(0, dtype=np.intp)], [np.zeros(0, dtype=np.intp)]
+    for start in range(0, m - 1, block):
+        rows = np.arange(start, min(m, start + block))
+        cols = np.arange(start + 1, m)
+        dx, dy = x[rows, None] - x[None, cols], y[rows, None] - y[None, cols]
+        r, c = np.nonzero((dx ** 2 + dy ** 2 < reach * reach) & (cols[None, :] > rows[:, None]))
+        found_i.append(rows[r])
+        found_j.append(cols[c])
+    return np.concatenate(found_i), np.concatenate(found_j)
+
+
 def _tridiagonal(a, b, c, d):
     """Solve a tridiagonal system: a below the diagonal (n-1), b on it (n),
     c above it (n-1), right-hand side d (Thomas algorithm)."""
@@ -661,7 +675,7 @@ def extend(cord, end, direction, reach):
 
 
 def tighten(cords, width, pulls, closed=None, max_steps=2500, reach=None, keep_every=10,
-            patience=100, grow_from=None, ramp=300, relax=None):
+            patience=100, grow_from=None, ramp=300, relax=None, progress=None, expected=None):
     """Pull the given ends until the knot jams, as a person tightens a knot.
 
     cords: polylines of (x, y, height) with heights in px (an over-part higher
@@ -680,6 +694,10 @@ def tighten(cords, width, pulls, closed=None, max_steps=2500, reach=None, keep_e
     grow_from: start with a cord this thick and thicken it to width over ramp
     steps. With width a few times the real cord's, a rough layout comes out
     evenly spaced and rounded, the same knot (dress()).
+
+    progress(fraction, cords) is told how far it has got after every step,
+    cords a function giving the cords as they are then; expected is how many
+    steps it usually takes (max_steps when not given).
     """
     width = float(width)
     start_width = float(grow_from) if grow_from else width
@@ -767,9 +785,14 @@ def tighten(cords, width, pulls, closed=None, max_steps=2500, reach=None, keep_e
             good = (rope.cords(), dict(rope.pins), steps)
         if steps % keep_every == 0:
             history.append((total, rope.cords()))
+        if progress is not None:
+            progress(min(0.95, 0.95 * steps / (expected or max_steps)), rope.cords)
     # Let the last contacts settle with no more pull; a cord laid out loose
     # (grown) relaxes longer, so no wobble is left where contacts pushed it.
-    for k in range(relax if relax is not None else (120 if start_width != width else 30)):
+    settle = relax if relax is not None else (120 if start_width != width else 30)
+    for k in range(settle):
+        if progress is not None:
+            progress(0.95 + 0.05 * k / settle, rope.cords)
         if k % 3 == 0:
             rope.find_pairs()
         if not rope.plan_contacts():
@@ -787,6 +810,8 @@ def tighten(cords, width, pulls, closed=None, max_steps=2500, reach=None, keep_e
     if not rope.code_matches():
         rope = Rope(good[0], rope.width, closed, spacing=spacing, pins=good[1], reference=reference)
     history.append((rope.length(), rope.cords()))
+    if progress is not None:
+        progress(1.0, rope.cords)
     info = dict(steps=steps, jammed=jammed, start_length=start, end_length=rope.length(),
                 clearance=rope.clearance(), overlap=rope.overlap(), crossings=rope.crossing_list(),
                 retries=retries, history=history)

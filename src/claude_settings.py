@@ -1,21 +1,47 @@
-"""The Claude settings: the user's Anthropic API key, the model to use, and
-what Claude has cost in all on this computer.
+"""The model settings (Settings > Models): the user's API key for each provider
+(Anthropic, OpenAI, xAI, Moonshot, DeepSeek, Alibaba Cloud), the model to use,
+and what the requests have cost in all on this computer.
 
 Kept in claude.json in the OpenStrand Studio settings folder, on this computer
 only, and never in project files or user_settings.txt. On macOS and Linux the
 file is readable by the user alone.
 """
 import datetime
+import importlib.util
 import json
 import os
 import sys
 
-MODELS = [
-    # (model id, translation key of its label)
-    ('claude-sonnet-5-5', 'claude_model_sonnet'),
-    ('claude-haiku-5-5', 'claude_model_haiku'),
-]
+
+def _providers():
+    """openstrand/providers.py, the one list of models and providers the agent uses too,
+    loaded on its own (not the openstrand package, which puts scripts/ on the path)."""
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'openstrand', 'providers.py')
+    spec = importlib.util.spec_from_file_location('openstrand_providers', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+try:
+    providers = _providers()
+except (OSError, ImportError, AttributeError):  # a build without the source folder: Claude only
+    providers = None
+
+if providers is not None:
+    MODELS = [(m.id, m.label) for m in providers.MODELS.values()]  # (model id, its name)
+    PROVIDERS = providers.PROVIDERS
+else:
+    MODELS = [('claude-sonnet-5-5', 'Claude Sonnet 5.5'), ('claude-haiku-5-5', 'Claude Haiku 5.5')]
+    PROVIDERS = {}
 DEFAULT_MODEL = MODELS[0][0]
+
+
+def provider_of(model):
+    """The provider key of a model ('anthropic' when unknown)."""
+    if providers is not None and model in providers.MODELS:
+        return providers.MODELS[model].provider
+    return 'anthropic'
 DEFAULT_MAX_COST = 2.00     # USD one request may spend before it stops
 MAX_COST_RANGE = (0.10, 20.00)
 DEFAULT_SESSION_LIMIT = 10.00  # USD all requests may spend before the app is restarted
@@ -83,7 +109,11 @@ def load():
     model = data.get('model')
     if model not in [m for m, _ in MODELS]:
         model = DEFAULT_MODEL
-    return {'api_key': str(data.get('api_key') or '').strip(), 'model': model,
+    keys = {str(k): str(v).strip() for k, v in (data.get('api_keys') or {}).items()
+            if isinstance(data.get('api_keys'), dict) and str(v or '').strip()}
+    if str(data.get('api_key') or '').strip():
+        keys['anthropic'] = str(data.get('api_key')).strip()
+    return {'api_key': keys.get('anthropic', ''), 'keys': keys, 'model': model,
             'web': data.get('web', True) is not False,
             'max_cost': _cost(data.get('max_cost', DEFAULT_MAX_COST)),
             'spent': _money(data.get('spent')), 'spent_since': str(data.get('spent_since') or ''),
@@ -95,11 +125,20 @@ def load():
 
 
 def save(api_key=None, model=None, web=None, max_cost=None, panel_open=None, show_button=None,
-         effort=None, session_limit=None, mode=None):
-    """Update the saved settings given. An empty key removes the key."""
+         effort=None, session_limit=None, mode=None, provider_key=None):
+    """Update the saved settings given. api_key is Anthropic's; provider_key is
+    (provider, key) for any provider. An empty key removes it."""
     current = load()
     if api_key is not None:
-        current['api_key'] = api_key.strip()
+        provider_key = ('anthropic', api_key)
+    if provider_key is not None:
+        provider, key = provider_key
+        key = (key or '').strip()
+        if key:
+            current['keys'][provider] = key
+        else:
+            current['keys'].pop(provider, None)
+        current['api_key'] = current['keys'].get('anthropic', '')
     if model is not None:
         if model not in [m for m, _ in MODELS]:
             raise ValueError(f'unknown model {model}')
@@ -150,6 +189,9 @@ def _write(current):
                'effort': current['effort'], 'session_limit': current['session_limit'], 'mode': current['mode']}
     if current['api_key']:
         payload['api_key'] = current['api_key']
+    others = {k: v for k, v in current['keys'].items() if k != 'anthropic' and v}
+    if others:
+        payload['api_keys'] = others
     # Create the file readable by its owner only before writing the key.
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, 'w', encoding='utf-8') as f:

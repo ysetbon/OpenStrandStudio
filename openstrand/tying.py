@@ -29,6 +29,7 @@ from pathlib import Path
 import numpy as np
 
 from . import draw, invariants, simulate
+from .progress import picture as picture_of
 
 LOOSE = 2.6          # widths between parts of a knot laid out loose
 TAIL = 4.0           # widths of tail shown beyond the knot
@@ -37,6 +38,17 @@ CENTRE = (600.0, 400.0)
 DEFAULT_WIDTH = 24
 MIN_WIDTH = 16
 SHAPES = Path(__file__).with_name('knot_shapes.json')
+# A path whose crossings lie further apart along it than OVERSIZED widths (the
+# median) is shrunk to SPACED first, a laid-out knot's spacing (5 to 6.5), never
+# bringing two crossings closer than CLOSEST widths (see compact_scale).
+OVERSIZED = 13.0
+SPACED = 6.5
+CLOSEST = 4.0
+# For the progress bar: the steps the two simulations usually take, the share
+# of the simulation's time the loose layout takes, and the share of a whole
+# tie() the simulation takes when there is one (drawing the steps is the rest).
+LAYOUT_STEPS, TIGHTEN_STEPS, LAYOUT_SHARE = 400, 200, 0.75
+SIMULATION_SHARE = 0.7
 
 # The knots people tie in one cord, as 4-plats (see plat_layout). All are
 # twist knots: a clasp and some half twists, the overhand family with an odd
@@ -165,23 +177,77 @@ def _dense(points, spacing=4.0):
     return np.array(spline([tuple(p[:2]) for p in points], spacing=spacing))
 
 
-def shapes(points, pattern, width, expect=None, cord=None):
+def shapes(points, pattern, width, expect=None, cord=None, progress=None):
     """Lay a rough path out loose, then pull it tight: (loose, history, tight, checks).
-    cord: a ready path of (x, y, height) instead of points and pattern."""
-    if cord is not None:
-        rough = simulate.resample(np.asarray(cord, dtype=float), 4.0)
-        rough[:, 2] = np.sign(rough[:, 2]) * np.minimum(np.abs(rough[:, 2]), 1.0) * simulate.LEVEL * width
-    else:
-        poly = _dense(points)
-        z, _ = simulate.heights_from_pattern(poly, pattern, width)
-        rough = np.c_[poly, z]
+    cord: a ready path of (x, y, height) instead of points and pattern.
+    progress(fraction, stage, cords) hears how far it has got: stage
+    'lay_out' or 'tighten', cords a function giving the cords then."""
+    rough = _rough(points, pattern, width, cord)
     knot = invariants.describe(rough)
     if expect is not None and tuple(knot['alexander']) != tuple(expect):
         raise TyingError(f"the path makes {knot['knot'] or 'a knot with Alexander polynomial ' + str(knot['alexander'])}, "
                          'not the knot asked for')
+    scale = compact_scale(rough, width)
+    if scale < 1:
+        try:
+            return _lay_out(_rough(points, pattern, width, cord, scale), width, knot, progress)
+        except (TyingError, simulate.SimulationError):
+            pass        # the smaller path would not lay out: the path as given, as before
+    return _lay_out(rough, width, knot, progress)
+
+
+def _rough(points, pattern, width, cord=None, scale=1.0):
+    """The path as (x, y, height) every 4 px, over and under as heights;
+    scale (< 1) shrinks it about its middle first."""
+    if cord is not None:
+        rough = simulate.resample(_scaled(np.asarray(cord, dtype=float), scale), 4.0)
+        rough[:, 2] = np.sign(rough[:, 2]) * np.minimum(np.abs(rough[:, 2]), 1.0) * simulate.LEVEL * width
+        return rough
+    poly = _dense(_scaled(np.asarray(points, dtype=float)[:, :2], scale).tolist())
+    z, _ = simulate.heights_from_pattern(poly, pattern, width)
+    return np.c_[poly, z]
+
+
+def _scaled(path, scale):
+    if scale == 1:
+        return path
+    out = np.array(path, dtype=float)
+    middle = (out[:, :2].min(0) + out[:, :2].max(0)) / 2
+    out[:, :2] = middle + (out[:, :2] - middle) * scale
+    return out
+
+
+def compact_scale(rough, width):
+    """How much to shrink an oversized path before laying it out: 1.0 for a
+    path of the right size.
+
+    Paths often come in canvas pixels, with loops many cord widths across. Laying
+    such a path out pulls a huge loop in by a fraction of a pixel a step, for
+    thousands of steps (minutes), and still leaves it sprawling. Scaling never
+    changes the knot, and the loose layout respaces the cord anyway, so a
+    path whose crossings lie much further apart along it than a laid-out knot's
+    is shrunk to that spacing first; never so far that two crossings come
+    closer than CLOSEST widths."""
+    coarse = simulate.resample(np.asarray(rough, dtype=float), width / 2)
+    passes = sorted(p for c in invariants.crossings([coarse[:, :2]], [False]) for p in c['positions'])
+    if len(passes) < 2:
+        return 1.0
+    gaps = np.diff(passes) / width
+    median = float(np.median(gaps))
+    if median <= OVERSIZED:
+        return 1.0
+    return min(1.0, max(SPACED / median, CLOSEST / max(float(gaps.min()), 1e-9)))
+
+
+def _lay_out(rough, width, knot, progress=None):
     pulls = [(0, 0, (-1, 0)), (0, 1, (1, 0))]
-    loose, info = simulate.tighten([rough], width * LOOSE, pulls, grow_from=width, max_steps=1500)
-    tight, tinfo = simulate.tighten(loose, width, pulls, max_steps=2500)
+    lay = pull = None
+    if progress is not None:
+        lay = lambda f, cords: progress(LAYOUT_SHARE * f, 'lay_out', cords)
+        pull = lambda f, cords: progress(LAYOUT_SHARE + (1 - LAYOUT_SHARE) * f, 'tighten', cords)
+    loose, info = simulate.tighten([rough], width * LOOSE, pulls, grow_from=width, max_steps=1500,
+                                   progress=lay, expected=LAYOUT_STEPS)
+    tight, tinfo = simulate.tighten(loose, width, pulls, max_steps=2500, progress=pull, expected=TIGHTEN_STEPS)
     checks = []
     for label, cord in (('laid out', loose[0]), ('pulled tight', tight[0])):
         d = invariants.describe(cord)
@@ -356,14 +422,19 @@ def _arrow(data, tip):
 
 
 def tie(knot=None, points=None, pattern=None, width=DEFAULT_WIDTH, color='#d97757', count=None,
-        titles=None, expect=None, build=True, cord=None):
+        titles=None, expect=None, build=True, cord=None, progress=None):
     """The steps to tie a knot: from the library by name, or from a rough path.
 
     Returns dict(title, knot, alexander, crossings, checks, steps) with
     steps [dict(title, caption, data, report)] (data is None when build is
     False). expect (Alexander coefficients) makes a path that turns out to
-    be another knot an error."""
+    be another knot an error. progress (see openstrand.progress) hears how
+    far it has got, with a picture of the cord: laid out and pulled tight in
+    the simulation, then each step as it is drawn."""
     width = float(width)
+    tell = progress or (lambda *a, **k: None)
+    picture = lambda get: lambda: picture_of(get(), width, color)    # made only when a picture is due
+    drawn_from = 0.0
     if not MIN_WIDTH <= width <= draw.WIDTH_RANGE[1]:
         raise TyingError(f'width must be between {MIN_WIDTH} and {draw.WIDTH_RANGE[1]} px: a tight knot in a '
                          'thinner cord is too fine for its strands to follow')
@@ -384,7 +455,12 @@ def tie(knot=None, points=None, pattern=None, width=DEFAULT_WIDTH, color='#d9775
             raise TyingError('points: the path of the cord, at least 4 [x, y] points from the standing end')
         if cord is None:
             pattern = pattern or alternating(points)
-        loose, history, tight, made = shapes(points, pattern, width, expect, cord=cord)
+        simulated = None
+        if progress is not None:
+            drawn_from = SIMULATION_SHARE
+            simulated = lambda f, stage, cords: tell(SIMULATION_SHARE * f, stage,
+                                                     picture(lambda: [_trimmed(c, width) for c in cords()]))
+        loose, history, tight, made = shapes(points, pattern, width, expect, cord=cord, progress=simulated)
         snug = _snug(history, tight)
         d = made['knot']
         checks = [dict(stage='as drawn', crossings=d['crossings'], alexander=d['alexander'], knot=d['knot'])]
@@ -397,8 +473,13 @@ def tie(knot=None, points=None, pattern=None, width=DEFAULT_WIDTH, color='#d9775
             raise TyingError(f"the knot is not the same at every stage ({c['stage']}: {c['knot']})")
     steps = []
     made = frames(loose, snug, tight, width, count, titles)
+    # Drawing a step takes about as long as its cord is long.
+    lengths = np.array([simulate.length(m[2]) for m in made])
+    starts = drawn_from + (1 - drawn_from) * np.concatenate([[0.0], np.cumsum(lengths)])[:-1] / lengths.sum()
     for n, (step_title, caption, cord, tip) in enumerate(made, start=1):
         cords = _centred([cord])
+        if build:
+            tell(starts[n - 1], 'draw_step', picture(lambda: cords), step=n, steps=len(made))
         shift = cords[0][0, :2] - cord[0, :2]
         entry = dict(title=step_title, caption=caption, data=None, report='', masks=None)
         if build:
@@ -424,6 +505,7 @@ def tie(knot=None, points=None, pattern=None, width=DEFAULT_WIDTH, color='#d9775
                 checks.append(dict(stage=f'step {n} as drawn in the app', crossings=knot['crossings'],
                                    alexander=knot['alexander'], knot=knot['knot']))
         steps.append(entry)
+    tell(1.0)
     wrong = [c for c in checks if tuple(c['alexander'] or ()) != tuple(knot_type['alexander'])]
     return dict(title=title, knot=knot_type['knot'], alexander=knot_type['alexander'],
                 crossings=knot_type['crossings'], checks=checks, steps=steps, ok=not wrong)

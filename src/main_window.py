@@ -502,7 +502,7 @@ class MainWindow(QMainWindow):
         # floats over the bottom of the canvas so the drawing never moves.
         self.claude_panel = ClaudePanel(self, self.canvas, self.language_code)
         self.claude_panel.design_ready.connect(self.open_claude_design)
-        # Claude's tab tools run here, with the app's own code (src/claude_bridge.py).
+        # Claude's app tools run here, with the app's own code (src/claude_bridge/).
         self.claude_panel.bridge = AppBridge(self, self.claude_panel)
         self.claude_button = ClaudeButton(self.claude_panel)
         self.claude_button.setVisible(claude_settings.load()['show_button'])

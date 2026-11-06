@@ -85,3 +85,81 @@ def summary(data):
     sets = len(info['sets'])
     return (f"{sets} set{'s' if sets != 1 else ''} · {info['strands']} strands · "
             f"{info['masks']} mask{'s' if info['masks'] != 1 else ''}")
+
+
+def detail(data):
+    """Every strand and mask, one line each, with exact coordinates: what Claude
+    needs to reason about a design's geometry (and to move points in a tab)."""
+    from .steps import mask_parts
+    pt = lambda p: f"[{p['x']:.1f}, {p['y']:.1f}]" if isinstance(p, dict) and 'x' in p else '-'
+    names = [s['layer_name'] for s in data['strands'] if s.get('type') != 'MaskedStrand']
+    lines = []
+    for s in data['strands']:
+        if s.get('type') == 'MaskedStrand':
+            parts = mask_parts(s['layer_name'], names)
+            over = f'{parts[0]} over {parts[1]}' if len(parts) == 2 else '?'
+            boxes = len(s.get('deletion_rectangles') or [])
+            flags = [w for k, w in (('is_hidden', 'hidden'), ('shadow_only', 'shadow only'),
+                                    ('hide_shadow', 'casts no shadow')) if s.get(k)]
+            lines.append(f"mask {s['layer_name']}: {over}"
+                         + (f", {boxes} erase box{'es' if boxes != 1 else ''}" if boxes else '')
+                         + (f" | {', '.join(flags)}" if flags else ''))
+            continue
+        cps = s.get('control_points') or []
+        line = (f"strand {s['layer_name']}: start {pt(s.get('start'))}, end {pt(s.get('end'))}, "
+                f"control_point1 {pt(cps[0] if len(cps) > 0 else None)}, "
+                f"control_point2 {pt(cps[1] if len(cps) > 1 else None)}")
+        if s.get('control_point_center_locked') and s.get('control_point_center'):
+            line += f", control_point_center {pt(s['control_point_center'])}"
+        line += f", width {s.get('width')}"
+        if s.get('attached_to'):
+            line += f", attached to {s['attached_to']} at its {'start' if s.get('attachment_side') == 0 else 'end'}"
+        lines.append(line + looks(s))
+    for name, group in sorted((data.get('groups') or {}).items()):
+        members = group.get('layers') or group.get('strands') or []
+        sets = sorted({str(m).split('_')[0] for m in (group.get('main_strands') or members)}, key=lambda n: (len(n), n))
+        lines.append(f"group {name}: sets {', '.join(sets) or '-'}"
+                     + (f" ({len(members)} layers: {', '.join(map(str, members))})" if members else ''))
+    for caster, rows in sorted((data.get('shadow_overrides') or {}).items()):
+        for receiver, row in sorted((rows or {}).items()):
+            bits = [f"{'visible' if row.get('visibility', True) else 'hidden'}"]
+            if row.get('allow_full_shadow'):
+                bits.append('full shadow')
+            if row.get('subtracted_layers'):
+                bits.append('minus ' + ', '.join(row['subtracted_layers']))
+            lines.append(f"shadow of {caster} on {receiver}: {', '.join(bits)}")
+    return '\n'.join(lines)
+
+
+def looks(s):
+    """How a strand is drawn, where it differs from a plain strand: ' | ...' (empty when plain).
+    What edit_layers_in_tab changes, so Claude knows what is on before it changes it."""
+    color = lambda c: ('#%02x%02x%02x' % (c['r'], c['g'], c['b']) + ('' if c.get('a', 255) == 255 else '%02x' % c['a'])
+                       if isinstance(c, dict) and 'r' in c else '-')
+    out = [f"color {color(s.get('color'))}", f"stroke {color(s.get('stroke_color'))} {s.get('stroke_width')}"]
+    for key, word in (('is_hidden', 'hidden'), ('shadow_only', 'shadow only'), ('hide_shadow', 'casts no shadow'),
+                      ('full_arrow_visible', 'full arrow'), ('elliptical_end_caps', 'elliptical ends')):
+        if s.get(key):
+            out.append(word)
+    circles = s.get('has_circles') or [False, False]
+    for index, side in enumerate(('start', 'end')):
+        ends = []
+        if index < len(circles) and circles[index]:
+            ends.append('circle')
+        if s.get(f'{side}_arrow_visible'):
+            ends.append('arrow')
+        if s.get(f'{side}_extension_visible'):
+            ends.append('dash')
+        if s.get(f'{side}_line_visible') is False:
+            ends.append('no line')
+        style = (s.get('end_styles') or [None, None])[index] if len(s.get('end_styles') or []) > index else None
+        if style:
+            ends.append(f"style {style.get('shape', 'straight')}")
+        if (s.get('closed_connections') or [False, False])[index]:
+            ends.append('closes the knot')
+        if ends:
+            out.append(f"{side}: {' '.join(ends)}")
+    edge = s.get('start_circle_stroke_color')
+    if isinstance(edge, dict) and s.get('type') != 'MaskedStrand':
+        out.append('start edge folded' if edge.get('a', 255) else 'start edge unfolded')
+    return ' | ' + ', '.join(out)

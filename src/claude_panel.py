@@ -20,8 +20,9 @@ import time
 
 from PyQt5.QtCore import (QDate, QEvent, QLocale, QPoint, QPointF, QProcess, QProcessEnvironment, QRect,
                           QRectF, Qt, QTimer, QUrl, pyqtSignal)
-from PyQt5.QtGui import QColor, QDesktopServices, QPainter, QPainterPath, QPen, QPixmap
-from PyQt5.QtWidgets import (QAction, QActionGroup, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog,
+from PyQt5.QtGui import (QColor, QDesktopServices, QImage, QPainter, QPainterPath, QPen, QPixmap, QRegion,
+                         QTextDocument)
+from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog,
                              QHBoxLayout, QLabel, QLineEdit, QMenu, QPushButton, QToolButton, QSizePolicy, QTextBrowser, QTextEdit, QVBoxLayout,
                              QWidget)
 
@@ -46,8 +47,38 @@ TOOL_CHIPS = {
     'open_in_new_tab': ('tabs', '#a04f9a', '#ffffff'),
     'rename_tab': ('tabs', '#a04f9a', '#ffffff'),
     'switch_tab': ('tabs', '#a04f9a', '#ffffff'),
+    'edit_mask_in_tab': ('claude_tool_edit_mask', '#a04f9a', '#ffffff'),
+    'read_tab_step': ('tabs', '#a04f9a', '#ffffff'),
+    'edit_strand_in_tab': ('claude_tool_edit_strand', '#a04f9a', '#ffffff'),
+    # The layer panel's right-click menu, the group panel, the main window and Settings.
+    'edit_layers_in_tab': ('claude_tool_layers', '#a04f9a', '#ffffff'),
+    'edit_groups_in_tab': ('claude_tool_groups', '#a04f9a', '#ffffff'),
+    'show_group': ('claude_tool_groups', '#a04f9a', '#ffffff'),
+    'app_window': ('claude_tool_window', '#a04f9a', '#ffffff'),
+    'app_settings': ('claude_tool_settings', '#a04f9a', '#ffffff'),
+    'read_settings': ('claude_tool_settings', '#a04f9a', '#ffffff'),
+    # Knots and masks: tie_knot makes a design, the others look and fix.
+    'tie_knot': ('claude_tool_tie_knot', '#93e993', '#1a1a1a'),
+    'check_masks': ('claude_tool_check_masks', '#d4d4d4', '#1a1a1a'),
+    'edit_mask': ('claude_tool_edit_mask', '#d4d4d4', '#1a1a1a'),
+    'identify_knot': ('claude_tool_identify_knot', '#d4d4d4', '#1a1a1a'),
+    'knot_library': ('claude_tool_knot_library', '#d4d4d4', '#1a1a1a'),
 }
 OTHER_CHIP = ('#d4d4d4', '#1a1a1a')
+ACCENT = '#D97757'  # Claude's orange: the running mark and the progress bars
+# A running tool's row: the picture of what it works on, and its progress bar (px).
+FRAME_SIZE = (132, 78)
+BAR_SIZE = (170, 8)
+# The picture under the mouse, larger: about 2.7 times the row's, the same
+# shape, big enough to follow every crossing and small enough to leave the
+# conversation in view.
+PREVIEW_SIZE = (360, 213)
+# App tools whose finished row shows the app as they left it (the agent sends the
+# picture for its own tools, see openstrand.agent.IMAGE_TOOLS): the canvas after an
+# edit or a view change, the group panel, the window after a setting (the settings
+# dialog when it was opened). Lists and readings get no picture.
+CANVAS_TOOLS = {'open_in_new_tab', 'switch_tab', 'edit_strand_in_tab', 'edit_mask_in_tab', 'edit_layers_in_tab',
+                'edit_groups_in_tab', 'app_window'}
 # Tools that can take up to a minute: the panel says so when they start.
 SLOW_TOOLS = {'draw_design', 'make_heart', 'make_turks_head'}
 
@@ -60,7 +91,8 @@ def _tr(language, key):
 def agent_command(prompt, model, out_dir, images=(), start=None, web=True, max_cost=None, effort=None,
                   plan=False, app=False, history=None):
     """The program and arguments that run one agent request."""
-    args = ['-m', 'openstrand', 'agent', prompt, '--model', model, '--out-dir', out_dir, '--json-events']
+    # --log: the agent's step-by-step log on stderr, which the panel prints in the terminal (terminal_log).
+    args = ['-m', 'openstrand', 'agent', prompt, '--model', model, '--out-dir', out_dir, '--json-events', '--log']
     if history:  # the session so far: Claude remembers it
         args += ['--history', history]
     if app:  # the app answers its tab tools through the bridge
@@ -78,6 +110,135 @@ def agent_command(prompt, model, out_dir, images=(), start=None, web=True, max_c
     if start:
         args += ['--start', start]
     return sys.executable, args
+
+
+def duration_text(seconds, t):
+    """'12s', '5m 39s', as the language writes them (t: the panel's translate)."""
+    s = max(0, int(round(seconds)))
+    if s < 60:
+        return t('claude_seconds').format(n=s)
+    return t('claude_minutes').format(m=s // 60, s=s % 60)
+
+
+def paint_bar(painter, rect, fraction, track, fill, phase=0.0):
+    """A rounded progress bar in rect. fraction None: the total is not known,
+    so a piece slides along it (phase 0 to 1) to show the tool is working."""
+    painter.save()
+    painter.setRenderHint(QPainter.Antialiasing)
+    painter.setPen(Qt.NoPen)
+    radius = rect.height() / 2
+    painter.setBrush(QColor(track))
+    painter.drawRoundedRect(rect, radius, radius)
+    if fraction is None:
+        size = rect.width() * 0.3
+        left = rect.left() + (rect.width() + size) * (phase % 1.0) - size
+        piece = QRectF(left, rect.top(), size, rect.height()).intersected(rect)
+    elif fraction > 0:
+        piece = QRectF(rect.left(), rect.top(), max(rect.height(), rect.width() * min(1.0, fraction)), rect.height())
+    else:
+        piece = None
+    if piece is not None and piece.width() > 0:
+        painter.setBrush(QColor(fill))
+        painter.drawRoundedRect(piece, radius, radius)
+    painter.restore()
+
+
+def bar_image(fraction, track, fill, phase=0.0, size=BAR_SIZE, ratio=2.0):
+    image = QImage(int(size[0] * ratio), int(size[1] * ratio), QImage.Format_ARGB32_Premultiplied)
+    image.setDevicePixelRatio(ratio)
+    image.fill(Qt.transparent)
+    painter = QPainter(image)
+    paint_bar(painter, QRectF(0, 0, size[0], size[1]), fraction, track, fill, phase)
+    painter.end()
+    return image
+
+
+def frame_image(frame, size=FRAME_SIZE, ratio=2.0):
+    """The picture a tool sends with its progress (openstrand.progress.picture),
+    drawn small: each cord with a darker edge, then the over part of every
+    crossing again on top, so over and under read as in the app."""
+    image = QImage(int(size[0] * ratio), int(size[1] * ratio), QImage.Format_ARGB32_Premultiplied)
+    image.setDevicePixelRatio(ratio)
+    image.fill(Qt.transparent)
+    cords = [c for c in frame.get('cords') or [] if len(c.get('points') or []) >= 2]
+    if not cords:
+        return image
+    xs = [p[0] for c in cords for p in c['points']]
+    ys = [p[1] for c in cords for p in c['points']]
+    wide, tall = max(xs) - min(xs), max(ys) - min(ys)
+    cord_width = float(frame.get('width') or 20)
+    room_w, room_h = size[0] - 6, size[1] - 6
+    scale = min(room_w / max(wide + cord_width, 1e-6), room_h / max(tall + cord_width, 1e-6))
+    pen_width = max(1.6, cord_width * scale)
+    middle = QPointF((max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2)
+    centre = QPointF(size[0] / 2, size[1] / 2)
+
+    def path(points, closed=False):
+        made = QPainterPath(centre + (QPointF(*points[0]) - middle) * scale)
+        for p in points[1:]:
+            made.lineTo(centre + (QPointF(*p) - middle) * scale)
+        if closed:
+            made.closeSubpath()
+        return made
+
+    def stroke(painter, made, color, cap):
+        # The edge with cap; the body round-ended, so a redrawn over part
+        # covers the seam where it ends (same color as the cord under it).
+        for pen_color, width, end in ((QColor(color).darker(175), pen_width + 1.6, cap),
+                                      (QColor(color), pen_width, Qt.RoundCap)):
+            pen = QPen(pen_color, width)
+            pen.setCapStyle(end)
+            pen.setJoinStyle(Qt.RoundJoin)
+            painter.setPen(pen)
+            painter.drawPath(made)
+
+    painter = QPainter(image)
+    painter.setRenderHint(QPainter.Antialiasing)
+    for c in cords:
+        stroke(painter, path(c['points'], c.get('closed')), c.get('color') or ACCENT, Qt.RoundCap)
+    for over in frame.get('overs') or []:
+        k = over.get('cord', 0)
+        if 0 <= k < len(cords) and len(over.get('points') or []) >= 2:
+            stroke(painter, path(over['points']), cords[k].get('color') or ACCENT, Qt.FlatCap)
+    painter.end()
+    return image
+
+
+def fitted_image(source, size=FRAME_SIZE, ratio=2.0):
+    """A finished tool's picture (a PNG's path, or a QImage), fitted into size, its
+    shape kept, centred on a clear background."""
+    image = QImage(int(size[0] * ratio), int(size[1] * ratio), QImage.Format_ARGB32_Premultiplied)
+    image.setDevicePixelRatio(ratio)
+    image.fill(Qt.transparent)
+    picture = source if isinstance(source, QImage) else QImage(str(source or ''))
+    if picture.isNull():
+        return image
+    scaled = picture.scaled(int(size[0] * ratio), int(size[1] * ratio), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    scaled.setDevicePixelRatio(ratio)
+    painter = QPainter(image)
+    painter.setRenderHint(QPainter.SmoothPixmapTransform)
+    painter.drawImage(QPointF((size[0] - scaled.width() / ratio) / 2, (size[1] - scaled.height() / ratio) / 2), scaled)
+    painter.end()
+    return image
+
+
+def picture_image(source, size):
+    """Any tool picture drawn at size: a progress frame (a dict) or a finished picture."""
+    return frame_image(source, size) if isinstance(source, dict) else fitted_image(source, size)
+
+
+LOG_PREFIX = 'log '  # the agent's log lines (openstrand/debuglog.py)
+
+
+def terminal_log(text):
+    """A line in the terminal the app was started from, for debugging Claude."""
+    out = sys.__stderr__
+    if out is None:  # no console (pythonw, a packaged app)
+        return
+    try:
+        print(f'[Claude] {text}', file=out, flush=True)
+    except (OSError, ValueError):
+        pass
 
 
 def money(value):
@@ -186,10 +347,50 @@ def load_knot():
     return [strip.copy(i * size, 0, size, size) for i in range(len(durations))], durations
 
 
+class FramePreview(QLabel):
+    """A running tool's picture, larger, while the mouse is over it in the
+    conversation. Drawn again from each new frame, so it moves with the tool."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent, Qt.ToolTip | Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_ShowWithoutActivating)
+        self.setAlignment(Qt.AlignCenter)
+        self.key = None  # the step whose picture it shows
+
+    def style_for(self, colors):
+        self.setStyleSheet(f"QLabel {{ background-color: {colors['log']}; border: 1px solid {colors['border']};"
+                           " border-radius: 8px; padding: 6px; }")
+
+    def show_frame(self, key, frame, cursor):
+        """frame: the tool's picture (progress data, or a finished picture's path);
+        cursor: the mouse, in screen coordinates."""
+        self.key = key
+        self.setPixmap(QPixmap.fromImage(picture_image(frame, PREVIEW_SIZE)))
+        self.adjustSize()
+        # Above the mouse (Claude sits at the bottom of the canvas), kept on screen.
+        screen = QApplication.screenAt(cursor) or QApplication.primaryScreen()
+        area = screen.availableGeometry() if screen is not None else QRect(0, 0, 10000, 10000)
+        x = min(max(area.left(), cursor.x() - self.width() // 2), area.right() - self.width())
+        y = cursor.y() - self.height() - 16
+        if y < area.top():
+            y = cursor.y() + 20
+        self.move(x, y)
+        self.show()
+        self.raise_()
+
+    def update_frame(self, frame):
+        self.setPixmap(QPixmap.fromImage(picture_image(frame, PREVIEW_SIZE)))
+
+    def hide_frame(self):
+        self.key = None
+        self.hide()
+
+
 class WorkingLine(QWidget):
     """Claude at work, the OpenStrand way: a closed overhand knot drawn strand
-    by strand, over and over, then what Claude is doing and the seconds so
-    far. (Without its frames it falls back to a turning trefoil.)"""
+    by strand, over and over, then what Claude is doing, how far a long tool
+    has got (a bar, how much is left) and the time so far. (Without its
+    frames it falls back to a turning trefoil.)"""
 
     SIZE = 28  # px of the knot
 
@@ -203,6 +404,9 @@ class WorkingLine(QWidget):
         self.phase = 0.0
         self.text_color = QColor('#FFFFFF')
         self.muted = QColor('#9A9A9A')
+        self.track = QColor('#5A5A5A')
+        self.progress = None  # (fraction or None, text) while a tool says how far it has got
+        self.format_time = lambda seconds: f'{int(seconds)}s'  # the panel gives the language's
         # The trefoil: x = sin t + 2 sin 2t, y = cos t - 2 cos 2t, fitted to SIZE.
         n = 150
         self.points = []
@@ -217,12 +421,23 @@ class WorkingLine(QWidget):
 
     def start(self, label):
         self.label, self.started = label, time.monotonic()
+        self.progress = None
         self.frame = 0
         self.show()
         self.timer.start(self.durations[0] if self.durations else 40)
 
     def set_label(self, label):
         self.label = label
+        self.update()
+
+    def set_progress(self, fraction, text):
+        """A long tool's progress: fraction (None while it cannot tell) and
+        what to say after the bar ("58% · about 20s left")."""
+        self.progress = (fraction, text)
+        self.update()
+
+    def clear_progress(self):
+        self.progress = None
         self.update()
 
     def stop(self):
@@ -279,16 +494,34 @@ class WorkingLine(QWidget):
         painter.drawPath(run)
         painter.restore()
 
+    BAR = 96  # px of the progress bar
+
     def draw_label(self, painter, box):
-        seconds = int(time.monotonic() - self.started)
         x = box + 12
-        painter.setPen(self.text_color)
         metrics = painter.fontMetrics()
-        label = metrics.elidedText(self.label, Qt.ElideRight, max(40, self.width() - x - 60))
+        elapsed = self.format_time(time.monotonic() - self.started)
+        tail = metrics.horizontalAdvance(elapsed) + 4
+        room = self.width() - x - tail - 10
+        fraction, text = self.progress if self.progress else (None, '')
+        # The bar and its text first; the label gets what is left (at least 60 px).
+        bar = self.BAR + 10 if self.progress and room > self.BAR + 140 else 0
+        text = metrics.elidedText(text, Qt.ElideRight, max(0, room - bar - 70)) if bar else ''
+        extra = bar + (metrics.horizontalAdvance(text) + 10 if text else 0)
+        label = metrics.elidedText(self.label, Qt.ElideRight, max(60, room - extra))
+        painter.setPen(self.text_color)
         painter.drawText(QRectF(x, 0, self.width() - x, self.height()), Qt.AlignVCenter, label)
+        x += metrics.horizontalAdvance(label) + 10
+        if bar:
+            paint_bar(painter, QRectF(x, (self.height() - 6) / 2, self.BAR, 6), fraction, self.track, ACCENT,
+                      self.phase * 4)
+            x += bar
+            if text:
+                painter.setPen(self.muted)
+                painter.drawText(QRectF(x, 0, metrics.horizontalAdvance(text) + 4, self.height()),
+                                 Qt.AlignVCenter, text)
+                x += metrics.horizontalAdvance(text) + 10
         painter.setPen(self.muted)
-        painter.drawText(QRectF(x + metrics.horizontalAdvance(label) + 10, 0, 60, self.height()),
-                         Qt.AlignVCenter, f'{seconds}s')
+        painter.drawText(QRectF(x, 0, tail + 8, self.height()), Qt.AlignVCenter, elapsed)
 
 
 class ClaudePanel(QWidget):
@@ -329,6 +562,12 @@ class ClaudePanel(QWidget):
         self.last_mode = self.mode
         self.run_mode = self.mode
         self.run_texts = []
+        self.stopping = False  # the person pressed Stop: the run ends without an answer, as asked
+        self.step_keys = 0  # each tool step's pictures get their own name in the transcript
+        # While a tool runs, its row's time and time left move on every second.
+        self.tick = QTimer(self)
+        self.tick.setInterval(1000)
+        self.tick.timeout.connect(self.refresh_running)
         self._build()
         saved = claude_settings.load()
         self.setVisible(saved['show_button'] and saved['panel_open'])
@@ -347,6 +586,11 @@ class ClaudePanel(QWidget):
         self.transcript = QTextBrowser(self)
         self.transcript.setOpenLinks(False)  # its links fold steps, open designs, build plans
         self.transcript.anchorClicked.connect(self.follow_link)
+        # A running tool's picture grows under the mouse (FramePreview).
+        self.preview = FramePreview(self)
+        self.preview.style_for(self.colors)
+        self.transcript.viewport().setMouseTracking(True)
+        self.transcript.viewport().installEventFilter(self)
         self.transcript.setMinimumHeight(60)
         self.transcript.setMaximumHeight(170)
         self.transcript.hide()
@@ -438,6 +682,8 @@ class ClaudePanel(QWidget):
         self.colors = c
         if hasattr(self, 'working'):
             self.working.text_color, self.working.muted = QColor(c['fg']), QColor(c['muted'])
+            self.working.track = QColor(c['log_border'])
+            self.preview.style_for(c)
             self.render_transcript()
             self.refresh_controls()
         self.setStyleSheet(f"""
@@ -462,6 +708,8 @@ class ClaudePanel(QWidget):
     def set_open(self, opened):
         """Show or hide Claude, and remember it for the next time the app opens."""
         opened = bool(opened)
+        if not opened:
+            self.preview.hide_frame()  # its own window: it would stay up with Claude hidden
         if opened:
             self.design_waiting = False
         self.setVisible(opened)
@@ -516,9 +764,32 @@ class ClaudePanel(QWidget):
             widget = widget.parentWidget()
 
     def eventFilter(self, obj, event):
+        if hasattr(self, 'transcript') and obj is self.transcript.viewport():
+            if event.type() == QEvent.MouseMove:
+                self.hover(self.transcript.anchorAt(event.pos()), event.globalPos())
+            elif event.type() == QEvent.Leave:
+                self.preview.hide_frame()
+            return False
         if event.type() == QEvent.Resize and self.isVisible():
             self.place()
         return False
+
+    def hover(self, anchor, cursor):
+        """Over a running tool's picture: show it larger; anywhere else: hide it."""
+        step = None
+        if anchor.startswith('os:frame/'):
+            try:
+                i, j = (int(n) for n in anchor[len('os:frame/'):].split('/'))
+                step = self.entries[i]['steps'][j]
+            except (ValueError, IndexError, KeyError):
+                step = None
+        shown = step.get('frame_data') if step is not None and step.get('running') else \
+            (step or {}).get('picture')
+        if step is None or not shown:
+            self.preview.hide_frame()
+            return
+        if self.preview.key != step['key']:
+            self.preview.show_frame(step['key'], shown, cursor)
 
     def stack(self):
         """Above the canvas's other overlays, but under the tab strip: the
@@ -544,6 +815,7 @@ class ClaudePanel(QWidget):
     def retranslate(self, language_code):
         self.language = language_code
         t = lambda key: _tr(language_code, key)
+        self.working.format_time = lambda seconds: duration_text(seconds, t)
         self.prompt_edit.setPlaceholderText(t('claude_prompt_placeholder'))
         self.prompt_edit.setToolTip(t('claude_prompt_keys'))
         self.attach_button.setText(t('claude_attach'))
@@ -604,13 +876,20 @@ class ClaudePanel(QWidget):
         self.render_transcript()
 
     def close_group(self):
-        last = self.entries[-1] if self.entries else None
-        if last and last['kind'] == 'group' and last['end'] is None:
-            last['end'] = time.monotonic()
-            for step in last['steps']:
-                step['running'] = False
-            if not last['toggled']:
-                last['open'] = False  # folded once Claude has answered
+        """Fold this request's step groups: a note (Stopped, no web search)
+        may have come after a group, so not only the last entry."""
+        changed = False
+        for entry in reversed(self.entries):
+            if entry['kind'] == 'user':
+                break
+            if entry['kind'] == 'group' and entry['end'] is None:
+                entry['end'] = time.monotonic()
+                for step in entry['steps']:
+                    step['running'] = False
+                if not entry['toggled']:
+                    entry['open'] = False  # folded once Claude has answered
+                changed = True
+        if changed:
             self.render_transcript()
 
     def render_transcript(self):
@@ -652,7 +931,10 @@ class ClaudePanel(QWidget):
                     f'{esc(t("claude_design_ready").format(name=e["name"]))}<br>{action}</td></tr></table>')
         if kind == 'confirm':
             action, current, new = e['what']
-            key = {'rename_tab': 'claude_confirm_rename', 'edit_mask': 'claude_confirm_mask'}.get(
+            key = {'rename_tab': 'claude_confirm_rename', 'edit_mask': 'claude_confirm_mask',
+                   'edit_strand': 'claude_confirm_strand', 'edit_layers': 'claude_confirm_layers',
+                   'edit_groups': 'claude_confirm_groups', 'window': 'claude_confirm_window',
+                   'settings': 'claude_confirm_settings'}.get(
                 action, 'claude_confirm_switch')
             text = esc(t(key).format(old=current, new=new))
             if e['state'] is None:
@@ -697,10 +979,24 @@ class ClaudePanel(QWidget):
         if kind == 'fetch':
             return t('claude_reading' if running else 'claude_step_read').format(url=short_url(step['text']))
         name = step['name']
+        key = TOOL_CHIPS.get(name, (None,))[0]
+        label = t(key) if key else name
+        if step.get('running') and step.get('stage'):
+            return f'{label} · {self.stage_text(step)}'
         if step.get('running') and name in SLOW_TOOLS:
             return t('claude_drawing')
-        key = TOOL_CHIPS.get(name, (None,))[0]
-        return (t(key) if key else name) + (f': {step["summary"]}' if step.get('summary') else '…')
+        return label + (f': {step["summary"]}' if step.get('summary') else '…')
+
+    def stage_text(self, step):
+        """What a tool says it is doing, in the person's language ("drawing step 3 of 5")."""
+        stage = str(step.get('stage') or '')
+        text = _tr(self.language, f'claude_stage_{stage}')
+        if text == f'claude_stage_{stage}':
+            return stage.replace('_', ' ')
+        try:
+            return text.format(**step.get('numbers', {}))
+        except (KeyError, IndexError, ValueError):
+            return text
 
     def step_html(self, i, j, step, c):
         t = lambda key: _tr(self.language, key)
@@ -718,14 +1014,185 @@ class ClaudePanel(QWidget):
         key, bg, fg = TOOL_CHIPS.get(step['name'], (None, *OTHER_CHIP))
         label = t(key) if key else step['name']
         if step.get('running'):
-            mark = f'<span style="color:#D97757;">●</span>'
-        elif step.get('ok'):
-            mark = f'<span style="color:{c["ok"]};">✓</span>'
+            mark = f'<span style="color:{ACCENT};">●</span>'
+            detail = self.stage_text(step) if step.get('stage') else '…'
         else:
-            mark = f'<span style="color:{c["bad"]};">✗</span>'
-        detail = step.get('summary') or ('…' if step.get('running') else '')
-        return (f'{mark}&nbsp; <span style="background-color:{bg}; color:{fg}; font-weight:bold;">'
-                f'&nbsp;{esc(label)}&nbsp;</span>&nbsp; <span style="color:{c["muted"]};">{esc(detail)}</span>')
+            mark = (f'<span style="color:{c["ok"]};">✓</span>' if step.get('ok')
+                    else f'<span style="color:{c["bad"]};">✗</span>')
+            detail = t('claude_stopped').rstrip('.。') if step.get('stopped') else step.get('summary') or ''
+            took = step.get('seconds')
+            if took is not None and took >= 1:  # how long it took, once it is worth saying
+                detail = (detail + ' · ' if detail else '') + duration_text(took, t)
+        out = (f'{mark}&nbsp; <span style="background-color:{bg}; color:{fg}; font-weight:bold;">'
+               f'&nbsp;{esc(label)}&nbsp;</span>&nbsp; <span style="color:{c["muted"]};">{esc(detail)}</span>')
+        if step.get('running'):
+            out += self.progress_html(step, c, i, j)
+        elif step.get('picture'):
+            image = (f'<a href="os:frame/{i}/{j}" style="text-decoration:none;"><img src="claude-frame:{step["key"]}"'
+                     f' width="{FRAME_SIZE[0]}" height="{FRAME_SIZE[1]}"></a>')
+            out += f'<table cellspacing="0" cellpadding="0" style="margin:4px 0 2px 22px;"><tr><td>{image}</td></tr></table>'
+        return out
+
+    # ------------------------------------------------------------ progress
+    # A long tool (tie_knot, draw_design) says how far it has got: a picture
+    # of what it works on, about once a second, and the fraction done. Its
+    # row shows them with a bar, how much is left and its time so far; the
+    # working line under the transcript shows the bar too.
+    def progress_html(self, step, c, i=None, j=None):
+        t = lambda key: _tr(self.language, key)
+        elapsed = time.monotonic() - step.get('start', time.monotonic())
+        if not (step.get('stage') or step.get('frame')) and elapsed < 2:
+            return ''  # a quick tool: nothing more to show
+        words = [w for w in (self.progress_words(step), duration_text(elapsed, t)) if w]
+        bar = f'claude-bar:{step["key"]}'
+        self.transcript.document().addResource(
+            QTextDocument.ImageResource, QUrl(bar),
+            bar_image(step.get('fraction'), c['log_border'], ACCENT, phase=elapsed / 4))  # redrawn every second
+        picture = ''
+        if step.get('frame'):
+            image = (f'<img src="claude-frame:{step["key"]}" width="{FRAME_SIZE[0]}" height="{FRAME_SIZE[1]}">')
+            if i is not None:  # the mouse over it shows it larger (hover)
+                image = f'<a href="os:frame/{i}/{j}" style="text-decoration:none;">{image}</a>'
+            picture = f'<td valign="middle" style="padding-right:10px;">{image}</td>'
+        return (f'<table cellspacing="0" cellpadding="0" style="margin:4px 0 2px 22px;"><tr>{picture}'
+                f'<td valign="middle"><img src="{bar}" width="{BAR_SIZE[0]}" height="{BAR_SIZE[1]}"><br>'
+                f'<span style="color:{c["muted"]};">{html.escape(" · ".join(words))}</span></td></tr></table>')
+
+    def progress_words(self, step):
+        """'58% · about 20s left' (or nothing while the tool cannot tell)."""
+        t = lambda key: _tr(self.language, key)
+        fraction = step.get('fraction')
+        if fraction is None:
+            return ''
+        words = [f'{int(100 * fraction)}%']
+        eta = step.get('eta')
+        if eta is not None:
+            left = eta[0] - (time.monotonic() - eta[1])
+            if left < 3:
+                words.append(t('claude_almost_done'))
+            else:
+                left = math.ceil(left / 5) * 5 if left < 60 else math.ceil(left / 15) * 15
+                words.append(t('claude_left').format(time=duration_text(left, t)))
+        return ' · '.join(words)
+
+    @staticmethod
+    def update_eta(step, now):
+        """Time left from the time so far and the fraction done, smoothed so
+        it counts down instead of jumping with every event."""
+        fraction, elapsed = step.get('fraction'), now - step.get('start', now)
+        if fraction is None or fraction < 0.03 or elapsed < 1.0:
+            return
+        estimate = elapsed * (1 - fraction) / fraction
+        if step.get('eta') is not None:
+            before, at = step['eta']
+            estimate = 0.6 * max(0.0, before - (now - at)) + 0.4 * estimate
+        step['eta'] = (estimate, now)
+
+    def running_step(self, name=None):
+        """The tool running now (named name, when given), or None."""
+        for entry in reversed(self.entries):
+            if entry['kind'] == 'user':
+                return None
+            if entry['kind'] == 'group' and entry['end'] is None:
+                for step in reversed(entry['steps']):
+                    if step['kind'] == 'tool' and step.get('running') and name in (None, step['name']):
+                        return step
+        return None
+
+    def show_progress(self, event):
+        step = self.running_step(event.get('name'))
+        if step is None:
+            return
+        now = time.monotonic()
+        if event.get('fraction') is not None:
+            step['fraction'] = max(step.get('fraction') or 0.0, min(1.0, float(event['fraction'])))
+            self.update_eta(step, now)
+        if event.get('stage'):
+            step['stage'] = event['stage']
+            step['numbers'] = {k: v for k, v in event.items()
+                               if k not in ('type', 'name', 'stage', 'fraction', 'frame')}
+        if event.get('frame'):
+            try:
+                image = frame_image(event['frame'])
+            except (KeyError, TypeError, ValueError, IndexError, AttributeError):
+                image = None  # a picture that cannot be drawn: keep the last one
+            if image is not None:
+                self.transcript.document().addResource(
+                    QTextDocument.ImageResource, QUrl(f'claude-frame:{step["key"]}'), image)
+                step['frame'], step['frame_data'] = True, event['frame']
+                if self.preview.key == step['key']:  # open under the mouse: it moves on too
+                    self.preview.update_frame(event['frame'])
+        self.render_transcript()
+        self.show_working(step)
+
+    def show_working(self, step):
+        self.working.set_label(self.step_label(step, running=True))
+        if step.get('stage') or step.get('fraction') is not None:
+            self.working.set_progress(step.get('fraction'), self.progress_words(step))
+
+    def refresh_running(self):
+        """Every second while a tool runs: its time, and the time left, move on."""
+        step = self.running_step()
+        if step is None:
+            self.tick.stop()
+            return
+        if time.monotonic() - step.get('start', 0) >= 2:
+            self.render_transcript()
+            self.show_working(step)
+
+    def release_pictures(self, step):
+        """A finished tool's progress picture and bar are freed (attach_picture then puts
+        its finished picture in, when it has one)."""
+        step.pop('frame_data', None)
+        if self.preview.key is not None and self.preview.key == step.get('key'):
+            self.preview.hide_frame()
+        if step.get('key') is not None:
+            for kind in ('claude-frame', 'claude-bar'):
+                self.transcript.document().addResource(QTextDocument.ImageResource,
+                                                       QUrl(f'{kind}:{step["key"]}'), QImage())
+
+    def attach_picture(self, step, event):
+        """The finished tool's picture in its row: what the agent sent (the design it
+        made, changed, checked or read), or the app as the tool left it."""
+        path = event.get('image')
+        if not path and event.get('ok'):
+            try:
+                path = self.grab_for(step)
+            except (RuntimeError, AttributeError) as e:  # a window gone or not there: no picture
+                terminal_log(f'no picture for {step.get("name")}: {e}')
+                path = None
+        if not path or not os.path.exists(path) or step.get('key') is None:
+            return
+        step['picture'] = path
+        self.transcript.document().addResource(QTextDocument.ImageResource, QUrl(f'claude-frame:{step["key"]}'),
+                                               fitted_image(path))
+
+    def grab_for(self, step):
+        """The app as an app tool left it, saved in this request's folder: the canvas
+        (without Claude floating over it), the group panel, or the window after a
+        setting. None for the tools that only list or read."""
+        name, window = step.get('name'), self.main_window
+        if name in CANVAS_TOOLS:
+            canvas = window.canvas
+            image = QImage(canvas.size(), QImage.Format_ARGB32_Premultiplied)
+            image.fill(Qt.transparent)
+            painter = QPainter(image)
+            canvas.render(painter, QPoint(), QRegion(), QWidget.RenderFlags(QWidget.DrawWindowBackground))
+            painter.end()
+        elif name == 'show_group':
+            image = window.group_layer_manager.group_panel.grab().toImage()
+        elif name == 'app_settings':
+            dialog = getattr(window, 'settings_dialog', None)
+            shown = (step.get('input') or {}).get('op') == 'show' and dialog is not None and dialog.isVisible()
+            image = (dialog if shown else window).grab().toImage()
+        else:
+            return None
+        if image.isNull() or not self.out_dir:
+            return None
+        folder = os.path.join(self.out_dir, 'frames')
+        os.makedirs(folder, exist_ok=True)
+        path = os.path.join(folder, f'app_{step["key"]}.png')
+        return path if image.save(path) else None
 
     def follow_link(self, url):
         link = url.toString()
@@ -733,6 +1200,8 @@ class ClaudePanel(QWidget):
             QDesktopServices.openUrl(url)
             return
         what, *ids = link[3:].split('/')
+        if what == 'frame':
+            return  # a tool's picture: the mouse over it shows it larger, a click does nothing
         try:
             ids = [int(n) for n in ids]
             entry = self.entries[ids[0]]
@@ -795,13 +1264,22 @@ class ClaudePanel(QWidget):
         names = dict(claude_settings.MODELS)
         self.model_menu.clear()
         group = QActionGroup(self.model_menu)
-        for model, label_key in claude_settings.MODELS:
-            action = QAction(t(label_key), self.model_menu, checkable=True)
+        provider = None
+        for model, label in claude_settings.MODELS:
+            if claude_settings.provider_of(model) != provider:  # each provider's models together
+                if provider is not None:
+                    self.model_menu.addSeparator()
+                provider = claude_settings.provider_of(model)
+                spec = claude_settings.PROVIDERS.get(provider)
+                keyed = provider in saved['keys'] or (spec is not None and os.environ.get(spec.env))
+            # Which provider runs it, and whether its key is still missing (Settings > Models).
+            where = (spec.name if spec else provider) + ('' if keyed else f', {t("models_no_key")}')
+            action = QAction(f'{label}   ({where})', self.model_menu, checkable=True)
             action.setChecked(model == saved['model'])
             action.triggered.connect(lambda _=False, m=model: self.choose(model=m))
             group.addAction(action)
             self.model_menu.addAction(action)
-        self.model_button.setText(('Sonnet 5.5' if 'sonnet' in saved['model'] else 'Haiku 5.5') + ' ▾')
+        self.model_button.setText(names.get(saved['model'], saved['model']) + ' ▾')
         self.effort_menu.clear()
         group = QActionGroup(self.effort_menu)
         for effort in claude_settings.EFFORTS:
@@ -834,6 +1312,10 @@ class ClaudePanel(QWidget):
 
     def send_or_stop(self):
         if self.running():
+            terminal_log('Stop pressed: ending the agent')
+            self.stopping = True
+            self.stop_steps()
+            self.close_group()
             self.process.kill()
             self.add_note(_tr(self.language, 'claude_stopped'))
         else:
@@ -860,8 +1342,13 @@ class ClaudePanel(QWidget):
             self.add_note(_tr(self.language, 'claude_source_only'), '#c0392b')
             return
         settings = claude_settings.load()
-        if not settings['api_key']:
-            self.add_note(_tr(self.language, 'claude_need_key'), '#c0392b')
+        provider = claude_settings.provider_of(settings['model'])
+        spec = claude_settings.PROVIDERS.get(provider)
+        key_env = spec.env if spec else 'ANTHROPIC_API_KEY'
+        key = settings['keys'].get(provider, '')
+        if not key and not os.environ.get(key_env, '').strip():
+            self.add_note(_tr(self.language, 'models_need_key').format(provider=spec.name if spec else 'Anthropic'),
+                          '#c0392b')
             return
         left = settings['session_limit'] - self.session_spent
         if left < 0.05:
@@ -888,7 +1375,8 @@ class ClaudePanel(QWidget):
                                       effort=settings['effort'], plan=self.mode == 'plan',
                                       app=self.bridge is not None, history=history)
         env = QProcessEnvironment.systemEnvironment()
-        env.insert('ANTHROPIC_API_KEY', settings['api_key'])
+        if key:  # the chosen model's provider: its key, as its own environment variable
+            env.insert(key_env, key)
         env.insert('QT_QPA_PLATFORM', 'offscreen')
         env.insert('PYTHONUNBUFFERED', '1')
         env.insert('PYTHONIOENCODING', 'utf-8')
@@ -900,6 +1388,7 @@ class ClaudePanel(QWidget):
         self.process.finished.connect(self.finished)
         self.process.errorOccurred.connect(self.failed_to_start)
         self.done_event, self.stdout_buffer, self.stderr_text = None, b'', ''
+        self.stopping = False
         # What this request has cost so far; the total keeps counting from
         # everything earlier requests cost, saved in claude.json.
         self.run_cost, self.total_before = 0.0, claude_settings.load()['spent']
@@ -912,8 +1401,19 @@ class ClaudePanel(QWidget):
         self.working.start(_tr(self.language, 'claude_thinking') + '…')
         self.activity_changed.emit()
         self.send_button.setText(_tr(self.language, 'claude_stop'))
+        terminal_log(f'request starts: {prompt[:80]!r}; its files and agent.log are in {self.out_dir}')
         self.process.start(program, args)
         self.new_button.setEnabled(False)  # not while Claude works
+
+    def stop_steps(self, by_person=True):
+        """The tools still running end here: stopped by the person, or the agent ended."""
+        now = time.monotonic()
+        while True:
+            step = self.running_step()
+            if step is None:
+                return
+            step.update(running=False, ok=False, stopped=by_person, seconds=now - step.get('start', now))
+            self.release_pictures(step)
 
     def cost_line(self):
         """'this request $0.041 · total $1.27': the total never starts again from zero."""
@@ -966,8 +1466,16 @@ class ClaudePanel(QWidget):
             self.handle_event(event)
 
     def read_errors(self):
-        if self.process is not None:
-            self.stderr_text += bytes(self.process.readAllStandardError()).decode('utf-8', 'replace')
+        if self.process is None:
+            return
+        new = bytes(self.process.readAllStandardError()).decode('utf-8', 'replace')
+        # Complete lines go to the terminal as they come: the agent's log, and any error.
+        start = self.stderr_text.rfind('\n') + 1
+        self.stderr_text += new
+        complete = self.stderr_text[start:self.stderr_text.rfind('\n') + 1] if '\n' in new else ''
+        for line in complete.splitlines():
+            if line.strip():
+                terminal_log(line[len(LOG_PREFIX):] if line.startswith(LOG_PREFIX) else line)
 
     def handle_event(self, event):
         kind = event.get('type')
@@ -990,9 +1498,15 @@ class ClaudePanel(QWidget):
         elif kind == 'note':
             self.add_note(event.get('text', ''))
         elif kind == 'tool_start':
-            step = {'kind': 'tool', 'name': event.get('name', ''), 'running': True, 'ok': None, 'summary': ''}
+            self.step_keys += 1
+            step = {'kind': 'tool', 'name': event.get('name', ''), 'running': True, 'ok': None, 'summary': '',
+                    'start': time.monotonic(), 'key': self.step_keys, 'input': event.get('input') or {}}
             self.add_step(step)
+            self.working.clear_progress()
             self.working.set_label(self.step_label(step, running=True))
+            self.tick.start()
+        elif kind == 'tool_progress':
+            self.show_progress(event)
         elif kind == 'tool_end':
             name = event.get('name', '')
             group = self.open_group()
@@ -1002,7 +1516,12 @@ class ClaudePanel(QWidget):
                 step = {'kind': 'tool', 'name': name}
                 group['steps'].append(step)
             step.update(running=False, ok=bool(event.get('ok')), summary=event.get('summary', ''))
+            if step.get('start') is not None:
+                step['seconds'] = time.monotonic() - step['start']
+            self.release_pictures(step)
+            self.attach_picture(step, event)
             self.render_transcript()
+            self.working.clear_progress()
             self.working.set_label(t('claude_working'))
         elif kind == 'usage':
             self.run_cost = max(self.run_cost, float(event.get('cost') or 0))
@@ -1039,6 +1558,9 @@ class ClaudePanel(QWidget):
         self.activity_changed.emit()
 
     def finished(self, *_):
+        if self.process is not None and hasattr(self.process, 'exitCode'):
+            terminal_log(f'the agent process ended (exit code {self.process.exitCode()}'
+                         f'{", stopped by the person" if self.stopping else ""})')
         try:
             self._finish()
             self.remember_turn()
@@ -1055,7 +1577,28 @@ class ClaudePanel(QWidget):
             design = 'opened in tabs: ' + ', '.join(event['opened_tabs'])
         elif self.run_mode == 'plan':
             design = 'a plan, nothing built yet'
-        self.history.append({'user': self.shown_prompt or self.prompt, 'claude': answer, 'design': design})
+        turn = {'user': self.shown_prompt or self.prompt, 'claude': answer, 'design': design}
+        tools = self.run_tools()
+        if tools:  # which tools ran and how each ended: Claude can say what happened
+            turn['tools'] = tools
+        self.history.append(turn)
+
+    def run_tools(self):
+        """This request's tool calls, for the next request: name, how it ended, time, summary."""
+        out = []
+        for entry in reversed(self.entries):
+            if entry['kind'] == 'user':
+                break
+            if entry['kind'] != 'group':
+                continue
+            for step in reversed(entry['steps']):
+                if step['kind'] != 'tool':
+                    continue
+                state = 'stopped by the person' if step.get('stopped') else 'ok' if step.get('ok') else 'failed'
+                took = f", {int(round(step['seconds']))} s" if step.get('seconds') is not None else ''
+                summary = f": {step['summary']}" if step.get('summary') and not step.get('stopped') else ''
+                out.append(f"{step['name']} ({state}{took}){summary}"[:160])
+        return out[::-1][-12:]
 
     def new_session(self):
         """Start again from nothing: no conversation, nothing Claude remembers,
@@ -1063,6 +1606,7 @@ class ClaudePanel(QWidget):
         "Start from the canvas" to leave it out too."""
         if self.running():
             return
+        self.preview.hide_frame()
         self.entries.clear()
         self.history.clear()
         self.session_spent = self.run_cost = 0.0
@@ -1084,6 +1628,8 @@ class ClaudePanel(QWidget):
         for entry in self.entries:
             if entry['kind'] == 'confirm' and entry['state'] is None:
                 entry['state'] = 'expired'  # Claude has stopped; nothing waits any more
+        self.stop_steps(by_person=self.stopping)
+        self.tick.stop()
         self.working.stop()
         self.close_group()
         self.send_button.setText(_tr(self.language, 'claude_send'))
@@ -1093,10 +1639,12 @@ class ClaudePanel(QWidget):
         spent, line = self.run_cost, self.cost_line()
         self.save_spending()
         if event is None:
-            lines = [l for l in self.stderr_text.splitlines() if l.strip()]
-            message = lines[-1] if lines else 'the agent stopped without an answer'
             self.status_label.setText(line if spent else '')
-            self.add_note(_tr(self.language, 'claude_failed').format(error=message.removeprefix('error: ')), '#c0392b')
+            if not self.stopping:  # stopped by the person: "Stopped." says it already
+                lines = [l for l in self.stderr_text.splitlines() if l.strip() and not l.startswith(LOG_PREFIX)]
+                message = lines[-1] if lines else 'the agent stopped without an answer'
+                self.add_note(_tr(self.language, 'claude_failed').format(error=message.removeprefix('error: ')),
+                              '#c0392b')
             return
         self.status_label.setText(line)  # the model is on the status line below
         if event.get('error'):
@@ -1127,21 +1675,65 @@ class ClaudePanel(QWidget):
                 self.design_ready.emit(named)
 
 
-class ClaudeButton(QPushButton):
-    """The Claude button next to Settings: shows and hides Claude.
+def knot_mark_path():
+    """The button's mark, in a 24 px box: one cord, its ends up, crossing itself
+    above a loop (an overhand loop), as OpenStrand draws a strand. Returns the
+    whole cord and the part that goes over at the crossing."""
+    a, b, c, d = QPointF(2.5, 3.5), QPointF(7.0, 7.0), QPointF(12.5, 10.5), QPointF(16.0, 14.0)
+    whole = QPainterPath(a)  # from the left end down over the crossing,
+    whole.cubicTo(b, c, d)
+    whole.cubicTo(QPointF(19.0, 17.5), QPointF(17.5, 21.2), QPointF(12.0, 21.2))  # round the loop
+    whole.cubicTo(QPointF(6.5, 21.2), QPointF(5.0, 17.5), QPointF(8.0, 14.0))
+    whole.cubicTo(QPointF(11.5, 10.5), QPointF(17.0, 7.0), QPointF(21.5, 3.5))  # and up under it to the right end
+    # The first curve from a third of the way along (de Casteljau): the part over the crossing.
+    t = 0.3
+    mix = lambda p, q: p + (q - p) * t  # noqa: E731
+    ab, bc, cd = mix(a, b), mix(b, c), mix(c, d)
+    abc, bcd = mix(ab, bc), mix(bc, cd)
+    over = QPainterPath(mix(abc, bcd))
+    over.cubicTo(bcd, cd, d)
+    return whole, over
 
-    The Claude app icon at the size of the Settings button, drawn here so it
-    answers the mouse the way Claude's own buttons do: lighter under the
-    pointer, a little smaller and darker while pressed, and, while Claude is
-    open, darker with a light ring. While Claude is hidden it also shows what
-    Claude is doing: an arc turns around it during a run, and a green dot
+
+def paint_knot_mark(painter, box, fill=QColor('#A65400'), outline=QColor('#111111'), width=4.2, stroke=0.9):
+    """The mark in box (a QRectF): the cord with its outline, the part from the left end
+    redrawn on top where it crosses, so it reads over and under as in the app."""
+    whole, over = knot_mark_path()
+    scale = min(box.width(), box.height()) / 24.0
+    painter.save()
+    painter.translate(box.center().x() - 12 * scale, box.center().y() - 12 * scale)
+    painter.scale(scale, scale)
+
+    def cord(path, body_cap):
+        for color, size, cap in ((outline, width + 2 * stroke, Qt.FlatCap), (fill, width, body_cap)):
+            pen = QPen(color, size)
+            pen.setCapStyle(cap)
+            pen.setJoinStyle(Qt.RoundJoin)
+            painter.setPen(pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(path)
+    cord(whole, Qt.FlatCap)  # the ends cut square, as a strand's ends
+    cord(over, Qt.RoundCap)  # over at the crossing; its round body ends hide the seams
+    painter.restore()
+
+
+class ClaudeButton(QPushButton):
+    """The assistant's button next to Settings: shows and hides the assistant.
+
+    A small OpenStrand knot (the assistant runs on many providers' models, so the
+    button is the app's own mark, not one provider's), drawn here so it answers the
+    mouse: a little darker under the pointer, smaller while pressed and, while the
+    assistant is open, a ring in the cord's color. While it is hidden it also shows
+    what the assistant is doing: an arc turns around it during a run, and a green dot
     waits on it when a design has opened."""
 
-    ORANGE = QColor('#D97757')
-    HOVER = QColor('#E3896B')
-    PRESSED = QColor('#C2613F')
-    OPEN = QColor('#B9583A')
-    RADIUS = 7  # corner radius of the 32 px square, as the Claude app icon
+    FACE = QColor('#FFFFFF')
+    HOVER = QColor('#F1ECE6')
+    PRESSED = QColor('#E3DAD0')
+    OPEN = QColor('#FBEBDD')
+    EDGE = QColor('#C9C2BA')
+    CORD = QColor('#A65400')
+    RADIUS = 7  # corner radius of the 32 px square
 
     def __init__(self, panel, parent=None):
         super().__init__(parent)
@@ -1149,10 +1741,9 @@ class ClaudeButton(QPushButton):
         self.setObjectName('claudeButton')
         self.setCheckable(True)
         self.setFixedSize(32, 32)
-        self.setAccessibleName('Claude')
+        self.setAccessibleName('Assistant')
         self.setAttribute(Qt.WA_Hover, True)
         self.setCursor(Qt.PointingHandCursor)
-        self.mark = QPixmap(resource_path('claude_mark_white.png'))
         self.angle = 0
         self.spin = QTimer(self)
         self.spin.setInterval(50)
@@ -1197,30 +1788,21 @@ class ClaudeButton(QPushButton):
             return self.OPEN
         if self.underMouse():
             return self.HOVER
-        return self.ORANGE
+        return self.FACE
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setRenderHint(QPainter.SmoothPixmapTransform)
-        square = QRectF(self.rect())
+        square = QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5)
         if self.isDown():  # pressed in: a touch smaller
             square = square.adjusted(1.5, 1.5, -1.5, -1.5)
-        painter.setPen(Qt.NoPen)
+        painter.setPen(QPen(self.CORD if self.isChecked() else self.EDGE, 1.5 if self.isChecked() else 1.0))
         painter.setBrush(self.color())
         painter.drawRoundedRect(square, self.RADIUS, self.RADIUS)
-        if self.isChecked():  # Claude is open
-            painter.setPen(QPen(QColor(255, 255, 255, 170), 1.5))
-            painter.setBrush(Qt.NoBrush)
-            painter.drawRoundedRect(square.adjusted(1.5, 1.5, -1.5, -1.5), self.RADIUS - 1.5, self.RADIUS - 1.5)
-        if not self.mark.isNull():
-            inset = square.width() * 0.17
-            painter.drawPixmap(square.adjusted(inset, inset, -inset, -inset), self.mark, QRectF(self.mark.rect()))
-        else:
-            painter.setPen(Qt.white)
-            painter.drawText(square, Qt.AlignCenter, '✳')
+        inset = square.width() * 0.12
+        paint_knot_mark(painter, square.adjusted(inset, inset, -inset, -inset), fill=self.CORD)
         if self.busy():
-            pen = QPen(QColor(255, 255, 255, 230), 2.5)
+            pen = QPen(self.CORD, 2.5)
             pen.setCapStyle(Qt.RoundCap)
             painter.setPen(pen)
             painter.setBrush(Qt.NoBrush)
@@ -1261,8 +1843,16 @@ class ClaudeSettingsPage(QWidget):
         self.show_hint.setStyleSheet('color: gray;')
         layout.addWidget(self.show_hint)
 
+        provider_row = QHBoxLayout()
         self.key_label = QLabel(self)
-        layout.addWidget(self.key_label)
+        self.provider_combo = QComboBox(self)
+        for provider in claude_settings.PROVIDERS.values():
+            self.provider_combo.addItem(provider.name, provider.key)
+        self.provider_combo.currentIndexChanged.connect(lambda _: self.show_provider())
+        provider_row.addWidget(self.key_label)
+        provider_row.addWidget(self.provider_combo)
+        provider_row.addStretch()
+        layout.addLayout(provider_row)
         key_row = QHBoxLayout()
         self.key_edit = QLineEdit(self)
         self.key_edit.setEchoMode(QLineEdit.Password)
@@ -1362,26 +1952,26 @@ class ClaudeSettingsPage(QWidget):
     def retranslate(self, language_code):
         self.language = language_code
         t = lambda key: _tr(language_code, key)
-        self.intro.setText(t('claude_settings_intro'))
-        self.key_label.setText(t('claude_api_key_label'))
+        self.intro.setText(t('models_settings_intro'))
+        self.key_label.setText(t('models_key_label'))
         self.show_button.setText(t('claude_hide_key') if self.show_button.isChecked() else t('claude_show_key'))
         self.save_button.setText(t('claude_save_key'))
         self.remove_button.setText(t('claude_remove_key'))
-        self.get_key.setText(t('claude_get_key'))
         self.model_label.setText(t('claude_model_label'))
         self.storage.setText(t('claude_key_storage'))
         saved = claude_settings.load()
         self.model_combo.blockSignals(True)
         self.model_combo.clear()
-        for model, key in claude_settings.MODELS:
-            self.model_combo.addItem(t(key), model)
+        for model, label in claude_settings.MODELS:
+            spec = claude_settings.PROVIDERS.get(claude_settings.provider_of(model))
+            self.model_combo.addItem(f'{label}  ·  {spec.name}' if spec else label, model)
         self.model_combo.setCurrentIndex(max(0, self.model_combo.findData(saved['model'])))
         self.model_combo.blockSignals(False)
         self.effort_label.setText(t('claude_effort_label'))
         self.effort_hint.setText(t('claude_effort_hint'))
         self.session_limit_label.setText(t('claude_session_limit_label'))
         self.web_check.setText(t('claude_web_label'))
-        self.web_hint.setText(t('claude_web_hint'))
+        self.web_hint.setText(t('claude_web_hint') + ' ' + t('models_web_claude_only'))
         self.limit_label.setText(t('claude_limit_label'))
         self.web_check.blockSignals(True)
         self.web_check.setChecked(saved['web'])
@@ -1390,7 +1980,7 @@ class ClaudeSettingsPage(QWidget):
         self.limit_spin.setValue(saved['max_cost'])
         self.limit_spin.blockSignals(False)
         self.show_choices()
-        self.show_saved(saved['api_key'])
+        self.show_provider(claude_settings.provider_of(saved['model']))
         self.show_check.setText(t('claude_show_button'))
         self.show_hint.setText(t('claude_show_button_hint'))
         self.show_check.blockSignals(True)
@@ -1442,6 +2032,23 @@ class ClaudeSettingsPage(QWidget):
         claude_settings.save(show_button=shown)
         self.show_button_changed.emit(bool(shown))
 
+    def provider(self):
+        return self.provider_combo.currentData() or 'anthropic'
+
+    def show_provider(self, provider=None):
+        """The key field for one provider: its saved key, what its keys look like, where to get one."""
+        if provider is not None:
+            self.provider_combo.blockSignals(True)
+            self.provider_combo.setCurrentIndex(max(0, self.provider_combo.findData(provider)))
+            self.provider_combo.blockSignals(False)
+        spec = claude_settings.PROVIDERS.get(self.provider())
+        self.key_edit.setPlaceholderText(spec.key_hint if spec else 'sk-ant-…')
+        if spec and spec.keys_url:
+            host = spec.keys_url.split('//', 1)[-1].split('/', 1)[0]
+            self.get_key.setText(_tr(self.language, 'models_get_key').format(
+                link=f'<a href="{spec.keys_url}">{host}</a>'))
+        self.show_saved(claude_settings.load()['keys'].get(self.provider(), ''))
+
     def show_saved(self, key):
         t = lambda k: _tr(self.language, k)
         self.key_status.setText(t('claude_key_saved').format(key=claude_settings.masked(key)) if key
@@ -1456,13 +2063,15 @@ class ClaudeSettingsPage(QWidget):
         key = self.key_edit.text().strip()
         if not key:
             return
-        claude_settings.save(api_key=key)
+        claude_settings.save(provider_key=(self.provider(), key))
         self.key_edit.clear()
         self.show_saved(key)
+        self.settings_changed.emit()  # the model menu says which providers have a key
 
     def remove_key(self):
-        claude_settings.save(api_key='')
+        claude_settings.save(provider_key=(self.provider(), ''))
         self.show_saved('')
+        self.settings_changed.emit()
         self.key_status.setText(_tr(self.language, 'claude_key_removed'))
 
     def changed_setting(self, **change):
@@ -1478,3 +2087,4 @@ class ClaudeSettingsPage(QWidget):
         model = self.model_combo.itemData(index)
         if model:
             self.changed_setting(model=model)
+            self.show_provider(claude_settings.provider_of(model))  # where this model's key goes

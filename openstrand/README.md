@@ -28,7 +28,7 @@ python -m openstrand render designs/bracelet.json --out designs/bracelet.png
 | --- | --- |
 | `make turks_head` | A Turk's head ring knot, woven over and under. Published sizes are copied; others are fitted (a minute or two). |
 | `make mxn` | An MxN stitch from `mxn_samples/` (m, n from 1 to 8, lh or rh, `--stretch`). |
-| `make heart` | A ribbon heart from one cord (fitted, about a minute). |
+| `make heart` | A ribbon heart from one cord (fitted, a few seconds). |
 | `make sample NAME` | A ready-made design from `knot_samples/` or `mxn_samples/`. |
 | `draw SPEC` | Your own design from cords given as points, x(t)/y(t) curves or shapes; woven over and under, with a report of every crossing. See `.claude/skills/openstrand-designer/drawing.md`. |
 | `tie KNOT` | Tying steps for a knot, one project per step: the cord laid move by move with an arrow on the working end, drawn up, then pulled tight. Worked out by simulating a real cord (`simulate.py`), every stage checked to be that knot (`invariants.py`, `identify.py`). `--list` for the library; `--path FILE` for any other knot. |
@@ -104,13 +104,28 @@ python -m openstrand agent "make this" --image photo.jpg --model haiku
 python -m openstrand agent "make the gold ribbons red" --start designs/bracelet.json
 ```
 
-- Needs your own Anthropic API key: `ANTHROPIC_API_KEY`, or the key saved in
-  the app under Settings > Claude. You pay Anthropic for what it uses; each
-  run prints its cost and stops at `--max-cost` (default $2.00).
-- Web search and fetch are on (`--no-web` turns them off); each search costs
-  about $0.01. Claude thinks at `--effort high` by default.
-- `--model sonnet` (Claude Sonnet 5.5, default) or `--model haiku`
-  (Claude Haiku 5.5, faster and much cheaper).
+- Runs on the model you pick with `--model` (an id or an alias), with your own
+  key for its provider, from the provider's environment variable or the key
+  saved in the app under Settings > Models. You pay the provider for what it
+  uses; each run prints its cost and stops at `--max-cost` (default $2.00).
+
+  | `--model` | model | provider, API | key |
+  |---|---|---|---|
+  | `sonnet` (default), `haiku` | Claude Sonnet 5.5, Claude Haiku 5.5 | Anthropic, Messages API | `ANTHROPIC_API_KEY` |
+  | `gpt`, `gpt-6.1-sol`, `gpt-6-astra` | GPT-6.1 Terra, GPT-6.1 Sol, GPT-6 Astra | OpenAI, Responses API | `OPENAI_API_KEY` |
+  | `grok` | Grok 4.7 | xAI, Responses API | `XAI_API_KEY` |
+  | `kimi` | Kimi K3.1 Pro | Moonshot AI, Anthropic-compatible | `MOONSHOT_API_KEY` |
+  | `deepseek` | DeepSeek V4.1 Flash (`deepseek-flash`) | DeepSeek, Anthropic-compatible | `DEEPSEEK_API_KEY` |
+  | `qwen` | Qwen3.8 Max | Alibaba Cloud Model Studio, Anthropic-compatible | `DASHSCOPE_API_KEY` |
+
+  `openstrand/providers.py` has the endpoints and prices, and a client for
+  each that answers like the anthropic SDK, so the agent loop is the same for
+  every model. The Responses API client uses Python's own urllib: nothing more
+  to install.
+- Web search and fetch (Claude models only: they are Anthropic's server
+  tools) are on (`--no-web` turns them off); each search costs about $0.01.
+  The model thinks at `--effort high` by default (a thinking budget on the
+  Anthropic-compatible endpoints, reasoning effort on the Responses API).
 - Results go to `--out-dir` (default `designs/`): `design.json` and `design.png`.
 - `--json-events` prints one JSON line per step; the app's Claude panel reads
   these.
@@ -139,15 +154,82 @@ package bundled first.
 
 The agent runs in its own process, so it cannot touch the app's windows. When
 the app starts it (`--app`), Claude also gets tools that act on the running
-app: `list_tabs`, `read_tab`, `open_in_new_tab`, `rename_tab`, `switch_tab`
-and `edit_mask_in_tab`. Each call goes out as a JSON line (`{"type": "app_call", ...}`);
-the panel hands it to `AppBridge` (`src/claude_bridge.py`), which runs it on
+app: `list_tabs`, `read_tab`, `read_tab_step`, `open_in_new_tab`, `rename_tab`,
+`switch_tab`, `edit_mask_in_tab`, `edit_strand_in_tab`, `edit_layers_in_tab`,
+`edit_groups_in_tab`, `show_group`, `app_window`, `read_settings` and
+`app_settings`. Each call goes out as a JSON line (`{"type": "app_call", ...}`);
+the panel hands it to `AppBridge` (`src/claude_bridge/`, one module per area: tabs,
+strands, masks, layers, groups, window, settings), which runs it on
 the app's main thread with the app's own code (the real `TabManager`, the
 same loader as Load) and answers on the agent's stdin
-(`openstrand/app_tools.py`, `AppClient`). Only those actions exist, only
+(`openstrand/app/client.py`, `AppClient`; the tools Claude sees are in `openstrand/app/`,
+by the same areas). Only those actions exist, only
 designs made in the request can open, and the panel's mode decides: plan
 mode only looks, ask mode shows a card or an Allow / Deny for each change,
 auto does it.
+
+`read_tab` gives the tab as it is at that moment: every strand with its start,
+end and control points, every mask, the tab's undo history, and a version (a
+fingerprint of its strands and groups). The person keeps working while Claude
+does, so an edit in the tab names the version it was worked out on, and the
+bridge refuses it when the tab changed since: Claude reads it again.
+`read_tab_step` loads any step of the tab's undo history (before the person's
+latest change, or a step they undid) as a copy. `edit_strand_in_tab` moves a
+strand's ends and handles with Move mode's own code, as a drag does (strands
+joined at a moved end follow, erase boxes follow their crossing), one undo step.
+
+The other areas are the app's own panels and buttons, called the way a click
+calls them:
+
+- `edit_layers_in_tab`: the layer panel's right-click menu (hide, shadows,
+  colors, widths, side lines, arrows, dashes, circles, full arrows, end styles,
+  fold the start edge, close the knot, copy and paste strand data).
+- `edit_groups_in_tab` and `show_group`: the group panel (create, rename,
+  delete, move, snap, rotate, strand angles, shadows, mask grid, duplicate).
+- `app_window`: the main window. View ops (zoom, center, grid, layer names,
+  the tab edge, the Strands/Masks switch, modes, select) change only what the
+  person sees and run in any mode; edit ops (undo, redo, control points,
+  shadows, New Strand from a start to an end, delete, Delete All, New Level,
+  locks, clearing the history) change the tab; `save` and `save_image` write
+  a file to a path.
+- `read_settings` and `app_settings`: the Settings dialog, set through its own
+  widgets and the code its OK button runs, so the dialog shows what Claude set
+  (dark mode is `{"theme": "dark"}`). Settings make no undo step; the reply
+  gives the old values.
+
+Where a button asks first (Delete All) or opens a dialog (Save, Image, a color,
+the default width), the bridge answers that dialog with Claude's request
+without showing it (`base.patched`), and the button's own code runs on.
+
+The agent reads its stdin only while a call waits for the app's answer, and
+loads numpy before it starts reading. On Windows a read left waiting holds the
+pipe, and a DLL that looks at the standard handles as it loads (numpy's do)
+waits for it: that is how the knot tools once hung in the app for good.
+
+### Progress
+
+A long tool says how far it has got (`openstrand/progress.py`): the fraction
+done, what it is doing, and about once a second a small picture of the cord it
+works on. `tie_knot` shows the cord laid out and pulled tight, then each step
+as it is drawn; `draw_design` shows the design while it fits the strands (it
+cannot know its total, so its bar slides). The panel draws the picture with a
+bar, the time left and the tool's own time on its row, and the bar under the
+conversation too; a finished tool's row says how long it took, and Stop marks
+the tool stopped. The events go out on the agent's real stdout, kept aside,
+since tools run with stdout pointed at nothing to hide the app's chatter. In a
+terminal, `openstrand agent` prints a line per stage.
+
+A finished tool keeps a picture on its row when one says something; the mouse
+over it shows it larger. In the app, the tools that make, change, check or read
+a design (`load_sample`, `make_*`, `draw_design`, `tie_knot`, `edit_mask`, a
+preview included, `recolor`, `make_steps`, `render`, `identify_knot`,
+`check_masks`, `read_tab`, `read_tab_step`) end with the design drawn by the
+app's real canvas, cut to the design (`Workspace.snapshot`, once per version).
+The panel pictures the app tools itself: the canvas as an edit, a tab switch or
+a view change left it (without Claude floating over it), the group panel for
+`show_group`, the window (or the Settings page shown) for `app_settings`. Tools
+that answer with words (`search_samples`, `knot_library`, `describe`,
+`validate`, `list_tabs`, `rename_tab`, `read_settings`) have none.
 
 `make_steps` (`openstrand/steps.py`) turns a design into tying steps: the cord
 drawn so far along its path, every crossing with its finished over and under,

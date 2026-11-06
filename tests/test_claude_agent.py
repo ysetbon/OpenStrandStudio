@@ -251,14 +251,22 @@ def test_other_api_errors_are_not_swallowed(tmp_path):
 def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch):
     import claude_settings
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    assert claude_settings.load() == {"api_key": "", "model": "claude-sonnet-5-5", "web": True, "max_cost": 2.0,
-                                      "spent": 0.0, "spent_since": "", "panel_open": False, "show_button": True,
-                                      "effort": "high", "session_limit": 10.0, "mode": "auto"}
+    assert claude_settings.load() == {"api_key": "", "keys": {}, "model": "claude-sonnet-5-5", "web": True,
+                                      "max_cost": 2.0, "spent": 0.0, "spent_since": "", "panel_open": False,
+                                      "show_button": True, "effort": "high", "session_limit": 10.0, "mode": "auto"}
     claude_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5", web=False, max_cost=5)
-    assert claude_settings.load() == {"api_key": "sk-ant-test-1234567890", "model": "claude-haiku-5-5",
+    assert claude_settings.load() == {"api_key": "sk-ant-test-1234567890",
+                                      "keys": {"anthropic": "sk-ant-test-1234567890"}, "model": "claude-haiku-5-5",
                                       "web": False, "max_cost": 5.0, "spent": 0.0, "spent_since": "",
                                       "panel_open": False, "show_button": True,
                                       "effort": "high", "session_limit": 10.0, "mode": "auto"}
+    # Every provider has its key; the model can be any provider's.
+    claude_settings.save(provider_key=("xai", " xai-test-123456789 "), model="grok-4.7")
+    saved = claude_settings.load()
+    assert saved["keys"] == {"anthropic": "sk-ant-test-1234567890", "xai": "xai-test-123456789"}
+    assert saved["model"] == "grok-4.7" and claude_settings.provider_of("grok-4.7") == "xai"
+    claude_settings.save(provider_key=("xai", ""))
+    assert claude_settings.load()["keys"] == {"anthropic": "sk-ant-test-1234567890"}
     claude_settings.save(max_cost=1000)
     assert claude_settings.load()["max_cost"] == claude_settings.MAX_COST_RANGE[1]
     if os.name == "posix":
@@ -275,7 +283,14 @@ def test_cli_agent_without_a_key_says_where_to_add_it(tmp_path):
     env.pop("ANTHROPIC_API_KEY", None)
     result = subprocess.run([sys.executable, "-m", "openstrand", "agent", "a heart"], cwd=ROOT, env=env,
                             capture_output=True, text=True, timeout=120)
-    assert result.returncode == 1 and "Settings > Claude" in result.stderr
+    assert result.returncode == 1 and "Settings > Models" in result.stderr and "ANTHROPIC_API_KEY" in result.stderr
+    env.pop("XAI_API_KEY", None)
+    result = subprocess.run([sys.executable, "-m", "openstrand", "agent", "a heart", "--model", "grok"], cwd=ROOT,
+                            env=env, capture_output=True, text=True, timeout=120)
+    assert result.returncode == 1 and "no xAI (Grok) API key: set XAI_API_KEY" in result.stderr
+    result = subprocess.run([sys.executable, "-m", "openstrand", "agent", "a heart", "--model", "gpt-9"], cwd=ROOT,
+                            env=env, capture_output=True, text=True, timeout=120)
+    assert result.returncode == 1 and "unknown model gpt-9" in result.stderr
 
 
 # ------------------------------------------------------------------ app
@@ -490,7 +505,7 @@ def test_the_panel_asks_for_a_key_before_sending(window, monkeypatch, tmp_path):
     panel.prompt_edit.setText("a heart")
     panel.send()
     assert panel.process is None or not panel.running()
-    assert "Settings > Claude" in panel.transcript.toPlainText()
+    assert "Settings > Models" in panel.transcript.toPlainText()
 
 
 def test_spending_adds_up_across_requests_until_reset(tmp_path, monkeypatch):
@@ -565,7 +580,7 @@ def test_the_settings_page_saves_key_and_model(monkeypatch, tmp_path):
     page.show_check.setChecked(False)
     assert shown == [False] and claude_settings.load()["show_button"] is False
     page.retranslate("he")
-    assert page.model_combo.count() == 2 and not page.show_check.isChecked()
+    assert page.model_combo.count() == len(claude_settings.MODELS) and not page.show_check.isChecked()
     assert not page.web_check.isChecked() and page.limit_spin.value() == 4.5
 
 
@@ -810,7 +825,7 @@ def test_the_status_line_switches_mode_model_and_effort(window, monkeypatch, tmp
     # The model and effort menus save the choice and the status line shows it.
     haiku = [a for a in panel.model_menu.actions() if "Haiku" in a.text()][0]
     haiku.trigger()
-    assert claude_settings.load()["model"] == "claude-haiku-5-5" and panel.model_button.text().startswith("Haiku 5.5")
+    assert claude_settings.load()["model"] == "claude-haiku-5-5" and panel.model_button.text().startswith("Claude Haiku 5.5")
     top = [a for a in panel.effort_menu.actions() if a.text() == "Max effort"][0]
     top.trigger()
     assert claude_settings.load()["effort"] == "max" and panel.effort_button.text().startswith("Max effort")
@@ -842,6 +857,179 @@ def test_steps_fold_into_one_line_once_claude_answers(window, monkeypatch, tmp_p
     assert "Two rings that link" not in shown
     panel.follow_link(QUrl(f"os:think/{index}/0"))
     assert "Two rings that link like a chain." in panel.transcript.toPlainText()
+
+
+def test_a_long_tool_shows_its_progress_with_a_picture_and_time_left(window, monkeypatch, tmp_path):
+    from PyQt5.QtCore import QUrl
+    from openstrand.progress import picture
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel = window.claude_panel
+    panel.set_mode("auto")
+    panel.entries.clear()
+    panel.handle_event({"type": "tool_start", "name": "tie_knot", "input": {"knot": "overhand"}})
+    step = panel.running_step("tie_knot")
+    assert step is not None and step["key"] and panel.tick.isActive()
+    step["start"] -= 10  # it has run ten seconds
+    cord = [(100 + 4 * k, 300 + 40 * ((k // 10) % 2), 5.0 if 20 < k < 30 else 0.0) for k in range(80)]
+    panel.handle_event({"type": "tool_progress", "name": "tie_knot", "stage": "draw_step", "step": 3, "steps": 5,
+                        "fraction": 0.5, "frame": picture([cord], 24, "#257d98")})
+    assert step["fraction"] == 0.5 and step["frame"] and step["eta"] is not None
+    shown = panel.transcript.toPlainText()
+    assert "Tie knot" in shown and "drawing step 3 of 5" in shown
+    assert re.search(r"50% · about \d+s left · 10s", shown)  # ten seconds for half: about ten more
+    html_text = panel.transcript.toHtml()
+    assert f'claude-frame:{step["key"]}' in html_text and f'claude-bar:{step["key"]}' in html_text
+    picture_shown = panel.transcript.document().resource(3, QUrl(f'claude-frame:{step["key"]}'))
+    assert picture_shown is not None and not picture_shown.isNull()  # 3: QTextDocument.ImageResource
+    assert panel.working.progress[0] == 0.5 and "50%" in panel.working.progress[1]
+    assert panel.working.label == "Tie knot · drawing step 3 of 5"
+    assert panel.working.grab().width() > 0
+    # A tool that cannot tell how far it is: a sliding bar, never a made-up percent.
+    panel.handle_event({"type": "tool_progress", "name": "tie_knot", "stage": "draw_step", "step": 4,
+                        "steps": 5, "fraction": None})
+    assert step["fraction"] == 0.5  # the bar never goes back
+    panel.handle_event({"type": "tool_end", "name": "tie_knot", "ok": True, "summary": "Overhand knot · 5 steps"})
+    assert not step["running"] and step["seconds"] >= 10 and panel.working.progress is None
+    assert "Overhand knot · 5 steps · 10s" in panel.transcript.toPlainText()  # what it took, once done
+    gone = panel.transcript.document().resource(3, QUrl(f'claude-frame:{step["key"]}'))
+    assert gone is None or gone.isNull()  # the picture is freed
+    panel.refresh_running()
+    assert not panel.tick.isActive()  # nothing runs: the second hand stops
+
+
+def test_the_mouse_over_a_tool_s_picture_shows_it_larger_and_it_keeps_moving(window, monkeypatch, tmp_path):
+    from PyQt5.QtCore import QEvent, QPoint, QPointF, Qt
+    from PyQt5.QtGui import QMouseEvent
+    from PyQt5.QtWidgets import QApplication
+    from openstrand.progress import picture
+    import claude_panel
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel = window.claude_panel
+    panel.set_open(True)
+    panel.entries.clear()
+    panel.handle_event({"type": "tool_start", "name": "tie_knot", "input": {}})
+    step = panel.running_step("tie_knot")
+    frame = lambda k: picture([[(100 + 4 * n, 300 + k * (n % 9), 0.0) for n in range(60)]], 24, "#257d98")
+    panel.handle_event({"type": "tool_progress", "name": "tie_knot", "stage": "lay_out", "fraction": 0.2,
+                        "frame": frame(1)})
+    assert 'href="os:frame/' in panel.transcript.toHtml()
+    QApplication.processEvents()
+    # Find the picture in the conversation and move the mouse over it.
+    viewport = panel.transcript.viewport()
+    spot = next((QPoint(x, y) for y in range(0, viewport.height(), 3) for x in range(0, viewport.width(), 3)
+                 if panel.transcript.anchorAt(QPoint(x, y)).startswith("os:frame/")), None)
+    assert spot is not None
+    move = QMouseEvent(QEvent.MouseMove, QPointF(spot), QPointF(viewport.mapToGlobal(spot)),
+                       Qt.NoButton, Qt.NoButton, Qt.NoModifier)
+    panel.eventFilter(viewport, move)
+    preview = panel.preview
+    assert preview.isVisible() and preview.key == step["key"]
+    size = preview.pixmap().deviceIndependentSize() if hasattr(preview.pixmap(), "deviceIndependentSize") \
+        else preview.pixmap().size() / preview.pixmap().devicePixelRatio()
+    assert (round(size.width()), round(size.height())) == claude_panel.PREVIEW_SIZE
+    before = preview.pixmap().toImage()
+    panel.handle_event({"type": "tool_progress", "name": "tie_knot", "stage": "tighten", "fraction": 0.6,
+                        "frame": frame(4)})
+    assert preview.isVisible() and preview.pixmap().toImage() != before  # the new frame, still large
+    panel.eventFilter(viewport, QEvent(QEvent.Leave))
+    assert not preview.isVisible()
+    panel.eventFilter(viewport, move)
+    assert preview.isVisible()
+    panel.handle_event({"type": "tool_end", "name": "tie_knot", "ok": True, "summary": "done"})
+    assert not preview.isVisible() and "frame_data" not in step  # the tool ended: no picture to show
+
+
+def test_finished_tools_show_a_picture_where_one_says_something(tmp_path):
+    """In the app, a tool that made, changed, checked or read a design ends with its
+    picture, cut to the design; tools that answer with words get none."""
+    from types import SimpleNamespace
+    from PyQt5.QtGui import QImage
+    from openstrand import agent, draw
+    events = []
+    runner = agent.Agent(SimpleNamespace(), tmp_path, app=SimpleNamespace(call=lambda name, args: {}),
+                         on_event=events.append)
+    data, _ = draw.build({"cords": [{"points": [[100, 300], [300, 200], [500, 300]], "color": "teal"}]})
+    try:
+        runner.workspace.store(data)
+        path = runner.tool_image("recolor", {})
+        assert path and Path(path).exists()
+        image = QImage(path)
+        assert 300 < image.width() < 700 and image.height() < image.width()  # the design, not the whole canvas
+        assert runner.tool_image("identify_knot", {}) == path  # the same design: drawn once
+        assert runner.tool_image("describe", {}) is None and runner.tool_image("list_tabs", {}) is None
+        runner.app = None  # the command line: nobody shows pictures
+        assert runner.tool_image("recolor", {}) is None
+    finally:
+        runner.workspace.close()
+
+
+def test_a_finished_tool_keeps_its_picture_and_app_tools_picture_the_canvas(window, monkeypatch, tmp_path):
+    from PyQt5.QtCore import QUrl
+    from PyQt5.QtGui import QColor, QImage
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel = window.claude_panel
+    panel.set_open(True)
+    panel.entries.clear()
+    panel.out_dir = str(tmp_path)
+    # The agent's picture of the design it made.
+    made = tmp_path / "made.png"
+    picture = QImage(400, 200, QImage.Format_ARGB32)
+    picture.fill(QColor("#257d98"))
+    picture.save(str(made))
+    panel.handle_event({"type": "tool_start", "name": "make_heart", "input": {}})
+    step = panel.running_step("make_heart")
+    panel.handle_event({"type": "tool_end", "name": "make_heart", "ok": True, "summary": "Heart", "image": str(made)})
+    assert step["picture"] == str(made) and f'claude-frame:{step["key"]}' in panel.transcript.toHtml()
+    shown = panel.transcript.document().resource(3, QUrl(f'claude-frame:{step["key"]}'))
+    assert shown is not None and not shown.isNull()
+    # An app tool: the canvas as the tool left it, without Claude floating over it.
+    panel.handle_event({"type": "tool_start", "name": "app_window", "input": {"op": "zoom"}})
+    step = panel.running_step("app_window")
+    panel.handle_event({"type": "tool_end", "name": "app_window", "ok": True, "summary": "zoom 100 %"})
+    grabbed = QImage(step["picture"])
+    assert grabbed.size() == window.canvas.size()
+    # Words only (a list), or a failed tool: no picture.
+    for name, ok in (("list_tabs", True), ("app_window", False)):
+        panel.handle_event({"type": "tool_start", "name": name, "input": {}})
+        step = panel.running_step(name)
+        panel.handle_event({"type": "tool_end", "name": name, "ok": ok, "summary": ""})
+        assert "picture" not in step
+
+
+def test_stop_folds_the_steps_says_stopped_once_and_claude_hears_of_it(window, monkeypatch, tmp_path):
+    from types import SimpleNamespace
+    from PyQt5.QtCore import QProcess
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel = window.claude_panel
+    panel.set_mode("auto")
+    panel.entries.clear()
+    panel.history.clear()
+    panel.out_dir, panel.prompt, panel.shown_prompt = str(tmp_path), "an overhand tutorial", "an overhand tutorial"
+    panel.run_cost, panel.total_before, panel.run_texts, panel.done_event = 0.0, 0.0, [], None
+    panel.stdout_buffer, panel.stderr_text, panel.stopping = b"", "", False
+    panel.add_user("an overhand tutorial")
+    panel.handle_event({"type": "tool_start", "name": "identify_knot", "input": {}})
+    killed = []
+    panel.process = SimpleNamespace(state=lambda: QProcess.Running, kill=lambda: killed.append(True),
+                                    readAllStandardOutput=lambda: b"", readAllStandardError=lambda: b"",
+                                    write=lambda data: None)
+    panel.send_or_stop()
+    panel.finished()
+    panel.process = None
+    assert killed
+    group = [e for e in panel.entries if e["kind"] == "group"][-1]
+    assert group["end"] is not None and not group["open"]  # folded, not left "running"
+    assert group["steps"][-1]["stopped"] and not group["steps"][-1]["running"]
+    shown = panel.transcript.toPlainText()
+    assert shown.count("Stopped.") == 1 and "Claude stopped" not in shown
+    assert panel.history[-1]["tools"] and "identify_knot (stopped by the person" in panel.history[-1]["tools"][0]
+
+
+def test_claude_hears_which_tools_ran_and_how_they_ended():
+    from openstrand.agent import with_history
+    text = with_history("why so slow?", [{"user": "an overhand tutorial", "claude": "",
+                                          "tools": ["tie_knot (stopped by the person, 339 s)"]}])
+    assert "Tools you ran" in text and "tie_knot (stopped by the person, 339 s)" in text
 
 
 def test_the_working_line_draws_the_knot_while_claude_works(window):
@@ -1019,6 +1207,87 @@ def test_the_app_client_waits_for_its_own_answer():
     writer.close()
 
 
+def test_the_app_client_reads_stdin_only_while_a_call_waits():
+    """No read may be left waiting on stdin while a tool runs: on Windows it
+    holds the pipe, and loading numpy's DLLs (they check the standard handles)
+    then waits for it, so the first knot tool hung for good."""
+    import queue as _queue
+    import threading as _threading
+    import time as _time
+    from openstrand.app_tools import AppClient
+
+    class Stdin:
+        def __init__(self):
+            self.waiting, self.lines = _threading.Event(), _queue.Queue()
+
+        def readline(self):
+            self.waiting.set()
+            line = self.lines.get()
+            self.waiting.clear()
+            return line
+
+    stdin = Stdin()
+    client = AppClient(lambda event: stdin.lines.put(json.dumps({"id": event["id"], "ok": True}) + "\n"),
+                       stream=stdin, timeout=5)
+    _time.sleep(0.2)
+    assert not stdin.waiting.is_set()  # started: nothing read yet
+    assert client.call("list_tabs", {}) == {}
+    _time.sleep(0.2)
+    assert not stdin.waiting.is_set()  # answered: nothing left waiting while tools run
+    assert client.call("list_tabs", {}) == {}
+    stdin.lines.put("")  # the app closes the pipe
+
+
+def test_the_log_says_what_a_request_still_waits_for(tmp_path):
+    from openstrand.app_tools import AppClient
+    from openstrand.debuglog import Log
+    log = Log(tmp_path / "agent.log")
+    log("round 1: asking claude-sonnet-5-5")
+    with log.waiting("Claude's answer (round 1)", every=0.05):
+        time.sleep(0.2)
+    read_end, write_end = os.pipe()
+    writer = os.fdopen(write_end, "w")
+
+    def emit(event):
+        writer.write(json.dumps({"id": event["id"], "ok": True, "result": {}}) + "\n")
+        writer.flush()
+    AppClient(emit, stream=os.fdopen(read_end), timeout=5, log=log).call("list_tabs", {})
+    lines = (tmp_path / "agent.log").read_text(encoding="utf-8").splitlines()
+    assert all(line.startswith("log ") for line in lines)
+    assert "round 1: asking claude-sonnet-5-5" in lines[0]
+    assert any("still waiting for Claude's answer (round 1)" in line for line in lines)
+    assert any("asking the app #1: list_tabs" in line for line in lines)
+    assert any("the app answered #1 in" in line and line.endswith("ok") for line in lines)
+
+
+def test_the_panel_prints_the_agent_log_in_the_terminal_and_keeps_errors_apart(window, monkeypatch, tmp_path):
+    import io
+    from types import SimpleNamespace
+    from PyQt5.QtCore import QProcess
+    import claude_panel
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    assert "--log" in claude_panel.agent_command("a heart", "claude-haiku-5-5", str(tmp_path))[1]
+    terminal = io.StringIO()
+    monkeypatch.setattr(sys, "__stderr__", terminal)
+    panel = window.claude_panel
+    panel.entries.clear()
+    chunks = [b"log 10:00:01 +    0.2s  round 1: asking claude-sonnet-5-5\nlog 10:00:4", b"0 +   39.0s  ... still",
+              b" waiting for Claude's answer (round 1): 30s\nerror: the Anthropic API returned 529: overloaded\n"]
+    panel.process = SimpleNamespace(state=lambda: QProcess.NotRunning, readAllStandardError=lambda: chunks.pop(0) if chunks else b"",
+                                    readAllStandardOutput=lambda: b"")
+    panel.stderr_text, panel.stopping, panel.done_event = "", False, None
+    panel.out_dir = str(tmp_path)
+    for _ in range(3):
+        panel.read_errors()
+    shown = terminal.getvalue().splitlines()
+    assert shown[0].startswith("[Claude] 10:00:01") and "round 1: asking" in shown[0]
+    assert "still waiting for Claude's answer (round 1): 30s" in shown[1]  # a line split across reads, whole
+    assert shown[2] == "[Claude] error: the Anthropic API returned 529: overloaded"
+    panel._finish()
+    panel.process = None
+    assert "Claude stopped: the Anthropic API returned 529: overloaded" in panel.transcript.toPlainText()
+
+
 def test_the_agent_offers_app_tools_only_from_the_app(tmp_path):
     from types import SimpleNamespace
     from openstrand import agent
@@ -1028,7 +1297,7 @@ def test_the_agent_offers_app_tools_only_from_the_app(tmp_path):
     app = SimpleNamespace(call=lambda name, args: {})
     assert APP_TOOL_NAMES <= names(agent.Agent(SimpleNamespace(), tmp_path, app=app))
     looking = names(agent.Agent(SimpleNamespace(), tmp_path, app=app, plan=True))
-    assert looking & APP_TOOL_NAMES == {"list_tabs", "read_tab"}
+    assert looking & APP_TOOL_NAMES == {"list_tabs", "read_tab", "read_tab_step", "read_settings"}  # only looks
     assert "running inside the person's OpenStrand Studio" in agent.Agent(
         SimpleNamespace(), tmp_path, app=app).system()[0]["text"]
 
@@ -1068,8 +1337,12 @@ def test_the_bridge_runs_the_real_tab_code(window, monkeypatch, tmp_path, figure
     active = tm.get_active()
     assert tm.title_for(active) == "Step 1 · tail" and len(window.canvas.strands) == len(figure8["strands"])
     listed = bridge.handle({"id": 2, "name": "list_tabs"})["result"]["tabs"]
-    assert {"id": active.id, "title": "Step 1 · tail", "active": True,
-            "strands": len(figure8["strands"]), "unsaved": active.dirty} in listed
+    entry = next(t for t in listed if t["id"] == active.id)
+    assert {k: entry[k] for k in ("id", "title", "active", "strands", "unsaved")} == {
+        "id": active.id, "title": "Step 1 · tail", "active": True,
+        "strands": len(figure8["strands"]), "unsaved": active.dirty}
+    # Its version (changes whenever the person edits it) and where it is in its undo history.
+    assert entry["version"] == bridge.version(active) and entry["at_step"] <= entry["undo_steps"]
     read = bridge.handle({"id": 3, "name": "read_tab", "args": {"tab_id": active.id}})["result"]
     assert len(_project.read(read["file"])["strands"]) == len(figure8["strands"])
     # Nothing from outside this request's folder opens.
@@ -1160,6 +1433,12 @@ def test_claude_ties_a_figure_eight_into_real_tabs_checked_at_every_step(window,
     assert "Figure-eight knot: figure-eight, 4 crossings." in result
     assert "pulled tight: figure-eight" in result and "step 6 as drawn in the app: figure-eight" in result
     assert "WARNING" not in result
+    # Behind the scenes: the request's log says each round, tool and app answer, and how long each took.
+    log = (Path(panel.out_dir) / "agent.log").read_text(encoding="utf-8")
+    assert "agent starts:" in log and "numpy loaded in" in log
+    assert re.search(r"round 1: answered in [\d.]+s, stop tool_use", log)
+    assert re.search(r"tool tie_knot done in [\d.]+s", log) and re.search(r"the app answered #\d+ in", log)
+    assert "request ends: answered" in log
     # Six real tabs, in order, with Claude's titles; each holds its step as the app loaded it.
     assert [tm.title_for(t) for t in tm.tabs[before:]] == TIE_TITLES
     knots = []

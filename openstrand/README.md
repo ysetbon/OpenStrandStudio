@@ -104,13 +104,28 @@ python -m openstrand agent "make this" --image photo.jpg --model haiku
 python -m openstrand agent "make the gold ribbons red" --start designs/bracelet.json
 ```
 
-- Needs your own Anthropic API key: `ANTHROPIC_API_KEY`, or the key saved in
-  the app under Settings > Claude. You pay Anthropic for what it uses; each
-  run prints its cost and stops at `--max-cost` (default $2.00).
-- Web search and fetch are on (`--no-web` turns them off); each search costs
-  about $0.01. Claude thinks at `--effort high` by default.
-- `--model sonnet` (Claude Sonnet 5.5, default) or `--model haiku`
-  (Claude Haiku 5.5, faster and much cheaper).
+- Runs on the model you pick with `--model` (an id or an alias), with your own
+  key for its provider, from the provider's environment variable or the key
+  saved in the app under Settings > Models. You pay the provider for what it
+  uses; each run prints its cost and stops at `--max-cost` (default $2.00).
+
+  | `--model` | model | provider, API | key |
+  |---|---|---|---|
+  | `sonnet` (default), `haiku` | Claude Sonnet 5.5, Claude Haiku 5.5 | Anthropic, Messages API | `ANTHROPIC_API_KEY` |
+  | `gpt`, `gpt-6.1-sol`, `gpt-6-astra` | GPT-6.1 Terra, GPT-6.1 Sol, GPT-6 Astra | OpenAI, Responses API | `OPENAI_API_KEY` |
+  | `grok` | Grok 4.7 | xAI, Responses API | `XAI_API_KEY` |
+  | `kimi` | Kimi K3.1 Pro | Moonshot AI, Anthropic-compatible | `MOONSHOT_API_KEY` |
+  | `deepseek` | DeepSeek V4.1 Flash (`deepseek-flash`) | DeepSeek, Anthropic-compatible | `DEEPSEEK_API_KEY` |
+  | `qwen` | Qwen3.8 Max | Alibaba Cloud Model Studio, Anthropic-compatible | `DASHSCOPE_API_KEY` |
+
+  `openstrand/providers.py` has the endpoints and prices, and a client for
+  each that answers like the anthropic SDK, so the agent loop is the same for
+  every model. The Responses API client uses Python's own urllib: nothing more
+  to install.
+- Web search and fetch (Claude models only: they are Anthropic's server
+  tools) are on (`--no-web` turns them off); each search costs about $0.01.
+  The model thinks at `--effort high` by default (a thinking budget on the
+  Anthropic-compatible endpoints, reasoning effort on the Responses API).
 - Results go to `--out-dir` (default `designs/`): `design.json` and `design.png`.
 - `--json-events` prints one JSON line per step; the app's Claude panel reads
   these.

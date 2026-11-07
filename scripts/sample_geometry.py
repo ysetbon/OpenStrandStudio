@@ -9,6 +9,7 @@ accident.
 """
 import math
 
+import numpy as np
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainterPathStroker
 
@@ -159,11 +160,12 @@ def polyline_crossings(a, b, same=False, gap=0):
     return hits
 
 
-def _least_squares(rows, rhs):
-    """Solve the normal equations of a small dense system; None if singular."""
-    n = len(rows[0])
-    m = [[sum(r[i]*r[j] for r in rows) for j in range(n)]+[sum(r[i]*y for r, y in zip(rows, rhs))]
-         for i in range(n)]
+def _solve_normal(m, rhs):
+    """Solve a small least-squares system from its normal equations (m is
+    the n x n matrix, n <= 4, rhs its right-hand side), Gauss-Jordan with
+    partial pivoting; None if singular."""
+    n = len(rhs)
+    m = [list(map(float, row))+[float(y)] for row, y in zip(m, rhs)]
     scale = max(abs(m[i][i]) for i in range(n)) or 1.0
     for col in range(n):
         pivot = max(range(col, n), key=lambda r: abs(m[r][col]))
@@ -175,6 +177,30 @@ def _least_squares(rows, rhs):
                 f = m[r][col]/m[col][col]
                 m[r] = [x-f*y for x, y in zip(m[r], m[col])]
     return [m[i][n]/m[i][i] for i in range(n)]
+
+
+def _solve_normal_batch(M, v):
+    """_solve_normal for many systems at once: M (S, n, n), v (S, n) ->
+    (x (S, n), ok (S,)), the same pivoting and singular test per system."""
+    S, n = v.shape
+    rows = np.arange(S)
+    aug = np.concatenate([M, v[:, :, None]], axis=2)
+    scale = np.abs(np.diagonal(M, axis1=1, axis2=2)).max(1)
+    scale = np.where(scale == 0, 1.0, scale)
+    ok = np.ones(S, dtype=bool)
+    for col in range(n):
+        pivot = col+np.argmax(np.abs(aug[:, col:, col]), axis=1)
+        ok &= ~(np.abs(aug[rows, pivot, col]) < 1e-12*scale)
+        top = aug[rows, col].copy()
+        aug[rows, col] = aug[rows, pivot]
+        aug[rows, pivot] = top
+        head = np.where(ok, aug[:, col, col], 1.0)
+        for r in range(n):
+            if r != col:
+                f = aug[:, r, col]/head
+                aug[:, r] = aug[:, r]-f[:, None]*aug[:, col]
+    diag = np.diagonal(aug[:, :, :n], axis1=1, axis2=2)
+    return aug[:, :, n]/np.where(ok[:, None], diag, 1.0), ok
 
 
 # --------------------------------------------------------------------------
@@ -202,6 +228,27 @@ class NativeCurve:
         w = self.weights(t)
         return (sum(p[0]*k for p, k in zip(c, w)), sum(p[1]*k for p, k in zip(c, w)))
 
+    def weights_array(self, t):
+        """weights() for an array of t at once: shape t.shape + (4,)."""
+        t = np.asarray(t, dtype=float)
+        f1, f2 = self.f1, self.f2
+        lo = t <= .5
+        v = np.where(lo, 2*t, 2*t-1)
+        u = 1-v
+        u3, v3 = u**3, v**3
+        uuv, uvv = 3*u*u*v, 3*u*v*v
+        w = np.empty(t.shape+(4,))
+        w[..., 0] = np.where(lo, u3+uuv*(1-f1), 0.0)
+        w[..., 1] = np.where(lo, uuv*f1+uvv*(1+f2)/2+v3/2, u3/2+uuv*(1-f2)/2)
+        w[..., 2] = np.where(lo, uvv*(1-f2)/2+v3/2, u3/2+uuv*(1+f2)/2+uvv*f2)
+        w[..., 3] = np.where(lo, 0.0, uvv*(1-f2)+v3)
+        return w
+
+    def points_array(self, curves, t):
+        """point() for many curves at once: curves (..., 4, 2), t (..., k)
+        -> (..., k, 2)."""
+        return self.weights_array(t) @ curves
+
     def fit_span(self, samples, t1, t2, headings=None):
         """Handles for one span; returns (curve, max deviation, max turn error).
 
@@ -211,67 +258,166 @@ class NativeCurve:
         largest angle, in degrees, between the curve and the design: a curve
         can stay close yet bend unevenly, which shows as flat spots.
         """
-        a, b = samples[0], samples[-1]
-        lengths = arc_lengths(samples)
-        total = lengths[-1]
-        if total < 1e-6:
-            return None, math.inf, math.inf
-        ts = [s/total for s in lengths]
-        curve = None
+        P = np.asarray(samples, dtype=float)[None, :, :2]
+        H = None if not headings else np.asarray(headings, dtype=float)[None, :, :2]
+        return self.fit_spans(P, np.array([len(samples)]), [t1], [t2], H)[0]
+
+    # Spans fitted per batch: samples x spans, so a batch stays a few MB.
+    BATCH = 24000
+
+    def fit_spans(self, P, m, t1s, t2s, H=None):
+        """fit_span for many spans at once, the same arithmetic on whole
+        arrays: drawing one design fits tens of thousands of spans, which
+        took minutes one sample at a time.
+
+        P (S, K, 2): each span's samples, the first m[s] used (the rest is
+        padding); t1s, t2s: each span's end directions, or None; H (S, K, 2):
+        headings, or None. Returns [(curve, error, turn)] as fit_span does.
+        """
+        P = np.asarray(P, dtype=float)
+        m = np.asarray(m, dtype=int)
+        S, K = P.shape[:2]
+        out = [None]*S
+        per = max(1, self.BATCH//max(K, 1))
+        for lo in range(0, S, per):
+            hi = min(S, lo+per)
+            curves, errors, turns, ok = self._fit_batch(
+                P[lo:hi], m[lo:hi], t1s[lo:hi], t2s[lo:hi], None if H is None else H[lo:hi])
+            for k in range(hi-lo):
+                if ok[k]:
+                    out[lo+k] = (tuple((float(x), float(y)) for x, y in curves[k]),
+                                 float(errors[k]), float(turns[k]))
+                else:
+                    out[lo+k] = (None, math.inf, math.inf)
+        return out
+
+    def _fit_batch(self, P, m, t1s, t2s, H):
+        S, K = P.shape[:2]
+        rows = np.arange(S)
+        valid = np.arange(K)[None, :] < m[:, None]
+        a, b = P[:, 0], P[rows, m-1]
+        has1 = np.array([bool(t) for t in t1s])
+        has2 = np.array([bool(t) for t in t2s])
+        T1 = np.array([t[:2] if t else (0.0, 0.0) for t in t1s], dtype=float).reshape(S, 2)
+        T2 = np.array([t[:2] if t else (0.0, 0.0) for t in t2s], dtype=float).reshape(S, 2)
+        step = np.hypot(P[:, 1:, 0]-P[:, :-1, 0], P[:, 1:, 1]-P[:, :-1, 1])
+        lengths = np.concatenate([np.zeros((S, 1)), np.cumsum(np.where(valid[:, 1:], step, 0.0), axis=1)], axis=1)
+        total = lengths[rows, m-1]
+        ok = total >= 1e-6
+        ts = np.where(valid, lengths/np.where(ok, total, 1.0)[:, None], 1.0)
+        curves = np.zeros((S, 4, 2))
+        curves[:, 0], curves[:, 3] = a, b
+        active = ok.copy()
+        e = 1e-4
         for iteration in range(6):
-            # Least squares: p - a*w0 - b*w3 = w1*cp1 + w2*cp2 per sample.
-            rows, rhs = [], []
-            for p, t in zip(samples, ts):
-                w0, w1, w2, w3 = self.weights(t)
-                r = sub(p, add(mul(a, w0+(w1 if t1 else 0)), mul(b, w3+(w2 if t2 else 0))))
-                for axis in (0, 1):
-                    row = []
-                    row += [w1*t1[axis]] if t1 else [w1*(axis == 0), w1*(axis == 1)]
-                    row += [-w2*t2[axis]] if t2 else [w2*(axis == 0), w2*(axis == 1)]
-                    rows.append(row)
-                    rhs.append(r[axis])
-            x = _least_squares(rows, rhs)
-            if x is None:
-                return None, math.inf, math.inf
-            if t1:
-                cp1, x = add(a, mul(t1, x[0])), x[1:]
-            else:
-                cp1, x = (x[0], x[1]), x[2:]
-            cp2 = sub(b, mul(t2, x[0])) if t2 else (x[0], x[1])
-            h1, h2 = dist(a, cp1), dist(b, cp2)
-            if t1 and dot(sub(cp1, a), t1) <= total*.02 or t2 and dot(sub(b, cp2), t2) <= total*.02:
-                return None, math.inf, math.inf
-            if max(h1, h2) > total*1.4:
-                return None, math.inf, math.inf
-            curve = (a, cp1, cp2, b)
-            if iteration == 5:
+            for kind in ((True, True), (True, False), (False, True), (False, False)):
+                idx = np.nonzero(active & (has1 == kind[0]) & (has2 == kind[1]))[0]
+                if len(idx):
+                    ok[idx], curves[idx, 1], curves[idx, 2] = self._solve_handles(
+                        P[idx], valid[idx], ts[idx], a[idx], b[idx], T1[idx], T2[idx], total[idx], *kind)
+            active &= ok
+            if iteration == 5 or not active.any():
                 break
-            updated = [0.0]
-            for p, t in zip(samples[1:-1], ts[1:-1]):
-                e = 1e-4
-                here = self.point(curve, t)
-                ahead, behind = self.point(curve, min(1, t+e)), self.point(curve, max(0, t-e))
-                d = mul(sub(ahead, behind), 1/(2*e))
-                dd = mul(add(sub(ahead, mul(here, 2)), behind), 1/(e*e))
-                r = sub(here, p)
-                den = dot(d, d)+dot(r, dd)
-                updated.append(min(1.0, max(0.0, t-dot(r, d)/den if abs(den) > 1e-9 else t)))
-            updated.append(1.0)
-            if any(x >= y for x, y in zip(updated, updated[1:])):
-                break
-            ts = updated
+            idx = np.nonzero(active)[0]
+            t = ts[idx]
+            inner = valid[idx] & (np.arange(K)[None, :] > 0) & (np.arange(K)[None, :] < m[idx, None]-1)
+            c = curves[idx]
+            here = self.points_array(c, t)
+            ahead = self.points_array(c, np.minimum(1, t+e))
+            behind = self.points_array(c, np.maximum(0, t-e))
+            d = (ahead-behind)*(1/(2*e))
+            dd = (ahead-here*2+behind)*(1/(e*e))
+            r = here-P[idx]
+            den = (d[..., 0]*d[..., 0]+d[..., 1]*d[..., 1])+(r[..., 0]*dd[..., 0]+r[..., 1]*dd[..., 1])
+            usable = np.abs(den) > 1e-9
+            moved = t-(r[..., 0]*d[..., 0]+r[..., 1]*d[..., 1])/np.where(usable, den, 1.0)
+            updated = np.where(inner, np.minimum(1.0, np.maximum(0.0, np.where(usable, moved, t))), t)
+            updated[:, 0] = 0.0
+            updated[np.arange(len(idx)), m[idx]-1] = 1.0
+            pair = valid[idx][:, 1:]
+            stuck = (pair & (updated[:, :-1] >= updated[:, 1:])).any(1)
+            ts[idx[~stuck]] = updated[~stuck]
+            active[idx[stuck]] = False
         # Deviation both ways: samples to curve and curve to samples.
-        error = max(dist(self.point(curve, t), p) for p, t in zip(samples, ts))
-        probe = [self.point(curve, k/24) for k in range(25)]
-        for q in probe:
-            error = max(error, min(segment_distance(q, p, r) for p, r in zip(samples, samples[1:])))
-        turn = 0.0
-        if headings:
-            for h, t in zip(headings, ts):
-                e = 1e-4
-                d = unit(sub(self.point(curve, min(1, t+e)), self.point(curve, max(0, t-e))))
-                turn = max(turn, math.degrees(math.acos(max(-1.0, min(1.0, dot(d, h))))))
-        return curve, error, turn
+        on = self.points_array(curves, ts)-P
+        error = np.where(valid, np.hypot(on[..., 0], on[..., 1]), -np.inf).max(1)
+        probe = self.points_array(curves, np.broadcast_to(np.arange(25)/24, (S, 25)))
+        # Each probe's distance to the nearest piece of the samples' polyline.
+        ax, ay = P[:, None, :-1, 0], P[:, None, :-1, 1]
+        sx, sy = P[:, None, 1:, 0]-ax, P[:, None, 1:, 1]-ay
+        n = sx*sx+sy*sy
+        live = valid[:, None, 1:] & (n > 0)
+        rx, ry = probe[:, :, None, 0]-ax, probe[:, :, None, 1]-ay
+        u = np.clip((rx*sx+ry*sy)/np.where(live, n, 1.0), 0.0, 1.0)
+        u = np.where(live, u, 0.0)
+        gx, gy = rx-sx*u, ry-sy*u
+        far = np.where(valid[:, None, 1:], gx*gx+gy*gy, np.inf).min(2)
+        error = np.maximum(error, np.sqrt(far.max(1)))
+        turn = np.zeros(S)
+        if H is not None:
+            d = self.points_array(curves, np.minimum(1, ts+e))-self.points_array(curves, np.maximum(0, ts-e))
+            size = np.hypot(d[..., 0], d[..., 1])
+            big = size > 1e-12
+            ux = np.where(big, d[..., 0]/np.where(big, size, 1.0), 1.0)
+            uy = np.where(big, d[..., 1]/np.where(big, size, 1.0), 0.0)
+            cosine = np.maximum(-1.0, np.minimum(1.0, ux*H[..., 0]+uy*H[..., 1]))
+            turn = np.where(valid, np.degrees(np.arccos(cosine)), 0.0).max(1)
+        return curves, error, turn, ok
+
+    def _solve_handles(self, P, valid, ts, a, b, T1, T2, total, fixed1, fixed2):
+        """One least-squares round for spans of one kind (which ends have a
+        fixed direction): (ok, cp1, cp2), as fit_span's round, with
+        _solve_normal's pivoting and singular test."""
+        w = self.weights_array(ts)*valid[..., None]
+        w0, w1, w2, w3 = w[..., 0], w[..., 1], w[..., 2], w[..., 3]
+        base = (a[:, None, :]*(w0+(w1 if fixed1 else 0))[..., None]
+                + b[:, None, :]*(w3+(w2 if fixed2 else 0))[..., None])
+        r = (P-base)*valid[..., None]
+        zero = np.zeros_like(w1)
+        X = [w1*T1[:, 0:1]] if fixed1 else [w1, zero]
+        Y = [w1*T1[:, 1:2]] if fixed1 else [zero, w1]
+        X += [-w2*T2[:, 0:1]] if fixed2 else [w2, zero]
+        Y += [-w2*T2[:, 1:2]] if fixed2 else [zero, w2]
+        X, Y = np.stack(X, -1), np.stack(Y, -1)
+        M = np.einsum('ski,skj->sij', X, X)+np.einsum('ski,skj->sij', Y, Y)
+        v = np.einsum('ski,sk->si', X, r[..., 0])+np.einsum('ski,sk->si', Y, r[..., 1])
+        x, ok = _solve_normal_batch(M, v)
+        if fixed1:
+            cp1, x = a+T1*x[:, 0:1], x[:, 1:]
+        else:
+            cp1, x = x[:, :2], x[:, 2:]
+        cp2 = b-T2*x[:, 0:1] if fixed2 else x[:, :2]
+        d1, d2 = cp1-a, b-cp2
+        if fixed1:
+            ok &= ~(d1[:, 0]*T1[:, 0]+d1[:, 1]*T1[:, 1] <= total*.02)
+        if fixed2:
+            ok &= ~(d2[:, 0]*T2[:, 0]+d2[:, 1]*T2[:, 1] <= total*.02)
+        ok &= ~(np.maximum(np.hypot(d1[:, 0], d1[:, 1]), np.hypot(d2[:, 0], d2[:, 1])) > total*1.4)
+        return ok, cp1, cp2
+
+    def _fit_jobs(self, poly, tang, jobs):
+        """fit_span for each job (sample indices, t1, t2) of one design, with
+        its tangents as headings; jobs of a similar sample count share a batch."""
+        if not jobs:
+            return []
+        poly, tang = np.asarray(poly, dtype=float)[:, :2], np.asarray(tang, dtype=float)
+        order = sorted(range(len(jobs)), key=lambda k: len(jobs[k][0]))
+        out = [None]*len(jobs)
+        start = 0
+        while start < len(order):
+            # As many as fit in a batch, padded to the longest of them.
+            end = start+1
+            while end < len(order) and (end+1-start)*len(jobs[order[end]][0]) <= self.BATCH:
+                end += 1
+            group = order[start:end]
+            K = len(jobs[group[-1]][0])
+            index = np.array([jobs[k][0]+[jobs[k][0][-1]]*(K-len(jobs[k][0])) for k in group])
+            fits = self.fit_spans(poly[index], np.array([len(jobs[k][0]) for k in group]),
+                                  [jobs[k][1] for k in group], [jobs[k][2] for k in group], tang[index])
+            for k, f in zip(group, fits):
+                out[k] = f
+            start = end
+        return out
 
     def fit(self, poly, closed, tolerance, forced=(), avoid=(), step=4, max_length=900, min_length=0,
             max_turn=math.radians(150), max_bend_error=6.0, bend_length=150, free_ends=False, cost=None):
@@ -300,10 +446,13 @@ class NativeCurve:
         avoid = set(avoid)-forced
         candidates = sorted((set(range(0, n-1, step))-avoid) | {0, n-1} | forced)
         loose = {0, n-1} if free_ends and not closed else set()
-        best = {0: (0, 0.0, None, None)}
+        # Every span the search below may use: which ones depends only on
+        # the design (length, turn, forced joins), so they are all fitted
+        # first, together (fit_spans), and the search reads the results.
+        tried, jobs = {}, []
         for jj in range(1, len(candidates)):
             j = candidates[jj]
-            options = []
+            tried[jj] = []
             for ii in range(jj-1, -1, -1):
                 i = candidates[ii]
                 span = lengths[j]-lengths[i]
@@ -314,10 +463,17 @@ class NativeCurve:
                 picks = list(range(i, j+1, stride))
                 if picks[-1] != j:
                     picks.append(j)
-                curve, error, bend = self.fit_span([poly[k] for k in picks],
-                                                   None if i in loose else tang[i],
-                                                   None if j in loose else tang[j],
-                                                   [tang[k] for k in picks])
+                tried[jj].append((ii, len(jobs)))
+                jobs.append((picks, None if i in loose else tang[i], None if j in loose else tang[j]))
+        fits = self._fit_jobs(poly, tang, jobs)
+        best = {0: (0, 0.0, None, None)}
+        for jj in range(1, len(candidates)):
+            j = candidates[jj]
+            options = []
+            for ii, job in tried[jj]:
+                i = candidates[ii]
+                span = lengths[j]-lengths[i]
+                curve, error, bend = fits[job]
                 if curve is None and ii == jj-1:
                     curve = (poly[i], lerp(poly[i], poly[j], 1/3), lerp(poly[i], poly[j], 2/3), poly[j])
                     error = bend = 0.0

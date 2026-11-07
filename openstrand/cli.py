@@ -9,6 +9,7 @@ import json
 import re
 import os
 import sys
+import time
 from pathlib import Path
 
 from . import __version__, colors, project
@@ -35,6 +36,27 @@ def quiet(enabled=True):
         os.dup2(saved[1], 2)
         for fd in (*saved, null):
             os.close(fd)
+
+
+def preload():
+    """Load numpy for the knot tools now, before anything reads stdin. On
+    Windows its DLLs look at the standard handles as they load, and wait
+    for any read left on them (see AppClient)."""
+    try:
+        import numpy  # noqa: F401
+    except ImportError:
+        pass  # the knot tools say how to install it when one is used
+
+
+def event_stream():
+    """Where the agent's events go: the real stdout, kept apart from it. A
+    tool runs inside quiet(), which points stdout at nothing to hide the
+    app's chatter; its progress events must still get out while it works."""
+    try:
+        sys.stdout.flush()
+        return os.fdopen(os.dup(sys.stdout.fileno()), 'w', encoding='utf-8', newline='\n', buffering=1)
+    except (AttributeError, OSError, ValueError):  # no real stdout (a test capturing it)
+        return sys.stdout
 
 
 def _write_design(args, data, warnings, source, default_name):
@@ -258,19 +280,17 @@ def cmd_render(args):
     print(f'rendered {out} · {image.width()}x{image.height()}')
 
 
-def api_key():
-    """The Anthropic API key: ANTHROPIC_API_KEY, else the one saved in the app's settings."""
-    key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
-    if not key:
-        try:
-            import claude_settings
-            key = claude_settings.load().get('api_key', '')
-        except Exception:
-            key = ''
-    if not key:
-        raise ValueError('no Anthropic API key: set ANTHROPIC_API_KEY, or add it in '
-                         'OpenStrand Studio under Settings > Claude')
-    return key
+def api_key(provider='anthropic'):
+    """The provider's API key: its environment variable (ANTHROPIC_API_KEY, OPENAI_API_KEY,
+    XAI_API_KEY, MOONSHOT_API_KEY, DEEPSEEK_API_KEY, DASHSCOPE_API_KEY), else the one saved
+    in the app's Settings > Models."""
+    from . import providers
+    try:
+        import claude_settings
+        saved = claude_settings.load().get('keys', {})
+    except Exception:
+        saved = {}
+    return providers.api_key(provider, saved)
 
 
 def _anthropic():
@@ -289,9 +309,15 @@ def _anthropic():
 
 def cmd_agent(args):
     anthropic = _anthropic()
-    from . import agent
-    model = agent.MODELS.get(args.model, args.model)
-    client = anthropic.Anthropic(api_key=api_key())
+    from . import agent, providers
+    try:  # the models Settings > Models offers: the built-in ones and what Refresh models found
+        import claude_settings
+        providers.use_catalog(claude_settings.catalog())
+    except Exception:
+        pass
+    model = providers.resolve(args.model)
+    provider = providers.provider_of(model)
+    client = providers.client_for(model, api_key(provider.key))
     start = project.read(args.start) if args.start else None
     for image in args.image or []:
         if not Path(image).is_file():
@@ -300,25 +326,41 @@ def cmd_agent(args):
     if not args.max_cost > 0:
         raise ValueError('--max-cost must be more than 0')
     app = None
+    events = event_stream()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    from .debuglog import Log
+    log = Log(out_dir / 'agent.log', to_stderr=args.log)
+    log(f'agent starts: model {model}, effort {args.effort}, web {not args.no_web}, plan {args.plan}, '
+        f'app {args.app}, max ${args.max_cost:.2f}, folder {out_dir.resolve()}')
+    log(f'python {sys.version.split()[0]} on {sys.platform}, {sys.executable}')
     if args.app:  # started by OpenStrand Studio: its tabs are tools, answered on stdin
-        from .app_tools import AppClient
+        began = time.monotonic()
+        preload()
+        log(f'numpy loaded in {time.monotonic() - began:.1f}s (before stdin is read)')
+        from .app import AppClient
         args.json_events = True
-        app = AppClient(lambda e: agent.print_events(e, True))
+        app = AppClient(lambda e: agent.print_events(e, True, out=events), log=log)
     runner = agent.Agent(client, out_dir, model=model, max_cost=args.max_cost, web=not args.no_web,
                          effort=args.effort, plan=args.plan, app=app,
-                         on_event=lambda e: agent.print_events(e, args.json_events),
-                         quiet=lambda: quiet(not args.verbose))
+                         on_event=lambda e: agent.print_events(e, args.json_events, out=events),
+                         quiet=lambda: quiet(not args.verbose), log=log)
     try:
         history = json.loads(Path(args.history).read_text(encoding='utf-8')) if args.history else None
         result = runner.run(args.prompt, images=args.image or [], start=start, history=history)
-    except anthropic.AuthenticationError:
-        raise ValueError('the Anthropic API key was refused: check it in Settings > Claude') from None
+    except (anthropic.AuthenticationError, anthropic.PermissionDeniedError):
+        raise ValueError(f'the {provider.name} API key was refused: check it in Settings > Models') from None
     except anthropic.APIConnectionError:
-        raise ValueError('cannot reach the Anthropic API: check the internet connection') from None
+        raise ValueError(f'cannot reach the {provider.name} API: check the internet connection') from None
     except anthropic.RateLimitError:
-        raise ValueError('the Anthropic API is busy (rate limit): try again in a minute') from None
+        raise ValueError(f'the {provider.name} API is busy (rate limit): try again in a minute') from None
     except anthropic.APIStatusError as e:
-        raise ValueError(f'the Anthropic API returned {e.status_code}: {e.message}') from None
+        raise ValueError(f'the {provider.name} API returned {e.status_code}: {e.message}') from None
+    except providers.ProviderError as e:
+        if e.status_code in (401, 403):
+            raise ValueError(f'the {provider.name} API key was refused ({e.message}): check it in '
+                             'Settings > Models') from None
+        raise ValueError(str(e)) from None
+
     if not result['ok']:
         raise SystemExit(1)  # the 'done' event already said why
 
@@ -420,7 +462,11 @@ def build_parser():
     agent_cmd = command('agent', 'ask Claude to build or change a design (needs an Anthropic API key)', cmd_agent)
     agent_cmd.add_argument('prompt', help='what to make, in plain words')
     agent_cmd.add_argument('--image', action='append', help='a reference image (PNG, JPEG, GIF, WebP); repeatable')
-    agent_cmd.add_argument('--model', default='sonnet', help='sonnet (Claude Sonnet 5.5, default) or haiku (Claude Haiku 5.5)')
+    agent_cmd.add_argument('--model', default='sonnet',
+                           help='a model id or alias: sonnet (Claude Sonnet 5.5, default), haiku, gpt (GPT-6.1 Terra), '
+                                'gpt-6.1-sol, gpt-6-astra, grok (Grok 4.7), kimi (Kimi K3.1 Pro), deepseek '
+                                '(DeepSeek V4.1 Flash), qwen (Qwen3.8 Max); each provider\'s key comes from its '
+                                'environment variable or Settings > Models')
     agent_cmd.add_argument('--start', help='a project to start from, such as the current canvas')
     agent_cmd.add_argument('--out-dir', help='folder for design.json and design.png (default designs/)')
     agent_cmd.add_argument('--max-cost', type=float, default=2.00, help='stop when one request has cost this many USD (default 2.00)')
@@ -433,6 +479,8 @@ def build_parser():
     agent_cmd.add_argument('--plan', action='store_true',
                            help='plan mode: research and write a plan, build nothing')
     agent_cmd.add_argument('--json-events', action='store_true', help='print one JSON event per line (for the app)')
+    agent_cmd.add_argument('--log', action='store_true',
+                           help="print the step-by-step log on stderr (it is always in the folder's agent.log)")
 
     render = command('render', "draw a project to PNG with the app's real canvas", cmd_render)
     render.add_argument('file')

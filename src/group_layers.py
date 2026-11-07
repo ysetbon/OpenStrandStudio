@@ -1928,118 +1928,131 @@ class GroupPanel(QWidget):
 
     def start_group_rotation(self, group_name):
         print(f"[DEBUG ROTATE] start_group_rotation called for '{group_name}'")
+        if not self.begin_group_rotation(group_name):
+            return
+        print("[DEBUG ROTATE] About to show dialog...")
+        # Suppress canvas repainting while the dialog is built, to prevent
+        # Windows access-violation crashes when the modal dialog's event loop
+        # triggers a premature paintEvent on the canvas.
+        self.canvas._suppress_repaint = True
+        try:
+            print(f"[DEBUG ROTATE] Constructing GroupRotateDialog for '{group_name}'")
+            parent_widget = self.window() or self
+            print(
+                f"[DEBUG ROTATE] Using parent widget {type(parent_widget).__name__} "
+                f"for GroupRotateDialog('{group_name}')"
+            )
+            dialog = GroupRotateDialog(group_name, group_panel=self, parent=parent_widget)
+            print(f"[DEBUG ROTATE] GroupRotateDialog constructed for '{group_name}'")
+
+            print(f"[DEBUG ROTATE] Connecting dialog signals for '{group_name}'")
+            dialog.rotation_updated.connect(self.update_group_rotation)
+            dialog.finished.connect(
+                lambda result, name=group_name: print(
+                    f"[DEBUG ROTATE] Dialog finished for '{name}' with result={result}"
+                )
+            )
+            # Keep a strong reference while the dialog is open.
+            self._rotation_dialog_ref = dialog
+            print("[DEBUG ROTATE] Dialog created, about to exec...")
+            dialog.setModal(True)
+            self.canvas._suppress_repaint = False
+            try:
+                dialog.exec_()
+                self.finish_group_rotation(group_name)
+                dialog.rotation_finished.emit(group_name)
+            finally:
+                self._rotation_dialog_ref = None
+                dialog.deleteLater()
+            print("[DEBUG ROTATE] Dialog exec completed")
+        except Exception as e:
+            print(f"[DEBUG ROTATE] Rotation setup failed for '{group_name}': {e}")
+            import traceback
+            traceback.print_exc()
+            raise
+        finally:
+            # Ensure repaint is always re-enabled, even on exception
+            self.canvas._suppress_repaint = False
+
+    def begin_group_rotation(self, group_name):
+        """Get a group ready to rotate: note every strand's points before the
+        rotation (it is absolute, from these) and start the canvas's rotation.
+        True when ready. The Rotate Strands dialog and Claude's group tool
+        (src/claude_bridge/groups.py) both start here, then rotate with
+        _perform_immediate_group_rotation and end with finish_group_rotation."""
         # Reset the save-done flag so this rotation can complete properly
         self._rotation_save_done = False
         # Resolve group data on-demand from main_strands
         group_data = self.resolve_group_data(group_name)
-        if group_data:
-            # Populate canvas.groups with resolved data for the duration of the operation
-            if self.canvas and hasattr(self.canvas, 'groups'):
-                self.canvas.groups[group_name] = group_data
-
-            # Set the active group name
-            self.active_group_name = group_name
-            if self.canvas:
-                # Store the current state of all strands in the group before rotation
-                # Using strands list from canvas.groups
-                strands_to_rotate = group_data.get('strands', [])
-                if not strands_to_rotate:
-                    print("[DEBUG ROTATE] No strands to rotate")
-                    return
-
-                print(f"[DEBUG ROTATE] Strands to rotate: {len(strands_to_rotate)}")
-                self.pre_rotation_state = {}
-
-                for strand in strands_to_rotate:
-                    try:
-                        print(f"[DEBUG ROTATE] Processing strand: {strand.layer_name} ({strand.__class__.__name__})")
-                        # Store all current positions and angles
-                        state = {
-                            'start': QPointF(strand.start),
-                            'end': QPointF(strand.end)
-                        }
-
-                        # Only store control points for regular strands, not masked strands
-                        if not isinstance(strand, MaskedStrand):
-                            state['control_point1'] = QPointF(strand.control_point1) if strand.control_point1 else QPointF(strand.start)
-                            state['control_point2'] = QPointF(strand.control_point2) if strand.control_point2 else QPointF(strand.end)
-                            # Store control_point_center if it exists
-                            if hasattr(strand, 'control_point_center') and strand.control_point_center:
-                                state['control_point_center'] = QPointF(strand.control_point_center)
-                        else:
-                            # For MaskedStrand: Store deletion rectangle corners
-                            if hasattr(strand, 'deletion_rectangles') and strand.deletion_rectangles:
-                                print(f"[DEBUG ROTATE]   Storing {len(strand.deletion_rectangles)} deletion rectangles")
-                                rect_corners = []
-                                for rect in strand.deletion_rectangles:
-                                    rect_corners.append({
-                                        'top_left': QPointF(*rect['top_left']),
-                                        'top_right': QPointF(*rect['top_right']),
-                                        'bottom_left': QPointF(*rect['bottom_left']),
-                                        'bottom_right': QPointF(*rect['bottom_right'])
-                                    })
-                                state['deletion_rectangles'] = rect_corners
-
-                        self.pre_rotation_state[strand.layer_name] = state
-                        print(f"[DEBUG ROTATE]   State stored for {strand.layer_name}")
-                    except (RuntimeError, TypeError):
-                        # Strand's C++ object was deleted — skip it
-                        continue
-
-                print("[DEBUG ROTATE] About to start canvas rotation and show dialog...")
-                # Suppress canvas repainting during rotation setup to prevent
-                # Windows access-violation crashes when the modal dialog's
-                # event loop triggers a premature paintEvent on the canvas.
-                self.canvas._suppress_repaint = True
-                try:
-                    print(
-                        f"[DEBUG ROTATE] Calling canvas.start_group_rotation for '{group_name}' "
-                        f"with canvas_group_layers={self.canvas.groups.get(group_name, {}).get('layers', []) if self.canvas else 'N/A'}"
-                    )
-                    self.canvas.start_group_rotation(group_name)
-                    print(f"[DEBUG ROTATE] canvas.start_group_rotation returned for '{group_name}'")
-
-                    print(f"[DEBUG ROTATE] Constructing GroupRotateDialog for '{group_name}'")
-                    parent_widget = self.window() or self
-                    print(
-                        f"[DEBUG ROTATE] Using parent widget {type(parent_widget).__name__} "
-                        f"for GroupRotateDialog('{group_name}')"
-                    )
-                    dialog = GroupRotateDialog(group_name, group_panel=self, parent=parent_widget)
-                    print(f"[DEBUG ROTATE] GroupRotateDialog constructed for '{group_name}'")
-
-                    print(f"[DEBUG ROTATE] Connecting dialog signals for '{group_name}'")
-                    dialog.rotation_updated.connect(self.update_group_rotation)
-                    dialog.finished.connect(
-                        lambda result, name=group_name: print(
-                            f"[DEBUG ROTATE] Dialog finished for '{name}' with result={result}"
-                        )
-                    )
-                    # Keep a strong reference while the dialog is open.
-                    self._rotation_dialog_ref = dialog
-                    print("[DEBUG ROTATE] Dialog created, about to exec...")
-                    dialog.setModal(True)
-                    self.canvas._suppress_repaint = False
-                    try:
-                        dialog.exec_()
-                        self.finish_group_rotation(group_name)
-                        dialog.rotation_finished.emit(group_name)
-                    finally:
-                        self._rotation_dialog_ref = None
-                        dialog.deleteLater()
-                    print("[DEBUG ROTATE] Dialog exec completed")
-                except Exception as e:
-                    print(f"[DEBUG ROTATE] Rotation setup failed for '{group_name}': {e}")
-                    import traceback
-                    traceback.print_exc()
-                    raise
-                finally:
-                    # Ensure repaint is always re-enabled, even on exception
-                    self.canvas._suppress_repaint = False
-            else:
-                print("[DEBUG ROTATE] No canvas")
-        else:
+        if not group_data:
             print(f"[DEBUG ROTATE] No group data for '{group_name}'")
+            return False
+        # Populate canvas.groups with resolved data for the duration of the operation
+        if self.canvas and hasattr(self.canvas, 'groups'):
+            self.canvas.groups[group_name] = group_data
+
+        # Set the active group name
+        self.active_group_name = group_name
+        if not self.canvas:
+            print("[DEBUG ROTATE] No canvas")
+            return False
+        # Store the current state of all strands in the group before rotation
+        # Using strands list from canvas.groups
+        strands_to_rotate = group_data.get('strands', [])
+        if not strands_to_rotate:
+            print("[DEBUG ROTATE] No strands to rotate")
+            return False
+
+        print(f"[DEBUG ROTATE] Strands to rotate: {len(strands_to_rotate)}")
+        self.pre_rotation_state = {}
+
+        for strand in strands_to_rotate:
+            try:
+                print(f"[DEBUG ROTATE] Processing strand: {strand.layer_name} ({strand.__class__.__name__})")
+                # Store all current positions and angles
+                state = {
+                    'start': QPointF(strand.start),
+                    'end': QPointF(strand.end)
+                }
+
+                # Only store control points for regular strands, not masked strands
+                if not isinstance(strand, MaskedStrand):
+                    state['control_point1'] = QPointF(strand.control_point1) if strand.control_point1 else QPointF(strand.start)
+                    state['control_point2'] = QPointF(strand.control_point2) if strand.control_point2 else QPointF(strand.end)
+                    # Store control_point_center if it exists
+                    if hasattr(strand, 'control_point_center') and strand.control_point_center:
+                        state['control_point_center'] = QPointF(strand.control_point_center)
+                else:
+                    # For MaskedStrand: Store deletion rectangle corners
+                    if hasattr(strand, 'deletion_rectangles') and strand.deletion_rectangles:
+                        print(f"[DEBUG ROTATE]   Storing {len(strand.deletion_rectangles)} deletion rectangles")
+                        rect_corners = []
+                        for rect in strand.deletion_rectangles:
+                            rect_corners.append({
+                                'top_left': QPointF(*rect['top_left']),
+                                'top_right': QPointF(*rect['top_right']),
+                                'bottom_left': QPointF(*rect['bottom_left']),
+                                'bottom_right': QPointF(*rect['bottom_right'])
+                            })
+                        state['deletion_rectangles'] = rect_corners
+
+                self.pre_rotation_state[strand.layer_name] = state
+                print(f"[DEBUG ROTATE]   State stored for {strand.layer_name}")
+            except (RuntimeError, TypeError):
+                # Strand's C++ object was deleted — skip it
+                continue
+
+        self.canvas._suppress_repaint = True
+        try:
+            print(
+                f"[DEBUG ROTATE] Calling canvas.start_group_rotation for '{group_name}' "
+                f"with canvas_group_layers={self.canvas.groups.get(group_name, {}).get('layers', []) if self.canvas else 'N/A'}"
+            )
+            self.canvas.start_group_rotation(group_name)
+            print(f"[DEBUG ROTATE] canvas.start_group_rotation returned for '{group_name}'")
+        finally:
+            self.canvas._suppress_repaint = False
+        return True
 
     def update_group_strands(self, group_name):
         """

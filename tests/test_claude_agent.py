@@ -349,6 +349,19 @@ def test_models_refresh_on_their_own_once_a_day_without_a_word(window, tmp_path,
         providers.use_catalog({})
 
 
+def test_the_mouse_over_the_assistant_is_an_arrow_whatever_the_canvas_mode(window):
+    from PyQt5.QtCore import Qt
+    panel = window.claude_panel
+    panel.set_open(True)
+    for mode_cursor in (Qt.CrossCursor, Qt.OpenHandCursor, Qt.SizeAllCursor):
+        window.canvas.setCursor(mode_cursor)  # what a canvas mode sets
+        for widget in (panel, panel.transcript, panel.model_button, panel.send_button):
+            assert widget.cursor().shape() == Qt.ArrowCursor
+        assert panel.transcript.viewport().cursor().shape() == Qt.ArrowCursor
+        assert panel.prompt_edit.viewport().cursor().shape() == Qt.IBeamCursor  # the box you type in
+    window.canvas.setCursor(Qt.ArrowCursor)
+
+
 def test_cli_agent_without_a_key_says_where_to_add_it(tmp_path):
     env = dict(os.environ, APPDATA=str(tmp_path))
     env.pop("ANTHROPIC_API_KEY", None)

@@ -559,6 +559,9 @@ class ClaudePanel(QWidget):
         # Claude floats over the bottom of the canvas: a child of the canvas,
         # so the canvas keeps its size and the drawing never moves.
         super().__init__(canvas if canvas is not None else main_window)
+        # Its own arrow: as a child of the canvas it would show the canvas mode's cursor
+        # (a cross, an open hand) over the conversation and its buttons.
+        self.setCursor(Qt.ArrowCursor)
         self.main_window = main_window
         self.language = language_code
         self.process = None

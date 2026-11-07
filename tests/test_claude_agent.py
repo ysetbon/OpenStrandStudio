@@ -251,12 +251,13 @@ def test_other_api_errors_are_not_swallowed(tmp_path):
 def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch):
     import claude_settings
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    assert claude_settings.load() == {"api_key": "", "keys": {}, "model": "claude-sonnet-5-5", "web": True,
+    assert claude_settings.load() == {"api_key": "", "keys": {}, "catalog": {}, "model": "claude-sonnet-5-5", "web": True,
                                       "max_cost": 2.0, "spent": 0.0, "spent_since": "", "panel_open": False,
                                       "show_button": True, "effort": "high", "session_limit": 10.0, "mode": "auto"}
     claude_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5", web=False, max_cost=5)
     assert claude_settings.load() == {"api_key": "sk-ant-test-1234567890",
-                                      "keys": {"anthropic": "sk-ant-test-1234567890"}, "model": "claude-haiku-5-5",
+                                      "keys": {"anthropic": "sk-ant-test-1234567890"}, "catalog": {},
+                                      "model": "claude-haiku-5-5",
                                       "web": False, "max_cost": 5.0, "spent": 0.0, "spent_since": "",
                                       "panel_open": False, "show_button": True,
                                       "effort": "high", "session_limit": 10.0, "mode": "auto"}
@@ -276,6 +277,36 @@ def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch
     claude_settings.save(api_key="")
     assert "api_key" not in json.loads(Path(claude_settings.settings_path()).read_text())
     assert claude_settings.masked("sk-ant-test-1234567890") == "sk-ant-…7890"
+
+
+def test_refresh_models_is_a_button_that_shows_what_the_providers_said(tmp_path, monkeypatch):
+    from PyQt5.QtWidgets import QApplication
+    QApplication.instance() or QApplication([])
+    import claude_settings
+    from claude_panel import ClaudeSettingsPage
+    from openstrand import providers
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    page = ClaudeSettingsPage("en")
+    assert page.refresh_button.text() == "Refresh models" and "Built-in list" in page.refresh_status.text()
+    found = {"refreshed": "2026-11-07 10:00", "providers": {
+        "xai": {"models": [{"id": "grok-4.7"}, {"id": "grok-4.8", "label": "Grok 4.8", "prices": [2.5, 8.0, 2.5, 0.5]}]},
+        "openai": {"error": "Incorrect API key provided"}}}
+    monkeypatch.setattr(claude_settings, "fetch_catalog", lambda: found)
+    try:
+        page.refresh_models()
+        for _ in range(100):  # the asking runs in a thread; its answer comes back as a signal
+            QApplication.processEvents()
+            if page.refresh_button.isEnabled():
+                break
+            time.sleep(0.02)
+        assert page.refresh_button.isEnabled()
+        status = page.refresh_status.text()
+        assert "1 new, 0 retiring, 0 no longer offered" in status and "OpenAI (GPT): Incorrect API key" in status
+        labels = [page.model_combo.itemText(i) for i in range(page.model_combo.count())]
+        assert any(label.startswith("Grok 4.8") and "new" in label for label in labels)
+        assert claude_settings.load()["catalog"]["refreshed"] == "2026-11-07 10:00"
+    finally:
+        providers.use_catalog({})
 
 
 def test_cli_agent_without_a_key_says_where_to_add_it(tmp_path):
@@ -580,7 +611,7 @@ def test_the_settings_page_saves_key_and_model(monkeypatch, tmp_path):
     page.show_check.setChecked(False)
     assert shown == [False] and claude_settings.load()["show_button"] is False
     page.retranslate("he")
-    assert page.model_combo.count() == len(claude_settings.MODELS) and not page.show_check.isChecked()
+    assert page.model_combo.count() == len(claude_settings.models()) and not page.show_check.isChecked()
     assert not page.web_check.isChecked() and page.limit_spin.value() == 4.5
 
 

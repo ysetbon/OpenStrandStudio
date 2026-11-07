@@ -18,8 +18,9 @@ Model ids, endpoints and prices are as the providers published them in November
 """
 import json
 import os
+import re
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from types import SimpleNamespace
 
 
@@ -32,6 +33,7 @@ class Provider:
     base_url: str = None
     keys_url: str = ''  # where to make a key
     key_hint: str = ''  # what a key looks like (the key field's placeholder)
+    models_url: str = ''  # where it lists the models a key can use (Refresh models)
 
 
 @dataclass(frozen=True)
@@ -42,25 +44,33 @@ class Model:
     prices: tuple                     # input, output, cache write, cache read (USD per million tokens)
     vision: bool = True               # reads images (the reference image, render's picture)
     aliases: tuple = field(default=())
+    new: bool = False                 # found by Refresh models, not in the built-in list
+    retiring: str = ''                # the date (or 'soon') its provider stops it, when announced
+    estimated: bool = False           # its price is an estimate (the provider does not publish it)
 
 
 PROVIDERS = {p.key: p for p in (
     Provider('anthropic', 'Anthropic (Claude)', 'anthropic', 'ANTHROPIC_API_KEY',
-             keys_url='https://console.anthropic.com/settings/keys', key_hint='sk-ant-…'),
+             keys_url='https://console.anthropic.com/settings/keys', key_hint='sk-ant-…',
+             models_url='https://api.anthropic.com/v1/models'),
     Provider('openai', 'OpenAI (GPT)', 'responses', 'OPENAI_API_KEY', 'https://api.openai.com/v1',
-             'https://platform.openai.com/api-keys', 'sk-…'),
+             'https://platform.openai.com/api-keys', 'sk-…', 'https://api.openai.com/v1/models'),
     Provider('xai', 'xAI (Grok)', 'responses', 'XAI_API_KEY', 'https://api.x.ai/v1',
-             'https://console.x.ai', 'xai-…'),
+             'https://console.x.ai', 'xai-…', 'https://api.x.ai/v1/language-models'),
     Provider('moonshot', 'Moonshot AI (Kimi)', 'anthropic-compatible', 'MOONSHOT_API_KEY',
-             'https://api.moonshot.ai/anthropic', 'https://platform.kimi.ai/console/api-keys', 'sk-…'),
+             'https://api.moonshot.ai/anthropic', 'https://platform.kimi.ai/console/api-keys', 'sk-…',
+             'https://api.moonshot.ai/v1/models'),
     Provider('deepseek', 'DeepSeek', 'anthropic-compatible', 'DEEPSEEK_API_KEY',
-             'https://api.deepseek.com/anthropic', 'https://platform.deepseek.com/api_keys', 'sk-…'),
+             'https://api.deepseek.com/anthropic', 'https://platform.deepseek.com/api_keys', 'sk-…',
+             'https://api.deepseek.com/models'),
+    # Its model list is not in Alibaba's docs: Refresh tries the OpenAI-compatible one.
     Provider('qwen', 'Alibaba Cloud (Qwen)', 'anthropic-compatible', 'DASHSCOPE_API_KEY',
              'https://dashscope-intl.aliyuncs.com/apps/anthropic',
-             'https://modelstudio.console.alibabacloud.com/?tab=playground#/api-key', 'sk-…'),
+             'https://modelstudio.console.alibabacloud.com/?tab=playground#/api-key', 'sk-…',
+             'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/models'),
 )}
 
-MODELS = {m.id: m for m in (
+BUILTIN = {m.id: m for m in (
     Model('claude-sonnet-5-5', 'Claude Sonnet 5.5', 'anthropic', (2.00, 10.00, 2.50, 0.20), aliases=('sonnet',)),
     Model('claude-haiku-5-5', 'Claude Haiku 5.5', 'anthropic', (0.10, 0.50, 0.125, 0.01), aliases=('haiku',)),
     Model('gpt-6.1-terra', 'GPT-6.1 Terra', 'openai', (1.00, 5.00, 1.00, 0.05), aliases=('gpt', 'terra')),
@@ -74,6 +84,9 @@ MODELS = {m.id: m for m in (
     # Its cache price is not published for this endpoint: counted at the input price.
     Model('qwen3.8-max', 'Qwen3.8 Max', 'qwen', (2.00, 6.00, 2.00, 2.00), aliases=('qwen',)),
 )}
+# The models offered: the built-in ones, and what Refresh models found (use_catalog
+# changes these in place, so the agent's PRICES follows).
+MODELS = dict(BUILTIN)
 DEFAULT_MODEL = 'claude-sonnet-5-5'
 PRICES = {m.id: m.prices for m in MODELS.values()}
 ALIASES = {alias: m.id for m in MODELS.values() for alias in m.aliases}
@@ -354,3 +367,158 @@ class ResponsesClient:
                 return str(error.get('message') or error)
             return str(error or data)
         return str(data)
+
+
+# ------------------------------------------------------------- Refresh models
+# What a provider lists that the assistant can use: chat models that call tools,
+# not its embedding, speech, image or dated snapshot ids.
+SKIP_WORDS = ('embed', 'audio', 'realtime', 'transcribe', 'tts', 'whisper', 'image', 'imagine', 'dall', 'vision-exp',
+              'moderation', 'search', 'instruct', 'asr', 'omni', '-vl', 'math', 'mt-', 'rerank', 'video', 'ocr')
+FAMILIES = {'anthropic': ('claude-',), 'openai': ('gpt-',), 'xai': ('grok-',), 'moonshot': ('kimi-',),
+            'deepseek': ('deepseek-',), 'qwen': ('qwen3', 'qwen4')}
+SNAPSHOT = re.compile(r'-(\d{4}-\d{2}-\d{2}|\d{8}|\d{4})$')  # gpt-6.1-terra-2026-10-26, qwen3.8-max-0902
+OPUS_FACTOR = 2.5  # an Opus model not in the built-in list: estimated at 2.5 times Sonnet
+
+
+def usable(provider, model_id):
+    model_id = str(model_id or '').lower()
+    return (model_id.startswith(FAMILIES.get(provider, ('',))) and not SNAPSHOT.search(model_id)
+            and not any(word in model_id for word in SKIP_WORDS))
+
+
+def pretty(model_id):
+    """A name for a model only known by its id: 'gpt-6.2-terra' -> 'GPT-6.2 Terra'."""
+    words = str(model_id).split('-')
+    names = {'gpt': 'GPT', 'deepseek': 'DeepSeek', 'grok': 'Grok', 'kimi': 'Kimi', 'claude': 'Claude'}
+    out = []
+    for i, word in enumerate(words):
+        if word in names:
+            out.append(names[word])
+        elif word[:1].isalpha() and word[1:2].isdigit():  # k3.1, v5
+            out.append(word.upper())
+        elif word[:1].isdigit() and out and out[-1] == 'GPT':
+            out[-1] = f'GPT-{word}'
+        elif word.isdigit() and out and out[-1].split('-')[-1].replace('.', '').isdigit():
+            out[-1] += '.' + word  # opus-5-5 -> Opus 5.5
+        else:
+            out.append(word[:1].upper() + word[1:])
+    return ' '.join(out)
+
+
+def _get_json(url, headers, timeout):
+    import urllib.error
+    import urllib.request
+    request = urllib.request.Request(url, headers=headers, method='GET')
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as answer:
+            return json.loads(answer.read().decode('utf-8') or 'null')
+    except urllib.error.HTTPError as e:
+        try:
+            data = json.loads(e.read().decode('utf-8') or 'null')
+        except ValueError:
+            data = None
+        raise ProviderError(url.split('/')[2], e.code, ResponsesClient.error_text(data) if data else e.reason) from None
+    except (urllib.error.URLError, OSError, ValueError) as e:
+        raise ProviderError(url.split('/')[2], 0, f'cannot reach it: {e}') from None
+
+
+def list_models(provider, key, timeout=30.0):
+    """The models a provider offers to this key, as dicts {id, label, vision, prices,
+    retiring, retired}; prices only where the provider says them (xAI), else None."""
+    p = PROVIDERS[provider]
+    found = []
+    if provider == 'anthropic':
+        url, after = p.models_url + '?limit=100', None
+        while True:
+            data = _get_json(url + (f'&after_id={after}' if after else ''),
+                             {'x-api-key': key, 'anthropic-version': '2023-06-01'}, timeout) or {}
+            for m in data.get('data') or []:
+                state = str(m.get('lifecycle') or m.get('status') or '').lower()
+                found.append({'id': m.get('id'), 'label': m.get('display_name') or pretty(m.get('id')),
+                              'vision': True, 'prices': None, 'retired': state == 'retired',
+                              'retiring': str(m.get('deprecated_at') or '')[:10] or ('soon' if state == 'deprecated'
+                                                                                    else '')})
+            if not data.get('has_more') or not data.get('last_id'):
+                break
+            after = data['last_id']
+    else:
+        data = _get_json(p.models_url, {'Authorization': f'Bearer {key}'}, timeout) or {}
+        rows = data.get('models') if provider == 'xai' else data.get('data')
+        today = time.strftime('%Y-%m-%d')
+        for m in rows or []:
+            if not isinstance(m, dict):
+                continue
+            modalities = [str(x).lower() for x in m.get('input_modalities') or []]
+            vision = ('image' in modalities) if modalities else bool(m.get('supports_image_in', True))
+            if provider == 'xai' and 'text' not in [str(x).lower() for x in m.get('output_modalities') or ['text']]:
+                continue
+            prices = None
+            if provider == 'xai' and m.get('prompt_text_token_price') is not None:
+                per_million = lambda v: round(float(v or 0) / 10000.0, 6)  # noqa: E731 (cents per 100M tokens)
+                cin = per_million(m['prompt_text_token_price'])
+                prices = (cin, per_million(m.get('completion_text_token_price')), cin,
+                          per_million(m.get('cached_prompt_text_token_price', m['prompt_text_token_price'])))
+            shutdown = str(m.get('shutdown_date') or '')[:10]
+            found.append({'id': m.get('id'), 'label': pretty(m.get('id')), 'vision': vision, 'prices': prices,
+                          'retired': bool(shutdown) and shutdown <= today, 'retiring': shutdown})
+    return [f for f in found if f['id'] and usable(provider, f['id'])]
+
+
+def estimate(provider, model_id):
+    """A price for a model its provider does not price: the dearest built-in model of the
+    provider (an Opus at OPUS_FACTOR times that), so a spending limit is never run past."""
+    known = [m.prices for m in BUILTIN.values() if m.provider == provider]
+    if not known:
+        return BUILTIN[DEFAULT_MODEL].prices
+    dearest = max(known, key=lambda prices: prices[1])
+    if provider == 'anthropic' and 'opus' in model_id:
+        return tuple(round(v * OPUS_FACTOR, 6) for v in dearest)
+    return dearest
+
+
+def use_catalog(catalog):
+    """The models offered, from the built-in ones and a Refresh (catalog: {'providers':
+    {provider: {'models': [list_models rows]} or {'error': text}}}). A provider that
+    answered decides: what it no longer lists or retired is hidden, what it newly lists
+    is added. MODELS, PRICES and ALIASES change in place. Returns the hidden ids."""
+    listed = {k: v.get('models') for k, v in ((catalog or {}).get('providers') or {}).items()
+              if isinstance(v, dict) and isinstance(v.get('models'), list)}
+    offered, hidden = {}, []
+    for provider in PROVIDERS:
+        rows = {r['id']: r for r in listed.get(provider) or [] if isinstance(r, dict) and r.get('id')}
+        answered = provider in listed
+        for m in BUILTIN.values():
+            if m.provider != provider:
+                continue
+            row = rows.get(m.id)
+            if answered and (row is None or row.get('retired')):
+                hidden.append(m.id)
+                continue
+            offered[m.id] = replace(m, retiring=(row or {}).get('retiring') or '')
+        for model_id, row in rows.items():
+            if model_id in BUILTIN or row.get('retired') or model_id in offered:
+                continue
+            prices = tuple(row['prices']) if row.get('prices') else estimate(provider, model_id)
+            offered[model_id] = Model(model_id, row.get('label') or pretty(model_id), provider, prices,
+                                      vision=row.get('vision', True) is not False, new=True,
+                                      retiring=row.get('retiring') or '', estimated=not row.get('prices'))
+    MODELS.clear()
+    MODELS.update(offered)
+    PRICES.clear()
+    PRICES.update({m.id: m.prices for m in offered.values()})
+    ALIASES.clear()
+    ALIASES.update({alias: m.id for m in offered.values() for alias in m.aliases})
+    return hidden
+
+
+def refresh(keys, timeout=30.0):
+    """Ask every provider with a key which models it offers: a catalog for use_catalog."""
+    catalog = {'refreshed': time.strftime('%Y-%m-%d %H:%M'), 'providers': {}}
+    for provider, key in keys.items():
+        if provider not in PROVIDERS or not key:
+            continue
+        try:
+            catalog['providers'][provider] = {'models': list_models(provider, key, timeout)}
+        except ProviderError as e:
+            catalog['providers'][provider] = {'error': e.message if e.status_code else str(e.message)}
+    return catalog

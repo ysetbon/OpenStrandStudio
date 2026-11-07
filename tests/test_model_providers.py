@@ -36,6 +36,16 @@ def server(monkeypatch):
             self.end_headers()
             self.wfile.write(out)
 
+        def do_GET(self):  # a model list
+            seen.append({"path": self.path, "headers": {k.lower(): v for k, v in self.headers.items()}, "body": None})
+            status, reply = answers.pop(0)
+            out = json.dumps(reply).encode()
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(out)))
+            self.end_headers()
+            self.wfile.write(out)
+
         def log_message(self, *args):
             pass
     http = HTTPServer(("127.0.0.1", 0), Handler)
@@ -184,3 +194,93 @@ def test_claude_still_uses_anthropic_itself():
     assert type(client) is anthropic.Anthropic and "api.anthropic.com" in str(client.base_url)
     assert isinstance(providers.client_for("gpt-6-astra", "sk"), providers.ResponsesClient)
     assert isinstance(providers.client_for("kimi", "sk"), providers.CompatClient)
+
+
+# ------------------------------------------------------------ Refresh models
+def listing(provider, server, monkeypatch, path="/models"):
+    """The provider's model list on the local server."""
+    monkeypatch.setitem(providers.PROVIDERS, provider,
+                        dataclasses.replace(providers.PROVIDERS[provider], models_url=server.url + path))
+
+
+def test_each_provider_lists_its_chat_models(server, monkeypatch):
+    # Anthropic: two pages, its own names, a deprecated model.
+    listing("anthropic", server, monkeypatch, "/v1/models")
+    server.answers[:] = [
+        (200, {"data": [{"id": "claude-opus-5-5", "display_name": "Claude Opus 5.5"},
+                        {"id": "claude-sonnet-5-5", "display_name": "Claude Sonnet 5.5"}],
+               "has_more": True, "last_id": "claude-sonnet-5-5"}),
+        (200, {"data": [{"id": "claude-haiku-5-5", "display_name": "Claude Haiku 5.5",
+                         "deprecated_at": "2026-12-01T00:00:00Z"}], "has_more": False})]
+    rows = providers.list_models("anthropic", "sk-ant-test")
+    assert [r["id"] for r in rows] == ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"]
+    assert rows[0]["label"] == "Claude Opus 5.5" and rows[2]["retiring"] == "2026-12-01"
+    assert server.seen[0]["headers"]["x-api-key"] == "sk-ant-test" and "anthropic-version" in server.seen[0]["headers"]
+    assert server.seen[1]["path"] == "/v1/models?limit=100&after_id=claude-sonnet-5-5"
+    # OpenAI: only chat models, no snapshots, no image or speech ids; a shutdown date passed is retired.
+    listing("openai", server, monkeypatch)
+    server.answers[:] = [(200, {"data": [
+        {"id": "gpt-6.1-terra"}, {"id": "gpt-6.1-terra-2026-10-26"}, {"id": "gpt-image-2"},
+        {"id": "text-embedding-4"}, {"id": "gpt-realtime-2"}, {"id": "gpt-6.2-terra"},
+        {"id": "gpt-6.1-sol", "shutdown_date": "2026-01-01"}]})]
+    rows = providers.list_models("openai", "sk-test")
+    assert [r["id"] for r in rows] == ["gpt-6.1-terra", "gpt-6.2-terra", "gpt-6.1-sol"]
+    assert rows[1]["label"] == "GPT-6.2 Terra" and rows[2]["retired"] is True
+    assert server.seen[-1]["headers"]["authorization"] == "Bearer sk-test"
+    # xAI: its prices, in USD cents per 100 million tokens.
+    listing("xai", server, monkeypatch, "/v1/language-models")
+    server.answers[:] = [(200, {"models": [
+        {"id": "grok-4.8", "input_modalities": ["text", "image"], "output_modalities": ["text"],
+         "prompt_text_token_price": 25000, "cached_prompt_text_token_price": 5000,
+         "completion_text_token_price": 80000},
+        {"id": "grok-imagine-2", "output_modalities": ["image"]}]})]
+    (grok,) = providers.list_models("xai", "xai-test")
+    assert grok["id"] == "grok-4.8" and grok["prices"] == (2.5, 8.0, 2.5, 0.5) and grok["vision"] is True
+    # A provider that refuses: its own message.
+    listing("deepseek", server, monkeypatch)
+    server.answers[:] = [(401, {"error": {"message": "Authentication Fails"}})]
+    with pytest.raises(providers.ProviderError, match="Authentication Fails"):
+        providers.list_models("deepseek", "sk-bad")
+
+
+def test_a_refresh_adds_new_models_marks_retiring_ones_and_hides_what_is_gone():
+    try:
+        hidden = providers.use_catalog({"providers": {
+            "anthropic": {"models": [
+                {"id": "claude-opus-5-5", "label": "Claude Opus 5.5", "prices": None, "vision": True},
+                {"id": "claude-sonnet-5-5", "label": "Claude Sonnet 5.5", "retiring": "2027-03-01"}]},
+            "xai": {"models": [{"id": "grok-4.7"}, {"id": "grok-4.8", "label": "Grok 4.8",
+                                                     "prices": [2.5, 8.0, 2.5, 0.5]}]},
+            "openai": {"error": "cannot reach it"}}})
+        assert hidden == ["claude-haiku-5-5"]  # Anthropic answered without it
+        assert "claude-haiku-5-5" not in providers.MODELS and "claude-haiku-5-5" not in agent.PRICES
+        opus = providers.MODELS["claude-opus-5-5"]
+        assert opus.new and opus.estimated and opus.prices == tuple(v * 2.5 for v in providers.PRICES["claude-sonnet-5-5"])
+        assert providers.MODELS["claude-sonnet-5-5"].retiring == "2027-03-01"
+        grok = providers.MODELS["grok-4.8"]
+        assert grok.new and not grok.estimated and agent.PRICES["grok-4.8"] == (2.5, 8.0, 2.5, 0.5)
+        assert providers.resolve("grok-4.8") == "grok-4.8" and providers.provider_of("grok-4.8").key == "xai"
+        assert "gpt-6.1-terra" in providers.MODELS  # OpenAI did not answer: its models stay
+        assert providers.resolve("haiku") != "claude-haiku-5-5" if "haiku" in providers.ALIASES else True
+    finally:
+        providers.use_catalog({})
+    assert "claude-haiku-5-5" in providers.MODELS and "grok-4.8" not in providers.MODELS
+
+
+def test_the_saved_model_moves_on_when_its_provider_no_longer_offers_it(tmp_path, monkeypatch):
+    import claude_settings
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    try:
+        claude_settings.save(model="claude-haiku-5-5")
+        result = claude_settings.apply_catalog({"refreshed": "2026-11-07 10:00", "providers": {
+            "anthropic": {"models": [{"id": "claude-sonnet-5-5"}, {"id": "claude-opus-5-5", "label": "Claude Opus 5.5"}]}}})
+        assert result["hidden"] == ["claude-haiku-5-5"] and result["new"] == ["claude-opus-5-5"]
+        assert result["switched"] == "claude-sonnet-5-5"
+        saved = claude_settings.load()
+        assert saved["model"] == "claude-sonnet-5-5" and saved["catalog"]["refreshed"] == "2026-11-07 10:00"
+        offered = dict(claude_settings.models())
+        assert offered["claude-opus-5-5"] == "Claude Opus 5.5" and "claude-haiku-5-5" not in offered
+        claude_settings.save(model="claude-opus-5-5")  # a refreshed model can be chosen and is kept
+        assert claude_settings.load()["model"] == "claude-opus-5-5"
+    finally:
+        providers.use_catalog({})

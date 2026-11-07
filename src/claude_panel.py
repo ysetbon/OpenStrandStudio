@@ -16,6 +16,7 @@ import os
 import re
 import shutil
 import sys
+import threading
 import time
 
 from PyQt5.QtCore import (QDate, QEvent, QLocale, QPoint, QPointF, QProcess, QProcessEnvironment, QRect,
@@ -86,6 +87,20 @@ SLOW_TOOLS = {'draw_design', 'make_heart', 'make_turks_head'}
 def _tr(language, key):
     table = translations.get(language) or translations['en']
     return table.get(key) or translations['en'].get(key, key)
+
+
+def model_tags(model, t):
+    """'new · price estimated', 'retiring 2026-12-01'... for a model in the menus."""
+    info = claude_settings.model_info(model)
+    if info is None:
+        return ''
+    tags = [t('models_tag_new')] if info.new else []
+    if info.estimated:
+        tags.append(t('models_tag_estimated'))
+    if info.retiring:
+        tags.append(t('models_tag_retiring_soon') if info.retiring == 'soon'
+                    else t('models_tag_retiring').format(date=info.retiring))
+    return ' · '.join(tags)
 
 
 def agent_command(prompt, model, out_dir, images=(), start=None, web=True, max_cost=None, effort=None,
@@ -1261,11 +1276,12 @@ class ClaudePanel(QWidget):
         glyph, color, key = self.MODE_LOOK[self.mode]
         self.mode_button.setText(f'{glyph} {t(key)}  ·  {t("claude_mode_cycle")}')
         self.mode_button.setStyleSheet(f'QToolButton {{ color: {c[color]}; }}')
-        names = dict(claude_settings.MODELS)
+        offered = claude_settings.models()
+        names = dict(offered)
         self.model_menu.clear()
         group = QActionGroup(self.model_menu)
         provider = None
-        for model, label in claude_settings.MODELS:
+        for model, label in offered:
             if claude_settings.provider_of(model) != provider:  # each provider's models together
                 if provider is not None:
                     self.model_menu.addSeparator()
@@ -1273,7 +1289,8 @@ class ClaudePanel(QWidget):
                 spec = claude_settings.PROVIDERS.get(provider)
                 keyed = provider in saved['keys'] or (spec is not None and os.environ.get(spec.env))
             # Which provider runs it, and whether its key is still missing (Settings > Models).
-            where = (spec.name if spec else provider) + ('' if keyed else f', {t("models_no_key")}')
+            where = ', '.join(w for w in ((spec.name if spec else provider), '' if keyed else t('models_no_key'),
+                                          model_tags(model, t)) if w)
             action = QAction(f'{label}   ({where})', self.model_menu, checkable=True)
             action.setChecked(model == saved['model'])
             action.triggered.connect(lambda _=False, m=model: self.choose(model=m))
@@ -1826,6 +1843,7 @@ class ClaudeSettingsPage(QWidget):
 
     show_button_changed = pyqtSignal(bool)  # the main window shows or hides the Claude button
     settings_changed = pyqtSignal()  # model, effort or limits: the Claude status line follows
+    refreshed = pyqtSignal(object, object)  # Refresh models: (what the providers said, or an error)
 
     def __init__(self, language_code='en', parent=None):
         super().__init__(parent)
@@ -1882,6 +1900,17 @@ class ClaudeSettingsPage(QWidget):
         self.model_combo = QComboBox(self)
         self.model_combo.currentIndexChanged.connect(self.save_model)
         layout.addWidget(self.model_combo)
+        refresh_row = QHBoxLayout()
+        self.refresh_button = QPushButton(self)
+        self.refresh_button.clicked.connect(self.refresh_models)
+        refresh_row.addWidget(self.refresh_button)
+        refresh_row.addStretch()
+        layout.addLayout(refresh_row)
+        self.refresh_status = QLabel(self)
+        self.refresh_status.setWordWrap(True)
+        self.refresh_status.setStyleSheet('color: gray;')
+        layout.addWidget(self.refresh_status)
+        self.refreshed.connect(self.show_refresh)
 
         self.effort_label = QLabel(self)
         layout.addWidget(self.effort_label)
@@ -1960,13 +1989,12 @@ class ClaudeSettingsPage(QWidget):
         self.model_label.setText(t('claude_model_label'))
         self.storage.setText(t('claude_key_storage'))
         saved = claude_settings.load()
-        self.model_combo.blockSignals(True)
-        self.model_combo.clear()
-        for model, label in claude_settings.MODELS:
-            spec = claude_settings.PROVIDERS.get(claude_settings.provider_of(model))
-            self.model_combo.addItem(f'{label}  ·  {spec.name}' if spec else label, model)
-        self.model_combo.setCurrentIndex(max(0, self.model_combo.findData(saved['model'])))
-        self.model_combo.blockSignals(False)
+        self.fill_models(saved)
+        self.refresh_button.setText(t('models_refresh'))
+        if self.refresh_button.isEnabled():
+            refreshed = (saved.get('catalog') or {}).get('refreshed')
+            self.refresh_status.setText(t('models_last_refresh').format(date=refreshed) if refreshed
+                                        else t('models_never_refreshed'))
         self.effort_label.setText(t('claude_effort_label'))
         self.effort_hint.setText(t('claude_effort_hint'))
         self.session_limit_label.setText(t('claude_session_limit_label'))
@@ -2082,6 +2110,56 @@ class ClaudeSettingsPage(QWidget):
         effort = self.effort_combo.itemData(index)
         if effort:
             self.changed_setting(effort=effort)
+
+    def fill_models(self, saved=None):
+        """The model list: every model offered now, its provider and tags."""
+        t = lambda k: _tr(self.language, k)
+        saved = saved or claude_settings.load()
+        self.model_combo.blockSignals(True)
+        self.model_combo.clear()
+        for model, label in claude_settings.models():
+            spec = claude_settings.PROVIDERS.get(claude_settings.provider_of(model))
+            words = [label] + [w for w in (spec.name if spec else '', model_tags(model, t)) if w]
+            self.model_combo.addItem('  ·  '.join(words), model)
+        self.model_combo.setCurrentIndex(max(0, self.model_combo.findData(saved['model'])))
+        self.model_combo.blockSignals(False)
+
+    def refresh_models(self):
+        """Refresh models (by hand only): each provider with a key says which models it
+        offers now. The asking runs off the main thread; show_refresh takes the answer."""
+        self.refresh_button.setEnabled(False)
+        self.refresh_status.setText(_tr(self.language, 'models_refreshing'))
+
+        def ask():
+            try:
+                self.refreshed.emit(claude_settings.fetch_catalog(), None)
+            except Exception as e:  # noqa: BLE001 - said on the page, the list stays as it was
+                self.refreshed.emit(None, f'{type(e).__name__}: {e}')
+        threading.Thread(target=ask, daemon=True).start()
+
+    def show_refresh(self, found, error):
+        t = lambda k: _tr(self.language, k)
+        self.refresh_button.setEnabled(True)
+        if error or not found:
+            self.refresh_status.setText(error or '')
+            return
+        if not found.get('providers'):
+            self.refresh_status.setText(t('models_refresh_none'))
+            return
+        result = claude_settings.apply_catalog(found)
+        lines = [t('models_refreshed').format(date=found.get('refreshed', ''), new=len(result['new']),
+                                              retiring=len(result['retiring']), hidden=len(result['hidden']))]
+        for provider, answer in found['providers'].items():
+            if answer.get('error'):
+                spec = claude_settings.PROVIDERS.get(provider)
+                lines.append(f"{spec.name if spec else provider}: {answer['error']}")
+        if result['switched']:
+            lines.append(t('models_switched').format(model=dict(claude_settings.models()).get(result['switched'],
+                                                                                              result['switched'])))
+        self.refresh_status.setText('\n'.join(lines))
+        self.fill_models()
+        self.show_provider(claude_settings.provider_of(claude_settings.load()['model']))
+        self.settings_changed.emit()  # the status line's model menu follows
 
     def save_model(self, index):
         model = self.model_combo.itemData(index)

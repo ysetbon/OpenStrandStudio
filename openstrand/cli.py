@@ -310,6 +310,11 @@ def _anthropic():
 def cmd_agent(args):
     anthropic = _anthropic()
     from . import agent, providers
+    try:  # the models Settings > Models offers: the built-in ones and what Refresh models found
+        import claude_settings
+        providers.use_catalog(claude_settings.catalog())
+    except Exception:
+        pass
     model = providers.resolve(args.model)
     provider = providers.provider_of(model)
     client = providers.client_for(model, api_key(provider.key))

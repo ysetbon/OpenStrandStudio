@@ -281,7 +281,7 @@ def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch
 
 def test_refresh_models_is_a_button_that_shows_what_the_providers_said(tmp_path, monkeypatch):
     from PyQt5.QtWidgets import QApplication
-    QApplication.instance() or QApplication([])
+    app = QApplication.instance() or QApplication([])  # noqa: F841 (kept alive for the page)
     import claude_settings
     from claude_panel import ClaudeSettingsPage
     from openstrand import providers
@@ -305,6 +305,46 @@ def test_refresh_models_is_a_button_that_shows_what_the_providers_said(tmp_path,
         labels = [page.model_combo.itemText(i) for i in range(page.model_combo.count())]
         assert any(label.startswith("Grok 4.8") and "new" in label for label in labels)
         assert claude_settings.load()["catalog"]["refreshed"] == "2026-11-07 10:00"
+    finally:
+        providers.use_catalog({})
+
+
+def test_models_refresh_on_their_own_once_a_day_without_a_word(window, tmp_path, monkeypatch):
+    import datetime
+    from PyQt5.QtWidgets import QApplication
+    import claude_settings
+    from openstrand import providers
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    for spec in claude_settings.PROVIDERS.values():
+        monkeypatch.delenv(spec.env, raising=False)
+    assert not claude_settings.refresh_due()  # no key: nobody to ask
+    claude_settings.save(provider_key=("xai", "xai-test-123456789"))
+    assert claude_settings.refresh_due()  # never refreshed
+    asked = []
+    found = {"refreshed": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), "providers": {
+        "xai": {"models": [{"id": "grok-4.7"}, {"id": "grok-4.8", "label": "Grok 4.8", "prices": [2.5, 8.0, 2.5, 0.5]}]}}}
+    monkeypatch.setattr(claude_settings, "fetch_catalog", lambda: asked.append(1) or found)
+    panel = window.claude_panel
+    panel.entries.clear()
+    try:
+        panel.auto_refresh_models()
+        for _ in range(100):  # asked in a thread, applied when its answer comes back
+            QApplication.processEvents()
+            if not panel.fetching_models:
+                break
+            time.sleep(0.02)
+        assert asked == [1] and not panel.fetching_models
+        assert panel.entries == []  # silent: nothing said in the conversation
+        assert any("Grok 4.8" in a.text() for a in panel.model_menu.actions())
+        assert not claude_settings.refresh_due()  # done for today
+        panel.auto_refresh_models()
+        assert asked == [1]
+        # A day later, a provider that fails keeps what it offered last time.
+        stale = dict(found, refreshed=(datetime.datetime.now() - datetime.timedelta(hours=25)).strftime("%Y-%m-%d %H:%M"))
+        claude_settings.apply_catalog(stale)
+        assert claude_settings.refresh_due()
+        claude_settings.apply_catalog({"refreshed": found["refreshed"], "providers": {"xai": {"error": "timed out"}}})
+        assert "grok-4.8" in dict(claude_settings.models())
     finally:
         providers.use_catalog({})
 

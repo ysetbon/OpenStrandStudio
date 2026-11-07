@@ -76,10 +76,31 @@ def fetch_catalog():
     return providers.refresh({k: v for k, v in keys.items() if v})
 
 
+def refresh_due(hours=24):
+    """Whether the automatic Refresh models should run: some provider has a key, and the
+    last refresh (by hand or not) is older than hours, or there was none."""
+    current = load()
+    keyed = any(current['keys'].get(k) or os.environ.get(spec.env, '').strip() for k, spec in PROVIDERS.items())
+    if not keyed or providers is None:
+        return False
+    stamp = (current.get('catalog') or {}).get('refreshed') or ''
+    try:
+        last = datetime.datetime.strptime(stamp, '%Y-%m-%d %H:%M')
+    except ValueError:
+        return True
+    return datetime.datetime.now() - last >= datetime.timedelta(hours=hours)
+
+
 def apply_catalog(found):
     """Keep what fetch_catalog found and offer it; move off the saved model if it is no
-    longer offered. Returns {'hidden': ids, 'new': ids, 'retiring': ids, 'switched': id or None}."""
+    longer offered. A provider that failed this time keeps what it said last time.
+    Returns {'hidden': ids, 'new': ids, 'retiring': ids, 'switched': id or None}."""
     current = load()
+    before = (current.get('catalog') or {}).get('providers') or {}
+    found = dict(found, providers=dict(found.get('providers') or {}))
+    for provider, answer in list(found['providers'].items()):
+        if answer.get('error') and isinstance((before.get(provider) or {}).get('models'), list):
+            found['providers'][provider] = dict(before[provider], error=answer['error'])
     hidden = providers.use_catalog(found)
     switched = None
     if current['model'] not in providers.MODELS:

@@ -80,6 +80,10 @@ PREVIEW_SIZE = (360, 213)
 # dialog when it was opened). Lists and readings get no picture.
 CANVAS_TOOLS = {'open_in_new_tab', 'switch_tab', 'edit_strand_in_tab', 'edit_mask_in_tab', 'edit_layers_in_tab',
                 'edit_groups_in_tab', 'app_window'}
+# The automatic Refresh models: once a day, checked hourly, first a little after the app starts.
+AUTO_REFRESH_HOURS = 24
+AUTO_REFRESH_CHECK_MS = 60 * 60 * 1000
+AUTO_REFRESH_FIRST_MS = 15 * 1000
 # Tools that can take up to a minute: the panel says so when they start.
 SLOW_TOOLS = {'draw_design', 'make_heart', 'make_turks_head'}
 
@@ -548,6 +552,7 @@ class ClaudePanel(QWidget):
     spending_changed = pyqtSignal()  # a request's cost was added to the saved total
     open_changed = pyqtSignal(bool)  # Claude was shown or hidden
     activity_changed = pyqtSignal()  # a run started or ended: the Claude button shows it
+    models_fetched = pyqtSignal(object)  # the daily, silent Refresh models: what the providers said
     MARGIN = 12  # px between Claude and the canvas edges
 
     def __init__(self, main_window, canvas=None, language_code='en'):
@@ -583,6 +588,15 @@ class ClaudePanel(QWidget):
         self.tick = QTimer(self)
         self.tick.setInterval(1000)
         self.tick.timeout.connect(self.refresh_running)
+        # Refresh models on its own once a day, silently: shortly after the app starts,
+        # then checked every hour while it stays open. No window, no note: the lists update.
+        self.models_fetched.connect(self.apply_fetched_models)
+        self.fetching_models = False
+        self.model_clock = QTimer(self)
+        self.model_clock.setInterval(AUTO_REFRESH_CHECK_MS)
+        self.model_clock.timeout.connect(self.auto_refresh_models)
+        self.model_clock.start()
+        QTimer.singleShot(AUTO_REFRESH_FIRST_MS, self.auto_refresh_models)
         self._build()
         saved = claude_settings.load()
         self.setVisible(saved['show_button'] and saved['panel_open'])
@@ -1308,6 +1322,32 @@ class ClaudePanel(QWidget):
         self.effort_button.setText(t(f'claude_effort_{saved["effort"]}') + ' ▾')
         self.show_session()
 
+    def auto_refresh_models(self):
+        """The daily Refresh models, in the background and without a word: only when a
+        day has passed since the last one and some provider has a key."""
+        if self.fetching_models or getattr(sys, 'frozen', False) or not claude_settings.refresh_due(AUTO_REFRESH_HOURS):
+            return
+        self.fetching_models = True
+
+        def ask():
+            try:
+                found = claude_settings.fetch_catalog()
+            except Exception as e:  # noqa: BLE001 - silent: the terminal says it, the lists stay
+                terminal_log(f'refresh models failed: {type(e).__name__}: {e}')
+                found = None
+            self.models_fetched.emit(found)
+        threading.Thread(target=ask, daemon=True).start()
+
+    def apply_fetched_models(self, found):
+        self.fetching_models = False
+        if not found or not found.get('providers'):
+            return
+        result = claude_settings.apply_catalog(found)
+        terminal_log(f"models refreshed: {len(result['new'])} new, {len(result['retiring'])} retiring, "
+                     f"{len(result['hidden'])} no longer offered"
+                     + (f", now using {result['switched']}" if result['switched'] else ''))
+        self.refresh_controls()
+
     def choose(self, **change):
         claude_settings.save(**change)
         self.refresh_controls()
@@ -2021,6 +2061,7 @@ class ClaudeSettingsPage(QWidget):
 
     def showEvent(self, event):
         super().showEvent(event)
+        self.fill_models()  # the daily refresh may have changed the models offered
         self.show_spending()  # requests may have run since the page was built
         self.show_choices()  # the status line may have changed the model or effort
 

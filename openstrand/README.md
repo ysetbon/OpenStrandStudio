@@ -122,7 +122,9 @@ python -m openstrand agent "make the gold ribbons red" --start designs/bracelet.
   each that answers like the anthropic SDK, so the agent loop is the same for
   every model. The Responses API client uses Python's own urllib: nothing more
   to install.
-- **Refresh models** (a button in Settings > Models, never automatic) asks each
+- **Refresh models** (a button in Settings > Models, and on its own once a day,
+  silently: 15 seconds after the app starts, then checked hourly; no window or
+  note, only the lists change and the terminal log says what changed) asks each
   provider you have a key for which models it offers now (`providers.list_models`:
   Anthropic and OpenAI `/v1/models`, xAI `/v1/language-models`, Kimi
   `/v1/models`, DeepSeek `/models`; Qwen's list is not documented, so its
@@ -133,8 +135,9 @@ python -m openstrand agent "make the gold ribbons red" --start designs/bracelet.
   (only xAI publishes them) gets the price of its provider's dearest built-in
   model (an Opus 2.5 times Sonnet), tagged "price estimated", so a spending limit
   is never run past. The answer is kept in `claude.json`; the agent uses the
-  same list (`providers.use_catalog`). If the saved model is no longer offered,
-  the page switches to that provider's first model and says so.
+  same list (`providers.use_catalog`). A provider that fails keeps what it
+  offered last time. If the saved model is no longer offered, it moves to that
+  provider's first model (the button's status says so).
 - Web search and fetch (Claude models only: they are Anthropic's server
   tools) are on (`--no-web` turns them off); each search costs about $0.01.
   The model thinks at `--effort high` by default (a thinking budget on the

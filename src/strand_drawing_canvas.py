@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt, QPointF, QRectF, QPoint, pyqtSignal, QTimer
-from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QFont, QFontMetrics, QImage, QPolygonF, QPalette, QPainterPathStroker, QTransform
+from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QFont, QFontMetrics, QImage, QPolygonF, QPalette, QPainterPathStroker, QTransform, QRegion
 from render_utils import RenderUtils
 import sound_manager
 from attach_mode import AttachMode
@@ -5517,7 +5517,8 @@ class StrandDrawingCanvas(QWidget):
         image.fill(Qt.white)
 
         painter = QPainter(image)
-        self.render(painter)
+        # The drawing only: not Claude, which floats over the canvas as a child.
+        self.render(painter, QPoint(), QRegion(), QWidget.DrawWindowBackground)
         painter.end()
 
         image.save(file_path)

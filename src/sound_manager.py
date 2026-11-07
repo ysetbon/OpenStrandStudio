@@ -73,6 +73,7 @@ CUES = {
     'stepper_plus': 70, 'stepper_minus': 70,
     'tab_switch': 60, 'hover_tab': 80, 'hover_tab_button': 80,
     'tab_new': 60, 'tab_duplicate': 60, 'tab_close': 60,
+    'tab_edge_grab': 60, 'tab_edge_snap': 80, 'tab_edge_unsnap': 80, 'tab_edge_drop': 60, 'tab_edge_dock': 60,
 }
 HOVER_CUES = {'hover_toolbar', 'hover_panel_top', 'hover_layer', 'hover_panel_bottom',
               'hover_level', 'hover_level_fold', 'hover_strand',

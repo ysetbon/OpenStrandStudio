@@ -1,0 +1,237 @@
+[
+  {
+    "file": "01_box_ground_and_level1.json",
+    "title": "Your box",
+    "covers": "The box from your project: 6 strands and mask 2_2_1_3 on the Ground, 4 strands and mask 2_4_1_5 on Level 1.",
+    "duplicate": [
+      "box"
+    ],
+    "steps": [],
+    "expect": "The copy (sets 3, 4) has 4_1 ... 3_3 and mask 4_2_3_3 on the Ground, 4_4 ... 3_5 and mask 4_4_3_5 on Level 1."
+  },
+  {
+    "file": "02_group_on_ground_under_a_level.json",
+    "title": "Whole group on the Ground",
+    "covers": "A group resting entirely on the Ground while another box sits on Level 1. New strands land on Level 1, so this is where the old code went wrong most.",
+    "duplicate": [
+      "ground box"
+    ],
+    "steps": [],
+    "expect": "Every layer of the copy, masks included, is on the Ground."
+  },
+  {
+    "file": "03_group_on_top_level.json",
+    "title": "Whole group on the top level",
+    "covers": "A group entirely on Level 2 (the top level) above a box on the Ground.",
+    "duplicate": [
+      "top box"
+    ],
+    "steps": [],
+    "expect": "Every layer of the copy is on Level 2."
+  },
+  {
+    "file": "04_staircase_four_levels.json",
+    "title": "Spread over four levels",
+    "covers": "One box whose strands are spread over the Ground and Levels 1, 2 and 3; the masks sit on the higher level of their two strands.",
+    "duplicate": [
+      "stairs"
+    ],
+    "steps": [],
+    "expect": "Each copy is on the same level as its original: 2_1 on Ground, 1_1 on Level 3, 2_2 on Level 1, 1_2 on Level 2, 2_3 on Level 2, 1_3 on Level 1, 2_4 on Level 3, 1_4 on Ground, 2_5 on Level 1, 1_5 on Level 2."
+  },
+  {
+    "file": "05_raised_masks.json",
+    "title": "Raised masks",
+    "covers": "Masks raised above their strands on the Masks tab: 2_2_1_3 (strands on the Ground) raised to Level 2, 2_4_1_5 (strands on Level 1) raised to Level 2.",
+    "duplicate": [
+      "box"
+    ],
+    "steps": [],
+    "expect": "Both copied masks are on Level 2, while their strands keep their own levels (4_2, 3_3 on the Ground; 4_4, 3_5 on Level 1)."
+  },
+  {
+    "file": "06_mask_across_two_levels.json",
+    "title": "Mask between two levels",
+    "covers": "Mask 2_2_1_3 joins 2_2 on the Ground and 1_3 on Level 2, so it sits on Level 2.",
+    "duplicate": [
+      "box"
+    ],
+    "steps": [],
+    "expect": "The copied mask 4_2_3_3 is on Level 2 (the higher of 4_2 and 3_3); it can be moved up but not below Level 2."
+  },
+  {
+    "file": "07_mask_partner_outside_group.json",
+    "title": "Mask whose partner is outside the group",
+    "covers": "Group \"pink only\" holds set 1 alone, but masks 2_2_1_3 and 2_4_1_5 also use set 2 (on Level 1). Duplicating pulls the set-2 strands the masks need into the copy, with the strands attached to them (2_5 on 2_2).",
+    "duplicate": [
+      "pink only"
+    ],
+    "steps": [],
+    "expect": "Every copied layer, including the pulled-in set-2 copies, is on the level of the layer it copies; the copied masks follow their strands; the copy of 2_2 carries the copy of 2_5, so it draws like the original."
+  },
+  {
+    "file": "08_no_levels.json",
+    "title": "Project without levels",
+    "covers": "The box with no levels at all: no Level rows, everything on the Ground.",
+    "duplicate": [
+      "box"
+    ],
+    "steps": [],
+    "expect": "No level row appears; every copy is on the Ground; the saved file has no levels."
+  },
+  {
+    "file": "09_two_groups_two_levels.json",
+    "title": "Two groups on two levels",
+    "covers": "Group \"ground\" (sets 1, 2) on the Ground and group \"upstairs\" (sets 3, 4) on Level 1. Duplicate both, one after the other.",
+    "duplicate": [
+      "ground",
+      "upstairs"
+    ],
+    "steps": [],
+    "expect": "The copy of \"ground\" is all on the Ground; the copy of \"upstairs\" is all on Level 1."
+  },
+  {
+    "file": "10_empty_levels_above.json",
+    "title": "Empty levels above",
+    "covers": "The box uses only the Ground and Level 1, while the project has 3 levels.",
+    "duplicate": [
+      "box"
+    ],
+    "steps": [],
+    "expect": "The copy keeps the Ground / Level 1 split; nothing goes up to the empty Level 3, and the project still has 3 levels."
+  },
+  {
+    "file": "11_hidden_and_shadow_only.json",
+    "title": "Hidden and shadow-only layers",
+    "covers": "1_2 (Ground) and 2_5 (Level 1) are hidden; 2_3 (Ground) is shadow-only.",
+    "duplicate": [
+      "box"
+    ],
+    "steps": [],
+    "expect": "Copies keep their levels and stay hidden / shadow-only like their originals."
+  },
+  {
+    "file": "12_selected_level_block.json",
+    "title": "A level block selected while duplicating",
+    "covers": "The box, with a second box on Level 1 so the Level 1 block has strands to select.",
+    "duplicate": [
+      "box"
+    ],
+    "steps": [
+      "On the Strands tab, click the \"Level 1\" row name to select its block.",
+      "With the block still selected, duplicate group \"box\"."
+    ],
+    "expect": "Copies keep their own levels; the selected Level 1 block does not pull them up."
+  },
+  {
+    "file": "13_copy_of_a_copy.json",
+    "title": "Copy of a copy",
+    "covers": "The box; duplicate it, then duplicate the copy \"box(1)\".",
+    "duplicate": [
+      "box",
+      "box(1)"
+    ],
+    "steps": [],
+    "expect": "Both copies (sets 3, 4 and sets 5, 6) keep the Ground / Level 1 split."
+  },
+  {
+    "file": "14_single_strand_group.json",
+    "title": "One strand on Level 1 in its own group",
+    "covers": "Set 5: just the start strand of a box, alone, on Level 1, over the box on the Ground.",
+    "duplicate": [
+      "single"
+    ],
+    "steps": [],
+    "expect": "The copy 7_1 is on Level 1."
+  },
+  {
+    "file": "15_overhand_knot.json",
+    "title": "Overhand knot",
+    "covers": "The shipped overhand knot design: its one set in a group, on Level 1 (set 1: Level 1).",
+    "duplicate": [
+      "overhand_knot"
+    ],
+    "steps": [],
+    "expect": "Every copied set is on the same level as the set it copies; the copied masks follow their strands."
+  },
+  {
+    "file": "16_twisted_pairs.json",
+    "title": "Twisted pairs",
+    "covers": "The shipped twisted pairs design: all 10 sets in one group, set by set on Level 1, Level 2 and the Ground (set 1: Level 1, set 2: Level 2, set 3: Ground, set 4: Level 1, set 5: Level 2, set 6: Ground, set 7: Level 1, set 8: Level 2, set 9: Ground, set 10: Level 1).",
+    "duplicate": [
+      "twisted_pairs"
+    ],
+    "steps": [],
+    "expect": "Every copied set is on the same level as the set it copies; the copied masks follow their strands."
+  },
+  {
+    "file": "17_three_strand_braid.json",
+    "title": "Three strand braid",
+    "covers": "The shipped three strand braid design: all 3 sets in one group, set by set on Level 1, Level 2 and the Ground (set 1: Level 1, set 2: Level 2, set 3: Ground).",
+    "duplicate": [
+      "three_strand_braid"
+    ],
+    "steps": [],
+    "expect": "Every copied set is on the same level as the set it copies; the copied masks follow their strands."
+  },
+  {
+    "file": "18_chinese_double_coin.json",
+    "title": "Chinese double coin",
+    "covers": "The shipped chinese double coin design: its one set in a group, on Level 1 (set 1: Level 1).",
+    "duplicate": [
+      "chinese_double_coin"
+    ],
+    "steps": [],
+    "expect": "Every copied set is on the same level as the set it copies; the copied masks follow their strands."
+  },
+  {
+    "file": "19_box_stitch.json",
+    "title": "Box stitch",
+    "covers": "The shipped box stitch design: all 2 sets in one group, set by set on Level 1, Level 2 and the Ground (set 1: Level 1, set 2: Level 2).",
+    "duplicate": [
+      "box_stitch"
+    ],
+    "steps": [],
+    "expect": "Every copied set is on the same level as the set it copies; the copied masks follow their strands."
+  },
+  {
+    "file": "20_plait.json",
+    "title": "Plait",
+    "covers": "The shipped plait design: all 3 sets in one group, set by set on Level 1, Level 2 and the Ground (set 1: Level 1, set 2: Level 2, set 3: Ground).",
+    "duplicate": [
+      "plait"
+    ],
+    "steps": [],
+    "expect": "Every copied set is on the same level as the set it copies; the copied masks follow their strands."
+  },
+  {
+    "file": "21_woven_heart.json",
+    "title": "Woven heart",
+    "covers": "The shipped woven heart design: all 6 sets in one group, set by set on Level 1, Level 2 and the Ground (set 1: Level 1, set 2: Level 2, set 3: Ground, set 4: Level 1, set 5: Level 2, set 6: Ground).",
+    "duplicate": [
+      "woven_heart"
+    ],
+    "steps": [],
+    "expect": "Every copied set is on the same level as the set it copies; the copied masks follow their strands."
+  },
+  {
+    "file": "22_curved_weave_6x6.json",
+    "title": "Curved weave 6x6",
+    "covers": "The shipped curved weave 6x6 design: all 12 sets in one group, set by set on Level 1, Level 2 and the Ground (set 1: Level 1, set 2: Level 2, set 3: Ground, set 4: Level 1, set 5: Level 2, set 6: Ground, set 7: Level 1, set 8: Level 2, set 9: Ground, set 10: Level 1, set 11: Level 2, set 12: Ground).",
+    "duplicate": [
+      "curved_weave_6x6"
+    ],
+    "steps": [],
+    "expect": "Every copied set is on the same level as the set it copies; the copied masks follow their strands."
+  },
+  {
+    "file": "23_styled_layers.json",
+    "title": "Arrows, curve, closed end, erased box",
+    "covers": "The box with a full red striped arrow on 2_1 and a start arrow plus an end extension on 1_1 (Ground), an end arrow without a head on 2_4 (Level 1), a curved 1_3, a closed end on 2_5, and an erased box in mask 2_2_1_3.",
+    "duplicate": [
+      "box"
+    ],
+    "steps": [],
+    "expect": "The copy looks exactly like the original: same arrows, extension, curve, closed end and erased box, on the same levels."
+  }
+]

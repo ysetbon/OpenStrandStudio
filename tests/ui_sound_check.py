@@ -482,10 +482,15 @@ def check_canvas(w, rec):
     start_pt = at(attached.start)
     run_check(rec, "Canvas", "control point", "drag it onto the start point and let go",
               lambda: drag_point(away, start_pt), "drag_drop")
-    no_hover("control point on the start point", "pointer moves around on it",
+    no_hover("control point on the start point", "pointer moves around on the control point",
              lambda: [(mouse(canvas, QEvent.MouseMove, start_pt + QPoint(dx, dy)), pump(30))
                       for dx, dy in ((2, 1), (8, -4), (-6, 6))],
-             "neither the control point nor the start point under it hovers after the drop")
+             "the control point was just dropped: no second hover while the pointer stays on it")
+    # Past the control point's 50-unit square but still in the start point's 120-unit one
+    off_cp = int(40 * canvas.zoom_factor)
+    run_check(rec, "Canvas", "start point under the dropped control point", "pointer moves onto it",
+              lambda: mouse(canvas, QEvent.MouseMove, start_pt + QPoint(off_cp, off_cp)), "hover_move_point",
+              note="a different point than the one dropped hovers right away")
     if not points_were_shown:
         click(w.toggle_control_points_button)
         pump(150)
@@ -1354,6 +1359,50 @@ def check_tabs(w, rec):
         run_check(rec, "Tabs", "close tab", "click", lambda: click(close), "tab_close",
                   note="any 'unsaved changes' prompt is dismissed by the test")
         pump(300)
+    check_tab_bar_drag(edge, rec)
+
+
+def check_tab_bar_drag(edge, rec):
+    """Drag the tab bar by its grip: grab, magnet, let go. Moving it makes no sound."""
+    grip = QPoint(edge.GRIP_WIDTH // 2, edge.height() // 2)
+
+    def press():
+        mouse(edge, QEvent.MouseButtonPress, grip)
+
+    def move_to(x, y):  # where the grip should go, in canvas coordinates
+        mouse(edge, QEvent.MouseMove, QPoint(x, y) - edge.pos(), buttons=Qt.LeftButton)
+
+    def release():
+        mouse(edge, QEvent.MouseButtonRelease, grip)
+
+    canvas = edge.canvas
+    middle = (canvas.width() // 2, canvas.height() // 2)
+    left_x, top_y = edge._anchor_positions()["top_left"]
+    near_top_left = (left_x + grip.x() + 20, top_y + grip.y() + 15)
+    docked = edge._anchor is not None
+    run_check(rec, "Tab bar drag", "grip", "press", press, exact=["tab_edge_grab"])
+    run_check(rec, "Tab bar drag", "grip", "drag to the middle of the canvas", lambda: move_to(*middle),
+              exact=["tab_edge_unsnap"] if docked else None,
+              note="pulling a docked bar off its magnet plays the magnet letting go")
+    run_check(rec, "Tab bar drag", "grip", "keep dragging, away from the magnets",
+              lambda: [move_to(middle[0] + d, middle[1] + d // 2) for d in (40, 80, 120, 160)], None,
+              note="moving the bar is silent")
+    run_check(rec, "Tab bar drag", "grip", "let go away from the magnets", release, exact=["tab_edge_drop"])
+    run_check(rec, "Tab bar drag", "grip", "press again", press, exact=["tab_edge_grab"])
+    run_check(rec, "Tab bar drag", "grip", "drag near the top-left magnet",
+              lambda: [move_to(*middle), move_to(*near_top_left)], exact=["tab_edge_snap"])
+    run_check(rec, "Tab bar drag", "grip", "wiggle while on the magnet",
+              lambda: [move_to(near_top_left[0] + d, near_top_left[1]) for d in (5, 10, 5)], None)
+    run_check(rec, "Tab bar drag", "grip", "let go on the magnet", release, exact=["tab_edge_dock"])
+    record("Tab bar drag", "grip", "docked", "top_left", edge._anchor, edge._anchor == "top_left")
+    run_check(rec, "Tab bar drag", "grip", "press the docked bar and nudge it",
+              lambda: (press(), move_to(near_top_left[0] + 8, near_top_left[1])), exact=["tab_edge_grab"],
+              note="the bar is already on this magnet, so it stays quiet")
+    run_check(rec, "Tab bar drag", "grip", "let go on the same magnet", release, exact=["tab_edge_dock"])
+    edge._anchor = "bottom_center"
+    edge._pos_ratio = None
+    edge.reposition()
+    pump(100)
 
 
 def check_save(w, rec):

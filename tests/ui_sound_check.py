@@ -650,6 +650,12 @@ def check_main_buttons(w, rec, tested):
             run_check(rec, "Main window", name, "click", lambda: click(b), {"toolbar_settings", "dialog_open"})
             close_stray_dialogs(w)
             continue
+        if b is getattr(w, "claude_button", None):
+            # The assistant's button sits next to Settings and sounds like it (main_window's
+            # toolbar cues), opening and closing the assistant alike, not as an on/off toggle.
+            run_check(rec, "Main window", name, "click", lambda: click(b), "toolbar_settings")
+            run_check(rec, "Main window", name, "click again", lambda: click(b), "toolbar_settings")
+            continue
         if b in (w.layer_panel.delete_all_button, w.layer_panel.delete_all_masks_button,
                  w.layer_panel.delete_strand_button, w.layer_panel.delete_mask_button):
             if b.isEnabled():

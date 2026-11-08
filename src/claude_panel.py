@@ -121,29 +121,15 @@ def menu_style(theme):
             f'QMenu::separator {{ height: 1px; background: #888888; margin: 3px 6px; }}')
 
 
-def picture_icon(color, size=14, ratio=3.0):
-    """A small picture (a frame, a sun, a hill) for the Image button, in color."""
-    pixmap = QPixmap(int(size * ratio), int(size * ratio))
-    pixmap.setDevicePixelRatio(ratio)
-    pixmap.fill(Qt.transparent)
-    painter = QPainter(pixmap)
-    painter.setRenderHint(QPainter.Antialiasing)
-    pen = QPen(QColor(color), 1.4)
-    pen.setJoinStyle(Qt.RoundJoin)
-    painter.setPen(pen)
-    painter.setBrush(Qt.NoBrush)
-    painter.drawRoundedRect(QRectF(1, 2, size - 2, size - 4), 2, 2)
-    painter.setBrush(QColor(color))
-    painter.drawEllipse(QPointF(size * 0.68, size * 0.36), 1.3, 1.3)
-    hill = QPainterPath(QPointF(2, size - 3))
-    hill.lineTo(size * 0.38, size * 0.48)
-    hill.lineTo(size * 0.62, size * 0.72)
-    hill.lineTo(size * 0.74, size * 0.6)
-    hill.lineTo(size - 2, size - 3)
-    hill.closeSubpath()
-    painter.drawPath(hill)
-    painter.end()
-    return QIcon(pixmap)
+def short_provider_name(name):
+    """'Anthropic' for 'Anthropic (Claude)': the company alone, for the status line."""
+    return name.split(' (')[0]
+
+
+def image_icon(theme):
+    """The Image button's picture: images/image_icon_*.png, white on the dark theme, black otherwise."""
+    name = 'image_icon_white.png' if str(theme).lower() == 'dark' else 'image_icon_black.png'
+    return QIcon(resource_path(os.path.join('images', name)))
 
 
 def agent_command(prompt, model, out_dir, images=(), start=None, web=True, max_cost=None, effort=None,
@@ -722,13 +708,17 @@ class ClaudePanel(QWidget):
         self.mode_button.clicked.connect(self.cycle_mode)
         self.mode_key = QLabel('⇧Tab', self)  # the key that switches the mode
         self.mode_key.setObjectName('claudeKey')
-        # The model and the effort: each its own drop-down, the model's with a menu per provider.
+        # The company, its model and the effort: each its own drop-down.
+        self.provider_button = QToolButton(self)
+        self.provider_button.setObjectName('claudePick')
+        self.provider_button.setPopupMode(QToolButton.InstantPopup)
+        self.provider_menu = QMenu(self.provider_button)
+        self.provider_button.setMenu(self.provider_menu)
         self.model_button = QToolButton(self)
         self.model_button.setObjectName('claudePick')
         self.model_button.setPopupMode(QToolButton.InstantPopup)
         self.model_menu = QMenu(self.model_button)
         self.model_button.setMenu(self.model_menu)
-        self.provider_menus = []
         self.effort_button = QToolButton(self)
         self.effort_button.setObjectName('claudePick')
         self.effort_button.setPopupMode(QToolButton.InstantPopup)
@@ -741,13 +731,14 @@ class ClaudePanel(QWidget):
         status.addWidget(self.mode_button)
         status.addWidget(self.mode_key)
         status.addStretch()
+        status.addWidget(self.provider_button)
         status.addWidget(self.model_button)
         status.addWidget(self.effort_button)
         body.addLayout(status)
-        for menu in (self.model_menu, self.effort_menu):
+        for menu in (self.provider_menu, self.model_menu, self.effort_menu):
             menu.setStyleSheet(menu_style(self.theme_name))
-        self.attach_button.setIcon(picture_icon(self.colors['fg']))
-        self.attach_button.setIconSize(QSize(14, 14))
+        self.attach_button.setIcon(image_icon(self.theme_name))
+        self.attach_button.setIconSize(QSize(16, 16))
 
     # Its own colors for each app theme: as a child of the canvas it would
     # otherwise take the canvas background (white in every theme).
@@ -811,9 +802,9 @@ class ClaudePanel(QWidget):
                 border: 1px solid {c['border']}; border-radius: 4px; padding: 0px 5px; font-size: 11px; }}
         """)
         if hasattr(self, 'model_menu'):
-            for menu in (self.model_menu, self.effort_menu):
+            for menu in (self.provider_menu, self.model_menu, self.effort_menu):
                 menu.setStyleSheet(menu_style(self.theme_name))
-            self.attach_button.setIcon(picture_icon(c['fg']))
+            self.attach_button.setIcon(image_icon(self.theme_name))
 
     def is_open(self):
         return self.isVisibleTo(self.parentWidget())
@@ -1387,32 +1378,36 @@ class ClaudePanel(QWidget):
             f'QToolButton:hover {{ background-color: rgba({tint.red()}, {tint.green()}, {tint.blue()}, 70); }}')
         offered = claude_settings.models()
         names = dict(offered)
-        # A drop-down per provider: its name (and whether its key is still missing, Settings >
-        # Models) opens its own menu of models; the provider of the chosen model is ticked.
-        for menu in self.provider_menus:
-            menu.deleteLater()
-        self.provider_menus = []
-        self.model_menu.clear()
-        group = QActionGroup(self.model_menu)
+        # The company drop-down lists the providers (and whether each key is still missing,
+        # Settings > Models); the model drop-down lists the chosen company's models.
         by_provider = {}
         for model, label in offered:
             by_provider.setdefault(claude_settings.provider_of(model), []).append((model, label))
+        current = claude_settings.provider_of(saved['model'])
+        self.provider_menu.clear()
+        group = QActionGroup(self.provider_menu)
         for provider, entries in by_provider.items():
             spec = claude_settings.PROVIDERS.get(provider)
             keyed = provider in saved['keys'] or (spec is not None and os.environ.get(spec.env))
             title = spec.name if spec else provider
-            submenu = QMenu(title if keyed else f'{title}   ({t("models_no_key")})', self.model_menu)
-            self.provider_menus.append(submenu)
-            for model, label in entries:
-                tags = model_tags(model, t)
-                action = QAction(f'{label}   ({tags})' if tags else label, submenu, checkable=True)
-                action.setChecked(model == saved['model'])
-                action.triggered.connect(lambda _=False, m=model: self.choose(model=m))
-                group.addAction(action)
-                submenu.addAction(action)
-            entry = self.model_menu.addMenu(submenu)
-            entry.setCheckable(True)
-            entry.setChecked(any(model == saved['model'] for model, _ in entries))
+            action = QAction(title if keyed else f'{title}   ({t("models_no_key")})', self.provider_menu, checkable=True)
+            action.setChecked(provider == current)
+            action.triggered.connect(lambda _=False, m=entries[0][0], p=provider:
+                                     None if p == claude_settings.provider_of(claude_settings.load()['model'])
+                                     else self.choose(model=m))
+            group.addAction(action)
+            self.provider_menu.addAction(action)
+        spec = claude_settings.PROVIDERS.get(current)
+        self.provider_button.setText(short_provider_name(spec.name if spec else current) + '  ▾')
+        self.model_menu.clear()
+        group = QActionGroup(self.model_menu)
+        for model, label in by_provider.get(current, []):
+            tags = model_tags(model, t)
+            action = QAction(f'{label}   ({tags})' if tags else label, self.model_menu, checkable=True)
+            action.setChecked(model == saved['model'])
+            action.triggered.connect(lambda _=False, m=model: self.choose(model=m))
+            group.addAction(action)
+            self.model_menu.addAction(action)
         self.model_button.setText(names.get(saved['model'], saved['model']) + '  ▾')
         self.effort_menu.clear()
         group = QActionGroup(self.effort_menu)
@@ -1424,10 +1419,6 @@ class ClaudePanel(QWidget):
             self.effort_menu.addAction(action)
         self.effort_button.setText(t(f'claude_effort_{saved["effort"]}') + '  ▾')
         self.show_session()
-
-    def model_actions(self):
-        """Every model in the model drop-down, across the providers' menus."""
-        return [action for menu in self.provider_menus for action in menu.actions()]
 
     def auto_refresh_models(self):
         """The daily Refresh models, in the background and without a word: only when a

@@ -335,7 +335,8 @@ def test_models_refresh_on_their_own_once_a_day_without_a_word(window, tmp_path,
             time.sleep(0.02)
         assert asked == [1] and not panel.fetching_models
         assert panel.entries == []  # silent: nothing said in the conversation
-        assert any("Grok 4.8" in a.text() for a in panel.model_actions())
+        panel.choose(model="grok-4.7")  # the model drop-down lists xAI's models now
+        assert any("Grok 4.8" in a.text() for a in panel.model_menu.actions())
         assert not claude_settings.refresh_due()  # done for today
         panel.auto_refresh_models()
         assert asked == [1]
@@ -925,12 +926,23 @@ def test_the_status_line_switches_mode_model_and_effort(window, monkeypatch, tmp
     assert panel.mode == "ask"
     panel.set_mode("auto")
     # The model and effort menus save the choice and the status line shows it.
-    # The model drop-down holds a menu per provider; the chosen model's provider is ticked.
-    providers = panel.model_menu.actions()
-    assert [a.text() for a in providers][0].startswith("Anthropic") and all(a.menu() for a in providers)
-    assert [a.isChecked() for a in providers].count(True) == 1 and providers[0].isChecked()
-    assert "QMenu::item:selected" in panel.model_menu.styleSheet() == panel.effort_menu.styleSheet()
-    haiku = [a for a in panel.model_actions() if "Haiku" in a.text()][0]
+    # The company has its own drop-down; the model drop-down lists that company's models.
+    providers = panel.provider_menu.actions()
+    assert providers[0].text().startswith("Anthropic") and providers[0].isChecked()
+    assert [a.isChecked() for a in providers].count(True) == 1
+    assert panel.provider_button.text().startswith("Anthropic ")
+    assert [a.text() for a in panel.model_menu.actions()] == ["Claude Sonnet 5.5", "Claude Haiku 5.5"]
+    assert ("QMenu::item:selected" in panel.model_menu.styleSheet()
+            and panel.provider_menu.styleSheet() == panel.model_menu.styleSheet() == panel.effort_menu.styleSheet())
+    openai = [a for a in providers if a.text().startswith("OpenAI")][0]
+    openai.trigger()  # another company: its first model
+    assert claude_settings.provider_of(claude_settings.load()["model"]) == "openai"
+    assert panel.provider_button.text().startswith("OpenAI ") and all("GPT" in a.text() for a in panel.model_menu.actions())
+    [a for a in panel.provider_menu.actions() if a.text().startswith("Anthropic")][0].trigger()
+    assert claude_settings.load()["model"] == "claude-sonnet-5-5"
+    # The Image button's picture is a PNG in images/, white on the dark theme.
+    assert panel.attach_button.text() == "Image" and not panel.attach_button.icon().isNull()
+    haiku = [a for a in panel.model_menu.actions() if "Haiku" in a.text()][0]
     haiku.trigger()
     assert claude_settings.load()["model"] == "claude-haiku-5-5" and panel.model_button.text().startswith("Claude Haiku 5.5")
     top = [a for a in panel.effort_menu.actions() if a.text() == "Max effort"][0]

@@ -20,8 +20,8 @@ import threading
 import time
 
 from PyQt5.QtCore import (QDate, QEvent, QLocale, QPoint, QPointF, QProcess, QProcessEnvironment, QRect,
-                          QRectF, Qt, QTimer, QUrl, pyqtSignal)
-from PyQt5.QtGui import (QColor, QDesktopServices, QImage, QPainter, QPainterPath, QPen, QPixmap, QRegion,
+                          QRectF, QSize, Qt, QTimer, QUrl, pyqtSignal)
+from PyQt5.QtGui import (QColor, QDesktopServices, QIcon, QImage, QPainter, QPainterPath, QPen, QPixmap, QRegion,
                          QTextDocument)
 from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog,
                              QHBoxLayout, QLabel, QLineEdit, QMenu, QPushButton, QToolButton, QSizePolicy, QTextBrowser, QTextEdit, QVBoxLayout,
@@ -105,6 +105,45 @@ def model_tags(model, t):
         tags.append(t('models_tag_retiring_soon') if info.retiring == 'soon'
                     else t('models_tag_retiring').format(date=info.retiring))
     return ' · '.join(tags)
+
+
+def menu_style(theme):
+    """The drop-downs drawn like the layer panel's menus: the theme's menu colors, and the
+    row under the mouse in the opposite ones (dark on light, light on dark)."""
+    if str(theme).lower() == 'dark':
+        bg, fg, sel_bg, sel_fg = '#333333', '#FFFFFF', '#F0F0F0', '#000000'
+    else:
+        bg, fg, sel_bg, sel_fg = '#F0F0F0', '#000000', '#333333', '#FFFFFF'
+    return (f'QMenu {{ background-color: {bg}; color: {fg}; border: 1px solid {sel_bg}; padding: 2px 0px; }}'
+            f'QMenu::item {{ background-color: transparent; color: {fg}; padding: 5px 24px 5px 22px; }}'
+            f'QMenu::item:selected {{ background-color: {sel_bg}; color: {sel_fg}; }}'
+            f'QMenu::item:disabled {{ color: #888888; }}'
+            f'QMenu::separator {{ height: 1px; background: #888888; margin: 3px 6px; }}')
+
+
+def picture_icon(color, size=14, ratio=3.0):
+    """A small picture (a frame, a sun, a hill) for the Image button, in color."""
+    pixmap = QPixmap(int(size * ratio), int(size * ratio))
+    pixmap.setDevicePixelRatio(ratio)
+    pixmap.fill(Qt.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.Antialiasing)
+    pen = QPen(QColor(color), 1.4)
+    pen.setJoinStyle(Qt.RoundJoin)
+    painter.setPen(pen)
+    painter.setBrush(Qt.NoBrush)
+    painter.drawRoundedRect(QRectF(1, 2, size - 2, size - 4), 2, 2)
+    painter.setBrush(QColor(color))
+    painter.drawEllipse(QPointF(size * 0.68, size * 0.36), 1.3, 1.3)
+    hill = QPainterPath(QPointF(2, size - 3))
+    hill.lineTo(size * 0.38, size * 0.48)
+    hill.lineTo(size * 0.62, size * 0.72)
+    hill.lineTo(size * 0.74, size * 0.6)
+    hill.lineTo(size - 2, size - 3)
+    hill.closeSubpath()
+    painter.drawPath(hill)
+    painter.end()
+    return QIcon(pixmap)
 
 
 def agent_command(prompt, model, out_dir, images=(), start=None, web=True, max_cost=None, effort=None,
@@ -601,8 +640,7 @@ class ClaudePanel(QWidget):
         self.model_clock.start()
         QTimer.singleShot(AUTO_REFRESH_FIRST_MS, self.auto_refresh_models)
         self._build()
-        saved = claude_settings.load()
-        self.setVisible(saved['show_button'] and saved['panel_open'])
+        self.setVisible(False)  # closed each time the app starts: the Claude button opens it
         self.retranslate(language_code)
 
     # ------------------------------------------------------------------ UI
@@ -645,13 +683,22 @@ class ClaudePanel(QWidget):
         self.prompt_edit.submitted.connect(self.send)
         self.prompt_edit.cycle_mode.connect(self.cycle_mode)
         self.attach_button = QPushButton(self)
+        self.attach_button.setObjectName('claudeChip')
         self.attach_button.clicked.connect(self.choose_image)
-        self.use_canvas_check = QCheckBox(self)
+        # A toggle like the toolbar's (Points, Shadow): a black frame while on.
+        self.use_canvas_check = QPushButton(self)
+        self.use_canvas_check.setObjectName('claudeToggle')
+        self.use_canvas_check.setCheckable(True)
         self.use_canvas_check.setChecked(True)  # an empty canvas sends nothing
+        self.use_canvas_check.toggled.connect(lambda _: self.show_use_canvas())
         self.status_label = QLabel(self)
         self.status_label.setStyleSheet('color: gray;')
+        self.session_label = QLabel(self)  # what this session has spent, beside Send
+        self.session_label.setObjectName('claudeSession')
         self.send_button = QPushButton(self)
-        self.send_button.setStyleSheet('QPushButton { background: #d97757; color: #1f1e1d; font-weight: bold; padding: 4px 14px; }')
+        self.send_button.setStyleSheet('QPushButton { background: #d97757; color: #1f1e1d; font-weight: bold; font-size: 12px;'
+                                       ' padding: 5px 16px; border: none; border-radius: 6px; }'
+                                       'QPushButton:hover { background: #E58D6F; } QPushButton:pressed { background: #C4623F; }')
         self.send_button.clicked.connect(self.send_or_stop)
         # A chat box: the text across the whole width, growing upward as
         # lines are added, with the buttons and the cost on a row under it.
@@ -662,56 +709,67 @@ class ClaudePanel(QWidget):
         row.addWidget(self.use_canvas_check)
         row.addStretch()
         row.addWidget(self.status_label)
+        row.addWidget(self.session_label)  # created below, with the status line
         row.addWidget(self.send_button)
         body.addLayout(row)
 
-        # The status line, as in Claude Code: the mode on the left (Shift+Tab
-        # switches it), then the model, the effort and the session's spending.
+        # The status line, as in Claude Code: New session and the mode on the left
+        # (Shift+Tab switches it), then the model and the effort.
         status = QHBoxLayout()
-        status.setSpacing(10)
+        status.setSpacing(6)
         self.mode_button = QToolButton(self)
         self.mode_button.setObjectName('claudeMode')
         self.mode_button.clicked.connect(self.cycle_mode)
+        self.mode_key = QLabel('⇧Tab', self)  # the key that switches the mode
+        self.mode_key.setObjectName('claudeKey')
+        # The model and the effort: each its own drop-down, the model's with a menu per provider.
         self.model_button = QToolButton(self)
         self.model_button.setObjectName('claudePick')
         self.model_button.setPopupMode(QToolButton.InstantPopup)
         self.model_menu = QMenu(self.model_button)
         self.model_button.setMenu(self.model_menu)
+        self.provider_menus = []
         self.effort_button = QToolButton(self)
         self.effort_button.setObjectName('claudePick')
         self.effort_button.setPopupMode(QToolButton.InstantPopup)
         self.effort_menu = QMenu(self.effort_button)
         self.effort_button.setMenu(self.effort_menu)
-        self.session_label = QLabel(self)
-        self.session_label.setObjectName('claudeSession')
         self.new_button = QToolButton(self)
-        self.new_button.setObjectName('claudePick')
+        self.new_button.setObjectName('claudeChip')
         self.new_button.clicked.connect(self.new_session)
         status.addWidget(self.new_button)
         status.addWidget(self.mode_button)
+        status.addWidget(self.mode_key)
         status.addStretch()
         status.addWidget(self.model_button)
         status.addWidget(self.effort_button)
-        status.addWidget(self.session_label)
         body.addLayout(status)
+        for menu in (self.model_menu, self.effort_menu):
+            menu.setStyleSheet(menu_style(self.theme_name))
+        self.attach_button.setIcon(picture_icon(self.colors['fg']))
+        self.attach_button.setIconSize(QSize(14, 14))
 
     # Its own colors for each app theme: as a child of the canvas it would
     # otherwise take the canvas background (white in every theme).
     THEMES = {
         'dark': dict(bg='#2C2C2C', fg='#FFFFFF', border='#5A5A5A', button='#3A3A3A', hover='#474747',
                      log='#262626', log_border='#3F3F3F', muted='#9A9A9A', user_bg='#393937',
-                     user_fg='#F5F4EF', ok='#4FC06F', bad='#E05A4B', auto='#B39DF0', plan='#3CC2B0'),
+                     user_fg='#F5F4EF', ok='#4FC06F', bad='#E05A4B', auto='#B39DF0', plan='#3CC2B0',
+                     pressed='#2F2F2F', frame='#FFFFFF', on='#4A3B33'),
         'light': dict(bg='#FFFFFF', fg='#000000', border='#B8B8B8', button='#ECECEC', hover='#DCDCDC',
                       log='#FAFAFA', log_border='#D0D0D0', muted='#6F6F6F', user_bg='#ECE9E2',
-                      user_fg='#1F1E1D', ok='#2F9E4F', bad='#C0392B', auto='#7457D6', plan='#16897A'),
+                      user_fg='#1F1E1D', ok='#2F9E4F', bad='#C0392B', auto='#7457D6', plan='#16897A',
+                      pressed='#CFCFCF', frame='#000000', on='#FBE4D8'),
         'default': dict(bg='#ECECEC', fg='#000000', border='#A8A8A8', button='#E0E0E0', hover='#D2D2D2',
                         log='#FFFFFF', log_border='#C8C8C8', muted='#6F6F6F', user_bg='#E2DED6',
-                        user_fg='#1F1E1D', ok='#2F9E4F', bad='#C0392B', auto='#7457D6', plan='#16897A'),
+                        user_fg='#1F1E1D', ok='#2F9E4F', bad='#C0392B', auto='#7457D6', plan='#16897A',
+                        pressed='#C2C2C2', frame='#000000', on='#F6DCCD'),
     }
 
     def apply_theme(self, theme_name):
         c = self.THEMES.get(str(theme_name).lower(), self.THEMES['default'])
         self.colors = c
+        self.theme_name = str(theme_name).lower()
         if hasattr(self, 'working'):
             self.working.text_color, self.working.muted = QColor(c['fg']), QColor(c['muted'])
             self.working.track = QColor(c['log_border'])
@@ -732,13 +790,36 @@ class ClaudePanel(QWidget):
             #claudePanel QToolButton:hover {{ color: {c['fg']}; }}
             #claudePanel QToolButton::menu-indicator {{ image: none; width: 0px; }}
             #claudePanel QLabel#claudeSession {{ color: {c['muted']}; font-size: 12px; }}
+            /* As the toolbar's buttons: bold, square-ish corners; a frame while a toggle is on. */
+            #claudePanel QPushButton#claudeChip, #claudePanel QToolButton#claudeChip,
+            #claudePanel QPushButton#claudeToggle {{
+                background-color: {c['button']}; color: {c['fg']}; border: 1px solid {c['border']};
+                border-radius: 6px; padding: 4px 10px; font-weight: bold; font-size: 12px; }}
+            #claudePanel QToolButton#claudeChip {{ padding: 2px 8px; }}
+            #claudePanel QPushButton#claudeChip:hover, #claudePanel QToolButton#claudeChip:hover,
+            #claudePanel QPushButton#claudeToggle:hover {{ background-color: {c['hover']}; }}
+            #claudePanel QPushButton#claudeChip:pressed, #claudePanel QToolButton#claudeChip:pressed,
+            #claudePanel QPushButton#claudeToggle:pressed {{ background-color: {c['pressed']}; }}
+            #claudePanel QToolButton#claudeChip:disabled {{ color: {c['muted']}; }}
+            #claudePanel QPushButton#claudeToggle:checked {{ background-color: {c['on']};
+                border: 2px solid {c['frame']}; padding: 3px 9px; }}
+            #claudePanel QToolButton#claudePick {{ background-color: {c['button']}; color: {c['fg']};
+                border: 1px solid {c['border']}; border-radius: 6px; padding: 2px 8px; font-size: 12px; }}
+            #claudePanel QToolButton#claudePick:hover {{ background-color: {c['hover']}; }}
+            #claudePanel QToolButton#claudePick:pressed {{ background-color: {c['pressed']}; }}
+            #claudePanel QLabel#claudeKey {{ color: {c['muted']}; background-color: {c['log']};
+                border: 1px solid {c['border']}; border-radius: 4px; padding: 0px 5px; font-size: 11px; }}
         """)
+        if hasattr(self, 'model_menu'):
+            for menu in (self.model_menu, self.effort_menu):
+                menu.setStyleSheet(menu_style(self.theme_name))
+            self.attach_button.setIcon(picture_icon(c['fg']))
 
     def is_open(self):
         return self.isVisibleTo(self.parentWidget())
 
     def set_open(self, opened):
-        """Show or hide Claude, and remember it for the next time the app opens."""
+        """Show or hide Claude (for this run only: it starts closed every time)."""
         opened = bool(opened)
         if not opened:
             self.preview.hide_frame()  # its own window: it would stay up with Claude hidden
@@ -749,8 +830,6 @@ class ClaudePanel(QWidget):
             self.place()
             self.stack()
             self.prompt_edit.setFocus()
-        if claude_settings.load()['panel_open'] != opened:
-            claude_settings.save(panel_open=opened)
         self.open_changed.emit(opened)
         self.activity_changed.emit()
 
@@ -852,12 +931,17 @@ class ClaudePanel(QWidget):
         self.prompt_edit.setToolTip(t('claude_prompt_keys'))
         self.attach_button.setText(t('claude_attach'))
         self.remove_image_button.setText(t('claude_remove_image'))
-        self.use_canvas_check.setText(t('claude_use_canvas'))
+        self.show_use_canvas()
         self.send_button.setText(t('claude_stop') if self.running() else t('claude_send'))
         self.setLayoutDirection(Qt.RightToLeft if language_code == 'he' else Qt.LeftToRight)
         self.set_image(self.image_path)
         self.refresh_controls()
         self.render_transcript()
+
+    def show_use_canvas(self):
+        """Start from the canvas: a check mark in front while it is on."""
+        text = _tr(self.language, 'claude_use_canvas')
+        self.use_canvas_check.setText(('✓  ' + text) if self.use_canvas_check.isChecked() else text)
 
     def set_image(self, path):
         self.image_path = path
@@ -1291,29 +1375,45 @@ class ClaudePanel(QWidget):
         self.new_button.setText('＋ ' + t('claude_new_session'))
         self.new_button.setEnabled(not self.running())
         glyph, color, key = self.MODE_LOOK[self.mode]
-        self.mode_button.setText(f'{glyph} {t(key)}  ·  {t("claude_mode_cycle")}')
-        self.mode_button.setStyleSheet(f'QToolButton {{ color: {c[color]}; }}')
+        # The mode as a tinted tag in its own color; ⇧Tab beside it switches it.
+        tint = QColor(c[color])
+        self.mode_button.setText(f'{glyph}  {t(key)}')
+        self.mode_button.setToolTip(t('claude_mode_cycle'))
+        self.mode_key.setToolTip(t('claude_mode_cycle'))
+        self.mode_button.setStyleSheet(
+            f'QToolButton {{ color: {c[color]}; background-color: rgba({tint.red()}, {tint.green()}, {tint.blue()}, 38);'
+            f' border: 1px solid rgba({tint.red()}, {tint.green()}, {tint.blue()}, 110); border-radius: 6px;'
+            f' padding: 2px 8px; font-weight: bold; font-size: 12px; }}'
+            f'QToolButton:hover {{ background-color: rgba({tint.red()}, {tint.green()}, {tint.blue()}, 70); }}')
         offered = claude_settings.models()
         names = dict(offered)
+        # A drop-down per provider: its name (and whether its key is still missing, Settings >
+        # Models) opens its own menu of models; the provider of the chosen model is ticked.
+        for menu in self.provider_menus:
+            menu.deleteLater()
+        self.provider_menus = []
         self.model_menu.clear()
         group = QActionGroup(self.model_menu)
-        provider = None
+        by_provider = {}
         for model, label in offered:
-            if claude_settings.provider_of(model) != provider:  # each provider's models together
-                if provider is not None:
-                    self.model_menu.addSeparator()
-                provider = claude_settings.provider_of(model)
-                spec = claude_settings.PROVIDERS.get(provider)
-                keyed = provider in saved['keys'] or (spec is not None and os.environ.get(spec.env))
-            # Which provider runs it, and whether its key is still missing (Settings > Models).
-            where = ', '.join(w for w in ((spec.name if spec else provider), '' if keyed else t('models_no_key'),
-                                          model_tags(model, t)) if w)
-            action = QAction(f'{label}   ({where})', self.model_menu, checkable=True)
-            action.setChecked(model == saved['model'])
-            action.triggered.connect(lambda _=False, m=model: self.choose(model=m))
-            group.addAction(action)
-            self.model_menu.addAction(action)
-        self.model_button.setText(names.get(saved['model'], saved['model']) + ' ▾')
+            by_provider.setdefault(claude_settings.provider_of(model), []).append((model, label))
+        for provider, entries in by_provider.items():
+            spec = claude_settings.PROVIDERS.get(provider)
+            keyed = provider in saved['keys'] or (spec is not None and os.environ.get(spec.env))
+            title = spec.name if spec else provider
+            submenu = QMenu(title if keyed else f'{title}   ({t("models_no_key")})', self.model_menu)
+            self.provider_menus.append(submenu)
+            for model, label in entries:
+                tags = model_tags(model, t)
+                action = QAction(f'{label}   ({tags})' if tags else label, submenu, checkable=True)
+                action.setChecked(model == saved['model'])
+                action.triggered.connect(lambda _=False, m=model: self.choose(model=m))
+                group.addAction(action)
+                submenu.addAction(action)
+            entry = self.model_menu.addMenu(submenu)
+            entry.setCheckable(True)
+            entry.setChecked(any(model == saved['model'] for model, _ in entries))
+        self.model_button.setText(names.get(saved['model'], saved['model']) + '  ▾')
         self.effort_menu.clear()
         group = QActionGroup(self.effort_menu)
         for effort in claude_settings.EFFORTS:
@@ -1322,8 +1422,12 @@ class ClaudePanel(QWidget):
             action.triggered.connect(lambda _=False, e=effort: self.choose(effort=e))
             group.addAction(action)
             self.effort_menu.addAction(action)
-        self.effort_button.setText(t(f'claude_effort_{saved["effort"]}') + ' ▾')
+        self.effort_button.setText(t(f'claude_effort_{saved["effort"]}') + '  ▾')
         self.show_session()
+
+    def model_actions(self):
+        """Every model in the model drop-down, across the providers' menus."""
+        return [action for menu in self.provider_menus for action in menu.actions()]
 
     def auto_refresh_models(self):
         """The daily Refresh models, in the background and without a word: only when a

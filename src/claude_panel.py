@@ -132,6 +132,16 @@ def mode_icon(mode, theme):
     return QIcon(resource_path(os.path.join('images', f'mode_{mode}_on_{shade}.png')))
 
 
+def icon_path(name):
+    """A picture in images/, as a style sheet url() wants it (forward slashes on Windows too)."""
+    return resource_path(os.path.join('images', name)).replace('\\', '/')
+
+
+def shade_of(theme):
+    """'dark' on the dark theme, 'light' on the default and light themes: which picture to use."""
+    return 'dark' if str(theme).lower() == 'dark' else 'light'
+
+
 def image_icon(theme):
     """The Image button's picture: images/image_icon_*.png, white on the dark theme, black otherwise."""
     name = 'image_icon_white.png' if str(theme).lower() == 'dark' else 'image_icon_black.png'
@@ -714,8 +724,12 @@ class ClaudePanel(QWidget):
         self.mode_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.mode_button.setIconSize(QSize(13, 13))
         self.mode_button.clicked.connect(self.cycle_mode)
-        self.mode_key = QLabel('⇧Tab', self)  # the key that switches the mode
+        self.mode_key = QToolButton(self)  # the key that switches the mode: Shift + Tab
         self.mode_key.setObjectName('claudeKey')
+        self.mode_key.setText('Tab')
+        self.mode_key.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.mode_key.setIconSize(QSize(11, 11))
+        self.mode_key.clicked.connect(self.cycle_mode)
         # The company, its model and the effort: each its own drop-down.
         self.provider_button = QToolButton(self)
         self.provider_button.setObjectName('claudePick')
@@ -747,6 +761,8 @@ class ClaudePanel(QWidget):
             menu.setStyleSheet(menu_style(self.theme_name))
         self.attach_button.setIcon(image_icon(self.theme_name))
         self.attach_button.setIconSize(QSize(16, 16))
+        self.mode_key.setIcon(QIcon(icon_path(f'shift_on_{shade_of(self.theme_name)}.png')))
+        self.use_canvas_check.setIconSize(QSize(14, 14))
 
     # Its own colors for each app theme: as a child of the canvas it would
     # otherwise take the canvas background (white in every theme).
@@ -803,16 +819,20 @@ class ClaudePanel(QWidget):
             #claudePanel QPushButton#claudeToggle:checked {{ background-color: {c['on']};
                 border: 2px solid {c['frame']}; padding: 3px 9px; }}
             #claudePanel QToolButton#claudePick {{ background-color: {c['button']}; color: {c['fg']};
-                border: 1px solid {c['border']}; border-radius: 6px; padding: 2px 8px; font-size: 12px; }}
+                border: 1px solid {c['border']}; border-radius: 6px; padding: 2px 22px 2px 8px; font-size: 12px; }}
+            #claudePanel QToolButton#claudePick::menu-indicator {{
+                image: url({icon_path(f"menu_arrow_on_{shade_of(theme_name)}.png")});
+                subcontrol-origin: padding; subcontrol-position: right center; width: 10px; height: 6px; right: 7px; }}
             #claudePanel QToolButton#claudePick:hover {{ background-color: {c['hover']}; }}
             #claudePanel QToolButton#claudePick:pressed {{ background-color: {c['pressed']}; }}
-            #claudePanel QLabel#claudeKey {{ color: {c['muted']}; background-color: {c['log']};
-                border: 1px solid {c['border']}; border-radius: 4px; padding: 0px 5px; font-size: 11px; }}
+            #claudePanel QToolButton#claudeKey {{ color: {c['muted']}; background-color: {c['log']};
+                border: 1px solid {c['border']}; border-radius: 4px; padding: 1px 5px; font-size: 11px; }}
         """)
         if hasattr(self, 'model_menu'):
             for menu in (self.provider_menu, self.model_menu, self.effort_menu):
                 menu.setStyleSheet(menu_style(self.theme_name))
             self.attach_button.setIcon(image_icon(self.theme_name))
+            self.mode_key.setIcon(QIcon(icon_path(f'shift_on_{shade_of(self.theme_name)}.png')))
 
     def is_open(self):
         return self.isVisibleTo(self.parentWidget())
@@ -938,9 +958,9 @@ class ClaudePanel(QWidget):
         self.render_transcript()
 
     def show_use_canvas(self):
-        """Start from the canvas: a check mark in front while it is on."""
-        text = _tr(self.language, 'claude_use_canvas')
-        self.use_canvas_check.setText(('✓  ' + text) if self.use_canvas_check.isChecked() else text)
+        """Start from the canvas: a check mark (images/check.png) in front while it is on."""
+        self.use_canvas_check.setText(_tr(self.language, 'claude_use_canvas'))
+        self.use_canvas_check.setIcon(QIcon(icon_path('check.png')) if self.use_canvas_check.isChecked() else QIcon())
 
     def set_image(self, path):
         self.image_path = path
@@ -1132,8 +1152,8 @@ class ClaudePanel(QWidget):
             mark = f'<span style="color:{ACCENT};">●</span>'
             detail = self.stage_text(step) if step.get('stage') else '…'
         else:
-            mark = (f'<span style="color:{c["ok"]};">✓</span>' if step.get('ok')
-                    else f'<span style="color:{c["bad"]};">✗</span>')
+            # Done or failed: the panel's check and cross pictures (images/), not font characters.
+            mark = f'<img src="{icon_path("check.png" if step.get("ok") else "cross.png")}" width="12" height="12">'
             detail = t('claude_stopped').rstrip('.。') if step.get('stopped') else step.get('summary') or ''
             took = step.get('seconds')
             if took is not None and took >= 1:  # how long it took, once it is worth saying
@@ -1376,12 +1396,13 @@ class ClaudePanel(QWidget):
         self.new_button.setText('＋ ' + t('claude_new_session'))
         self.new_button.setEnabled(not self.running())
         color, key = self.MODE_LOOK[self.mode]
-        # The mode as a tinted tag in its own color; ⇧Tab beside it switches it.
+        # The mode as a tinted tag in its own color; the Shift+Tab key cap beside it switches it.
         tint = QColor(c[color])
         self.mode_button.setIcon(mode_icon(self.mode, self.theme_name))
         self.mode_button.setText(t(key))
         self.mode_button.setToolTip(t('claude_mode_cycle'))
         self.mode_key.setToolTip(t('claude_mode_cycle'))
+        self.mode_key.setAccessibleName('Shift+Tab')
         self.mode_button.setStyleSheet(
             f'QToolButton {{ color: {c[color]}; background-color: rgba({tint.red()}, {tint.green()}, {tint.blue()}, 38);'
             f' border: 1px solid rgba({tint.red()}, {tint.green()}, {tint.blue()}, 110); border-radius: 6px;'
@@ -1409,7 +1430,7 @@ class ClaudePanel(QWidget):
             group.addAction(action)
             self.provider_menu.addAction(action)
         spec = claude_settings.PROVIDERS.get(current)
-        self.provider_button.setText(short_provider_name(spec.name if spec else current) + '  ▾')
+        self.provider_button.setText(short_provider_name(spec.name if spec else current))
         self.model_menu.clear()
         group = QActionGroup(self.model_menu)
         for model, label in by_provider.get(current, []):
@@ -1419,7 +1440,7 @@ class ClaudePanel(QWidget):
             action.triggered.connect(lambda _=False, m=model: self.choose(model=m))
             group.addAction(action)
             self.model_menu.addAction(action)
-        self.model_button.setText(names.get(saved['model'], saved['model']) + '  ▾')
+        self.model_button.setText(names.get(saved['model'], saved['model']))
         self.effort_menu.clear()
         group = QActionGroup(self.effort_menu)
         for effort in claude_settings.EFFORTS:
@@ -1428,7 +1449,7 @@ class ClaudePanel(QWidget):
             action.triggered.connect(lambda _=False, e=effort: self.choose(effort=e))
             group.addAction(action)
             self.effort_menu.addAction(action)
-        self.effort_button.setText(t(f'claude_effort_{saved["effort"]}') + '  ▾')
+        self.effort_button.setText(t(f'claude_effort_{saved["effort"]}'))
         self.show_session()
 
     def auto_refresh_models(self):

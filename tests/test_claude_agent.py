@@ -933,18 +933,32 @@ def test_the_status_line_switches_mode_model_and_effort(window, monkeypatch, tmp
     providers = panel.provider_menu.actions()
     assert providers[0].text().startswith("Anthropic") and providers[0].isChecked()
     assert [a.isChecked() for a in providers].count(True) == 1
-    assert panel.provider_button.text().startswith("Anthropic ")
+    assert panel.provider_button.text() == "Anthropic"
     assert [a.text() for a in panel.model_menu.actions()] == ["Claude Sonnet 5.5", "Claude Haiku 5.5"]
     assert ("QMenu::item:selected" in panel.model_menu.styleSheet()
             and panel.provider_menu.styleSheet() == panel.model_menu.styleSheet() == panel.effort_menu.styleSheet())
     openai = [a for a in providers if a.text().startswith("OpenAI")][0]
     openai.trigger()  # another company: its first model
     assert claude_settings.provider_of(claude_settings.load()["model"]) == "openai"
-    assert panel.provider_button.text().startswith("OpenAI ") and all("GPT" in a.text() for a in panel.model_menu.actions())
+    assert panel.provider_button.text() == "OpenAI" and all("GPT" in a.text() for a in panel.model_menu.actions())
     [a for a in panel.provider_menu.actions() if a.text().startswith("Anthropic")][0].trigger()
     assert claude_settings.load()["model"] == "claude-sonnet-5-5"
     # The Image button's picture is a PNG in images/, white on the dark theme.
     assert panel.attach_button.text() == "Image" and not panel.attach_button.icon().isNull()
+    # Pictures, not characters: the drop-downs' arrow, the toggle's check, the Shift key.
+    for pick in (panel.provider_button, panel.model_button, panel.effort_button):
+        assert "▾" not in pick.text()
+    assert "menu_arrow_on_" in panel.styleSheet() and "::menu-indicator" in panel.styleSheet()
+    assert panel.use_canvas_check.isChecked() and not panel.use_canvas_check.icon().isNull()
+    assert "✓" not in panel.use_canvas_check.text()
+    panel.use_canvas_check.setChecked(False)
+    assert panel.use_canvas_check.icon().isNull()
+    panel.use_canvas_check.setChecked(True)
+    assert panel.mode_key.text() == "Tab" and not panel.mode_key.icon().isNull()
+    import os
+    for name in ("check.png", "cross.png", "menu_arrow_on_dark.png", "menu_arrow_on_light.png",
+                 "shift_on_dark.png", "shift_on_light.png"):
+        assert os.path.exists(os.path.join(os.path.dirname(claude_settings.__file__), "images", name))
     haiku = [a for a in panel.model_menu.actions() if "Haiku" in a.text()][0]
     haiku.trigger()
     assert claude_settings.load()["model"] == "claude-haiku-5-5" and panel.model_button.text().startswith("Claude Haiku 5.5")

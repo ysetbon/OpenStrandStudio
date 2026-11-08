@@ -1695,3 +1695,181 @@ def test_claude_remembers_the_session_until_a_new_one(window, fake_api, monkeypa
     third = ask("a heart")
     assert third == "a heart"  # a new session: from nothing
     panel.use_canvas_check.setChecked(True)
+
+
+# ------------------------------------------------- Claude waits for an Allow or Deny
+def test_a_card_that_comes_while_its_tool_runs_does_not_break_the_tool_s_row(window, monkeypatch, tmp_path):
+    """In ask mode a card (a design to open, an Allow/Deny) comes while its tool runs. The tool's
+    end looked for its row only in the last group, which the card had closed off: it made a row
+    with no picture name and raised KeyError: 'key', and the events after it were lost."""
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel = window.claude_panel
+    panel.set_open(True)
+    panel.entries.clear()
+    panel.out_dir = str(tmp_path)
+    panel.add_user("only up to the _4 strands")
+    try:
+        cards = {"open_in_new_tab": lambda: panel.add_design_card(str(tmp_path / "ring.json"), "Ring"),
+                 "app_window": lambda: panel.add_confirm_card(5, ("window", "Ring", "delete 1_5, 2_5, 3_5"))}
+        for name, card in cards.items():
+            panel.handle_event({"type": "tool_start", "name": name, "input": {}})
+            step = panel.running_step(name)
+            card()
+            panel.handle_event({"type": "tool_end", "name": name, "ok": True, "summary": "done"})
+            assert not step["running"] and step["ok"] and step["summary"] == "done" and "waiting" not in step
+            assert step["picture"]  # the canvas as the tool left it
+            assert panel.running_step() is None
+        rows = [s["name"] for e in panel.entries if e["kind"] == "group" for s in e["steps"]]
+        assert rows == ["open_in_new_tab", "app_window"]  # no second row without a picture name
+    finally:
+        panel.entries.clear()
+        panel.render_transcript()
+
+
+def test_an_event_the_panel_cannot_show_does_not_lose_the_lines_after_it(window, monkeypatch, caplog):
+    """An error in one event stopped the read: the lines after it were lost, an app_call among
+    them, and Claude waited ten minutes for an answer that never came."""
+    from types import SimpleNamespace
+    from PyQt5.QtCore import QProcess
+    panel = window.claude_panel
+    real, answered = panel.handle_event, []
+
+    def handle(event):
+        if event.get("text") == "cannot show this":
+            raise KeyError("key")
+        real(event)
+    monkeypatch.setattr(panel, "handle_event", handle)
+    monkeypatch.setattr(panel, "answer", answered.append)
+    lines = [{"type": "note", "text": "cannot show this"}, {"type": "app_call", "id": 9, "name": "list_tabs", "args": {}}]
+    out = b"".join(json.dumps(e).encode() + b"\n" for e in lines)
+    panel.stdout_buffer = b""
+    panel.process = SimpleNamespace(state=lambda: QProcess.Running, readAllStandardOutput=lambda: out)
+    try:
+        panel.read_events()
+    finally:
+        panel.process = None
+    assert [(r["id"], r["ok"]) for r in answered] == [(9, True)]
+    assert "could not show a note event" in caplog.text and "KeyError" in caplog.text
+
+
+def test_an_allow_card_stays_in_view_at_the_end_of_a_long_conversation(window, monkeypatch, tmp_path):
+    """Qt lays a long conversation out a little at a time, so the scroll bar's range grew after
+    the panel had scrolled to the end: the view stopped short, and the Allow/Deny card at the end
+    went unseen while Claude waited for it. Scrolled up by the person, the view stays put."""
+    from PyQt5.QtGui import QTextDocument
+    from PyQt5.QtWidgets import QApplication
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel = window.claude_panel
+    panel.set_open(True)
+    panel.entries.clear()
+    panel.out_dir = str(tmp_path)
+    transcript, bar = panel.transcript, panel.transcript.verticalScrollBar()
+
+    def settle():
+        end = time.monotonic() + 0.3
+        while time.monotonic() < end:
+            QApplication.processEvents()
+            time.sleep(0.01)
+    try:
+        for r in range(20):
+            panel.add_user(f"request {r}: a hexagon stitch, a box stitch with one more strand")
+            for _ in range(14):
+                panel.handle_event({"type": "tool_start", "name": "draw_design", "input": {}})
+                panel.handle_event({"type": "tool_end", "name": "draw_design", "ok": True,
+                                    "summary": "cord 1 (Ribbon 1): 7 strands, 17 crossings, open"})
+            panel.add_claude("the three ribbons cross at 60 degrees " * 8)
+        settle()
+        panel.add_user("only up to the _4 strands")
+        panel.handle_event({"type": "tool_start", "name": "app_window", "input": {"op": "delete"}})
+        panel.add_confirm_card(3, ("window", "Ring", "delete 1_5, 2_5, 3_5"))
+        settle()
+        assert bar.value() == bar.maximum() > 0
+        doc = transcript.document()
+        allow = doc.find("Allow", doc.characterCount(), QTextDocument.FindBackward | QTextDocument.FindCaseSensitively)
+        shown = transcript.cursorRect(allow)
+        assert 0 <= shown.top() and shown.bottom() <= transcript.viewport().height()
+        # The person scrolls up to read: new lines leave the view where they put it...
+        bar.setValue(bar.maximum() // 2)
+        place = bar.value()
+        panel.handle_event({"type": "thinking", "text": "the _5 strands are the start lines"})
+        settle()
+        assert bar.value() == place
+        # ...until they send a request.
+        panel.add_user("thanks")
+        settle()
+        assert bar.value() == bar.maximum()
+    finally:
+        panel.entries.clear()
+        panel.render_transcript()
+
+
+def test_while_a_card_waits_the_panel_and_the_terminal_say_claude_waits_for_the_person(window, monkeypatch,
+                                                                                         tmp_path):
+    """Claude's tool waits for the person's Allow or Deny. Its row showed a moving bar and a clock,
+    as if Claude were busy, and the terminal only said the agent waited for the app."""
+    import io
+    from PyQt5.QtCore import QUrl
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    terminal = io.StringIO()
+    monkeypatch.setattr(sys, "__stderr__", terminal)
+    panel = window.claude_panel
+    panel.set_open(True)
+    panel.entries.clear()
+    panel.out_dir = str(tmp_path)
+    decided = []
+    monkeypatch.setattr(panel.bridge, "decide", lambda call_id, allowed: decided.append((call_id, allowed)))
+    try:
+        panel.add_user("only up to the _4 strands")
+        panel.handle_event({"type": "tool_start", "name": "app_window", "input": {"op": "delete"}})
+        step = panel.running_step("app_window")
+        step["start"] -= 10  # it has waited a while: a busy tool shows its bar and time by now
+        panel.add_confirm_card(3, ("window", "Ring", "delete 1_5, 2_5, 3_5"))
+        panel.refresh_running()
+        shown = panel.transcript.toPlainText()
+        assert "App · Waiting for you: Allow or Deny" in shown
+        assert "Claude wants to delete 1_5, 2_5, 3_5 (tab “Ring”)." in shown
+        assert "claude-bar:" not in panel.transcript.toHtml()  # no bar, no clock: nothing is moving
+        assert panel.working.label == "Waiting for you: Allow or Deny"
+        assert ("[Claude] waiting for the person to click Allow or Deny in the panel: "
+                "Claude wants to delete 1_5, 2_5, 3_5 (tab “Ring”).") in terminal.getvalue()
+        card = panel.entries[-1]
+        panel.follow_link(QUrl(f"os:allow/{panel.entries.index(card)}"))
+        assert decided == [(3, True)] and card["state"] == "allowed"
+        assert "waiting" not in step and panel.working.label == "App…"  # the tool runs on
+        assert "[Claude] allowed by the person: Claude wants to delete 1_5" in terminal.getvalue()
+        # Other languages say it with the card's own words.
+        panel.retranslate("fr")
+        assert panel.waiting_text() == "En attente de votre choix : Autoriser ou Refuser"
+    finally:
+        panel.retranslate("en")
+        panel.entries.clear()
+        panel.render_transcript()
+
+
+def test_a_card_no_one_answered_does_nothing_once_claude_stops_waiting_for_it(window, monkeypatch, tmp_path):
+    """The agent waits ten minutes for the app's answer, then its tool fails. The card it waited
+    for then does nothing: a late Allow would make a change Claude no longer knows of."""
+    from PyQt5.QtCore import QUrl
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel = window.claude_panel
+    panel.set_open(True)
+    panel.entries.clear()
+    panel.out_dir = str(tmp_path)
+    try:
+        panel.add_user("only up to the _4 strands")
+        panel.handle_event({"type": "tool_start", "name": "app_window", "input": {"op": "delete"}})
+        panel.bridge.pending[11] = {"id": 11, "name": "window", "args": {"op": "delete"}}
+        panel.add_confirm_card(11, ("window", "Ring", "delete 1_5, 2_5, 3_5"))
+        card = panel.entries[-1]
+        panel.handle_event({"type": "tool_end", "name": "app_window", "ok": False,
+                            "summary": "the app did not answer window in time"})
+        assert card["state"] == "expired" and 11 not in panel.bridge.pending
+        assert "Allow" not in panel.transcript.toPlainText().split("(tab “Ring”).")[-1]
+        decided = []
+        monkeypatch.setattr(panel.bridge, "decide", lambda *args: decided.append(args))
+        panel.follow_link(QUrl(f"os:allow/{panel.entries.index(card)}"))
+        assert decided == []
+    finally:
+        panel.bridge.pending.pop(11, None)
+        panel.entries.clear()
+        panel.render_transcript()

@@ -11,6 +11,7 @@ the agent as its starting design.
 """
 import html
 import json
+import logging
 import math
 import os
 import re
@@ -18,6 +19,7 @@ import shutil
 import sys
 import threading
 import time
+from contextlib import contextmanager
 
 from PyQt5.QtCore import (QDate, QEvent, QLocale, QPoint, QPointF, QProcess, QProcessEnvironment, QRect,
                           QRectF, QSize, Qt, QTimer, QUrl, pyqtSignal)
@@ -92,6 +94,19 @@ SLOW_TOOLS = {'draw_design', 'make_heart', 'make_turks_head'}
 def _tr(language, key):
     table = translations.get(language) or translations['en']
     return table.get(key) or translations['en'].get(key, key)
+
+
+# An Allow/Deny card's words, by the bridge action that asks (src/claude_bridge).
+CONFIRM_KEYS = {'rename_tab': 'claude_confirm_rename', 'edit_mask': 'claude_confirm_mask',
+                'edit_strand': 'claude_confirm_strand', 'edit_layers': 'claude_confirm_layers',
+                'edit_groups': 'claude_confirm_groups', 'window': 'claude_confirm_window',
+                'settings': 'claude_confirm_settings'}
+
+
+def confirm_text(language, what):
+    """'Claude wants to delete 1_5, 2_5 (tab “Ring”).': what an Allow/Deny card asks."""
+    action, current, new = what
+    return _tr(language, CONFIRM_KEYS.get(action, 'claude_confirm_switch')).format(old=current, new=new)
 
 
 def model_tags(model, t):
@@ -616,6 +631,11 @@ class ClaudePanel(QWidget):
         self.stdout_buffer = b''
         self.stderr_text = ''
         self.entries = []  # the conversation: drawn as HTML each time it changes
+        # The conversation keeps its newest line in view (where an Allow/Deny card waits),
+        # unless the person scrolled up to read: then it stays where they put it.
+        self.follow_end = True
+        self.kept_scroll = 0
+        self.scrolling = False  # the panel moves the scroll bar itself: not the person scrolling
         self.bridge = None  # set by the main window: Claude's tab tools run through it
         # The session: what was asked and answered so far, sent with each request
         # so Claude remembers it. "New session" (or /clear, /new) starts again.
@@ -666,6 +686,9 @@ class ClaudePanel(QWidget):
         self.transcript.viewport().installEventFilter(self)
         self.transcript.setMinimumHeight(60)
         self.transcript.setMaximumHeight(170)
+        bar = self.transcript.verticalScrollBar()
+        bar.rangeChanged.connect(self.keep_scroll)
+        bar.valueChanged.connect(self.scrolled)
         self.transcript.hide()
         body.addWidget(self.transcript)
         self.working = WorkingLine(self)
@@ -986,6 +1009,7 @@ class ClaudePanel(QWidget):
 
     def add_user(self, text):
         self.close_group()
+        self.follow_end = True  # a new request: show it, and what Claude does with it
         self.add_entry({'kind': 'user', 'text': text})
 
     def add_claude(self, text):
@@ -1031,14 +1055,40 @@ class ClaudePanel(QWidget):
     def render_transcript(self):
         if not hasattr(self, 'transcript'):
             return
-        bar = self.transcript.verticalScrollBar()
-        at_end = bar.value() >= bar.maximum() - 4
-        keep = bar.value()
         c = self.colors
         body = ''.join(self.entry_html(i, e, c) for i, e in enumerate(self.entries))
-        self.transcript.setHtml(f'<div style="color:{c["fg"]};">{body}</div>')
-        self.transcript.setVisible(bool(self.entries))
-        bar.setValue(bar.maximum() if at_end else keep)
+        with self.own_scroll():
+            self.transcript.setHtml(f'<div style="color:{c["fg"]};">{body}</div>')
+            self.transcript.setVisible(bool(self.entries))
+            bar = self.transcript.verticalScrollBar()
+            bar.setValue(bar.maximum() if self.follow_end else self.kept_scroll)
+
+    @contextmanager
+    def own_scroll(self):
+        """The panel moves the scroll bar itself, not the person (it nests: keep_scroll runs
+        inside setHtml)."""
+        was, self.scrolling = self.scrolling, True
+        try:
+            yield
+        finally:
+            self.scrolling = was
+
+    def keep_scroll(self, _minimum, maximum):
+        """Qt lays a long conversation out a little at a time after setHtml, so the scroll bar's
+        range keeps growing after render_transcript has scrolled: scroll again as it grows. Without
+        this the view stopped short of the end, and an Allow/Deny card there went unseen."""
+        target = maximum if self.follow_end else min(self.kept_scroll, maximum)
+        bar = self.transcript.verticalScrollBar()
+        if bar.value() != target:
+            with self.own_scroll():
+                bar.setValue(target)
+
+    def scrolled(self, value):
+        """The person scrolled: stay where they put it, or follow the end again from the bottom."""
+        if self.scrolling:
+            return
+        self.kept_scroll = value
+        self.follow_end = value >= self.transcript.verticalScrollBar().maximum() - 4
 
     def entry_html(self, i, e, c):
         t = lambda key: _tr(self.language, key)
@@ -1066,13 +1116,7 @@ class ClaudePanel(QWidget):
                     f' border:1px solid {c["log_border"]};"><tr>{picture}<td valign="middle">'
                     f'{esc(t("claude_design_ready").format(name=e["name"]))}<br>{action}</td></tr></table>')
         if kind == 'confirm':
-            action, current, new = e['what']
-            key = {'rename_tab': 'claude_confirm_rename', 'edit_mask': 'claude_confirm_mask',
-                   'edit_strand': 'claude_confirm_strand', 'edit_layers': 'claude_confirm_layers',
-                   'edit_groups': 'claude_confirm_groups', 'window': 'claude_confirm_window',
-                   'settings': 'claude_confirm_settings'}.get(
-                action, 'claude_confirm_switch')
-            text = esc(t(key).format(old=current, new=new))
+            text = esc(confirm_text(self.language, e['what']))
             if e['state'] is None:
                 choice = (f'<a href="os:allow/{i}" style="color:#D97757; font-weight:bold; text-decoration:none;">'
                           f'{esc(t("claude_allow"))}</a>&nbsp;&nbsp;&nbsp;<a href="os:deny/{i}" '
@@ -1117,6 +1161,8 @@ class ClaudePanel(QWidget):
         name = step['name']
         key = TOOL_CHIPS.get(name, (None,))[0]
         label = t(key) if key else name
+        if step.get('running') and step.get('waiting'):
+            return f'{label} · {self.waiting_text()}'
         if step.get('running') and step.get('stage'):
             return f'{label} · {self.stage_text(step)}'
         if step.get('running') and name in SLOW_TOOLS:
@@ -1151,7 +1197,8 @@ class ClaudePanel(QWidget):
         label = t(key) if key else step['name']
         if step.get('running'):
             mark = f'<span style="color:{ACCENT};">●</span>'
-            detail = self.stage_text(step) if step.get('stage') else '…'
+            detail = (self.waiting_text() if step.get('waiting') else
+                      self.stage_text(step) if step.get('stage') else '…')
         else:
             # Done or failed: the panel's check and cross pictures (images/), not font characters.
             mark = f'<img src="{icon_path("check.png" if step.get("ok") else "cross.png")}" width="12" height="12">'
@@ -1162,7 +1209,8 @@ class ClaudePanel(QWidget):
         out = (f'{mark}&nbsp; <span style="background-color:{bg}; color:{fg}; font-weight:bold;">'
                f'&nbsp;{esc(label)}&nbsp;</span>&nbsp; <span style="color:{c["muted"]};">{esc(detail)}</span>')
         if step.get('running'):
-            out += self.progress_html(step, c, i, j)
+            if not step.get('waiting'):  # a moving bar and clock would say Claude is busy: it waits for the person
+                out += self.progress_html(step, c, i, j)
         elif step.get('picture'):
             image = (f'<a href="os:frame/{i}/{j}" style="text-decoration:none;"><img src="claude-frame:{step["key"]}"'
                      f' width="{FRAME_SIZE[0]}" height="{FRAME_SIZE[1]}"></a>')
@@ -1272,6 +1320,8 @@ class ClaudePanel(QWidget):
         if step is None:
             self.tick.stop()
             return
+        if step.get('waiting'):
+            return  # nothing moves while Claude waits for the person's Allow or Deny
         if time.monotonic() - step.get('start', 0) >= 2:
             self.render_transcript()
             self.show_working(step)
@@ -1290,6 +1340,8 @@ class ClaudePanel(QWidget):
     def attach_picture(self, step, event):
         """The finished tool's picture in its row: what the agent sent (the design it
         made, changed, checked or read), or the app as the tool left it."""
+        if step.get('key') is None:
+            return  # no name for its picture in the transcript
         path = event.get('image')
         if not path and event.get('ok'):
             try:
@@ -1297,7 +1349,7 @@ class ClaudePanel(QWidget):
             except (RuntimeError, AttributeError) as e:  # a window gone or not there: no picture
                 terminal_log(f'no picture for {step.get("name")}: {e}')
                 path = None
-        if not path or not os.path.exists(path) or step.get('key') is None:
+        if not path or not os.path.exists(path):
             return
         step['picture'] = path
         self.transcript.document().addResource(QTextDocument.ImageResource, QUrl(f'claude-frame:{step["key"]}'),
@@ -1360,6 +1412,8 @@ class ClaudePanel(QWidget):
         elif what in ('allow', 'deny') and entry['state'] is None:
             allowed = what == 'allow'
             entry['state'] = 'allowed' if allowed else 'denied'
+            terminal_log(f'{"allowed" if allowed else "declined"} by the person: {confirm_text("en", entry["what"])}')
+            self.stop_waiting()
             if self.bridge is not None:
                 reply = self.bridge.decide(entry['id'], allowed)
                 if reply is not None:
@@ -1651,7 +1705,12 @@ class ClaudePanel(QWidget):
                 event = json.loads(line.decode('utf-8'))
             except ValueError:
                 continue  # not an event (stray output from a library)
-            self.handle_event(event)
+            try:
+                self.handle_event(event)
+            except Exception:  # noqa: BLE001
+                # Logged, and the read goes on: an error here used to lose the lines after it,
+                # an app_call among them, and Claude then waited for an answer that never came.
+                logging.exception('the Claude panel could not show a %s event', event.get('type'))
 
     def read_errors(self):
         if self.process is None:
@@ -1697,12 +1756,17 @@ class ClaudePanel(QWidget):
             self.show_progress(event)
         elif kind == 'tool_end':
             name = event.get('name', '')
-            group = self.open_group()
-            step = next((s for s in reversed(group['steps'])
-                         if s['kind'] == 'tool' and s['name'] == name and s.get('running')), None)
+            # Its row, in whichever group it started: a card (Allow/Deny, a design to open)
+            # may have come after it, and the steps after a card go in a new group.
+            step = self.running_step(name)
             if step is None:
-                step = {'kind': 'tool', 'name': name}
-                group['steps'].append(step)
+                self.step_keys += 1
+                step = {'kind': 'tool', 'name': name, 'key': self.step_keys}
+                self.open_group()['steps'].append(step)
+            if step.pop('waiting', None):
+                # Its card was never answered and Claude gave up waiting (the app's answer came
+                # too late): a late Allow would make a change Claude no longer knows of.
+                self.expire_cards()
             step.update(running=False, ok=bool(event.get('ok')), summary=event.get('summary', ''))
             if step.get('start') is not None:
                 step['seconds'] = time.monotonic() - step['start']
@@ -1741,9 +1805,38 @@ class ClaudePanel(QWidget):
                         'opened': False, 'name': title, 'title': title})
 
     def add_confirm_card(self, call_id, what):
+        """Ask mode: a change Claude asked for waits for the person's Allow or Deny, and Claude
+        waits with it (its tool runs until they answer). So the card comes into view, the tool's
+        row and the working line say Claude waits for them, and so does the terminal."""
         self.design_waiting = self.design_waiting or not self.is_open()
+        step = self.running_step()
+        if step is not None:
+            step['waiting'] = True
+        self.follow_end = True
         self.add_entry({'kind': 'confirm', 'id': call_id, 'what': what, 'state': None})
+        self.working.clear_progress()
+        self.working.set_label(self.waiting_text())
+        terminal_log(f'waiting for the person to click Allow or Deny in the panel: {confirm_text("en", what)}')
         self.activity_changed.emit()
+
+    def waiting_text(self):
+        """'Waiting for you: Allow or Deny', in the card's own words."""
+        t = lambda key: _tr(self.language, key)
+        return t('claude_waiting_for_you').format(allow=t('claude_allow'), deny=t('claude_deny'))
+
+    def stop_waiting(self):
+        """The person answered a card: the tool that waited for it runs on."""
+        step = self.running_step()
+        if step is not None and step.pop('waiting', None):
+            self.show_working(step)
+
+    def expire_cards(self):
+        """Cards no one answered, once Claude no longer waits for them: they do nothing now."""
+        for entry in self.entries:
+            if entry['kind'] == 'confirm' and entry['state'] is None:
+                entry['state'] = 'expired'
+                if self.bridge is not None:
+                    self.bridge.pending.pop(entry['id'], None)
 
     def finished(self, *_):
         if self.process is not None and hasattr(self.process, 'exitCode'):
@@ -1813,9 +1906,7 @@ class ClaudePanel(QWidget):
         self.read_errors()
         if self.bridge is not None:
             self.bridge.forget()
-        for entry in self.entries:
-            if entry['kind'] == 'confirm' and entry['state'] is None:
-                entry['state'] = 'expired'  # Claude has stopped; nothing waits any more
+        self.expire_cards()  # Claude has stopped; nothing waits any more
         self.stop_steps(by_person=self.stopping)
         self.tick.stop()
         self.working.stop()

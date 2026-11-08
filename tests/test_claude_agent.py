@@ -252,14 +252,14 @@ def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch
     import claude_settings
     monkeypatch.setenv("APPDATA", str(tmp_path))
     assert claude_settings.load() == {"api_key": "", "keys": {}, "catalog": {}, "model": "claude-sonnet-5-5", "web": True,
-                                      "max_cost": 2.0, "spent": 0.0, "spent_since": "", "panel_open": False,
+                                      "max_cost": 2.0, "spent": 0.0, "spent_since": "",
                                       "show_button": True, "effort": "high", "session_limit": 10.0, "mode": "auto"}
     claude_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5", web=False, max_cost=5)
     assert claude_settings.load() == {"api_key": "sk-ant-test-1234567890",
                                       "keys": {"anthropic": "sk-ant-test-1234567890"}, "catalog": {},
                                       "model": "claude-haiku-5-5",
                                       "web": False, "max_cost": 5.0, "spent": 0.0, "spent_since": "",
-                                      "panel_open": False, "show_button": True,
+                                      "show_button": True,
                                       "effort": "high", "session_limit": 10.0, "mode": "auto"}
     # Every provider has its key; the model can be any provider's.
     claude_settings.save(provider_key=("xai", " xai-test-123456789 "), model="grok-4.7")
@@ -335,6 +335,7 @@ def test_models_refresh_on_their_own_once_a_day_without_a_word(window, tmp_path,
             time.sleep(0.02)
         assert asked == [1] and not panel.fetching_models
         assert panel.entries == []  # silent: nothing said in the conversation
+        panel.choose(model="grok-4.7")  # the model drop-down lists xAI's models now
         assert any("Grok 4.8" in a.text() for a in panel.model_menu.actions())
         assert not claude_settings.refresh_due()  # done for today
         panel.auto_refresh_models()
@@ -458,6 +459,7 @@ def test_the_claude_button_shows_and_hides_claude_over_the_canvas(window, monkey
     order = [row.itemAt(i).widget() for i in range(row.count()) if row.itemAt(i).widget()]
     assert order[-3:] == [window.layer_state_button, button, window.settings_button]
     assert button.size() == window.settings_button.size() and button.toolTip() == ""
+    assert button.color().name() == "#a65400" and button.CORD.name() == "#ffe9cf"  # Ember, at rest
 
     # Pressed, Claude floats over the bottom of the visible canvas; the canvas keeps its size.
     size = window.canvas.size()
@@ -467,11 +469,11 @@ def test_the_claude_button_shows_and_hides_claude_over_the_canvas(window, monkey
     assert panel.parentWidget() is window.canvas
     area = panel.visible_canvas()
     assert area.contains(panel.geometry()) and panel.geometry().bottom() == area.bottom() - panel.MARGIN
-    assert claude_settings.load()["panel_open"] is True  # remembered for next time
+    assert "panel_open" not in claude_settings.load()  # not kept: Claude starts closed every time
 
     # Pressed again, nothing is left on screen; Ctrl+J does the same both ways.
     button.click()
-    assert not panel.isVisible() and claude_settings.load()["panel_open"] is False
+    assert not panel.isVisible() and not button.isChecked()
     window.activateWindow()
     QTest.keyClick(window.windowHandle(), Qt.Key_J, Qt.ControlModifier)
     assert panel.isVisible() and button.isChecked()
@@ -483,8 +485,26 @@ def test_the_claude_button_shows_and_hides_claude_over_the_canvas(window, monkey
     assert not button.isVisible() and claude_settings.load()["show_button"] is True  # the page saves it
     QTest.keyClick(window.windowHandle(), Qt.Key_J, Qt.ControlModifier)
     assert not panel.isVisible()
+    button.click()  # open when Settings hides it: shown again, it comes back closed
+    window.set_claude_available(False)
     window.set_claude_available(True)
-    assert button.isVisible() and not panel.isVisible()  # back as it was left: hidden
+    assert button.isVisible() and not panel.isVisible() and not button.isChecked()
+
+    # Each time the app starts Claude is closed, whatever was showing when it last closed.
+    import json
+    from claude_panel import ClaudePanel
+    path = claude_settings.settings_path()
+    claude_settings.save(show_button=True)
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    data["panel_open"] = True  # what older versions kept
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f)
+    fresh = ClaudePanel(window, window.canvas)
+    try:
+        assert not fresh.isVisibleTo(window.canvas)
+    finally:
+        fresh.deleteLater()
 
 
 def test_the_claude_button_shows_a_run_while_claude_is_hidden(window, monkeypatch, tmp_path):
@@ -902,11 +922,43 @@ def test_the_status_line_switches_mode_model_and_effort(window, monkeypatch, tmp
     assert panel.prompt_edit.hasFocus()  # Shift+Tab switched the mode, not the focus
     panel.mode_button.click()
     assert panel.mode == "plan" and "plan mode" in panel.mode_button.text()
+    # The mode's symbol is a picture (images/mode_*.png), not a character that may be an emoji.
+    assert not panel.mode_button.icon().isNull() and not any(ch in panel.mode_button.text() for ch in "⏵⏸")
     assert claude_settings.load()["mode"] == "auto"  # plan mode is never kept
     panel.cycle_mode()
     assert panel.mode == "ask"
     panel.set_mode("auto")
     # The model and effort menus save the choice and the status line shows it.
+    # The company has its own drop-down; the model drop-down lists that company's models.
+    providers = panel.provider_menu.actions()
+    assert providers[0].text().startswith("Anthropic") and providers[0].isChecked()
+    assert [a.isChecked() for a in providers].count(True) == 1
+    assert panel.provider_button.text() == "Anthropic"
+    assert [a.text() for a in panel.model_menu.actions()] == ["Claude Sonnet 5.5", "Claude Haiku 5.5"]
+    assert ("QMenu::item:selected" in panel.model_menu.styleSheet()
+            and panel.provider_menu.styleSheet() == panel.model_menu.styleSheet() == panel.effort_menu.styleSheet())
+    openai = [a for a in providers if a.text().startswith("OpenAI")][0]
+    openai.trigger()  # another company: its first model
+    assert claude_settings.provider_of(claude_settings.load()["model"]) == "openai"
+    assert panel.provider_button.text() == "OpenAI" and all("GPT" in a.text() for a in panel.model_menu.actions())
+    [a for a in panel.provider_menu.actions() if a.text().startswith("Anthropic")][0].trigger()
+    assert claude_settings.load()["model"] == "claude-sonnet-5-5"
+    # The Image button's picture is a PNG in images/, white on the dark theme.
+    assert panel.attach_button.text() == "Image" and not panel.attach_button.icon().isNull()
+    # Pictures, not characters: the drop-downs' arrow, the toggle's check, the Shift key.
+    for pick in (panel.provider_button, panel.model_button, panel.effort_button):
+        assert "▾" not in pick.text()
+    assert "menu_arrow_on_" in panel.styleSheet() and "::menu-indicator" in panel.styleSheet()
+    assert panel.use_canvas_check.isChecked() and not panel.use_canvas_check.icon().isNull()
+    assert "✓" not in panel.use_canvas_check.text()
+    panel.use_canvas_check.setChecked(False)
+    assert panel.use_canvas_check.icon().isNull()
+    panel.use_canvas_check.setChecked(True)
+    assert panel.mode_key.text() == "Tab" and not panel.mode_key.icon().isNull()
+    import os
+    for name in ("check.png", "cross.png", "menu_arrow_on_dark.png", "menu_arrow_on_light.png",
+                 "shift_on_dark.png", "shift_on_light.png"):
+        assert os.path.exists(os.path.join(os.path.dirname(claude_settings.__file__), "images", name))
     haiku = [a for a in panel.model_menu.actions() if "Haiku" in a.text()][0]
     haiku.trigger()
     assert claude_settings.load()["model"] == "claude-haiku-5-5" and panel.model_button.text().startswith("Claude Haiku 5.5")

@@ -13,6 +13,7 @@ a = Analysis(
         ('guide_images/levels_masks/*.png', 'guide_images/levels_masks/'),  # Settings > Levels & Masks pictures
         ('samples/*.json', 'samples/'),  # Include sample JSON files
         ('images/*.svg', 'images/'),  # Include SVG images
+        ('images/*.png', 'images/'),  # the assistant's Image button picture
         ('sounds/*.wav', 'sounds/')  # UI sound effects
     ],
     hiddenimports=['PyQt5', 'PyQt5.QtCore', 'PyQt5.QtGui', 'PyQt5.QtWidgets', 'PyQt5.QtSvg', 'PyQt5.QtMultimedia', 'PyQt5.QtMultimediaWidgets', 'PIL'],

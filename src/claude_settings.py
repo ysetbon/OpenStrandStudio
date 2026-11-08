@@ -177,13 +177,12 @@ def _money(value):
 
 
 def load():
-    """{'api_key', 'model', 'web', 'max_cost', 'spent', 'spent_since', 'panel_open', 'show_button'};
+    """{'api_key', 'model', 'web', 'max_cost', 'spent', 'spent_since', 'show_button'};
     empty key when none is saved.
 
     spent is what every request has cost in all, in USD, since spent_since
-    (an ISO date, empty before the first request). panel_open is whether
-    Claude was showing when the app last closed; show_button is False when
-    Settings > Claude hides Claude altogether."""
+    (an ISO date, empty before the first request). show_button is False when
+    Settings > Claude hides Claude altogether. Claude itself always starts closed."""
     data = {}
     try:
         with open(settings_path(), 'r', encoding='utf-8') as f:
@@ -205,14 +204,14 @@ def load():
             'web': data.get('web', True) is not False,
             'max_cost': _cost(data.get('max_cost', DEFAULT_MAX_COST)),
             'spent': _money(data.get('spent')), 'spent_since': str(data.get('spent_since') or ''),
-            'panel_open': data.get('panel_open') is True, 'show_button': data.get('show_button', True) is not False,
+            'show_button': data.get('show_button', True) is not False,
             'effort': data.get('effort') if data.get('effort') in EFFORTS else DEFAULT_EFFORT,
             'session_limit': _range(data.get('session_limit', DEFAULT_SESSION_LIMIT), SESSION_LIMIT_RANGE,
                                     DEFAULT_SESSION_LIMIT),
             'mode': data.get('mode') if data.get('mode') in MODES else DEFAULT_MODE}
 
 
-def save(api_key=None, model=None, web=None, max_cost=None, panel_open=None, show_button=None,
+def save(api_key=None, model=None, web=None, max_cost=None, show_button=None,
          effort=None, session_limit=None, mode=None, provider_key=None):
     """Update the saved settings given. api_key is Anthropic's; provider_key is
     (provider, key) for any provider. An empty key removes it."""
@@ -235,8 +234,6 @@ def save(api_key=None, model=None, web=None, max_cost=None, panel_open=None, sho
         current['web'] = bool(web)
     if max_cost is not None:
         current['max_cost'] = _cost(max_cost)
-    if panel_open is not None:
-        current['panel_open'] = bool(panel_open)
     if show_button is not None:
         current['show_button'] = bool(show_button)
     if effort is not None:
@@ -273,7 +270,7 @@ def _write(current):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     payload = {'model': current['model'], 'web': current['web'], 'max_cost': current['max_cost'],
                'spent': current['spent'], 'spent_since': current['spent_since'],
-               'panel_open': current['panel_open'], 'show_button': current['show_button'],
+               'show_button': current['show_button'],
                'effort': current['effort'], 'session_limit': current['session_limit'], 'mode': current['mode']}
     if current['api_key']:
         payload['api_key'] = current['api_key']

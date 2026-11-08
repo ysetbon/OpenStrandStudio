@@ -2775,12 +2775,9 @@ class MainWindow(QMainWindow):
     def set_claude_available(self, shown):
         """Settings > Claude: show the Claude button, or hide it and Claude with it."""
         self.claude_button.setVisible(shown)
-        if shown:
-            # Back the way it was left: shown or hidden.
-            self.claude_panel.set_open(claude_settings.load()['panel_open'])
-        else:
-            self.claude_panel.hide()  # keeps the remembered open/closed state
-            self.claude_button.follow(False)
+        if not shown:
+            self.claude_panel.set_open(False)
+        # Shown again: the button is back, Claude stays closed until it is pressed.
         self._toolbar_two_rows = None  # measure the toolbar again
         self._apply_toolbar_rows()
 

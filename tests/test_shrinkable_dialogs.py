@@ -191,6 +191,25 @@ def test_settings_dialog_shrinks_and_scrolls_its_pages():
     dialog.reject()
 
 
+def test_settings_dialog_pages_are_as_wide_as_the_page_showing():
+    """The stack takes its size from the current page, not its widest one (Layer Panel):
+    a narrow page fits the dialog instead of being stretched past its edge."""
+    dialog = settings_dialog()
+    dialog.show()
+    APP.processEvents()
+    stack = dialog.stacked_widget
+    widest = max(range(stack.count()), key=lambda i: stack.widget(i).minimumSizeHint().width())
+    narrow = dialog.claude_settings_page
+    assert narrow.minimumSizeHint().width() < stack.widget(widest).minimumSizeHint().width()
+    stack.setCurrentWidget(narrow)
+    APP.processEvents()
+    assert stack.minimumSizeHint().width() == narrow.minimumSizeHint().width()
+    stack.setCurrentIndex(widest)
+    APP.processEvents()
+    assert stack.minimumSizeHint().width() == stack.widget(widest).minimumSizeHint().width()
+    dialog.reject()
+
+
 def test_settings_dialog_still_opens_wide_enough_for_its_translations():
     dialog = settings_dialog()
     dialog.show()

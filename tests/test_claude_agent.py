@@ -459,6 +459,7 @@ def test_the_claude_button_shows_and_hides_claude_over_the_canvas(window, monkey
     order = [row.itemAt(i).widget() for i in range(row.count()) if row.itemAt(i).widget()]
     assert order[-3:] == [window.layer_state_button, button, window.settings_button]
     assert button.size() == window.settings_button.size() and button.toolTip() == ""
+    assert button.color().name() == "#a65400" and button.CORD.name() == "#ffe9cf"  # Ember, at rest
 
     # Pressed, Claude floats over the bottom of the visible canvas; the canvas keeps its size.
     size = window.canvas.size()
@@ -921,6 +922,8 @@ def test_the_status_line_switches_mode_model_and_effort(window, monkeypatch, tmp
     assert panel.prompt_edit.hasFocus()  # Shift+Tab switched the mode, not the focus
     panel.mode_button.click()
     assert panel.mode == "plan" and "plan mode" in panel.mode_button.text()
+    # The mode's symbol is a picture (images/mode_*.png), not a character that may be an emoji.
+    assert not panel.mode_button.icon().isNull() and not any(ch in panel.mode_button.text() for ch in "⏵⏸")
     assert claude_settings.load()["mode"] == "auto"  # plan mode is never kept
     panel.cycle_mode()
     assert panel.mode == "ask"

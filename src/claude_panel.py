@@ -126,6 +126,12 @@ def short_provider_name(name):
     return name.split(' (')[0]
 
 
+def mode_icon(mode, theme):
+    """The mode's symbol (ask: one arrow, auto: two, plan: pause) in its color for the theme."""
+    shade = 'dark' if str(theme).lower() == 'dark' else 'light'
+    return QIcon(resource_path(os.path.join('images', f'mode_{mode}_on_{shade}.png')))
+
+
 def image_icon(theme):
     """The Image button's picture: images/image_icon_*.png, white on the dark theme, black otherwise."""
     name = 'image_icon_white.png' if str(theme).lower() == 'dark' else 'image_icon_black.png'
@@ -705,6 +711,8 @@ class ClaudePanel(QWidget):
         status.setSpacing(6)
         self.mode_button = QToolButton(self)
         self.mode_button.setObjectName('claudeMode')
+        self.mode_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.mode_button.setIconSize(QSize(13, 13))
         self.mode_button.clicked.connect(self.cycle_mode)
         self.mode_key = QLabel('⇧Tab', self)  # the key that switches the mode
         self.mode_key.setObjectName('claudeKey')
@@ -1341,8 +1349,10 @@ class ClaudePanel(QWidget):
         self.render_transcript()
 
     # -------------------------------------------------------- status line
-    MODE_LOOK = {'ask': ('⏵', 'muted', 'claude_mode_ask'), 'auto': ('⏵⏵', 'auto', 'claude_mode_auto'),
-                 'plan': ('⏸', 'plan', 'claude_mode_plan')}
+    # Each mode's color and words; its symbol is images/mode_<mode>_on_<dark|light>.png, a picture
+    # rather than a font character, so it looks the same everywhere (no emoji, no missing glyph).
+    MODE_LOOK = {'ask': ('muted', 'claude_mode_ask'), 'auto': ('auto', 'claude_mode_auto'),
+                 'plan': ('plan', 'claude_mode_plan')}
 
     def cycle_mode(self):
         """Shift+Tab, as in Claude Code: ask before opening, open automatically, plan."""
@@ -1365,10 +1375,11 @@ class ClaudePanel(QWidget):
         saved = claude_settings.load()
         self.new_button.setText('＋ ' + t('claude_new_session'))
         self.new_button.setEnabled(not self.running())
-        glyph, color, key = self.MODE_LOOK[self.mode]
+        color, key = self.MODE_LOOK[self.mode]
         # The mode as a tinted tag in its own color; ⇧Tab beside it switches it.
         tint = QColor(c[color])
-        self.mode_button.setText(f'{glyph}  {t(key)}')
+        self.mode_button.setIcon(mode_icon(self.mode, self.theme_name))
+        self.mode_button.setText(t(key))
         self.mode_button.setToolTip(t('claude_mode_cycle'))
         self.mode_key.setToolTip(t('claude_mode_cycle'))
         self.mode_button.setStyleSheet(
@@ -1877,17 +1888,18 @@ class ClaudeButton(QPushButton):
 
     A small OpenStrand knot (the assistant runs on many providers' models, so the
     button is the app's own mark, not one provider's), drawn here so it answers the
-    mouse: a little darker under the pointer, smaller while pressed and, while the
+    mouse: a little lighter under the pointer, smaller while pressed and, while the
     assistant is open, a ring in the cord's color. While it is hidden it also shows
     what the assistant is doing: an arc turns around it during a run, and a green dot
     waits on it when a design has opened."""
 
-    FACE = QColor('#FFFFFF')
-    HOVER = QColor('#F1ECE6')
-    PRESSED = QColor('#E3DAD0')
-    OPEN = QColor('#FBEBDD')
-    EDGE = QColor('#C9C2BA')
-    CORD = QColor('#A65400')
+    # Ember: a burnt-orange face and a cream cord, as strong as the toolbar's other buttons.
+    FACE = QColor('#A65400')
+    HOVER = QColor('#BC6A17')
+    PRESSED = QColor('#7A3D00')
+    OPEN = QColor('#8A4500')
+    EDGE = QColor('#6E3700')
+    CORD = QColor('#FFE9CF')
     RADIUS = 7  # corner radius of the 32 px square
 
     def __init__(self, panel, parent=None):

@@ -2207,36 +2207,18 @@ class ClaudeSettingsPage(QWidget):
         self.show_spending()
         self.setLayoutDirection(Qt.RightToLeft if language_code == 'he' else Qt.LeftToRight)
 
-    # Its own look, in the app's theme: the dialog's generic buttons are tall and its combo
-    # arrow is drawn with a CSS trick Qt does not support (it shows as a small square).
+    # The dialog's own look: its buttons' colors, border and hover and pressed states are kept
+    # exactly (the dialog's style sheet); only their size is made compact (the dialog's are 48 px
+    # tall with a 120 px minimum). The key field gets a border and padding.
     def apply_theme(self, theme=None):
         theme = str(theme or getattr(self.window(), 'current_theme', None) or 'default').lower()
         self.theme = theme
         c = ClaudePanel.THEMES.get(theme, ClaudePanel.THEMES['default'])
-        shade = shade_of(theme)
-        menu_bg, menu_fg, sel_bg, sel_fg = (('#333333', '#FFFFFF', '#F0F0F0', '#000000') if shade == 'dark'
-                                            else ('#F0F0F0', '#000000', '#333333', '#FFFFFF'))
         self.setStyleSheet(f"""
             #claudeSettings QLineEdit {{ background-color: {c['log']}; color: {c['fg']};
                 border: 1px solid {c['border']}; border-radius: 4px; padding: 5px 6px; font-size: 13px; }}
             #claudeSettings QLineEdit:focus {{ border: 1px solid #D97757; }}
-            #claudeSettings QComboBox {{ background-color: {c['button']}; color: {c['fg']};
-                border: 1px solid {c['border']}; border-radius: 4px; padding: 5px 28px 5px 8px;
-                font-size: 13px; min-height: 18px; }}
-            #claudeSettings QComboBox:hover {{ background-color: {c['hover']}; }}
-            #claudeSettings QComboBox::drop-down {{ subcontrol-origin: padding; subcontrol-position: right center;
-                width: 26px; border: none; background: transparent; padding: 0px; margin: 0px; }}
-            #claudeSettings QComboBox::drop-down:hover {{ background: transparent; }}
-            #claudeSettings QComboBox::down-arrow {{ image: url({icon_path(f'menu_arrow_on_{shade}.png')});
-                width: 10px; height: 6px; border: none; margin: 0px; }}
-            #claudeSettings QComboBox QAbstractItemView {{ background-color: {menu_bg}; color: {menu_fg};
-                selection-background-color: {sel_bg}; selection-color: {sel_fg}; outline: none; padding: 2px; }}
-            #claudeSettings QPushButton {{ background-color: {c['button']}; color: {c['fg']};
-                border: 1px solid {c['border']}; border-radius: 6px; padding: 5px 14px; height: 18px;
-                min-width: 0px; font-weight: bold; font-size: 13px; }}
-            #claudeSettings QPushButton:hover {{ background-color: {c['hover']}; }}
-            #claudeSettings QPushButton:pressed {{ background-color: {c['pressed']}; }}
-            #claudeSettings QPushButton:disabled {{ color: {c['muted']}; }}
+            #claudeSettings QPushButton {{ padding: 5px 14px; height: 18px; min-width: 0px; }}
         """)
         # The drop-downs exactly like Settings > General's Theme: its own style sheet.
         theme_combo = getattr(self.window(), 'theme_combobox', None)

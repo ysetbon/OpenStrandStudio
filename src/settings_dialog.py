@@ -12,7 +12,7 @@ from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap, QImage, Q
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from translations import translations
-from claude_panel import ClaudeSettingsPage
+from claude_panel import ClaudeSettingsPage, icon_path
 from save_load_manager import load_strands, apply_loaded_strands
 from project_settings import capture_project_settings, read_project_settings, apply_project_settings
 # Reads the provenance recorded with each undo/redo state, for the History page.
@@ -226,11 +226,10 @@ class SettingsDialog(QDialog):
     # New method to get dropdown arrow CSS based on theme and direction
     def get_dropdown_arrow_css(self, is_rtl=False):
         """Get CSS for dropdown arrow positioning based on direction and theme."""
-        arrow_color = "#666666"
-        if self.current_theme == "dark":
-            arrow_color = "#cccccc"
-        elif self.current_theme == "light":
-            arrow_color = "#333333"
+        # The arrow is a picture (images/menu_arrow_on_*.png): the old border-triangle trick is
+        # not something Qt draws, and it came out as a small square.
+        arrow_image = icon_path('menu_arrow_on_dark.png' if self.current_theme == "dark"
+                                else 'menu_arrow_on_light.png')
         
         # Define hover colors for dropdown area only
         dropdown_hover_color = "#e0e0e0"
@@ -253,11 +252,10 @@ class SettingsDialog(QDialog):
                     border-radius: 4px;
                 }}
                 QComboBox::down-arrow {{
-                    width: 0;
-                    height: 0;
-                    border-left: 4px solid transparent;
-                    border-right: 4px solid transparent;
-                    border-top: 6px solid {arrow_color};
+                    image: url({arrow_image});
+                    width: 10px;
+                    height: 6px;
+                    border: none;
                     margin-left: 6px;
                 }}
             """
@@ -275,11 +273,10 @@ class SettingsDialog(QDialog):
                     border-radius: 4px;
                 }}
                 QComboBox::down-arrow {{
-                    width: 0;
-                    height: 0;
-                    border-left: 4px solid transparent;
-                    border-right: 4px solid transparent;
-                    border-top: 6px solid {arrow_color};
+                    image: url({arrow_image});
+                    width: 10px;
+                    height: 6px;
+                    border: none;
                     margin-left: 6px;
                 }}
             """
@@ -3634,6 +3631,10 @@ class SettingsDialog(QDialog):
         # and the settings scroll rather than being cut off.
         self.pages_scroll = scroll_area(self)
         self.pages_scroll.setWidget(self.stacked_widget)
+        # Size the pages by the one showing: a stack is otherwise as wide as its widest
+        # page (Layer Panel), and every other page was stretched past the dialog's edge.
+        self._page_policies = {}
+        self.stacked_widget.currentChanged.connect(self.fit_pages_to_current)
         main_layout.addWidget(self.categories_list)
         main_layout.addWidget(self.pages_scroll, 1)
 
@@ -3650,9 +3651,19 @@ class SettingsDialog(QDialog):
         # Set default category
         self.categories_list.setCurrentRow(0)
         self.stacked_widget.setCurrentIndex(0)
+        self.fit_pages_to_current()
   
         # Style the buttons consistently
         self.style_dialog_buttons()
+
+    def fit_pages_to_current(self, index=None):
+        """Let only the current page set the stack's size; the others are ignored until shown."""
+        current = self.stacked_widget.currentWidget()
+        for i in range(self.stacked_widget.count()):
+            page = self.stacked_widget.widget(i)
+            original = self._page_policies.setdefault(page, page.sizePolicy())
+            page.setSizePolicy(original if page is current else QSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored))
+        self.stacked_widget.updateGeometry()
 
     def update_category_panel_width(self):
         """Recalculate and apply the category list width based on current translations."""
@@ -3934,6 +3945,8 @@ class SettingsDialog(QDialog):
         """Apply theme to dialog components"""
         # Update current theme for dropdown arrow colors
         self.current_theme = theme_name
+        if hasattr(self, 'claude_settings_page'):
+            self.claude_settings_page.apply_theme(theme_name)  # its own look, in this theme
         is_rtl = self.is_rtl_language(self.current_language)
         dropdown_arrow_css = self.get_dropdown_arrow_css(is_rtl)
         

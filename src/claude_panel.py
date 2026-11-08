@@ -24,7 +24,8 @@ from PyQt5.QtCore import (QDate, QEvent, QLocale, QPoint, QPointF, QProcess, QPr
 from PyQt5.QtGui import (QColor, QDesktopServices, QIcon, QImage, QPainter, QPainterPath, QPen, QPixmap, QRegion,
                          QTextDocument)
 from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog,
-                             QHBoxLayout, QLabel, QLineEdit, QMenu, QPushButton, QToolButton, QSizePolicy, QTextBrowser, QTextEdit, QVBoxLayout,
+                             QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMenu, QPushButton, QToolButton, QSizePolicy, QStyle,
+                             QStyleOptionComboBox, QTextBrowser, QTextEdit, QVBoxLayout,
                              QWidget)
 
 import claude_settings
@@ -2019,7 +2020,10 @@ class ClaudeSettingsPage(QWidget):
     def __init__(self, language_code='en', parent=None):
         super().__init__(parent)
         self.language = language_code
+        self.theme = None
+        self.setObjectName('claudeSettings')
         layout = QVBoxLayout(self)
+        layout.setSpacing(8)
         self.intro = QLabel(self)
         self.intro.setWordWrap(True)
         layout.addWidget(self.intro)
@@ -2038,26 +2042,28 @@ class ClaudeSettingsPage(QWidget):
         for provider in claude_settings.PROVIDERS.values():
             self.provider_combo.addItem(provider.name, provider.key)
         self.provider_combo.currentIndexChanged.connect(lambda _: self.show_provider())
+        self.provider_combo.currentIndexChanged.connect(self.fit_combos)
         provider_row.addWidget(self.key_label)
         provider_row.addWidget(self.provider_combo)
         provider_row.addStretch()
         layout.addLayout(provider_row)
+        # The key field, with an eye in it that shows what was typed (a pasted key can be
+        # checked before saving; once saved the field empties and only its ends are shown).
         key_row = QHBoxLayout()
         self.key_edit = QLineEdit(self)
         self.key_edit.setEchoMode(QLineEdit.Password)
         self.key_edit.setPlaceholderText('sk-ant-…')
-        self.show_button = QPushButton(self)
-        self.show_button.setCheckable(True)
-        self.show_button.toggled.connect(self.toggle_shown)
+        self.key_edit.returnPressed.connect(self.save_key)
+        self.show_key_action = self.key_edit.addAction(QIcon(), QLineEdit.TrailingPosition)
+        self.show_key_action.setCheckable(True)
+        self.show_key_action.toggled.connect(self.toggle_shown)
         self.save_button = QPushButton(self)
         self.save_button.clicked.connect(self.save_key)
         self.remove_button = QPushButton(self)
         self.remove_button.clicked.connect(self.remove_key)
-        layout.addWidget(self.key_edit)
-        key_row.addWidget(self.show_button)
+        key_row.addWidget(self.key_edit, 1)
         key_row.addWidget(self.save_button)
         key_row.addWidget(self.remove_button)
-        key_row.addStretch()
         layout.addLayout(key_row)
         self.key_status = QLabel(self)
         layout.addWidget(self.key_status)
@@ -2068,15 +2074,20 @@ class ClaudeSettingsPage(QWidget):
 
         self.model_label = QLabel(self)
         layout.addWidget(self.model_label)
+        # The model and Refresh models on one row. The list sizes to a short name, not to its
+        # longest entry, so the page never grows wider than the dialog; its popup shows all.
         self.model_combo = QComboBox(self)
+        self.model_combo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
+        self.model_combo.setMinimumContentsLength(24)
         self.model_combo.currentIndexChanged.connect(self.save_model)
-        layout.addWidget(self.model_combo)
-        refresh_row = QHBoxLayout()
+        self.model_combo.currentIndexChanged.connect(self.fit_combos)
         self.refresh_button = QPushButton(self)
         self.refresh_button.clicked.connect(self.refresh_models)
-        refresh_row.addWidget(self.refresh_button)
-        refresh_row.addStretch()
-        layout.addLayout(refresh_row)
+        model_row = QHBoxLayout()
+        model_row.addWidget(self.model_combo)
+        model_row.addWidget(self.refresh_button)
+        model_row.addStretch(1)
+        layout.addLayout(model_row)
         self.refresh_status = QLabel(self)
         self.refresh_status.setWordWrap(True)
         self.refresh_status.setStyleSheet('color: gray;')
@@ -2087,7 +2098,11 @@ class ClaudeSettingsPage(QWidget):
         layout.addWidget(self.effort_label)
         self.effort_combo = QComboBox(self)
         self.effort_combo.currentIndexChanged.connect(self.save_effort)
-        layout.addWidget(self.effort_combo)
+        self.effort_combo.currentIndexChanged.connect(self.fit_combos)
+        effort_row = QHBoxLayout()
+        effort_row.addWidget(self.effort_combo)
+        effort_row.addStretch()
+        layout.addLayout(effort_row)
         self.effort_hint = QLabel(self)
         self.effort_hint.setWordWrap(True)
         self.effort_hint.setStyleSheet('color: gray;')
@@ -2101,7 +2116,11 @@ class ClaudeSettingsPage(QWidget):
         self.web_hint.setStyleSheet('color: gray;')
         layout.addWidget(self.web_hint)
 
-        limit_row = QHBoxLayout()
+        # The two spending limits in a grid: labels in one column, the $ − / + controls lined
+        # up in the next, each wide enough for its largest amount.
+        limits = QGridLayout()
+        limits.setHorizontalSpacing(10)
+        limits.setVerticalSpacing(6)
         self.limit_label = QLabel(self)
         self.limit_spin = QDoubleSpinBox(self)
         self.limit_spin.setRange(*claude_settings.MAX_COST_RANGE)
@@ -2109,12 +2128,9 @@ class ClaudeSettingsPage(QWidget):
         self.limit_spin.setSingleStep(0.50)
         self.limit_spin.setPrefix('$')
         self.limit_spin.valueChanged.connect(lambda value: self.changed_setting(max_cost=value))
-        limit_row.addWidget(self.limit_label)
-        limit_row.addWidget(self.limit_spin)
-        limit_row.addStretch()
-        layout.addLayout(limit_row)
+        limits.addWidget(self.limit_label, 0, 0)
+        limits.addWidget(self.limit_spin, 0, 1)
 
-        session_row = QHBoxLayout()
         self.session_limit_label = QLabel(self)
         self.session_spin = QDoubleSpinBox(self)
         self.session_spin.setRange(*claude_settings.SESSION_LIMIT_RANGE)
@@ -2122,10 +2138,10 @@ class ClaudeSettingsPage(QWidget):
         self.session_spin.setSingleStep(1.00)
         self.session_spin.setPrefix('$')
         self.session_spin.valueChanged.connect(lambda value: self.changed_setting(session_limit=value))
-        session_row.addWidget(self.session_limit_label)
-        session_row.addWidget(self.session_spin)
-        session_row.addStretch()
-        layout.addLayout(session_row)
+        limits.addWidget(self.session_limit_label, 1, 0)
+        limits.addWidget(self.session_spin, 1, 1)
+        limits.setColumnStretch(2, 1)
+        layout.addLayout(limits)
 
         # What Claude has cost in all on this computer, kept across requests.
         spent_row = QHBoxLayout()
@@ -2148,13 +2164,14 @@ class ClaudeSettingsPage(QWidget):
         layout.addWidget(self.storage)
         layout.addStretch()
         self.retranslate(language_code)
+        self.apply_theme()
 
     def retranslate(self, language_code):
         self.language = language_code
         t = lambda key: _tr(language_code, key)
         self.intro.setText(t('models_settings_intro'))
         self.key_label.setText(t('models_key_label'))
-        self.show_button.setText(t('claude_hide_key') if self.show_button.isChecked() else t('claude_show_key'))
+        self.toggle_shown(self.show_key_action.isChecked())
         self.save_button.setText(t('claude_save_key'))
         self.remove_button.setText(t('claude_remove_key'))
         self.model_label.setText(t('claude_model_label'))
@@ -2190,8 +2207,76 @@ class ClaudeSettingsPage(QWidget):
         self.show_spending()
         self.setLayoutDirection(Qt.RightToLeft if language_code == 'he' else Qt.LeftToRight)
 
+    # Its own look, in the app's theme: the dialog's generic buttons are tall and its combo
+    # arrow is drawn with a CSS trick Qt does not support (it shows as a small square).
+    def apply_theme(self, theme=None):
+        theme = str(theme or getattr(self.window(), 'current_theme', None) or 'default').lower()
+        self.theme = theme
+        c = ClaudePanel.THEMES.get(theme, ClaudePanel.THEMES['default'])
+        shade = shade_of(theme)
+        menu_bg, menu_fg, sel_bg, sel_fg = (('#333333', '#FFFFFF', '#F0F0F0', '#000000') if shade == 'dark'
+                                            else ('#F0F0F0', '#000000', '#333333', '#FFFFFF'))
+        self.setStyleSheet(f"""
+            #claudeSettings QLineEdit {{ background-color: {c['log']}; color: {c['fg']};
+                border: 1px solid {c['border']}; border-radius: 4px; padding: 5px 6px; font-size: 13px; }}
+            #claudeSettings QLineEdit:focus {{ border: 1px solid #D97757; }}
+            #claudeSettings QComboBox {{ background-color: {c['button']}; color: {c['fg']};
+                border: 1px solid {c['border']}; border-radius: 4px; padding: 5px 28px 5px 8px;
+                font-size: 13px; min-height: 18px; }}
+            #claudeSettings QComboBox:hover {{ background-color: {c['hover']}; }}
+            #claudeSettings QComboBox::drop-down {{ subcontrol-origin: padding; subcontrol-position: right center;
+                width: 26px; border: none; background: transparent; padding: 0px; margin: 0px; }}
+            #claudeSettings QComboBox::drop-down:hover {{ background: transparent; }}
+            #claudeSettings QComboBox::down-arrow {{ image: url({icon_path(f'menu_arrow_on_{shade}.png')});
+                width: 10px; height: 6px; border: none; margin: 0px; }}
+            #claudeSettings QComboBox QAbstractItemView {{ background-color: {menu_bg}; color: {menu_fg};
+                selection-background-color: {sel_bg}; selection-color: {sel_fg}; outline: none; padding: 2px; }}
+            #claudeSettings QPushButton {{ background-color: {c['button']}; color: {c['fg']};
+                border: 1px solid {c['border']}; border-radius: 6px; padding: 5px 14px; height: 18px;
+                min-width: 0px; font-weight: bold; font-size: 13px; }}
+            #claudeSettings QPushButton:hover {{ background-color: {c['hover']}; }}
+            #claudeSettings QPushButton:pressed {{ background-color: {c['pressed']}; }}
+            #claudeSettings QPushButton:disabled {{ color: {c['muted']}; }}
+        """)
+        # The drop-downs exactly like Settings > General's Theme: its own style sheet.
+        theme_combo = getattr(self.window(), 'theme_combobox', None)
+        for combo in (self.provider_combo, self.model_combo, self.effort_combo):
+            combo.setStyleSheet(theme_combo.styleSheet() if theme_combo is not None else '')
+        self.toggle_shown(self.show_key_action.isChecked())
+        self.show_provider()  # the link's color follows the theme
+        self.fit_money_spins()
+        self.fit_combos()
+
+    def fit_combos(self, *_):
+        """Each drop-down as wide as the item it shows (not its longest one, and not the whole
+        row), so there is no empty gap before the arrow; capped so the page still fits."""
+        for combo in (self.provider_combo, self.model_combo, self.effort_combo):
+            combo.ensurePolished()
+            # What the style keeps for the arrow, padding and border: the combo's width less the
+            # field its text is drawn in (measured, so it holds for any style sheet).
+            option = QStyleOptionComboBox()
+            combo.initStyleOption(option)
+            option.rect = QRect(0, 0, 400, max(combo.height(), 30))
+            field = combo.style().subControlRect(QStyle.CC_ComboBox, option, QStyle.SC_ComboBoxEditField, combo)
+            overhead = 400 - field.width()
+            icon = 0 if combo.itemIcon(combo.currentIndex()).isNull() else combo.iconSize().width() + 4
+            text = combo.fontMetrics().horizontalAdvance(combo.currentText())
+            combo.setFixedWidth(min(overhead + icon + text + 8, 460))
+
+    def fit_money_spins(self):
+        """The $ − / + controls: room for the largest amount between the buttons (the dialog's
+        stepper is a fixed 110 px, where $10.00 touched the +), both the same width."""
+        widest = 0
+        for spin in (self.limit_spin, self.session_spin):
+            text = spin.prefix() + spin.textFromValue(spin.maximum())
+            widest = max(widest, spin.fontMetrics().horizontalAdvance(text))
+        width = 2 * 31 + widest + 28  # the two 30 px buttons and their hairlines, the value, its margins
+        for spin in (self.limit_spin, self.session_spin):
+            spin.setFixedWidth(width)
+
     def showEvent(self, event):
         super().showEvent(event)
+        self.apply_theme()  # the theme may have changed on another page
         self.fill_models()  # the daily refresh may have changed the models offered
         self.show_spending()  # requests may have run since the page was built
         self.show_choices()  # the status line may have changed the model or effort
@@ -2212,6 +2297,7 @@ class ClaudeSettingsPage(QWidget):
         self.session_spin.blockSignals(True)
         self.session_spin.setValue(saved['session_limit'])
         self.session_spin.blockSignals(False)
+        self.fit_combos()
 
     def show_spending(self):
         saved = claude_settings.load()
@@ -2245,8 +2331,9 @@ class ClaudeSettingsPage(QWidget):
         self.key_edit.setPlaceholderText(spec.key_hint if spec else 'sk-ant-…')
         if spec and spec.keys_url:
             host = spec.keys_url.split('//', 1)[-1].split('/', 1)[0]
+            link_color = '#E8892F' if shade_of(self.theme) == 'dark' else '#A65400'  # readable on the theme
             self.get_key.setText(_tr(self.language, 'models_get_key').format(
-                link=f'<a href="{spec.keys_url}">{host}</a>'))
+                link=f'<a href="{spec.keys_url}" style="color:{link_color};">{host}</a>'))
         self.show_saved(claude_settings.load()['keys'].get(self.provider(), ''))
 
     def show_saved(self, key):
@@ -2256,8 +2343,11 @@ class ClaudeSettingsPage(QWidget):
         self.remove_button.setEnabled(bool(key))
 
     def toggle_shown(self, shown):
+        """The eye in the key field: show what was typed, or hide it again."""
         self.key_edit.setEchoMode(QLineEdit.Normal if shown else QLineEdit.Password)
-        self.show_button.setText(_tr(self.language, 'claude_hide_key' if shown else 'claude_show_key'))
+        eye = f"eye_{'open' if shown else 'closed'}_on_{shade_of(self.theme)}.png"
+        self.show_key_action.setIcon(QIcon(icon_path(eye)))
+        self.show_key_action.setToolTip(_tr(self.language, 'claude_hide_key' if shown else 'claude_show_key'))
 
     def save_key(self):
         key = self.key_edit.text().strip()
@@ -2295,6 +2385,9 @@ class ClaudeSettingsPage(QWidget):
             self.model_combo.addItem('  ·  '.join(words), model)
         self.model_combo.setCurrentIndex(max(0, self.model_combo.findData(saved['model'])))
         self.model_combo.blockSignals(False)
+        view = self.model_combo.view()  # the popup wide enough for every entry
+        view.setMinimumWidth(view.sizeHintForColumn(0) + 32)
+        self.fit_combos()
 
     def refresh_models(self):
         """Refresh models (by hand only): each provider with a key says which models it

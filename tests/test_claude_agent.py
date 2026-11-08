@@ -667,6 +667,20 @@ def test_the_settings_page_saves_key_and_model(monkeypatch, tmp_path):
     from claude_panel import ClaudeSettingsPage
     monkeypatch.setenv("APPDATA", str(tmp_path))
     page = ClaudeSettingsPage("en")
+    from PyQt5.QtWidgets import QLineEdit, QPushButton
+    # The eye in the key field shows what was typed and hides it again (no separate Show button).
+    assert page.key_edit.echoMode() == QLineEdit.Password
+    assert not any(b.text() in ("Show", "Hide") for b in page.findChildren(QPushButton))
+    page.show_key_action.trigger()
+    assert page.key_edit.echoMode() == QLineEdit.Normal and page.show_key_action.toolTip() == "Hide"
+    page.show_key_action.trigger()
+    assert page.key_edit.echoMode() == QLineEdit.Password and not page.show_key_action.icon().isNull()
+    # The page never asks for more width than a dialog gives it: the model list sizes to a
+    # short name, not to its longest entry.
+    assert page.minimumSizeHint().width() < 520
+    # The $ − / + controls are the same width, with room for the largest amount.
+    page.fit_money_spins()
+    assert page.limit_spin.width() == page.session_spin.width() >= page.limit_spin.fontMetrics().horizontalAdvance("$500.00") + 62
     page.key_edit.setText("sk-ant-api03-abcdefghijkl")
     page.save_key()
     assert claude_settings.load()["api_key"] == "sk-ant-api03-abcdefghijkl"

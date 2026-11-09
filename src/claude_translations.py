@@ -1337,3 +1337,23 @@ _REFRESH = {
 }
 for _language, _strings in _REFRESH.items():
     CLAUDE_TRANSLATIONS[_language].update(_strings)
+
+
+# Ask mode: Claude waits while an Allow/Deny card waits for the person. {allow} and
+# {deny} are the card's own words (claude_allow, claude_deny).
+_WAITING = {
+    'en': {'claude_waiting_for_you': 'Waiting for you: {allow} or {deny}'},
+    'fr': {'claude_waiting_for_you': 'En attente de votre choix : {allow} ou {deny}'},
+    'de': {'claude_waiting_for_you': 'Wartet auf Sie: {allow} oder {deny}'},
+    'it': {'claude_waiting_for_you': 'In attesa della tua scelta: {allow} o {deny}'},
+    'es': {'claude_waiting_for_you': 'Esperando tu respuesta: {allow} o {deny}'},
+    'pt': {'claude_waiting_for_you': 'Aguardando sua resposta: {allow} ou {deny}'},
+    'he': {'claude_waiting_for_you': 'ממתין לך: {allow} או {deny}'},
+    'ru': {'claude_waiting_for_you': 'Ждёт вашего ответа: {allow} или {deny}'},
+    'fi': {'claude_waiting_for_you': 'Odottaa sinua: {allow} tai {deny}'},
+    'sv': {'claude_waiting_for_you': 'Väntar på dig: {allow} eller {deny}'},
+    'ja': {'claude_waiting_for_you': 'あなたの選択を待っています：{allow} または {deny}'},
+    'zh': {'claude_waiting_for_you': '等待你的选择：{allow} 或 {deny}'},
+}
+for _language, _strings in _WAITING.items():
+    CLAUDE_TRANSLATIONS[_language].update(_strings)

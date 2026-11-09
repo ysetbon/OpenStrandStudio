@@ -56,13 +56,40 @@ def catalog():
     return found if isinstance(found, dict) else {}
 
 
-def models():
+def models(data=None):
     """[(model id, name)] offered now: the built-in models, with what the last Refresh
-    found (new ones added, ones a provider no longer offers hidden)."""
+    found (new ones added, ones a provider no longer offers hidden), less those of the
+    providers based in China unless the person allowed them (data: claude.json's, read
+    when not given)."""
     if providers is None:
         return list(MODELS)
     providers.use_catalog(catalog())
-    return [(m.id, m.label) for m in providers.MODELS.values()]
+    china = (_read() if data is None else data).get('allow_china') is True
+    return [(m.id, m.label) for m in providers.MODELS.values() if china or not based_in_china(m.provider)]
+
+
+def based_in_china(provider):
+    spec = PROVIDERS.get(provider)
+    return getattr(spec, 'country', '') == 'CN'
+
+
+def refusal(provider=None, data=None):
+    """Why nothing may be sent to provider now, as Settings > Models says (a sentence), or
+    None when it may. provider None: a share with the developer, refused only while AI
+    models are off. providers.POLICY: every request asks this just before it leaves."""
+    data = _read() if data is None else data
+    if data.get('models_on', True) is False:
+        return ('AI models are turned off in OpenStrand Studio (Settings > Models): nothing is sent to any '
+                'of them')
+    if provider and based_in_china(provider) and data.get('allow_china') is not True:
+        name = PROVIDERS[provider].name
+        return (f'{name} is turned off in OpenStrand Studio (Settings > Models): models from companies based '
+                'in China are only used once the person allows them')
+    return None
+
+
+if providers is not None:
+    providers.POLICY = refusal  # the agent's own copy too, when it imports this module
 
 
 def model_info(model):
@@ -78,14 +105,17 @@ def fetch_catalog():
     for key, spec in PROVIDERS.items():
         if not keys.get(key):
             keys[key] = os.environ.get(spec.env, '').strip()
-    return providers.refresh({k: v for k, v in keys.items() if v})
+    data = _read()  # only the providers Settings > Models allows are asked
+    return providers.refresh({k: v for k, v in keys.items() if v and refusal(k, data) is None})
 
 
 def refresh_due(hours=24):
     """Whether the automatic Refresh models should run: some provider has a key, and the
     last refresh (by hand or not) is older than hours, or there was none."""
     current = load()
-    keyed = any(current['keys'].get(k) or os.environ.get(spec.env, '').strip() for k, spec in PROVIDERS.items())
+    data = _read()
+    keyed = any((current['keys'].get(k) or os.environ.get(spec.env, '').strip()) and refusal(k, data) is None
+                for k, spec in PROVIDERS.items())
     if not keyed or providers is None:
         return False
     stamp = (current.get('catalog') or {}).get('refreshed') or ''
@@ -272,7 +302,7 @@ def load():
     version move to the password store here, once there is one."""
     data = _read()
     model = data.get('model')
-    offered = [m for m, _ in models()]
+    offered = [m for m, _ in models(data)]
     if model not in offered:
         model = DEFAULT_MODEL if DEFAULT_MODEL in offered else (offered or [DEFAULT_MODEL])[0]
     keys = {str(k): str(v).strip() for k, v in (data.get('api_keys') or {}).items()
@@ -296,17 +326,29 @@ def load():
                'session_limit': _range(data.get('session_limit', DEFAULT_SESSION_LIMIT), SESSION_LIMIT_RANGE,
                                        DEFAULT_SESSION_LIMIT),
                'mode': data.get('mode') if data.get('mode') in MODES else DEFAULT_MODE,
-               'share': data.get('share') if data.get('share') in (True, False) else None}
+               'share': data.get('share') if data.get('share') in (True, False) else None,
+               'models_on': data.get('models_on', True) is not False,
+               'allow_china': data.get('allow_china') is True}
     if in_file and store is not None:
         _write(current)  # keys an earlier version kept in claude.json: into the store
     return current
 
 
 def save(api_key=None, model=None, web=None, max_cost=None, show_button=None,
-         effort=None, session_limit=None, mode=None, provider_key=None, share=None):
+         effort=None, session_limit=None, mode=None, provider_key=None, share=None,
+         models_on=None, allow_china=None):
     """Update the saved settings given. api_key is Anthropic's; provider_key is
-    (provider, key) for any provider. An empty key removes it. share: True or False."""
+    (provider, key) for any provider. An empty key removes it. share, models_on (False:
+    nothing is ever sent to a model) and allow_china (the providers based in China):
+    True or False."""
     current = load()
+    if models_on is not None:
+        current['models_on'] = bool(models_on)
+    if allow_china is not None:
+        current['allow_china'] = bool(allow_china)
+        offered = [m for m, _ in models({'allow_china': current['allow_china']})]
+        if current['model'] not in offered:  # its provider is no longer allowed
+            current['model'] = DEFAULT_MODEL if DEFAULT_MODEL in offered else (offered or [DEFAULT_MODEL])[0]
     if api_key is not None:
         provider_key = ('anthropic', api_key)
     if provider_key is not None:
@@ -318,7 +360,7 @@ def save(api_key=None, model=None, web=None, max_cost=None, show_button=None,
             current['keys'].pop(provider, None)
         current['api_key'] = current['keys'].get('anthropic', '')
     if model is not None:
-        if model not in [m for m, _ in models()]:
+        if model not in [m for m, _ in models({'allow_china': current['allow_china']})]:
             raise ValueError(f'unknown model {model}')
         current['model'] = model
     if web is not None:
@@ -367,6 +409,8 @@ def _write(current):
                'effort': current['effort'], 'session_limit': current['session_limit'], 'mode': current['mode']}
     if current.get('share') is not None:
         payload['share'] = bool(current['share'])
+    payload['models_on'] = current.get('models_on', True) is not False
+    payload['allow_china'] = current.get('allow_china') is True
     if current.get('catalog'):
         payload['catalog'] = current['catalog']
     # Each key in the password store, else (none, or it refused this one) in the file.

@@ -254,14 +254,15 @@ def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch
     assert claude_settings.load() == {"api_key": "", "keys": {}, "catalog": {}, "model": "claude-sonnet-5-5", "web": True,
                                       "max_cost": 2.0, "spent": 0.0, "spent_since": "",
                                       "show_button": True, "effort": "high", "session_limit": 10.0, "mode": "auto",
-                                      "share": None}
+                                      "share": None, "models_on": True, "allow_china": False}
     claude_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5", web=False, max_cost=5)
     assert claude_settings.load() == {"api_key": "sk-ant-test-1234567890",
                                       "keys": {"anthropic": "sk-ant-test-1234567890"}, "catalog": {},
                                       "model": "claude-haiku-5-5",
                                       "web": False, "max_cost": 5.0, "spent": 0.0, "spent_since": "",
                                       "show_button": True,
-                                      "effort": "high", "session_limit": 10.0, "mode": "auto", "share": None}
+                                      "effort": "high", "session_limit": 10.0, "mode": "auto", "share": None,
+                                      "models_on": True, "allow_china": False}
     # Every provider has its key; the model can be any provider's.
     claude_settings.save(provider_key=("xai", " xai-test-123456789 "), model="grok-4.7")
     saved = claude_settings.load()
@@ -707,6 +708,43 @@ def test_settings_say_where_the_keys_are_and_offer_sharing_once_it_is_set_up(tmp
     assert claude_settings.load()["share"] is True
     page.retranslate("de")
     assert page.share_check.isChecked() and page.share_check.text().startswith("Was Claude erstellt")
+
+
+def test_with_models_off_the_panel_sends_nothing_and_a_running_request_stops(window, monkeypatch, tmp_path):
+    from PyQt5.QtCore import QProcess
+    import claude_settings
+    from claude_panel import ClaudeSettingsPage
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    claude_settings.save(api_key="sk-ant-test-1234567890")
+    page = ClaudeSettingsPage("en")
+    assert page.models_check.isChecked() and not page.china_check.isChecked() and page.refresh_button.isEnabled()
+    labels = [page.model_combo.itemText(i) for i in range(page.model_combo.count())]
+    assert labels and not any(name in label for label in labels for name in ("Kimi", "DeepSeek", "Qwen"))
+    page.china_check.setChecked(True)  # allowed: their models are offered
+    assert any("DeepSeek" in page.model_combo.itemText(i) for i in range(page.model_combo.count()))
+    page.china_check.setChecked(False)
+    assert claude_settings.load()["allow_china"] is False
+    page.models_check.setChecked(False)
+    assert claude_settings.load()["models_on"] is False and not page.refresh_button.isEnabled()
+    panel = window.claude_panel
+    started, killed = [], []
+    monkeypatch.setattr("claude_panel.QProcess.start", lambda self, program, args: started.append(args))
+    panel.prompt_edit.setText("a heart")
+    panel.send()
+    assert started == [] and "AI models are turned off in Settings > Models" in panel.transcript.toPlainText()
+    # Turned off while a request runs: it stops at once, as with Stop.
+    page.models_check.setChecked(True)
+    assert claude_settings.load()["models_on"] and page.refresh_button.isEnabled()
+    panel.process = SimpleNamespace(state=lambda: QProcess.Running, kill=lambda: killed.append(1))
+    try:
+        panel.refresh_controls()
+        assert killed == []  # on: it runs on
+        page.models_check.setChecked(False)  # the dialog sends settings_changed to the panel
+        panel.refresh_controls()
+        assert killed == [1] and panel.stopping
+    finally:
+        panel.process, panel.stopping = None, False
+        claude_settings.save(models_on=True)
 
 
 def test_the_panel_asks_for_a_key_before_sending(window, monkeypatch, tmp_path):

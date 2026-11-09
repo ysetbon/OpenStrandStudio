@@ -43,6 +43,7 @@ class Provider:
     keys_url: str = ''  # where to make a key
     key_hint: str = ''  # what a key looks like (the key field's placeholder)
     models_url: str = ''  # where it lists the models a key can use (Refresh models)
+    country: str = ''  # where the company is based ('CN': off unless the person allows it)
 
 
 @dataclass(frozen=True)
@@ -61,22 +62,22 @@ class Model:
 PROVIDERS = {p.key: p for p in (
     Provider('anthropic', 'Anthropic (Claude)', 'anthropic', 'ANTHROPIC_API_KEY', 'https://api.anthropic.com',
              keys_url='https://console.anthropic.com/settings/keys', key_hint='sk-ant-…',
-             models_url='https://api.anthropic.com/v1/models'),
+             models_url='https://api.anthropic.com/v1/models', country='US'),
     Provider('openai', 'OpenAI (GPT)', 'responses', 'OPENAI_API_KEY', 'https://api.openai.com/v1',
-             'https://platform.openai.com/api-keys', 'sk-…', 'https://api.openai.com/v1/models'),
+             'https://platform.openai.com/api-keys', 'sk-…', 'https://api.openai.com/v1/models', country='US'),
     Provider('xai', 'xAI (Grok)', 'responses', 'XAI_API_KEY', 'https://api.x.ai/v1',
-             'https://console.x.ai', 'xai-…', 'https://api.x.ai/v1/language-models'),
+             'https://console.x.ai', 'xai-…', 'https://api.x.ai/v1/language-models', country='US'),
     Provider('moonshot', 'Moonshot AI (Kimi)', 'anthropic-compatible', 'MOONSHOT_API_KEY',
              'https://api.moonshot.ai/anthropic', 'https://platform.kimi.ai/console/api-keys', 'sk-…',
-             'https://api.moonshot.ai/v1/models'),
+             'https://api.moonshot.ai/v1/models', country='CN'),
     Provider('deepseek', 'DeepSeek', 'anthropic-compatible', 'DEEPSEEK_API_KEY',
              'https://api.deepseek.com/anthropic', 'https://platform.deepseek.com/api_keys', 'sk-…',
-             'https://api.deepseek.com/models'),
+             'https://api.deepseek.com/models', country='CN'),
     # Its model list is not in Alibaba's docs: Refresh tries the OpenAI-compatible one.
     Provider('qwen', 'Alibaba Cloud (Qwen)', 'anthropic-compatible', 'DASHSCOPE_API_KEY',
              'https://dashscope-intl.aliyuncs.com/apps/anthropic',
              'https://modelstudio.console.alibabacloud.com/?tab=playground#/api-key', 'sk-…',
-             'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/models'),
+             'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/models', country='CN'),
 )}
 
 BUILTIN = {m.id: m for m in (
@@ -144,14 +145,14 @@ def client_for(model, key):
         return ResponsesClient(p, key)
     import anthropic
     if p.api == 'anthropic':
-        return sdk_client(anthropic, p.base_url, key)
-    return CompatClient(compatible_sdk(anthropic, key, p.base_url))
+        return sdk_client(anthropic, p.base_url, key, provider=p.key)
+    return CompatClient(compatible_sdk(anthropic, key, p.base_url, provider=p.key))
 
 
-def compatible_sdk(anthropic, key, base_url):
+def compatible_sdk(anthropic, key, base_url, provider=None):
     """The anthropic SDK on a compatible endpoint. Their docs for Claude Code give the key
     as a Bearer token (ANTHROPIC_AUTH_TOKEN); some read x-api-key: send it both ways."""
-    return sdk_client(anthropic, base_url, key, bearer=True)
+    return sdk_client(anthropic, base_url, key, bearer=True, provider=provider)
 
 
 class ProviderError(Exception):
@@ -182,6 +183,26 @@ class UnsafeRequest(ValueError):
     """A request that would have taken a key where it does not belong. It was not sent."""
 
 
+class NotAllowed(UnsafeRequest):
+    """A request the person's settings forbid (Settings > Models). It was not sent."""
+
+
+# What the person allows (Settings > Models): set by the app's claude_settings, which reads
+# their choice afresh each time. POLICY(provider key, or None for a share with the developer)
+# gives a sentence saying why nothing may be sent, or None. Every request asks it just
+# before it would leave, so switching models off (or the providers based in China) stops
+# them all, the requests of an agent already running included. Without the app (the tests,
+# the CLI on its own) it is None: nothing to ask.
+POLICY = None
+
+
+def check_allowed(provider):
+    """Raise NotAllowed when the person's settings forbid sending anything to provider."""
+    reason = POLICY(provider) if POLICY is not None else None
+    if reason:
+        raise NotAllowed(reason)
+
+
 def host_of(url):
     return (urlsplit(str(url)).hostname or '').lower()
 
@@ -195,15 +216,17 @@ def check_url(url, host):
                             f'the key for {host} goes to https://{host} only')
 
 
-def sdk_client(anthropic, base_url, key, bearer=False):
+def sdk_client(anthropic, base_url, key, bearer=False, provider=None):
     """anthropic.Anthropic held to one endpoint: base_url and key are given here, so the
     SDK reads neither from the environment; it follows no redirect, and each request is
-    checked on its way out: its host, and its credentials, which are this key exactly as
-    the SDK sends it (whatever else an environment variable put there is replaced)."""
+    checked on its way out: that the person allows it (POLICY), its host, and its
+    credentials, which are this key exactly as the SDK sends it (whatever else an
+    environment variable put there is replaced)."""
     host = host_of(base_url)
     wanted = {}  # header name (lowercase) -> its one value; filled once the client exists
 
     def guard(request):
+        check_allowed(provider)
         check_url(request.url, host)
         for name in CREDENTIAL_HEADERS:
             mine = [wanted[name]] if name in wanted else []
@@ -412,6 +435,7 @@ class ResponsesClient:
 
     def post(self, body):
         """(status, headers, parsed body or text) of one POST to /responses."""
+        check_allowed(self.provider.key)
         request = urllib.request.Request(
             f'{self.provider.base_url}/responses', data=json.dumps(body).encode('utf-8'), method='POST',
             headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {self.key}'})
@@ -523,6 +547,7 @@ def list_models(provider, key, timeout=30.0):
     """The models a provider offers to this key, as dicts {id, label, vision, prices,
     retiring, retired}; prices only where the provider says them (xAI), else None."""
     p = PROVIDERS[provider]
+    check_allowed(provider)
     host = host_of(p.models_url)  # every page of the list from there, whatever an answer says
     found = []
     if provider == 'anthropic':
@@ -619,4 +644,6 @@ def refresh(keys, timeout=30.0):
             catalog['providers'][provider] = {'models': list_models(provider, key, timeout)}
         except ProviderError as e:
             catalog['providers'][provider] = {'error': e.message if e.status_code else str(e.message)}
+        except NotAllowed as e:  # turned off in Settings > Models: not asked at all
+            catalog['providers'][provider] = {'error': str(e)}
     return catalog

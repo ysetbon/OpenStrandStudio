@@ -169,6 +169,7 @@ def unseal(sealed, key):
 def send(sealed, url=None, timeout=TIMEOUT):
     """POST a sealed share to the Worker over HTTPS; its HTTP status (2xx: kept)."""
     providers = claude_settings.providers
+    providers.check_allowed(None)  # AI models turned off (Settings > Models): nothing is shared either
     url = SHARE_URL if url is None else url
     request = urllib.request.Request(url, data=sealed, method='POST',
                                      headers={'Content-Type': 'application/octet-stream',

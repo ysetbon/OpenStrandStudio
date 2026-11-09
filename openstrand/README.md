@@ -183,6 +183,15 @@ the person's pictures, keys or files) are encrypted on this computer with the
 developer's public key and sent to the developer's Cloudflare Worker
 (`cloudflare/share-worker`, whose README says how to set it up).
 
+Two switches in Settings > Models decide what may be sent at all, and every
+request asks them just before it leaves (`providers.POLICY`, which
+`claude_settings.refusal` answers from the saved settings), in the app and in
+the agent it starts alike. **Connect to AI models**, turned off, sends nothing
+to any model: no request, no Refresh models, no share; a request already
+running stops. **Allow Kimi, DeepSeek and Qwen (based in China)** is off until
+the person ticks it: their models are hidden and anything for them is refused.
+`openstrand agent` from a terminal follows the same settings.
+
 ### Claude and the app's tabs (the bridge)
 
 The agent runs in its own process, so it cannot touch the app's windows. When

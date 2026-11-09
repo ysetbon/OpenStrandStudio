@@ -1471,6 +1471,9 @@ class ClaudePanel(QWidget):
         t = lambda key: _tr(self.language, key)
         c = self.colors
         saved = claude_settings.load()
+        if not saved['models_on'] and self.running():
+            terminal_log('AI models were turned off in Settings > Models: ending the agent')
+            self.send_or_stop()  # stops it, as Stop does: nothing more goes to the model
         self.new_button.setText('＋ ' + t('claude_new_session'))
         self.new_button.setEnabled(not self.running())
         color, key = self.MODE_LOOK[self.mode]
@@ -1607,6 +1610,9 @@ class ClaudePanel(QWidget):
             self.add_note(_tr(self.language, 'claude_source_only'), '#c0392b')
             return
         settings = claude_settings.load()
+        if not settings['models_on']:  # Settings > Models: nothing is ever sent to a model
+            self.add_note(_tr(self.language, 'models_off_note'), '#c0392b')
+            return
         provider = claude_settings.provider_of(settings['model'])
         spec = claude_settings.PROVIDERS.get(provider)
         key_env = spec.env if spec else 'ANTHROPIC_API_KEY'
@@ -1903,8 +1909,9 @@ class ClaudePanel(QWidget):
                 or not claude_sharing.available()):
             return
         self.shared_event = event
-        choice = claude_settings.load()['share']
-        if choice is False or (choice is None and self.share_asked):
+        settings = claude_settings.load()
+        choice = settings['share']
+        if not settings['models_on'] or choice is False or (choice is None and self.share_asked):
             return
         record = self.share_record(event, design, picture)
         if choice:
@@ -2201,6 +2208,24 @@ class ClaudeSettingsPage(QWidget):
         self.show_hint.setStyleSheet('color: gray;')
         layout.addWidget(self.show_hint)
 
+        # Off: OpenStrand never connects to any AI model (providers.POLICY refuses every request).
+        self.models_check = QCheckBox(self)
+        self.models_check.toggled.connect(self.set_models_on)
+        layout.addWidget(self.models_check)
+        self.models_hint = QLabel(self)
+        self.models_hint.setWordWrap(True)
+        self.models_hint.setStyleSheet('color: gray;')
+        layout.addWidget(self.models_hint)
+        # The providers based in China: off until the person allows them.
+        self.china_check = QCheckBox(self)
+        self.china_check.toggled.connect(self.set_allow_china)
+        layout.addWidget(self.china_check)
+        self.china_hint = QLabel(self)
+        self.china_hint.setWordWrap(True)
+        self.china_hint.setStyleSheet('color: gray;')
+        layout.addWidget(self.china_hint)
+        self.refreshing = False  # Refresh models is asking the providers
+
         provider_row = QHBoxLayout()
         self.key_label = QLabel(self)
         self.provider_combo = QComboBox(self)
@@ -2353,10 +2378,14 @@ class ClaudeSettingsPage(QWidget):
                                else 'claude_key_storage'))
         self.share_check.setText(t('models_share_label'))
         self.share_hint.setText(t('models_share_hint'))
+        self.models_check.setText(t('models_use_label'))
+        self.models_hint.setText(t('models_use_hint'))
+        self.china_check.setText(t('models_china_label'))
+        self.china_hint.setText(t('models_china_hint'))
         saved = claude_settings.load()
         self.fill_models(saved)
         self.refresh_button.setText(t('models_refresh'))
-        if self.refresh_button.isEnabled():
+        if not self.refreshing:
             refreshed = (saved.get('catalog') or {}).get('refreshed')
             self.refresh_status.setText(t('models_last_refresh').format(date=refreshed) if refreshed
                                         else t('models_never_refreshed'))
@@ -2383,6 +2412,7 @@ class ClaudeSettingsPage(QWidget):
         self.spent_hint.setText(t('claude_spent_hint'))
         self.show_spending()
         self.show_share()
+        self.show_switches()
         self.setLayoutDirection(Qt.RightToLeft if language_code == 'he' else Qt.LeftToRight)
 
     # The dialog's own look: its buttons' colors, border and hover and pressed states are kept
@@ -2441,6 +2471,7 @@ class ClaudeSettingsPage(QWidget):
         self.show_spending()  # requests may have run since the page was built
         self.show_choices()  # the status line may have changed the model or effort
         self.show_share()  # the panel's card may have changed it
+        self.show_switches()
 
     def show_choices(self):
         """Model, effort and the session limit as saved."""
@@ -2474,6 +2505,28 @@ class ClaudeSettingsPage(QWidget):
     def reset_spending(self):
         claude_settings.reset_spending()
         self.show_spending()
+
+    def show_switches(self):
+        """The two switches as saved. With models off nothing can ask a provider anything, so
+        Refresh models waits; keys can still be removed."""
+        saved = claude_settings.load()
+        for check, on in ((self.models_check, saved['models_on']), (self.china_check, saved['allow_china'])):
+            check.blockSignals(True)
+            check.setChecked(on)
+            check.blockSignals(False)
+        self.refresh_button.setEnabled(saved['models_on'] and not self.refreshing)
+
+    def set_models_on(self, on):
+        claude_settings.save(models_on=on)
+        self.show_switches()
+        self.settings_changed.emit()  # the panel stops a request that is running
+
+    def set_allow_china(self, allowed):
+        claude_settings.save(allow_china=allowed)
+        self.fill_models()  # their models shown or hidden; the saved model may have moved off them
+        self.show_choices()
+        self.show_provider(claude_settings.provider_of(claude_settings.load()['model']))
+        self.settings_changed.emit()
 
     def show_share(self):
         """The share box as saved (off until the person says yes), shown once sharing is set up."""
@@ -2562,6 +2615,7 @@ class ClaudeSettingsPage(QWidget):
     def refresh_models(self):
         """Refresh models (by hand only): each provider with a key says which models it
         offers now. The asking runs off the main thread; show_refresh takes the answer."""
+        self.refreshing = True
         self.refresh_button.setEnabled(False)
         self.refresh_status.setText(_tr(self.language, 'models_refreshing'))
 
@@ -2574,7 +2628,8 @@ class ClaudeSettingsPage(QWidget):
 
     def show_refresh(self, found, error):
         t = lambda k: _tr(self.language, k)
-        self.refresh_button.setEnabled(True)
+        self.refreshing = False
+        self.refresh_button.setEnabled(claude_settings.load()['models_on'])
         if error or not found:
             self.refresh_status.setText(error or '')
             return

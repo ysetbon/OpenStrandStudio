@@ -319,6 +319,7 @@ def cmd_agent(args):
         pass
     model = providers.resolve(args.model)
     provider = providers.provider_of(model)
+    providers.check_allowed(provider.key)  # Settings > Models may forbid it: then nothing is sent
     client = providers.client_for(model, api_key(provider.key))
     start = project.read(args.start) if args.start else None
     for image in args.image or []:

@@ -1486,3 +1486,108 @@ _SHARING = {
 }
 for _language, _strings in _SHARING.items():
     CLAUDE_TRANSLATIONS[_language].update(_strings)
+
+
+# Settings > Models: the switch that keeps every AI model off the internet (nothing is ever
+# sent: providers.POLICY), and the one for the providers based in China (off until allowed).
+# The check boxes' words stay short (a check box does not wrap); the hints under them say it all.
+_SWITCHES = {
+    'en': {
+        'models_use_label': 'Connect to AI models',
+        'models_use_hint': 'Turned off, OpenStrand never connects to any AI model: nothing is sent to Claude, GPT, Grok, Kimi, DeepSeek or Qwen, the model list is never refreshed, and nothing is shared. A request already running stops. Your saved keys stay where they are.',
+        'models_off_note': 'AI models are turned off in Settings > Models, so nothing was sent.',
+        'models_china_label': 'Allow Kimi, DeepSeek and Qwen (based in China)',
+        'models_china_hint': 'Moonshot AI (Kimi), DeepSeek and Alibaba Cloud (Qwen) are based in China. What you send them may be stored there (DeepSeek says it is) and handled under Chinese law. While this is off, their models are hidden and nothing is ever sent to them.',
+        'models_share_label': 'Share what Claude makes with the developer',
+    },
+    'fr': {
+        'models_use_label': "Se connecter aux modèles d'IA",
+        'models_use_hint': "Désactivé, OpenStrand ne se connecte jamais à aucun modèle d'IA : rien n'est envoyé à Claude, GPT, Grok, Kimi, DeepSeek ou Qwen, la liste des modèles n'est jamais actualisée et rien n'est partagé. Une demande en cours s'arrête. Vos clés enregistrées restent en place.",
+        'models_off_note': "Les modèles d'IA sont désactivés dans Réglages > Modèles : rien n'a été envoyé.",
+        'models_china_label': 'Autoriser Kimi, DeepSeek et Qwen (basés en Chine)',
+        'models_china_hint': "Moonshot AI (Kimi), DeepSeek et Alibaba Cloud (Qwen) sont basées en Chine. Ce que vous leur envoyez peut y être stocké (DeepSeek indique que c'est le cas) et relever du droit chinois. Tant que c'est désactivé, leurs modèles sont masqués et rien ne leur est jamais envoyé.",
+        'models_share_label': 'Partager ce que Claude crée avec le développeur',
+    },
+    'de': {
+        'models_use_label': 'Mit KI-Modellen verbinden',
+        'models_use_hint': 'Ausgeschaltet verbindet sich OpenStrand nie mit einem KI-Modell: Nichts wird an Claude, GPT, Grok, Kimi, DeepSeek oder Qwen gesendet, die Modellliste wird nie aktualisiert und nichts wird geteilt. Eine laufende Anfrage wird beendet. Ihre gespeicherten Schlüssel bleiben erhalten.',
+        'models_off_note': 'KI-Modelle sind unter Einstellungen > Modelle ausgeschaltet, daher wurde nichts gesendet.',
+        'models_china_label': 'Kimi, DeepSeek und Qwen erlauben (Sitz in China)',
+        'models_china_hint': 'Moonshot AI (Kimi), DeepSeek und Alibaba Cloud (Qwen) haben ihren Sitz in China. Was Sie ihnen senden, kann dort gespeichert werden (DeepSeek gibt das an) und unterliegt dann chinesischem Recht. Solange dies aus ist, sind ihre Modelle ausgeblendet und es wird nie etwas an sie gesendet.',
+        'models_share_label': 'Was Claude erstellt, mit dem Entwickler teilen',
+    },
+    'it': {
+        'models_use_label': 'Collegati ai modelli di IA',
+        'models_use_hint': "Se disattivato, OpenStrand non si collega mai a nessun modello di IA: nulla viene inviato a Claude, GPT, Grok, Kimi, DeepSeek o Qwen, l'elenco dei modelli non viene mai aggiornato e nulla viene condiviso. Una richiesta in corso si interrompe. Le chiavi salvate restano dove sono.",
+        'models_off_note': 'I modelli di IA sono disattivati in Impostazioni > Modelli, quindi non è stato inviato nulla.',
+        'models_china_label': 'Consenti Kimi, DeepSeek e Qwen (con sede in Cina)',
+        'models_china_hint': 'Moonshot AI (Kimi), DeepSeek e Alibaba Cloud (Qwen) hanno sede in Cina. Ciò che invii loro può essere conservato lì (DeepSeek dichiara che lo è) e trattato secondo la legge cinese. Finché è disattivato, i loro modelli sono nascosti e non viene mai inviato loro nulla.',
+        'models_share_label': 'Condividi ciò che Claude crea con lo sviluppatore',
+    },
+    'es': {
+        'models_use_label': 'Conectarse a modelos de IA',
+        'models_use_hint': 'Si se desactiva, OpenStrand nunca se conecta a ningún modelo de IA: no se envía nada a Claude, GPT, Grok, Kimi, DeepSeek ni Qwen, la lista de modelos nunca se actualiza y no se comparte nada. Una petición en curso se detiene. Tus claves guardadas se quedan donde están.',
+        'models_off_note': 'Los modelos de IA están desactivados en Ajustes > Modelos, así que no se ha enviado nada.',
+        'models_china_label': 'Permitir Kimi, DeepSeek y Qwen (con sede en China)',
+        'models_china_hint': 'Moonshot AI (Kimi), DeepSeek y Alibaba Cloud (Qwen) tienen su sede en China. Lo que les envías puede guardarse allí (DeepSeek indica que así es) y quedar sujeto a la ley china. Mientras esté desactivado, sus modelos están ocultos y nunca se les envía nada.',
+        'models_share_label': 'Compartir lo que Claude crea con el desarrollador',
+    },
+    'pt': {
+        'models_use_label': 'Conectar-se a modelos de IA',
+        'models_use_hint': 'Desativado, o OpenStrand nunca se conecta a nenhum modelo de IA: nada é enviado ao Claude, GPT, Grok, Kimi, DeepSeek ou Qwen, a lista de modelos nunca é atualizada e nada é compartilhado. Um pedido em andamento é interrompido. Suas chaves salvas continuam onde estão.',
+        'models_off_note': 'Os modelos de IA estão desativados em Configurações > Modelos, então nada foi enviado.',
+        'models_china_label': 'Permitir Kimi, DeepSeek e Qwen (sediadas na China)',
+        'models_china_hint': 'Moonshot AI (Kimi), DeepSeek e Alibaba Cloud (Qwen) são sediadas na China. O que você envia a elas pode ser armazenado lá (a DeepSeek diz que é) e ficar sujeito à lei chinesa. Enquanto isto estiver desativado, os modelos delas ficam ocultos e nada é enviado a elas.',
+        'models_share_label': 'Compartilhar o que o Claude cria com o desenvolvedor',
+    },
+    'he': {
+        'models_use_label': 'להתחבר למודלי בינה מלאכותית',
+        'models_use_hint': 'כשזה כבוי, OpenStrand אף פעם לא מתחבר לשום מודל בינה מלאכותית: שום דבר לא נשלח ל-Claude, GPT, Grok, Kimi, DeepSeek או Qwen, רשימת המודלים לא מתרעננת ושום דבר לא משותף. בקשה שכבר רצה נעצרת. המפתחות השמורים שלך נשארים במקומם.',
+        'models_off_note': 'מודלי הבינה המלאכותית כבויים בהגדרות > מודלים, ולכן שום דבר לא נשלח.',
+        'models_china_label': 'לאפשר את Kimi, DeepSeek ו-Qwen (חברות מסין)',
+        'models_china_hint': 'Moonshot AI (Kimi), DeepSeek ו-Alibaba Cloud (Qwen) הן חברות שמושבן בסין. מה שתשלח להן עשוי להישמר שם (DeepSeek מצהירה שכך) ולהיות כפוף לחוק הסיני. כל עוד זה כבוי, המודלים שלהן מוסתרים ושום דבר לא נשלח אליהן.',
+        'models_share_label': 'לשתף עם יוצר האפליקציה את מה ש-Claude יוצר',
+    },
+    'ru': {
+        'models_use_label': 'Подключаться к моделям ИИ',
+        'models_use_hint': 'Если выключено, OpenStrand никогда не подключается ни к одной модели ИИ: ничего не отправляется в Claude, GPT, Grok, Kimi, DeepSeek или Qwen, список моделей никогда не обновляется и ничего не передаётся. Уже выполняющийся запрос останавливается. Сохранённые ключи остаются на месте.',
+        'models_off_note': 'Модели ИИ выключены в Настройки > Модели, поэтому ничего не отправлено.',
+        'models_china_label': 'Разрешить Kimi, DeepSeek и Qwen (компании из Китая)',
+        'models_china_hint': 'Moonshot AI (Kimi), DeepSeek и Alibaba Cloud (Qwen) — компании из Китая. То, что вы им отправляете, может храниться там (DeepSeek прямо это указывает) и подпадать под китайское законодательство. Пока этот флажок выключен, их модели скрыты и им ничего не отправляется.',
+        'models_share_label': 'Делиться созданным Claude с разработчиком',
+    },
+    'fi': {
+        'models_use_label': 'Yhdistä tekoälymalleihin',
+        'models_use_hint': 'Pois päältä OpenStrand ei koskaan muodosta yhteyttä mihinkään tekoälymalliin: mitään ei lähetetä Claudelle, GPT:lle, Grokille, Kimille, DeepSeekille tai Qwenille, mallilistaa ei koskaan päivitetä eikä mitään jaeta. Käynnissä oleva pyyntö pysähtyy. Tallennetut avaimesi pysyvät paikallaan.',
+        'models_off_note': 'Tekoälymallit on poistettu käytöstä kohdassa Asetukset > Mallit, joten mitään ei lähetetty.',
+        'models_china_label': 'Salli Kimi, DeepSeek ja Qwen (kiinalaisia yrityksiä)',
+        'models_china_hint': 'Moonshot AI (Kimi), DeepSeek ja Alibaba Cloud (Qwen) ovat kiinalaisia yrityksiä. Niille lähettämäsi tiedot voidaan tallentaa Kiinaan (DeepSeek kertoo tekevänsä niin), jolloin niihin sovelletaan Kiinan lakia. Kun tämä on pois päältä, niiden mallit ovat piilossa eikä niille lähetetä koskaan mitään.',
+        'models_share_label': 'Jaa Clauden tekemät työt kehittäjälle',
+    },
+    'sv': {
+        'models_use_label': 'Anslut till AI-modeller',
+        'models_use_hint': 'Avstängt ansluter OpenStrand aldrig till någon AI-modell: inget skickas till Claude, GPT, Grok, Kimi, DeepSeek eller Qwen, modellistan uppdateras aldrig och inget delas. En förfrågan som redan pågår stoppas. Dina sparade nycklar ligger kvar.',
+        'models_off_note': 'AI-modeller är avstängda under Inställningar > Modeller, så inget skickades.',
+        'models_china_label': 'Tillåt Kimi, DeepSeek och Qwen (baserade i Kina)',
+        'models_china_hint': 'Moonshot AI (Kimi), DeepSeek och Alibaba Cloud (Qwen) har sitt säte i Kina. Det du skickar till dem kan lagras där (DeepSeek uppger att det gör det) och omfattas av kinesisk lag. Så länge detta är avstängt är deras modeller dolda och inget skickas någonsin till dem.',
+        'models_share_label': 'Dela det Claude skapar med utvecklaren',
+    },
+    'ja': {
+        'models_use_label': 'AI モデルに接続する',
+        'models_use_hint': 'オフにすると、OpenStrand はどの AI モデルにも接続しません。Claude、GPT、Grok、Kimi、DeepSeek、Qwen には何も送られず、モデル一覧も更新されず、共有も行われません。実行中のリクエストは停止します。保存したキーはそのまま残ります。',
+        'models_off_note': 'AI モデルは「設定 > モデル」でオフになっているため、何も送信されませんでした。',
+        'models_china_label': 'Kimi、DeepSeek、Qwen を許可する（中国企業）',
+        'models_china_hint': 'Moonshot AI（Kimi）、DeepSeek、Alibaba Cloud（Qwen）は中国に拠点を置く企業です。送った内容は中国で保存され（DeepSeek はそうしていると明記しています）、中国の法律の下で扱われる可能性があります。オフの間は、これらのモデルは表示されず、何も送信されません。',
+        'models_share_label': 'Claude が作ったものを開発者と共有する',
+    },
+    'zh': {
+        'models_use_label': '连接 AI 模型',
+        'models_use_hint': '关闭后，OpenStrand 绝不会连接任何 AI 模型：不会向 Claude、GPT、Grok、Kimi、DeepSeek 或 Qwen 发送任何内容，不会刷新模型列表，也不会分享任何内容。正在进行的请求会停止。已保存的密钥保持不变。',
+        'models_off_note': 'AI 模型已在“设置 > 模型”中关闭，因此没有发送任何内容。',
+        'models_china_label': '允许 Kimi、DeepSeek 和 Qwen（中国公司）',
+        'models_china_hint': '月之暗面（Kimi）、DeepSeek 和阿里云（Qwen）是总部位于中国的公司。你发送给它们的内容可能存储在中国（DeepSeek 声明会这样做），并受中国法律管辖。关闭时，它们的模型会被隐藏，也绝不会向它们发送任何内容。',
+        'models_share_label': '把 Claude 做出的内容分享给开发者',
+    },
+}
+for _language, _strings in _SWITCHES.items():
+    CLAUDE_TRANSLATIONS[_language].update(_strings)

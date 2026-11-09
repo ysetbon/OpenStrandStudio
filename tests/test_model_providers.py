@@ -18,6 +18,13 @@ for folder in (ROOT, ROOT / "src", ROOT / "scripts"):
 from openstrand import agent, providers  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def nothing_forbidden(monkeypatch):
+    """These tests are about the clients themselves. What Settings > Models forbids
+    (providers.POLICY, set once claude_settings is imported) has tests of its own."""
+    monkeypatch.setattr(providers, "POLICY", None)
+
+
 @pytest.fixture
 def server(monkeypatch):
     """A local API: answers queued in .answers ((status, body)), requests kept in .seen."""
@@ -318,6 +325,35 @@ def test_environment_variables_neither_move_a_client_nor_add_a_credential(start,
         assert sent and all(value in (key, f"Bearer {key}") for _, value in sent), sent
         assert len({name for name, _ in sent}) == len(sent)  # one value each, no repeats
         assert ("x-note", "kept") in seen[-1]["headers"]  # what is not a credential stays
+
+
+def test_what_the_settings_forbid_is_never_sent(start, monkeypatch):
+    anthropic = pytest.importorskip("anthropic")
+    url, _, seen = start(answer=MESSAGE)
+    forbidden = {"deepseek", "xai", None}  # None: a share with the developer
+    monkeypatch.setattr(providers, "POLICY", lambda p: "turned off in Settings > Models" if p in forbidden else None)
+    with pytest.raises(anthropic.APIConnectionError) as refused:
+        providers.compatible_sdk(anthropic, "sk-ds", url + "/anthropic", provider="deepseek").with_options(
+            max_retries=0).messages.create(model="m", max_tokens=10, messages=[{"role": "user", "content": "hi"}])
+    assert isinstance(refused.value.__cause__, providers.NotAllowed)
+    grok = providers.ResponsesClient(dataclasses.replace(providers.PROVIDERS["xai"], base_url=url + "/v1"), "xai-k")
+    with pytest.raises(providers.NotAllowed, match="turned off"):
+        grok.messages.create(model="grok-4.7", messages=[{"role": "user", "content": "hi"}])
+    monkeypatch.setitem(providers.PROVIDERS, "deepseek",
+                        dataclasses.replace(providers.PROVIDERS["deepseek"], models_url=url + "/models"))
+    with pytest.raises(providers.NotAllowed):
+        providers.list_models("deepseek", "sk-ds")
+    assert providers.refresh({"deepseek": "sk-ds"})["providers"]["deepseek"] == {
+        "error": "turned off in Settings > Models"}
+    assert seen == []  # not one byte left
+    providers.sdk_client(anthropic, url, "sk-ant", provider="anthropic").messages.create(
+        model="m", max_tokens=10, messages=[{"role": "user", "content": "hi"}])
+    assert len(seen) == 1  # what is allowed still goes
+
+
+def test_each_provider_says_where_its_company_is_based():
+    assert {p.key: p.country for p in providers.PROVIDERS.values()} == {
+        "anthropic": "US", "openai": "US", "xai": "US", "moonshot": "CN", "deepseek": "CN", "qwen": "CN"}
 
 
 def test_the_tests_own_stand_in_api_must_be_on_this_computer(monkeypatch):

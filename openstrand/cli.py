@@ -285,6 +285,8 @@ def api_key(provider='anthropic'):
     XAI_API_KEY, MOONSHOT_API_KEY, DEEPSEEK_API_KEY, DASHSCOPE_API_KEY), else the one saved
     in the app's Settings > Models."""
     from . import providers
+    if os.environ.get(providers.PROVIDERS[provider].env, '').strip():
+        return providers.api_key(provider)  # the app passes it this way: the saved keys stay unread
     try:
         import claude_settings
         saved = claude_settings.load().get('keys', {})
@@ -349,7 +351,9 @@ def cmd_agent(args):
         result = runner.run(args.prompt, images=args.image or [], start=start, history=history)
     except (anthropic.AuthenticationError, anthropic.PermissionDeniedError):
         raise ValueError(f'the {provider.name} API key was refused: check it in Settings > Models') from None
-    except anthropic.APIConnectionError:
+    except anthropic.APIConnectionError as e:
+        if isinstance(e.__cause__, providers.UnsafeRequest):  # stopped before it left: say why
+            raise ValueError(str(e.__cause__)) from None
         raise ValueError(f'cannot reach the {provider.name} API: check the internet connection') from None
     except anthropic.RateLimitError:
         raise ValueError(f'the {provider.name} API is busy (rate limit): try again in a minute') from None

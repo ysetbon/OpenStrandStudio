@@ -159,12 +159,29 @@ strands, masks, groups and layer panel are exactly as in a saved project. With
 **Start from the canvas** on, the current canvas goes to Claude as the design
 to change. The app remembers whether Claude was showing.
 
-Settings > Claude holds the API key (on this computer only, in `claude.json`
-in the OpenStrand settings folder, never in projects), the model, web search,
-the spending limit per request, and what Claude has cost in all with a Reset
-button. Its first switch hides the Claude button altogether. For now Claude
-works when the app runs from source; the installed app needs the openstrand
-package bundled first.
+Settings > Claude holds the API keys (on this computer only, never in
+projects: in the system's password store, macOS Keychain, Windows Credential
+Manager or the Secret Service, when the `keyring` package finds one, else in
+`claude.json` in the OpenStrand settings folder, readable by the user alone),
+the model, web search, the spending limit per request, and what Claude has
+cost in all with a Reset button. Its first switch hides the Claude button
+altogether. For now Claude works when the app runs from source; the installed
+app needs the openstrand package bundled first.
+
+A key only ever goes to its own provider (`providers.py`, "Safe requests"):
+each request is checked as it leaves (HTTPS, to the host its endpoint names,
+certificate checked), no redirect is followed, and environment variables can
+neither move a client (`ANTHROPIC_BASE_URL`, which Claude Code users of
+DeepSeek or Kimi often have set) nor add another credential to its requests.
+The tests point the agent at a local stand-in API with `OPENSTRAND_TEST_API`,
+which must be on this computer itself.
+
+Sharing with the developer (`src/claude_sharing.py`) is off until the person
+says yes, on a card under Claude's first answer or in Settings > Models: then
+the design Claude made, its picture and Claude's answer (never the request,
+the person's pictures, keys or files) are encrypted on this computer with the
+developer's public key and sent to the developer's Cloudflare Worker
+(`cloudflare/share-worker`, whose README says how to set it up).
 
 ### Claude and the app's tabs (the bridge)
 

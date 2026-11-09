@@ -253,14 +253,15 @@ def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch
     monkeypatch.setenv("APPDATA", str(tmp_path))
     assert claude_settings.load() == {"api_key": "", "keys": {}, "catalog": {}, "model": "claude-sonnet-5-5", "web": True,
                                       "max_cost": 2.0, "spent": 0.0, "spent_since": "",
-                                      "show_button": True, "effort": "high", "session_limit": 10.0, "mode": "auto"}
+                                      "show_button": True, "effort": "high", "session_limit": 10.0, "mode": "auto",
+                                      "share": None}
     claude_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5", web=False, max_cost=5)
     assert claude_settings.load() == {"api_key": "sk-ant-test-1234567890",
                                       "keys": {"anthropic": "sk-ant-test-1234567890"}, "catalog": {},
                                       "model": "claude-haiku-5-5",
                                       "web": False, "max_cost": 5.0, "spent": 0.0, "spent_since": "",
                                       "show_button": True,
-                                      "effort": "high", "session_limit": 10.0, "mode": "auto"}
+                                      "effort": "high", "session_limit": 10.0, "mode": "auto", "share": None}
     # Every provider has its key; the model can be any provider's.
     claude_settings.save(provider_key=("xai", " xai-test-123456789 "), model="grok-4.7")
     saved = claude_settings.load()
@@ -603,6 +604,111 @@ def test_the_panel_turns_events_into_a_transcript_and_opens_the_result(window, t
     assert panel.status_label.text().startswith("this request $0.012")
 
 
+def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed(window, monkeypatch, tmp_path):
+    pytest.importorskip("cryptography.hazmat.primitives.hpke")
+    import threading
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    from PyQt5.QtCore import QUrl
+    from PyQt5.QtWidgets import QApplication
+    import claude_settings
+    import claude_sharing
+    monkeypatch.setenv("APPDATA", str(tmp_path / "appdata"))
+    got = []
+
+    class Worker(BaseHTTPRequestHandler):  # a stand-in for the developer's Cloudflare Worker
+        def do_POST(self):
+            got.append(self.rfile.read(int(self.headers["Content-Length"])))
+            self.send_response(204)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
+        def log_message(self, *args):
+            pass
+    http = HTTPServer(("127.0.0.1", 0), Worker)
+    threading.Thread(target=http.serve_forever, daemon=True).start()
+    monkeypatch.setenv("NO_PROXY", "127.0.0.1,localhost")
+    monkeypatch.setenv("no_proxy", "127.0.0.1,localhost")
+    private, public = claude_sharing.new_keys()
+    panel = window.claude_panel
+    panel.entries.clear()
+    panel.share_asked, panel.stopping = False, False
+    design = tmp_path / "made.json"
+    design.write_text((ROOT / "knot_samples/links/json/hopf_link.json").read_text(), encoding="utf-8")
+
+    def run():  # one request's events, as the agent sends them (new ones each time)
+        return [{"type": "text", "text": "Two linked rings, in teal."},
+                {"type": "done", "ok": True, "error": None, "project": str(design), "cost": 0.01,
+                 "model": "claude-haiku-5-5"}]
+
+    def received(count):
+        for _ in range(200):
+            if len(got) >= count:
+                return True
+            QApplication.processEvents()
+            time.sleep(0.02)
+        return False
+
+    def cards():
+        return [e for e in panel.entries if e["kind"] == "share"]
+    try:
+        # Until the developer sets sharing up, nothing asks and nothing goes.
+        run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT two rings")
+        assert cards() == [] and got == []
+        monkeypatch.setattr(claude_sharing, "SHARE_URL", f"http://127.0.0.1:{http.server_port}/v1/share")
+        monkeypatch.setattr(claude_sharing, "SHARE_PUBLIC_KEY", public)
+        run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT two rings")
+        (card,) = cards()
+        assert card["state"] is None and got == [] and claude_settings.load()["share"] is None
+        assert "Share what Claude made with the OpenStrand Studio developer" in panel.transcript.toPlainText()
+        run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT two rings")
+        assert len(cards()) == 1  # left unanswered: not asked again while the app runs
+        # Share: this request goes, sealed; the next ones go without asking.
+        panel.follow_link(QUrl(f"os:share/{panel.entries.index(card)}"))
+        assert card["state"] == "shared" and "record" not in card and claude_settings.load()["share"] is True
+        assert received(1)
+        shared = claude_sharing.unseal(got[0], private)
+        assert shared["answer"] == ["Two linked rings, in teal."] and shared["model"] == "claude-haiku-5-5"
+        assert shared["design"]["strands"] and shared["ok"] is True
+        assert "SECRET-PROMPT" not in json.dumps(shared)  # what the person typed never goes
+        run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT again")
+        assert received(2) and len(cards()) == 1
+        panel.finished()  # the same request finishing twice is still shared once
+        time.sleep(0.3)
+        assert len(got) == 2
+        # Turned off (Settings > Models): nothing goes.
+        claude_settings.save(share=False)
+        run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT once more")
+        time.sleep(0.3)
+        assert len(got) == 2 and len(cards()) == 1
+    finally:
+        http.shutdown()
+        panel.entries.clear()
+
+
+def test_settings_say_where_the_keys_are_and_offer_sharing_once_it_is_set_up(tmp_path, monkeypatch):
+    pytest.importorskip("cryptography.hazmat.primitives.hpke")
+    from PyQt5.QtWidgets import QApplication
+    app = QApplication.instance() or QApplication([])  # noqa: F841 (kept alive for the page)
+    import claude_settings
+    import claude_sharing
+    from claude_panel import ClaudeSettingsPage
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    page = ClaudeSettingsPage("en")
+    assert page.share_check.isHidden() and page.share_hint.isHidden()  # the developer has not set it up
+    assert "settings folder" in page.storage.text()
+    _, public = claude_sharing.new_keys()
+    monkeypatch.setattr(claude_sharing, "SHARE_URL", "https://openstrand-share.example.workers.dev/v1/share")
+    monkeypatch.setattr(claude_sharing, "SHARE_PUBLIC_KEY", public)
+    monkeypatch.setattr(claude_settings, "keychain", lambda: object())  # a password store on this computer
+    page.retranslate("en")
+    assert not page.share_check.isHidden() and not page.share_check.isChecked()  # off until they say yes
+    assert "encrypted on this computer" in page.share_hint.text() and "password store" in page.storage.text()
+    page.share_check.setChecked(True)
+    assert claude_settings.load()["share"] is True
+    page.retranslate("de")
+    assert page.share_check.isChecked() and page.share_check.text().startswith("Was Claude erstellt")
+
+
 def test_the_panel_asks_for_a_key_before_sending(window, monkeypatch, tmp_path):
     monkeypatch.setenv("APPDATA", str(tmp_path))
     panel = window.claude_panel
@@ -808,7 +914,9 @@ def fake_api(monkeypatch, request):
 
     server = HTTPServer(("127.0.0.1", 0), Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    monkeypatch.setenv("ANTHROPIC_BASE_URL", f"http://127.0.0.1:{server.server_port}")
+    # The agent runs every model on the stand-in (ANTHROPIC_BASE_URL would be ignored: see
+    # openstrand/providers.py, "Safe requests").
+    monkeypatch.setenv("OPENSTRAND_TEST_API", f"http://127.0.0.1:{server.server_port}")
     monkeypatch.setenv("NO_PROXY", "127.0.0.1,localhost")
     monkeypatch.setenv("no_proxy", "127.0.0.1,localhost")
     yield requests

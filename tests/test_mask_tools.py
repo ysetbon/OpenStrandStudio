@@ -606,7 +606,7 @@ def test_claude_checks_and_fixes_masks_then_ties_a_tight_knot(tmp_path, monkeypa
     ]
     api = FakeAPI(lambda n, body: script[min(n, len(script) - 1)])
     try:
-        env = dict(os.environ, ANTHROPIC_API_KEY="sk-ant-test-key", ANTHROPIC_BASE_URL=api.url,
+        env = dict(os.environ, ANTHROPIC_API_KEY="sk-ant-test-key", OPENSTRAND_TEST_API=api.url,
                    NO_PROXY="127.0.0.1,localhost", no_proxy="127.0.0.1,localhost",
                    APPDATA=str(tmp_path / "appdata"), QT_QPA_PLATFORM="offscreen")
         out = tmp_path / "out"
@@ -685,7 +685,7 @@ def test_claude_fixes_a_mask_in_the_person_s_own_tab(window, monkeypatch, tmp_pa
             return use("t4", "edit_mask_in_tab", tab_id=script.tab, op="erase", mask="1_1_2_1", covers="3_1")
         return say("Mask 1_1_2_1 no longer covers 3_1 in your tab; Undo puts it back.")
     api = FakeAPI(script)
-    monkeypatch.setenv("ANTHROPIC_BASE_URL", api.url)
+    monkeypatch.setenv("OPENSTRAND_TEST_API", api.url)
     monkeypatch.setenv("NO_PROXY", "127.0.0.1,localhost")
     monkeypatch.setenv("no_proxy", "127.0.0.1,localhost")
     try:

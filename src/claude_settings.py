@@ -1,16 +1,21 @@
 """The model settings (Settings > Models): the user's API key for each provider
 (Anthropic, OpenAI, xAI, Moonshot, DeepSeek, Alibaba Cloud), the model to use,
-and what the requests have cost in all on this computer.
+whether what Claude makes is shared with the developer, and what the requests
+have cost in all on this computer.
 
 Kept in claude.json in the OpenStrand Studio settings folder, on this computer
-only, and never in project files or user_settings.txt. On macOS and Linux the
-file is readable by the user alone.
+only, and never in project files or user_settings.txt. The API keys go in the
+system's own password store when there is one (macOS Keychain, Windows
+Credential Manager, the Secret Service on Linux, through the keyring package):
+claude.json then only says which providers have a key there. Without one they
+stay in claude.json, which is readable by the user alone on macOS and Linux.
 """
 import datetime
 import importlib.util
 import json
 import os
 import sys
+import tempfile
 
 
 def _providers():
@@ -137,6 +142,76 @@ DEFAULT_EFFORT = 'high'
 MODES = ('ask', 'auto')  # ask before opening a design, or open it at once (plan mode is never kept)
 DEFAULT_MODE = 'auto'
 FILE_NAME = 'claude.json'
+KEYCHAIN_SERVICE = 'OpenStrandStudio'  # the keys' entries in the password store: this, and the provider
+
+
+# ------------------------------------------------------------ the password store
+_found = []  # [the keyring backend to use, or None], once looked for
+_cache = {}  # provider -> its key as read from (or written to) the store by this process
+
+
+def keychain():
+    """The system's password store, or None: keyring not installed, no secure store on this
+    computer (keyring's 'fail' backend, or one that keeps its own files), or
+    OPENSTRAND_KEYCHAIN=off (the tests, which must never touch the real one)."""
+    if os.environ.get('OPENSTRAND_KEYCHAIN', '').strip().lower() in ('off', '0', 'no', 'false'):
+        return None
+    if not _found:
+        _found.append(_find_keychain())
+    return _found[0]
+
+
+def _find_keychain():
+    try:
+        import keyring
+        from keyring.backends import chainer, fail
+        backend = keyring.get_keyring()
+        first = backend
+        if isinstance(backend, chainer.ChainerBackend):
+            chained = list(backend.backends)
+            first = chained[0] if chained else fail.Keyring()
+        if isinstance(first, fail.Keyring) or float(getattr(first, 'priority', 0) or 0) < 1:
+            return None
+        if type(first).__module__.startswith('keyrings.alt'):  # plain files of its own: no better than ours
+            return None
+        return backend
+    except Exception:  # noqa: BLE001 - no keyring, or a store that cannot be reached
+        return None
+
+
+def key_storage():
+    """'keychain' when the keys go in the system's password store, else 'file'."""
+    return 'keychain' if keychain() is not None else 'file'
+
+
+def _stored_key(store, provider):
+    if provider not in _cache:
+        try:
+            _cache[provider] = str(store.get_password(KEYCHAIN_SERVICE, provider) or '').strip()
+        except Exception:  # noqa: BLE001 - locked, or access refused: as if there were none
+            return ''
+    return _cache[provider]
+
+
+def _store_key(store, provider, key):
+    """Put the key in the store (when it is not there already); False if that failed."""
+    if _cache.get(provider) == key:
+        return True
+    try:
+        store.set_password(KEYCHAIN_SERVICE, provider, key)
+    except Exception:  # noqa: BLE001
+        _cache.pop(provider, None)
+        return False
+    _cache[provider] = key
+    return True
+
+
+def _forget_key(store, provider):
+    _cache.pop(provider, None)
+    try:
+        store.delete_password(KEYCHAIN_SERVICE, provider)
+    except Exception:  # noqa: BLE001 - not there: nothing to remove
+        pass
 
 
 def settings_directory():
@@ -176,21 +251,26 @@ def _money(value):
     return value if value > 0 and value == value and value != float('inf') else 0.0
 
 
-def load():
-    """{'api_key', 'model', 'web', 'max_cost', 'spent', 'spent_since', 'show_button'};
-    empty key when none is saved.
-
-    spent is what every request has cost in all, in USD, since spent_since
-    (an ISO date, empty before the first request). show_button is False when
-    Settings > Claude hides Claude altogether. Claude itself always starts closed."""
-    data = {}
+def _read():
     try:
         with open(settings_path(), 'r', encoding='utf-8') as f:
             data = json.load(f)
     except (OSError, ValueError):
-        data = {}
-    if not isinstance(data, dict):
-        data = {}
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def load():
+    """{'api_key', 'keys', 'model', 'web', 'max_cost', 'spent', 'spent_since', 'show_button',
+    'share', ...}; empty key when none is saved.
+
+    spent is what every request has cost in all, in USD, since spent_since
+    (an ISO date, empty before the first request). show_button is False when
+    Settings > Claude hides Claude altogether. Claude itself always starts closed.
+    share: whether what Claude makes goes to the developer (claude_sharing): None until
+    the person is asked, then True or False. Keys saved in claude.json by an earlier
+    version move to the password store here, once there is one."""
+    data = _read()
     model = data.get('model')
     offered = [m for m, _ in models()]
     if model not in offered:
@@ -199,22 +279,33 @@ def load():
             if isinstance(data.get('api_keys'), dict) and str(v or '').strip()}
     if str(data.get('api_key') or '').strip():
         keys['anthropic'] = str(data.get('api_key')).strip()
-    return {'api_key': keys.get('anthropic', ''), 'keys': keys, 'model': model,
-            'catalog': data.get('catalog') if isinstance(data.get('catalog'), dict) else {},
-            'web': data.get('web', True) is not False,
-            'max_cost': _cost(data.get('max_cost', DEFAULT_MAX_COST)),
-            'spent': _money(data.get('spent')), 'spent_since': str(data.get('spent_since') or ''),
-            'show_button': data.get('show_button', True) is not False,
-            'effort': data.get('effort') if data.get('effort') in EFFORTS else DEFAULT_EFFORT,
-            'session_limit': _range(data.get('session_limit', DEFAULT_SESSION_LIMIT), SESSION_LIMIT_RANGE,
-                                    DEFAULT_SESSION_LIMIT),
-            'mode': data.get('mode') if data.get('mode') in MODES else DEFAULT_MODE}
+    in_file = bool(keys)
+    stored = [str(p) for p in data.get('keychain') or [] if isinstance(data.get('keychain'), list)]
+    store = keychain() if (stored or in_file) else None
+    for provider in stored if store is not None else ():
+        key = _stored_key(store, provider)
+        if key:
+            keys.setdefault(provider, key)
+    current = {'api_key': keys.get('anthropic', ''), 'keys': keys, 'model': model,
+               'catalog': data.get('catalog') if isinstance(data.get('catalog'), dict) else {},
+               'web': data.get('web', True) is not False,
+               'max_cost': _cost(data.get('max_cost', DEFAULT_MAX_COST)),
+               'spent': _money(data.get('spent')), 'spent_since': str(data.get('spent_since') or ''),
+               'show_button': data.get('show_button', True) is not False,
+               'effort': data.get('effort') if data.get('effort') in EFFORTS else DEFAULT_EFFORT,
+               'session_limit': _range(data.get('session_limit', DEFAULT_SESSION_LIMIT), SESSION_LIMIT_RANGE,
+                                       DEFAULT_SESSION_LIMIT),
+               'mode': data.get('mode') if data.get('mode') in MODES else DEFAULT_MODE,
+               'share': data.get('share') if data.get('share') in (True, False) else None}
+    if in_file and store is not None:
+        _write(current)  # keys an earlier version kept in claude.json: into the store
+    return current
 
 
 def save(api_key=None, model=None, web=None, max_cost=None, show_button=None,
-         effort=None, session_limit=None, mode=None, provider_key=None):
+         effort=None, session_limit=None, mode=None, provider_key=None, share=None):
     """Update the saved settings given. api_key is Anthropic's; provider_key is
-    (provider, key) for any provider. An empty key removes it."""
+    (provider, key) for any provider. An empty key removes it. share: True or False."""
     current = load()
     if api_key is not None:
         provider_key = ('anthropic', api_key)
@@ -244,6 +335,8 @@ def save(api_key=None, model=None, web=None, max_cost=None, show_button=None,
         current['session_limit'] = _range(session_limit, SESSION_LIMIT_RANGE, DEFAULT_SESSION_LIMIT)
     if mode is not None and mode in MODES:
         current['mode'] = mode
+    if share is not None:
+        current['share'] = bool(share)
     return _write(current)
 
 
@@ -272,18 +365,53 @@ def _write(current):
                'spent': current['spent'], 'spent_since': current['spent_since'],
                'show_button': current['show_button'],
                'effort': current['effort'], 'session_limit': current['session_limit'], 'mode': current['mode']}
-    if current['api_key']:
-        payload['api_key'] = current['api_key']
+    if current.get('share') is not None:
+        payload['share'] = bool(current['share'])
     if current.get('catalog'):
         payload['catalog'] = current['catalog']
-    others = {k: v for k, v in current['keys'].items() if k != 'anthropic' and v}
+    # Each key in the password store, else (none, or it refused this one) in the file.
+    store = keychain()
+    stored, plain = [], {}
+    for provider, key in current['keys'].items():
+        if key and store is not None and _store_key(store, provider, key):
+            stored.append(provider)
+        elif key:
+            plain[provider] = key
+    if store is not None:
+        before = _read().get('keychain')
+        for provider in before if isinstance(before, list) else []:
+            if provider not in stored:
+                _forget_key(store, str(provider))  # removed in Settings, or kept in the file now
+    if stored:
+        payload['keychain'] = sorted(stored)
+    if plain.get('anthropic'):
+        payload['api_key'] = plain['anthropic']
+    others = {k: v for k, v in plain.items() if k != 'anthropic'}
     if others:
         payload['api_keys'] = others
-    # Create the file readable by its owner only before writing the key.
+    _write_private(path, payload)
+    return current
+
+
+def _write_private(path, payload):
+    """Write the file whole or not at all (a crash halfway cannot lose the settings), and
+    readable by its owner only (mkstemp makes it so, before anything is in it)."""
+    fd, temp = tempfile.mkstemp(prefix='.claude-', suffix='.json', dir=os.path.dirname(path))
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            json.dump(payload, f, indent=2)
+        try:
+            os.replace(temp, path)
+            return
+        except PermissionError:  # Windows: another process has the file open this instant
+            pass
+    except BaseException:
+        os.unlink(temp)
+        raise
+    os.unlink(temp)
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, 'w', encoding='utf-8') as f:
         json.dump(payload, f, indent=2)
-    return current
 
 
 def masked(key):

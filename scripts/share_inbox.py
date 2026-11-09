@@ -150,11 +150,13 @@ def open_files(args):
     failed = 0
     for path in args.files:
         folder = Path(args.out) / Path(path).stem
+        made_here = not folder.exists()  # a folder from an earlier run is never removed
         try:
             record = claude_sharing.unseal(Path(path).read_bytes(), key)
             save(record, folder)
         except Exception as e:  # noqa: BLE001
-            shutil.rmtree(folder, ignore_errors=True)
+            if made_here:
+                shutil.rmtree(folder, ignore_errors=True)  # never half a share, taken for a whole one
             print(f'{path}: cannot open it ({type(e).__name__}: {e})', file=sys.stderr)
             failed += 1
             continue

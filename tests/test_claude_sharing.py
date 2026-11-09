@@ -181,3 +181,7 @@ def test_a_share_anyone_could_make_cannot_flood_or_trip_the_developer_s_tool(key
     bad.write_bytes(seal_raw(bomb))
     assert share_inbox.main(["open", str(bad), str(good), "--key", str(key), "--out", str(tmp_path / "out")]) == 1
     assert not (tmp_path / "out" / "bad").exists() and (tmp_path / "out" / "good" / "design.json").exists()
+    # A damaged file of the same name as one opened before: the earlier copy is left as it was.
+    good.write_bytes(seal_raw(bomb))
+    assert share_inbox.main(["open", str(good), "--key", str(key), "--out", str(tmp_path / "out")]) == 1
+    assert json.loads((tmp_path / "out" / "good" / "design.json").read_text(encoding="utf-8")) == HOPF

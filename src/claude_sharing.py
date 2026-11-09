@@ -2,11 +2,12 @@
 says yes. They are asked once, on a card under Claude's first answer; Settings > Models
 changes it at any time.
 
-What goes: the design Claude made (its project and picture), Claude's answer, the model,
-the app's language, and whether the request worked (its error, if any). What never goes:
-the request the person typed, pictures they gave Claude, their API keys, file names or
-folders (a path in an answer is cut out), the time, anything about the computer or the
-person.
+What goes, for each request once the person said yes (until they turn it off): the
+design Claude made (its project and picture; never their own canvas left as it was),
+Claude's answer, the model, the app's language, and whether the request worked. What never
+goes: the request the person typed (though Claude's answer may repeat words of it), pictures
+they gave Claude, their API keys, file names or folders (a path in an answer is cut out),
+an error's text, the time, anything about the computer or the person.
 
 How it goes: sealed on this computer with the developer's public key before it leaves
 (HPKE, RFC 9180: ML-KEM-768 with X25519, which holds against quantum computers too,
@@ -140,11 +141,11 @@ def scrub(value):
     return value
 
 
-def record(answer, design=None, picture=None, model='', language='', ok=True, error=None):
+def record(answer, design=None, picture=None, model='', language='', ok=True):
     """One share: Claude's answer (its texts, in order), the design it made (a project dict)
-    and its picture (PNG bytes), the model, the app's language, how the request ended."""
-    return {'format': FORMAT, 'model': str(model or ''), 'language': str(language or ''),
-            'ok': bool(ok), 'error': scrub(str(error))[:500] if error else None,
+    and its picture (PNG bytes), the model, the app's language, whether the request worked
+    (not why not: an error's text can hold the person's own settings, a spending limit)."""
+    return {'format': FORMAT, 'model': str(model or ''), 'language': str(language or ''), 'ok': bool(ok),
             'answer': scrub([str(t) for t in answer or [] if str(t).strip()]),
             'design': scrub(design) if isinstance(design, dict) else None,
             'picture': base64.b64encode(picture).decode('ascii') if picture else None}

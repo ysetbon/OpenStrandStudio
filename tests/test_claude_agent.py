@@ -665,7 +665,8 @@ def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed
         run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT two rings")
         (card,) = cards()
         assert card["state"] is None and got == [] and claude_settings.load()["share"] is None
-        assert "Share what Claude made with the OpenStrand Studio developer" in panel.transcript.toPlainText()
+        assert "Share what Claude makes with the OpenStrand Studio developer" in panel.transcript.toPlainText()
+        assert "From now on" in panel.transcript.toPlainText()  # a yes holds for the requests after it
         run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT two rings")
         assert len(cards()) == 1  # left unanswered: not asked again while the app runs
         # Share: this request goes, sealed; the next ones go without asking.

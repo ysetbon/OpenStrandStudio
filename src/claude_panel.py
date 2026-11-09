@@ -1931,7 +1931,7 @@ class ClaudePanel(QWidget):
             with open(picture, 'rb') as f:
                 png = f.read()
         return claude_sharing.record(self.run_texts, project, png, model=event.get('model'), language=self.language,
-                                     ok=bool(event.get('ok')) and not event.get('error'), error=event.get('error'))
+                                     ok=bool(event.get('ok')) and not event.get('error'))
 
     def send_share(self, record):
         """Seal it and send it, off the main thread. The terminal says how it went, never what

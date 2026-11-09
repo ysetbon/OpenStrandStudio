@@ -180,12 +180,14 @@ a local stand-in API, and only on this computer itself (`127.0.0.1`,
 Sharing with the developer (`src/claude_sharing.py`) is offered only once the
 developer has set `SHARE_URL` and `SHARE_PUBLIC_KEY` there (the Worker's
 README says how), and then off until the person says yes, on a card under
-Claude's first answer or in Settings > Models. Then the design Claude made,
-its picture and Claude's answer, with the model, the app's language and
-whether the request worked (never the request itself, the person's pictures,
-keys or files, or the time), are encrypted on this computer with the
-developer's public key and sent to the developer's Cloudflare Worker
-(`cloudflare/share-worker`).
+Claude's first answer or in Settings > Models; a yes holds for each request
+after it, until they turn it off. For each request, the design Claude made
+(never the person's own canvas left as it was), its picture and Claude's
+answer, with the model, the app's language and whether the request worked,
+are encrypted on this computer with the developer's public key and sent to
+the developer's Cloudflare Worker (`cloudflare/share-worker`). The request
+itself, the person's pictures, keys and files, an error's text and the time
+are never sent, though Claude's answer may repeat words of the request.
 
 Two switches in Settings > Models decide what may be sent at all, and every
 request asks them just before it leaves (`providers.POLICY`, which

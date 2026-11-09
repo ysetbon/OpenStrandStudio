@@ -5,7 +5,8 @@ Studio's Claude panel: the design Claude made, its picture, and Claude's answer,
 model used, the app's language and whether the request worked.
 
 Nobody shares anything until they say yes. The panel asks once, on a card under Claude's
-first answer, and *Settings > Models* turns sharing on or off at any time. Until you finish
+first answer, and *Settings > Models* turns sharing on or off at any time. A yes holds for
+every request after it, until it is turned off. Until you finish
 the setup below, the app shows no card and no setting.
 
 ## How it stays private
@@ -19,8 +20,9 @@ the setup below, the app shows no card and no setting.
 | Who can add | Anyone with the app, at most 10 shares a minute per IP address and 8 MB each. Anything that is not a sealed share is refused. |
 | Who can read | Only someone with the `INBOX_TOKEN` secret, and what they get is still sealed. Only your **private key**, kept off line, opens it. |
 
-Never sent: the request the person typed, pictures they gave Claude, API keys, file names
-or folders, the time, anything about the computer or the person. Nothing is sent at all
+Never sent: the request the person typed (though Claude's answer may repeat words of it),
+pictures they gave Claude, their own canvas left unchanged, API keys, file names or folders,
+an error's text, the time, anything about the computer or the person. Nothing is sent at all
 while the person has *Connect to AI models* turned off in *Settings > Models*.
 
 > Anyone can send a share (your public key is inside the app). A share is sealed, not
@@ -106,7 +108,7 @@ Each share is saved in its own folder under `shared/`:
 - `design.json` opens in OpenStrand Studio
 - `design.png` is the design's picture
 - `answer.md` is Claude's answer
-- `about.json` holds the model, the app's language, how the request ended, and when the Worker received it
+- `about.json` holds the model, the app's language, whether the request worked, and when the Worker received it
 
 Add `--delete` to remove shares from Cloudflare once they are saved on your computer. Leave
 out `OPENSTRAND_INBOX_TOKEN=…` and the tool asks for the token instead, which keeps it out
@@ -132,7 +134,7 @@ What you collect, only with the person's consent and revocable at any time in
 
 - the designs Claude makes in the app, with their pictures
 - Claude's answers
-- the model used, the app's language, and whether each request worked (with its error message, if any)
+- the model used, the app's language, and whether each request worked
 
 It is encrypted on the person's computer and stored with Cloudflare (R2) until you delete
 it. You do not collect the person's requests, their own pictures or files, their API keys,

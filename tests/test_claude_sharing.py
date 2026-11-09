@@ -92,16 +92,16 @@ def test_a_share_never_holds_a_folder_or_the_person_s_name_in_one():
              r"The file C:\Users\Jane Doe\Documents\knot.json is open.",
              "Also /home/jane/designs/knot.json and ~/Desktop/k.json and \\\\server\\share\\k.json.",
              "From https://www.animatedknots.com/home/figure-8 and http://example.org/Users/x, as is."]
-    record = claude_sharing.record(texts, {"strands": [], "note": "/Users/jane/x.png"}, None,
-                                   error=r"cannot open D:\work\jane\a.json")
+    record = claude_sharing.record(texts + [r"cannot open D:\work\jane\a.json"],
+                                   {"strands": [], "note": "/Users/jane/x.png"}, None, ok=False)
     said = json.dumps(record)
     for private in (home, "Jane Doe", "Documents", "/home/jane", "/Users/jane", "Desktop", "server\\\\share",
                     "D:\\\\work"):
         assert private not in said, private
     assert "https://www.animatedknots.com/home/figure-8" in said and "http://example.org/Users/x" in said
     assert record["design"]["note"] == "…" and record["picture"] is None
-    assert set(record) == {"format", "model", "language", "ok", "error", "answer", "design",
-                           "picture"}  # nothing else: not the request, the time, the computer or the person
+    assert set(record) == {"format", "model", "language", "ok", "answer", "design", "picture"}
+    # Nothing else: not the request, an error's text, the time, the computer or the person.
 
 
 def test_sharing_is_off_until_the_developer_sets_it_up(keys, monkeypatch):

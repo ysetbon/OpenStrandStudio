@@ -78,7 +78,7 @@ def save(record, folder):
         picture = base64.b64decode(record['picture'], validate=True) if isinstance(record.get('picture'), str) else b''
     except ValueError:
         picture = b''
-    about = {k: record.get(k) for k in ('model', 'language', 'ok', 'error', 'received')
+    about = {k: record.get(k) for k in ('model', 'language', 'ok', 'received')
              if isinstance(record.get(k), (str, bool, type(None)))}
     folder.mkdir(parents=True, exist_ok=True)
     (folder / 'about.json').write_text(json.dumps(about, indent=2, ensure_ascii=False), encoding='utf-8')
@@ -135,7 +135,7 @@ def fetch(args):
                     failed += 1
                     continue
                 saved += 1
-                print(f'{folder}: {record.get("model")}, {"ok" if record.get("ok") is True else record.get("error")}')
+                print(f'{folder}: {record.get("model")}, {"worked" if record.get("ok") is True else "did not work"}')
             if args.delete:
                 call(f'{base}/v1/inbox/{urllib.parse.quote(name, safe="")}', token, method='DELETE')
         cursor = listed.get('cursor')

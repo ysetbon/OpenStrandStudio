@@ -599,6 +599,7 @@ class Agent:
         self.log = log or NoLog()  # the step-by-step log (debuglog.Log), for debugging a request
         self.opened_tabs = []  # titles of tabs opened by open_in_new_tab
         self.workspace = Workspace(out_dir)
+        self.start_version = None  # the workspace's version holding the person's canvas, as it came
         self.on_event = on_event or (lambda event: None)
         self.max_rounds = max_rounds
         self.max_cost = max_cost
@@ -678,6 +679,7 @@ class Agent:
             prompt = with_history(prompt, history)
         if start is not None:
             self.workspace.store(start)
+            self.start_version = self.workspace.version
             prompt = ('The design on my canvas right now is already loaded as the current design '
                       f'({project.summary(start)}). Change it if my request is about it; '
                       'make a new one if I ask for something new.\n\n' + prompt)
@@ -804,7 +806,10 @@ class Agent:
                  'project': str(ws.project_path) if ws.data is not None else None,
                  'png': str(ws.png_path) if ws.rendered_version == ws.version and ws.data is not None else None,
                  'cost': round(self.cost, 4), 'model': self.model, 'searches': self.searches,
-                 'plan': self.plan, 'opened_tabs': self.opened_tabs, **self.usage}
+                 'plan': self.plan, 'opened_tabs': self.opened_tabs, **self.usage,
+                 # Whether the design is this request's work: False while it is still the person's
+                 # canvas as it came (a request that only looked at it), which is never shared.
+                 'changed': ws.data is not None and ws.version != self.start_version}
         if self.plan:  # a plan builds nothing, whatever is in the workspace
             event['project'] = event['png'] = None
         if ws.tab is not None:

@@ -68,6 +68,7 @@ test('anything but a sealed share is refused, and nothing is kept', async () => 
     [post(plain), 400], // not "OSS1"
     [post(SEALED.slice(0, 1000)), 400], // too short to be one
     [post(SEALED, { 'Content-Length': '9000000' }), 413],
+    [post(SEALED, { 'Content-Length': 'not a number' }), 413],
     [new Request('https://inbox.example/shares/2026-11-09/x.oss'), 404],
   ];
   for (const [request, status] of cases) assert.equal((await worker.fetch(request, e)).status, status);

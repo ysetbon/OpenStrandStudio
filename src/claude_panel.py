@@ -1905,6 +1905,8 @@ class ClaudePanel(QWidget):
         developer has set sharing up."""
         event = self.done_event
         design, picture = self.run_files
+        if event is not None and event.get('changed') is False:
+            design = picture = None  # still the person's own canvas, as it came: theirs, not Claude's
         if (event is None or event is self.shared_event or self.stopping or not (self.run_texts or design)
                 or not claude_sharing.available()):
             return

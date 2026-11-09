@@ -54,7 +54,8 @@ async function share(request, env) {
   const type = (request.headers.get('Content-Type') || '').split(';')[0].trim().toLowerCase();
   if (type !== 'application/octet-stream') return reply(415);
   const max = Number(env.MAX_BYTES) > 0 ? Number(env.MAX_BYTES) : DEFAULT_MAX_BYTES;
-  if (Number(request.headers.get('Content-Length') || 0) > max) return reply(413);
+  const declared = Number(request.headers.get('Content-Length') || 0);
+  if (!Number.isFinite(declared) || declared < 0 || declared > max) return reply(413); // the stream is capped too
   const body = await read(request.body, max);
   if (body === null) return reply(413);
   if (body.length < MIN_BYTES || !MAGIC.every((byte, i) => body[i] === byte)) return reply(400);

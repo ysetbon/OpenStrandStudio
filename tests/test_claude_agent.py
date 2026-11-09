@@ -83,7 +83,7 @@ def test_agent_builds_checks_and_renders_a_design(tmp_path):
     result = agent.Agent(client, tmp_path, model="claude-sonnet-5-5", on_event=events.append).run(
         "5x3 right hand bracelet in teal and gold")
 
-    assert result["ok"] and result["error"] is None
+    assert result["ok"] and result["error"] is None and result["changed"] is True
     assert "teal vertical" in result["text"]
     info = project.describe(project.read(result["project"]))
     assert len(info["sets"]) == 8
@@ -178,6 +178,11 @@ def test_start_design_is_loaded_and_described(tmp_path):
     described = client.calls[1][1]["messages"][-1]["content"][0]["content"]
     assert "set 1" in described and "set 2" in described
     assert result["project"]
+    assert result["changed"] is False  # only looked at: still the person's canvas, never shared as Claude's
+    recolored = ScriptedClient([reply(tool("t1", "recolor", sets=[1], color="gold")),
+                                reply(text("Gold now."), stop="end_turn")])
+    result = agent.Agent(recolored, tmp_path, model="claude-haiku-5-5").run("make it gold", start=start)
+    assert result["ok"] and result["changed"] is True  # Claude's work now
 
 
 def test_agent_draws_its_own_design_and_reports_thinking_and_searches(tmp_path):
@@ -681,11 +686,19 @@ def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed
         tabbed[-1]["opened_tabs"] = ["Two rings"]
         run_events(panel, tabbed, tmp_path, prompt="SECRET-PROMPT in a tab")
         assert received(3) and claude_sharing.unseal(got[2], private)["design"]["strands"]
+        # A request that only looked at the person's canvas: their design is not Claude's to share.
+        looked = run()
+        looked[-1]["changed"] = False
+        run_events(panel, looked, tmp_path, prompt="SECRET-PROMPT what is this")
+        assert received(4)
+        only_answer = claude_sharing.unseal(got[3], private)
+        assert only_answer["design"] is None and only_answer["picture"] is None
+        assert only_answer["answer"] == ["Two linked rings, in teal."]
         # Turned off (Settings > Models): nothing goes.
         claude_settings.save(share=False)
         run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT once more")
         time.sleep(0.3)
-        assert len(got) == 3 and len(cards()) == 1
+        assert len(got) == 4 and len(cards()) == 1
     finally:
         http.shutdown()
         panel.entries.clear()

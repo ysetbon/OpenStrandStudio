@@ -24,6 +24,8 @@ import base64
 import getpass
 import json
 import os
+import re
+import shutil
 import sys
 import urllib.error
 import urllib.parse
@@ -37,6 +39,8 @@ import claude_sharing  # noqa: E402
 
 DEFAULT_KEY = Path.home() / '.openstrand-share.key'
 PNG = b'\x89PNG\r\n\x1a\n'
+# A share's name in the Worker's bucket (cloudflare/share-worker/src/index.js): its day, its id.
+NAME = re.compile(r'^shares/(\d{4}-\d{2}-\d{2})/([0-9a-f]{8})-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.oss$')
 HEADER = ('# OpenStrand Studio share key: PRIVATE. It opens every share sent to you.\n'
           '# Keep it off line and backed up; never commit it, upload it or send it.\n')
 
@@ -65,16 +69,22 @@ def keygen(args):
 
 
 def save(record, folder):
-    """A share's parts as files you can open: the design, its picture, Claude's answer."""
+    """A share's parts as files you can open: the design, its picture, Claude's answer. Anyone
+    can make a share, so each part is written only when it has the shape it should."""
+    answer = record.get('answer')
+    answer = [str(t) for t in answer] if isinstance(answer, list) else []
+    design = record.get('design') if isinstance(record.get('design'), dict) else None
+    try:
+        picture = base64.b64decode(record['picture'], validate=True) if isinstance(record.get('picture'), str) else b''
+    except ValueError:
+        picture = b''
+    about = {k: record.get(k) for k in ('model', 'language', 'ok', 'error', 'received')
+             if isinstance(record.get(k), (str, bool, type(None)))}
     folder.mkdir(parents=True, exist_ok=True)
-    about = {k: record.get(k) for k in ('made', 'model', 'mode', 'language', 'ok', 'error', 'received')}
     (folder / 'about.json').write_text(json.dumps(about, indent=2, ensure_ascii=False), encoding='utf-8')
-    answer = [str(t) for t in record.get('answer') or []]
     (folder / 'answer.md').write_text('\n\n'.join(answer) + '\n', encoding='utf-8')
-    if isinstance(record.get('design'), dict):
-        (folder / 'design.json').write_text(json.dumps(record['design'], indent=2, ensure_ascii=False),
-                                            encoding='utf-8')
-    picture = base64.b64decode(record['picture']) if record.get('picture') else b''
+    if design is not None:
+        (folder / 'design.json').write_text(json.dumps(design, indent=2, ensure_ascii=False), encoding='utf-8')
     if picture.startswith(PNG):  # only a real PNG is written as one
         (folder / 'design.png').write_bytes(picture)
 
@@ -105,22 +115,27 @@ def fetch(args):
         query = f'?cursor={urllib.parse.quote(cursor)}' if cursor else ''
         listed = json.loads(call(f'{base}/v1/inbox{query}', token))
         for share in listed.get('shares') or []:
-            name = share['key']  # shares/2026-11-09/<uuid>.oss
-            day, uuid = name.split('/')[1], name.rsplit('/', 1)[-1].split('.')[0]
-            folder = out / f'{day}_{uuid[:8]}'
+            found = NAME.match(str(share.get('key') or ''))  # shares/2026-11-09/<uuid>.oss
+            if not found:
+                print(f'{share.get("key")!r}: not a share, left alone', file=sys.stderr)
+                failed += 1
+                continue
+            name = found.group(0)
+            folder = out / f'{found.group(1)}_{found.group(2)}'
             if folder.exists():
                 skipped += 1
             else:
                 address = f'{base}/v1/inbox/{urllib.parse.quote(name, safe="")}'
-                try:
+                try:  # one bad share (anyone can make one) does not stop the rest
                     record = claude_sharing.unseal(call(address, token), key)
-                except Exception as e:  # noqa: BLE001 - one bad share does not stop the rest
+                    save(dict(record, received=share.get('uploaded')), folder)
+                except Exception as e:  # noqa: BLE001
+                    shutil.rmtree(folder, ignore_errors=True)  # never half a share, taken for a whole one
                     print(f'{name}: cannot open it ({type(e).__name__}: {e})', file=sys.stderr)
                     failed += 1
                     continue
-                save(dict(record, received=share.get('uploaded')), folder)
                 saved += 1
-                print(f'{folder}: {record.get("model")}, {"ok" if record.get("ok") else record.get("error")}')
+                print(f'{folder}: {record.get("model")}, {"ok" if record.get("ok") is True else record.get("error")}')
             if args.delete:
                 call(f'{base}/v1/inbox/{urllib.parse.quote(name, safe="")}', token, method='DELETE')
         cursor = listed.get('cursor')
@@ -132,12 +147,19 @@ def fetch(args):
 
 def open_files(args):
     key = read_key(args.key)
+    failed = 0
     for path in args.files:
-        record = claude_sharing.unseal(Path(path).read_bytes(), key)
         folder = Path(args.out) / Path(path).stem
-        save(record, folder)
+        try:
+            record = claude_sharing.unseal(Path(path).read_bytes(), key)
+            save(record, folder)
+        except Exception as e:  # noqa: BLE001
+            shutil.rmtree(folder, ignore_errors=True)
+            print(f'{path}: cannot open it ({type(e).__name__}: {e})', file=sys.stderr)
+            failed += 1
+            continue
         print(f'{folder}: {record.get("model")}')
-    return 0
+    return 1 if failed else 0
 
 
 def main(argv=None):

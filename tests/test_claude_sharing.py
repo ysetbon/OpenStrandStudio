@@ -64,7 +64,7 @@ def worker(monkeypatch):
 def test_a_share_opens_with_the_private_key_only_and_holds_nothing_readable(keys):
     private, public = keys
     record = claude_sharing.record(["Two linked rings, in teal."], HOPF, PNG, model="claude-sonnet-5-5",
-                                   mode="auto", language="fr")
+                                   language="fr")
     sealed = claude_sharing.seal(record, public)
     assert sealed.startswith(b"OSS1")
     for plain in (b"linked rings", b"strands", b"claude-sonnet", PNG, base64.b64encode(PNG)):
@@ -100,8 +100,8 @@ def test_a_share_never_holds_a_folder_or_the_person_s_name_in_one():
         assert private not in said, private
     assert "https://www.animatedknots.com/home/figure-8" in said and "http://example.org/Users/x" in said
     assert record["design"]["note"] == "…" and record["picture"] is None
-    assert set(record) == {"format", "made", "model", "mode", "language", "ok", "error", "answer", "design",
-                           "picture"}  # nothing else: not the request, the computer or the person
+    assert set(record) == {"format", "model", "language", "ok", "error", "answer", "design",
+                           "picture"}  # nothing else: not the request, the time, the computer or the person
 
 
 def test_sharing_is_off_until_the_developer_sets_it_up(keys, monkeypatch):
@@ -154,3 +154,30 @@ def test_the_developer_s_tool_makes_a_private_key_and_opens_shares_into_files(tm
     assert json.loads((folder / "design.json").read_text(encoding="utf-8")) == HOPF
     assert (folder / "design.png").read_bytes() == PNG
     assert json.loads((folder / "about.json").read_text(encoding="utf-8"))["model"] == "kimi-k3.1-pro"
+
+
+def test_a_share_anyone_could_make_cannot_flood_or_trip_the_developer_s_tool(keys, tmp_path, capsys):
+    import zlib
+    private, public = keys
+    from cryptography.hazmat.primitives import hpke  # noqa: F401
+    seal_raw = lambda data: claude_sharing.MAGIC + claude_sharing.suite().encrypt(  # noqa: E731
+        data, claude_sharing.public_key(public), info=claude_sharing.INFO)
+    bomb = zlib.compress(b"[" + b" " * (claude_sharing.MAX_OPENED_BYTES + 10) + b"]", 9)  # a few hundred kB
+    assert len(bomb) < claude_sharing.MAX_BYTES
+    with pytest.raises(ValueError, match="opens to more than"):
+        claude_sharing.unseal(seal_raw(bomb), private)
+    with pytest.raises(ValueError, match="not an OpenStrand Studio share record"):
+        claude_sharing.unseal(seal_raw(zlib.compress(b'["a list"]')), private)
+    # A record of the wrong shape: the developer's tool writes what it can, never trips on it.
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import share_inbox
+    odd = {"answer": "not a list", "design": ["not", "a", "dict"], "picture": "%%% not base64", "model": 7}
+    share_inbox.save(odd, tmp_path / "odd")
+    assert sorted(p.name for p in (tmp_path / "odd").iterdir()) == ["about.json", "answer.md"]
+    key = tmp_path / "share.key"
+    key.write_text(private + "\n", encoding="ascii")
+    good, bad = tmp_path / "good.oss", tmp_path / "bad.oss"
+    good.write_bytes(claude_sharing.seal(claude_sharing.record(["A ring."], HOPF, PNG), public))
+    bad.write_bytes(seal_raw(bomb))
+    assert share_inbox.main(["open", str(bad), str(good), "--key", str(key), "--out", str(tmp_path / "out")]) == 1
+    assert not (tmp_path / "out" / "bad").exists() and (tmp_path / "out" / "good" / "design.json").exists()

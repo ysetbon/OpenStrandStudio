@@ -3,9 +3,10 @@ says yes. They are asked once, on a card under Claude's first answer; Settings >
 changes it at any time.
 
 What goes: the design Claude made (its project and picture), Claude's answer, the model,
-the app's language, and whether the request ended well. What never goes: the request the
-person typed, pictures they gave Claude, their API keys, file names or folders (a path
-in an answer is cut out), anything about the computer or the person.
+the app's language, and whether the request worked (its error, if any). What never goes:
+the request the person typed, pictures they gave Claude, their API keys, file names or
+folders (a path in an answer is cut out), the time, anything about the computer or the
+person.
 
 How it goes: sealed on this computer with the developer's public key before it leaves
 (HPKE, RFC 9180: ML-KEM-768 with X25519, which holds against quantum computers too,
@@ -19,7 +20,6 @@ Off until the developer sets SHARE_URL and SHARE_PUBLIC_KEY below
 (cloudflare/share-worker/README.md says how): the panel and Settings then show nothing.
 """
 import base64
-import datetime
 import json
 import os
 import re
@@ -36,6 +36,9 @@ MAGIC = b'OSS1'  # what every sealed share starts with: the format and its versi
 INFO = b'OpenStrand Studio share v1'  # bound into the encryption: a share opens as nothing else
 FORMAT = 1
 MAX_BYTES = 8 * 1024 * 1024  # a larger share is not sent (the Worker refuses it too)
+# What a share may open up to: anyone can seal one (the public key is in the app), so one
+# made to inflate without end (a zip bomb) stops here instead of filling the memory.
+MAX_OPENED_BYTES = 64 * 1024 * 1024
 MLKEM_PUBLIC, MLKEM_SEED, X25519_SIZE = 1184, 64, 32
 TIMEOUT = 20.0
 
@@ -137,12 +140,10 @@ def scrub(value):
     return value
 
 
-def record(answer, design=None, picture=None, model='', mode='', language='', ok=True, error=None):
+def record(answer, design=None, picture=None, model='', language='', ok=True, error=None):
     """One share: Claude's answer (its texts, in order), the design it made (a project dict)
-    and its picture (PNG bytes), the model, the panel's mode and language, how it ended."""
-    return {'format': FORMAT,
-            'made': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%MZ'),
-            'model': str(model or ''), 'mode': str(mode or ''), 'language': str(language or ''),
+    and its picture (PNG bytes), the model, the app's language, how the request ended."""
+    return {'format': FORMAT, 'model': str(model or ''), 'language': str(language or ''),
             'ok': bool(ok), 'error': scrub(str(error))[:500] if error else None,
             'answer': scrub([str(t) for t in answer or [] if str(t).strip()]),
             'design': scrub(design) if isinstance(design, dict) else None,
@@ -159,11 +160,19 @@ def seal(rec, key=None):
 
 
 def unseal(sealed, key):
-    """The record a sealed share holds (key: the private key's base64)."""
+    """The record a sealed share holds (key: the private key's base64). Anyone can seal a
+    share, so what opens is checked: no more than MAX_OPENED_BYTES, and a record (a dict)."""
     if not sealed.startswith(MAGIC):
         raise ValueError('not an OpenStrand Studio share')
     data = suite().decrypt(sealed[len(MAGIC):], private_key(key), info=INFO)
-    return json.loads(zlib.decompress(data).decode('utf-8'))
+    inflate = zlib.decompressobj()
+    raw = inflate.decompress(data, MAX_OPENED_BYTES + 1)
+    if len(raw) > MAX_OPENED_BYTES or inflate.unconsumed_tail:
+        raise ValueError(f'the share opens to more than {MAX_OPENED_BYTES} bytes')
+    opened = json.loads(raw.decode('utf-8'))
+    if not isinstance(opened, dict):
+        raise ValueError('not an OpenStrand Studio share record')
+    return opened
 
 
 def send(sealed, url=None, timeout=TIMEOUT):

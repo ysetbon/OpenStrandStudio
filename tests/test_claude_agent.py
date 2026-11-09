@@ -676,11 +676,16 @@ def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed
         panel.finished()  # the same request finishing twice is still shared once
         time.sleep(0.3)
         assert len(got) == 2
+        # A design Claude opened in a tab itself (through the bridge) is shared with it too.
+        tabbed = run()
+        tabbed[-1]["opened_tabs"] = ["Two rings"]
+        run_events(panel, tabbed, tmp_path, prompt="SECRET-PROMPT in a tab")
+        assert received(3) and claude_sharing.unseal(got[2], private)["design"]["strands"]
         # Turned off (Settings > Models): nothing goes.
         claude_settings.save(share=False)
         run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT once more")
         time.sleep(0.3)
-        assert len(got) == 2 and len(cards()) == 1
+        assert len(got) == 3 and len(cards()) == 1
     finally:
         http.shutdown()
         panel.entries.clear()

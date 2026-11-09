@@ -49,6 +49,7 @@ def settings(tmp_path, monkeypatch):
 def use_store(monkeypatch, store):
     monkeypatch.setattr(claude_settings, "keychain", lambda: store)
     monkeypatch.setattr(claude_settings, "_cache", {})  # as a new start of the app: nothing read yet
+    monkeypatch.setattr(claude_settings, "_unreadable", set())
 
 
 def test_keys_an_earlier_version_kept_in_the_file_move_into_the_password_store(settings, monkeypatch):
@@ -123,3 +124,52 @@ def test_only_a_secure_store_is_used(monkeypatch):
     assert claude_settings._find_keychain() is None
     monkeypatch.setenv("OPENSTRAND_KEYCHAIN", "off")
     assert claude_settings.keychain() is None
+
+
+def test_a_key_the_store_cannot_give_for_now_is_never_deleted(settings, monkeypatch):
+    store = Store()
+    use_store(monkeypatch, store)
+    claude_settings.save(provider_key=("anthropic", "sk-ant-test-1234567890"))
+    claude_settings.save(provider_key=("xai", "xai-test-1234567890"))
+
+    class Locked(Store):  # the same entries, but every read refused (locked, or access denied)
+        def get_password(self, service, name):
+            raise RuntimeError("locked")
+    locked = Locked()
+    locked.items = store.items
+    use_store(monkeypatch, locked)  # the app starts with the store locked
+    assert claude_settings.load()["keys"] == {}
+    claude_settings.add_spending(0.25)  # every request's cost is saved: the keys must survive it
+    claude_settings.save(model="claude-haiku-5-5", share=False)
+    assert len(store.items) == 2 and json.loads(settings.read_text(encoding="utf-8"))["keychain"] == ["anthropic", "xai"]
+    claude_settings.save(provider_key=("xai", ""))  # removed by the person: gone, even while locked
+    assert list(store.items) == [("OpenStrandStudio", "anthropic")]
+    assert json.loads(settings.read_text(encoding="utf-8"))["keychain"] == ["anthropic"]
+    use_store(monkeypatch, None)  # no store at all now (keyring uninstalled): still listed, not lost
+    claude_settings.add_spending(0.25)
+    assert json.loads(settings.read_text(encoding="utf-8"))["keychain"] == ["anthropic"]
+    use_store(monkeypatch, store)  # the store is back
+    assert claude_settings.load()["keys"] == {"anthropic": "sk-ant-test-1234567890"}
+
+
+def test_a_settings_file_held_open_elsewhere_is_still_written_whole(settings, monkeypatch):
+    use_store(monkeypatch, None)
+    claude_settings.save(model="claude-haiku-5-5")
+    real, refused = os.replace, []
+
+    def busy(source, target):  # Windows: another process has it open for a moment
+        if len(refused) < 2:
+            refused.append(target)
+            raise PermissionError("in use")
+        return real(source, target)
+    monkeypatch.setattr(os, "replace", busy)
+    monkeypatch.setattr(claude_settings.time, "sleep", lambda seconds: None)
+    claude_settings.save(model="gpt-6.1-terra")
+    assert len(refused) == 2 and claude_settings.load()["model"] == "gpt-6.1-terra"
+
+    def always_busy(source, target):
+        raise PermissionError("in use")
+    monkeypatch.setattr(os, "replace", always_busy)  # held open all along: written in place, whole
+    claude_settings.save(model="grok-4.7")
+    assert claude_settings.load()["model"] == "grok-4.7" and json.loads(settings.read_text(encoding="utf-8"))
+    assert [p.name for p in settings.parent.iterdir()] == ["claude.json"]  # no temporary file left behind

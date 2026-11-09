@@ -159,7 +159,7 @@ strands, masks, groups and layer panel are exactly as in a saved project. With
 **Start from the canvas** on, the current canvas goes to Claude as the design
 to change. The app remembers whether Claude was showing.
 
-Settings > Claude holds the API keys (on this computer only, never in
+Settings > Models holds the API keys (on this computer only, never in
 projects: in the system's password store, macOS Keychain, Windows Credential
 Manager or the Secret Service, when the `keyring` package finds one, else in
 `claude.json` in the OpenStrand settings folder, readable by the user alone),
@@ -173,15 +173,19 @@ each request is checked as it leaves (HTTPS, to the host its endpoint names,
 certificate checked), no redirect is followed, and environment variables can
 neither move a client (`ANTHROPIC_BASE_URL`, which Claude Code users of
 DeepSeek or Kimi often have set) nor add another credential to its requests.
-The tests point the agent at a local stand-in API with `OPENSTRAND_TEST_API`,
-which must be on this computer itself.
+The one exception is for the tests: `OPENSTRAND_TEST_API` points the agent at
+a local stand-in API, and only on this computer itself (`127.0.0.1`,
+`localhost` or `::1`; any other host is refused).
 
-Sharing with the developer (`src/claude_sharing.py`) is off until the person
-says yes, on a card under Claude's first answer or in Settings > Models: then
-the design Claude made, its picture and Claude's answer (never the request,
-the person's pictures, keys or files) are encrypted on this computer with the
+Sharing with the developer (`src/claude_sharing.py`) is offered only once the
+developer has set `SHARE_URL` and `SHARE_PUBLIC_KEY` there (the Worker's
+README says how), and then off until the person says yes, on a card under
+Claude's first answer or in Settings > Models. Then the design Claude made,
+its picture and Claude's answer, with the model, the app's language and
+whether the request worked (never the request itself, the person's pictures,
+keys or files, or the time), are encrypted on this computer with the
 developer's public key and sent to the developer's Cloudflare Worker
-(`cloudflare/share-worker`, whose README says how to set it up).
+(`cloudflare/share-worker`).
 
 Two switches in Settings > Models decide what may be sent at all, and every
 request asks them just before it leaves (`providers.POLICY`, which

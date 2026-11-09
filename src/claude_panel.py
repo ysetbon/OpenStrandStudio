@@ -1928,9 +1928,8 @@ class ClaudePanel(QWidget):
         if picture and os.path.exists(picture):
             with open(picture, 'rb') as f:
                 png = f.read()
-        return claude_sharing.record(self.run_texts, project, png, model=event.get('model'), mode=self.run_mode,
-                                     language=self.language, ok=bool(event.get('ok')) and not event.get('error'),
-                                     error=event.get('error'))
+        return claude_sharing.record(self.run_texts, project, png, model=event.get('model'), language=self.language,
+                                     ok=bool(event.get('ok')) and not event.get('error'), error=event.get('error'))
 
     def send_share(self, record):
         """Seal it and send it, off the main thread. The terminal says how it went, never what
@@ -2015,6 +2014,9 @@ class ClaudePanel(QWidget):
             return
         project = event.get('project')
         if event.get('opened_tabs'):
+            if project and os.path.exists(project):  # still what this request made: shared as such
+                png = event.get('png')
+                self.run_files = (project, png if png and os.path.exists(png) else None)
             project = None  # Claude opened its tabs itself, through the bridge
         if project and os.path.exists(project):
             named = os.path.join(self.out_dir, design_name(self.prompt) + '.json')

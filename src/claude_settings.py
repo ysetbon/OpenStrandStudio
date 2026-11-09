@@ -16,6 +16,7 @@ import json
 import os
 import sys
 import tempfile
+import time
 
 
 def _providers():
@@ -178,6 +179,9 @@ KEYCHAIN_SERVICE = 'OpenStrandStudio'  # the keys' entries in the password store
 # ------------------------------------------------------------ the password store
 _found = []  # [the keyring backend to use, or None], once looked for
 _cache = {}  # provider -> its key as read from (or written to) the store by this process
+# Providers whose key the store would not give this process (locked, or access refused).
+# Their keys are still there: nothing may take them off the store or out of claude.json's list.
+_unreadable = set()
 
 
 def keychain():
@@ -215,11 +219,15 @@ def key_storage():
 
 
 def _stored_key(store, provider):
+    """The provider's key from the store, '' when there is none or it cannot be read now
+    (locked, or access refused: _unreadable, and asked again next time)."""
     if provider not in _cache:
         try:
             _cache[provider] = str(store.get_password(KEYCHAIN_SERVICE, provider) or '').strip()
-        except Exception:  # noqa: BLE001 - locked, or access refused: as if there were none
+        except Exception:  # noqa: BLE001
+            _unreadable.add(provider)
             return ''
+        _unreadable.discard(provider)
     return _cache[provider]
 
 
@@ -233,11 +241,13 @@ def _store_key(store, provider, key):
         _cache.pop(provider, None)
         return False
     _cache[provider] = key
+    _unreadable.discard(provider)
     return True
 
 
 def _forget_key(store, provider):
     _cache.pop(provider, None)
+    _unreadable.discard(provider)
     try:
         store.delete_password(KEYCHAIN_SERVICE, provider)
     except Exception:  # noqa: BLE001 - not there: nothing to remove
@@ -349,6 +359,7 @@ def save(api_key=None, model=None, web=None, max_cost=None, show_button=None,
         offered = [m for m, _ in models({'allow_china': current['allow_china']})]
         if current['model'] not in offered:  # its provider is no longer allowed
             current['model'] = DEFAULT_MODEL if DEFAULT_MODEL in offered else (offered or [DEFAULT_MODEL])[0]
+    removed = set()  # keys the person removed: off the store too, even one it cannot read now
     if api_key is not None:
         provider_key = ('anthropic', api_key)
     if provider_key is not None:
@@ -358,6 +369,7 @@ def save(api_key=None, model=None, web=None, max_cost=None, show_button=None,
             current['keys'][provider] = key
         else:
             current['keys'].pop(provider, None)
+            removed.add(provider)
         current['api_key'] = current['keys'].get('anthropic', '')
     if model is not None:
         if model not in [m for m, _ in models({'allow_china': current['allow_china']})]:
@@ -379,7 +391,7 @@ def save(api_key=None, model=None, web=None, max_cost=None, show_button=None,
         current['mode'] = mode
     if share is not None:
         current['share'] = bool(share)
-    return _write(current)
+    return _write(current, removed)
 
 
 def add_spending(amount):
@@ -400,7 +412,8 @@ def reset_spending():
     return _write(current)
 
 
-def _write(current):
+def _write(current, removed=()):
+    """Save current (load's dict). removed: providers whose key the person removed."""
     path = settings_path()
     os.makedirs(os.path.dirname(path), exist_ok=True)
     payload = {'model': current['model'], 'web': current['web'], 'max_cost': current['max_cost'],
@@ -421,11 +434,18 @@ def _write(current):
             stored.append(provider)
         elif key:
             plain[provider] = key
-    if store is not None:
-        before = _read().get('keychain')
-        for provider in before if isinstance(before, list) else []:
-            if provider not in stored:
-                _forget_key(store, str(provider))  # removed in Settings, or kept in the file now
+    # The keys the file says are in the store, and that load() could not read just now (the
+    # store locked or refusing, or no store in this process): still there, so still listed,
+    # never deleted, unless the person removed them. The rest that are not saved again were
+    # removed, moved to the file, or are gone from the store: off it.
+    before = _read().get('keychain')
+    for provider in [str(p) for p in before] if isinstance(before, list) else []:
+        if provider in stored:
+            continue
+        if provider not in plain and provider not in removed and (store is None or provider in _unreadable):
+            stored.append(provider)
+        elif store is not None:
+            _forget_key(store, provider)
     if stored:
         payload['keychain'] = sorted(stored)
     if plain.get('anthropic'):
@@ -437,25 +457,31 @@ def _write(current):
     return current
 
 
+REPLACE_TRIES = 6  # Windows: another process may hold claude.json open for a moment
+
+
 def _write_private(path, payload):
     """Write the file whole or not at all (a crash halfway cannot lose the settings), and
-    readable by its owner only (mkstemp makes it so, before anything is in it)."""
+    readable by its owner only (mkstemp makes it so, before anything is in it). On Windows
+    the file may be open in another process for a moment, which refuses the replace: it is
+    tried again, and only after that written in place, from text already made whole."""
+    text = json.dumps(payload, indent=2)
     fd, temp = tempfile.mkstemp(prefix='.claude-', suffix='.json', dir=os.path.dirname(path))
     try:
         with os.fdopen(fd, 'w', encoding='utf-8') as f:
-            json.dump(payload, f, indent=2)
-        try:
-            os.replace(temp, path)
-            return
-        except PermissionError:  # Windows: another process has the file open this instant
-            pass
-    except BaseException:
-        os.unlink(temp)
-        raise
-    os.unlink(temp)
-    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, 'w', encoding='utf-8') as f:
-        json.dump(payload, f, indent=2)
+            f.write(text)
+        for attempt in range(REPLACE_TRIES):
+            try:
+                os.replace(temp, path)
+                return
+            except PermissionError:
+                time.sleep(0.05 * (attempt + 1))
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            f.write(text)
+    finally:
+        if os.path.exists(temp):
+            os.unlink(temp)
 
 
 def masked(key):

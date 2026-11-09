@@ -20,11 +20,17 @@ import claude_settings  # noqa: E402
 import claude_sharing  # noqa: E402
 
 
+# The app's own copy of providers.py, which claude_settings loads (the same module as
+# openstrand.providers in the agent, but another copy when a test imported claude_settings first).
+APP = claude_settings.providers
+
+
 @pytest.fixture
 def settings(tmp_path, monkeypatch):
     """This test's own settings, asked before every request as in the app and the agent."""
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    monkeypatch.setattr(providers, "POLICY", claude_settings.refusal)
+    for copy in {id(providers): providers, id(APP): APP}.values():
+        monkeypatch.setattr(copy, "POLICY", claude_settings.refusal)
     for spec in providers.PROVIDERS.values():
         monkeypatch.delenv(spec.env, raising=False)
     return Path(claude_settings.settings_path())
@@ -63,9 +69,9 @@ def test_with_models_off_nothing_is_sent_anywhere(settings, monkeypatch):
             providers.check_allowed(provider)
     assert not claude_settings.refresh_due()  # no daily Refresh models
     asked = []
-    monkeypatch.setattr(providers, "refresh", lambda keys, timeout=30.0: asked.append(dict(keys)) or {"providers": {}})
+    monkeypatch.setattr(APP, "refresh", lambda keys, timeout=30.0: asked.append(dict(keys)) or {"providers": {}})
     claude_settings.fetch_catalog()
-    with pytest.raises(providers.NotAllowed):
+    with pytest.raises(APP.NotAllowed):
         claude_sharing.send(b"OSS1" + bytes(2000), "https://openstrand-share.example.workers.dev/v1/share")
     # On again: only the providers allowed are asked (not DeepSeek, whose key is in the environment).
     claude_settings.save(models_on=True)
@@ -83,11 +89,13 @@ def test_with_models_off_nothing_is_sent_anywhere(settings, monkeypatch):
 ])
 def test_the_agent_sends_nothing_the_settings_forbid(tmp_path, saved, model, said):
     pytest.importorskip("anthropic")
-    folder = tmp_path / "appdata" / "OpenStrandStudio"
-    folder.mkdir(parents=True)
-    (folder / "claude.json").write_text(json.dumps(saved), encoding="utf-8")
-    env = dict(os.environ, APPDATA=str(tmp_path / "appdata"), ANTHROPIC_API_KEY="sk-ant-test",
-               DEEPSEEK_API_KEY="sk-ds-test", QT_QPA_PLATFORM="offscreen")
+    # Where the agent looks: APPDATA's folder, or on macOS the home's Library (both this test's own).
+    for folder in (tmp_path / "appdata" / "OpenStrandStudio",
+                   tmp_path / "home" / "Library" / "Application Support" / "OpenStrandStudio"):
+        folder.mkdir(parents=True)
+        (folder / "claude.json").write_text(json.dumps(saved), encoding="utf-8")
+    env = dict(os.environ, APPDATA=str(tmp_path / "appdata"), HOME=str(tmp_path / "home"),
+               ANTHROPIC_API_KEY="sk-ant-test", DEEPSEEK_API_KEY="sk-ds-test", QT_QPA_PLATFORM="offscreen")
     env.pop("OPENSTRAND_TEST_API", None)
     run = subprocess.run([sys.executable, "-m", "openstrand", "agent", "a heart", "--model", model,
                           "--out-dir", str(tmp_path / "out")], cwd=ROOT, env=env, capture_output=True,

@@ -1,4 +1,8 @@
-"""Build the knot Claude's working line shows: a closed overhand knot drawn
+"""(Superseded: the working line now plays the logo's box stitch, built by
+scripts/build_box_stitch_spinner.py, which writes the same two files. This script
+still works and its one-row strip still loads, if the overhand knot is wanted back.)
+
+Build the knot Claude's working line shows: a closed overhand knot drawn
 step by step, strand after strand, by OpenStrand Studio's own canvas, then
 untied from the other end, so the loop comes back to where it began.
 

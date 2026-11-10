@@ -2245,16 +2245,16 @@ class ClaudeButton(QPushButton):
     """The assistant's button next to Settings: shows and hides the assistant.
 
     The OpenStrand logo (the assistant runs on many providers' models, so the button is the
-    app's own mark, not one provider's) on the app icon's light tile, drawn here so it answers
+    app's own mark, not one provider's) on a sandstone tile, drawn here so it answers
     the mouse: lighter under the pointer, a touch smaller while pressed and, while the assistant
     is open, the stretched 1x1 starting stitch in an orange ring (click again for the logo). While it is hidden it also shows what the
     assistant is doing: the logo steps in and an arc turns around it during a run, drifting from
     the logo's orange to its blue and back, and a green dot waits on it when a design has opened."""
 
-    FACE = QColor('#F0F0F0')     # the app icon's tile, in every theme
-    HOVER = QColor('#FFFFFF')
-    PRESSED = QColor('#DCDCDC')
-    OPEN = QColor('#FFE6D9')
+    FACE = QColor('#D3C4AD')     # sandstone, in every theme: mid-tone like the other toolbar buttons
+    HOVER = QColor('#DDD1BF')
+    PRESSED = QColor('#C3AF8F')
+    OPEN = QColor('#E2D8C9')
     EDGE = QColor('#111111')
     RING = LOGO_ORANGE           # the frame while the assistant is open
     RADIUS = 7                   # corner radius of the 32 px square

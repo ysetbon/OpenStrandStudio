@@ -57,6 +57,13 @@ in the app with real strands, masks and groups.
 How to work:
 1. Understand the request from the words and any reference image. Describe an
    image in the guide's terms first (kind of design, loops, crossings, colors).
+   A request to make, show or explain a knot, stitch or pattern, or a tutorial
+   or "how to" for one, asks for a design: build it with the tools in this same
+   request. Never answer with written steps alone, and never end by offering
+   to draw it: draw it. Words alone answer a question (what is this, why did
+   that happen), not a request to make something. When a tool cannot do the
+   exact thing, make the closest design you can and say in one sentence what
+   differs.
 2. If a published sample or a make_ tool fits, use it: it is the fastest and
    cleanest result.
 3. Otherwise design it yourself:
@@ -78,9 +85,9 @@ How to work:
    and anything you could not do or had to assume. Plain words, no markdown.
 
 Knots tied in a cord (overhand, figure-eight, stevedore and the like):
-- To show how a knot is tied, or a knot pulled tight, use tie_knot. It works
-  the steps out by simulating a real cord and checks every step is the right
-  knot, so never draw tying steps or a tightened knot by hand.
+- To show how a knot in one cord is tied, or pulled tight, use tie_knot. It
+  works the steps out by simulating a real cord and checks every step is the
+  right knot, so for these never draw tying steps or a tightened knot by hand.
 - A knot not in knot_library: research how it is tied, then give tie_knot its
   path (rough points from the standing end, crossing itself where the knot
   does, a few cord widths between parts) and its over/under pattern. Read the
@@ -88,9 +95,14 @@ Knots tied in a cord (overhand, figure-eight, stevedore and the like):
   fix the path or the pattern and try again.
 - For the knot in a design the person already has (in the app: read_tab it
   first), call tie_knot with from_design: it keeps that knot's over and under.
-- tie_knot pulls the two ends apart, as for stopper knots. For a loop knot
-  (bowline) or a bend joining two cords, say it is not supported yet and draw
-  it with draw_design.
+- tie_knot pulls the two ends apart, as for stopper knots, so it cannot tie a
+  loop knot (bowline) or a knot that joins two cords (a bend: magic knot,
+  square knot, sheet bend, fisherman's knot). Those are still yours to make:
+  draw the knot with draw_design, loose enough to follow, one cord per rope,
+  each in its own color and labeled. For a tutorial or how to tie it, then
+  call make_steps: it shows the cords drawn bit by bit, in the order you list
+  them, so list first the cord that is laid down first. Say in one sentence
+  that these steps are drawn, not simulated.
 - To check any design is the knot it should be, call identify_knot rather than
   judging the picture.
 
@@ -199,8 +211,9 @@ TOOLS = [
                         'end, crossing itself where the knot does, and its over/under pattern; or the knot in '
                         'the current design (from_design, e.g. after read_tab). The knot is tightened by pulling '
                         'its two ends apart, as for stopper knots; not for loop knots (bowline) or bends that '
-                        'join two cords. Saves the steps as "step 1", "step 2", ... (open them with '
-                        'open_in_new_tab) and makes the tight knot the current design. Library knots take a '
+                        'join two cords: draw those with draw_design, then make_steps for the steps. Saves '
+                        'the steps as "step 1", "step 2", ... (open them with open_in_new_tab) and makes the '
+                        'tight knot the current design. Library knots take a '
                         'second or two; a path or a design a few seconds (a path drawn larger than it needs is '
                         'shrunk to a laid-out size first). The person sees its progress live.'),
         'input_schema': {'type': 'object', 'properties': {

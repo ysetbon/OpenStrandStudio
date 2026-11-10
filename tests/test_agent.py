@@ -502,7 +502,7 @@ def test_the_agent_button_shows_and_hides_agent_over_the_canvas(window, monkeypa
     order = [row.itemAt(i).widget() for i in range(row.count()) if row.itemAt(i).widget()]
     assert order[-3:] == [window.layer_state_button, button, window.settings_button]
     assert button.size() == window.settings_button.size() and button.toolTip() == ""
-    assert button.color().name() == "#f0f0f0" and button.RING.name() == "#ff5500"  # the logo's tile, at rest
+    assert button.color().name() == "#d3c4ad" and button.RING.name() == "#ff5500"  # the sandstone tile, at rest
 
     # Pressed, the agent floats over the bottom of the visible canvas; the canvas keeps its size.
     size = window.canvas.size()
@@ -1787,6 +1787,34 @@ def test_the_assistant_button_is_the_openstrand_logo(window):
 
     colors = {picture().pixelColor(x, y).name() for x in range(0, 128, 2) for y in range(0, 128, 2)}
     assert LOGO_ORANGE.name() in colors and LOGO_BLUE.name() in colors
+    # on and off are two pictures: the stitch while the assistant is open, the logo when it is not
+    opened = button.isChecked()
+    button.follow(False)
+    off = picture()
+    button.follow(True)
+    on = picture()
+    button.follow(opened)
+
+    def cords(image):  # the logo's orange and blue inside the frame, where the picture is
+        return {(x, y) for x in range(16, 112) for y in range(16, 112)
+                if image.pixelColor(x, y).name() in (LOGO_ORANGE.name(), LOGO_BLUE.name())}
+    off_cords, on_cords = cords(off), cords(on)
+    assert off_cords and on_cords
+    assert len(off_cords ^ on_cords) > len(off_cords) // 4  # another picture, not the same one recoloured
+
+    def frame_width(image, color):  # px (at 4x) of the frame's colour across the middle row, from the left
+        return sum(1 for x in range(0, 24) if image.pixelColor(x, 64).name() == color.name())
+    # the closed frame is as wide as the open ring: near black here, warm white on the dark theme
+    theme = button.panel.theme_name
+    for name, edge in (("default", AgentButton.EDGE), ("dark", AgentButton.EDGE_DARK)):
+        button.panel.apply_theme(name)
+        assert button.edge() == edge
+        button.follow(False)
+        closed = frame_width(picture(), edge)
+        button.follow(True)
+        assert closed >= 6 and closed == frame_width(picture(), AgentButton.RING)
+    button.panel.apply_theme(theme)
+    button.follow(opened)
     # working while hidden: the arc's colour drifts from the logo's orange to its blue and back
     button.tint = 0
     assert button.arc_color() == LOGO_ORANGE
@@ -1795,9 +1823,11 @@ def test_the_assistant_button_is_the_openstrand_logo(window):
     button.tint = AgentButton.TINT_TICKS - 1
     button.turn()
     assert button.tint == 0 and button.arc_color() == LOGO_ORANGE
-    # the arc runs in a ring of its own: clear of the frame (inner edge 15 px out) and of the logo
-    assert AgentButton.ARC_RADIUS + AgentButton.ARC_WIDTH / 2 <= 14.0
-    assert AgentButton.ARC_RADIUS - AgentButton.ARC_WIDTH / 2 >= 11.46 + 1.0
+    # the arc runs in a ring of its own: 1 px clear of the 2 px frame (inner edge 14 px out) and of the
+    # logo, which reaches 11.46 px out in a 24 px box and steps in to BUSY_LOGO px while the arc turns
+    inner_frame = 16 - 1.0 - AgentButton.FRAME_WIDTH / 2  # the frame line sits 1 px in, its pen centred on it
+    assert AgentButton.ARC_RADIUS + AgentButton.ARC_WIDTH / 2 <= inner_frame - 1.0
+    assert AgentButton.ARC_RADIUS - AgentButton.ARC_WIDTH / 2 >= 11.46 * AgentButton.BUSY_LOGO / 24 + 1.0
     assert button.spin.timerType() == Qt.PreciseTimer and window.agent_panel.working.timer.timerType() == Qt.PreciseTimer
     assert QColor(LOGO_ORANGE).name() == "#ff5500"
 

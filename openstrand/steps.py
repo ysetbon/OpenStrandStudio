@@ -107,6 +107,14 @@ def assemble(project, drawn, masks, names):
     return frame
 
 
+def set_of(strand):
+    """The number of the strand's set (its cord): 2 for '2_5'."""
+    try:
+        return int(strand.get('set_number') or str(strand['layer_name']).split('_')[0])
+    except ValueError:
+        return 0
+
+
 def cord_path(strands):
     """[(strand, forward)] in the order each cord runs, tail to tail.
 
@@ -114,7 +122,8 @@ def cord_path(strands):
     its start (attachment side 0) run back from it, those at its end run on.
     The walk starts at the far end of the part that runs back, so those
     strands are traversed end to start (forward False), then the first
-    strand and the rest start to end."""
+    strand and the rest start to end. Cords come in set order (cord 1, then
+    cord 2), whichever lies lower in the layers."""
     by_name = {s['layer_name']: s for s in strands}
     children = {}
     for s in strands:
@@ -132,7 +141,7 @@ def cord_path(strands):
         return out
 
     path = []
-    roots = [s for s in strands if s.get('attached_to') not in by_name]
+    roots = sorted((s for s in strands if s.get('attached_to') not in by_name), key=set_of)
     for root in roots + strands:  # then anything left over, in layer order
         if root['layer_name'] in seen:
             continue

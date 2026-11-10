@@ -1940,6 +1940,42 @@ def test_steps_follow_the_cord_tail_to_tail(figure8):
         steps.make(figure8, count=40)
 
 
+def test_steps_of_two_cords_show_the_first_cord_first():
+    """A knot joining two cords (a bend) gets its steps from make_steps: cord 1
+    is drawn first, then cord 2, whichever lies lower in the layers."""
+    from openstrand import draw, steps
+    data, _ = draw.build({"name": "two yarns joined", "cords": [
+        {"label": "Old yarn", "color": "teal", "width": 22,
+         "points": [[80, 380], [260, 390], [350, 320], [430, 250], [500, 300], [450, 380], [390, 440],
+                    [330, 420], [370, 340], [560, 300], [680, 340]]},
+        {"label": "New yarn", "color": "gold", "width": 22,
+         "points": [[920, 440], [760, 430], [640, 480], [540, 520], [440, 480], [400, 420], [470, 380],
+                    [560, 420], [600, 500], [300, 470], [120, 450]]}]})
+    strands = [s for s in data["strands"] if s["type"] != "MaskedStrand"]
+    assert strands[0]["layer_name"].startswith("2_")  # the second cord is the lower layer here
+    sets = [steps.set_of(s) for s, _ in steps.cord_path(strands)]
+    assert sets == sorted(sets) and set(sets) == {1, 2}
+    made = steps.make(data)
+    shown = [{steps.set_of(s) for s in d["strands"] if s["type"] != "MaskedStrand"} for _, d in made]
+    assert shown[0] == {1} and shown[-1] == {1, 2}
+
+
+def test_a_tutorial_is_a_design_not_a_written_answer():
+    """Asked for a magic knot tutorial, the agent wrote the steps out and
+    offered to draw: the instructions told it to say a bend is not supported."""
+    from openstrand.agent import INSTRUCTIONS, TOOLS
+    from openstrand.app_tools import APP_INSTRUCTIONS
+    assert "say it is not supported" not in INSTRUCTIONS
+    assert "Never answer with written steps alone" in INSTRUCTIONS
+    assert "never end by offering\n   to draw it" in INSTRUCTIONS
+    bend = INSTRUCTIONS[INSTRUCTIONS.index("a knot that joins two cords"):]
+    assert "draw_design" in bend[:400] and "make_steps" in bend[:400]
+    assert "keep the closest one, make and open its\n  steps all the same" in bend  # no giving up before the steps
+    tie = next(t for t in TOOLS if t["name"] == "tie_knot")["description"]
+    assert "draw those with draw_design, then make_steps" in tie
+    assert "a knot joining two cords" in APP_INSTRUCTIONS and "not a written list" in APP_INSTRUCTIONS
+
+
 def test_the_app_client_waits_for_its_own_answer():
     import os as _os
     from openstrand.app_tools import AppClient, AppError

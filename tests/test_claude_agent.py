@@ -503,7 +503,7 @@ def test_the_claude_button_shows_and_hides_claude_over_the_canvas(window, monkey
     order = [row.itemAt(i).widget() for i in range(row.count()) if row.itemAt(i).widget()]
     assert order[-3:] == [window.layer_state_button, button, window.settings_button]
     assert button.size() == window.settings_button.size() and button.toolTip() == ""
-    assert button.color().name() == "#f0f0f0" and button.RING.name() == "#ff5500"  # the logo's tile, at rest
+    assert button.color().name() == "#d3c4ad" and button.RING.name() == "#ff5500"  # the sandstone tile, at rest
 
     # Pressed, Claude floats over the bottom of the visible canvas; the canvas keeps its size.
     size = window.canvas.size()

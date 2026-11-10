@@ -63,8 +63,9 @@ LOOK_ONLY = {'list_tabs', 'read_tab', 'read_tab_step'}
 INSTRUCTIONS = """- When asked about tabs, use these tools. For how to tie a knot, call tie_knot
   (it makes checked steps), then open_in_new_tab for each step in order, with
   titles like "Step 1 · first loop" that say what the step does. For other
-  step-by-step instructions, make the design, call make_steps, then open the
-  steps the same way.
+  step-by-step instructions (a knot joining two cords, a loop knot, a stitch,
+  a weave), make the design, call make_steps, then open the steps the same
+  way. A tutorial is its steps open in tabs, not a written list.
 - To work on what is in a tab, read_tab it first; it becomes the current design.
   The person keeps working while you do: when they may have changed the tab, or
   an edit is refused because the tab changed, read_tab it again. Use the strand

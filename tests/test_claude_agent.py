@@ -1474,17 +1474,125 @@ def test_the_working_line_draws_the_knot_while_claude_works(window):
     # every frame lies on the sheet: no picture wider than a few thousand pixels (Windows, macOS)
     assert line.sheet.width() <= 4096 and line.sheet.height() <= 4096
     assert all(line.sheet.rect().contains(r) for r in line.frames)
+    # twice the size it had (28 px), and frames with the pixels for it on a 2x screen
+    assert line.SIZE == 56 and line.height() >= line.SIZE and info["frame"] >= 2 * line.SIZE
+    assert line.sheet.depth() == 8  # kept as the file has it, not as a 50 MB pixmap
     line.start("Thinking…")
     assert line.isVisibleTo(window.claude_panel) and line.timer.isActive() and line.frame == 0
-    line.tick()
-    assert line.frame == 1 and line.timer.interval() == info["durations_ms"][1]
+    # the tying moves on in the animation's own time, frame after frame
+    line.advance(info["durations_ms"][0])
+    assert line.frame_at(line.at) == 1
     # after the last frame it goes on from the level the loop comes back to, not from the start
-    line.frame = count - 1
-    line.tick()
-    assert line.frame == info["loop_from"] + 1
-    assert line.grab().width() > 0
+    line.at = line.starts[-1] - 1
+    assert line.frame_at(line.at) == count - 1
+    line.advance(1)
+    assert line.frame_at(line.at) == info["loop_from"] + 1
+    line.advance(line.starts[-1] - line.starts[info["loop_from"] + 1])  # once round the loop
+    assert line.frame_at(line.at) == info["loop_from"] + 1
+    picture = line.grab()
+    assert picture.width() > 0
+    line.frame = 300
+    assert line.frame_picture().size().width() == info["frame"] and line.cut[0] == 300
     line.stop()
     assert not line.timer.isActive() and not line.isVisibleTo(window.claude_panel)
+
+
+def test_the_working_line_keeps_claudes_tempo(window):
+    """How fast the stitch is tied and how often the picture changes are two things, and both
+    follow what Claude does: thinking, writing, a tool, a tool that draws, waiting."""
+    from claude_panel import KICK, TEMPOS, step_mood
+    line = window.claude_panel.working
+
+    def run(mood, seconds, dt=0.005):
+        """seconds at work in this mood (settled first): animation ms tied, picture changes."""
+        line.start("…")
+        line.timer.stop()  # the test is the clock
+        line.set_mood(mood)
+        line.pace = TEMPOS[mood][0]
+        tied, changes, before, at = 0.0, 0, line.frame, line.at
+        for _ in range(round(seconds / dt)):
+            line.step(dt)
+            tied += (line.at - at) % line.starts[-1]
+            at = line.at
+            changes, before = changes + (line.frame != before), line.frame
+        return tied / (1000 * seconds), changes / seconds
+
+    rate = 1000 / line.durations[0]  # the frames come 22 a second at speed 1
+    speeds, changes = {}, {}
+    for mood in TEMPOS:
+        speeds[mood], changes[mood] = run(mood, 6.4)  # two whole swells
+        speed, fps, _ = TEMPOS[mood]
+        assert abs(speeds[mood] - speed) < 0.06 * speed, mood          # as fast as the mood says
+        assert changes[mood] <= fps + 0.5, mood                         # never more pictures than its fps
+        assert abs(changes[mood] - min(fps, speed * rate)) < 1.5, mood  # and no fewer than it can show
+    assert speeds["waiting"] < speeds["thinking"] < speeds["working"] < speeds["tool"] < speeds["picture"]
+    # a tool that draws: the fastest tying in the fewest pictures, so it jumps (stop motion);
+    # thinking: slow, and every frame shows
+    assert changes["picture"] < changes["thinking"] < changes["working"] < changes["tool"]
+    assert speeds["picture"] * rate / changes["picture"] > 5      # frames of the animation a picture
+    assert abs(speeds["thinking"] * rate / changes["thinking"] - 1) < 0.1
+
+    # thinking breathes: the speed swells and falls around the mood's
+    line.start("…")
+    line.timer.stop()
+    seen = []
+    for _ in range(640):
+        line.step(0.005)
+        seen.append(line.speed())
+    low, high, swell = min(seen), max(seen), TEMPOS["thinking"][2]
+    assert abs(low - TEMPOS["thinking"][0] * (1 - swell)) < 0.02
+    assert abs(high - TEMPOS["thinking"][0] * (1 + swell)) < 0.02
+
+    # an event pushes it on for a moment, and a new mood glides in
+    line.start("…")
+    line.timer.stop()
+    line.step(0.005)
+    calm = line.speed()
+    line.nudge()
+    assert abs(line.speed() / calm - (1 + KICK)) < 0.01
+    for _ in range(600):
+        line.step(0.005)
+    assert line.kick < 0.01
+    line.set_label("Tying…", "tool")
+    line.step(0.05)
+    assert TEMPOS["thinking"][0] < line.pace < TEMPOS["tool"][0]
+    for _ in range(600):
+        line.step(0.005)
+    assert abs(line.pace - TEMPOS["tool"][0]) < 0.01
+    # a held-up app does not make the tying leap: a tick counts a quarter of a second at most
+    line.ticked -= 30
+    at = line.at
+    line.tick()
+    assert (line.at - at) % line.starts[-1] <= 250 * line.speed() * 1.01 + 1
+    line.stop()
+
+    # the panel sets the mood from the agent's events
+    assert step_mood({"name": "tie_knot"}) == "picture" and step_mood({"name": "read_tab"}) == "tool"
+    assert step_mood({"name": "edit_mask", "frame": True}) == "picture"  # it sends pictures
+    assert step_mood({"name": "tie_knot", "waiting": True}) == "waiting"
+    panel = window.claude_panel
+    panel.add_user("a bowline")
+    line.start("Thinking…")
+    line.timer.stop()
+    assert line.mood == "thinking"
+    panel.handle_event({"type": "tool_start", "name": "read_tab", "input": {}})
+    assert line.mood == "tool" and line.kick == 1.0
+    panel.handle_event({"type": "tool_end", "name": "read_tab", "ok": True})
+    assert line.mood == "working"
+    panel.handle_event({"type": "thinking", "text": "a loop, then the rabbit"})
+    assert line.mood == "thinking"
+    panel.handle_event({"type": "tool_start", "name": "tie_knot", "input": {}})
+    assert line.mood == "picture"
+    line.kick = 0.0
+    panel.handle_event({"type": "tool_progress", "name": "tie_knot", "stage": "relaxing", "fraction": 0.2})
+    assert line.mood == "picture" and line.kick == 1.0  # a new stage
+    line.kick = 0.0
+    panel.handle_event({"type": "tool_progress", "name": "tie_knot", "stage": "relaxing", "fraction": 0.3})
+    assert line.kick == 0.0  # the same stage, no picture: no push
+    panel.handle_event({"type": "tool_end", "name": "tie_knot", "ok": True})
+    panel.handle_event({"type": "text", "text": "Here is your bowline."})
+    assert line.mood == "working"
+    line.stop()
 
 
 def test_the_assistant_button_is_the_openstrand_logo(window):

@@ -22,12 +22,15 @@ then repeats levels 11 to 20 (loop_from in the .json).
 
 Every frame shows for 45 ms, with no pauses, and the strand ends move at about the same speed
 in every step (the orange attach a little faster). Frames where nothing visible moves (strand
-tips growing under another strand) are left out.
+tips growing under another strand) are left out. That is the animation at speed 1: the panel
+plays it slower or faster, and changes the picture more or less often, by what Claude is doing
+(TEMPOS in src/claude_panel.py).
 
     python scripts/build_box_stitch_spinner.py      # src/claude_knot.png + .json, src/images/assistant_pressed.png
 
 src/claude_knot.png is a grid of square frames, `columns` to a row; src/claude_knot.json gives
 the frame size, the columns, how long each frame shows and the frame the loop comes back to.
+Frames are 112 px: the panel shows the animation 56 px, and a 2x screen gets a pixel for each.
 Rendering takes about 25 minutes (some 1100 frames).
 """
 import argparse
@@ -134,6 +137,17 @@ def strand(name, a, b, level=0):
     return s
 
 
+def tip_beneath(tip, a, b, half):
+    """Whether the point tip lies within half of the strand a -> b (its round start included)."""
+    length = math.dist(a, b)
+    if length < 1e-6:
+        return False
+    d = ((b[0] - a[0]) / length, (b[1] - a[1]) / length)
+    along = (tip[0] - a[0]) * d[0] + (tip[1] - a[1]) * d[1]
+    across = (tip[0] - a[0]) * d[1] - (tip[1] - a[1]) * d[0]
+    return -half <= along <= length and abs(across) <= half
+
+
 def project(geom):
     """A project of the strands in geom (name -> (start, end)), with the masks of crossings
     whose two strands are both there."""
@@ -146,6 +160,11 @@ def project(geom):
                       end=dict(first['end']), deletion_rectangles=[])
             mk.pop('level', None)
             strands.append(mk)
+            # While the under strand's tip is beneath the over strand, the app still draws the
+            # tip's end line on top of the mask: a stray line down the middle of the over strand.
+            under = next(s for s in strands if s['layer_name'] == b)
+            if tip_beneath(geom[b][1], *geom[a], first['width'] / 2 + first['stroke_width'] + 2):
+                under['end_line_visible'] = False
     for i, s in enumerate(strands):
         s['index'] = i
     out = {k: v for k, v in K1.items() if k != 'strands'}
@@ -332,7 +351,8 @@ def to_pil(qimage):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--frame', type=int, default=64, help='frame size in the sheet, px (default 64)')
+    parser.add_argument('--frame', type=int, default=112,
+                        help='frame size in the sheet, px (default 112: the panel shows it 56 px, so 2x screens stay sharp)')
     parser.add_argument('--out', default=str(ROOT / 'src' / 'claude_knot.png'))
     parser.add_argument('--pressed', default=str(ROOT / 'src' / 'images' / 'assistant_pressed.png'),
                         help='the Assistant button pressed: the stretched 1x1 starting stitch')

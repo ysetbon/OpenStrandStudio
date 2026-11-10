@@ -1,6 +1,6 @@
-"""(Superseded: the working line now plays the logo's box stitch, built by
-scripts/build_box_stitch_spinner.py, which writes the same two files. This script
-still works and its one-row strip still loads, if the overhand knot is wanted back.)
+"""(Superseded: the working line now draws the logo's box stitch itself, live
+(src/claude_stitch.py), and loads no frames. This script still renders its strip, but
+nothing in the app plays src/claude_knot.png any more.)
 
 Build the knot Claude's working line shows: a closed overhand knot drawn
 step by step, strand after strand, by OpenStrand Studio's own canvas, then

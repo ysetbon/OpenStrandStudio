@@ -1,5 +1,11 @@
-"""Build the Assistant's working animation: the OpenStrand logo, a box stitch, tied and then
-continued level after level, rendered frame by frame by OpenStrand Studio's own canvas.
+"""Render the OpenStrand logo, a box stitch, tied and then continued level after level, frame
+by frame with OpenStrand Studio's own canvas.
+
+The Assistant's working line no longer plays these frames: it draws the stitch itself, live,
+from the same geometry (src/claude_stitch.py), so a level can be k = 0 as well as k = 1 and the
+stitch can start again from the plus. This script stays as the reference render of that
+geometry by the app's canvas, and it makes the Assistant button's pressed picture
+(src/images/assistant_pressed.png).
 
 The steps, in the logo's colours (set 1 blue, set 2 orange), right-handed like the logo:
 
@@ -22,15 +28,12 @@ then repeats levels 11 to 20 (loop_from in the .json).
 
 Every frame shows for 45 ms, with no pauses, and the strand ends move at about the same speed
 in every step (the orange attach a little faster). Frames where nothing visible moves (strand
-tips growing under another strand) are left out. That is the animation at speed 1: the panel
-plays it slower or faster, and changes the picture more or less often, by what Claude is doing
-(TEMPOS in src/claude_panel.py).
+tips growing under another strand) are left out.
 
-    python scripts/build_box_stitch_spinner.py      # src/claude_knot.png + .json, src/images/assistant_pressed.png
+    python scripts/build_box_stitch_spinner.py      # output/box_stitch_frames.png + .json, src/images/assistant_pressed.png
 
-src/claude_knot.png is a grid of square frames, `columns` to a row; src/claude_knot.json gives
-the frame size, the columns, how long each frame shows and the frame the loop comes back to.
-Frames are 112 px: the panel shows the animation 56 px, and a 2x screen gets a pixel for each.
+The sheet is a grid of square frames, `columns` to a row; the .json next to it gives the frame
+size, the columns, how long each frame shows and the frame the loop comes back to.
 Rendering takes about 25 minutes (some 1100 frames).
 """
 import argparse
@@ -351,9 +354,8 @@ def to_pil(qimage):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--frame', type=int, default=112,
-                        help='frame size in the sheet, px (default 112: the panel shows it 56 px, so 2x screens stay sharp)')
-    parser.add_argument('--out', default=str(ROOT / 'src' / 'claude_knot.png'))
+    parser.add_argument('--frame', type=int, default=112, help='frame size in the sheet, px (default 112)')
+    parser.add_argument('--out', default=str(ROOT / 'output' / 'box_stitch_frames.png'))
     parser.add_argument('--pressed', default=str(ROOT / 'src' / 'images' / 'assistant_pressed.png'),
                         help='the Assistant button pressed: the stretched 1x1 starting stitch')
     args = parser.parse_args()
@@ -375,6 +377,7 @@ def main():
     sheet = Image.new('RGBA', (columns * size, rows * size), (0, 0, 0, 0))
     for i, im in enumerate(images):
         sheet.paste(im.resize((size, size), Image.LANCZOS), ((i % columns) * size, (i // columns) * size))
+    Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     sheet.quantize(colors=128, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE).save(args.out, optimize=True)
     durations = [FRAME_MS] * len(images)
     Path(args.out).with_suffix('.json').write_text(json.dumps(

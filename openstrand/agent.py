@@ -693,6 +693,8 @@ class Agent:
         try:
             for round_ in range(1, self.max_rounds + 1):
                 self.log(f'round {round_}: asking {self.model} (effort {self.effort}, {len(messages)} messages)')
+                # The panel shows that the model is thinking from here until it answers.
+                self.on_event({'type': 'round', 'round': round_})
                 asked = time.monotonic()
                 with self.log.waiting(f"{self.label}'s answer (round {round_})"):
                     response = self.call(messages)

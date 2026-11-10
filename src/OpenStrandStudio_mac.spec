@@ -7,8 +7,6 @@ a = Analysis(
     datas=[
         ('box_stitch.icns', '.'), 
         ('settings_icon.png', '.'),
-        ('claude_knot.png', '.'),  # the Assistant's working animation (frames on one sheet)
-        ('claude_knot.json', '.'),  # its frame size, timing and loop point
         ('mov', 'mov'),  # Include .mov tutorial videos for Mac compatibility
         ('flags/*.png', 'flags/'),  # Include flag images
         ('layer_panel_icons/*.png', 'layer_panel_icons/'),  # Include layer-panel button icons

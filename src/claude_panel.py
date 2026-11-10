@@ -2247,7 +2247,8 @@ class ClaudeButton(QPushButton):
     The OpenStrand logo (the assistant runs on many providers' models, so the button is the
     app's own mark, not one provider's) on a sandstone tile, drawn here so it answers
     the mouse: lighter under the pointer, a touch smaller while pressed and, while the assistant
-    is open, the stretched 1x1 starting stitch in an orange ring (click again for the logo). While it is hidden it also shows what the
+    is open, the stretched 1x1 starting stitch in an orange ring (click again for the logo). Closed,
+    its frame is as wide as that ring: near black, or warm white on the dark theme. While it is hidden it also shows what the
     assistant is doing: the logo steps in and an arc turns around it during a run, drifting from
     the logo's orange to its blue and back, and a green dot waits on it when a design has opened."""
 
@@ -2255,11 +2256,14 @@ class ClaudeButton(QPushButton):
     HOVER = QColor('#DDD1BF')
     PRESSED = QColor('#C3AF8F')
     OPEN = QColor('#E2D8C9')
-    EDGE = QColor('#111111')
+    EDGE = QColor('#111111')     # the frame while the assistant is closed, on the default and light themes
+    EDGE_DARK = QColor('#F6EFE4')  # and on the dark theme: a warm white, as a dark edge is lost there
     RING = LOGO_ORANGE           # the frame while the assistant is open
+    FRAME_WIDTH = 2.0            # both frames, closed and open
     RADIUS = 7                   # corner radius of the 32 px square
-    ARC_WIDTH = 1.5              # the working arc: 1 px clear of the frame (inner edge 15 px out)
-    ARC_RADIUS = 13.25           # and 1 px clear of the logo, which steps in to 24 px while it turns
+    ARC_WIDTH = 1.5              # the working arc: 1 px clear of the 2 px frame (inner edge 14 px out)
+    ARC_RADIUS = 12.25           # and 1 px clear of the logo, which steps in to BUSY_LOGO px while it turns
+    BUSY_LOGO = 21.5
     TINT_TICKS = 60              # orange -> blue -> orange every 60 ticks (3 s, exactly 4 turns)
     _pressed_picture = None
 
@@ -2327,6 +2331,10 @@ class ClaudeButton(QPushButton):
         super().leaveEvent(event)
         self.update()
 
+    def edge(self):
+        """The closed frame's colour: warm white on the dark theme, near black on the others."""
+        return self.EDGE_DARK if shade_of(getattr(self.panel, 'theme_name', 'default')) == 'dark' else self.EDGE
+
     def color(self):
         if self.isDown():
             return self.PRESSED
@@ -2344,16 +2352,16 @@ class ClaudeButton(QPushButton):
         if self.isDown():  # pressed in: a touch smaller
             square = square.adjusted(1.5, 1.5, -1.5, -1.5)
         opened = self.isChecked()
-        painter.setPen(QPen(self.RING if opened else self.EDGE, 2.0 if opened else 1.0))
+        painter.setPen(QPen(self.RING if opened else self.edge(), self.FRAME_WIDTH))
         painter.setBrush(self.color())
-        painter.drawRoundedRect(square.adjusted(0.5, 0.5, -0.5, -0.5) if opened else square, self.RADIUS, self.RADIUS)
+        painter.drawRoundedRect(square.adjusted(0.5, 0.5, -0.5, -0.5), self.RADIUS, self.RADIUS)
         centre = QRectF(self.rect()).center()
         busy = self.busy()
         stitch = self.pressed_picture() if opened else None  # on: the stitch, off: the logo
         if stitch is not None and not stitch.isNull():
             painter.drawPixmap(square.adjusted(1, 1, -1, -1), stitch, QRectF(stitch.rect()))
         elif busy:  # the logo steps in so the arc has a ring of its own
-            paint_logo(painter, QRectF(centre.x() - 12, centre.y() - 12, 24, 24))
+            paint_logo(painter, QRectF(centre.x() - self.BUSY_LOGO / 2, centre.y() - self.BUSY_LOGO / 2, self.BUSY_LOGO, self.BUSY_LOGO))
         else:
             inset = square.width() * 0.03
             paint_logo(painter, square.adjusted(inset, inset, -inset, -inset))

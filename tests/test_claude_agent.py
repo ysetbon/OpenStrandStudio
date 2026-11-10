@@ -1807,6 +1807,20 @@ def test_the_assistant_button_is_the_openstrand_logo(window):
     off_cords, on_cords = cords(off), cords(on)
     assert off_cords and on_cords
     assert len(off_cords ^ on_cords) > len(off_cords) // 4  # another picture, not the same one recoloured
+
+    def frame_width(image, color):  # px (at 4x) of the frame's colour across the middle row, from the left
+        return sum(1 for x in range(0, 24) if image.pixelColor(x, 64).name() == color.name())
+    # the closed frame is as wide as the open ring: near black here, warm white on the dark theme
+    theme = button.panel.theme_name
+    for name, edge in (("default", ClaudeButton.EDGE), ("dark", ClaudeButton.EDGE_DARK)):
+        button.panel.apply_theme(name)
+        assert button.edge() == edge
+        button.follow(False)
+        closed = frame_width(picture(), edge)
+        button.follow(True)
+        assert closed >= 6 and closed == frame_width(picture(), ClaudeButton.RING)
+    button.panel.apply_theme(theme)
+    button.follow(opened)
     # working while hidden: the arc's colour drifts from the logo's orange to its blue and back
     button.tint = 0
     assert button.arc_color() == LOGO_ORANGE
@@ -1815,9 +1829,11 @@ def test_the_assistant_button_is_the_openstrand_logo(window):
     button.tint = ClaudeButton.TINT_TICKS - 1
     button.turn()
     assert button.tint == 0 and button.arc_color() == LOGO_ORANGE
-    # the arc runs in a ring of its own: clear of the frame (inner edge 15 px out) and of the logo
-    assert ClaudeButton.ARC_RADIUS + ClaudeButton.ARC_WIDTH / 2 <= 14.0
-    assert ClaudeButton.ARC_RADIUS - ClaudeButton.ARC_WIDTH / 2 >= 11.46 + 1.0
+    # the arc runs in a ring of its own: 1 px clear of the 2 px frame (inner edge 14 px out) and of the
+    # logo, which reaches 11.46 px out in a 24 px box and steps in to BUSY_LOGO px while the arc turns
+    inner_frame = 16 - 1.0 - ClaudeButton.FRAME_WIDTH / 2  # the frame line sits 1 px in, its pen centred on it
+    assert ClaudeButton.ARC_RADIUS + ClaudeButton.ARC_WIDTH / 2 <= inner_frame - 1.0
+    assert ClaudeButton.ARC_RADIUS - ClaudeButton.ARC_WIDTH / 2 >= 11.46 * ClaudeButton.BUSY_LOGO / 24 + 1.0
     assert button.spin.timerType() == Qt.PreciseTimer and window.claude_panel.working.timer.timerType() == Qt.PreciseTimer
     assert QColor(LOGO_ORANGE).name() == "#ff5500"
 

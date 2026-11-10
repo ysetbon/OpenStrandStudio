@@ -1062,6 +1062,8 @@ class MainWindow(QMainWindow):
         self.current_theme = theme_name
         if hasattr(self, 'claude_panel'):
             self.claude_panel.apply_theme(theme_name)
+        if hasattr(self, 'claude_button'):
+            self.claude_button.update()  # its closed frame follows the theme
         
         if theme_name == "dark":
             style_sheet = """

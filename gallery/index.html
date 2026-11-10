@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Everything this page shows comes from this folder: nothing is loaded from anywhere else. -->
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>OpenStrand Studio gallery</title>
+<link rel="stylesheet" href="gallery.css">
+</head>
+<body>
+<header>
+  <h1>OpenStrand Studio gallery</h1>
+  <p>Designs that AI models made in <a href="https://github.com/ysetbon/OpenStrandStudio">OpenStrand Studio</a>,
+     shown with the say-so of the people who asked for them. Each one opens in the app: download its file,
+     then <em>Load</em> it.</p>
+</header>
+<main>
+  <p id="status" role="status">Loading the designs…</p>
+  <ul id="designs"></ul>
+</main>
+<footer>
+  <p>Only the design, its picture, the model and the app's version are shown: never a request, an answer,
+     or anything about the person. Each design was looked at before it went up.</p>
+</footer>
+<script src="gallery.js"></script>
+</body>
+</html>

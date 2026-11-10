@@ -310,10 +310,17 @@ def _anthropic():
 
 
 def cmd_agent(args):
-    anthropic = _anthropic()
-    from . import agent, providers
-    try:  # the models Settings > Models offers: the built-in ones and what Refresh models found
+    from . import providers
+    try:  # the app's settings, when the app is here: they decide what this command may do
         import claude_settings
+    except ImportError:
+        claude_settings = None
+    # AI models turned off in the app (Settings > Models): this command does nothing at all,
+    # before any package is loaded, any key read or any model looked up.
+    providers.check_allowed(None)
+    anthropic = _anthropic()
+    from . import agent
+    try:  # the models Settings > Models offers: the built-in ones and what Refresh models found
         providers.use_catalog(claude_settings.catalog())
     except Exception:
         pass

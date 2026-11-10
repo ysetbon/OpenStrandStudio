@@ -8,10 +8,12 @@ workers_dev = true
 [observability]
 enabled = false
 
-# Where the sealed shares are kept (private: R2 buckets have no public access unless you add it).
+# Where the sealed shares are kept: the developer's R2 bucket, under shares/ (the Worker
+# reads and writes nothing else in it). Keep the bucket private: no public access, no
+# custom domain, no r2.dev address (R2 buckets have none unless you add one).
 [[r2_buckets]]
 binding = "SHARES"
-bucket_name = "openstrand-shares"
+bucket_name = "openstrandstudio"
 
 # At most 10 shares a minute from one IP address (counted in each Cloudflare location).
 [[ratelimits]]

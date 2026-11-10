@@ -505,7 +505,7 @@ class MainWindow(QMainWindow):
         # Claude's app tools run here, with the app's own code (src/claude_bridge/).
         self.claude_panel.bridge = AppBridge(self, self.claude_panel)
         self.claude_button = ClaudeButton(self.claude_panel)
-        self.claude_button.setVisible(claude_settings.load()['show_button'])
+        self.claude_button.setVisible(claude_settings.claude_available())  # gone while AI models are off
         button_layout.addWidget(self.claude_button, 0)
 
         # Settings button (fixed size, no stretch)
@@ -2768,12 +2768,13 @@ class MainWindow(QMainWindow):
         return False
 
     def toggle_claude(self):
-        """Ctrl+J: show or hide Claude, unless Settings > Claude has hidden it."""
+        """Ctrl+J: show or hide Claude, unless Settings > Claude has hidden it or turned AI models off."""
         if self.claude_button.isVisible():
             self.claude_panel.set_open(not self.claude_panel.is_open())
 
     def set_claude_available(self, shown):
-        """Settings > Claude: show the Claude button, or hide it and Claude with it."""
+        """Settings > Claude: show the Claude button, or hide it and Claude with it (the box
+        that shows it, and the one that turns AI models off altogether)."""
         self.claude_button.setVisible(shown)
         if not shown:
             self.claude_panel.set_open(False)

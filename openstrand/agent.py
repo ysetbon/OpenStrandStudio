@@ -345,6 +345,7 @@ class Workspace:
         self.tab = None
         self.tab_version = None
         self.theirs = False  # the current design is the person's own, as read (never shared as Claude's)
+        self.own = False  # this request read a design of the person's (its work is then never called new)
         self.version = 0
         self.rendered_version = -1
         self._preview = None
@@ -365,6 +366,7 @@ class Workspace:
         self.tab = tab  # the tab this design was read from, while it is unchanged
         self.tab_version = tab_version  # that tab's version when read: edits are refused if it changed
         self.theirs = bool(theirs or tab is not None)
+        self.own = self.own or self.theirs  # from here on, what it makes may come from theirs
         self.version += 1
         project.write(data, self.project_path)
 
@@ -811,7 +813,10 @@ class Agent:
                  'plan': self.plan, 'opened_tabs': self.opened_tabs, **self.usage,
                  # Whether the design is this request's work: False while it is still the person's
                  # own as read (their canvas, a tab or a past step of one), which is never shared.
-                 'changed': ws.data is not None and not ws.theirs}
+                 'changed': ws.data is not None and not ws.theirs,
+                 # Whether the design was made from nothing of the person's: False once this request
+                 # read their canvas, a tab or a past step. Only such a design may go in the gallery.
+                 'new': ws.data is not None and not ws.own}
         if self.plan:  # a plan builds nothing, whatever is in the workspace
             event['project'] = event['png'] = None
         if ws.tab is not None:

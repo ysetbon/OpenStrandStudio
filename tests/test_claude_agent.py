@@ -179,10 +179,12 @@ def test_start_design_is_loaded_and_described(tmp_path):
     assert "set 1" in described and "set 2" in described
     assert result["project"]
     assert result["changed"] is False  # only looked at: still the person's canvas, never shared as Claude's
+    assert result["new"] is False
     recolored = ScriptedClient([reply(tool("t1", "recolor", sets=[1], color="gold")),
                                 reply(text("Gold now."), stop="end_turn")])
     result = agent.Agent(recolored, tmp_path, model="claude-haiku-5-5").run("make it gold", start=start)
     assert result["ok"] and result["changed"] is True  # Claude's work now
+    assert result["new"] is False  # but made from the person's own canvas: never for the gallery
 
 
 def test_a_tab_or_a_past_step_of_one_is_the_person_s_never_claude_s_work(tmp_path):
@@ -209,9 +211,11 @@ def test_a_tab_or_a_past_step_of_one_is_the_person_s_never_claude_s_work(tmp_pat
         return agent.Agent(client, tmp_path, model="claude-haiku-5-5", app=app).run("x")
     made = run()
     assert made["ok"] and made["opened_tabs"] == ["Rings"] and made["project"] and made["changed"] is True
+    assert made["new"] is True  # made from nothing of the person's: it may go in the gallery
     past = run(("read_tab_step", {"tab_id": "1", "step": 2}))
     assert past["ok"] and past["opened_tabs"] == ["Rings"] and past["project"]  # a copy, in the workspace
     assert past["changed"] is False  # the person's tab two steps ago: never shared as Claude's design
+    assert past["new"] is False
     tab = run(("read_tab", {"tab_id": "1"}))
     assert tab["ok"] and tab["changed"] is False and tab["in_tab"] == "1" and tab["project"] is None
     recolored = run(("read_tab_step", {"tab_id": "1", "step": 2}), ("recolor", {"sets": [1], "color": "gold"}))
@@ -292,7 +296,7 @@ def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch
     assert claude_settings.load() == {"api_key": "", "keys": {}, "catalog": {}, "model": "claude-sonnet-5-5", "web": True,
                                       "max_cost": 2.0, "spent": 0.0, "spent_since": "",
                                       "show_button": True, "effort": "high", "session_limit": 10.0, "mode": "auto",
-                                      "share": None, "models_on": True, "allow_china": False}
+                                      "share": None, "gallery": None, "models_on": True, "allow_china": False}
     claude_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5", web=False, max_cost=5)
     assert claude_settings.load() == {"api_key": "sk-ant-test-1234567890",
                                       "keys": {"anthropic": "sk-ant-test-1234567890"}, "catalog": {},
@@ -300,7 +304,7 @@ def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch
                                       "web": False, "max_cost": 5.0, "spent": 0.0, "spent_since": "",
                                       "show_button": True,
                                       "effort": "high", "session_limit": 10.0, "mode": "auto", "share": None,
-                                      "models_on": True, "allow_china": False}
+                                      "gallery": None, "models_on": True, "allow_china": False}
     # Every provider has its key; the model can be any provider's.
     claude_settings.save(provider_key=("xai", " xai-test-123456789 "), model="grok-4.7")
     saved = claude_settings.load()
@@ -699,9 +703,11 @@ def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed
         (card,) = cards()
         assert card["state"] is None and got == [] and claude_settings.load()["share"] is None
         asked = panel.transcript.toPlainText()
-        assert "Share your results from Claude with the OpenStrand Studio developer" in asked
-        assert "From now on, with any model" in asked  # a yes holds for the requests after it, any model
-        assert "your canvas too if Claude changed it" in asked and "file names" in asked
+        assert "Help make it better" in asked and "Yes, help improve it" in asked
+        assert "From now on, send the developer what the model makes" in asked  # a yes holds from here on
+        assert "Never sent: what you type, your pictures, your files, your API keys" in asked
+        # What a short text could leave out is said too: the answer can quote, their design goes whole.
+        assert "can repeat words from your request" in asked and "a design of yours that the model changed" in asked
         run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT two rings")
         assert len(cards()) == 1  # left unanswered: not asked again while the app runs
         # Share: this request goes, sealed; the next ones go without asking.
@@ -711,7 +717,9 @@ def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed
         shared = claude_sharing.unseal(got[0], private)
         assert shared["answer"] == ["Two linked rings, in teal."] and shared["model"] == "claude-haiku-5-5"
         assert shared["design"]["strands"] and shared["ok"] is True
+        assert shared["version"] == claude_sharing.APP_VERSION and shared["gallery"] is False
         assert "SECRET-PROMPT" not in json.dumps(shared)  # what the person typed never goes
+        assert [e for e in panel.entries if e["kind"] == "gallery"] == []  # no gallery set up: not asked
         run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT again")
         assert received(2) and len(cards()) == 1
         panel.finished()  # the same request finishing twice is still shared once
@@ -736,6 +744,35 @@ def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed
         keyed[0]["text"] = "Your key an-odd-saved-key-0123456789 works."
         run_events(panel, keyed, tmp_path, prompt="SECRET-PROMPT my key")
         assert received(5) and claude_sharing.unseal(got[4], private)["answer"] == ["Your key … works."]
+        # The public gallery is a second question, asked only after a yes to sharing, and only
+        # once the developer says where the gallery is. Until the person says yes, no share
+        # says it may be shown, and never one made from a design of their own.
+        monkeypatch.setattr(claude_sharing, "GALLERY_URL", "https://example.github.io/OpenStrandStudio/")
+        fresh = lambda: run()[:1] + [dict(run()[1], new=True)]  # noqa: E731 (made from nothing of theirs)
+        run_events(panel, fresh(), tmp_path, prompt="SECRET-PROMPT a new one")
+        assert received(6) and claude_sharing.unseal(got[5], private)["gallery"] is False
+        saved = json.loads(Path(claude_settings.settings_path()).read_text(encoding="utf-8"))
+        saved.pop("share")  # as before the person was ever asked
+        Path(claude_settings.settings_path()).write_text(json.dumps(saved), encoding="utf-8")
+        panel.shared_event, panel.share_asked = None, False
+        panel.entries.clear()
+        run_events(panel, fresh(), tmp_path, prompt="SECRET-PROMPT asked again")
+        (card,) = cards()
+        panel.follow_link(QUrl(f"os:share/{panel.entries.index(card)}"))
+        (asked,) = [e for e in panel.entries if e["kind"] == "gallery"]
+        text = panel.transcript.toPlainText()
+        assert "public gallery" in text and "https://example.github.io/OpenStrandStudio/" in text
+        assert "Never the answer" in text and "cannot find yours later to take them down" in text
+        assert received(7) and claude_sharing.unseal(got[6], private)["gallery"] is False  # not answered yet
+        panel.follow_link(QUrl(f"os:gallery/{panel.entries.index(asked)}"))
+        assert asked["state"] == "shared" and claude_settings.load()["gallery"] is True
+        run_events(panel, fresh(), tmp_path, prompt="SECRET-PROMPT for the gallery")
+        assert received(8)
+        shown = claude_sharing.unseal(got[7], private)
+        assert shown["gallery"] is True and shown["new"] is True
+        run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT from my canvas")  # not new: stays private
+        assert received(9) and claude_sharing.unseal(got[8], private)["gallery"] is False
+        assert len([e for e in panel.entries if e["kind"] == "gallery"]) == 1  # asked once
         # Turned off (Settings > Models): nothing goes, not even a share already on its way.
         claude_settings.save(share=False)
         run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT once more")
@@ -749,7 +786,7 @@ def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed
         assert "not shared: sharing was turned off" in said
         assert not any(line.startswith("shared with the developer") for line in said)
         time.sleep(0.2)
-        assert len(got) == 5 and len(cards()) == 1
+        assert len(got) == 9 and len(cards()) == 1
     finally:
         http.shutdown()
         panel.entries.clear()
@@ -776,11 +813,24 @@ def test_settings_say_where_the_keys_are_and_offer_sharing_once_it_is_set_up(tmp
     page.share_check.setChecked(True)
     assert claude_settings.load()["share"] is True
     page.retranslate("de")
-    assert page.share_check.isChecked() and page.share_check.text().startswith("Was Claude erstellt")
+    assert page.share_check.isChecked() and page.share_check.text().startswith("Was das Modell erstellt")
+    # The gallery box: shown once the developer says where the gallery is, its own yes, and
+    # only while sharing is on.
+    assert page.gallery_check.isHidden() and page.gallery_hint.isHidden()
+    monkeypatch.setattr(claude_sharing, "GALLERY_URL", "https://example.github.io/OpenStrandStudio/")
+    page.retranslate("en")
+    assert not page.gallery_check.isHidden() and not page.gallery_check.isChecked()
+    assert "https://example.github.io/OpenStrandStudio/" in page.gallery_hint.text()
+    page.gallery_check.setChecked(True)
+    assert claude_settings.load()["gallery"] is True
+    page.share_check.setChecked(False)  # sharing off: the gallery box goes with it
+    assert not page.gallery_check.isEnabled() and not page.gallery_check.isChecked()
+    assert claude_settings.load()["share"] is False
 
 
 def test_with_models_off_the_panel_sends_nothing_and_a_running_request_stops(window, monkeypatch, tmp_path):
-    from PyQt5.QtCore import QProcess
+    from PyQt5.QtCore import QProcess, Qt
+    from PyQt5.QtTest import QTest
     import claude_settings
     from claude_panel import ClaudeSettingsPage
     monkeypatch.setenv("APPDATA", str(tmp_path))
@@ -793,9 +843,19 @@ def test_with_models_off_the_panel_sends_nothing_and_a_running_request_stops(win
     assert any("DeepSeek" in page.model_combo.itemText(i) for i in range(page.model_combo.count()))
     page.china_check.setChecked(False)
     assert claude_settings.load()["allow_china"] is False
+    page.show_button_changed.connect(window.set_claude_available)  # as the Settings dialog does
+    button, panel = window.claude_button, window.claude_panel
+    panel.set_open(True)
+    assert button.isVisible() and panel.isVisible() and page.show_check.isEnabled()
     page.models_check.setChecked(False)
     assert claude_settings.load()["models_on"] is False and not page.refresh_button.isEnabled()
-    panel = window.claude_panel
+    # Off is off everywhere: no Claude button in the main window, no panel, and Ctrl+J does nothing.
+    assert not button.isVisible() and not panel.isVisible() and not claude_settings.claude_available()
+    window.activateWindow()
+    QTest.keyClick(window.windowHandle(), Qt.Key_J, Qt.ControlModifier)
+    assert not panel.isVisible()
+    assert not page.show_check.isEnabled() and claude_settings.load()["show_button"] is True  # kept for later
+    assert "Claude button also leaves the main window" in page.models_hint.text()
     started, killed = [], []
     monkeypatch.setattr("claude_panel.QProcess.start", lambda self, program, args: started.append(args))
     panel.prompt_edit.setText("a heart")
@@ -804,6 +864,13 @@ def test_with_models_off_the_panel_sends_nothing_and_a_running_request_stops(win
     # Turned off while a request runs: it stops at once, as with Stop.
     page.models_check.setChecked(True)
     assert claude_settings.load()["models_on"] and page.refresh_button.isEnabled()
+    assert button.isVisible() and not panel.isVisible() and page.show_check.isEnabled()  # back, and closed
+    page.show_check.setChecked(False)  # hidden by its own box: turning models on does not bring it back
+    page.models_check.setChecked(False)
+    page.models_check.setChecked(True)
+    assert not button.isVisible()
+    page.show_check.setChecked(True)
+    assert button.isVisible()
     panel.process = SimpleNamespace(state=lambda: QProcess.Running, kill=lambda: killed.append(1))
     try:
         panel.refresh_controls()

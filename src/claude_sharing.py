@@ -1,11 +1,12 @@
-"""Sharing what Claude makes with the OpenStrand Studio developer, only when the person
-says yes. They are asked once, on a card under Claude's first answer; Settings > Models
+"""Sharing what the model makes with the OpenStrand Studio developer, only when the person
+says yes. They are asked once, on a card under the model's first answer; Settings > Models
 changes it at any time.
 
 What goes, for each request once the person said yes (until they turn it off), whichever
-model answered: the design Claude made, whole (the person's canvas too, when Claude changed
-it; never their canvas, a tab or a past step of one that Claude only read), its picture,
-Claude's answer, the model, the app's language, and whether the request worked. What never
+model answered: the design it made, whole (the person's canvas too, when the model changed
+it; never their canvas, a tab or a past step of one that it only read), its picture, the
+model's answer, the model, the app's version and language, whether the request worked, and
+whether the design was made from nothing of the person's (new). What never
 goes: the request the person typed, pictures they gave Claude, their API keys, their files,
 folders (every path and every API key in an answer or a design is cut out: the person's own
 keys whatever their shape, and any sk-... or xai-... key), an error's text, the time,
@@ -22,6 +23,13 @@ into the Worker or its storage can read it.
 
 Off until the developer sets SHARE_URL and SHARE_PUBLIC_KEY below
 (cloudflare/share-worker/README.md says how): the panel and Settings then show nothing.
+
+The public gallery (gallery/, on GitHub Pages) is a second, separate yes, asked only after
+the first: a share then says the developer may show its design there (gallery). Only a
+design made from nothing of the person's can say so, and the developer still looks at each
+one and publishes a cleaned copy by hand (scripts/share_inbox.py publish): the design and
+its picture, with the model and the app's version, never the answer. What is in the inbox
+stays private either way. Off until the developer sets GALLERY_URL below.
 """
 import base64
 import json
@@ -35,6 +43,11 @@ import claude_settings
 # The Worker that receives shares, and the developer's public key (scripts/share_inbox.py keygen).
 SHARE_URL = ''  # 'https://openstrand-share.<your-account>.workers.dev/v1/share'
 SHARE_PUBLIC_KEY = ''
+# Where the public gallery is shown, once it is on GitHub Pages (gallery/README.md).
+GALLERY_URL = ''  # 'https://<your-account>.github.io/OpenStrandStudio/'
+# This app's version, as its installers say it (src/OpenStrandStudio_mac.spec, src/inno setup):
+# change it with them. It goes with each share, so a result can be set against the version.
+APP_VERSION = '2.1'
 
 MAGIC = b'OSS1'  # what every sealed share starts with: the format and its version
 INFO = b'OpenStrand Studio share v1'  # bound into the encryption: a share opens as nothing else
@@ -78,6 +91,13 @@ def available(url=None, key=None):
     except Exception:  # noqa: BLE001 - not set up, or no cryptography: no sharing
         return False
     return True
+
+
+def gallery_available(url=None):
+    """Whether the gallery can be offered: sharing works here, and the developer said where
+    the gallery is (an https address)."""
+    url = GALLERY_URL if url is None else url
+    return str(url).startswith('https://') and available()
 
 
 # ---------------------------------------------------------------------- keys
@@ -160,16 +180,22 @@ def scrub(value, secrets=()):
     return value
 
 
-def record(answer, design=None, picture=None, model='', language='', ok=True, secrets=()):
-    """One share: Claude's answer (its texts, in order), the design it made (a project dict)
-    and its picture (PNG bytes), the model, the app's language, whether the request worked
-    (not why not: an error's text can hold the person's own settings, a spending limit).
-    secrets: the person's API keys, cut out of the answer and the design like any key."""
+def record(answer, design=None, picture=None, model='', language='', ok=True, secrets=(), new=False,
+           gallery=False):
+    """One share: the model's answer (its texts, in order), the design it made (a project dict)
+    and its picture (PNG bytes), the model, the app's version and language, whether the request
+    worked (not why not: an error's text can hold the person's own settings, a spending limit).
+    secrets: the person's API keys, cut out of the answer and the design like any key.
+    new: the design was made from nothing of the person's. gallery: the person allows their new
+    designs in the public gallery; a share only says so for a design that is new and worked."""
     secrets = sorted({str(s).strip() for s in secrets or () if len(str(s or '').strip()) >= MIN_SECRET},
                      key=len, reverse=True)  # a longer key first, should one hold another
+    made = isinstance(design, dict)
     return {'format': FORMAT, 'model': str(model or ''), 'language': str(language or ''), 'ok': bool(ok),
+            'version': APP_VERSION, 'new': bool(new) and made,
+            'gallery': bool(gallery) and bool(new) and bool(ok) and made,
             'answer': scrub([str(t) for t in answer or [] if str(t).strip()], secrets),
-            'design': scrub(design, secrets) if isinstance(design, dict) else None,
+            'design': scrub(design, secrets) if made else None,
             'picture': base64.b64encode(picture).decode('ascii') if picture else None}
 
 

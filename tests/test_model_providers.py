@@ -18,6 +18,13 @@ for folder in (ROOT, ROOT / "src", ROOT / "scripts"):
 from openstrand import agent, providers  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def nothing_forbidden(monkeypatch):
+    """These tests are about the clients themselves. What Settings > Models forbids
+    (providers.POLICY, set once claude_settings is imported) has tests of its own."""
+    monkeypatch.setattr(providers, "POLICY", None)
+
+
 @pytest.fixture
 def server(monkeypatch):
     """A local API: answers queued in .answers ((status, body)), requests kept in .seen."""
@@ -194,6 +201,170 @@ def test_claude_still_uses_anthropic_itself():
     assert type(client) is anthropic.Anthropic and "api.anthropic.com" in str(client.base_url)
     assert isinstance(providers.client_for("gpt-6-astra", "sk"), providers.ResponsesClient)
     assert isinstance(providers.client_for("kimi", "sk"), providers.CompatClient)
+
+
+# ------------------------------------------------------------ safe requests
+MESSAGE = {"id": "msg_1", "type": "message", "role": "assistant", "model": "m", "stop_reason": "end_turn",
+           "stop_sequence": None, "content": [{"type": "text", "text": "done"}],
+           "usage": {"input_tokens": 1, "output_tokens": 1}}
+
+
+@pytest.fixture
+def start(monkeypatch):
+    """start(answer=..., redirect_to=...): a local server that keeps every request it gets (its
+    headers as sent, repeats included); it answers with a JSON body, or redirects elsewhere."""
+    monkeypatch.setenv("NO_PROXY", "127.0.0.1,localhost")
+    monkeypatch.setenv("no_proxy", "127.0.0.1,localhost")
+    servers = []
+
+    def start_server(answer=None, redirect_to=None):
+        seen = []
+
+        class Handler(BaseHTTPRequestHandler):
+            def reply(self):
+                length = int(self.headers.get("Content-Length") or 0)
+                if length:
+                    self.rfile.read(length)
+                seen.append({"path": self.path, "headers": [(k.lower(), v) for k, v in self.headers.items()]})
+                out = json.dumps(answer or {}).encode()
+                if redirect_to:  # 302: what a client following it would send on, key and all
+                    self.send_response(302)
+                    self.send_header("Location", redirect_to + self.path)
+                else:
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(out)))
+                self.end_headers()
+                self.wfile.write(out)
+
+            do_GET = do_POST = reply
+
+            def log_message(self, *args):
+                pass
+        http = HTTPServer(("127.0.0.1", 0), Handler)
+        threading.Thread(target=http.serve_forever, daemon=True).start()
+        servers.append(http)
+        return f"http://127.0.0.1:{http.server_port}", http.server_port, seen
+    yield start_server
+    for http in servers:
+        http.shutdown()
+
+
+def credentials(request):
+    return [(k, v) for k, v in request["headers"] if k in ("authorization", "x-api-key")]
+
+
+def test_every_endpoint_is_https_and_lists_its_models_on_its_own_api_host():
+    for p in providers.PROVIDERS.values():
+        assert p.base_url.startswith("https://") and p.models_url.startswith("https://"), p.key
+        assert providers.host_of(p.models_url) == providers.host_of(p.base_url), p.key
+    context = providers.tls_context()
+    import ssl
+    assert context.verify_mode == ssl.CERT_REQUIRED and context.check_hostname
+    assert context.minimum_version >= ssl.TLSVersion.TLSv1_2
+
+
+def test_a_key_goes_over_https_to_its_own_host_only():
+    providers.check_url("https://api.x.ai/v1/responses", "api.x.ai")
+    providers.check_url("http://127.0.0.1:8123/v1", "127.0.0.1")  # this computer itself: the tests
+    for url in ("http://api.x.ai/v1/responses", "https://api.x.ai.evil.example/v1", "https://evil.example/v1",
+                "ftp://api.x.ai/v1"):
+        with pytest.raises(providers.UnsafeRequest):
+            providers.check_url(url, "api.x.ai")
+    # Refused before anything is sent: no connection is even tried.
+    plain = dataclasses.replace(providers.PROVIDERS["xai"], base_url="http://api.x.ai/v1")
+    with pytest.raises(providers.UnsafeRequest, match="https://api.x.ai only"):
+        providers.ResponsesClient(plain, "xai-secret").messages.create(
+            model="grok-4.7", messages=[{"role": "user", "content": "hi"}])
+    anthropic = pytest.importorskip("anthropic")
+    client = providers.sdk_client(anthropic, "http://api.anthropic.com", "sk-ant-secret").with_options(max_retries=0)
+    with pytest.raises(anthropic.APIConnectionError) as refused:
+        client.messages.create(model="claude-sonnet-5-5", max_tokens=10, messages=[{"role": "user", "content": "hi"}])
+    assert isinstance(refused.value.__cause__, providers.UnsafeRequest)
+
+
+def test_a_redirect_never_carries_a_key_to_another_host(start, monkeypatch):
+    elsewhere, port, taken = start()
+    front, _, asked = start(redirect_to=f"http://localhost:{port}")  # another host name, as a redirect would be
+    # The SDK (Claude, and Kimi, DeepSeek and Qwen's endpoints): the 302 is the answer, not followed.
+    anthropic = pytest.importorskip("anthropic")
+    client = providers.compatible_sdk(anthropic, "sk-secret", front + "/anthropic").with_options(max_retries=0)
+    with pytest.raises(anthropic.APIStatusError) as answer:
+        client.messages.create(model="kimi-k3.1-pro", max_tokens=10, messages=[{"role": "user", "content": "hi"}])
+    assert answer.value.status_code == 302
+    # The Responses API (GPT, Grok): a 302 would be followed as a GET, its Authorization header with it.
+    responses = providers.ResponsesClient(dataclasses.replace(providers.PROVIDERS["openai"], base_url=front + "/v1"),
+                                          "sk-secret")
+    with pytest.raises(providers.ProviderError, match="returned 302"):
+        responses.messages.create(model="gpt-6.1-terra", messages=[{"role": "user", "content": "hi"}])
+    # Refresh models.
+    monkeypatch.setitem(providers.PROVIDERS, "deepseek",
+                        dataclasses.replace(providers.PROVIDERS["deepseek"], models_url=front + "/models"))
+    with pytest.raises(providers.ProviderError, match="returned 302"):
+        providers.list_models("deepseek", "sk-secret")
+    assert len(asked) == 3 and taken == []  # the key reached the provider's own host only
+
+
+def test_environment_variables_neither_move_a_client_nor_add_a_credential(start, monkeypatch):
+    anthropic = pytest.importorskip("anthropic")
+    # Set for Claude Code by people who use DeepSeek's or Kimi's endpoint with it.
+    monkeypatch.setenv("ANTHROPIC_BASE_URL", "https://api.deepseek.com/anthropic")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-from-env")
+    monkeypatch.setenv("ANTHROPIC_AUTH_TOKEN", "sk-other-from-env")
+    monkeypatch.setenv("ANTHROPIC_CUSTOM_HEADERS",
+                       "X-Api-Key: sk-ant-from-env\nAuthorization: Bearer sk-other-from-env\nX-Note: kept")
+    claude = providers.client_for("claude-sonnet-5-5", "sk-ant-mine")
+    assert str(claude.base_url).rstrip("/") == "https://api.anthropic.com"
+    assert str(providers.client_for("deepseek", "sk-ds")._client.base_url).rstrip("/") == \
+        "https://api.deepseek.com/anthropic"
+    url, _, seen = start(answer=MESSAGE)
+    for client, key in ((providers.sdk_client(anthropic, url, "sk-ant-mine"), "sk-ant-mine"),
+                        (providers.compatible_sdk(anthropic, "sk-kimi-mine", url + "/anthropic"), "sk-kimi-mine")):
+        client.messages.create(model="m", max_tokens=10, messages=[{"role": "user", "content": "hi"}])
+        sent = credentials(seen[-1])
+        assert sent and all(value in (key, f"Bearer {key}") for _, value in sent), sent
+        assert len({name for name, _ in sent}) == len(sent)  # one value each, no repeats
+        assert ("x-note", "kept") in seen[-1]["headers"]  # what is not a credential stays
+
+
+def test_what_the_settings_forbid_is_never_sent(start, monkeypatch):
+    anthropic = pytest.importorskip("anthropic")
+    url, _, seen = start(answer=MESSAGE)
+    forbidden = {"deepseek", "xai", None}  # None: a share with the developer
+    monkeypatch.setattr(providers, "POLICY", lambda p: "turned off in Settings > Models" if p in forbidden else None)
+    with pytest.raises(anthropic.APIConnectionError) as refused:
+        providers.compatible_sdk(anthropic, "sk-ds", url + "/anthropic", provider="deepseek").with_options(
+            max_retries=0).messages.create(model="m", max_tokens=10, messages=[{"role": "user", "content": "hi"}])
+    assert isinstance(refused.value.__cause__, providers.NotAllowed)
+    grok = providers.ResponsesClient(dataclasses.replace(providers.PROVIDERS["xai"], base_url=url + "/v1"), "xai-k")
+    with pytest.raises(providers.NotAllowed, match="turned off"):
+        grok.messages.create(model="grok-4.7", messages=[{"role": "user", "content": "hi"}])
+    monkeypatch.setitem(providers.PROVIDERS, "deepseek",
+                        dataclasses.replace(providers.PROVIDERS["deepseek"], models_url=url + "/models"))
+    with pytest.raises(providers.NotAllowed):
+        providers.list_models("deepseek", "sk-ds")
+    assert providers.refresh({"deepseek": "sk-ds"})["providers"]["deepseek"] == {
+        "error": "turned off in Settings > Models"}
+    assert seen == []  # not one byte left
+    providers.sdk_client(anthropic, url, "sk-ant", provider="anthropic").messages.create(
+        model="m", max_tokens=10, messages=[{"role": "user", "content": "hi"}])
+    assert len(seen) == 1  # what is allowed still goes
+
+
+def test_each_provider_says_where_its_company_is_based():
+    assert {p.key: p.country for p in providers.PROVIDERS.values()} == {
+        "anthropic": "US", "openai": "US", "xai": "US", "moonshot": "CN", "deepseek": "CN", "qwen": "CN"}
+
+
+def test_the_tests_own_stand_in_api_must_be_on_this_computer(monkeypatch):
+    pytest.importorskip("anthropic")
+    monkeypatch.setenv("OPENSTRAND_TEST_API", "http://127.0.0.1:8123")
+    assert str(providers.client_for("claude-sonnet-5-5", "sk-ant-x").base_url).startswith("http://127.0.0.1:8123")
+    assert providers.client_for("grok", "xai-x").provider.base_url == "http://127.0.0.1:8123"
+    for elsewhere in ("https://api.deepseek.com/anthropic", "http://10.0.0.5:8123"):
+        monkeypatch.setenv("OPENSTRAND_TEST_API", elsewhere)
+        with pytest.raises(providers.UnsafeRequest, match="must be on this computer"):
+            providers.client_for("claude-sonnet-5-5", "sk-ant-x")
 
 
 # ------------------------------------------------------------ Refresh models

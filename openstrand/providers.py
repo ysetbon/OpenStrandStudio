@@ -15,13 +15,22 @@ same for every model:
 
 Model ids, endpoints and prices are as the providers published them in November
 2026; PRICES are USD per million tokens: input, output, cache write, cache read.
+
+A key only ever goes to its own provider (see "Safe requests" below): every
+request is checked on its way out (HTTPS, to the host its endpoint names here),
+no redirect is followed, and environment variables can neither move a client
+(ANTHROPIC_BASE_URL) nor add another credential to its requests.
 """
 import json
 import os
 import re
+import ssl
 import time
+import urllib.error
+import urllib.request
 from dataclasses import dataclass, field, replace
 from types import SimpleNamespace
+from urllib.parse import quote, urlsplit
 
 
 @dataclass(frozen=True)
@@ -34,6 +43,7 @@ class Provider:
     keys_url: str = ''  # where to make a key
     key_hint: str = ''  # what a key looks like (the key field's placeholder)
     models_url: str = ''  # where it lists the models a key can use (Refresh models)
+    country: str = ''  # where the company is based ('CN': off unless the person allows it)
 
 
 @dataclass(frozen=True)
@@ -50,24 +60,24 @@ class Model:
 
 
 PROVIDERS = {p.key: p for p in (
-    Provider('anthropic', 'Anthropic (Claude)', 'anthropic', 'ANTHROPIC_API_KEY',
+    Provider('anthropic', 'Anthropic (Claude)', 'anthropic', 'ANTHROPIC_API_KEY', 'https://api.anthropic.com',
              keys_url='https://console.anthropic.com/settings/keys', key_hint='sk-ant-…',
-             models_url='https://api.anthropic.com/v1/models'),
+             models_url='https://api.anthropic.com/v1/models', country='US'),
     Provider('openai', 'OpenAI (GPT)', 'responses', 'OPENAI_API_KEY', 'https://api.openai.com/v1',
-             'https://platform.openai.com/api-keys', 'sk-…', 'https://api.openai.com/v1/models'),
+             'https://platform.openai.com/api-keys', 'sk-…', 'https://api.openai.com/v1/models', country='US'),
     Provider('xai', 'xAI (Grok)', 'responses', 'XAI_API_KEY', 'https://api.x.ai/v1',
-             'https://console.x.ai', 'xai-…', 'https://api.x.ai/v1/language-models'),
+             'https://console.x.ai', 'xai-…', 'https://api.x.ai/v1/language-models', country='US'),
     Provider('moonshot', 'Moonshot AI (Kimi)', 'anthropic-compatible', 'MOONSHOT_API_KEY',
              'https://api.moonshot.ai/anthropic', 'https://platform.kimi.ai/console/api-keys', 'sk-…',
-             'https://api.moonshot.ai/v1/models'),
+             'https://api.moonshot.ai/v1/models', country='CN'),
     Provider('deepseek', 'DeepSeek', 'anthropic-compatible', 'DEEPSEEK_API_KEY',
              'https://api.deepseek.com/anthropic', 'https://platform.deepseek.com/api_keys', 'sk-…',
-             'https://api.deepseek.com/models'),
+             'https://api.deepseek.com/models', country='CN'),
     # Its model list is not in Alibaba's docs: Refresh tries the OpenAI-compatible one.
     Provider('qwen', 'Alibaba Cloud (Qwen)', 'anthropic-compatible', 'DASHSCOPE_API_KEY',
              'https://dashscope-intl.aliyuncs.com/apps/anthropic',
              'https://modelstudio.console.alibabacloud.com/?tab=playground#/api-key', 'sk-…',
-             'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/models'),
+             'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/models', country='CN'),
 )}
 
 BUILTIN = {m.id: m for m in (
@@ -125,18 +135,24 @@ def api_key(provider, saved=None):
 def client_for(model, key):
     """A client for the model's provider, answering like anthropic.Anthropic()."""
     p = provider_of(model)
+    stand_in = os.environ.get(TEST_API, '').strip()
+    if stand_in:  # the tests' local stand-in for the provider's API, never another computer
+        if host_of(stand_in) not in LOOPBACK:
+            raise UnsafeRequest(f'{TEST_API} must be on this computer (127.0.0.1 or localhost), '
+                                f'not {host_of(stand_in) or stand_in}')
+        p = replace(p, base_url=stand_in.rstrip('/'))
     if p.api == 'responses':
         return ResponsesClient(p, key)
     import anthropic
     if p.api == 'anthropic':
-        return anthropic.Anthropic(api_key=key)
-    return CompatClient(compatible_sdk(anthropic, key, p.base_url))
+        return sdk_client(anthropic, p.base_url, key, provider=p.key)
+    return CompatClient(compatible_sdk(anthropic, key, p.base_url, provider=p.key))
 
 
-def compatible_sdk(anthropic, key, base_url):
+def compatible_sdk(anthropic, key, base_url, provider=None):
     """The anthropic SDK on a compatible endpoint. Their docs for Claude Code give the key
     as a Bearer token (ANTHROPIC_AUTH_TOKEN); some read x-api-key: send it both ways."""
-    return anthropic.Anthropic(auth_token=key, base_url=base_url, default_headers={'x-api-key': key})
+    return sdk_client(anthropic, base_url, key, bearer=True, provider=provider)
 
 
 class ProviderError(Exception):
@@ -145,6 +161,112 @@ class ProviderError(Exception):
     def __init__(self, provider, status_code, message):
         super().__init__(f'{provider} API returned {status_code}: {message}')
         self.provider, self.status_code, self.message = provider, status_code, message
+
+
+# --------------------------------------------------------------- safe requests
+# The endpoints above are the only places a key goes. Each request is checked as it
+# leaves: HTTPS to the host its endpoint names (plain HTTP only to this computer itself,
+# where the tests stand in for the APIs), with the certificate and its host name
+# verified. A redirect is never followed, since following one could carry the key to
+# another host. What the environment says cannot change this: the SDK would otherwise
+# take its endpoint from ANTHROPIC_BASE_URL (set for Claude Code by people who use
+# DeepSeek's or Kimi's endpoint, it would send the Claude key and the whole request
+# there), and credentials from ANTHROPIC_AUTH_TOKEN or ANTHROPIC_CUSTOM_HEADERS.
+LOOPBACK = ('127.0.0.1', 'localhost', '::1')
+CREDENTIAL_HEADERS = ('authorization', 'x-api-key')
+# For the tests only: the URL of a stand-in for every provider's API, which must be on this
+# computer itself (so, unlike ANTHROPIC_BASE_URL, it can never take a key anywhere else).
+TEST_API = 'OPENSTRAND_TEST_API'
+
+
+class UnsafeRequest(ValueError):
+    """A request that would have taken a key where it does not belong. It was not sent."""
+
+
+class NotAllowed(UnsafeRequest):
+    """A request the person's settings forbid (Settings > Models). It was not sent."""
+
+
+# What the person allows (Settings > Models): set by the app's claude_settings, which reads
+# their choice afresh each time. POLICY(provider key, or None for a share with the developer)
+# gives a sentence saying why nothing may be sent, or None. Every request asks it just
+# before it would leave, so switching models off (or the providers based in China) stops
+# them all, the requests of an agent already running included. Without the app (the tests,
+# the CLI on its own) it is None: nothing to ask.
+POLICY = None
+
+
+def check_allowed(provider):
+    """Raise NotAllowed when the person's settings forbid sending anything to provider."""
+    reason = POLICY(provider) if POLICY is not None else None
+    if reason:
+        raise NotAllowed(reason)
+
+
+def host_of(url):
+    return (urlsplit(str(url)).hostname or '').lower()
+
+
+def check_url(url, host):
+    """Raise UnsafeRequest unless url is on host, over HTTPS (HTTP only to this computer)."""
+    parts = urlsplit(str(url))
+    name = (parts.hostname or '').lower()
+    if name != host or not (parts.scheme == 'https' or (parts.scheme == 'http' and name in LOOPBACK)):
+        raise UnsafeRequest(f'refused to send a request to {parts.scheme}://{name}: '
+                            f'the key for {host} goes to https://{host} only')
+
+
+def sdk_client(anthropic, base_url, key, bearer=False, provider=None):
+    """anthropic.Anthropic held to one endpoint: base_url and key are given here, so the
+    SDK reads neither from the environment; it follows no redirect, and each request is
+    checked on its way out: that the person allows it (POLICY), its host, and its
+    credentials, which are this key exactly as the SDK sends it (whatever else an
+    environment variable put there is replaced)."""
+    host = host_of(base_url)
+    wanted = {}  # header name (lowercase) -> its one value; filled once the client exists
+
+    def guard(request):
+        check_allowed(provider)
+        check_url(request.url, host)
+        for name in CREDENTIAL_HEADERS:
+            mine = [wanted[name]] if name in wanted else []
+            if request.headers.get_list(name) != mine:
+                if name in request.headers:
+                    del request.headers[name]
+                for value in mine:
+                    request.headers[name] = value
+
+    http = anthropic.DefaultHttpxClient(follow_redirects=False, event_hooks={'request': [guard]})
+    if bearer:
+        client = anthropic.Anthropic(auth_token=key, base_url=base_url, http_client=http,
+                                     default_headers={'x-api-key': key})
+    else:
+        client = anthropic.Anthropic(api_key=key, base_url=base_url, http_client=http)
+    wanted.update({name.lower(): value for name, value in (client.auth_headers or {'x-api-key': key}).items()})
+    if bearer:
+        wanted['x-api-key'] = key
+    return client
+
+
+class _NoRedirects(urllib.request.HTTPRedirectHandler):
+    """A redirect ends the request: its 3xx comes back as the answer (an HTTPError)."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def tls_context():
+    """The certificate and its host name checked, TLS 1.2 or newer."""
+    context = ssl.create_default_context()
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
+    return context
+
+
+def open_url(request, host, timeout):
+    """urllib's urlopen for a request that carries a key for host: checked, never redirected."""
+    check_url(request.full_url, host)
+    opener = urllib.request.build_opener(urllib.request.HTTPSHandler(context=tls_context()), _NoRedirects)
+    return opener.open(request, timeout=timeout)
 
 
 # ------------------------------------------------- Anthropic-compatible endpoints
@@ -313,13 +435,12 @@ class ResponsesClient:
 
     def post(self, body):
         """(status, headers, parsed body or text) of one POST to /responses."""
-        import urllib.error
-        import urllib.request
+        check_allowed(self.provider.key)
         request = urllib.request.Request(
             f'{self.provider.base_url}/responses', data=json.dumps(body).encode('utf-8'), method='POST',
             headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {self.key}'})
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as answer:
+            with open_url(request, host_of(self.provider.base_url), self.timeout) as answer:
                 status, headers, raw = answer.status, dict(answer.headers), answer.read()
         except urllib.error.HTTPError as e:
             status, headers, raw = e.code, dict(e.headers or {}), e.read()
@@ -329,7 +450,6 @@ class ResponsesClient:
             return status, headers, raw.decode('utf-8', 'replace')[:500]
 
     def create(self, **params):
-        import urllib.error
         model = params['model']
         request = responses_request(params, model, self.include_reasoning)
         status, data = 0, None
@@ -341,7 +461,7 @@ class ResponsesClient:
                     time.sleep(2 ** (attempt + 1))
                     continue
                 raise ProviderError(self.provider.name, 0, f'cannot reach {self.provider.base_url}: {e}') from None
-            if status < 400 and isinstance(data, dict):
+            if 200 <= status < 300 and isinstance(data, dict):  # a redirect (3xx) is no answer
                 return responses_message(data, model)
             message = self.error_text(data)
             if status == 400 and 'include' in request and 'include' in message.lower():
@@ -405,13 +525,14 @@ def pretty(model_id):
     return ' '.join(out)
 
 
-def _get_json(url, headers, timeout):
-    import urllib.error
-    import urllib.request
+def _get_json(url, headers, timeout, host):
+    """GET url (with a key in headers, for host only) as parsed JSON."""
     request = urllib.request.Request(url, headers=headers, method='GET')
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as answer:
+        with open_url(request, host, timeout) as answer:
             return json.loads(answer.read().decode('utf-8') or 'null')
+    except UnsafeRequest as e:
+        raise ProviderError(url.split('/')[2], 0, str(e)) from None
     except urllib.error.HTTPError as e:
         try:
             data = json.loads(e.read().decode('utf-8') or 'null')
@@ -426,12 +547,14 @@ def list_models(provider, key, timeout=30.0):
     """The models a provider offers to this key, as dicts {id, label, vision, prices,
     retiring, retired}; prices only where the provider says them (xAI), else None."""
     p = PROVIDERS[provider]
+    check_allowed(provider)
+    host = host_of(p.models_url)  # every page of the list from there, whatever an answer says
     found = []
     if provider == 'anthropic':
         url, after = p.models_url + '?limit=100', None
         while True:
-            data = _get_json(url + (f'&after_id={after}' if after else ''),
-                             {'x-api-key': key, 'anthropic-version': '2023-06-01'}, timeout) or {}
+            data = _get_json(url + (f'&after_id={quote(str(after), safe="")}' if after else ''),
+                             {'x-api-key': key, 'anthropic-version': '2023-06-01'}, timeout, host) or {}
             for m in data.get('data') or []:
                 state = str(m.get('lifecycle') or m.get('status') or '').lower()
                 found.append({'id': m.get('id'), 'label': m.get('display_name') or pretty(m.get('id')),
@@ -442,7 +565,7 @@ def list_models(provider, key, timeout=30.0):
                 break
             after = data['last_id']
     else:
-        data = _get_json(p.models_url, {'Authorization': f'Bearer {key}'}, timeout) or {}
+        data = _get_json(p.models_url, {'Authorization': f'Bearer {key}'}, timeout, host) or {}
         rows = data.get('models') if provider == 'xai' else data.get('data')
         today = time.strftime('%Y-%m-%d')
         for m in rows or []:
@@ -521,4 +644,6 @@ def refresh(keys, timeout=30.0):
             catalog['providers'][provider] = {'models': list_models(provider, key, timeout)}
         except ProviderError as e:
             catalog['providers'][provider] = {'error': e.message if e.status_code else str(e.message)}
+        except NotAllowed as e:  # turned off in Settings > Models: not asked at all
+            catalog['providers'][provider] = {'error': str(e)}
     return catalog

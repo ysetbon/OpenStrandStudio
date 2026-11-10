@@ -344,6 +344,7 @@ class Workspace:
         self.data = None
         self.tab = None
         self.tab_version = None
+        self.theirs = False  # the current design is the person's own, as read (never shared as Claude's)
         self.version = 0
         self.rendered_version = -1
         self._preview = None
@@ -357,10 +358,13 @@ class Workspace:
             raise ToolError('there is no design yet: make, draw or load one first')
         return self.data
 
-    def store(self, data, tab=None, tab_version=None):
+    def store(self, data, tab=None, tab_version=None, theirs=False):
+        """data becomes the current design. theirs: it is the person's own as read (their canvas,
+        a tab, a past step of one), not this request's work, until a tool stores another."""
         self.data = data
         self.tab = tab  # the tab this design was read from, while it is unchanged
         self.tab_version = tab_version  # that tab's version when read: edits are refused if it changed
+        self.theirs = bool(theirs or tab is not None)
         self.version += 1
         project.write(data, self.project_path)
 
@@ -677,7 +681,7 @@ class Agent:
         if history:
             prompt = with_history(prompt, history)
         if start is not None:
-            self.workspace.store(start)
+            self.workspace.store(start, theirs=True)
             prompt = ('The design on my canvas right now is already loaded as the current design '
                       f'({project.summary(start)}). Change it if my request is about it; '
                       'make a new one if I ask for something new.\n\n' + prompt)
@@ -804,7 +808,10 @@ class Agent:
                  'project': str(ws.project_path) if ws.data is not None else None,
                  'png': str(ws.png_path) if ws.rendered_version == ws.version and ws.data is not None else None,
                  'cost': round(self.cost, 4), 'model': self.model, 'searches': self.searches,
-                 'plan': self.plan, 'opened_tabs': self.opened_tabs, **self.usage}
+                 'plan': self.plan, 'opened_tabs': self.opened_tabs, **self.usage,
+                 # Whether the design is this request's work: False while it is still the person's
+                 # own as read (their canvas, a tab or a past step of one), which is never shared.
+                 'changed': ws.data is not None and not ws.theirs}
         if self.plan:  # a plan builds nothing, whatever is in the workspace
             event['project'] = event['png'] = None
         if ws.tab is not None:

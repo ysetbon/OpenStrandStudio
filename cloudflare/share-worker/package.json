@@ -1,0 +1,14 @@
+{
+  "name": "openstrand-share-worker",
+  "private": true,
+  "type": "module",
+  "description": "OpenStrand Studio's share inbox: keeps the sealed shares people choose to send the developer.",
+  "scripts": {
+    "test": "node --test test/worker.test.mjs",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.152.0"
+  }
+}

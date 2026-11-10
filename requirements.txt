@@ -2,3 +2,5 @@ PyQt5==5.15.4
 pillow>=8.0.0 
 anthropic>=2.4  # the Claude panel and "openstrand agent" only
 numpy>=1.24     # knot tools: tying, simulation, knot invariants
+keyring>=24        # API keys in the system's password store (Keychain, Credential Manager); else claude.json
+cryptography>=47   # sharing with the developer: seals each share (HPKE with ML-KEM); else no sharing

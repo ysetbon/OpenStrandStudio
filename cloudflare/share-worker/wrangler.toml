@@ -1,0 +1,26 @@
+# OpenStrand Studio's share inbox (README.md says how to set it up).
+name = "openstrand-share"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+# No request logs: they would keep the senders' IP addresses. Turn on only to debug.
+[observability]
+enabled = false
+
+# Where the sealed shares are kept (private: R2 buckets have no public access unless you add it).
+[[r2_buckets]]
+binding = "SHARES"
+bucket_name = "openstrand-shares"
+
+# At most 10 shares a minute from one IP address (counted in each Cloudflare location).
+[[ratelimits]]
+name = "SHARE_LIMIT"
+namespace_id = "1001"
+simple = { limit = 10, period = 60 }
+
+[vars]
+MAX_BYTES = "8388608"  # 8 MB, as the app's own limit
+
+# Secret (never in this file): INBOX_TOKEN, set with `npx wrangler secret put INBOX_TOKEN`.
+# Without it no one can read the inbox, you included.

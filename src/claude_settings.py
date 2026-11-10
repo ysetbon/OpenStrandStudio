@@ -1,16 +1,22 @@
 """The model settings (Settings > Models): the user's API key for each provider
 (Anthropic, OpenAI, xAI, Moonshot, DeepSeek, Alibaba Cloud), the model to use,
-and what the requests have cost in all on this computer.
+whether what Claude makes is shared with the developer, and what the requests
+have cost in all on this computer.
 
 Kept in claude.json in the OpenStrand Studio settings folder, on this computer
-only, and never in project files or user_settings.txt. On macOS and Linux the
-file is readable by the user alone.
+only, and never in project files or user_settings.txt. The API keys go in the
+system's own password store when there is one (macOS Keychain, Windows
+Credential Manager, the Secret Service on Linux, through the keyring package):
+claude.json then only says which providers have a key there. Without one they
+stay in claude.json, which is readable by the user alone on macOS and Linux.
 """
 import datetime
 import importlib.util
 import json
 import os
 import sys
+import tempfile
+import time
 
 
 def _providers():
@@ -51,13 +57,56 @@ def catalog():
     return found if isinstance(found, dict) else {}
 
 
-def models():
+def models(data=None):
     """[(model id, name)] offered now: the built-in models, with what the last Refresh
-    found (new ones added, ones a provider no longer offers hidden)."""
+    found (new ones added, ones a provider no longer offers hidden), less those of the
+    providers based in China unless the person allowed them (data: claude.json's, read
+    when not given)."""
     if providers is None:
         return list(MODELS)
     providers.use_catalog(catalog())
-    return [(m.id, m.label) for m in providers.MODELS.values()]
+    china = (_read() if data is None else data).get('allow_china') is True
+    return [(m.id, m.label) for m in providers.MODELS.values() if china or not based_in_china(m.provider)]
+
+
+def own_keys(current=None):
+    """Every API key this app knows of, saved or set in the environment, whatever its shape:
+    claude_sharing cuts each one out of anything shared (an answer may repeat a key)."""
+    current = load() if current is None else current
+    keys = set(current['keys'].values())
+    keys.update(os.environ.get(spec.env, '').strip() for spec in PROVIDERS.values() if spec.env)
+    return sorted(key for key in keys if key)
+
+
+def sharing_on():
+    """Whether a share may go now: the person said yes and has not turned it (or models) off.
+    Read from claude.json alone (no password store), so a background thread can ask it."""
+    data = _read()
+    return data.get('share') is True and data.get('models_on', True) is not False
+
+
+def based_in_china(provider):
+    spec = PROVIDERS.get(provider)
+    return getattr(spec, 'country', '') == 'CN'
+
+
+def refusal(provider=None, data=None):
+    """Why nothing may be sent to provider now, as Settings > Models says (a sentence), or
+    None when it may. provider None: a share with the developer, refused only while AI
+    models are off. providers.POLICY: every request asks this just before it leaves."""
+    data = _read() if data is None else data
+    if data.get('models_on', True) is False:
+        return ('AI models are turned off in OpenStrand Studio (Settings > Models): nothing is sent to any '
+                'of them')
+    if provider and based_in_china(provider) and data.get('allow_china') is not True:
+        name = PROVIDERS[provider].name
+        return (f'{name} is turned off in OpenStrand Studio (Settings > Models): models from companies based '
+                'in China are only used once the person allows them')
+    return None
+
+
+if providers is not None:
+    providers.POLICY = refusal  # the agent's own copy too, when it imports this module
 
 
 def model_info(model):
@@ -73,14 +122,17 @@ def fetch_catalog():
     for key, spec in PROVIDERS.items():
         if not keys.get(key):
             keys[key] = os.environ.get(spec.env, '').strip()
-    return providers.refresh({k: v for k, v in keys.items() if v})
+    data = _read()  # only the providers Settings > Models allows are asked
+    return providers.refresh({k: v for k, v in keys.items() if v and refusal(k, data) is None})
 
 
 def refresh_due(hours=24):
     """Whether the automatic Refresh models should run: some provider has a key, and the
     last refresh (by hand or not) is older than hours, or there was none."""
     current = load()
-    keyed = any(current['keys'].get(k) or os.environ.get(spec.env, '').strip() for k, spec in PROVIDERS.items())
+    data = _read()
+    keyed = any((current['keys'].get(k) or os.environ.get(spec.env, '').strip()) and refusal(k, data) is None
+                for k, spec in PROVIDERS.items())
     if not keyed or providers is None:
         return False
     stamp = (current.get('catalog') or {}).get('refreshed') or ''
@@ -137,6 +189,85 @@ DEFAULT_EFFORT = 'high'
 MODES = ('ask', 'auto')  # ask before opening a design, or open it at once (plan mode is never kept)
 DEFAULT_MODE = 'auto'
 FILE_NAME = 'claude.json'
+KEYCHAIN_SERVICE = 'OpenStrandStudio'  # the keys' entries in the password store: this, and the provider
+
+
+# ------------------------------------------------------------ the password store
+_found = []  # [the keyring backend to use, or None], once looked for
+_cache = {}  # provider -> its key as read from (or written to) the store by this process
+# Providers whose key the store would not give this process (locked, or access refused).
+# Their keys are still there: nothing may take them off the store or out of claude.json's list.
+_unreadable = set()
+
+
+def keychain():
+    """The system's password store, or None: keyring not installed, no secure store on this
+    computer (keyring's 'fail' backend, or one that keeps its own files), or
+    OPENSTRAND_KEYCHAIN=off (the tests, which must never touch the real one)."""
+    if os.environ.get('OPENSTRAND_KEYCHAIN', '').strip().lower() in ('off', '0', 'no', 'false'):
+        return None
+    if not _found:
+        _found.append(_find_keychain())
+    return _found[0]
+
+
+def _find_keychain():
+    try:
+        import keyring
+        from keyring.backends import chainer, fail
+        backend = keyring.get_keyring()
+        first = backend
+        if isinstance(backend, chainer.ChainerBackend):
+            chained = list(backend.backends)
+            first = chained[0] if chained else fail.Keyring()
+        if isinstance(first, fail.Keyring) or float(getattr(first, 'priority', 0) or 0) < 1:
+            return None
+        if type(first).__module__.startswith('keyrings.alt'):  # plain files of its own: no better than ours
+            return None
+        return backend
+    except Exception:  # noqa: BLE001 - no keyring, or a store that cannot be reached
+        return None
+
+
+def key_storage():
+    """'keychain' when the keys go in the system's password store, else 'file'."""
+    return 'keychain' if keychain() is not None else 'file'
+
+
+def _stored_key(store, provider):
+    """The provider's key from the store, '' when there is none or it cannot be read now
+    (locked, or access refused: _unreadable, and asked again next time)."""
+    if provider not in _cache:
+        try:
+            _cache[provider] = str(store.get_password(KEYCHAIN_SERVICE, provider) or '').strip()
+        except Exception:  # noqa: BLE001
+            _unreadable.add(provider)
+            return ''
+        _unreadable.discard(provider)
+    return _cache[provider]
+
+
+def _store_key(store, provider, key):
+    """Put the key in the store (when it is not there already); False if that failed."""
+    if _cache.get(provider) == key:
+        return True
+    try:
+        store.set_password(KEYCHAIN_SERVICE, provider, key)
+    except Exception:  # noqa: BLE001
+        _cache.pop(provider, None)
+        return False
+    _cache[provider] = key
+    _unreadable.discard(provider)
+    return True
+
+
+def _forget_key(store, provider):
+    _cache.pop(provider, None)
+    _unreadable.discard(provider)
+    try:
+        store.delete_password(KEYCHAIN_SERVICE, provider)
+    except Exception:  # noqa: BLE001 - not there: nothing to remove
+        pass
 
 
 def settings_directory():
@@ -176,46 +307,75 @@ def _money(value):
     return value if value > 0 and value == value and value != float('inf') else 0.0
 
 
-def load():
-    """{'api_key', 'model', 'web', 'max_cost', 'spent', 'spent_since', 'show_button'};
-    empty key when none is saved.
-
-    spent is what every request has cost in all, in USD, since spent_since
-    (an ISO date, empty before the first request). show_button is False when
-    Settings > Claude hides Claude altogether. Claude itself always starts closed."""
-    data = {}
+def _read():
     try:
         with open(settings_path(), 'r', encoding='utf-8') as f:
             data = json.load(f)
     except (OSError, ValueError):
-        data = {}
-    if not isinstance(data, dict):
-        data = {}
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def load():
+    """{'api_key', 'keys', 'model', 'web', 'max_cost', 'spent', 'spent_since', 'show_button',
+    'share', ...}; empty key when none is saved.
+
+    spent is what every request has cost in all, in USD, since spent_since
+    (an ISO date, empty before the first request). show_button is False when
+    Settings > Claude hides Claude altogether. Claude itself always starts closed.
+    share: whether what Claude makes goes to the developer (claude_sharing): None until
+    the person is asked, then True or False. Keys saved in claude.json by an earlier
+    version move to the password store here, once there is one."""
+    data = _read()
     model = data.get('model')
-    offered = [m for m, _ in models()]
+    offered = [m for m, _ in models(data)]
     if model not in offered:
         model = DEFAULT_MODEL if DEFAULT_MODEL in offered else (offered or [DEFAULT_MODEL])[0]
     keys = {str(k): str(v).strip() for k, v in (data.get('api_keys') or {}).items()
             if isinstance(data.get('api_keys'), dict) and str(v or '').strip()}
     if str(data.get('api_key') or '').strip():
         keys['anthropic'] = str(data.get('api_key')).strip()
-    return {'api_key': keys.get('anthropic', ''), 'keys': keys, 'model': model,
-            'catalog': data.get('catalog') if isinstance(data.get('catalog'), dict) else {},
-            'web': data.get('web', True) is not False,
-            'max_cost': _cost(data.get('max_cost', DEFAULT_MAX_COST)),
-            'spent': _money(data.get('spent')), 'spent_since': str(data.get('spent_since') or ''),
-            'show_button': data.get('show_button', True) is not False,
-            'effort': data.get('effort') if data.get('effort') in EFFORTS else DEFAULT_EFFORT,
-            'session_limit': _range(data.get('session_limit', DEFAULT_SESSION_LIMIT), SESSION_LIMIT_RANGE,
-                                    DEFAULT_SESSION_LIMIT),
-            'mode': data.get('mode') if data.get('mode') in MODES else DEFAULT_MODE}
+    in_file = bool(keys)
+    stored = [str(p) for p in data.get('keychain') or [] if isinstance(data.get('keychain'), list)]
+    store = keychain() if (stored or in_file) else None
+    for provider in stored if store is not None else ():
+        key = _stored_key(store, provider)
+        if key:
+            keys.setdefault(provider, key)
+    current = {'api_key': keys.get('anthropic', ''), 'keys': keys, 'model': model,
+               'catalog': data.get('catalog') if isinstance(data.get('catalog'), dict) else {},
+               'web': data.get('web', True) is not False,
+               'max_cost': _cost(data.get('max_cost', DEFAULT_MAX_COST)),
+               'spent': _money(data.get('spent')), 'spent_since': str(data.get('spent_since') or ''),
+               'show_button': data.get('show_button', True) is not False,
+               'effort': data.get('effort') if data.get('effort') in EFFORTS else DEFAULT_EFFORT,
+               'session_limit': _range(data.get('session_limit', DEFAULT_SESSION_LIMIT), SESSION_LIMIT_RANGE,
+                                       DEFAULT_SESSION_LIMIT),
+               'mode': data.get('mode') if data.get('mode') in MODES else DEFAULT_MODE,
+               'share': data.get('share') if data.get('share') in (True, False) else None,
+               'models_on': data.get('models_on', True) is not False,
+               'allow_china': data.get('allow_china') is True}
+    if in_file and store is not None:
+        _write(current)  # keys an earlier version kept in claude.json: into the store
+    return current
 
 
 def save(api_key=None, model=None, web=None, max_cost=None, show_button=None,
-         effort=None, session_limit=None, mode=None, provider_key=None):
+         effort=None, session_limit=None, mode=None, provider_key=None, share=None,
+         models_on=None, allow_china=None):
     """Update the saved settings given. api_key is Anthropic's; provider_key is
-    (provider, key) for any provider. An empty key removes it."""
+    (provider, key) for any provider. An empty key removes it. share, models_on (False:
+    nothing is ever sent to a model) and allow_china (the providers based in China):
+    True or False."""
     current = load()
+    if models_on is not None:
+        current['models_on'] = bool(models_on)
+    if allow_china is not None:
+        current['allow_china'] = bool(allow_china)
+        offered = [m for m, _ in models({'allow_china': current['allow_china']})]
+        if current['model'] not in offered:  # its provider is no longer allowed
+            current['model'] = DEFAULT_MODEL if DEFAULT_MODEL in offered else (offered or [DEFAULT_MODEL])[0]
+    removed = set()  # keys the person removed: off the store too, even one it cannot read now
     if api_key is not None:
         provider_key = ('anthropic', api_key)
     if provider_key is not None:
@@ -225,9 +385,10 @@ def save(api_key=None, model=None, web=None, max_cost=None, show_button=None,
             current['keys'][provider] = key
         else:
             current['keys'].pop(provider, None)
+            removed.add(provider)
         current['api_key'] = current['keys'].get('anthropic', '')
     if model is not None:
-        if model not in [m for m, _ in models()]:
+        if model not in [m for m, _ in models({'allow_china': current['allow_china']})]:
             raise ValueError(f'unknown model {model}')
         current['model'] = model
     if web is not None:
@@ -244,7 +405,9 @@ def save(api_key=None, model=None, web=None, max_cost=None, show_button=None,
         current['session_limit'] = _range(session_limit, SESSION_LIMIT_RANGE, DEFAULT_SESSION_LIMIT)
     if mode is not None and mode in MODES:
         current['mode'] = mode
-    return _write(current)
+    if share is not None:
+        current['share'] = bool(share)
+    return _write(current, removed)
 
 
 def add_spending(amount):
@@ -265,25 +428,76 @@ def reset_spending():
     return _write(current)
 
 
-def _write(current):
+def _write(current, removed=()):
+    """Save current (load's dict). removed: providers whose key the person removed."""
     path = settings_path()
     os.makedirs(os.path.dirname(path), exist_ok=True)
     payload = {'model': current['model'], 'web': current['web'], 'max_cost': current['max_cost'],
                'spent': current['spent'], 'spent_since': current['spent_since'],
                'show_button': current['show_button'],
                'effort': current['effort'], 'session_limit': current['session_limit'], 'mode': current['mode']}
-    if current['api_key']:
-        payload['api_key'] = current['api_key']
+    if current.get('share') is not None:
+        payload['share'] = bool(current['share'])
+    payload['models_on'] = current.get('models_on', True) is not False
+    payload['allow_china'] = current.get('allow_china') is True
     if current.get('catalog'):
         payload['catalog'] = current['catalog']
-    others = {k: v for k, v in current['keys'].items() if k != 'anthropic' and v}
+    # Each key in the password store, else (none, or it refused this one) in the file.
+    store = keychain()
+    stored, plain = [], {}
+    for provider, key in current['keys'].items():
+        if key and store is not None and _store_key(store, provider, key):
+            stored.append(provider)
+        elif key:
+            plain[provider] = key
+    # The keys the file says are in the store, and that load() could not read just now (the
+    # store locked or refusing, or no store in this process): still there, so still listed,
+    # never deleted, unless the person removed them. The rest that are not saved again were
+    # removed, moved to the file, or are gone from the store: off it.
+    before = _read().get('keychain')
+    for provider in [str(p) for p in before] if isinstance(before, list) else []:
+        if provider in stored:
+            continue
+        if provider not in plain and provider not in removed and (store is None or provider in _unreadable):
+            stored.append(provider)
+        elif store is not None:
+            _forget_key(store, provider)
+    if stored:
+        payload['keychain'] = sorted(stored)
+    if plain.get('anthropic'):
+        payload['api_key'] = plain['anthropic']
+    others = {k: v for k, v in plain.items() if k != 'anthropic'}
     if others:
         payload['api_keys'] = others
-    # Create the file readable by its owner only before writing the key.
-    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, 'w', encoding='utf-8') as f:
-        json.dump(payload, f, indent=2)
+    _write_private(path, payload)
     return current
+
+
+REPLACE_TRIES = 6  # Windows: another process may hold claude.json open for a moment
+
+
+def _write_private(path, payload):
+    """Write the file whole or not at all (a crash halfway cannot lose the settings), and
+    readable by its owner only (mkstemp makes it so, before anything is in it). On Windows
+    the file may be open in another process for a moment, which refuses the replace: it is
+    tried again, and only after that written in place, from text already made whole."""
+    text = json.dumps(payload, indent=2)
+    fd, temp = tempfile.mkstemp(prefix='.claude-', suffix='.json', dir=os.path.dirname(path))
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            f.write(text)
+        for attempt in range(REPLACE_TRIES):
+            try:
+                os.replace(temp, path)
+                return
+            except PermissionError:
+                time.sleep(0.05 * (attempt + 1))
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            f.write(text)
+    finally:
+        if os.path.exists(temp):
+            os.unlink(temp)
 
 
 def masked(key):

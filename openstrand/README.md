@@ -159,12 +159,50 @@ strands, masks, groups and layer panel are exactly as in a saved project. With
 **Start from the canvas** on, the current canvas goes to Claude as the design
 to change. The app remembers whether Claude was showing.
 
-Settings > Claude holds the API key (on this computer only, in `claude.json`
-in the OpenStrand settings folder, never in projects), the model, web search,
-the spending limit per request, and what Claude has cost in all with a Reset
-button. Its first switch hides the Claude button altogether. For now Claude
-works when the app runs from source; the installed app needs the openstrand
-package bundled first.
+Settings > Models holds the API keys (on this computer only, never in
+projects: in the system's password store, macOS Keychain, Windows Credential
+Manager or the Secret Service, when the `keyring` package finds one, else in
+`claude.json` in the OpenStrand settings folder, readable by the user alone),
+the model, web search, the spending limit per request, and what Claude has
+cost in all with a Reset button. Its first switch hides the Claude button
+altogether. For now Claude works when the app runs from source; the installed
+app needs the openstrand package bundled first.
+
+A key only ever goes to its own provider (`providers.py`, "Safe requests"):
+each request is checked as it leaves (HTTPS, to the host its endpoint names,
+certificate checked), no redirect is followed, and environment variables can
+neither move a client (`ANTHROPIC_BASE_URL`, which Claude Code users of
+DeepSeek or Kimi often have set) nor add another credential to its requests.
+The one exception is for the tests: `OPENSTRAND_TEST_API` points the agent at
+a local stand-in API, and only on this computer itself (`127.0.0.1`,
+`localhost` or `::1`; any other host is refused).
+
+Sharing with the developer (`src/claude_sharing.py`) is offered only once the
+developer has set `SHARE_URL` and `SHARE_PUBLIC_KEY` there (the Worker's
+README says how), and then off until the person says yes, on a card under
+Claude's first answer or in Settings > Models; a yes holds for each request
+after it, until they turn it off. For each request, whichever model answered,
+the design Claude made (all of it, the person's canvas too when Claude changed
+it; never a canvas, tab or past step that Claude only read: the agent's
+`changed` says which), its picture and Claude's answer, with the model, the
+app's language and whether the request worked, are encrypted on this computer
+with the developer's public key and sent to the developer's Cloudflare Worker
+(`cloudflare/share-worker`). The setting is read again just before a share
+leaves, so one turned off meanwhile stays here. The request itself, the
+person's pictures, keys and files, every folder path, an error's text and the
+time are never sent, though Claude's answer may repeat words or bare file
+names from the request or the canvas. An API key an answer repeats is cut out
+(`claude_settings.own_keys`: the person's own keys, whatever their shape, and
+any `sk-...` or `xai-...` key).
+
+Two switches in Settings > Models decide what may be sent at all, and every
+request asks them just before it leaves (`providers.POLICY`, which
+`claude_settings.refusal` answers from the saved settings), in the app and in
+the agent it starts alike. **Connect to AI models**, turned off, sends nothing
+to any model: no request, no Refresh models, no share; a request already
+running stops. **Allow Kimi, DeepSeek and Qwen (based in China)** is off until
+the person ticks it: their models are hidden and anything for them is refused.
+`openstrand agent` from a terminal follows the same settings.
 
 ### Claude and the app's tabs (the bridge)
 

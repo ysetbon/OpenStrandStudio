@@ -83,7 +83,7 @@ def test_agent_builds_checks_and_renders_a_design(tmp_path):
     result = agent.Agent(client, tmp_path, model="claude-sonnet-5-5", on_event=events.append).run(
         "5x3 right hand bracelet in teal and gold")
 
-    assert result["ok"] and result["error"] is None
+    assert result["ok"] and result["error"] is None and result["changed"] is True
     assert "teal vertical" in result["text"]
     info = project.describe(project.read(result["project"]))
     assert len(info["sets"]) == 8
@@ -178,6 +178,44 @@ def test_start_design_is_loaded_and_described(tmp_path):
     described = client.calls[1][1]["messages"][-1]["content"][0]["content"]
     assert "set 1" in described and "set 2" in described
     assert result["project"]
+    assert result["changed"] is False  # only looked at: still the person's canvas, never shared as Claude's
+    recolored = ScriptedClient([reply(tool("t1", "recolor", sets=[1], color="gold")),
+                                reply(text("Gold now."), stop="end_turn")])
+    result = agent.Agent(recolored, tmp_path, model="claude-haiku-5-5").run("make it gold", start=start)
+    assert result["ok"] and result["changed"] is True  # Claude's work now
+
+
+def test_a_tab_or_a_past_step_of_one_is_the_person_s_never_claude_s_work(tmp_path):
+    """After read_tab or read_tab_step the current design is the person's own, even when Claude
+    made and opened a design of its own earlier in the request: changed is False, so the panel
+    never shares it as Claude's. A tool that stores a new design makes it Claude's work again."""
+    hopf = ROOT / "knot_samples/links/json/hopf_link.json"
+
+    def call(name, args):  # the app, through the bridge
+        if name == "read_tab_step":
+            return {"file": str(hopf), "title": "Mine", "step": args["step"], "what": "moved a strand",
+                    "current_step": 4, "max_step": 4}
+        if name == "read_tab":
+            return {"file": str(hopf), "title": "Mine", "version": 7, "history": []}
+        return {"opened": True}
+    app = SimpleNamespace(call=call)
+
+    def run(*steps):
+        load = SimpleNamespace(type="tool_use", id="t1", name="load_sample", input={"name": "hopf_link"})
+        client = ScriptedClient([reply(load),
+                                 reply(tool("t2", "open_in_new_tab", design="current", title="Rings")),
+                                 *[reply(tool(f"t{3 + i}", name, **args)) for i, (name, args) in enumerate(steps)],
+                                 reply(text("Done."), stop="end_turn")])
+        return agent.Agent(client, tmp_path, model="claude-haiku-5-5", app=app).run("x")
+    made = run()
+    assert made["ok"] and made["opened_tabs"] == ["Rings"] and made["project"] and made["changed"] is True
+    past = run(("read_tab_step", {"tab_id": "1", "step": 2}))
+    assert past["ok"] and past["opened_tabs"] == ["Rings"] and past["project"]  # a copy, in the workspace
+    assert past["changed"] is False  # the person's tab two steps ago: never shared as Claude's design
+    tab = run(("read_tab", {"tab_id": "1"}))
+    assert tab["ok"] and tab["changed"] is False and tab["in_tab"] == "1" and tab["project"] is None
+    recolored = run(("read_tab_step", {"tab_id": "1", "step": 2}), ("recolor", {"sets": [1], "color": "gold"}))
+    assert recolored["ok"] and recolored["changed"] is True  # Claude changed it: its work now
 
 
 def test_agent_draws_its_own_design_and_reports_thinking_and_searches(tmp_path):
@@ -253,14 +291,16 @@ def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch
     monkeypatch.setenv("APPDATA", str(tmp_path))
     assert claude_settings.load() == {"api_key": "", "keys": {}, "catalog": {}, "model": "claude-sonnet-5-5", "web": True,
                                       "max_cost": 2.0, "spent": 0.0, "spent_since": "",
-                                      "show_button": True, "effort": "high", "session_limit": 10.0, "mode": "auto"}
+                                      "show_button": True, "effort": "high", "session_limit": 10.0, "mode": "auto",
+                                      "share": None, "models_on": True, "allow_china": False}
     claude_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5", web=False, max_cost=5)
     assert claude_settings.load() == {"api_key": "sk-ant-test-1234567890",
                                       "keys": {"anthropic": "sk-ant-test-1234567890"}, "catalog": {},
                                       "model": "claude-haiku-5-5",
                                       "web": False, "max_cost": 5.0, "spent": 0.0, "spent_since": "",
                                       "show_button": True,
-                                      "effort": "high", "session_limit": 10.0, "mode": "auto"}
+                                      "effort": "high", "session_limit": 10.0, "mode": "auto", "share": None,
+                                      "models_on": True, "allow_china": False}
     # Every provider has its key; the model can be any provider's.
     claude_settings.save(provider_key=("xai", " xai-test-123456789 "), model="grok-4.7")
     saved = claude_settings.load()
@@ -603,6 +643,179 @@ def test_the_panel_turns_events_into_a_transcript_and_opens_the_result(window, t
     assert panel.status_label.text().startswith("this request $0.012")
 
 
+def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed(window, monkeypatch, tmp_path):
+    pytest.importorskip("cryptography.hazmat.primitives.hpke")
+    import threading
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    from PyQt5.QtCore import QUrl
+    from PyQt5.QtWidgets import QApplication
+    import claude_settings
+    import claude_sharing
+    monkeypatch.setenv("APPDATA", str(tmp_path / "appdata"))
+    got = []
+
+    class Worker(BaseHTTPRequestHandler):  # a stand-in for the developer's Cloudflare Worker
+        def do_POST(self):
+            got.append(self.rfile.read(int(self.headers["Content-Length"])))
+            self.send_response(204)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
+        def log_message(self, *args):
+            pass
+    http = HTTPServer(("127.0.0.1", 0), Worker)
+    threading.Thread(target=http.serve_forever, daemon=True).start()
+    monkeypatch.setenv("NO_PROXY", "127.0.0.1,localhost")
+    monkeypatch.setenv("no_proxy", "127.0.0.1,localhost")
+    private, public = claude_sharing.new_keys()
+    panel = window.claude_panel
+    panel.entries.clear()
+    panel.share_asked, panel.stopping = False, False
+    design = tmp_path / "made.json"
+    design.write_text((ROOT / "knot_samples/links/json/hopf_link.json").read_text(), encoding="utf-8")
+
+    def run():  # one request's events, as the agent sends them (new ones each time)
+        return [{"type": "text", "text": "Two linked rings, in teal."},
+                {"type": "done", "ok": True, "error": None, "project": str(design), "cost": 0.01,
+                 "model": "claude-haiku-5-5"}]
+
+    def received(count):
+        for _ in range(200):
+            if len(got) >= count:
+                return True
+            QApplication.processEvents()
+            time.sleep(0.02)
+        return False
+
+    def cards():
+        return [e for e in panel.entries if e["kind"] == "share"]
+    try:
+        # Until the developer sets sharing up, nothing asks and nothing goes.
+        run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT two rings")
+        assert cards() == [] and got == []
+        monkeypatch.setattr(claude_sharing, "SHARE_URL", f"http://127.0.0.1:{http.server_port}/v1/share")
+        monkeypatch.setattr(claude_sharing, "SHARE_PUBLIC_KEY", public)
+        run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT two rings")
+        (card,) = cards()
+        assert card["state"] is None and got == [] and claude_settings.load()["share"] is None
+        asked = panel.transcript.toPlainText()
+        assert "Share your results from Claude with the OpenStrand Studio developer" in asked
+        assert "From now on, with any model" in asked  # a yes holds for the requests after it, any model
+        assert "your canvas too if Claude changed it" in asked and "file names" in asked
+        run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT two rings")
+        assert len(cards()) == 1  # left unanswered: not asked again while the app runs
+        # Share: this request goes, sealed; the next ones go without asking.
+        panel.follow_link(QUrl(f"os:share/{panel.entries.index(card)}"))
+        assert card["state"] == "shared" and "record" not in card and claude_settings.load()["share"] is True
+        assert received(1)
+        shared = claude_sharing.unseal(got[0], private)
+        assert shared["answer"] == ["Two linked rings, in teal."] and shared["model"] == "claude-haiku-5-5"
+        assert shared["design"]["strands"] and shared["ok"] is True
+        assert "SECRET-PROMPT" not in json.dumps(shared)  # what the person typed never goes
+        run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT again")
+        assert received(2) and len(cards()) == 1
+        panel.finished()  # the same request finishing twice is still shared once
+        time.sleep(0.3)
+        assert len(got) == 2
+        # A design Claude opened in a tab itself (through the bridge) is shared with it too.
+        tabbed = run()
+        tabbed[-1]["opened_tabs"] = ["Two rings"]
+        run_events(panel, tabbed, tmp_path, prompt="SECRET-PROMPT in a tab")
+        assert received(3) and claude_sharing.unseal(got[2], private)["design"]["strands"]
+        # A request that only looked at the person's canvas: their design is not Claude's to share.
+        looked = run()
+        looked[-1]["changed"] = False
+        run_events(panel, looked, tmp_path, prompt="SECRET-PROMPT what is this")
+        assert received(4)
+        only_answer = claude_sharing.unseal(got[3], private)
+        assert only_answer["design"] is None and only_answer["picture"] is None
+        assert only_answer["answer"] == ["Two linked rings, in teal."]
+        # An answer that repeats one of the person's keys (saved, of any shape): the key is cut out.
+        claude_settings.save(provider_key=("openai", "an-odd-saved-key-0123456789"))
+        keyed = run()
+        keyed[0]["text"] = "Your key an-odd-saved-key-0123456789 works."
+        run_events(panel, keyed, tmp_path, prompt="SECRET-PROMPT my key")
+        assert received(5) and claude_sharing.unseal(got[4], private)["answer"] == ["Your key … works."]
+        # Turned off (Settings > Models): nothing goes, not even a share already on its way.
+        claude_settings.save(share=False)
+        run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT once more")
+        said = []
+        monkeypatch.setattr(sys.modules[type(panel).__module__], "terminal_log", said.append)
+        panel.send_share(claude_sharing.record(["Queued just before sharing was turned off."]))
+        for _ in range(250):
+            if "not shared: sharing was turned off" in said:
+                break
+            time.sleep(0.02)
+        assert "not shared: sharing was turned off" in said
+        assert not any(line.startswith("shared with the developer") for line in said)
+        time.sleep(0.2)
+        assert len(got) == 5 and len(cards()) == 1
+    finally:
+        http.shutdown()
+        panel.entries.clear()
+
+
+def test_settings_say_where_the_keys_are_and_offer_sharing_once_it_is_set_up(tmp_path, monkeypatch):
+    pytest.importorskip("cryptography.hazmat.primitives.hpke")
+    from PyQt5.QtWidgets import QApplication
+    app = QApplication.instance() or QApplication([])  # noqa: F841 (kept alive for the page)
+    import claude_settings
+    import claude_sharing
+    from claude_panel import ClaudeSettingsPage
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    page = ClaudeSettingsPage("en")
+    assert page.share_check.isHidden() and page.share_hint.isHidden()  # the developer has not set it up
+    assert "settings folder" in page.storage.text()
+    _, public = claude_sharing.new_keys()
+    monkeypatch.setattr(claude_sharing, "SHARE_URL", "https://openstrand-share.example.workers.dev/v1/share")
+    monkeypatch.setattr(claude_sharing, "SHARE_PUBLIC_KEY", public)
+    monkeypatch.setattr(claude_settings, "keychain", lambda: object())  # a password store on this computer
+    page.retranslate("en")
+    assert not page.share_check.isHidden() and not page.share_check.isChecked()  # off until they say yes
+    assert "encrypted on this computer" in page.share_hint.text() and "password store" in page.storage.text()
+    page.share_check.setChecked(True)
+    assert claude_settings.load()["share"] is True
+    page.retranslate("de")
+    assert page.share_check.isChecked() and page.share_check.text().startswith("Was Claude erstellt")
+
+
+def test_with_models_off_the_panel_sends_nothing_and_a_running_request_stops(window, monkeypatch, tmp_path):
+    from PyQt5.QtCore import QProcess
+    import claude_settings
+    from claude_panel import ClaudeSettingsPage
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    claude_settings.save(api_key="sk-ant-test-1234567890")
+    page = ClaudeSettingsPage("en")
+    assert page.models_check.isChecked() and not page.china_check.isChecked() and page.refresh_button.isEnabled()
+    labels = [page.model_combo.itemText(i) for i in range(page.model_combo.count())]
+    assert labels and not any(name in label for label in labels for name in ("Kimi", "DeepSeek", "Qwen"))
+    page.china_check.setChecked(True)  # allowed: their models are offered
+    assert any("DeepSeek" in page.model_combo.itemText(i) for i in range(page.model_combo.count()))
+    page.china_check.setChecked(False)
+    assert claude_settings.load()["allow_china"] is False
+    page.models_check.setChecked(False)
+    assert claude_settings.load()["models_on"] is False and not page.refresh_button.isEnabled()
+    panel = window.claude_panel
+    started, killed = [], []
+    monkeypatch.setattr("claude_panel.QProcess.start", lambda self, program, args: started.append(args))
+    panel.prompt_edit.setText("a heart")
+    panel.send()
+    assert started == [] and "AI models are turned off in Settings > Models" in panel.transcript.toPlainText()
+    # Turned off while a request runs: it stops at once, as with Stop.
+    page.models_check.setChecked(True)
+    assert claude_settings.load()["models_on"] and page.refresh_button.isEnabled()
+    panel.process = SimpleNamespace(state=lambda: QProcess.Running, kill=lambda: killed.append(1))
+    try:
+        panel.refresh_controls()
+        assert killed == []  # on: it runs on
+        page.models_check.setChecked(False)  # the dialog sends settings_changed to the panel
+        panel.refresh_controls()
+        assert killed == [1] and panel.stopping
+    finally:
+        panel.process, panel.stopping = None, False
+        claude_settings.save(models_on=True)
+
+
 def test_the_panel_asks_for_a_key_before_sending(window, monkeypatch, tmp_path):
     monkeypatch.setenv("APPDATA", str(tmp_path))
     panel = window.claude_panel
@@ -808,7 +1021,9 @@ def fake_api(monkeypatch, request):
 
     server = HTTPServer(("127.0.0.1", 0), Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    monkeypatch.setenv("ANTHROPIC_BASE_URL", f"http://127.0.0.1:{server.server_port}")
+    # The agent runs every model on the stand-in (ANTHROPIC_BASE_URL would be ignored: see
+    # openstrand/providers.py, "Safe requests").
+    monkeypatch.setenv("OPENSTRAND_TEST_API", f"http://127.0.0.1:{server.server_port}")
     monkeypatch.setenv("NO_PROXY", "127.0.0.1,localhost")
     monkeypatch.setenv("no_proxy", "127.0.0.1,localhost")
     yield requests

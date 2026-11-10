@@ -31,6 +31,7 @@ from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QCheckBox, QCo
                              QWidget)
 
 import claude_settings
+import claude_sharing
 from translations import translations
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -647,6 +648,9 @@ class ClaudePanel(QWidget):
         self.last_mode = self.mode
         self.run_mode = self.mode
         self.run_texts = []
+        self.run_files = (None, None)  # the design this request made, and its picture (in out_dir)
+        self.share_asked = False  # whether to share with the developer: asked once while the app runs
+        self.shared_event = None  # the request last shared (or asked about): each one goes once
         self.stopping = False  # the person pressed Stop: the run ends without an answer, as asked
         self.step_keys = 0  # each tool step's pictures get their own name in the transcript
         # While a tool runs, its row's time and time left move on every second.
@@ -1126,6 +1130,18 @@ class ClaudePanel(QWidget):
                 choice = f'<span style="color:{c["muted"]};">{esc(t(word))}</span>'
             return (f'<table cellspacing="0" cellpadding="6" style="margin:4px 0 4px 18px;'
                     f' border:1px solid {c["log_border"]};"><tr><td>{text}<br>{choice}</td></tr></table>')
+        if kind == 'share':
+            if e['state'] is None:
+                text = f'{esc(t("claude_share_ask"))}<br>'
+                choice = (f'<a href="os:share/{i}" style="color:#D97757; font-weight:bold; text-decoration:none;">'
+                          f'{esc(t("claude_share_yes"))}</a>&nbsp;&nbsp;&nbsp;<a href="os:noshare/{i}" '
+                          f'style="color:{c["muted"]}; text-decoration:none;">{esc(t("claude_share_no"))}</a>')
+            else:
+                text = ''
+                said = 'claude_share_on' if e['state'] == 'shared' else 'claude_share_off'
+                choice = f'<span style="color:{c["muted"]};">{esc(t(said))}</span>'
+            return (f'<table cellspacing="0" cellpadding="6" style="margin:4px 0 4px 18px;'
+                    f' border:1px solid {c["log_border"]};"><tr><td>{text}{choice}</td></tr></table>')
         if kind == 'plan':
             if e['built']:
                 return f'<p style="margin:4px 0 4px 18px; color:{c["muted"]};">{esc(t("claude_plan_built"))}</p>'
@@ -1421,6 +1437,13 @@ class ClaudePanel(QWidget):
         elif what == 'plan' and not entry['built'] and not self.running():
             self.build_plan(entry)
             return
+        elif what in ('share', 'noshare') and entry['kind'] == 'share' and entry['state'] is None:
+            shared = what == 'share'
+            entry['state'] = 'shared' if shared else 'declined'
+            claude_settings.save(share=shared)  # Settings > Models shows it, and changes it
+            record = entry.pop('record', None)
+            if shared and record is not None:
+                self.send_share(record)
         self.render_transcript()
 
     # -------------------------------------------------------- status line
@@ -1448,6 +1471,9 @@ class ClaudePanel(QWidget):
         t = lambda key: _tr(self.language, key)
         c = self.colors
         saved = claude_settings.load()
+        if not saved['models_on'] and self.running():
+            terminal_log('AI models were turned off in Settings > Models: ending the agent')
+            self.send_or_stop()  # stops it, as Stop does: nothing more goes to the model
         self.new_button.setText('＋ ' + t('claude_new_session'))
         self.new_button.setEnabled(not self.running())
         color, key = self.MODE_LOOK[self.mode]
@@ -1584,6 +1610,9 @@ class ClaudePanel(QWidget):
             self.add_note(_tr(self.language, 'claude_source_only'), '#c0392b')
             return
         settings = claude_settings.load()
+        if not settings['models_on']:  # Settings > Models: nothing is ever sent to a model
+            self.add_note(_tr(self.language, 'models_off_note'), '#c0392b')
+            return
         provider = claude_settings.provider_of(settings['model'])
         spec = claude_settings.PROVIDERS.get(provider)
         key_env = spec.env if spec else 'ANTHROPIC_API_KEY'
@@ -1634,7 +1663,7 @@ class ClaudePanel(QWidget):
         # What this request has cost so far; the total keeps counting from
         # everything earlier requests cost, saved in claude.json.
         self.run_cost, self.total_before = 0.0, claude_settings.load()['spent']
-        self.run_mode, self.run_texts = self.mode, []
+        self.run_mode, self.run_texts, self.run_files = self.mode, [], (None, None)
         self.add_user((shown or prompt) + (f'  [{os.path.basename(self.image_path)}]' if self.image_path else ''))
         if typed:
             self.prompt_edit.clear()
@@ -1845,6 +1874,10 @@ class ClaudePanel(QWidget):
         try:
             self._finish()
             self.remember_turn()
+            try:
+                self.share_run()
+            except Exception:  # noqa: BLE001 - sharing never gets in the way of the answer
+                logging.exception('could not prepare this request for sharing')
         finally:
             self.new_button.setEnabled(True)
             self.activity_changed.emit()  # the Claude button stops turning
@@ -1863,6 +1896,59 @@ class ClaudePanel(QWidget):
         if tools:  # which tools ran and how each ended: Claude can say what happened
             turn['tools'] = tools
         self.history.append(turn)
+
+    # ------------------------------------------------- sharing with the developer
+    def share_run(self):
+        """What this request made, for the developer (claude_sharing): sent when the person
+        said yes; while they have not said, a card asks, once while the app runs. Nothing
+        for a request they stopped, or one that made nothing; nothing at all until the
+        developer has set sharing up."""
+        event = self.done_event
+        design, picture = self.run_files
+        if event is not None and event.get('changed') is False:
+            design = picture = None  # still the person's own canvas, as it came: theirs, not Claude's
+        if (event is None or event is self.shared_event or self.stopping or not (self.run_texts or design)
+                or not claude_sharing.available()):
+            return
+        self.shared_event = event
+        settings = claude_settings.load()
+        choice = settings['share']
+        if not settings['models_on'] or choice is False or (choice is None and self.share_asked):
+            return
+        record = self.share_record(event, design, picture, claude_settings.own_keys(settings))
+        if choice:
+            self.send_share(record)
+            return
+        self.share_asked = True
+        self.add_entry({'kind': 'share', 'state': None, 'record': record})
+
+    def share_record(self, event, design, picture, keys=()):
+        """The share for this request (claude_sharing.record): keys, the person's own, are cut
+        out of it wherever an answer or the design repeats one."""
+        project = png = None
+        if design and os.path.exists(design):
+            with open(design, 'r', encoding='utf-8') as f:
+                project = json.load(f)
+        if picture and os.path.exists(picture):
+            with open(picture, 'rb') as f:
+                png = f.read()
+        return claude_sharing.record(self.run_texts, project, png, model=event.get('model'), language=self.language,
+                                     ok=bool(event.get('ok')) and not event.get('error'), secrets=keys)
+
+    def send_share(self, record):
+        """Seal it and send it, off the main thread. The terminal says how it went, never what
+        it held; a share that fails is dropped (it never holds the panel up)."""
+        def send():
+            try:
+                sealed = claude_sharing.seal(record)
+                if not claude_settings.sharing_on():  # turned off since it was queued: it stays here
+                    terminal_log('not shared: sharing was turned off')
+                    return
+                status = claude_sharing.send(sealed)
+                terminal_log(f'shared with the developer, encrypted (the server answered {status})')
+            except Exception as e:  # noqa: BLE001
+                terminal_log(f'could not share with the developer: {type(e).__name__}: {e}')
+        threading.Thread(target=send, daemon=True).start()
 
     def run_tools(self):
         """This request's tool calls, for the next request: name, how it ended, time, summary."""
@@ -1902,6 +1988,7 @@ class ClaudePanel(QWidget):
         self.prompt_edit.setFocus()
 
     def _finish(self):
+        self.run_files = (None, None)  # set below when this request made a design
         self.read_events(flush=True)
         self.read_errors()
         if self.bridge is not None:
@@ -1935,6 +2022,9 @@ class ClaudePanel(QWidget):
             return
         project = event.get('project')
         if event.get('opened_tabs'):
+            if project and os.path.exists(project):  # still what this request made: shared as such
+                png = event.get('png')
+                self.run_files = (project, png if png and os.path.exists(png) else None)
             project = None  # Claude opened its tabs itself, through the bridge
         if project and os.path.exists(project):
             named = os.path.join(self.out_dir, design_name(self.prompt) + '.json')
@@ -1945,6 +2035,7 @@ class ClaudePanel(QWidget):
             if png and os.path.exists(png):
                 picture = named[:-5] + '.png'
                 shutil.copyfile(png, picture)
+            self.run_files = (named, picture)
             self.design_waiting = not self.is_open()
             if self.run_mode == 'ask':  # wait for "Open in new tab"
                 self.add_entry({'kind': 'design', 'path': named, 'png': picture, 'opened': False,
@@ -2127,6 +2218,24 @@ class ClaudeSettingsPage(QWidget):
         self.show_hint.setStyleSheet('color: gray;')
         layout.addWidget(self.show_hint)
 
+        # Off: OpenStrand never connects to any AI model (providers.POLICY refuses every request).
+        self.models_check = QCheckBox(self)
+        self.models_check.toggled.connect(self.set_models_on)
+        layout.addWidget(self.models_check)
+        self.models_hint = QLabel(self)
+        self.models_hint.setWordWrap(True)
+        self.models_hint.setStyleSheet('color: gray;')
+        layout.addWidget(self.models_hint)
+        # The providers based in China: off until the person allows them.
+        self.china_check = QCheckBox(self)
+        self.china_check.toggled.connect(self.set_allow_china)
+        layout.addWidget(self.china_check)
+        self.china_hint = QLabel(self)
+        self.china_hint.setWordWrap(True)
+        self.china_hint.setStyleSheet('color: gray;')
+        layout.addWidget(self.china_hint)
+        self.refreshing = False  # Refresh models is asking the providers
+
         provider_row = QHBoxLayout()
         self.key_label = QLabel(self)
         self.provider_combo = QComboBox(self)
@@ -2249,6 +2358,15 @@ class ClaudeSettingsPage(QWidget):
         self.spent_hint.setStyleSheet('color: gray;')
         layout.addWidget(self.spent_hint)
 
+        # Sharing what Claude makes with the developer: only once the developer set it up.
+        self.share_check = QCheckBox(self)
+        self.share_check.toggled.connect(lambda on: claude_settings.save(share=on))
+        layout.addWidget(self.share_check)
+        self.share_hint = QLabel(self)
+        self.share_hint.setWordWrap(True)
+        self.share_hint.setStyleSheet('color: gray;')
+        layout.addWidget(self.share_hint)
+
         self.storage = QLabel(self)
         self.storage.setWordWrap(True)
         self.storage.setStyleSheet('color: gray;')
@@ -2266,11 +2384,18 @@ class ClaudeSettingsPage(QWidget):
         self.save_button.setText(t('claude_save_key'))
         self.remove_button.setText(t('claude_remove_key'))
         self.model_label.setText(t('claude_model_label'))
-        self.storage.setText(t('claude_key_storage'))
+        self.storage.setText(t('claude_key_storage_keychain' if claude_settings.key_storage() == 'keychain'
+                               else 'claude_key_storage'))
+        self.share_check.setText(t('models_share_label'))
+        self.share_hint.setText(t('models_share_hint'))
+        self.models_check.setText(t('models_use_label'))
+        self.models_hint.setText(t('models_use_hint'))
+        self.china_check.setText(t('models_china_label'))
+        self.china_hint.setText(t('models_china_hint'))
         saved = claude_settings.load()
         self.fill_models(saved)
         self.refresh_button.setText(t('models_refresh'))
-        if self.refresh_button.isEnabled():
+        if not self.refreshing:
             refreshed = (saved.get('catalog') or {}).get('refreshed')
             self.refresh_status.setText(t('models_last_refresh').format(date=refreshed) if refreshed
                                         else t('models_never_refreshed'))
@@ -2296,6 +2421,8 @@ class ClaudeSettingsPage(QWidget):
         self.reset_spent_button.setText(t('claude_spent_reset'))
         self.spent_hint.setText(t('claude_spent_hint'))
         self.show_spending()
+        self.show_share()
+        self.show_switches()
         self.setLayoutDirection(Qt.RightToLeft if language_code == 'he' else Qt.LeftToRight)
 
     # The dialog's own look: its buttons' colors, border and hover and pressed states are kept
@@ -2353,6 +2480,8 @@ class ClaudeSettingsPage(QWidget):
         self.fill_models()  # the daily refresh may have changed the models offered
         self.show_spending()  # requests may have run since the page was built
         self.show_choices()  # the status line may have changed the model or effort
+        self.show_share()  # the panel's card may have changed it
+        self.show_switches()
 
     def show_choices(self):
         """Model, effort and the session limit as saved."""
@@ -2386,6 +2515,37 @@ class ClaudeSettingsPage(QWidget):
     def reset_spending(self):
         claude_settings.reset_spending()
         self.show_spending()
+
+    def show_switches(self):
+        """The two switches as saved. With models off nothing can ask a provider anything, so
+        Refresh models waits; keys can still be removed."""
+        saved = claude_settings.load()
+        for check, on in ((self.models_check, saved['models_on']), (self.china_check, saved['allow_china'])):
+            check.blockSignals(True)
+            check.setChecked(on)
+            check.blockSignals(False)
+        self.refresh_button.setEnabled(saved['models_on'] and not self.refreshing)
+
+    def set_models_on(self, on):
+        claude_settings.save(models_on=on)
+        self.show_switches()
+        self.settings_changed.emit()  # the panel stops a request that is running
+
+    def set_allow_china(self, allowed):
+        claude_settings.save(allow_china=allowed)
+        self.fill_models()  # their models shown or hidden; the saved model may have moved off them
+        self.show_choices()
+        self.show_provider(claude_settings.provider_of(claude_settings.load()['model']))
+        self.settings_changed.emit()
+
+    def show_share(self):
+        """The share box as saved (off until the person says yes), shown once sharing is set up."""
+        shown = claude_sharing.available()
+        self.share_check.setVisible(shown)
+        self.share_hint.setVisible(shown)
+        self.share_check.blockSignals(True)
+        self.share_check.setChecked(claude_settings.load()['share'] is True)
+        self.share_check.blockSignals(False)
 
     def set_show_button(self, shown):
         claude_settings.save(show_button=shown)
@@ -2465,6 +2625,7 @@ class ClaudeSettingsPage(QWidget):
     def refresh_models(self):
         """Refresh models (by hand only): each provider with a key says which models it
         offers now. The asking runs off the main thread; show_refresh takes the answer."""
+        self.refreshing = True
         self.refresh_button.setEnabled(False)
         self.refresh_status.setText(_tr(self.language, 'models_refreshing'))
 
@@ -2477,7 +2638,8 @@ class ClaudeSettingsPage(QWidget):
 
     def show_refresh(self, found, error):
         t = lambda k: _tr(self.language, k)
-        self.refresh_button.setEnabled(True)
+        self.refreshing = False
+        self.refresh_button.setEnabled(claude_settings.load()['models_on'])
         if error or not found:
             self.refresh_status.setText(error or '')
             return

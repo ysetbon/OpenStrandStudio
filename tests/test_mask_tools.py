@@ -606,7 +606,7 @@ def test_claude_checks_and_fixes_masks_then_ties_a_tight_knot(tmp_path, monkeypa
     ]
     api = FakeAPI(lambda n, body: script[min(n, len(script) - 1)])
     try:
-        env = dict(os.environ, ANTHROPIC_API_KEY="sk-ant-test-key", ANTHROPIC_BASE_URL=api.url,
+        env = dict(os.environ, ANTHROPIC_API_KEY="sk-ant-test-key", OPENSTRAND_TEST_API=api.url,
                    NO_PROXY="127.0.0.1,localhost", no_proxy="127.0.0.1,localhost",
                    APPDATA=str(tmp_path / "appdata"), QT_QPA_PLATFORM="offscreen")
         out = tmp_path / "out"
@@ -685,7 +685,7 @@ def test_claude_fixes_a_mask_in_the_person_s_own_tab(window, monkeypatch, tmp_pa
             return use("t4", "edit_mask_in_tab", tab_id=script.tab, op="erase", mask="1_1_2_1", covers="3_1")
         return say("Mask 1_1_2_1 no longer covers 3_1 in your tab; Undo puts it back.")
     api = FakeAPI(script)
-    monkeypatch.setenv("ANTHROPIC_BASE_URL", api.url)
+    monkeypatch.setenv("OPENSTRAND_TEST_API", api.url)
     monkeypatch.setenv("NO_PROXY", "127.0.0.1,localhost")
     monkeypatch.setenv("no_proxy", "127.0.0.1,localhost")
     try:
@@ -777,6 +777,7 @@ def test_claude_reads_the_tab_as_it_is_now_its_history_and_moves_a_strand(window
     old = next(s for s in ws.data["strands"] if s["layer_name"] == parent.layer_name)
     assert abs(old["end"]["x"] - (end[0] - 9.0)) < 0.6 and ws.tab is None  # a copy: no tab edits from it
     assert f"undo step {after_step - 1}" in text
+    assert ws.theirs and runner.finish([])["changed"] is False  # the person's own: never shared as Claude's
     with pytest.raises(agent.ToolError, match="read_tab this tab first"):
         runner.app_tool("edit_strand_in_tab", {"tab_id": tab.id, "strand": parent.layer_name, "points": {"end": end}})
     # Undo: the tab goes back, its version changes, and the undone step can still be read.

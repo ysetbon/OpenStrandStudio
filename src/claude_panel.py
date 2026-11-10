@@ -70,7 +70,7 @@ TOOL_CHIPS = {
     'knot_library': ('claude_tool_knot_library', '#d4d4d4', '#1a1a1a'),
 }
 OTHER_CHIP = ('#d4d4d4', '#1a1a1a')
-ACCENT = '#D97757'  # Claude's orange: the running mark and the progress bars
+ACCENT = '#FF5500'  # the OpenStrand logo's orange: the running mark, the progress bars, Send and the links
 # A running tool's row: the picture of what it works on, and its progress bar (px).
 FRAME_SIZE = (132, 78)
 BAR_SIZE = (170, 8)
@@ -357,7 +357,7 @@ class PromptBox(QTextEdit):
         self.setObjectName('claudePrompt')
         self.setStyleSheet('QTextEdit#claudePrompt { border: 1px solid palette(mid); border-radius: 8px;'
                            ' padding: 4px 6px; }'  # colors come from the app's theme
-                           'QTextEdit#claudePrompt:focus { border-color: #d97757; }')
+                           'QTextEdit#claudePrompt:focus { border-color: #FF5500; }')
         self.document().setDocumentMargin(2)
         self.document().contentsChanged.connect(self.fit_height)
         self.fit_height()
@@ -409,19 +409,30 @@ class PromptBox(QTextEdit):
 
 
 def load_knot():
-    """The working line's knot: a closed overhand knot drawn strand by strand
-    by OpenStrand Studio (scripts/build_knot_spinner.py), as frames and how
-    long each shows. Empty when the files are missing."""
+    """The working line's animation, drawn frame by frame by OpenStrand Studio
+    (scripts/build_box_stitch_spinner.py): the OpenStrand logo, a box stitch, tied and
+    then continued with k = 1 level after level. Returns the sheet the frames are cut
+    from, each frame's place on it, how long each shows (ms) and the frame the loop
+    comes back to: after the last frame it goes on from the one after it. Nothing
+    when the files are missing.
+
+    The frames sit on one sheet, `columns` to a row (one row in older files), and are
+    drawn from it as they come, so there is no picture wider than a few thousand
+    pixels and nothing is copied out ahead of time."""
     try:
         with open(resource_path('claude_knot.json'), encoding='utf-8') as f:
             info = json.load(f)
-        strip = QPixmap(resource_path('claude_knot.png'))
+        sheet = QPixmap(resource_path('claude_knot.png'))
         size, durations = int(info['frame']), [int(d) for d in info['durations_ms']]
+        columns = int(info.get('columns') or len(durations))
+        loop_from = int(info.get('loop_from', -1))
     except (OSError, ValueError, KeyError, TypeError):
-        return [], []
-    if strip.isNull() or strip.width() < size * len(durations):
-        return [], []
-    return [strip.copy(i * size, 0, size, size) for i in range(len(durations))], durations
+        return None, [], [], -1
+    rows = -(-len(durations) // columns) if columns > 0 else 0
+    if sheet.isNull() or columns <= 0 or sheet.width() < size * columns or sheet.height() < size * rows:
+        return None, [], [], -1
+    frames = [QRect((i % columns) * size, (i // columns) * size, size, size) for i in range(len(durations))]
+    return sheet, frames, durations, loop_from if -1 <= loop_from < len(frames) - 1 else -1
 
 
 class FramePreview(QLabel):
@@ -464,17 +475,17 @@ class FramePreview(QLabel):
 
 
 class WorkingLine(QWidget):
-    """Claude at work, the OpenStrand way: a closed overhand knot drawn strand
-    by strand, over and over, then what Claude is doing, how far a long tool
-    has got (a bar, how much is left) and the time so far. (Without its
-    frames it falls back to a turning trefoil.)"""
+    """Claude at work, the OpenStrand way: the logo's box stitch tied strand by strand and
+    continued with k = 1 level after level (played once, then the last levels over and over),
+    then what Claude is doing, how far a long tool has got (a bar, how much is left) and the
+    time so far. (Without its frames it falls back to a turning trefoil.)"""
 
     SIZE = 28  # px of the knot
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFixedHeight(32)
-        self.frames, self.durations = load_knot()
+        self.sheet, self.frames, self.durations, self.loop_from = load_knot()
         self.frame = 0
         self.label = ''
         self.started = time.monotonic()
@@ -492,6 +503,7 @@ class WorkingLine(QWidget):
             x, y = math.sin(t) + 2 * math.sin(2 * t), math.cos(t) - 2 * math.cos(2 * t)
             self.points.append(QPointF(x, y))
         self.timer = QTimer(self)
+        self.timer.setTimerType(Qt.PreciseTimer)  # 45 ms frames keep time on Windows too
         self.timer.setInterval(40)
         self.timer.timeout.connect(self.tick)
         self.hide()
@@ -524,7 +536,7 @@ class WorkingLine(QWidget):
     def tick(self):
         self.phase = (self.phase + 0.012) % 1.0
         if self.frames:
-            self.frame = (self.frame + 1) % len(self.frames)
+            self.frame = self.frame + 1 if self.frame + 1 < len(self.frames) else self.loop_from + 1
             self.timer.setInterval(self.durations[self.frame])
         self.update()
 
@@ -534,8 +546,7 @@ class WorkingLine(QWidget):
         painter.setRenderHint(QPainter.SmoothPixmapTransform)
         box = self.SIZE
         if self.frames:
-            pixmap = self.frames[self.frame]
-            painter.drawPixmap(QRectF(2, (self.height() - box) / 2, box, box), pixmap, QRectF(pixmap.rect()))
+            painter.drawPixmap(QRectF(2, (self.height() - box) / 2, box, box), self.sheet, QRectF(self.frames[self.frame]))
         else:
             self.draw_trefoil(painter, box)
         self.draw_label(painter, box)
@@ -546,7 +557,7 @@ class WorkingLine(QWidget):
         painter.translate(2 + box / 2, self.height() / 2)
         painter.rotate(self.phase * 120)  # a slow turn
         painter.scale(box / 6.4, box / 6.4)
-        orange = QColor('#D97757')
+        orange = QColor(ACCENT)
         dim = QColor(orange)
         dim.setAlpha(110)
         path = QPainterPath(self.points[0])
@@ -726,9 +737,9 @@ class ClaudePanel(QWidget):
         self.session_label = QLabel(self)  # what this session has spent, beside Send
         self.session_label.setObjectName('claudeSession')
         self.send_button = QPushButton(self)
-        self.send_button.setStyleSheet('QPushButton { background: #d97757; color: #1f1e1d; font-weight: bold; font-size: 12px;'
+        self.send_button.setStyleSheet('QPushButton { background: #FF5500; color: #1f1e1d; font-weight: bold; font-size: 12px;'
                                        ' padding: 5px 16px; border: none; border-radius: 6px; }'
-                                       'QPushButton:hover { background: #E58D6F; } QPushButton:pressed { background: #C4623F; }')
+                                       'QPushButton:hover { background: #FF7A33; } QPushButton:pressed { background: #D94800; }')
         self.send_button.clicked.connect(self.send_or_stop)
         # A chat box: the text across the whole width, growing upward as
         # lines are added, with the buttons and the cost on a row under it.
@@ -798,15 +809,15 @@ class ClaudePanel(QWidget):
         'dark': dict(bg='#2C2C2C', fg='#FFFFFF', border='#5A5A5A', button='#3A3A3A', hover='#474747',
                      log='#262626', log_border='#3F3F3F', muted='#9A9A9A', user_bg='#393937',
                      user_fg='#F5F4EF', ok='#4FC06F', bad='#E05A4B', auto='#B39DF0', plan='#3CC2B0',
-                     pressed='#2F2F2F', frame='#FFFFFF', on='#4A3B33'),
+                     pressed='#2F2F2F', frame='#FFFFFF', on='#4D3222'),
         'light': dict(bg='#FFFFFF', fg='#000000', border='#B8B8B8', button='#ECECEC', hover='#DCDCDC',
                       log='#FAFAFA', log_border='#D0D0D0', muted='#6F6F6F', user_bg='#ECE9E2',
                       user_fg='#1F1E1D', ok='#2F9E4F', bad='#C0392B', auto='#7457D6', plan='#16897A',
-                      pressed='#CFCFCF', frame='#000000', on='#FBE4D8'),
+                      pressed='#CFCFCF', frame='#000000', on='#FFE6D9'),
         'default': dict(bg='#ECECEC', fg='#000000', border='#A8A8A8', button='#E0E0E0', hover='#D2D2D2',
                         log='#FFFFFF', log_border='#C8C8C8', muted='#6F6F6F', user_bg='#E2DED6',
                         user_fg='#1F1E1D', ok='#2F9E4F', bad='#C0392B', auto='#7457D6', plan='#16897A',
-                        pressed='#C2C2C2', frame='#000000', on='#F6DCCD'),
+                        pressed='#C2C2C2', frame='#000000', on='#FFDCC7'),
     }
 
     def apply_theme(self, theme_name):
@@ -1103,7 +1114,7 @@ class ClaudePanel(QWidget):
             return (f'<p style="margin:6px 0 4px 0;"><span style="background-color:{c["user_bg"]};'
                     f' color:{c["user_fg"]};">&nbsp;{esc(e["text"])}&nbsp;</span></p>')
         if kind == 'claude':
-            return (f'<p style="margin:5px 0;"><span style="color:#D97757; font-size:9px;">●</span>&nbsp; '
+            return (f'<p style="margin:5px 0;"><span style="color:{ACCENT}; font-size:9px;">●</span>&nbsp; '
                     f'{lines(e["text"])}</p>')
         if kind == 'note':
             return f'<p style="margin:4px 0; color:{e.get("color") or c["muted"]};">{esc(e["text"])}</p>'
@@ -1115,7 +1126,7 @@ class ClaudePanel(QWidget):
                 picture = (f'<td valign="middle"><img src="{QUrl.fromLocalFile(e["png"]).toString()}"'
                            f' width="96"></td>')
             action = (f'<span style="color:{c["muted"]};">{esc(t("claude_opened_short"))}</span>' if e['opened']
-                      else f'<a href="os:open/{i}" style="color:#D97757; font-weight:bold;'
+                      else f'<a href="os:open/{i}" style="color:{ACCENT}; font-weight:bold;'
                            f' text-decoration:none;">{esc(t("claude_open_design"))} ›</a>')
             return (f'<table cellspacing="0" cellpadding="6" style="margin:4px 0 4px 18px;'
                     f' border:1px solid {c["log_border"]};"><tr>{picture}<td valign="middle">'
@@ -1123,7 +1134,7 @@ class ClaudePanel(QWidget):
         if kind == 'confirm':
             text = esc(confirm_text(self.language, e['what']))
             if e['state'] is None:
-                choice = (f'<a href="os:allow/{i}" style="color:#D97757; font-weight:bold; text-decoration:none;">'
+                choice = (f'<a href="os:allow/{i}" style="color:{ACCENT}; font-weight:bold; text-decoration:none;">'
                           f'{esc(t("claude_allow"))}</a>&nbsp;&nbsp;&nbsp;<a href="os:deny/{i}" '
                           f'style="color:{c["muted"]}; text-decoration:none;">{esc(t("claude_deny"))}</a>')
             else:
@@ -1139,7 +1150,7 @@ class ClaudePanel(QWidget):
                 asked = esc(t(f'claude_{kind}_ask').replace('{url}', claude_sharing.GALLERY_URL))
                 question, _, rest = asked.partition('\n')  # its first line is the question itself
                 text = f'<b>{question}</b><br>' + rest.replace('\n', '<br>') + '<br><br>'
-                choice = (f'<a href="os:{yes}/{i}" style="color:#D97757; font-weight:bold; text-decoration:none;">'
+                choice = (f'<a href="os:{yes}/{i}" style="color:{ACCENT}; font-weight:bold; text-decoration:none;">'
                           f'{esc(t(f"claude_{kind}_yes"))}</a>&nbsp;&nbsp;&nbsp;<a href="os:{no}/{i}" '
                           f'style="color:{c["muted"]}; text-decoration:none;">{esc(t(f"claude_{kind}_no"))}</a>')
             else:
@@ -1157,7 +1168,7 @@ class ClaudePanel(QWidget):
         steps = e['steps']
         if e['end'] is None:
             current = self.step_label(steps[-1], running=True) if steps else t('claude_working')
-            head = f'<span style="color:#D97757; font-size:9px;">●</span>&nbsp; {esc(current)}'
+            head = f'<span style="color:{ACCENT}; font-size:9px;">●</span>&nbsp; {esc(current)}'
         else:
             seconds = max(1, int(round(e['end'] - e['start'])))
             head = esc(t('claude_steps').format(count=len(steps), seconds=seconds))
@@ -2060,66 +2071,100 @@ class ClaudePanel(QWidget):
                 self.design_ready.emit(named)
 
 
-def knot_mark_path():
-    """The button's mark, in a 24 px box: one cord, its ends up, crossing itself
-    above a loop (an overhand loop), as OpenStrand draws a strand. Returns the
-    whole cord and the part that goes over at the crossing."""
-    a, b, c, d = QPointF(2.5, 3.5), QPointF(7.0, 7.0), QPointF(12.5, 10.5), QPointF(16.0, 14.0)
-    whole = QPainterPath(a)  # from the left end down over the crossing,
-    whole.cubicTo(b, c, d)
-    whole.cubicTo(QPointF(19.0, 17.5), QPointF(17.5, 21.2), QPointF(12.0, 21.2))  # round the loop
-    whole.cubicTo(QPointF(6.5, 21.2), QPointF(5.0, 17.5), QPointF(8.0, 14.0))
-    whole.cubicTo(QPointF(11.5, 10.5), QPointF(17.0, 7.0), QPointF(21.5, 3.5))  # and up under it to the right end
-    # The first curve from a third of the way along (de Casteljau): the part over the crossing.
-    t = 0.3
-    mix = lambda p, q: p + (q - p) * t  # noqa: E731
-    ab, bc, cd = mix(a, b), mix(b, c), mix(c, d)
-    abc, bcd = mix(ab, bc), mix(bc, cd)
-    over = QPainterPath(mix(abc, bcd))
-    over.cubicTo(bcd, cd, d)
-    return whole, over
+LOGO_ORANGE, LOGO_BLUE = QColor('#FF5500'), QColor('#1525FF')  # the logo's two cords
 
 
-def paint_knot_mark(painter, box, fill=QColor('#A65400'), outline=QColor('#111111'), width=4.2, stroke=0.9):
-    """The mark in box (a QRectF): the cord with its outline, the part from the left end
-    redrawn on top where it crosses, so it reads over and under as in the app."""
-    whole, over = knot_mark_path()
+def logo_strands():
+    """The OpenStrand logo, a box stitch (box_stitch.png), in a 24 px box: two orange cords and
+    two blue ones as straight strands, (start, end, start cap, end cap), and the two turns that
+    join them, which lie underneath and only show as slivers."""
+    P = QPointF
+    return {
+        'orange_turn': (P(12.15, 19.5), P(12.05, 3.5), 'flat', 'flat'),
+        'blue_turn': (P(4.7, 11.7), P(19.7, 11.6), 'flat', 'flat'),
+        'orange_a': (P(6.1, 4.1), P(12.3, 19.5), 'flat', 'round'),
+        'orange_b': (P(12.0, 3.4), P(18.3, 19.2), 'round', 'flat'),
+        'blue_a': (P(4.7, 11.7), P(19.7, 5.6), 'round', 'flat'),
+        'blue_b': (P(4.7, 17.7), P(19.7, 11.6), 'flat', 'round'),
+    }
+
+
+def paint_logo(painter, box, width=3.4, stroke=0.6, outline=QColor('#000000')):
+    """The logo in box (a QRectF), drawn as OpenStrand draws strands: a black outline all round,
+    square or round ends, each orange cord over one blue cord and under the other."""
+    strands = logo_strands()
     scale = min(box.width(), box.height()) / 24.0
     painter.save()
     painter.translate(box.center().x() - 12 * scale, box.center().y() - 12 * scale)
     painter.scale(scale, scale)
 
-    def cord(path, body_cap):
-        for color, size, cap in ((outline, width + 2 * stroke, Qt.FlatCap), (fill, width, body_cap)):
-            pen = QPen(color, size)
-            pen.setCapStyle(cap)
-            pen.setJoinStyle(Qt.RoundJoin)
-            painter.setPen(pen)
-            painter.setBrush(Qt.NoBrush)
-            painter.drawPath(path)
-    cord(whole, Qt.FlatCap)  # the ends cut square, as a strand's ends
-    cord(over, Qt.RoundCap)  # over at the crossing; its round body ends hide the seams
+    def unit(a, b):
+        d = b - a
+        n = math.hypot(d.x(), d.y())
+        return QPointF(d.x() / n, d.y() / n)
+
+    def line(a, b, color, size):
+        pen = QPen(color, size)
+        pen.setCapStyle(Qt.FlatCap)
+        painter.setPen(pen)
+        painter.setBrush(Qt.NoBrush)
+        path = QPainterPath(a)
+        path.lineTo(b)
+        painter.drawPath(path)
+
+    def cord(name):
+        a, b, start_cap, end_cap = strands[name]
+        color = LOGO_ORANGE if name.startswith('orange') else LOGO_BLUE
+        u = unit(a, b)
+        # the outline runs past a square end, so the end has its border too
+        line(a - u * stroke if start_cap == 'flat' else a, b + u * stroke if end_cap == 'flat' else b,
+             outline, width + 2 * stroke)
+        for fill, radius in ((outline, width / 2 + stroke), (color, width / 2)):
+            for point, cap in ((a, start_cap), (b, end_cap)):
+                if cap == 'round':
+                    painter.setPen(Qt.NoPen)
+                    painter.setBrush(fill)
+                    painter.drawEllipse(point, radius, radius)
+        line(a, b, color, width)
+
+    for name in ('orange_turn', 'blue_turn', 'orange_a', 'orange_b', 'blue_a', 'blue_b'):
+        cord(name)
+    # Over at two crossings: orange a over blue b, orange b over blue a. A short piece of the
+    # orange is laid back on top, its cut ends on orange, so no seam shows.
+    for over, under in (('orange_a', 'blue_b'), ('orange_b', 'blue_a')):
+        a, b = strands[over][:2]
+        c, d = strands[under][:2]
+        r, q = b - a, d - c
+        t = ((c.x() - a.x()) * q.y() - (c.y() - a.y()) * q.x()) / (r.x() * q.y() - r.y() * q.x())
+        u, v = unit(a, b), unit(c, d)
+        half = (width / 2 + stroke) / abs(u.x() * v.y() - u.y() * v.x()) + 0.6
+        point = a + r * t
+        line(point - u * half, point + u * half, outline, width + 2 * stroke)
+        line(point - u * (half + 0.4), point + u * (half + 0.4), LOGO_ORANGE, width)  # a touch longer hides the cut
     painter.restore()
 
 
 class ClaudeButton(QPushButton):
     """The assistant's button next to Settings: shows and hides the assistant.
 
-    A small OpenStrand knot (the assistant runs on many providers' models, so the
-    button is the app's own mark, not one provider's), drawn here so it answers the
-    mouse: a little lighter under the pointer, smaller while pressed and, while the
-    assistant is open, a ring in the cord's color. While it is hidden it also shows
-    what the assistant is doing: an arc turns around it during a run, and a green dot
-    waits on it when a design has opened."""
+    The OpenStrand logo (the assistant runs on many providers' models, so the button is the
+    app's own mark, not one provider's) on the app icon's light tile, drawn here so it answers
+    the mouse: lighter under the pointer, the stretched 1x1 starting stitch while pressed and,
+    while the assistant is open, an orange ring. While it is hidden it also shows what the
+    assistant is doing: the logo steps in and an arc turns around it during a run, drifting from
+    the logo's orange to its blue and back, and a green dot waits on it when a design has opened."""
 
-    # Ember: a burnt-orange face and a cream cord, as strong as the toolbar's other buttons.
-    FACE = QColor('#A65400')
-    HOVER = QColor('#BC6A17')
-    PRESSED = QColor('#7A3D00')
-    OPEN = QColor('#8A4500')
-    EDGE = QColor('#6E3700')
-    CORD = QColor('#FFE9CF')
-    RADIUS = 7  # corner radius of the 32 px square
+    FACE = QColor('#F0F0F0')     # the app icon's tile, in every theme
+    HOVER = QColor('#FFFFFF')
+    PRESSED = QColor('#DCDCDC')
+    OPEN = QColor('#FFE6D9')
+    EDGE = QColor('#111111')
+    RING = LOGO_ORANGE           # the frame while the assistant is open
+    RADIUS = 7                   # corner radius of the 32 px square
+    ARC_WIDTH = 1.5              # the working arc: 1 px clear of the frame (inner edge 15 px out)
+    ARC_RADIUS = 13.25           # and 1 px clear of the logo, which steps in to 24 px while it turns
+    TINT_TICKS = 60              # orange -> blue -> orange every 60 ticks (3 s, exactly 4 turns)
+    _pressed_picture = None
 
     def __init__(self, panel, parent=None):
         super().__init__(parent)
@@ -2131,7 +2176,9 @@ class ClaudeButton(QPushButton):
         self.setAttribute(Qt.WA_Hover, True)
         self.setCursor(Qt.PointingHandCursor)
         self.angle = 0
+        self.tint = 0
         self.spin = QTimer(self)
+        self.spin.setTimerType(Qt.PreciseTimer)  # 50 ms on Windows too, not rounded to 15.6 ms steps
         self.spin.setInterval(50)
         self.spin.timeout.connect(self.turn)
         self.setChecked(panel.is_open())
@@ -2157,7 +2204,22 @@ class ClaudeButton(QPushButton):
 
     def turn(self):
         self.angle = (self.angle - 24) % 360
+        self.tint = (self.tint + 1) % self.TINT_TICKS
         self.update()
+
+    def arc_color(self):
+        """The working arc's colour: the logo's orange, drifting to its blue and back."""
+        f = (1 - math.cos(2 * math.pi * self.tint / self.TINT_TICKS)) / 2
+        a, b = LOGO_ORANGE, LOGO_BLUE
+        return QColor(round(a.red() + (b.red() - a.red()) * f), round(a.green() + (b.green() - a.green()) * f),
+                      round(a.blue() + (b.blue() - a.blue()) * f))
+
+    @classmethod
+    def pressed_picture(cls):
+        """The stretched 1x1 starting stitch, drawn by OpenStrand (scripts/build_box_stitch_spinner.py)."""
+        if cls._pressed_picture is None:
+            cls._pressed_picture = QPixmap(resource_path(os.path.join('images', 'assistant_pressed.png')))
+        return cls._pressed_picture
 
     def enterEvent(self, event):
         super().enterEvent(event)
@@ -2179,20 +2241,31 @@ class ClaudeButton(QPushButton):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform)
         square = QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5)
         if self.isDown():  # pressed in: a touch smaller
             square = square.adjusted(1.5, 1.5, -1.5, -1.5)
-        painter.setPen(QPen(self.CORD if self.isChecked() else self.EDGE, 1.5 if self.isChecked() else 1.0))
+        opened = self.isChecked()
+        painter.setPen(QPen(self.RING if opened else self.EDGE, 2.0 if opened else 1.0))
         painter.setBrush(self.color())
-        painter.drawRoundedRect(square, self.RADIUS, self.RADIUS)
-        inset = square.width() * 0.12
-        paint_knot_mark(painter, square.adjusted(inset, inset, -inset, -inset), fill=self.CORD)
-        if self.busy():
-            pen = QPen(self.CORD, 2.5)
+        painter.drawRoundedRect(square.adjusted(0.5, 0.5, -0.5, -0.5) if opened else square, self.RADIUS, self.RADIUS)
+        centre = QRectF(self.rect()).center()
+        busy = self.busy()
+        pressed = self.pressed_picture() if self.isDown() else None
+        if pressed is not None and not pressed.isNull():
+            painter.drawPixmap(square.adjusted(1, 1, -1, -1), pressed, QRectF(pressed.rect()))
+        elif busy:  # the logo steps in so the arc has a ring of its own
+            paint_logo(painter, QRectF(centre.x() - 12, centre.y() - 12, 24, 24))
+        else:
+            inset = square.width() * 0.03
+            paint_logo(painter, square.adjusted(inset, inset, -inset, -inset))
+        if busy:
+            pen = QPen(self.arc_color(), self.ARC_WIDTH)
             pen.setCapStyle(Qt.RoundCap)
             painter.setPen(pen)
             painter.setBrush(Qt.NoBrush)
-            painter.drawArc(QRectF(self.rect()).adjusted(2.5, 2.5, -2.5, -2.5), self.angle * 16, 100 * 16)
+            r = self.ARC_RADIUS
+            painter.drawArc(QRectF(centre.x() - r, centre.y() - r, 2 * r, 2 * r), self.angle * 16, 100 * 16)
         if self.panel.design_waiting and not self.panel.is_open():
             painter.setPen(QPen(QColor('#1f1e1d'), 1.5))
             painter.setBrush(QColor('#4fc06f'))
@@ -2460,7 +2533,7 @@ class ClaudeSettingsPage(QWidget):
         self.setStyleSheet(f"""
             #claudeSettings QLineEdit {{ background-color: {c['log']}; color: {c['fg']};
                 border: 1px solid {c['border']}; border-radius: 4px; padding: 5px 6px; font-size: 13px; }}
-            #claudeSettings QLineEdit:focus {{ border: 1px solid #D97757; }}
+            #claudeSettings QLineEdit:focus {{ border: 1px solid {ACCENT}; }}
             #claudeSettings QPushButton {{ padding: 5px 14px; height: 18px; min-width: 0px; }}
         """)
         # The drop-downs exactly like Settings > General's Theme: its own style sheet.
@@ -2604,7 +2677,7 @@ class ClaudeSettingsPage(QWidget):
         self.key_edit.setPlaceholderText(spec.key_hint if spec else 'sk-ant-…')
         if spec and spec.keys_url:
             host = spec.keys_url.split('//', 1)[-1].split('/', 1)[0]
-            link_color = '#E8892F' if shade_of(self.theme) == 'dark' else '#A65400'  # readable on the theme
+            link_color = '#FF7A33' if shade_of(self.theme) == 'dark' else '#C24100'  # the logo's orange, readable on the theme
             self.get_key.setText(_tr(self.language, 'models_get_key').format(
                 link=f'<a href="{spec.keys_url}" style="color:{link_color};">{host}</a>'))
         self.show_saved(claude_settings.load()['keys'].get(self.provider(), ''))

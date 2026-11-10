@@ -503,7 +503,7 @@ def test_the_claude_button_shows_and_hides_claude_over_the_canvas(window, monkey
     order = [row.itemAt(i).widget() for i in range(row.count()) if row.itemAt(i).widget()]
     assert order[-3:] == [window.layer_state_button, button, window.settings_button]
     assert button.size() == window.settings_button.size() and button.toolTip() == ""
-    assert button.color().name() == "#a65400" and button.CORD.name() == "#ffe9cf"  # Ember, at rest
+    assert button.color().name() == "#f0f0f0" and button.RING.name() == "#ff5500"  # the logo's tile, at rest
 
     # Pressed, Claude floats over the bottom of the visible canvas; the canvas keeps its size.
     size = window.canvas.size()
@@ -1468,14 +1468,56 @@ def test_the_working_line_draws_the_knot_while_claude_works(window):
     import json as _json
     line = window.claude_panel.working
     info = _json.loads((ROOT / "src" / "claude_knot.json").read_text())
-    assert len(line.frames) == len(info["durations_ms"]) == 48
+    count = len(info["durations_ms"])
+    assert len(line.frames) == count > 1000 and line.sheet is not None
+    assert line.loop_from == info["loop_from"] and 0 < line.loop_from < count - 1
+    # every frame lies on the sheet: no picture wider than a few thousand pixels (Windows, macOS)
+    assert line.sheet.width() <= 4096 and line.sheet.height() <= 4096
+    assert all(line.sheet.rect().contains(r) for r in line.frames)
     line.start("Thinking…")
     assert line.isVisibleTo(window.claude_panel) and line.timer.isActive() and line.frame == 0
     line.tick()
     assert line.frame == 1 and line.timer.interval() == info["durations_ms"][1]
+    # after the last frame it goes on from the level the loop comes back to, not from the start
+    line.frame = count - 1
+    line.tick()
+    assert line.frame == info["loop_from"] + 1
     assert line.grab().width() > 0
     line.stop()
     assert not line.timer.isActive() and not line.isVisibleTo(window.claude_panel)
+
+
+def test_the_assistant_button_is_the_openstrand_logo(window):
+    from PyQt5.QtCore import QPoint, Qt
+    from PyQt5.QtGui import QColor, QImage, QPainter
+    from claude_panel import ClaudeButton, LOGO_BLUE, LOGO_ORANGE
+    button = window.claude_button
+    assert not ClaudeButton.pressed_picture().isNull()  # the stretched 1x1 starting stitch
+
+    def picture():
+        image = QImage(button.size() * 4, QImage.Format_ARGB32)
+        image.setDevicePixelRatio(4)
+        image.fill(Qt.white)
+        painter = QPainter(image)
+        button.render(painter, QPoint())
+        painter.end()
+        return image
+
+    colors = {picture().pixelColor(x, y).name() for x in range(0, 128, 2) for y in range(0, 128, 2)}
+    assert LOGO_ORANGE.name() in colors and LOGO_BLUE.name() in colors
+    # working while hidden: the arc's colour drifts from the logo's orange to its blue and back
+    button.tint = 0
+    assert button.arc_color() == LOGO_ORANGE
+    button.tint = ClaudeButton.TINT_TICKS // 2
+    assert button.arc_color() == LOGO_BLUE
+    button.tint = ClaudeButton.TINT_TICKS - 1
+    button.turn()
+    assert button.tint == 0 and button.arc_color() == LOGO_ORANGE
+    # the arc runs in a ring of its own: clear of the frame (inner edge 15 px out) and of the logo
+    assert ClaudeButton.ARC_RADIUS + ClaudeButton.ARC_WIDTH / 2 <= 14.0
+    assert ClaudeButton.ARC_RADIUS - ClaudeButton.ARC_WIDTH / 2 >= 11.46 + 1.0
+    assert button.spin.timerType() == Qt.PreciseTimer and window.claude_panel.working.timer.timerType() == Qt.PreciseTimer
+    assert QColor(LOGO_ORANGE).name() == "#ff5500"
 
 
 def test_ask_mode_waits_for_open_in_new_tab(window, monkeypatch, tmp_path):

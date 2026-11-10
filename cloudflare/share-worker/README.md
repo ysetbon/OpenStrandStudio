@@ -17,7 +17,7 @@ the setup below, the app shows no card and no setting.
 | On the person's computer | The app encrypts each share with **your public key** before it leaves (HPKE, RFC 9180: ML-KEM-768 + X25519, so it holds against future quantum computers too, with HKDF-SHA256 and ChaCha20-Poly1305). File paths, API keys (the person's own, and any `sk-...` or `xai-...` key) and the home folder are cut out of every text first. |
 | On the way | HTTPS only, certificate checked, TLS 1.2 or newer, and no redirects followed. |
 | At Cloudflare | The Worker and its R2 bucket only ever hold sealed bytes. Without your private key, nobody can read them: not Cloudflare, not someone who breaks into your Cloudflare account, and not a leaked bucket. |
-| Kept about the sender | No IP address and no headers. Request logs are off. Each share's name holds the day it came, and R2 notes when it was stored (the inbox shows that as `received`). |
+| Kept about the sender | No IP address or header is saved, with a share or in a log: request logs are off. Cloudflare's rate limiter counts each IP address's shares for its 60-second window. Each share's name holds the day it came, and R2 notes when it was stored (the inbox shows that as `received`). |
 | Who can add | Anyone with the app, at most 10 shares a minute per IP address and 8 MB each. Anything that is not a sealed share is refused. |
 | Who can read | Only someone with the `INBOX_TOKEN` secret, and what they get is still sealed. Only your **private key**, kept off line, opens it. |
 
@@ -144,4 +144,5 @@ What you collect, only with the person's consent and revocable at any time in
 
 It is encrypted on the person's computer and stored with Cloudflare (R2) until you delete
 it. You do not collect the person's requests, their own pictures or files, their API keys,
-or their IP address.
+or their IP address (Cloudflare's rate limiter only counts shares per IP address, for a
+minute at a time).

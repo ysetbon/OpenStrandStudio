@@ -92,14 +92,16 @@ def test_a_share_never_holds_a_folder_or_the_person_s_name_in_one():
              r"The file C:\Users\Jane Doe\Documents\knot.json is open.",
              "Also /home/jane/designs/knot.json and ~/Desktop/k.json and \\\\server\\share\\k.json.",
              "From https://www.animatedknots.com/home/figure-8 and http://example.org/Users/x, as is."]
+    groups = {r"C:\Users\Jane Doe\private": {}, r"D:\work\jane\a": {}, "Rings": {}}  # a key is a text too
     record = claude_sharing.record(texts + [r"cannot open D:\work\jane\a.json"],
-                                   {"strands": [], "note": "/Users/jane/x.png"}, None, ok=False)
+                                   {"strands": [], "note": "/Users/jane/x.png", "groups": groups}, None, ok=False)
     said = json.dumps(record)
     for private in (home, "Jane Doe", "Documents", "/home/jane", "/Users/jane", "Desktop", "server\\\\share",
                     "D:\\\\work"):
         assert private not in said, private
     assert "https://www.animatedknots.com/home/figure-8" in said and "http://example.org/Users/x" in said
     assert record["design"]["note"] == "…" and record["picture"] is None
+    assert record["design"]["groups"] == {"…": {}, "… (2)": {}, "Rings": {}}  # cut out, and none merged
     assert set(record) == {"format", "model", "language", "ok", "answer", "design", "picture"}
     # Nothing else: not the request, an error's text, the time, the computer or the person.
 
@@ -207,3 +209,38 @@ def test_a_share_anyone_could_make_cannot_flood_or_trip_the_developer_s_tool(key
     good.write_bytes(seal_raw(bomb))
     assert share_inbox.main(["open", str(good), "--key", str(key), "--out", str(tmp_path / "out")]) == 1
     assert json.loads((tmp_path / "out" / "good" / "design.json").read_text(encoding="utf-8")) == HOPF
+
+
+def test_the_developer_s_tool_writes_a_share_whole_or_not_at_all(keys, tmp_path, monkeypatch):
+    """A share that opens but cannot be written (here the disk refuses its picture) leaves no
+    half folder, and an earlier folder of the same name exactly as it was; text that is not
+    valid Unicode (a lone surrogate: valid JSON, not UTF-8) is written, not tripped on."""
+    private, public = keys
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import share_inbox
+    key, out = tmp_path / "share.key", tmp_path / "out"
+    key.write_text(private + "\n", encoding="ascii")
+    first, second = tmp_path / "first" / "ring.oss", tmp_path / "second" / "ring.oss"  # the same name
+    for path, answer in ((first, "A ring."), (second, "Another ring.")):
+        path.parent.mkdir()
+        path.write_bytes(claude_sharing.seal(claude_sharing.record([answer], HOPF, PNG), public))
+    assert share_inbox.main(["open", str(first), "--key", str(key), "--out", str(out)]) == 0
+    before = {p.name: p.read_bytes() for p in (out / "ring").iterdir()}
+    real = share_inbox.Path.write_bytes
+
+    def full_disk(self, data):
+        if self.name == "design.png":
+            raise OSError(28, "No space left on device")
+        return real(self, data)
+    monkeypatch.setattr(share_inbox.Path, "write_bytes", full_disk)
+    assert share_inbox.main(["open", str(second), "--key", str(key), "--out", str(out)]) == 1
+    monkeypatch.setattr(share_inbox.Path, "write_bytes", real)
+    assert {p.name: p.read_bytes() for p in (out / "ring").iterdir()} == before
+    assert [p.name for p in out.iterdir()] == ["ring"]  # nothing half written left beside it
+    # Once it can be written, it takes the earlier one's place whole.
+    assert share_inbox.main(["open", str(second), "--key", str(key), "--out", str(out)]) == 0
+    assert (out / "ring" / "answer.md").read_text(encoding="utf-8") == "Another ring.\n"
+    assert [p.name for p in out.iterdir()] == ["ring"]
+    share_inbox.save({"answer": ["bad \ud800 text"], "design": {"name": "\udfff"}}, out / "odd")
+    assert (out / "odd" / "answer.md").read_text(encoding="utf-8") == "bad ? text\n"
+    assert json.loads((out / "odd" / "design.json").read_text(encoding="utf-8")) == {"name": "?"}

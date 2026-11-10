@@ -134,8 +134,9 @@ def _home():
 
 
 def scrub(value, secrets=()):
-    """value with every folder path and API key cut out of its texts, whatever its shape.
-    secrets: the person's own keys (claude_settings.own_keys), cut out whatever their shape."""
+    """value with every folder path and API key cut out of its texts, its dictionaries' keys
+    included, whatever its shape. secrets: the person's own keys (claude_settings.own_keys),
+    cut out whatever their shape."""
     if isinstance(value, str):
         for secret in secrets:
             value = value.replace(secret, '…')
@@ -147,8 +148,15 @@ def scrub(value, secrets=()):
         return value
     if isinstance(value, list):
         return [scrub(v, secrets) for v in value]
-    if isinstance(value, dict):
-        return {k: scrub(v, secrets) for k, v in value.items()}
+    if isinstance(value, dict):  # its keys too (a design's group names are keys): none merged
+        out = {}
+        for k, v in value.items():
+            key = scrub(k, secrets) if isinstance(k, str) else k
+            base, n = key, 2
+            while key in out:  # two keys that differ only in what was cut out: both kept
+                key, n = f'{base} ({n})', n + 1
+            out[key] = scrub(v, secrets)
+        return out
     return value
 
 

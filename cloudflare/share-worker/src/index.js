@@ -12,9 +12,10 @@
  * which their private key, kept off line, then opens. Without INBOX_TOKEN set, reading is
  * off altogether.
  *
- * Nothing about the sender is kept: no IP address, no headers. A share's name holds the day
- * it came, and R2 notes when it was stored (the inbox lists that time). Request logs are off
- * (wrangler.toml).
+ * Nothing about the sender is saved: no IP address or header, with a share or in a log
+ * (request logs are off, wrangler.toml). Cloudflare's rate limiter counts shares by IP address
+ * for its 60-second window, and that count is all it holds. A share's name holds the day it
+ * came, and R2 notes when it was stored (the inbox lists that time).
  */
 const MAGIC = [0x4f, 0x53, 0x53, 0x31]; // "OSS1": what every sealed share starts with
 const ENCAPSULATED = 1120; // HPKE's encapsulated key, for ML-KEM-768 + X25519
@@ -49,6 +50,7 @@ async function share(request, env) {
   // asking first (a CORS preflight), which this Worker never allows.
   if (request.method !== 'POST') return reply(405, null, { Allow: 'POST' });
   if (env.SHARE_LIMIT) {
+    // Counted per IP address for 60 seconds (Cloudflare's rate limiter): never saved here.
     const { success } = await env.SHARE_LIMIT.limit({ key: request.headers.get('CF-Connecting-IP') || 'unknown' });
     if (!success) return reply(429, null, { 'Retry-After': '60' });
   }

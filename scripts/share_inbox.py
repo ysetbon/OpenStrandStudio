@@ -25,8 +25,10 @@ import getpass
 import json
 import os
 import re
+import secrets
 import shutil
 import sys
+import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -70,7 +72,10 @@ def keygen(args):
 
 def save(record, folder):
     """A share's parts as files you can open: the design, its picture, Claude's answer. Anyone
-    can make a share, so each part is written only when it has the shape it should."""
+    can make a share, so each part is written only when it has the shape it should, and text
+    that is not valid Unicode is written with a replacement character. The files go in a new
+    folder beside folder first, which then takes its place whole: a share that cannot be
+    written leaves nothing behind, and never damages a folder an earlier run made."""
     answer = record.get('answer')
     answer = [str(t) for t in answer] if isinstance(answer, list) else []
     design = record.get('design') if isinstance(record.get('design'), dict) else None
@@ -80,13 +85,33 @@ def save(record, folder):
         picture = b''
     about = {k: record.get(k) for k in ('model', 'language', 'ok', 'received')
              if isinstance(record.get(k), (str, bool, type(None)))}
-    folder.mkdir(parents=True, exist_ok=True)
-    (folder / 'about.json').write_text(json.dumps(about, indent=2, ensure_ascii=False), encoding='utf-8')
-    (folder / 'answer.md').write_text('\n\n'.join(answer) + '\n', encoding='utf-8')
-    if design is not None:
-        (folder / 'design.json').write_text(json.dumps(design, indent=2, ensure_ascii=False), encoding='utf-8')
-    if picture.startswith(PNG):  # only a real PNG is written as one
-        (folder / 'design.png').write_bytes(picture)
+    folder = Path(folder)
+    folder.parent.mkdir(parents=True, exist_ok=True)
+    new = Path(tempfile.mkdtemp(prefix=f'.{folder.name}-', dir=folder.parent))
+    old = None
+    try:
+        text = {'encoding': 'utf-8', 'errors': 'replace'}  # a lone surrogate is valid JSON, not UTF-8
+        (new / 'about.json').write_text(json.dumps(about, indent=2, ensure_ascii=False), **text)
+        (new / 'answer.md').write_text('\n\n'.join(answer) + '\n', **text)
+        if design is not None:
+            (new / 'design.json').write_text(json.dumps(design, indent=2, ensure_ascii=False), **text)
+        if picture.startswith(PNG):  # only a real PNG is written as one
+            (new / 'design.png').write_bytes(picture)
+        if folder.exists():  # an earlier extract of the same name: set aside until this one is in place
+            old = folder.with_name(f'.{folder.name}-old-{secrets.token_hex(4)}')
+            os.replace(folder, old)
+        try:
+            os.replace(new, folder)
+        except OSError:
+            if old is not None:
+                os.replace(old, folder)
+                old = None
+            raise
+    except BaseException:
+        shutil.rmtree(new, ignore_errors=True)
+        raise
+    if old is not None:
+        shutil.rmtree(old, ignore_errors=True)
 
 
 def call(url, token, method='GET'):
@@ -126,11 +151,10 @@ def fetch(args):
                 skipped += 1
             else:
                 address = f'{base}/v1/inbox/{urllib.parse.quote(name, safe="")}'
-                try:  # one bad share (anyone can make one) does not stop the rest
+                try:  # one bad share (anyone can make one) does not stop the rest; save leaves no half one
                     record = claude_sharing.unseal(call(address, token), key)
                     save(dict(record, received=share.get('uploaded')), folder)
                 except Exception as e:  # noqa: BLE001
-                    shutil.rmtree(folder, ignore_errors=True)  # never half a share, taken for a whole one
                     print(f'{name}: cannot open it ({type(e).__name__}: {e})', file=sys.stderr)
                     failed += 1
                     continue
@@ -150,13 +174,10 @@ def open_files(args):
     failed = 0
     for path in args.files:
         folder = Path(args.out) / Path(path).stem
-        made_here = not folder.exists()  # a folder from an earlier run is never removed
-        try:
+        try:  # a share that cannot be opened or written leaves an earlier folder of its name as it was
             record = claude_sharing.unseal(Path(path).read_bytes(), key)
             save(record, folder)
         except Exception as e:  # noqa: BLE001
-            if made_here:
-                shutil.rmtree(folder, ignore_errors=True)  # never half a share, taken for a whole one
             print(f'{path}: cannot open it ({type(e).__name__}: {e})', file=sys.stderr)
             failed += 1
             continue

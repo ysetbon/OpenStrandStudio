@@ -1,10 +1,10 @@
 """The agent's step-by-step log, to see what a request is doing and where it waits.
 
-Every call to Claude (how long it took, why it stopped, tokens, cost), every
+Every call to the model (how long it took, why it stopped, tokens, cost), every
 tool (its input, how long it ran) and every question to the app, with the
 time since the request started. While something takes long, a line every
 WAIT_EVERY seconds says what it is still waiting for, so a request that seems
-stuck shows whether Claude is still thinking, a tool is running or the app
+stuck shows whether the agent is still thinking, a tool is running or the app
 has not answered.
 
 Lines go to agent.log in the request's folder and, when asked, to stderr: the

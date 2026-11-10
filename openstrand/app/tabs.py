@@ -144,7 +144,7 @@ HANDLERS = {'list_tabs': list_tabs, 'read_tab': read_tab, 'read_tab_step': read_
 
 
 def history_text(history):
-    """A tab's undo history for Claude: which step it is at, what made each step."""
+    """A tab's undo history for the agent: which step it is at, what made each step."""
     if not history or not history.get('steps'):
         return 'undo history: none kept'
     lines = [f"undo history (at step {history.get('current_step')} of {history.get('max_step')}; later steps "

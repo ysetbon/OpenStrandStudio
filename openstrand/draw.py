@@ -6,7 +6,7 @@ The sample generators' fitter turns each centerline into a chain of attached
 strands, and every crossing gets over and under: alternating along each cord
 by default, or, for cords given "heights" (one number per point, how high
 the cord lies there), the higher part on top, the way a real cord lies. This
-is what lets a person, or Claude, design something no template covers.
+is what lets a person, or the agent, design something no template covers.
 
 Every design carries the curve settings it was fitted for (project_settings),
 so it opens the same whatever the person's own Settings are.
@@ -569,7 +569,7 @@ def _explain(error):
 
 
 def report(scene, seconds, shallow=()):
-    """What was built, for a person or Claude to check against the plan."""
+    """What was built, for a person or the agent to check against the plan."""
     from masked_strand import MaskedStrand
     lines = []
     tight = any(cord.get('heights') is not None for cord in scene.cords)

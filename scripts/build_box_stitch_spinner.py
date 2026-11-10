@@ -2,7 +2,7 @@
 by frame with OpenStrand Studio's own canvas.
 
 The Assistant's working line no longer plays these frames: it draws the stitch itself, live,
-from the same geometry (src/claude_stitch.py), so a level can be k = 0 as well as k = 1 and the
+from the same geometry (src/agent_stitch.py), so a level can be k = 0 as well as k = 1 and the
 stitch can start again from the plus. This script stays as the reference render of that
 geometry by the app's canvas, and it makes the Assistant button's pressed picture
 (src/images/assistant_pressed.png).

@@ -1,4 +1,4 @@
-"""Claude's tools for the layer panel's right-click menu, the group panel, the
+"""The agent's tools for the layer panel's right-click menu, the group panel, the
 main window's buttons and the Settings dialog, run end to end: the agent's
 tool, the bridge, the app's own code in a real window. Each change is checked
 on the live app (and as its undo steps)."""
@@ -48,11 +48,11 @@ def window(tmp_path_factory):
 
 @pytest.fixture()
 def tab(window, monkeypatch, tmp_path):
-    """The tight overhand in a new tab, Claude's runner answered by the real bridge, the tab read."""
+    """The tight overhand in a new tab, the agent's runner answered by the real bridge, the tab read."""
     from PyQt5.QtWidgets import QApplication
     from openstrand import agent
     from openstrand.app import AppError
-    panel = window.claude_panel
+    panel = window.agent_panel
     run = tmp_path / "run"
     run.mkdir()
     panel.out_dir = str(run)
@@ -89,7 +89,7 @@ def groups(tab, op, group, **more):
 
 
 # ------------------------------------------------------------------ layers
-def test_claude_folds_the_start_edge_and_recolors_through_the_layer_menu(tab):
+def test_agent_folds_the_start_edge_and_recolors_through_the_layer_menu(tab):
     canvas = tab.canvas
     one = live(canvas, "1_1")
     assert "start edge unfolded" in project_detail(tab)
@@ -114,7 +114,7 @@ def project_detail(tab):
     return project.detail(tab.runner.workspace.data)
 
 
-def test_claude_sets_widths_ends_arrows_and_styles_as_the_menu_does(tab):
+def test_agent_sets_widths_ends_arrows_and_styles_as_the_menu_does(tab):
     canvas = tab.canvas
     layers(tab, "width", ["1_1"], value={"width": 20, "stroke_width": 3})
     assert {(s.width, s.stroke_width) for s in canvas.strands if s.layer_name.startswith("1_")} == {(20, 3)}
@@ -145,7 +145,7 @@ def test_claude_sets_widths_ends_arrows_and_styles_as_the_menu_does(tab):
     assert "already so" in text
 
 
-def test_claude_hides_shadows_and_pastes_and_is_told_when_the_app_keeps_no_step(tab):
+def test_agent_hides_shadows_and_pastes_and_is_told_when_the_app_keeps_no_step(tab):
     canvas = tab.canvas
     layers(tab, "visible", ["1_2"], value=False)
     assert live(canvas, "1_2").is_hidden
@@ -184,7 +184,7 @@ def test_bad_layer_requests_say_what_is_wrong(tab):
 
 
 # ------------------------------------------------------------------ groups
-def test_claude_makes_moves_rotates_and_duplicates_a_group(tab):
+def test_agent_makes_moves_rotates_and_duplicates_a_group(tab):
     canvas = tab.canvas
     one = live(canvas, "1_1")
     before = tab.steps()
@@ -253,7 +253,7 @@ def window_op(tab, op, **more):
     return tab.runner.app_tool("app_window", dict({"tab_id": tab.id, "op": op}, **more))
 
 
-def test_claude_uses_the_view_buttons_without_touching_the_design(tab):
+def test_agent_uses_the_view_buttons_without_touching_the_design(tab):
     from PyQt5.QtCore import QPointF
     canvas, panel = tab.canvas, tab.window.layer_panel
     before, version = tab.steps(), tab.runner.workspace.tab_version
@@ -303,7 +303,7 @@ def test_claude_uses_the_view_buttons_without_touching_the_design(tab):
             window_op(tab, op, **more)
 
 
-def test_claude_draws_undoes_deletes_and_locks_with_the_window_buttons(tab):
+def test_agent_draws_undoes_deletes_and_locks_with_the_window_buttons(tab):
     from openstrand.app import AppError
     canvas, panel = tab.canvas, tab.window.layer_panel
     before = tab.steps()
@@ -348,7 +348,7 @@ def test_claude_draws_undoes_deletes_and_locks_with_the_window_buttons(tab):
     assert not any(hasattr(s, "get_mask_path") for s in canvas.strands)
     window_op(tab, "undo")
     assert sorted(s.layer_name for s in canvas.strands if hasattr(s, "get_mask_path")) == sorted(masks)
-    # The person changes the tab: Claude's next edit is refused until it reads again.
+    # The person changes the tab: the agent's next edit is refused until it reads again.
     live(canvas, "1_1").start.setX(live(canvas, "1_1").start.x() + 5)
     with pytest.raises(AppError, match="changed since you read it"):
         window_op(tab, "new_level")
@@ -356,7 +356,7 @@ def test_claude_draws_undoes_deletes_and_locks_with_the_window_buttons(tab):
     window_op(tab, "undo")
 
 
-def test_claude_saves_the_tab_and_the_view_as_files(tab, tmp_path):
+def test_agent_saves_the_tab_and_the_view_as_files(tab, tmp_path):
     import json
     from openstrand.app import AppError
     from PyQt5.QtGui import QImage
@@ -400,7 +400,7 @@ def kept_settings(tab):
         copy.write_bytes(text)
 
 
-def test_claude_reads_and_changes_settings_as_the_dialog_does(tab, kept_settings):
+def test_agent_reads_and_changes_settings_as_the_dialog_does(tab, kept_settings):
     from PyQt5.QtGui import QColor
     canvas, dialog = tab.canvas, tab.window.settings_dialog
     summary, text = tab.runner.app_tool("read_settings", {})
@@ -432,7 +432,7 @@ def test_claude_reads_and_changes_settings_as_the_dialog_does(tab, kept_settings
 
 
 def test_settings_and_window_changes_wait_for_the_person_in_ask_mode(tab, kept_settings):
-    panel, bridge = tab.window.claude_panel, tab.bridge
+    panel, bridge = tab.window.agent_panel, tab.bridge
     sounds = tab.bridge.setting_value("sounds")
     panel.run_mode = "ask"
     try:

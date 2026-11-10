@@ -1,8 +1,8 @@
 """(Superseded: the working line now draws the logo's box stitch itself, live
-(src/claude_stitch.py), and loads no frames. This script still renders its strip, but
-nothing in the app plays src/claude_knot.png any more.)
+(src/agent_stitch.py), and loads no frames. This script still renders its strip, but
+nothing in the app plays src/agent_knot.png any more.)
 
-Build the knot Claude's working line shows: a closed overhand knot drawn
+Build the knot the agent's working line shows: a closed overhand knot drawn
 step by step, strand after strand, by OpenStrand Studio's own canvas, then
 untied from the other end, so the loop comes back to where it began.
 
@@ -15,10 +15,10 @@ under as soon as both its strands appear. Once finished it unties: the cord leav
 first end, strand after strand along the same path, until nothing is left. The frames are rendered by the app's canvas onto a
 transparent ground.
 
-    python scripts/build_knot_spinner.py            # writes src/claude_knot.png (+ .json)
+    python scripts/build_knot_spinner.py            # writes src/agent_knot.png (+ .json)
     python scripts/build_knot_spinner.py --gif x.gif --size 256
 
-src/claude_knot.png is a strip of square frames; src/claude_knot.json gives
+src/agent_knot.png is a strip of square frames; src/agent_knot.json gives
 the frame size and how long each frame shows.
 """
 import argparse
@@ -190,7 +190,7 @@ def check_crossings(frames, images, full, crossings, to_image, radius=9, limit=8
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--size', type=int, default=64, help='frame size in px (default 64)')
-    parser.add_argument('--out', default=str(ROOT / 'src' / 'claude_knot.png'))
+    parser.add_argument('--out', default=str(ROOT / 'src' / 'agent_knot.png'))
     parser.add_argument('--gif', help='also write an animated GIF here')
     parser.add_argument('--frames', help='also write each frame as a PNG into this folder')
     args = parser.parse_args()

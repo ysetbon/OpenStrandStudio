@@ -1,6 +1,6 @@
 """The person's Settings (the gear button's dialog): read them, change them with
 the dialog's own code (its widgets and what its OK button runs), or open a page
-for the person (src/claude_bridge/settings.py). Settings belong to the app, not
+for the person (src/agent_bridge/settings.py). Settings belong to the app, not
 to a tab: changing one makes no undo step."""
 from ..errors import ToolError
 from .layers import color_value
@@ -59,7 +59,7 @@ def settings_text(rows):
 
 
 def app_value(key, value):
-    """Claude's value with its colors made exact for the app."""
+    """The agent's value with its colors made exact for the app."""
     if key not in COLOR_KEYS or value is None:
         return value
     try:

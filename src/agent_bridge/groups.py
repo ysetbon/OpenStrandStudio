@@ -1,7 +1,7 @@
 """Groups: what the group panel does, on groups of the tab showing. Each op runs
 the panel's own code (GroupPanel, GroupLayerManager), and where the panel opens
 a dialog that applies values live (Move Strands, Edit Strand Angles, Create
-Mask Grid) the dialog itself is built, given Claude's values and finished as
+Mask Grid) the dialog itself is built, given the agent's values and finished as
 OK finishes it, without being shown. One undo step each.
 
 A group is stored as its sets' root strands (n_1); its layers are every strand
@@ -214,7 +214,7 @@ class GroupActions:
         return f'deleted group {name} (its strands stay)'
 
     def group_move(self, name, args):
-        """Move Strands: the dialog's own update_positions with Claude's offset, then OK."""
+        """Move Strands: the dialog's own update_positions with the agent's offset, then OK."""
         from group_layers import GroupMoveDialog
         panel, canvas = self.group_panel, self.canvas
         steps = args.get('grid_steps')
@@ -311,7 +311,7 @@ class GroupActions:
         return f'set {rows} shadow row{"s" if rows != 1 else ""} of group {name}'
 
     def group_mask_grid(self, name, args):
-        """Create Mask Grid: the dialog's own _create_masks for Claude's pairs."""
+        """Create Mask Grid: the dialog's own _create_masks for the agent's pairs."""
         from mask_grid_dialog import MaskGridDialog
         dialog = MaskGridDialog(self.canvas, name, parent=self.layer_panel)
         try:

@@ -28,7 +28,7 @@ METADATA_KEY = "undo_metadata"
 
 # Where an action came from. 'mode' is a canvas tool; the rest are the non-mode
 # surfaces that also change the document.
-SOURCES = ("mode", "panel", "dialog", "menu", "shortcut", "system", "claude")  # claude: done by Claude through its app tools
+SOURCES = ("mode", "panel", "dialog", "menu", "shortcut", "system", "agent")  # agent: done by the agent through its app tools
 
 # Action catalogue: id -> human-readable description. Ids are stable and are
 # what gets persisted; the text is only for display, so rewording is safe.

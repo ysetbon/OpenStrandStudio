@@ -92,7 +92,7 @@ class StrandActions:
                 one.is_selected = was
             canvas.selected_strand, canvas.selected_attached_strand = selection[0], selection[1]
         canvas.update()
-        self.save_undo('strand.claude_move', [strand.layer_name])
+        self.save_undo('strand.agent_move', [strand.layer_name])
         p = lambda q: [round(q.x(), 1), round(q.y(), 1)]
         now = {k: p(getattr(strand, k)) for k in POINTS if getattr(strand, k, None) is not None}
         return {'tab_id': session.id, 'strand': strand.layer_name, 'now': now,

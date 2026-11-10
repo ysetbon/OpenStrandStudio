@@ -1,6 +1,6 @@
 /**
  * OpenStrand Studio's share inbox: a Cloudflare Worker that keeps, in an R2 bucket, what
- * people choose to share with the developer from the app (src/claude_sharing.py).
+ * people choose to share with the developer from the app (src/agent_sharing.py).
  *
  * The world can only add to it: POST /v1/share keeps one sealed share. Each share is
  * encrypted in the app with the developer's public key (HPKE with ML-KEM-768 + X25519)

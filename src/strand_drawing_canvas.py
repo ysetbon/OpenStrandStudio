@@ -5517,7 +5517,7 @@ class StrandDrawingCanvas(QWidget):
         image.fill(Qt.white)
 
         painter = QPainter(image)
-        # The drawing only: not Claude, which floats over the canvas as a child.
+        # The drawing only: not the agent, which floats over the canvas as a child.
         self.render(painter, QPoint(), QRegion(), QWidget.DrawWindowBackground)
         painter.end()
 

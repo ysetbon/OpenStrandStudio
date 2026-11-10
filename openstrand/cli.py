@@ -288,8 +288,8 @@ def api_key(provider='anthropic'):
     if os.environ.get(providers.PROVIDERS[provider].env, '').strip():
         return providers.api_key(provider)  # the app passes it this way: the saved keys stay unread
     try:
-        import claude_settings
-        saved = claude_settings.load().get('keys', {})
+        import agent_settings
+        saved = agent_settings.load().get('keys', {})
     except Exception:
         saved = {}
     return providers.api_key(provider, saved)
@@ -312,16 +312,16 @@ def _anthropic():
 def cmd_agent(args):
     from . import providers
     try:  # the app's settings, when the app is here: they decide what this command may do
-        import claude_settings
+        import agent_settings
     except ImportError:
-        claude_settings = None
+        agent_settings = None
     # The agent turned off in the app (Settings > Models): this command does nothing at all,
     # before any package is loaded, any key read or any model looked up.
     providers.check_allowed(None)
     anthropic = _anthropic()
     from . import agent
     try:  # the models Settings > Models offers: the built-in ones and what Refresh models found
-        providers.use_catalog(claude_settings.catalog())
+        providers.use_catalog(agent_settings.catalog())
     except Exception:
         pass
     model = providers.resolve(args.model)
@@ -485,7 +485,7 @@ def build_parser():
     agent_cmd.add_argument('--no-web', action='store_true', help='do not let the agent search or read the web')
     agent_cmd.add_argument('--effort', default='high', choices=['low', 'medium', 'high', 'xhigh', 'max'],
                            help='how hard the model thinks (default high; higher costs more)')
-    agent_cmd.add_argument('--history', help="the session so far, a JSON list of {user, claude, design}")
+    agent_cmd.add_argument('--history', help="the session so far, a JSON list of {user, agent, design}")
     agent_cmd.add_argument('--app', action='store_true',
                            help="started by OpenStrand Studio: its tabs become tools, answered on stdin")
     agent_cmd.add_argument('--plan', action='store_true',

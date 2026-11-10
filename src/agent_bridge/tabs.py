@@ -84,7 +84,7 @@ class TabActions:
     def tab_data(self, session):
         """The tab's design now: the live canvas for the tab showing, else its kept state."""
         if session.id == self.tabs.active_tab_id:
-            return self.window.claude_canvas_snapshot()
+            return self.window.agent_canvas_snapshot()
         return session.project_state
 
     @staticmethod
@@ -98,7 +98,7 @@ class TabActions:
         return self.fingerprint(self.tab_data(session))
 
     def check_fresh(self, args, session):
-        """An edit worked out on the tab as Claude read it: refused if the tab changed since."""
+        """An edit worked out on the tab as the agent read it: refused if the tab changed since."""
         expected = args.get('version')
         if expected and expected != self.version(session):
             raise BridgeError(f'"{self.tabs.title_for(session)}" changed since you read it (the person edited it, '
@@ -150,7 +150,7 @@ class TabActions:
         raise BridgeError(f'"{self.tabs.title_for(session)}" keeps no undo step {step}')
 
     def read_tab_step(self, tab_id, step):
-        """One past (or undone) step of a tab, as a design file Claude reads. The tab is unchanged."""
+        """One past (or undone) step of a tab, as a design file the agent reads. The tab is unchanged."""
         session = self.session(tab_id)
         try:
             step = int(step)
@@ -171,13 +171,13 @@ class TabActions:
         tm = self.tabs
         session = self.session(tab_id)
         if session.id == tm.active_tab_id:
-            data = self.window.claude_canvas_snapshot()
+            data = self.window.agent_canvas_snapshot()
         else:
             data = session.project_state
         if not data or not data.get('strands'):
             raise BridgeError(f'tab "{tm.title_for(session)}" has no design in it')
         if 'project_settings' not in data:
-            # The curve settings the tab is drawn with, so Claude's copy has
+            # The curve settings the tab is drawn with, so the agent's copy has
             # the same paths (as a saved project file carries them).
             from project_settings import capture_project_settings
             data = dict(data, project_settings=capture_project_settings(self.window.canvas))
@@ -188,9 +188,9 @@ class TabActions:
                 'history': self.history(session)}
 
     def open_in_new_tab(self, path, title):
-        """The same way as Claude's finished designs: a new tab, then Load's own loader."""
+        """The same way as the agent's finished designs: a new tab, then Load's own loader."""
         tm = self.tabs
-        if not self.window.open_claude_design(path):
+        if not self.window.open_agent_design(path):
             raise BridgeError('the design could not be opened in a new tab')
         session = tm.get_active()
         self.set_title(session, title)

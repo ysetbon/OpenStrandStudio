@@ -1,6 +1,6 @@
 """The model settings (Settings > Models): the user's API key for each provider
 (Anthropic, OpenAI, xAI, Moonshot, DeepSeek, Alibaba Cloud), the model to use,
-whether what Claude makes is shared with the developer, and what the requests
+whether what the agent makes is shared with the developer, and what the requests
 have cost in all on this computer.
 
 Kept in claude.json in the OpenStrand Studio settings folder, on this computer
@@ -71,7 +71,7 @@ def models(data=None):
 
 def own_keys(current=None):
     """Every API key this app knows of, saved or set in the environment, whatever its shape:
-    claude_sharing cuts each one out of anything shared (an answer may repeat a key)."""
+    agent_sharing cuts each one out of anything shared (an answer may repeat a key)."""
     current = load() if current is None else current
     keys = set(current['keys'].values())
     keys.update(os.environ.get(spec.env, '').strip() for spec in PROVIDERS.values() if spec.env)
@@ -195,7 +195,7 @@ DEFAULT_MAX_COST = 2.00     # USD one request may spend before it stops
 MAX_COST_RANGE = (0.10, 20.00)
 DEFAULT_SESSION_LIMIT = 10.00  # USD all requests may spend before the app is restarted
 SESSION_LIMIT_RANGE = (0.50, 500.00)
-EFFORTS = ('low', 'medium', 'high', 'xhigh', 'max')  # how long Claude may think
+EFFORTS = ('low', 'medium', 'high', 'xhigh', 'max')  # how long the agent may think
 DEFAULT_EFFORT = 'high'
 MODES = ('ask', 'auto')  # ask before opening a design, or open it at once (plan mode is never kept)
 DEFAULT_MODE = 'auto'
@@ -358,7 +358,7 @@ def load():
     spent is what every request has cost in all, in USD, since spent_since
     (an ISO date, empty before the first request). models_on is False when
     Settings > Models turns the agent off altogether. Its panel always starts closed.
-    share: whether what the model makes goes to the developer (claude_sharing): None until
+    share: whether what the model makes goes to the developer (agent_sharing): None until
     the person is asked, then True or False. gallery: whether the developer may show their
     new designs in the public gallery, the same way (it only counts while share is on). Keys saved in claude.json by an earlier
     version move to the password store here, once there is one."""

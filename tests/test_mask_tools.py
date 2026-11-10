@@ -268,7 +268,7 @@ def test_repair_fixes_what_is_safe_and_says_what_is_left():
     fixed, done, left = masks.repair(data)
     assert len(done) == 1 and done[0].startswith("erased mask 1_1_2_1 at (600, 400) where it hid 3_1")
     assert left == [] and masks.check(fixed)["problems"] == []
-    # A tight knot: no erase fixes it cleanly, so it is left, located, for Claude...
+    # A tight knot: no erase fixes it cleanly, so it is left, located, for the agent...
     data = load(OVERHAND)
     fixed, done, left = masks.repair(data)
     assert done == [] and [tuple(round(v) for v in p["at"]) for p in left] == [(579, 380)]
@@ -310,7 +310,7 @@ def test_the_agent_checks_and_edits_masks(tmp_path):
     assert {"check_masks", "edit_mask"} <= {t["name"] for t in TOOLS}
 
 
-def test_tie_knot_tells_claude_what_it_fixed_and_what_is_left(tmp_path):
+def test_tie_knot_tells_agent_what_it_fixed_and_what_is_left(tmp_path):
     from openstrand.agent import INSTRUCTIONS, Workspace
     from openstrand.app_tools import APP_INSTRUCTIONS
     ws = Workspace(tmp_path)
@@ -434,12 +434,12 @@ def live_mask(window, name):
     return next((s for s in window.canvas.strands if s.layer_name == name and hasattr(s, "get_mask_path")), None)
 
 
-def test_claude_edits_a_mask_in_the_tab_itself_as_one_undo_step(window, monkeypatch, tmp_path):
+def test_agent_edits_a_mask_in_the_tab_itself_as_one_undo_step(window, monkeypatch, tmp_path):
     from PyQt5.QtCore import QUrl
     from PyQt5.QtWidgets import QApplication
     from openstrand import agent
     from openstrand.app_tools import AppError
-    panel, tm = window.claude_panel, window.tab_manager
+    panel, tm = window.agent_panel, window.tab_manager
     bridge = panel.bridge
     run = tmp_path / "run"
     run.mkdir()
@@ -461,7 +461,7 @@ def test_claude_edits_a_mask_in_the_tab_itself_as_one_undo_step(window, monkeypa
         return reply["result"]
     runner = agent.Agent(SimpleNamespace(), tmp_path / "out", app=SimpleNamespace(call=call))
     runner.app_tool("read_tab", {"tab_id": tab.id})
-    # read_tab carries the tab's curve settings: Claude's copy has the same paths.
+    # read_tab carries the tab's curve settings: the agent's copy has the same paths.
     assert runner.workspace.data["project_settings"]["distance_multiplier"] == window.canvas.distance_multiplier
     assert planted(masks.check(runner.workspace.data)) is not None
 
@@ -469,10 +469,10 @@ def test_claude_edits_a_mask_in_the_tab_itself_as_one_undo_step(window, monkeypa
                                                          "covers": "3_1"})
     mask = live_mask(window, "1_1_2_1")
     assert mask.deletion_rectangles and summary.startswith("In the tab")
-    # The tab now draws what Claude's copy says: nothing hides 3_1 any more.
+    # The tab now draws what the agent's copy says: nothing hides 3_1 any more.
     # (A tab keeps no "design_crossings": the crossings' own masks say which strand is on top.)
     assert "design_crossings" not in runner.workspace.data
-    snapshot = dict(window.claude_canvas_snapshot(), project_settings=runner.workspace.data["project_settings"])
+    snapshot = dict(window.agent_canvas_snapshot(), project_settings=runner.workspace.data["project_settings"])
     assert planted(masks.check(snapshot)) is None
     # One undo step takes it back.
     window.canvas.undo_redo_manager.undo()
@@ -531,7 +531,7 @@ def test_claude_edits_a_mask_in_the_tab_itself_as_one_undo_step(window, monkeypa
     assert not reply["ok"] and "switch_tab to it first" in reply["error"]
 
 
-# ------------------------------------------------------ Claude, end to end
+# ------------------------------------------------------ the agent, end to end
 class FakeAPI:
     """A local Messages API, reached through the real SDK. Each request gets
     the reply script(n, body) returns: n counts the requests from 0."""
@@ -588,7 +588,7 @@ def say(text):
     return {"content": [{"type": "text", "text": text}], "stop_reason": "end_turn"}
 
 
-def test_claude_checks_and_fixes_masks_then_ties_a_tight_knot(tmp_path, monkeypatch):
+def test_agent_checks_and_fixes_masks_then_ties_a_tight_knot(tmp_path, monkeypatch):
     """The whole loop through the real SDK and the openstrand agent command,
     from a design with a planted problem: check_masks, a preview, the fix, the
     check again; then tie_knot, a refused edit, a preview and a render."""
@@ -638,14 +638,14 @@ def test_claude_checks_and_fixes_masks_then_ties_a_tight_knot(tmp_path, monkeypa
     assert "masks fixed: made mask 1_3_1_6 (1_3 over 1_6)" in tied
     assert "crowded crossing" not in tied
     assert "2 masks:" in api.result(6) and "no mask problems" in api.result(6)
-    # A wrong edit goes back to Claude as an error; a preview changes nothing.
+    # A wrong edit goes back to the agent as an error; a preview changes nothing.
     refused = api.requests[7]["messages"][-1]["content"][0]
     assert refused["is_error"] and "already have mask 1_3_1_6" in refused["content"]
     preview = api.result(8)
     assert preview.startswith("Preview, not kept: deleted mask 1_3_1_6")
     assert "Fix: edit_mask create, first 1_3, second 1_6." in preview
     assert "<image>" in api.result(9)
-    # The design Claude leaves is the tight knot with its fix, as the app loads it.
+    # The design the agent leaves is the tight knot with its fix, as the app loads it.
     final = project.read(out / "design.json")
     assert masks.Design(final).mask("1_3_1_6").deletion_rectangles
     assert knot(final) == "trefoil"
@@ -655,18 +655,18 @@ def test_claude_checks_and_fixes_masks_then_ties_a_tight_knot(tmp_path, monkeypa
                     ("render", True)]
 
 
-def test_claude_fixes_a_mask_in_the_person_s_own_tab(window, monkeypatch, tmp_path):
-    """From the app's Claude panel: Claude lists the tabs, reads the one with
+def test_agent_fixes_a_mask_in_the_person_s_own_tab(window, monkeypatch, tmp_path):
+    """From the app's agent panel: the agent lists the tabs, reads the one with
     the problem, checks its masks and fixes the mask in that tab itself."""
-    import claude_settings
+    import agent_settings
     from PyQt5.QtWidgets import QApplication
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    claude_settings.save(api_key="sk-ant-test-key", model="claude-haiku-5-5", web=False)
-    panel, tm = window.claude_panel, window.tab_manager
+    agent_settings.save(api_key="sk-ant-test-key", model="claude-haiku-5-5", web=False)
+    panel, tm = window.agent_panel, window.tab_manager
     # The person's tab: the three cords, a mask hiding 3_1.
     path = tmp_path / "mine.json"
     path.write_text(THREE.read_text(encoding="utf-8"), encoding="utf-8")
-    assert window.open_claude_design(str(path))
+    assert window.open_agent_design(str(path))
     mine = tm.get_active()
     tm.changed.emit()
     QApplication.processEvents()
@@ -712,12 +712,12 @@ def test_claude_fixes_a_mask_in_the_person_s_own_tab(window, monkeypatch, tmp_pa
     assert live_mask(window, "1_1_2_1").deletion_rectangles == []
 
 
-def test_claude_reads_the_tab_as_it_is_now_its_history_and_moves_a_strand(window, monkeypatch, tmp_path):
+def test_agent_reads_the_tab_as_it_is_now_its_history_and_moves_a_strand(window, monkeypatch, tmp_path):
     from PyQt5.QtCore import QPointF
     from PyQt5.QtWidgets import QApplication
     from openstrand import agent, project
     from openstrand.app_tools import AppError
-    panel, tm, canvas = window.claude_panel, window.tab_manager, window.canvas
+    panel, tm, canvas = window.agent_panel, window.tab_manager, window.canvas
     bridge = panel.bridge
     run = tmp_path / "run"
     run.mkdir()
@@ -751,7 +751,7 @@ def test_claude_reads_the_tab_as_it_is_now_its_history_and_moves_a_strand(window
     parent = live(child["attached_to"])
     before_step = canvas.undo_redo_manager.current_step
 
-    # The person moves a handle meanwhile: Claude's edit, worked out on its old copy, is refused.
+    # The person moves a handle meanwhile: the agent's edit, worked out on its old copy, is refused.
     assert bridge.handle({"id": 2, "name": "edit_strand", "args": {
         "tab_id": tab.id, "strand": parent.layer_name,
         "points": {"control_point1": [parent.control_point1.x() + 6, parent.control_point1.y()]}}})["ok"]
@@ -770,14 +770,14 @@ def test_claude_reads_the_tab_as_it_is_now_its_history_and_moves_a_strand(window
     assert abs(follower.start.x() - parent.end.x()) < 0.6 and abs(follower.start.y() - parent.end.y()) < 0.6
     assert ws.tab_version == bridge.version(tab)  # the copy is the tab again
     after_step = canvas.undo_redo_manager.current_step
-    assert after_step == before_step + 2  # the person's move and Claude's: one undo step each
+    assert after_step == before_step + 2  # the person's move and the agent's: one undo step each
 
-    # Past steps: the tab before Claude's edit, read without changing the tab.
+    # Past steps: the tab before the agent's edit, read without changing the tab.
     _, text = runner.app_tool("read_tab_step", {"tab_id": tab.id, "step": after_step - 1})
     old = next(s for s in ws.data["strands"] if s["layer_name"] == parent.layer_name)
     assert abs(old["end"]["x"] - (end[0] - 9.0)) < 0.6 and ws.tab is None  # a copy: no tab edits from it
     assert f"undo step {after_step - 1}" in text
-    assert ws.theirs and runner.finish([])["changed"] is False  # the person's own: never shared as Claude's
+    assert ws.theirs and runner.finish([])["changed"] is False  # the person's own: never shared as the agent's
     with pytest.raises(agent.ToolError, match="read_tab this tab first"):
         runner.app_tool("edit_strand_in_tab", {"tab_id": tab.id, "strand": parent.layer_name, "points": {"end": end}})
     # Undo: the tab goes back, its version changes, and the undone step can still be read.
@@ -796,11 +796,11 @@ def test_claude_reads_the_tab_as_it_is_now_its_history_and_moves_a_strand(window
 
 
 def test_a_strand_edit_ends_like_a_drop_and_the_layer_panel_still_selects(window, monkeypatch, tmp_path):
-    """After Claude moved a strand, clicking a layer raised "argument of type 'NoneType' is not
+    """After the agent moved a strand, clicking a layer raised "argument of type 'NoneType' is not
     iterable": the edit left canvas.truly_moving_strands = None where the app expects no attribute
     or a list. An edit must leave the canvas as a mouse release leaves it, the selection included."""
     from PyQt5.QtWidgets import QApplication
-    panel, tm, canvas = window.claude_panel, window.tab_manager, window.canvas
+    panel, tm, canvas = window.agent_panel, window.tab_manager, window.canvas
     bridge = panel.bridge
     run = tmp_path / "run"
     run.mkdir()

@@ -1,4 +1,4 @@
-"""Sharing what Claude makes with the developer (src/claude_sharing.py): what a share
+"""Sharing what the agent makes with the developer (src/agent_sharing.py): what a share
 holds and never holds, sealed so only the developer's private key opens it, and sent over
 HTTPS (here: a local stand-in for the Worker) without following a redirect."""
 import base64
@@ -18,7 +18,7 @@ for folder in (ROOT, ROOT / "src"):
         sys.path.insert(0, str(folder))
 
 pytest.importorskip("cryptography.hazmat.primitives.hpke")  # cryptography 47 or newer
-import claude_sharing  # noqa: E402
+import agent_sharing  # noqa: E402
 
 PNG = b"\x89PNG\r\n\x1a\n-a-picture-"
 HOPF = json.loads((ROOT / "knot_samples/links/json/hopf_link.json").read_text(encoding="utf-8"))
@@ -26,7 +26,7 @@ HOPF = json.loads((ROOT / "knot_samples/links/json/hopf_link.json").read_text(en
 
 @pytest.fixture(scope="module")
 def keys():
-    return claude_sharing.new_keys()
+    return agent_sharing.new_keys()
 
 
 @pytest.fixture
@@ -63,37 +63,37 @@ def worker(monkeypatch):
 
 def test_a_share_opens_with_the_private_key_only_and_holds_nothing_readable(keys):
     private, public = keys
-    record = claude_sharing.record(["Two linked rings, in teal."], HOPF, PNG, model="claude-sonnet-5-5",
+    record = agent_sharing.record(["Two linked rings, in teal."], HOPF, PNG, model="claude-sonnet-5-5",
                                    language="fr")
-    sealed = claude_sharing.seal(record, public)
+    sealed = agent_sharing.seal(record, public)
     assert sealed.startswith(b"OSS1")
     for plain in (b"linked rings", b"strands", b"claude-sonnet", PNG, base64.b64encode(PNG)):
         assert plain not in sealed
-    opened = claude_sharing.unseal(sealed, private)
+    opened = agent_sharing.unseal(sealed, private)
     assert opened == json.loads(json.dumps(record))
     assert opened["design"] == HOPF and base64.b64decode(opened["picture"]) == PNG
     assert opened["answer"] == ["Two linked rings, in teal."] and opened["language"] == "fr"
     # Another key, a changed byte, or a share sealed twice for the same record: never the same.
-    other, _ = claude_sharing.new_keys()
+    other, _ = agent_sharing.new_keys()
     with pytest.raises(Exception):
-        claude_sharing.unseal(sealed, other)
+        agent_sharing.unseal(sealed, other)
     changed = bytearray(sealed)
     changed[-20] ^= 1
     with pytest.raises(Exception):
-        claude_sharing.unseal(bytes(changed), private)
-    assert claude_sharing.seal(record, public) != sealed  # a fresh key exchange every time
+        agent_sharing.unseal(bytes(changed), private)
+    assert agent_sharing.seal(record, public) != sealed  # a fresh key exchange every time
     with pytest.raises(ValueError, match="not an OpenStrand Studio share"):
-        claude_sharing.unseal(b"PK\x03\x04" + sealed[4:], private)
+        agent_sharing.unseal(b"PK\x03\x04" + sealed[4:], private)
 
 
 def test_a_share_never_holds_a_folder_or_the_person_s_name_in_one():
     home = os.path.expanduser("~")
-    texts = [f"Saved it as {home}{os.sep}AppData{os.sep}OpenStrandStudio{os.sep}claude_designs{os.sep}ring.json.",
+    texts = [f"Saved it as {home}{os.sep}AppData{os.sep}OpenStrandStudio{os.sep}agent_designs{os.sep}ring.json.",
              r"The file C:\Users\Jane Doe\Documents\knot.json is open.",
              "Also /home/jane/designs/knot.json and ~/Desktop/k.json and \\\\server\\share\\k.json.",
              "From https://www.animatedknots.com/home/figure-8 and http://example.org/Users/x, as is."]
     groups = {r"C:\Users\Jane Doe\private": {}, r"D:\work\jane\a": {}, "Rings": {}}  # a key is a text too
-    record = claude_sharing.record(texts + [r"cannot open D:\work\jane\a.json"],
+    record = agent_sharing.record(texts + [r"cannot open D:\work\jane\a.json"],
                                    {"strands": [], "note": "/Users/jane/x.png", "groups": groups}, None, ok=False)
     said = json.dumps(record)
     for private in (home, "Jane Doe", "Documents", "/home/jane", "/Users/jane", "Desktop", "server\\\\share",
@@ -106,19 +106,19 @@ def test_a_share_never_holds_a_folder_or_the_person_s_name_in_one():
                            "version", "new", "gallery"}
     # The app's version goes with each share: the one its installers say.
     spec = (ROOT / "src" / "OpenStrandStudio_mac.spec").read_text(encoding="utf-8")
-    assert record["version"] == claude_sharing.APP_VERSION
-    assert f"'CFBundleShortVersionString': '{claude_sharing.APP_VERSION}'" in spec
+    assert record["version"] == agent_sharing.APP_VERSION
+    assert f"'CFBundleShortVersionString': '{agent_sharing.APP_VERSION}'" in spec
     # Nothing else: not the request, an error's text, the time, the computer or the person.
 
 
 def test_a_share_never_holds_an_api_key_even_when_the_answer_repeats_one(tmp_path, monkeypatch):
-    import claude_settings
+    import agent_settings
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    claude_settings.save(provider_key=("moonshot", "an-odd-saved-key-0123456789"))
+    agent_settings.save(provider_key=("moonshot", "an-odd-saved-key-0123456789"))
     monkeypatch.setenv("OPENAI_API_KEY", "an-odd-env-key-9876543210")
-    keys = claude_settings.own_keys()  # the person's own, saved or in the environment, any shape
+    keys = agent_settings.own_keys()  # the person's own, saved or in the environment, any shape
     assert {"an-odd-saved-key-0123456789", "an-odd-env-key-9876543210"} <= set(keys)
-    record = claude_sharing.record(
+    record = agent_sharing.record(
         ["Your keys an-odd-saved-key-0123456789 and an-odd-env-key-9876543210 both work.",
          "So would sk-ant-api03-AbCdEf0123456789_xyz-QQ, sk-proj-ABCDEFGHIJKLMNOPQRSTUVWX or "
          "xai-0123456789abcdefghijKLMNOP.",
@@ -135,32 +135,32 @@ def test_a_share_never_holds_an_api_key_even_when_the_answer_repeats_one(tmp_pat
 
 def test_sharing_is_off_until_the_developer_sets_it_up(keys, monkeypatch):
     _, public = keys
-    monkeypatch.setattr(claude_sharing, "SHARE_URL", "")
-    monkeypatch.setattr(claude_sharing, "SHARE_PUBLIC_KEY", "")
-    assert not claude_sharing.available()
-    assert claude_sharing.available("https://openstrand-share.example.workers.dev/v1/share", public)
-    assert not claude_sharing.available("http://openstrand-share.example.workers.dev/v1/share", public)  # not HTTPS
-    assert not claude_sharing.available("https://openstrand-share.example.workers.dev/v1/share", public[:-8])
+    monkeypatch.setattr(agent_sharing, "SHARE_URL", "")
+    monkeypatch.setattr(agent_sharing, "SHARE_PUBLIC_KEY", "")
+    assert not agent_sharing.available()
+    assert agent_sharing.available("https://openstrand-share.example.workers.dev/v1/share", public)
+    assert not agent_sharing.available("http://openstrand-share.example.workers.dev/v1/share", public)  # not HTTPS
+    assert not agent_sharing.available("https://openstrand-share.example.workers.dev/v1/share", public[:-8])
     with pytest.raises(ValueError, match="bytes"):
-        claude_sharing.public_key(base64.b64encode(b"short").decode())
+        agent_sharing.public_key(base64.b64encode(b"short").decode())
 
 
 def test_a_share_goes_to_the_worker_sealed_and_never_follows_a_redirect(keys, worker):
     private, public = keys
-    sealed = claude_sharing.seal(claude_sharing.record(["A heart."], HOPF, PNG), public)
-    assert claude_sharing.send(sealed, worker.url) == 204
+    sealed = agent_sharing.seal(agent_sharing.record(["A heart."], HOPF, PNG), public)
+    assert agent_sharing.send(sealed, worker.url) == 204
     (sent,) = worker.got
     assert sent["path"] == "/v1/share" and sent["type"] == "application/octet-stream" and sent["body"] == sealed
-    assert claude_sharing.unseal(sent["body"], private)["answer"] == ["A heart."]
+    assert agent_sharing.unseal(sent["body"], private)["answer"] == ["A heart."]
     worker.handler.redirect = f"http://localhost:{worker.port}/elsewhere"
     with pytest.raises(urllib.error.HTTPError) as answer:
-        claude_sharing.send(sealed, worker.url)
+        agent_sharing.send(sealed, worker.url)
     assert answer.value.code == 302 and [g["path"] for g in worker.got] == ["/v1/share", "/v1/share"]
     with pytest.raises(ValueError, match="https://"):  # never in the clear to another computer
-        claude_sharing.send(sealed, "http://openstrand-share.example.workers.dev/v1/share")
-    huge = claude_sharing.record(["x"], None, os.urandom(claude_sharing.MAX_BYTES))
+        agent_sharing.send(sealed, "http://openstrand-share.example.workers.dev/v1/share")
+    huge = agent_sharing.record(["x"], None, os.urandom(agent_sharing.MAX_BYTES))
     with pytest.raises(ValueError, match="too large"):
-        claude_sharing.seal(huge, public)
+        agent_sharing.seal(huge, public)
 
 
 def test_the_developer_s_tool_makes_a_private_key_and_opens_shares_into_files(tmp_path, capsys):
@@ -174,7 +174,7 @@ def test_the_developer_s_tool_makes_a_private_key_and_opens_shares_into_files(tm
     with pytest.raises(SystemExit, match="exists already"):  # never over a key in use
         share_inbox.main(["keygen", "--key", str(key)])
     sealed = tmp_path / "one.oss"
-    sealed.write_bytes(claude_sharing.seal(claude_sharing.record(["A trefoil."], HOPF, PNG, model="kimi-k3.1-pro"),
+    sealed.write_bytes(agent_sharing.seal(agent_sharing.record(["A trefoil."], HOPF, PNG, model="kimi-k3.1-pro"),
                                            public))
     assert share_inbox.main(["open", str(sealed), "--key", str(key), "--out", str(tmp_path / "shared")]) == 0
     folder = tmp_path / "shared" / "one"
@@ -189,14 +189,14 @@ def test_a_share_anyone_could_make_cannot_flood_or_trip_the_developer_s_tool(key
     import zlib
     private, public = keys
     from cryptography.hazmat.primitives import hpke  # noqa: F401
-    seal_raw = lambda data: claude_sharing.MAGIC + claude_sharing.suite().encrypt(  # noqa: E731
-        data, claude_sharing.public_key(public), info=claude_sharing.INFO)
-    bomb = zlib.compress(b"[" + b" " * (claude_sharing.MAX_OPENED_BYTES + 10) + b"]", 9)  # a few hundred kB
-    assert len(bomb) < claude_sharing.MAX_BYTES
+    seal_raw = lambda data: agent_sharing.MAGIC + agent_sharing.suite().encrypt(  # noqa: E731
+        data, agent_sharing.public_key(public), info=agent_sharing.INFO)
+    bomb = zlib.compress(b"[" + b" " * (agent_sharing.MAX_OPENED_BYTES + 10) + b"]", 9)  # a few hundred kB
+    assert len(bomb) < agent_sharing.MAX_BYTES
     with pytest.raises(ValueError, match="opens to more than"):
-        claude_sharing.unseal(seal_raw(bomb), private)
+        agent_sharing.unseal(seal_raw(bomb), private)
     with pytest.raises(ValueError, match="not an OpenStrand Studio share record"):
-        claude_sharing.unseal(seal_raw(zlib.compress(b'["a list"]')), private)
+        agent_sharing.unseal(seal_raw(zlib.compress(b'["a list"]')), private)
     # A record of the wrong shape: the developer's tool writes what it can, never trips on it.
     sys.path.insert(0, str(ROOT / "scripts"))
     import share_inbox
@@ -206,7 +206,7 @@ def test_a_share_anyone_could_make_cannot_flood_or_trip_the_developer_s_tool(key
     key = tmp_path / "share.key"
     key.write_text(private + "\n", encoding="ascii")
     good, bad = tmp_path / "good.oss", tmp_path / "bad.oss"
-    good.write_bytes(claude_sharing.seal(claude_sharing.record(["A ring."], HOPF, PNG), public))
+    good.write_bytes(agent_sharing.seal(agent_sharing.record(["A ring."], HOPF, PNG), public))
     bad.write_bytes(seal_raw(bomb))
     assert share_inbox.main(["open", str(bad), str(good), "--key", str(key), "--out", str(tmp_path / "out")]) == 1
     assert not (tmp_path / "out" / "bad").exists() and (tmp_path / "out" / "good" / "design.json").exists()
@@ -228,7 +228,7 @@ def test_the_developer_s_tool_writes_a_share_whole_or_not_at_all(keys, tmp_path,
     first, second = tmp_path / "first" / "ring.oss", tmp_path / "second" / "ring.oss"  # the same name
     for path, answer in ((first, "A ring."), (second, "Another ring.")):
         path.parent.mkdir()
-        path.write_bytes(claude_sharing.seal(claude_sharing.record([answer], HOPF, PNG), public))
+        path.write_bytes(agent_sharing.seal(agent_sharing.record([answer], HOPF, PNG), public))
     assert share_inbox.main(["open", str(first), "--key", str(key), "--out", str(out)]) == 0
     before = {p.name: p.read_bytes() for p in (out / "ring").iterdir()}
     real = share_inbox.Path.write_bytes
@@ -251,7 +251,7 @@ def test_the_developer_s_tool_writes_a_share_whole_or_not_at_all(keys, tmp_path,
         return real_replace(src, dst)
     monkeypatch.setattr(share_inbox.os, "replace", interrupted)
     with pytest.raises(KeyboardInterrupt):
-        share_inbox.save(claude_sharing.record(["Another ring."], HOPF, PNG), out / "ring")
+        share_inbox.save(agent_sharing.record(["Another ring."], HOPF, PNG), out / "ring")
     monkeypatch.setattr(share_inbox.os, "replace", real_replace)
     assert {p.name: p.read_bytes() for p in (out / "ring").iterdir()} == before
     assert [p.name for p in out.iterdir()] == ["ring"]
@@ -267,7 +267,7 @@ def test_the_developer_s_tool_writes_a_share_whole_or_not_at_all(keys, tmp_path,
 def test_a_share_says_gallery_only_for_a_new_design_the_person_allowed():
     """The gallery is a second yes, and only for a design made from nothing of the person's,
     in a request that worked."""
-    share = lambda **given: claude_sharing.record(["Done."], given.pop("design", HOPF), PNG, **given)  # noqa: E731
+    share = lambda **given: agent_sharing.record(["Done."], given.pop("design", HOPF), PNG, **given)  # noqa: E731
     assert share()["gallery"] is False and share()["new"] is False  # nothing said: private
     assert share(new=True)["gallery"] is False  # new, but the person did not allow the gallery
     assert share(gallery=True)["gallery"] is False  # allowed, but made from their own design
@@ -278,15 +278,15 @@ def test_a_share_says_gallery_only_for_a_new_design_the_person_allowed():
 
 
 def test_the_gallery_is_offered_only_once_the_developer_says_where_it_is(keys, monkeypatch):
-    monkeypatch.setattr(claude_sharing, "SHARE_URL", "https://openstrand-share.example.workers.dev/v1/share")
-    monkeypatch.setattr(claude_sharing, "SHARE_PUBLIC_KEY", keys[1])
-    assert claude_sharing.available() and not claude_sharing.gallery_available()
-    monkeypatch.setattr(claude_sharing, "GALLERY_URL", "http://example.github.io/OpenStrandStudio/")
-    assert not claude_sharing.gallery_available()  # https only
-    monkeypatch.setattr(claude_sharing, "GALLERY_URL", "https://example.github.io/OpenStrandStudio/")
-    assert claude_sharing.gallery_available()
-    monkeypatch.setattr(claude_sharing, "SHARE_URL", "")
-    assert not claude_sharing.gallery_available()  # no sharing, no gallery
+    monkeypatch.setattr(agent_sharing, "SHARE_URL", "https://openstrand-share.example.workers.dev/v1/share")
+    monkeypatch.setattr(agent_sharing, "SHARE_PUBLIC_KEY", keys[1])
+    assert agent_sharing.available() and not agent_sharing.gallery_available()
+    monkeypatch.setattr(agent_sharing, "GALLERY_URL", "http://example.github.io/OpenStrandStudio/")
+    assert not agent_sharing.gallery_available()  # https only
+    monkeypatch.setattr(agent_sharing, "GALLERY_URL", "https://example.github.io/OpenStrandStudio/")
+    assert agent_sharing.gallery_available()
+    monkeypatch.setattr(agent_sharing, "SHARE_URL", "")
+    assert not agent_sharing.gallery_available()  # no sharing, no gallery
 
 
 @pytest.fixture
@@ -311,7 +311,7 @@ def test_publish_puts_a_cleaned_copy_in_the_gallery_and_never_the_share_itself(i
     tool, gallery = inbox.tool, inbox.gallery
     design = json.loads(json.dumps(HOPF))
     design["groups"] = {"Jane Doe's rings": {"layers": ["1_1"], "strands": ["1_1"], "main_strands": ["1_1"]}}
-    record = claude_sharing.record(["Two rings for Jane Doe."], design, PNG, model="claude-haiku-5-5", new=True,
+    record = agent_sharing.record(["Two rings for Jane Doe."], design, PNG, model="claude-haiku-5-5", new=True,
                                    gallery=True)
     name = tool.publish_one(inbox.extract(record), gallery, draw=inbox.draw)
     assert tool.GALLERY_ID.match(name)
@@ -322,7 +322,7 @@ def test_publish_puts_a_cleaned_copy_in_the_gallery_and_never_the_share_itself(i
     assert json.loads(shown)["strands"] == HOPF["strands"]  # the design itself, as it was made
     assert (gallery / "designs" / f"{name}.png").read_bytes() != PNG  # drawn again, not the shared picture
     listed = json.loads((gallery / "designs.json").read_text(encoding="utf-8"))
-    assert listed == {"designs": [{"id": name, "model": "claude-haiku-5-5", "version": claude_sharing.APP_VERSION}]}
+    assert listed == {"designs": [{"id": name, "model": "claude-haiku-5-5", "version": agent_sharing.APP_VERSION}]}
     assert "Jane" not in json.dumps(listed)  # the answer goes nowhere near the gallery
     # The same design again is the same entry; taking it out leaves nothing behind.
     assert tool.publish_one(inbox.extract(record), gallery, draw=inbox.draw) == name
@@ -336,7 +336,7 @@ def test_publish_puts_a_cleaned_copy_in_the_gallery_and_never_the_share_itself(i
 def test_publish_refuses_what_the_person_did_not_allow_and_what_a_stranger_could_hide(inbox):
     tool, gallery = inbox.tool, inbox.gallery
     share = lambda design=HOPF, **given: inbox.extract(dict(  # noqa: E731
-        claude_sharing.record(["Done."], design, PNG, model="gpt-6.1-terra", new=True, gallery=True), **given))
+        agent_sharing.record(["Done."], design, PNG, model="gpt-6.1-terra", new=True, gallery=True), **given))
 
     def why(folder):
         with pytest.raises(ValueError) as stopped:
@@ -379,8 +379,8 @@ def test_a_stranger_s_share_cannot_swell_on_disk_or_drive_the_terminal(keys, tmp
     private, public = keys
     deep = ('{"format":1,"model":"m","ok":true,"answer":[],"picture":null,"design":{"strands":'
             + "[" * 900 + ",".join("0" * 1 for _ in range(20000)) + "]" * 900 + "}}").encode()
-    sealed = claude_sharing.MAGIC + claude_sharing.suite().encrypt(
-        zlib.compress(deep, 9), claude_sharing.public_key(public), info=claude_sharing.INFO)
+    sealed = agent_sharing.MAGIC + agent_sharing.suite().encrypt(
+        zlib.compress(deep, 9), agent_sharing.public_key(public), info=agent_sharing.INFO)
     assert len(sealed) < 2000
     key, bomb = tmp_path / "share.key", tmp_path / "bomb.oss"
     key.write_text(private + "\n", encoding="ascii")
@@ -388,7 +388,7 @@ def test_a_stranger_s_share_cannot_swell_on_disk_or_drive_the_terminal(keys, tmp
     assert share_inbox.main(["open", str(bomb), "--key", str(key), "--out", str(tmp_path / "out")]) == 1
     assert "nested more than" in capsys.readouterr().err and not (tmp_path / "out" / "bomb").exists()
     loud = tmp_path / "loud.oss"
-    loud.write_bytes(claude_sharing.seal(dict(claude_sharing.record(["\x1b[31mred\x1b[0m\nline two"], HOPF, PNG),
+    loud.write_bytes(agent_sharing.seal(dict(agent_sharing.record(["\x1b[31mred\x1b[0m\nline two"], HOPF, PNG),
                                               model="gpt\x1b]0;owned\x07" + "x" * 500), public))
     assert share_inbox.main(["open", str(loud), "--key", str(key), "--out", str(tmp_path / "out")]) == 0
     said = capsys.readouterr().out

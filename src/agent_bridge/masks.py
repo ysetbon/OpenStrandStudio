@@ -86,12 +86,12 @@ class MaskActions:
                 raise BridgeError(f'{first.layer_name} and {second.layer_name} do not cross: no mask made')
             note = f'{"swapped" if op == "swap" else "made"} mask {made}: {first.layer_name} on top'
             boxes = args.get('boxes') or []
-            if boxes:  # trimmed where it would paint the wrong way, as Claude's copy is
+            if boxes:  # trimmed where it would paint the wrong way, as the agent's copy is
                 for box in boxes:
                     mask.deletion_rectangles.append({k: (float(box[k][0]), float(box[k][1]))
                                                      for k in CORNERS})
                 mask.set_custom_mask(mask.get_mask_path())
                 note += f", erased with {len(boxes)} box{'es' if len(boxes) != 1 else ''} where it would paint the wrong way"
         canvas.update()
-        self.save_undo(f'mask.claude_{op}', [name or args.get('first')])
+        self.save_undo(f'mask.agent_{op}', [name or args.get('first')])
         return {'tab_id': session.id, 'note': note}

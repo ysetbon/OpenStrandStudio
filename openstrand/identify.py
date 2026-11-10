@@ -194,7 +194,7 @@ def _heights(s, visits, level=1.0, reach=None):
 
 
 def summary(project):
-    """One line per cord, for a person or Claude."""
+    """One line per cord, for a person or the agent."""
     lines = []
     for n, c in enumerate(cords(project), start=1):
         kind = 'closed' if c['closed'] else 'open (ends joined above everything to name it)'

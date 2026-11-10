@@ -1,7 +1,7 @@
 """The main window: the toolbar, the round buttons beside the canvas and the
 buttons under the layer panel, run with the window's own code on the tab
 showing. Where a button asks first (Delete All) or opens a file dialog (Save,
-Image), the question is answered with Claude's request and the button's own
+Image), the question is answered with the agent's request and the button's own
 code runs on, as when the person answers.
 
 window_view ops (the view only, the design does not change; in every mode):

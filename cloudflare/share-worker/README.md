@@ -1,7 +1,7 @@
 # OpenStrand Studio share inbox
 
 A Cloudflare Worker that receives what people **choose** to share with you from OpenStrand
-Studio's Claude panel, whichever model they use there: the design the model made (all of it,
+Studio's agent panel, whichever model they use there: the design the model made (all of it,
 their own canvas too when the model changed it), its picture, and the model's answer, with
 the model used, the app's version and language, whether the request worked, and whether the
 design was made from nothing of theirs.
@@ -10,7 +10,7 @@ This inbox is private: only you read it. The public gallery is a separate thing
 (`gallery/README.md`): a second yes from the person, and a cleaned copy that you publish by
 hand. Nothing in the inbox is ever public.
 
-Nobody shares anything until they say yes. The panel asks once, on a card under Claude's
+Nobody shares anything until they say yes. The panel asks once, on a card under the agent's
 first answer, and *Settings > Models* turns sharing on or off at any time. A yes holds for
 every request after it, until it is turned off. Until you finish
 the setup below, the app shows no card and no setting.
@@ -26,9 +26,9 @@ the setup below, the app shows no card and no setting.
 | Who can add | Anyone with the app, at most 10 shares a minute per IP address and 8 MB each. Anything that is not a sealed share is refused. |
 | Who can read | Only someone with the `INBOX_TOKEN` secret, and what they get is still sealed. Only your **private key**, kept off line, opens it. |
 
-Never sent: the request the person typed, pictures they gave Claude, their own canvas (or a
-tab) that Claude only read, API keys (one an answer repeats is cut out too), their files,
-folders (every path is cut out), an error's text, the time, anything about the computer or the person. Claude's answer may still
+Never sent: the request the person typed, pictures they gave the agent, their own canvas (or a
+tab) that the agent only read, API keys (one an answer repeats is cut out too), their files,
+folders (every path is cut out), an error's text, the time, anything about the computer or the person. The agent's answer may still
 repeat words or bare file names from the request or the canvas: the consent text tells
 people so. Nothing is sent at all while the person has *Connect to AI models* turned off in
 *Settings > Models*.
@@ -89,7 +89,7 @@ npx wrangler deploy
 
 `deploy` prints your Worker's address, such as `https://openstrand-share.<account>.workers.dev`.
 
-**3. Put both in the app.** In `src/claude_sharing.py`:
+**3. Put both in the app.** In `src/agent_sharing.py`:
 
 ```python
 SHARE_URL = 'https://openstrand-share.<account>.workers.dev/v1/share'
@@ -120,7 +120,7 @@ Each share is saved in its own folder under `shared/`:
 
 - `design.json` opens in OpenStrand Studio
 - `design.png` is the design's picture
-- `answer.md` is Claude's answer
+- `answer.md` is the agent's answer
 - `about.json` holds the model, the app's version and language, whether the request worked, whether the design is new (made from nothing of the person's), whether they allowed it in the gallery, and when the Worker received it
 
 Add `--delete` to remove shares from Cloudflare once they are saved on your computer. Leave
@@ -145,8 +145,8 @@ npx wrangler dev
 What you collect, only with the person's consent and revocable at any time in
 *Settings > Models*:
 
-- the designs Claude makes in the app, with their pictures (a person's own design too,
-  in full, when Claude changed it)
+- the designs the agent makes in the app, with their pictures (a person's own design too,
+  in full, when the agent changed it)
 - the answers of whichever model they use (which may repeat words or file names from their
   request)
 - the model used, the app's version and language, and whether each request worked

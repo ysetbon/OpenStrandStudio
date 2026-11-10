@@ -1,6 +1,6 @@
 """What the layer panel's right-click menu does, on layers of the person's tab:
-done in the app with the menu's own code (src/claude_bridge/layers.py), then
-the tab is read back so Claude's copy is the tab again."""
+done in the app with the menu's own code (src/agent_bridge/layers.py), then
+the tab is read back so the agent's copy is the tab again."""
 import re
 
 from .. import colors, identify
@@ -79,7 +79,7 @@ def color_value(value):
 
 
 def app_value(op, value):
-    """Claude's value with its colors made exact for the app."""
+    """The agent's value with its colors made exact for the app."""
     if op in ('color', 'stroke_color'):
         return color_value(value)
     if op == 'arrow_style' and isinstance(value, dict) and value.get('color') is not None:

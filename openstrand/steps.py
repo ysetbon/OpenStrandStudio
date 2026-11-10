@@ -12,7 +12,7 @@ The last step is the whole design.
     for title, data in steps.make(design, count=5):
         ...
 
-Also used by scripts/build_knot_spinner.py for Claude's working-line knot.
+Also used by scripts/build_knot_spinner.py for the agent's working-line knot.
 """
 import copy
 

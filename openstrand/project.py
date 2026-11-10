@@ -88,7 +88,7 @@ def summary(data):
 
 
 def detail(data):
-    """Every strand and mask, one line each, with exact coordinates: what Claude
+    """Every strand and mask, one line each, with exact coordinates: what the agent
     needs to reason about a design's geometry (and to move points in a tab)."""
     from .steps import mask_parts
     pt = lambda p: f"[{p['x']:.1f}, {p['y']:.1f}]" if isinstance(p, dict) and 'x' in p else '-'
@@ -133,7 +133,7 @@ def detail(data):
 
 def looks(s):
     """How a strand is drawn, where it differs from a plain strand: ' | ...' (empty when plain).
-    What edit_layers_in_tab changes, so Claude knows what is on before it changes it."""
+    What edit_layers_in_tab changes, so the agent knows what is on before it changes it."""
     color = lambda c: ('#%02x%02x%02x' % (c['r'], c['g'], c['b']) + ('' if c.get('a', 255) == 255 else '%02x' % c['a'])
                        if isinstance(c, dict) and 'r' in c else '-')
     out = [f"color {color(s.get('color'))}", f"stroke {color(s.get('stroke_color'))} {s.get('stroke_width')}"]

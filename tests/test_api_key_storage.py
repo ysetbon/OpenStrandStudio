@@ -15,7 +15,7 @@ for folder in (ROOT, ROOT / "src"):
     if str(folder) not in sys.path:
         sys.path.insert(0, str(folder))
 
-import claude_settings  # noqa: E402
+import agent_settings  # noqa: E402
 
 
 class Store:
@@ -42,14 +42,14 @@ class Store:
 @pytest.fixture
 def settings(tmp_path, monkeypatch):
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    monkeypatch.setattr(claude_settings, "_cache", {})
-    return Path(claude_settings.settings_path())
+    monkeypatch.setattr(agent_settings, "_cache", {})
+    return Path(agent_settings.settings_path())
 
 
 def use_store(monkeypatch, store):
-    monkeypatch.setattr(claude_settings, "keychain", lambda: store)
-    monkeypatch.setattr(claude_settings, "_cache", {})  # as a new start of the app: nothing read yet
-    monkeypatch.setattr(claude_settings, "_unreadable", set())
+    monkeypatch.setattr(agent_settings, "keychain", lambda: store)
+    monkeypatch.setattr(agent_settings, "_cache", {})  # as a new start of the app: nothing read yet
+    monkeypatch.setattr(agent_settings, "_unreadable", set())
 
 
 def test_keys_an_earlier_version_kept_in_the_file_move_into_the_password_store(settings, monkeypatch):
@@ -58,7 +58,7 @@ def test_keys_an_earlier_version_kept_in_the_file_move_into_the_password_store(s
                                     "model": "grok-4.7"}), encoding="utf-8")
     store = Store()
     use_store(monkeypatch, store)
-    saved = claude_settings.load()
+    saved = agent_settings.load()
     assert saved["keys"] == {"anthropic": "sk-ant-old-1234567890", "xai": "xai-old-1234567890"}
     text = settings.read_text(encoding="utf-8")
     assert "sk-ant-old" not in text and "xai-old" not in text
@@ -66,32 +66,32 @@ def test_keys_an_earlier_version_kept_in_the_file_move_into_the_password_store(s
     assert store.items == {("OpenStrandStudio", "anthropic"): "sk-ant-old-1234567890",
                            ("OpenStrandStudio", "xai"): "xai-old-1234567890"}
     use_store(monkeypatch, store)  # the next start reads them back from the store
-    assert claude_settings.load()["keys"] == saved["keys"] and claude_settings.key_storage() == "keychain"
+    assert agent_settings.load()["keys"] == saved["keys"] and agent_settings.key_storage() == "keychain"
 
 
 def test_a_removed_key_leaves_the_store_and_other_settings_never_write_it_again(settings, monkeypatch):
     store = Store()
     use_store(monkeypatch, store)
-    claude_settings.save(provider_key=("openai", "sk-openai-1234567890"))
+    agent_settings.save(provider_key=("openai", "sk-openai-1234567890"))
     writes = []
     original = store.set_password
     store.set_password = lambda *args: writes.append(args) or original(*args)
-    claude_settings.add_spending(0.5)
-    claude_settings.save(model="claude-haiku-5-5", share=False)
+    agent_settings.add_spending(0.5)
+    agent_settings.save(model="claude-haiku-5-5", share=False)
     assert writes == []  # the key is there already: the store is not asked again
-    claude_settings.save(provider_key=("openai", ""))
+    agent_settings.save(provider_key=("openai", ""))
     assert store.items == {} and "keychain" not in json.loads(settings.read_text(encoding="utf-8"))
-    assert claude_settings.load()["keys"] == {} and claude_settings.load()["share"] is False
+    assert agent_settings.load()["keys"] == {} and agent_settings.load()["share"] is False
 
 
 def test_a_key_the_store_refuses_stays_in_the_private_file(settings, monkeypatch):
     use_store(monkeypatch, Store(refuse={"xai"}))
-    claude_settings.save(provider_key=("xai", "xai-test-1234567890"))
-    claude_settings.save(provider_key=("anthropic", "sk-ant-test-1234567890"))
+    agent_settings.save(provider_key=("xai", "xai-test-1234567890"))
+    agent_settings.save(provider_key=("anthropic", "sk-ant-test-1234567890"))
     on_disk = json.loads(settings.read_text(encoding="utf-8"))
     assert on_disk["api_keys"] == {"xai": "xai-test-1234567890"} and on_disk["keychain"] == ["anthropic"]
     assert "api_key" not in on_disk
-    assert claude_settings.load()["keys"] == {"anthropic": "sk-ant-test-1234567890", "xai": "xai-test-1234567890"}
+    assert agent_settings.load()["keys"] == {"anthropic": "sk-ant-test-1234567890", "xai": "xai-test-1234567890"}
     if os.name == "posix":
         assert stat.S_IMODE(os.stat(settings).st_mode) == 0o600
 
@@ -102,9 +102,9 @@ def test_without_a_store_keys_stay_in_a_file_only_its_owner_can_read(settings, m
     settings.write_text("{}", encoding="utf-8")
     if os.name == "posix":
         os.chmod(settings, 0o644)  # readable by others: made by an earlier version, or by hand
-    claude_settings.save(provider_key=("deepseek", "sk-ds-1234567890"))
+    agent_settings.save(provider_key=("deepseek", "sk-ds-1234567890"))
     assert json.loads(settings.read_text(encoding="utf-8"))["api_keys"] == {"deepseek": "sk-ds-1234567890"}
-    assert claude_settings.key_storage() == "file"
+    assert agent_settings.key_storage() == "file"
     if os.name == "posix":
         assert stat.S_IMODE(os.stat(settings).st_mode) == 0o600
     assert [p.name for p in settings.parent.iterdir()] == ["claude.json"]  # no temporary file left behind
@@ -116,21 +116,21 @@ def test_only_a_secure_store_is_used(monkeypatch):
     monkeypatch.delenv("OPENSTRAND_KEYCHAIN", raising=False)
     secure = Store()
     monkeypatch.setattr(keyring, "get_keyring", lambda: secure)
-    assert claude_settings._find_keychain() is secure
+    assert agent_settings._find_keychain() is secure
     monkeypatch.setattr(keyring, "get_keyring", lambda: fail.Keyring())  # no store on this computer
-    assert claude_settings._find_keychain() is None
+    assert agent_settings._find_keychain() is None
     plain = type("PlaintextKeyring", (Store,), {"__module__": "keyrings.alt.file"})()  # its own plain files
     monkeypatch.setattr(keyring, "get_keyring", lambda: plain)
-    assert claude_settings._find_keychain() is None
+    assert agent_settings._find_keychain() is None
     monkeypatch.setenv("OPENSTRAND_KEYCHAIN", "off")
-    assert claude_settings.keychain() is None
+    assert agent_settings.keychain() is None
 
 
 def test_a_key_the_store_cannot_give_for_now_is_never_deleted(settings, monkeypatch):
     store = Store()
     use_store(monkeypatch, store)
-    claude_settings.save(provider_key=("anthropic", "sk-ant-test-1234567890"))
-    claude_settings.save(provider_key=("xai", "xai-test-1234567890"))
+    agent_settings.save(provider_key=("anthropic", "sk-ant-test-1234567890"))
+    agent_settings.save(provider_key=("xai", "xai-test-1234567890"))
 
     class Locked(Store):  # the same entries, but every read refused (locked, or access denied)
         def get_password(self, service, name):
@@ -138,23 +138,23 @@ def test_a_key_the_store_cannot_give_for_now_is_never_deleted(settings, monkeypa
     locked = Locked()
     locked.items = store.items
     use_store(monkeypatch, locked)  # the app starts with the store locked
-    assert claude_settings.load()["keys"] == {}
-    claude_settings.add_spending(0.25)  # every request's cost is saved: the keys must survive it
-    claude_settings.save(model="claude-haiku-5-5", share=False)
+    assert agent_settings.load()["keys"] == {}
+    agent_settings.add_spending(0.25)  # every request's cost is saved: the keys must survive it
+    agent_settings.save(model="claude-haiku-5-5", share=False)
     assert len(store.items) == 2 and json.loads(settings.read_text(encoding="utf-8"))["keychain"] == ["anthropic", "xai"]
-    claude_settings.save(provider_key=("xai", ""))  # removed by the person: gone, even while locked
+    agent_settings.save(provider_key=("xai", ""))  # removed by the person: gone, even while locked
     assert list(store.items) == [("OpenStrandStudio", "anthropic")]
     assert json.loads(settings.read_text(encoding="utf-8"))["keychain"] == ["anthropic"]
     use_store(monkeypatch, None)  # no store at all now (keyring uninstalled): still listed, not lost
-    claude_settings.add_spending(0.25)
+    agent_settings.add_spending(0.25)
     assert json.loads(settings.read_text(encoding="utf-8"))["keychain"] == ["anthropic"]
     use_store(monkeypatch, store)  # the store is back
-    assert claude_settings.load()["keys"] == {"anthropic": "sk-ant-test-1234567890"}
+    assert agent_settings.load()["keys"] == {"anthropic": "sk-ant-test-1234567890"}
 
 
 def test_a_settings_file_held_open_elsewhere_is_still_written_whole(settings, monkeypatch):
     use_store(monkeypatch, None)
-    claude_settings.save(model="claude-haiku-5-5")
+    agent_settings.save(model="claude-haiku-5-5")
     real, refused = os.replace, []
 
     def busy(source, target):  # Windows: another process has it open for a moment
@@ -163,13 +163,13 @@ def test_a_settings_file_held_open_elsewhere_is_still_written_whole(settings, mo
             raise PermissionError("in use")
         return real(source, target)
     monkeypatch.setattr(os, "replace", busy)
-    monkeypatch.setattr(claude_settings.time, "sleep", lambda seconds: None)
-    claude_settings.save(model="gpt-6.1-terra")
-    assert len(refused) == 2 and claude_settings.load()["model"] == "gpt-6.1-terra"
+    monkeypatch.setattr(agent_settings.time, "sleep", lambda seconds: None)
+    agent_settings.save(model="gpt-6.1-terra")
+    assert len(refused) == 2 and agent_settings.load()["model"] == "gpt-6.1-terra"
 
     def always_busy(source, target):
         raise PermissionError("in use")
     monkeypatch.setattr(os, "replace", always_busy)  # held open all along: written in place, whole
-    claude_settings.save(model="grok-4.7")
-    assert claude_settings.load()["model"] == "grok-4.7" and json.loads(settings.read_text(encoding="utf-8"))
+    agent_settings.save(model="grok-4.7")
+    assert agent_settings.load()["model"] == "grok-4.7" and json.loads(settings.read_text(encoding="utf-8"))
     assert [p.name for p in settings.parent.iterdir()] == ["claude.json"]  # no temporary file left behind

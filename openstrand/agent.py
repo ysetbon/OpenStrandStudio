@@ -1,12 +1,12 @@
-"""A Claude agent that builds OpenStrand Studio projects with the openstrand tools.
+"""An agent that builds OpenStrand Studio projects with the openstrand tools.
 
-The agent loop is ours: Claude reads the request (and any reference image),
+The agent loop is ours: the agent reads the request (and any reference image),
 researches it on the web when it needs to, plans a structure, builds it from
 samples, generators or its own drawing, looks at each render, and stops when
 the design is right. Everything it does is reported through on_event, one
-dict per step, so a terminal or the app's Claude panel can show progress.
+dict per step, so a terminal or the app's agent panel can show progress.
 
-Runs with the user's own Anthropic API key (ANTHROPIC_API_KEY).
+Runs with the user's own API key for the model's provider (ANTHROPIC_API_KEY for Claude).
 """
 import base64
 import contextlib
@@ -18,7 +18,7 @@ from pathlib import Path
 
 from . import ROOT, colors, edit, generators, project
 from .debuglog import short
-from .errors import ToolError  # agent.ToolError: what a tool raises for Claude
+from .errors import ToolError  # agent.ToolError: what a tool raises for the agent
 
 from . import providers
 
@@ -57,6 +57,13 @@ in the app with real strands, masks and groups.
 How to work:
 1. Understand the request from the words and any reference image. Describe an
    image in the guide's terms first (kind of design, loops, crossings, colors).
+   A request to make, show or explain a knot, stitch or pattern, or a tutorial
+   or "how to" for one, asks for a design: build it with the tools in this same
+   request. Never answer with written steps alone, and never end by offering
+   to draw it: draw it. Words alone answer a question (what is this, why did
+   that happen), not a request to make something. When a tool cannot do the
+   exact thing, make the closest design you can and say in one sentence what
+   differs.
 2. If a published sample or a make_ tool fits, use it: it is the fastest and
    cleanest result.
 3. Otherwise design it yourself:
@@ -78,9 +85,9 @@ How to work:
    and anything you could not do or had to assume. Plain words, no markdown.
 
 Knots tied in a cord (overhand, figure-eight, stevedore and the like):
-- To show how a knot is tied, or a knot pulled tight, use tie_knot. It works
-  the steps out by simulating a real cord and checks every step is the right
-  knot, so never draw tying steps or a tightened knot by hand.
+- To show how a knot in one cord is tied, or pulled tight, use tie_knot. It
+  works the steps out by simulating a real cord and checks every step is the
+  right knot, so for these never draw tying steps or a tightened knot by hand.
 - A knot not in knot_library: research how it is tied, then give tie_knot its
   path (rough points from the standing end, crossing itself where the knot
   does, a few cord widths between parts) and its over/under pattern. Read the
@@ -88,9 +95,17 @@ Knots tied in a cord (overhand, figure-eight, stevedore and the like):
   fix the path or the pattern and try again.
 - For the knot in a design the person already has (in the app: read_tab it
   first), call tie_knot with from_design: it keeps that knot's over and under.
-- tie_knot pulls the two ends apart, as for stopper knots. For a loop knot
-  (bowline) or a bend joining two cords, say it is not supported yet and draw
-  it with draw_design.
+- tie_knot pulls the two ends apart, as for stopper knots, so it cannot tie a
+  loop knot (bowline) or a knot that joins two cords (a bend: magic knot,
+  square knot, sheet bend, fisherman's knot). Those are still yours to make:
+  draw the knot with draw_design, loose enough to follow, one cord per rope,
+  each in its own color and labeled. For a tutorial or how to tie it, then
+  call make_steps: it shows the cords drawn bit by bit, in the order you list
+  them, so list first the cord that is laid down first. Say in one sentence
+  that these steps are drawn, not simulated. If the drawing is still not
+  exactly the knot when you stop, keep the closest one, make and open its
+  steps all the same, and say which part differs: a sketch with its steps is
+  what the person asked for, not an apology.
 - To check any design is the knot it should be, call identify_knot rather than
   judging the picture.
 
@@ -199,8 +214,9 @@ TOOLS = [
                         'end, crossing itself where the knot does, and its over/under pattern; or the knot in '
                         'the current design (from_design, e.g. after read_tab). The knot is tightened by pulling '
                         'its two ends apart, as for stopper knots; not for loop knots (bowline) or bends that '
-                        'join two cords. Saves the steps as "step 1", "step 2", ... (open them with '
-                        'open_in_new_tab) and makes the tight knot the current design. Library knots take a '
+                        'join two cords: draw those with draw_design, then make_steps for the steps. Saves '
+                        'the steps as "step 1", "step 2", ... (open them with open_in_new_tab) and makes the '
+                        'tight knot the current design. Library knots take a '
                         'second or two; a path or a design a few seconds (a path drawn larger than it needs is '
                         'shrunk to a laid-out size first). The person sees its progress live.'),
         'input_schema': {'type': 'object', 'properties': {
@@ -344,7 +360,7 @@ class Workspace:
         self.data = None
         self.tab = None
         self.tab_version = None
-        self.theirs = False  # the current design is the person's own, as read (never shared as Claude's)
+        self.theirs = False  # the current design is the person's own, as read (never shared as the agent's)
         self.own = False  # this request read a design of the person's (its work is then never called new)
         self.version = 0
         self.rendered_version = -1
@@ -443,7 +459,7 @@ class Workspace:
         return summary, text
 
     def run(self, name, args):
-        """Do one tool call. Returns (summary for people, content for Claude)."""
+        """Do one tool call. Returns (summary for people, content for the agent)."""
         if name == 'search_samples':
             text = str(args.get('text', '')).lower()
             names = [n for n in generators.samples() if text in n.lower()]
@@ -582,7 +598,7 @@ class Workspace:
 
 
 class Agent:
-    """Runs one request: the loop of Claude calls and tool calls."""
+    """Runs one request: the loop of model calls and tool calls."""
 
     def __init__(self, client, out_dir, model=DEFAULT_MODEL, on_event=None, max_rounds=24, max_cost=2.00,
                  quiet=None, web=True, effort='high', plan=False, app=None, log=None):
@@ -677,7 +693,7 @@ class Agent:
 
         start is a project dict to begin from, such as what is on the
         person's canvas; the agent can describe, change or replace it.
-        history is the session so far ([{'user', 'claude', 'design'}], oldest
+        history is the session so far ([{'user', 'agent', 'design'}], oldest
         first), so the person can refer back to it; a new session sends none.
         """
         if history:
@@ -771,7 +787,7 @@ class Agent:
             message = str(e) if not isinstance(e, KeyError) else f'missing argument {e}'
             self.on_event({'type': 'tool_end', 'name': block.name, 'ok': False, 'summary': message})
             return {'type': 'tool_result', 'tool_use_id': block.id, 'content': message, 'is_error': True}
-        except Exception as e:  # a crash inside the app's code: tell Claude, keep going
+        except Exception as e:  # a crash inside the app's code: tell the agent, keep going
             message = f'{type(e).__name__}: {e}'
             self.on_event({'type': 'tool_end', 'name': block.name, 'ok': False, 'summary': message})
             return {'type': 'tool_result', 'tool_use_id': block.id, 'content': message, 'is_error': True}
@@ -842,8 +858,8 @@ def with_history(prompt, history):
     lines = ['Earlier in this conversation, oldest first (the person may refer to it):']
     for turn in history[-HISTORY_TURNS:]:
         lines.append(f"- The person asked: {str(turn.get('user', ''))[:600]}")
-        if turn.get('claude'):
-            lines.append(f"  You answered: {str(turn['claude'])[:900]}")
+        if turn.get('agent'):
+            lines.append(f"  You answered: {str(turn['agent'])[:900]}")
         if turn.get('design'):
             lines.append(f"  The design: {turn['design']}")
         if turn.get('tools'):
@@ -882,7 +898,7 @@ def print_events(event, as_json=False, out=None):
             print_(f"    {int(100 * (event.get('fraction') or 0)):3d}% {stage_text(event)}")
         return
     if kind == 'text':
-        print_(f"claude: {event['text']}")
+        print_(f"agent: {event['text']}")
     elif kind == 'thinking':
         print_(f"  (thinking) {event['text']}")
     elif kind == 'search':

@@ -61,7 +61,7 @@ its length) or `alternate_under_first`.
    the report ends with the mask check instead: the exact places where a mask
    or a crossing is drawn wrong, each with the edit that fixes it
    (`openstrand masks`, `openstrand edit-mask`, or `check_masks` and
-   `edit_mask` for Claude).
+   `edit_mask` for the agent).
 4. **Read the report** after each draw: crossings per cord, which cord is on
    top at each crossing, over/under conflicts (places where alternation
    cannot hold), and warnings. Then render and look.

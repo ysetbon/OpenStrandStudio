@@ -1,5 +1,5 @@
 """What the group panel does, on groups of the person's tab: done in the app with
-the panel's own code (src/claude_bridge/groups.py), then the tab is read back."""
+the panel's own code (src/agent_bridge/groups.py), then the tab is read back."""
 from .. import identify
 from ..errors import ToolError
 from .strands import require_read

@@ -1,10 +1,10 @@
-"""Read what people chose to share with you from OpenStrand Studio (src/claude_sharing.py).
+"""Read what people chose to share with you from OpenStrand Studio (src/agent_sharing.py).
 
   python scripts/share_inbox.py keygen [--key FILE]
       Make your key pair. The private key goes in FILE (default ~/.openstrand-share.key),
       readable by you alone: keep it off line and backed up, never in the repository or
       anywhere online. The public key is printed, for SHARE_PUBLIC_KEY in
-      src/claude_sharing.py.
+      src/agent_sharing.py.
 
   python scripts/share_inbox.py fetch --url https://openstrand-share.<account>.workers.dev
       Download the sealed shares your Worker keeps, open each with your private key, and
@@ -49,7 +49,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'src'))
 
-import claude_sharing  # noqa: E402
+import agent_sharing  # noqa: E402
 
 DEFAULT_KEY = Path.home() / '.openstrand-share.key'
 PNG = b'\x89PNG\r\n\x1a\n'
@@ -81,7 +81,7 @@ def read_key(path):
 
 def keygen(args):
     path = Path(args.key).expanduser()
-    private, public = claude_sharing.new_keys()
+    private, public = agent_sharing.new_keys()
     try:  # created for its owner alone, and never over a key that exists
         fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     except FileExistsError:
@@ -90,7 +90,7 @@ def keygen(args):
     with os.fdopen(fd, 'w', encoding='ascii') as f:
         f.write(HEADER + private + '\n')
     print(f'Private key: {path} (only you can read it: keep it off line and backed up).\n')
-    print('Public key, for SHARE_PUBLIC_KEY in src/claude_sharing.py:\n')
+    print('Public key, for SHARE_PUBLIC_KEY in src/agent_sharing.py:\n')
     print(public)
 
 
@@ -116,7 +116,7 @@ def nesting(value, limit=MAX_NESTING):
 
 
 def save(record, folder):
-    """A share's parts as files you can open: the design, its picture, Claude's answer. Anyone
+    """A share's parts as files you can open: the design, its picture, the agent's answer. Anyone
     can make a share, so each part is written only when it has the shape it should, and text
     that is not valid Unicode is written with a replacement character. The files go in a new
     folder beside folder first, which then takes its place whole: a share that cannot be
@@ -164,7 +164,7 @@ def save(record, folder):
 def call(url, token, method='GET'):
     request = urllib.request.Request(url, method=method, headers={'Authorization': f'Bearer {token}',
                                                                   'User-Agent': 'OpenStrandStudio-inbox/1'})
-    providers = claude_sharing.claude_settings.providers
+    providers = agent_sharing.agent_settings.providers
     try:
         with providers.open_url(request, providers.host_of(url), 60.0) as answer:
             return answer.read()
@@ -199,7 +199,7 @@ def fetch(args):
             else:
                 address = f'{base}/v1/inbox/{urllib.parse.quote(name, safe="")}'
                 try:  # one bad share (anyone can make one) does not stop the rest; save leaves no half one
-                    record = claude_sharing.unseal(call(address, token), key)
+                    record = agent_sharing.unseal(call(address, token), key)
                     save(dict(record, received=share.get('uploaded')), folder)
                 except Exception as e:  # noqa: BLE001
                     print(f'{name}: cannot open it ({type(e).__name__}: {e})', file=sys.stderr)
@@ -224,7 +224,7 @@ def open_files(args):
     for path in args.files:
         folder = Path(args.out) / Path(path).stem
         try:  # a share that cannot be opened or written leaves an earlier folder of its name as it was
-            record = claude_sharing.unseal(Path(path).read_bytes(), key)
+            record = agent_sharing.unseal(Path(path).read_bytes(), key)
             save(record, folder)
         except Exception as e:  # noqa: BLE001
             print(f'{path}: cannot open it ({type(e).__name__}: {e})', file=sys.stderr)

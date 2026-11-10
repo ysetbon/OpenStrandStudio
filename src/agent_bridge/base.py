@@ -24,7 +24,7 @@ def patched(owner, name, value):
 
 
 class BridgeError(Exception):
-    """A request the app cannot do: its message goes back to Claude."""
+    """A request the app cannot do: its message goes back to the agent."""
 
 
 @dataclass(frozen=True)
@@ -35,7 +35,7 @@ class Action:
     change it changes something: never in plan mode; in ask mode the person decides
     tab    it takes a tab_id (the session is looked up for it)
     edits  it edits the tab showing: must be that tab, is checked against the
-           version Claude read, and answers with the tab's new version
+           version the agent read, and answers with the tab's new version
     check  method(args, session): refuses a bad request before the person is asked
     card   method(args, session) -> (kind, tab title, what): the Allow/Deny card
     ask    method(args, session) -> result: what ask mode does instead of a card
@@ -98,7 +98,7 @@ class BridgeBase:
 
     def settle(self, before, timeout=0.3):
         """Let the app's own undo save happen now where it saves a moment later (a new
-        strand's step comes 50 ms after the strand): the step is there before Claude's
+        strand's step comes 50 ms after the strand): the step is there before the agent's
         next request, so an undo right after undoes it."""
         import time
         from PyQt5.QtWidgets import QApplication
@@ -109,8 +109,8 @@ class BridgeBase:
             time.sleep(0.005)
 
     def save_undo(self, action, targets):
-        """One undo step for what Claude just did, named so the history says so."""
+        """One undo step for what the agent just did, named so the history says so."""
         manager = getattr(self.canvas, 'undo_redo_manager', None)
         if manager is not None:
             manager._last_save_time = 0
-            manager.save_state(action=action, source='claude', targets=[t for t in targets if t])
+            manager.save_state(action=action, source='agent', targets=[t for t in targets if t])

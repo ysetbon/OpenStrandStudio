@@ -199,7 +199,7 @@ def test_settings_dialog_pages_are_as_wide_as_the_page_showing():
     APP.processEvents()
     stack = dialog.stacked_widget
     widest = max(range(stack.count()), key=lambda i: stack.widget(i).minimumSizeHint().width())
-    narrow = dialog.claude_settings_page
+    narrow = dialog.agent_settings_page
     assert narrow.minimumSizeHint().width() < stack.widget(widest).minimumSizeHint().width()
     stack.setCurrentWidget(narrow)
     APP.processEvents()

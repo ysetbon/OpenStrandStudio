@@ -1,6 +1,6 @@
 """Settings: what the Settings dialog does, through its own widgets and the code
 its OK button runs (SettingsDialog._perform_apply_settings), so the dialog shows
-what Claude set and the person's next OK keeps it. Colors and the default strand
+what the agent set and the person's next OK keeps it. Colors and the default strand
 width go through the dialog's own choosers, their color (or width) dialog answered
 unshown. Settings belong to the app, not to a tab: no undo step; the reply gives
 the old values, to set them back.
@@ -18,9 +18,9 @@ from .base import Action, BridgeError, patched
 from .layers import qcolor
 
 PAGES = ('general', 'layer_panel', 'selected_strand', 'language', 'save_load', 'tutorial', 'button_guide',
-         'levels_masks', 'history', 'whats_new', 'samples', 'claude', 'about')
+         'levels_masks', 'history', 'whats_new', 'samples', 'models', 'about')
 PAGE_LABELS = ('General', 'Layer Panel', 'Selected Strand', 'Language', 'Save/Load', 'Tutorial', 'Button Guide',
-               'Levels & Masks', 'History', "What's New", 'Samples', 'Claude', 'About')
+               'Levels & Masks', 'History', "What's New", 'Samples', 'Models', 'About')
 
 
 @dataclass(frozen=True)
@@ -151,7 +151,7 @@ class SettingsActions:
                 'color_px': color, 'stroke_px': stroke}
 
     def takes(self, spec):
-        """What a setting takes, as Claude reads it."""
+        """What a setting takes, as the agent reads it."""
         if spec.kind == 'check':
             return 'true/false'
         if spec.kind in ('spin', 'slider'):
@@ -170,7 +170,7 @@ class SettingsActions:
                 'as the dialog offers, or exact {"color_px", "stroke_px"} (stroke: each side)')
 
     def setting_input(self, key, value):
-        """Claude's value made what the dialog takes, or a BridgeError saying what it takes."""
+        """The agent's value made what the dialog takes, or a BridgeError saying what it takes."""
         spec = SPEC[key]
         wrong = BridgeError(f'{key}: {self.takes(spec)}')
         if spec.kind == 'check':

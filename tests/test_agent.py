@@ -1,6 +1,6 @@
-"""The Claude agent harness, its settings, and the app's Claude panel.
+"""The agent harness, its settings, and the app's agent panel.
 
-Claude itself is replaced by a scripted client: the tests check what the
+The agent itself is replaced by a scripted client: the tests check what the
 harness sends, how it runs the tools, and that a finished design loads into
 the real main window (canvas, layer panel, groups) through the Load path.
 """
@@ -19,7 +19,7 @@ import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 # Settings for this test run only: never the user's own.
-os.environ["APPDATA"] = tempfile.mkdtemp(prefix="oss_claude_test_")
+os.environ["APPDATA"] = tempfile.mkdtemp(prefix="oss_agent_test_")
 
 ROOT = Path(__file__).resolve().parents[1]
 for folder in (ROOT, ROOT / "src"):
@@ -29,7 +29,7 @@ for folder in (ROOT, ROOT / "src"):
 from openstrand import agent, project  # noqa: E402
 
 
-# ---------------------------------------------------------------- fake Claude
+# ---------------------------------------------------------------- fake model
 def usage(inp=1000, out=200, write=0, read=0):
     return SimpleNamespace(input_tokens=inp, output_tokens=out,
                            cache_creation_input_tokens=write, cache_read_input_tokens=read)
@@ -145,7 +145,7 @@ def test_conversation_is_append_only_and_renders_go_back_as_images(tmp_path):
     assert render_result["content"][0]["type"] == "image"
 
 
-def test_a_bad_tool_call_goes_back_to_claude_as_an_error(tmp_path):
+def test_a_bad_tool_call_goes_back_to_agent_as_an_error(tmp_path):
     client = ScriptedClient([
         reply(tool("t1", "make_turks_head", leads=3, bights=6)),
         reply(tool("t2", "recolor", sets=[1], color="red")),
@@ -178,19 +178,19 @@ def test_start_design_is_loaded_and_described(tmp_path):
     described = client.calls[1][1]["messages"][-1]["content"][0]["content"]
     assert "set 1" in described and "set 2" in described
     assert result["project"]
-    assert result["changed"] is False  # only looked at: still the person's canvas, never shared as Claude's
+    assert result["changed"] is False  # only looked at: still the person's canvas, never shared as the agent's
     assert result["new"] is False
     recolored = ScriptedClient([reply(tool("t1", "recolor", sets=[1], color="gold")),
                                 reply(text("Gold now."), stop="end_turn")])
     result = agent.Agent(recolored, tmp_path, model="claude-haiku-5-5").run("make it gold", start=start)
-    assert result["ok"] and result["changed"] is True  # Claude's work now
+    assert result["ok"] and result["changed"] is True  # the agent's work now
     assert result["new"] is False  # but made from the person's own canvas: never for the gallery
 
 
-def test_a_tab_or_a_past_step_of_one_is_the_person_s_never_claude_s_work(tmp_path):
-    """After read_tab or read_tab_step the current design is the person's own, even when Claude
+def test_a_tab_or_a_past_step_of_one_is_the_person_s_never_the_agent_s_work(tmp_path):
+    """After read_tab or read_tab_step the current design is the person's own, even when the agent
     made and opened a design of its own earlier in the request: changed is False, so the panel
-    never shares it as Claude's. A tool that stores a new design makes it Claude's work again."""
+    never shares it as the agent's. A tool that stores a new design makes it the agent's work again."""
     hopf = ROOT / "knot_samples/links/json/hopf_link.json"
 
     def call(name, args):  # the app, through the bridge
@@ -214,12 +214,12 @@ def test_a_tab_or_a_past_step_of_one_is_the_person_s_never_claude_s_work(tmp_pat
     assert made["new"] is True  # made from nothing of the person's: it may go in the gallery
     past = run(("read_tab_step", {"tab_id": "1", "step": 2}))
     assert past["ok"] and past["opened_tabs"] == ["Rings"] and past["project"]  # a copy, in the workspace
-    assert past["changed"] is False  # the person's tab two steps ago: never shared as Claude's design
+    assert past["changed"] is False  # the person's tab two steps ago: never shared as the agent's design
     assert past["new"] is False
     tab = run(("read_tab", {"tab_id": "1"}))
     assert tab["ok"] and tab["changed"] is False and tab["in_tab"] == "1" and tab["project"] is None
     recolored = run(("read_tab_step", {"tab_id": "1", "step": 2}), ("recolor", {"sets": [1], "color": "gold"}))
-    assert recolored["ok"] and recolored["changed"] is True  # Claude changed it: its work now
+    assert recolored["ok"] and recolored["changed"] is True  # the agent changed it: its work now
 
 
 def test_agent_draws_its_own_design_and_reports_thinking_and_searches(tmp_path):
@@ -252,7 +252,7 @@ def test_agent_draws_its_own_design_and_reports_thinking_and_searches(tmp_path):
     assert result["cost"] == pytest.approx(3 * (1000 * 2 + 200 * 10) / 1e6 + 2 * agent.WEB_SEARCH_PRICE)
 
 
-def test_a_drawing_problem_goes_back_to_claude(tmp_path):
+def test_a_drawing_problem_goes_back_to_agent(tmp_path):
     client = ScriptedClient([
         reply(tool("t1", "draw_design", cords=[{"shape": "circle", "center": [600, 400], "radius": 100}])),
         reply(text("That needs a crossing."), stop="end_turn")])
@@ -291,51 +291,50 @@ def test_other_api_errors_are_not_swallowed(tmp_path):
 
 # -------------------------------------------------------------- settings
 def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch):
-    import claude_settings
+    import agent_settings
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    assert claude_settings.load() == {"api_key": "", "keys": {}, "catalog": {}, "model": "claude-sonnet-5-5", "web": True,
+    assert agent_settings.load() == {"api_key": "", "keys": {}, "catalog": {}, "model": "claude-sonnet-5-5", "web": True,
                                       "max_cost": 2.0, "spent": 0.0, "spent_since": "",
-                                      "show_button": True, "effort": "high", "session_limit": 10.0, "mode": "auto",
+                                      "effort": "high", "session_limit": 10.0, "mode": "auto",
                                       "share": None, "gallery": None, "models_on": True, "allow_china": False}
-    claude_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5", web=False, max_cost=5)
-    assert claude_settings.load() == {"api_key": "sk-ant-test-1234567890",
+    agent_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5", web=False, max_cost=5)
+    assert agent_settings.load() == {"api_key": "sk-ant-test-1234567890",
                                       "keys": {"anthropic": "sk-ant-test-1234567890"}, "catalog": {},
                                       "model": "claude-haiku-5-5",
                                       "web": False, "max_cost": 5.0, "spent": 0.0, "spent_since": "",
-                                      "show_button": True,
                                       "effort": "high", "session_limit": 10.0, "mode": "auto", "share": None,
                                       "gallery": None, "models_on": True, "allow_china": False}
     # Every provider has its key; the model can be any provider's.
-    claude_settings.save(provider_key=("xai", " xai-test-123456789 "), model="grok-4.7")
-    saved = claude_settings.load()
+    agent_settings.save(provider_key=("xai", " xai-test-123456789 "), model="grok-4.7")
+    saved = agent_settings.load()
     assert saved["keys"] == {"anthropic": "sk-ant-test-1234567890", "xai": "xai-test-123456789"}
-    assert saved["model"] == "grok-4.7" and claude_settings.provider_of("grok-4.7") == "xai"
-    claude_settings.save(provider_key=("xai", ""))
-    assert claude_settings.load()["keys"] == {"anthropic": "sk-ant-test-1234567890"}
-    claude_settings.save(max_cost=1000)
-    assert claude_settings.load()["max_cost"] == claude_settings.MAX_COST_RANGE[1]
+    assert saved["model"] == "grok-4.7" and agent_settings.provider_of("grok-4.7") == "xai"
+    agent_settings.save(provider_key=("xai", ""))
+    assert agent_settings.load()["keys"] == {"anthropic": "sk-ant-test-1234567890"}
+    agent_settings.save(max_cost=1000)
+    assert agent_settings.load()["max_cost"] == agent_settings.MAX_COST_RANGE[1]
     if os.name == "posix":
-        assert stat.S_IMODE(os.stat(claude_settings.settings_path()).st_mode) == 0o600
+        assert stat.S_IMODE(os.stat(agent_settings.settings_path()).st_mode) == 0o600
     with pytest.raises(ValueError):
-        claude_settings.save(model="claude-opus-1")
-    claude_settings.save(api_key="")
-    assert "api_key" not in json.loads(Path(claude_settings.settings_path()).read_text())
-    assert claude_settings.masked("sk-ant-test-1234567890") == "sk-ant-…7890"
+        agent_settings.save(model="claude-opus-1")
+    agent_settings.save(api_key="")
+    assert "api_key" not in json.loads(Path(agent_settings.settings_path()).read_text())
+    assert agent_settings.masked("sk-ant-test-1234567890") == "sk-ant-…7890"
 
 
 def test_refresh_models_is_a_button_that_shows_what_the_providers_said(tmp_path, monkeypatch):
     from PyQt5.QtWidgets import QApplication
     app = QApplication.instance() or QApplication([])  # noqa: F841 (kept alive for the page)
-    import claude_settings
-    from claude_panel import ClaudeSettingsPage
+    import agent_settings
+    from agent_panel import AgentSettingsPage
     from openstrand import providers
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    page = ClaudeSettingsPage("en")
+    page = AgentSettingsPage("en")
     assert page.refresh_button.text() == "Refresh models" and "Built-in list" in page.refresh_status.text()
     found = {"refreshed": "2026-11-07 10:00", "providers": {
         "xai": {"models": [{"id": "grok-4.7"}, {"id": "grok-4.8", "label": "Grok 4.8", "prices": [2.5, 8.0, 2.5, 0.5]}]},
         "openai": {"error": "Incorrect API key provided"}}}
-    monkeypatch.setattr(claude_settings, "fetch_catalog", lambda: found)
+    monkeypatch.setattr(agent_settings, "fetch_catalog", lambda: found)
     try:
         page.refresh_models()
         for _ in range(100):  # the asking runs in a thread; its answer comes back as a signal
@@ -348,7 +347,7 @@ def test_refresh_models_is_a_button_that_shows_what_the_providers_said(tmp_path,
         assert "1 new, 0 retiring, 0 no longer offered" in status and "OpenAI (GPT): Incorrect API key" in status
         labels = [page.model_combo.itemText(i) for i in range(page.model_combo.count())]
         assert any(label.startswith("Grok 4.8") and "new" in label for label in labels)
-        assert claude_settings.load()["catalog"]["refreshed"] == "2026-11-07 10:00"
+        assert agent_settings.load()["catalog"]["refreshed"] == "2026-11-07 10:00"
     finally:
         providers.use_catalog({})
 
@@ -356,19 +355,19 @@ def test_refresh_models_is_a_button_that_shows_what_the_providers_said(tmp_path,
 def test_models_refresh_on_their_own_once_a_day_without_a_word(window, tmp_path, monkeypatch):
     import datetime
     from PyQt5.QtWidgets import QApplication
-    import claude_settings
+    import agent_settings
     from openstrand import providers
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    for spec in claude_settings.PROVIDERS.values():
+    for spec in agent_settings.PROVIDERS.values():
         monkeypatch.delenv(spec.env, raising=False)
-    assert not claude_settings.refresh_due()  # no key: nobody to ask
-    claude_settings.save(provider_key=("xai", "xai-test-123456789"))
-    assert claude_settings.refresh_due()  # never refreshed
+    assert not agent_settings.refresh_due()  # no key: nobody to ask
+    agent_settings.save(provider_key=("xai", "xai-test-123456789"))
+    assert agent_settings.refresh_due()  # never refreshed
     asked = []
     found = {"refreshed": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), "providers": {
         "xai": {"models": [{"id": "grok-4.7"}, {"id": "grok-4.8", "label": "Grok 4.8", "prices": [2.5, 8.0, 2.5, 0.5]}]}}}
-    monkeypatch.setattr(claude_settings, "fetch_catalog", lambda: asked.append(1) or found)
-    panel = window.claude_panel
+    monkeypatch.setattr(agent_settings, "fetch_catalog", lambda: asked.append(1) or found)
+    panel = window.agent_panel
     panel.entries.clear()
     try:
         panel.auto_refresh_models()
@@ -381,22 +380,22 @@ def test_models_refresh_on_their_own_once_a_day_without_a_word(window, tmp_path,
         assert panel.entries == []  # silent: nothing said in the conversation
         panel.choose(model="grok-4.7")  # the model drop-down lists xAI's models now
         assert any("Grok 4.8" in a.text() for a in panel.model_menu.actions())
-        assert not claude_settings.refresh_due()  # done for today
+        assert not agent_settings.refresh_due()  # done for today
         panel.auto_refresh_models()
         assert asked == [1]
         # A day later, a provider that fails keeps what it offered last time.
         stale = dict(found, refreshed=(datetime.datetime.now() - datetime.timedelta(hours=25)).strftime("%Y-%m-%d %H:%M"))
-        claude_settings.apply_catalog(stale)
-        assert claude_settings.refresh_due()
-        claude_settings.apply_catalog({"refreshed": found["refreshed"], "providers": {"xai": {"error": "timed out"}}})
-        assert "grok-4.8" in dict(claude_settings.models())
+        agent_settings.apply_catalog(stale)
+        assert agent_settings.refresh_due()
+        agent_settings.apply_catalog({"refreshed": found["refreshed"], "providers": {"xai": {"error": "timed out"}}})
+        assert "grok-4.8" in dict(agent_settings.models())
     finally:
         providers.use_catalog({})
 
 
 def test_the_mouse_over_the_assistant_is_an_arrow_whatever_the_canvas_mode(window):
     from PyQt5.QtCore import Qt
-    panel = window.claude_panel
+    panel = window.agent_panel
     panel.set_open(True)
     for mode_cursor in (Qt.CrossCursor, Qt.OpenHandCursor, Qt.SizeAllCursor):
         window.canvas.setCursor(mode_cursor)  # what a canvas mode sets
@@ -427,7 +426,7 @@ def test_cli_agent_without_a_key_says_where_to_add_it(tmp_path):
 def window(tmp_path_factory):
     from PyQt5.QtWidgets import QApplication
     app = QApplication.instance() or QApplication([])
-    # Claude saves whether it is open, and what it cost, in the settings folder.
+    # The agent saves whether it is open, and what it cost, in the settings folder.
     old_appdata = os.environ.get("APPDATA")
     os.environ["APPDATA"] = str(tmp_path_factory.mktemp("appdata"))
     cwd = os.getcwd()
@@ -472,11 +471,11 @@ def run_events(panel, events, tmp_path, prompt="two linked rings"):
     panel.finished()
 
 
-def test_a_claude_design_opens_in_a_new_tab_with_layers_and_groups(window, tmp_path):
+def test_a_agent_design_opens_in_a_new_tab_with_layers_and_groups(window, tmp_path):
     source = ROOT / "knot_samples/turks_heads/json/turks_head_3x5.json"
     expected = project.read(source)
     tabs_before = len(window.tab_manager.tabs)
-    assert window.open_claude_design(str(source))
+    assert window.open_agent_design(str(source))
     assert len(window.tab_manager.tabs) == tabs_before + 1
     assert len(window.canvas.strands) == len(expected["strands"])
     names = {s.layer_name for s in window.canvas.strands}
@@ -484,18 +483,18 @@ def test_a_claude_design_opens_in_a_new_tab_with_layers_and_groups(window, tmp_p
     assert set(expected["groups"]) <= set(window.group_layer_manager.get_group_data())
     assert window.tab_manager.get_active().title == "turks_head_3x5"
 
-    # What Claude would start from is exactly what is now on the canvas.
-    snapshot = window.claude_canvas_snapshot()
+    # What the agent would start from is exactly what is now on the canvas.
+    snapshot = window.agent_canvas_snapshot()
     assert len(snapshot["strands"]) == len(expected["strands"])
 
 
-def test_the_claude_button_shows_and_hides_claude_over_the_canvas(window, monkeypatch, tmp_path):
-    import claude_settings
+def test_the_agent_button_shows_and_hides_agent_over_the_canvas(window, monkeypatch, tmp_path):
+    import agent_settings
     from PyQt5.QtCore import Qt
     from PyQt5.QtTest import QTest
     from PyQt5.QtWidgets import QApplication
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    panel, button = window.claude_panel, window.claude_button
+    panel, button = window.agent_panel, window.agent_button
     panel.set_open(False)
     assert button.isVisible() and not button.isChecked() and not panel.isVisible()
     # It sits with State and Settings at the end of the toolbar, as a twin of Settings.
@@ -505,7 +504,7 @@ def test_the_claude_button_shows_and_hides_claude_over_the_canvas(window, monkey
     assert button.size() == window.settings_button.size() and button.toolTip() == ""
     assert button.color().name() == "#d3c4ad" and button.RING.name() == "#ff5500"  # the sandstone tile, at rest
 
-    # Pressed, Claude floats over the bottom of the visible canvas; the canvas keeps its size.
+    # Pressed, the agent floats over the bottom of the visible canvas; the canvas keeps its size.
     size = window.canvas.size()
     button.click()
     QApplication.processEvents()
@@ -513,7 +512,7 @@ def test_the_claude_button_shows_and_hides_claude_over_the_canvas(window, monkey
     assert panel.parentWidget() is window.canvas
     area = panel.visible_canvas()
     assert area.contains(panel.geometry()) and panel.geometry().bottom() == area.bottom() - panel.MARGIN
-    assert "panel_open" not in claude_settings.load()  # not kept: Claude starts closed every time
+    assert "panel_open" not in agent_settings.load()  # not kept: the agent starts closed every time
 
     # Pressed again, nothing is left on screen; Ctrl+J does the same both ways.
     button.click()
@@ -524,42 +523,42 @@ def test_the_claude_button_shows_and_hides_claude_over_the_canvas(window, monkey
     QTest.keyClick(window.windowHandle(), Qt.Key_J, Qt.ControlModifier)
     assert not panel.isVisible() and not button.isChecked()
 
-    # Settings > Claude can hide it altogether: no button, and Ctrl+J does nothing.
-    window.set_claude_available(False)
-    assert not button.isVisible() and claude_settings.load()["show_button"] is True  # the page saves it
+    # Settings > Models can turn the agent off altogether: no button, and Ctrl+J does nothing.
+    window.set_agent_on(False)
+    assert not button.isVisible() and "show_button" not in agent_settings.load()  # one switch: models_on
     QTest.keyClick(window.windowHandle(), Qt.Key_J, Qt.ControlModifier)
     assert not panel.isVisible()
-    button.click()  # open when Settings hides it: shown again, it comes back closed
-    window.set_claude_available(False)
-    window.set_claude_available(True)
+    button.click()  # open when Settings turns it off: on again, it comes back closed
+    window.set_agent_on(False)
+    window.set_agent_on(True)
     assert button.isVisible() and not panel.isVisible() and not button.isChecked()
 
-    # Each time the app starts Claude is closed, whatever was showing when it last closed.
+    # Each time the app starts the agent is closed, whatever was showing when it last closed.
     import json
-    from claude_panel import ClaudePanel
-    path = claude_settings.settings_path()
-    claude_settings.save(show_button=True)
+    from agent_panel import AgentPanel
+    path = agent_settings.settings_path()
+    agent_settings.save(models_on=True)
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
     data["panel_open"] = True  # what older versions kept
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f)
-    fresh = ClaudePanel(window, window.canvas)
+    fresh = AgentPanel(window, window.canvas)
     try:
         assert not fresh.isVisibleTo(window.canvas)
     finally:
         fresh.deleteLater()
 
 
-def test_the_claude_button_shows_a_run_while_claude_is_hidden(window, monkeypatch, tmp_path):
+def test_the_agent_button_shows_a_run_while_agent_is_hidden(window, monkeypatch, tmp_path):
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    panel, button = window.claude_panel, window.claude_button
+    panel, button = window.agent_panel, window.agent_button
     panel.set_open(False)
     monkeypatch.setattr(panel, "running", lambda: True)
     panel.activity_changed.emit()
     assert button.spin.isActive()  # an arc turns around the button
     panel.set_open(True)
-    assert not button.spin.isActive()  # Claude is in view, so the button stays still
+    assert not button.spin.isActive()  # the agent is in view, so the button stays still
     panel.set_open(False)
     monkeypatch.setattr(panel, "running", lambda: False)
     panel.design_waiting = True
@@ -573,7 +572,7 @@ def test_the_prompt_box_is_a_chat_box(window, monkeypatch):
     from PyQt5.QtCore import Qt
     from PyQt5.QtTest import QTest
     from PyQt5.QtWidgets import QApplication
-    panel, manager = window.claude_panel, window.layer_panel.undo_redo_manager
+    panel, manager = window.agent_panel, window.layer_panel.undo_redo_manager
     clicks, pans, sent = [], [], []
     for name in ("undo_button", "redo_button"):
         button = getattr(manager, name)
@@ -628,7 +627,7 @@ def test_the_prompt_box_is_a_chat_box(window, monkeypatch):
 
 def test_the_panel_turns_events_into_a_transcript_and_opens_the_result(window, tmp_path, monkeypatch):
     monkeypatch.setenv("APPDATA", str(tmp_path))  # the run's cost is saved in the settings folder
-    panel = window.claude_panel
+    panel = window.agent_panel
     opened = []
     panel.design_ready.connect(opened.append)
     design = tmp_path / "design.json"
@@ -653,8 +652,8 @@ def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed
     from http.server import BaseHTTPRequestHandler, HTTPServer
     from PyQt5.QtCore import QUrl
     from PyQt5.QtWidgets import QApplication
-    import claude_settings
-    import claude_sharing
+    import agent_settings
+    import agent_sharing
     monkeypatch.setenv("APPDATA", str(tmp_path / "appdata"))
     got = []
 
@@ -671,8 +670,8 @@ def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed
     threading.Thread(target=http.serve_forever, daemon=True).start()
     monkeypatch.setenv("NO_PROXY", "127.0.0.1,localhost")
     monkeypatch.setenv("no_proxy", "127.0.0.1,localhost")
-    private, public = claude_sharing.new_keys()
-    panel = window.claude_panel
+    private, public = agent_sharing.new_keys()
+    panel = window.agent_panel
     panel.entries.clear()
     panel.share_asked, panel.stopping = False, False
     design = tmp_path / "made.json"
@@ -697,11 +696,11 @@ def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed
         # Until the developer sets sharing up, nothing asks and nothing goes.
         run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT two rings")
         assert cards() == [] and got == []
-        monkeypatch.setattr(claude_sharing, "SHARE_URL", f"http://127.0.0.1:{http.server_port}/v1/share")
-        monkeypatch.setattr(claude_sharing, "SHARE_PUBLIC_KEY", public)
+        monkeypatch.setattr(agent_sharing, "SHARE_URL", f"http://127.0.0.1:{http.server_port}/v1/share")
+        monkeypatch.setattr(agent_sharing, "SHARE_PUBLIC_KEY", public)
         run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT two rings")
         (card,) = cards()
-        assert card["state"] is None and got == [] and claude_settings.load()["share"] is None
+        assert card["state"] is None and got == [] and agent_settings.load()["share"] is None
         asked = panel.transcript.toPlainText()
         assert "Help make it better" in asked and "Yes, help improve it" in asked
         assert "From now on, send the developer what the model makes" in asked  # a yes holds from here on
@@ -712,12 +711,12 @@ def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed
         assert len(cards()) == 1  # left unanswered: not asked again while the app runs
         # Share: this request goes, sealed; the next ones go without asking.
         panel.follow_link(QUrl(f"os:share/{panel.entries.index(card)}"))
-        assert card["state"] == "shared" and "record" not in card and claude_settings.load()["share"] is True
+        assert card["state"] == "shared" and "record" not in card and agent_settings.load()["share"] is True
         assert received(1)
-        shared = claude_sharing.unseal(got[0], private)
+        shared = agent_sharing.unseal(got[0], private)
         assert shared["answer"] == ["Two linked rings, in teal."] and shared["model"] == "claude-haiku-5-5"
         assert shared["design"]["strands"] and shared["ok"] is True
-        assert shared["version"] == claude_sharing.APP_VERSION and shared["gallery"] is False
+        assert shared["version"] == agent_sharing.APP_VERSION and shared["gallery"] is False
         assert "SECRET-PROMPT" not in json.dumps(shared)  # what the person typed never goes
         assert [e for e in panel.entries if e["kind"] == "gallery"] == []  # no gallery set up: not asked
         run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT again")
@@ -725,35 +724,35 @@ def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed
         panel.finished()  # the same request finishing twice is still shared once
         time.sleep(0.3)
         assert len(got) == 2
-        # A design Claude opened in a tab itself (through the bridge) is shared with it too.
+        # A design the agent opened in a tab itself (through the bridge) is shared with it too.
         tabbed = run()
         tabbed[-1]["opened_tabs"] = ["Two rings"]
         run_events(panel, tabbed, tmp_path, prompt="SECRET-PROMPT in a tab")
-        assert received(3) and claude_sharing.unseal(got[2], private)["design"]["strands"]
-        # A request that only looked at the person's canvas: their design is not Claude's to share.
+        assert received(3) and agent_sharing.unseal(got[2], private)["design"]["strands"]
+        # A request that only looked at the person's canvas: their design is not the agent's to share.
         looked = run()
         looked[-1]["changed"] = False
         run_events(panel, looked, tmp_path, prompt="SECRET-PROMPT what is this")
         assert received(4)
-        only_answer = claude_sharing.unseal(got[3], private)
+        only_answer = agent_sharing.unseal(got[3], private)
         assert only_answer["design"] is None and only_answer["picture"] is None
         assert only_answer["answer"] == ["Two linked rings, in teal."]
         # An answer that repeats one of the person's keys (saved, of any shape): the key is cut out.
-        claude_settings.save(provider_key=("openai", "an-odd-saved-key-0123456789"))
+        agent_settings.save(provider_key=("openai", "an-odd-saved-key-0123456789"))
         keyed = run()
         keyed[0]["text"] = "Your key an-odd-saved-key-0123456789 works."
         run_events(panel, keyed, tmp_path, prompt="SECRET-PROMPT my key")
-        assert received(5) and claude_sharing.unseal(got[4], private)["answer"] == ["Your key … works."]
+        assert received(5) and agent_sharing.unseal(got[4], private)["answer"] == ["Your key … works."]
         # The public gallery is a second question, asked only after a yes to sharing, and only
         # once the developer says where the gallery is. Until the person says yes, no share
         # says it may be shown, and never one made from a design of their own.
-        monkeypatch.setattr(claude_sharing, "GALLERY_URL", "https://example.github.io/OpenStrandStudio/")
+        monkeypatch.setattr(agent_sharing, "GALLERY_URL", "https://example.github.io/OpenStrandStudio/")
         fresh = lambda: run()[:1] + [dict(run()[1], new=True)]  # noqa: E731 (made from nothing of theirs)
         run_events(panel, fresh(), tmp_path, prompt="SECRET-PROMPT a new one")
-        assert received(6) and claude_sharing.unseal(got[5], private)["gallery"] is False
-        saved = json.loads(Path(claude_settings.settings_path()).read_text(encoding="utf-8"))
+        assert received(6) and agent_sharing.unseal(got[5], private)["gallery"] is False
+        saved = json.loads(Path(agent_settings.settings_path()).read_text(encoding="utf-8"))
         saved.pop("share")  # as before the person was ever asked
-        Path(claude_settings.settings_path()).write_text(json.dumps(saved), encoding="utf-8")
+        Path(agent_settings.settings_path()).write_text(json.dumps(saved), encoding="utf-8")
         panel.shared_event, panel.share_asked = None, False
         panel.entries.clear()
         run_events(panel, fresh(), tmp_path, prompt="SECRET-PROMPT asked again")
@@ -763,22 +762,22 @@ def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed
         text = panel.transcript.toPlainText()
         assert "public gallery" in text and "https://example.github.io/OpenStrandStudio/" in text
         assert "Never the answer" in text and "cannot find yours later to take them down" in text
-        assert received(7) and claude_sharing.unseal(got[6], private)["gallery"] is False  # not answered yet
+        assert received(7) and agent_sharing.unseal(got[6], private)["gallery"] is False  # not answered yet
         panel.follow_link(QUrl(f"os:gallery/{panel.entries.index(asked)}"))
-        assert asked["state"] == "shared" and claude_settings.load()["gallery"] is True
+        assert asked["state"] == "shared" and agent_settings.load()["gallery"] is True
         run_events(panel, fresh(), tmp_path, prompt="SECRET-PROMPT for the gallery")
         assert received(8)
-        shown = claude_sharing.unseal(got[7], private)
+        shown = agent_sharing.unseal(got[7], private)
         assert shown["gallery"] is True and shown["new"] is True
         run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT from my canvas")  # not new: stays private
-        assert received(9) and claude_sharing.unseal(got[8], private)["gallery"] is False
+        assert received(9) and agent_sharing.unseal(got[8], private)["gallery"] is False
         assert len([e for e in panel.entries if e["kind"] == "gallery"]) == 1  # asked once
         # Turned off (Settings > Models): nothing goes, not even a share already on its way.
-        claude_settings.save(share=False)
+        agent_settings.save(share=False)
         run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT once more")
         said = []
         monkeypatch.setattr(sys.modules[type(panel).__module__], "terminal_log", said.append)
-        panel.send_share(claude_sharing.record(["Queued just before sharing was turned off."]))
+        panel.send_share(agent_sharing.record(["Queued just before sharing was turned off."]))
         for _ in range(250):
             if "not shared: sharing was turned off" in said:
                 break
@@ -796,81 +795,76 @@ def test_settings_say_where_the_keys_are_and_offer_sharing_once_it_is_set_up(tmp
     pytest.importorskip("cryptography.hazmat.primitives.hpke")
     from PyQt5.QtWidgets import QApplication
     app = QApplication.instance() or QApplication([])  # noqa: F841 (kept alive for the page)
-    import claude_settings
-    import claude_sharing
-    from claude_panel import ClaudeSettingsPage
+    import agent_settings
+    import agent_sharing
+    from agent_panel import AgentSettingsPage
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    page = ClaudeSettingsPage("en")
+    page = AgentSettingsPage("en")
     assert page.share_check.isHidden() and page.share_hint.isHidden()  # the developer has not set it up
     assert "settings folder" in page.storage.text()
-    _, public = claude_sharing.new_keys()
-    monkeypatch.setattr(claude_sharing, "SHARE_URL", "https://openstrand-share.example.workers.dev/v1/share")
-    monkeypatch.setattr(claude_sharing, "SHARE_PUBLIC_KEY", public)
-    monkeypatch.setattr(claude_settings, "keychain", lambda: object())  # a password store on this computer
+    _, public = agent_sharing.new_keys()
+    monkeypatch.setattr(agent_sharing, "SHARE_URL", "https://openstrand-share.example.workers.dev/v1/share")
+    monkeypatch.setattr(agent_sharing, "SHARE_PUBLIC_KEY", public)
+    monkeypatch.setattr(agent_settings, "keychain", lambda: object())  # a password store on this computer
     page.retranslate("en")
     assert not page.share_check.isHidden() and not page.share_check.isChecked()  # off until they say yes
     assert "encrypted on this computer" in page.share_hint.text() and "password store" in page.storage.text()
     page.share_check.setChecked(True)
-    assert claude_settings.load()["share"] is True
+    assert agent_settings.load()["share"] is True
     page.retranslate("de")
     assert page.share_check.isChecked() and page.share_check.text().startswith("Was das Modell erstellt")
     # The gallery box: shown once the developer says where the gallery is, its own yes, and
     # only while sharing is on.
     assert page.gallery_check.isHidden() and page.gallery_hint.isHidden()
-    monkeypatch.setattr(claude_sharing, "GALLERY_URL", "https://example.github.io/OpenStrandStudio/")
+    monkeypatch.setattr(agent_sharing, "GALLERY_URL", "https://example.github.io/OpenStrandStudio/")
     page.retranslate("en")
     assert not page.gallery_check.isHidden() and not page.gallery_check.isChecked()
     assert "https://example.github.io/OpenStrandStudio/" in page.gallery_hint.text()
     page.gallery_check.setChecked(True)
-    assert claude_settings.load()["gallery"] is True
+    assert agent_settings.load()["gallery"] is True
     page.share_check.setChecked(False)  # sharing off: the gallery box goes with it
     assert not page.gallery_check.isEnabled() and not page.gallery_check.isChecked()
-    assert claude_settings.load()["share"] is False
+    assert agent_settings.load()["share"] is False
 
 
 def test_with_models_off_the_panel_sends_nothing_and_a_running_request_stops(window, monkeypatch, tmp_path):
     from PyQt5.QtCore import QProcess, Qt
     from PyQt5.QtTest import QTest
-    import claude_settings
-    from claude_panel import ClaudeSettingsPage
+    import agent_settings
+    from agent_panel import AgentSettingsPage
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    claude_settings.save(api_key="sk-ant-test-1234567890")
-    page = ClaudeSettingsPage("en")
+    agent_settings.save(api_key="sk-ant-test-1234567890")
+    page = AgentSettingsPage("en")
     assert page.models_check.isChecked() and not page.china_check.isChecked() and page.refresh_button.isEnabled()
     labels = [page.model_combo.itemText(i) for i in range(page.model_combo.count())]
     assert labels and not any(name in label for label in labels for name in ("Kimi", "DeepSeek", "Qwen"))
     page.china_check.setChecked(True)  # allowed: their models are offered
     assert any("DeepSeek" in page.model_combo.itemText(i) for i in range(page.model_combo.count()))
     page.china_check.setChecked(False)
-    assert claude_settings.load()["allow_china"] is False
-    page.show_button_changed.connect(window.set_claude_available)  # as the Settings dialog does
-    button, panel = window.claude_button, window.claude_panel
+    assert agent_settings.load()["allow_china"] is False
+    page.agent_switched.connect(window.set_agent_on)  # as the Settings dialog does
+    button, panel = window.agent_button, window.agent_panel
     panel.set_open(True)
-    assert button.isVisible() and panel.isVisible() and page.show_check.isEnabled()
+    assert button.isVisible() and panel.isVisible()
+    assert not hasattr(page, "show_check")  # one switch: no second box that only hides the button
+    assert page.models_check.text() == "Use the OpenStrand agent"
     page.models_check.setChecked(False)
-    assert claude_settings.load()["models_on"] is False and not page.refresh_button.isEnabled()
-    # Off is off everywhere: no Claude button in the main window, no panel, and Ctrl+J does nothing.
-    assert not button.isVisible() and not panel.isVisible() and not claude_settings.claude_available()
+    assert agent_settings.load()["models_on"] is False and not page.refresh_button.isEnabled()
+    # Off is off everywhere: no agent button in the main window, no panel, and Ctrl+J does nothing.
+    assert not button.isVisible() and not panel.isVisible() and not agent_settings.agent_on()
     window.activateWindow()
     QTest.keyClick(window.windowHandle(), Qt.Key_J, Qt.ControlModifier)
     assert not panel.isVisible()
-    assert not page.show_check.isEnabled() and claude_settings.load()["show_button"] is True  # kept for later
-    assert "Claude button also leaves the main window" in page.models_hint.text()
+    assert "agent's button also leaves the main window" in page.models_hint.text()
     started, killed = [], []
-    monkeypatch.setattr("claude_panel.QProcess.start", lambda self, program, args: started.append(args))
+    monkeypatch.setattr("agent_panel.QProcess.start", lambda self, program, args: started.append(args))
     panel.prompt_edit.setText("a heart")
     panel.send()
-    assert started == [] and "AI models are turned off in Settings > Models" in panel.transcript.toPlainText()
+    assert started == [] and "The OpenStrand agent is turned off in Settings > Models" in panel.transcript.toPlainText()
     # Turned off while a request runs: it stops at once, as with Stop.
     page.models_check.setChecked(True)
-    assert claude_settings.load()["models_on"] and page.refresh_button.isEnabled()
-    assert button.isVisible() and not panel.isVisible() and page.show_check.isEnabled()  # back, and closed
-    page.show_check.setChecked(False)  # hidden by its own box: turning models on does not bring it back
-    page.models_check.setChecked(False)
-    page.models_check.setChecked(True)
-    assert not button.isVisible()
-    page.show_check.setChecked(True)
-    assert button.isVisible()
+    assert agent_settings.load()["models_on"] and page.refresh_button.isEnabled()
+    assert button.isVisible() and not panel.isVisible()  # back, and closed
     panel.process = SimpleNamespace(state=lambda: QProcess.Running, kill=lambda: killed.append(1))
     try:
         panel.refresh_controls()
@@ -880,12 +874,12 @@ def test_with_models_off_the_panel_sends_nothing_and_a_running_request_stops(win
         assert killed == [1] and panel.stopping
     finally:
         panel.process, panel.stopping = None, False
-        claude_settings.save(models_on=True)
+        agent_settings.save(models_on=True)
 
 
 def test_the_panel_asks_for_a_key_before_sending(window, monkeypatch, tmp_path):
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    panel = window.claude_panel
+    panel = window.agent_panel
     panel.prompt_edit.setText("a heart")
     panel.send()
     assert panel.process is None or not panel.running()
@@ -894,59 +888,59 @@ def test_the_panel_asks_for_a_key_before_sending(window, monkeypatch, tmp_path):
 
 def test_spending_adds_up_across_requests_until_reset(tmp_path, monkeypatch):
     import datetime
-    import claude_settings
+    import agent_settings
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    assert claude_settings.add_spending(0.25) == 0.25
-    assert claude_settings.add_spending(0.5) == 0.75
+    assert agent_settings.add_spending(0.25) == 0.25
+    assert agent_settings.add_spending(0.5) == 0.75
     for nothing in (0, -3, "x", float("nan"), None):
-        assert claude_settings.add_spending(nothing) == 0.75
-    claude_settings.save(api_key="sk-ant-test-1234567890", model="claude-haiku-5-5")  # keeps the total
-    saved = claude_settings.load()
+        assert agent_settings.add_spending(nothing) == 0.75
+    agent_settings.save(api_key="sk-ant-test-1234567890", model="claude-haiku-5-5")  # keeps the total
+    saved = agent_settings.load()
     assert saved["spent"] == 0.75 and saved["spent_since"] == datetime.date.today().isoformat()
-    claude_settings.reset_spending()
-    assert claude_settings.load()["spent"] == 0.0 and claude_settings.load()["api_key"]
+    agent_settings.reset_spending()
+    assert agent_settings.load()["spent"] == 0.0 and agent_settings.load()["api_key"]
 
 
 def test_the_panel_total_keeps_counting_and_settings_show_it(window, monkeypatch, tmp_path):
-    import claude_settings
-    from claude_panel import ClaudeSettingsPage
+    import agent_settings
+    from agent_panel import AgentSettingsPage
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    claude_settings.add_spending(1.2)  # earlier requests
-    panel = window.claude_panel
+    agent_settings.add_spending(1.2)  # earlier requests
+    panel = window.agent_panel
     panel.out_dir, panel.prompt = str(tmp_path), "a heart"
 
     # A first request: the total rises live from what was spent before.
-    panel.run_cost, panel.total_before = 0.0, claude_settings.load()["spent"]
+    panel.run_cost, panel.total_before = 0.0, agent_settings.load()["spent"]
     panel.handle_event({"type": "usage", "cost": 0.04})
     assert panel.status_label.text().endswith("this request $0.040 · total $1.24")
     panel.handle_event({"type": "done", "ok": True, "error": None, "project": None, "cost": 0.06,
                         "model": "claude-haiku-5-5"})
     panel.finished()
     assert panel.status_label.text() == "this request $0.060 · total $1.26"
-    assert claude_settings.load()["spent"] == pytest.approx(1.26)
+    assert agent_settings.load()["spent"] == pytest.approx(1.26)
 
     # A second request is stopped part way: what it spent still counts, once.
-    panel.run_cost, panel.total_before = 0.0, claude_settings.load()["spent"]
+    panel.run_cost, panel.total_before = 0.0, agent_settings.load()["spent"]
     panel.done_event = None
     panel.handle_event({"type": "usage", "cost": 0.03})
     panel.finished()
     panel.finished()
-    assert claude_settings.load()["spent"] == pytest.approx(1.29)
+    assert agent_settings.load()["spent"] == pytest.approx(1.29)
 
-    page = ClaudeSettingsPage("en")
-    assert page.spent_label.text().startswith("Spent with Claude: $1.29 since ")
+    page = AgentSettingsPage("en")
+    assert page.spent_label.text().startswith("Spent with the agent: $1.29 since ")
     page.reset_spending()
-    assert claude_settings.load()["spent"] == 0.0 and not page.reset_spent_button.isEnabled()
-    assert page.spent_label.text().startswith("Spent with Claude: $0.000 since ")
+    assert agent_settings.load()["spent"] == 0.0 and not page.reset_spent_button.isEnabled()
+    assert page.spent_label.text().startswith("Spent with the agent: $0.000 since ")
 
 
 def test_the_settings_page_saves_key_and_model(monkeypatch, tmp_path):
     from PyQt5.QtWidgets import QApplication
     QApplication.instance() or QApplication([])
-    import claude_settings
-    from claude_panel import ClaudeSettingsPage
+    import agent_settings
+    from agent_panel import AgentSettingsPage
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    page = ClaudeSettingsPage("en")
+    page = AgentSettingsPage("en")
     from PyQt5.QtWidgets import QLineEdit, QPushButton
     # The eye in the key field shows what was typed and hides it again (no separate Show button).
     assert page.key_edit.echoMode() == QLineEdit.Password
@@ -963,22 +957,22 @@ def test_the_settings_page_saves_key_and_model(monkeypatch, tmp_path):
     assert page.limit_spin.width() == page.session_spin.width() >= page.limit_spin.fontMetrics().horizontalAdvance("$500.00") + 62
     page.key_edit.setText("sk-ant-api03-abcdefghijkl")
     page.save_key()
-    assert claude_settings.load()["api_key"] == "sk-ant-api03-abcdefghijkl"
+    assert agent_settings.load()["api_key"] == "sk-ant-api03-abcdefghijkl"
     assert "ijkl" in page.key_status.text() and page.key_edit.text() == ""
     page.model_combo.setCurrentIndex(page.model_combo.findData("claude-haiku-5-5"))
-    assert claude_settings.load()["model"] == "claude-haiku-5-5"
+    assert agent_settings.load()["model"] == "claude-haiku-5-5"
     page.remove_key()
-    assert claude_settings.load()["api_key"] == ""
+    assert agent_settings.load()["api_key"] == ""
     page.web_check.setChecked(False)
     page.limit_spin.setValue(4.5)
-    assert claude_settings.load()["web"] is False and claude_settings.load()["max_cost"] == 4.5
-    shown = []
-    page.show_button_changed.connect(shown.append)
-    assert page.show_check.isChecked()
-    page.show_check.setChecked(False)
-    assert shown == [False] and claude_settings.load()["show_button"] is False
+    assert agent_settings.load()["web"] is False and agent_settings.load()["max_cost"] == 4.5
+    switched = []
+    page.agent_switched.connect(switched.append)
+    assert page.models_check.isChecked()
+    page.models_check.setChecked(False)
+    assert switched == [False] and agent_settings.load()["models_on"] is False
     page.retranslate("he")
-    assert page.model_combo.count() == len(claude_settings.models()) and not page.show_check.isChecked()
+    assert page.model_combo.count() == len(agent_settings.models()) and not page.models_check.isChecked()
     assert not page.web_check.isChecked() and page.limit_spin.value() == 4.5
 
 
@@ -1098,11 +1092,11 @@ def fake_api(monkeypatch, request):
 
 
 def test_the_panel_runs_the_agent_in_the_background_and_opens_its_design(window, fake_api, monkeypatch, tmp_path):
-    import claude_settings
+    import agent_settings
     from PyQt5.QtWidgets import QApplication
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    claude_settings.save(api_key="sk-ant-test-key", model="claude-sonnet-5-5")
-    panel = window.claude_panel
+    agent_settings.save(api_key="sk-ant-test-key", model="claude-sonnet-5-5")
+    panel = window.agent_panel
     opened = []
     panel.design_ready.connect(opened.append)
     tabs_before = len(window.tab_manager.tabs)
@@ -1138,12 +1132,12 @@ def test_the_panel_runs_the_agent_in_the_background_and_opens_its_design(window,
 
 
 @pytest.mark.parametrize("fake_api", [FAKE_DRAWING], indirect=True)
-def test_a_drawing_by_claude_opens_with_its_groups_in_the_layer_panel(window, fake_api, monkeypatch, tmp_path):
-    import claude_settings
+def test_a_drawing_by_agent_opens_with_its_groups_in_the_layer_panel(window, fake_api, monkeypatch, tmp_path):
+    import agent_settings
     from PyQt5.QtWidgets import QApplication
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    claude_settings.save(api_key="sk-ant-test-key", model="claude-haiku-5-5", web=False, max_cost=0.5)
-    panel = window.claude_panel
+    agent_settings.save(api_key="sk-ant-test-key", model="claude-haiku-5-5", web=False, max_cost=0.5)
+    panel = window.agent_panel
     opened = []
     panel.design_ready.connect(opened.append)
     panel.prompt_edit.setText("two linked rings")
@@ -1182,7 +1176,7 @@ def test_cli_agent_says_how_to_install_the_anthropic_package(tmp_path, package, 
 def test_agent_command_carries_effort_and_plan():
     import sys as _sys
     _sys.path.insert(0, str(ROOT / "src"))
-    from claude_panel import agent_command
+    from agent_panel import agent_command
     _, args = agent_command("a heart", "claude-haiku-5-5", "out", effort="max", plan=True, max_cost=1.5)
     assert args[args.index("--effort") + 1] == "max" and "--plan" in args
     assert args[args.index("--max-cost") + 1] == "1.50"
@@ -1203,24 +1197,24 @@ def test_plan_mode_offers_only_tools_that_look():
 
 
 def test_the_status_line_switches_mode_model_and_effort(window, monkeypatch, tmp_path):
-    import claude_settings
+    import agent_settings
     from PyQt5.QtCore import Qt
     from PyQt5.QtTest import QTest
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    panel = window.claude_panel
+    panel = window.agent_panel
     panel.set_open(True)
     panel.set_mode("ask")
     assert "ask before opening designs" in panel.mode_button.text()
     # Shift+Tab in the box cycles ask -> open automatically -> plan, like Claude Code.
     panel.prompt_edit.setFocus()
     QTest.keyClick(panel.prompt_edit, Qt.Key_Backtab, Qt.ShiftModifier)
-    assert panel.mode == "auto" and claude_settings.load()["mode"] == "auto"
+    assert panel.mode == "auto" and agent_settings.load()["mode"] == "auto"
     assert panel.prompt_edit.hasFocus()  # Shift+Tab switched the mode, not the focus
     panel.mode_button.click()
     assert panel.mode == "plan" and "plan mode" in panel.mode_button.text()
     # The mode's symbol is a picture (images/mode_*.png), not a character that may be an emoji.
     assert not panel.mode_button.icon().isNull() and not any(ch in panel.mode_button.text() for ch in "⏵⏸")
-    assert claude_settings.load()["mode"] == "auto"  # plan mode is never kept
+    assert agent_settings.load()["mode"] == "auto"  # plan mode is never kept
     panel.cycle_mode()
     assert panel.mode == "ask"
     panel.set_mode("auto")
@@ -1235,10 +1229,10 @@ def test_the_status_line_switches_mode_model_and_effort(window, monkeypatch, tmp
             and panel.provider_menu.styleSheet() == panel.model_menu.styleSheet() == panel.effort_menu.styleSheet())
     openai = [a for a in providers if a.text().startswith("OpenAI")][0]
     openai.trigger()  # another company: its first model
-    assert claude_settings.provider_of(claude_settings.load()["model"]) == "openai"
+    assert agent_settings.provider_of(agent_settings.load()["model"]) == "openai"
     assert panel.provider_button.text() == "OpenAI" and all("GPT" in a.text() for a in panel.model_menu.actions())
     [a for a in panel.provider_menu.actions() if a.text().startswith("Anthropic")][0].trigger()
-    assert claude_settings.load()["model"] == "claude-sonnet-5-5"
+    assert agent_settings.load()["model"] == "claude-sonnet-5-5"
     # The Image button's picture is a PNG in images/, white on the dark theme.
     assert panel.attach_button.text() == "Image" and not panel.attach_button.icon().isNull()
     # Pictures, not characters: the drop-downs' arrow, the toggle's check, the Shift key.
@@ -1254,19 +1248,19 @@ def test_the_status_line_switches_mode_model_and_effort(window, monkeypatch, tmp
     import os
     for name in ("check.png", "cross.png", "menu_arrow_on_dark.png", "menu_arrow_on_light.png",
                  "shift_on_dark.png", "shift_on_light.png"):
-        assert os.path.exists(os.path.join(os.path.dirname(claude_settings.__file__), "images", name))
+        assert os.path.exists(os.path.join(os.path.dirname(agent_settings.__file__), "images", name))
     haiku = [a for a in panel.model_menu.actions() if "Haiku" in a.text()][0]
     haiku.trigger()
-    assert claude_settings.load()["model"] == "claude-haiku-5-5" and panel.model_button.text().startswith("Claude Haiku 5.5")
+    assert agent_settings.load()["model"] == "claude-haiku-5-5" and panel.model_button.text().startswith("Claude Haiku 5.5")
     top = [a for a in panel.effort_menu.actions() if a.text() == "Max effort"][0]
     top.trigger()
-    assert claude_settings.load()["effort"] == "max" and panel.effort_button.text().startswith("Max effort")
+    assert agent_settings.load()["effort"] == "max" and panel.effort_button.text().startswith("Max effort")
     assert re.fullmatch(r"session \$\d+\.\d+ of \$10\.00", panel.session_label.text())
 
 
-def test_steps_fold_into_one_line_once_claude_answers(window, monkeypatch, tmp_path):
+def test_steps_fold_into_one_line_once_agent_answers(window, monkeypatch, tmp_path):
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    panel = window.claude_panel
+    panel = window.agent_panel
     panel.set_mode("auto")
     panel.entries.clear()
     panel.handle_event({"type": "thinking", "text": "Two rings that link like a chain."})
@@ -1295,7 +1289,7 @@ def test_a_long_tool_shows_its_progress_with_a_picture_and_time_left(window, mon
     from PyQt5.QtCore import QUrl
     from openstrand.progress import picture
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    panel = window.claude_panel
+    panel = window.agent_panel
     panel.set_mode("auto")
     panel.entries.clear()
     panel.handle_event({"type": "tool_start", "name": "tie_knot", "input": {"knot": "overhand"}})
@@ -1310,8 +1304,8 @@ def test_a_long_tool_shows_its_progress_with_a_picture_and_time_left(window, mon
     assert "Tie knot" in shown and "drawing step 3 of 5" in shown
     assert re.search(r"50% · about \d+s left · 10s", shown)  # ten seconds for half: about ten more
     html_text = panel.transcript.toHtml()
-    assert f'claude-frame:{step["key"]}' in html_text and f'claude-bar:{step["key"]}' in html_text
-    picture_shown = panel.transcript.document().resource(3, QUrl(f'claude-frame:{step["key"]}'))
+    assert f'agent-frame:{step["key"]}' in html_text and f'agent-bar:{step["key"]}' in html_text
+    picture_shown = panel.transcript.document().resource(3, QUrl(f'agent-frame:{step["key"]}'))
     assert picture_shown is not None and not picture_shown.isNull()  # 3: QTextDocument.ImageResource
     assert panel.working.progress[0] == 0.5 and "50%" in panel.working.progress[1]
     assert panel.working.label == "Tie knot · drawing step 3 of 5"
@@ -1323,7 +1317,7 @@ def test_a_long_tool_shows_its_progress_with_a_picture_and_time_left(window, mon
     panel.handle_event({"type": "tool_end", "name": "tie_knot", "ok": True, "summary": "Overhand knot · 5 steps"})
     assert not step["running"] and step["seconds"] >= 10 and panel.working.progress is None
     assert "Overhand knot · 5 steps · 10s" in panel.transcript.toPlainText()  # what it took, once done
-    gone = panel.transcript.document().resource(3, QUrl(f'claude-frame:{step["key"]}'))
+    gone = panel.transcript.document().resource(3, QUrl(f'agent-frame:{step["key"]}'))
     assert gone is None or gone.isNull()  # the picture is freed
     panel.refresh_running()
     assert not panel.tick.isActive()  # nothing runs: the second hand stops
@@ -1334,9 +1328,9 @@ def test_the_mouse_over_a_tool_s_picture_shows_it_larger_and_it_keeps_moving(win
     from PyQt5.QtGui import QMouseEvent
     from PyQt5.QtWidgets import QApplication
     from openstrand.progress import picture
-    import claude_panel
+    import agent_panel
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    panel = window.claude_panel
+    panel = window.agent_panel
     panel.set_open(True)
     panel.entries.clear()
     panel.handle_event({"type": "tool_start", "name": "tie_knot", "input": {}})
@@ -1358,7 +1352,7 @@ def test_the_mouse_over_a_tool_s_picture_shows_it_larger_and_it_keeps_moving(win
     assert preview.isVisible() and preview.key == step["key"]
     size = preview.pixmap().deviceIndependentSize() if hasattr(preview.pixmap(), "deviceIndependentSize") \
         else preview.pixmap().size() / preview.pixmap().devicePixelRatio()
-    assert (round(size.width()), round(size.height())) == claude_panel.PREVIEW_SIZE
+    assert (round(size.width()), round(size.height())) == agent_panel.PREVIEW_SIZE
     before = preview.pixmap().toImage()
     panel.handle_event({"type": "tool_progress", "name": "tie_knot", "stage": "tighten", "fraction": 0.6,
                         "frame": frame(4)})
@@ -1399,7 +1393,7 @@ def test_a_finished_tool_keeps_its_picture_and_app_tools_picture_the_canvas(wind
     from PyQt5.QtCore import QUrl
     from PyQt5.QtGui import QColor, QImage
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    panel = window.claude_panel
+    panel = window.agent_panel
     panel.set_open(True)
     panel.entries.clear()
     panel.out_dir = str(tmp_path)
@@ -1411,10 +1405,10 @@ def test_a_finished_tool_keeps_its_picture_and_app_tools_picture_the_canvas(wind
     panel.handle_event({"type": "tool_start", "name": "make_heart", "input": {}})
     step = panel.running_step("make_heart")
     panel.handle_event({"type": "tool_end", "name": "make_heart", "ok": True, "summary": "Heart", "image": str(made)})
-    assert step["picture"] == str(made) and f'claude-frame:{step["key"]}' in panel.transcript.toHtml()
-    shown = panel.transcript.document().resource(3, QUrl(f'claude-frame:{step["key"]}'))
+    assert step["picture"] == str(made) and f'agent-frame:{step["key"]}' in panel.transcript.toHtml()
+    shown = panel.transcript.document().resource(3, QUrl(f'agent-frame:{step["key"]}'))
     assert shown is not None and not shown.isNull()
-    # An app tool: the canvas as the tool left it, without Claude floating over it.
+    # An app tool: the canvas as the tool left it, without the agent floating over it.
     panel.handle_event({"type": "tool_start", "name": "app_window", "input": {"op": "zoom"}})
     step = panel.running_step("app_window")
     panel.handle_event({"type": "tool_end", "name": "app_window", "ok": True, "summary": "zoom 100 %"})
@@ -1428,11 +1422,11 @@ def test_a_finished_tool_keeps_its_picture_and_app_tools_picture_the_canvas(wind
         assert "picture" not in step
 
 
-def test_stop_folds_the_steps_says_stopped_once_and_claude_hears_of_it(window, monkeypatch, tmp_path):
+def test_stop_folds_the_steps_says_stopped_once_and_agent_hears_of_it(window, monkeypatch, tmp_path):
     from types import SimpleNamespace
     from PyQt5.QtCore import QProcess
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    panel = window.claude_panel
+    panel = window.agent_panel
     panel.set_mode("auto")
     panel.entries.clear()
     panel.history.clear()
@@ -1453,23 +1447,23 @@ def test_stop_folds_the_steps_says_stopped_once_and_claude_hears_of_it(window, m
     assert group["end"] is not None and not group["open"]  # folded, not left "running"
     assert group["steps"][-1]["stopped"] and not group["steps"][-1]["running"]
     shown = panel.transcript.toPlainText()
-    assert shown.count("Stopped.") == 1 and "Claude stopped" not in shown
+    assert shown.count("Stopped.") == 1 and "The agent stopped" not in shown
     assert panel.history[-1]["tools"] and "identify_knot (stopped by the person" in panel.history[-1]["tools"][0]
 
 
-def test_claude_hears_which_tools_ran_and_how_they_ended():
+def test_agent_hears_which_tools_ran_and_how_they_ended():
     from openstrand.agent import with_history
-    text = with_history("why so slow?", [{"user": "an overhand tutorial", "claude": "",
+    text = with_history("why so slow?", [{"user": "an overhand tutorial", "agent": "",
                                           "tools": ["tie_knot (stopped by the person, 339 s)"]}])
     assert "Tools you ran" in text and "tie_knot (stopped by the person, 339 s)" in text
 
 
 def test_the_stitch_is_tied_from_a_plus_and_continued_with_k_1_and_k_0():
-    """The working line's stitch (src/claude_stitch.py): its geometry and its time, no Qt."""
+    """The working line's stitch (src/agent_stitch.py): its geometry and its time, no Qt."""
     import math
     import random
     sys.path.insert(0, str(ROOT / "src"))
-    import claude_stitch as cs
+    import agent_stitch as cs
 
     def angles(level):  # where each strand starts, round the centre (degrees)
         return [math.degrees(math.atan2(s.y, s.x)) % 360 for s in level.strands]
@@ -1565,13 +1559,13 @@ def test_the_stitch_is_tied_from_a_plus_and_continued_with_k_1_and_k_0():
     assert stitch.leaving is not None
 
 
-def test_the_working_line_draws_the_stitch_while_claude_works(window):
+def test_the_working_line_draws_the_stitch_while_agent_works(window):
     from PyQt5.QtCore import Qt
     from PyQt5.QtGui import QColor
-    import claude_stitch as cs
-    line = window.claude_panel.working
+    import agent_stitch as cs
+    line = window.agent_panel.working
     assert line.SIZE == 56 and line.height() >= line.SIZE  # twice the size it had (28 px)
-    assert not (ROOT / "src" / "claude_knot.png").exists()  # drawn live: no sheet of frames to load
+    assert not (ROOT / "src" / "agent_knot.png").exists()  # drawn live: no sheet of frames to load
 
     def colours(shot):  # how much of the picture is blue, orange, outline
         image = shot.toImage()
@@ -1591,7 +1585,7 @@ def test_the_working_line_draws_the_stitch_while_claude_works(window):
 
     line.start("Thinking…")
     line.timer.stop()  # the test is the clock
-    assert line.isVisibleTo(window.claude_panel) and line.stitch.at == 0 and line.stitch.history == []
+    assert line.isVisibleTo(window.agent_panel) and line.stitch.at == 0 and line.stitch.history == []
     line.take_shot()
     plus = colours(line.shot)
     assert plus["blue"] > 100 and plus["orange"] > 100 and plus["black"] > 20 and plus["clear"] > 1000
@@ -1616,7 +1610,7 @@ def test_the_working_line_draws_the_stitch_while_claude_works(window):
     # the whole picture is the under part and the moving part
     from PyQt5.QtCore import QRectF
     from PyQt5.QtGui import QImage, QPainter
-    from claude_panel import STITCH_COLOURS
+    from agent_panel import STITCH_COLOURS
 
     def drawn(*parts):
         image = QImage(112, 112, QImage.Format_ARGB32_Premultiplied)
@@ -1636,15 +1630,15 @@ def test_the_working_line_draws_the_stitch_while_claude_works(window):
     assert going["clear"] > woven["clear"]
     assert line.grab().width() > 0
     line.stop()
-    assert not line.timer.isActive() and not line.isVisibleTo(window.claude_panel)
+    assert not line.timer.isActive() and not line.isVisibleTo(window.agent_panel)
 
 
-def test_the_working_line_keeps_claudes_tempo(window):
+def test_the_working_line_keeps_the_agents_tempo(window):
     """How fast the stitch is tied and how often the picture changes are two things, and both
-    follow what Claude does: thinking, writing, a tool, a tool that draws, waiting."""
-    import claude_stitch as cs
-    from claude_panel import KICK, STUCK, TEMPOS, step_mood
-    line = window.claude_panel.working
+    follow what the agent does: thinking, writing, a tool, a tool that draws, waiting."""
+    import agent_stitch as cs
+    from agent_panel import KICK, STUCK, TEMPOS, step_mood
+    line = window.agent_panel.working
 
     def begin(mood=None):
         line.start("…")
@@ -1735,7 +1729,7 @@ def test_the_working_line_keeps_claudes_tempo(window):
     assert step_mood({"name": "tie_knot"}) == "picture" and step_mood({"name": "read_tab"}) == "tool"
     assert step_mood({"name": "edit_mask", "frame": True}) == "picture"  # it sends pictures
     assert step_mood({"name": "tie_knot", "waiting": True}) == "waiting"
-    panel = window.claude_panel
+    panel = window.agent_panel
     panel.add_user("a bowline")
     begin()
     assert line.mood == "thinking"
@@ -1778,9 +1772,9 @@ def test_the_agent_says_when_it_asks_the_model(tmp_path):
 def test_the_assistant_button_is_the_openstrand_logo(window):
     from PyQt5.QtCore import QPoint, Qt
     from PyQt5.QtGui import QColor, QImage, QPainter
-    from claude_panel import ClaudeButton, LOGO_BLUE, LOGO_ORANGE
-    button = window.claude_button
-    assert not ClaudeButton.pressed_picture().isNull()  # the stretched 1x1 starting stitch
+    from agent_panel import AgentButton, LOGO_BLUE, LOGO_ORANGE
+    button = window.agent_button
+    assert not AgentButton.pressed_picture().isNull()  # the stretched 1x1 starting stitch
 
     def picture():
         image = QImage(button.size() * 4, QImage.Format_ARGB32)
@@ -1812,36 +1806,36 @@ def test_the_assistant_button_is_the_openstrand_logo(window):
         return sum(1 for x in range(0, 24) if image.pixelColor(x, 64).name() == color.name())
     # the closed frame is as wide as the open ring: near black here, warm white on the dark theme
     theme = button.panel.theme_name
-    for name, edge in (("default", ClaudeButton.EDGE), ("dark", ClaudeButton.EDGE_DARK)):
+    for name, edge in (("default", AgentButton.EDGE), ("dark", AgentButton.EDGE_DARK)):
         button.panel.apply_theme(name)
         assert button.edge() == edge
         button.follow(False)
         closed = frame_width(picture(), edge)
         button.follow(True)
-        assert closed >= 6 and closed == frame_width(picture(), ClaudeButton.RING)
+        assert closed >= 6 and closed == frame_width(picture(), AgentButton.RING)
     button.panel.apply_theme(theme)
     button.follow(opened)
     # working while hidden: the arc's colour drifts from the logo's orange to its blue and back
     button.tint = 0
     assert button.arc_color() == LOGO_ORANGE
-    button.tint = ClaudeButton.TINT_TICKS // 2
+    button.tint = AgentButton.TINT_TICKS // 2
     assert button.arc_color() == LOGO_BLUE
-    button.tint = ClaudeButton.TINT_TICKS - 1
+    button.tint = AgentButton.TINT_TICKS - 1
     button.turn()
     assert button.tint == 0 and button.arc_color() == LOGO_ORANGE
     # the arc runs in a ring of its own: 1 px clear of the 2 px frame (inner edge 14 px out) and of the
     # logo, which reaches 11.46 px out in a 24 px box and steps in to BUSY_LOGO px while the arc turns
-    inner_frame = 16 - 1.0 - ClaudeButton.FRAME_WIDTH / 2  # the frame line sits 1 px in, its pen centred on it
-    assert ClaudeButton.ARC_RADIUS + ClaudeButton.ARC_WIDTH / 2 <= inner_frame - 1.0
-    assert ClaudeButton.ARC_RADIUS - ClaudeButton.ARC_WIDTH / 2 >= 11.46 * ClaudeButton.BUSY_LOGO / 24 + 1.0
-    assert button.spin.timerType() == Qt.PreciseTimer and window.claude_panel.working.timer.timerType() == Qt.PreciseTimer
+    inner_frame = 16 - 1.0 - AgentButton.FRAME_WIDTH / 2  # the frame line sits 1 px in, its pen centred on it
+    assert AgentButton.ARC_RADIUS + AgentButton.ARC_WIDTH / 2 <= inner_frame - 1.0
+    assert AgentButton.ARC_RADIUS - AgentButton.ARC_WIDTH / 2 >= 11.46 * AgentButton.BUSY_LOGO / 24 + 1.0
+    assert button.spin.timerType() == Qt.PreciseTimer and window.agent_panel.working.timer.timerType() == Qt.PreciseTimer
     assert QColor(LOGO_ORANGE).name() == "#ff5500"
 
 
 def test_ask_mode_waits_for_open_in_new_tab(window, monkeypatch, tmp_path):
     from PyQt5.QtCore import QUrl
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    panel = window.claude_panel
+    panel = window.agent_panel
     panel.set_mode("ask")
     opened = []
     panel.design_ready.connect(opened.append)
@@ -1861,7 +1855,7 @@ def test_ask_mode_waits_for_open_in_new_tab(window, monkeypatch, tmp_path):
 def test_plan_mode_ends_with_build_this_plan(window, monkeypatch, tmp_path):
     from PyQt5.QtCore import QUrl
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    panel = window.claude_panel
+    panel = window.agent_panel
     panel.set_mode("ask")
     panel.set_mode("plan")
     run_events(panel, [{"type": "text", "text": "1. Two circles of 180 px, linked.\n2. Teal and gold."},
@@ -1882,12 +1876,12 @@ def test_plan_mode_ends_with_build_this_plan(window, monkeypatch, tmp_path):
 
 
 def test_the_session_limit_stops_new_requests(window, monkeypatch, tmp_path):
-    import claude_settings
+    import agent_settings
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    claude_settings.save(api_key="sk-ant-test-key", session_limit=1.0)
-    panel = window.claude_panel
+    agent_settings.save(api_key="sk-ant-test-key", session_limit=1.0)
+    panel = window.agent_panel
     started = []
-    monkeypatch.setattr("claude_panel.QProcess.start", lambda self, program, args: started.append(args))
+    monkeypatch.setattr("agent_panel.QProcess.start", lambda self, program, args: started.append(args))
     panel.session_spent = 0.75
     panel.prompt_edit.setText("a heart")
     panel.send()
@@ -1976,6 +1970,42 @@ def test_steps_follow_the_cord_tail_to_tail(figure8):
         steps.make(figure8, count=40)
 
 
+def test_steps_of_two_cords_show_the_first_cord_first():
+    """A knot joining two cords (a bend) gets its steps from make_steps: cord 1
+    is drawn first, then cord 2, whichever lies lower in the layers."""
+    from openstrand import draw, steps
+    data, _ = draw.build({"name": "two yarns joined", "cords": [
+        {"label": "Old yarn", "color": "teal", "width": 22,
+         "points": [[80, 380], [260, 390], [350, 320], [430, 250], [500, 300], [450, 380], [390, 440],
+                    [330, 420], [370, 340], [560, 300], [680, 340]]},
+        {"label": "New yarn", "color": "gold", "width": 22,
+         "points": [[920, 440], [760, 430], [640, 480], [540, 520], [440, 480], [400, 420], [470, 380],
+                    [560, 420], [600, 500], [300, 470], [120, 450]]}]})
+    strands = [s for s in data["strands"] if s["type"] != "MaskedStrand"]
+    assert strands[0]["layer_name"].startswith("2_")  # the second cord is the lower layer here
+    sets = [steps.set_of(s) for s, _ in steps.cord_path(strands)]
+    assert sets == sorted(sets) and set(sets) == {1, 2}
+    made = steps.make(data)
+    shown = [{steps.set_of(s) for s in d["strands"] if s["type"] != "MaskedStrand"} for _, d in made]
+    assert shown[0] == {1} and shown[-1] == {1, 2}
+
+
+def test_a_tutorial_is_a_design_not_a_written_answer():
+    """Asked for a magic knot tutorial, the agent wrote the steps out and
+    offered to draw: the instructions told it to say a bend is not supported."""
+    from openstrand.agent import INSTRUCTIONS, TOOLS
+    from openstrand.app_tools import APP_INSTRUCTIONS
+    assert "say it is not supported" not in INSTRUCTIONS
+    assert "Never answer with written steps alone" in INSTRUCTIONS
+    assert "never end by offering\n   to draw it" in INSTRUCTIONS
+    bend = INSTRUCTIONS[INSTRUCTIONS.index("a knot that joins two cords"):]
+    assert "draw_design" in bend[:400] and "make_steps" in bend[:400]
+    assert "keep the closest one, make and open its\n  steps all the same" in bend  # no giving up before the steps
+    tie = next(t for t in TOOLS if t["name"] == "tie_knot")["description"]
+    assert "draw those with draw_design, then make_steps" in tie
+    assert "a knot joining two cords" in APP_INSTRUCTIONS and "not a written list" in APP_INSTRUCTIONS
+
+
 def test_the_app_client_waits_for_its_own_answer():
     import os as _os
     from openstrand.app_tools import AppClient, AppError
@@ -2035,7 +2065,7 @@ def test_the_log_says_what_a_request_still_waits_for(tmp_path):
     from openstrand.debuglog import Log
     log = Log(tmp_path / "agent.log")
     log("round 1: asking claude-sonnet-5-5")
-    with log.waiting("Claude's answer (round 1)", every=0.05):
+    with log.waiting("the agent's answer (round 1)", every=0.05):
         time.sleep(0.2)
     read_end, write_end = os.pipe()
     writer = os.fdopen(write_end, "w")
@@ -2047,7 +2077,7 @@ def test_the_log_says_what_a_request_still_waits_for(tmp_path):
     lines = (tmp_path / "agent.log").read_text(encoding="utf-8").splitlines()
     assert all(line.startswith("log ") for line in lines)
     assert "round 1: asking claude-sonnet-5-5" in lines[0]
-    assert any("still waiting for Claude's answer (round 1)" in line for line in lines)
+    assert any("still waiting for the agent's answer (round 1)" in line for line in lines)
     assert any("asking the app #1: list_tabs" in line for line in lines)
     assert any("the app answered #1 in" in line and line.endswith("ok") for line in lines)
 
@@ -2056,15 +2086,15 @@ def test_the_panel_prints_the_agent_log_in_the_terminal_and_keeps_errors_apart(w
     import io
     from types import SimpleNamespace
     from PyQt5.QtCore import QProcess
-    import claude_panel
+    import agent_panel
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    assert "--log" in claude_panel.agent_command("a heart", "claude-haiku-5-5", str(tmp_path))[1]
+    assert "--log" in agent_panel.agent_command("a heart", "claude-haiku-5-5", str(tmp_path))[1]
     terminal = io.StringIO()
     monkeypatch.setattr(sys, "__stderr__", terminal)
-    panel = window.claude_panel
+    panel = window.agent_panel
     panel.entries.clear()
     chunks = [b"log 10:00:01 +    0.2s  round 1: asking claude-sonnet-5-5\nlog 10:00:4", b"0 +   39.0s  ... still",
-              b" waiting for Claude's answer (round 1): 30s\nerror: the Anthropic API returned 529: overloaded\n"]
+              b" waiting for the agent's answer (round 1): 30s\nerror: the Anthropic API returned 529: overloaded\n"]
     panel.process = SimpleNamespace(state=lambda: QProcess.NotRunning, readAllStandardError=lambda: chunks.pop(0) if chunks else b"",
                                     readAllStandardOutput=lambda: b"")
     panel.stderr_text, panel.stopping, panel.done_event = "", False, None
@@ -2072,12 +2102,12 @@ def test_the_panel_prints_the_agent_log_in_the_terminal_and_keeps_errors_apart(w
     for _ in range(3):
         panel.read_errors()
     shown = terminal.getvalue().splitlines()
-    assert shown[0].startswith("[Claude] 10:00:01") and "round 1: asking" in shown[0]
-    assert "still waiting for Claude's answer (round 1): 30s" in shown[1]  # a line split across reads, whole
-    assert shown[2] == "[Claude] error: the Anthropic API returned 529: overloaded"
+    assert shown[0].startswith("[agent] 10:00:01") and "round 1: asking" in shown[0]
+    assert "still waiting for the agent's answer (round 1): 30s" in shown[1]  # a line split across reads, whole
+    assert shown[2] == "[agent] error: the Anthropic API returned 529: overloaded"
     panel._finish()
     panel.process = None
-    assert "Claude stopped: the Anthropic API returned 529: overloaded" in panel.transcript.toPlainText()
+    assert "The agent stopped: the Anthropic API returned 529: overloaded" in panel.transcript.toPlainText()
 
 
 def test_the_agent_offers_app_tools_only_from_the_app(tmp_path):
@@ -2111,7 +2141,7 @@ def test_open_in_new_tab_sends_the_step_file(tmp_path, figure8):
 
 def test_the_bridge_runs_the_real_tab_code(window, monkeypatch, tmp_path, figure8):
     from openstrand import project as _project
-    panel, tm = window.claude_panel, window.tab_manager
+    panel, tm = window.agent_panel, window.tab_manager
     bridge = panel.bridge
     monkeypatch.setenv("APPDATA", str(tmp_path))
     run = tmp_path / "run"
@@ -2169,12 +2199,12 @@ def test_the_bridge_runs_the_real_tab_code(window, monkeypatch, tmp_path, figure
 
 
 @pytest.mark.parametrize("fake_api", [FAKE_STEPS], indirect=True)
-def test_claude_opens_a_figure_8_step_by_step_in_real_tabs(window, fake_api, monkeypatch, tmp_path):
-    import claude_settings
+def test_agent_opens_a_figure_8_step_by_step_in_real_tabs(window, fake_api, monkeypatch, tmp_path):
+    import agent_settings
     from PyQt5.QtWidgets import QApplication
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    claude_settings.save(api_key="sk-ant-test-key", model="claude-haiku-5-5", web=False)
-    panel, tm = window.claude_panel, window.tab_manager
+    agent_settings.save(api_key="sk-ant-test-key", model="claude-haiku-5-5", web=False)
+    panel, tm = window.agent_panel, window.tab_manager
     panel.set_mode("auto")
     before = len(tm.tabs)
     panel.prompt_edit.setText("make a paracord figure 8 knot with open ends, and a tab for each step")
@@ -2186,7 +2216,7 @@ def test_claude_opens_a_figure_8_step_by_step_in_real_tabs(window, fake_api, mon
     QApplication.processEvents()
     shown = unfolded(panel)
     assert "Five tabs, one per step" in shown, shown
-    # The tab tools went to Claude, and five real tabs opened with Claude's titles, in order.
+    # The tab tools went to the agent, and five real tabs opened with the agent's titles, in order.
     assert "open_in_new_tab" in {t["name"] for t in fake_api[0]["body"]["tools"]}
     assert [tm.title_for(s) for s in tm.tabs[before:]] == STEP_TITLES
     assert tm.title_for(tm.get_active()) == "Step 5 · the figure 8"
@@ -2194,21 +2224,21 @@ def test_claude_opens_a_figure_8_step_by_step_in_real_tabs(window, fake_api, mon
     tm.switch_to_tab(tm.tabs[before].id)
     QApplication.processEvents()
     assert 0 < len(window.canvas.strands) < figure_8_strands  # step 1: the cord so far
-    # list_tabs reached Claude with the real tabs, and the finished design did not open again.
+    # list_tabs reached the agent with the real tabs, and the finished design did not open again.
     listed = json.loads(fake_api[3]["body"]["messages"][-1]["content"][0]["content"])
     assert len(listed) == before and any(t["active"] for t in listed)
     assert "New tab · Step 3 · up and over" in shown
 
 
 @pytest.mark.parametrize("fake_api", [FAKE_TIE], indirect=True)
-def test_claude_ties_a_figure_eight_into_real_tabs_checked_at_every_step(window, fake_api, monkeypatch, tmp_path):
-    import claude_settings
+def test_agent_ties_a_figure_eight_into_real_tabs_checked_at_every_step(window, fake_api, monkeypatch, tmp_path):
+    import agent_settings
     from PyQt5.QtWidgets import QApplication
     from openstrand import identify
     from save_load_manager import serialize_strand
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    claude_settings.save(api_key="sk-ant-test-key", model="claude-haiku-5-5", web=False)
-    panel, tm = window.claude_panel, window.tab_manager
+    agent_settings.save(api_key="sk-ant-test-key", model="claude-haiku-5-5", web=False)
+    panel, tm = window.agent_panel, window.tab_manager
     panel.set_mode("auto")
     before = len(tm.tabs)
     panel.prompt_edit.setText("show me how to tie a figure 8 knot, a tab per step, and pull it tight at the end")
@@ -2220,7 +2250,7 @@ def test_claude_ties_a_figure_eight_into_real_tabs_checked_at_every_step(window,
     QApplication.processEvents()
     shown = unfolded(panel)
     assert "Six tabs" in shown, shown
-    # What tie_knot told Claude: every stage checked, also as the app draws it.
+    # What tie_knot told the agent: every stage checked, also as the app draws it.
     result = fake_api[2]["body"]["messages"][-1]["content"][0]["content"]
     assert "Figure-eight knot: figure-eight, 4 crossings." in result
     assert "pulled tight: figure-eight" in result and "step 6 as drawn in the app: figure-eight" in result
@@ -2231,7 +2261,7 @@ def test_claude_ties_a_figure_eight_into_real_tabs_checked_at_every_step(window,
     assert re.search(r"round 1: answered in [\d.]+s, stop tool_use", log)
     assert re.search(r"tool tie_knot done in [\d.]+s", log) and re.search(r"the app answered #\d+ in", log)
     assert "request ends: answered" in log
-    # Six real tabs, in order, with Claude's titles; each holds its step as the app loaded it.
+    # Six real tabs, in order, with the agent's titles; each holds its step as the app loaded it.
     assert [tm.title_for(t) for t in tm.tabs[before:]] == TIE_TITLES
     knots = []
     for tab in tm.tabs[before:]:
@@ -2242,16 +2272,16 @@ def test_claude_ties_a_figure_eight_into_real_tabs_checked_at_every_step(window,
                                      "distance_multiplier": 2.0, "curve_response_exponent": 2.0}}
         knots.append(identify.cords(data)[0]["knot"])
     assert knots == ["unknot", "unknot", "unknot", "figure-eight", "figure-eight", "figure-eight"]
-    # identify_knot on the current design (the tight knot) went back to Claude too.
+    # identify_knot on the current design (the tight knot) went back to the agent too.
     checked = fake_api[9]["body"]["messages"][-1]["content"][0]["content"]
     assert "4 crossings with itself: figure eight knot (4_1)" in checked
 
 
-def test_the_tab_strip_floats_over_claude_and_claude_stays_put(window, monkeypatch, tmp_path):
+def test_the_tab_strip_floats_over_agent_and_agent_stays_put(window, monkeypatch, tmp_path):
     from PyQt5.QtCore import QPoint
     from PyQt5.QtWidgets import QApplication
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    panel, edge, canvas = window.claude_panel, window.tab_edge, window.canvas
+    panel, edge, canvas = window.agent_panel, window.tab_edge, window.canvas
     if window.tabs_button.isChecked():
         window.tabs_button.click()
     panel.set_open(False)
@@ -2263,8 +2293,8 @@ def test_the_tab_strip_floats_over_claude_and_claude_stays_put(window, monkeypat
     def on_top():  # later siblings are drawn over earlier ones
         kids = [w for w in canvas.children() if w in (panel, edge)]
         return kids[-1] is edge
-    # Showing the strip, dragging it over Claude, opening Claude again:
-    # Claude never moves, and the strip is always drawn over it.
+    # Showing the strip, dragging it over the agent, opening the agent again:
+    # The agent never moves, and the strip is always drawn over it.
     window.tabs_button.click()
     QApplication.processEvents()
     assert edge.isVisible() and on_top() and panel.geometry() == home
@@ -2283,36 +2313,36 @@ def test_the_tab_strip_floats_over_claude_and_claude_stays_put(window, monkeypat
 
 def test_new_session_starts_from_nothing(window, monkeypatch, tmp_path):
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    panel = window.claude_panel
+    panel = window.agent_panel
     panel.set_mode("auto")
     panel.new_session()
     run_events(panel, [{"type": "text", "text": "A crimson figure 8."},
                        {"type": "usage", "cost": 0.05},
                        {"type": "done", "ok": True, "error": None, "project": None, "cost": 0.05,
                         "model": "claude-haiku-5-5"}], tmp_path, prompt="a figure 8")
-    assert panel.history[-1] == {"user": "a figure 8", "claude": "A crimson figure 8.", "design": None}
+    assert panel.history[-1] == {"user": "a figure 8", "agent": "A crimson figure 8.", "design": None}
     assert panel.session_spent > 0 and "＋ New session" == panel.new_button.text()
     panel.new_button.click()
     assert panel.history == [] and panel.session_spent == 0
     assert [e["kind"] for e in panel.entries] == ["note"]
-    assert "New session: Claude starts with no earlier messages." in panel.transcript.toPlainText()
+    assert "New session: the agent starts with no earlier messages." in panel.transcript.toPlainText()
     # /clear and /new in the box do the same, as in Claude Code.
     run_events(panel, [{"type": "text", "text": "Hi."}, {"type": "done", "ok": True, "error": None,
                         "project": None, "cost": 0.0, "model": "claude-haiku-5-5"}], tmp_path, prompt="hello")
     for command in ("/clear", "/new"):
-        panel.history.append({"user": "x", "claude": "y", "design": None})
+        panel.history.append({"user": "x", "agent": "y", "design": None})
         panel.prompt_edit.setText(command)
         panel.send()
         assert panel.history == [] and panel.prompt_edit.text() == ""
 
 
 @pytest.mark.parametrize("fake_api", [FAKE_TALK], indirect=True)
-def test_claude_remembers_the_session_until_a_new_one(window, fake_api, monkeypatch, tmp_path):
-    import claude_settings
+def test_agent_remembers_the_session_until_a_new_one(window, fake_api, monkeypatch, tmp_path):
+    import agent_settings
     from PyQt5.QtWidgets import QApplication
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    claude_settings.save(api_key="sk-ant-test-key", model="claude-haiku-5-5", web=False)
-    panel = window.claude_panel
+    agent_settings.save(api_key="sk-ant-test-key", model="claude-haiku-5-5", web=False)
+    panel = window.agent_panel
     panel.set_mode("auto")
     panel.use_canvas_check.setChecked(False)
     panel.new_session()
@@ -2320,7 +2350,7 @@ def test_claude_remembers_the_session_until_a_new_one(window, fake_api, monkeypa
     def ask(text):
         panel.prompt_edit.setText(text)
         panel.send()
-        assert not panel.new_button.isEnabled()  # not while Claude works
+        assert not panel.new_button.isEnabled()  # not while the agent works
         deadline = time.time() + 120
         while panel.running() and time.time() < deadline:
             QApplication.processEvents()
@@ -2339,13 +2369,13 @@ def test_claude_remembers_the_session_until_a_new_one(window, fake_api, monkeypa
     panel.use_canvas_check.setChecked(True)
 
 
-# ------------------------------------------------- Claude waits for an Allow or Deny
+# ------------------------------------------------- the agent waits for an Allow or Deny
 def test_a_card_that_comes_while_its_tool_runs_does_not_break_the_tool_s_row(window, monkeypatch, tmp_path):
     """In ask mode a card (a design to open, an Allow/Deny) comes while its tool runs. The tool's
     end looked for its row only in the last group, which the card had closed off: it made a row
     with no picture name and raised KeyError: 'key', and the events after it were lost."""
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    panel = window.claude_panel
+    panel = window.agent_panel
     panel.set_open(True)
     panel.entries.clear()
     panel.out_dir = str(tmp_path)
@@ -2370,10 +2400,10 @@ def test_a_card_that_comes_while_its_tool_runs_does_not_break_the_tool_s_row(win
 
 def test_an_event_the_panel_cannot_show_does_not_lose_the_lines_after_it(window, monkeypatch, caplog):
     """An error in one event stopped the read: the lines after it were lost, an app_call among
-    them, and Claude waited ten minutes for an answer that never came."""
+    them, and the agent waited ten minutes for an answer that never came."""
     from types import SimpleNamespace
     from PyQt5.QtCore import QProcess
-    panel = window.claude_panel
+    panel = window.agent_panel
     real, answered = panel.handle_event, []
 
     def handle(event):
@@ -2397,11 +2427,11 @@ def test_an_event_the_panel_cannot_show_does_not_lose_the_lines_after_it(window,
 def test_an_allow_card_stays_in_view_at_the_end_of_a_long_conversation(window, monkeypatch, tmp_path):
     """Qt lays a long conversation out a little at a time, so the scroll bar's range grew after
     the panel had scrolled to the end: the view stopped short, and the Allow/Deny card at the end
-    went unseen while Claude waited for it. Scrolled up by the person, the view stays put."""
+    went unseen while the agent waited for it. Scrolled up by the person, the view stays put."""
     from PyQt5.QtGui import QTextDocument
     from PyQt5.QtWidgets import QApplication
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    panel = window.claude_panel
+    panel = window.agent_panel
     panel.set_open(True)
     panel.entries.clear()
     panel.out_dir = str(tmp_path)
@@ -2419,7 +2449,7 @@ def test_an_allow_card_stays_in_view_at_the_end_of_a_long_conversation(window, m
                 panel.handle_event({"type": "tool_start", "name": "draw_design", "input": {}})
                 panel.handle_event({"type": "tool_end", "name": "draw_design", "ok": True,
                                     "summary": "cord 1 (Ribbon 1): 7 strands, 17 crossings, open"})
-            panel.add_claude("the three ribbons cross at 60 degrees " * 8)
+            panel.add_agent("the three ribbons cross at 60 degrees " * 8)
         settle()
         panel.add_user("only up to the _4 strands")
         panel.handle_event({"type": "tool_start", "name": "app_window", "input": {"op": "delete"}})
@@ -2445,16 +2475,16 @@ def test_an_allow_card_stays_in_view_at_the_end_of_a_long_conversation(window, m
         panel.render_transcript()
 
 
-def test_while_a_card_waits_the_panel_and_the_terminal_say_claude_waits_for_the_person(window, monkeypatch,
+def test_while_a_card_waits_the_panel_and_the_terminal_say_agent_waits_for_the_person(window, monkeypatch,
                                                                                          tmp_path):
-    """Claude's tool waits for the person's Allow or Deny. Its row showed a moving bar and a clock,
-    as if Claude were busy, and the terminal only said the agent waited for the app."""
+    """The agent's tool waits for the person's Allow or Deny. Its row showed a moving bar and a clock,
+    as if the agent were busy, and the terminal only said the agent waited for the app."""
     import io
     from PyQt5.QtCore import QUrl
     monkeypatch.setenv("APPDATA", str(tmp_path))
     terminal = io.StringIO()
     monkeypatch.setattr(sys, "__stderr__", terminal)
-    panel = window.claude_panel
+    panel = window.agent_panel
     panel.set_open(True)
     panel.entries.clear()
     panel.out_dir = str(tmp_path)
@@ -2469,16 +2499,16 @@ def test_while_a_card_waits_the_panel_and_the_terminal_say_claude_waits_for_the_
         panel.refresh_running()
         shown = panel.transcript.toPlainText()
         assert "App · Waiting for you: Allow or Deny" in shown
-        assert "Claude wants to delete 1_5, 2_5, 3_5 (tab “Ring”)." in shown
-        assert "claude-bar:" not in panel.transcript.toHtml()  # no bar, no clock: nothing is moving
+        assert "The agent wants to delete 1_5, 2_5, 3_5 (tab “Ring”)." in shown
+        assert "agent-bar:" not in panel.transcript.toHtml()  # no bar, no clock: nothing is moving
         assert panel.working.label == "Waiting for you: Allow or Deny"
-        assert ("[Claude] waiting for the person to click Allow or Deny in the panel: "
-                "Claude wants to delete 1_5, 2_5, 3_5 (tab “Ring”).") in terminal.getvalue()
+        assert ("[agent] waiting for the person to click Allow or Deny in the panel: "
+                "The agent wants to delete 1_5, 2_5, 3_5 (tab “Ring”).") in terminal.getvalue()
         card = panel.entries[-1]
         panel.follow_link(QUrl(f"os:allow/{panel.entries.index(card)}"))
         assert decided == [(3, True)] and card["state"] == "allowed"
         assert "waiting" not in step and panel.working.label == "App…"  # the tool runs on
-        assert "[Claude] allowed by the person: Claude wants to delete 1_5" in terminal.getvalue()
+        assert "[agent] allowed by the person: The agent wants to delete 1_5" in terminal.getvalue()
         # Other languages say it with the card's own words.
         panel.retranslate("fr")
         assert panel.waiting_text() == "En attente de votre choix : Autoriser ou Refuser"
@@ -2488,12 +2518,12 @@ def test_while_a_card_waits_the_panel_and_the_terminal_say_claude_waits_for_the_
         panel.render_transcript()
 
 
-def test_a_card_no_one_answered_does_nothing_once_claude_stops_waiting_for_it(window, monkeypatch, tmp_path):
+def test_a_card_no_one_answered_does_nothing_once_agent_stops_waiting_for_it(window, monkeypatch, tmp_path):
     """The agent waits ten minutes for the app's answer, then its tool fails. The card it waited
-    for then does nothing: a late Allow would make a change Claude no longer knows of."""
+    for then does nothing: a late Allow would make a change the agent no longer knows of."""
     from PyQt5.QtCore import QUrl
     monkeypatch.setenv("APPDATA", str(tmp_path))
-    panel = window.claude_panel
+    panel = window.agent_panel
     panel.set_open(True)
     panel.entries.clear()
     panel.out_dir = str(tmp_path)

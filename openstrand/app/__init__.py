@@ -2,7 +2,7 @@
 
 The agent runs in its own process, so it cannot touch the app's windows. When
 the app starts it (with --app), these tools go through a bridge instead
-(client.py here, src/claude_bridge in the app): each call is a JSON line on
+(client.py here, src/agent_bridge in the app): each call is a JSON line on
 stdout, and the app runs it with its own code and answers on stdin.
 
 - client.py   AppClient: the bridge's agent end
@@ -14,10 +14,10 @@ stdout, and the app runs it with its own code and answers on stdin.
 - window.py   the main window's buttons: toolbar, beside the canvas, under the layer panel
 - settings.py the Settings dialog: read, set, show a page
 
-Each area declares TOOLS (the schemas Claude sees), LOOK_ONLY (the ones plan
-mode offers), INSTRUCTIONS (its part of what Claude is told) and HANDLERS
+Each area declares TOOLS (the schemas the agent sees), LOOK_ONLY (the ones plan
+mode offers), INSTRUCTIONS (its part of what the agent is told) and HANDLERS
 (name -> function(agent, args) returning (summary for people, content for
-Claude)). The app decides what is allowed: in plan mode only looking, in ask
+the agent)). The app decides what is allowed: in plan mode only looking, in ask
 mode the person confirms changes.
 """
 from . import groups, layers, masks, settings, strands, tabs, window

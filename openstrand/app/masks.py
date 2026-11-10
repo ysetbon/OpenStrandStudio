@@ -1,4 +1,4 @@
-"""Masks in the person's tab: the edit is worked out on Claude's copy (the
+"""Masks in the person's tab: the edit is worked out on the agent's copy (the
 openstrand mask tools), checked, then done in the tab by the canvas's own
 mask code, as one undo step."""
 from ..errors import ToolError
@@ -53,7 +53,7 @@ def edit_mask_in_tab(agent, args):
         if not call['boxes']:
             raise ToolError('the erase added no box')
     elif args.get('op') in ('create', 'swap'):
-        # The new mask is trimmed on Claude's copy: the same boxes go to the tab.
+        # The new mask is trimmed on the agent's copy: the same boxes go to the tab.
         made = (f"{args.get('first')}_{args.get('second')}" if args.get('op') == 'create'
                 else swapped(before, str(args.get('mask'))))
         call['boxes'] = new_boxes(before, after, made)

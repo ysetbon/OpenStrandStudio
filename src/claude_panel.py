@@ -2246,8 +2246,8 @@ class ClaudeButton(QPushButton):
 
     The OpenStrand logo (the assistant runs on many providers' models, so the button is the
     app's own mark, not one provider's) on the app icon's light tile, drawn here so it answers
-    the mouse: lighter under the pointer, the stretched 1x1 starting stitch while pressed and,
-    while the assistant is open, an orange ring. While it is hidden it also shows what the
+    the mouse: lighter under the pointer, a touch smaller while pressed and, while the assistant
+    is open, the stretched 1x1 starting stitch in an orange ring (click again for the logo). While it is hidden it also shows what the
     assistant is doing: the logo steps in and an arc turns around it during a run, drifting from
     the logo's orange to its blue and back, and a green dot waits on it when a design has opened."""
 
@@ -2313,7 +2313,8 @@ class ClaudeButton(QPushButton):
 
     @classmethod
     def pressed_picture(cls):
-        """The stretched 1x1 starting stitch, drawn by OpenStrand (scripts/build_box_stitch_spinner.py)."""
+        """The button's "on" picture, shown while the assistant is open: the stretched 1x1
+        starting stitch, drawn by OpenStrand (scripts/build_box_stitch_spinner.py)."""
         if cls._pressed_picture is None:
             cls._pressed_picture = QPixmap(resource_path(os.path.join('images', 'assistant_pressed.png')))
         return cls._pressed_picture
@@ -2348,9 +2349,9 @@ class ClaudeButton(QPushButton):
         painter.drawRoundedRect(square.adjusted(0.5, 0.5, -0.5, -0.5) if opened else square, self.RADIUS, self.RADIUS)
         centre = QRectF(self.rect()).center()
         busy = self.busy()
-        pressed = self.pressed_picture() if self.isDown() else None
-        if pressed is not None and not pressed.isNull():
-            painter.drawPixmap(square.adjusted(1, 1, -1, -1), pressed, QRectF(pressed.rect()))
+        stitch = self.pressed_picture() if opened else None  # on: the stitch, off: the logo
+        if stitch is not None and not stitch.isNull():
+            painter.drawPixmap(square.adjusted(1, 1, -1, -1), stitch, QRectF(stitch.rect()))
         elif busy:  # the logo steps in so the arc has a ring of its own
             paint_logo(painter, QRectF(centre.x() - 12, centre.y() - 12, 24, 24))
         else:

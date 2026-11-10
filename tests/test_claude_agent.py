@@ -1793,6 +1793,20 @@ def test_the_assistant_button_is_the_openstrand_logo(window):
 
     colors = {picture().pixelColor(x, y).name() for x in range(0, 128, 2) for y in range(0, 128, 2)}
     assert LOGO_ORANGE.name() in colors and LOGO_BLUE.name() in colors
+    # on and off are two pictures: the stitch while the assistant is open, the logo when it is not
+    opened = button.isChecked()
+    button.follow(False)
+    off = picture()
+    button.follow(True)
+    on = picture()
+    button.follow(opened)
+
+    def cords(image):  # the logo's orange and blue inside the frame, where the picture is
+        return {(x, y) for x in range(16, 112) for y in range(16, 112)
+                if image.pixelColor(x, y).name() in (LOGO_ORANGE.name(), LOGO_BLUE.name())}
+    off_cords, on_cords = cords(off), cords(on)
+    assert off_cords and on_cords
+    assert len(off_cords ^ on_cords) > len(off_cords) // 4  # another picture, not the same one recoloured
     # working while hidden: the arc's colour drifts from the logo's orange to its blue and back
     button.tint = 0
     assert button.arc_color() == LOGO_ORANGE

@@ -882,7 +882,7 @@ def print_events(event, as_json=False, out=None):
             print_(f"    {int(100 * (event.get('fraction') or 0)):3d}% {stage_text(event)}")
         return
     if kind == 'text':
-        print_(f"claude: {event['text']}")
+        print_(f"agent: {event['text']}")
     elif kind == 'thinking':
         print_(f"  (thinking) {event['text']}")
     elif kind == 'search':

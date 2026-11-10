@@ -340,7 +340,7 @@ def terminal_log(text):
     if out is None:  # no console (pythonw, a packaged app)
         return
     try:
-        print(f'[Claude] {text}', file=out, flush=True)
+        print(f'[agent] {text}', file=out, flush=True)
     except (OSError, ValueError):
         pass
 
@@ -956,9 +956,9 @@ class ClaudePanel(QWidget):
         return self.isVisibleTo(self.parentWidget())
 
     def set_open(self, opened):
-        """Show or hide Claude (for this run only: it starts closed every time). It never opens
-        while Settings > Models hides it or has AI models turned off, whatever asks."""
-        opened = bool(opened) and claude_settings.claude_available()
+        """Show or hide the agent (for this run only: it starts closed every time). It never
+        opens while Settings > Models has the agent turned off, whatever asks."""
+        opened = bool(opened) and claude_settings.agent_on()
         if not opened:
             self.preview.hide_frame()  # its own window: it would stay up with Claude hidden
         if opened:
@@ -1577,7 +1577,7 @@ class ClaudePanel(QWidget):
         c = self.colors
         saved = claude_settings.load()
         if not saved['models_on'] and self.running():
-            terminal_log('AI models were turned off in Settings > Models: ending the agent')
+            terminal_log('the agent was turned off in Settings > Models: ending it')
             self.send_or_stop()  # stops it, as Stop does: nothing more goes to the model
         self.new_button.setText('＋ ' + t('claude_new_session'))
         self.new_button.setEnabled(not self.running())
@@ -1844,7 +1844,7 @@ class ClaudePanel(QWidget):
             except Exception:  # noqa: BLE001
                 # Logged, and the read goes on: an error here used to lose the lines after it,
                 # an app_call among them, and Claude then waited for an answer that never came.
-                logging.exception('the Claude panel could not show a %s event', event.get('type'))
+                logging.exception('the agent panel could not show a %s event', event.get('type'))
 
     def read_errors(self):
         if self.process is None:
@@ -2377,10 +2377,10 @@ def resource_path(name):
 
 
 class ClaudeSettingsPage(QWidget):
-    """Settings > Claude: whether Claude shows, the Anthropic API key, the
-    model, web search, the spending limit and what Claude has cost."""
+    """Settings > Models: the switch that turns the agent on or off, each provider's API
+    key, the model, web search, the spending limit and what the agent has cost."""
 
-    show_button_changed = pyqtSignal(bool)  # the main window shows or hides the Claude button
+    agent_switched = pyqtSignal(bool)  # the one switch: the main window shows or hides the agent
     settings_changed = pyqtSignal()  # model, effort or limits: the Claude status line follows
     refreshed = pyqtSignal(object, object)  # Refresh models: (what the providers said, or an error)
 
@@ -2395,15 +2395,9 @@ class ClaudeSettingsPage(QWidget):
         self.intro.setWordWrap(True)
         layout.addWidget(self.intro)
 
-        self.show_check = QCheckBox(self)
-        self.show_check.toggled.connect(self.set_show_button)
-        layout.addWidget(self.show_check)
-        self.show_hint = QLabel(self)
-        self.show_hint.setWordWrap(True)
-        self.show_hint.setStyleSheet('color: gray;')
-        layout.addWidget(self.show_hint)
-
-        # Off: OpenStrand never connects to any AI model (providers.POLICY refuses every request).
+        # The one switch for the agent. Off: its button leaves the main window, Ctrl+J and the
+        # openstrand agent command do nothing, and OpenStrand never connects to any AI model
+        # (providers.POLICY refuses every request).
         self.models_check = QCheckBox(self)
         self.models_check.toggled.connect(self.set_models_on)
         layout.addWidget(self.models_check)
@@ -2608,11 +2602,6 @@ class ClaudeSettingsPage(QWidget):
         self.limit_spin.blockSignals(False)
         self.show_choices()
         self.show_provider(claude_settings.provider_of(saved['model']))
-        self.show_check.setText(t('claude_show_button'))
-        self.show_hint.setText(t('claude_show_button_hint'))
-        self.show_check.blockSignals(True)
-        self.show_check.setChecked(saved['show_button'])
-        self.show_check.blockSignals(False)
         self.reset_spent_button.setText(t('claude_spent_reset'))
         self.spent_hint.setText(t('claude_spent_hint'))
         self.show_spending()
@@ -2712,21 +2701,20 @@ class ClaudeSettingsPage(QWidget):
         self.show_spending()
 
     def show_switches(self):
-        """The two switches as saved. With models off nothing can ask a provider anything, so
-        Refresh models waits; keys can still be removed."""
+        """The two switches as saved. With the agent off nothing can ask a provider anything,
+        so Refresh models waits; keys can still be removed."""
         saved = claude_settings.load()
         for check, on in ((self.models_check, saved['models_on']), (self.china_check, saved['allow_china'])):
             check.blockSignals(True)
             check.setChecked(on)
             check.blockSignals(False)
         self.refresh_button.setEnabled(saved['models_on'] and not self.refreshing)
-        self.show_check.setEnabled(saved['models_on'])  # with AI models off there is no button to show
 
     def set_models_on(self, on):
         claude_settings.save(models_on=on)
         self.show_switches()
-        # Off is off everywhere: the Claude button leaves the main window, and Claude with it.
-        self.show_button_changed.emit(claude_settings.claude_available())
+        # Off is off everywhere: the agent's button leaves the main window, and its panel with it.
+        self.agent_switched.emit(claude_settings.agent_on())
         self.settings_changed.emit()  # the panel stops a request that is running
 
     def set_allow_china(self, allowed):
@@ -2757,9 +2745,6 @@ class ClaudeSettingsPage(QWidget):
         claude_settings.save(share=on)
         self.show_share()  # the gallery box follows: it only counts while sharing is on
 
-    def set_show_button(self, shown):
-        claude_settings.save(show_button=shown)
-        self.show_button_changed.emit(claude_settings.claude_available())  # never while AI models are off
 
     def provider(self):
         return self.provider_combo.currentData() or 'anthropic'

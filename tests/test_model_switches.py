@@ -65,7 +65,7 @@ def test_with_models_off_nothing_is_sent_anywhere(settings, monkeypatch):
     claude_settings.save(provider_key=("xai", "xai-test-1234567890"), models_on=False)
     monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-ds-from-env")
     for provider in (*providers.PROVIDERS, None):  # None: a share with the developer
-        with pytest.raises(providers.NotAllowed, match="AI models are turned off"):
+        with pytest.raises(providers.NotAllowed, match="The OpenStrand agent is turned off"):
             providers.check_allowed(provider)
     assert not claude_settings.refresh_due()  # no daily Refresh models
     asked = []
@@ -83,8 +83,25 @@ def test_with_models_off_nothing_is_sent_anywhere(settings, monkeypatch):
     assert asked[-1] == {"xai": "xai-test-1234567890", "deepseek": "sk-ds-from-env"}
 
 
+def test_one_switch_turns_the_agent_off_and_the_earlier_hide_box_counts_as_off(settings):
+    """There is one switch (models_on). An earlier version had a second box that only hid the
+    button (show_button): whoever unticked it finds the agent off everywhere, not back in
+    the toolbar, until they tick the one switch, which is then all that is saved."""
+    assert claude_settings.agent_on() and "show_button" not in claude_settings.load()
+    settings.parent.mkdir(parents=True, exist_ok=True)
+    settings.write_text(json.dumps({"show_button": False, "share": True}), encoding="utf-8")
+    assert not claude_settings.agent_on() and claude_settings.load()["models_on"] is False
+    assert "turned off" in claude_settings.refusal("anthropic") and not claude_settings.sharing_on()
+    claude_settings.save(models_on=True)
+    assert claude_settings.agent_on() and claude_settings.refusal("anthropic") is None
+    assert "show_button" not in json.loads(settings.read_text(encoding="utf-8"))
+    with pytest.raises(TypeError):
+        claude_settings.save(show_button=False)  # no such setting any more
+
+
 @pytest.mark.parametrize("saved, model, said", [
-    ({"models_on": False}, "haiku", "AI models are turned off"),
+    ({"models_on": False}, "haiku", "The OpenStrand agent is turned off"),
+    ({"show_button": False}, "haiku", "The OpenStrand agent is turned off"),  # the earlier version's box
     ({}, "deepseek", "DeepSeek is turned off"),
     ('{"models_on": false, "damaged', "haiku", "claude.json) could not be read"),  # never read as "on"
 ])
@@ -111,16 +128,16 @@ def test_settings_that_cannot_be_read_keep_ai_models_off_and_are_never_written_o
     writes the file again (a save from what could not be read would lose what it held)."""
     path = str(settings)
     monkeypatch.setattr(claude_settings.time, "sleep", lambda seconds: None)
-    assert claude_settings.refusal("anthropic") is None and claude_settings.claude_available()  # no file yet
+    assert claude_settings.refusal("anthropic") is None and claude_settings.agent_on()  # no file yet
     claude_settings.save(models_on=False, max_cost=5)
-    assert "turned off" in claude_settings.refusal("anthropic") and not claude_settings.claude_available()
+    assert "turned off" in claude_settings.refusal("anthropic") and not claude_settings.agent_on()
     good = open(path, encoding="utf-8").read()
     for damaged in ("", '{"models_on": fal', "[1, 2]"):
         with open(path, "w", encoding="utf-8") as f:
             f.write(damaged)
         assert "could not be read" in claude_settings.refusal("anthropic")
         assert "could not be read" in claude_settings.refusal(None)  # no share either
-        assert claude_settings.load()["models_on"] is False and not claude_settings.claude_available()
+        assert claude_settings.load()["models_on"] is False and not claude_settings.agent_on()
         assert not claude_settings.sharing_on()
         claude_settings.add_spending(0.25)  # what the panel does after a request: not over this file
         assert open(path, encoding="utf-8").read() == damaged
@@ -139,5 +156,5 @@ def test_settings_that_cannot_be_read_keep_ai_models_off_and_are_never_written_o
     with open(path, "w", encoding="utf-8") as f:
         f.write("{damaged")
     claude_settings.save(models_on=True)
-    assert claude_settings.refusal("anthropic") is None and claude_settings.claude_available()
+    assert claude_settings.refusal("anthropic") is None and claude_settings.agent_on()
     assert json.load(open(path, encoding="utf-8"))["models_on"] is True

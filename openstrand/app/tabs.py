@@ -112,7 +112,7 @@ def read_tab_step(agent, args):
 def open_in_new_tab(agent, args):
     ws = agent.workspace
     which = str(args.get('design', 'current')).strip().lower()
-    title = str(args.get('title') or '').strip()[:60] or 'Claude design'
+    title = str(args.get('title') or '').strip()[:60] or 'Agent design'
     if which in ('current', 'design', ''):
         ws.need()
         path = ws.project_path

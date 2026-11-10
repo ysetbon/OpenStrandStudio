@@ -24,7 +24,7 @@ class AppBridge(TabActions, StrandActions, MaskActions, LayerActions, GroupActio
                 raise BridgeError(f'the app has no action {name}')
             mode = self.panel.run_mode
             if spec.change and mode == 'plan':
-                raise BridgeError('plan mode is on: Claude may look at tabs but not change them')
+                raise BridgeError('plan mode is on: the agent may look at tabs but not change them')
             session = self.session(args.get('tab_id')) if spec.tab else None
             self.check(spec, args, session)
             if spec.change and mode == 'ask':

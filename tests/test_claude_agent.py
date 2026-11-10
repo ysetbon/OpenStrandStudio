@@ -295,14 +295,13 @@ def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch
     monkeypatch.setenv("APPDATA", str(tmp_path))
     assert claude_settings.load() == {"api_key": "", "keys": {}, "catalog": {}, "model": "claude-sonnet-5-5", "web": True,
                                       "max_cost": 2.0, "spent": 0.0, "spent_since": "",
-                                      "show_button": True, "effort": "high", "session_limit": 10.0, "mode": "auto",
+                                      "effort": "high", "session_limit": 10.0, "mode": "auto",
                                       "share": None, "gallery": None, "models_on": True, "allow_china": False}
     claude_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5", web=False, max_cost=5)
     assert claude_settings.load() == {"api_key": "sk-ant-test-1234567890",
                                       "keys": {"anthropic": "sk-ant-test-1234567890"}, "catalog": {},
                                       "model": "claude-haiku-5-5",
                                       "web": False, "max_cost": 5.0, "spent": 0.0, "spent_since": "",
-                                      "show_button": True,
                                       "effort": "high", "session_limit": 10.0, "mode": "auto", "share": None,
                                       "gallery": None, "models_on": True, "allow_china": False}
     # Every provider has its key; the model can be any provider's.
@@ -524,21 +523,21 @@ def test_the_claude_button_shows_and_hides_claude_over_the_canvas(window, monkey
     QTest.keyClick(window.windowHandle(), Qt.Key_J, Qt.ControlModifier)
     assert not panel.isVisible() and not button.isChecked()
 
-    # Settings > Claude can hide it altogether: no button, and Ctrl+J does nothing.
-    window.set_claude_available(False)
-    assert not button.isVisible() and claude_settings.load()["show_button"] is True  # the page saves it
+    # Settings > Models can turn the agent off altogether: no button, and Ctrl+J does nothing.
+    window.set_agent_on(False)
+    assert not button.isVisible() and "show_button" not in claude_settings.load()  # one switch: models_on
     QTest.keyClick(window.windowHandle(), Qt.Key_J, Qt.ControlModifier)
     assert not panel.isVisible()
-    button.click()  # open when Settings hides it: shown again, it comes back closed
-    window.set_claude_available(False)
-    window.set_claude_available(True)
+    button.click()  # open when Settings turns it off: on again, it comes back closed
+    window.set_agent_on(False)
+    window.set_agent_on(True)
     assert button.isVisible() and not panel.isVisible() and not button.isChecked()
 
     # Each time the app starts Claude is closed, whatever was showing when it last closed.
     import json
     from claude_panel import ClaudePanel
     path = claude_settings.settings_path()
-    claude_settings.save(show_button=True)
+    claude_settings.save(models_on=True)
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
     data["panel_open"] = True  # what older versions kept
@@ -843,34 +842,29 @@ def test_with_models_off_the_panel_sends_nothing_and_a_running_request_stops(win
     assert any("DeepSeek" in page.model_combo.itemText(i) for i in range(page.model_combo.count()))
     page.china_check.setChecked(False)
     assert claude_settings.load()["allow_china"] is False
-    page.show_button_changed.connect(window.set_claude_available)  # as the Settings dialog does
+    page.agent_switched.connect(window.set_agent_on)  # as the Settings dialog does
     button, panel = window.claude_button, window.claude_panel
     panel.set_open(True)
-    assert button.isVisible() and panel.isVisible() and page.show_check.isEnabled()
+    assert button.isVisible() and panel.isVisible()
+    assert not hasattr(page, "show_check")  # one switch: no second box that only hides the button
+    assert page.models_check.text() == "Use the OpenStrand agent"
     page.models_check.setChecked(False)
     assert claude_settings.load()["models_on"] is False and not page.refresh_button.isEnabled()
-    # Off is off everywhere: no Claude button in the main window, no panel, and Ctrl+J does nothing.
-    assert not button.isVisible() and not panel.isVisible() and not claude_settings.claude_available()
+    # Off is off everywhere: no agent button in the main window, no panel, and Ctrl+J does nothing.
+    assert not button.isVisible() and not panel.isVisible() and not claude_settings.agent_on()
     window.activateWindow()
     QTest.keyClick(window.windowHandle(), Qt.Key_J, Qt.ControlModifier)
     assert not panel.isVisible()
-    assert not page.show_check.isEnabled() and claude_settings.load()["show_button"] is True  # kept for later
-    assert "Claude button also leaves the main window" in page.models_hint.text()
+    assert "agent's button also leaves the main window" in page.models_hint.text()
     started, killed = [], []
     monkeypatch.setattr("claude_panel.QProcess.start", lambda self, program, args: started.append(args))
     panel.prompt_edit.setText("a heart")
     panel.send()
-    assert started == [] and "AI models are turned off in Settings > Models" in panel.transcript.toPlainText()
+    assert started == [] and "The OpenStrand agent is turned off in Settings > Models" in panel.transcript.toPlainText()
     # Turned off while a request runs: it stops at once, as with Stop.
     page.models_check.setChecked(True)
     assert claude_settings.load()["models_on"] and page.refresh_button.isEnabled()
-    assert button.isVisible() and not panel.isVisible() and page.show_check.isEnabled()  # back, and closed
-    page.show_check.setChecked(False)  # hidden by its own box: turning models on does not bring it back
-    page.models_check.setChecked(False)
-    page.models_check.setChecked(True)
-    assert not button.isVisible()
-    page.show_check.setChecked(True)
-    assert button.isVisible()
+    assert button.isVisible() and not panel.isVisible()  # back, and closed
     panel.process = SimpleNamespace(state=lambda: QProcess.Running, kill=lambda: killed.append(1))
     try:
         panel.refresh_controls()
@@ -934,10 +928,10 @@ def test_the_panel_total_keeps_counting_and_settings_show_it(window, monkeypatch
     assert claude_settings.load()["spent"] == pytest.approx(1.29)
 
     page = ClaudeSettingsPage("en")
-    assert page.spent_label.text().startswith("Spent with Claude: $1.29 since ")
+    assert page.spent_label.text().startswith("Spent with the agent: $1.29 since ")
     page.reset_spending()
     assert claude_settings.load()["spent"] == 0.0 and not page.reset_spent_button.isEnabled()
-    assert page.spent_label.text().startswith("Spent with Claude: $0.000 since ")
+    assert page.spent_label.text().startswith("Spent with the agent: $0.000 since ")
 
 
 def test_the_settings_page_saves_key_and_model(monkeypatch, tmp_path):
@@ -972,13 +966,13 @@ def test_the_settings_page_saves_key_and_model(monkeypatch, tmp_path):
     page.web_check.setChecked(False)
     page.limit_spin.setValue(4.5)
     assert claude_settings.load()["web"] is False and claude_settings.load()["max_cost"] == 4.5
-    shown = []
-    page.show_button_changed.connect(shown.append)
-    assert page.show_check.isChecked()
-    page.show_check.setChecked(False)
-    assert shown == [False] and claude_settings.load()["show_button"] is False
+    switched = []
+    page.agent_switched.connect(switched.append)
+    assert page.models_check.isChecked()
+    page.models_check.setChecked(False)
+    assert switched == [False] and claude_settings.load()["models_on"] is False
     page.retranslate("he")
-    assert page.model_combo.count() == len(claude_settings.models()) and not page.show_check.isChecked()
+    assert page.model_combo.count() == len(claude_settings.models()) and not page.models_check.isChecked()
     assert not page.web_check.isChecked() and page.limit_spin.value() == 4.5
 
 
@@ -1453,7 +1447,7 @@ def test_stop_folds_the_steps_says_stopped_once_and_claude_hears_of_it(window, m
     assert group["end"] is not None and not group["open"]  # folded, not left "running"
     assert group["steps"][-1]["stopped"] and not group["steps"][-1]["running"]
     shown = panel.transcript.toPlainText()
-    assert shown.count("Stopped.") == 1 and "Claude stopped" not in shown
+    assert shown.count("Stopped.") == 1 and "The agent stopped" not in shown
     assert panel.history[-1]["tools"] and "identify_knot (stopped by the person" in panel.history[-1]["tools"][0]
 
 
@@ -2042,12 +2036,12 @@ def test_the_panel_prints_the_agent_log_in_the_terminal_and_keeps_errors_apart(w
     for _ in range(3):
         panel.read_errors()
     shown = terminal.getvalue().splitlines()
-    assert shown[0].startswith("[Claude] 10:00:01") and "round 1: asking" in shown[0]
+    assert shown[0].startswith("[agent] 10:00:01") and "round 1: asking" in shown[0]
     assert "still waiting for Claude's answer (round 1): 30s" in shown[1]  # a line split across reads, whole
-    assert shown[2] == "[Claude] error: the Anthropic API returned 529: overloaded"
+    assert shown[2] == "[agent] error: the Anthropic API returned 529: overloaded"
     panel._finish()
     panel.process = None
-    assert "Claude stopped: the Anthropic API returned 529: overloaded" in panel.transcript.toPlainText()
+    assert "The agent stopped: the Anthropic API returned 529: overloaded" in panel.transcript.toPlainText()
 
 
 def test_the_agent_offers_app_tools_only_from_the_app(tmp_path):
@@ -2265,7 +2259,7 @@ def test_new_session_starts_from_nothing(window, monkeypatch, tmp_path):
     panel.new_button.click()
     assert panel.history == [] and panel.session_spent == 0
     assert [e["kind"] for e in panel.entries] == ["note"]
-    assert "New session: Claude starts with no earlier messages." in panel.transcript.toPlainText()
+    assert "New session: the agent starts with no earlier messages." in panel.transcript.toPlainText()
     # /clear and /new in the box do the same, as in Claude Code.
     run_events(panel, [{"type": "text", "text": "Hi."}, {"type": "done", "ok": True, "error": None,
                         "project": None, "cost": 0.0, "model": "claude-haiku-5-5"}], tmp_path, prompt="hello")
@@ -2439,16 +2433,16 @@ def test_while_a_card_waits_the_panel_and_the_terminal_say_claude_waits_for_the_
         panel.refresh_running()
         shown = panel.transcript.toPlainText()
         assert "App · Waiting for you: Allow or Deny" in shown
-        assert "Claude wants to delete 1_5, 2_5, 3_5 (tab “Ring”)." in shown
+        assert "The agent wants to delete 1_5, 2_5, 3_5 (tab “Ring”)." in shown
         assert "claude-bar:" not in panel.transcript.toHtml()  # no bar, no clock: nothing is moving
         assert panel.working.label == "Waiting for you: Allow or Deny"
-        assert ("[Claude] waiting for the person to click Allow or Deny in the panel: "
-                "Claude wants to delete 1_5, 2_5, 3_5 (tab “Ring”).") in terminal.getvalue()
+        assert ("[agent] waiting for the person to click Allow or Deny in the panel: "
+                "The agent wants to delete 1_5, 2_5, 3_5 (tab “Ring”).") in terminal.getvalue()
         card = panel.entries[-1]
         panel.follow_link(QUrl(f"os:allow/{panel.entries.index(card)}"))
         assert decided == [(3, True)] and card["state"] == "allowed"
         assert "waiting" not in step and panel.working.label == "App…"  # the tool runs on
-        assert "[Claude] allowed by the person: Claude wants to delete 1_5" in terminal.getvalue()
+        assert "[agent] allowed by the person: The agent wants to delete 1_5" in terminal.getvalue()
         # Other languages say it with the card's own words.
         panel.retranslate("fr")
         assert panel.waiting_text() == "En attente de votre choix : Autoriser ou Refuser"

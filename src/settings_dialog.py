@@ -3608,9 +3608,9 @@ class SettingsDialog(QDialog):
         # Claude Page: the Anthropic API key and the model
         self.claude_settings_page = ClaudeSettingsPage(self.current_language, self)
         self.stacked_widget.addWidget(self.claude_settings_page)
-        # Its switch shows or hides the Claude button in the main window.
-        if hasattr(self.parent_window, 'set_claude_available'):
-            self.claude_settings_page.show_button_changed.connect(self.parent_window.set_claude_available)
+        # Its switch turns the agent on or off: its button in the main window comes and goes.
+        if hasattr(self.parent_window, 'set_agent_on'):
+            self.claude_settings_page.agent_switched.connect(self.parent_window.set_agent_on)
         if hasattr(self.parent_window, 'claude_panel'):
             self.claude_settings_page.settings_changed.connect(self.parent_window.claude_panel.refresh_controls)
 

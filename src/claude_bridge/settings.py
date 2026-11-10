@@ -18,9 +18,9 @@ from .base import Action, BridgeError, patched
 from .layers import qcolor
 
 PAGES = ('general', 'layer_panel', 'selected_strand', 'language', 'save_load', 'tutorial', 'button_guide',
-         'levels_masks', 'history', 'whats_new', 'samples', 'claude', 'about')
+         'levels_masks', 'history', 'whats_new', 'samples', 'models', 'about')
 PAGE_LABELS = ('General', 'Layer Panel', 'Selected Strand', 'Language', 'Save/Load', 'Tutorial', 'Button Guide',
-               'Levels & Masks', 'History', "What's New", 'Samples', 'Claude', 'About')
+               'Levels & Masks', 'History', "What's New", 'Samples', 'Models', 'About')
 
 
 @dataclass(frozen=True)

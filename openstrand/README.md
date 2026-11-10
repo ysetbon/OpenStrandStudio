@@ -164,8 +164,8 @@ projects: in the system's password store, macOS Keychain, Windows Credential
 Manager or the Secret Service, when the `keyring` package finds one, else in
 `claude.json` in the OpenStrand settings folder, readable by the user alone),
 the model, web search, the spending limit per request, and what Claude has
-cost in all with a Reset button. Its first switch hides the Claude button
-altogether. For now Claude works when the app runs from source; the installed
+cost in all with a Reset button. Its first switch, **Use the OpenStrand
+agent**, turns the agent off altogether (see below). For now Claude works when the app runs from source; the installed
 app needs the openstrand package bundled first.
 
 A key only ever goes to its own provider (`providers.py`, "Safe requests"):
@@ -207,9 +207,11 @@ that copy, the model and the app's version, and never the answer.
 Two switches in Settings > Models decide what may be sent at all, and every
 request asks them just before it leaves (`providers.POLICY`, which
 `claude_settings.refusal` answers from the saved settings), in the app and in
-the agent it starts alike. **Connect to AI models**, turned off, sends nothing
+the agent it starts alike. **Use the OpenStrand agent** is the one switch for
+the agent (an earlier version had a second box that only hid its button; a
+person who had unticked it finds the agent off). Turned off, it sends nothing
 to any model: no request, no Refresh models, no share; a request already
-running stops. Off is off everywhere: the Claude button leaves the main
+running stops. Off is off everywhere: the agent's button leaves the main
 window, Ctrl+J does nothing, the panel cannot be opened, and
 `openstrand agent` refuses before it loads a package or reads a key (the
 other `openstrand` commands never contact a model and still work). A

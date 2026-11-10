@@ -204,7 +204,7 @@ class TabActions:
     def run_folder(self):
         folder = self.panel.out_dir
         if not folder or not os.path.isdir(folder):
-            raise BridgeError('there is no Claude request running')
+            raise BridgeError('there is no agent request running')
         return folder
 
     def design_path(self, path):

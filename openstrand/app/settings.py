@@ -7,7 +7,7 @@ from .layers import color_value
 from .tabs import read_into_workspace
 
 PAGES = ('general', 'layer_panel', 'selected_strand', 'language', 'save_load', 'tutorial', 'button_guide',
-         'levels_masks', 'history', 'whats_new', 'samples', 'claude', 'about')
+         'levels_masks', 'history', 'whats_new', 'samples', 'models', 'about')
 COLOR_KEYS = {'shadow_color', 'default_arrow_color', 'default_strand_color', 'default_stroke_color',
               'default_level_color', 'highlight_color'}
 

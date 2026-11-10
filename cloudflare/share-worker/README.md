@@ -1,9 +1,14 @@
 # OpenStrand Studio share inbox
 
 A Cloudflare Worker that receives what people **choose** to share with you from OpenStrand
-Studio's Claude panel, whichever model they use there: the design Claude made (all of it,
-their own canvas too when Claude changed it), its picture, and Claude's answer, with the
-model used, the app's language and whether the request worked.
+Studio's Claude panel, whichever model they use there: the design the model made (all of it,
+their own canvas too when the model changed it), its picture, and the model's answer, with
+the model used, the app's version and language, whether the request worked, and whether the
+design was made from nothing of theirs.
+
+This inbox is private: only you read it. The public gallery is a separate thing
+(`gallery/README.md`): a second yes from the person, and a cleaned copy that you publish by
+hand. Nothing in the inbox is ever public.
 
 Nobody shares anything until they say yes. The panel asks once, on a card under Claude's
 first answer, and *Settings > Models* turns sharing on or off at any time. A yes holds for
@@ -61,9 +66,11 @@ npm install
 npx wrangler login
 ```
 
-```bash
-npx wrangler r2 bucket create openstrand-shares
-```
+The shares go in your R2 bucket `openstrandstudio`, under `shares/` (`wrangler.toml` names
+it; the Worker touches nothing else in the bucket). Keep that bucket private: no public
+access, no custom domain and no `r2.dev` address. Its S3 address
+(`https://<account>.r2.cloudflarestorage.com/openstrandstudio`) and any R2 access key never
+go in the app or in this repository: the app only ever knows the Worker's address.
 
 ```bash
 python -c "import secrets; print(secrets.token_urlsafe(32))"
@@ -92,11 +99,14 @@ SHARE_PUBLIC_KEY = '<the public key from step 1>'
 Commit that change. The public key is meant to be public; the private key never goes in
 the repository.
 
-**4. Optional: delete old shares automatically**, for example after 90 days:
+**4. Delete old shares automatically**, after 90 days. The rule covers `shares/` only, so
+anything else in the bucket is left alone:
 
 ```bash
-npx wrangler r2 bucket lifecycle add openstrand-shares expire-90-days --expire-days 90
+npx wrangler r2 bucket lifecycle add openstrandstudio expire-shares-90-days shares/ --expire-days 90
 ```
+
+**5. Optional: the public gallery.** See `gallery/README.md`.
 
 ## Read what people shared
 
@@ -111,7 +121,7 @@ Each share is saved in its own folder under `shared/`:
 - `design.json` opens in OpenStrand Studio
 - `design.png` is the design's picture
 - `answer.md` is Claude's answer
-- `about.json` holds the model, the app's language, whether the request worked, and when the Worker received it
+- `about.json` holds the model, the app's version and language, whether the request worked, whether the design is new (made from nothing of the person's), whether they allowed it in the gallery, and when the Worker received it
 
 Add `--delete` to remove shares from Cloudflare once they are saved on your computer. Leave
 out `OPENSTRAND_INBOX_TOKEN=…` and the tool asks for the token instead, which keeps it out
@@ -139,10 +149,12 @@ What you collect, only with the person's consent and revocable at any time in
   in full, when Claude changed it)
 - the answers of whichever model they use (which may repeat words or file names from their
   request)
-- the model used, the app's language, and whether each request worked
+- the model used, the app's version and language, and whether each request worked
 - when each share arrived
 
 It is encrypted on the person's computer and stored with Cloudflare (R2) until you delete
-it. You do not collect the person's requests, their own pictures or files, their API keys,
+it. With a second, separate consent, a design the model made from scratch may be shown in
+the public gallery, with the model and the app's version: shares carry no name, so one that
+is shown cannot be found again and taken down for the person who sent it. You do not collect the person's requests, their own pictures or files, their API keys,
 or their IP address (Cloudflare's rate limiter only counts shares per IP address, for a
 minute at a time).

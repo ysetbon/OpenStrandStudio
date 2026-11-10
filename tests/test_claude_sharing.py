@@ -102,7 +102,12 @@ def test_a_share_never_holds_a_folder_or_the_person_s_name_in_one():
     assert "https://www.animatedknots.com/home/figure-8" in said and "http://example.org/Users/x" in said
     assert record["design"]["note"] == "…" and record["picture"] is None
     assert record["design"]["groups"] == {"…": {}, "… (2)": {}, "Rings": {}}  # cut out, and none merged
-    assert set(record) == {"format", "model", "language", "ok", "answer", "design", "picture"}
+    assert set(record) == {"format", "model", "language", "ok", "answer", "design", "picture",
+                           "version", "new", "gallery"}
+    # The app's version goes with each share: the one its installers say.
+    spec = (ROOT / "src" / "OpenStrandStudio_mac.spec").read_text(encoding="utf-8")
+    assert record["version"] == claude_sharing.APP_VERSION
+    assert f"'CFBundleShortVersionString': '{claude_sharing.APP_VERSION}'" in spec
     # Nothing else: not the request, an error's text, the time, the computer or the person.
 
 
@@ -257,3 +262,137 @@ def test_the_developer_s_tool_writes_a_share_whole_or_not_at_all(keys, tmp_path,
     share_inbox.save({"answer": ["bad \ud800 text"], "design": {"name": "\udfff"}}, out / "odd")
     assert (out / "odd" / "answer.md").read_text(encoding="utf-8") == "bad ? text\n"
     assert json.loads((out / "odd" / "design.json").read_text(encoding="utf-8")) == {"name": "?"}
+
+
+def test_a_share_says_gallery_only_for_a_new_design_the_person_allowed():
+    """The gallery is a second yes, and only for a design made from nothing of the person's,
+    in a request that worked."""
+    share = lambda **given: claude_sharing.record(["Done."], given.pop("design", HOPF), PNG, **given)  # noqa: E731
+    assert share()["gallery"] is False and share()["new"] is False  # nothing said: private
+    assert share(new=True)["gallery"] is False  # new, but the person did not allow the gallery
+    assert share(gallery=True)["gallery"] is False  # allowed, but made from their own design
+    assert share(new=True, gallery=True, ok=False)["gallery"] is False  # the request failed
+    assert share(new=True, gallery=True, design=None)["gallery"] is False  # no design at all
+    allowed = share(new=True, gallery=True)
+    assert allowed["gallery"] is True and allowed["new"] is True
+
+
+def test_the_gallery_is_offered_only_once_the_developer_says_where_it_is(keys, monkeypatch):
+    monkeypatch.setattr(claude_sharing, "SHARE_URL", "https://openstrand-share.example.workers.dev/v1/share")
+    monkeypatch.setattr(claude_sharing, "SHARE_PUBLIC_KEY", keys[1])
+    assert claude_sharing.available() and not claude_sharing.gallery_available()
+    monkeypatch.setattr(claude_sharing, "GALLERY_URL", "http://example.github.io/OpenStrandStudio/")
+    assert not claude_sharing.gallery_available()  # https only
+    monkeypatch.setattr(claude_sharing, "GALLERY_URL", "https://example.github.io/OpenStrandStudio/")
+    assert claude_sharing.gallery_available()
+    monkeypatch.setattr(claude_sharing, "SHARE_URL", "")
+    assert not claude_sharing.gallery_available()  # no sharing, no gallery
+
+
+@pytest.fixture
+def inbox(tmp_path):
+    """The developer's tool, a gallery folder, and extract(record): a share as fetch leaves it."""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import share_inbox
+    count = iter(range(1000))
+
+    def extract(record):
+        folder = tmp_path / "shared" / f"share{next(count)}"
+        share_inbox.save(record, folder)
+        return folder
+
+    def draw(design, path):  # the app's canvas stands in: the test needs no window
+        Path(path).write_bytes(PNG + json.dumps(sorted(design)).encode())
+    return type("Inbox", (), {"tool": share_inbox, "gallery": tmp_path / "gallery", "extract": staticmethod(extract),
+                              "draw": staticmethod(draw)})
+
+
+def test_publish_puts_a_cleaned_copy_in_the_gallery_and_never_the_share_itself(inbox):
+    tool, gallery = inbox.tool, inbox.gallery
+    design = json.loads(json.dumps(HOPF))
+    design["groups"] = {"Jane Doe's rings": {"layers": ["1_1"], "strands": ["1_1"], "main_strands": ["1_1"]}}
+    record = claude_sharing.record(["Two rings for Jane Doe."], design, PNG, model="claude-haiku-5-5", new=True,
+                                   gallery=True)
+    name = tool.publish_one(inbox.extract(record), gallery, draw=inbox.draw)
+    assert tool.GALLERY_ID.match(name)
+    assert sorted(p.name for p in (gallery / "designs").iterdir()) == [f"{name}.json", f"{name}.png"]
+    shown = (gallery / "designs" / f"{name}.json").read_text(encoding="utf-8")
+    assert "Jane" not in shown and "rings" not in shown  # a group's name is the person's own text
+    assert list(json.loads(shown)["groups"]) == ["Group 1"]
+    assert json.loads(shown)["strands"] == HOPF["strands"]  # the design itself, as it was made
+    assert (gallery / "designs" / f"{name}.png").read_bytes() != PNG  # drawn again, not the shared picture
+    listed = json.loads((gallery / "designs.json").read_text(encoding="utf-8"))
+    assert listed == {"designs": [{"id": name, "model": "claude-haiku-5-5", "version": claude_sharing.APP_VERSION}]}
+    assert "Jane" not in json.dumps(listed)  # the answer goes nowhere near the gallery
+    # The same design again is the same entry; taking it out leaves nothing behind.
+    assert tool.publish_one(inbox.extract(record), gallery, draw=inbox.draw) == name
+    assert len(json.loads((gallery / "designs.json").read_text(encoding="utf-8"))["designs"]) == 1
+    assert tool.main(["unpublish", name, "--gallery", str(gallery)]) == 0
+    assert list((gallery / "designs").iterdir()) == []
+    assert json.loads((gallery / "designs.json").read_text(encoding="utf-8")) == {"designs": []}
+    assert tool.main(["unpublish", "../../etc", "--gallery", str(gallery)]) == 1  # an id only, never a path
+
+
+def test_publish_refuses_what_the_person_did_not_allow_and_what_a_stranger_could_hide(inbox):
+    tool, gallery = inbox.tool, inbox.gallery
+    share = lambda design=HOPF, **given: inbox.extract(dict(  # noqa: E731
+        claude_sharing.record(["Done."], design, PNG, model="gpt-6.1-terra", new=True, gallery=True), **given))
+
+    def why(folder):
+        with pytest.raises(ValueError) as stopped:
+            tool.publish_one(folder, gallery, draw=inbox.draw)
+        return str(stopped.value)
+    assert "did not allow the gallery" in why(share(gallery=False))
+    assert "did not allow the gallery" in why(share(gallery="true"))  # a real yes only
+    assert "from nothing of theirs" in why(share(new=False))
+    assert "from nothing of theirs" in why(share(ok=False))
+    assert "not a model name" in why(share(model="<img src=x onerror=alert(1)>"))
+    assert "not a version" in why(share(version="2.1 <script>"))
+    # Text hidden where a design has none: a strand's field, a field's name, a made-up field.
+    hidden = json.loads(json.dumps(HOPF))
+    hidden["strands"][0]["arrow_texture"] = "call Jane on 555 0100"
+    assert "text that is not part of the format" in why(share(hidden))
+    hidden = json.loads(json.dumps(HOPF))
+    hidden["strands"][0]["Jane Doe"] = 1
+    assert "name that is not part of the format" in why(share(hidden))
+    hidden = json.loads(json.dumps(HOPF))
+    hidden["note"] = "sk-not-a-layer-name"
+    assert "text that is not part of the format" in why(share(hidden))
+    # A design the app cannot draw is not shown either, and leaves nothing half made.
+    def cannot(design, path):
+        raise RuntimeError("no canvas")
+    with pytest.raises(RuntimeError):
+        tool.publish_one(share(), gallery, draw=cannot)
+    assert not (gallery / "designs.json").exists()
+    assert not (gallery / "designs").exists() or list((gallery / "designs").iterdir()) == []
+    # The command goes on past a share it refuses, and says so.
+    assert tool.main(["publish", str(share(gallery=False)), "--gallery", str(gallery)]) == 1
+
+
+def test_a_stranger_s_share_cannot_swell_on_disk_or_drive_the_terminal(keys, tmp_path, capsys):
+    """A design nested very deep would be written with a mile of indentation per number (a
+    1 kB share became 100 MB): it is refused. Control characters never reach the terminal
+    or the files."""
+    import zlib
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import share_inbox
+    private, public = keys
+    deep = ('{"format":1,"model":"m","ok":true,"answer":[],"picture":null,"design":{"strands":'
+            + "[" * 900 + ",".join("0" * 1 for _ in range(20000)) + "]" * 900 + "}}").encode()
+    sealed = claude_sharing.MAGIC + claude_sharing.suite().encrypt(
+        zlib.compress(deep, 9), claude_sharing.public_key(public), info=claude_sharing.INFO)
+    assert len(sealed) < 2000
+    key, bomb = tmp_path / "share.key", tmp_path / "bomb.oss"
+    key.write_text(private + "\n", encoding="ascii")
+    bomb.write_bytes(sealed)
+    assert share_inbox.main(["open", str(bomb), "--key", str(key), "--out", str(tmp_path / "out")]) == 1
+    assert "nested more than" in capsys.readouterr().err and not (tmp_path / "out" / "bomb").exists()
+    loud = tmp_path / "loud.oss"
+    loud.write_bytes(claude_sharing.seal(dict(claude_sharing.record(["\x1b[31mred\x1b[0m\nline two"], HOPF, PNG),
+                                              model="gpt\x1b]0;owned\x07" + "x" * 500), public))
+    assert share_inbox.main(["open", str(loud), "--key", str(key), "--out", str(tmp_path / "out")]) == 0
+    said = capsys.readouterr().out
+    assert "\x1b" not in said and "\x07" not in said and len(said) < 400
+    answer = (tmp_path / "out" / "loud" / "answer.md").read_bytes()
+    assert b"\x1b" not in answer and b"line two" in answer
+    assert "\\u001b" not in (tmp_path / "out" / "loud" / "about.json").read_text(encoding="utf-8")

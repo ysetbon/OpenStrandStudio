@@ -323,8 +323,9 @@ def load():
     spent is what every request has cost in all, in USD, since spent_since
     (an ISO date, empty before the first request). show_button is False when
     Settings > Claude hides Claude altogether. Claude itself always starts closed.
-    share: whether what Claude makes goes to the developer (claude_sharing): None until
-    the person is asked, then True or False. Keys saved in claude.json by an earlier
+    share: whether what the model makes goes to the developer (claude_sharing): None until
+    the person is asked, then True or False. gallery: whether the developer may show their
+    new designs in the public gallery, the same way (it only counts while share is on). Keys saved in claude.json by an earlier
     version move to the password store here, once there is one."""
     data = _read()
     model = data.get('model')
@@ -353,6 +354,7 @@ def load():
                                        DEFAULT_SESSION_LIMIT),
                'mode': data.get('mode') if data.get('mode') in MODES else DEFAULT_MODE,
                'share': data.get('share') if data.get('share') in (True, False) else None,
+               'gallery': data.get('gallery') if data.get('gallery') in (True, False) else None,
                'models_on': data.get('models_on', True) is not False,
                'allow_china': data.get('allow_china') is True}
     if in_file and store is not None:
@@ -362,11 +364,11 @@ def load():
 
 def save(api_key=None, model=None, web=None, max_cost=None, show_button=None,
          effort=None, session_limit=None, mode=None, provider_key=None, share=None,
-         models_on=None, allow_china=None):
+         models_on=None, allow_china=None, gallery=None):
     """Update the saved settings given. api_key is Anthropic's; provider_key is
-    (provider, key) for any provider. An empty key removes it. share, models_on (False:
-    nothing is ever sent to a model) and allow_china (the providers based in China):
-    True or False."""
+    (provider, key) for any provider. An empty key removes it. share, gallery (their new
+    designs may be shown in the public gallery), models_on (False: nothing is ever sent to
+    a model) and allow_china (the providers based in China): True or False."""
     current = load()
     if models_on is not None:
         current['models_on'] = bool(models_on)
@@ -407,6 +409,8 @@ def save(api_key=None, model=None, web=None, max_cost=None, show_button=None,
         current['mode'] = mode
     if share is not None:
         current['share'] = bool(share)
+    if gallery is not None:
+        current['gallery'] = bool(gallery)
     return _write(current, removed)
 
 
@@ -438,6 +442,8 @@ def _write(current, removed=()):
                'effort': current['effort'], 'session_limit': current['session_limit'], 'mode': current['mode']}
     if current.get('share') is not None:
         payload['share'] = bool(current['share'])
+    if current.get('gallery') is not None:
+        payload['gallery'] = bool(current['gallery'])
     payload['models_on'] = current.get('models_on', True) is not False
     payload['allow_china'] = current.get('allow_china') is True
     if current.get('catalog'):

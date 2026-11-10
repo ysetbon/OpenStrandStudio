@@ -185,7 +185,7 @@ after it, until they turn it off. For each request, whichever model answered,
 the design Claude made (all of it, the person's canvas too when Claude changed
 it; never a canvas, tab or past step that Claude only read: the agent's
 `changed` says which), its picture and Claude's answer, with the model, the
-app's language and whether the request worked, are encrypted on this computer
+app's version and language and whether the request worked, are encrypted on this computer
 with the developer's public key and sent to the developer's Cloudflare Worker
 (`cloudflare/share-worker`). The setting is read again just before a share
 leaves, so one turned off meanwhile stays here. The request itself, the
@@ -194,6 +194,15 @@ time are never sent, though Claude's answer may repeat words or bare file
 names from the request or the canvas. An API key an answer repeats is cut out
 (`claude_settings.own_keys`: the person's own keys, whatever their shape, and
 any `sk-...` or `xai-...` key).
+
+The public gallery (`gallery/`, on GitHub Pages) is a second, separate yes,
+asked only after the first and only once the developer has set `GALLERY_URL`.
+A share then says the developer may show its design there, and only when the
+model made that design from nothing of the person's (the agent's `new`: False
+once the request read their canvas, a tab or a past step). Nothing becomes
+public by itself: the developer looks at each one and publishes a cleaned copy
+by hand (`scripts/share_inbox.py publish`), with a picture drawn again from
+that copy, the model and the app's version, and never the answer.
 
 Two switches in Settings > Models decide what may be sent at all, and every
 request asks them just before it leaves (`providers.POLICY`, which

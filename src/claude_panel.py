@@ -1130,15 +1130,20 @@ class ClaudePanel(QWidget):
                 choice = f'<span style="color:{c["muted"]};">{esc(t(word))}</span>'
             return (f'<table cellspacing="0" cellpadding="6" style="margin:4px 0 4px 18px;'
                     f' border:1px solid {c["log_border"]};"><tr><td>{text}<br>{choice}</td></tr></table>')
-        if kind == 'share':
+        if kind in ('share', 'gallery'):
+            # Two questions, each its own yes: sharing with the developer, then (only after a
+            # yes) the public gallery. Each text is a few short lines.
+            yes, no = ('share', 'noshare') if kind == 'share' else ('gallery', 'nogallery')
             if e['state'] is None:
-                text = f'{esc(t("claude_share_ask"))}<br>'
-                choice = (f'<a href="os:share/{i}" style="color:#D97757; font-weight:bold; text-decoration:none;">'
-                          f'{esc(t("claude_share_yes"))}</a>&nbsp;&nbsp;&nbsp;<a href="os:noshare/{i}" '
-                          f'style="color:{c["muted"]}; text-decoration:none;">{esc(t("claude_share_no"))}</a>')
+                asked = esc(t(f'claude_{kind}_ask').replace('{url}', claude_sharing.GALLERY_URL))
+                question, _, rest = asked.partition('\n')  # its first line is the question itself
+                text = f'<b>{question}</b><br>' + rest.replace('\n', '<br>') + '<br><br>'
+                choice = (f'<a href="os:{yes}/{i}" style="color:#D97757; font-weight:bold; text-decoration:none;">'
+                          f'{esc(t(f"claude_{kind}_yes"))}</a>&nbsp;&nbsp;&nbsp;<a href="os:{no}/{i}" '
+                          f'style="color:{c["muted"]}; text-decoration:none;">{esc(t(f"claude_{kind}_no"))}</a>')
             else:
                 text = ''
-                said = 'claude_share_on' if e['state'] == 'shared' else 'claude_share_off'
+                said = f'claude_{kind}_on' if e['state'] == 'shared' else f'claude_{kind}_off'
                 choice = f'<span style="color:{c["muted"]};">{esc(t(said))}</span>'
             return (f'<table cellspacing="0" cellpadding="6" style="margin:4px 0 4px 18px;'
                     f' border:1px solid {c["log_border"]};"><tr><td>{text}{choice}</td></tr></table>')
@@ -1444,6 +1449,12 @@ class ClaudePanel(QWidget):
             record = entry.pop('record', None)
             if shared and record is not None:
                 self.send_share(record)
+            # The gallery is asked about only after a yes, and only once.
+            if shared and claude_sharing.gallery_available() and claude_settings.load()['gallery'] is None:
+                self.entries.append({'kind': 'gallery', 'state': None})
+        elif what in ('gallery', 'nogallery') and entry['kind'] == 'gallery' and entry['state'] is None:
+            entry['state'] = 'shared' if what == 'gallery' else 'declined'
+            claude_settings.save(gallery=what == 'gallery')
         self.render_transcript()
 
     # -------------------------------------------------------- status line
@@ -1915,16 +1926,18 @@ class ClaudePanel(QWidget):
         choice = settings['share']
         if not settings['models_on'] or choice is False or (choice is None and self.share_asked):
             return
-        record = self.share_record(event, design, picture, claude_settings.own_keys(settings))
+        record = self.share_record(event, design, picture, claude_settings.own_keys(settings),
+                                   gallery=settings['gallery'] is True and claude_sharing.gallery_available())
         if choice:
             self.send_share(record)
             return
         self.share_asked = True
         self.add_entry({'kind': 'share', 'state': None, 'record': record})
 
-    def share_record(self, event, design, picture, keys=()):
+    def share_record(self, event, design, picture, keys=(), gallery=False):
         """The share for this request (claude_sharing.record): keys, the person's own, are cut
-        out of it wherever an answer or the design repeats one."""
+        out of it wherever an answer or the design repeats one. gallery: the person allows
+        their new designs in the public gallery (this one counts only if it is new)."""
         project = png = None
         if design and os.path.exists(design):
             with open(design, 'r', encoding='utf-8') as f:
@@ -1933,7 +1946,8 @@ class ClaudePanel(QWidget):
             with open(picture, 'rb') as f:
                 png = f.read()
         return claude_sharing.record(self.run_texts, project, png, model=event.get('model'), language=self.language,
-                                     ok=bool(event.get('ok')) and not event.get('error'), secrets=keys)
+                                     ok=bool(event.get('ok')) and not event.get('error'), secrets=keys,
+                                     new=event.get('new') is True, gallery=gallery)
 
     def send_share(self, record):
         """Seal it and send it, off the main thread. The terminal says how it went, never what
@@ -2360,12 +2374,20 @@ class ClaudeSettingsPage(QWidget):
 
         # Sharing what Claude makes with the developer: only once the developer set it up.
         self.share_check = QCheckBox(self)
-        self.share_check.toggled.connect(lambda on: claude_settings.save(share=on))
+        self.share_check.toggled.connect(self.set_share)
         layout.addWidget(self.share_check)
         self.share_hint = QLabel(self)
         self.share_hint.setWordWrap(True)
         self.share_hint.setStyleSheet('color: gray;')
         layout.addWidget(self.share_hint)
+        # The public gallery: its own yes, and only while sharing is on.
+        self.gallery_check = QCheckBox(self)
+        self.gallery_check.toggled.connect(lambda on: claude_settings.save(gallery=on))
+        layout.addWidget(self.gallery_check)
+        self.gallery_hint = QLabel(self)
+        self.gallery_hint.setWordWrap(True)
+        self.gallery_hint.setStyleSheet('color: gray;')
+        layout.addWidget(self.gallery_hint)
 
         self.storage = QLabel(self)
         self.storage.setWordWrap(True)
@@ -2388,6 +2410,8 @@ class ClaudeSettingsPage(QWidget):
                                else 'claude_key_storage'))
         self.share_check.setText(t('models_share_label'))
         self.share_hint.setText(t('models_share_hint'))
+        self.gallery_check.setText(t('models_gallery_label'))
+        self.gallery_hint.setText(t('models_gallery_hint').replace('{url}', claude_sharing.GALLERY_URL))
         self.models_check.setText(t('models_use_label'))
         self.models_hint.setText(t('models_use_hint'))
         self.china_check.setText(t('models_china_label'))
@@ -2543,9 +2567,21 @@ class ClaudeSettingsPage(QWidget):
         shown = claude_sharing.available()
         self.share_check.setVisible(shown)
         self.share_hint.setVisible(shown)
+        saved = claude_settings.load()
         self.share_check.blockSignals(True)
-        self.share_check.setChecked(claude_settings.load()['share'] is True)
+        self.share_check.setChecked(saved['share'] is True)
         self.share_check.blockSignals(False)
+        gallery = claude_sharing.gallery_available()
+        self.gallery_check.setVisible(gallery)
+        self.gallery_hint.setVisible(gallery)
+        self.gallery_check.setEnabled(saved['share'] is True)  # nothing reaches the gallery unshared
+        self.gallery_check.blockSignals(True)
+        self.gallery_check.setChecked(saved['share'] is True and saved['gallery'] is True)
+        self.gallery_check.blockSignals(False)
+
+    def set_share(self, on):
+        claude_settings.save(share=on)
+        self.show_share()  # the gallery box follows: it only counts while sharing is on
 
     def set_show_button(self, shown):
         claude_settings.save(show_button=shown)

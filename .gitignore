@@ -45,3 +45,7 @@ src/build_env/
 
 # openstrand command output (see .claude/skills/openstrand-designer)
 designs/
+
+# What scripts/share_inbox.py downloads and opens: private, never committed.
+/shared/
+*.oss

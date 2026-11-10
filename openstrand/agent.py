@@ -102,7 +102,10 @@ Knots tied in a cord (overhand, figure-eight, stevedore and the like):
   each in its own color and labeled. For a tutorial or how to tie it, then
   call make_steps: it shows the cords drawn bit by bit, in the order you list
   them, so list first the cord that is laid down first. Say in one sentence
-  that these steps are drawn, not simulated.
+  that these steps are drawn, not simulated. If the drawing is still not
+  exactly the knot when you stop, keep the closest one, make and open its
+  steps all the same, and say which part differs: a sketch with its steps is
+  what the person asked for, not an apology.
 - To check any design is the knot it should be, call identify_knot rather than
   judging the picture.
 

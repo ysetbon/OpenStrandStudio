@@ -1796,6 +1796,7 @@ def test_a_tutorial_is_a_design_not_a_written_answer():
     assert "never end by offering\n   to draw it" in INSTRUCTIONS
     bend = INSTRUCTIONS[INSTRUCTIONS.index("a knot that joins two cords"):]
     assert "draw_design" in bend[:400] and "make_steps" in bend[:400]
+    assert "keep the closest one, make and open its\n  steps all the same" in bend  # no giving up before the steps
     tie = next(t for t in TOOLS if t["name"] == "tie_knot")["description"]
     assert "draw those with draw_design, then make_steps" in tie
     assert "a knot joining two cords" in APP_INSTRUCTIONS and "not a written list" in APP_INSTRUCTIONS

@@ -34,7 +34,7 @@ it down for the person who sent it. The app tells people that before they say ye
 2. Push this folder to `main`. The *Gallery* workflow (`.github/workflows/gallery.yml`)
    puts it online; its run shows the address, such as
    `https://ysetbon.github.io/OpenStrandStudio/`.
-3. Put that address in `src/claude_sharing.py`:
+3. Put that address in `src/agent_sharing.py`:
 
    ```python
    GALLERY_URL = 'https://ysetbon.github.io/OpenStrandStudio/'

@@ -1977,8 +1977,8 @@ class GroupPanel(QWidget):
     def begin_group_rotation(self, group_name):
         """Get a group ready to rotate: note every strand's points before the
         rotation (it is absolute, from these) and start the canvas's rotation.
-        True when ready. The Rotate Strands dialog and Claude's group tool
-        (src/claude_bridge/groups.py) both start here, then rotate with
+        True when ready. The Rotate Strands dialog and the agent's group tool
+        (src/agent_bridge/groups.py) both start here, then rotate with
         _perform_immediate_group_rotation and end with finish_group_rotation."""
         # Reset the save-done flag so this rotation can complete properly
         self._rotation_save_done = False

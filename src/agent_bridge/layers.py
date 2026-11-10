@@ -1,7 +1,7 @@
 """Layers: what the layer panel's right-click menu does, on layers of the tab
 showing. Each op runs the menu's own handler (NumberedLayerButton, LayerPanel)
 or, where the menu opens a dialog, the code the dialog's OK runs, with the
-value Claude gives standing for what the person would pick. Each change is
+value the agent gives standing for what the person would pick. Each change is
 saved for undo as the menu saves it; where the app keeps no undo step (it
 does not tell Shadow Only or Hide Shadow apart from the step before), the
 answer says so.
@@ -39,7 +39,7 @@ GRID_UNIT = 27  # px per grid square in the width dialog (WidthConfigDialog)
 
 
 def qcolor(value):
-    """A QColor from "#rrggbb" or "#rrggbbaa" (alpha last, as Claude's colors are written)."""
+    """A QColor from "#rrggbb" or "#rrggbbaa" (alpha last, as the agent's colors are written)."""
     from PyQt5.QtGui import QColor
     text = str(value or '').strip()
     if len(text) == 9 and text.startswith('#'):
@@ -333,7 +333,7 @@ class LayerActions:
         return f"{layer.layer_name} stroke {args['value']}"
 
     def layer_width(self, layer, args):
-        """What the width dialog's OK does, with Claude's px for the color and the stroke."""
+        """What the width dialog's OK does, with the agent's px for the color and the stroke."""
         value = args['value']
         width, stroke = int(value['width']), int(value['stroke_width'])
         squares = round((width + 2 * stroke) / GRID_UNIT, 1)
@@ -361,7 +361,7 @@ class LayerActions:
         manager = getattr(self.canvas, 'undo_redo_manager', None)
         if manager is not None:
             manager._last_save_time = 0
-            manager.save_state(action=action, source='claude', targets=targets, detail=detail)
+            manager.save_state(action=action, source='agent', targets=targets, detail=detail)
 
     # ends: lines, arrows, dashes, circles
     def toggle_side(self, layer, args, attr, toggle, what):
@@ -462,7 +462,7 @@ class LayerActions:
         return f"closing knot side of {layer.layer_name}: {args['value']}"
 
     def layer_end_style(self, layer, args):
-        """What the Stylize End Side dialog's OK does, with Claude's style."""
+        """What the Stylize End Side dialog's OK does, with the agent's style."""
         import end_style
         side, value = SIDES[args['side']], dict(args['value'])
         show_line, both = value.pop('show_line', None), value.pop('both_ends', False)
@@ -511,7 +511,7 @@ class LayerActions:
             if not self.layer_panel.copy_strand_data(self.index(source), list(value.get('properties') or PASTE_PROPERTIES)):
                 raise BridgeError(f"{source.layer_name}'s data cannot be copied")
             pasted = self.layer_panel.paste_copied_strand_data(anchor=value.get('anchor', 'start'),
-                                                         target_indices=[self.index(layer)], source='claude')
+                                                         target_indices=[self.index(layer)], source='agent')
         finally:
             canvas.strand_clipboard = kept
         if not pasted:

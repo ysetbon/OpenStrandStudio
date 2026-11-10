@@ -87,10 +87,10 @@ Everything is worked out in small windows of the map, so an 8x8 stretched
 stitch (128 masks, 576 crossings) is checked in about ten seconds and a knot in
 a fraction of one. `tie` runs the safe fixes on its finished steps.
 
-## Claude agent
+## The agent
 
-`openstrand agent` asks Claude to build or change a design with the commands
-above. Claude reads the request (and any reference image), uses a sample or a
+`openstrand agent` asks the agent to build or change a design with the commands
+above. The agent reads the request (and any reference image), uses a sample or a
 generator when one fits, and otherwise designs it: it searches the web for
 what the thing is and how it is built (or reasons it out when nothing turns
 up), plans the cords and crossings, draws them, looks at each render, fixes
@@ -143,29 +143,29 @@ python -m openstrand agent "make the gold ribbons red" --start designs/bracelet.
   The model thinks at `--effort high` by default (a thinking budget on the
   Anthropic-compatible endpoints, reasoning effort on the Responses API).
 - Results go to `--out-dir` (default `designs/`): `design.json` and `design.png`.
-- `--json-events` prints one JSON line per step; the app's Claude panel reads
+- `--json-events` prints one JSON line per step; the app's agent panel reads
   these.
 
 ### In the app
 
-The **Claude** button, next to Settings, shows and hides Claude (so does
-Ctrl+J). Claude floats over the bottom of the canvas, so the drawing never
+The agent's button (the OpenStrand logo), next to Settings, shows and hides the agent (so does
+Ctrl+J). The agent floats over the bottom of the canvas, so the drawing never
 moves. Describe a design (Enter sends, Shift+Enter starts a new line; attach a
 reference image if you have one). The agent runs in its own background
 process, so the app stays responsive; each step shows with the color of the
-matching app button, and while Claude is hidden an arc turns around its button.
+matching app button, and while the agent is hidden an arc turns around its button.
 The finished design opens in a new tab through the same loader as Load, so its
 strands, masks, groups and layer panel are exactly as in a saved project. With
-**Start from the canvas** on, the current canvas goes to Claude as the design
-to change. The app remembers whether Claude was showing.
+**Start from the canvas** on, the current canvas goes to the agent as the design
+to change. The app remembers whether the agent was showing.
 
 Settings > Models holds the API keys (on this computer only, never in
 projects: in the system's password store, macOS Keychain, Windows Credential
 Manager or the Secret Service, when the `keyring` package finds one, else in
 `claude.json` in the OpenStrand settings folder, readable by the user alone),
-the model, web search, the spending limit per request, and what Claude has
-cost in all with a Reset button. Its first switch hides the Claude button
-altogether. For now Claude works when the app runs from source; the installed
+the model, web search, the spending limit per request, and what the agent has
+cost in all with a Reset button. Its first switch, **Use the OpenStrand
+agent**, turns the agent off altogether (see below). For now the agent works when the app runs from source; the installed
 app needs the openstrand package bundled first.
 
 A key only ever goes to its own provider (`providers.py`, "Safe requests"):
@@ -177,22 +177,22 @@ The one exception is for the tests: `OPENSTRAND_TEST_API` points the agent at
 a local stand-in API, and only on this computer itself (`127.0.0.1`,
 `localhost` or `::1`; any other host is refused).
 
-Sharing with the developer (`src/claude_sharing.py`) is offered only once the
+Sharing with the developer (`src/agent_sharing.py`) is offered only once the
 developer has set `SHARE_URL` and `SHARE_PUBLIC_KEY` there (the Worker's
 README says how), and then off until the person says yes, on a card under
-Claude's first answer or in Settings > Models; a yes holds for each request
+the agent's first answer or in Settings > Models; a yes holds for each request
 after it, until they turn it off. For each request, whichever model answered,
-the design Claude made (all of it, the person's canvas too when Claude changed
-it; never a canvas, tab or past step that Claude only read: the agent's
-`changed` says which), its picture and Claude's answer, with the model, the
+the design the agent made (all of it, the person's canvas too when the agent changed
+it; never a canvas, tab or past step that the agent only read: the agent's
+`changed` says which), its picture and the agent's answer, with the model, the
 app's version and language and whether the request worked, are encrypted on this computer
 with the developer's public key and sent to the developer's Cloudflare Worker
 (`cloudflare/share-worker`). The setting is read again just before a share
 leaves, so one turned off meanwhile stays here. The request itself, the
 person's pictures, keys and files, every folder path, an error's text and the
-time are never sent, though Claude's answer may repeat words or bare file
+time are never sent, though the agent's answer may repeat words or bare file
 names from the request or the canvas. An API key an answer repeats is cut out
-(`claude_settings.own_keys`: the person's own keys, whatever their shape, and
+(`agent_settings.own_keys`: the person's own keys, whatever their shape, and
 any `sk-...` or `xai-...` key).
 
 The public gallery (`gallery/`, on GitHub Pages) is a second, separate yes,
@@ -206,32 +206,34 @@ that copy, the model and the app's version, and never the answer.
 
 Two switches in Settings > Models decide what may be sent at all, and every
 request asks them just before it leaves (`providers.POLICY`, which
-`claude_settings.refusal` answers from the saved settings), in the app and in
-the agent it starts alike. **Connect to AI models**, turned off, sends nothing
+`agent_settings.refusal` answers from the saved settings), in the app and in
+the agent it starts alike. **Use the OpenStrand agent** is the one switch for
+the agent (an earlier version had a second box that only hid its button; a
+person who had unticked it finds the agent off). Turned off, it sends nothing
 to any model: no request, no Refresh models, no share; a request already
-running stops. Off is off everywhere: the Claude button leaves the main
+running stops. Off is off everywhere: the agent's button leaves the main
 window, Ctrl+J does nothing, the panel cannot be opened, and
 `openstrand agent` refuses before it loads a package or reads a key (the
 other `openstrand` commands never contact a model and still work). A
 `claude.json` that is there and cannot be read counts as off, never as on,
 and is not written over except by the person's own save
-(`claude_settings._read`). **Allow Kimi, DeepSeek and Qwen (based in China)** is off until
+(`agent_settings._read`). **Allow Kimi, DeepSeek and Qwen (based in China)** is off until
 the person ticks it: their models are hidden and anything for them is refused.
 `openstrand agent` from a terminal follows the same settings.
 
-### Claude and the app's tabs (the bridge)
+### The agent and the app's tabs (the bridge)
 
 The agent runs in its own process, so it cannot touch the app's windows. When
-the app starts it (`--app`), Claude also gets tools that act on the running
+the app starts it (`--app`), the agent also gets tools that act on the running
 app: `list_tabs`, `read_tab`, `read_tab_step`, `open_in_new_tab`, `rename_tab`,
 `switch_tab`, `edit_mask_in_tab`, `edit_strand_in_tab`, `edit_layers_in_tab`,
 `edit_groups_in_tab`, `show_group`, `app_window`, `read_settings` and
 `app_settings`. Each call goes out as a JSON line (`{"type": "app_call", ...}`);
-the panel hands it to `AppBridge` (`src/claude_bridge/`, one module per area: tabs,
+the panel hands it to `AppBridge` (`src/agent_bridge/`, one module per area: tabs,
 strands, masks, layers, groups, window, settings), which runs it on
 the app's main thread with the app's own code (the real `TabManager`, the
 same loader as Load) and answers on the agent's stdin
-(`openstrand/app/client.py`, `AppClient`; the tools Claude sees are in `openstrand/app/`,
+(`openstrand/app/client.py`, `AppClient`; the tools the agent sees are in `openstrand/app/`,
 by the same areas). Only those actions exist, only
 designs made in the request can open, and the panel's mode decides: plan
 mode only looks, ask mode shows a card or an Allow / Deny for each change,
@@ -239,9 +241,9 @@ auto does it.
 
 `read_tab` gives the tab as it is at that moment: every strand with its start,
 end and control points, every mask, the tab's undo history, and a version (a
-fingerprint of its strands and groups). The person keeps working while Claude
+fingerprint of its strands and groups). The person keeps working while the agent
 does, so an edit in the tab names the version it was worked out on, and the
-bridge refuses it when the tab changed since: Claude reads it again.
+bridge refuses it when the tab changed since: the agent reads it again.
 `read_tab_step` loads any step of the tab's undo history (before the person's
 latest change, or a step they undid) as a copy. `edit_strand_in_tab` moves a
 strand's ends and handles with Move mode's own code, as a drag does (strands
@@ -262,12 +264,12 @@ calls them:
   locks, clearing the history) change the tab; `save` and `save_image` write
   a file to a path.
 - `read_settings` and `app_settings`: the Settings dialog, set through its own
-  widgets and the code its OK button runs, so the dialog shows what Claude set
+  widgets and the code its OK button runs, so the dialog shows what the agent set
   (dark mode is `{"theme": "dark"}`). Settings make no undo step; the reply
   gives the old values.
 
 Where a button asks first (Delete All) or opens a dialog (Save, Image, a color,
-the default width), the bridge answers that dialog with Claude's request
+the default width), the bridge answers that dialog with the agent's request
 without showing it (`base.patched`), and the button's own code runs on.
 
 The agent reads its stdin only while a call waits for the app's answer, and
@@ -295,25 +297,25 @@ preview included, `recolor`, `make_steps`, `render`, `identify_knot`,
 `check_masks`, `read_tab`, `read_tab_step`) end with the design drawn by the
 app's real canvas, cut to the design (`Workspace.snapshot`, once per version).
 The panel pictures the app tools itself: the canvas as an edit, a tab switch or
-a view change left it (without Claude floating over it), the group panel for
+a view change left it (without the agent floating over it), the group panel for
 `show_group`, the window (or the Settings page shown) for `app_settings`. Tools
 that answer with words (`search_samples`, `knot_library`, `describe`,
 `validate`, `list_tabs`, `rename_tab`, `read_settings`) have none.
 
 `make_steps` (`openstrand/steps.py`) turns a design into tying steps: the cord
 drawn so far along its path, every crossing with its finished over and under,
-and an arrow on the working end. With the bridge, Claude opens each step in a
+and an arrow on the working end. With the bridge, the agent opens each step in a
 tab of its own ("Step 1 · first loop", ...).
 
 `check_masks` and `edit_mask` work on the current design. After `tie_knot`,
-or on anything crowded, Claude checks the masks and fixes each problem with
+or on anything crowded, the agent checks the masks and fixes each problem with
 the edit the check names (with `preview` first when unsure), then renders and
-looks. When the person points at a mask in their own tab, Claude reads it
+looks. When the person points at a mask in their own tab, the agent reads it
 (`read_tab` carries the tab's curve settings, so its copy has the same paths),
 checks it, and either opens a fixed copy in a new tab or, with
-`edit_mask_in_tab`, changes the mask in that tab: worked out on Claude's copy,
+`edit_mask_in_tab`, changes the mask in that tab: worked out on the agent's copy,
 done with the canvas's own mask code (Reset Mask, `create_masked_layer`,
 `delete_masked_layer`, erase boxes by corners), one undo step, after Allow in
 ask mode.
 
-Tests: `python -m pytest tests/test_openstrand_cli.py tests/test_claude_agent.py tests/test_mask_tools.py`
+Tests: `python -m pytest tests/test_openstrand_cli.py tests/test_agent.py tests/test_mask_tools.py`

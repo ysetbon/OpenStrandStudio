@@ -1,6 +1,6 @@
 """The model settings (Settings > Models): the user's API key for each provider
 (Anthropic, OpenAI, xAI, Moonshot, DeepSeek, Alibaba Cloud), the model to use,
-whether what Claude makes is shared with the developer, and what the requests
+whether what the agent makes is shared with the developer, and what the requests
 have cost in all on this computer.
 
 Kept in claude.json in the OpenStrand Studio settings folder, on this computer
@@ -71,18 +71,25 @@ def models(data=None):
 
 def own_keys(current=None):
     """Every API key this app knows of, saved or set in the environment, whatever its shape:
-    claude_sharing cuts each one out of anything shared (an answer may repeat a key)."""
+    agent_sharing cuts each one out of anything shared (an answer may repeat a key)."""
     current = load() if current is None else current
     keys = set(current['keys'].values())
     keys.update(os.environ.get(spec.env, '').strip() for spec in PROVIDERS.values() if spec.env)
     return sorted(key for key in keys if key)
 
 
+def _switched_on(data):
+    """Whether claude.json's own data leaves the agent on: the one switch in Settings > Models
+    (models_on). An earlier version had a second box that hid the agent (show_button); a
+    person who had unticked it finds the agent off, until they tick the switch."""
+    return data.get('models_on', True) is not False and data.get('show_button', True) is not False
+
+
 def sharing_on():
-    """Whether a share may go now: the person said yes and has not turned it (or models) off.
+    """Whether a share may go now: the person said yes and has not turned it (or the agent) off.
     Read from claude.json alone (no password store), so a background thread can ask it."""
     data = _read()
-    return data.get('share') is True and data.get('models_on', True) is not False
+    return data.get('share') is True and _switched_on(data)
 
 
 def based_in_china(provider):
@@ -92,15 +99,15 @@ def based_in_china(provider):
 
 def refusal(provider=None, data=None):
     """Why nothing may be sent to provider now, as Settings > Models says (a sentence), or
-    None when it may. provider None: a share with the developer, refused only while AI
-    models are off. providers.POLICY: every request asks this just before it leaves."""
+    None when it may. provider None: a share with the developer, refused only while the
+    agent is off. providers.POLICY: every request asks this just before it leaves."""
     data = _read() if data is None else data
     if data.get(UNREADABLE) is True:
-        return ('AI models are turned off: the OpenStrand Studio settings (claude.json) could not be read. '
-                'Tick "Connect to AI models" in Settings > Models to turn them on again')
-    if data.get('models_on', True) is False:
-        return ('AI models are turned off in OpenStrand Studio (Settings > Models): nothing is sent to any '
-                'of them')
+        return ('The OpenStrand agent is turned off: the OpenStrand Studio settings (claude.json) could not '
+                'be read. Tick "Use the OpenStrand agent" in Settings > Models to turn it on again')
+    if not _switched_on(data):
+        return ('The OpenStrand agent is turned off in OpenStrand Studio (Settings > Models): nothing is '
+                'sent to any AI model')
     if provider and based_in_china(provider) and data.get('allow_china') is not True:
         name = PROVIDERS[provider].name
         return (f'{name} is turned off in OpenStrand Studio (Settings > Models): models from companies based '
@@ -188,7 +195,7 @@ DEFAULT_MAX_COST = 2.00     # USD one request may spend before it stops
 MAX_COST_RANGE = (0.10, 20.00)
 DEFAULT_SESSION_LIMIT = 10.00  # USD all requests may spend before the app is restarted
 SESSION_LIMIT_RANGE = (0.50, 500.00)
-EFFORTS = ('low', 'medium', 'high', 'xhigh', 'max')  # how long Claude may think
+EFFORTS = ('low', 'medium', 'high', 'xhigh', 'max')  # how long the agent may think
 DEFAULT_EFFORT = 'high'
 MODES = ('ask', 'auto')  # ask before opening a design, or open it at once (plan mode is never kept)
 DEFAULT_MODE = 'auto'
@@ -336,22 +343,22 @@ def _read():
     return {'models_on': False, UNREADABLE: True}
 
 
-def claude_available(current=None):
-    """Whether the Claude button, Ctrl+J and the panel are there at all: Settings > Models
-    shows the button, and AI models are not turned off (off is off everywhere: no button,
-    no panel, no agent command, nothing sent)."""
+def agent_on(current=None):
+    """Whether the agent is there at all: its button, Ctrl+J, its panel and the openstrand
+    agent command. One switch in Settings > Models says so (models_on); off is off
+    everywhere: no button, no panel, no agent command, nothing sent to any model."""
     current = load() if current is None else current
-    return bool(current['show_button'] and current['models_on'])
+    return bool(current['models_on'])
 
 
 def load():
-    """{'api_key', 'keys', 'model', 'web', 'max_cost', 'spent', 'spent_since', 'show_button',
+    """{'api_key', 'keys', 'model', 'web', 'max_cost', 'spent', 'spent_since', 'models_on',
     'share', ...}; empty key when none is saved.
 
     spent is what every request has cost in all, in USD, since spent_since
-    (an ISO date, empty before the first request). show_button is False when
-    Settings > Claude hides Claude altogether. Claude itself always starts closed.
-    share: whether what the model makes goes to the developer (claude_sharing): None until
+    (an ISO date, empty before the first request). models_on is False when
+    Settings > Models turns the agent off altogether. Its panel always starts closed.
+    share: whether what the model makes goes to the developer (agent_sharing): None until
     the person is asked, then True or False. gallery: whether the developer may show their
     new designs in the public gallery, the same way (it only counts while share is on). Keys saved in claude.json by an earlier
     version move to the password store here, once there is one."""
@@ -376,14 +383,13 @@ def load():
                'web': data.get('web', True) is not False,
                'max_cost': _cost(data.get('max_cost', DEFAULT_MAX_COST)),
                'spent': _money(data.get('spent')), 'spent_since': str(data.get('spent_since') or ''),
-               'show_button': data.get('show_button', True) is not False,
                'effort': data.get('effort') if data.get('effort') in EFFORTS else DEFAULT_EFFORT,
                'session_limit': _range(data.get('session_limit', DEFAULT_SESSION_LIMIT), SESSION_LIMIT_RANGE,
                                        DEFAULT_SESSION_LIMIT),
                'mode': data.get('mode') if data.get('mode') in MODES else DEFAULT_MODE,
                'share': data.get('share') if data.get('share') in (True, False) else None,
                'gallery': data.get('gallery') if data.get('gallery') in (True, False) else None,
-               'models_on': data.get('models_on', True) is not False,
+               'models_on': _switched_on(data),
                'allow_china': data.get('allow_china') is True}
     if data.get(UNREADABLE) is True:  # not what is saved: nothing but the person's own save writes it back
         current[UNREADABLE] = True
@@ -392,13 +398,13 @@ def load():
     return current
 
 
-def save(api_key=None, model=None, web=None, max_cost=None, show_button=None,
-         effort=None, session_limit=None, mode=None, provider_key=None, share=None,
+def save(api_key=None, model=None, web=None, max_cost=None, effort=None,
+         session_limit=None, mode=None, provider_key=None, share=None,
          models_on=None, allow_china=None, gallery=None):
     """Update the saved settings given. api_key is Anthropic's; provider_key is
     (provider, key) for any provider. An empty key removes it. share, gallery (their new
-    designs may be shown in the public gallery), models_on (False: nothing is ever sent to
-    a model) and allow_china (the providers based in China): True or False."""
+    designs may be shown in the public gallery), models_on (False: the agent is off, and
+    nothing is ever sent to a model) and allow_china (the providers based in China): True or False."""
     current = load()
     if models_on is not None:
         current['models_on'] = bool(models_on)
@@ -427,8 +433,6 @@ def save(api_key=None, model=None, web=None, max_cost=None, show_button=None,
         current['web'] = bool(web)
     if max_cost is not None:
         current['max_cost'] = _cost(max_cost)
-    if show_button is not None:
-        current['show_button'] = bool(show_button)
     if effort is not None:
         if effort not in EFFORTS:
             raise ValueError(f'unknown effort {effort}')
@@ -468,7 +472,6 @@ def _write(current, removed=()):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     payload = {'model': current['model'], 'web': current['web'], 'max_cost': current['max_cost'],
                'spent': current['spent'], 'spent_since': current['spent_since'],
-               'show_button': current['show_button'],
                'effort': current['effort'], 'session_limit': current['session_limit'], 'mode': current['mode']}
     if current.get('share') is not None:
         payload['share'] = bool(current['share'])

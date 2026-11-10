@@ -1,9 +1,9 @@
-"""Claude in the app: the box floating over the canvas, the Claude button
-next to Settings that shows and hides it, and the Settings > Claude page.
+"""The agent in the app: the box floating over the canvas, the agent button
+next to Settings that shows and hides it, and the Settings > Models page.
 
 The panel sends a request to the openstrand agent (python -m openstrand agent),
 which runs in its own background process with the user's API key and model
-from Settings > Claude. Its progress arrives as JSON lines; when it finishes,
+from Settings > Models. Its progress arrives as JSON lines; when it finishes,
 the design opens in a new tab through MainWindow.load_project_file, the same
 path as Load, so strands, masks, groups and the layer panel come out as in
 any saved project. With "Start from the canvas" the current canvas goes to
@@ -31,9 +31,9 @@ from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QCheckBox, QCo
                              QStyleOptionComboBox, QTextBrowser, QTextEdit, QVBoxLayout,
                              QWidget)
 
-import claude_settings
-import claude_sharing
-from claude_stitch import Stitch, paint_stitch
+import agent_settings
+import agent_sharing
+from agent_stitch import Stitch, paint_stitch
 from translations import translations
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -54,26 +54,26 @@ TOOL_CHIPS = {
     'open_in_new_tab': ('tabs', '#a04f9a', '#ffffff'),
     'rename_tab': ('tabs', '#a04f9a', '#ffffff'),
     'switch_tab': ('tabs', '#a04f9a', '#ffffff'),
-    'edit_mask_in_tab': ('claude_tool_edit_mask', '#a04f9a', '#ffffff'),
+    'edit_mask_in_tab': ('agent_tool_edit_mask', '#a04f9a', '#ffffff'),
     'read_tab_step': ('tabs', '#a04f9a', '#ffffff'),
-    'edit_strand_in_tab': ('claude_tool_edit_strand', '#a04f9a', '#ffffff'),
+    'edit_strand_in_tab': ('agent_tool_edit_strand', '#a04f9a', '#ffffff'),
     # The layer panel's right-click menu, the group panel, the main window and Settings.
-    'edit_layers_in_tab': ('claude_tool_layers', '#a04f9a', '#ffffff'),
-    'edit_groups_in_tab': ('claude_tool_groups', '#a04f9a', '#ffffff'),
-    'show_group': ('claude_tool_groups', '#a04f9a', '#ffffff'),
-    'app_window': ('claude_tool_window', '#a04f9a', '#ffffff'),
-    'app_settings': ('claude_tool_settings', '#a04f9a', '#ffffff'),
-    'read_settings': ('claude_tool_settings', '#a04f9a', '#ffffff'),
+    'edit_layers_in_tab': ('agent_tool_layers', '#a04f9a', '#ffffff'),
+    'edit_groups_in_tab': ('agent_tool_groups', '#a04f9a', '#ffffff'),
+    'show_group': ('agent_tool_groups', '#a04f9a', '#ffffff'),
+    'app_window': ('agent_tool_window', '#a04f9a', '#ffffff'),
+    'app_settings': ('agent_tool_settings', '#a04f9a', '#ffffff'),
+    'read_settings': ('agent_tool_settings', '#a04f9a', '#ffffff'),
     # Knots and masks: tie_knot makes a design, the others look and fix.
-    'tie_knot': ('claude_tool_tie_knot', '#93e993', '#1a1a1a'),
-    'check_masks': ('claude_tool_check_masks', '#d4d4d4', '#1a1a1a'),
-    'edit_mask': ('claude_tool_edit_mask', '#d4d4d4', '#1a1a1a'),
-    'identify_knot': ('claude_tool_identify_knot', '#d4d4d4', '#1a1a1a'),
-    'knot_library': ('claude_tool_knot_library', '#d4d4d4', '#1a1a1a'),
+    'tie_knot': ('agent_tool_tie_knot', '#93e993', '#1a1a1a'),
+    'check_masks': ('agent_tool_check_masks', '#d4d4d4', '#1a1a1a'),
+    'edit_mask': ('agent_tool_edit_mask', '#d4d4d4', '#1a1a1a'),
+    'identify_knot': ('agent_tool_identify_knot', '#d4d4d4', '#1a1a1a'),
+    'knot_library': ('agent_tool_knot_library', '#d4d4d4', '#1a1a1a'),
 }
 OTHER_CHIP = ('#d4d4d4', '#1a1a1a')
 ACCENT = '#FF5500'  # the OpenStrand logo's orange: the running mark, the progress bars, Send and the links
-# The working animation's tempo, by what Claude is doing. Two things, kept apart:
+# The working animation's tempo, by what the agent is doing. Two things, kept apart:
 #   speed  how fast the stitch is tied: 1.0 is a level in 2.34 s
 #   fps    how often the picture may change: many times a second it glides, a few times a
 #          second at a high speed the tying jumps from picture to picture (stop motion)
@@ -94,7 +94,7 @@ STUCK = {'thinking': (45, 60), 'working': (45, 60), 'tool': (15, 25), 'picture':
 SWELL_SECONDS = 3.2
 EASE_SECONDS = 0.35  # a change of tempo glides in
 # Every event (a thought, a tool starting or ending, a tool's new picture) speeds the tying
-# up by KICK for a moment, fading over KICK_SECONDS: the animation answers what Claude does.
+# up by KICK for a moment, fading over KICK_SECONDS: the animation answers what the agent does.
 KICK, KICK_SECONDS = 0.9, 0.5
 # The tools that draw a design. Any tool that sends pictures of its progress counts too.
 PICTURE_TOOLS = {'make_turks_head', 'make_mxn', 'make_heart', 'draw_design', 'tie_knot', 'render', 'make_steps'}
@@ -124,22 +124,22 @@ def _tr(language, key):
     return table.get(key) or translations['en'].get(key, key)
 
 
-# An Allow/Deny card's words, by the bridge action that asks (src/claude_bridge).
-CONFIRM_KEYS = {'rename_tab': 'claude_confirm_rename', 'edit_mask': 'claude_confirm_mask',
-                'edit_strand': 'claude_confirm_strand', 'edit_layers': 'claude_confirm_layers',
-                'edit_groups': 'claude_confirm_groups', 'window': 'claude_confirm_window',
-                'settings': 'claude_confirm_settings'}
+# An Allow/Deny card's words, by the bridge action that asks (src/agent_bridge).
+CONFIRM_KEYS = {'rename_tab': 'agent_confirm_rename', 'edit_mask': 'agent_confirm_mask',
+                'edit_strand': 'agent_confirm_strand', 'edit_layers': 'agent_confirm_layers',
+                'edit_groups': 'agent_confirm_groups', 'window': 'agent_confirm_window',
+                'settings': 'agent_confirm_settings'}
 
 
 def confirm_text(language, what):
-    """'Claude wants to delete 1_5, 2_5 (tab “Ring”).': what an Allow/Deny card asks."""
+    """'The agent wants to delete 1_5, 2_5 (tab “Ring”).': what an Allow/Deny card asks."""
     action, current, new = what
-    return _tr(language, CONFIRM_KEYS.get(action, 'claude_confirm_switch')).format(old=current, new=new)
+    return _tr(language, CONFIRM_KEYS.get(action, 'agent_confirm_switch')).format(old=current, new=new)
 
 
 def model_tags(model, t):
     """'new · price estimated', 'retiring 2026-12-01'... for a model in the menus."""
-    info = claude_settings.model_info(model)
+    info = agent_settings.model_info(model)
     if info is None:
         return ''
     tags = [t('models_tag_new')] if info.new else []
@@ -197,7 +197,7 @@ def agent_command(prompt, model, out_dir, images=(), start=None, web=True, max_c
     """The program and arguments that run one agent request."""
     # --log: the agent's step-by-step log on stderr, which the panel prints in the terminal (terminal_log).
     args = ['-m', 'openstrand', 'agent', prompt, '--model', model, '--out-dir', out_dir, '--json-events', '--log']
-    if history:  # the session so far: Claude remembers it
+    if history:  # the session so far: the agent remembers it
         args += ['--history', history]
     if app:  # the app answers its tab tools through the bridge
         args.append('--app')
@@ -220,8 +220,8 @@ def duration_text(seconds, t):
     """'12s', '5m 39s', as the language writes them (t: the panel's translate)."""
     s = max(0, int(round(seconds)))
     if s < 60:
-        return t('claude_seconds').format(n=s)
-    return t('claude_minutes').format(m=s // 60, s=s % 60)
+        return t('agent_seconds').format(n=s)
+    return t('agent_minutes').format(m=s // 60, s=s % 60)
 
 
 def paint_bar(painter, rect, fraction, track, fill, phase=0.0):
@@ -335,12 +335,12 @@ LOG_PREFIX = 'log '  # the agent's log lines (openstrand/debuglog.py)
 
 
 def terminal_log(text):
-    """A line in the terminal the app was started from, for debugging Claude."""
+    """A line in the terminal the app was started from, for debugging the agent."""
     out = sys.__stderr__
     if out is None:  # no console (pythonw, a packaged app)
         return
     try:
-        print(f'[Claude] {text}', file=out, flush=True)
+        print(f'[agent] {text}', file=out, flush=True)
     except (OSError, ValueError):
         pass
 
@@ -364,7 +364,7 @@ def short_url(url):
 def design_name(prompt):
     """A file name from the request: '5x3 bracelet in teal' -> '5x3_bracelet_in_teal'."""
     words = re.findall(r'[\w×]+', prompt.lower(), re.UNICODE)[:6]
-    return '_'.join(words).replace('×', 'x')[:48] or 'claude_design'
+    return '_'.join(words).replace('×', 'x')[:48] or 'agent_design'
 
 
 class PromptBox(QTextEdit):
@@ -381,10 +381,10 @@ class PromptBox(QTextEdit):
         self.setLineWrapMode(QTextEdit.WidgetWidth)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.setObjectName('claudePrompt')
-        self.setStyleSheet('QTextEdit#claudePrompt { border: 1px solid palette(mid); border-radius: 8px;'
+        self.setObjectName('agentPrompt')
+        self.setStyleSheet('QTextEdit#agentPrompt { border: 1px solid palette(mid); border-radius: 8px;'
                            ' padding: 4px 6px; }'  # colors come from the app's theme
-                           'QTextEdit#claudePrompt:focus { border-color: #FF5500; }')
+                           'QTextEdit#agentPrompt:focus { border-color: #FF5500; }')
         self.document().setDocumentMargin(2)
         self.document().contentsChanged.connect(self.fit_height)
         self.fit_height()
@@ -455,7 +455,7 @@ class FramePreview(QLabel):
         self.key = key
         self.setPixmap(QPixmap.fromImage(picture_image(frame, PREVIEW_SIZE)))
         self.adjustSize()
-        # Above the mouse (Claude sits at the bottom of the canvas), kept on screen.
+        # Above the mouse (the agent sits at the bottom of the canvas), kept on screen.
         screen = QApplication.screenAt(cursor) or QApplication.primaryScreen()
         area = screen.availableGeometry() if screen is not None else QRect(0, 0, 10000, 10000)
         x = min(max(area.left(), cursor.x() - self.width() // 2), area.right() - self.width())
@@ -483,7 +483,7 @@ def step_mood(step):
 
 class WorkingLine(QWidget):
     """The assistant at work, the OpenStrand way: the logo's box stitch tied from a plus and
-    continued level after level, k = 1 or k = 0 (claude_stitch), then what the assistant is
+    continued level after level, k = 1 or k = 0 (agent_stitch), then what the assistant is
     doing, how far a long tool has got (a bar, how much is left) and the time so far.
 
     The tying keeps the assistant's tempo (TEMPOS): slow and breathing while it thinks, as
@@ -691,20 +691,20 @@ class WorkingLine(QWidget):
         painter.drawText(QRectF(x, 0, tail + 8, self.height()), Qt.AlignVCenter, elapsed)
 
 
-class ClaudePanel(QWidget):
-    """Claude, floating over the bottom of the canvas: the conversation, the
-    chat box and its buttons. The Claude button next to Settings shows and
+class AgentPanel(QWidget):
+    """The agent panel, floating over the bottom of the canvas: the conversation, the
+    chat box and its buttons. The agent button next to Settings shows and
     hides it."""
 
     design_ready = pyqtSignal(str)  # path of the finished project file
     spending_changed = pyqtSignal()  # a request's cost was added to the saved total
-    open_changed = pyqtSignal(bool)  # Claude was shown or hidden
-    activity_changed = pyqtSignal()  # a run started or ended: the Claude button shows it
+    open_changed = pyqtSignal(bool)  # the agent was shown or hidden
+    activity_changed = pyqtSignal()  # a run started or ended: the agent button shows it
     models_fetched = pyqtSignal(object)  # the daily, silent Refresh models: what the providers said
-    MARGIN = 12  # px between Claude and the canvas edges
+    MARGIN = 12  # px between the agent and the canvas edges
 
     def __init__(self, main_window, canvas=None, language_code='en'):
-        # Claude floats over the bottom of the canvas: a child of the canvas,
+        # The agent floats over the bottom of the canvas: a child of the canvas,
         # so the canvas keeps its size and the drawing never moves.
         super().__init__(canvas if canvas is not None else main_window)
         # Its own arrow: as a child of the canvas it would show the canvas mode's cursor
@@ -713,8 +713,8 @@ class ClaudePanel(QWidget):
         self.main_window = main_window
         self.language = language_code
         self.process = None
-        self.run_cost, self.total_before = 0.0, claude_settings.load()['spent']
-        self.design_waiting = False  # a design opened while Claude was hidden
+        self.run_cost, self.total_before = 0.0, agent_settings.load()['spent']
+        self.design_waiting = False  # a design opened while the agent was hidden
         self.image_path = None
         self.out_dir = None
         self.prompt = ''
@@ -727,14 +727,14 @@ class ClaudePanel(QWidget):
         self.follow_end = True
         self.kept_scroll = 0
         self.scrolling = False  # the panel moves the scroll bar itself: not the person scrolling
-        self.bridge = None  # set by the main window: Claude's tab tools run through it
+        self.bridge = None  # set by the main window: the agent's tab tools run through it
         # The session: what was asked and answered so far, sent with each request
-        # so Claude remembers it. "New session" (or /clear, /new) starts again.
+        # so the agent remembers it. "New session" (or /clear, /new) starts again.
         self.history = []
         self.shown_prompt = ''
         self.run_design = None
         self.session_spent = 0.0  # since the app opened; held to the session limit
-        self.mode = claude_settings.load()['mode']  # 'ask', 'auto', or 'plan' (never saved)
+        self.mode = agent_settings.load()['mode']  # 'ask', 'auto', or 'plan' (never saved)
         self.last_mode = self.mode
         self.run_mode = self.mode
         self.run_texts = []
@@ -757,12 +757,12 @@ class ClaudePanel(QWidget):
         self.model_clock.start()
         QTimer.singleShot(AUTO_REFRESH_FIRST_MS, self.auto_refresh_models)
         self._build()
-        self.setVisible(False)  # closed each time the app starts: the Claude button opens it
+        self.setVisible(False)  # closed each time the app starts: the agent button opens it
         self.retranslate(language_code)
 
     # ------------------------------------------------------------------ UI
     def _build(self):
-        self.setObjectName('claudePanel')
+        self.setObjectName('agentPanel')
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.apply_theme(getattr(self.main_window, 'current_theme', 'default'))
         self.body = self
@@ -803,18 +803,18 @@ class ClaudePanel(QWidget):
         self.prompt_edit.submitted.connect(self.send)
         self.prompt_edit.cycle_mode.connect(self.cycle_mode)
         self.attach_button = QPushButton(self)
-        self.attach_button.setObjectName('claudeChip')
+        self.attach_button.setObjectName('agentChip')
         self.attach_button.clicked.connect(self.choose_image)
         # A toggle like the toolbar's (Points, Shadow): a black frame while on.
         self.use_canvas_check = QPushButton(self)
-        self.use_canvas_check.setObjectName('claudeToggle')
+        self.use_canvas_check.setObjectName('agentToggle')
         self.use_canvas_check.setCheckable(True)
         self.use_canvas_check.setChecked(True)  # an empty canvas sends nothing
         self.use_canvas_check.toggled.connect(lambda _: self.show_use_canvas())
         self.status_label = QLabel(self)
         self.status_label.setStyleSheet('color: gray;')
         self.session_label = QLabel(self)  # what this session has spent, beside Send
-        self.session_label.setObjectName('claudeSession')
+        self.session_label.setObjectName('agentSession')
         self.send_button = QPushButton(self)
         self.send_button.setStyleSheet('QPushButton { background: #FF5500; color: #1f1e1d; font-weight: bold; font-size: 12px;'
                                        ' padding: 5px 16px; border: none; border-radius: 6px; }'
@@ -838,34 +838,34 @@ class ClaudePanel(QWidget):
         status = QHBoxLayout()
         status.setSpacing(6)
         self.mode_button = QToolButton(self)
-        self.mode_button.setObjectName('claudeMode')
+        self.mode_button.setObjectName('agentMode')
         self.mode_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.mode_button.setIconSize(QSize(13, 13))
         self.mode_button.clicked.connect(self.cycle_mode)
         self.mode_key = QToolButton(self)  # the key that switches the mode: Shift + Tab
-        self.mode_key.setObjectName('claudeKey')
+        self.mode_key.setObjectName('agentKey')
         self.mode_key.setText('Tab')
         self.mode_key.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.mode_key.setIconSize(QSize(11, 11))
         self.mode_key.clicked.connect(self.cycle_mode)
         # The company, its model and the effort: each its own drop-down.
         self.provider_button = QToolButton(self)
-        self.provider_button.setObjectName('claudePick')
+        self.provider_button.setObjectName('agentPick')
         self.provider_button.setPopupMode(QToolButton.InstantPopup)
         self.provider_menu = QMenu(self.provider_button)
         self.provider_button.setMenu(self.provider_menu)
         self.model_button = QToolButton(self)
-        self.model_button.setObjectName('claudePick')
+        self.model_button.setObjectName('agentPick')
         self.model_button.setPopupMode(QToolButton.InstantPopup)
         self.model_menu = QMenu(self.model_button)
         self.model_button.setMenu(self.model_menu)
         self.effort_button = QToolButton(self)
-        self.effort_button.setObjectName('claudePick')
+        self.effort_button.setObjectName('agentPick')
         self.effort_button.setPopupMode(QToolButton.InstantPopup)
         self.effort_menu = QMenu(self.effort_button)
         self.effort_button.setMenu(self.effort_menu)
         self.new_button = QToolButton(self)
-        self.new_button.setObjectName('claudeChip')
+        self.new_button.setObjectName('agentChip')
         self.new_button.clicked.connect(self.new_session)
         status.addWidget(self.new_button)
         status.addWidget(self.mode_button)
@@ -910,40 +910,40 @@ class ClaudePanel(QWidget):
             self.render_transcript()
             self.refresh_controls()
         self.setStyleSheet(f"""
-            QWidget#claudePanel {{ background-color: {c['bg']}; border: 1px solid {c['border']}; border-radius: 10px; }}
-            #claudePanel QWidget {{ background-color: {c['bg']}; color: {c['fg']}; }}
-            #claudePanel QLabel, #claudePanel QCheckBox {{ background-color: transparent; color: {c['fg']}; }}
-            #claudePanel QPushButton {{ background-color: {c['button']}; color: {c['fg']}; border: none;
+            QWidget#agentPanel {{ background-color: {c['bg']}; border: 1px solid {c['border']}; border-radius: 10px; }}
+            #agentPanel QWidget {{ background-color: {c['bg']}; color: {c['fg']}; }}
+            #agentPanel QLabel, #agentPanel QCheckBox {{ background-color: transparent; color: {c['fg']}; }}
+            #agentPanel QPushButton {{ background-color: {c['button']}; color: {c['fg']}; border: none;
                                         border-radius: 4px; padding: 5px 10px; }}
-            #claudePanel QPushButton:hover {{ background-color: {c['hover']}; }}
-            #claudePanel QTextBrowser {{ background-color: {c['log']}; color: {c['fg']};
+            #agentPanel QPushButton:hover {{ background-color: {c['hover']}; }}
+            #agentPanel QTextBrowser {{ background-color: {c['log']}; color: {c['fg']};
                                          border: 1px solid {c['log_border']}; border-radius: 6px; }}
-            #claudePanel QToolButton {{ background-color: transparent; border: none; padding: 1px 2px;
+            #agentPanel QToolButton {{ background-color: transparent; border: none; padding: 1px 2px;
                                         color: {c['muted']}; font-size: 12px; }}
-            #claudePanel QToolButton:hover {{ color: {c['fg']}; }}
-            #claudePanel QToolButton::menu-indicator {{ image: none; width: 0px; }}
-            #claudePanel QLabel#claudeSession {{ color: {c['muted']}; font-size: 12px; }}
+            #agentPanel QToolButton:hover {{ color: {c['fg']}; }}
+            #agentPanel QToolButton::menu-indicator {{ image: none; width: 0px; }}
+            #agentPanel QLabel#agentSession {{ color: {c['muted']}; font-size: 12px; }}
             /* As the toolbar's buttons: bold, square-ish corners; a frame while a toggle is on. */
-            #claudePanel QPushButton#claudeChip, #claudePanel QToolButton#claudeChip,
-            #claudePanel QPushButton#claudeToggle {{
+            #agentPanel QPushButton#agentChip, #agentPanel QToolButton#agentChip,
+            #agentPanel QPushButton#agentToggle {{
                 background-color: {c['button']}; color: {c['fg']}; border: 1px solid {c['border']};
                 border-radius: 6px; padding: 4px 10px; font-weight: bold; font-size: 12px; }}
-            #claudePanel QToolButton#claudeChip {{ padding: 2px 8px; }}
-            #claudePanel QPushButton#claudeChip:hover, #claudePanel QToolButton#claudeChip:hover,
-            #claudePanel QPushButton#claudeToggle:hover {{ background-color: {c['hover']}; }}
-            #claudePanel QPushButton#claudeChip:pressed, #claudePanel QToolButton#claudeChip:pressed,
-            #claudePanel QPushButton#claudeToggle:pressed {{ background-color: {c['pressed']}; }}
-            #claudePanel QToolButton#claudeChip:disabled {{ color: {c['muted']}; }}
-            #claudePanel QPushButton#claudeToggle:checked {{ background-color: {c['on']};
+            #agentPanel QToolButton#agentChip {{ padding: 2px 8px; }}
+            #agentPanel QPushButton#agentChip:hover, #agentPanel QToolButton#agentChip:hover,
+            #agentPanel QPushButton#agentToggle:hover {{ background-color: {c['hover']}; }}
+            #agentPanel QPushButton#agentChip:pressed, #agentPanel QToolButton#agentChip:pressed,
+            #agentPanel QPushButton#agentToggle:pressed {{ background-color: {c['pressed']}; }}
+            #agentPanel QToolButton#agentChip:disabled {{ color: {c['muted']}; }}
+            #agentPanel QPushButton#agentToggle:checked {{ background-color: {c['on']};
                 border: 2px solid {c['frame']}; padding: 3px 9px; }}
-            #claudePanel QToolButton#claudePick {{ background-color: {c['button']}; color: {c['fg']};
+            #agentPanel QToolButton#agentPick {{ background-color: {c['button']}; color: {c['fg']};
                 border: 1px solid {c['border']}; border-radius: 6px; padding: 2px 22px 2px 8px; font-size: 12px; }}
-            #claudePanel QToolButton#claudePick::menu-indicator {{
+            #agentPanel QToolButton#agentPick::menu-indicator {{
                 image: url({icon_path(f"menu_arrow_on_{shade_of(theme_name)}.png")});
                 subcontrol-origin: padding; subcontrol-position: right center; width: 10px; height: 6px; right: 7px; }}
-            #claudePanel QToolButton#claudePick:hover {{ background-color: {c['hover']}; }}
-            #claudePanel QToolButton#claudePick:pressed {{ background-color: {c['pressed']}; }}
-            #claudePanel QToolButton#claudeKey {{ color: {c['muted']}; background-color: {c['log']};
+            #agentPanel QToolButton#agentPick:hover {{ background-color: {c['hover']}; }}
+            #agentPanel QToolButton#agentPick:pressed {{ background-color: {c['pressed']}; }}
+            #agentPanel QToolButton#agentKey {{ color: {c['muted']}; background-color: {c['log']};
                 border: 1px solid {c['border']}; border-radius: 4px; padding: 1px 5px; font-size: 11px; }}
         """)
         if hasattr(self, 'model_menu'):
@@ -956,11 +956,11 @@ class ClaudePanel(QWidget):
         return self.isVisibleTo(self.parentWidget())
 
     def set_open(self, opened):
-        """Show or hide Claude (for this run only: it starts closed every time). It never opens
-        while Settings > Models hides it or has AI models turned off, whatever asks."""
-        opened = bool(opened) and claude_settings.claude_available()
+        """Show or hide the agent (for this run only: it starts closed every time). It never
+        opens while Settings > Models has the agent turned off, whatever asks."""
+        opened = bool(opened) and agent_settings.agent_on()
         if not opened:
-            self.preview.hide_frame()  # its own window: it would stay up with Claude hidden
+            self.preview.hide_frame()  # its own window: it would stay up with the agent hidden
         if opened:
             self.design_waiting = False
         self.setVisible(opened)
@@ -983,7 +983,7 @@ class ClaudePanel(QWidget):
         height = layout.totalHeightForWidth(width) if layout.hasHeightForWidth() else -1
         if height < 0:
             height = layout.totalSizeHint().height()
-        # Always the bottom of the canvas: Claude never moves for the tab strip,
+        # Always the bottom of the canvas: the agent never moves for the tab strip,
         # which floats over it (see stack).
         bottom = area.bottom() + 1 - m
         height = min(height, max(80, bottom - area.top() - m))
@@ -1042,7 +1042,7 @@ class ClaudePanel(QWidget):
 
     def stack(self):
         """Above the canvas's other overlays, but under the tab strip: the
-        strip floats over Claude and can be dragged anywhere, Claude stays put."""
+        strip floats over the agent and can be dragged anywhere, the agent stays put."""
         self.raise_()
         edge = getattr(self.main_window, 'tab_edge', None)
         if edge is not None and edge.isVisible():
@@ -1065,12 +1065,12 @@ class ClaudePanel(QWidget):
         self.language = language_code
         t = lambda key: _tr(language_code, key)
         self.working.format_time = lambda seconds: duration_text(seconds, t)
-        self.prompt_edit.setPlaceholderText(t('claude_prompt_placeholder'))
-        self.prompt_edit.setToolTip(t('claude_prompt_keys'))
-        self.attach_button.setText(t('claude_attach'))
-        self.remove_image_button.setText(t('claude_remove_image'))
+        self.prompt_edit.setPlaceholderText(t('agent_prompt_placeholder'))
+        self.prompt_edit.setToolTip(t('agent_prompt_keys'))
+        self.attach_button.setText(t('agent_attach'))
+        self.remove_image_button.setText(t('agent_remove_image'))
         self.show_use_canvas()
-        self.send_button.setText(t('claude_stop') if self.running() else t('claude_send'))
+        self.send_button.setText(t('agent_stop') if self.running() else t('agent_send'))
         self.setLayoutDirection(Qt.RightToLeft if language_code == 'he' else Qt.LeftToRight)
         self.set_image(self.image_path)
         self.refresh_controls()
@@ -1078,7 +1078,7 @@ class ClaudePanel(QWidget):
 
     def show_use_canvas(self):
         """Start from the canvas: a check mark (images/check.png) in front while it is on."""
-        self.use_canvas_check.setText(_tr(self.language, 'claude_use_canvas'))
+        self.use_canvas_check.setText(_tr(self.language, 'agent_use_canvas'))
         self.use_canvas_check.setIcon(QIcon(icon_path('check.png')) if self.use_canvas_check.isChecked() else QIcon())
 
     def set_image(self, path):
@@ -1088,14 +1088,14 @@ class ClaudePanel(QWidget):
             self.image_label.setText(os.path.basename(path))
 
     def choose_image(self):
-        path, _ = QFileDialog.getOpenFileName(self, _tr(self.language, 'claude_attach_title'), '',
+        path, _ = QFileDialog.getOpenFileName(self, _tr(self.language, 'agent_attach_title'), '',
                                               'Images (*.png *.jpg *.jpeg *.gif *.webp)')
         if path:
             self.set_image(path)
 
     # ---------------------------------------------------------- transcript
     # The conversation is a list of entries, drawn as HTML each time it
-    # changes, so step groups fold and open like Claude Code's: while Claude
+    # changes, so step groups fold and open like Claude Code's: while the agent
     # works its steps show in a box under a live line; once it has answered
     # they fold into one line ("6 steps · 50s ›") that opens again on a click.
     def add_entry(self, entry):
@@ -1104,12 +1104,12 @@ class ClaudePanel(QWidget):
 
     def add_user(self, text):
         self.close_group()
-        self.follow_end = True  # a new request: show it, and what Claude does with it
+        self.follow_end = True  # a new request: show it, and what the agent does with it
         self.add_entry({'kind': 'user', 'text': text})
 
-    def add_claude(self, text):
+    def add_agent(self, text):
         self.close_group()
-        self.add_entry({'kind': 'claude', 'text': text})
+        self.add_entry({'kind': 'agent', 'text': text})
 
     def add_note(self, text, color=None):
         self.add_entry({'kind': 'note', 'text': text, 'color': color})
@@ -1142,7 +1142,7 @@ class ClaudePanel(QWidget):
                 for step in entry['steps']:
                     step['running'] = False
                 if not entry['toggled']:
-                    entry['open'] = False  # folded once Claude has answered
+                    entry['open'] = False  # folded once the agent has answered
                 changed = True
         if changed:
             self.render_transcript()
@@ -1192,7 +1192,7 @@ class ClaudePanel(QWidget):
         if kind == 'user':
             return (f'<p style="margin:6px 0 4px 0;"><span style="background-color:{c["user_bg"]};'
                     f' color:{c["user_fg"]};">&nbsp;{esc(e["text"])}&nbsp;</span></p>')
-        if kind == 'claude':
+        if kind == 'agent':
             return (f'<p style="margin:5px 0;"><span style="color:{ACCENT}; font-size:9px;">●</span>&nbsp; '
                     f'{lines(e["text"])}</p>')
         if kind == 'note':
@@ -1204,20 +1204,20 @@ class ClaudePanel(QWidget):
             if e.get('png') and os.path.exists(e['png']):
                 picture = (f'<td valign="middle"><img src="{QUrl.fromLocalFile(e["png"]).toString()}"'
                            f' width="96"></td>')
-            action = (f'<span style="color:{c["muted"]};">{esc(t("claude_opened_short"))}</span>' if e['opened']
+            action = (f'<span style="color:{c["muted"]};">{esc(t("agent_opened_short"))}</span>' if e['opened']
                       else f'<a href="os:open/{i}" style="color:{ACCENT}; font-weight:bold;'
-                           f' text-decoration:none;">{esc(t("claude_open_design"))} ›</a>')
+                           f' text-decoration:none;">{esc(t("agent_open_design"))} ›</a>')
             return (f'<table cellspacing="0" cellpadding="6" style="margin:4px 0 4px 18px;'
                     f' border:1px solid {c["log_border"]};"><tr>{picture}<td valign="middle">'
-                    f'{esc(t("claude_design_ready").format(name=e["name"]))}<br>{action}</td></tr></table>')
+                    f'{esc(t("agent_design_ready").format(name=e["name"]))}<br>{action}</td></tr></table>')
         if kind == 'confirm':
             text = esc(confirm_text(self.language, e['what']))
             if e['state'] is None:
                 choice = (f'<a href="os:allow/{i}" style="color:{ACCENT}; font-weight:bold; text-decoration:none;">'
-                          f'{esc(t("claude_allow"))}</a>&nbsp;&nbsp;&nbsp;<a href="os:deny/{i}" '
-                          f'style="color:{c["muted"]}; text-decoration:none;">{esc(t("claude_deny"))}</a>')
+                          f'{esc(t("agent_allow"))}</a>&nbsp;&nbsp;&nbsp;<a href="os:deny/{i}" '
+                          f'style="color:{c["muted"]}; text-decoration:none;">{esc(t("agent_deny"))}</a>')
             else:
-                word = {'allowed': 'claude_allowed', 'denied': 'claude_denied'}.get(e['state'], 'claude_stopped')
+                word = {'allowed': 'agent_allowed', 'denied': 'agent_denied'}.get(e['state'], 'agent_stopped')
                 choice = f'<span style="color:{c["muted"]};">{esc(t(word))}</span>'
             return (f'<table cellspacing="0" cellpadding="6" style="margin:4px 0 4px 18px;'
                     f' border:1px solid {c["log_border"]};"><tr><td>{text}<br>{choice}</td></tr></table>')
@@ -1226,31 +1226,31 @@ class ClaudePanel(QWidget):
             # yes) the public gallery. Each text is a few short lines.
             yes, no = ('share', 'noshare') if kind == 'share' else ('gallery', 'nogallery')
             if e['state'] is None:
-                asked = esc(t(f'claude_{kind}_ask').replace('{url}', claude_sharing.GALLERY_URL))
+                asked = esc(t(f'agent_{kind}_ask').replace('{url}', agent_sharing.GALLERY_URL))
                 question, _, rest = asked.partition('\n')  # its first line is the question itself
                 text = f'<b>{question}</b><br>' + rest.replace('\n', '<br>') + '<br><br>'
                 choice = (f'<a href="os:{yes}/{i}" style="color:{ACCENT}; font-weight:bold; text-decoration:none;">'
-                          f'{esc(t(f"claude_{kind}_yes"))}</a>&nbsp;&nbsp;&nbsp;<a href="os:{no}/{i}" '
-                          f'style="color:{c["muted"]}; text-decoration:none;">{esc(t(f"claude_{kind}_no"))}</a>')
+                          f'{esc(t(f"agent_{kind}_yes"))}</a>&nbsp;&nbsp;&nbsp;<a href="os:{no}/{i}" '
+                          f'style="color:{c["muted"]}; text-decoration:none;">{esc(t(f"agent_{kind}_no"))}</a>')
             else:
                 text = ''
-                said = f'claude_{kind}_on' if e['state'] == 'shared' else f'claude_{kind}_off'
+                said = f'agent_{kind}_on' if e['state'] == 'shared' else f'agent_{kind}_off'
                 choice = f'<span style="color:{c["muted"]};">{esc(t(said))}</span>'
             return (f'<table cellspacing="0" cellpadding="6" style="margin:4px 0 4px 18px;'
                     f' border:1px solid {c["log_border"]};"><tr><td>{text}{choice}</td></tr></table>')
         if kind == 'plan':
             if e['built']:
-                return f'<p style="margin:4px 0 4px 18px; color:{c["muted"]};">{esc(t("claude_plan_built"))}</p>'
+                return f'<p style="margin:4px 0 4px 18px; color:{c["muted"]};">{esc(t("agent_plan_built"))}</p>'
             return (f'<p style="margin:6px 0 6px 18px;"><a href="os:plan/{i}" style="color:{c["plan"]};'
-                    f' font-weight:bold; text-decoration:none;">▶ {esc(t("claude_build_plan"))}</a></p>')
+                    f' font-weight:bold; text-decoration:none;">▶ {esc(t("agent_build_plan"))}</a></p>')
         # A group of steps.
         steps = e['steps']
         if e['end'] is None:
-            current = self.step_label(steps[-1], running=True) if steps else t('claude_working')
+            current = self.step_label(steps[-1], running=True) if steps else t('agent_working')
             head = f'<span style="color:{ACCENT}; font-size:9px;">●</span>&nbsp; {esc(current)}'
         else:
             seconds = max(1, int(round(e['end'] - e['start'])))
-            head = esc(t('claude_steps').format(count=len(steps), seconds=seconds))
+            head = esc(t('agent_steps').format(count=len(steps), seconds=seconds))
         arrow = '⌄' if e['open'] else '›'
         out = (f'<p style="margin:5px 0 2px 0;"><a href="os:group/{i}" style="color:{c["muted"]};'
                f' text-decoration:none;">{head}&nbsp; {arrow}</a></p>')
@@ -1265,11 +1265,11 @@ class ClaudePanel(QWidget):
         t = lambda key: _tr(self.language, key)
         kind = step['kind']
         if kind == 'thinking':
-            return t('claude_thinking') + ('…' if running else '')
+            return t('agent_thinking') + ('…' if running else '')
         if kind == 'search':
-            return t('claude_searching' if running else 'claude_step_searched').format(query=step['text'])
+            return t('agent_searching' if running else 'agent_step_searched').format(query=step['text'])
         if kind == 'fetch':
-            return t('claude_reading' if running else 'claude_step_read').format(url=short_url(step['text']))
+            return t('agent_reading' if running else 'agent_step_read').format(url=short_url(step['text']))
         name = step['name']
         key = TOOL_CHIPS.get(name, (None,))[0]
         label = t(key) if key else name
@@ -1278,14 +1278,14 @@ class ClaudePanel(QWidget):
         if step.get('running') and step.get('stage'):
             return f'{label} · {self.stage_text(step)}'
         if step.get('running') and name in SLOW_TOOLS:
-            return t('claude_drawing')
+            return t('agent_drawing')
         return label + (f': {step["summary"]}' if step.get('summary') else '…')
 
     def stage_text(self, step):
         """What a tool says it is doing, in the person's language ("drawing step 3 of 5")."""
         stage = str(step.get('stage') or '')
-        text = _tr(self.language, f'claude_stage_{stage}')
-        if text == f'claude_stage_{stage}':
+        text = _tr(self.language, f'agent_stage_{stage}')
+        if text == f'agent_stage_{stage}':
             return stage.replace('_', ' ')
         try:
             return text.format(**step.get('numbers', {}))
@@ -1299,7 +1299,7 @@ class ClaudePanel(QWidget):
         if kind == 'thinking':
             arrow = '⌄' if step['open'] else '›'
             out = (f'<a href="os:think/{i}/{j}" style="color:{c["muted"]}; text-decoration:none;">'
-                   f'<i>{esc(t("claude_step_thought"))}</i>&nbsp; {arrow}</a>')
+                   f'<i>{esc(t("agent_step_thought"))}</i>&nbsp; {arrow}</a>')
             if step['open']:
                 out += f'<br><i style="color:{c["muted"]};">{lines(step["text"])}</i>'
             return out
@@ -1314,17 +1314,17 @@ class ClaudePanel(QWidget):
         else:
             # Done or failed: the panel's check and cross pictures (images/), not font characters.
             mark = f'<img src="{icon_path("check.png" if step.get("ok") else "cross.png")}" width="12" height="12">'
-            detail = t('claude_stopped').rstrip('.。') if step.get('stopped') else step.get('summary') or ''
+            detail = t('agent_stopped').rstrip('.。') if step.get('stopped') else step.get('summary') or ''
             took = step.get('seconds')
             if took is not None and took >= 1:  # how long it took, once it is worth saying
                 detail = (detail + ' · ' if detail else '') + duration_text(took, t)
         out = (f'{mark}&nbsp; <span style="background-color:{bg}; color:{fg}; font-weight:bold;">'
                f'&nbsp;{esc(label)}&nbsp;</span>&nbsp; <span style="color:{c["muted"]};">{esc(detail)}</span>')
         if step.get('running'):
-            if not step.get('waiting'):  # a moving bar and clock would say Claude is busy: it waits for the person
+            if not step.get('waiting'):  # a moving bar and clock would say the agent is busy: it waits for the person
                 out += self.progress_html(step, c, i, j)
         elif step.get('picture'):
-            image = (f'<a href="os:frame/{i}/{j}" style="text-decoration:none;"><img src="claude-frame:{step["key"]}"'
+            image = (f'<a href="os:frame/{i}/{j}" style="text-decoration:none;"><img src="agent-frame:{step["key"]}"'
                      f' width="{FRAME_SIZE[0]}" height="{FRAME_SIZE[1]}"></a>')
             out += f'<table cellspacing="0" cellpadding="0" style="margin:4px 0 2px 22px;"><tr><td>{image}</td></tr></table>'
         return out
@@ -1340,13 +1340,13 @@ class ClaudePanel(QWidget):
         if not (step.get('stage') or step.get('frame')) and elapsed < 2:
             return ''  # a quick tool: nothing more to show
         words = [w for w in (self.progress_words(step), duration_text(elapsed, t)) if w]
-        bar = f'claude-bar:{step["key"]}'
+        bar = f'agent-bar:{step["key"]}'
         self.transcript.document().addResource(
             QTextDocument.ImageResource, QUrl(bar),
             bar_image(step.get('fraction'), c['log_border'], ACCENT, phase=elapsed / 4))  # redrawn every second
         picture = ''
         if step.get('frame'):
-            image = (f'<img src="claude-frame:{step["key"]}" width="{FRAME_SIZE[0]}" height="{FRAME_SIZE[1]}">')
+            image = (f'<img src="agent-frame:{step["key"]}" width="{FRAME_SIZE[0]}" height="{FRAME_SIZE[1]}">')
             if i is not None:  # the mouse over it shows it larger (hover)
                 image = f'<a href="os:frame/{i}/{j}" style="text-decoration:none;">{image}</a>'
             picture = f'<td valign="middle" style="padding-right:10px;">{image}</td>'
@@ -1365,10 +1365,10 @@ class ClaudePanel(QWidget):
         if eta is not None:
             left = eta[0] - (time.monotonic() - eta[1])
             if left < 3:
-                words.append(t('claude_almost_done'))
+                words.append(t('agent_almost_done'))
             else:
                 left = math.ceil(left / 5) * 5 if left < 60 else math.ceil(left / 15) * 15
-                words.append(t('claude_left').format(time=duration_text(left, t)))
+                words.append(t('agent_left').format(time=duration_text(left, t)))
         return ' · '.join(words)
 
     @staticmethod
@@ -1416,7 +1416,7 @@ class ClaudePanel(QWidget):
                 image = None  # a picture that cannot be drawn: keep the last one
             if image is not None:
                 self.transcript.document().addResource(
-                    QTextDocument.ImageResource, QUrl(f'claude-frame:{step["key"]}'), image)
+                    QTextDocument.ImageResource, QUrl(f'agent-frame:{step["key"]}'), image)
                 step['frame'], step['frame_data'] = True, event['frame']
                 self.working.nudge()  # each new picture pushes the tying on
                 if self.preview.key == step['key']:  # open under the mouse: it moves on too
@@ -1436,7 +1436,7 @@ class ClaudePanel(QWidget):
             self.tick.stop()
             return
         if step.get('waiting'):
-            return  # nothing moves while Claude waits for the person's Allow or Deny
+            return  # nothing moves while the agent waits for the person's Allow or Deny
         if time.monotonic() - step.get('start', 0) >= 2:
             self.render_transcript()
             self.show_working(step)
@@ -1448,7 +1448,7 @@ class ClaudePanel(QWidget):
         if self.preview.key is not None and self.preview.key == step.get('key'):
             self.preview.hide_frame()
         if step.get('key') is not None:
-            for kind in ('claude-frame', 'claude-bar'):
+            for kind in ('agent-frame', 'agent-bar'):
                 self.transcript.document().addResource(QTextDocument.ImageResource,
                                                        QUrl(f'{kind}:{step["key"]}'), QImage())
 
@@ -1467,12 +1467,12 @@ class ClaudePanel(QWidget):
         if not path or not os.path.exists(path):
             return
         step['picture'] = path
-        self.transcript.document().addResource(QTextDocument.ImageResource, QUrl(f'claude-frame:{step["key"]}'),
+        self.transcript.document().addResource(QTextDocument.ImageResource, QUrl(f'agent-frame:{step["key"]}'),
                                                fitted_image(path))
 
     def grab_for(self, step):
         """The app as an app tool left it, saved in this request's folder: the canvas
-        (without Claude floating over it), the group panel, or the window after a
+        (without the agent floating over it), the group panel, or the window after a
         setting. None for the tools that only list or read."""
         name, window = step.get('name'), self.main_window
         if name in CANVAS_TOOLS:
@@ -1521,7 +1521,7 @@ class ClaudePanel(QWidget):
                 try:
                     self.bridge.open_in_new_tab(entry['path'], entry['title'])
                 except Exception as e:
-                    self.add_note(_tr(self.language, 'claude_failed').format(error=e), self.colors['bad'])
+                    self.add_note(_tr(self.language, 'agent_failed').format(error=e), self.colors['bad'])
             else:
                 self.design_ready.emit(entry['path'])
         elif what in ('allow', 'deny') and entry['state'] is None:
@@ -1539,23 +1539,23 @@ class ClaudePanel(QWidget):
         elif what in ('share', 'noshare') and entry['kind'] == 'share' and entry['state'] is None:
             shared = what == 'share'
             entry['state'] = 'shared' if shared else 'declined'
-            claude_settings.save(share=shared)  # Settings > Models shows it, and changes it
+            agent_settings.save(share=shared)  # Settings > Models shows it, and changes it
             record = entry.pop('record', None)
             if shared and record is not None:
                 self.send_share(record)
             # The gallery is asked about only after a yes, and only once.
-            if shared and claude_sharing.gallery_available() and claude_settings.load()['gallery'] is None:
+            if shared and agent_sharing.gallery_available() and agent_settings.load()['gallery'] is None:
                 self.entries.append({'kind': 'gallery', 'state': None})
         elif what in ('gallery', 'nogallery') and entry['kind'] == 'gallery' and entry['state'] is None:
             entry['state'] = 'shared' if what == 'gallery' else 'declined'
-            claude_settings.save(gallery=what == 'gallery')
+            agent_settings.save(gallery=what == 'gallery')
         self.render_transcript()
 
     # -------------------------------------------------------- status line
     # Each mode's color and words; its symbol is images/mode_<mode>_on_<dark|light>.png, a picture
     # rather than a font character, so it looks the same everywhere (no emoji, no missing glyph).
-    MODE_LOOK = {'ask': ('muted', 'claude_mode_ask'), 'auto': ('auto', 'claude_mode_auto'),
-                 'plan': ('plan', 'claude_mode_plan')}
+    MODE_LOOK = {'ask': ('muted', 'agent_mode_ask'), 'auto': ('auto', 'agent_mode_auto'),
+                 'plan': ('plan', 'agent_mode_plan')}
 
     def cycle_mode(self):
         """Shift+Tab, as in Claude Code: ask before opening, open automatically, plan."""
@@ -1566,7 +1566,7 @@ class ClaudePanel(QWidget):
         self.mode = mode
         if mode != 'plan':
             self.last_mode = mode
-            claude_settings.save(mode=mode)  # plan mode is never kept
+            agent_settings.save(mode=mode)  # plan mode is never kept
         self.refresh_controls()
 
     def refresh_controls(self):
@@ -1575,47 +1575,47 @@ class ClaudePanel(QWidget):
             return
         t = lambda key: _tr(self.language, key)
         c = self.colors
-        saved = claude_settings.load()
+        saved = agent_settings.load()
         if not saved['models_on'] and self.running():
-            terminal_log('AI models were turned off in Settings > Models: ending the agent')
+            terminal_log('the agent was turned off in Settings > Models: ending it')
             self.send_or_stop()  # stops it, as Stop does: nothing more goes to the model
-        self.new_button.setText('＋ ' + t('claude_new_session'))
+        self.new_button.setText('＋ ' + t('agent_new_session'))
         self.new_button.setEnabled(not self.running())
         color, key = self.MODE_LOOK[self.mode]
         # The mode as a tinted tag in its own color; the Shift+Tab key cap beside it switches it.
         tint = QColor(c[color])
         self.mode_button.setIcon(mode_icon(self.mode, self.theme_name))
         self.mode_button.setText(t(key))
-        self.mode_button.setToolTip(t('claude_mode_cycle'))
-        self.mode_key.setToolTip(t('claude_mode_cycle'))
+        self.mode_button.setToolTip(t('agent_mode_cycle'))
+        self.mode_key.setToolTip(t('agent_mode_cycle'))
         self.mode_key.setAccessibleName('Shift+Tab')
         self.mode_button.setStyleSheet(
             f'QToolButton {{ color: {c[color]}; background-color: rgba({tint.red()}, {tint.green()}, {tint.blue()}, 38);'
             f' border: 1px solid rgba({tint.red()}, {tint.green()}, {tint.blue()}, 110); border-radius: 6px;'
             f' padding: 2px 8px; font-weight: bold; font-size: 12px; }}'
             f'QToolButton:hover {{ background-color: rgba({tint.red()}, {tint.green()}, {tint.blue()}, 70); }}')
-        offered = claude_settings.models()
+        offered = agent_settings.models()
         names = dict(offered)
         # The company drop-down lists the providers (and whether each key is still missing,
         # Settings > Models); the model drop-down lists the chosen company's models.
         by_provider = {}
         for model, label in offered:
-            by_provider.setdefault(claude_settings.provider_of(model), []).append((model, label))
-        current = claude_settings.provider_of(saved['model'])
+            by_provider.setdefault(agent_settings.provider_of(model), []).append((model, label))
+        current = agent_settings.provider_of(saved['model'])
         self.provider_menu.clear()
         group = QActionGroup(self.provider_menu)
         for provider, entries in by_provider.items():
-            spec = claude_settings.PROVIDERS.get(provider)
+            spec = agent_settings.PROVIDERS.get(provider)
             keyed = provider in saved['keys'] or (spec is not None and os.environ.get(spec.env))
             title = spec.name if spec else provider
             action = QAction(title if keyed else f'{title}   ({t("models_no_key")})', self.provider_menu, checkable=True)
             action.setChecked(provider == current)
             action.triggered.connect(lambda _=False, m=entries[0][0], p=provider:
-                                     None if p == claude_settings.provider_of(claude_settings.load()['model'])
+                                     None if p == agent_settings.provider_of(agent_settings.load()['model'])
                                      else self.choose(model=m))
             group.addAction(action)
             self.provider_menu.addAction(action)
-        spec = claude_settings.PROVIDERS.get(current)
+        spec = agent_settings.PROVIDERS.get(current)
         self.provider_button.setText(short_provider_name(spec.name if spec else current))
         self.model_menu.clear()
         group = QActionGroup(self.model_menu)
@@ -1629,25 +1629,25 @@ class ClaudePanel(QWidget):
         self.model_button.setText(names.get(saved['model'], saved['model']))
         self.effort_menu.clear()
         group = QActionGroup(self.effort_menu)
-        for effort in claude_settings.EFFORTS:
-            action = QAction(t(f'claude_effort_{effort}'), self.effort_menu, checkable=True)
+        for effort in agent_settings.EFFORTS:
+            action = QAction(t(f'agent_effort_{effort}'), self.effort_menu, checkable=True)
             action.setChecked(effort == saved['effort'])
             action.triggered.connect(lambda _=False, e=effort: self.choose(effort=e))
             group.addAction(action)
             self.effort_menu.addAction(action)
-        self.effort_button.setText(t(f'claude_effort_{saved["effort"]}'))
+        self.effort_button.setText(t(f'agent_effort_{saved["effort"]}'))
         self.show_session()
 
     def auto_refresh_models(self):
         """The daily Refresh models, in the background and without a word: only when a
         day has passed since the last one and some provider has a key."""
-        if self.fetching_models or getattr(sys, 'frozen', False) or not claude_settings.refresh_due(AUTO_REFRESH_HOURS):
+        if self.fetching_models or getattr(sys, 'frozen', False) or not agent_settings.refresh_due(AUTO_REFRESH_HOURS):
             return
         self.fetching_models = True
 
         def ask():
             try:
-                found = claude_settings.fetch_catalog()
+                found = agent_settings.fetch_catalog()
             except Exception as e:  # noqa: BLE001 - silent: the terminal says it, the lists stay
                 terminal_log(f'refresh models failed: {type(e).__name__}: {e}')
                 found = None
@@ -1658,23 +1658,23 @@ class ClaudePanel(QWidget):
         self.fetching_models = False
         if not found or not found.get('providers'):
             return
-        result = claude_settings.apply_catalog(found)
+        result = agent_settings.apply_catalog(found)
         terminal_log(f"models refreshed: {len(result['new'])} new, {len(result['retiring'])} retiring, "
                      f"{len(result['hidden'])} no longer offered"
                      + (f", now using {result['switched']}" if result['switched'] else ''))
         self.refresh_controls()
 
     def choose(self, **change):
-        claude_settings.save(**change)
+        agent_settings.save(**change)
         self.refresh_controls()
 
     def session_left(self):
-        return claude_settings.load()['session_limit'] - self.session_spent
+        return agent_settings.load()['session_limit'] - self.session_spent
 
     def show_session(self):
-        limit = claude_settings.load()['session_limit']
+        limit = agent_settings.load()['session_limit']
         spent = self.session_spent + self.run_cost
-        self.session_label.setText(_tr(self.language, 'claude_session').format(spent=money(spent),
+        self.session_label.setText(_tr(self.language, 'agent_session').format(spent=money(spent),
                                                                                   limit=money(limit)))
         near = spent >= 0.8 * limit
         self.session_label.setStyleSheet(f'color: {self.colors["bad"] if near else self.colors["muted"]};')
@@ -1690,16 +1690,16 @@ class ClaudePanel(QWidget):
             self.stop_steps()
             self.close_group()
             self.process.kill()
-            self.add_note(_tr(self.language, 'claude_stopped'))
+            self.add_note(_tr(self.language, 'agent_stopped'))
         else:
             self.send()
 
     def build_plan(self, entry):
-        """Build the plan Claude wrote in plan mode, in the mode used before it."""
+        """Build the plan the agent wrote in plan mode, in the mode used before it."""
         entry['built'] = True
         self.set_mode(self.last_mode)
         prompt = (entry['prompt'] + '\n\nBuild it now, following this plan, which I approved:\n' + entry['plan'])
-        self.send(prompt=prompt, shown=_tr(self.language, 'claude_build_plan'))
+        self.send(prompt=prompt, shown=_tr(self.language, 'agent_build_plan'))
 
     def send(self, prompt=None, shown=None):
         typed = prompt is None
@@ -1712,14 +1712,14 @@ class ClaudePanel(QWidget):
             return
         self.set_open(True)
         if getattr(sys, 'frozen', False):
-            self.add_note(_tr(self.language, 'claude_source_only'), '#c0392b')
+            self.add_note(_tr(self.language, 'agent_source_only'), '#c0392b')
             return
-        settings = claude_settings.load()
+        settings = agent_settings.load()
         if not settings['models_on']:  # Settings > Models: nothing is ever sent to a model
             self.add_note(_tr(self.language, 'models_off_note'), '#c0392b')
             return
-        provider = claude_settings.provider_of(settings['model'])
-        spec = claude_settings.PROVIDERS.get(provider)
+        provider = agent_settings.provider_of(settings['model'])
+        spec = agent_settings.PROVIDERS.get(provider)
         key_env = spec.env if spec else 'ANTHROPIC_API_KEY'
         key = settings['keys'].get(provider, '')
         if not key and not os.environ.get(key_env, '').strip():
@@ -1728,12 +1728,12 @@ class ClaudePanel(QWidget):
             return
         left = settings['session_limit'] - self.session_spent
         if left < 0.05:
-            self.add_note(_tr(self.language, 'claude_session_reached').format(
+            self.add_note(_tr(self.language, 'agent_session_reached').format(
                 limit=money(settings['session_limit'])), self.colors['bad'])
             return
         self.prompt = prompt
         stamp = time.strftime('%Y%m%d-%H%M%S')
-        self.out_dir = os.path.join(claude_settings.settings_directory(), 'claude_designs', stamp)
+        self.out_dir = os.path.join(agent_settings.settings_directory(), 'agent_designs', stamp)
         os.makedirs(self.out_dir, exist_ok=True)
         start = None
         if self.use_canvas_check.isChecked():
@@ -1767,19 +1767,19 @@ class ClaudePanel(QWidget):
         self.stopping = False
         # What this request has cost so far; the total keeps counting from
         # everything earlier requests cost, saved in claude.json.
-        self.run_cost, self.total_before = 0.0, claude_settings.load()['spent']
+        self.run_cost, self.total_before = 0.0, agent_settings.load()['spent']
         self.run_mode, self.run_texts, self.run_files = self.mode, [], (None, None)
         self.add_user((shown or prompt) + (f'  [{os.path.basename(self.image_path)}]' if self.image_path else ''))
         if typed:
             self.prompt_edit.clear()
         self.set_image(None)
-        self.status_label.setText(_tr(self.language, 'claude_working'))
-        self.working.start(_tr(self.language, 'claude_thinking') + '…')
+        self.status_label.setText(_tr(self.language, 'agent_working'))
+        self.working.start(_tr(self.language, 'agent_thinking') + '…')
         self.activity_changed.emit()
-        self.send_button.setText(_tr(self.language, 'claude_stop'))
+        self.send_button.setText(_tr(self.language, 'agent_stop'))
         terminal_log(f'request starts: {prompt[:80]!r}; its files and agent.log are in {self.out_dir}')
         self.process.start(program, args)
-        self.new_button.setEnabled(False)  # not while Claude works
+        self.new_button.setEnabled(False)  # not while the agent works
 
     def stop_steps(self, by_person=True):
         """The tools still running end here: stopped by the person, or the agent ended."""
@@ -1793,13 +1793,13 @@ class ClaudePanel(QWidget):
 
     def cost_line(self):
         """'this request $0.041 · total $1.27': the total never starts again from zero."""
-        return _tr(self.language, 'claude_cost_line').format(
+        return _tr(self.language, 'agent_cost_line').format(
             request=money(self.run_cost), total=money(self.total_before + self.run_cost))
 
     def save_spending(self):
         """Add this request to the saved total once, finished, stopped or failed."""
         if self.run_cost:
-            claude_settings.add_spending(self.run_cost)
+            agent_settings.add_spending(self.run_cost)
             self.total_before += self.run_cost
             self.session_spent += self.run_cost
             self.run_cost = 0.0
@@ -1809,15 +1809,15 @@ class ClaudePanel(QWidget):
     def failed_to_start(self, error):
         if error != QProcess.FailedToStart:
             return  # a crash or kill still ends in finished()
-        self.send_button.setText(_tr(self.language, 'claude_send'))
+        self.send_button.setText(_tr(self.language, 'agent_send'))
         self.status_label.setText('')
         self.working.stop()
-        self.add_note(_tr(self.language, 'claude_failed').format(error=self.process.errorString()), '#c0392b')
+        self.add_note(_tr(self.language, 'agent_failed').format(error=self.process.errorString()), '#c0392b')
         self.activity_changed.emit()
 
     def write_canvas(self, path):
         """Save what is on the canvas now as the agent's starting design; None when empty."""
-        data = self.main_window.claude_canvas_snapshot()
+        data = self.main_window.agent_canvas_snapshot()
         if not data or not data.get('strands'):
             return None
         with open(path, 'w', encoding='utf-8') as f:
@@ -1843,8 +1843,8 @@ class ClaudePanel(QWidget):
                 self.handle_event(event)
             except Exception:  # noqa: BLE001
                 # Logged, and the read goes on: an error here used to lose the lines after it,
-                # an app_call among them, and Claude then waited for an answer that never came.
-                logging.exception('the Claude panel could not show a %s event', event.get('type'))
+                # an app_call among them, and the agent then waited for an answer that never came.
+                logging.exception('the agent panel could not show a %s event', event.get('type'))
 
     def read_errors(self):
         if self.process is None:
@@ -1864,19 +1864,19 @@ class ClaudePanel(QWidget):
         self.working.heard()  # any event is a sign of life: the tying does not stand still
         if kind == 'round':
             # The model is asked (again, with what the tools said): it thinks until it answers.
-            self.working.set_label(t('claude_thinking') + '…', 'thinking')
+            self.working.set_label(t('agent_thinking') + '…', 'thinking')
             self.working.nudge()
         elif kind == 'text':
             text = event.get('text', '')
             self.run_texts.append(text)
-            self.add_claude(text)
-            self.working.set_label(t('claude_working'), 'working')
+            self.add_agent(text)
+            self.working.set_label(t('agent_working'), 'working')
             self.working.nudge()
         elif kind == 'thinking':
             text = event.get('text', '')
             text = text if len(text) <= 2000 else text[:2000].rsplit(' ', 1)[0] + '…'
             self.add_step({'kind': 'thinking', 'text': text, 'open': False})
-            self.working.set_label(t('claude_thinking') + '…', 'thinking')
+            self.working.set_label(t('agent_thinking') + '…', 'thinking')
             self.working.nudge()
         elif kind == 'search':
             fetch = event.get('name') == 'web_fetch'
@@ -1911,8 +1911,8 @@ class ClaudePanel(QWidget):
                 step = {'kind': 'tool', 'name': name, 'key': self.step_keys}
                 self.open_group()['steps'].append(step)
             if step.pop('waiting', None):
-                # Its card was never answered and Claude gave up waiting (the app's answer came
-                # too late): a late Allow would make a change Claude no longer knows of.
+                # Its card was never answered and the agent gave up waiting (the app's answer came
+                # too late): a late Allow would make a change the agent no longer knows of.
                 self.expire_cards()
             step.update(running=False, ok=bool(event.get('ok')), summary=event.get('summary', ''))
             if step.get('start') is not None:
@@ -1921,7 +1921,7 @@ class ClaudePanel(QWidget):
             self.attach_picture(step, event)
             self.render_transcript()
             self.working.clear_progress()
-            self.working.set_label(t('claude_working'), 'working')
+            self.working.set_label(t('agent_working'), 'working')
             self.working.nudge()
         elif kind == 'usage':
             self.run_cost = max(self.run_cost, float(event.get('cost') or 0))
@@ -1934,7 +1934,7 @@ class ClaudePanel(QWidget):
 
     # ------------------------------------------------------------- bridge
     def app_call(self, call):
-        """A request from Claude's app tools: the bridge runs it with the app's own code."""
+        """A request from the agent's app tools: the bridge runs it with the app's own code."""
         if self.bridge is None:
             reply = {'id': call.get('id'), 'ok': False, 'error': 'the app bridge is not available'}
         else:
@@ -1947,15 +1947,15 @@ class ClaudePanel(QWidget):
             self.process.write((json.dumps(reply) + '\n').encode('utf-8'))
 
     def add_design_card(self, path, title):
-        """Ask mode: a design Claude wants in a tab of its own, opened when the person says so."""
+        """Ask mode: a design the agent wants in a tab of its own, opened when the person says so."""
         png = path[:-5] + '.png'
         self.add_entry({'kind': 'design', 'path': path, 'png': png if os.path.exists(png) else None,
                         'opened': False, 'name': title, 'title': title})
 
     def add_confirm_card(self, call_id, what):
-        """Ask mode: a change Claude asked for waits for the person's Allow or Deny, and Claude
+        """Ask mode: a change the agent asked for waits for the person's Allow or Deny, and the agent
         waits with it (its tool runs until they answer). So the card comes into view, the tool's
-        row and the working line say Claude waits for them, and so does the terminal."""
+        row and the working line say the agent waits for them, and so does the terminal."""
         self.design_waiting = self.design_waiting or not self.is_open()
         step = self.running_step()
         if step is not None:
@@ -1970,7 +1970,7 @@ class ClaudePanel(QWidget):
     def waiting_text(self):
         """'Waiting for you: Allow or Deny', in the card's own words."""
         t = lambda key: _tr(self.language, key)
-        return t('claude_waiting_for_you').format(allow=t('claude_allow'), deny=t('claude_deny'))
+        return t('agent_waiting_for_you').format(allow=t('agent_allow'), deny=t('agent_deny'))
 
     def stop_waiting(self):
         """The person answered a card: the tool that waited for it runs on."""
@@ -1979,7 +1979,7 @@ class ClaudePanel(QWidget):
             self.show_working(step)
 
     def expire_cards(self):
-        """Cards no one answered, once Claude no longer waits for them: they do nothing now."""
+        """Cards no one answered, once the agent no longer waits for them: they do nothing now."""
         for entry in self.entries:
             if entry['kind'] == 'confirm' and entry['state'] is None:
                 entry['state'] = 'expired'
@@ -1999,10 +1999,10 @@ class ClaudePanel(QWidget):
                 logging.exception('could not prepare this request for sharing')
         finally:
             self.new_button.setEnabled(True)
-            self.activity_changed.emit()  # the Claude button stops turning
+            self.activity_changed.emit()  # the agent button stops turning
 
     def remember_turn(self):
-        """Keep this request and Claude's answer for the next one in the session."""
+        """Keep this request and the agent's answer for the next one in the session."""
         event = self.done_event or {}
         answer = '\n\n'.join(self.run_texts) or event.get('text') or event.get('error') or ''
         design = self.run_design
@@ -2010,32 +2010,32 @@ class ClaudePanel(QWidget):
             design = 'opened in tabs: ' + ', '.join(event['opened_tabs'])
         elif self.run_mode == 'plan':
             design = 'a plan, nothing built yet'
-        turn = {'user': self.shown_prompt or self.prompt, 'claude': answer, 'design': design}
+        turn = {'user': self.shown_prompt or self.prompt, 'agent': answer, 'design': design}
         tools = self.run_tools()
-        if tools:  # which tools ran and how each ended: Claude can say what happened
+        if tools:  # which tools ran and how each ended: the agent can say what happened
             turn['tools'] = tools
         self.history.append(turn)
 
     # ------------------------------------------------- sharing with the developer
     def share_run(self):
-        """What this request made, for the developer (claude_sharing): sent when the person
+        """What this request made, for the developer (agent_sharing): sent when the person
         said yes; while they have not said, a card asks, once while the app runs. Nothing
         for a request they stopped, or one that made nothing; nothing at all until the
         developer has set sharing up."""
         event = self.done_event
         design, picture = self.run_files
         if event is not None and event.get('changed') is False:
-            design = picture = None  # still the person's own canvas, as it came: theirs, not Claude's
+            design = picture = None  # still the person's own canvas, as it came: theirs, not the agent's
         if (event is None or event is self.shared_event or self.stopping or not (self.run_texts or design)
-                or not claude_sharing.available()):
+                or not agent_sharing.available()):
             return
         self.shared_event = event
-        settings = claude_settings.load()
+        settings = agent_settings.load()
         choice = settings['share']
         if not settings['models_on'] or choice is False or (choice is None and self.share_asked):
             return
-        record = self.share_record(event, design, picture, claude_settings.own_keys(settings),
-                                   gallery=settings['gallery'] is True and claude_sharing.gallery_available())
+        record = self.share_record(event, design, picture, agent_settings.own_keys(settings),
+                                   gallery=settings['gallery'] is True and agent_sharing.gallery_available())
         if choice:
             self.send_share(record)
             return
@@ -2043,7 +2043,7 @@ class ClaudePanel(QWidget):
         self.add_entry({'kind': 'share', 'state': None, 'record': record})
 
     def share_record(self, event, design, picture, keys=(), gallery=False):
-        """The share for this request (claude_sharing.record): keys, the person's own, are cut
+        """The share for this request (agent_sharing.record): keys, the person's own, are cut
         out of it wherever an answer or the design repeats one. gallery: the person allows
         their new designs in the public gallery (this one counts only if it is new)."""
         project = png = None
@@ -2053,7 +2053,7 @@ class ClaudePanel(QWidget):
         if picture and os.path.exists(picture):
             with open(picture, 'rb') as f:
                 png = f.read()
-        return claude_sharing.record(self.run_texts, project, png, model=event.get('model'), language=self.language,
+        return agent_sharing.record(self.run_texts, project, png, model=event.get('model'), language=self.language,
                                      ok=bool(event.get('ok')) and not event.get('error'), secrets=keys,
                                      new=event.get('new') is True, gallery=gallery)
 
@@ -2062,11 +2062,11 @@ class ClaudePanel(QWidget):
         it held; a share that fails is dropped (it never holds the panel up)."""
         def send():
             try:
-                sealed = claude_sharing.seal(record)
-                if not claude_settings.sharing_on():  # turned off since it was queued: it stays here
+                sealed = agent_sharing.seal(record)
+                if not agent_settings.sharing_on():  # turned off since it was queued: it stays here
                     terminal_log('not shared: sharing was turned off')
                     return
-                status = claude_sharing.send(sealed)
+                status = agent_sharing.send(sealed)
                 terminal_log(f'shared with the developer, encrypted (the server answered {status})')
             except Exception as e:  # noqa: BLE001
                 terminal_log(f'could not share with the developer: {type(e).__name__}: {e}')
@@ -2090,7 +2090,7 @@ class ClaudePanel(QWidget):
         return out[::-1][-12:]
 
     def new_session(self):
-        """Start again from nothing: no conversation, nothing Claude remembers,
+        """Start again from nothing: no conversation, nothing the agent remembers,
         the session's spending back to $0. The canvas stays as it is; untick
         "Start from the canvas" to leave it out too."""
         if self.running():
@@ -2104,7 +2104,7 @@ class ClaudePanel(QWidget):
         self.set_image(None)
         if self.bridge is not None:
             self.bridge.forget()
-        self.add_note(_tr(self.language, 'claude_new_session_note'))
+        self.add_note(_tr(self.language, 'agent_new_session_note'))
         self.show_session()
         self.activity_changed.emit()
         self.prompt_edit.setFocus()
@@ -2115,12 +2115,12 @@ class ClaudePanel(QWidget):
         self.read_errors()
         if self.bridge is not None:
             self.bridge.forget()
-        self.expire_cards()  # Claude has stopped; nothing waits any more
+        self.expire_cards()  # the agent has stopped; nothing waits any more
         self.stop_steps(by_person=self.stopping)
         self.tick.stop()
         self.working.stop()
         self.close_group()
-        self.send_button.setText(_tr(self.language, 'claude_send'))
+        self.send_button.setText(_tr(self.language, 'agent_send'))
         event = self.done_event
         if event is not None:
             self.run_cost = max(self.run_cost, float(event.get('cost') or 0))
@@ -2131,12 +2131,12 @@ class ClaudePanel(QWidget):
             if not self.stopping:  # stopped by the person: "Stopped." says it already
                 lines = [l for l in self.stderr_text.splitlines() if l.strip() and not l.startswith(LOG_PREFIX)]
                 message = lines[-1] if lines else 'the agent stopped without an answer'
-                self.add_note(_tr(self.language, 'claude_failed').format(error=message.removeprefix('error: ')),
+                self.add_note(_tr(self.language, 'agent_failed').format(error=message.removeprefix('error: ')),
                               '#c0392b')
             return
         self.status_label.setText(line)  # the model is on the status line below
         if event.get('error'):
-            self.add_note(_tr(self.language, 'claude_failed').format(error=event['error']), '#c0392b')
+            self.add_note(_tr(self.language, 'agent_failed').format(error=event['error']), '#c0392b')
         if event.get('plan') or self.run_mode == 'plan':
             if self.run_texts and not event.get('error'):
                 self.add_entry({'kind': 'plan', 'prompt': self.prompt, 'plan': '\n\n'.join(self.run_texts),
@@ -2147,7 +2147,7 @@ class ClaudePanel(QWidget):
             if project and os.path.exists(project):  # still what this request made: shared as such
                 png = event.get('png')
                 self.run_files = (project, png if png and os.path.exists(png) else None)
-            project = None  # Claude opened its tabs itself, through the bridge
+            project = None  # the agent opened its tabs itself, through the bridge
         if project and os.path.exists(project):
             named = os.path.join(self.out_dir, design_name(self.prompt) + '.json')
             shutil.copyfile(project, named)
@@ -2163,7 +2163,7 @@ class ClaudePanel(QWidget):
                 self.add_entry({'kind': 'design', 'path': named, 'png': picture, 'opened': False,
                                 'name': os.path.basename(named)})
             else:
-                self.add_note(_tr(self.language, 'claude_opened').format(name=os.path.basename(named)))
+                self.add_note(_tr(self.language, 'agent_opened').format(name=os.path.basename(named)))
                 self.design_ready.emit(named)
 
 
@@ -2241,7 +2241,7 @@ def paint_logo(painter, box, width=3.4, stroke=0.6, outline=QColor('#000000')):
     painter.restore()
 
 
-class ClaudeButton(QPushButton):
+class AgentButton(QPushButton):
     """The assistant's button next to Settings: shows and hides the assistant.
 
     The OpenStrand logo (the assistant runs on many providers' models, so the button is the
@@ -2266,7 +2266,7 @@ class ClaudeButton(QPushButton):
     def __init__(self, panel, parent=None):
         super().__init__(parent)
         self.panel = panel
-        self.setObjectName('claudeButton')
+        self.setObjectName('agentButton')
         self.setCheckable(True)
         self.setFixedSize(32, 32)
         self.setAccessibleName('Assistant')
@@ -2376,34 +2376,28 @@ def resource_path(name):
     return os.path.join(base, name)
 
 
-class ClaudeSettingsPage(QWidget):
-    """Settings > Claude: whether Claude shows, the Anthropic API key, the
-    model, web search, the spending limit and what Claude has cost."""
+class AgentSettingsPage(QWidget):
+    """Settings > Models: the switch that turns the agent on or off, each provider's API
+    key, the model, web search, the spending limit and what the agent has cost."""
 
-    show_button_changed = pyqtSignal(bool)  # the main window shows or hides the Claude button
-    settings_changed = pyqtSignal()  # model, effort or limits: the Claude status line follows
+    agent_switched = pyqtSignal(bool)  # the one switch: the main window shows or hides the agent
+    settings_changed = pyqtSignal()  # model, effort or limits: the agent's status line follows
     refreshed = pyqtSignal(object, object)  # Refresh models: (what the providers said, or an error)
 
     def __init__(self, language_code='en', parent=None):
         super().__init__(parent)
         self.language = language_code
         self.theme = None
-        self.setObjectName('claudeSettings')
+        self.setObjectName('agentSettings')
         layout = QVBoxLayout(self)
         layout.setSpacing(8)
         self.intro = QLabel(self)
         self.intro.setWordWrap(True)
         layout.addWidget(self.intro)
 
-        self.show_check = QCheckBox(self)
-        self.show_check.toggled.connect(self.set_show_button)
-        layout.addWidget(self.show_check)
-        self.show_hint = QLabel(self)
-        self.show_hint.setWordWrap(True)
-        self.show_hint.setStyleSheet('color: gray;')
-        layout.addWidget(self.show_hint)
-
-        # Off: OpenStrand never connects to any AI model (providers.POLICY refuses every request).
+        # The one switch for the agent. Off: its button leaves the main window, Ctrl+J and the
+        # openstrand agent command do nothing, and OpenStrand never connects to any AI model
+        # (providers.POLICY refuses every request).
         self.models_check = QCheckBox(self)
         self.models_check.toggled.connect(self.set_models_on)
         layout.addWidget(self.models_check)
@@ -2424,7 +2418,7 @@ class ClaudeSettingsPage(QWidget):
         provider_row = QHBoxLayout()
         self.key_label = QLabel(self)
         self.provider_combo = QComboBox(self)
-        for provider in claude_settings.PROVIDERS.values():
+        for provider in agent_settings.PROVIDERS.values():
             self.provider_combo.addItem(provider.name, provider.key)
         self.provider_combo.currentIndexChanged.connect(lambda _: self.show_provider())
         self.provider_combo.currentIndexChanged.connect(self.fit_combos)
@@ -2494,7 +2488,7 @@ class ClaudeSettingsPage(QWidget):
         layout.addWidget(self.effort_hint)
 
         self.web_check = QCheckBox(self)
-        self.web_check.toggled.connect(lambda on: claude_settings.save(web=on))
+        self.web_check.toggled.connect(lambda on: agent_settings.save(web=on))
         layout.addWidget(self.web_check)
         self.web_hint = QLabel(self)
         self.web_hint.setWordWrap(True)
@@ -2508,7 +2502,7 @@ class ClaudeSettingsPage(QWidget):
         limits.setVerticalSpacing(6)
         self.limit_label = QLabel(self)
         self.limit_spin = QDoubleSpinBox(self)
-        self.limit_spin.setRange(*claude_settings.MAX_COST_RANGE)
+        self.limit_spin.setRange(*agent_settings.MAX_COST_RANGE)
         self.limit_spin.setDecimals(2)
         self.limit_spin.setSingleStep(0.50)
         self.limit_spin.setPrefix('$')
@@ -2518,7 +2512,7 @@ class ClaudeSettingsPage(QWidget):
 
         self.session_limit_label = QLabel(self)
         self.session_spin = QDoubleSpinBox(self)
-        self.session_spin.setRange(*claude_settings.SESSION_LIMIT_RANGE)
+        self.session_spin.setRange(*agent_settings.SESSION_LIMIT_RANGE)
         self.session_spin.setDecimals(2)
         self.session_spin.setSingleStep(1.00)
         self.session_spin.setPrefix('$')
@@ -2528,7 +2522,7 @@ class ClaudeSettingsPage(QWidget):
         limits.setColumnStretch(2, 1)
         layout.addLayout(limits)
 
-        # What Claude has cost in all on this computer, kept across requests.
+        # What the agent has cost in all on this computer, kept across requests.
         spent_row = QHBoxLayout()
         self.spent_label = QLabel(self)
         self.spent_label.setStyleSheet('font-weight: bold;')
@@ -2543,7 +2537,7 @@ class ClaudeSettingsPage(QWidget):
         self.spent_hint.setStyleSheet('color: gray;')
         layout.addWidget(self.spent_hint)
 
-        # Sharing what Claude makes with the developer: only once the developer set it up.
+        # Sharing what the agent makes with the developer: only once the developer set it up.
         self.share_check = QCheckBox(self)
         self.share_check.toggled.connect(self.set_share)
         layout.addWidget(self.share_check)
@@ -2553,7 +2547,7 @@ class ClaudeSettingsPage(QWidget):
         layout.addWidget(self.share_hint)
         # The public gallery: its own yes, and only while sharing is on.
         self.gallery_check = QCheckBox(self)
-        self.gallery_check.toggled.connect(lambda on: claude_settings.save(gallery=on))
+        self.gallery_check.toggled.connect(lambda on: agent_settings.save(gallery=on))
         layout.addWidget(self.gallery_check)
         self.gallery_hint = QLabel(self)
         self.gallery_hint.setWordWrap(True)
@@ -2574,32 +2568,32 @@ class ClaudeSettingsPage(QWidget):
         self.intro.setText(t('models_settings_intro'))
         self.key_label.setText(t('models_key_label'))
         self.toggle_shown(self.show_key_action.isChecked())
-        self.save_button.setText(t('claude_save_key'))
-        self.remove_button.setText(t('claude_remove_key'))
-        self.model_label.setText(t('claude_model_label'))
-        self.storage.setText(t('claude_key_storage_keychain' if claude_settings.key_storage() == 'keychain'
-                               else 'claude_key_storage'))
+        self.save_button.setText(t('agent_save_key'))
+        self.remove_button.setText(t('agent_remove_key'))
+        self.model_label.setText(t('agent_model_label'))
+        self.storage.setText(t('agent_key_storage_keychain' if agent_settings.key_storage() == 'keychain'
+                               else 'agent_key_storage'))
         self.share_check.setText(t('models_share_label'))
         self.share_hint.setText(t('models_share_hint'))
         self.gallery_check.setText(t('models_gallery_label'))
-        self.gallery_hint.setText(t('models_gallery_hint').replace('{url}', claude_sharing.GALLERY_URL))
+        self.gallery_hint.setText(t('models_gallery_hint').replace('{url}', agent_sharing.GALLERY_URL))
         self.models_check.setText(t('models_use_label'))
         self.models_hint.setText(t('models_use_hint'))
         self.china_check.setText(t('models_china_label'))
         self.china_hint.setText(t('models_china_hint'))
-        saved = claude_settings.load()
+        saved = agent_settings.load()
         self.fill_models(saved)
         self.refresh_button.setText(t('models_refresh'))
         if not self.refreshing:
             refreshed = (saved.get('catalog') or {}).get('refreshed')
             self.refresh_status.setText(t('models_last_refresh').format(date=refreshed) if refreshed
                                         else t('models_never_refreshed'))
-        self.effort_label.setText(t('claude_effort_label'))
-        self.effort_hint.setText(t('claude_effort_hint'))
-        self.session_limit_label.setText(t('claude_session_limit_label'))
-        self.web_check.setText(t('claude_web_label'))
-        self.web_hint.setText(t('claude_web_hint') + ' ' + t('models_web_claude_only'))
-        self.limit_label.setText(t('claude_limit_label'))
+        self.effort_label.setText(t('agent_effort_label'))
+        self.effort_hint.setText(t('agent_effort_hint'))
+        self.session_limit_label.setText(t('agent_session_limit_label'))
+        self.web_check.setText(t('agent_web_label'))
+        self.web_hint.setText(t('agent_web_hint') + ' ' + t('models_web_claude_only'))
+        self.limit_label.setText(t('agent_limit_label'))
         self.web_check.blockSignals(True)
         self.web_check.setChecked(saved['web'])
         self.web_check.blockSignals(False)
@@ -2607,14 +2601,9 @@ class ClaudeSettingsPage(QWidget):
         self.limit_spin.setValue(saved['max_cost'])
         self.limit_spin.blockSignals(False)
         self.show_choices()
-        self.show_provider(claude_settings.provider_of(saved['model']))
-        self.show_check.setText(t('claude_show_button'))
-        self.show_hint.setText(t('claude_show_button_hint'))
-        self.show_check.blockSignals(True)
-        self.show_check.setChecked(saved['show_button'])
-        self.show_check.blockSignals(False)
-        self.reset_spent_button.setText(t('claude_spent_reset'))
-        self.spent_hint.setText(t('claude_spent_hint'))
+        self.show_provider(agent_settings.provider_of(saved['model']))
+        self.reset_spent_button.setText(t('agent_spent_reset'))
+        self.spent_hint.setText(t('agent_spent_hint'))
         self.show_spending()
         self.show_share()
         self.show_switches()
@@ -2626,12 +2615,12 @@ class ClaudeSettingsPage(QWidget):
     def apply_theme(self, theme=None):
         theme = str(theme or getattr(self.window(), 'current_theme', None) or 'default').lower()
         self.theme = theme
-        c = ClaudePanel.THEMES.get(theme, ClaudePanel.THEMES['default'])
+        c = AgentPanel.THEMES.get(theme, AgentPanel.THEMES['default'])
         self.setStyleSheet(f"""
-            #claudeSettings QLineEdit {{ background-color: {c['log']}; color: {c['fg']};
+            #agentSettings QLineEdit {{ background-color: {c['log']}; color: {c['fg']};
                 border: 1px solid {c['border']}; border-radius: 4px; padding: 5px 6px; font-size: 13px; }}
-            #claudeSettings QLineEdit:focus {{ border: 1px solid {ACCENT}; }}
-            #claudeSettings QPushButton {{ padding: 5px 14px; height: 18px; min-width: 0px; }}
+            #agentSettings QLineEdit:focus {{ border: 1px solid {ACCENT}; }}
+            #agentSettings QPushButton {{ padding: 5px 14px; height: 18px; min-width: 0px; }}
         """)
         # The drop-downs exactly like Settings > General's Theme: its own style sheet.
         theme_combo = getattr(self.window(), 'theme_combobox', None)
@@ -2681,13 +2670,13 @@ class ClaudeSettingsPage(QWidget):
     def show_choices(self):
         """Model, effort and the session limit as saved."""
         t = lambda key: _tr(self.language, key)
-        saved = claude_settings.load()
+        saved = agent_settings.load()
         for combo in (self.model_combo, self.effort_combo):
             combo.blockSignals(True)
         self.model_combo.setCurrentIndex(max(0, self.model_combo.findData(saved['model'])))
         self.effort_combo.clear()
-        for effort in claude_settings.EFFORTS:
-            self.effort_combo.addItem(t(f'claude_effort_{effort}'), effort)
+        for effort in agent_settings.EFFORTS:
+            self.effort_combo.addItem(t(f'agent_effort_{effort}'), effort)
         self.effort_combo.setCurrentIndex(max(0, self.effort_combo.findData(saved['effort'])))
         for combo in (self.model_combo, self.effort_combo):
             combo.blockSignals(False)
@@ -2697,55 +2686,54 @@ class ClaudeSettingsPage(QWidget):
         self.fit_combos()
 
     def show_spending(self):
-        saved = claude_settings.load()
+        saved = agent_settings.load()
         t = lambda k: _tr(self.language, k)
         if saved['spent'] or saved['spent_since']:
             since = QDate.fromString(saved['spent_since'], Qt.ISODate)
             when = QLocale(self.language).toString(since, QLocale.ShortFormat) if since.isValid() else ''
-            self.spent_label.setText(t('claude_spent').format(total=money(saved['spent']), date=when))
+            self.spent_label.setText(t('agent_spent').format(total=money(saved['spent']), date=when))
         else:
-            self.spent_label.setText(t('claude_spent_none'))
+            self.spent_label.setText(t('agent_spent_none'))
         self.reset_spent_button.setEnabled(saved['spent'] > 0)
 
     def reset_spending(self):
-        claude_settings.reset_spending()
+        agent_settings.reset_spending()
         self.show_spending()
 
     def show_switches(self):
-        """The two switches as saved. With models off nothing can ask a provider anything, so
-        Refresh models waits; keys can still be removed."""
-        saved = claude_settings.load()
+        """The two switches as saved. With the agent off nothing can ask a provider anything,
+        so Refresh models waits; keys can still be removed."""
+        saved = agent_settings.load()
         for check, on in ((self.models_check, saved['models_on']), (self.china_check, saved['allow_china'])):
             check.blockSignals(True)
             check.setChecked(on)
             check.blockSignals(False)
         self.refresh_button.setEnabled(saved['models_on'] and not self.refreshing)
-        self.show_check.setEnabled(saved['models_on'])  # with AI models off there is no button to show
 
     def set_models_on(self, on):
-        claude_settings.save(models_on=on)
+        agent_settings.save(models_on=on)
         self.show_switches()
-        # Off is off everywhere: the Claude button leaves the main window, and Claude with it.
-        self.show_button_changed.emit(claude_settings.claude_available())
+        # Off is off everywhere: the agent's button leaves the main window, and its panel with it.
+        self.agent_switched.emit(agent_settings.agent_on())
         self.settings_changed.emit()  # the panel stops a request that is running
 
     def set_allow_china(self, allowed):
-        claude_settings.save(allow_china=allowed)
+        agent_settings.save(allow_china=allowed)
         self.fill_models()  # their models shown or hidden; the saved model may have moved off them
         self.show_choices()
-        self.show_provider(claude_settings.provider_of(claude_settings.load()['model']))
+        self.show_provider(agent_settings.provider_of(agent_settings.load()['model']))
         self.settings_changed.emit()
 
     def show_share(self):
         """The share box as saved (off until the person says yes), shown once sharing is set up."""
-        shown = claude_sharing.available()
+        shown = agent_sharing.available()
         self.share_check.setVisible(shown)
         self.share_hint.setVisible(shown)
-        saved = claude_settings.load()
+        saved = agent_settings.load()
         self.share_check.blockSignals(True)
         self.share_check.setChecked(saved['share'] is True)
         self.share_check.blockSignals(False)
-        gallery = claude_sharing.gallery_available()
+        gallery = agent_sharing.gallery_available()
         self.gallery_check.setVisible(gallery)
         self.gallery_hint.setVisible(gallery)
         self.gallery_check.setEnabled(saved['share'] is True)  # nothing reaches the gallery unshared
@@ -2754,12 +2742,9 @@ class ClaudeSettingsPage(QWidget):
         self.gallery_check.blockSignals(False)
 
     def set_share(self, on):
-        claude_settings.save(share=on)
+        agent_settings.save(share=on)
         self.show_share()  # the gallery box follows: it only counts while sharing is on
 
-    def set_show_button(self, shown):
-        claude_settings.save(show_button=shown)
-        self.show_button_changed.emit(claude_settings.claude_available())  # never while AI models are off
 
     def provider(self):
         return self.provider_combo.currentData() or 'anthropic'
@@ -2770,19 +2755,19 @@ class ClaudeSettingsPage(QWidget):
             self.provider_combo.blockSignals(True)
             self.provider_combo.setCurrentIndex(max(0, self.provider_combo.findData(provider)))
             self.provider_combo.blockSignals(False)
-        spec = claude_settings.PROVIDERS.get(self.provider())
+        spec = agent_settings.PROVIDERS.get(self.provider())
         self.key_edit.setPlaceholderText(spec.key_hint if spec else 'sk-ant-…')
         if spec and spec.keys_url:
             host = spec.keys_url.split('//', 1)[-1].split('/', 1)[0]
             link_color = '#FF7A33' if shade_of(self.theme) == 'dark' else '#C24100'  # the logo's orange, readable on the theme
             self.get_key.setText(_tr(self.language, 'models_get_key').format(
                 link=f'<a href="{spec.keys_url}" style="color:{link_color};">{host}</a>'))
-        self.show_saved(claude_settings.load()['keys'].get(self.provider(), ''))
+        self.show_saved(agent_settings.load()['keys'].get(self.provider(), ''))
 
     def show_saved(self, key):
         t = lambda k: _tr(self.language, k)
-        self.key_status.setText(t('claude_key_saved').format(key=claude_settings.masked(key)) if key
-                                else t('claude_key_none'))
+        self.key_status.setText(t('agent_key_saved').format(key=agent_settings.masked(key)) if key
+                                else t('agent_key_none'))
         self.remove_button.setEnabled(bool(key))
 
     def toggle_shown(self, shown):
@@ -2790,25 +2775,25 @@ class ClaudeSettingsPage(QWidget):
         self.key_edit.setEchoMode(QLineEdit.Normal if shown else QLineEdit.Password)
         eye = f"eye_{'open' if shown else 'closed'}_on_{shade_of(self.theme)}.png"
         self.show_key_action.setIcon(QIcon(icon_path(eye)))
-        self.show_key_action.setToolTip(_tr(self.language, 'claude_hide_key' if shown else 'claude_show_key'))
+        self.show_key_action.setToolTip(_tr(self.language, 'agent_hide_key' if shown else 'agent_show_key'))
 
     def save_key(self):
         key = self.key_edit.text().strip()
         if not key:
             return
-        claude_settings.save(provider_key=(self.provider(), key))
+        agent_settings.save(provider_key=(self.provider(), key))
         self.key_edit.clear()
         self.show_saved(key)
         self.settings_changed.emit()  # the model menu says which providers have a key
 
     def remove_key(self):
-        claude_settings.save(provider_key=(self.provider(), ''))
+        agent_settings.save(provider_key=(self.provider(), ''))
         self.show_saved('')
         self.settings_changed.emit()
-        self.key_status.setText(_tr(self.language, 'claude_key_removed'))
+        self.key_status.setText(_tr(self.language, 'agent_key_removed'))
 
     def changed_setting(self, **change):
-        claude_settings.save(**change)
+        agent_settings.save(**change)
         self.settings_changed.emit()
 
     def save_effort(self, index):
@@ -2819,11 +2804,11 @@ class ClaudeSettingsPage(QWidget):
     def fill_models(self, saved=None):
         """The model list: every model offered now, its provider and tags."""
         t = lambda k: _tr(self.language, k)
-        saved = saved or claude_settings.load()
+        saved = saved or agent_settings.load()
         self.model_combo.blockSignals(True)
         self.model_combo.clear()
-        for model, label in claude_settings.models():
-            spec = claude_settings.PROVIDERS.get(claude_settings.provider_of(model))
+        for model, label in agent_settings.models():
+            spec = agent_settings.PROVIDERS.get(agent_settings.provider_of(model))
             words = [label] + [w for w in (spec.name if spec else '', model_tags(model, t)) if w]
             self.model_combo.addItem('  ·  '.join(words), model)
         self.model_combo.setCurrentIndex(max(0, self.model_combo.findData(saved['model'])))
@@ -2841,7 +2826,7 @@ class ClaudeSettingsPage(QWidget):
 
         def ask():
             try:
-                self.refreshed.emit(claude_settings.fetch_catalog(), None)
+                self.refreshed.emit(agent_settings.fetch_catalog(), None)
             except Exception as e:  # noqa: BLE001 - said on the page, the list stays as it was
                 self.refreshed.emit(None, f'{type(e).__name__}: {e}')
         threading.Thread(target=ask, daemon=True).start()
@@ -2849,30 +2834,30 @@ class ClaudeSettingsPage(QWidget):
     def show_refresh(self, found, error):
         t = lambda k: _tr(self.language, k)
         self.refreshing = False
-        self.refresh_button.setEnabled(claude_settings.load()['models_on'])
+        self.refresh_button.setEnabled(agent_settings.load()['models_on'])
         if error or not found:
             self.refresh_status.setText(error or '')
             return
         if not found.get('providers'):
             self.refresh_status.setText(t('models_refresh_none'))
             return
-        result = claude_settings.apply_catalog(found)
+        result = agent_settings.apply_catalog(found)
         lines = [t('models_refreshed').format(date=found.get('refreshed', ''), new=len(result['new']),
                                               retiring=len(result['retiring']), hidden=len(result['hidden']))]
         for provider, answer in found['providers'].items():
             if answer.get('error'):
-                spec = claude_settings.PROVIDERS.get(provider)
+                spec = agent_settings.PROVIDERS.get(provider)
                 lines.append(f"{spec.name if spec else provider}: {answer['error']}")
         if result['switched']:
-            lines.append(t('models_switched').format(model=dict(claude_settings.models()).get(result['switched'],
+            lines.append(t('models_switched').format(model=dict(agent_settings.models()).get(result['switched'],
                                                                                               result['switched'])))
         self.refresh_status.setText('\n'.join(lines))
         self.fill_models()
-        self.show_provider(claude_settings.provider_of(claude_settings.load()['model']))
+        self.show_provider(agent_settings.provider_of(agent_settings.load()['model']))
         self.settings_changed.emit()  # the status line's model menu follows
 
     def save_model(self, index):
         model = self.model_combo.itemData(index)
         if model:
             self.changed_setting(model=model)
-            self.show_provider(claude_settings.provider_of(model))  # where this model's key goes
+            self.show_provider(agent_settings.provider_of(model))  # where this model's key goes

@@ -21,7 +21,7 @@ from openstrand import agent, providers  # noqa: E402
 @pytest.fixture(autouse=True)
 def nothing_forbidden(monkeypatch):
     """These tests are about the clients themselves. What Settings > Models forbids
-    (providers.POLICY, set once claude_settings is imported) has tests of its own."""
+    (providers.POLICY, set once agent_settings is imported) has tests of its own."""
     monkeypatch.setattr(providers, "POLICY", None)
 
 
@@ -195,7 +195,7 @@ def test_kimi_deepseek_and_qwen_use_their_anthropic_compatible_endpoints(model, 
     assert runner.web is False
 
 
-def test_claude_still_uses_anthropic_itself():
+def test_agent_still_uses_anthropic_itself():
     anthropic = pytest.importorskip("anthropic")
     client = providers.client_for("claude-sonnet-5-5", "sk-ant-test")
     assert type(client) is anthropic.Anthropic and "api.anthropic.com" in str(client.base_url)
@@ -439,19 +439,19 @@ def test_a_refresh_adds_new_models_marks_retiring_ones_and_hides_what_is_gone():
 
 
 def test_the_saved_model_moves_on_when_its_provider_no_longer_offers_it(tmp_path, monkeypatch):
-    import claude_settings
+    import agent_settings
     monkeypatch.setenv("APPDATA", str(tmp_path))
     try:
-        claude_settings.save(model="claude-haiku-5-5")
-        result = claude_settings.apply_catalog({"refreshed": "2026-11-07 10:00", "providers": {
+        agent_settings.save(model="claude-haiku-5-5")
+        result = agent_settings.apply_catalog({"refreshed": "2026-11-07 10:00", "providers": {
             "anthropic": {"models": [{"id": "claude-sonnet-5-5"}, {"id": "claude-opus-5-5", "label": "Claude Opus 5.5"}]}}})
         assert result["hidden"] == ["claude-haiku-5-5"] and result["new"] == ["claude-opus-5-5"]
         assert result["switched"] == "claude-sonnet-5-5"
-        saved = claude_settings.load()
+        saved = agent_settings.load()
         assert saved["model"] == "claude-sonnet-5-5" and saved["catalog"]["refreshed"] == "2026-11-07 10:00"
-        offered = dict(claude_settings.models())
+        offered = dict(agent_settings.models())
         assert offered["claude-opus-5-5"] == "Claude Opus 5.5" and "claude-haiku-5-5" not in offered
-        claude_settings.save(model="claude-opus-5-5")  # a refreshed model can be chosen and is kept
-        assert claude_settings.load()["model"] == "claude-opus-5-5"
+        agent_settings.save(model="claude-opus-5-5")  # a refreshed model can be chosen and is kept
+        assert agent_settings.load()["model"] == "claude-opus-5-5"
     finally:
         providers.use_catalog({})

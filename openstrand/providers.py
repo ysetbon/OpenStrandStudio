@@ -187,7 +187,7 @@ class NotAllowed(UnsafeRequest):
     """A request the person's settings forbid (Settings > Models). It was not sent."""
 
 
-# What the person allows (Settings > Models): set by the app's claude_settings, which reads
+# What the person allows (Settings > Models): set by the app's agent_settings, which reads
 # their choice afresh each time. POLICY(provider key, or None for a share with the developer)
 # gives a sentence saying why nothing may be sent, or None. Every request asks it just
 # before it would leave, so switching models off (or the providers based in China) stops

@@ -22,9 +22,9 @@ from layer_panel import LayerPanel
 from attached_strand import AttachedStrand
 from masked_strand import MaskedStrand
 from save_load_manager import save_strands, load_strands, apply_loaded_strands, serialize_project_state
-import claude_settings
-from claude_bridge import AppBridge
-from claude_panel import ClaudeButton, ClaudePanel
+import agent_settings
+from agent_bridge import AppBridge
+from agent_panel import AgentButton, AgentPanel
 from project_settings import capture_project_settings, read_project_settings, apply_project_settings
 from mask_mode import MaskMode
 from group_layers import GroupLayerManager, StrandAngleEditDialog
@@ -109,10 +109,10 @@ class MainWindow(QMainWindow):
             self.group_panel_shortcut.setContext(Qt.WindowShortcut)
             self.group_panel_shortcut.activated.connect(self.layer_panel.toggle_group_panel)
 
-        # Ctrl+J shows and hides Claude, like the Claude button.
-        self.claude_shortcut = QShortcut(QKeySequence("Ctrl+J"), self)
-        self.claude_shortcut.setContext(Qt.WindowShortcut)
-        self.claude_shortcut.activated.connect(self.toggle_claude)
+        # Ctrl+J shows and hides the agent, like the agent button.
+        self.agent_shortcut = QShortcut(QKeySequence("Ctrl+J"), self)
+        self.agent_shortcut.setContext(Qt.WindowShortcut)
+        self.agent_shortcut.activated.connect(self.toggle_agent)
         # Log initial state
         self.layer_state_manager.save_initial_state()
         self.layer_state_manager.log_layer_state()
@@ -145,7 +145,7 @@ class MainWindow(QMainWindow):
         toolbar_cues = {
             self.load_button: 'toolbar_action',
             self.settings_button: 'toolbar_settings',
-            self.claude_button: 'toolbar_settings',
+            self.agent_button: 'toolbar_settings',
             self.save_image_button: 'toolbar_image',
             self.toggle_shadow_button: 'toggle_shadow_{state}',
             self.tabs_button: 'toggle_tabs_{state}',
@@ -160,7 +160,7 @@ class MainWindow(QMainWindow):
                        self.toggle_grid_button, self.toggle_control_points_button,
                        self.toggle_shadow_button, self.tabs_button, self.layer_state_button,
                        self.save_button, self.load_button, self.save_image_button,
-                       self.settings_button, self.claude_button):
+                       self.settings_button, self.agent_button):
             sound_manager.set_hover_cue(button, 'hover_toolbar')
         panel = self.layer_panel
         for area in (panel.top_header, panel.zoom_panel, panel.refresh_panel):
@@ -284,8 +284,8 @@ class MainWindow(QMainWindow):
 
         # Update settings button tooltip or text
         self.settings_button.setToolTip(_['settings'])
-        if hasattr(self, 'claude_panel'):
-            self.claude_panel.retranslate(self.language_code)
+        if hasattr(self, 'agent_panel'):
+            self.agent_panel.retranslate(self.language_code)
         self.layer_state_manager = LayerStateManager()
         self.layer_state_manager.set_canvas(self.canvas)
         self.layer_state_manager.set_layer_panel(self.layer_panel)
@@ -498,15 +498,15 @@ class MainWindow(QMainWindow):
         self.layer_state_button.clicked.connect(self.show_layer_state_log)
         button_layout.addWidget(self.layer_state_button)
 
-        # Claude: a button next to Settings shows and hides Claude, which
+        # The agent: a button next to Settings shows and hides the agent, which
         # floats over the bottom of the canvas so the drawing never moves.
-        self.claude_panel = ClaudePanel(self, self.canvas, self.language_code)
-        self.claude_panel.design_ready.connect(self.open_claude_design)
-        # Claude's app tools run here, with the app's own code (src/claude_bridge/).
-        self.claude_panel.bridge = AppBridge(self, self.claude_panel)
-        self.claude_button = ClaudeButton(self.claude_panel)
-        self.claude_button.setVisible(claude_settings.claude_available())  # gone while AI models are off
-        button_layout.addWidget(self.claude_button, 0)
+        self.agent_panel = AgentPanel(self, self.canvas, self.language_code)
+        self.agent_panel.design_ready.connect(self.open_agent_design)
+        # The agent's app tools run here, with the app's own code (src/agent_bridge/).
+        self.agent_panel.bridge = AppBridge(self, self.agent_panel)
+        self.agent_button = AgentButton(self.agent_panel)
+        self.agent_button.setVisible(agent_settings.agent_on())  # gone while the agent is turned off
+        button_layout.addWidget(self.agent_button, 0)
 
         # Settings button (fixed size, no stretch)
         button_layout.addWidget(self.settings_button, 0)
@@ -768,12 +768,12 @@ class MainWindow(QMainWindow):
             self.toggle_grid_button, self.angle_adjust_button,
             self.save_button, self.load_button, self.save_image_button,
             self.toggle_control_points_button, self.toggle_shadow_button,
-            self.tabs_button, self.layer_state_button, self.claude_button, self.settings_button,
+            self.tabs_button, self.layer_state_button, self.agent_button, self.settings_button,
         ]
 
     def _toolbar_row_end(self):
         """The buttons kept together at the far end of the last row."""
-        return [self.layer_state_button, self.claude_button, self.settings_button]
+        return [self.layer_state_button, self.agent_button, self.settings_button]
 
     def _toolbar_single_row_width(self):
         """Width one row needs to show every label at its natural size with
@@ -817,7 +817,7 @@ class MainWindow(QMainWindow):
         split = self.TOOLBAR_SECOND_ROW_FROM if two_rows else len(widgets)
         first, second = widgets[:split], widgets[split:]
         # Each row keeps the original shape: buttons, a stretch, then State,
-        # Claude and the settings button at the far end of the last row.
+        # The agent and the settings button at the far end of the last row.
         end = self._toolbar_row_end()
         for w in first:
             if w not in end:
@@ -1060,8 +1060,8 @@ class MainWindow(QMainWindow):
     def apply_theme(self, theme_name):
         # Store the current theme
         self.current_theme = theme_name
-        if hasattr(self, 'claude_panel'):
-            self.claude_panel.apply_theme(theme_name)
+        if hasattr(self, 'agent_panel'):
+            self.agent_panel.apply_theme(theme_name)
         
         if theme_name == "dark":
             style_sheet = """
@@ -2080,7 +2080,7 @@ class MainWindow(QMainWindow):
     def load_project_file(self, filename):
         """Load a project or history file into the active tab: canvas, layer
         panel, groups, masks, shadows, locks and a fresh undo baseline. Shared
-        by Load and by the Claude panel, which opens its designs this way."""
+        by Load and by the agent panel, which opens its designs this way."""
         try:
             with open(filename, 'r', encoding='utf-8') as f:
                 file_data = json.load(f)
@@ -2186,14 +2186,14 @@ class MainWindow(QMainWindow):
             # You might want to show an error dialog to the user here
             return False
 
-    def claude_canvas_snapshot(self):
-        """The current canvas as a project dict: what Claude starts from when
+    def agent_canvas_snapshot(self):
+        """The current canvas as a project dict: what the agent starts from when
         the panel's "Start from the canvas" is on."""
         groups = self.group_layer_manager.get_group_data() if hasattr(self, 'group_layer_manager') else {}
         return serialize_project_state(self.canvas.strands, groups, self.canvas)
 
-    def open_claude_design(self, path):
-        """Open a design Claude made in a new tab, through the same loader as
+    def open_agent_design(self, path):
+        """Open a design the agent made in a new tab, through the same loader as
         Load, so the work in the current tab stays as it is."""
         if hasattr(self, 'tab_manager'):
             before = self.tab_manager.active_tab_id
@@ -2710,7 +2710,7 @@ class MainWindow(QMainWindow):
         if event.type() == QEvent.Resize and obj is getattr(self, 'left_widget', None):
             self._apply_toolbar_rows()
         if event.type() in (QEvent.KeyPress, QEvent.KeyRelease, QEvent.ShortcutOverride):
-            # Typing in a text box (the Claude prompt, a layer rename, a
+            # Typing in a text box (the agent's prompt, a layer rename, a
             # number field) keeps every key: Space types a space, Z and X
             # type letters instead of undoing.
             if self._typing_into(obj):
@@ -2767,18 +2767,18 @@ class MainWindow(QMainWindow):
                 return True
         return False
 
-    def toggle_claude(self):
-        """Ctrl+J: show or hide Claude, unless Settings > Claude has hidden it or turned AI models off."""
-        if self.claude_button.isVisible():
-            self.claude_panel.set_open(not self.claude_panel.is_open())
+    def toggle_agent(self):
+        """Ctrl+J: show or hide the agent, unless Settings > Models has turned it off."""
+        if self.agent_button.isVisible():
+            self.agent_panel.set_open(not self.agent_panel.is_open())
 
-    def set_claude_available(self, shown):
-        """Settings > Claude: show the Claude button, or hide it and Claude with it (the box
-        that shows it, and the one that turns AI models off altogether)."""
-        self.claude_button.setVisible(shown)
-        if not shown:
-            self.claude_panel.set_open(False)
-        # Shown again: the button is back, Claude stays closed until it is pressed.
+    def set_agent_on(self, on):
+        """Settings > Models, the one switch for the agent: on, its button is in the toolbar;
+        off, the button goes and its panel with it."""
+        self.agent_button.setVisible(on)
+        if not on:
+            self.agent_panel.set_open(False)
+        # On again: the button is back, the panel stays closed until it is pressed.
         self._toolbar_two_rows = None  # measure the toolbar again
         self._apply_toolbar_rows()
 

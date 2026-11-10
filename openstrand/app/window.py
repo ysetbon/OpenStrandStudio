@@ -1,7 +1,7 @@
 """What the main window's buttons do in the person's app: the toolbar, the round
 buttons beside the canvas and the buttons under the layer panel, done with the
-window's own code (src/claude_bridge/window.py). After a change the tab is read
-back, so Claude's copy is the tab again."""
+window's own code (src/agent_bridge/window.py). After a change the tab is read
+back, so the agent's copy is the tab again."""
 from .. import project
 from ..errors import ToolError
 from .strands import require_read

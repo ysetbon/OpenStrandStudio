@@ -3,7 +3,7 @@ waits for its answer. Each call is one JSON line on stdout,
 
     {"type": "app_call", "id": 3, "name": "open_in_new_tab", "args": {...}}
 
-and the app (src/claude_bridge, class AppBridge) answers with one line on stdin:
+and the app (src/agent_bridge, class AppBridge) answers with one line on stdin:
 
     {"id": 3, "ok": true, "result": {...}}      or      {"id": 3, "ok": false, "error": "..."}
 """

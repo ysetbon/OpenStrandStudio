@@ -1,4 +1,4 @@
-"""AppBridge: runs one request from Claude by the Action its area declares."""
+"""AppBridge: runs one request from the agent by the Action its area declares."""
 from .base import BridgeBase, BridgeError
 from .groups import GroupActions
 from .layers import LayerActions
@@ -24,7 +24,7 @@ class AppBridge(TabActions, StrandActions, MaskActions, LayerActions, GroupActio
                 raise BridgeError(f'the app has no action {name}')
             mode = self.panel.run_mode
             if spec.change and mode == 'plan':
-                raise BridgeError('plan mode is on: Claude may look at tabs but not change them')
+                raise BridgeError('plan mode is on: the agent may look at tabs but not change them')
             session = self.session(args.get('tab_id')) if spec.tab else None
             self.check(spec, args, session)
             if spec.change and mode == 'ask':
@@ -36,7 +36,7 @@ class AppBridge(TabActions, StrandActions, MaskActions, LayerActions, GroupActio
             return self.ok(call_id, self.run(spec, args, session))
         except BridgeError as e:
             return self.fail(call_id, str(e))
-        except Exception as e:  # the app's own code failed: tell Claude, keep the app running
+        except Exception as e:  # the app's own code failed: tell the agent, keep the app running
             return self.fail(call_id, f'{type(e).__name__}: {e}')
 
     def decide(self, call_id, allowed):

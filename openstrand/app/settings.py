@@ -1,13 +1,13 @@
 """The person's Settings (the gear button's dialog): read them, change them with
 the dialog's own code (its widgets and what its OK button runs), or open a page
-for the person (src/claude_bridge/settings.py). Settings belong to the app, not
+for the person (src/agent_bridge/settings.py). Settings belong to the app, not
 to a tab: changing one makes no undo step."""
 from ..errors import ToolError
 from .layers import color_value
 from .tabs import read_into_workspace
 
 PAGES = ('general', 'layer_panel', 'selected_strand', 'language', 'save_load', 'tutorial', 'button_guide',
-         'levels_masks', 'history', 'whats_new', 'samples', 'claude', 'about')
+         'levels_masks', 'history', 'whats_new', 'samples', 'models', 'about')
 COLOR_KEYS = {'shadow_color', 'default_arrow_color', 'default_strand_color', 'default_stroke_color',
               'default_level_color', 'highlight_color'}
 
@@ -59,7 +59,7 @@ def settings_text(rows):
 
 
 def app_value(key, value):
-    """Claude's value with its colors made exact for the app."""
+    """The agent's value with its colors made exact for the app."""
     if key not in COLOR_KEYS or value is None:
         return value
     try:

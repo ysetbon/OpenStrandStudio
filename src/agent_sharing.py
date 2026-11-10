@@ -7,10 +7,10 @@ model answered: the design it made, whole (the person's canvas too, when the mod
 it; never their canvas, a tab or a past step of one that it only read), its picture, the
 model's answer, the model, the app's version and language, whether the request worked, and
 whether the design was made from nothing of the person's (new). What never
-goes: the request the person typed, pictures they gave Claude, their API keys, their files,
+goes: the request the person typed, pictures they gave the agent, their API keys, their files,
 folders (every path and every API key in an answer or a design is cut out: the person's own
 keys whatever their shape, and any sk-... or xai-... key), an error's text, the time,
-anything about the computer or the person. Claude's answer can still repeat words or bare
+anything about the computer or the person. The agent's answer can still repeat words or bare
 file names (knot.json) from the request or the canvas: the consent text says so.
 
 How it goes: sealed on this computer with the developer's public key before it leaves
@@ -38,7 +38,7 @@ import re
 import urllib.request
 import zlib
 
-import claude_settings
+import agent_settings
 
 # The Worker that receives shares, and the developer's public key (scripts/share_inbox.py keygen).
 SHARE_URL = ''  # 'https://openstrand-share.<your-account>.workers.dev/v1/share'
@@ -82,10 +82,10 @@ def available(url=None, key=None):
     Python has what seals a share (the cryptography package, 47 or newer)."""
     url = SHARE_URL if url is None else url
     key = SHARE_PUBLIC_KEY if key is None else key
-    if not url or not key or claude_settings.providers is None:
+    if not url or not key or agent_settings.providers is None:
         return False
     try:
-        claude_settings.providers.check_url(url, claude_settings.providers.host_of(url))
+        agent_settings.providers.check_url(url, agent_settings.providers.host_of(url))
         public_key(key)
         suite()
     except Exception:  # noqa: BLE001 - not set up, or no cryptography: no sharing
@@ -155,7 +155,7 @@ def _home():
 
 def scrub(value, secrets=()):
     """value with every folder path and API key cut out of its texts, its dictionaries' keys
-    included, whatever its shape. secrets: the person's own keys (claude_settings.own_keys),
+    included, whatever its shape. secrets: the person's own keys (agent_settings.own_keys),
     cut out whatever their shape."""
     if isinstance(value, str):
         for secret in secrets:
@@ -226,7 +226,7 @@ def unseal(sealed, key):
 
 def send(sealed, url=None, timeout=TIMEOUT):
     """POST a sealed share to the Worker over HTTPS; its HTTP status (2xx: kept)."""
-    providers = claude_settings.providers
+    providers = agent_settings.providers
     providers.check_allowed(None)  # AI models turned off (Settings > Models): nothing is shared either
     url = SHARE_URL if url is None else url
     request = urllib.request.Request(url, data=sealed, method='POST',

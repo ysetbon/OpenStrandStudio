@@ -1,12 +1,12 @@
-"""A Claude agent that builds OpenStrand Studio projects with the openstrand tools.
+"""An agent that builds OpenStrand Studio projects with the openstrand tools.
 
-The agent loop is ours: Claude reads the request (and any reference image),
+The agent loop is ours: the agent reads the request (and any reference image),
 researches it on the web when it needs to, plans a structure, builds it from
 samples, generators or its own drawing, looks at each render, and stops when
 the design is right. Everything it does is reported through on_event, one
-dict per step, so a terminal or the app's Claude panel can show progress.
+dict per step, so a terminal or the app's agent panel can show progress.
 
-Runs with the user's own Anthropic API key (ANTHROPIC_API_KEY).
+Runs with the user's own API key for the model's provider (ANTHROPIC_API_KEY for Claude).
 """
 import base64
 import contextlib
@@ -18,7 +18,7 @@ from pathlib import Path
 
 from . import ROOT, colors, edit, generators, project
 from .debuglog import short
-from .errors import ToolError  # agent.ToolError: what a tool raises for Claude
+from .errors import ToolError  # agent.ToolError: what a tool raises for the agent
 
 from . import providers
 
@@ -360,7 +360,7 @@ class Workspace:
         self.data = None
         self.tab = None
         self.tab_version = None
-        self.theirs = False  # the current design is the person's own, as read (never shared as Claude's)
+        self.theirs = False  # the current design is the person's own, as read (never shared as the agent's)
         self.own = False  # this request read a design of the person's (its work is then never called new)
         self.version = 0
         self.rendered_version = -1
@@ -459,7 +459,7 @@ class Workspace:
         return summary, text
 
     def run(self, name, args):
-        """Do one tool call. Returns (summary for people, content for Claude)."""
+        """Do one tool call. Returns (summary for people, content for the agent)."""
         if name == 'search_samples':
             text = str(args.get('text', '')).lower()
             names = [n for n in generators.samples() if text in n.lower()]
@@ -598,7 +598,7 @@ class Workspace:
 
 
 class Agent:
-    """Runs one request: the loop of Claude calls and tool calls."""
+    """Runs one request: the loop of model calls and tool calls."""
 
     def __init__(self, client, out_dir, model=DEFAULT_MODEL, on_event=None, max_rounds=24, max_cost=2.00,
                  quiet=None, web=True, effort='high', plan=False, app=None, log=None):
@@ -693,7 +693,7 @@ class Agent:
 
         start is a project dict to begin from, such as what is on the
         person's canvas; the agent can describe, change or replace it.
-        history is the session so far ([{'user', 'claude', 'design'}], oldest
+        history is the session so far ([{'user', 'agent', 'design'}], oldest
         first), so the person can refer back to it; a new session sends none.
         """
         if history:
@@ -787,7 +787,7 @@ class Agent:
             message = str(e) if not isinstance(e, KeyError) else f'missing argument {e}'
             self.on_event({'type': 'tool_end', 'name': block.name, 'ok': False, 'summary': message})
             return {'type': 'tool_result', 'tool_use_id': block.id, 'content': message, 'is_error': True}
-        except Exception as e:  # a crash inside the app's code: tell Claude, keep going
+        except Exception as e:  # a crash inside the app's code: tell the agent, keep going
             message = f'{type(e).__name__}: {e}'
             self.on_event({'type': 'tool_end', 'name': block.name, 'ok': False, 'summary': message})
             return {'type': 'tool_result', 'tool_use_id': block.id, 'content': message, 'is_error': True}
@@ -858,8 +858,8 @@ def with_history(prompt, history):
     lines = ['Earlier in this conversation, oldest first (the person may refer to it):']
     for turn in history[-HISTORY_TURNS:]:
         lines.append(f"- The person asked: {str(turn.get('user', ''))[:600]}")
-        if turn.get('claude'):
-            lines.append(f"  You answered: {str(turn['claude'])[:900]}")
+        if turn.get('agent'):
+            lines.append(f"  You answered: {str(turn['agent'])[:900]}")
         if turn.get('design'):
             lines.append(f"  The design: {turn['design']}")
         if turn.get('tools'):
@@ -898,7 +898,7 @@ def print_events(event, as_json=False, out=None):
             print_(f"    {int(100 * (event.get('fraction') or 0)):3d}% {stage_text(event)}")
         return
     if kind == 'text':
-        print_(f"claude: {event['text']}")
+        print_(f"agent: {event['text']}")
     elif kind == 'thinking':
         print_(f"  (thinking) {event['text']}")
     elif kind == 'search':

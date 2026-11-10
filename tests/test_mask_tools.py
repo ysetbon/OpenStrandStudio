@@ -777,6 +777,7 @@ def test_claude_reads_the_tab_as_it_is_now_its_history_and_moves_a_strand(window
     old = next(s for s in ws.data["strands"] if s["layer_name"] == parent.layer_name)
     assert abs(old["end"]["x"] - (end[0] - 9.0)) < 0.6 and ws.tab is None  # a copy: no tab edits from it
     assert f"undo step {after_step - 1}" in text
+    assert ws.theirs and runner.finish([])["changed"] is False  # the person's own: never shared as Claude's
     with pytest.raises(agent.ToolError, match="read_tab this tab first"):
         runner.app_tool("edit_strand_in_tab", {"tab_id": tab.id, "strand": parent.layer_name, "points": {"end": end}})
     # Undo: the tab goes back, its version changes, and the undone step can still be read.

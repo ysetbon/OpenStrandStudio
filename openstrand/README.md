@@ -181,13 +181,17 @@ Sharing with the developer (`src/claude_sharing.py`) is offered only once the
 developer has set `SHARE_URL` and `SHARE_PUBLIC_KEY` there (the Worker's
 README says how), and then off until the person says yes, on a card under
 Claude's first answer or in Settings > Models; a yes holds for each request
-after it, until they turn it off. For each request, the design Claude made
-(never the person's own canvas left as it was), its picture and Claude's
-answer, with the model, the app's language and whether the request worked,
-are encrypted on this computer with the developer's public key and sent to
-the developer's Cloudflare Worker (`cloudflare/share-worker`). The request
-itself, the person's pictures, keys and files, an error's text and the time
-are never sent, though Claude's answer may repeat words of the request.
+after it, until they turn it off. For each request, whichever model answered,
+the design Claude made (all of it, the person's canvas too when Claude changed
+it; never a canvas, tab or past step that Claude only read: the agent's
+`changed` says which), its picture and Claude's answer, with the model, the
+app's language and whether the request worked, are encrypted on this computer
+with the developer's public key and sent to the developer's Cloudflare Worker
+(`cloudflare/share-worker`). The setting is read again just before a share
+leaves, so one turned off meanwhile stays here. The request itself, the
+person's pictures, keys and files, every folder path, an error's text and the
+time are never sent, though Claude's answer may repeat words or bare file
+names from the request or the canvas.
 
 Two switches in Settings > Models decide what may be sent at all, and every
 request asks them just before it leaves (`providers.POLICY`, which

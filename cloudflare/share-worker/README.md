@@ -1,7 +1,8 @@
 # OpenStrand Studio share inbox
 
 A Cloudflare Worker that receives what people **choose** to share with you from OpenStrand
-Studio's Claude panel: the design Claude made, its picture, and Claude's answer, with the
+Studio's Claude panel, whichever model they use there: the design Claude made (all of it,
+their own canvas too when Claude changed it), its picture, and Claude's answer, with the
 model used, the app's language and whether the request worked.
 
 Nobody shares anything until they say yes. The panel asks once, on a card under Claude's
@@ -16,14 +17,16 @@ the setup below, the app shows no card and no setting.
 | On the person's computer | The app encrypts each share with **your public key** before it leaves (HPKE, RFC 9180: ML-KEM-768 + X25519, so it holds against future quantum computers too, with HKDF-SHA256 and ChaCha20-Poly1305). File paths and the home folder are cut out of every text first. |
 | On the way | HTTPS only, certificate checked, TLS 1.2 or newer, and no redirects followed. |
 | At Cloudflare | The Worker and its R2 bucket only ever hold sealed bytes. Without your private key, nobody can read them: not Cloudflare, not someone who breaks into your Cloudflare account, and not a leaked bucket. |
-| Kept about the sender | Nothing: no IP address, no headers, no time finer than the day. Request logs are off. |
+| Kept about the sender | No IP address and no headers. Request logs are off. Each share's name holds the day it came, and R2 notes when it was stored (the inbox shows that as `received`). |
 | Who can add | Anyone with the app, at most 10 shares a minute per IP address and 8 MB each. Anything that is not a sealed share is refused. |
 | Who can read | Only someone with the `INBOX_TOKEN` secret, and what they get is still sealed. Only your **private key**, kept off line, opens it. |
 
-Never sent: the request the person typed (though Claude's answer may repeat words of it),
-pictures they gave Claude, their own canvas left unchanged, API keys, file names or folders,
-an error's text, the time, anything about the computer or the person. Nothing is sent at all
-while the person has *Connect to AI models* turned off in *Settings > Models*.
+Never sent: the request the person typed, pictures they gave Claude, their own canvas (or a
+tab) that Claude only read, API keys, their files, folders (every path is cut out), an
+error's text, the time, anything about the computer or the person. Claude's answer may still
+repeat words or bare file names from the request or the canvas: the consent text tells
+people so. Nothing is sent at all while the person has *Connect to AI models* turned off in
+*Settings > Models*.
 
 > Anyone can send a share (your public key is inside the app). A share is sealed, not
 > signed, so open one the way you would open a file from a stranger.
@@ -132,9 +135,12 @@ npx wrangler dev
 What you collect, only with the person's consent and revocable at any time in
 *Settings > Models*:
 
-- the designs Claude makes in the app, with their pictures
-- Claude's answers
+- the designs Claude makes in the app, with their pictures (a person's own design too,
+  in full, when Claude changed it)
+- the answers of whichever model they use (which may repeat words or file names from their
+  request)
 - the model used, the app's language, and whether each request worked
+- when each share arrived
 
 It is encrypted on the person's computer and stored with Cloudflare (R2) until you delete
 it. You do not collect the person's requests, their own pictures or files, their API keys,

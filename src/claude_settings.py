@@ -69,6 +69,13 @@ def models(data=None):
     return [(m.id, m.label) for m in providers.MODELS.values() if china or not based_in_china(m.provider)]
 
 
+def sharing_on():
+    """Whether a share may go now: the person said yes and has not turned it (or models) off.
+    Read from claude.json alone (no password store), so a background thread can ask it."""
+    data = _read()
+    return data.get('share') is True and data.get('models_on', True) is not False
+
+
 def based_in_china(provider):
     spec = PROVIDERS.get(provider)
     return getattr(spec, 'country', '') == 'CN'

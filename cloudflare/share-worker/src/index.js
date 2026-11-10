@@ -12,8 +12,9 @@
  * which their private key, kept off line, then opens. Without INBOX_TOKEN set, reading is
  * off altogether.
  *
- * Nothing about the sender is kept: no IP address, no headers, nothing but the day in the
- * share's name. Request logs are off (wrangler.toml).
+ * Nothing about the sender is kept: no IP address, no headers. A share's name holds the day
+ * it came, and R2 notes when it was stored (the inbox lists that time). Request logs are off
+ * (wrangler.toml).
  */
 const MAGIC = [0x4f, 0x53, 0x53, 0x31]; // "OSS1": what every sealed share starts with
 const ENCAPSULATED = 1120; // HPKE's encapsulated key, for ML-KEM-768 + X25519

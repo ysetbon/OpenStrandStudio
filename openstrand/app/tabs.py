@@ -100,7 +100,8 @@ def read_tab_step(agent, args):
     tab, step = str(args.get('tab_id', '')), args.get('step')
     result = agent.app.call('read_tab_step', {'tab_id': tab, 'step': step})
     data = project.read(result['file'])
-    agent.workspace.store(data)  # a copy of a past step: not the tab as it is, so no tab edits from it
+    # A copy of a past step: not the tab as it is, so no tab edits from it; still the person's own.
+    agent.workspace.store(data, theirs=True)
     what = f" ({result['what']})" if result.get('what') else ''
     return (f"Tab {result.get('title', '')} at step {result.get('step')} · {project.summary(data)}",
             f"tab \"{result.get('title', '')}\" as it was at undo step {result.get('step')}{what} is now the "

@@ -1938,7 +1938,11 @@ class ClaudePanel(QWidget):
         it held; a share that fails is dropped (it never holds the panel up)."""
         def send():
             try:
-                status = claude_sharing.send(claude_sharing.seal(record))
+                sealed = claude_sharing.seal(record)
+                if not claude_settings.sharing_on():  # turned off since it was queued: it stays here
+                    terminal_log('not shared: sharing was turned off')
+                    return
+                status = claude_sharing.send(sealed)
                 terminal_log(f'shared with the developer, encrypted (the server answered {status})')
             except Exception as e:  # noqa: BLE001
                 terminal_log(f'could not share with the developer: {type(e).__name__}: {e}')

@@ -185,6 +185,39 @@ def test_start_design_is_loaded_and_described(tmp_path):
     assert result["ok"] and result["changed"] is True  # Claude's work now
 
 
+def test_a_tab_or_a_past_step_of_one_is_the_person_s_never_claude_s_work(tmp_path):
+    """After read_tab or read_tab_step the current design is the person's own, even when Claude
+    made and opened a design of its own earlier in the request: changed is False, so the panel
+    never shares it as Claude's. A tool that stores a new design makes it Claude's work again."""
+    hopf = ROOT / "knot_samples/links/json/hopf_link.json"
+
+    def call(name, args):  # the app, through the bridge
+        if name == "read_tab_step":
+            return {"file": str(hopf), "title": "Mine", "step": args["step"], "what": "moved a strand",
+                    "current_step": 4, "max_step": 4}
+        if name == "read_tab":
+            return {"file": str(hopf), "title": "Mine", "version": 7, "history": []}
+        return {"opened": True}
+    app = SimpleNamespace(call=call)
+
+    def run(*steps):
+        load = SimpleNamespace(type="tool_use", id="t1", name="load_sample", input={"name": "hopf_link"})
+        client = ScriptedClient([reply(load),
+                                 reply(tool("t2", "open_in_new_tab", design="current", title="Rings")),
+                                 *[reply(tool(f"t{3 + i}", name, **args)) for i, (name, args) in enumerate(steps)],
+                                 reply(text("Done."), stop="end_turn")])
+        return agent.Agent(client, tmp_path, model="claude-haiku-5-5", app=app).run("x")
+    made = run()
+    assert made["ok"] and made["opened_tabs"] == ["Rings"] and made["project"] and made["changed"] is True
+    past = run(("read_tab_step", {"tab_id": "1", "step": 2}))
+    assert past["ok"] and past["opened_tabs"] == ["Rings"] and past["project"]  # a copy, in the workspace
+    assert past["changed"] is False  # the person's tab two steps ago: never shared as Claude's design
+    tab = run(("read_tab", {"tab_id": "1"}))
+    assert tab["ok"] and tab["changed"] is False and tab["in_tab"] == "1" and tab["project"] is None
+    recolored = run(("read_tab_step", {"tab_id": "1", "step": 2}), ("recolor", {"sets": [1], "color": "gold"}))
+    assert recolored["ok"] and recolored["changed"] is True  # Claude changed it: its work now
+
+
 def test_agent_draws_its_own_design_and_reports_thinking_and_searches(tmp_path):
     with_search = SimpleNamespace(input_tokens=1000, output_tokens=200, cache_creation_input_tokens=0,
                                   cache_read_input_tokens=0,
@@ -665,8 +698,10 @@ def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed
         run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT two rings")
         (card,) = cards()
         assert card["state"] is None and got == [] and claude_settings.load()["share"] is None
-        assert "Share what Claude makes with the OpenStrand Studio developer" in panel.transcript.toPlainText()
-        assert "From now on" in panel.transcript.toPlainText()  # a yes holds for the requests after it
+        asked = panel.transcript.toPlainText()
+        assert "Share your results from Claude with the OpenStrand Studio developer" in asked
+        assert "From now on, with any model" in asked  # a yes holds for the requests after it, any model
+        assert "your canvas too if Claude changed it" in asked and "file names" in asked
         run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT two rings")
         assert len(cards()) == 1  # left unanswered: not asked again while the app runs
         # Share: this request goes, sealed; the next ones go without asking.
@@ -695,10 +730,19 @@ def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed
         only_answer = claude_sharing.unseal(got[3], private)
         assert only_answer["design"] is None and only_answer["picture"] is None
         assert only_answer["answer"] == ["Two linked rings, in teal."]
-        # Turned off (Settings > Models): nothing goes.
+        # Turned off (Settings > Models): nothing goes, not even a share already on its way.
         claude_settings.save(share=False)
         run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT once more")
-        time.sleep(0.3)
+        said = []
+        monkeypatch.setattr(sys.modules[type(panel).__module__], "terminal_log", said.append)
+        panel.send_share(claude_sharing.record(["Queued just before sharing was turned off."]))
+        for _ in range(250):
+            if "not shared: sharing was turned off" in said:
+                break
+            time.sleep(0.02)
+        assert "not shared: sharing was turned off" in said
+        assert not any(line.startswith("shared with the developer") for line in said)
+        time.sleep(0.2)
         assert len(got) == 4 and len(cards()) == 1
     finally:
         http.shutdown()

@@ -2,12 +2,14 @@
 says yes. They are asked once, on a card under Claude's first answer; Settings > Models
 changes it at any time.
 
-What goes, for each request once the person said yes (until they turn it off): the
-design Claude made (its project and picture; never their own canvas left as it was),
+What goes, for each request once the person said yes (until they turn it off), whichever
+model answered: the design Claude made, whole (the person's canvas too, when Claude changed
+it; never their canvas, a tab or a past step of one that Claude only read), its picture,
 Claude's answer, the model, the app's language, and whether the request worked. What never
-goes: the request the person typed (though Claude's answer may repeat words of it), pictures
-they gave Claude, their API keys, file names or folders (a path in an answer is cut out),
-an error's text, the time, anything about the computer or the person.
+goes: the request the person typed, pictures they gave Claude, their API keys, their files,
+folders (every path in an answer or a design is cut out), an error's text, the time,
+anything about the computer or the person. Claude's answer can still repeat words or bare
+file names (knot.json) from the request or the canvas: the consent text says so.
 
 How it goes: sealed on this computer with the developer's public key before it leaves
 (HPKE, RFC 9180: ML-KEM-768 with X25519, which holds against quantum computers too,

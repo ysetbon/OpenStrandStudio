@@ -100,14 +100,13 @@ def save(record, folder):
         if folder.exists():  # an earlier extract of the same name: set aside until this one is in place
             old = folder.with_name(f'.{folder.name}-old-{secrets.token_hex(4)}')
             os.replace(folder, old)
-        try:
-            os.replace(new, folder)
-        except OSError:
-            if old is not None:
+        os.replace(new, folder)
+    except BaseException:  # anything at all, Ctrl+C included: the earlier extract goes back in its place
+        if old is not None and old.exists() and not folder.exists():
+            try:
                 os.replace(old, folder)
-                old = None
-            raise
-    except BaseException:
+            except OSError:
+                pass  # left where it is, under its dotted name: never removed
         shutil.rmtree(new, ignore_errors=True)
         raise
     if old is not None:

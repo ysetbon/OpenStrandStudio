@@ -237,6 +237,19 @@ def test_the_developer_s_tool_writes_a_share_whole_or_not_at_all(keys, tmp_path,
     monkeypatch.setattr(share_inbox.Path, "write_bytes", real)
     assert {p.name: p.read_bytes() for p in (out / "ring").iterdir()} == before
     assert [p.name for p in out.iterdir()] == ["ring"]  # nothing half written left beside it
+    # Stopped (Ctrl+C) just as the new one would take its place: the earlier one is put back.
+    real_replace = share_inbox.os.replace
+
+    def interrupted(src, dst):
+        if Path(dst) == out / "ring" and "-old-" not in Path(src).name:
+            raise KeyboardInterrupt
+        return real_replace(src, dst)
+    monkeypatch.setattr(share_inbox.os, "replace", interrupted)
+    with pytest.raises(KeyboardInterrupt):
+        share_inbox.save(claude_sharing.record(["Another ring."], HOPF, PNG), out / "ring")
+    monkeypatch.setattr(share_inbox.os, "replace", real_replace)
+    assert {p.name: p.read_bytes() for p in (out / "ring").iterdir()} == before
+    assert [p.name for p in out.iterdir()] == ["ring"]
     # Once it can be written, it takes the earlier one's place whole.
     assert share_inbox.main(["open", str(second), "--key", str(key), "--out", str(out)]) == 0
     assert (out / "ring" / "answer.md").read_text(encoding="utf-8") == "Another ring.\n"

@@ -104,6 +104,28 @@ def test_a_share_never_holds_a_folder_or_the_person_s_name_in_one():
     # Nothing else: not the request, an error's text, the time, the computer or the person.
 
 
+def test_a_share_never_holds_an_api_key_even_when_the_answer_repeats_one(tmp_path, monkeypatch):
+    import claude_settings
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    claude_settings.save(provider_key=("moonshot", "an-odd-saved-key-0123456789"))
+    monkeypatch.setenv("OPENAI_API_KEY", "an-odd-env-key-9876543210")
+    keys = claude_settings.own_keys()  # the person's own, saved or in the environment, any shape
+    assert {"an-odd-saved-key-0123456789", "an-odd-env-key-9876543210"} <= set(keys)
+    record = claude_sharing.record(
+        ["Your keys an-odd-saved-key-0123456789 and an-odd-env-key-9876543210 both work.",
+         "So would sk-ant-api03-AbCdEf0123456789_xyz-QQ, sk-proj-ABCDEFGHIJKLMNOPQRSTUVWX or "
+         "xai-0123456789abcdefghijKLMNOP.",
+         "A risk-free-of-charge-for-everyone knot, task-based, from xai-org/grok-1."],
+        {"strands": [], "note": "sk-0123456789abcdef0123", "name": "an-odd-saved-key-0123456789"}, None,
+        secrets=keys + ["", "short"])
+    said = json.dumps(record)
+    for secret in ("an-odd-saved-key", "an-odd-env-key", "sk-ant-", "sk-proj-", "xai-0123", "sk-0123"):
+        assert secret not in said, secret
+    assert record["answer"] == ["Your keys … and … both work.", "So would …, … or ….",
+                                "A risk-free-of-charge-for-everyone knot, task-based, from xai-org/grok-1."]
+    assert record["design"] == {"strands": [], "note": "…", "name": "…"}
+
+
 def test_sharing_is_off_until_the_developer_sets_it_up(keys, monkeypatch):
     _, public = keys
     monkeypatch.setattr(claude_sharing, "SHARE_URL", "")

@@ -191,7 +191,9 @@ with the developer's public key and sent to the developer's Cloudflare Worker
 leaves, so one turned off meanwhile stays here. The request itself, the
 person's pictures, keys and files, every folder path, an error's text and the
 time are never sent, though Claude's answer may repeat words or bare file
-names from the request or the canvas.
+names from the request or the canvas. An API key an answer repeats is cut out
+(`claude_settings.own_keys`: the person's own keys, whatever their shape, and
+any `sk-...` or `xai-...` key).
 
 Two switches in Settings > Models decide what may be sent at all, and every
 request asks them just before it leaves (`providers.POLICY`, which

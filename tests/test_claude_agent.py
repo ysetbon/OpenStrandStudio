@@ -730,6 +730,12 @@ def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed
         only_answer = claude_sharing.unseal(got[3], private)
         assert only_answer["design"] is None and only_answer["picture"] is None
         assert only_answer["answer"] == ["Two linked rings, in teal."]
+        # An answer that repeats one of the person's keys (saved, of any shape): the key is cut out.
+        claude_settings.save(provider_key=("openai", "an-odd-saved-key-0123456789"))
+        keyed = run()
+        keyed[0]["text"] = "Your key an-odd-saved-key-0123456789 works."
+        run_events(panel, keyed, tmp_path, prompt="SECRET-PROMPT my key")
+        assert received(5) and claude_sharing.unseal(got[4], private)["answer"] == ["Your key … works."]
         # Turned off (Settings > Models): nothing goes, not even a share already on its way.
         claude_settings.save(share=False)
         run_events(panel, run(), tmp_path, prompt="SECRET-PROMPT once more")
@@ -743,7 +749,7 @@ def test_sharing_with_the_developer_is_asked_once_and_only_a_yes_sends_it_sealed
         assert "not shared: sharing was turned off" in said
         assert not any(line.startswith("shared with the developer") for line in said)
         time.sleep(0.2)
-        assert len(got) == 4 and len(cards()) == 1
+        assert len(got) == 5 and len(cards()) == 1
     finally:
         http.shutdown()
         panel.entries.clear()

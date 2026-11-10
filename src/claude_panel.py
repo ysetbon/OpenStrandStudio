@@ -1915,14 +1915,16 @@ class ClaudePanel(QWidget):
         choice = settings['share']
         if not settings['models_on'] or choice is False or (choice is None and self.share_asked):
             return
-        record = self.share_record(event, design, picture)
+        record = self.share_record(event, design, picture, claude_settings.own_keys(settings))
         if choice:
             self.send_share(record)
             return
         self.share_asked = True
         self.add_entry({'kind': 'share', 'state': None, 'record': record})
 
-    def share_record(self, event, design, picture):
+    def share_record(self, event, design, picture, keys=()):
+        """The share for this request (claude_sharing.record): keys, the person's own, are cut
+        out of it wherever an answer or the design repeats one."""
         project = png = None
         if design and os.path.exists(design):
             with open(design, 'r', encoding='utf-8') as f:
@@ -1931,7 +1933,7 @@ class ClaudePanel(QWidget):
             with open(picture, 'rb') as f:
                 png = f.read()
         return claude_sharing.record(self.run_texts, project, png, model=event.get('model'), language=self.language,
-                                     ok=bool(event.get('ok')) and not event.get('error'))
+                                     ok=bool(event.get('ok')) and not event.get('error'), secrets=keys)
 
     def send_share(self, record):
         """Seal it and send it, off the main thread. The terminal says how it went, never what

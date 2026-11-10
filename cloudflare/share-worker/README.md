@@ -14,7 +14,7 @@ the setup below, the app shows no card and no setting.
 
 | Step | What protects it |
 |---|---|
-| On the person's computer | The app encrypts each share with **your public key** before it leaves (HPKE, RFC 9180: ML-KEM-768 + X25519, so it holds against future quantum computers too, with HKDF-SHA256 and ChaCha20-Poly1305). File paths and the home folder are cut out of every text first. |
+| On the person's computer | The app encrypts each share with **your public key** before it leaves (HPKE, RFC 9180: ML-KEM-768 + X25519, so it holds against future quantum computers too, with HKDF-SHA256 and ChaCha20-Poly1305). File paths, API keys (the person's own, and any `sk-...` or `xai-...` key) and the home folder are cut out of every text first. |
 | On the way | HTTPS only, certificate checked, TLS 1.2 or newer, and no redirects followed. |
 | At Cloudflare | The Worker and its R2 bucket only ever hold sealed bytes. Without your private key, nobody can read them: not Cloudflare, not someone who breaks into your Cloudflare account, and not a leaked bucket. |
 | Kept about the sender | No IP address and no headers. Request logs are off. Each share's name holds the day it came, and R2 notes when it was stored (the inbox shows that as `received`). |
@@ -22,8 +22,8 @@ the setup below, the app shows no card and no setting.
 | Who can read | Only someone with the `INBOX_TOKEN` secret, and what they get is still sealed. Only your **private key**, kept off line, opens it. |
 
 Never sent: the request the person typed, pictures they gave Claude, their own canvas (or a
-tab) that Claude only read, API keys, their files, folders (every path is cut out), an
-error's text, the time, anything about the computer or the person. Claude's answer may still
+tab) that Claude only read, API keys (one an answer repeats is cut out too), their files,
+folders (every path is cut out), an error's text, the time, anything about the computer or the person. Claude's answer may still
 repeat words or bare file names from the request or the canvas: the consent text tells
 people so. Nothing is sent at all while the person has *Connect to AI models* turned off in
 *Settings > Models*.

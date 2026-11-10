@@ -7,7 +7,8 @@ model answered: the design Claude made, whole (the person's canvas too, when Cla
 it; never their canvas, a tab or a past step of one that Claude only read), its picture,
 Claude's answer, the model, the app's language, and whether the request worked. What never
 goes: the request the person typed, pictures they gave Claude, their API keys, their files,
-folders (every path in an answer or a design is cut out), an error's text, the time,
+folders (every path and every API key in an answer or a design is cut out: the person's own
+keys whatever their shape, and any sk-... or xai-... key), an error's text, the time,
 anything about the computer or the person. Claude's answer can still repeat words or bare
 file names (knot.json) from the request or the canvas: the consent text says so.
 
@@ -52,6 +53,10 @@ TIMEOUT = 20.0
 PATHS = (re.compile(r'(?:(?<!\w)[A-Za-z]:[\\/](?![\\/])|\\\\(?=\w))(?:[^\\/\r\n"\'<>|:*?]+[\\/])*'
                     r'[^\s\\/"\'<>|:*?]*'),
          re.compile(r'(?:(?<![\w.])/(?:Users|home|private|var|tmp|mnt|Volumes)/|(?<!\w)~[\\/])[^\s"\'<>|]*'))
+# An API key in a text, as every provider's keys start: sk- (Anthropic sk-ant-, OpenAI sk- and
+# sk-proj-, DeepSeek, Kimi, Qwen) or xai- (Grok). Never part of a word (risk-free, ask-me-...).
+KEYS = re.compile(r'(?<![\w-])(?:sk|xai)-[A-Za-z0-9_\-]{16,}')
+MIN_SECRET = 12  # a saved key shorter than this is cut out by its shape only (never a common word)
 
 
 def suite():
@@ -128,28 +133,35 @@ def _home():
     return re.compile(r'(?<![\w.])' + prefix + r'[\\/]+'.join(parts) + r'(?![\w.-])', re.IGNORECASE)
 
 
-def scrub(value):
-    """value with every folder path cut out of its texts, whatever its shape."""
+def scrub(value, secrets=()):
+    """value with every folder path and API key cut out of its texts, whatever its shape.
+    secrets: the person's own keys (claude_settings.own_keys), cut out whatever their shape."""
     if isinstance(value, str):
+        for secret in secrets:
+            value = value.replace(secret, '…')
+        value = KEYS.sub('…', value)
         home = _home()
         value = home.sub('~', value) if home else value
         for path in PATHS:
             value = path.sub('…', value)
         return value
     if isinstance(value, list):
-        return [scrub(v) for v in value]
+        return [scrub(v, secrets) for v in value]
     if isinstance(value, dict):
-        return {k: scrub(v) for k, v in value.items()}
+        return {k: scrub(v, secrets) for k, v in value.items()}
     return value
 
 
-def record(answer, design=None, picture=None, model='', language='', ok=True):
+def record(answer, design=None, picture=None, model='', language='', ok=True, secrets=()):
     """One share: Claude's answer (its texts, in order), the design it made (a project dict)
     and its picture (PNG bytes), the model, the app's language, whether the request worked
-    (not why not: an error's text can hold the person's own settings, a spending limit)."""
+    (not why not: an error's text can hold the person's own settings, a spending limit).
+    secrets: the person's API keys, cut out of the answer and the design like any key."""
+    secrets = sorted({str(s).strip() for s in secrets or () if len(str(s or '').strip()) >= MIN_SECRET},
+                     key=len, reverse=True)  # a longer key first, should one hold another
     return {'format': FORMAT, 'model': str(model or ''), 'language': str(language or ''), 'ok': bool(ok),
-            'answer': scrub([str(t) for t in answer or [] if str(t).strip()]),
-            'design': scrub(design) if isinstance(design, dict) else None,
+            'answer': scrub([str(t) for t in answer or [] if str(t).strip()], secrets),
+            'design': scrub(design, secrets) if isinstance(design, dict) else None,
             'picture': base64.b64encode(picture).decode('ascii') if picture else None}
 
 

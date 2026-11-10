@@ -69,6 +69,15 @@ def models(data=None):
     return [(m.id, m.label) for m in providers.MODELS.values() if china or not based_in_china(m.provider)]
 
 
+def own_keys(current=None):
+    """Every API key this app knows of, saved or set in the environment, whatever its shape:
+    claude_sharing cuts each one out of anything shared (an answer may repeat a key)."""
+    current = load() if current is None else current
+    keys = set(current['keys'].values())
+    keys.update(os.environ.get(spec.env, '').strip() for spec in PROVIDERS.values() if spec.env)
+    return sorted(key for key in keys if key)
+
+
 def sharing_on():
     """Whether a share may go now: the person said yes and has not turned it (or models) off.
     Read from claude.json alone (no password store), so a background thread can ask it."""

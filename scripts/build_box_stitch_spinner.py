@@ -137,6 +137,17 @@ def strand(name, a, b, level=0):
     return s
 
 
+def tip_beneath(tip, a, b, half):
+    """Whether the point tip lies within half of the strand a -> b (its round start included)."""
+    length = math.dist(a, b)
+    if length < 1e-6:
+        return False
+    d = ((b[0] - a[0]) / length, (b[1] - a[1]) / length)
+    along = (tip[0] - a[0]) * d[0] + (tip[1] - a[1]) * d[1]
+    across = (tip[0] - a[0]) * d[1] - (tip[1] - a[1]) * d[0]
+    return -half <= along <= length and abs(across) <= half
+
+
 def project(geom):
     """A project of the strands in geom (name -> (start, end)), with the masks of crossings
     whose two strands are both there."""
@@ -149,6 +160,11 @@ def project(geom):
                       end=dict(first['end']), deletion_rectangles=[])
             mk.pop('level', None)
             strands.append(mk)
+            # While the under strand's tip is beneath the over strand, the app still draws the
+            # tip's end line on top of the mask: a stray line down the middle of the over strand.
+            under = next(s for s in strands if s['layer_name'] == b)
+            if tip_beneath(geom[b][1], *geom[a], first['width'] / 2 + first['stroke_width'] + 2):
+                under['end_line_visible'] = False
     for i, s in enumerate(strands):
         s['index'] = i
     out = {k: v for k, v in K1.items() if k != 'strands'}

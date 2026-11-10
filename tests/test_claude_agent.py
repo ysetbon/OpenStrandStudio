@@ -829,7 +829,8 @@ def test_settings_say_where_the_keys_are_and_offer_sharing_once_it_is_set_up(tmp
 
 
 def test_with_models_off_the_panel_sends_nothing_and_a_running_request_stops(window, monkeypatch, tmp_path):
-    from PyQt5.QtCore import QProcess
+    from PyQt5.QtCore import QProcess, Qt
+    from PyQt5.QtTest import QTest
     import claude_settings
     from claude_panel import ClaudeSettingsPage
     monkeypatch.setenv("APPDATA", str(tmp_path))
@@ -842,9 +843,19 @@ def test_with_models_off_the_panel_sends_nothing_and_a_running_request_stops(win
     assert any("DeepSeek" in page.model_combo.itemText(i) for i in range(page.model_combo.count()))
     page.china_check.setChecked(False)
     assert claude_settings.load()["allow_china"] is False
+    page.show_button_changed.connect(window.set_claude_available)  # as the Settings dialog does
+    button, panel = window.claude_button, window.claude_panel
+    panel.set_open(True)
+    assert button.isVisible() and panel.isVisible() and page.show_check.isEnabled()
     page.models_check.setChecked(False)
     assert claude_settings.load()["models_on"] is False and not page.refresh_button.isEnabled()
-    panel = window.claude_panel
+    # Off is off everywhere: no Claude button in the main window, no panel, and Ctrl+J does nothing.
+    assert not button.isVisible() and not panel.isVisible() and not claude_settings.claude_available()
+    window.activateWindow()
+    QTest.keyClick(window.windowHandle(), Qt.Key_J, Qt.ControlModifier)
+    assert not panel.isVisible()
+    assert not page.show_check.isEnabled() and claude_settings.load()["show_button"] is True  # kept for later
+    assert "Claude button also leaves the main window" in page.models_hint.text()
     started, killed = [], []
     monkeypatch.setattr("claude_panel.QProcess.start", lambda self, program, args: started.append(args))
     panel.prompt_edit.setText("a heart")
@@ -853,6 +864,13 @@ def test_with_models_off_the_panel_sends_nothing_and_a_running_request_stops(win
     # Turned off while a request runs: it stops at once, as with Stop.
     page.models_check.setChecked(True)
     assert claude_settings.load()["models_on"] and page.refresh_button.isEnabled()
+    assert button.isVisible() and not panel.isVisible() and page.show_check.isEnabled()  # back, and closed
+    page.show_check.setChecked(False)  # hidden by its own box: turning models on does not bring it back
+    page.models_check.setChecked(False)
+    page.models_check.setChecked(True)
+    assert not button.isVisible()
+    page.show_check.setChecked(True)
+    assert button.isVisible()
     panel.process = SimpleNamespace(state=lambda: QProcess.Running, kill=lambda: killed.append(1))
     try:
         panel.refresh_controls()

@@ -209,7 +209,13 @@ request asks them just before it leaves (`providers.POLICY`, which
 `claude_settings.refusal` answers from the saved settings), in the app and in
 the agent it starts alike. **Connect to AI models**, turned off, sends nothing
 to any model: no request, no Refresh models, no share; a request already
-running stops. **Allow Kimi, DeepSeek and Qwen (based in China)** is off until
+running stops. Off is off everywhere: the Claude button leaves the main
+window, Ctrl+J does nothing, the panel cannot be opened, and
+`openstrand agent` refuses before it loads a package or reads a key (the
+other `openstrand` commands never contact a model and still work). A
+`claude.json` that is there and cannot be read counts as off, never as on,
+and is not written over except by the person's own save
+(`claude_settings._read`). **Allow Kimi, DeepSeek and Qwen (based in China)** is off until
 the person ticks it: their models are hidden and anything for them is refused.
 `openstrand agent` from a terminal follows the same settings.
 

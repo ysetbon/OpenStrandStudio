@@ -95,6 +95,9 @@ def refusal(provider=None, data=None):
     None when it may. provider None: a share with the developer, refused only while AI
     models are off. providers.POLICY: every request asks this just before it leaves."""
     data = _read() if data is None else data
+    if data.get(UNREADABLE) is True:
+        return ('AI models are turned off: the OpenStrand Studio settings (claude.json) could not be read. '
+                'Tick "Connect to AI models" in Settings > Models to turn them on again')
     if data.get('models_on', True) is False:
         return ('AI models are turned off in OpenStrand Studio (Settings > Models): nothing is sent to any '
                 'of them')
@@ -160,7 +163,8 @@ def apply_catalog(found):
         switched = (same or list(providers.MODELS) or [DEFAULT_MODEL])[0]
         current['model'] = switched
     current['catalog'] = found
-    _write(current)
+    if not current.get(UNREADABLE):  # never over settings that could not be read
+        _write(current)
     offered = providers.MODELS.values()
     return {'hidden': hidden, 'new': [m.id for m in offered if m.new],
             'retiring': [m.id for m in offered if m.retiring], 'switched': switched}
@@ -307,13 +311,37 @@ def _money(value):
     return value if value > 0 and value == value and value != float('inf') else 0.0
 
 
+UNREADABLE = 'unreadable'  # in what _read gives when claude.json is there and cannot be read
+READ_TRIES = 4  # another program may hold claude.json, or be writing it, for a moment
+
+
 def _read():
-    try:
-        with open(settings_path(), 'r', encoding='utf-8') as f:
-            data = json.load(f)
-    except (OSError, ValueError):
-        return {}
-    return data if isinstance(data, dict) else {}
+    """What claude.json holds: {} while there is no file (nothing saved yet: the defaults).
+    A file that is there and cannot be read (held or half written for a moment, or damaged)
+    is asked for again a few times. If it still cannot be read, what comes back says AI
+    models are off (and UNREADABLE): a switch the person turned off never turns itself on
+    because its file could not be read. Ticking it again in Settings writes the file anew."""
+    for attempt in range(READ_TRIES):
+        try:
+            with open(settings_path(), 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                return data
+        except FileNotFoundError:
+            return {}
+        except (OSError, ValueError):
+            pass
+        if attempt < READ_TRIES - 1:
+            time.sleep(0.03 * (attempt + 1))
+    return {'models_on': False, UNREADABLE: True}
+
+
+def claude_available(current=None):
+    """Whether the Claude button, Ctrl+J and the panel are there at all: Settings > Models
+    shows the button, and AI models are not turned off (off is off everywhere: no button,
+    no panel, no agent command, nothing sent)."""
+    current = load() if current is None else current
+    return bool(current['show_button'] and current['models_on'])
 
 
 def load():
@@ -357,6 +385,8 @@ def load():
                'gallery': data.get('gallery') if data.get('gallery') in (True, False) else None,
                'models_on': data.get('models_on', True) is not False,
                'allow_china': data.get('allow_china') is True}
+    if data.get(UNREADABLE) is True:  # not what is saved: nothing but the person's own save writes it back
+        current[UNREADABLE] = True
     if in_file and store is not None:
         _write(current)  # keys an earlier version kept in claude.json: into the store
     return current
@@ -418,7 +448,7 @@ def add_spending(amount):
     """Add what one request cost to the running total; returns the new total."""
     current = load()
     amount = _money(amount)
-    if amount:
+    if amount and not current.get(UNREADABLE):
         current['spent'] = round(current['spent'] + amount, 6)
         current['spent_since'] = current['spent_since'] or datetime.date.today().isoformat()
         _write(current)

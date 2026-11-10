@@ -866,8 +866,9 @@ class ClaudePanel(QWidget):
         return self.isVisibleTo(self.parentWidget())
 
     def set_open(self, opened):
-        """Show or hide Claude (for this run only: it starts closed every time)."""
-        opened = bool(opened)
+        """Show or hide Claude (for this run only: it starts closed every time). It never opens
+        while Settings > Models hides it or has AI models turned off, whatever asks."""
+        opened = bool(opened) and claude_settings.claude_available()
         if not opened:
             self.preview.hide_frame()  # its own window: it would stay up with Claude hidden
         if opened:
@@ -2549,10 +2550,13 @@ class ClaudeSettingsPage(QWidget):
             check.setChecked(on)
             check.blockSignals(False)
         self.refresh_button.setEnabled(saved['models_on'] and not self.refreshing)
+        self.show_check.setEnabled(saved['models_on'])  # with AI models off there is no button to show
 
     def set_models_on(self, on):
         claude_settings.save(models_on=on)
         self.show_switches()
+        # Off is off everywhere: the Claude button leaves the main window, and Claude with it.
+        self.show_button_changed.emit(claude_settings.claude_available())
         self.settings_changed.emit()  # the panel stops a request that is running
 
     def set_allow_china(self, allowed):
@@ -2585,7 +2589,7 @@ class ClaudeSettingsPage(QWidget):
 
     def set_show_button(self, shown):
         claude_settings.save(show_button=shown)
-        self.show_button_changed.emit(bool(shown))
+        self.show_button_changed.emit(claude_settings.claude_available())  # never while AI models are off
 
     def provider(self):
         return self.provider_combo.currentData() or 'anthropic'

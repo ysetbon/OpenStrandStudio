@@ -1664,3 +1664,23 @@ _SWITCHES = {
 }
 for _language, _strings in _SWITCHES.items():
     CLAUDE_TRANSLATIONS[_language].update(_strings)
+
+
+# Off is off everywhere: with AI models turned off the Claude button, Ctrl+J and the agent
+# command go too. One more sentence for the switch's hint.
+_OFF_IS_OFF = {
+    'en': ' The Claude button also leaves the main window, Ctrl+J does nothing, and the openstrand agent command refuses to run, until you tick this box again.',
+    'fr': " Le bouton Claude disparaît aussi de la fenêtre principale, Ctrl+J ne fait rien et la commande openstrand agent refuse de s'exécuter, jusqu'à ce que vous cochiez de nouveau cette case.",
+    'de': ' Außerdem verschwindet die Claude-Schaltfläche aus dem Hauptfenster, Strg+J bewirkt nichts und der Befehl openstrand agent verweigert die Ausführung, bis Sie dieses Kästchen wieder aktivieren.',
+    'it': ' Inoltre il pulsante Claude scompare dalla finestra principale, Ctrl+J non fa nulla e il comando openstrand agent si rifiuta di partire, finché non selezioni di nuovo questa casella.',
+    'es': ' Además, el botón Claude desaparece de la ventana principal, Ctrl+J no hace nada y el comando openstrand agent se niega a ejecutarse, hasta que vuelvas a marcar esta casilla.',
+    'pt': ' Além disso, o botão Claude some da janela principal, Ctrl+J não faz nada e o comando openstrand agent se recusa a rodar, até você marcar esta caixa de novo.',
+    'he': ' בנוסף, כפתור Claude נעלם מהחלון הראשי, Ctrl+J לא עושה דבר והפקודה openstrand agent מסרבת לרוץ, עד שתסמן שוב את התיבה הזו.',
+    'ru': ' Кроме того, кнопка Claude исчезает из главного окна, Ctrl+J ничего не делает, а команда openstrand agent отказывается запускаться, пока вы снова не отметите этот флажок.',
+    'fi': ' Lisäksi Claude-painike poistuu pääikkunasta, Ctrl+J ei tee mitään ja openstrand agent -komento kieltäytyy käynnistymästä, kunnes valitset tämän ruudun uudelleen.',
+    'sv': ' Dessutom försvinner Claude-knappen från huvudfönstret, Ctrl+J gör ingenting och kommandot openstrand agent vägrar att köras, tills du markerar den här rutan igen.',
+    'ja': 'さらに、Claude ボタンはメインウィンドウから消え、Ctrl+J は何もせず、openstrand agent コマンドは実行を拒否します。このチェックボックスをもう一度オンにすると元に戻ります。',
+    'zh': '此外，Claude 按钮会从主窗口消失，Ctrl+J 不起作用，openstrand agent 命令拒绝运行，直到你重新勾选此框。',
+}
+for _language, _sentence in _OFF_IS_OFF.items():
+    CLAUDE_TRANSLATIONS[_language]['models_use_hint'] += _sentence

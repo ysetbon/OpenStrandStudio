@@ -86,6 +86,7 @@ def test_with_models_off_nothing_is_sent_anywhere(settings, monkeypatch):
 @pytest.mark.parametrize("saved, model, said", [
     ({"models_on": False}, "haiku", "AI models are turned off"),
     ({}, "deepseek", "DeepSeek is turned off"),
+    ('{"models_on": false, "damaged', "haiku", "claude.json) could not be read"),  # never read as "on"
 ])
 def test_the_agent_sends_nothing_the_settings_forbid(tmp_path, saved, model, said):
     pytest.importorskip("anthropic")
@@ -93,7 +94,8 @@ def test_the_agent_sends_nothing_the_settings_forbid(tmp_path, saved, model, sai
     for folder in (tmp_path / "appdata" / "OpenStrandStudio",
                    tmp_path / "home" / "Library" / "Application Support" / "OpenStrandStudio"):
         folder.mkdir(parents=True)
-        (folder / "claude.json").write_text(json.dumps(saved), encoding="utf-8")
+        (folder / "claude.json").write_text(saved if isinstance(saved, str) else json.dumps(saved),
+                                            encoding="utf-8")
     env = dict(os.environ, APPDATA=str(tmp_path / "appdata"), HOME=str(tmp_path / "home"),
                ANTHROPIC_API_KEY="sk-ant-test", DEEPSEEK_API_KEY="sk-ds-test", QT_QPA_PLATFORM="offscreen")
     env.pop("OPENSTRAND_TEST_API", None)
@@ -101,3 +103,41 @@ def test_the_agent_sends_nothing_the_settings_forbid(tmp_path, saved, model, sai
                           "--out-dir", str(tmp_path / "out")], cwd=ROOT, env=env, capture_output=True,
                          text=True, timeout=300)
     assert run.returncode == 1 and said in run.stderr, run.stderr[-2000:]
+
+
+def test_settings_that_cannot_be_read_keep_ai_models_off_and_are_never_written_over(settings, monkeypatch):
+    """claude.json that is there and cannot be read is not "nothing saved": the switch the
+    person turned off stays off, the button stays away, and nothing but their own save
+    writes the file again (a save from what could not be read would lose what it held)."""
+    path = str(settings)
+    monkeypatch.setattr(claude_settings.time, "sleep", lambda seconds: None)
+    assert claude_settings.refusal("anthropic") is None and claude_settings.claude_available()  # no file yet
+    claude_settings.save(models_on=False, max_cost=5)
+    assert "turned off" in claude_settings.refusal("anthropic") and not claude_settings.claude_available()
+    good = open(path, encoding="utf-8").read()
+    for damaged in ("", '{"models_on": fal', "[1, 2]"):
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(damaged)
+        assert "could not be read" in claude_settings.refusal("anthropic")
+        assert "could not be read" in claude_settings.refusal(None)  # no share either
+        assert claude_settings.load()["models_on"] is False and not claude_settings.claude_available()
+        assert not claude_settings.sharing_on()
+        claude_settings.add_spending(0.25)  # what the panel does after a request: not over this file
+        assert open(path, encoding="utf-8").read() == damaged
+    # Held or half written for a moment only: it is asked for again, and read.
+    tries = []
+
+    def back(seconds):
+        tries.append(seconds)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(good)
+    monkeypatch.setattr(claude_settings.time, "sleep", back)
+    saved = claude_settings.load()
+    assert tries and saved["models_on"] is False and saved["max_cost"] == 5.0 and "unreadable" not in saved
+    # A file that stays damaged: the person ticks the box again, and that writes it anew.
+    monkeypatch.setattr(claude_settings.time, "sleep", lambda seconds: None)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("{damaged")
+    claude_settings.save(models_on=True)
+    assert claude_settings.refusal("anthropic") is None and claude_settings.claude_available()
+    assert json.load(open(path, encoding="utf-8"))["models_on"] is True

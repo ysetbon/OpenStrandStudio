@@ -9,8 +9,6 @@ a = Analysis(
         ('box_stitch.icns', '.'), 
         ('settings_icon.png', '.'),
         ('claude_mark_white.png', '.'),
-        ('claude_knot.png', '.'),
-        ('claude_knot.json', '.'),
         ('images/*.png', 'images/'),  # the Assistant's pictures (pressed button, Image, modes)
         ('flags/*.png', 'flags/'),
         ('layer_panel_icons/*.png', 'layer_panel_icons/'),

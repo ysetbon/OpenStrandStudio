@@ -1464,35 +1464,177 @@ def test_claude_hears_which_tools_ran_and_how_they_ended():
     assert "Tools you ran" in text and "tie_knot (stopped by the person, 339 s)" in text
 
 
-def test_the_working_line_draws_the_knot_while_claude_works(window):
-    import json as _json
+def test_the_stitch_is_tied_from_a_plus_and_continued_with_k_1_and_k_0():
+    """The working line's stitch (src/claude_stitch.py): its geometry and its time, no Qt."""
+    import math
+    import random
+    sys.path.insert(0, str(ROOT / "src"))
+    import claude_stitch as cs
+
+    def angles(level):  # where each strand starts, round the centre (degrees)
+        return [math.degrees(math.atan2(s.y, s.x)) % 360 for s in level.strands]
+
+    def turned(a, b):  # how far b's start is round the centre from a's, -180 to 180
+        return (b - a + 180) % 360 - 180
+
+    stitch = cs.Stitch(random.Random(1))
+    stitch.again = 99  # not started again while this looks at it
+    # from scratch: a plus, 1_1 across and 2_1 up, and nothing attached yet
+    across, up = stitch.mains[1], stitch.mains[0]
+    assert abs(math.sin(across.dir)) < 1e-9 and abs(math.cos(up.dir)) < 1e-9
+    assert all(s.len == 0 for s in stitch.levels[0].strands) and stitch.hand() == 1
+    # then the x, the attached strands (the logo), and the stretched 1x1 starting stitch
+    stitch.advance(cs.TURN_MS + cs.ATTACH_MS)
+    assert all(abs(s.len - cs.ARM) < 1e-6 for s in stitch.levels[0].strands)
+    stitch.advance(cs.STRETCH_MS)
+    arms = stitch.levels[0].strands
+    for arm, name in zip(arms, cs.ARMS):
+        (ax, ay), (bx, by) = cs.STRETCHED[name]
+        assert abs(arm.x - ax) < 1e-6 and abs(arm.y - ay) < 1e-6
+        assert math.dist(arm.end(), (bx, by)) < 1e-6
+    radius = math.hypot(arms[0].x, arms[0].y)
+
+    # k = 1: the newest strands shorten, new ones grow from their ends turned 126.87 degrees,
+    # and the level is an exact copy of the one under it, turned
+    stitch.queue = [1, 0, 1, 0, 0]
+    before, dirs = angles(stitch.levels[-1]), [s.dir for s in stitch.levels[-1].strands]
+    stitch.advance(cs.LEVEL_MS / 2)
+    assert stitch.next.k == 1 and abs(stitch.t - 0.5) < 1e-9
+    assert all(abs(s.len - (cs.ARM + cs.SHORT) / 2) < 1e-6 for s in stitch.levels[-1].strands)
+    assert all(abs(s.len - cs.ARM / 2) < 1e-6 for s in stitch.next.strands)
+    stitch.advance(cs.LEVEL_MS / 2)
+    level = stitch.levels[-1]
+    assert stitch.history == [1] and level.hand == 1 and stitch.hand() == 1
+    assert all(abs(s.len - cs.SHORT) < 1e-6 for s in stitch.levels[-2].strands)
+    for i, strand in enumerate(level.strands):
+        assert abs(strand.len - cs.ARM) < 1e-6 and abs(math.hypot(strand.x, strand.y) - radius) < 1e-6
+        assert abs(turned(before[i], angles(level)[i]) - math.degrees(cs.TURN)) < 1e-6
+        assert abs(math.remainder(strand.dir - dirs[i] - cs.TURN, 2 * math.pi)) < 1e-9
+
+    # k = 0: each new strand folds straight back over its own parent, and the hand switches
+    before, dirs = angles(level), [s.dir for s in level.strands]
+    stitch.advance(cs.LEVEL_MS)
+    level = stitch.levels[-1]
+    assert stitch.history == [1, 0] and level.hand == -1 and stitch.hand() == -1
+    for i, (strand, parent) in enumerate(zip(level.strands, stitch.levels[-2].strands)):
+        assert abs(math.remainder(strand.dir - dirs[i] - math.pi, 2 * math.pi)) < 1e-9
+        assert math.dist((strand.x, strand.y), parent.end()) < 1e-6
+        assert abs(math.hypot(strand.x, strand.y) - radius) < 1e-6
+        # it lies along its parent: it passes the parent's start on its way
+        assert math.dist((strand.x + math.cos(strand.dir) * cs.SHORT, strand.y + math.sin(strand.dir) * cs.SHORT),
+                         (parent.x, parent.y)) < 1e-6
+    # left-handed now: the next k = 1 level spirals the other way
+    before = angles(level)
+    stitch.advance(cs.LEVEL_MS)
+    level = stitch.levels[-1]
+    assert level.hand == -1 and all(abs(turned(b, a) + math.degrees(cs.TURN)) < 1e-6
+                                    for b, a in zip(before, angles(level)))
+    stitch.advance(2 * cs.LEVEL_MS)  # two k = 0 in a row: the hand comes back
+    assert stitch.history == [1, 0, 1, 0, 0] and stitch.hand() == -1
+
+    # by lot: some of each, never more than SAME_RUN alike in a row; only KEEP levels are kept
+    stitch = cs.Stitch(random.Random(7))
+    stitch.again = 10 ** 6
+    stitch.advance(cs.INTRO_MS + 200 * cs.LEVEL_MS)
+    lots = stitch.history
+    assert len(lots) == 200 and len(stitch.levels) == cs.KEEP and not stitch.mains
+    assert 0.25 < lots.count(0) / 200 < 0.6
+    assert all(len(set(lots[i:i + cs.SAME_RUN + 1])) == 2 for i in range(200 - cs.SAME_RUN))
+
+    # asked for a k = 0 (once, however often asked), and to start over from the plus
+    stitch = cs.Stitch(random.Random(3))
+    stitch.flip_next()
+    stitch.flip_next()
+    assert stitch.queue == [0]
+    stitch.start_over()                      # nothing tied yet: nothing to let go of
+    assert stitch.leaving is None
+    stitch.advance(cs.INTRO_MS + 2 * cs.LEVEL_MS)
+    assert stitch.history[0] == 0
+    rev = stitch.rev
+    stitch.start_over()
+    assert stitch.leaving == cs.LEAVE_MS and stitch.fade() == 1.0
+    stitch.advance(cs.LEAVE_MS / 2)
+    assert 0 < stitch.fade() < 1
+    stitch.advance(cs.LEAVE_MS / 2 + 1)      # let go, and a plus again
+    assert stitch.leaving is None and stitch.history == [] and stitch.at == 1 and stitch.rev > rev
+    assert all(s.len == 0 for s in stitch.levels[0].strands) and stitch.hand() == 1
+    # and on its own after AGAIN levels
+    stitch = cs.Stitch(random.Random(5))
+    assert cs.AGAIN[0] <= stitch.again <= cs.AGAIN[1]
+    stitch.advance(cs.INTRO_MS + stitch.again * cs.LEVEL_MS)
+    assert stitch.leaving is not None
+
+
+def test_the_working_line_draws_the_stitch_while_claude_works(window):
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtGui import QColor
+    import claude_stitch as cs
     line = window.claude_panel.working
-    info = _json.loads((ROOT / "src" / "claude_knot.json").read_text())
-    count = len(info["durations_ms"])
-    assert len(line.frames) == count > 1000 and line.sheet is not None
-    assert line.loop_from == info["loop_from"] and 0 < line.loop_from < count - 1
-    # every frame lies on the sheet: no picture wider than a few thousand pixels (Windows, macOS)
-    assert line.sheet.width() <= 4096 and line.sheet.height() <= 4096
-    assert all(line.sheet.rect().contains(r) for r in line.frames)
-    # twice the size it had (28 px), and frames with the pixels for it on a 2x screen
-    assert line.SIZE == 56 and line.height() >= line.SIZE and info["frame"] >= 2 * line.SIZE
-    assert line.sheet.depth() == 8  # kept as the file has it, not as a 50 MB pixmap
+    assert line.SIZE == 56 and line.height() >= line.SIZE  # twice the size it had (28 px)
+    assert not (ROOT / "src" / "claude_knot.png").exists()  # drawn live: no sheet of frames to load
+
+    def colours(shot):  # how much of the picture is blue, orange, outline
+        image = shot.toImage()
+        seen = {"blue": 0, "orange": 0, "black": 0, "clear": 0}
+        for y in range(image.height()):
+            for x in range(image.width()):
+                c = QColor.fromRgba(image.pixel(x, y))
+                if c.alpha() < 40:
+                    seen["clear"] += 1
+                elif c.red() > 200 and c.blue() < 80:
+                    seen["orange"] += 1
+                elif c.blue() > 200 and c.red() < 80:
+                    seen["blue"] += 1
+                elif c.red() < 40 and c.green() < 40 and c.blue() < 40:
+                    seen["black"] += 1
+        return seen
+
     line.start("Thinking…")
-    assert line.isVisibleTo(window.claude_panel) and line.timer.isActive() and line.frame == 0
-    # the tying moves on in the animation's own time, frame after frame
-    line.advance(info["durations_ms"][0])
-    assert line.frame_at(line.at) == 1
-    # after the last frame it goes on from the level the loop comes back to, not from the start
-    line.at = line.starts[-1] - 1
-    assert line.frame_at(line.at) == count - 1
-    line.advance(1)
-    assert line.frame_at(line.at) == info["loop_from"] + 1
-    line.advance(line.starts[-1] - line.starts[info["loop_from"] + 1])  # once round the loop
-    assert line.frame_at(line.at) == info["loop_from"] + 1
-    picture = line.grab()
-    assert picture.width() > 0
-    line.frame = 300
-    assert line.frame_picture().size().width() == info["frame"] and line.cut[0] == 300
+    line.timer.stop()  # the test is the clock
+    assert line.isVisibleTo(window.claude_panel) and line.stitch.at == 0 and line.stitch.history == []
+    line.take_shot()
+    plus = colours(line.shot)
+    assert plus["blue"] > 100 and plus["orange"] > 100 and plus["black"] > 20 and plus["clear"] > 1000
+    # the picture is the size of the stitch on this screen
+    assert line.shot.width() == round(line.SIZE * line.devicePixelRatioF())
+    # tied on to a few levels: both colours still there, and the picture has changed
+    line.stitch.again = 99
+    line.stitch.queue = [1, 0, 1]
+    line.stitch.advance(cs.INTRO_MS + 2.5 * cs.LEVEL_MS)
+    before = line.shot.toImage()
+    line.take_shot()
+    woven = colours(line.shot)
+    assert woven["blue"] > 300 and woven["orange"] > 300 and line.shot.toImage() != before
+    # the levels that do not move are kept as a picture, drawn again only when a level is done
+    under = line.under[1]
+    line.stitch.advance(0.2 * cs.LEVEL_MS)
+    line.take_shot()
+    assert line.under[1] is under
+    line.stitch.advance(0.5 * cs.LEVEL_MS)
+    line.take_shot()
+    assert line.under[1] is not under
+    # the whole picture is the under part and the moving part
+    from PyQt5.QtCore import QRectF
+    from PyQt5.QtGui import QImage, QPainter
+    from claude_panel import STITCH_COLOURS
+
+    def drawn(*parts):
+        image = QImage(112, 112, QImage.Format_ARGB32_Premultiplied)
+        image.fill(Qt.transparent)
+        painter = QPainter(image)
+        for part in parts:
+            cs.paint_stitch(painter, line.stitch, QRectF(0, 0, 112, 112), STITCH_COLOURS, part)
+        painter.end()
+        return image
+
+    assert drawn("all") == drawn("under", "top")
+    # let go, it shrinks away
+    line.stitch.start_over()
+    line.stitch.advance(cs.LEAVE_MS * 0.7)
+    line.take_shot()
+    going = colours(line.shot)
+    assert going["clear"] > woven["clear"]
+    assert line.grab().width() > 0
     line.stop()
     assert not line.timer.isActive() and not line.isVisibleTo(window.claude_panel)
 
@@ -1500,41 +1642,40 @@ def test_the_working_line_draws_the_knot_while_claude_works(window):
 def test_the_working_line_keeps_claudes_tempo(window):
     """How fast the stitch is tied and how often the picture changes are two things, and both
     follow what Claude does: thinking, writing, a tool, a tool that draws, waiting."""
-    from claude_panel import KICK, TEMPOS, step_mood
+    import claude_stitch as cs
+    from claude_panel import KICK, STUCK, TEMPOS, step_mood
     line = window.claude_panel.working
 
-    def run(mood, seconds, dt=0.005):
-        """seconds at work in this mood (settled first): animation ms tied, picture changes."""
+    def begin(mood=None):
         line.start("…")
         line.timer.stop()  # the test is the clock
-        line.set_mood(mood)
-        line.pace = TEMPOS[mood][0]
-        tied, changes, before, at = 0.0, 0, line.frame, line.at
+        line.stitch.again = 10 ** 6
+        if mood:
+            line.set_mood(mood)
+            line.pace = TEMPOS[mood][0]
+
+    def run(seconds, dt=0.005):
+        """seconds at work: (speed: animation seconds tied a second, pictures a second)."""
+        played, shots = line.played, line.shots
         for _ in range(round(seconds / dt)):
             line.step(dt)
-            tied += (line.at - at) % line.starts[-1]
-            at = line.at
-            changes, before = changes + (line.frame != before), line.frame
-        return tied / (1000 * seconds), changes / seconds
+            line.heard()  # the assistant is heard from all along
+        return (line.played - played) / (1000 * seconds), (line.shots - shots) / seconds
 
-    rate = 1000 / line.durations[0]  # the frames come 22 a second at speed 1
-    speeds, changes = {}, {}
+    speeds, pictures = {}, {}
     for mood in TEMPOS:
-        speeds[mood], changes[mood] = run(mood, 6.4)  # two whole swells
+        begin(mood)
+        speeds[mood], pictures[mood] = run(6.4)  # two whole swells
         speed, fps, _ = TEMPOS[mood]
-        assert abs(speeds[mood] - speed) < 0.06 * speed, mood          # as fast as the mood says
-        assert changes[mood] <= fps + 0.5, mood                         # never more pictures than its fps
-        assert abs(changes[mood] - min(fps, speed * rate)) < 1.5, mood  # and no fewer than it can show
+        assert abs(speeds[mood] - speed) < 0.06 * speed, mood   # as fast as the mood says
+        assert fps - 1.5 < pictures[mood] <= fps + 0.5, mood     # and its fps: no more, hardly fewer
     assert speeds["waiting"] < speeds["thinking"] < speeds["working"] < speeds["tool"] < speeds["picture"]
-    # a tool that draws: the fastest tying in the fewest pictures, so it jumps (stop motion);
-    # thinking: slow, and every frame shows
-    assert changes["picture"] < changes["thinking"] < changes["working"] < changes["tool"]
-    assert speeds["picture"] * rate / changes["picture"] > 5      # frames of the animation a picture
-    assert abs(speeds["thinking"] * rate / changes["thinking"] - 1) < 0.1
+    # a tool that draws: the fastest tying in the fewest pictures, so it jumps (stop motion)
+    assert pictures["picture"] < pictures["working"] < pictures["tool"]
+    assert speeds["picture"] / pictures["picture"] > 8 * speeds["thinking"] / pictures["thinking"]
 
     # thinking breathes: the speed swells and falls around the mood's
-    line.start("…")
-    line.timer.stop()
+    begin()
     seen = []
     for _ in range(640):
         line.step(0.005)
@@ -1544,55 +1685,94 @@ def test_the_working_line_keeps_claudes_tempo(window):
     assert abs(high - TEMPOS["thinking"][0] * (1 + swell)) < 0.02
 
     # an event pushes it on for a moment, and a new mood glides in
-    line.start("…")
-    line.timer.stop()
+    begin()
     line.step(0.005)
     calm = line.speed()
     line.nudge()
     assert abs(line.speed() / calm - (1 + KICK)) < 0.01
-    for _ in range(600):
-        line.step(0.005)
+    run(3)
     assert line.kick < 0.01
     line.set_label("Tying…", "tool")
     line.step(0.05)
     assert TEMPOS["thinking"][0] < line.pace < TEMPOS["tool"][0]
-    for _ in range(600):
-        line.step(0.005)
+    run(3)
     assert abs(line.pace - TEMPOS["tool"][0]) < 0.01
     # a held-up app does not make the tying leap: a tick counts a quarter of a second at most
     line.ticked -= 30
-    at = line.at
+    played = line.played
     line.tick()
-    assert (line.at - at) % line.starts[-1] <= 250 * line.speed() * 1.01 + 1
+    assert line.played - played <= 250 * TEMPOS["tool"][0] * (1 + KICK) + 1
+
+    # stuck: nothing heard from the assistant for too long, and the tying comes to a stop and
+    # holds its picture; heard again, it goes on
+    for mood, (slows, stops) in STUCK.items():
+        begin(mood)
+        for _ in range(round((slows - 1) / 0.05)):
+            line.step(0.05)
+        assert line.alive() == 1.0 and not line.stuck(), mood
+        for _ in range(round((stops - slows) / 2 / 0.05)):
+            line.step(0.05)
+        assert 0 < line.alive() < 1, mood
+        for _ in range(round(((stops - slows) / 2 + 2) / 0.05)):
+            line.step(0.05)
+        assert line.stuck() and line.speed() == 0.0, mood
+        played, shots, shot = line.played, line.shots, line.shot
+        for _ in range(100):
+            line.step(0.05)
+        assert line.played == played and line.shots == shots and line.shot is shot, mood  # the same picture
+        line.heard()
+        assert line.alive() == 1.0
+        line.step(0.05)
+        assert line.played > played and line.shots == shots + 1, mood
+    assert "waiting" not in STUCK  # waiting for the person is not the assistant's silence
+    begin("waiting")
+    for _ in range(4000):
+        line.step(0.05)
+    assert line.alive() == 1.0 and line.speed() > 0
     line.stop()
 
-    # the panel sets the mood from the agent's events
+    # the panel sets the mood from the agent's events, and every event is a sign of life
     assert step_mood({"name": "tie_knot"}) == "picture" and step_mood({"name": "read_tab"}) == "tool"
     assert step_mood({"name": "edit_mask", "frame": True}) == "picture"  # it sends pictures
     assert step_mood({"name": "tie_knot", "waiting": True}) == "waiting"
     panel = window.claude_panel
     panel.add_user("a bowline")
-    line.start("Thinking…")
-    line.timer.stop()
+    begin()
     assert line.mood == "thinking"
+    line.stitch.advance(cs.INTRO_MS + 3 * cs.LEVEL_MS)
+    line.stitch.queue.clear()
     panel.handle_event({"type": "tool_start", "name": "read_tab", "input": {}})
     assert line.mood == "tool" and line.kick == 1.0
+    assert line.stitch.queue == [0]  # another tool: the stitch's next level is k = 0
     panel.handle_event({"type": "tool_end", "name": "read_tab", "ok": True})
     assert line.mood == "working"
-    panel.handle_event({"type": "thinking", "text": "a loop, then the rabbit"})
-    assert line.mood == "thinking"
+    line.kick = 0.0
+    panel.handle_event({"type": "round", "round": 2})  # the model is asked again: it thinks
+    assert line.mood == "thinking" and line.kick == 1.0 and line.label.startswith("Thinking")
     panel.handle_event({"type": "tool_start", "name": "tie_knot", "input": {}})
     assert line.mood == "picture"
+    assert line.stitch.leaving is not None  # a design is drawn: the stitch starts again from the plus
     line.kick = 0.0
     panel.handle_event({"type": "tool_progress", "name": "tie_knot", "stage": "relaxing", "fraction": 0.2})
     assert line.mood == "picture" and line.kick == 1.0  # a new stage
-    line.kick = 0.0
+    line.kick, line.quiet = 0.0, 30.0
     panel.handle_event({"type": "tool_progress", "name": "tie_knot", "stage": "relaxing", "fraction": 0.3})
     assert line.kick == 0.0  # the same stage, no picture: no push
+    assert line.quiet == 0.0  # but heard from
     panel.handle_event({"type": "tool_end", "name": "tie_knot", "ok": True})
     panel.handle_event({"type": "text", "text": "Here is your bowline."})
     assert line.mood == "working"
     line.stop()
+
+
+def test_the_agent_says_when_it_asks_the_model(tmp_path):
+    """A 'round' event before each request to the model: the panel shows it thinking until it answers."""
+    client = ScriptedClient([reply(tool("t1", "knot_library")), reply(text("Here they are."), stop="end_turn")])
+    events = []
+    agent.Agent(client, tmp_path, model="claude-sonnet-5-5", on_event=events.append).run("which knots do you know?")
+    kinds = [e["type"] for e in events if e["type"] in ("round", "tool_start", "tool_end", "text", "done")]
+    assert kinds[:5] == ["round", "tool_start", "tool_end", "round", "text"]
+    assert [e["round"] for e in events if e["type"] == "round"] == [1, 2]
 
 
 def test_the_assistant_button_is_the_openstrand_logo(window):

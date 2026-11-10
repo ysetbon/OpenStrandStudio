@@ -33,6 +33,7 @@ from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QCheckBox, QCo
 
 import claude_settings
 import claude_sharing
+from claude_stitch import Stitch, paint_stitch
 from translations import translations
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -73,18 +74,23 @@ TOOL_CHIPS = {
 OTHER_CHIP = ('#d4d4d4', '#1a1a1a')
 ACCENT = '#FF5500'  # the OpenStrand logo's orange: the running mark, the progress bars, Send and the links
 # The working animation's tempo, by what Claude is doing. Two things, kept apart:
-#   speed  how fast the stitch is tied: 1.0 is the animation as it was drawn (45 ms a frame)
-#   fps    how often the picture may change. While that is more often than the frames come at
-#          that speed, every frame shows, evenly spaced; otherwise frames are skipped and the
-#          tying jumps from picture to picture (stop motion)
+#   speed  how fast the stitch is tied: 1.0 is a level in 2.34 s
+#   fps    how often the picture may change: many times a second it glides, a few times a
+#          second at a high speed the tying jumps from picture to picture (stop motion)
 #   swell  the speed rises and falls by this share, once every SWELL_SECONDS: it breathes
 TEMPOS = {
-    'thinking': (0.6, 30, 0.4),   # slow and smooth, breathing: Claude turns the request over
-    'working': (1.0, 30, 0.0),    # as it was drawn: Claude writes, or reads what a tool said
+    'thinking': (0.7, 40, 0.5),   # slow and smooth, breathing: the model turns the request over
+    'working': (1.0, 30, 0.0),    # as it was drawn: the assistant writes
     'tool': (1.7, 40, 0.0),       # brisk and smooth: a tool runs
     'picture': (2.6, 9, 0.0),     # fast, in snapshots: a tool draws a design or sends pictures
-    'waiting': (0.15, 10, 0.0),   # all but still: Claude waits for the person's Allow or Deny
+    'waiting': (0.15, 10, 0.0),   # all but still: the assistant waits for the person's Allow or Deny
 }
+# Stuck: with nothing heard from the assistant (no event at all) for the first number of
+# seconds the tying starts to slow, and at the second it stands still and holds its picture,
+# until the assistant is heard again. A model's answer may take a minute; a tool that reports
+# its progress several times a second and then goes silent is stuck much sooner. Not while
+# the assistant waits for the person: that is not the assistant's silence.
+STUCK = {'thinking': (45, 60), 'working': (45, 60), 'tool': (15, 25), 'picture': (15, 25)}
 SWELL_SECONDS = 3.2
 EASE_SECONDS = 0.35  # a change of tempo glides in
 # Every event (a thought, a tool starting or ending, a tool's new picture) speeds the tying
@@ -429,34 +435,6 @@ class PromptBox(QTextEdit):
         self.ensureCursorVisible()
 
 
-def load_knot():
-    """The working line's animation, drawn frame by frame by OpenStrand Studio
-    (scripts/build_box_stitch_spinner.py): the OpenStrand logo, a box stitch, tied and
-    then continued with k = 1 level after level. Returns the sheet the frames are cut
-    from, each frame's place on it, how long each shows (ms) and the frame the loop
-    comes back to: after the last frame it goes on from the one after it. Nothing
-    when the files are missing.
-
-    The frames sit on one sheet, `columns` to a row (one row in older files), and are
-    cut from it as they come, so there is no picture wider than a few thousand pixels
-    and nothing is copied out ahead of time. The sheet stays as the file has it (one
-    byte a pixel, a palette): about 14 MB in memory, a quarter of what a pixmap takes."""
-    try:
-        with open(resource_path('claude_knot.json'), encoding='utf-8') as f:
-            info = json.load(f)
-        sheet = QImage(resource_path('claude_knot.png'))
-        size, durations = int(info['frame']), [int(d) for d in info['durations_ms']]
-        columns = int(info.get('columns') or len(durations))
-        loop_from = int(info.get('loop_from', -1))
-    except (OSError, ValueError, KeyError, TypeError):
-        return None, [], [], -1
-    rows = -(-len(durations) // columns) if columns > 0 else 0
-    if sheet.isNull() or columns <= 0 or sheet.width() < size * columns or sheet.height() < size * rows:
-        return None, [], [], -1
-    frames = [QRect((i % columns) * size, (i // columns) * size, size, size) for i in range(len(durations))]
-    return sheet, frames, durations, loop_from if -1 <= loop_from < len(frames) - 1 else -1
-
-
 class FramePreview(QLabel):
     """A running tool's picture, larger, while the mouse is over it in the
     conversation. Drawn again from each new frame, so it moves with the tool."""
@@ -504,67 +482,63 @@ def step_mood(step):
 
 
 class WorkingLine(QWidget):
-    """Claude at work, the OpenStrand way: the logo's box stitch tied strand by strand and
-    continued with k = 1 level after level (played once, then the last levels over and over),
-    then what Claude is doing, how far a long tool has got (a bar, how much is left) and the
-    time so far. (Without its frames it falls back to a turning trefoil.)
+    """The assistant at work, the OpenStrand way: the logo's box stitch tied from a plus and
+    continued level after level, k = 1 or k = 0 (claude_stitch), then what the assistant is
+    doing, how far a long tool has got (a bar, how much is left) and the time so far.
 
-    The tying keeps Claude's tempo (TEMPOS): slow and breathing while it thinks, as drawn
-    while it writes, brisk while a tool runs, fast and in snapshots while a tool draws, all
-    but still while it waits for the person. Each event gives it a short push (nudge)."""
+    The tying keeps the assistant's tempo (TEMPOS): slow and breathing while it thinks, as
+    drawn while it writes, brisk while a tool runs, fast and in snapshots while a tool draws,
+    all but still while it waits for the person. Each event gives it a short push (nudge),
+    and when nothing has been heard from the assistant for too long it comes to a stop and
+    holds its picture (STUCK) until the assistant is heard again."""
 
     SIZE = 56  # px of the knot
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFixedHeight(self.SIZE + 4)
-        self.sheet, self.frames, self.durations, self.loop_from = load_knot()
-        # Where each frame starts in the animation's own time (ms); the last entry is its end.
-        self.starts = [0]
-        for d in self.durations:
-            self.starts.append(self.starts[-1] + max(1, d))
-        self.at = 0.0             # how far the tying has got, in the animation's own time (ms)
-        self.frame = 0            # the frame shown
-        self.cut = (None, None)   # that frame cut from the sheet: (its number, the pixmap)
+        self.stitch = Stitch()
+        self.shot = None          # the stitch as it shows now: a picture, changed fps times a second at most
+        self.shots = 0            # how many pictures so far
+        self.under = (None, None)  # the levels that do not move: (what they are a picture of, the picture)
+        self.played = 0.0         # how far the tying has got in all, in the animation's own time (ms)
+        self.shown = -1.0         # where it was when the picture was taken
         self.mood = 'thinking'
         self.pace = TEMPOS['thinking'][0]  # the speed now, easing toward the mood's
         self.kick = 0.0           # 1 right after an event, fading to 0
         self.clock = 0.0          # seconds at work: the swell's time
-        self.since = 0.0          # seconds the shown frame has been up
+        self.since = 0.0          # seconds the picture has been up
+        self.quiet = 0.0          # seconds since the assistant was last heard
         self.ticked = time.monotonic()
         self.label = ''
         self.started = time.monotonic()
         self.phase = 0.0          # the bar's sliding piece: real time
-        self.turn = 0.0           # the trefoil's turn: Claude's tempo
         self.text_color = QColor('#FFFFFF')
         self.muted = QColor('#9A9A9A')
         self.track = QColor('#5A5A5A')
         self.progress = None  # (fraction or None, text) while a tool says how far it has got
         self.format_time = lambda seconds: f'{int(seconds)}s'  # the panel gives the language's
-        # The trefoil: x = sin t + 2 sin 2t, y = cos t - 2 cos 2t, fitted to SIZE.
-        n = 150
-        self.points = []
-        for i in range(n):
-            t = 2 * math.pi * i / n
-            x, y = math.sin(t) + 2 * math.sin(2 * t), math.cos(t) - 2 * math.cos(2 * t)
-            self.points.append(QPointF(x, y))
         self.timer = QTimer(self)
         self.timer.setTimerType(Qt.PreciseTimer)  # frames a few ms apart keep time on Windows too
-        self.timer.setInterval(33)
+        self.timer.setInterval(25)
         self.timer.timeout.connect(self.tick)
         self.hide()
 
     def start(self, label):
+        """A request starts: the stitch is tied from scratch, from the plus."""
         self.label, self.started = label, time.monotonic()
         self.progress = None
-        self.at, self.frame, self.since, self.clock, self.kick = 0.0, 0, 0.0, 0.0, 0.0
+        self.stitch.queue.clear()
+        self.stitch.restart()
+        self.shot, self.under, self.shown = None, (None, None), -1.0
+        self.since, self.clock, self.kick, self.quiet = 0.0, 0.0, 0.0, 0.0
         self.mood, self.pace = 'thinking', TEMPOS['thinking'][0]
         self.ticked = time.monotonic()
         self.show()
-        self.timer.start(33)
+        self.timer.start(25)
 
     def set_label(self, label, mood=None):
-        """What Claude is doing, and with it (when given) the tempo of the tying."""
+        """What the assistant is doing, and with it (when given) the tempo of the tying."""
         self.label = label
         if mood is not None:
             self.set_mood(mood)
@@ -574,9 +548,14 @@ class WorkingLine(QWidget):
         """One of TEMPOS. The speed eases over to it; the fps changes at once."""
         self.mood = mood if mood in TEMPOS else 'working'
 
+    def heard(self):
+        """The assistant gave a sign of life (any event): the tying goes on, or starts again."""
+        self.quiet = 0.0
+
     def nudge(self):
         """Something just happened (a thought, a tool's step, a new picture): a short push."""
         self.kick = 1.0
+        self.quiet = 0.0
 
     def set_progress(self, fraction, text):
         """A long tool's progress: fraction (None while it cannot tell) and
@@ -592,11 +571,24 @@ class WorkingLine(QWidget):
         self.timer.stop()
         self.hide()
 
+    def alive(self):
+        """1 while the assistant is heard from, falling to 0 as it stays silent past what its
+        mood allows (STUCK): at 0 the tying stands still."""
+        limits = STUCK.get(self.mood)
+        if limits is None:
+            return 1.0
+        f = 1.0 - min(1.0, max(0.0, (self.quiet - limits[0]) / (limits[1] - limits[0])))
+        return f * f * (3 - 2 * f)
+
+    def stuck(self):
+        return self.alive() <= 0.0
+
     def speed(self):
-        """How fast the tying goes now: the mood's speed (eased), its swell, and the last push."""
+        """How fast the tying goes now: the mood's speed (eased), its swell, the last push, and
+        how long the assistant has been silent."""
         swell = TEMPOS[self.mood][2]
         return (self.pace * (1 + swell * math.sin(2 * math.pi * self.clock / SWELL_SECONDS))
-                * (1 + KICK * self.kick))
+                * (1 + KICK * self.kick) * self.alive())
 
     def tick(self):
         now = time.monotonic()
@@ -605,91 +597,69 @@ class WorkingLine(QWidget):
 
     def step(self, seconds):
         """seconds of real time went by: the tempo moves toward the mood's, the tying moves on
-        at it, and the picture changes when the next frame is due and the fps allows it."""
+        at it, and the picture changes when the fps allows it."""
         goal, fps, _ = TEMPOS[self.mood]
         self.pace += (goal - self.pace) * (1 - math.exp(-seconds / EASE_SECONDS))
         self.kick *= math.exp(-seconds / KICK_SECONDS)
         self.clock += seconds
         self.since += seconds
-        speed = self.speed()
+        self.quiet += seconds
         self.phase = (self.phase + 0.28 * seconds) % 1.0
-        self.turn = (self.turn + 0.28 * seconds * speed) % 1.0
-        wait = 33.0
-        if self.frames:
-            self.advance(1000 * seconds * speed)
-            hold = 1.0 / fps
-            due = self.frame_at(self.at)
-            if due != self.frame and self.since >= hold - 0.002:
-                self.frame, self.since = due, 0.0
-            # The next tick: when the frame after this one is due, not sooner than the fps allows.
-            wait = 1000 * (hold - self.since)
-            if due == self.frame:
-                wait = max(wait, (self.starts[due + 1] - self.at) / max(speed, 0.01))
-        # Not longer than this: the bar's sliding piece, the time and a new tempo stay live.
-        self.timer.setInterval(int(min(max(1.0, math.ceil(wait)), 33 if self.progress else 100)))
+        ms = 1000 * seconds * self.speed()
+        if ms > 0:
+            self.stitch.advance(ms)
+            self.played += ms
+        hold = 1.0 / fps
+        if self.shot is None or (self.since >= hold - 0.002 and self.shown != self.played):
+            self.take_shot()
+        # The next tick: when the next picture is due. Not longer than this: the bar's sliding
+        # piece, the time and a new tempo stay live.
+        wait = max(1.0, math.ceil(1000 * (hold - self.since)))
+        self.timer.setInterval(int(min(wait, 33 if self.progress else 100)))
         self.update()
 
-    def advance(self, ms):
-        """The tying moves on by ms of the animation's own time. Past the last frame it goes
-        on from the level the loop comes back to, not from the start."""
-        self.at += ms
-        end = self.starts[-1]
-        if self.at >= end:
-            back = self.starts[self.loop_from + 1]
-            self.at = back + (self.at - end) % (end - back)
+    def take_shot(self):
+        """The stitch as it is now, as a picture. The levels that do not move are kept as a
+        picture of their own (drawn again only when a level is done), so a frame costs the
+        newest level and the one being tied."""
+        ratio = self.devicePixelRatioF()
+        side = max(1, round(self.SIZE * ratio))
+        box = QRectF(0, 0, self.SIZE, self.SIZE)
 
-    def frame_at(self, ms):
-        """The frame the animation shows at ms of its own time (half a ms early counts)."""
-        return min(bisect.bisect_right(self.starts, ms + 0.5), len(self.frames)) - 1
+        def blank():
+            image = QPixmap(side, side)
+            image.setDevicePixelRatio(ratio)
+            image.fill(Qt.transparent)
+            return image
 
-    def frame_picture(self):
-        """The frame shown, cut from the sheet (once for each frame it shows)."""
-        if self.cut[0] != self.frame:
-            self.cut = (self.frame, QPixmap.fromImage(self.sheet.copy(self.frames[self.frame])))
-        return self.cut[1]
+        shot = blank()
+        painter = QPainter(shot)
+        if self.stitch.fade() < 1.0:  # let go: all of it shrinks away
+            paint_stitch(painter, self.stitch, box, STITCH_COLOURS)
+        else:
+            key = (self.stitch.rev, side)
+            if self.under[0] != key:
+                under = blank()
+                below = QPainter(under)
+                paint_stitch(below, self.stitch, box, STITCH_COLOURS, 'under')
+                below.end()
+                self.under = (key, under)
+            painter.drawPixmap(0, 0, self.under[1])
+            paint_stitch(painter, self.stitch, box, STITCH_COLOURS, 'top')
+        painter.end()
+        self.shot, self.shown, self.since = shot, self.played, 0.0
+        self.shots += 1
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setRenderHint(QPainter.SmoothPixmapTransform)
         box = self.SIZE
-        if self.frames:
-            picture = self.frame_picture()
-            painter.drawPixmap(QRectF(2, (self.height() - box) / 2, box, box), picture, QRectF(picture.rect()))
-        else:
-            self.draw_trefoil(painter, box)
+        if self.shot is None:
+            self.take_shot()
+        painter.drawPixmap(QRectF(2, (self.height() - box) / 2, box, box), self.shot, QRectF(self.shot.rect()))
         self.draw_label(painter, box)
         painter.end()
-
-    def draw_trefoil(self, painter, box):
-        painter.save()
-        painter.translate(2 + box / 2, self.height() / 2)
-        painter.rotate(self.turn * 120)  # a slow turn, at Claude's tempo
-        painter.scale(box / 6.4, box / 6.4)
-        orange = QColor(ACCENT)
-        dim = QColor(orange)
-        dim.setAlpha(110)
-        path = QPainterPath(self.points[0])
-        for p in self.points[1:]:
-            path.lineTo(p)
-        path.closeSubpath()
-        pen = QPen(dim, 0.55)
-        pen.setCapStyle(Qt.RoundCap)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-        painter.drawPath(path)
-        # The bright stretch running along the cord.
-        n = len(self.points)
-        head = int(self.turn * 3 * n) % n
-        run = QPainterPath(self.points[(head - 50) % n])
-        for k in range(-49, 1):
-            run.lineTo(self.points[(head + k) % n])
-        pen = QPen(orange, 0.85)
-        pen.setCapStyle(Qt.RoundCap)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-        painter.drawPath(run)
-        painter.restore()
 
     BAR = 96  # px of the progress bar
 
@@ -1891,7 +1861,12 @@ class ClaudePanel(QWidget):
     def handle_event(self, event):
         kind = event.get('type')
         t = lambda key: _tr(self.language, key)
-        if kind == 'text':
+        self.working.heard()  # any event is a sign of life: the tying does not stand still
+        if kind == 'round':
+            # The model is asked (again, with what the tools said): it thinks until it answers.
+            self.working.set_label(t('claude_thinking') + '…', 'thinking')
+            self.working.nudge()
+        elif kind == 'text':
             text = event.get('text', '')
             self.run_texts.append(text)
             self.add_claude(text)
@@ -1919,6 +1894,10 @@ class ClaudePanel(QWidget):
             self.working.clear_progress()
             self.working.set_label(self.step_label(step, running=True), step_mood(step))
             self.working.nudge()
+            if step['name'] in PICTURE_TOOLS:
+                self.working.stitch.start_over()  # a design is drawn: the stitch is tied again from the plus
+            else:
+                self.working.stitch.flip_next()   # another tool: the stitch's next level is k = 0, its hand switches
             self.tick.start()
         elif kind == 'tool_progress':
             self.show_progress(event)
@@ -2189,6 +2168,7 @@ class ClaudePanel(QWidget):
 
 
 LOGO_ORANGE, LOGO_BLUE = QColor('#FF5500'), QColor('#1525FF')  # the logo's two cords
+STITCH_COLOURS = {1: LOGO_BLUE, 2: LOGO_ORANGE}  # set 1 blue, set 2 orange
 
 
 def logo_strands():

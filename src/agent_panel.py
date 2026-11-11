@@ -45,6 +45,7 @@ TOOL_CHIPS = {
     'make_mxn': ('add_new_strand', '#93e993', '#1a1a1a'),
     'make_heart': ('add_new_strand', '#93e993', '#1a1a1a'),
     'draw_design': ('add_new_strand', '#93e993', '#1a1a1a'),
+    'draw_steps': ('add_new_strand', '#93e993', '#1a1a1a'),
     'load_sample': ('load', '#a07a6a', '#1a1a1a'),
     'search_samples': ('load', '#a07a6a', '#1a1a1a'),
     'render': ('save_image', '#8a3a55', '#ffffff'),
@@ -98,7 +99,8 @@ EASE_SECONDS = 0.35  # a change of tempo glides in
 # up by KICK for a moment, fading over KICK_SECONDS: the animation answers what the agent does.
 KICK, KICK_SECONDS = 0.9, 0.5
 # The tools that draw a design. Any tool that sends pictures of its progress counts too.
-PICTURE_TOOLS = {'make_turks_head', 'make_mxn', 'make_heart', 'draw_design', 'tie_knot', 'render', 'make_steps'}
+PICTURE_TOOLS = {'make_turks_head', 'make_mxn', 'make_heart', 'draw_design', 'draw_steps', 'tie_knot', 'render',
+                 'make_steps'}
 # A running tool's row: the picture of what it works on, and its progress bar (px).
 FRAME_SIZE = (132, 78)
 BAR_SIZE = (170, 8)

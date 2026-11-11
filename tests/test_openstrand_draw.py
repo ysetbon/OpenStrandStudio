@@ -240,7 +240,8 @@ def test_a_design_without_a_pattern_is_woven_as_before():
 
 def guide_examples():
     text = GUIDE.read_text(encoding="utf-8")
-    return [json.loads(block) for block in re.findall(r"```json\n(.*?)```", text, re.S) if '"cords"' in block]
+    found = [json.loads(block) for block in re.findall(r"```json\n(.*?)```", text, re.S) if '"cords"' in block]
+    return [spec for spec in found if "cords" in spec]  # a design; the step sequences are in test_openstrand_steps
 
 
 @pytest.mark.parametrize("spec", guide_examples(), ids=lambda s: s.get("name") or str(len(s["cords"])))

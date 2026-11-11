@@ -120,7 +120,9 @@ Knots (how one is tied, or one shown tied):
   the real knot. For a tutorial or how to tie it, then call make_steps: it
   shows the cords drawn bit by bit, in the order you list them, so list first
   the cord that is laid down first; it says what each step shows, to title
-  the tabs by (how much of each cord, where its end is). Say in one sentence
+  the tabs by (how much of each cord, where its end is). Use draw_steps
+  instead when the cords must move between the pictures (see below). Say in
+  one sentence
   that these steps are drawn, not simulated. If the drawing is still not
   exactly the knot when you stop, keep the closest one, make and open its
   steps all the same, and say which part differs: a sketch with its steps is
@@ -130,6 +132,39 @@ Knots (how one is tied, or one shown tied):
   which crossings go the other way round; for cords that cross each other it
   says how often, which is on top, and whether one passes through a loop of
   the other. A cord that lies over another everywhere is not joined to it.
+
+Step-by-step pictures (tutorials, "how to", "the next steps"):
+- Three tools make steps; choose by what changes from one picture to the next.
+  tie_knot: any knot in knot_library, stopper knots, bends and loop knots;
+  checked step by step.
+  make_steps: one finished design shown as it is drawn, bit by bit. Nothing
+  moves, more of it appears: a mat, a weave, a bend drawn loose.
+  draw_steps: every picture is its own drawing. Use it whenever the cord moves
+  between pictures: a loop is pulled through, an end is tucked, a knot is drawn
+  up, a hook, needle or finger works the cord, an arrow shows the next move.
+  That is every crochet and knitting stitch (chain, slip stitch, single and
+  double crochet, casting on), a slip knot, a hitch on a post, a loop knot not
+  in knot_library, and "what comes after this step".
+- For draw_steps, first plan the pictures in words: what each shows, what
+  moved since the one before, the tool and the arrow in it. Three to six
+  steps, one move each; the last shows the finished thing. Then send them all
+  in ONE draw_steps call, never one draw_design per picture: a hook is a tool
+  ({"tool": "hook", ...}) and an arrow is an arrow ("arrows"), never cords
+  drawn to look like them.
+- In each step give only what is new: "keep" the cords that did not move,
+  redraw (same label) the one that did. Give every cord that crosses another
+  its heights, so the picture shows what really lies on top: a hook goes into
+  a loop over one side of it and under the other.
+- An arrow in a step shows the move that leads to the next step, starting
+  where the cord or the hook is now and ending where it will be.
+- draw_steps answers with one picture of all the steps. Check each against
+  your plan, then fix only the steps that are off with "replace". Stop after
+  three rounds and say what still differs.
+- A reference image with numbered or separate pictures: one step per picture,
+  in its order, each showing what that picture shows.
+- A slip knot is not an overhand knot: pulling its working end undoes it, so
+  identify_knot answers "no knot: the cord would slip free" for a right one.
+  The guide has it drawn step by step; start from that.
 
 Masks (which strand is on top at a crossing) in tight and crowded designs:
 - A tight knot's parts touch and its joints sit inside crossings, so a mask
@@ -151,8 +186,8 @@ Masks (which strand is on top at a crossing) in tight and crowded designs:
   over, the check reads it from what most of the crossing shows: compare with
   the render and with what the person asked before you change it.
 
-Drawing, tying a knot, making a heart or a Turk's head size that is not
-published each take a few seconds; the person sees the tool's progress. Call it
+Drawing a design or its steps, tying a knot, making a heart or a Turk's head
+size that is not published each take a few seconds; the person sees the tool's progress. Call it
 once and wait.
 
 """
@@ -169,6 +204,20 @@ draw_design and the curve for each cord). End with any question the person
 should answer before you build. No markdown headings or bold.
 
 """
+
+# The parts draw_design and draw_steps share (openstrand/draw.py reads them).
+CORD = {'type': 'object', 'description': 'one cord: points, x/y, shape or tool, plus style and heights'}
+ARROW = {'type': 'object', 'description': 'an arrow: {"points": [[x, y], ...]} from its tail to its head, '
+                                          'plus optional color (default red) and label'}
+STEP = {'type': 'object', 'properties': {
+    'step': {'type': 'integer', 'description': 'in "replace" only: the number of the step this one replaces'},
+    'title': {'type': 'string', 'description': 'what the step does, short: "Pull the yarn through the loop"'},
+    'keep': {'description': 'labels of the cords that stay exactly as in the step before, or "all"'},
+    'cords': {'type': 'array', 'maxItems': 12, 'items': CORD,
+              'description': 'the cords new in this step, and those of the step before that moved (same label)'},
+    'arrows': {'type': 'array', 'maxItems': 8, 'items': ARROW,
+               'description': 'the move that leads to the next step'}},
+    'required': ['title']}
 
 TOOLS = [
     {
@@ -214,23 +263,49 @@ TOOLS = [
         'name': 'draw_design',
         'description': 'Draw your own design from cord centerlines; it replaces the current design. '
                        'Each cord is points it passes through ({"points": [[x, y], ...]}), a parametric '
-                       'curve ({"x": "...t...", "y": "...t...", "t0": 0, "t1": "2*pi"}) or a shape '
+                       'curve ({"x": "...t...", "y": "...t...", "t0": 0, "t1": "2*pi"}), a shape '
                        '({"shape": "circle", "center": [x, y], "radius": r}; also ellipse, polygon, heart, '
-                       'turks_head), plus optional closed, color, width, label, second_color, tucked, '
-                       'pattern. Every crossing gets over and under, alternating along each cord, unless a '
+                       'turks_head) or a tool ({"tool": "hook", "from": [x, y], "to": [x, y]}; also needle, '
+                       'stick), plus optional closed, color, width, label, second_color, tucked, pattern, '
+                       'heights. Every crossing gets over and under, alternating along each cord, unless a '
                        'cord has a pattern: a letter for each crossing it passes, in order from its start, O '
-                       'over or U under ("-" leaves one to the other cord), for knots that do not alternate. '
-                       'Send the whole design every time. Returns a report: every crossing and which cord is '
-                       'on top, each cord\'s crossings in order with its pattern as drawn (change a letter '
-                       'and draw again to turn that crossing over), conflicts and warnings. See "Drawing '
+                       'over or U under ("-" leaves one to the other cord), for knots that do not alternate; '
+                       'or, between cords given heights, the higher one on top. "arrows" are drawn on top and '
+                       'never woven. Send the whole design every time. Returns a report: every crossing and '
+                       'which cord is on top, each cord\'s crossings in order with its pattern as drawn '
+                       '(change a letter and draw again to turn that crossing over), conflicts and warnings. '
+                       'One picture only: for a tutorial of several pictures use draw_steps. See "Drawing '
                        'your own designs" in the guide.',
         'input_schema': {'type': 'object', 'properties': {
             'name': {'type': 'string', 'description': 'what the design is'},
             'weave': {'type': 'string', 'enum': ['alternate', 'alternate_under_first']},
-            'cords': {'type': 'array', 'minItems': 1, 'maxItems': 12,
-                      'items': {'type': 'object', 'description': 'one cord: points, x/y, or shape, '
-                                                                 'plus style'}}},
+            'cords': {'type': 'array', 'minItems': 1, 'maxItems': 12, 'items': CORD},
+            'arrows': {'type': 'array', 'maxItems': 8, 'items': ARROW}},
             'required': ['cords']},
+    },
+    {
+        'name': 'draw_steps',
+        'description': ('Draw a tutorial whose pictures differ from step to step, all of it in one call: a crochet '
+                        'or knitting stitch, a slip knot, a hitch or loop knot shown stage by stage, anything '
+                        'where the cord moves between the pictures or a hook, a needle or an arrow is in them. '
+                        'Each step is its own drawing: a title, its cords (as in draw_design: points, x/y or '
+                        'shape; "heights" or "height" say what lies on top), tools as cords ({"tool": "hook" | '
+                        '"needle" | "stick", "from": [x, y], "to": [x, y]}: a straight stick, "to" is its tip) '
+                        'and arrows ({"points": [[x, y], ...]}, tail first: red, on top of everything, never '
+                        'woven: the move to make next). A step says only what is new: "keep" lists the labels of '
+                        'the cords that stay exactly as in the step before; a cord with a label of the step '
+                        'before is that cord redrawn. Returns a report per step (crossings, what is on top, '
+                        'masks) and one picture of all the steps side by side. Saves them as "step 1", "step 2", '
+                        '... (open them with open_in_new_tab); the last becomes the current design. To fix or '
+                        'add steps afterwards, send only those in "replace". See "Steps drawn one by one" in '
+                        'the guide.'),
+        'input_schema': {'type': 'object', 'properties': {
+            'name': {'type': 'string', 'description': 'what the tutorial shows'},
+            'steps': {'type': 'array', 'minItems': 1, 'maxItems': 12, 'items': STEP,
+                      'description': 'the whole sequence, in order'},
+            'replace': {'type': 'array', 'minItems': 1, 'maxItems': 12, 'items': STEP,
+                        'description': 'after a first call: only the steps to change, each with "step": its '
+                                       'number (the number after the last adds a step); the others stay as sent'}}},
     },
     {
         'name': 'tie_knot',
@@ -246,7 +321,8 @@ TOOLS = [
                         'does, and its over/under pattern; or the knot in the current design (from_design, e.g. '
                         'after read_tab). A path or a design is tightened by pulling its two ends apart, as for '
                         'stopper knots; a loop knot or a bend that is not in the library cannot be given that '
-                        'way: draw those with draw_design, then make_steps for the steps. Saves the steps as '
+                        'way: draw those with draw_design, then make_steps for the steps (or draw_steps). Saves '
+                        'the steps as '
                         '"step 1", "step 2", ... (open them with open_in_new_tab) and makes the finished knot '
                         'the current design. Library knots take a few seconds; a path or a design a few more '
                         '(a path drawn larger than it needs is shrunk to a laid-out size first). The person '
@@ -350,8 +426,10 @@ TOOLS = [
     },
     {
         'name': 'render',
-        'description': "Draw the current design with the app's real canvas and return the picture to look at.",
-        'input_schema': {'type': 'object', 'properties': {}},
+        'description': "Draw the current design with the app's real canvas and return the picture to look at. "
+                       'With step, one of the steps instead (tie_knot, make_steps, draw_steps), full size.',
+        'input_schema': {'type': 'object', 'properties': {
+            'step': {'type': 'integer', 'description': 'a step number, to look at that step'}}},
     },
     {
         'name': 'make_steps',
@@ -456,7 +534,9 @@ class Workspace:
         self.rendered_version = -1
         self._preview = None
         self._shot, self._shots = None, 0  # (version, path) of the current design's last picture; pictures made
-        self.steps = []  # [(title, path)] from make_steps
+        self.steps = []  # [(title, path)] from make_steps, tie_knot or draw_steps
+        self.story = None  # the steps draw_steps was sent last, as sent: "replace" changes single ones
+        self.sheet = None  # (version, path) of the picture of all of draw_steps' steps
         self.last_edit = None  # the design edit_mask made last (kept or previewed)
         self.progress = None  # set while a tool runs: tells the person how far it has got
 
@@ -476,21 +556,68 @@ class Workspace:
         self.version += 1
         project.write(data, self.project_path)
 
-    def render(self):
+    def render(self, step=None):
+        """The current design's picture, or one step's (its number), full size."""
         from generate_creative_samples import AppPreview
+        if step is not None:
+            if isinstance(step, bool) or not isinstance(step, int) or not 1 <= step <= len(self.steps):
+                raise ToolError(f'no step {step}: there are {len(self.steps)} steps')
+            data, path = project.read(self.steps[step - 1][1]), self.out_dir / f'step_{step}.png'
+        else:
+            data, path = self.need(), self.png_path
         generators.application()
         if self._preview is None:
             self._preview = AppPreview()
-        self._preview.capture(self.need(), self.png_path)
-        self.rendered_version = self.version
-        return self.png_path
+        self._preview.capture(data, path)
+        if step is None:
+            self.rendered_version = self.version
+        return path
+
+    def draw_steps(self, args):
+        """Every step of a tutorial drawn in one call: (summary, content with
+        one picture of all of them)."""
+        from . import storyboard
+        if args.get('steps') is not None:
+            story = args['steps']
+        elif args.get('replace') is not None:
+            story = storyboard.replace(self.story, args['replace'])
+        else:
+            raise ToolError('give "steps" (the whole sequence), or "replace" (the steps to change of the '
+                            'sequence sent before)')
+        if isinstance(story, list):
+            self.story = story  # kept even when a step fails: "replace" then fixes just that step
+        made = storyboard.build({'steps': story, 'weave': args.get('weave')}, progress=self.progress)
+        self.steps = []
+        for number, step in enumerate(made, start=1):
+            path = self.out_dir / f'step_{number}.json'
+            project.write(step['data'], path)
+            self.steps.append((step['title'], path))
+        self.store(made[-1]['data'])
+        count = len(made)
+        text = (storyboard.summary(made) + f'\nSaved as "step 1" to "step {count}"; the current design is step '
+                f'{count}. The picture shows them all, in order: check each one against what the step should '
+                'show (what crosses over what, where the hook and the arrows are, that it leads on from the '
+                'step before). Fix a step that is off with draw_steps "replace" (only that step); render with '
+                '"step" shows one step larger. In the app, open each with open_in_new_tab, in order, titled '
+                'by what it does, e.g. "Step 1 · make a loop".')
+        content = [{'type': 'text', 'text': text}]
+        self.sheet = None
+        try:
+            pictures = [self.snapshot(step['data']) for step in made]
+            sheet = storyboard.sheet(pictures, [step['title'] for step in made], self.out_dir / 'steps.png')
+            self.sheet = (self.version, sheet)
+            data = base64.standard_b64encode(sheet.read_bytes()).decode('ascii')
+            content.append({'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/png', 'data': data}})
+        except Exception as e:  # noqa: BLE001 - the steps are drawn and saved: say so, without the picture
+            content[0]['text'] += f'\n(No picture of the steps: {type(e).__name__}: {e}. Use render with "step".)'
+        title = str(args.get('name') or 'steps')[:40]
+        return f'{title} · {count} step{"s" if count != 1 else ""}', content
 
     def snapshot(self, data=None):
         """A picture of a design (the current one by default) for the tool's row in the
         app: drawn with the app's real canvas, cut to the design with a margin. The
         current design is drawn once per version. Returns the PNG's path."""
-        from PyQt5.QtCore import QRect
-        from PyQt5.QtGui import QImage
+        from . import render
         current = data is None
         data = self.need() if current else data
         if current and self._shot is not None and self._shot[0] == self.version and self._shot[1].exists():
@@ -503,19 +630,7 @@ class Workspace:
         frames.mkdir(exist_ok=True)
         self._shots += 1
         path = frames / f'tool_{self._shots}.png'
-        self._preview.capture(data, path)
-        canvas = self._preview.window.canvas
-        bounds, zoom = canvas.get_bounding_rect(), canvas.zoom_factor
-        w, h = canvas.width(), canvas.height()
-        # Where the design's box lands on the canvas (the canvas's own transform).
-        x0 = (bounds.left() - w / 2) * zoom + w / 2 + canvas.pan_offset_x
-        y0 = (bounds.top() - h / 2) * zoom + h / 2 + canvas.pan_offset_y
-        widest = max([getattr(s, 'width', 0) + 2 * getattr(s, 'stroke_width', 0) for s in canvas.strands] or [0])
-        pad = widest * zoom / 2 + 12
-        box = QRect(int(x0 - pad), int(y0 - pad), int(bounds.width() * zoom + 2 * pad),
-                    int(bounds.height() * zoom + 2 * pad)).intersected(QRect(0, 0, w, h))
-        if box.width() > 8 and box.height() > 8:
-            QImage(str(path)).copy(box).save(str(path))
+        render.shot(self._preview, data, path)
         if current:
             self._shot = (self.version, path)
         return path
@@ -613,6 +728,8 @@ class Workspace:
             self.store(data)
             title = str(args.get('name') or 'drawing')[:40]
             return f'{title} · {project.summary(data)}', report + '\nNow render it and look at the result.'
+        if name == 'draw_steps':
+            return self.draw_steps(args)
         if name == 'tie_knot':
             from . import bends, tying
             wanted = args.get('knot')
@@ -726,7 +843,7 @@ class Workspace:
             lines.append('Each can open in its own tab with open_in_new_tab if you are running in the app.')
             return f'{len(made)} steps', '\n'.join(lines)
         if name == 'render':
-            path = self.render()
+            path = self.render(args.get('step'))
             data = base64.standard_b64encode(path.read_bytes()).decode('ascii')
             return 'picture', [{'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/png', 'data': data}}]
         raise ToolError(f'unknown tool {name}')
@@ -948,6 +1065,10 @@ class Agent:
             with self.quiet():
                 if name == 'edit_mask' and args.get('preview') and ws.last_edit is not None:
                     return str(ws.snapshot(ws.last_edit))
+                if name == 'draw_steps' and ws.sheet is not None and ws.sheet[0] == ws.version:
+                    return str(ws.sheet[1])  # all the steps, not only the last
+                if name == 'render' and args.get('step') and (ws.out_dir / f"step_{args['step']}.png").exists():
+                    return str(ws.out_dir / f"step_{args['step']}.png")  # the step it looked at
                 return str(ws.snapshot())
         except Exception as e:  # noqa: BLE001
             self.log(f'no picture for {name}: {type(e).__name__}: {e}')
@@ -985,8 +1106,9 @@ class Agent:
 
 
 # Tools whose finished row shows the design they made, changed, checked or read.
-IMAGE_TOOLS = {'load_sample', 'make_turks_head', 'make_mxn', 'make_heart', 'draw_design', 'tie_knot', 'edit_mask',
-               'recolor', 'make_steps', 'render', 'identify_knot', 'check_masks', 'read_tab', 'read_tab_step'}
+IMAGE_TOOLS = {'load_sample', 'make_turks_head', 'make_mxn', 'make_heart', 'draw_design', 'draw_steps', 'tie_knot',
+               'edit_mask', 'recolor', 'make_steps', 'render', 'identify_knot', 'check_masks', 'read_tab',
+               'read_tab_step'}
 
 HISTORY_TURNS = 8
 

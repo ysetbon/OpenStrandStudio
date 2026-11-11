@@ -38,8 +38,9 @@ TOOLS = [
     {
         'name': 'open_in_new_tab',
         'description': ("Open a design made in this request in a new tab of the person's app, with a title. "
-                        'design is "current" (the current design) or "step N" (from make_steps). The '
-                        "person's other tabs stay as they are. Open steps in order, one call each."),
+                        'design is "current" (the current design) or "step N" (from tie_knot, make_steps or '
+                        "draw_steps). The person's other tabs stay as they are. Open steps in order, one call "
+                        'each.'),
         'input_schema': {'type': 'object', 'properties': {
             'design': {'type': 'string', 'description': '"current" or "step 1", "step 2", ...'},
             'title': {'type': 'string', 'description': 'the tab title, short, e.g. "Step 1 · first loop"'},
@@ -64,10 +65,12 @@ INSTRUCTIONS = """- When asked about tabs, use these tools. For how to tie a kno
   (it makes checked steps, for the stopper knots and for the bends and loop
   knots in knot_library alike), then open_in_new_tab for each step in order,
   with titles like "Step 1 · first loop" that say what the step does. For
-  other step-by-step instructions (a knot joining two cords or a loop knot
-  that is not in knot_library, a stitch, a weave), make the design, call
-  make_steps, then open the steps the same way. A tutorial is its steps open
-  in tabs, not a written list.
+  other step-by-step instructions, draw_steps when the pictures differ from
+  step to step (a crochet or knitting stitch, a slip knot, a loop knot that is
+  not in knot_library, anything with a hook or an arrow), else make the design
+  and call make_steps (a weave, a mat, a knot joining two cords drawn loose
+  that is not in knot_library); then open the steps the same way. A tutorial
+  is its steps open in tabs, not a written list.
 - To work on what is in a tab, read_tab it first; it becomes the current design.
   The person keeps working while you do: when they may have changed the tab, or
   an edit is refused because the tab changed, read_tab it again. Use the strand
@@ -122,7 +125,8 @@ def open_in_new_tab(agent, args):
     else:
         number = which.replace('step', '').strip()
         if not number.isdigit() or not 1 <= int(number) <= len(ws.steps):
-            raise ToolError(f'no {which}: make_steps made {len(ws.steps)} steps')
+            raise ToolError(f'no {which}: there are {len(ws.steps)} steps in this request (tie_knot, make_steps '
+                            'and draw_steps make them; steps of an earlier request are gone, make them again)')
         path = ws.steps[int(number) - 1][1]
     result = agent.app.call('open_in_new_tab', {'path': str(path), 'title': title})
     if result.get('opened'):

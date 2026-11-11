@@ -11,6 +11,12 @@ alternate, such as a square knot or a sheet bend; or, for cords given
 part on top, the way a real cord lies. This is what lets a person, or the
 agent, design something no template covers.
 
+A cord can also be a tool, a hook or a needle the cord is worked with: a
+straight stick with a shaped tip, woven with the cords like any other. Arrows
+("arrows": the move to make next) are not cords: each is drawn on top of
+everything and never crosses or masks anything (in the app, a hidden strand
+showing its full arrow).
+
 Every design carries the curve settings it was fitted for (project_settings),
 so it opens the same whatever the person's own Settings are.
 
@@ -19,8 +25,9 @@ so it opens the same whatever the person's own Settings are.
         {"points": [[300, 250], [600, 400], [900, 250]], "heights": [0, 30, 0]},
         {"points": [[300, 500], [600, 300], [900, 500]], "pattern": "UO"},
         {"x": "600 + 200*cos(t)", "y": "400 + 200*sin(t)", "t1": "2*pi", "closed": true},
-        {"shape": "circle", "center": [600, 400], "radius": 150, "color": "gold"}
-    ]}
+        {"shape": "circle", "center": [600, 400], "radius": 150, "color": "gold"},
+        {"tool": "hook", "from": [200, 300], "to": [700, 380], "height": 10}
+    ], "arrows": [{"points": [[700, 300], [780, 240], [860, 300]]}]}
 """
 import ast
 import itertools
@@ -38,6 +45,27 @@ WIDTH_RANGE = (8, 60)
 FLAT_ANGLE = 8              # crossings flatter than this are cords lying on each other
 DEFAULT_WIDTH = 24
 SPACING = 4.0               # px between centerline samples (the samples use 2; 4 fits about 4x faster)
+
+# Tools a cord is worked with: a straight stick from its handle ("from") to its
+# tip ("to"). Per tool, the end style (see src/end_style.py) of the handle and
+# of the tip: shape, depth (a share of the width), tilt (degrees).
+TOOLS = {
+    'hook': (('rounded', 0.5, 0), ('rounded', 1.0, 45)),      # a crochet hook: a round head with a barb
+    'needle': (('rounded', 0.5, 0), ('pointed', 1.0, 0)),     # a knitting needle: a point
+    'stick': (('rounded', 0.4, 0), ('rounded', 0.4, 0)),      # a rod, a finger, a peg
+}
+TOOL_WIDTH = 34
+TOOL_COLOR = 'grey'
+
+# Arrows: the move to make next. Never woven, always on top.
+MAX_ARROWS = 8
+ARROW_POINTS = 12
+ARROW_COLOR = 'red'
+ARROW_WIDTH = 10            # the hidden strand that carries the arrow
+ARROW_TOLERANCE = 3.0       # px an arrow's curve may stray from its points
+# How the app draws full arrows in a design with arrows: a thin shaft, a clear head.
+ARROW_SETTINGS = dict(arrow_line_width=7.0, arrow_head_length=30.0, arrow_head_width=26.0,
+                      arrow_head_stroke_width=2)
 
 _FUNCTIONS = {
     'sin': math.sin, 'cos': math.cos, 'tan': math.tan, 'asin': math.asin, 'acos': math.acos,
@@ -157,9 +185,9 @@ def centerline(cord, index, with_heights=False):
     from sample_geometry import parametric, resample, spline
     what = f'cord {index + 1}'
     closed = _flag(cord.get('closed', False), f'{what} "closed"')
-    kinds = [k for k in ('points', 'x', 'shape') if k in cord]
+    kinds = [k for k in ('points', 'x', 'shape', 'tool') if k in cord]
     if len(kinds) != 1:
-        raise DrawError(f'{what} needs exactly one of "points", "x" and "y", or "shape"')
+        raise DrawError(f'{what} needs exactly one of "points", "x" and "y", "shape" or "tool"')
     kind = kinds[0]
     if kind == 'points':
         points = cord['points']
@@ -192,17 +220,48 @@ def centerline(cord, index, with_heights=False):
         if not 100 <= steps <= 20000:
             raise DrawError(f'{what}: steps must be between 100 and 20000')
         poly = parametric(lambda t: (fx(t=t), fy(t=t)), t0, t1, closed=closed, steps=steps, spacing=SPACING)
+    elif kind == 'tool':
+        heights = None
+        tool_of(cord, what)
+        if 'from' not in cord or 'to' not in cord:
+            raise DrawError(f'{what}: a {cord["tool"]} needs "from" (its handle end) and "to" (its tip), each [x, y]')
+        a, b = _point(cord['from'], f'{what} "from"'), _point(cord['to'], f'{what} "to"')
+        if math.dist(a, b) < 1:
+            raise DrawError(f'{what}: "from" and "to" are the same point')
+        poly, closed = resample([a, b], SPACING), False
+        if 'heights' in cord:       # a stick that dips: its height at the handle and at the tip
+            ends = cord['heights']
+            if not isinstance(ends, list) or len(ends) != 2:
+                raise DrawError(f'{what}: a tool\'s "heights" are two numbers, at its handle and at its tip')
+            h0, h1 = (_number(h, f'{what} height {k + 1}') for k, h in enumerate(ends))
+            heights = [h0 + (h1 - h0) * k / (len(poly) - 1) for k in range(len(poly))]
     else:
         heights = None
         poly = _shape(cord, what)
         closed = True
     if heights is None and 'heights' in cord:
-        raise DrawError(f'{what}: "heights" go with "points" (one height per point)')
+        raise DrawError(f'{what}: "heights" go with "points" (one height per point); '
+                        'use "height" (one number) for the whole cord')
+    if 'height' in cord:
+        if heights is not None:
+            raise DrawError(f'{what}: give "height" (one number for the whole cord) or "heights" '
+                            '(one per point), not both')
+        heights = [_number(cord['height'], f'{what} height')] * len(poly)
     for x, y in poly:
         if not (BOUNDS[0] <= x <= BOUNDS[1] and BOUNDS[0] <= y <= BOUNDS[1]):
             raise DrawError(f'{what} goes to ({x:.0f}, {y:.0f}); keep every point between '
                             f'{BOUNDS[0]} and {BOUNDS[1]} (the samples use about 0-1200 by 0-800)')
     return (poly, closed, heights) if with_heights else (poly, closed)
+
+
+def tool_of(cord, what='the cord'):
+    """The cord's tool ("hook", "needle", "stick"), or None for a cord."""
+    if 'tool' not in cord:
+        return None
+    name = str(cord['tool']).strip().lower()
+    if name not in TOOLS:
+        raise DrawError(f'{what}: unknown tool "{cord["tool"]}"; use {", ".join(TOOLS)}')
+    return name
 
 
 def _heights(cord, what, given, pts, poly, closed):
@@ -343,7 +402,8 @@ def build(spec, mask_check=True, progress=None):
     import generate_creative_samples as g
 
     started = time.monotonic()
-    tucked, lengths, made, patterns = set(), 0.0, [], {}
+    arrows = _arrows(spec.get('arrows'))
+    tucked, lengths, made, patterns, tools = set(), 0.0, [], {}, {}
     for k, cord in enumerate(cords):
         if not isinstance(cord, dict):
             raise DrawError(f'cord {k + 1} must be an object')
@@ -354,15 +414,18 @@ def build(spec, mask_check=True, progress=None):
             patterns[k] = _letters(cord['pattern'], k)
         length = sum(math.dist(a, b) for a, b in zip(poly, poly[1:]))
         lengths += length
-        width = _number(cord.get('width', DEFAULT_WIDTH), f'cord {k + 1} width')
+        tool = tool_of(cord)
+        if tool:
+            tools[k] = tool
+        width = _number(cord.get('width', TOOL_WIDTH if tool else DEFAULT_WIDTH), f'cord {k + 1} width')
         if not WIDTH_RANGE[0] <= width <= WIDTH_RANGE[1]:
             raise DrawError(f'cord {k + 1}: width must be between {WIDTH_RANGE[0]} and {WIDTH_RANGE[1]}')
         if length < 3 * width:
             raise DrawError(f'cord {k + 1} is only {length:.0f} px long; make it at least three times its '
                             f'width ({3 * width:.0f} px) so it reads as a cord')
-        color = colors.parse(str(cord.get('color', 'teal')))
+        color = colors.parse(str(cord.get('color', TOOL_COLOR if tool else 'teal')))
         second = colors.parse(str(cord['second_color'])) if cord.get('second_color') else None
-        group = str(cord.get('label') or f'Cord {k + 1}')[:40]
+        group = str(cord.get('label') or (tool.capitalize() if tool else f'Cord {k + 1}'))[:40]
         made.append((poly, color, group, width, closed, second, heights))
         if _flag(cord.get('tucked', False), f'cord {k + 1} "tucked"'):
             tucked.add(k)
@@ -454,10 +517,17 @@ def build(spec, mask_check=True, progress=None):
     scene = best[1]
     if conflicts is not None:
         scene.woven_conflicts = conflicts
+    for k, tool in tools.items():
+        _shape_tool(scene.cords[k]['chain'], tool)
+    _add_arrows(scene, arrows)
     data = _serialize(scene)
     data['project_settings'] = project_settings()
+    if arrows:
+        data['project_settings'].update(ARROW_SETTINGS)
     data['design_crossings'] = design_crossings(scene)
     text = report(scene, time.monotonic() - started, shallow)
+    if arrows:
+        text += f'\n{len(arrows)} arrow{"s" if len(arrows) != 1 else ""} drawn on top (arrows are never woven)'
     if mask_check and any(cord.get('heights') is not None for cord in scene.cords):
         text += '\n' + mask_findings(data)
     return data, text
@@ -569,6 +639,100 @@ def _levels(scene, dense, rule, patterns):
         else:
             out[c] = np.interp(np.arange(size), at, up).tolist()
     return out, conflicts
+
+
+def _shape_tool(chain, tool):
+    """Give a tool's two free ends their shapes: the handle at the cord's
+    start, the tip at its end."""
+    from end_style import normalize_style
+    handle, tip = TOOLS[tool]
+    first, last = chain[0], chain[-1]
+    # A strand before the cord's first strand runs against the cord: its
+    # free end is its own end. The last strand always runs with the cord.
+    for strand, side, (shape, depth, tilt) in ((first, 1 if first.reversed else 0, handle), (last, 1, tip)):
+        if not hasattr(strand, 'end_styles') or strand.end_styles is None:
+            strand.end_styles = [None, None]
+        strand.end_styles[side] = normalize_style({'shape': shape, 'depth': depth, 'tilt': tilt})
+        strand.update_shape()
+        strand.update_side_line()
+
+
+def _arrows(given):
+    """The design's arrows as [(centerline, color, label)]."""
+    from sample_geometry import resample, spline
+    if given is None:
+        return []
+    if not isinstance(given, list) or len(given) > MAX_ARROWS:
+        raise DrawError(f'"arrows" must list at most {MAX_ARROWS} arrows')
+    out = []
+    for n, arrow in enumerate(given, start=1):
+        what = f'arrow {n}'
+        if not isinstance(arrow, dict) or not isinstance(arrow.get('points'), list) \
+                or not 2 <= len(arrow['points']) <= ARROW_POINTS:
+            raise DrawError(f'{what} must be {{"points": [[x, y], ...]}} with 2 to {ARROW_POINTS} points, '
+                            'from its tail to its head')
+        pts = [_point(p, f'{what} point {k + 1}') for k, p in enumerate(arrow['points'])]
+        for a, b in zip(pts, pts[1:]):
+            if math.dist(a, b) < 1:
+                raise DrawError(f'{what}: two points in a row are the same ({a[0]:g}, {a[1]:g})')
+        for x, y in pts:
+            if not (BOUNDS[0] <= x <= BOUNDS[1] and BOUNDS[0] <= y <= BOUNDS[1]):
+                raise DrawError(f'{what} goes to ({x:.0f}, {y:.0f}); keep every point between '
+                                f'{BOUNDS[0]} and {BOUNDS[1]}')
+        smooth = _flag(arrow.get('smooth', True), f'{what} "smooth"') and len(pts) > 2
+        poly = spline(pts, closed=False, spacing=SPACING) if smooth else resample(pts, SPACING)
+        length = sum(math.dist(a, b) for a, b in zip(poly, poly[1:]))
+        head = ARROW_SETTINGS['arrow_head_length']
+        if length < 2 * head:
+            raise DrawError(f'{what} is only {length:.0f} px long; make it at least {2 * head:.0f} px')
+        # The app draws the head beyond the strand's end: stop the shaft a
+        # head short, so the tip lands on the arrow's last point.
+        keep = max(2, len(poly) - int(round(head / SPACING)))
+        color = colors.parse(str(arrow.get('color', ARROW_COLOR)))
+        out.append((poly[:keep], color, str(arrow.get('label') or f'Arrow {n}')[:40]))
+    return out
+
+
+def _add_arrows(scene, arrows):
+    """Each arrow as hidden strands showing their full arrow, above
+    everything: one strand where one curve follows the arrow, else a few in a
+    row with the head on the last."""
+    if not arrows:
+        return
+    from PyQt5.QtCore import QPointF
+    from PyQt5.QtGui import QColor
+    from strand import Strand
+    import generate_creative_samples as g
+    for poly, color, label in arrows:
+        spans = g.NATIVE.fit(poly, False, ARROW_TOLERANCE, free_ends=True, min_length=ARROW_WIDTH * 3,
+                             max_turn=math.radians(200), max_bend_error=30.0)
+        entry = scene.groups.setdefault(label, dict(layers=[], main_strands=[], strands=[], control_points={}))
+        for k, (_, _, curve) in enumerate(spans):
+            scene.set_count += 1
+            start, c1, c2, end = (QPointF(*p) for p in curve)
+            strand = Strand(start, end, ARROW_WIDTH, QColor(color), QColor(color), 2, scene.set_count)
+            strand.is_first_strand = True
+            strand.layer_name = f'{scene.set_count}_1'
+            strand.control_point1, strand.control_point2 = c1, c2
+            strand.control_point2_activated = strand.control_point2_shown = True
+            strand.control_point_center_locked = False
+            for key, value in g.CURVE_SETTINGS.items():
+                setattr(strand, key, value)
+            strand.triangle_has_moved = True
+            strand.start_circle_stroke_color = QColor(0, 0, 0, 0)
+            strand.end_circle_stroke_color = QColor(0, 0, 0, 0)
+            strand.is_hidden = True                 # only its arrow shows
+            strand.full_arrow_visible = True
+            strand.arrow_color = QColor(color)
+            strand.arrow_head_visible = k == len(spans) - 1
+            strand.hide_shadow = True
+            strand.update_shape()
+            strand.update_side_line()
+            scene.strands.append(strand)
+            entry['main_strands'].append(strand)
+            entry['strands'].append(strand)
+            entry['layers'].append(strand.layer_name)
+            entry['control_points'][strand.layer_name] = dict(control_point1=c1, control_point2=c2)
 
 
 def mask_findings(data, limit=12):

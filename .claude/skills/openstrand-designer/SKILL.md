@@ -92,6 +92,23 @@ crossings go the other way round), gives each cord's pattern and what it is
 on its own, and for every two cords that cross: how often, which is on top,
 and whether one passes through a loop of the other.
 
+## Tutorials drawn step by step
+
+When the pictures of a tutorial differ from step to step (a crochet or
+knitting stitch, a slip knot, a hitch or loop knot: the cord moves, a loop is
+pulled through, a hook or needle works it, an arrow shows the next move), do
+not make one design per picture: write all the steps as one JSON design and
+```
+python -m openstrand draw-steps steps.json --out-dir designs/slip_knot
+```
+draws each as its own project (`step_1.json`, ...) and `steps.png`, one
+picture of all of them side by side. A step lists only what is new in it:
+`keep` for the cords that did not move, `cords` for those that are new or
+moved (hooks and needles are cords: `{"tool": "hook", ...}`), `arrows` for the
+move to make. "Steps drawn one by one" in `drawing.md` has the format, the
+rules and a slip knot worked out. Open `steps.png`, check every step, change
+the JSON and run it again.
+
 ## Masks in tight and crowded designs
 
 A mask says which strand is on top where two cross. In a knot pulled tight

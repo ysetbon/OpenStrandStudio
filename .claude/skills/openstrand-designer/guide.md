@@ -66,7 +66,8 @@ that one. Search before you draw anything.
 - **Boondoggle** (scoubidou, gimp, lanyard, plastic lace): every stitch is an
   MxN stitch. Box or square stitch = 1x1 (two strings); brick stitch = 2x1
   (three strings); any other size is `make mxn`.
-- **Macrame**: the square knot (cobra knot, Solomon bar), with tying steps.
+- **Macrame**: the square knot (cobra knot, Solomon bar), with tying steps;
+  the lark's head knot (cow hitch, mounting knot) and its reverse, shown loose.
 - **Chinese knotting**: double coin, cloverleaf, good luck, Pan Chang (mystic
   or endless knot), shown finished and flat.
 - **Knitting**: the magic knot that joins two yarns, with tying steps.

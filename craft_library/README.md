@@ -36,6 +36,9 @@ the tool call the match ends with.
   `load_sample` take.
 - `also`: every other name people use, any spelling. Search and `make sample`
   match these too.
+- `patterns` (for a design drawn for the library): each cord's over and under
+  in order, `O` or `U` at every crossing it passes, as the design must read
+  back. The tests check the file against it, and that its masks are right.
 - `build`, one of:
   - `{"file": "craft_library/<craft>/json/<name>.json"}`: a project file in
     this repository.
@@ -52,8 +55,10 @@ a craft has its own name for one (knitting's magic knot).
 
 ## Adding a design
 
-1. Build it with the `openstrand` command, never by hand, and save the project
-   under `craft_library/<craft>/json/`, its picture under
+1. Build it with the `openstrand` command, never by hand: keep the drawing
+   it was made from under `craft_library/<craft>/spec/` (`openstrand draw`
+   makes the project from it again), the project under
+   `craft_library/<craft>/json/`, its picture under
    `craft_library/<craft>/images/`.
 2. Check it: `validate`, `masks`, `identify`, and look at the render beside a
    picture of the real thing.

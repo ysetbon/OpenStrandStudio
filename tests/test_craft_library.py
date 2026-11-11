@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from openstrand import agent, bends, check, generators, library, tying
+from openstrand import agent, bends, check, generators, identify, invariants, library, masks, tying
 from openstrand.cli import main
 
 CATALOG = library.read_catalog()
@@ -72,6 +72,12 @@ def test_every_entry_can_be_made(entry):
     data, _, _ = generators.sample(entry["name"])
     assert data["strands"]
     assert check.problems(data) == []
+    if "patterns" in entry:
+        # The design is the knot its entry says, crossing for crossing: each cord's over
+        # and under in order, read back from the strands, masks and layers as the app draws them.
+        code = identify.code(data)
+        assert [invariants.pattern(code, k) for k in range(len(code["passes"]))] == entry["patterns"]
+        assert masks.check(data)["problems"] == []
 
 
 def test_files_of_the_library_are_all_listed():
@@ -91,6 +97,9 @@ def test_files_of_the_library_are_all_listed():
     ("double coin", "chinese_double_coin"),
     ("how to tie a magic knot", "magic_knot"),
     ("cobra knot", "macrame square knot"),
+    ("lark's head", "larks_head_knot"),
+    ("cow hitch", "larks_head_knot"),
+    ("reverse larks head knot", "reverse_larks_head_knot"),
     ("Macramé", "macrame square knot"),
     ("weaver's knot", "sheet bend"),
     ("bowline", "bowline"),

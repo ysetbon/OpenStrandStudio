@@ -21,8 +21,11 @@ use for them. `drawing.md` explains how to draw any design yourself.
    glossary in `guide.md`. With a reference image, describe what you see in
    those terms first: the kind of design, how many leads and bights or ribbons,
    the hand, the colors.
-2. **Look for a starting point.** `python -m openstrand samples <word>` lists
-   ready-made designs. Prefer a sample or a published size when one fits.
+2. **Look for a starting point.** `python -m openstrand samples <word>` looks
+   the request up in the craft library by any name people use (boondoggle,
+   "cobra knot", "mystic knot", "magic knot") and in the published files;
+   each match ends with the command that makes it. Prefer a sample or a
+   published size when one fits.
    When nothing fits, design it: search the web for what it is and how it is
    built (or reason it out when the web has nothing), plan the cords and
    crossings, write them as a JSON design (see `drawing.md`) and run

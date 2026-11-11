@@ -1,0 +1,28 @@
+{
+  "name": "double_half_hitch",
+  "craft": "macrame",
+  "title": "Double half hitch",
+  "also": ["clove hitch", "DHH", "horizontal double half hitch", "double half hitch knot"],
+  "about": "Two half hitches side by side on a holding cord, both turned the same way: the knot that draws lines and shapes in macrame, and the sailor's clove hitch. Shown loose, from the front.",
+  "kind": "hitch",
+  "width": 24,
+  "cords": [
+    {"label": "Holding cord", "color": "gold", "smooth": false, "points": [
+      [200, 400], [1000, 400]]},
+    {"label": "Working cord", "color": "teal", "points": [
+      [600, 720], [600, 640], [600, 480], [600, 350], [607, 314], [627, 293],
+      [660, 290], [693, 293], [713, 314], [720, 350], [720, 470], [720, 520],
+      [716, 543], [704, 557], [685, 560], [520, 560], [400, 560], [378, 560],
+      [362, 546], [360, 520], [360, 460], [360, 350], [367, 314], [387, 293],
+      [420, 290], [453, 293], [473, 314], [480, 350], [480, 480], [480, 640],
+      [480, 720]]}
+  ],
+  "patterns": ["UOUO", "UOUOUOUO"],
+  "steps": [
+    {"shown": ["all", null], "caption": "Lay the holding cord straight across. Nothing else is tied yet."},
+    {"shown": ["all", {"after": 3}], "arrow": 1, "caption": "Bring the working cord up over the holding cord, bend it over to the right, and take it down under the holding cord."},
+    {"shown": ["all", {"after": 4}], "arrow": 1, "caption": "Carry the working cord across to the left, over its own standing part: that is one half hitch."},
+    {"shown": ["all", {"after": 7}], "arrow": 1, "caption": "Take the working cord up over the holding cord again, to the left of the first hitch, and down under it."},
+    {"shown": ["all", "all"], "caption": "Take the working cord straight down, over its own crossing part: the second half hitch, and both hitches sit side by side."}
+  ]
+}

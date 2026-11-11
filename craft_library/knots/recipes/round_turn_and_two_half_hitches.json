@@ -1,0 +1,21 @@
+{
+  "name": "round_turn_and_two_half_hitches",
+  "craft": "knots",
+  "title": "Round turn and two half hitches",
+  "also": ["round turn & two half hitches", "round turn two half hitches"],
+  "about": "Ties a rope to a ring, a rail or a post so that it can be cast off under load: two turns round it, which take the strain, then two half hitches round the rope's own standing part. Shown loose and flat.",
+  "kind": "hitch",
+  "width": 24,
+  "cords": [
+    {"label": "Rod", "color": "gold", "smooth": false, "points": [[250, 300], [1070, 300]]},
+    {"label": "Rope", "color": "teal", "points": [[600, 1000], [600, 820], [600, 700], [600, 580], [600, 460], [600, 300], [600, 250], [610, 215], [630, 195], [660, 190], [690, 195], [710, 215], [720, 250], [720, 300], [720, 340], [730, 370], [760, 385], [790, 370], [800, 340], [800, 300], [800, 250], [810, 215], [830, 195], [860, 190], [890, 195], [910, 215], [920, 250], [920, 300], [920, 480], [912, 535], [885, 568], [845, 580], [800, 580], [760, 580], [600, 580], [560, 580], [525, 570], [505, 545], [500, 520], [505, 495], [525, 470], [560, 460], [600, 460], [700, 460], [735, 468], [755, 490], [760, 520], [760, 580], [760, 700], [760, 780], [752, 805], [730, 818], [700, 820], [600, 820], [560, 820], [525, 810], [505, 785], [500, 760], [505, 735], [525, 710], [560, 700], [600, 700], [760, 700], [840, 700], [940, 700]]}
+  ],
+  "patterns": ["UOUO", "UOUOOUOUUOUOUOUO"],
+  "steps": [
+    {"shown": ["all", null], "caption": "The rod, rail or ring the rope is tied to."},
+    {"shown": ["all", {"after": 6}], "arrow": 1, "caption": "Bring the end up over the rod in front and down behind it: one turn."},
+    {"shown": ["all", {"after": 8}], "arrow": 1, "caption": "And round once more, beside the first turn: over the rod and down behind it. That is the round turn."},
+    {"shown": ["all", {"after": 12}], "arrow": 1, "caption": "First half hitch: take the end across over the standing part, back under it, and down over its own part."},
+    {"shown": ["all", "all"], "caption": "Second half hitch, below the first and made the same way: over the standing part, back under it, and out over its own part."}
+  ]
+}

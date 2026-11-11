@@ -1,0 +1,29 @@
+{
+  "name": "half_knot",
+  "craft": "macrame",
+  "title": "Half knot",
+  "also": ["macrame half knot", "half square knot", "first half of a square knot"],
+  "about": "The first half of the macrame square knot: the left working cord crosses in front of the two filler cords, the right one goes over it, behind the fillers and up through the loop on the left. Tied again and again the same way it twists into a spiral; followed by its mirror image it makes a square knot.",
+  "kind": "macrame",
+  "width": 22,
+  "cords": [
+    {"label": "Left working cord", "color": "teal", "points": [
+      [470, 80], [425, 140], [400, 200], [420, 250], [470, 270], [565, 270],
+      [635, 270], [720, 270], [775, 285], [800, 340], [800, 385], [800, 520],
+      [800, 720]]},
+    {"label": "Filler cords", "color": "gold", "points": [
+      [565, 80], [565, 400], [565, 720]]},
+    {"label": "Filler cords", "color": "gold", "points": [
+      [635, 80], [635, 400], [635, 720]]},
+    {"label": "Right working cord", "color": "rose", "points": [
+      [720, 80], [720, 180], [720, 270], [714, 316], [688, 338], [635, 340],
+      [565, 340], [512, 337], [486, 312], [480, 270], [474, 222], [445, 192],
+      [400, 187], [356, 198], [333, 240], [328, 330], [328, 520], [328, 720]]}
+  ],
+  "patterns": ["UOOOU", "UO", "UO", "OUUUO"],
+  "steps": [
+    {"shown": [{"after": 0}, "all", "all", {"after": 0}], "caption": "Four cords side by side: two filler cords in the middle, a working cord on each side."},
+    {"shown": ["all", "all", "all", {"after": 1}], "arrow": 0, "caption": "Take the left cord across in front of the two fillers and under the right cord."},
+    {"shown": ["all", "all", "all", "all"], "caption": "Take the right cord behind the fillers and up through the loop on the left: under the left cord where it crosses over, then over it. Pull both working cords: that is a half knot."}
+  ]
+}

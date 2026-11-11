@@ -1,0 +1,19 @@
+{
+  "name": "cross_knot",
+  "craft": "chinese knotting",
+  "title": "Cross knot",
+  "also": ["Chinese cross knot", "square knot (Chinese knotting)", "shi zi jie", "kano musubi"],
+  "about": "A compact knot in one cord folded in half, the first layer of a four-strand crown sinnet: one face shows a square, the other a cross. Shown loose from the back, the square side, as it is tied: the two halves woven through each other in three rows, the loop at the top and both ends hanging below.",
+  "kind": "decorative",
+  "width": 22,
+  "cords": [
+    {"label": "Cord", "color": "crimson", "points": [[480, 720], [480, 640], [480, 560], [480, 440], [480, 320], [480, 250], [484.6, 227.0], [497.6, 207.6], [517.0, 194.6], [540.0, 190.0], [563.0, 194.6], [582.4, 207.6], [595.4, 227.0], [600, 250], [600, 320], [600, 440], [600, 560], [600, 630], [604.6, 653.0], [617.6, 672.4], [637.0, 685.4], [660.0, 690.0], [683.0, 685.4], [702.4, 672.4], [715.4, 653.0], [720, 630], [720, 560], [720, 440], [720, 320], [720, 230], [720, 190], [714.0, 165.4], [696.6, 142.5], [668.7, 122.8], [632.5, 107.7], [590.3, 98.2], [545.0, 95.0], [499.7, 98.2], [457.5, 107.7], [421.3, 122.8], [393.4, 142.5], [376.0, 165.4], [370, 190], [370, 240], [377, 285], [400, 312], [430, 320, "top row"], [480, 320], [600, 320], [720, 320], [820, 320], [843.0, 324.6], [862.4, 337.6], [875.4, 357.0], [880.0, 380.0], [875.4, 403.0], [862.4, 422.4], [843.0, 435.4], [820, 440], [720, 440], [600, 440], [480, 440], [380, 440], [357.0, 444.6], [337.6, 457.6], [324.6, 477.0], [320.0, 500.0], [324.6, 523.0], [337.6, 542.4], [357.0, 555.4], [380, 560], [480, 560], [600, 560], [720, 560], [820, 560], [860, 570], [885, 595], [898, 630], [900, 720]]}
+  ],
+  "patterns": ["UOOUOUOOUUOOUUUOOU"],
+  "steps": [
+    {"shown": ["top row"], "caption": "Fold the cord, leaving a loop at the top. Lay the right half in a zigzag of three upright bars: down the right, round at the bottom, up the middle, round at the top and down the left."},
+    {"shown": [{"after": 12}], "arrow": 0, "caption": "Bring the left half across the top from the left: under the left bar, over the middle bar and over the right bar, and round to the right."},
+    {"shown": [{"after": 15}], "arrow": 0, "caption": "Take it back to the left through the middle: under all three bars, and round down on the left."},
+    {"shown": ["all"], "caption": "Take it to the right along the bottom: over, over, under, and let the end hang down. Pull the loop and both ends to tighten: this side shows a square, the other side a cross."}
+  ]
+}

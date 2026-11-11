@@ -57,6 +57,39 @@ Ready-made designs from `knot_samples/` (knots, Turk's heads, links such as
 hopf_link, borromean_rings, solomons_knot, five_ring_chain) and `mxn_samples/`.
 `openstrand samples <word>` searches them.
 
+## The craft library (`samples <any name>`, the agent's `search_samples`)
+
+Designs by craft, found by any name people use for them. Each match says
+what it is and ends with the exact command or tool call that makes it: run
+that one. Search before you draw anything.
+
+- **Boondoggle** (scoubidou, gimp, lanyard, plastic lace): every stitch is an
+  MxN stitch. Box or square stitch = 1x1 (two strings); brick stitch = 2x1
+  (three strings); any other size is `make mxn`. Starting a box stitch, with
+  steps: `tie "box stitch start"`.
+- **Macrame**, each with its tying steps (`tie`): lark's head knot (cow
+  hitch) and its reverse, vertical lark's head; half hitch, double half hitch
+  (clove hitch), diagonal, vertical and reverse double half hitch, half hitch
+  spiral, alternating half hitch chain; half knot, square knot (cobra knot),
+  square knot sennit, half knot spiral, alternating square knots, switch
+  knot; Josephine knot (Carrick bend); two-strand twist and three- to
+  seven-strand braids.
+- **Chinese knotting**, with steps: double coin knot, Pan Chang (mystic or
+  endless knot), good luck knot, cloverleaf knot, cross knot. (The sample
+  `chinese_cloverleaf` is the cloverleaf finished, as a closed cord.)
+- **Knitting**: the magic knot that joins two yarns, with tying steps.
+- **Crochet**: the slip knot every piece starts from, with steps. No
+  stitches yet: say so, then draw them.
+- **Knots**: every knot `tie` makes, by all its names, and with steps:
+  two half hitches, round turn and two half hitches, buntline hitch, timber
+  hitch, rolling hitch; surgeon's knot, water knot (ring bend), figure-eight
+  bend (Flemish bend), overhand bend; overhand loop, double overhand loop
+  (surgeon's loop), figure-eight loop, running bowline, double bowline,
+  bowline on a bight, noose; sheepshank.
+- Not in the library (say so, then draw with a pattern and check): zeppelin
+  bend, double sheet bend, anchor hitch, constrictor knot, alpine butterfly,
+  snake knot, button knot, sauvastika knot, plafond knot.
+
 ## Knots by name (`tie`)
 
 `openstrand tie NAME` (the agent's `tie_knot`) makes a knot with its tying
@@ -81,6 +114,12 @@ steps, every step checked to be that knot, crossing by crossing.
 | trefoil, three-lobed knot | `make turks_head --leads 2 --bights 3` |
 | Carrick mat | `make turks_head --leads 3 --bights 4` |
 | stitch, weave, bracelet weave, braid, basket weave | `make mxn` |
+| boondoggle, scoubidou, gimp, lanyard, plastic lace | `samples boondoggle`, then `make mxn` |
+| box stitch, square stitch | `make mxn --m 1 --n 1` |
+| brick stitch | `make mxn --m 2 --n 1` |
+| Chinese knot, mystic knot, Pan Chang, double coin, good luck knot | `samples "chinese knot"`, then the `tie` it names |
+| half hitch, clove hitch, lark's head, sennit, spiral, braid, plait | `samples <the name>`, then the `tie` it names |
+| macrame, crochet, knitting, any knot or stitch by name | `samples <the name>` first |
 | "4 by 3", "4x3" | `--m 4 --n 3` |
 | left-handed / right-handed | `--hand lh` / `--hand rh` |
 | tight, packed, close together | `--stretch` |

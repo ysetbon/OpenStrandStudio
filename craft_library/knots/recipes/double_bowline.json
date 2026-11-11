@@ -1,0 +1,20 @@
+{
+  "name": "double_bowline",
+  "craft": "knots",
+  "title": "Double bowline",
+  "also": ["round turn bowline", "double bowline knot"],
+  "about": "A bowline whose small loop in the standing part is a round turn: the end comes up through both turns, goes round behind the standing part and back down through both. More secure than the bowline. Shown loose and flat, the two turns one inside the other.",
+  "kind": "loop",
+  "width": 22,
+  "cords": [
+    {"label": "Cord", "color": "teal", "points": [[600, 70], [600, 160], [600, 240], [600, 313], [600, 345], [597, 368], [559.3, 388.2], [520.9, 405.8], [490.0, 436.5], [471.0, 477.3], [467.1, 523.4], [479.6, 569.5], [508.1, 609.5], [549.7, 638.1], [600.0, 651.0], [653.0, 645.7], [702.2, 621.8], [741.2, 581.5], [764.5, 529.0], [768.4, 470.3], [751.6, 412.5], [715.1, 362.9], [662.6, 328.0], [600.0, 313.0], [534.7, 320.5], [474.7, 350.6], [427.7, 400.5], [400.1, 464.7], [396.1, 535.9], [417.3, 605.5], [461.8, 664.7], [525.1, 705.8], [600.0, 723.0], [677.6, 713.3], [748.5, 677.0], [803.5, 617.5], [835.4, 541.5], [839.3, 457.8], [813.9, 376.5], [761.3, 307.7], [687.2, 260.4], [600.0, 241.0], [510.0, 252.9], [428.4, 295.5], [365.3, 364.5], [329.2, 452.2], [318, 560], [322, 660], [348, 760], [405, 850], [490, 900], [585, 908], [655, 880], [676, 830], [675, 790], [675, 760], [675, 714], [675, 636], [675, 480], [675, 333], [675, 256], [675, 215], [665, 168], [640, 140], [600, 130], [560, 140], [535, 168], [525, 215], [525, 248], [525, 324], [525, 408], [525, 520], [525, 626], [525, 706], [525, 800]]}
+  ],
+  "patterns": ["OUUUOOUOUOOUOUUUOOUOOOUU"],
+  "steps": [
+    {"shown": [{"after": 8}], "arrow": 0, "caption": "Bring the standing part down and make a small loop: the cord comes round and crosses over the standing part."},
+    {"shown": [{"after": 13}], "arrow": 0, "caption": "Go round a second time outside the first, crossing over the standing part again: this is the round turn."},
+    {"shown": [{"after": 17}], "arrow": 0, "caption": "Lead the end round for the big loop and bring it up through both turns from underneath: under the lower edges of both turns, then over their upper edges."},
+    {"shown": [{"after": 19}], "arrow": 0, "caption": "Pass it behind the standing part."},
+    {"shown": ["all"], "caption": "Bring it back down through both turns: over the cord leaving the turns, over the upper edges of both turns and under their lower edges. Hold the end against the loop and pull the standing part."}
+  ]
+}

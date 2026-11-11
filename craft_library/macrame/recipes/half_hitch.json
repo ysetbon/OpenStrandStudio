@@ -1,0 +1,25 @@
+{
+  "name": "half_hitch",
+  "craft": "macrame",
+  "title": "Half hitch",
+  "also": ["single half hitch", "simple hitch", "half hitch knot"],
+  "about": "The simplest hitch: the working cord goes over the holding cord, round behind it, and out over its own standing part. One alone slips; two in a row make the double half hitch. Shown loose, from the front.",
+  "kind": "hitch",
+  "width": 24,
+  "cords": [
+    {"label": "Holding cord", "color": "gold", "smooth": false, "points": [
+      [250, 400], [950, 400]]},
+    {"label": "Working cord", "color": "teal", "points": [
+      [540, 720], [540, 640], [540, 480], [540, 350], [558, 308], [600, 290],
+      [642, 308], [660, 350], [660, 460], [660, 520], [648, 548], [620, 560],
+      [580, 560], [500, 560], [460, 560], [440, 560], [422, 563], [408, 575],
+      [401, 592], [400, 620], [400, 670], [400, 720]]}
+  ],
+  "patterns": ["UO", "UOUO"],
+  "steps": [
+    {"shown": ["all", null], "caption": "Stretch the holding cord across."},
+    {"shown": ["all", {"after": 2}], "arrow": 1, "caption": "Bring the working cord up in front of the holding cord and over it."},
+    {"shown": ["all", {"after": 3}], "arrow": 1, "caption": "Turn it to the right and take it back down behind the holding cord."},
+    {"shown": ["all", "all"], "caption": "Take the end across to the left, over its own standing part, and let it hang. That is a half hitch."}
+  ]
+}

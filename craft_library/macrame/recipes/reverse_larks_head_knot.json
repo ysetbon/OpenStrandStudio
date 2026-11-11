@@ -1,0 +1,28 @@
+{
+  "name": "reverse_larks_head_knot",
+  "craft": "macrame",
+  "title": "Reverse lark's head knot",
+  "also": ["reverse lark's head", "reversed lark's head", "reverse mounting knot"],
+  "about": "The lark's head knot seen from its back: the bar lies behind the two legs, which hang down in front of it. Shown loose, tied with one end.",
+  "kind": "hitch",
+  "width": 24,
+  "cords": [
+    {"label": "Holding cord", "color": "copper", "smooth": false, "points": [
+      [250, 300], [600, 300], [950, 300]]},
+    {"label": "Working cord", "color": "violet", "points": [
+      [540, 720], [540, 600], [540, 440], [540, 300], [540, 250], [533, 225],
+      [515, 207], [490, 200], [465, 207], [447, 225], [440, 250], [440, 300],
+      [440, 360, "behind"], [440, 410], [443, 428], [452, 437], [465, 440], [540, 440],
+      [600, 440], [660, 440], [720, 440, "bar"], [735, 440], [752, 437], [760, 425],
+      [760, 400], [760, 350], [760, 300], [760, 250], [753, 225], [735, 207],
+      [710, 200], [685, 207], [667, 225], [660, 250], [660, 300], [660, 360],
+      [660, 440], [660, 600], [660, 720]]}
+  ],
+  "patterns": ["UOOU", "OUOUUOUO"],
+  "steps": [
+    {"shown": ["all", null], "caption": "Stretch the holding cord across."},
+    {"shown": ["all", "behind"], "arrow": 1, "caption": "Bring the working cord up behind the holding cord, over it, and back down in front of it."},
+    {"shown": ["all", "bar"], "arrow": 1, "caption": "Take it across to the right, behind its own first leg: this is the bar."},
+    {"shown": ["all", "all"], "caption": "Take it up in front of the holding cord, over it and down behind, then over the bar. Pull both legs down: the bar tightens behind them."}
+  ]
+}

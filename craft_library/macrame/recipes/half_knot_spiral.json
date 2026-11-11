@@ -1,0 +1,39 @@
+{
+  "name": "half_knot_spiral",
+  "craft": "macrame",
+  "title": "Half knot spiral",
+  "also": ["spiral knot", "spiral sennit", "twisted sennit", "half knot sennit", "spiral stitch", "DNA spiral"],
+  "about": "The same half knot tied again and again round two filler cords, never mirrored: the cord on the left always crosses in front of the fillers, the cord on the right always goes behind them. The knots turn round the fillers as they go and the band twists into a spiral. Shown loose and flat, three half knots.",
+  "kind": "sennit",
+  "width": 22,
+  "cords": [
+    {"label": "Left working cord", "color": "teal", "points": [
+      [470, 80], [425, 140], [400, 200], [420, 250], [470, 270], [565, 270],
+      [635, 270], [720, 270], [775, 285], [800, 340], [800, 385], [800, 500],
+      [775, 590], [720, 660], [720, 750], [714, 796], [688, 818], [635, 820],
+      [565, 820], [512, 817], [486, 792], [480, 750], [474, 702], [445, 672],
+      [400, 667], [356, 678], [333, 720], [328, 810], [328, 940], [345, 1050],
+      [400, 1160], [420, 1210], [470, 1230], [565, 1230], [635, 1230], [720, 1230],
+      [775, 1245], [800, 1300], [800, 1345], [800, 1480], [800, 1660]]},
+    {"label": "Filler cords", "color": "gold", "points": [
+      [565, 80], [565, 700], [565, 1660]]},
+    {"label": "Filler cords", "color": "gold", "points": [
+      [635, 80], [635, 700], [635, 1660]]},
+    {"label": "Right working cord", "color": "rose", "points": [
+      [720, 80], [720, 180], [720, 270], [714, 316], [688, 338], [635, 340],
+      [565, 340], [512, 337], [486, 312], [480, 270], [474, 222], [445, 192],
+      [400, 187], [356, 198], [333, 240], [328, 330], [328, 460], [345, 570],
+      [400, 680], [420, 730], [470, 750], [565, 750], [635, 750], [720, 750],
+      [775, 765], [800, 820], [800, 865], [800, 980], [775, 1070], [720, 1140],
+      [720, 1230], [714, 1276], [688, 1298], [635, 1300], [565, 1300], [512, 1297],
+      [486, 1272], [480, 1230], [474, 1182], [445, 1152], [400, 1147], [356, 1158],
+      [333, 1200], [328, 1290], [328, 1440], [328, 1660]]}
+  ],
+  "patterns": ["UOOOUOUUUOUOOOU", "UOUOUO", "UOUOUO", "OUUUOUOOOUOUUUO"],
+  "steps": [
+    {"shown": [{"after": 0}, "all", "all", {"after": 0}], "caption": "Four cords side by side: two filler cords in the middle, a working cord on each side."},
+    {"shown": [{"after": 5}, "all", "all", {"after": 5}], "arrow": 3, "caption": "A half knot: the left cord across in front of the fillers and under the right cord; the right cord behind the fillers and up through the loop on the left. The two working cords have changed sides."},
+    {"shown": [{"after": 10}, "all", "all", {"after": 10}], "arrow": 0, "caption": "The same half knot again, not its mirror image: the cord that is on the left now goes across in front of the fillers, the other one behind them and up through the loop."},
+    {"shown": ["all", "all", "all", "all"], "caption": "And again, always starting with the cord on the left. Pulled tight, the knots turn round the fillers and the sennit spirals."}
+  ]
+}

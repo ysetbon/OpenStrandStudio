@@ -172,6 +172,68 @@ def cmd_tie(args):
         raise SystemExit('error: not every stage is the same knot (see the checks above)')
 
 
+def cmd_recipe(args):
+    """Try a knot recipe (openstrand/recipes.py): its crossings, its reference, every tying step."""
+    from . import bends, recipes, render
+    path = Path(args.file)
+    try:
+        spec = json.loads(path.read_text(encoding='utf-8'))
+    except json.JSONDecodeError as e:
+        raise ValueError(f'{path}: not valid JSON ({e.msg}, line {e.lineno})') from None
+    with quiet(not args.verbose):
+        _, _, along, _ = recipes.passes(spec.get('cords') or [], str(path))
+    print('crossings each cord passes, in order from its first point:')
+    print(recipes.listing(spec['cords'], along))
+    if args.alternate:
+        with quiet(not args.verbose):
+            found = recipes.alternating(spec['cords'])
+        if found is None:
+            raise ValueError('this drawing cannot go over, under, over along every cord: write its patterns by hand')
+        print('over, under, over along every cord gives "patterns": ' + json.dumps(found))
+        return
+    recipe = recipes.parse(spec, str(path))
+    bends.EXTRA[recipe['name']] = recipe
+    out = Path(args.out_dir or path.parent)
+    with quiet(not args.verbose):
+        made = bends.tie(recipe['name'])
+    out.mkdir(parents=True, exist_ok=True)
+    print(f"{made['title']}: {bends.KINDS[made['kind']]}, {made['crossings']} crossings, "
+          f"{len(made['steps'])} steps")
+    for c in made['checks']:
+        print(f"  {'ok  ' if c['ok'] else 'FAIL'} {c['stage']}: {c['note']}")
+    pictures = []
+    for n, step in enumerate(made['steps'], start=1):
+        file = out / f"{recipe['name']}_step_{n}.json"
+        project.write(step['data'], file)
+        print(f'wrote {file} · {step["caption"]}')
+        for line in mask_lines(step.get('masks')):
+            print('  ' + line)
+        if not args.no_pictures:
+            with quiet(not args.verbose):
+                pictures.append(render.render(step['data'], file.with_suffix('.png')))
+    if pictures:
+        sheet = out / f"{recipe['name']}_steps.png"
+        _contact_sheet(pictures, sheet)
+        print(f'pictures: {sheet} (every step, in order), and one PNG per step beside its project')
+    if not made['ok']:
+        raise SystemExit('error: FAIL: not every step is the knot (see the checks above)')
+    print('PASS: the drawing passes its reference, and every step is the part of the knot it shows')
+
+
+def _contact_sheet(pictures, out, size=340, columns=4):
+    """Every step's picture in one, in order, each with its number."""
+    from PIL import Image, ImageDraw
+    rows = (len(pictures) + columns - 1) // columns
+    sheet = Image.new('RGB', (min(columns, len(pictures)) * size, rows * size), 'white')
+    pen = ImageDraw.Draw(sheet)
+    for n, picture in enumerate(pictures):
+        x, y = (n % columns) * size, (n // columns) * size
+        sheet.paste(Image.open(picture).convert('RGB').resize((size, size)), (x, y))
+        pen.rectangle([x, y, x + size - 1, y + size - 1], outline='#c8c8c8')
+        pen.text((x + 10, y + 8), f'step {n + 1}', fill='black')
+    sheet.save(out)
+
+
 def tie_drawn(args, out):
     """tie for a knot that joins cords or makes a loop: its steps from the checked drawing."""
     from . import bends
@@ -179,7 +241,7 @@ def tie_drawn(args, out):
     with quiet(not args.verbose):
         made = bends.tie(args.knot, colors=given, width=args.width)
     out.mkdir(parents=True, exist_ok=True)
-    stem = re.sub(r'[^a-z0-9]+', '_', bends.LIBRARY[made['key']]['title'].lower().replace("'", '')).strip('_')
+    stem = re.sub(r'[^a-z0-9]+', '_', bends.recipe_of(made['key'])['title'].lower().replace("'", '')).strip('_')
     print(f"{made['title']}: {bends.KINDS[made['kind']]}, {made['crossings']} crossings")
     print('checks: ' + bends.checked(made))
     for n, step in enumerate(made['steps'], start=1):
@@ -267,11 +329,14 @@ def cmd_identify(args):
 
 
 def cmd_samples(args):
-    from . import generators
+    from . import generators, library
+    entries = library.search(args.filter) if args.filter else library.entries()
+    for entry in entries:
+        print(library.line(entry, cli=True))
     names = [n for n in generators.samples() if not args.filter or args.filter.lower() in n.lower()]
     for n in names:
         print(n)
-    print(f'{len(names)} samples', file=sys.stderr)
+    print(f'{len(entries) + len(names)} samples', file=sys.stderr)
 
 
 def cmd_info(args):
@@ -464,6 +529,14 @@ def build_parser():
         d.add_argument('--out', help='project file to write (default: a name from the design)')
         d.add_argument('--verbose', action='store_true', help=argparse.SUPPRESS)
 
+    recipe = command('recipe', 'try a knot recipe of the craft library: its crossings, its reference and every '
+                               'tying step, with pictures', cmd_recipe)
+    recipe.add_argument('file', help='the recipe, a JSON file (see openstrand/recipes.py)')
+    recipe.add_argument('--out-dir', help='folder for the step projects and pictures (default: beside the recipe)')
+    recipe.add_argument('--alternate', action='store_true',
+                        help='only list the crossings and print the patterns that go over, under, over')
+    recipe.add_argument('--no-pictures', action='store_true', help='do not render the steps')
+
     drawn = command('draw', 'draw a design from your own cords (points, x(t)/y(t) curves or shapes)', cmd_draw)
     drawn.add_argument('spec', help='a JSON file with {"cords": [...]}, or - to read it from stdin')
     drawn.add_argument('--out', help='project file to write (default drawn.json)')
@@ -518,7 +591,7 @@ def build_parser():
     identify_cmd.add_argument('file')
 
     samples = command('samples', 'list the ready-made designs', cmd_samples)
-    samples.add_argument('filter', nargs='?', help='only names containing this text')
+    samples.add_argument('filter', nargs='?', help='a craft or any name people use (boondoggle, "cobra knot"), or part of a file name')
 
     info = command('info', 'describe a project: sets, colors, strands, size', cmd_info)
     info.add_argument('file')

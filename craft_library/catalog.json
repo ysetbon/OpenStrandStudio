@@ -1,0 +1,52 @@
+{
+  "crafts": {
+    "boondoggle": "Flat plastic lace (scoubidou, gimp, lanyard) woven stitch on stitch. Every stitch is an MxN stitch.",
+    "macrame": "Cords knotted round each other or round filler cords.",
+    "chinese knotting": "Decorative knots tied in one cord, laid flat.",
+    "knitting": "Loops of one yarn pulled through the loops of the row below.",
+    "crochet": "Loops of one yarn pulled through each other with a hook.",
+    "knots": "Rope knots, each with its tying steps."
+  },
+  "entries": [
+    {
+      "name": "box_stitch",
+      "craft": "boondoggle",
+      "title": "Box stitch",
+      "also": ["square stitch", "boondoggle", "scoubidou", "gimp stitch", "lanyard stitch", "two-string stitch"],
+      "about": "The basic boondoggle stitch: two strings, four ends, each folded over the next, a 2 by 2 square seen from above. It is the 1x1 MxN stitch.",
+      "build": {"mxn": {"m": 1, "n": 1}}
+    },
+    {
+      "name": "brick_stitch",
+      "craft": "boondoggle",
+      "title": "Brick stitch",
+      "also": ["three-string stitch", "2x3 stitch"],
+      "about": "Three strings, six ends: two strings one way and one across, a 2 by 3 rectangle seen from above. It is the 2x1 MxN stitch.",
+      "build": {"mxn": {"m": 2, "n": 1}}
+    },
+    {
+      "name": "mxn_stitch",
+      "craft": "boondoggle",
+      "title": "MxN stitch",
+      "also": ["boondoggle stitch of any size", "scoubidou", "gimp", "lanyard", "plastic lace", "craft lace", "bracelet weave"],
+      "about": "Any boondoggle stitch: m strings one way and n the other, each from 1 to 8, left or right hand, loose or stretched.",
+      "build": {"make": "mxn"}
+    },
+    {
+      "name": "chinese_cloverleaf",
+      "craft": "chinese knotting",
+      "title": "Cloverleaf knot",
+      "also": ["Chinese cloverleaf", "clover knot", "four-leaf clover knot"],
+      "about": "Four heart-shaped leaves interlocking on one closed cord, with a stem tucked under the centre. Shown finished and flat; no tying steps yet.",
+      "build": {"file": "src/samples/chinese_cloverleaf.json"}
+    },
+    {
+      "name": "magic_knot",
+      "craft": "knitting",
+      "title": "Magic knot",
+      "also": ["joining two yarns", "yarn join", "joining a new ball"],
+      "about": "Joins a new ball of yarn to the old one: each yarn ties an overhand knot round the other. It is the fisherman's knot.",
+      "build": {"tie": "fisherman's knot"}
+    }
+  ]
+}

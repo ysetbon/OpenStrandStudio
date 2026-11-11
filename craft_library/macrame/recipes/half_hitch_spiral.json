@@ -1,0 +1,33 @@
+{
+  "name": "half_hitch_spiral",
+  "craft": "macrame",
+  "title": "Half hitch spiral",
+  "also": ["spiral half hitch", "half hitch sennit", "half hitch chain", "twisted half hitch"],
+  "about": "The same half hitch tied again and again round a filler cord, always the same way: the knots turn round the filler as they go down and make a spiral. Shown loose and flat, three hitches.",
+  "kind": "sennit",
+  "width": 22,
+  "cords": [
+    {"label": "Filler cord", "color": "gold", "smooth": false, "points": [
+      [600, 60], [600, 880]]},
+    {"label": "Working cord", "color": "teal", "points": [
+      [500, 80], [500, 140], [500, 200], [500, 230], [508.8, 271.2], [530.0, 280.0],
+      [600, 280], [660, 280], [688.3, 268.3], [700.0, 240.0], [688.3, 211.7], [660.0, 200.0],
+      [600, 200], [500, 200], [440, 200], [425.9, 214.6], [420.0, 250.0], [421, 275],
+      [428, 300], [445, 324], [470, 341], [490, 348], [500, 358], [500, 400],
+      [500, 430], [508.8, 471.2], [530.0, 480.0], [600, 480], [660, 480], [688.3, 468.3],
+      [700.0, 440.0], [688.3, 411.7], [660.0, 400.0], [600, 400], [500, 400], [440, 400],
+      [425.9, 414.6], [420.0, 450.0], [421, 475], [428, 500], [445, 524], [470, 541],
+      [490, 548], [500, 558], [500, 600], [500, 630], [508.8, 671.2], [530.0, 680.0],
+      [600, 680], [660, 680], [688.3, 668.3], [700.0, 640.0], [688.3, 611.7], [660.0, 600.0],
+      [600, 600], [500, 600], [440, 600], [425.9, 614.6], [420.0, 650.0], [420, 700],
+      [420, 760], [420, 820], [420, 860]]}
+  ],
+  "patterns": ["OUOUOU", "UOUOUOUOUOUO"],
+  "steps": [
+    {"shown": ["all", null], "caption": "Hang the filler cord straight down."},
+    {"shown": ["all", {"after": 3}], "arrow": 1, "caption": "Bring the working cord down beside the filler, across in front of it, round, and back behind it."},
+    {"shown": ["all", {"after": 4}], "arrow": 1, "caption": "Carry it on to the left, over its own standing part: one half hitch."},
+    {"shown": ["all", {"after": 8}], "arrow": 1, "caption": "Tie a second half hitch below the first, exactly the same way: across in front of the filler, back behind it, and over its own standing part."},
+    {"shown": ["all", "all"], "caption": "And a third, the same way again. Pulled tight, the hitches turn round the filler and make a spiral."}
+  ]
+}

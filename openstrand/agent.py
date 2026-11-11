@@ -64,8 +64,10 @@ How to work:
    that happen), not a request to make something. When a tool cannot do the
    exact thing, make the closest design you can and say in one sentence what
    differs.
-2. If a published sample or a make_ tool fits, use it: it is the fastest and
-   cleanest result.
+2. Look it up first: call search_samples with the person's own words for the
+   thing (its name, its craft). A match says what it is and ends with the tool
+   call that makes it: make that call. If a published sample or a make_ tool
+   fits, use it: it is the fastest and cleanest result.
 3. Otherwise design it yourself:
    - Research: when you do not know exactly what the thing is or how it is
      tied or woven, search the web (web_search) and read a good page
@@ -94,6 +96,10 @@ Knots (how one is tied, or one shown tied):
   square knot): tie_knot draws their steps from a checked drawing, the knot
   shown loose. Either way it checks every step is that knot, crossing by
   crossing, also as drawn in the app.
+- The craft library has more knots tie_knot ties the same way, from checked
+  drawings with their steps (macrame hitches and sennits, Chinese knots,
+  braids): search_samples finds them by any name and ends with the tie_knot
+  call to make.
 - So for any knot in knot_library, call tie_knot with its name, at once: do
   not search the web for it first. Such a knot is not yours to draw:
   never draw tying steps or a tightened knot by hand, nor the knot itself
@@ -107,7 +113,7 @@ Knots (how one is tied, or one shown tied):
 - For the knot in a design the person already has (in the app: read_tab it
   first), call tie_knot with from_design: it keeps that knot's over and under.
 - A loop knot or a knot that joins two cords (a bend) that is not in
-  knot_library (a Carrick bend, a zeppelin bend): research it, then draw it
+  knot_library (a zeppelin bend, a water knot): research it, then draw it
   with draw_design, loose enough to follow, one cord per rope, each in its
   own color and labeled. Such knots seldom alternate, so say which cord is on
   top: give a cord a "pattern", a letter for each crossing it passes in order
@@ -223,15 +229,20 @@ STEP = {'type': 'object', 'properties': {
 TOOLS = [
     {
         'name': 'search_samples',
-        'description': 'List published ready-made designs whose names contain the text '
-                       '(knots, Turk\'s heads, links, MxN stitches). Empty text lists all.',
+        'description': 'Look up ready-made designs. First the craft library, found by any name people use '
+                       '(boondoggle, scoubidou, box stitch, macrame, cobra knot, Chinese knotting, mystic knot, '
+                       'knitting, magic knot, crochet, any knot by name): each match says what it is and the '
+                       'exact tool call that makes it. Then the published files whose names contain the text '
+                       '(knots, Turk\'s heads, links, MxN stitches). Empty text lists the crafts and all files.',
         'input_schema': {'type': 'object', 'properties': {
-            'text': {'type': 'string', 'description': 'part of a name, e.g. "turks", "ring", "mxn_rh"'}},
+            'text': {'type': 'string', 'description': 'what the person asked for in a few words, e.g. '
+                                                      '"box stitch", "chinese knot", "turks", "mxn_rh"'}},
             'required': ['text']},
     },
     {
         'name': 'load_sample',
-        'description': 'Start from a published design by its exact name (from search_samples).',
+        'description': 'Start from a ready-made design by its name (from search_samples): a published file '
+                       'or a craft library entry.',
         'input_schema': {'type': 'object', 'properties': {'name': {'type': 'string'}}, 'required': ['name']},
     },
     {
@@ -694,13 +705,33 @@ class Workspace:
                      'does, e.g. "Step 1 · the bight".')
         return f"{made['title']} · {count} steps", '\n'.join(lines)
 
+    def search_samples(self, text):
+        """Craft library entries that match, each with the call that makes it, then file names."""
+        from . import library
+        text = text.strip()
+        lines = []
+        entries = library.search(text) if text else []
+        if entries:
+            lines.append('Craft library (each line ends with the tool call that makes it):')
+            lines += [library.line(e) for e in entries[:12]]
+            if len(entries) > 12:
+                lines.append(f'(and {len(entries) - 12} more: search with more words)')
+        elif not text:
+            lines.append('Craft library, by craft (search a craft or a name to see its designs):')
+            lines += [f'{craft}: {about}' for craft, about in library.crafts().items()]
+        names = [n for n in generators.samples() if text.lower() in n.lower()]
+        if names:
+            lines.append('Published files (load_sample name): ' + ', '.join(names[:60])
+                         + (f' (and {len(names) - 60} more)' if len(names) > 60 else ''))
+        if not entries and not names:
+            return '0 samples', ('nothing matches; try one word of the name, or a craft (boondoggle, macrame, '
+                                 'chinese knotting, knitting, crochet, knots)')
+        return f'{len(entries) + len(names)} samples', '\n'.join(lines)
+
     def run(self, name, args):
         """Do one tool call. Returns (summary for people, content for the agent)."""
         if name == 'search_samples':
-            text = str(args.get('text', '')).lower()
-            names = [n for n in generators.samples() if text in n.lower()]
-            shown = ', '.join(names[:60]) + (f' (and {len(names) - 60} more)' if len(names) > 60 else '')
-            return f'{len(names)} samples', shown or 'no sample matches; try a shorter word'
+            return self.search_samples(str(args.get('text', '')))
         if name == 'load_sample':
             data, _, source = generators.sample(str(args.get('name', '')))
             self.store(data)

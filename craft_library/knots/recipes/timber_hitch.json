@@ -1,0 +1,21 @@
+{
+  "name": "timber_hitch",
+  "craft": "knots",
+  "title": "Timber hitch",
+  "also": ["timber-hitch", "lumberman's knot", "countryman's knot"],
+  "about": "Ties a rope round a log, a spar or a bundle for hauling: the end goes round the log, round the standing part and is then twisted three times round its own part, where the load jams it against the log. Shown loose and flat.",
+  "kind": "hitch",
+  "width": 22,
+  "cords": [
+    {"label": "Log", "color": "gold", "smooth": false, "points": [[250, 300], [1000, 300]]},
+    {"label": "Rope", "color": "teal", "points": [[600, 1070], [600, 920], [600, 600], [600, 360], [600, 300], [600, 250], [615, 200], [650, 165], [690, 150], [730, 165], [752, 200], [760, 250], [760, 300], [760, 440], [760, 510], [760, 580], [760, 650], [760, 720], [760, 790], [760, 850], [748, 890], [715, 915], [670, 920], [600, 920], [520, 920], [470, 905], [440, 860], [432, 760], [432, 470], [445, 400], [490, 365], [540, 360], [600, 360], [650, 362], [690, 378], [708.0, 405], [713.1, 415], [727.6, 425], [748.4, 435], [771.6, 445], [792.4, 455], [806.9, 465], [812.0, 475], [806.9, 485], [792.4, 495], [771.6, 505], [748.4, 515], [727.6, 525], [713.1, 535], [708.0, 545], [713.1, 555], [727.6, 565], [748.4, 575], [771.6, 585], [792.4, 595], [806.9, 605], [812.0, 615], [806.9, 625], [792.4, 635], [771.6, 645], [748.4, 655], [727.6, 665], [713.1, 675], [708.0, 685], [713.1, 695], [727.6, 705], [748.4, 715], [771.6, 725], [792.4, 735], [806.9, 745], [812.0, 755], [806.9, 765], [792.4, 775], [771.6, 785], [748.4, 795], [727.6, 805], [713.1, 815], [708.0, 825], [690, 845], [650, 850]]}
+  ],
+  "patterns": ["UO", "OUOUUOUOUOUOOUOUOU"],
+  "steps": [
+    {"shown": ["all", null], "caption": "The log or spar to be hauled."},
+    {"shown": ["all", {"after": 4}], "arrow": 1, "caption": "Bring the end up over the log in front and down behind it."},
+    {"shown": ["all", {"after": 12}], "arrow": 1, "caption": "Take the end round the standing part: under it below, then back over it above."},
+    {"shown": ["all", {"after": 14}], "arrow": 1, "caption": "Now twist the end round its own part, the one that came down behind the log: over it, then under it."},
+    {"shown": ["all", "all"], "caption": "Twist it round twice more, over and under each time: three turns in all. Pull the standing part: the twists jam against the log."}
+  ]
+}

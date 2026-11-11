@@ -1,0 +1,44 @@
+{
+  "name": "square_knot_sennit",
+  "craft": "macrame",
+  "title": "Square knot sennit",
+  "also": ["square knot chain", "sennit of square knots", "cobra weave", "Solomon bar bracelet", "flat sennit"],
+  "about": "Square knots tied one under another round the same two filler cords: the flat band of macrame bracelets, belts and plant hangers. Each knot is two half knots, the second the mirror image of the first, so the band lies flat instead of twisting. Shown loose, two knots.",
+  "kind": "sennit",
+  "width": 22,
+  "cords": [
+    {"label": "Left working cord", "color": "teal", "points": [
+      [470, 80], [425, 140], [400, 200], [420, 250], [470, 270], [565, 270],
+      [635, 270], [720, 270], [775, 285], [800, 340], [800, 385], [800, 430],
+      [775, 485], [720, 500], [635, 500], [565, 500], [505, 500], [440, 512],
+      [402, 560], [398, 660], [398, 760], [400, 840], [420, 890], [470, 910],
+      [565, 910], [635, 910], [720, 910], [775, 925], [800, 980], [800, 1025],
+      [800, 1070], [775, 1125], [720, 1140], [635, 1140], [565, 1140], [505, 1140],
+      [440, 1152], [402, 1200], [412, 1270], [470, 1360]]},
+    {"label": "Filler cords", "color": "gold", "points": [
+      [565, 80], [565, 720], [565, 1360]]},
+    {"label": "Filler cords", "color": "gold", "points": [
+      [635, 80], [635, 720], [635, 1360]]},
+    {"label": "Right working cord", "color": "rose", "points": [
+      [720, 80], [720, 180], [720, 270], [714, 316], [688, 338], [635, 340],
+      [565, 340], [512, 337], [486, 312], [480, 270], [474, 222], [445, 192],
+      [400, 187], [356, 198], [333, 240], [328, 330], [332, 400], [352, 436],
+      [410, 447], [470, 450], [500, 470], [505, 500], [512, 545], [545, 568],
+      [565, 570], [635, 570], [690, 567], [716, 545], [720, 500], [724, 452],
+      [758, 424], [800, 420], [846, 436], [868, 490], [858, 600], [800, 710],
+      [740, 790], [720, 910], [714, 956], [688, 978], [635, 980], [565, 980],
+      [512, 977], [486, 952], [480, 910], [474, 862], [445, 832], [400, 827],
+      [356, 838], [333, 880], [328, 970], [332, 1040], [352, 1076], [410, 1087],
+      [470, 1090], [500, 1110], [505, 1140], [512, 1185], [545, 1208], [565, 1210],
+      [635, 1210], [690, 1207], [716, 1185], [720, 1140], [724, 1092], [758, 1064],
+      [800, 1060], [846, 1076], [868, 1130], [866, 1240], [820, 1320], [790, 1360]]}
+  ],
+  "patterns": ["UOOOUUOOOUUOOOUUOOOU", "UOUOUOUO", "UOUOUOUO", "OUUUOOUUUOOUUUOOUUUO"],
+  "steps": [
+    {"shown": [{"after": 0}, "all", "all", {"after": 0}], "caption": "Four cords side by side: two filler cords in the middle, a working cord on each side."},
+    {"shown": [{"after": 5}, "all", "all", {"after": 5}], "arrow": 3, "caption": "A half knot: the left cord across in front of the fillers and under the right cord, the right cord behind the fillers and up through the loop on the left."},
+    {"shown": [{"after": 10}, "all", "all", {"after": 10}], "arrow": 0, "caption": "The same from the other side: the cord now on the right across in front of the fillers, the other one behind them and up through the loop on the right. That is one square knot."},
+    {"shown": [{"after": 15}, "all", "all", {"after": 15}], "arrow": 3, "caption": "Start the next knot under the first, exactly as before: left cord in front of the fillers, right cord behind them and up through the loop."},
+    {"shown": ["all", "all", "all", "all"], "caption": "And its second half from the other side. Go on in the same way: the sennit grows one square knot at a time."}
+  ]
+}

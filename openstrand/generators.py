@@ -125,8 +125,14 @@ def samples():
 
 
 def sample(name):
+    """A ready-made design by name: a published file, else an entry of the craft library
+    (by its name, title or any other name people use)."""
     found = samples()
     if name not in found:
+        from . import library
+        entry = library.find(name)
+        if entry is not None:
+            return library.build(entry)
         close = [n for n in found if name.lower() in n.lower()][:8]
         hint = f"; did you mean: {', '.join(close)}" if close else '; run "openstrand samples" to list them'
         raise ValueError(f'no sample named "{name}"{hint}')

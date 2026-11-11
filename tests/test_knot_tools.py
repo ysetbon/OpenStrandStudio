@@ -367,7 +367,7 @@ def test_the_command_ties_lists_and_identifies(tmp_path):
     assert len(files) == 5
     named = run("identify", str(files[-1]))
     assert "3 crossings with itself: overhand knot (3_1)" in named.stdout
-    wrong = run("tie", "carrick bend")
+    wrong = run("tie", "zeppelin bend")
     assert wrong.returncode == 1 and "not in the knot library" in wrong.stderr
 
 

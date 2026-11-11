@@ -1,0 +1,19 @@
+{
+  "name": "cloverleaf_knot",
+  "craft": "chinese knotting",
+  "title": "Cloverleaf knot",
+  "also": ["three-leaf clover knot", "wood sorrel knot", "kicho knot"],
+  "about": "Three ears round a small woven centre in one cord, the two ends leaving together at the bottom as the stem: the loops of the cord pass through each other in a ring. Drawn loose and flat, the cord going over and under in turn.",
+  "kind": "decorative",
+  "width": 22,
+  "cords": [
+    {"label": "Cord", "color": "red", "points": [[560.0, 720.0], [526.8, 610.0], [490.8, 521.6], [486.8, 476.6], [485.6, 447.7], [488.9, 418.0], [496.6, 388.1], [508.7, 358.8], [524.8, 331.0], [544.8, 305.3], [568.0, 282.4], [594.0, 262.9], [622.0, 247.1], [651.4, 235.5], [681.3, 228.3], [711.0, 225.5], [739.7, 227.2], [766.6, 233.1], [791.0, 243.0], [812.3, 256.4], [829.8, 272.8], [843.1, 291.5], [851.9, 312.1], [855.8, 333.6], [854.8, 355.3], [848.9, 376.5], [838.2, 396.4], [823.2, 414.3], [804.1, 429.5], [781.4, 441.5], [755.9, 449.8], [728.2, 454.0], [699.0, 453.9], [669.1, 449.3], [639.3, 440.3], [610.4, 427.0], [583.1, 409.6], [558.2, 388.6], [536.2, 364.5], [517.8, 337.9], [503.2, 309.4], [492.9, 279.8], [487.0, 249.8], [485.6, 220.4], [488.5, 192.1], [495.6, 165.8], [506.6, 142.3], [520.9, 122.1], [538.1, 105.8], [557.5, 93.8], [578.4, 86.5], [600.0, 84.0], [621.6, 86.5], [642.5, 93.8], [661.9, 105.8], [679.1, 122.1], [693.4, 142.3], [704.4, 165.8], [711.5, 192.1], [714.4, 220.4], [713.0, 249.8], [707.1, 279.8], [696.8, 309.4], [682.2, 337.9], [663.8, 364.5], [641.8, 388.6], [616.9, 409.6], [589.6, 427.0], [560.7, 440.3], [530.9, 449.3], [501.0, 453.9], [471.8, 454.0], [444.1, 449.8], [418.6, 441.5], [395.9, 429.5], [376.8, 414.3], [361.8, 396.4], [351.1, 376.5], [345.2, 355.3], [344.2, 333.6], [348.1, 312.1], [356.9, 291.5], [370.2, 272.8], [387.7, 256.4], [409.0, 243.0], [433.4, 233.1], [460.3, 227.2], [489.0, 225.5], [518.7, 228.3], [548.6, 235.5], [578.0, 247.1], [606.0, 262.9], [632.0, 282.4], [655.2, 305.3], [675.2, 331.0], [691.3, 358.8], [703.4, 388.1], [711.1, 418.0], [714.4, 447.7], [713.2, 476.6], [709.2, 521.6], [673.2, 610.0], [640.0, 720.0]]}
+  ],
+  "patterns": ["OUOUOUOUOUOUOUOU"],
+  "steps": [
+    {"shown": [{"after": 6}], "arrow": 0, "caption": "Lay the cord up from the bottom left, across the middle and round to the right: this is the first ear. Bring it back to the bottom of the middle."},
+    {"shown": [{"after": 11}], "arrow": 0, "caption": "Take it up on the left and round the top for the second ear, going over the cord three times: left of the middle, at the top right and at the bottom of the middle."},
+    {"shown": [{"after": 13}], "arrow": 0, "caption": "Take it under the start of the cord at the bottom left, then over the second ear at the top left, and round to the left for the third ear."},
+    {"shown": ["all"], "caption": "Bring the end across the middle: under the first ear at the top, over the second ear on the right, under the first ear at the bottom right, and down beside the other end. Ease the three ears even."}
+  ]
+}

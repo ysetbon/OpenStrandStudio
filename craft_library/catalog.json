@@ -51,10 +51,19 @@
       "patterns": ["UOOU", "OUOUUOUO"]
     },
     {
+      "name": "josephine_knot",
+      "craft": "macrame",
+      "title": "Josephine knot",
+      "also": ["Carrick bend", "double Carrick bend", "Josephine"],
+      "about": "Two cords, each laid in one loop, the loops woven through each other over and under: eight crossings round a diamond-shaped centre, an ear on each side, the ends leaving up and down. Shown loose; no tying steps yet.",
+      "build": {"file": "craft_library/macrame/json/josephine_knot.json"},
+      "patterns": ["OUOUOUOU", "UOUOUOUO"]
+    },
+    {
       "name": "chinese_double_coin",
       "craft": "chinese knotting",
       "title": "Double coin knot",
-      "also": ["Chinese double coin", "coin knot", "Josephine knot"],
+      "also": ["Chinese double coin", "coin knot"],
       "about": "One cord, mirror-symmetric: a loop on top and one each side, eight crossings, two tails. Shown finished and flat; no tying steps yet.",
       "build": {"file": "src/samples/chinese_double_coin.json"}
     },

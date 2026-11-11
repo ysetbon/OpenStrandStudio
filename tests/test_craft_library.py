@@ -99,6 +99,8 @@ def test_files_of_the_library_are_all_listed():
     ("cobra knot", "macrame square knot"),
     ("lark's head", "larks_head_knot"),
     ("cow hitch", "larks_head_knot"),
+    ("josephine", "josephine_knot"),
+    ("carrick bend", "josephine_knot"),
     ("reverse larks head knot", "reverse_larks_head_knot"),
     ("Macramé", "macrame square knot"),
     ("weaver's knot", "sheet bend"),

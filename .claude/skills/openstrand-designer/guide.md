@@ -57,6 +57,22 @@ Ready-made designs from `knot_samples/` (knots, Turk's heads, links such as
 hopf_link, borromean_rings, solomons_knot, five_ring_chain) and `mxn_samples/`.
 `openstrand samples <word>` searches them.
 
+## The craft library (`samples <any name>`, the agent's `search_samples`)
+
+Designs by craft, found by any name people use for them. Each match says
+what it is and ends with the exact command or tool call that makes it: run
+that one. Search before you draw anything.
+
+- **Boondoggle** (scoubidou, gimp, lanyard, plastic lace): every stitch is an
+  MxN stitch. Box or square stitch = 1x1 (two strings); brick stitch = 2x1
+  (three strings); any other size is `make mxn`.
+- **Macrame**: the square knot (cobra knot, Solomon bar), with tying steps.
+- **Chinese knotting**: double coin, cloverleaf, good luck, Pan Chang (mystic
+  or endless knot), shown finished and flat.
+- **Knitting**: the magic knot that joins two yarns, with tying steps.
+- **Crochet**: nothing ready-made yet: say so, then draw it.
+- **Knots**: every knot `tie` makes, by all its names.
+
 ## Knots by name (`tie`)
 
 `openstrand tie NAME` (the agent's `tie_knot`) makes a knot with its tying
@@ -81,6 +97,11 @@ steps, every step checked to be that knot, crossing by crossing.
 | trefoil, three-lobed knot | `make turks_head --leads 2 --bights 3` |
 | Carrick mat | `make turks_head --leads 3 --bights 4` |
 | stitch, weave, bracelet weave, braid, basket weave | `make mxn` |
+| boondoggle, scoubidou, gimp, lanyard, plastic lace | `samples boondoggle`, then `make mxn` |
+| box stitch, square stitch | `make mxn --m 1 --n 1` |
+| brick stitch | `make mxn --m 2 --n 1` |
+| Chinese knot, mystic knot, Pan Chang, double coin, good luck knot | `samples "chinese knot"`, then `make sample NAME` |
+| macrame, crochet, knitting, any knot or stitch by name | `samples <the name>` first |
 | "4 by 3", "4x3" | `--m 4 --n 3` |
 | left-handed / right-handed | `--hand lh` / `--hand rh` |
 | tight, packed, close together | `--stretch` |

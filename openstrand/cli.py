@@ -243,11 +243,14 @@ def cmd_identify(args):
 
 
 def cmd_samples(args):
-    from . import generators
+    from . import generators, library
+    entries = library.search(args.filter) if args.filter else library.entries()
+    for entry in entries:
+        print(library.line(entry, cli=True))
     names = [n for n in generators.samples() if not args.filter or args.filter.lower() in n.lower()]
     for n in names:
         print(n)
-    print(f'{len(names)} samples', file=sys.stderr)
+    print(f'{len(entries) + len(names)} samples', file=sys.stderr)
 
 
 def cmd_info(args):
@@ -487,7 +490,7 @@ def build_parser():
     identify_cmd.add_argument('file')
 
     samples = command('samples', 'list the ready-made designs', cmd_samples)
-    samples.add_argument('filter', nargs='?', help='only names containing this text')
+    samples.add_argument('filter', nargs='?', help='a craft or any name people use (boondoggle, "cobra knot"), or part of a file name')
 
     info = command('info', 'describe a project: sets, colors, strands, size', cmd_info)
     info.add_argument('file')

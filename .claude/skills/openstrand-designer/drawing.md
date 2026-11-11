@@ -39,6 +39,11 @@ Up to 12 cords, together at most 30000 px long. Each cord is one of:
   rotation), `polygon` (center, sides 3-12, radius, rounding, rotation),
   `heart` (center, size = width in px, rotation), `turks_head` (center,
   leads, bights, inner, outer). Shapes are closed.
+- **tool**: what the cord is worked with, a straight stick from its handle
+  (`from`) to its tip (`to`): `hook` (a crochet hook, round head with a barb),
+  `needle` (a knitting needle, pointed) or `stick` (a rod, a peg, a finger).
+  Grey and 34 px wide unless you say otherwise. It is woven like a cord:
+  `{"tool": "hook", "from": [880, 160], "to": [530, 112], "height": 20}`
 
 Every cord may add `color` (name or hex), `width`, `label` (its group name in
 the layer panel), `second_color` (the cord changes color under a crossing; it
@@ -48,6 +53,22 @@ everything).
 
 `weave` is `alternate` (default: every cord goes over, under, over… along
 its length) or `alternate_under_first`.
+
+**Heights** say what really lies on top, instead of alternating: where two
+parts that both have a height cross, the higher one goes over. A points cord
+takes `heights`, one number per point (the cord rises and dips between them);
+any cord takes `height`, one number for all of it; a tool takes `height` or
+`heights` of two numbers (handle, tip). Use them whenever over and under
+matter: a loop lying on the table is 0, the end laid over it 20, a part that
+passes behind it -20; a hook at 10 goes into a loop whose near side is 20 and
+far side 0. Give heights to every cord of such a picture.
+
+**Arrows** show a move: `"arrows": [{"points": [[700, 520], [760, 420], [860,
+380]]}]` beside `"cords"`, from tail to head, 2 to 12 points, red unless
+`color` says otherwise, at most 8. An arrow is not a cord: it is drawn on top
+of everything, crosses nothing and gets no mask (in the app it is a hidden
+strand showing its full arrow, so the person can move or delete it). Never
+draw an arrow as a cord.
 
 ## Over and under by hand: `pattern`
 
@@ -115,6 +136,98 @@ square knot. Draw one by hand only when it is not in that list
   alternate.
 - **Unknown structure**: decide how many cords, where each runs, where they
   cross and which goes over; sketch it as points first, then refine.
+
+## Steps drawn one by one
+
+A tutorial whose pictures differ from step to step (a crochet or knitting
+stitch, a slip knot, a hitch, a loop knot: the cord moves, a loop is pulled
+through, a hook goes in) is one `draw_steps` design: every step is its own
+drawing, and all of them are drawn in one call.
+
+```
+python -m openstrand draw-steps steps.json --out-dir designs/slip_knot
+```
+
+writes `step_1.json`, `step_2.json`, ... and `steps.png`, one picture of all
+the steps side by side, numbered and titled (the agent's `draw_steps` returns
+that picture).
+
+```text
+{"name": "what it shows",
+ "steps": [ {"title": "...", "keep": [...], "cords": [...], "arrows": [...]}, ... ]}
+```
+
+- `title`: what the step does, as an instruction: "Pull the yarn through".
+- `cords`: as in a design. Label every cord: labels tie the steps together.
+- `keep`: the labels of the cords that stay exactly as in the step before
+  (or `"all"`). A cord in `cords` with a label of the step before is that
+  cord redrawn: it moved. Anything neither kept nor redrawn is gone.
+- `arrows`: the move that leads to the next step. They belong to their step
+  only.
+- Up to 12 steps. Each step's masks are checked and the safe fixes made; the
+  report says what is left.
+- To change steps after a first call, the agent sends only those in
+  `"replace": [{"step": 3, "title": ..., "cords": ...}]`; the number after the
+  last adds a step.
+
+How to plan them:
+
+1. One move per step, three to six steps, the last one the finished thing.
+2. Keep the same place and size from step to step: the part that does not
+   move keeps its points, so the eye follows the part that does.
+3. Copy the points of the cord from the step before and change only the
+   stretch that moved; add points where it now goes.
+4. Heights on every cord that crosses another (see Heights above).
+5. Leave room: crossings two cord widths apart, loops at least four wide.
+6. Look at the picture of all steps; in a slip knot's last steps `identify`
+   must still find no knot in the yarn ("no knot: the cord would slip free",
+   or "not knotted on its own" with the hook there): an overhand knot is not
+   one.
+
+**Slip knot on a crochet hook** (the start of crochet and knitting): a loop,
+the working yarn laid behind it, caught by the hook and pulled up through as
+a new loop, then drawn tight. One yarn, redrawn as it moves; the hook dips
+from 20 at its handle to -40 at its tip to go into the loop and under the
+yarn behind it:
+
+```json
+{"name": "Slip knot on a hook", "steps": [
+  {"title": "Make a loop, working yarn on top",
+   "cords": [{"label": "Yarn", "color": "teal", "width": 22,
+     "points": [[320, 620], [470, 515], [640, 485], [760, 380], [720, 240], [600, 190], [480, 260],
+                [465, 400], [560, 510], [680, 590], [830, 620]],
+     "heights": [0, 0, 0, 0, 0, 0, 0, 0, 20, 20, 20]}],
+   "arrows": [{"points": [[850, 560], [880, 420], [800, 320]]}]},
+  {"title": "Lay the working yarn behind the loop",
+   "cords": [{"label": "Yarn", "color": "teal", "width": 22,
+     "points": [[320, 620], [470, 515], [640, 485], [760, 380], [720, 240], [600, 190], [480, 260],
+                [465, 400], [560, 510], [680, 590], [810, 530], [810, 400], [650, 345], [420, 340], [290, 335]],
+     "heights": [0, 0, 0, 0, 0, 0, 0, 0, 20, 20, 0, -20, -20, -20, -20]}]},
+  {"title": "Hook into the loop and under the working yarn",
+   "keep": ["Yarn"],
+   "cords": [{"tool": "hook", "from": [900, 110], "to": [560, 400], "heights": [20, -40]}],
+   "arrows": [{"points": [[590, 300], [600, 200], [640, 110]]}]},
+  {"title": "Pull a loop of the working yarn up through",
+   "cords": [{"label": "Yarn", "color": "teal", "width": 22,
+     "points": [[320, 620], [470, 515], [640, 485], [760, 380], [720, 240], [600, 190], [480, 260],
+                [465, 400], [560, 510], [680, 590], [810, 530], [800, 420], [720, 360], [655, 320],
+                [640, 240], [640, 120], [610, 75], [580, 120], [580, 240], [560, 320], [500, 345],
+                [420, 340], [290, 335]],
+     "heights": [0, 0, 0, 0, 0, 0, 0, 0, 20, 20, 0, -20, -20, 0, 15, 10, 20, 30, 25, 0, -20, -20, -20]},
+    {"tool": "hook", "from": [880, 160], "to": [530, 112], "height": 20}]},
+  {"title": "Pull both ends: the knot closes on the hook",
+   "cords": [{"label": "Yarn", "color": "teal", "width": 22,
+     "points": [[330, 640], [450, 575], [600, 545], [662, 480], [600, 418], [538, 480], [560, 560],
+                [640, 600], [720, 560], [715, 490], [640, 478], [628, 450], [625, 380], [625, 300],
+                [600, 205], [575, 300], [575, 380], [572, 450], [555, 478], [440, 500], [320, 520]],
+     "heights": [0, 0, 0, 0, 0, 0, 20, 20, 0, -20, -20, 10, 10, 10, 20, 30, 30, 30, -20, -20, -20]},
+    {"tool": "hook", "from": [880, 275], "to": [430, 240], "height": 20}],
+   "arrows": [{"points": [[470, 645], [380, 705]]}, {"points": [[440, 455], [325, 470]]}]}
+]}
+```
+
+In step 4 the new loop's two legs are at 10 and 30 and the hook at 20: the
+hook passes over one leg and under the other, so it is through the loop.
 
 ## Worked examples
 

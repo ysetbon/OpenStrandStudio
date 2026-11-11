@@ -87,7 +87,8 @@ def drawing(project):
     crossing, as invariants.crossings lists them, with over (0 or 1: which of
     its two parts is on top) taken from the masks, their erase boxes and the
     layer order."""
-    strands = [s for s in project.get('strands', []) if s.get('type') != 'MaskedStrand']
+    # A hidden strand is not drawn (an arrow of draw's "arrows" is one): it is no part of a knot.
+    strands = [s for s in project.get('strands', []) if s.get('type') != 'MaskedStrand' and not s.get('is_hidden')]
     masks = [s for s in project.get('strands', []) if s.get('type') == 'MaskedStrand']
     if not strands:
         return dict(lines=[], owners=[], closed=[], strands=[], found=[])

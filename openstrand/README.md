@@ -13,6 +13,7 @@ python -m openstrand make mxn --m 4 --n 3 --hand lh --stretch --out designs/brac
 python -m openstrand make heart --color crimson --out designs/heart.json
 python -m openstrand make sample hopf_link --out designs/rings.json
 python -m openstrand draw my_design.json --out designs/mine.json
+python -m openstrand draw-steps slip_knot.json --out-dir designs/slip_knot
 python -m openstrand tie figure-eight --color crimson --out-dir designs/figure8
 python -m openstrand tie "square knot" --colors teal,gold --out-dir designs/square
 python -m openstrand identify designs/figure8/figure_eight_knot_step_6.json
@@ -31,7 +32,8 @@ python -m openstrand render designs/bracelet.json --out designs/bracelet.png
 | `make mxn` | An MxN stitch from `mxn_samples/` (m, n from 1 to 8, lh or rh, `--stretch`). |
 | `make heart` | A ribbon heart from one cord (fitted, a few seconds). |
 | `make sample NAME` | A ready-made design from `knot_samples/` or `mxn_samples/`, or a craft library entry by any of its names. |
-| `draw SPEC` | Your own design from cords given as points, x(t)/y(t) curves or shapes; woven over and under, alternating or as each cord's `pattern` says (O or U at every crossing it passes), with a report of every crossing and each cord's crossings in order. See `.claude/skills/openstrand-designer/drawing.md`. |
+| `draw SPEC` | Your own design from cords given as points, x(t)/y(t) curves, shapes or tools (a hook, a needle); woven over and under, alternating, as each cord's `pattern` says (O or U at every crossing it passes) or by the cords' heights, with a report of every crossing and each cord's crossings in order; `arrows` on top. See `.claude/skills/openstrand-designer/drawing.md`. |
+| `draw-steps SPEC` | A tutorial whose pictures differ from step to step (a crochet stitch, a slip knot on a hook, a knot shown stage by stage): every step its own drawing, all in one design. A step lists the cords that are new or moved, `keep` for those that stay, tools as cords (`hook`, `needle`, `stick`: a straight stick with a shaped tip, woven like a cord) and `arrows` (the move to make: on top, never woven; in the app a hidden strand showing its full arrow). Writes `step_N.json` and `steps.png`, all the steps side by side. See "Steps drawn one by one" in `drawing.md`. |
 | `tie KNOT` | Tying steps for a knot, one project per step, every step checked to be that knot (`invariants.py`, `identify.py`). A stopper knot in one cord is worked out by simulating a real cord (`simulate.py`): laid move by move with an arrow on the working end, drawn up, then pulled tight. A knot that joins cords or makes a loop (square knot, sheet bend, fisherman's knot, bowline, macrame square knot...) comes from a checked drawing (`bends.py`), shown loose. `--list` for the library; `--path FILE` for any other knot in one cord. |
 | `identify FILE` | Which knot a project shows, read from its strands, masks and layers the way the app draws them (erase boxes included): the ready-made knot it is, crossing for crossing, or which crossings differ; each cord's pattern and its own knot; and how every two cords cross. |
 | `masks FILE` | Every mask (its two strands, which is on top, centre, erase boxes) and every place one is drawn wrong, with coordinates and the edit that fixes it. `--repair` does the safe fixes; `--json` for machines. See "Masks" below. |
@@ -281,7 +283,7 @@ the person ticks it: their models are hidden and anything for them is refused.
 The agent runs in its own process, so it cannot touch the app's windows. When
 the app starts it (`--app`), the agent also gets tools that act on the running
 app: `list_tabs`, `read_tab`, `read_tab_step`, `open_in_new_tab`, `rename_tab`,
-`switch_tab`, `edit_mask_in_tab`, `edit_strand_in_tab`, `edit_layers_in_tab`,
+`switch_tab`, `close_tab`, `edit_mask_in_tab`, `edit_strand_in_tab`, `edit_layers_in_tab`,
 `edit_groups_in_tab`, `show_group`, `app_window`, `read_settings` and
 `app_settings`. Each call goes out as a JSON line (`{"type": "app_call", ...}`);
 the panel hands it to `AppBridge` (`src/agent_bridge/`, one module per area: tabs,
@@ -303,6 +305,27 @@ bridge refuses it when the tab changed since: the agent reads it again.
 latest change, or a step they undid) as a copy. `edit_strand_in_tab` moves a
 strand's ends and handles with Move mode's own code, as a drag does (strands
 joined at a moved end follow, erase boxes follow their crossing), one undo step.
+
+`close_tab` closes a tab the person asked to have closed, and is the one tab
+action that could lose their work, so the app hedges it itself
+(`src/agent_bridge/tabs.py`), whatever the agent understood:
+
+- One tab per call, named by its id and its title as `list_tabs` gives them
+  now. When the two do not match, nothing closes: a guessed or remembered id
+  cannot close another tab.
+- A tab with unsaved changes stays open, and the agent is told to say so. It
+  closes only with `discard_unsaved: true`, which the agent is told to pass
+  only when the person said to close without saving or to discard, and with
+  the tab's version: if the person changed the tab since the agent listed
+  it, it stays open. "Close all tabs" alone closes the saved ones.
+- The app's own "Unsaved changes" dialog never opens for the agent (it would
+  wait for a click while the agent waits for the answer); the checks above
+  stand in for it.
+- Plan mode never closes; ask mode shows an Allow / Deny card for each tab,
+  which says when the tab is unsaved.
+- Every closed tab stays on a card in the conversation, whole (design, undo
+  history, file, unsaved state): **Reopen** puts it back at its place. The
+  card lasts until a new session is started.
 
 The other areas are the app's own panels and buttons, called the way a click
 calls them:
@@ -347,10 +370,11 @@ terminal, `openstrand agent` prints a line per stage.
 
 A finished tool keeps a picture on its row when one says something; the mouse
 over it shows it larger. In the app, the tools that make, change, check or read
-a design (`load_sample`, `make_*`, `draw_design`, `tie_knot`, `edit_mask`, a
-preview included, `recolor`, `make_steps`, `render`, `identify_knot`,
-`check_masks`, `read_tab`, `read_tab_step`) end with the design drawn by the
-app's real canvas, cut to the design (`Workspace.snapshot`, once per version).
+a design (`load_sample`, `make_*`, `draw_design`, `draw_steps`, `tie_knot`,
+`edit_mask`, a preview included, `recolor`, `make_steps`, `render`,
+`identify_knot`, `check_masks`, `read_tab`, `read_tab_step`) end with the
+design drawn by the app's real canvas, cut to the design (`Workspace.snapshot`,
+once per version); `draw_steps` with all its steps side by side.
 The panel pictures the app tools itself: the canvas as an edit, a tab switch or
 a view change left it (without the agent floating over it), the group panel for
 `show_group`, the window (or the Settings page shown) for `app_settings`. Tools
@@ -364,6 +388,19 @@ tab of its own ("Step 1 · first loop", ...). The knots `tie_knot` knows by
 name come with their own steps, checked one by one; `make_steps` is for
 everything else, and says what each step shows (how much of each cord, where
 the working end is), so its tabs can be titled without looking at them.
+
+`draw_steps` (`openstrand/storyboard.py`) is for tutorials whose pictures
+differ from step to step: a crochet stitch, a slip knot on a hook, a knot shown
+stage by stage. The agent sends every step in one call, each with the cords
+that are new or moved, `keep` for those that stay as they were, hooks and
+needles as cords (`{"tool": "hook", ...}`) and `arrows` for the move to make
+next. Each step is drawn as its own design (`draw.build`), its masks checked
+and the safe fixes made, and the answer carries one picture of all the steps,
+numbered and titled, so the agent checks the whole tutorial in one look
+instead of a render per picture. `replace` then changes single steps (or adds
+one) without sending the others again. Before it, the agent drew such
+tutorials one `draw_design` per picture, with hooks and arrows as cords, which
+were then woven into the design.
 
 `check_masks` and `edit_mask` work on the current design. After `tie_knot`,
 or on anything crowded, the agent checks the masks and fixes each problem with

@@ -103,6 +103,30 @@ def cmd_draw(args):
     print(report)
 
 
+def cmd_draw_steps(args):
+    """openstrand draw-steps: each step written as a project, and one picture of all of them."""
+    from . import storyboard
+    text = sys.stdin.read() if args.spec == '-' else Path(args.spec).read_text(encoding='utf-8')
+    try:
+        spec = json.loads(text)
+    except json.JSONDecodeError as e:
+        raise ValueError(f'{args.spec}: not valid JSON ({e.msg}, line {e.lineno})') from None
+    out = Path(args.out_dir or '.')
+    with quiet(not args.verbose):
+        made = storyboard.build(spec)
+        paths = [project.write(step['data'], out / f'step_{n}.json') for n, step in enumerate(made, start=1)]
+        sheet = None
+        if not args.no_sheet:
+            from . import render
+            sheet = render.step_sheet([step['data'] for step in made], [step['title'] for step in made],
+                                      out / 'steps.png')
+    for path, step in zip(paths, made):
+        print(f'wrote {path} · {step["title"]} · {project.summary(step["data"])}')
+    if sheet:
+        print(f'rendered {sheet} · all {len(made)} steps side by side')
+    print(storyboard.summary(made))
+
+
 def cmd_tie(args):
     from . import bends, tying
     if args.list:
@@ -516,6 +540,13 @@ def build_parser():
     drawn = command('draw', 'draw a design from your own cords (points, x(t)/y(t) curves or shapes)', cmd_draw)
     drawn.add_argument('spec', help='a JSON file with {"cords": [...]}, or - to read it from stdin')
     drawn.add_argument('--out', help='project file to write (default drawn.json)')
+
+    steps = command('draw-steps', 'draw a tutorial step by step: each step its own picture, with hooks, '
+                                  'needles and arrows', cmd_draw_steps)
+    steps.add_argument('spec', help='a JSON file with {"steps": [{"title", "keep", "cords", "arrows"}, ...]}, '
+                                    'or - to read it from stdin')
+    steps.add_argument('--out-dir', help='folder for step_1.json, step_2.json, ... and steps.png (default: here)')
+    steps.add_argument('--no-sheet', action='store_true', help='do not render steps.png, the picture of all steps')
 
     tie = command('tie', 'tying steps for a knot, each checked to be that knot: stopper knots simulated with a '
                          'real cord, bends and loop knots from a checked drawing', cmd_tie)

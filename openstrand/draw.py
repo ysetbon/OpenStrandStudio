@@ -4,9 +4,12 @@ A design is a list of cords. Each cord is a centerline, given as points the
 cord passes through, as a parametric curve x(t), y(t), or as a ready shape.
 The sample generators' fitter turns each centerline into a chain of attached
 strands, and every crossing gets over and under: alternating along each cord
-by default, or, for cords given "heights" (one number per point, how high
-the cord lies there), the higher part on top, the way a real cord lies. This
-is what lets a person, or the agent, design something no template covers.
+by default; as a cord's "pattern" says (a letter per crossing the cord
+passes, O over or U under, in order from its start), for knots that do not
+alternate, such as a square knot or a sheet bend; or, for cords given
+"heights" (one number per point, how high the cord lies there), the higher
+part on top, the way a real cord lies. This is what lets a person, or the
+agent, design something no template covers.
 
 Every design carries the curve settings it was fitted for (project_settings),
 so it opens the same whatever the person's own Settings are.
@@ -14,6 +17,7 @@ so it opens the same whatever the person's own Settings are.
     {"cords": [
         {"points": [[300, 400], [600, 250], [900, 400]], "color": "teal"},
         {"points": [[300, 250], [600, 400], [900, 250]], "heights": [0, 30, 0]},
+        {"points": [[300, 500], [600, 300], [900, 500]], "pattern": "UO"},
         {"x": "600 + 200*cos(t)", "y": "400 + 200*sin(t)", "t1": "2*pi", "closed": true},
         {"shape": "circle", "center": [600, 400], "radius": 150, "color": "gold"}
     ]}
@@ -339,11 +343,15 @@ def build(spec, mask_check=True, progress=None):
     import generate_creative_samples as g
 
     started = time.monotonic()
-    tucked, lengths, made = set(), 0.0, []
+    tucked, lengths, made, patterns = set(), 0.0, [], {}
     for k, cord in enumerate(cords):
         if not isinstance(cord, dict):
             raise DrawError(f'cord {k + 1} must be an object')
         poly, closed, heights = centerline(cord, k, with_heights=True)
+        if cord.get('pattern') is not None:
+            if heights is not None:
+                raise DrawError(f'cord {k + 1}: give "pattern" or "heights", not both')
+            patterns[k] = _letters(cord['pattern'], k)
         length = sum(math.dist(a, b) for a, b in zip(poly, poly[1:]))
         lengths += length
         width = _number(cord.get('width', DEFAULT_WIDTH), f'cord {k + 1} width')
@@ -369,6 +377,8 @@ def build(spec, mask_check=True, progress=None):
         raise DrawError(f'the cords are {lengths:.0f} px long together; keep them under {MAX_LENGTH} px '
                         '(shorter or fewer cords), so drawing takes minutes, not hours')
 
+    levels = {}                 # heights worked out from the patterns, for the cords that gave none
+
     def scene_for(room, unders=None):
         # A fresh name per build: the fitter caches its fits by scene name.
         scene = g.Scene(f"drawn_{next(_BUILDS)}_{spec.get('name') or 'design'}")
@@ -376,8 +386,12 @@ def build(spec, mask_check=True, progress=None):
             scene.cord(poly, color, group, width, closed=closed,
                        second_color=second, split='auto' if second else None)
             scene.cords[-1]['join_room'] = room
+            scene.cords[-1]['first'] = poly[0]      # where the cord starts (a closed cord is turned later)
             if heights is not None:
                 scene.cords[-1]['heights'] = list(heights)
+                scene.cords[-1]['tight'] = True     # its parts lie against each other, as a knot pulled tight
+            elif k in levels:
+                scene.cords[-1]['heights'] = list(levels[k])
             if unders and not closed:
                 scene.cords[-1]['joins'] = sorted(unders.get(k, ()))
         return scene
@@ -401,6 +415,16 @@ def build(spec, mask_check=True, progress=None):
     rule = g.woven(start_over=weave == 'alternate', tucked=tucked)
     if any(heights is not None for *_, heights in made):
         rule = by_height(rule)
+    conflicts = None
+    if patterns:
+        # The patterns say which part is on top where they speak; the rest
+        # alternates. Kept as heights along every cord, so each crossing is
+        # found again on the fitted strands, wherever a closed cord is joined.
+        levels, conflicts = _levels(scene, dense, rule, patterns)
+        for k, cord in enumerate(scene.cords):
+            if k in levels:
+                cord['heights'] = list(levels[k])
+        rule = by_height(g.woven(start_over=weave == 'alternate', tucked=tucked))
     # Joins stay clear of crossings, so the strands' end circles and shadows
     # never show there. A tight knot has crossings everywhere: when that
     # leaves no room to follow the design, let joins come closer.
@@ -428,6 +452,8 @@ def build(spec, mask_check=True, progress=None):
     if best is None:
         raise DrawError(_explain(error)) from None
     scene = best[1]
+    if conflicts is not None:
+        scene.woven_conflicts = conflicts
     data = _serialize(scene)
     data['project_settings'] = project_settings()
     data['design_crossings'] = design_crossings(scene)
@@ -435,6 +461,114 @@ def build(spec, mask_check=True, progress=None):
     if mask_check and any(cord.get('heights') is not None for cord in scene.cords):
         text += '\n' + mask_findings(data)
     return data, text
+
+
+def _letters(pattern, index):
+    """A cord's pattern as a list of 'O', 'U' and '-' (left to the other cord
+    or to the weave), one per crossing the cord passes."""
+    what = f'cord {index + 1}'
+    if isinstance(pattern, (list, tuple)):
+        pattern = ''.join(map(str, pattern))
+    if not isinstance(pattern, str):
+        raise DrawError(f'{what}: "pattern" is text such as "OUUO": O (over) or U (under) for each crossing '
+                        'the cord passes, in order from its start')
+    letters = []
+    for ch in pattern.upper():
+        if ch in 'OU':
+            letters.append(ch)
+        elif ch in '-?._*':
+            letters.append('-')
+        elif not (ch.isspace() or ch in ',;/|'):
+            raise DrawError(f'{what}: the pattern "{pattern}" has "{ch}" in it; use O (over), U (under) and '
+                            '- (leave that crossing to the other cord or to the weave)')
+    return letters
+
+
+def _visits(hits):
+    """Per cord, the crossings it passes in order: (position, hit number, side)."""
+    visits = {}
+    for k, h in enumerate(hits):
+        for side in (0, 1):
+            visits.setdefault(h['cords'][side], []).append((h['positions'][side], k, side))
+    for row in visits.values():
+        row.sort()
+    return visits
+
+
+def _levels(scene, dense, rule, patterns):
+    """Over and under at every crossing of the design, as the patterns say
+    where they speak and as rule (the weave) gives elsewhere, turned into
+    heights along each cord that has none of its own: up where it goes over,
+    down where it goes under. Returns ({cord: heights}, conflicts left in the
+    weave). A pattern that does not fit the design is a DrawError that lists
+    the cord's crossings."""
+    import numpy as np
+    over = list(rule(scene, dense))             # for each crossing: its first part is on top
+    conflicts = getattr(scene, 'woven_conflicts', 0)
+    visits = _visits(dense)
+    said = {}
+
+    def place(k):
+        x, y = dense[k]['point']
+        return f'({x:.0f}, {y:.0f})'
+
+    def listed(c):
+        row = visits.get(c, [])
+        names = []
+        for n, (_, k, side) in enumerate(row, start=1):
+            other = dense[k]['cords'][1 - side]
+            names.append(f"{n} {'itself' if other == c else f'cord {other + 1}'} at {place(k)}")
+        return '; '.join(names) if names else 'none'
+
+    for c, letters in sorted(patterns.items()):
+        row = visits.get(c, [])
+        if len(letters) != len(row):
+            twice = ' (a crossing of the cord with itself is passed twice, so it has two letters)' \
+                if any(dense[k]['cords'][0] == dense[k]['cords'][1] for _, k, _ in row) else ''
+            raise DrawError(f'cord {c + 1} passes {len(row)} crossing{"s" if len(row) != 1 else ""} but its '
+                            f'pattern has {len(letters)} letter{"s" if len(letters) != 1 else ""}{twice}. '
+                            f'Its crossings in order from its start: {listed(c)}. Give one letter for each.')
+        for n, ((_, k, side), ch) in enumerate(zip(row, letters), start=1):
+            if ch == '-':
+                continue
+            first_on_top = (ch == 'O') == (side == 0)
+            if k in said and said[k][0] != first_on_top:
+                c0, n0, ch0 = said[k][1:]
+                a, b = dense[k]['cords']
+                if a == b:
+                    raise DrawError(f'cord {c + 1} crosses itself at {place(k)}: letters {n0} and {n} of its '
+                                    f'pattern are both {ch}. One pass goes over (O), the other under (U).')
+                raise DrawError(f'the crossing at {place(k)} is letter {n0} of cord {c0 + 1}\'s pattern ({ch0}) '
+                                f'and letter {n} of cord {c + 1}\'s ({ch}): one cord goes over (O) there and '
+                                'the other under (U). Change one of the two letters, or write - for one.')
+            said.setdefault(k, (first_on_top, c, n, ch))
+            over[k] = first_on_top
+    if len(said) == len(dense):
+        conflicts = 0                           # nothing was left to the weave
+    for c, cord in enumerate(scene.cords):
+        row = visits.get(c, [])
+        if cord['closed'] and row and all(over[k] == (side == 0) for _, k, side in row):
+            raise DrawError(f'cord {c + 1} is closed and goes over at every crossing it passes: the two ends of a '
+                            'closed cord meet hidden under a crossing, so it has to pass under at least once. '
+                            'Make one of its letters U, or draw it open ("closed": false).')
+    given = [abs(v) for cord in scene.cords if cord.get('tight') for v in cord['heights']]
+    level = 1.0 + 2.0 * (max(given) if given else 0.0)   # above and below any height a cord brought
+    out = {}
+    for c, cord in enumerate(scene.cords):
+        if cord.get('tight'):
+            continue
+        size = len(cord['poly'])
+        row = visits.get(c, [])
+        if not row:
+            out[c] = [0.0] * size
+            continue
+        at = [p for p, _, _ in row]
+        up = [level if over[k] == (side == 0) else -level for _, k, side in row]
+        if cord['closed']:
+            out[c] = np.interp(np.arange(size), at, up, period=size - 1).tolist()
+        else:
+            out[c] = np.interp(np.arange(size), at, up).tolist()
+    return out, conflicts
 
 
 def mask_findings(data, limit=12):
@@ -568,17 +702,54 @@ def _explain(error):
     return f'the fitter could not build this design ({text}). Simplify the cords and try again.'
 
 
+PATTERN_SHOWN = 80              # a cord that passes more crossings than this shows no pattern
+
+
+def passes(scene):
+    """Per cord, the crossings it passes in order from its start, as built:
+    (letter, the other cord, the place), letter O where it goes over and U
+    where it goes under. A closed cord is fitted from a join the fitter
+    chose; its crossings are still listed from the point it was drawn from."""
+    hits = getattr(scene, 'hits', [])
+    out = []
+    for c, cord in enumerate(scene.cords):
+        poly = cord['poly']
+        size = len(poly) - 1
+        start = 0
+        if cord['closed'] and cord.get('first') is not None:
+            fx, fy = cord['first']
+            start = min(range(size), key=lambda i: (poly[i][0] - fx) ** 2 + (poly[i][1] - fy) ** 2)
+        row = []
+        for h in hits:
+            for side in (0, 1):
+                if h['cords'][side] != c:
+                    continue
+                position = h['positions'][side]
+                if 'strands' in h and cord.get('spans'):
+                    position = scene.poly_index(c, position)
+                if cord['closed']:
+                    position = (position - start) % size
+                row.append((position, 'O' if bool(h.get('over')) == (side == 0) else 'U',
+                            h['cords'][1 - side], h['point']))
+        row.sort(key=lambda item: item[0])
+        out.append([item[1:] for item in row])
+    return out
+
+
 def report(scene, seconds, shallow=()):
     """What was built, for a person or the agent to check against the plan."""
     from masked_strand import MaskedStrand
     lines = []
-    tight = any(cord.get('heights') is not None for cord in scene.cords)
+    tight = any(cord.get('tight') for cord in scene.cords)
     hits = getattr(scene, 'hits', [])
+    along = passes(scene)
     for k, cord in enumerate(scene.cords):
         visits = [h for h in hits if k in h['cords']]
         strands = len(cord.get('chain') or [])
+        letters = ''.join(letter for letter, _, _ in along[k])
         lines.append(f"cord {k + 1} ({cord['group']}): {strands} strands, {len(visits)} crossings, "
-                     f"{'closed' if cord['closed'] else 'open'}")
+                     f"{'closed' if cord['closed'] else 'open'}"
+                     + (f', pattern {letters}' if 0 < len(letters) <= PATTERN_SHOWN else ''))
     lines.append(f'{len(hits)} crossings in all, '
                  f'{sum(isinstance(s, MaskedStrand) for s in scene.strands)} masks; '
                  f"over/under conflicts: {getattr(scene, 'woven_conflicts', 0)}")
@@ -591,6 +762,16 @@ def report(scene, seconds, shallow=()):
         lines.append(f'  crossing at ({x:.0f}, {y:.0f}): {who}')
     if len(hits) > 40:
         lines.append(f'  … and {len(hits) - 40} more crossings')
+    if 0 < len(hits) <= 40 and (len(scene.cords) > 1 or not tight):
+        # Each cord's crossings in the order it passes them: what a pattern is written from.
+        for k, row in enumerate(along):
+            if row:
+                said = ', '.join(f"{n} {'over' if letter == 'O' else 'under'} "
+                                 f"{'itself' if other == k else f'cord {other + 1}'} ({x:.0f}, {y:.0f})"
+                                 for n, (letter, other, (x, y)) in enumerate(row, start=1))
+                lines.append(f'  cord {k + 1} passes, from its start: {said}')
+        lines.append('  (a pattern is these letters in that order, O over and U under: to turn a crossing the '
+                     'other way, draw again with the pattern of a cord that passes it, that letter changed)')
     for k, cord in enumerate(scene.cords):
         wanted = cord.get('second_color')
         if wanted and not any(s.color.name().lower() == wanted.lower() for s in cord.get('chain') or []):

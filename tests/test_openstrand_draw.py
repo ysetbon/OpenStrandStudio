@@ -136,6 +136,108 @@ def test_the_draw_command_writes_a_project_and_a_report(tmp_path):
     assert len(project.describe(project.read(out))["sets"]) == 2
 
 
+# ------------------------------------------------------ over and under by hand
+PRETZEL = [[420, 640], [500, 420], [640, 300], [760, 360], [740, 480], [600, 520],
+           [460, 480], [440, 360], [560, 300], [700, 420], [780, 640]]
+HOOKED = [{"points": [[200, 400], [1000, 400]], "color": "teal"},
+          {"points": [[400, 250], [600, 520], [800, 250]], "color": "gold"}]
+
+
+def knot_of(data):
+    from openstrand import identify
+    return identify.cords(data)[0]["knot"]
+
+
+def patterns(report):
+    return re.findall(r"^cord \d+ .*, pattern ([OU]+)$", report, re.M)
+
+
+@pytest.mark.parametrize("pattern, knot", [
+    ("OUOUOU", "trefoil"), ("UOUOUO", "trefoil"),      # over and under in turn: an overhand knot, either hand
+    ("UUOOOU", "unknot"),                              # its first crossing the other way round: it slips free
+    ("O-----", "trefoil"), ("ou ou ou", "trefoil"), ("O,U,O,U,O,U", "trefoil")])
+def test_a_pattern_says_which_part_is_on_top_at_each_crossing(pattern, knot):
+    data, report = draw.build({"cords": [{"points": PRETZEL, "pattern": pattern, "width": 26}]})
+    assert knot_of(data) == knot
+    letters = [ch for ch in pattern.upper() if ch in "OU-"]
+    drawn = patterns(report)[0]
+    assert all(want in ("-", got) for want, got in zip(letters, drawn))
+    assert "conflicts: 0" in report and "mask check: no problems" in report
+    assert check.problems(data) == []
+
+
+def test_the_report_lists_each_cords_crossings_in_order_and_its_pattern_draws_the_same_again():
+    data, report = draw.build({"cords": HOOKED})
+    assert patterns(report) == ["OU", "UO"]                 # the same two crossings, seen from each cord
+    assert "cord 1 passes, from its start: 1 over cord 2 (" in report and "2 under cord 2 (" in report
+    assert "cord 2 passes, from its start: 1 under cord 1 (" in report
+    assert "to turn a crossing the other way" in report
+    # Fed back, the patterns give the same design; one letter changed turns that crossing over, and only it.
+    again, report_2 = draw.build({"cords": [dict(HOOKED[0], pattern="OU"), dict(HOOKED[1], pattern="UO")]})
+    assert patterns(report_2) == ["OU", "UO"]
+    turned, report_3 = draw.build({"cords": [dict(HOOKED[0], pattern="UU"), HOOKED[1]]})
+    assert patterns(report_3) == ["UU", "OO"] and report_3.count("cord 2 over cord 1") == 2
+    crossings = lambda r: sorted(re.findall(r"crossing at \((\d+), (\d+)\)", r))
+    assert crossings(report) == crossings(report_2) == crossings(report_3)
+
+
+def test_one_cords_pattern_is_enough_and_a_dash_leaves_a_crossing_to_the_other():
+    said_by_two, report = draw.build({"cords": [dict(HOOKED[0], pattern="U-"), dict(HOOKED[1], pattern="-O")]})
+    assert patterns(report) == ["UU", "OO"]
+    left_to_weave, report = draw.build({"cords": [dict(HOOKED[0], pattern="U-"), HOOKED[1]]})
+    assert patterns(report)[0][0] == "U" and "conflicts: 0" in report
+
+
+def test_a_closed_cord_takes_a_pattern_from_the_point_it_is_drawn_from():
+    rings = [{"shape": "circle", "center": [480, 400], "radius": 180, "color": "teal"},
+             {"shape": "circle", "center": [720, 400], "radius": 180, "color": "gold"}]
+    linked, report = draw.build({"cords": rings})
+    first = patterns(report)[0]
+    assert first in ("OU", "UO")
+    # The link the other way round: the first ring's two letters swapped.
+    other = first[::-1]
+    turned, report = draw.build({"cords": [dict(rings[0], pattern=other), rings[1]]})
+    assert patterns(report)[0] == other and "conflicts: 0" in report and check.problems(turned) == []
+    # Over at both crossings, a closed cord has nowhere to hide its join: said plainly.
+    with pytest.raises(draw.DrawError, match="cord 1 is closed and goes over at every crossing it passes"):
+        draw.build({"cords": [dict(rings[0], pattern="OO"), rings[1]]})
+    # A closed cord that crosses itself: the trefoil's own pattern, whichever crossing its join hides under.
+    trefoil = {"x": "600 + 95*(sin(t) + 2*sin(2*t))", "y": "400 + 95*(cos(t) - 2*cos(2*t))", "t1": "2*pi",
+               "closed": True, "width": 28}
+    _, report = draw.build({"cords": [trefoil]})
+    as_drawn = patterns(report)[0]
+    assert as_drawn in ("OUOUOU", "UOUOUO")
+    other = "".join("U" if ch == "O" else "O" for ch in as_drawn)
+    _, report = draw.build({"cords": [dict(trefoil, pattern=other)]})
+    assert patterns(report)[0] == other
+
+
+@pytest.mark.parametrize("cords, message", [
+    ([{"points": PRETZEL, "pattern": "OUOU"}],
+     r"cord 1 passes 6 crossings but its pattern has 4 letters \(a crossing of the cord with itself is passed "
+     r"twice.*Its crossings in order from its start: 1 itself at \(\d+, \d+\); 2 itself"),
+    ([{"points": PRETZEL, "pattern": "OOUUOU"}], r"letters 2 and 5 of its pattern are both O"),
+    ([{"points": PRETZEL, "pattern": "OUOXOU"}], r'has "X" in it'),
+    ([{"points": PRETZEL, "pattern": 7}], r'"pattern" is text such as "OUUO"'),
+    ([dict(HOOKED[0], pattern="OU"), dict(HOOKED[1], pattern="OO")],
+     r"is letter 1 of cord 1's pattern \(O\) and letter 1 of cord 2's \(O\): one cord goes over"),
+    ([dict(HOOKED[0], pattern="O"), HOOKED[1]],
+     r"cord 1 passes 2 crossings but its pattern has 1 letter\. Its crossings in order from its start: "
+     r"1 cord 2 at \(\d+, \d+\); 2 cord 2 at"),
+    ([{"points": [[300, 300], [500, 400], [700, 500]], "heights": [0, 1, 0], "pattern": "O"},
+      {"points": [[300, 500], [500, 400], [700, 300]]}], r'give "pattern" or "heights", not both'),
+])
+def test_a_pattern_that_does_not_fit_says_what_to_change(cords, message):
+    with pytest.raises(draw.DrawError, match=message):
+        draw.build({"cords": cords})
+
+
+def test_a_design_without_a_pattern_is_woven_as_before():
+    data, report = draw.build({"cords": [{"points": PRETZEL, "width": 26}]})
+    assert patterns(report) == ["OUOUOU"] and "mask check" not in report
+    assert knot_of(data) == "trefoil"
+
+
 def guide_examples():
     text = GUIDE.read_text(encoding="utf-8")
     return [json.loads(block) for block in re.findall(r"```json\n(.*?)```", text, re.S) if '"cords"' in block]

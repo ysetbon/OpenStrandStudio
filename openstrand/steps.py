@@ -163,6 +163,46 @@ def cord_order(strands):
 
 
 # ------------------------------------------------------------------- steps
+def shown(made):
+    """What each step from make() shows, in words: for every cord how much of
+    it is drawn (cords named by their group when they have one), how many
+    crossings are there by then, and where the working end is. So a step's
+    tab can say what it does without the step being looked at."""
+    last = made[-1][1]
+    whole, _ = cords_and_masks(last)
+    total = {}
+    for s in whole:
+        total[set_of(s)] = total.get(set_of(s), 0) + 1
+    label = {}
+    for name, group in (last.get('groups') or {}).items():
+        for member in group.get('main_strands') or group.get('layers') or []:
+            number = str(member).split('_')[0]
+            if number.isdigit():
+                label.setdefault(int(number), name)
+    out = []
+    for _, data in made:
+        strands, masks = cords_and_masks(data)
+        drawn = {}
+        for s in strands:
+            drawn[set_of(s)] = drawn.get(set_of(s), 0) + 1
+        parts = []
+        for n in sorted(total):
+            who = f'cord {n}' + (f' ({label[n]})' if n in label else '')
+            if not drawn.get(n):
+                parts.append(f'{who} not yet')
+            elif drawn[n] == total[n]:
+                parts.append(f'{who} whole')
+            else:
+                parts.append(f'{who} as far as strand {drawn[n]} of {total[n]}')
+        text = ', '.join(parts)
+        tip = next(((s['end'] if s.get('end_arrow_visible') else s['start']) for s in strands
+                    if s.get('end_arrow_visible') or s.get('start_arrow_visible')), None)
+        if tip is not None:
+            text += f"; the working end is at ({tip['x']:.0f}, {tip['y']:.0f})"
+        out.append(text)
+    return out
+
+
 def make(project, count=None, arrows=True):
     """[(title, project)] for count steps (default: one per strand, at most
     six); the last is the whole design, with its groups."""

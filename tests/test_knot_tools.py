@@ -319,7 +319,7 @@ def test_a_knot_given_as_a_path_is_named_and_tied():
 
 def test_tying_says_what_is_wrong():
     with pytest.raises(tying.TyingError, match="not in the knot library"):
-        tying.tie("bowline")
+        tying.tie("carrick bend")
     with pytest.raises(tying.TyingError, match="never crosses itself"):
         tying.tie(points=[[100, 400], [400, 380], [700, 420], [1000, 400]], build=False)
     with pytest.raises(tying.TyingError, match="width"):
@@ -331,7 +331,7 @@ def test_the_agent_ties_a_knot_and_checks_it(tmp_path):
     from openstrand.agent import Agent, PLAN_TOOLS, TOOLS, Workspace
     ws = Workspace(tmp_path)
     summary, text = ws.run("knot_library", {})
-    assert summary == "5 knots" and "Stevedore knot" in text and "figure 8" in text
+    assert summary == "12 knots" and "Stevedore knot" in text and "figure 8" in text
     assert "Double overhand knot (\"double overhand\"): 5 crossings, cinquefoil (5_1)" in text
     summary, text = ws.run("tie_knot", {"knot": "overhand", "color": "gold"})
     assert summary == "Overhand knot · 5 steps"
@@ -367,7 +367,7 @@ def test_the_command_ties_lists_and_identifies(tmp_path):
     assert len(files) == 5
     named = run("identify", str(files[-1]))
     assert "3 crossings with itself: overhand knot (3_1)" in named.stdout
-    wrong = run("tie", "bowline")
+    wrong = run("tie", "carrick bend")
     assert wrong.returncode == 1 and "not in the knot library" in wrong.stderr
 
 

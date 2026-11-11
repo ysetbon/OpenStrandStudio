@@ -104,10 +104,14 @@ def cmd_draw(args):
 
 
 def cmd_tie(args):
-    from . import tying
+    from . import bends, tying
     if args.list:
+        print('stopper knots, tied in one cord (simulated: laid out, drawn up, pulled tight):')
         for key, title, crossings, kind, aliases, about in tying.library():
-            print(f'{key:<16} {title}: {crossings} crossings, {kind}; also {", ".join(aliases)}')
+            print(f'  {key:<16} {title}: {crossings} crossings, {kind}; also {", ".join(aliases)}')
+        print('knots that join cords or make a loop (from a checked drawing, shown loose):')
+        for key, title, kind, _, crossings, aliases, about in bends.library():
+            print(f'  {key:<16} {title}: {kind}, {crossings} crossings; also {", ".join(aliases)}')
         return
     points = None
     if args.path:
@@ -121,11 +125,15 @@ def cmd_tie(args):
             points = points.get('points')
     if not args.knot and points is None:
         raise ValueError('name a knot (see: openstrand tie --list) or give --path with its points')
+    out = Path(args.out_dir or '.')
+    if args.knot and points is None and tying.find(args.knot) is None and bends.find(args.knot) is not None:
+        return tie_drawn(args, out)
+    if args.colors:
+        raise ValueError('--colors is for a knot of several cords; use --color for a knot in one cord')
     color = colors.parse(args.color) if args.color else colors.NAMES['teal']
     with quiet(not args.verbose):
-        made = tying.tie(knot=args.knot, points=points, pattern=args.pattern, width=args.width,
+        made = tying.tie(knot=args.knot, points=points, pattern=args.pattern, width=args.width or 24,
                          color=color, count=args.moves)
-    out = Path(args.out_dir or '.')
     out.mkdir(parents=True, exist_ok=True)
     stem = re.sub(r'[^a-z0-9]+', '_', made['title'].lower()).strip('_') or 'knot'
     print(f"{made['title']}: {made['knot'] or made['alexander']}, {made['crossings']} crossings")
@@ -138,6 +146,26 @@ def cmd_tie(args):
             print('  ' + line)
     if not made['ok']:
         raise SystemExit('error: not every stage is the same knot (see the checks above)')
+
+
+def tie_drawn(args, out):
+    """tie for a knot that joins cords or makes a loop: its steps from the checked drawing."""
+    from . import bends
+    given = [c for c in (args.colors or '').split(',') if c.strip()] or ([args.color] if args.color else None)
+    with quiet(not args.verbose):
+        made = bends.tie(args.knot, colors=given, width=args.width)
+    out.mkdir(parents=True, exist_ok=True)
+    stem = re.sub(r'[^a-z0-9]+', '_', bends.LIBRARY[made['key']]['title'].lower().replace("'", '')).strip('_')
+    print(f"{made['title']}: {bends.KINDS[made['kind']]}, {made['crossings']} crossings")
+    print('checks: ' + bends.checked(made))
+    for n, step in enumerate(made['steps'], start=1):
+        path = out / f'{stem}_step_{n}.json'
+        project.write(step['data'], path)
+        print(f'wrote {path} · {step["caption"]}')
+        for line in mask_lines(step.get('masks')):
+            print('  ' + line)
+    if not made['ok']:
+        raise SystemExit('error: not every step is the knot (see the checks above)')
 
 
 def mask_lines(found):
@@ -210,7 +238,7 @@ def cmd_identify(args):
     from . import identify
     data = project.read(args.file)
     with quiet(not args.verbose):
-        text = identify.summary(data)
+        text = identify.summary(data, unknown=True)
     print(text)
 
 
@@ -414,14 +442,17 @@ def build_parser():
     drawn.add_argument('spec', help='a JSON file with {"cords": [...]}, or - to read it from stdin')
     drawn.add_argument('--out', help='project file to write (default drawn.json)')
 
-    tie = command('tie', 'tying steps for a knot, simulated with a real cord and checked to be that knot', cmd_tie)
-    tie.add_argument('knot', nargs='?', help='a library knot, e.g. figure-eight (see --list)')
+    tie = command('tie', 'tying steps for a knot, each checked to be that knot: stopper knots simulated with a '
+                         'real cord, bends and loop knots from a checked drawing', cmd_tie)
+    tie.add_argument('knot', nargs='?', help='a library knot, e.g. figure-eight, bowline, "square knot" (see --list)')
     tie.add_argument('--list', action='store_true', help='list the library knots')
     tie.add_argument('--path', help='a JSON file with the path of a knot not in the library: '
                                     '[[x, y], ...] or {"points": [...], "pattern": "OUOU..."}')
     tie.add_argument('--pattern', help='over (O) / under (U) at each crossing along the path (default alternating)')
     tie.add_argument('--color', help='name or hex (default teal)')
-    tie.add_argument('--width', type=float, default=24, help='cord width in px, 16-60 (default 24)')
+    tie.add_argument('--colors', help='a knot of several cords: one color per cord, e.g. teal,gold')
+    tie.add_argument('--width', type=float, help='cord width in px: 16-60 for a knot in one cord (default 24), '
+                                                 '14-30 for a knot of several cords')
     tie.add_argument('--moves', type=int, help='tying pictures before the knot is drawn up (default up to 4)')
     tie.add_argument('--out-dir', help='folder for the step files (default: here)')
 

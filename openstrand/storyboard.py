@@ -38,6 +38,8 @@ class StepsError(DrawError):
 
 
 def _label(cord, index, what):
+    """The cord's label: its own, else the default name its tool or its place gives it
+    ("Hook", "Cord 2"). Labels are how a step names the cords of the step before."""
     if not isinstance(cord, dict):
         raise StepsError(f'{what}: cord {index + 1} must be an object')
     tool = tool_of(cord, f'{what}, cord {index + 1}')
@@ -77,6 +79,11 @@ def resolve(steps):
         drawn = {}
         for k, cord in enumerate(cords):
             label = _label(cord, k, what)
+            if label in keep and not str(cord.get('label') or '').strip():
+                # Its name is only the default one ("Cord 1", "Hook"): it cannot mean the kept cord.
+                raise StepsError(f'{what}: cord {k + 1} has no label, and its default name "{label}" is a cord '
+                                 'this step keeps. Give it a label of its own to add it, or give it the label '
+                                 f'"{label}" and leave that out of "keep" to redraw that cord')
             if label in drawn:
                 raise StepsError(f'{what} has two cords labelled "{label}": give each cord its own label')
             drawn[label] = dict(copy.deepcopy(cord), label=label)
@@ -127,7 +134,7 @@ def build(spec, progress=None):
     made = []
     for n, step in enumerate(steps, start=1):
         def shown(fraction=None, stage=None, frame=None, n=n, **_):
-            # The step's cords, as the drawing shows them, under this call's own bar.
+            """draw.build's progress, shown as this step of the whole call: its cords, its number."""
             progress((n - 1) / len(steps), 'draw_step', frame, step=n, steps=len(steps))
         if progress is not None:
             shown()

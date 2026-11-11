@@ -174,6 +174,7 @@ def rename_tab(agent, args):
 
 
 def close_tab(agent, args):
+    """Ask the app to close one tab; the app checks the id, the title and unsaved work itself."""
     request = {'tab_id': str(args.get('tab_id', '')), 'title': str(args.get('title') or ''),
                'discard_unsaved': args.get('discard_unsaved') is True}  # true itself: nothing else discards
     if args.get('version'):

@@ -104,6 +104,7 @@ def cmd_draw(args):
 
 
 def cmd_draw_steps(args):
+    """openstrand draw-steps: each step written as a project, and one picture of all of them."""
     from . import storyboard
     text = sys.stdin.read() if args.spec == '-' else Path(args.spec).read_text(encoding='utf-8')
     try:

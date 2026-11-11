@@ -120,6 +120,51 @@ def test_bad_arrows_say_what_to_change(arrows, message):
         draw.build({"cords": [LOOP], "arrows": arrows})
 
 
+def test_arrows_count_toward_the_length_limit():
+    """Arrows are fitted like cords: eight long zigzags must not keep the fitter busy for minutes."""
+    zigzag = {"points": [[-900 if k % 2 else 3900, -900 if k % 2 else 3900] for k in range(12)], "smooth": False}
+    with pytest.raises(draw.DrawError, match="the cords and arrows are .* px long together"):
+        draw.build({"cords": [LOOP], "arrows": [zigzag] * 8})
+
+
+def test_every_arrow_head_is_inside_the_picture(tmp_path):
+    """The canvas's bounds leave arrow heads out (a head is painted past its strand's end); an
+    arrow on the edge of a design kept its tip off the picture."""
+    from PyQt5.QtCore import QPointF
+    from PyQt5.QtGui import QImage
+    from openstrand import generators, render
+    from generate_creative_samples import AppPreview
+    tip = (1400, 400)                                  # far right of everything, pointing out
+    data, _ = draw.build({"cords": [{"points": [[300, 300], [600, 500]], "width": 14}],
+                          "arrows": [{"points": [[700, 400], tip]}]})
+    generators.application()
+    preview = AppPreview()
+    try:
+        canvas = preview.window.canvas
+        default_head = canvas.arrow_head_length
+        assert default_head != draw.ARROW_SETTINGS["arrow_head_length"]
+        bounds = render.capture(preview, data, tmp_path / "full.png")
+        assert canvas.arrow_head_length == default_head  # the preview's own settings are back
+        canvas.arrow_head_length = draw.ARROW_SETTINGS["arrow_head_length"]  # as the picture was drawn
+        canvas.arrow_head_width = draw.ARROW_SETTINGS["arrow_head_width"]
+        assert render.arrow_heads(canvas).contains(QPointF(*tip))
+        assert not canvas.get_bounding_rect().contains(QPointF(*tip))  # the canvas's own bounds, as before
+        assert bounds.contains(QPointF(*tip))
+        w, zoom = canvas.width(), canvas.zoom_factor
+        x = (tip[0] - w / 2) * zoom + w / 2 + canvas.pan_offset_x
+        assert 0 < x < QImage(str(tmp_path / "full.png")).width()
+        shot = render.shot(preview, data, tmp_path / "cut.png")
+        image = QImage(str(shot))
+        # The cut picture ends past the tip, on white: nothing of the head was cut off.
+        right = image.width() - 2
+        assert all(image.pixelColor(right, y).lightness() > 240 for y in range(image.height()))
+        heads = [image.pixelColor(xx, yy) for xx in range(image.width() - 40, image.width())
+                 for yy in range(image.height())]
+        assert any(c.red() > 150 and c.green() < 120 for c in heads)  # the red head is near the right edge
+    finally:
+        preview.close()
+
+
 def test_arrows_are_no_part_of_the_knot_or_of_a_design_shown_bit_by_bit():
     cord = {"label": "Pretzel", "points": [[420, 640], [500, 420], [640, 300], [760, 360], [740, 480], [600, 520],
                                            [460, 480], [440, 360], [560, 300], [700, 420], [780, 640]]}
@@ -163,6 +208,24 @@ def test_steps_that_cannot_be_resolved_name_the_step(change, message):
     change(story)
     with pytest.raises(storyboard.StepsError, match=message):
         storyboard.resolve(story)
+
+
+def test_an_unlabelled_cord_never_replaces_a_kept_one():
+    """Step 1's unlabelled cord is "Cord 1"; so would be step 2's new unlabelled cord, which took
+    the kept one's place."""
+    first = {"points": [[0, 0], [300, 0]]}
+    second = {"points": [[0, 100], [300, 100]]}
+    with pytest.raises(storyboard.StepsError, match='step 2: cord 1 has no label, and its default name "Cord 1"'):
+        storyboard.resolve([{"cords": [first]}, {"keep": "all", "cords": [second]}])
+    with pytest.raises(storyboard.StepsError, match='default name "Hook"'):
+        storyboard.resolve([{"cords": [HOOK]}, {"keep": ["Hook"], "cords": [dict(HOOK, to=[800, 300])]}])
+    # Labelled, it is added beside the kept cord; labelled as the kept cord and not kept, it redraws it.
+    added = storyboard.resolve([{"cords": [first]}, {"keep": "all", "cords": [dict(second, label="Second")]}])
+    assert [c["label"] for c in added[1]["cords"]] == ["Cord 1", "Second"]
+    redrawn = storyboard.resolve([{"cords": [first]}, {"cords": [dict(second, label="Cord 1")]}])
+    assert [c["points"] for c in redrawn[1]["cords"]] == [second["points"]]
+    # Unlabelled and not kept: a new step's own cord, as before.
+    assert storyboard.resolve([{"cords": [first]}, {"cords": [second]}])[1]["cords"][0]["points"] == second["points"]
 
 
 def test_every_step_is_its_own_design():

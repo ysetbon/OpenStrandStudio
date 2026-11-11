@@ -569,7 +569,8 @@ class Workspace:
         generators.application()
         if self._preview is None:
             self._preview = AppPreview()
-        self._preview.capture(data, path)
+        from . import render
+        render.capture(self._preview, data, path)
         if step is None:
             self.rendered_version = self.version
         return path

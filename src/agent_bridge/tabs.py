@@ -103,9 +103,11 @@ class TabActions:
                               'open. Tell the person, rather than closing work they just did')
 
     def close_card(self, args, session):
+        """Ask mode's Allow / Deny card, which says when the tab has unsaved changes."""
         return ('close_tab_unsaved' if session.dirty else 'close_tab', self.tabs.title_for(session), '')
 
     def close_tab_action(self, args, session):
+        """Close the tab with the app's own code, after check_close, keeping it on a Reopen card."""
         tm = self.tabs
         title, unsaved, index = tm.title_for(session), bool(session.dirty), tm.tabs.index(session)
         if session.id == tm.active_tab_id and not tm.capture_active_session():

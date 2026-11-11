@@ -403,7 +403,9 @@ def build(spec, mask_check=True, progress=None):
 
     started = time.monotonic()
     arrows = _arrows(spec.get('arrows'))
-    tucked, lengths, made, patterns, tools = set(), 0.0, [], {}, {}
+    tucked, made, patterns, tools = set(), [], {}, {}
+    # Arrows are fitted too: they count toward the same limit as the cords.
+    lengths = sum(math.dist(a, b) for poly, _, _ in arrows for a, b in zip(poly, poly[1:]))
     for k, cord in enumerate(cords):
         if not isinstance(cord, dict):
             raise DrawError(f'cord {k + 1} must be an object')
@@ -437,8 +439,9 @@ def build(spec, mask_check=True, progress=None):
              for poly, _, _, _, _, _, heights in made],
             max(m[3] for m in made), [str(m[1]) for m in made], [m[4] for m in made]))
     if lengths > MAX_LENGTH:
-        raise DrawError(f'the cords are {lengths:.0f} px long together; keep them under {MAX_LENGTH} px '
-                        '(shorter or fewer cords), so drawing takes minutes, not hours')
+        what = 'the cords and arrows are' if arrows else 'the cords are'
+        raise DrawError(f'{what} {lengths:.0f} px long together; keep them under {MAX_LENGTH} px '
+                        '(shorter or fewer cords and arrows), so drawing takes minutes, not hours')
 
     levels = {}                 # heights worked out from the patterns, for the cords that gave none
 

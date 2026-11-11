@@ -54,6 +54,35 @@ def _need(spec, key, kind, what):
     return value
 
 
+def cords_of(spec, what='recipe'):
+    """The cords of a recipe's JSON, each checked to be a cord: a label, a colour and its points."""
+    if not isinstance(spec, dict):
+        raise RecipeError(f'{what}: a recipe is a JSON object')
+    cords = _need(spec, 'cords', list, what)
+    for k, cord in enumerate(cords):
+        points = cord.get('points') if isinstance(cord, dict) else None
+        if not isinstance(points, list) or len(points) < 2 or not cord.get('label') or not cord.get('color'):
+            raise RecipeError(f'{what}: cord {k + 1} needs "label", "color" and at least two "points"')
+        for p in points:
+            if not (isinstance(p, list) and len(p) in (2, 3)
+                    and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in p[:2])
+                    and (len(p) == 2 or isinstance(p[2], str))):
+                raise RecipeError(f'{what}: cord {k + 1} has a point that is not [x, y] or [x, y, "name"]: {p}')
+    return cords
+
+
+def _extent(stop, names):
+    """How far a "shown" entry draws its cord, as (kind, amount): entries of one kind can be
+    compared; a point name and a crossing count cannot, without the drawing."""
+    if stop is None:
+        return ('none', 0)
+    if stop == 'all':
+        return ('all', 0)
+    if isinstance(stop, dict):
+        return ('after', stop['after'])
+    return ('name', names[stop])
+
+
 def parse(spec, source='recipe'):
     """A recipe as bends.tie takes it, from its JSON: checked for shape here,
     for its crossings when its layout is first asked for."""
@@ -66,34 +95,31 @@ def parse(spec, source='recipe'):
     kind = spec.get('kind', 'decorative')
     if kind not in KINDS:
         raise RecipeError(f'{what}: "kind" is one of {", ".join(KINDS)}')
-    cords = _need(spec, 'cords', list, what)
+    cords = cords_of(spec, what)
     patterns = _need(spec, 'patterns', list, what)
     if len(patterns) != len(cords) or not all(isinstance(p, str) and set(p) <= set('OU') for p in patterns):
         raise RecipeError(f'{what}: "patterns" lists one string of O and U for each of the {len(cords)} cords')
-    names = []
-    for k, cord in enumerate(cords):
-        points = cord.get('points') if isinstance(cord, dict) else None
-        if not isinstance(points, list) or len(points) < 2 or not cord.get('label') or not cord.get('color'):
-            raise RecipeError(f'{what}: cord {k + 1} needs "label", "color" and at least two "points"')
-        for p in points:
-            if not (isinstance(p, list) and len(p) in (2, 3) and all(isinstance(v, (int, float)) for v in p[:2])
-                    and (len(p) == 2 or isinstance(p[2], str))):
-                raise RecipeError(f'{what}: cord {k + 1} has a point that is not [x, y] or [x, y, "name"]: {p}')
-        names.append({p[2] for p in points if len(p) == 3})
+    # Per cord: its named points, and where along the cord each lies (its number among the points).
+    names = [{p[2]: n for n, p in enumerate(cord['points']) if len(p) == 3} for cord in cords]
     steps = _need(spec, 'steps', list, what)
     if len(steps) < 2:
         raise RecipeError(f'{what}: a tutorial has at least two steps')
     plan = []
     afters = [set() for _ in cords]             # per cord: the crossing counts some step stops after
+    reached = [('none', 0) for _ in cords]      # per cord: how far the step before drew it
     for n, step in enumerate(steps, start=1):
         shown = step.get('shown') if isinstance(step, dict) else None
         if not isinstance(shown, list) or len(shown) != len(cords) or not step.get('caption'):
             raise RecipeError(f'{what}: step {n} needs "shown" (one entry per cord) and a "caption"')
         shown = list(shown)
         for k, stop in enumerate(shown):
+            if not (stop is None or isinstance(stop, (str, dict))):
+                raise RecipeError(f'{what}: step {n} cord {k + 1}: "shown" takes null, "all", {{"after": n}} or '
+                                  f'the name of one of the cord\'s points, not {json.dumps(stop)}')
             if isinstance(stop, dict):
                 after = stop.get('after')
-                if set(stop) != {'after'} or not isinstance(after, int) or not 0 <= after < len(patterns[k]):
+                if (set(stop) != {'after'} or not isinstance(after, int) or isinstance(after, bool)
+                        or not 0 <= after < len(patterns[k])):
                     raise RecipeError(f'{what}: step {n} cord {k + 1}: {{"after": n}} takes a number of crossings '
                                       f'passed, from 0 to {len(patterns[k]) - 1} for this cord ("all" for the '
                                       'whole cord)')
@@ -102,6 +128,15 @@ def parse(spec, source='recipe'):
             elif stop not in (None, 'all') and stop not in names[k]:
                 raise RecipeError(f'{what}: step {n} draws cord {k + 1} as far as "{stop}", but none of its points '
                                   f'has that name ({", ".join(sorted(names[k])) or "it has no named points"})')
+            # A tutorial only adds: no step shows less of a cord than the step before it.
+            now = _extent(stop, names[k])
+            before = reached[k]
+            back = (now[0] == 'none' and before[0] != 'none') or (before[0] == 'all' and now[0] != 'all') \
+                or (now[0] == before[0] and now[1] < before[1])
+            if back:
+                raise RecipeError(f'{what}: step {n} shows less of cord {k + 1} than step {n - 1}: each step '
+                                  'draws every cord at least as far as the step before')
+            reached[k] = now
         arrow = step.get('arrow')
         if arrow is not None and not (isinstance(arrow, int) and 0 <= arrow < len(cords) and shown[arrow]):
             raise RecipeError(f'{what}: step {n} "arrow" is the number (from 0) of a cord that step shows')

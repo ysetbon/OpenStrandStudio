@@ -609,10 +609,13 @@ def references():
         for key in LIBRARY:
             _REFERENCES[key] = reference(key)
     found = dict(_REFERENCES)
-    for key in more():
-        if key not in _MORE_REFERENCES:
-            _MORE_REFERENCES[key] = reference(key)
-        found[key] = _MORE_REFERENCES[key]
+    for key, recipe in more().items():
+        # Kept with the recipe it was worked out from: a recipe read again after its file
+        # changed (or another one tried under the same name) gets its own reference.
+        kept = _MORE_REFERENCES.get(key)
+        if kept is None or kept[0] is not recipe:
+            kept = _MORE_REFERENCES[key] = (recipe, reference(key))
+        found[key] = kept[1]
     return found
 
 

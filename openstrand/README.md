@@ -283,7 +283,7 @@ the person ticks it: their models are hidden and anything for them is refused.
 The agent runs in its own process, so it cannot touch the app's windows. When
 the app starts it (`--app`), the agent also gets tools that act on the running
 app: `list_tabs`, `read_tab`, `read_tab_step`, `open_in_new_tab`, `rename_tab`,
-`switch_tab`, `edit_mask_in_tab`, `edit_strand_in_tab`, `edit_layers_in_tab`,
+`switch_tab`, `close_tab`, `edit_mask_in_tab`, `edit_strand_in_tab`, `edit_layers_in_tab`,
 `edit_groups_in_tab`, `show_group`, `app_window`, `read_settings` and
 `app_settings`. Each call goes out as a JSON line (`{"type": "app_call", ...}`);
 the panel hands it to `AppBridge` (`src/agent_bridge/`, one module per area: tabs,
@@ -305,6 +305,27 @@ bridge refuses it when the tab changed since: the agent reads it again.
 latest change, or a step they undid) as a copy. `edit_strand_in_tab` moves a
 strand's ends and handles with Move mode's own code, as a drag does (strands
 joined at a moved end follow, erase boxes follow their crossing), one undo step.
+
+`close_tab` closes a tab the person asked to have closed, and is the one tab
+action that could lose their work, so the app hedges it itself
+(`src/agent_bridge/tabs.py`), whatever the agent understood:
+
+- One tab per call, named by its id and its title as `list_tabs` gives them
+  now. When the two do not match, nothing closes: a guessed or remembered id
+  cannot close another tab.
+- A tab with unsaved changes stays open, and the agent is told to say so. It
+  closes only with `discard_unsaved: true`, which the agent is told to pass
+  only when the person said to close without saving or to discard, and with
+  the tab's version: if the person changed the tab since the agent listed
+  it, it stays open. "Close all tabs" alone closes the saved ones.
+- The app's own "Unsaved changes" dialog never opens for the agent (it would
+  wait for a click while the agent waits for the answer); the checks above
+  stand in for it.
+- Plan mode never closes; ask mode shows an Allow / Deny card for each tab,
+  which says when the tab is unsaved.
+- Every closed tab stays on a card in the conversation, whole (design, undo
+  history, file, unsaved state): **Reopen** puts it back at its place. The
+  card lasts until a new session is started.
 
 The other areas are the app's own panels and buttons, called the way a click
 calls them:

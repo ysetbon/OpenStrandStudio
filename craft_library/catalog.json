@@ -33,33 +33,6 @@
       "build": {"make": "mxn"}
     },
     {
-      "name": "larks_head_knot",
-      "craft": "macrame",
-      "title": "Lark's head knot",
-      "also": ["lark's head", "cow hitch", "girth hitch", "mounting knot"],
-      "about": "Mounts a cord on a holding cord, a rod or a ring: the cord is folded in half, its two legs go up over the holding cord, round behind it and out under their own bar, which lies in front. Shown loose, from the front; no tying steps yet.",
-      "build": {"file": "craft_library/macrame/json/larks_head_knot.json"},
-      "patterns": ["OUUO", "UOUOOUOU"]
-    },
-    {
-      "name": "reverse_larks_head_knot",
-      "craft": "macrame",
-      "title": "Reverse lark's head knot",
-      "also": ["reverse lark's head", "reversed lark's head", "reverse mounting knot"],
-      "about": "The lark's head knot seen from its back: the bar lies behind the two legs, which hang down in front of it. Shown loose; no tying steps yet.",
-      "build": {"file": "craft_library/macrame/json/reverse_larks_head_knot.json"},
-      "patterns": ["UOOU", "OUOUUOUO"]
-    },
-    {
-      "name": "josephine_knot",
-      "craft": "macrame",
-      "title": "Josephine knot",
-      "also": ["Carrick bend", "double Carrick bend", "Josephine"],
-      "about": "Two cords, each laid in one loop, the loops woven through each other over and under: eight crossings round a diamond-shaped centre, an ear on each side, the ends leaving up and down. Shown loose; no tying steps yet.",
-      "build": {"file": "craft_library/macrame/json/josephine_knot.json"},
-      "patterns": ["OUOUOUOU", "UOUOUOUO"]
-    },
-    {
       "name": "chinese_double_coin",
       "craft": "chinese knotting",
       "title": "Double coin knot",

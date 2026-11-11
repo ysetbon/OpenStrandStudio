@@ -116,7 +116,9 @@ def test_the_library_has_the_knots_people_ask_for():
     # Other knots, though their names are close: the fisherman's bend is the anchor hitch.
     ("fisherman's bend", None), ("double sheet bend", None), ("running bowline", None),
     ("bowline on a bight", None), ("double bowline", None), ("surgeon's knot", None), ("flat knot", None),
-    ("carrick bend", None), ("overhand", None), ("double overhand", None), ("", None)])
+    ("zeppelin bend", None), ("overhand", None), ("double overhand", None), ("", None),
+    # A knot of the craft library (craft_library/<craft>/recipes/), by its names.
+    ("carrick bend", "josephine_knot"), ("cow hitch", "larks_head_knot")])
 def test_knots_are_found_by_the_names_people_use(name, key):
     assert bends.find(name) == key
 
@@ -342,7 +344,7 @@ def test_colors_and_width_can_be_chosen():
     with pytest.raises(bends.BendError, match="between 14 and 30"):
         bends.tie("square", width=50, build=False)
     with pytest.raises(bends.BendError, match="not one of the ready-made knots"):
-        bends.tie("carrick bend")
+        bends.tie("zeppelin bend")
     with pytest.raises(ValueError, match="unknown color"):
         bends.tie("square", colors=["sparkly"], build=False)
 
@@ -557,7 +559,7 @@ def test_the_agent_is_told_to_tie_these_knots_by_name_and_how_to_draw_the_rest()
     assert "never draw tying steps or a tightened knot by hand" in knots
     assert "cannot tie" not in INSTRUCTIONS                               # it can, now
     # A bend that is not in the library is still the agent's to draw, with a pattern, and checked.
-    other = knots[knots.index("that is not in\n  knot_library (a Carrick bend"):]
+    other = knots[knots.index("that is not in\n  knot_library (a zeppelin bend"):]
     assert '"pattern"' in other and "identify_knot" in other and "make_steps" in other
     assert "never with edit_mask" in other
     tools = {t["name"]: t for t in TOOLS}

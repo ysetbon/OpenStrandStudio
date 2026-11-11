@@ -20,12 +20,13 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from openstrand import agent, bends, check, generators, identify, invariants, library, masks, tying
+from openstrand import agent, bends, check, generators, identify, invariants, library, masks, recipes, tying
 from openstrand.cli import main
 
 CATALOG = library.read_catalog()
 LISTED = CATALOG["entries"]
 BY_NAME = {e["name"]: e for e in LISTED}
+RECIPES = recipes.library()
 
 
 def dialog_samples():
@@ -84,6 +85,60 @@ def test_files_of_the_library_are_all_listed():
     files = {p.resolve() for p in library.FOLDER.glob("**/json/*.json")}
     listed = {library.path_of(e) for e in LISTED if "file" in e["build"]}
     assert files <= listed, "a project in craft_library/ has no entry in catalog.json"
+    assert {e["name"] for e in library.entries()} >= set(RECIPES)
+
+
+# ------------------------------------------------------------- the recipes
+def test_every_recipe_has_a_name_of_its_own():
+    assert RECIPES, "craft_library/<craft>/recipes/ holds the library's knots"
+    assert not set(RECIPES) & set(BY_NAME) and not set(RECIPES) & set(generators.samples())
+    for name, recipe in RECIPES.items():
+        assert recipe["craft"] in CATALOG["crafts"], name
+        assert recipe["about"].endswith("."), name
+        assert (library.FOLDER / recipe["craft"].replace(" ", "_") / "recipes" / f"{name}.json").exists(), name
+        # tie finds it by its name, its title and every other name, and no older knot answers to them.
+        for said in (name, recipe["title"]) + recipe["aliases"]:
+            assert tying.find(said) is None and bends.find(said) == name, (name, said)
+
+
+@pytest.mark.parametrize("name", sorted(RECIPES))
+def test_every_recipe_ties_step_by_step(name):
+    """The drawing passes its reference, and every step, read back from its strands, masks
+    and layers as the app draws them, is the part of the knot it shows, its masks right."""
+    made = bends.tie(name)
+    assert made["ok"], [c for c in made["checks"] if not c["ok"]]
+    assert made["patterns"] == list(RECIPES[name]["patterns"])
+    assert len(made["steps"]) >= 2 and all(step["caption"].endswith(".") for step in made["steps"])
+    last = made["steps"][-1]["data"]
+    assert check.problems(last) == []
+    # identify names it, crossing for crossing: as itself, or as the knot it is the back
+    # or the mirror image of (a reverse lark's head is a lark's head seen from behind).
+    found = identify.named(last)
+    assert found["how"] == "exact"
+    assert found["key"] == name or invariants.compare(bends.reference(name), bends.reference(found["key"]))
+
+
+def test_a_recipe_that_does_not_pass_its_reference_is_refused():
+    spec = {"name": "wrong", "craft": "macrame", "title": "Wrong", "about": "Two cords that cross once.",
+            "cords": [{"label": "A", "color": "teal", "points": [[100, 100], [500, 500]]},
+                      {"label": "B", "color": "gold", "points": [[100, 500], [500, 100]]}],
+            "patterns": ["O", "O"],
+            "steps": [{"shown": ["all", None], "caption": "A."}, {"shown": ["all", "all"], "caption": "B."}]}
+    with pytest.raises(recipes.RecipeError, match='both parts are "O"'):
+        recipes.parse(spec)["layout"]()
+    with pytest.raises(recipes.RecipeError, match="cord 2 passes 1 crossings, but its pattern"):
+        recipes.parse(dict(spec, patterns=["O", "UU"]))["layout"]()
+    with pytest.raises(recipes.RecipeError, match='"after": n'):
+        recipes.parse(dict(spec, patterns=["O", "U"], steps=[
+            {"shown": ["all", {"after": 3}], "caption": "A."}, {"shown": ["all", "all"], "caption": "B."}]))
+    assert recipes.alternating(spec["cords"]) == ["O", "U"]
+
+
+def test_a_step_can_stop_after_a_number_of_crossings():
+    made = bends.tie("josephine knot", build=False)
+    lines = bends.centrelines("josephine_knot", RECIPES["josephine_knot"]["steps"][1][0][0])
+    assert len(bends.code_of(lines)["hand"]) == 3    # the left cord's own crossing and two of the right cord's
+    assert made["crossings"] == 8
 
 
 # -------------------------------------------------------------- the lookup

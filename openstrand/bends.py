@@ -319,7 +319,25 @@ LIBRARY = {
                                                       'the loop on the right. Pull both working cords: the '
                                                       'square knot is done.'))),
 }
-KINDS = {'bend': 'joins two cords', 'loop': 'a loop in one cord', 'macrame': 'tied round two filler cords'}
+KINDS = {'bend': 'joins two cords', 'loop': 'a loop in one cord', 'macrame': 'tied round two filler cords',
+         'hitch': 'tied round a holding cord', 'decorative': 'a decorative knot',
+         'braid': 'cords plaited together', 'sennit': 'the same knot tied again and again'}
+
+# More knots, of the same shape as LIBRARY's: the craft library's recipes
+# (openstrand/recipes.py, read from craft_library/) and any recipe put in
+# EXTRA to be tried before it is one of them. tie, find and recognise know
+# them; library() and the tests of LIBRARY list only the knots written here.
+EXTRA = {}
+
+
+def more():
+    """{key: recipe} of the knots that are not in LIBRARY."""
+    from . import recipes
+    return {**recipes.library(), **EXTRA}
+
+
+def recipe_of(key):
+    return LIBRARY[key] if key in LIBRARY else more()[key]
 
 
 # Words a request for a knot is wrapped in: "how do I tie a bowline", "square
@@ -343,14 +361,15 @@ def find(name):
     key = _plain(name)
     if not key:
         return None
-    names = {k: {_plain(n) for n in (k, recipe['title']) + tuple(recipe['aliases'])} for k, recipe in LIBRARY.items()}
+    every = {**LIBRARY, **more()}
+    names = {k: {_plain(n) for n in (k, recipe['title']) + tuple(recipe['aliases'])} for k, recipe in every.items()}
     for k, known in names.items():
         if key in known:
             return k
     # Written as one word, or as two: "sheetbend", "squareknot", "bow line".
     squeezed = re.sub(r'[^a-z0-9]', '', str(name or '').lower())
     for k, known in names.items():
-        full = (k, LIBRARY[k]['title']) + tuple(LIBRARY[k]['aliases'])
+        full = (k, every[k]['title']) + tuple(every[k]['aliases'])
         if {key.replace(' ', ''), squeezed} & ({n.replace(' ', '') for n in known}
                                               | {re.sub(r'[^a-z0-9]', '', n.lower()) for n in full}):
             return k
@@ -369,7 +388,7 @@ def library():
 
 def full_title(key):
     """'Square knot (reef knot)': the title with the other name people know it by."""
-    recipe = LIBRARY[key]
+    recipe = recipe_of(key)
     return recipe['title'] + (f" ({recipe['also']})" if recipe.get('also') else '')
 
 
@@ -380,7 +399,7 @@ def centrelines(key, shown=None):
     the point named there (None: not at all, 'all': the whole cord). A cord
     not shown is None."""
     out = []
-    for k, points in enumerate(LIBRARY[key]['layout']()):
+    for k, points in enumerate(recipe_of(key)['layout']()):
         stop = 'all' if shown is None else shown[k]
         if stop is None:
             out.append(None)
@@ -420,7 +439,7 @@ def reference(key):
     """The knot's crossing code, from its drawing. The drawing must pass the
     crossings the library writes down for it, letter for letter: a drawing
     that has drifted from its reference is an error, never a knot."""
-    recipe = LIBRARY[key]
+    recipe = recipe_of(key)
     found = code_of(centrelines(key))
     drawn = tuple(invariants.pattern(found, k) for k in range(len(found['passes'])))
     if drawn != tuple(recipe['patterns']):
@@ -433,12 +452,12 @@ def design(key, shown=None, colors=None, width=None):
     """The knot (or the part of it a step shows) as a design for draw.build:
     every cord with its points and heights, its colour and its name. colors:
     one per cord with its own name (the two fillers share theirs)."""
-    recipe = LIBRARY[key]
+    recipe = recipe_of(key)
     return _design(key, shown, _colors(recipe, colors), float(width or recipe['width']))
 
 
 def _design(key, shown, picked, width):
-    recipe = LIBRARY[key]
+    recipe = recipe_of(key)
     cords = []
     for (label, _), color, line in zip(recipe['cords'], picked, centrelines(key, shown)):
         if line is None:
@@ -501,7 +520,7 @@ def tie(name, colors=None, width=None, build=True, progress=None):
     if key is None:
         names = ', '.join(r['title'] for r in LIBRARY.values())
         raise BendError(f'"{name}" is not one of the ready-made knots ({names})')
-    recipe = LIBRARY[key]
+    recipe = recipe_of(key)
     width = float(width or recipe['width'])
     if not MIN_WIDTH <= width <= MAX_WIDTH:
         raise BendError(f'width must be between {MIN_WIDTH} and {MAX_WIDTH} px for this drawing: a wider cord '
@@ -510,7 +529,7 @@ def tie(name, colors=None, width=None, build=True, progress=None):
     whole = reference(key)
     checks = [dict(stage='the drawing against its reference', ok=True,
                    note='; '.join(f'cord {k + 1} passes {p}' for k, p in enumerate(recipe['patterns'])))]
-    alone = recipe['alone']
+    alone = recipe.get('alone')
     if alone:
         lines = centrelines(key)
         for k, expected in enumerate(alone):
@@ -581,6 +600,7 @@ def checked(made):
 
 # --------------------------------------------------------------- recognising
 _REFERENCES = {}
+_MORE_REFERENCES = {}
 
 
 def references():
@@ -588,7 +608,12 @@ def references():
     if not _REFERENCES:
         for key in LIBRARY:
             _REFERENCES[key] = reference(key)
-    return _REFERENCES
+    found = dict(_REFERENCES)
+    for key in more():
+        if key not in _MORE_REFERENCES:
+            _MORE_REFERENCES[key] = reference(key)
+        found[key] = _MORE_REFERENCES[key]
+    return found
 
 
 def recognise(code, alone=None, closed=None):
@@ -603,15 +628,16 @@ def recognise(code, alone=None, closed=None):
     of its crossings (flipped: their numbers in the code) go the other way
     round."""
     best = None
+    order = list(references())
     for key, ref in references().items():
         found = invariants.compare(code, ref)
         if found is None:
             continue
-        rank = (len(found['flipped']), list(LIBRARY).index(key))
+        rank = (len(found['flipped']), order.index(key))
         if best is None or rank < best[0]:
             best = (rank, dict(key=key, title=full_title(key), how='near' if found['flipped'] else 'exact',
                                flipped=found['flipped'], mirror=found['mirror'], cords=found['cords'],
-                               note=LIBRARY[key].get('note', '')))
+                               note=recipe_of(key).get('note', '')))
     if best and best[1]['how'] == 'exact':
         return best[1]
     tied = _tied_round_each_other(code, alone, closed)

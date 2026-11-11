@@ -96,6 +96,10 @@ Knots (how one is tied, or one shown tied):
   square knot): tie_knot draws their steps from a checked drawing, the knot
   shown loose. Either way it checks every step is that knot, crossing by
   crossing, also as drawn in the app.
+- The craft library has more knots tie_knot ties the same way, from checked
+  drawings with their steps (macrame hitches and sennits, Chinese knots,
+  braids): search_samples finds them by any name and ends with the tie_knot
+  call to make.
 - So for any knot in knot_library, call tie_knot with its name, at once: do
   not search the web for it first. Such a knot is not yours to draw:
   never draw tying steps or a tightened knot by hand, nor the knot itself
@@ -109,7 +113,7 @@ Knots (how one is tied, or one shown tied):
 - For the knot in a design the person already has (in the app: read_tab it
   first), call tie_knot with from_design: it keeps that knot's over and under.
 - A loop knot or a knot that joins two cords (a bend) that is not in
-  knot_library (a Carrick bend, a zeppelin bend): research it, then draw it
+  knot_library (a zeppelin bend, a water knot): research it, then draw it
   with draw_design, loose enough to follow, one cord per rope, each in its
   own color and labeled. Such knots seldom alternate, so say which cord is on
   top: give a cord a "pattern", a letter for each crossing it passes in order

@@ -2,8 +2,9 @@
 
 craft_library/catalog.json lists designs by craft (boondoggle, macrame,
 Chinese knotting, knitting, crochet): a name, the other names people use,
-one line about it and how it is built. The knots `tie` makes are listed
-too, from their own libraries. A request for "scoubidou", "cobra knot" or
+one line about it and how it is built. The knot recipes beside it
+(craft_library/<craft>/recipes/, see recipes.py), each with its tying steps,
+and the knots `tie` makes from its own libraries are listed too. A request for "scoubidou", "cobra knot" or
 "mystic knot" then finds its design by looking it up, not by drawing it.
 
 It is a backend library: only the openstrand command and the agent read it.
@@ -61,9 +62,18 @@ def _knots():
     return out
 
 
+def _recipes():
+    """An entry for every knot recipe of the craft library (craft_library/<craft>/recipes/)."""
+    from . import recipes
+    return [dict(name=name, craft=recipe['craft'], title=recipe['title'], also=list(recipe['aliases']),
+                 about=recipe['about'], build={'tie': recipe['title'].lower()}, patterns=list(recipe['patterns']),
+                 steps=len(recipe['steps']))
+            for name, recipe in recipes.library().items()]
+
+
 def entries():
-    """Every entry: the catalog's, then the knots `tie` makes."""
-    return [dict(e) for e in read_catalog()['entries']] + _knots()
+    """Every entry: the catalog's, the craft library's knot recipes, then the other knots `tie` makes."""
+    return [dict(e) for e in read_catalog()['entries']] + _recipes() + _knots()
 
 
 def crafts():

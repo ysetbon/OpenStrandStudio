@@ -155,6 +155,9 @@ def picture(path, width=40, height=30, color="teal"):
 
 
 def test_several_reference_images_go_with_one_request_up_to_the_models_number(tmp_path):
+    """The agent sends the reference images in the order given, refuses more than the model
+    takes (or any, for a model that cannot see them) before anything is sent, caches them on
+    Claude only, and shrinks a picture larger than any model reads."""
     import base64
     from PyQt5.QtGui import QImage
     from openstrand import providers
@@ -953,6 +956,9 @@ def test_the_panel_asks_for_a_key_before_sending(window, monkeypatch, tmp_path):
 
 
 def test_the_panel_attaches_several_images_up_to_the_models_number(window, monkeypatch, tmp_path):
+    """The Image button takes several images, a chip each that a click takes off, up to the
+    chosen model's number; after a switch to a model that takes fewer, nothing is sent until
+    some are taken off, and then each goes to the agent as its own --image."""
     import agent_settings
     from agent_panel import agent_command, image_limit
     monkeypatch.setenv("APPDATA", str(tmp_path))

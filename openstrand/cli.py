@@ -378,6 +378,8 @@ def cmd_agent(args):
 
 
 def build_parser():
+    """The command line: one sub-command per tool (make, draw, tie, masks, agent, render...),
+    each with its options and the function that runs it."""
     p = argparse.ArgumentParser(prog='openstrand', description='Make, check, recolor and render OpenStrand Studio projects.')
     p.add_argument('--version', action='version', version=f'openstrand {__version__}')
     sub = p.add_subparsers(dest='command', required=True, metavar='command')

@@ -229,9 +229,11 @@ class FlowLayout(QLayout):
         return len(self.items)
 
     def itemAt(self, index):
+        """The item at index, or None past the end: Qt walks a layout until it gets None."""
         return self.items[index] if 0 <= index < len(self.items) else None
 
     def takeAt(self, index):
+        """Take the item at index out of the layout and return it (its widget is the caller's to delete)."""
         return self.items.pop(index) if 0 <= index < len(self.items) else None
 
     def expandingDirections(self):
@@ -251,6 +253,7 @@ class FlowLayout(QLayout):
         return self.minimumSize()
 
     def minimumSize(self):
+        """One item's width, the widest: the rest wrap under it, so the row never widens the panel."""
         size = QSize()
         for item in self.items:
             size = size.expandedTo(item.minimumSize())
@@ -783,6 +786,8 @@ class AgentPanel(QWidget):
     MARGIN = 12  # px between the agent and the canvas edges
 
     def __init__(self, main_window, canvas=None, language_code='en'):
+        """The panel for main_window, a child of its canvas (of the window itself when there
+        is none), in the app's language. It starts hidden, with no conversation."""
         # The agent floats over the bottom of the canvas: a child of the canvas,
         # so the canvas keeps its size and the drawing never moves.
         super().__init__(canvas if canvas is not None else main_window)
@@ -841,6 +846,8 @@ class AgentPanel(QWidget):
 
     # ------------------------------------------------------------------ UI
     def _build(self):
+        """Make the panel's widgets, top to bottom: the conversation, the attached images,
+        the chat box with its buttons, then the status line (session, mode, model, effort)."""
         self.setObjectName('agentPanel')
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.apply_theme(getattr(self.main_window, 'current_theme', 'default'))
@@ -974,6 +981,8 @@ class AgentPanel(QWidget):
     }
 
     def apply_theme(self, theme_name):
+        """The panel's colors for the app theme ('dark', 'light', anything else the default),
+        on its style sheet, its menus and icons, and the conversation drawn again in them."""
         c = self.THEMES.get(str(theme_name).lower(), self.THEMES['default'])
         self.colors = c
         self.theme_name = str(theme_name).lower()
@@ -1138,6 +1147,8 @@ class AgentPanel(QWidget):
         return super().event(event)
 
     def retranslate(self, language_code):
+        """Every word of the panel in the language, the conversation included; Hebrew also
+        turns the layout right to left."""
         self.language = language_code
         t = lambda key: _tr(language_code, key)
         self.working.format_time = lambda seconds: duration_text(seconds, t)
@@ -1184,6 +1195,8 @@ class AgentPanel(QWidget):
         self.show_attach()
 
     def show_attach(self):
+        """The Image button's words: 'Image', or 'Image 3/10' while images are attached, with
+        how many the chosen model takes as its tooltip."""
         model = agent_settings.load()['model']
         count = f' {len(self.image_paths)}/{image_limit(model)}' if self.image_paths else ''
         self.attach_button.setText(_tr(self.language, 'agent_attach') + count)
@@ -1813,6 +1826,12 @@ class AgentPanel(QWidget):
         self.send(prompt=prompt, shown=_tr(self.language, 'agent_build_plan'))
 
     def send(self, prompt=None, shown=None):
+        """Start a request in the agent's own process: what is typed in the box, or prompt
+        (shown: the words the conversation shows for it), with the attached images, the
+        canvas when it is ticked and the session so far. Nothing starts with an empty box or
+        while a request runs; nor, with a note that says why, in a built app (the agent needs
+        the source), with the agent off, without a key, with the session's limit spent, or
+        with more images attached than the model takes."""
         typed = prompt is None
         prompt = (self.prompt_edit.text() if typed else prompt).strip()
         if typed and prompt.lower() in ('/clear', '/new'):  # as in Claude Code

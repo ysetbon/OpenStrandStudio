@@ -179,8 +179,9 @@ How to plan them:
    stretch that moved; add points where it now goes.
 4. Heights on every cord that crosses another (see Heights above).
 5. Leave room: crossings two cord widths apart, loops at least four wide.
-6. Look at the picture of all steps; a slip knot's last steps must still be
-   "no knot: the cord would slip free" (`identify`), an overhand knot is not
+6. Look at the picture of all steps; in a slip knot's last steps `identify`
+   must still find no knot in the yarn ("no knot: the cord would slip free",
+   or "not knotted on its own" with the hook there): an overhand knot is not
    one.
 
 **Slip knot on a crochet hook** (the start of crochet and knitting): a loop,

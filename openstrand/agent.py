@@ -163,7 +163,8 @@ Step-by-step pictures (tutorials, "how to", "the next steps"):
 - A reference image with numbered or separate pictures: one step per picture,
   in its order, each showing what that picture shows.
 - A slip knot is not an overhand knot: pulling its working end undoes it, so
-  identify_knot answers "no knot: the cord would slip free" for a right one.
+  identify_knot finds no knot in the yarn of a right one ("no knot: the cord
+  would slip free"; with a hook in the picture, "not knotted on its own").
   The guide has it drawn step by step; start from that.
 
 Masks (which strand is on top at a crossing) in tight and crowded designs:

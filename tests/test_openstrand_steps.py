@@ -229,7 +229,16 @@ def test_the_guides_slip_knot_is_one_and_not_an_overhand_knot():
     for step in made:
         yarn = identify.cords(step["data"])[0]
         assert yarn["knot"] == "unknot", (step["title"], yarn["knot"])  # pulling the working end undoes it
-    assert "would slip free" in identify.summary(made[-1]["data"])
+    # As the person reads it: the yarn alone slips free; beside the hook it is not knotted on its own.
+    everything = made[-1]["data"]["strands"]
+    yarn = {s["layer_name"] for s in everything if s["type"] != "MaskedStrand" and s["set_number"] == 1}
+    yarn_only = dict(made[-1]["data"], strands=[
+        s for s in everything if s["layer_name"] in yarn or (
+            s["type"] == "MaskedStrand" and set(steps.mask_parts(s["layer_name"], sorted(yarn))) <= yarn)])
+    assert len(yarn_only["strands"]) > len(yarn)  # the yarn's own masks come with it
+    assert "would slip free" in identify.summary(yarn_only)
+    assert "cord 1: " in identify.summary(made[-1]["data"]) and \
+        "not knotted on its own" in identify.summary(made[-1]["data"]).splitlines()[0]
     last = made[-1]["data"]
     assert len(strands_of(last, hidden=True)) == 2 and "Hook" in project.describe(last)["groups"]
     # The loop is on the hook: the hook passes over one of its legs and under the other.
@@ -345,8 +354,9 @@ def test_the_agent_is_told_when_to_draw_steps():
     assert "in ONE draw_steps call, never one draw_design per picture" in text
     assert "never cords\n  drawn to look like them" in text
     assert "A slip knot is not an overhand knot" in text and "would slip free" in text
+    assert "not knotted on its own" in text  # what identify says with the hook in the picture
     assert "every crochet and knitting stitch" in text and 'fix only the steps that are off with "replace"' in text
-    assert "draw_steps when the pictures differ from step to\n  step" in APP_INSTRUCTIONS
+    assert "draw_steps when the pictures differ from\n  step to step" in APP_INSTRUCTIONS
     described = next(t for t in agent.TOOLS if t["name"] == "draw_steps")
     assert set(described["input_schema"]["properties"]) == {"name", "steps", "replace"}
     assert "Steps drawn one by one" in described["description"]

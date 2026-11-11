@@ -324,14 +324,58 @@ TOOLS = [
 
 
 
+# The long edge, in px, of the largest picture a model reads whole (Claude Sonnet 5.5 and
+# Haiku 5.5; the API shrinks a larger one to this itself). A larger file only makes every
+# round's upload slower, and past 10 MB the API refuses it: a phone's photo is 4,000 px.
+MAX_EDGE = 2576
+
+
+def shrunk(path):
+    """A picture larger than MAX_EDGE, made that size: (media type, bytes). None for one
+    that already fits, or that Qt cannot read (it is then sent as it is)."""
+    try:
+        from PyQt5.QtCore import QBuffer, QIODevice, Qt
+        from PyQt5.QtGui import QImageReader
+    except ImportError:
+        return None
+    reader = QImageReader(str(path))
+    reader.setAutoTransform(True)  # a photo taken sideways stays upright once it is saved again
+    size = reader.size()
+    if max(size.width(), size.height()) <= MAX_EDGE:
+        return None
+    image = reader.read()
+    if image.isNull():
+        return None
+    image = image.scaled(MAX_EDGE, MAX_EDGE, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    kind, quality = ('PNG', -1) if image.hasAlphaChannel() else ('JPEG', 90)
+    buffer = QBuffer()
+    buffer.open(QIODevice.WriteOnly)
+    if not image.save(buffer, kind, quality):
+        return None
+    return f'image/{kind.lower()}', bytes(buffer.data())
+
+
 def image_block(path):
     """A user-message image block for a PNG, JPEG, GIF or WebP file."""
     path = Path(path)
     media = mimetypes.guess_type(path.name)[0]
     if media not in ('image/png', 'image/jpeg', 'image/gif', 'image/webp'):
         raise ValueError(f'{path}: use a PNG, JPEG, GIF or WebP image')
-    data = base64.standard_b64encode(path.read_bytes()).decode('ascii')
+    media, raw = shrunk(path) or (media, path.read_bytes())
+    data = base64.standard_b64encode(raw).decode('ascii')
     return {'type': 'image', 'source': {'type': 'base64', 'media_type': media, 'data': data}}
+
+
+def reference_images(model, paths):
+    """The request's reference pictures as image blocks, no more than the model takes
+    (providers.image_limit)."""
+    paths = list(paths)
+    limit, label = providers.image_limit(model), providers.MODELS[model].label
+    if paths and not limit:
+        raise ValueError(f'{label} cannot see pictures: leave the images out, or use another model')
+    if len(paths) > limit:
+        raise ValueError(f'{label} takes up to {limit} reference images with one request ({len(paths)} given)')
+    return [image_block(p) for p in paths]
 
 
 def _searches(usage):
@@ -703,7 +747,10 @@ class Agent:
             prompt = ('The design on my canvas right now is already loaded as the current design '
                       f'({project.summary(start)}). Change it if my request is about it; '
                       'make a new one if I ask for something new.\n\n' + prompt)
-        content = [image_block(p) for p in images] + [{'type': 'text', 'text': prompt}]
+        content = reference_images(self.model, images) + [{'type': 'text', 'text': prompt}]
+        if len(content) > 1 and providers.provider_of(self.model).api == 'anthropic':
+            # The pictures go back with every round: cached after the first, a tenth of the price.
+            content[-1]['cache_control'] = {'type': 'ephemeral'}
         messages = [{'role': 'user', 'content': content}]
         said = []
         try:

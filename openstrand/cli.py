@@ -378,6 +378,8 @@ def cmd_agent(args):
 
 
 def build_parser():
+    """The command line: one sub-command per tool (make, draw, tie, masks, agent, render...),
+    each with its options and the function that runs it."""
     p = argparse.ArgumentParser(prog='openstrand', description='Make, check, recolor and render OpenStrand Studio projects.')
     p.add_argument('--version', action='version', version=f'openstrand {__version__}')
     sub = p.add_subparsers(dest='command', required=True, metavar='command')
@@ -473,7 +475,9 @@ def build_parser():
 
     agent_cmd = command('agent', 'ask the OpenStrand agent to build or change a design (needs an API key for the model)', cmd_agent)
     agent_cmd.add_argument('prompt', help='what to make, in plain words')
-    agent_cmd.add_argument('--image', action='append', help='a reference image (PNG, JPEG, GIF, WebP); repeatable')
+    agent_cmd.add_argument('--image', action='append',
+                           help='a reference image (PNG, JPEG, GIF, WebP); repeat it for more, up to 10 with one '
+                                'request (6 with haiku)')
     agent_cmd.add_argument('--model', default='sonnet',
                            help='a model id or alias: sonnet (Claude Sonnet 5.5, default), haiku, gpt (GPT-6.1 Terra), '
                                 'gpt-6.1-sol, gpt-6-astra, grok (Grok 4.7), kimi (Kimi K3.1 Pro), deepseek '

@@ -6,7 +6,7 @@ the app starts it (with --app), these tools go through a bridge instead
 stdout, and the app runs it with its own code and answers on stdin.
 
 - client.py   AppClient: the bridge's agent end
-- tabs.py     list, read (as it is now, or any undo step), open, rename, switch
+- tabs.py     list, read (as it is now, or any undo step), open, rename, switch, close
 - strands.py  move a strand's ends and handles in a tab
 - masks.py    edit masks in a tab
 - layers.py   the layer panel's right-click menu

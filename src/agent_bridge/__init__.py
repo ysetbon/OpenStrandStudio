@@ -8,7 +8,7 @@ openstrand/app/ for the other end).
 
 Each action is a few lines over the app's own code, one module per area:
 
-- tabs.py     list, read (as it is now, or any undo step), open, rename, switch
+- tabs.py     list, read (as it is now, or any undo step), open, rename, switch, close
 - strands.py  move a strand's ends and handles (Move mode's code, as a drag)
 - masks.py    erase, reset, swap, delete, create masks (the canvas's mask code)
 - layers.py   everything the layer panel's right-click menu does

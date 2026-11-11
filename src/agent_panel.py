@@ -45,6 +45,7 @@ TOOL_CHIPS = {
     'make_mxn': ('add_new_strand', '#93e993', '#1a1a1a'),
     'make_heart': ('add_new_strand', '#93e993', '#1a1a1a'),
     'draw_design': ('add_new_strand', '#93e993', '#1a1a1a'),
+    'draw_steps': ('add_new_strand', '#93e993', '#1a1a1a'),
     'load_sample': ('load', '#a07a6a', '#1a1a1a'),
     'search_samples': ('load', '#a07a6a', '#1a1a1a'),
     'render': ('save_image', '#8a3a55', '#ffffff'),
@@ -55,6 +56,7 @@ TOOL_CHIPS = {
     'open_in_new_tab': ('tabs', '#a04f9a', '#ffffff'),
     'rename_tab': ('tabs', '#a04f9a', '#ffffff'),
     'switch_tab': ('tabs', '#a04f9a', '#ffffff'),
+    'close_tab': ('tabs', '#a04f9a', '#ffffff'),
     'edit_mask_in_tab': ('agent_tool_edit_mask', '#a04f9a', '#ffffff'),
     'read_tab_step': ('tabs', '#a04f9a', '#ffffff'),
     'edit_strand_in_tab': ('agent_tool_edit_strand', '#a04f9a', '#ffffff'),
@@ -98,7 +100,8 @@ EASE_SECONDS = 0.35  # a change of tempo glides in
 # up by KICK for a moment, fading over KICK_SECONDS: the animation answers what the agent does.
 KICK, KICK_SECONDS = 0.9, 0.5
 # The tools that draw a design. Any tool that sends pictures of its progress counts too.
-PICTURE_TOOLS = {'make_turks_head', 'make_mxn', 'make_heart', 'draw_design', 'tie_knot', 'render', 'make_steps'}
+PICTURE_TOOLS = {'make_turks_head', 'make_mxn', 'make_heart', 'draw_design', 'draw_steps', 'tie_knot', 'render',
+                 'make_steps'}
 # A running tool's row: the picture of what it works on, and its progress bar (px).
 FRAME_SIZE = (132, 78)
 BAR_SIZE = (170, 8)
@@ -110,8 +113,8 @@ PREVIEW_SIZE = (360, 213)
 # picture for its own tools, see openstrand.agent.IMAGE_TOOLS): the canvas after an
 # edit or a view change, the group panel, the window after a setting (the settings
 # dialog when it was opened). Lists and readings get no picture.
-CANVAS_TOOLS = {'open_in_new_tab', 'switch_tab', 'edit_strand_in_tab', 'edit_mask_in_tab', 'edit_layers_in_tab',
-                'edit_groups_in_tab', 'app_window'}
+CANVAS_TOOLS = {'open_in_new_tab', 'switch_tab', 'close_tab', 'edit_strand_in_tab', 'edit_mask_in_tab',
+                'edit_layers_in_tab', 'edit_groups_in_tab', 'app_window'}
 # The automatic Refresh models: once a day, checked hourly, first a little after the app starts.
 AUTO_REFRESH_HOURS = 24
 AUTO_REFRESH_CHECK_MS = 60 * 60 * 1000
@@ -126,7 +129,8 @@ def _tr(language, key):
 
 
 # An Allow/Deny card's words, by the bridge action that asks (src/agent_bridge).
-CONFIRM_KEYS = {'rename_tab': 'agent_confirm_rename', 'edit_mask': 'agent_confirm_mask',
+CONFIRM_KEYS = {'rename_tab': 'agent_confirm_rename', 'close_tab': 'agent_confirm_close',
+                'close_tab_unsaved': 'agent_confirm_close_unsaved', 'edit_mask': 'agent_confirm_mask',
                 'edit_strand': 'agent_confirm_strand', 'edit_layers': 'agent_confirm_layers',
                 'edit_groups': 'agent_confirm_groups', 'window': 'agent_confirm_window',
                 'settings': 'agent_confirm_settings'}
@@ -1344,6 +1348,14 @@ class AgentPanel(QWidget):
                 choice = f'<span style="color:{c["muted"]};">{esc(t(word))}</span>'
             return (f'<table cellspacing="0" cellpadding="6" style="margin:4px 0 4px 18px;'
                     f' border:1px solid {c["log_border"]};"><tr><td>{text}<br>{choice}</td></tr></table>')
+        if kind == 'closed_tab':
+            # A tab the agent closed, kept whole: one click brings it back.
+            text = esc(t('agent_tab_closed_unsaved' if e['unsaved'] else 'agent_tab_closed').format(name=e['title']))
+            action = (f'<span style="color:{c["muted"]};">{esc(t("agent_tab_reopened"))}</span>' if e['state']
+                      else f'<a href="os:reopen/{i}" style="color:{ACCENT}; font-weight:bold;'
+                           f' text-decoration:none;">{esc(t("agent_reopen_tab"))} ›</a>')
+            return (f'<table cellspacing="0" cellpadding="6" style="margin:4px 0 4px 18px;'
+                    f' border:1px solid {c["log_border"]};"><tr><td>{text}<br>{action}</td></tr></table>')
         if kind in ('share', 'gallery'):
             # Two questions, each its own yes: sharing with the developer, then (only after a
             # yes) the public gallery. Each text is a few short lines.
@@ -1647,6 +1659,14 @@ class AgentPanel(QWidget):
                     self.add_note(_tr(self.language, 'agent_failed').format(error=e), self.colors['bad'])
             else:
                 self.design_ready.emit(entry['path'])
+        elif what == 'reopen' and entry['kind'] == 'closed_tab' and entry['state'] is None:
+            try:
+                if self.bridge is not None and self.bridge.reopen_tab(entry['session'], entry['index']):
+                    entry['state'] = 'reopened'
+                    entry['session'] = None  # the tab is the app's again
+                    terminal_log(f'reopened by the person: the tab "{entry["title"]}" the agent closed')
+            except Exception as e:  # noqa: BLE001
+                self.add_note(_tr(self.language, 'agent_failed').format(error=e), self.colors['bad'])
         elif what in ('allow', 'deny') and entry['state'] is None:
             allowed = what == 'allow'
             entry['state'] = 'allowed' if allowed else 'denied'
@@ -2084,6 +2104,15 @@ class AgentPanel(QWidget):
         png = path[:-5] + '.png'
         self.add_entry({'kind': 'design', 'path': path, 'png': png if os.path.exists(png) else None,
                         'opened': False, 'name': title, 'title': title})
+
+    def add_closed_tab_card(self, session, index, title, unsaved):
+        """The agent closed a tab: the tab itself is kept on this card (its design, undo history,
+        file and unsaved state), so Reopen puts it back as it was. It lasts as long as the
+        conversation does: a new session lets it go, as closing a tab by hand does at once."""
+        self.add_entry({'kind': 'closed_tab', 'session': session, 'index': index, 'title': title,
+                        'unsaved': bool(unsaved), 'state': None})
+        terminal_log(f'the agent closed the tab "{title}"{" (it had unsaved changes)" if unsaved else ""}; '
+                     'Reopen on its card in the panel brings it back')
 
     def add_confirm_card(self, call_id, what):
         """Ask mode: a change the agent asked for waits for the person's Allow or Deny, and the agent

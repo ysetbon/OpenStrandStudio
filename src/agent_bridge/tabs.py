@@ -1,12 +1,25 @@
 """Tabs: list them, read one as it is now or at any step of its undo history,
-open a design in a new tab, rename, switch. Every tab has a version (a
+open a design in a new tab, rename, switch, close. Every tab has a version (a
 fingerprint of its strands and groups) that changes whenever the person
-edits, undoes or redoes."""
+edits, undoes or redoes.
+
+Closing is the one thing here that can lose the person's work, so it is
+hedged on this side, whatever the agent was told or understood:
+- one tab per request, named by its id AND its title as list_tabs gives them
+  now: a guessed, remembered or off-by-one id closes nothing;
+- a tab with unsaved changes stays open unless the request says to discard
+  them and names the tab's version: when the person changed the tab since the
+  agent looked, it stays open;
+- the app's own "Unsaved changes" dialog is never shown for the agent (it
+  would wait for a click nobody knows to make): the checks above stand in;
+- the closed tab is kept, whole (design, undo history, file, unsaved state),
+  on a card in the conversation with Reopen: a wrong close is one click to
+  put right."""
 import hashlib
 import json
 import os
 
-from .base import Action, BridgeError
+from .base import Action, BridgeError, patched
 
 MAX_TITLE = 60
 
@@ -20,6 +33,7 @@ class TabActions:
         'rename_tab': Action(run='rename_tab_action', change=True, tab=True, check='check_rename',
                              card='rename_card'),
         'switch_tab': Action(run='switch_tab_action', change=True, tab=True, card='switch_card'),
+        'close_tab': Action(run='close_tab_action', change=True, tab=True, check='check_close', card='close_card'),
     }
 
     # ---------------------------------------------------------- actions
@@ -63,6 +77,68 @@ class TabActions:
         if not self.tabs.switch_to_tab(session.id):
             raise BridgeError('the app could not switch tabs')
         return {'tab_id': session.id, 'title': self.tabs.title_for(session), 'note': 'switched'}
+
+    # ------------------------------------------------------------ closing
+    def check_close(self, args, session):
+        """Refuses a close that is not surely the tab meant, or that would lose work unasked."""
+        title = self.tabs.title_for(session)
+        same = lambda text: ' '.join(str(text or '').split()).casefold()
+        if same(args.get('title')) != same(title):
+            raise BridgeError(f'tab {session.id} is titled "{title}", not "{args.get("title") or ""}": nothing was '
+                              'closed. Call list_tabs and give the id and the title of the tab the person asked '
+                              'to close, both as listed')
+        if not session.dirty:
+            return
+        if args.get('discard_unsaved') is not True:
+            raise BridgeError(f'"{title}" has unsaved changes, so it stays open: closing it would lose them. Tell '
+                              'the person it is unsaved. Close it only if they said, in this request, to close it '
+                              'without saving or to discard its changes: then pass discard_unsaved: true with its '
+                              'version from list_tabs. To save it first: switch_tab to it, then app_window save')
+        expected = args.get('version')
+        if not expected:
+            raise BridgeError(f'"{title}" has unsaved changes: to close it without saving, also give its version '
+                              'from list_tabs, so it is closed only as you saw it')
+        if str(expected) != self.version(session):
+            raise BridgeError(f'"{title}" changed since you listed it (the person is working in it): it stays '
+                              'open. Tell the person, rather than closing work they just did')
+
+    def close_card(self, args, session):
+        """Ask mode's Allow / Deny card, which says when the tab has unsaved changes."""
+        return ('close_tab_unsaved' if session.dirty else 'close_tab', self.tabs.title_for(session), '')
+
+    def close_tab_action(self, args, session):
+        """Close the tab with the app's own code, after check_close, keeping it on a Reopen card."""
+        tm = self.tabs
+        title, unsaved, index = tm.title_for(session), bool(session.dirty), tm.tabs.index(session)
+        if session.id == tm.active_tab_id and not tm.capture_active_session():
+            # What is on the canvas is this tab: without a copy of it, Reopen would have nothing.
+            raise BridgeError(f'"{title}" could not be kept for reopening, so it was not closed')
+        # check_close has decided about unsaved changes: the app's own dialog must not open,
+        # it would wait for a click while the agent waits for this answer.
+        with patched(self.canvas, 'skip_close_tab_warning', True):
+            tm.close_tab(session.id)
+        if tm.find(session.id) is not None:
+            raise BridgeError(f'the app did not close "{title}"')
+        self.panel.add_closed_tab_card(session, index, title, unsaved)
+        note = f'closed "{title}"' + (' without saving it' if unsaved else '')
+        return {'tab_id': session.id, 'title': title, 'closed': True, 'unsaved': unsaved,
+                'note': note + '; the person can reopen it from the card in the conversation'}
+
+    def reopen_tab(self, session, index):
+        """A tab the agent closed, back as it was: its design, undo history, file and unsaved
+        state, at its old place, showing. For the Reopen link on its card."""
+        tm = self.tabs
+        if tm.find(session.id) is not None:
+            return False
+        if not tm._capture_or_warn():  # the tab showing now is kept first, as for any switch
+            return False
+        unsaved = session.dirty
+        tm.tabs.insert(max(0, min(index, len(tm.tabs))), session)
+        tm.active_tab_id = session.id
+        tm.restore_session(session.id)
+        session.dirty = unsaved
+        tm.changed.emit()
+        return True
 
     def list_tabs(self):
         tm = self.tabs

@@ -91,7 +91,11 @@ def mask_parts(mask_name, names):
 
 
 def cords_and_masks(project):
-    strands = [s for s in project['strands'] if s['type'] != 'MaskedStrand']
+    """The strands that make the cords, and the masks. A hidden strand showing
+    its full arrow is a note on the finished design (draw's "arrows"), not a
+    cord: it comes with the last step only."""
+    strands = [s for s in project['strands'] if s['type'] != 'MaskedStrand'
+               and not (s.get('is_hidden') and s.get('full_arrow_visible'))]
     masks = [s for s in project['strands'] if s['type'] == 'MaskedStrand']
     return strands, masks
 

@@ -1,6 +1,7 @@
 """The person's tabs: list them, read one as it is now (every strand's points,
 masks, undo history and version) or at any step of its history, open a
-design in a new tab, rename, switch."""
+design in a new tab, rename, switch, close (only the tabs the person named:
+src/agent_bridge/tabs.py says how the app hedges it)."""
 import json
 
 from .. import project
@@ -38,8 +39,9 @@ TOOLS = [
     {
         'name': 'open_in_new_tab',
         'description': ("Open a design made in this request in a new tab of the person's app, with a title. "
-                        'design is "current" (the current design) or "step N" (from make_steps). The '
-                        "person's other tabs stay as they are. Open steps in order, one call each."),
+                        'design is "current" (the current design) or "step N" (from tie_knot, make_steps or '
+                        "draw_steps). The person's other tabs stay as they are. Open steps in order, one call "
+                        'each.'),
         'input_schema': {'type': 'object', 'properties': {
             'design': {'type': 'string', 'description': '"current" or "step 1", "step 2", ...'},
             'title': {'type': 'string', 'description': 'the tab title, short, e.g. "Step 1 · first loop"'},
@@ -57,6 +59,23 @@ TOOLS = [
         'description': "Show one of the person's tabs.",
         'input_schema': {'type': 'object', 'properties': {'tab_id': {'type': 'string'}}, 'required': ['tab_id']},
     },
+    {
+        'name': 'close_tab',
+        'description': ("Close one of the person's tabs: only a tab the person asked, in this request, to have "
+                        'closed. One tab per call. Give its tab_id and its title, both exactly as list_tabs lists '
+                        'them now: the app closes nothing when they do not match. A tab with unsaved changes is '
+                        'refused, as the app itself would ask the person first; pass discard_unsaved: true, with '
+                        "the tab's version from list_tabs, only when the person said in words that it may be "
+                        'closed without saving (or to discard its changes). It is then closed only if it is still '
+                        'as you listed it. The person gets a card to reopen each closed tab.'),
+        'input_schema': {'type': 'object', 'properties': {
+            'tab_id': {'type': 'string', 'description': 'from list_tabs'},
+            'title': {'type': 'string', 'description': "the tab's title, as list_tabs gives it"},
+            'discard_unsaved': {'type': 'boolean', 'description': 'true only when the person said to close it '
+                                                                  'without saving or to discard its changes'},
+            'version': {'type': 'string', 'description': 'with discard_unsaved: the version list_tabs gave'},
+        }, 'required': ['tab_id', 'title']},
+    },
 ]
 LOOK_ONLY = {'list_tabs', 'read_tab', 'read_tab_step'}
 
@@ -64,16 +83,32 @@ INSTRUCTIONS = """- When asked about tabs, use these tools. For how to tie a kno
   (it makes checked steps, for the stopper knots and for the bends and loop
   knots in knot_library alike), then open_in_new_tab for each step in order,
   with titles like "Step 1 · first loop" that say what the step does. For
-  other step-by-step instructions (a knot joining two cords or a loop knot
-  that is not in knot_library, a stitch, a weave), make the design, call
-  make_steps, then open the steps the same way. A tutorial is its steps open
-  in tabs, not a written list.
+  other step-by-step instructions, draw_steps when the pictures differ from
+  step to step (a crochet or knitting stitch, a slip knot, a loop knot that is
+  not in knot_library, anything with a hook or an arrow), else make the design
+  and call make_steps (a weave, a mat, a knot joining two cords drawn loose
+  that is not in knot_library); then open the steps the same way. A tutorial
+  is its steps open in tabs, not a written list.
 - To work on what is in a tab, read_tab it first; it becomes the current design.
   The person keeps working while you do: when they may have changed the tab, or
   an edit is refused because the tab changed, read_tab it again. Use the strand
   names and points read_tab gives, never ones from earlier in the conversation.
 - To see the tab before a change, or a step the person undid, read_tab_step
   with a step from read_tab's history.
+- Closing tabs (close_tab): only when the person asks, in this request, to
+  close, exit or remove tabs, and only the tabs their words name. Call
+  list_tabs first, decide which tabs they mean (by title, by what is in them,
+  "the step tabs", "all but this one"), and close exactly those, one call
+  each, with the id and title list_tabs gave. Never close a tab because it
+  looks finished, empty or left over, or to tidy up after your own work. When
+  their words could fit different sets of tabs ("close the old ones"), close
+  none and ask which.
+- A tab that list_tabs marks unsaved stays open unless the person said to
+  close without saving, to discard, or that they do not need the changes:
+  only then pass discard_unsaved with its version. "Close all tabs" alone
+  does not say that: close the saved ones, leave the unsaved ones open and
+  name them, so the person can save them or tell you to discard them. End by
+  saying which tabs you closed and which you left open, and why.
 """
 
 
@@ -122,7 +157,8 @@ def open_in_new_tab(agent, args):
     else:
         number = which.replace('step', '').strip()
         if not number.isdigit() or not 1 <= int(number) <= len(ws.steps):
-            raise ToolError(f'no {which}: make_steps made {len(ws.steps)} steps')
+            raise ToolError(f'no {which}: there are {len(ws.steps)} steps in this request (tie_knot, make_steps '
+                            'and draw_steps make them; steps of an earlier request are gone, make them again)')
         path = ws.steps[int(number) - 1][1]
     result = agent.app.call('open_in_new_tab', {'path': str(path), 'title': title})
     if result.get('opened'):
@@ -137,13 +173,24 @@ def rename_tab(agent, args):
     return f"Rename tab · {result.get('title', '')}", result.get('note') or 'done'
 
 
+def close_tab(agent, args):
+    """Ask the app to close one tab; the app checks the id, the title and unsaved work itself."""
+    request = {'tab_id': str(args.get('tab_id', '')), 'title': str(args.get('title') or ''),
+               'discard_unsaved': args.get('discard_unsaved') is True}  # true itself: nothing else discards
+    if args.get('version'):
+        request['version'] = str(args['version'])
+    result = agent.app.call('close_tab', request)
+    return f"Close tab · {result.get('title', '')}", result.get('note') or 'closed'
+
+
 def switch_tab(agent, args):
     result = agent.app.call('switch_tab', {'tab_id': str(args.get('tab_id', ''))})
     return f"Switch tab · {result.get('title', '')}", result.get('note') or 'done'
 
 
 HANDLERS = {'list_tabs': list_tabs, 'read_tab': read_tab, 'read_tab_step': read_tab_step,
-            'open_in_new_tab': open_in_new_tab, 'rename_tab': rename_tab, 'switch_tab': switch_tab}
+            'open_in_new_tab': open_in_new_tab, 'rename_tab': rename_tab, 'switch_tab': switch_tab,
+            'close_tab': close_tab}
 
 
 def history_text(history):

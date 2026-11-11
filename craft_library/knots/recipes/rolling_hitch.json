@@ -1,0 +1,21 @@
+{
+  "name": "rolling_hitch",
+  "craft": "knots",
+  "title": "Rolling hitch",
+  "also": ["Magnus hitch", "ABOK #1734", "rolling hitch (1)"],
+  "about": "A clove hitch with its first turn doubled: two turns round the rod, each crossing over the standing part, the second between the first and the standing part, then a half hitch on the other side. It grips when the standing part is pulled along the rod towards the turns (here to the right). Shown loose, from the front.",
+  "kind": "hitch",
+  "width": 24,
+  "cords": [
+    {"label": "Rod", "color": "gold", "smooth": false, "points": [[150, 400], [1050, 400]]},
+    {"label": "Working cord", "color": "teal", "points": [[600, 720], [600, 640], [600, 330], [603, 315], [612, 302], [625, 293], [640, 290], [720, 290], [735, 293], [748, 302], [757, 315], [760, 330], [760, 500], [757, 515], [748, 528], [735, 537], [720, 540], [540, 540], [525, 537], [512, 528], [503, 515], [500, 500], [500, 240], [503, 225], [512, 212], [525, 203], [540, 200], [640, 200], [655, 203], [668, 212], [677, 225], [680, 240], [680, 580], [677, 595], [668, 608], [655, 617], [640, 620], [320, 620], [305, 617], [292, 608], [283, 595], [280, 580], [280, 330], [283, 315], [292, 302], [305, 293], [320, 290], [360, 290], [375, 293], [388, 302], [397, 315], [400, 330], [400, 640], [400, 720]]}
+  ],
+  "patterns": ["UOUUOO", "UUOUUUOOOUOOUOUO"],
+  "steps": [
+    {"shown": ["all", null], "caption": "Lay the rod straight across. Nothing else is tied yet."},
+    {"shown": ["all", {"after": 5}], "arrow": 1, "caption": "Bring the working cord up over the rod, across to the right and down under it."},
+    {"shown": ["all", {"after": 7}], "arrow": 1, "caption": "Carry it across to the left, over the standing part: that is the first turn."},
+    {"shown": ["all", {"after": 12}], "arrow": 1, "caption": "Take it up over the rod again, over the first turn and down under the rod between the first turn and the standing part. Bring it down over the first turn and across to the left over the standing part: the second turn."},
+    {"shown": ["all", "all"], "caption": "Take it up over the rod on the far side of the standing part, down under the rod, and down over the part it has just crossed: the half hitch that locks the knot."}
+  ]
+}

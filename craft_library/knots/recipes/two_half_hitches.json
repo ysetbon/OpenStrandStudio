@@ -1,0 +1,20 @@
+{
+  "name": "two_half_hitches",
+  "craft": "knots",
+  "title": "Two half hitches",
+  "also": ["double half hitch round the standing part", "two half-hitches"],
+  "about": "Ties a rope to a ring, a rail or a post: one turn round it, then two half hitches round the rope's own standing part, both made the same way, so that they form a clove hitch on the standing part. Shown loose and flat.",
+  "kind": "hitch",
+  "width": 24,
+  "cords": [
+    {"label": "Rod", "color": "gold", "smooth": false, "points": [[250, 300], [1050, 300]]},
+    {"label": "Rope", "color": "teal", "points": [[600, 900], [600, 720], [600, 600], [600, 480], [600, 360], [600, 300], [600, 250], [620, 180], [680, 125], [740, 110], [800, 125], [860, 180], [880, 250], [880, 300], [880, 400], [872, 445], [845, 472], [800, 480], [760, 480], [600, 480], [560, 480], [525, 470], [505, 445], [500, 420], [505, 395], [525, 370], [560, 360], [600, 360], [700, 360], [735, 368], [755, 390], [760, 420], [760, 480], [760, 600], [760, 680], [752, 705], [730, 718], [700, 720], [600, 720], [560, 720], [525, 710], [505, 685], [500, 660], [505, 635], [525, 610], [560, 600], [600, 600], [760, 600], [840, 600], [940, 600]]}
+  ],
+  "patterns": ["UO", "UOUOOUUOUOUOUO"],
+  "steps": [
+    {"shown": ["all", null], "caption": "The rod, rail or ring the rope is tied to."},
+    {"shown": ["all", {"after": 6}], "arrow": 1, "caption": "Bring the end up over the rod in front and down behind it."},
+    {"shown": ["all", {"after": 10}], "arrow": 1, "caption": "First half hitch: take the end across over the standing part, back under it, and down over its own part."},
+    {"shown": ["all", "all"], "caption": "Second half hitch, below the first and made the same way: over the standing part, back under it, and out over its own part. Push the two hitches together and up to the rod."}
+  ]
+}

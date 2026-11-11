@@ -1,0 +1,26 @@
+{
+  "name": "alternating_square_knots",
+  "craft": "macrame",
+  "title": "Alternating square knots",
+  "also": ["alternating square knot", "ASK", "alternating square knot pattern", "square knot netting"],
+  "about": "The net of macrame: a row of square knots, then a row tied with the cords between them, two from the knot on each side, so every knot sits under the gap of the row above. Shown loose: two knots above, one below on the four middle cords.",
+  "kind": "macrame",
+  "width": 22,
+  "cords": [
+    {"label": "Cord 1", "color": "teal", "points": [[170, 80], [125, 140], [100, 200], [120, 250], [170, 270], [265, 270], [335, 270], [420, 270], [475, 285], [500, 340], [500, 385], [500, 430], [475, 485], [420, 500], [335, 500], [265, 500], [205, 500], [140, 512], [102, 560], [112, 630], [170, 720], [170, 1000], [170, 1420]]},
+    {"label": "Cord 2", "color": "gold", "points": [[265, 80], [265, 720], [265, 1420]]},
+    {"label": "Cord 3", "color": "gold", "points": [[335, 80], [335, 400], [335, 720], [350, 770], [405, 825], [425, 840], [400, 900], [420, 950], [470, 970], [565, 970], [635, 970], [720, 970], [775, 985], [800, 1040], [800, 1085], [800, 1130], [775, 1185], [720, 1200], [635, 1200], [565, 1200], [505, 1200], [440, 1212], [402, 1260], [412, 1330], [470, 1420]]},
+    {"label": "Cord 4", "color": "rose", "points": [[420, 80], [420, 180], [420, 270], [414, 316], [388, 338], [335, 340], [265, 340], [212, 337], [186, 312], [180, 270], [174, 222], [145, 192], [100, 187], [56, 198], [33, 240], [28, 330], [32, 400], [52, 436], [110, 447], [170, 450], [200, 470], [205, 500], [212, 545], [245, 568], [265, 570], [335, 570], [390, 567], [416, 545], [420, 500], [424, 452], [458, 424], [500, 420], [546, 436], [568, 490], [566, 600], [565, 700], [565, 1100], [565, 1420]]},
+    {"label": "Cord 5", "color": "teal", "points": [[770, 80], [725, 140], [700, 200], [720, 250], [770, 270], [865, 270], [935, 270], [1020, 270], [1075, 285], [1100, 340], [1100, 385], [1100, 430], [1075, 485], [1020, 500], [935, 500], [865, 500], [805, 500], [740, 512], [702, 560], [690, 640], [650, 720], [635, 800], [635, 1100], [635, 1420]]},
+    {"label": "Cord 6", "color": "gold", "points": [[865, 80], [865, 400], [865, 720], [845, 790], [775, 850], [728, 900], [720, 970], [714, 1016], [688, 1038], [635, 1040], [565, 1040], [512, 1037], [486, 1012], [480, 970], [474, 922], [445, 892], [400, 887], [356, 898], [333, 940], [328, 1030], [332, 1100], [352, 1136], [410, 1147], [470, 1150], [500, 1170], [505, 1200], [512, 1245], [545, 1268], [565, 1270], [635, 1270], [690, 1267], [716, 1245], [720, 1200], [724, 1152], [758, 1124], [800, 1120], [846, 1136], [868, 1190], [866, 1300], [820, 1380], [790, 1420]]},
+    {"label": "Cord 7", "color": "gold", "points": [[935, 80], [935, 720], [935, 1420]]},
+    {"label": "Cord 8", "color": "rose", "points": [[1020, 80], [1020, 180], [1020, 270], [1014, 316], [988, 338], [935, 340], [865, 340], [812, 337], [786, 312], [780, 270], [774, 222], [745, 192], [700, 187], [656, 198], [633, 240], [628, 330], [632, 400], [652, 436], [710, 447], [770, 450], [800, 470], [805, 500], [812, 545], [845, 568], [865, 570], [935, 570], [990, 567], [1016, 545], [1020, 500], [1024, 452], [1058, 424], [1100, 420], [1146, 436], [1168, 490], [1166, 600], [1120, 680], [1090, 720], [1080, 1000], [1080, 1420]]}
+  ],
+  "patterns": ["UOOOUUOOOU", "UOUO", "UOUOUOOOUUOOOU", "OUUUOOUUUOUOUO", "UOOOUUOOOUUOUO", "UOUOOUUUOOUUUO", "UOUO", "OUUUOOUUUO"],
+  "steps": [
+    {"shown": [{"after": 0}, {"after": 0}, {"after": 0}, {"after": 0}, {"after": 0}, {"after": 0}, {"after": 0}, {"after": 0}], "caption": "Eight cords side by side, in two groups of four."},
+    {"shown": ["all", "all", {"after": 4}, {"after": 10}, {"after": 0}, {"after": 0}, {"after": 0}, {"after": 0}], "caption": "Tie a square knot with the four cords on the left: the outer two are the working cords, the inner two the fillers."},
+    {"shown": ["all", "all", {"after": 4}, {"after": 10}, {"after": 10}, {"after": 4}, "all", "all"], "caption": "Tie another with the four cords on the right."},
+    {"shown": ["all", "all", "all", "all", "all", "all", "all", "all"], "caption": "Leave the outer two cords on each side alone. With the four middle cords, two from each knot, tie a square knot below the gap: the cords that were fillers are now its working cords."}
+  ]
+}

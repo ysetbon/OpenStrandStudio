@@ -1,0 +1,20 @@
+{
+  "name": "running_bowline",
+  "craft": "knots",
+  "title": "Running bowline",
+  "also": ["running bowline knot", "bowline noose"],
+  "about": "A noose that runs freely and never jams: a bowline tied round its own standing part, so the standing part passes through the loop. Shown loose and flat.",
+  "kind": "loop",
+  "width": 22,
+  "cords": [
+    {"label": "Rope", "color": "teal", "points": [[1000, 700], [860, 696], [668, 694], [560, 690], [455, 694], [360, 690], [290, 650], [255, 570], [250, 420], [262, 270], [310, 160], [400, 95], [500, 62], [570, 72], [598, 110], [600, 150], [600, 240], [600, 300], [600, 360], [593, 394], [572, 420], [540, 438], [518, 446], [506, 468], [518, 503], [552, 537], [600, 550], [648, 537], [682, 503], [695, 455], [682, 408], [648, 373], [600, 360], [560, 353], [540, 350], [490, 350], [446, 368], [412, 410], [392, 480], [392, 560], [414, 640], [462, 706], [535, 742], [610, 736], [668, 694], [688, 630], [676, 572], [660, 529], [660, 381], [660, 335], [660, 300], [642, 258], [600, 240], [558, 258], [540, 300], [540, 350], [540, 438], [540, 529], [540, 640]]}
+  ],
+  "patterns": ["OUOUUOOUOUOUUOUOOU"],
+  "steps": [
+    {"shown": [{"after": 10}], "arrow": 0, "caption": "Bring the rope round and make a small loop in it: the cord crosses over the part it came from."},
+    {"shown": [{"after": 12}], "arrow": 0, "caption": "Take the end round the standing part further back along the rope: over it, round, and back under it. The standing part now runs through the big loop."},
+    {"shown": [{"after": 14}], "arrow": 0, "caption": "Bring the end up through the small loop from underneath."},
+    {"shown": [{"after": 15}], "arrow": 0, "caption": "Pass it behind the part above the small loop."},
+    {"shown": ["all"], "caption": "And back down through the small loop, beside itself: a bowline. Pull the standing part and the loop runs down it like a noose."}
+  ]
+}

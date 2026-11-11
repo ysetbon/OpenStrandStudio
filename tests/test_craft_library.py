@@ -167,6 +167,14 @@ def test_a_step_can_stop_after_a_number_of_crossings():
     ("Macramé", "macrame square knot"),
     ("weaver's knot", "sheet bend"),
     ("bowline", "bowline"),
+    ("surgeon's knot", "surgeons_knot"),
+    ("ring bend", "water_knot"),
+    ("flemish bend", "figure_eight_bend"),
+    ("figure eight on a bight", "figure_eight_loop"),
+    ("round turn and two half hitches", "round_turn_and_two_half_hitches"),
+    ("alternating square knots", "alternating_square_knots"),
+    ("scoubidou start", "box_stitch_start"),
+    ("chinese cross knot", "cross_knot"),
 ])
 def test_search_finds_a_design_by_the_names_people_use(asked, name):
     assert library.search(asked)[0]["name"] == name
@@ -174,7 +182,7 @@ def test_search_finds_a_design_by_the_names_people_use(asked, name):
 
 def test_search_by_craft_lists_that_craft():
     assert {e["name"] for e in library.search("chinese knot")} == {
-        "chinese_cloverleaf", "double_coin_knot", "good_luck_knot", "pan_chang_knot"}
+        "chinese_cloverleaf", "cloverleaf_knot", "cross_knot", "double_coin_knot", "good_luck_knot", "pan_chang_knot"}
     assert [e["name"] for e in library.search("crochet")] == ["slip_knot"]
     assert library.search("knitting swatch") == [] and library.search("4x3 bracelet") == []
 

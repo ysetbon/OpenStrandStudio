@@ -1,0 +1,19 @@
+{
+  "name": "sheepshank",
+  "craft": "knots",
+  "title": "Sheepshank",
+  "also": ["sheep shank", "sheepshank knot"],
+  "about": "Shortens a rope or takes a worn part out of the load: the rope is folded in three, and a half hitch in each standing part is dropped over the bight next to it. Holds only under tension; shown loose and flat.",
+  "kind": "loop",
+  "width": 22,
+  "cords": [
+    {"label": "Rope", "color": "teal", "points": [[100, 320], [200, 320], [330, 320], [380, 320], [420, 320], [455, 335], [470, 370], [470, 400], [470, 470], [470, 550], [470, 600], [449, 628], [400, 640], [351, 628], [330, 600], [330, 550], [330, 480], [330, 400], [330, 320], [330, 290], [341, 262], [370, 250], [420, 250], [600, 250], [730, 250], [870, 250], [960, 250], [1000, 275], [1010, 325], [1000, 375], [960, 400], [870, 400], [730, 400], [600, 400], [470, 400], [330, 400], [240, 400], [200, 425], [190, 475], [200, 525], [240, 550], [330, 550], [470, 550], [600, 550], [780, 550], [830, 550], [859, 538], [870, 510], [870, 480], [870, 400], [870, 320], [870, 250], [870, 200], [849, 172], [800, 160], [751, 172], [730, 200], [730, 250], [730, 330], [730, 400], [730, 430], [745, 465], [780, 480], [820, 480], [870, 480], [1000, 480], [1100, 480]]}
+  ],
+  "patterns": ["OUUOOUOUUOOUUOUOOUUO"],
+  "steps": [
+    {"shown": [{"after": 6}], "arrow": 0, "caption": "Make a small loop in the standing part, near one end of the rope: the rope goes round and passes under itself where the loop closes."},
+    {"shown": [{"after": 10}], "arrow": 0, "caption": "Run the rope along the top part to the right, round the right bight, and back along the middle part to the centre."},
+    {"shown": [{"after": 14}], "arrow": 0, "caption": "Take the middle part left through the small loop: over its right side, under its left side, round the left bight, then back right along the bottom part, under the left side of the loop and over its right side."},
+    {"shown": ["all"], "caption": "Near the other end, make the same small loop in the standing part, round the right bight: the bight goes through it, over one side and under the other. Pull both standing parts: each loop grips the bight inside it."}
+  ]
+}

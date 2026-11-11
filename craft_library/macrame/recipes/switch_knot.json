@@ -1,0 +1,22 @@
+{
+  "name": "switch_knot",
+  "craft": "macrame",
+  "title": "Switch knot",
+  "also": ["switch knots", "switched square knot", "square knot switch"],
+  "about": "Square knots with a gap between them in which the cords change places: the working cords cross to the middle and become the fillers, the fillers move out and tie the next knot. Shown loose, with the working cords crossing in front of the fillers.",
+  "kind": "sennit",
+  "width": 22,
+  "cords": [
+    {"label": "Left working cord", "color": "teal", "points": [[470, 80], [425, 140], [400, 200], [420, 250], [470, 270], [565, 270], [635, 270], [720, 270], [775, 285], [800, 340], [800, 385], [800, 430], [775, 485], [720, 500], [635, 500], [565, 500], [505, 500], [440, 512], [402, 560], [412, 630], [470, 720], [540, 800], [565, 860], [565, 1100], [565, 1480]]},
+    {"label": "Filler cord", "color": "gold", "points": [[565, 80], [565, 400], [565, 720], [520, 790], [470, 840], [425, 900], [400, 960], [420, 1010], [470, 1030], [565, 1030], [635, 1030], [720, 1030], [775, 1045], [800, 1100], [800, 1145], [800, 1190], [775, 1245], [720, 1260], [635, 1260], [565, 1260], [505, 1260], [440, 1272], [402, 1320], [412, 1390], [470, 1480]]},
+    {"label": "Filler cord", "color": "gold", "points": [[635, 80], [635, 400], [635, 720], [680, 780], [720, 840], [720, 940], [720, 1030], [714, 1076], [688, 1098], [635, 1100], [565, 1100], [512, 1097], [486, 1072], [480, 1030], [474, 982], [445, 952], [400, 947], [356, 958], [333, 1000], [328, 1090], [332, 1160], [352, 1196], [410, 1207], [470, 1210], [500, 1230], [505, 1260], [512, 1305], [545, 1328], [565, 1330], [635, 1330], [690, 1327], [716, 1305], [720, 1260], [724, 1212], [758, 1184], [800, 1180], [846, 1196], [868, 1250], [866, 1360], [820, 1440], [790, 1480]]},
+    {"label": "Right working cord", "color": "rose", "points": [[720, 80], [720, 180], [720, 270], [714, 316], [688, 338], [635, 340], [565, 340], [512, 337], [486, 312], [480, 270], [474, 222], [445, 192], [400, 187], [356, 198], [333, 240], [328, 330], [332, 400], [352, 436], [410, 447], [470, 450], [500, 470], [505, 500], [512, 545], [545, 568], [565, 570], [635, 570], [690, 567], [716, 545], [720, 500], [724, 452], [758, 424], [800, 420], [846, 436], [868, 490], [866, 600], [820, 680], [760, 740], [665, 800], [635, 860], [635, 1100], [635, 1480]]}
+  ],
+  "patterns": ["UOOOUUOOOUOUOUO", "UOUOUUOOOUUOOOU", "UOUOUOUUUOOUUUO", "OUUUOOUUUOOUOUO"],
+  "steps": [
+    {"shown": [{"after": 0}, {"after": 0}, {"after": 0}, {"after": 0}], "caption": "Four cords side by side: two filler cords in the middle, a working cord on each side."},
+    {"shown": [{"after": 10}, {"after": 4}, {"after": 4}, {"after": 10}], "caption": "Tie a square knot round the two fillers."},
+    {"shown": [{"after": 11}, {"after": 5}, {"after": 5}, {"after": 11}], "caption": "Switch: bring the two working cords to the middle, over the fillers, and move the fillers out to the sides."},
+    {"shown": ["all", "all", "all", "all"], "caption": "Leave a gap, then tie a square knot with the cords now outside round the cords now in the middle. Switch again after every knot."}
+  ]
+}

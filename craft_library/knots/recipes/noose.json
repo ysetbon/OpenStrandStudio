@@ -1,0 +1,18 @@
+{
+  "name": "noose",
+  "craft": "knots",
+  "title": "Noose",
+  "also": ["noose knot", "running knot", "simple noose"],
+  "about": "A loop that draws tight when the standing part is pulled: an overhand knot tied round a bight of the standing part. The same knot as the slip knot, used as a snare. Shown loose and flat.",
+  "kind": "loop",
+  "width": 22,
+  "cords": [
+    {"label": "Rope", "color": "teal", "points": [[200, 480], [350, 480], [530, 480], [600, 480], [670, 478], [700, 465], [710, 430], [710, 330], [700, 290], [670, 272], [600, 270], [520, 272], [500, 290], [495, 330], [495, 400], [496, 440], [497, 520], [500, 600], [520, 632], [545, 642], [565, 640], [565, 600], [565, 520], [565, 400], [565, 330], [566, 250], [580, 195], [605, 172], [630, 195], [634, 250], [635, 330], [635, 400], [635, 520], [635, 600], [652, 632], [685, 648], [760, 680], [900, 700]]}
+  ],
+  "patterns": ["OUUOOUOUUO"],
+  "steps": [
+    {"shown": [{"after": 6}], "arrow": 0, "caption": "Lay the rope in a loop near its end, the standing part crossing under the end where the loop closes."},
+    {"shown": [{"after": 8}], "arrow": 0, "caption": "Bring a bight of the standing part up through the loop: over the near side of the loop, then under the far side."},
+    {"shown": ["all"], "caption": "The bight is the noose, both its legs through the first loop: over the near side, under the far side. Pull the end to tighten the knot; pull the standing part and the noose closes."}
+  ]
+}

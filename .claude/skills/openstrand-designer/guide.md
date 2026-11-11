@@ -65,19 +65,30 @@ that one. Search before you draw anything.
 
 - **Boondoggle** (scoubidou, gimp, lanyard, plastic lace): every stitch is an
   MxN stitch. Box or square stitch = 1x1 (two strings); brick stitch = 2x1
-  (three strings); any other size is `make mxn`.
+  (three strings); any other size is `make mxn`. Starting a box stitch, with
+  steps: `tie "box stitch start"`.
 - **Macrame**, each with its tying steps (`tie`): lark's head knot (cow
   hitch) and its reverse, vertical lark's head; half hitch, double half hitch
-  (clove hitch), diagonal and vertical double half hitch, half hitch spiral;
-  half knot, square knot (cobra knot), square knot sennit, half knot spiral;
-  Josephine knot (Carrick bend); two-strand twist and three- to seven-strand
-  braids.
+  (clove hitch), diagonal, vertical and reverse double half hitch, half hitch
+  spiral, alternating half hitch chain; half knot, square knot (cobra knot),
+  square knot sennit, half knot spiral, alternating square knots, switch
+  knot; Josephine knot (Carrick bend); two-strand twist and three- to
+  seven-strand braids.
 - **Chinese knotting**, with steps: double coin knot, Pan Chang (mystic or
-  endless knot), good luck knot. The cloverleaf is shown finished.
+  endless knot), good luck knot, cloverleaf knot, cross knot. (The sample
+  `chinese_cloverleaf` is the cloverleaf finished, as a closed cord.)
 - **Knitting**: the magic knot that joins two yarns, with tying steps.
 - **Crochet**: the slip knot every piece starts from, with steps. No
   stitches yet: say so, then draw them.
-- **Knots**: every knot `tie` makes, by all its names.
+- **Knots**: every knot `tie` makes, by all its names, and with steps:
+  two half hitches, round turn and two half hitches, buntline hitch, timber
+  hitch, rolling hitch; surgeon's knot, water knot (ring bend), figure-eight
+  bend (Flemish bend), overhand bend; overhand loop, double overhand loop
+  (surgeon's loop), figure-eight loop, running bowline, double bowline,
+  bowline on a bight, noose; sheepshank.
+- Not in the library (say so, then draw with a pattern and check): zeppelin
+  bend, double sheet bend, anchor hitch, constrictor knot, alpine butterfly,
+  snake knot, button knot, sauvastika knot, plafond knot.
 
 ## Knots by name (`tie`)
 

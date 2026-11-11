@@ -1,0 +1,21 @@
+{
+  "name": "alternating_half_hitch_chain",
+  "craft": "macrame",
+  "title": "Alternating half hitch chain",
+  "also": ["alternating half hitches", "alternating half hitch sennit", "chain of alternating half hitches", "zigzag braid"],
+  "about": "Two cords, each in turn tied in a half hitch round the other: the left round the right, then the right round the left, and so on, which makes a zigzag chain. Shown loose and flat, two hitches of each cord.",
+  "kind": "sennit",
+  "width": 22,
+  "cords": [
+    {"label": "Left cord", "color": "teal", "points": [[500, 80], [500, 150], [500, 230], [500, 250], [512, 272], [535, 280], [600, 280], [665, 280], [693, 268], [702, 240], [693, 212], [665, 200], [600, 200], [540, 200], [500, 200], [460, 200], [438, 200], [425, 212], [420, 250], [428, 295], [460, 330], [500, 350], [500, 400], [500, 480], [500, 560], [500, 630], [500, 650], [512, 672], [535, 680], [600, 680], [665, 680], [693, 668], [702, 640], [693, 612], [665, 600], [600, 600], [540, 600], [500, 600], [460, 600], [438, 600], [425, 612], [420, 650], [428, 695], [460, 730], [500, 750], [500, 800], [500, 880], [500, 1050]]},
+    {"label": "Right cord", "color": "gold", "points": [[600, 80], [600, 200], [600, 280], [600, 360], [600, 430], [600, 450], [588, 472], [565, 480], [500, 480], [435, 480], [407, 468], [398, 440], [407, 412], [435, 400], [500, 400], [560, 400], [600, 400], [640, 400], [662, 400], [675, 412], [680, 450], [672, 495], [640, 530], [600, 550], [600, 600], [600, 680], [600, 760], [600, 830], [600, 850], [588, 872], [565, 880], [500, 880], [435, 880], [407, 868], [398, 840], [407, 812], [435, 800], [500, 800], [560, 800], [600, 800], [640, 800], [662, 800], [675, 812], [680, 850], [672, 895], [640, 930], [600, 950], [600, 1050]]}
+  ],
+  "patterns": ["UOUOOUUOUOOU", "OUUOUOOUUOUO"],
+  "steps": [
+    {"shown": [{"after": 0}, {"after": 0}], "caption": "Two cords hanging side by side."},
+    {"shown": [{"after": 4}, {"after": 2}], "arrow": 0, "caption": "Hold the right cord straight. Take the left cord across over it, back under it, and over its own standing part: a half hitch."},
+    {"shown": [{"after": 6}, {"after": 6}], "arrow": 1, "caption": "Now hold the left cord straight. Take the right cord across over it, back under it, and over its own standing part."},
+    {"shown": [{"after": 10}, {"after": 8}], "arrow": 0, "caption": "The left cord again, round the right: over it, back under it, over its own standing part."},
+    {"shown": ["all", "all"], "caption": "And the right cord round the left. Go on in turn: the hitches lean left and right down the chain."}
+  ]
+}

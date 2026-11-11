@@ -1,0 +1,20 @@
+{
+  "name": "buntline_hitch",
+  "craft": "knots",
+  "title": "Buntline hitch",
+  "also": ["buntline", "studding sail tack bend", "four-in-hand knot"],
+  "about": "Ties a rope to a ring or a shackle so that it cannot shake loose: one turn through the ring, then a clove hitch round the rope's own standing part, made towards the ring, so the second hitch is jammed between the first and the ring. It is two half hitches made in the opposite order. Shown loose and flat.",
+  "kind": "hitch",
+  "width": 24,
+  "cords": [
+    {"label": "Ring", "color": "gold", "smooth": false, "points": [[250, 300], [1050, 300]]},
+    {"label": "Rope", "color": "teal", "points": [[600, 980], [600, 840], [600, 720], [600, 600], [600, 480], [600, 300], [600, 250], [620, 180], [680, 125], [740, 110], [800, 125], [860, 180], [880, 250], [880, 300], [880, 640], [872, 685], [845, 712], [800, 720], [760, 720], [600, 720], [560, 720], [525, 730], [505, 755], [500, 780], [505, 805], [525, 830], [560, 840], [600, 840], [700, 840], [735, 832], [755, 810], [760, 780], [760, 720], [760, 600], [760, 520], [752, 495], [730, 482], [700, 480], [600, 480], [560, 480], [525, 490], [505, 515], [500, 540], [505, 565], [525, 590], [560, 600], [600, 600], [760, 600], [840, 600]]}
+  ],
+  "patterns": ["UO", "OUOUOUUOUOUOUO"],
+  "steps": [
+    {"shown": ["all", null], "caption": "The ring, rail or shackle the rope is tied to."},
+    {"shown": ["all", {"after": 6}], "arrow": 1, "caption": "Bring the end up over the ring in front and down behind it, and lead it well down the standing part."},
+    {"shown": ["all", {"after": 8}], "arrow": 1, "caption": "Take the end across over the standing part, well down from the ring."},
+    {"shown": ["all", "all"], "caption": "Bring it back under the standing part and up over its own part: the first half hitch. Make the second between it and the ring, the same way: over the standing part, back under it, out over its own part. Pull the standing part: the hitches slide up and jam against the ring."}
+  ]
+}

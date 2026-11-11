@@ -1,0 +1,21 @@
+{
+  "name": "reverse_double_half_hitch",
+  "craft": "macrame",
+  "title": "Reverse double half hitch",
+  "also": ["RDHH", "reverse clove hitch", "reversed double half hitch", "back double half hitch"],
+  "about": "A double half hitch tied from the back: the working cord goes up behind the holding cord and comes down in front of it, twice, so the two bars lie in front of the holding cord and the bump is on the back of the work. It is the double half hitch seen from behind. Shown loose.",
+  "kind": "hitch",
+  "width": 24,
+  "cords": [
+    {"label": "Holding cord", "color": "gold", "smooth": false, "points": [[200, 400], [1000, 400]]},
+    {"label": "Working cord", "color": "teal", "points": [[600, 720], [600, 640], [600, 480], [600, 350], [607, 314], [627, 293], [660, 290], [693, 293], [713, 314], [720, 350], [720, 470], [720, 520], [716, 543], [704, 557], [685, 560], [520, 560], [400, 560], [378, 560], [362, 546], [360, 520], [360, 460], [360, 350], [367, 314], [387, 293], [420, 290], [453, 293], [473, 314], [480, 350], [480, 480], [480, 640], [480, 720]]}
+  ],
+  "patterns": ["OUOU", "OUOUOUOU"],
+  "steps": [
+    {"shown": ["all", null], "caption": "Lay the holding cord straight across."},
+    {"shown": ["all", {"after": 3}], "arrow": 1, "caption": "Bring the working cord up under the holding cord, bend it over to the right, and take it down over the holding cord."},
+    {"shown": ["all", {"after": 4}], "arrow": 1, "caption": "Carry it across to the left, under its own standing part: that is one half hitch."},
+    {"shown": ["all", {"after": 7}], "arrow": 1, "caption": "Take it up under the holding cord again, to the left of the first hitch, and down over it."},
+    {"shown": ["all", "all"], "caption": "Take it straight down, under its own crossing part: the second half hitch. Both hitches sit side by side."}
+  ]
+}

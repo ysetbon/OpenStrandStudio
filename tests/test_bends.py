@@ -114,11 +114,13 @@ def test_the_library_has_the_knots_people_ask_for():
     # Written as one word, or as two.
     ("sheetbend", "sheet bend"), ("squareknot", "square"), ("magicknot", "fisherman"), ("bow line", "bowline"),
     # Other knots, though their names are close: the fisherman's bend is the anchor hitch.
-    ("fisherman's bend", None), ("double sheet bend", None), ("running bowline", None),
-    ("bowline on a bight", None), ("double bowline", None), ("surgeon's knot", None), ("flat knot", None),
+    ("fisherman's bend", None), ("double sheet bend", None), ("flat knot", None),
     ("zeppelin bend", None), ("overhand", None), ("double overhand", None), ("", None),
     # A knot of the craft library (craft_library/<craft>/recipes/), by its names.
-    ("carrick bend", "josephine_knot"), ("cow hitch", "larks_head_knot")])
+    ("carrick bend", "josephine_knot"), ("cow hitch", "larks_head_knot"),
+    # Bowlines of the craft library: each its own knot, not the bowline.
+    ("running bowline", "running_bowline"), ("bowline on a bight", "bowline_on_a_bight"),
+    ("double bowline", "double_bowline"), ("surgeon's knot", "surgeons_knot")])
 def test_knots_are_found_by_the_names_people_use(name, key):
     assert bends.find(name) == key
 

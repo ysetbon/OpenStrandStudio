@@ -1,0 +1,20 @@
+{
+  "name": "surgeons_knot",
+  "craft": "knots",
+  "title": "Surgeon's knot",
+  "also": ["surgeon's square knot", "ligature knot", "surgical knot", "surgeons knot"],
+  "about": "A square knot with one more twist in its first half: the two ends are wound round each other twice, which holds while the second half is tied the other way on top. Shown loose, the two halves side by side: five crossings, then three the other way.",
+  "kind": "bend",
+  "width": 22,
+  "cords": [
+    {"label": "First cord", "color": "teal", "points": [[90, 250], [170, 320], [215, 368], [250, 400], [285, 438], [320, 400], [355, 362], [390, 400], [425, 438], [460, 400], [495, 362], [530, 400], [565, 440], [615, 478], [665, 440], [700, 400], [735, 362], [770, 400], [805, 438], [840, 400], [875, 368], [920, 320], [1000, 250]]},
+    {"label": "Second cord", "color": "gold", "points": [[90, 550], [170, 480], [215, 432], [250, 400], [285, 362], [320, 400], [355, 438], [390, 400], [425, 362], [460, 400], [495, 438], [530, 400], [565, 360], [615, 322], [665, 360], [700, 400], [735, 438], [770, 400], [805, 362], [840, 400], [875, 432], [920, 480], [1000, 550]]}
+  ],
+  "patterns": ["OUOUOOUO", "UOUOUUOU"],
+  "steps": [
+    {"shown": [{"after": 0}, {"after": 0}], "caption": "Two ends, coming towards each other."},
+    {"shown": [{"after": 3}, {"after": 3}], "arrow": 0, "caption": "Cross the first cord over the second, then under it and over it again: a half knot."},
+    {"shown": [{"after": 5}, {"after": 5}], "arrow": 0, "caption": "Wind it round once more: under the second cord and over it. This double twist is what makes it a surgeon's knot."},
+    {"shown": ["all", "all"], "caption": "Now a half knot the other way: the first cord goes over the second again, then under it and over it. Pull all four ends."}
+  ]
+}

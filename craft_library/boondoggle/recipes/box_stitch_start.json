@@ -1,0 +1,20 @@
+{
+  "name": "box_stitch_start",
+  "craft": "boondoggle",
+  "title": "Box stitch start",
+  "also": ["starting a box stitch", "scoubidou start", "boondoggle start", "first box stitch"],
+  "about": "The first box stitch of a boondoggle (scoubidou): two strings crossed at their middles, the halves of the first folded back into a loop on each side, the halves of the second woven over one leg and under the other, a crown of the four ends. Shown loose from above, the centre crossing drawn open in the middle; pulled tight it sinks under the four leg crossings, which make the two-by-two checkerboard.",
+  "kind": "decorative",
+  "width": 24,
+  "cords": [
+    {"label": "First string", "color": "gold", "points": [[490, 700], [490, 555], [490, 245], [490, 210], [494.2, 189.0], [506.1, 171.1], [524.0, 159.2], [545.0, 155.0], [566.0, 159.2], [583.9, 171.1], [595.8, 189.0], [600, 210], [600, 245], [600, 555], [600, 590], [604.2, 611.0], [616.1, 628.9], [634.0, 640.8], [655.0, 645.0], [676.0, 640.8], [693.9, 628.9], [705.8, 611.0], [710, 590], [710, 555], [710, 245], [710, 100]]},
+    {"label": "Second string", "color": "teal", "points": [[300, 290], [445, 290], [755, 290], [790, 290], [811.0, 294.2], [828.9, 306.1], [840.8, 324.0], [845.0, 345.0], [840.8, 366.0], [828.9, 383.9], [811.0, 395.8], [790, 400], [755, 400], [445, 400], [410, 400], [389.0, 404.2], [371.1, 416.1], [359.2, 434.0], [355.0, 455.0], [359.2, 476.0], [371.1, 493.9], [389.0, 505.8], [410, 510], [445, 510], [755, 510], [900, 510]]}
+  ],
+  "patterns": ["UOOUUUOOU", "UOOUOUOOU"],
+  "steps": [
+    {"shown": ["all", null], "caption": "Lay the gold string down the middle and fold both halves back beside it: the top half down on the left, the bottom half up on the right, a loop at each end."},
+    {"shown": ["all", {"after": 3}], "arrow": 1, "caption": "Bring the teal string in from the left across the top: under the left gold leg, over the gold middle, over the right gold leg, and round to the right."},
+    {"shown": ["all", {"after": 6}], "arrow": 1, "caption": "Bring it back across the centre: under the right gold leg, over the gold middle, where the two middles cross, and under the left gold leg."},
+    {"shown": ["all", "all"], "caption": "Round the left, take the other teal half across the bottom: over the left gold leg, over the gold middle, under the right gold leg. Pull the four ends tight and the four leg crossings close into the checkerboard box."}
+  ]
+}

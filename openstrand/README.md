@@ -101,8 +101,18 @@ built-in knowledge.
 ```
 python -m openstrand agent "5x3 right hand bracelet in teal and gold"
 python -m openstrand agent "make this" --image photo.jpg --model haiku
+python -m openstrand agent "this knot, front and back" --image front.jpg --image back.jpg
 python -m openstrand agent "make the gold ribbons red" --start designs/bracelet.json
 ```
+
+- `--image` can be given more than once: up to 10 reference images with one
+  request (6 with Claude Haiku 5.5, whose price rises past 100K tokens of
+  prompt). Every provider's API takes far more; ten is where the pictures still
+  help: they go back to the model with every round of a request, and past a
+  handful it reads each one less closely. The number per model is `max_images`
+  in `openstrand/providers.py`. A picture larger than 2,576 px on its long edge
+  is shrunk to that before it is sent (no model reads more), so a phone's
+  photos need no resizing first.
 
 - Runs on the model you pick with `--model` (an id or an alias), with your own
   key for its provider, from the provider's environment variable or the key
@@ -150,8 +160,9 @@ python -m openstrand agent "make the gold ribbons red" --start designs/bracelet.
 
 The agent's button (the OpenStrand logo), next to Settings, shows and hides the agent (so does
 Ctrl+J). The agent floats over the bottom of the canvas, so the drawing never
-moves. Describe a design (Enter sends, Shift+Enter starts a new line; attach a
-reference image if you have one). The agent runs in its own background
+moves. Describe a design (Enter sends, Shift+Enter starts a new line; attach
+reference images if you have some: the Image button takes several, up to the
+number the chosen model takes). The agent runs in its own background
 process, so the app stays responsive; each step shows with the color of the
 matching app button, and while the agent is hidden an arc turns around its button.
 The finished design opens in a new tab through the same loader as Load, so its

@@ -24,10 +24,11 @@ from contextlib import contextmanager
 
 from PyQt5.QtCore import (QDate, QEvent, QLocale, QPoint, QPointF, QProcess, QProcessEnvironment, QRect,
                           QRectF, QSize, Qt, QTimer, QUrl, pyqtSignal)
-from PyQt5.QtGui import (QColor, QDesktopServices, QIcon, QImage, QPainter, QPainterPath, QPen, QPixmap, QRegion,
-                         QTextDocument)
+from PyQt5.QtGui import (QColor, QDesktopServices, QIcon, QImage, QImageReader, QPainter, QPainterPath, QPen, QPixmap,
+                         QRegion, QTextDocument)
 from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog,
-                             QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMenu, QPushButton, QToolButton, QSizePolicy, QStyle,
+                             QGridLayout, QHBoxLayout, QLabel, QLayout, QLineEdit, QMenu, QPushButton, QToolButton,
+                             QSizePolicy, QStyle,
                              QStyleOptionComboBox, QTextBrowser, QTextEdit, QVBoxLayout,
                              QWidget)
 
@@ -190,6 +191,84 @@ def image_icon(theme):
     """The Image button's picture: images/image_icon_*.png, white on the dark theme, black otherwise."""
     name = 'image_icon_white.png' if str(theme).lower() == 'dark' else 'image_icon_black.png'
     return QIcon(resource_path(os.path.join('images', name)))
+
+
+def image_limit(model):
+    """How many reference images one request to the model may carry (openstrand/providers.py:
+    ten, fewer for some models, none for a model that cannot see pictures)."""
+    info = agent_settings.model_info(model)
+    if info is None:
+        return 0
+    return info.max_images if info.vision else 0
+
+
+def thumbnail(path, side=18):
+    """A small picture of an attached image for its chip; an empty icon for a file Qt cannot read."""
+    reader = QImageReader(path)
+    reader.setAutoTransform(True)
+    size = reader.size()
+    if size.isValid():  # read at the small size: a phone's photo would take a moment at its own
+        reader.setScaledSize(size.scaled(side * 2, side * 2, Qt.KeepAspectRatio))
+    return QIcon(QPixmap.fromImage(reader.read()))
+
+
+class FlowLayout(QLayout):
+    """Widgets in a row that wraps onto the next line where the width ends (the attached
+    images: ten of them do not fit beside each other in a narrow window)."""
+
+    def __init__(self, parent=None, spacing=6):
+        super().__init__(parent)
+        self.items = []
+        self.setContentsMargins(0, 0, 0, 0)
+        self.setSpacing(spacing)
+
+    def addItem(self, item):
+        self.items.append(item)
+
+    def count(self):
+        return len(self.items)
+
+    def itemAt(self, index):
+        return self.items[index] if 0 <= index < len(self.items) else None
+
+    def takeAt(self, index):
+        return self.items.pop(index) if 0 <= index < len(self.items) else None
+
+    def expandingDirections(self):
+        return Qt.Orientations(0)
+
+    def hasHeightForWidth(self):
+        return True
+
+    def heightForWidth(self, width):
+        return self.arrange(QRect(0, 0, width, 0), move=False)
+
+    def setGeometry(self, rect):
+        super().setGeometry(rect)
+        self.arrange(rect, move=True)
+
+    def sizeHint(self):
+        return self.minimumSize()
+
+    def minimumSize(self):
+        size = QSize()
+        for item in self.items:
+            size = size.expandedTo(item.minimumSize())
+        return size
+
+    def arrange(self, rect, move):
+        """Place the items in rect (when move) and return the height they take."""
+        x, y, line = rect.x(), rect.y(), 0
+        for item in self.items:
+            hint = item.sizeHint()
+            if x > rect.x() and x + hint.width() > rect.right() + 1:
+                x, y, line = rect.x(), y + line + self.spacing(), 0
+            if move:  # from the right in a right-to-left language
+                item.setGeometry(QStyle.visualRect(self.parentWidget().layoutDirection(), rect,
+                                                   QRect(QPoint(x, y), hint)))
+            x += hint.width() + self.spacing()
+            line = max(line, hint.height())
+        return y + line - rect.y()
 
 
 def agent_command(prompt, model, out_dir, images=(), start=None, web=True, max_cost=None, effort=None,
@@ -715,7 +794,7 @@ class AgentPanel(QWidget):
         self.process = None
         self.run_cost, self.total_before = 0.0, agent_settings.load()['spent']
         self.design_waiting = False  # a design opened while the agent was hidden
-        self.image_path = None
+        self.image_paths = []  # the reference images attached to the next request
         self.out_dir = None
         self.prompt = ''
         self.done_event = None
@@ -788,15 +867,10 @@ class AgentPanel(QWidget):
         self.working = WorkingLine(self)
         body.addWidget(self.working)
 
+        # The attached images, each a chip with its picture and name: a click takes it off.
         self.image_row = QWidget(self)
-        image_row = QHBoxLayout(self.image_row)
-        image_row.setContentsMargins(0, 0, 0, 0)
-        self.image_label = QLabel(self.image_row)
-        self.remove_image_button = QPushButton(self.image_row)
-        self.remove_image_button.clicked.connect(lambda: self.set_image(None))
-        image_row.addWidget(self.image_label)
-        image_row.addWidget(self.remove_image_button)
-        image_row.addStretch()
+        self.image_chips = FlowLayout(self.image_row)
+        self.image_row.hide()
         body.addWidget(self.image_row)
 
         self.prompt_edit = PromptBox(self)
@@ -804,7 +878,7 @@ class AgentPanel(QWidget):
         self.prompt_edit.cycle_mode.connect(self.cycle_mode)
         self.attach_button = QPushButton(self)
         self.attach_button.setObjectName('agentChip')
-        self.attach_button.clicked.connect(self.choose_image)
+        self.attach_button.clicked.connect(self.choose_images)
         # A toggle like the toolbar's (Points, Shadow): a black frame while on.
         self.use_canvas_check = QPushButton(self)
         self.use_canvas_check.setObjectName('agentToggle')
@@ -929,6 +1003,8 @@ class AgentPanel(QWidget):
                 background-color: {c['button']}; color: {c['fg']}; border: 1px solid {c['border']};
                 border-radius: 6px; padding: 4px 10px; font-weight: bold; font-size: 12px; }}
             #agentPanel QToolButton#agentChip {{ padding: 2px 8px; }}
+            #agentPanel QPushButton#agentImage {{ border: 1px solid {c['border']}; border-radius: 6px;
+                padding: 2px 8px; font-size: 12px; }}
             #agentPanel QPushButton#agentChip:hover, #agentPanel QToolButton#agentChip:hover,
             #agentPanel QPushButton#agentToggle:hover {{ background-color: {c['hover']}; }}
             #agentPanel QPushButton#agentChip:pressed, #agentPanel QToolButton#agentChip:pressed,
@@ -1067,12 +1143,10 @@ class AgentPanel(QWidget):
         self.working.format_time = lambda seconds: duration_text(seconds, t)
         self.prompt_edit.setPlaceholderText(t('agent_prompt_placeholder'))
         self.prompt_edit.setToolTip(t('agent_prompt_keys'))
-        self.attach_button.setText(t('agent_attach'))
-        self.remove_image_button.setText(t('agent_remove_image'))
         self.show_use_canvas()
         self.send_button.setText(t('agent_stop') if self.running() else t('agent_send'))
         self.setLayoutDirection(Qt.RightToLeft if language_code == 'he' else Qt.LeftToRight)
-        self.set_image(self.image_path)
+        self.set_images(self.image_paths)  # the chips' words
         self.refresh_controls()
         self.render_transcript()
 
@@ -1081,17 +1155,53 @@ class AgentPanel(QWidget):
         self.use_canvas_check.setText(_tr(self.language, 'agent_use_canvas'))
         self.use_canvas_check.setIcon(QIcon(icon_path('check.png')) if self.use_canvas_check.isChecked() else QIcon())
 
-    def set_image(self, path):
-        self.image_path = path
-        self.image_row.setVisible(bool(path))
-        if path:
-            self.image_label.setText(os.path.basename(path))
+    def images_note(self, model):
+        """'Claude Haiku 5.5 takes up to 6 reference images with one request.' (or that it sees none)."""
+        limit, info = image_limit(model), agent_settings.model_info(model)
+        key = 'agent_images_limit' if limit else 'agent_images_none'
+        return _tr(self.language, key).format(n=limit, model=info.label if info else model)
 
-    def choose_image(self):
-        path, _ = QFileDialog.getOpenFileName(self, _tr(self.language, 'agent_attach_title'), '',
-                                              'Images (*.png *.jpg *.jpeg *.gif *.webp)')
-        if path:
-            self.set_image(path)
+    def set_images(self, paths):
+        """The images attached to the next request: one chip each, and how many of the
+        chosen model's number on the Image button ('Image 3/10')."""
+        self.image_paths = list(paths)
+        while self.image_chips.count():
+            old = self.image_chips.takeAt(0).widget()
+            old.hide()  # still the row's child until it is deleted: on its own it would be a window
+            old.deleteLater()
+        metrics = self.fontMetrics()
+        for path in self.image_paths:
+            chip = QPushButton(self.image_row)
+            chip.setObjectName('agentImage')
+            chip.setIcon(thumbnail(path))
+            chip.setIconSize(QSize(18, 18))
+            chip.setText(metrics.elidedText(os.path.basename(path), Qt.ElideMiddle, 150) + '  ×')
+            chip.setToolTip(f"{_tr(self.language, 'agent_remove_image')}: {path}")
+            chip.clicked.connect(lambda _=False, p=path: self.set_images([q for q in self.image_paths if q != p]))
+            self.image_chips.addWidget(chip)
+            chip.show()
+        self.image_row.setVisible(bool(self.image_paths))
+        self.show_attach()
+
+    def show_attach(self):
+        model = agent_settings.load()['model']
+        count = f' {len(self.image_paths)}/{image_limit(model)}' if self.image_paths else ''
+        self.attach_button.setText(_tr(self.language, 'agent_attach') + count)
+        self.attach_button.setToolTip(self.images_note(model))
+
+    def choose_images(self):
+        """Attach images, several at once or a few at a time, up to the chosen model's number."""
+        model = agent_settings.load()['model']
+        room = image_limit(model) - len(self.image_paths)
+        if room <= 0:  # full already (or the model sees no pictures): say so, ask for no file
+            self.add_note(self.images_note(model))
+            return
+        chosen, _ = QFileDialog.getOpenFileNames(self, _tr(self.language, 'agent_attach_title'), '',
+                                                 'Images (*.png *.jpg *.jpeg *.gif *.webp)')
+        chosen = [path for path in dict.fromkeys(chosen) if path not in self.image_paths]
+        self.set_images(self.image_paths + chosen[:room])
+        if len(chosen) > room:  # some did not fit: say how many the model takes
+            self.add_note(self.images_note(model))
 
     # ---------------------------------------------------------- transcript
     # The conversation is a list of entries, drawn as HTML each time it
@@ -1636,6 +1746,7 @@ class AgentPanel(QWidget):
             group.addAction(action)
             self.effort_menu.addAction(action)
         self.effort_button.setText(t(f'agent_effort_{saved["effort"]}'))
+        self.show_attach()  # the model's number of images may have changed
         self.show_session()
 
     def auto_refresh_models(self):
@@ -1731,6 +1842,9 @@ class AgentPanel(QWidget):
             self.add_note(_tr(self.language, 'agent_session_reached').format(
                 limit=money(settings['session_limit'])), self.colors['bad'])
             return
+        if len(self.image_paths) > image_limit(settings['model']):  # attached for another model
+            self.add_note(self.images_note(settings['model']), self.colors['bad'])
+            return
         self.prompt = prompt
         stamp = time.strftime('%Y%m%d-%H%M%S')
         self.out_dir = os.path.join(agent_settings.settings_directory(), 'agent_designs', stamp)
@@ -1745,8 +1859,7 @@ class AgentPanel(QWidget):
                 json.dump(self.history, f)
         self.shown_prompt, self.run_design = (shown or prompt), None
         # One request may spend its own limit, but never past what the session has left.
-        program, args = agent_command(prompt, settings['model'], self.out_dir,
-                                      [self.image_path] if self.image_path else [], start,
+        program, args = agent_command(prompt, settings['model'], self.out_dir, self.image_paths, start,
                                       web=settings['web'], max_cost=min(settings['max_cost'], left),
                                       effort=settings['effort'], plan=self.mode == 'plan',
                                       app=self.bridge is not None, history=history)
@@ -1769,10 +1882,11 @@ class AgentPanel(QWidget):
         # everything earlier requests cost, saved in claude.json.
         self.run_cost, self.total_before = 0.0, agent_settings.load()['spent']
         self.run_mode, self.run_texts, self.run_files = self.mode, [], (None, None)
-        self.add_user((shown or prompt) + (f'  [{os.path.basename(self.image_path)}]' if self.image_path else ''))
+        names = ', '.join(os.path.basename(path) for path in self.image_paths)
+        self.add_user((shown or prompt) + (f'  [{names}]' if names else ''))
         if typed:
             self.prompt_edit.clear()
-        self.set_image(None)
+        self.set_images([])
         self.status_label.setText(_tr(self.language, 'agent_working'))
         self.working.start(_tr(self.language, 'agent_thinking') + '…')
         self.activity_changed.emit()
@@ -2101,7 +2215,7 @@ class AgentPanel(QWidget):
         self.session_spent = self.run_cost = 0.0
         self.design_waiting = False
         self.status_label.setText('')
-        self.set_image(None)
+        self.set_images([])
         if self.bridge is not None:
             self.bridge.forget()
         self.add_note(_tr(self.language, 'agent_new_session_note'))

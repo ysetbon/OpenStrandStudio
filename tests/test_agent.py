@@ -145,6 +145,72 @@ def test_conversation_is_append_only_and_renders_go_back_as_images(tmp_path):
     assert render_result["content"][0]["type"] == "image"
 
 
+def picture(path, width=40, height=30, color="teal"):
+    """A reference image file of that size."""
+    from PyQt5.QtGui import QColor, QImage
+    image = QImage(width, height, QImage.Format_RGB32)
+    image.fill(QColor(color))
+    assert image.save(str(path))
+    return str(path)
+
+
+def test_several_reference_images_go_with_one_request_up_to_the_models_number(tmp_path):
+    import base64
+    from PyQt5.QtGui import QImage
+    from openstrand import providers
+    assert providers.image_limit("sonnet") == providers.MAX_IMAGES == 10
+    assert providers.image_limit("haiku") == 6  # its price rises past 100K tokens of prompt
+    assert all(0 < providers.image_limit(m) <= 10 for m in providers.MODELS)
+    pictures = [picture(tmp_path / f"view{n}.png") for n in range(3)]
+    done = [reply(text("A knot."), stop="end_turn")]
+
+    client = ScriptedClient(list(done))
+    agent.Agent(client, tmp_path, model="claude-sonnet-5-5").run("this knot, from three sides", images=pictures)
+    content = client.calls[0][1]["messages"][0]["content"]
+    assert [b["type"] for b in content] == ["image", "image", "image", "text"]  # in the order given
+    assert all(b["source"]["media_type"] == "image/png" for b in content[:3])
+    assert base64.standard_b64decode(content[0]["source"]["data"]) == Path(pictures[0]).read_bytes()  # as it is
+    # The pictures go back with every round: on Claude they are cached after the first.
+    assert content[-1]["cache_control"] == {"type": "ephemeral"}
+    client = ScriptedClient(list(done))
+    agent.Agent(client, tmp_path, model="claude-sonnet-5-5").run("a knot")
+    assert "cache_control" not in client.calls[0][1]["messages"][0]["content"][-1]  # no picture: as before
+    client = ScriptedClient(list(done))
+    agent.Agent(client, tmp_path, model="gpt-6.1-terra").run("this knot", images=pictures)
+    assert "cache_control" not in client.calls[0][1]["messages"][0]["content"][-1]  # Claude's own setting
+
+    # More than the model takes: nothing is sent, and the error says how many it takes.
+    seven = [picture(tmp_path / f"step{n}.png") for n in range(7)]
+    client = ScriptedClient(list(done))
+    with pytest.raises(ValueError, match="Claude Haiku 5.5 takes up to 6 reference images .*7 given"):
+        agent.Agent(client, tmp_path, model="claude-haiku-5-5").run("these steps", images=seven)
+    assert client.calls == []
+    client = ScriptedClient(list(done))
+    agent.Agent(client, tmp_path, model="claude-sonnet-5-5").run("these steps", images=seven + pictures)  # ten
+    assert len(client.calls[0][1]["messages"][0]["content"]) == 11
+    with pytest.raises(ValueError, match="up to 10"):
+        agent.Agent(client, tmp_path, model="claude-sonnet-5-5").run("x", images=seven + pictures + pictures[:1])
+    # A model that cannot see pictures takes none.
+    blind = providers.replace(providers.MODELS["grok-4.7"], vision=False)
+    providers.MODELS["grok-4.7"] = blind
+    try:
+        assert providers.image_limit("grok") == 0
+        with pytest.raises(ValueError, match="Grok 4.7 cannot see pictures"):
+            agent.Agent(ScriptedClient(list(done)), tmp_path, model="grok-4.7").run("this", images=pictures[:1])
+    finally:
+        providers.MODELS["grok-4.7"] = providers.BUILTIN["grok-4.7"]
+
+    # A photo larger than any model reads is shrunk to that size before it is sent; a small one is not.
+    photo = agent.image_block(picture(tmp_path / "photo.jpg", 4000, 3000))
+    sent = QImage.fromData(base64.standard_b64decode(photo["source"]["data"]))
+    assert (sent.width(), sent.height()) == (agent.MAX_EDGE, 1932) and photo["source"]["media_type"] == "image/jpeg"
+    tall = agent.image_block(picture(tmp_path / "tall.png", 1000, 5152))
+    sent = QImage.fromData(base64.standard_b64decode(tall["source"]["data"]))
+    assert (sent.width(), sent.height()) == (500, agent.MAX_EDGE)
+    with pytest.raises(ValueError, match="PNG, JPEG, GIF or WebP"):
+        agent.image_block(tmp_path / "notes.txt")
+
+
 def test_a_bad_tool_call_goes_back_to_agent_as_an_error(tmp_path):
     client = ScriptedClient([
         reply(tool("t1", "make_turks_head", leads=3, bights=6)),
@@ -884,6 +950,79 @@ def test_the_panel_asks_for_a_key_before_sending(window, monkeypatch, tmp_path):
     panel.send()
     assert panel.process is None or not panel.running()
     assert "Settings > Models" in panel.transcript.toPlainText()
+
+
+def test_the_panel_attaches_several_images_up_to_the_models_number(window, monkeypatch, tmp_path):
+    import agent_settings
+    from agent_panel import agent_command, image_limit
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    agent_settings.save(api_key="sk-ant-test-1234567890", model="claude-sonnet-5-5")
+    panel = window.agent_panel
+    panel.set_open(True)
+    panel.new_session()
+    panel.refresh_controls()
+    assert image_limit("claude-sonnet-5-5") == 10 and image_limit("claude-haiku-5-5") == 6
+    assert panel.attach_button.text() == "Image" and not panel.image_row.isVisible()
+    assert "up to 10 reference images" in panel.attach_button.toolTip()
+    pictures = [picture(tmp_path / f"view {n}.png") for n in range(12)]
+    asked = []
+
+    def choose(parent, title, folder, kinds):
+        asked.append(title)
+        return chosen, kinds
+    monkeypatch.setattr("agent_panel.QFileDialog.getOpenFileNames", choose)
+
+    # Several at once, then more: each a chip with its name; one already attached is not added twice.
+    chosen = pictures[:3]
+    panel.choose_images()
+    assert asked == ["Choose reference images"] and panel.image_paths == pictures[:3]
+    assert panel.image_row.isVisible() and panel.attach_button.text() == "Image 3/10"
+    chips = [panel.image_chips.itemAt(i).widget() for i in range(panel.image_chips.count())]
+    assert [chip.text() for chip in chips] == ["view 0.png  ×", "view 1.png  ×", "view 2.png  ×"]
+    assert not chips[0].icon().isNull() and pictures[0] in chips[0].toolTip()
+    chosen = pictures[2:5]
+    panel.choose_images()
+    assert panel.image_paths == pictures[:5]
+    # A click on a chip takes that image off.
+    chips = [panel.image_chips.itemAt(i).widget() for i in range(panel.image_chips.count())]
+    chips[1].click()
+    assert panel.image_paths == pictures[:1] + pictures[2:5] and panel.attach_button.text() == "Image 4/10"
+    # More than the model takes: the first that fit are kept, and a note says how many it takes.
+    chosen = pictures[5:]
+    panel.choose_images()
+    assert len(panel.image_paths) == 10 and panel.image_paths[-1] == pictures[10]
+    assert "Claude Sonnet 5.5 takes up to 10 reference images with one request." in panel.transcript.toPlainText()
+    asked.clear()
+    panel.choose_images()  # full: no file is asked for
+    assert asked == [] and len(panel.image_paths) == 10
+    # Ten chips wrap onto more lines in a narrow panel instead of widening it.
+    assert panel.image_chips.heightForWidth(300) > panel.image_chips.heightForWidth(3000) > 0
+    assert panel.image_row.minimumSizeHint().width() < 300
+
+    # A model that takes fewer: the button says so, and nothing is sent until some are taken off.
+    started = []
+    monkeypatch.setattr("agent_panel.QProcess.start", lambda self, program, args: started.append(args))
+    monkeypatch.setattr(panel, "write_canvas", lambda path: None)
+    panel.choose(model="claude-haiku-5-5")
+    assert panel.attach_button.text() == "Image 10/6"
+    panel.prompt_edit.setText("this knot")
+    panel.send()
+    assert started == [] and len(panel.image_paths) == 10 and panel.prompt_edit.text() == "this knot"
+    assert "Claude Haiku 5.5 takes up to 6 reference images with one request." in panel.transcript.toPlainText()
+    panel.set_images(panel.image_paths[:6])
+    try:
+        panel.send()
+        args = started[0]
+        assert [args[i + 1] for i, a in enumerate(args) if a == "--image"] == pictures[:1] + pictures[2:7]
+        assert "this knot [view 0.png, view 2.png, view 3.png, view 4.png, view 5.png, view 6.png]" in \
+            panel.transcript.toPlainText()
+        assert panel.image_paths == [] and not panel.image_row.isVisible() and panel.attach_button.text() == "Image"
+    finally:
+        panel.process = None
+        panel.working.stop()
+        panel.new_session()
+    _, args = agent_command("a knot", "claude-sonnet-5-5", "out", images=["a.png", "b.jpg"])
+    assert args[args.index("--image"):args.index("--image") + 4] == ["--image", "a.png", "--image", "b.jpg"]
 
 
 def test_spending_adds_up_across_requests_until_reset(tmp_path, monkeypatch):

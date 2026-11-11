@@ -46,6 +46,14 @@ class Provider:
     country: str = ''  # where the company is based ('CN': off unless the person allows it)
 
 
+# Reference pictures with one request (openstrand agent --image, the panel's Image button).
+# Every API takes far more (Claude 600, GPT 1,500, Grok any number), so this is what works
+# well, not what fits: the pictures go back with every round of a request, each costing up
+# to about 4,800 tokens on Claude, and past a handful a model reads each one less closely.
+# Ten covers a design from every side, or a tutorial step by step.
+MAX_IMAGES = 10
+
+
 @dataclass(frozen=True)
 class Model:
     id: str
@@ -57,6 +65,7 @@ class Model:
     new: bool = False                 # found by Refresh models, not in the built-in list
     retiring: str = ''                # the date (or 'soon') its provider stops it, when announced
     estimated: bool = False           # its price is an estimate (the provider does not publish it)
+    max_images: int = MAX_IMAGES      # reference pictures it takes with one request (see image_limit)
 
 
 PROVIDERS = {p.key: p for p in (
@@ -82,7 +91,10 @@ PROVIDERS = {p.key: p for p in (
 
 BUILTIN = {m.id: m for m in (
     Model('claude-sonnet-5-5', 'Claude Sonnet 5.5', 'anthropic', (2.00, 10.00, 2.50, 0.20), aliases=('sonnet',)),
-    Model('claude-haiku-5-5', 'Claude Haiku 5.5', 'anthropic', (0.10, 0.50, 0.125, 0.01), aliases=('haiku',)),
+    # Haiku's price is five times higher past 100K tokens of prompt: six pictures (up to
+    # 29K tokens) keep a request under it, renders and the guides included.
+    Model('claude-haiku-5-5', 'Claude Haiku 5.5', 'anthropic', (0.10, 0.50, 0.125, 0.01), aliases=('haiku',),
+          max_images=6),
     Model('gpt-6.1-terra', 'GPT-6.1 Terra', 'openai', (1.00, 5.00, 1.00, 0.05), aliases=('gpt', 'terra')),
     Model('gpt-6.1-sol', 'GPT-6.1 Sol', 'openai', (2.00, 10.00, 2.00, 0.10), aliases=('sol',)),
     Model('gpt-6-astra', 'GPT-6 Astra', 'openai', (10.00, 50.00, 10.00, 1.00), aliases=('astra',)),
@@ -119,6 +131,13 @@ def resolve(name):
 
 def provider_of(model):
     return PROVIDERS[MODELS[resolve(model)].provider]
+
+
+def image_limit(model):
+    """How many reference pictures one request to the model may carry: none for a model
+    that cannot see pictures."""
+    spec = MODELS[resolve(model)]
+    return spec.max_images if spec.vision else 0
 
 
 def api_key(provider, saved=None):

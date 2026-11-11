@@ -285,9 +285,9 @@ def test_tie_knot_checks_the_masks_of_its_finished_steps():
     made = tying.tie("triple overhand")
     assert made["ok"]
     tight, drawn_up = made["steps"][-1], made["steps"][-2]
-    assert tight["masks"] is not None and "fixed" in tight["masks"]
-    assert drawn_up["masks"]["left"], "the drawn-up triple overhand keeps one place no edit fixes cleanly"
-    assert all(len(p["at"]) == 2 and p["text"] for p in drawn_up["masks"]["left"])
+    assert tight["masks"] is not None and "fixed" in tight["masks"] and "fixed" in drawn_up["masks"]
+    assert tight["masks"]["left"], "the tight triple overhand keeps places no edit fixes cleanly"
+    assert all(len(p["at"]) == 2 and p["text"] for p in tight["masks"]["left"])
     assert made["steps"][0]["masks"] is None  # the first moves are loose: nothing to check
 
 

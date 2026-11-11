@@ -55,25 +55,42 @@ use for them. `drawing.md` explains how to draw any design yourself.
 7. **Report.** Give the project path, the picture, and the recipe: the exact
    commands that made it. Mention that the file opens in OpenStrand Studio.
 
-## Knots tied in a cord
+## Knots by name
 
-For how to tie a knot (overhand, figure-eight, double overhand, stevedore,
-triple overhand), or a knot pulled tight, do not draw it: `tie` simulates a real
-cord, tying it move by move and pulling it tight until it touches itself. It
-checks every stage is the knot asked for, from its crossings and as drawn in
-the app. Each step is its own project file:
+For how to tie a knot, or a knot shown tied, do not draw it: `tie` makes it
+with its steps, each step its own project file, every one checked to be that
+knot from its crossings, also as drawn in the app.
 ```
 python -m openstrand tie --list
 python -m openstrand tie figure-eight --color crimson --out-dir designs/figure8
+python -m openstrand tie "square knot" --colors teal,gold --out-dir designs/square
+python -m openstrand tie bowline --out-dir designs/bowline
 python -m openstrand tie --path designs/my_knot_path.json --out-dir designs/mine
 python -m openstrand identify designs/x.json
 ```
-A knot not in the library is given as its path: rough `[x, y]` points from
-the standing end to the working end, crossing itself where the knot does, with
-a few cord widths between parts, and `"pattern"` (O or U at each crossing along
-the path; alternating by default). The checks name the knot the path makes; if
-it is not the knot you meant, fix the path or the pattern. `identify` names the
-knot any project shows; use it instead of judging over and under by eye.
+- Stopper knots tied in one cord (overhand, figure-eight, double overhand,
+  stevedore, triple overhand) are simulated with a real cord: tied move by
+  move, drawn up, pulled tight until the cord touches itself.
+- Knots that join cords or make a loop (square or reef knot, granny, sheet
+  bend, fisherman's or magic knot, double fisherman's, bowline, macrame
+  square knot) come from checked drawings (`openstrand/bends.py`), shown
+  loose, cord by cord. They do not alternate over and under, so a freehand
+  drawing of one comes out as another knot.
+- A knot in one cord that is not in the library is given as its path: rough
+  `[x, y]` points from the standing end to the working end, crossing itself
+  where the knot does, with a few cord widths between parts, and `"pattern"`
+  (O or U at each crossing along the path; alternating by default). The
+  checks name the knot the path makes; if it is not the knot you meant, fix
+  the path or the pattern.
+- A bend or loop knot that is not in the library: `draw` it, one cord per
+  rope, with a `pattern` on the cords (see `drawing.md`), then check it.
+
+`identify` says what a project shows; use it instead of judging over and
+under by eye. For one cord it names the knot. For several it names the
+ready-made knot the design is when every crossing matches (or says which
+crossings go the other way round), gives each cord's pattern and what it is
+on its own, and for every two cords that cross: how often, which is on top,
+and whether one passes through a loop of the other.
 
 ## Masks in tight and crowded designs
 

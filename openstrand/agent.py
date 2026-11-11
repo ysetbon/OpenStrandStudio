@@ -84,30 +84,52 @@ How to work:
 5. Finish with two or three short sentences: what you made, how it is built,
    and anything you could not do or had to assume. Plain words, no markdown.
 
-Knots tied in a cord (overhand, figure-eight, stevedore and the like):
-- To show how a knot in one cord is tied, or pulled tight, use tie_knot. It
-  works the steps out by simulating a real cord and checks every step is the
-  right knot, so for these never draw tying steps or a tightened knot by hand.
-- A knot not in knot_library: research how it is tied, then give tie_knot its
-  path (rough points from the standing end, crossing itself where the knot
-  does, a few cord widths between parts) and its over/under pattern. Read the
-  checks: they name the knot the path makes. If it is not the knot you meant,
-  fix the path or the pattern and try again.
+Knots (how one is tied, or one shown tied):
+- knot_library lists every knot tie_knot makes by name, of two kinds. Stopper
+  knots tied in one cord (overhand, figure-eight, double overhand, stevedore,
+  triple overhand): tie_knot works their steps out by simulating a real cord,
+  laid out move by move and pulled tight. Knots that join cords or make a
+  loop (square or reef knot, granny knot, sheet bend, fisherman's knot, which
+  knitters call the magic knot, double fisherman's knot, bowline, macrame
+  square knot): tie_knot draws their steps from a checked drawing, the knot
+  shown loose. Either way it checks every step is that knot, crossing by
+  crossing, also as drawn in the app.
+- So for any knot in knot_library, call tie_knot with its name, at once: do
+  not search the web for it first. Such a knot is not yours to draw:
+  never draw tying steps or a tightened knot by hand, nor the knot itself
+  with draw_design. A freehand drawing of a bowline or a square knot comes
+  out as some other knot.
+- A knot in one cord that is not in knot_library: research how it is tied,
+  then give tie_knot its path (rough points from the standing end, crossing
+  itself where the knot does, a few cord widths between parts) and its
+  over/under pattern. Read the checks: they name the knot the path makes. If
+  it is not the knot you meant, fix the path or the pattern and try again.
 - For the knot in a design the person already has (in the app: read_tab it
   first), call tie_knot with from_design: it keeps that knot's over and under.
-- tie_knot pulls the two ends apart, as for stopper knots, so it cannot tie a
-  loop knot (bowline) or a knot that joins two cords (a bend: magic knot,
-  square knot, sheet bend, fisherman's knot). Those are still yours to make:
-  draw the knot with draw_design, loose enough to follow, one cord per rope,
-  each in its own color and labeled. For a tutorial or how to tie it, then
-  call make_steps: it shows the cords drawn bit by bit, in the order you list
-  them, so list first the cord that is laid down first. Say in one sentence
+- A loop knot or a knot that joins two cords (a bend) that is not in
+  knot_library (a Carrick bend, a zeppelin bend): research it, then draw it
+  with draw_design, loose enough to follow, one cord per rope, each in its
+  own color and labeled. Such knots seldom alternate, so say which cord is on
+  top: give a cord a "pattern", a letter for each crossing it passes in order
+  from its start, O over or U under. The report lists each cord's crossings
+  in that order with the pattern as drawn: to turn a crossing over, change
+  its letter and draw again (never with edit_mask). Then check it with
+  identify_knot: it names only the ready-made knots, so for any other knot it
+  tells you how the cords cross, not that the drawing is that knot. Tell the
+  person such a drawing is your own sketch and has not been checked against
+  the real knot. For a tutorial or how to tie it, then call make_steps: it
+  shows the cords drawn bit by bit, in the order you list them, so list first
+  the cord that is laid down first; it says what each step shows, to title
+  the tabs by (how much of each cord, where its end is). Say in one sentence
   that these steps are drawn, not simulated. If the drawing is still not
   exactly the knot when you stop, keep the closest one, make and open its
   steps all the same, and say which part differs: a sketch with its steps is
   what the person asked for, not an apology.
 - To check any design is the knot it should be, call identify_knot rather than
-  judging the picture.
+  judging the picture. It names a ready-made knot from its crossings, or says
+  which crossings go the other way round; for cords that cross each other it
+  says how often, which is on top, and whether one passes through a loop of
+  the other. A cord that lies over another everywhere is not joined to it.
 
 Masks (which strand is on top at a crossing) in tight and crowded designs:
 - A tight knot's parts touch and its joints sit inside crossings, so a mask
@@ -123,6 +145,8 @@ Masks (which strand is on top at a crossing) in tight and crowded designs:
   the tool shapes those along the strand's outline. Then render and look
   closely at each place you changed. Stop when check_masks finds nothing, or
   say what is left and why (some places need the strands moved apart).
+  Not needed for a knot tie_knot drew loose from a checked drawing (a bend, a
+  loop knot): its result says every mask is right. Render that one and look.
 - Where a problem says neither the design nor a mask says which strand goes
   over, the check reads it from what most of the crossing shows: compare with
   the render and with what the person asked before you change it.
@@ -192,10 +216,14 @@ TOOLS = [
                        'Each cord is points it passes through ({"points": [[x, y], ...]}), a parametric '
                        'curve ({"x": "...t...", "y": "...t...", "t0": 0, "t1": "2*pi"}) or a shape '
                        '({"shape": "circle", "center": [x, y], "radius": r}; also ellipse, polygon, heart, '
-                       'turks_head), plus optional closed, color, width, label, second_color, tucked. '
-                       'Every crossing gets over and under, alternating along each cord. Send the whole '
-                       'design every time. Returns a report: crossings, which cord is on top, conflicts '
-                       'and warnings. See "Drawing your own designs" in the guide.',
+                       'turks_head), plus optional closed, color, width, label, second_color, tucked, '
+                       'pattern. Every crossing gets over and under, alternating along each cord, unless a '
+                       'cord has a pattern: a letter for each crossing it passes, in order from its start, O '
+                       'over or U under ("-" leaves one to the other cord), for knots that do not alternate. '
+                       'Send the whole design every time. Returns a report: every crossing and which cord is '
+                       'on top, each cord\'s crossings in order with its pattern as drawn (change a letter '
+                       'and draw again to turn that crossing over), conflicts and warnings. See "Drawing '
+                       'your own designs" in the guide.',
         'input_schema': {'type': 'object', 'properties': {
             'name': {'type': 'string', 'description': 'what the design is'},
             'weave': {'type': 'string', 'enum': ['alternate', 'alternate_under_first']},
@@ -206,43 +234,60 @@ TOOLS = [
     },
     {
         'name': 'tie_knot',
-        'description': ('Steps to tie a knot, worked out by simulating a real cord: the cord laid out move by '
-                        'move with an arrow on the working end, then drawn up, then pulled tight until it '
-                        'touches itself, no gaps. Every stage is checked to be the knot asked for, from its '
-                        'crossings, also as drawn in the app. Library knots by name (knot_library lists them); '
-                        'any other knot from its path: rough [x, y] points from the standing end to the working '
-                        'end, crossing itself where the knot does, and its over/under pattern; or the knot in '
-                        'the current design (from_design, e.g. after read_tab). The knot is tightened by pulling '
-                        'its two ends apart, as for stopper knots; not for loop knots (bowline) or bends that '
-                        'join two cords: draw those with draw_design, then make_steps for the steps. Saves '
-                        'the steps as "step 1", "step 2", ... (open them with open_in_new_tab) and makes the '
-                        'tight knot the current design. Library knots take a '
-                        'second or two; a path or a design a few seconds (a path drawn larger than it needs is '
-                        'shrunk to a laid-out size first). The person sees its progress live.'),
+        'description': ('Steps to tie a knot, each a checked design. Knots in knot_library by name: a stopper '
+                        'knot in one cord (overhand, figure-eight, ...) is worked out by simulating a real cord: '
+                        'laid out move by move with an arrow on the working end, drawn up, then pulled tight '
+                        'until it touches itself. A knot that joins cords or makes a loop (square or reef knot, '
+                        'granny, sheet bend, fisherman\'s or magic knot, double fisherman\'s, bowline, macrame '
+                        'square knot) comes from a checked drawing, shown loose, cord by cord with an arrow on '
+                        'the working end. Every step is checked to be that knot from its crossings, also as '
+                        'drawn in the app. A knot in one cord that is not in the library: from its path, rough '
+                        '[x, y] points from the standing end to the working end, crossing itself where the knot '
+                        'does, and its over/under pattern; or the knot in the current design (from_design, e.g. '
+                        'after read_tab). A path or a design is tightened by pulling its two ends apart, as for '
+                        'stopper knots; a loop knot or a bend that is not in the library cannot be given that '
+                        'way: draw those with draw_design, then make_steps for the steps. Saves the steps as '
+                        '"step 1", "step 2", ... (open them with open_in_new_tab) and makes the finished knot '
+                        'the current design. Library knots take a few seconds; a path or a design a few more '
+                        '(a path drawn larger than it needs is shrunk to a laid-out size first). The person '
+                        'sees its progress live.'),
         'input_schema': {'type': 'object', 'properties': {
-            'knot': {'type': 'string', 'description': 'a library knot, e.g. "figure-eight", "overhand"'},
+            'knot': {'type': 'string', 'description': 'a library knot, by any name people use: "bowline", '
+                                                      '"square knot", "magic knot", "figure-eight"'},
             'points': {'type': 'array', 'items': {'type': 'array', 'items': {'type': 'number'}},
-                       'description': 'for a knot not in the library: its path, standing end first'},
+                       'description': 'for a knot in one cord that is not in the library: its path, standing '
+                                      'end first'},
             'pattern': {'type': 'string', 'description': 'with points: O or U for each crossing the path '
                                                          'passes, in order along it (default alternating)'},
             'from_design': {'type': 'boolean', 'description': 'tie the knot of the current design (one open '
                                                               'cord), keeping its over and under'},
             'color': {'type': 'string', 'description': 'color name or hex; default teal'},
-            'width': {'type': 'number', 'description': 'cord width in px, 16-60; default 24'},
+            'colors': {'type': 'array', 'items': {'type': 'string'},
+                       'description': 'for a knot of several cords: one color for each (default teal, gold)'},
+            'width': {'type': 'number', 'description': 'cord width in px: 16-60 for a knot in one cord '
+                                                       '(default 24), 14-30 for a knot of several cords'},
             'moves': {'type': 'integer', 'minimum': 1, 'maximum': 6,
-                      'description': 'tying pictures before the knot is drawn up (default: up to 4)'}}},
+                      'description': 'a knot in one cord: tying pictures before it is drawn up (default: up '
+                                     'to 4)'}}},
     },
     {
         'name': 'knot_library',
-        'description': 'The knots tie_knot knows by name: the names people use, crossings, what each is for.',
+        'description': 'The knots tie_knot makes by name: stopper knots in one cord, and knots that join '
+                       'cords or make a loop (square knot, sheet bend, fisherman\'s knot, bowline, ...); the '
+                       'names people use, crossings, what each is for.',
         'input_schema': {'type': 'object', 'properties': {}},
     },
     {
         'name': 'identify_knot',
         'description': ('Which knot the current design shows, read from its strands, masks and layers the way '
-                        'the app draws them: per cord its crossings and its knot type (an open cord is named '
-                        'as if its ends were joined high above it, as for a tied rope). Use it to check that a '
-                        'design really is the knot it should be, instead of judging by eye.'),
+                        'the app draws them. First the ready-made knot it is (square knot, sheet bend, bowline, '
+                        'fisherman\'s knot, ...) when every crossing goes as in that knot\'s checked drawing, or '
+                        'which crossings go the other way round. Then per cord its crossings, its pattern (O '
+                        'over, U under, in order along it) and its knot type on its own (an open cord is named '
+                        'as if its ends were joined high above it, as for a tied rope); and, for a design of a '
+                        'few cords, how each two cross: how often, which is on top, whether one passes through '
+                        'a loop of the other. Use it to check that a design really is the knot it should be, '
+                        'instead of judging by eye.'),
         'input_schema': {'type': 'object', 'properties': {}},
     },
     {
@@ -313,7 +358,8 @@ TOOLS = [
         'description': ('Turn the current design into tying steps: step k shows the cord drawn so far along its '
                         'path, every crossing with its finished over and under, and an arrow on the working end '
                         'showing where the cord goes next; the last step is the whole design. Each step is saved '
-                        'as its own design ("step 1", "step 2", ...) that can open in its own tab. Default: one '
+                        'as its own design ("step 1", "step 2", ...) that can open in its own tab. Says what '
+                        'each step shows: how much of each cord, and where the working end is. Default: one '
                         'step per strand, at most six.'),
         'input_schema': {'type': 'object', 'properties': {
             'count': {'type': 'integer', 'minimum': 2, 'maximum': 12, 'description': 'how many steps'},
@@ -502,6 +548,35 @@ class Workspace:
         self.last_edit = new
         return summary, text
 
+    def tie_drawn(self, args):
+        """tie_knot for a knot that joins cords or makes a loop (bends.LIBRARY):
+        its steps from the checked drawing, the finished knot the current design."""
+        from . import bends
+        given = args.get('colors') or ([args['color']] if args.get('color') else None)
+        try:
+            made = bends.tie(args.get('knot'), colors=given, width=args.get('width'), progress=self.progress)
+        except (bends.BendError, ImportError) as e:
+            raise ToolError(str(e)) from None
+        self.steps = []
+        for number, step in enumerate(made['steps'], start=1):
+            path = self.out_dir / f'step_{number}.json'
+            project.write(step['data'], path)
+            self.steps.append((step['title'], path))
+        self.store(made['steps'][-1]['data'])
+        count = len(made['steps'])
+        lines = [f"{made['title']}: {bends.KINDS[made['kind']]}, {made['crossings']} crossings. {made['about']}"]
+        lines.append('Checks: ' + bends.checked(made))
+        if not made['ok']:
+            lines.append('WARNING: not every step came out as the knot; tell the person which step is off.')
+        lines.append('These steps are drawn from the checked drawing, not simulated: the knot is shown loose, as '
+                     'it is tied. Say so in one sentence.')
+        for number, step in enumerate(made['steps'], start=1):
+            lines.append(f"step {number}: {step['caption']}")
+        lines.append(f'Saved as "step 1" to "step {count}"; the current design is the finished knot (step '
+                     f'{count}). In the app, open each step with open_in_new_tab, in order, titled by what it '
+                     'does, e.g. "Step 1 · the bight".')
+        return f"{made['title']} · {count} steps", '\n'.join(lines)
+
     def run(self, name, args):
         """Do one tool call. Returns (summary for people, content for the agent)."""
         if name == 'search_samples':
@@ -539,7 +614,17 @@ class Workspace:
             title = str(args.get('name') or 'drawing')[:40]
             return f'{title} · {project.summary(data)}', report + '\nNow render it and look at the result.'
         if name == 'tie_knot':
-            from . import tying
+            from . import bends, tying
+            wanted = args.get('knot')
+            if wanted and not args.get('from_design') and not args.get('points') and tying.find(wanted) is None:
+                if bends.find(wanted) is not None:
+                    return self.tie_drawn(args)
+                raise ToolError(f'"{wanted}" is not in the knot library (knot_library lists them: '
+                                + ', '.join([r['title'] for r in tying.LIBRARY.values()]
+                                            + [r['title'] for r in bends.LIBRARY.values()])
+                                + '). A knot tied in one cord can be given as its path: points from the standing '
+                                'end, with its over/under pattern. A knot that joins cords or makes a loop is '
+                                'drawn with draw_design, a pattern on each cord, then make_steps.')
             cord = None
             if args.get('from_design'):
                 from . import identify
@@ -592,13 +677,18 @@ class Workspace:
         if name == 'edit_mask':
             return self.edit_mask(args)
         if name == 'knot_library':
-            from . import tying
-            lines = [f'{title} ("{key}"): {crossings} crossings, {kind}; also called {", ".join(aliases)}. {about}'
-                     for key, title, crossings, kind, aliases, about in tying.library()]
-            return f'{len(lines)} knots', '\n'.join(lines)
+            from . import bends, tying
+            lines = ['Stopper knots, tied in one cord (tie_knot simulates the cord, laid out and pulled tight):']
+            lines += [f'{title} ("{key}"): {crossings} crossings, {kind}; also called {", ".join(aliases)}. {about}'
+                      for key, title, crossings, kind, aliases, about in tying.library()]
+            lines.append('Knots that join cords or make a loop (tie_knot draws them from a checked drawing, '
+                         'shown loose):')
+            lines += [f'{title} ("{key}"): {kind}, {crossings} crossings; also called {", ".join(aliases)}. '
+                      f'{about}' for key, title, kind, _, crossings, aliases, about in bends.library()]
+            return f'{len(lines) - 2} knots', '\n'.join(lines)
         if name == 'identify_knot':
             from . import identify
-            text = identify.summary(self.need())
+            text = identify.summary(self.need(), unknown=True)
             return text.splitlines()[0][:80], text
         if name == 'describe':
             info = project.describe(self.need())
@@ -630,10 +720,11 @@ class Workspace:
                 path = self.out_dir / f'step_{number}.json'
                 project.write(data, path)
                 self.steps.append((title, path))
-            names = ', '.join(f'step {n}' for n in range(1, len(made) + 1))
-            return (f'{len(made)} steps',
-                    f'made {len(made)} steps ({names}); the last is the whole design. Each can open in its own '
-                    'tab with open_in_new_tab if you are running in the app.')
+            lines = [f'made {len(made)} steps; the last is the whole design. What each shows, to title its tab '
+                     'by (a cord is drawn from its first point on):']
+            lines += [f'step {number}: {text}' for number, text in enumerate(steps.shown(made), start=1)]
+            lines.append('Each can open in its own tab with open_in_new_tab if you are running in the app.')
+            return f'{len(made)} steps', '\n'.join(lines)
         if name == 'render':
             path = self.render()
             data = base64.standard_b64encode(path.read_bytes()).decode('ascii')

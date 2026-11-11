@@ -40,6 +40,7 @@ SPACING = 1 / 3         # points along the cord, in cord widths
 LEVEL = 0.55            # height of an over-pass above the table, in widths (for drawn heights)
 HUMP = 1.5              # along each part, how far from a crossing the parts are seen in 3D (widths)
 GRAVITY = 0.03          # how far an unsupported part sinks per step (widths)
+MET_RELAX = 300         # settling steps for a knot that jammed with two crossings meeting (tighten's closest)
 
 
 class SimulationError(ValueError):
@@ -549,6 +550,18 @@ class Rope:
         _, _, c1, c2 = _closest(P[self.A[oi]], P[self.B[oi]], P[self.A[oj]], P[self.B[oj]])
         return float(np.linalg.norm(c1 - c2, axis=1).min() / self.width)
 
+    def closest_crossings(self):
+        """How near the two closest crossings are to each other in the picture,
+        in widths (infinite with fewer than two crossings)."""
+        i, j, t, u = self._crossings()
+        if len(i) < 2:
+            return float('inf')
+        P = self.P
+        at = P[self.A[i], :2] + t[:, None] * (P[self.B[i], :2] - P[self.A[i], :2])
+        apart = np.hypot(at[:, None, 0] - at[None, :, 0], at[:, None, 1] - at[None, :, 1])
+        apart[np.arange(len(at)), np.arange(len(at))] = np.inf
+        return float(apart.min() / self.width)
+
     def core(self):
         """Middle of the knot: the mean of its crossings in the picture, or None."""
         i, j, t, u = self._crossings()
@@ -675,7 +688,7 @@ def extend(cord, end, direction, reach):
 
 
 def tighten(cords, width, pulls, closed=None, max_steps=2500, reach=None, keep_every=10,
-            patience=100, grow_from=None, ramp=300, relax=None, progress=None, expected=None):
+            patience=100, grow_from=None, ramp=300, relax=None, progress=None, expected=None, closest=None):
     """Pull the given ends until the knot jams, as a person tightens a knot.
 
     cords: polylines of (x, y, height) with heights in px (an over-part higher
@@ -698,6 +711,13 @@ def tighten(cords, width, pulls, closed=None, max_steps=2500, reach=None, keep_e
     progress(fraction, cords) is told how far it has got after every step,
     cords a function giving the cords as they are then; expected is how many
     steps it usually takes (max_steps when not given).
+
+    closest: the knot also counts as jammed once two of its crossings come
+    nearer than this many widths in the picture. Two cords twisted round each
+    other (a double overhand knot) keep sliding their crossings together long
+    after the knot has stopped getting smaller, until parts lie on top of each
+    other; a real cord has no room for that, since between two crossings it
+    has to get from over to under.
     """
     width = float(width)
     start_width = float(grow_from) if grow_from else width
@@ -732,7 +752,7 @@ def tighten(cords, width, pulls, closed=None, max_steps=2500, reach=None, keep_e
     history = [(start, rope.cords())]
     good = (rope.cords(), dict(rope.pins), 0)
     gentle, retries, steps, calm_steps = 1.0, 0, 0, 0
-    best, since, jammed = start, 0, False
+    best, since, jammed, met = start, 0, False, False
     while steps < max_steps:
         steps += 1
         if start_width != width:
@@ -770,6 +790,13 @@ def tighten(cords, width, pulls, closed=None, max_steps=2500, reach=None, keep_e
             rope = Rope(cords_, rope.width, closed, spacing=spacing, pins=pins_, reference=reference)
             gentle, calm_steps = max(gentle * 0.5, 1 / 32), 0
             continue
+        if closest is not None and steps % 2 == 0 and steps > (ramp if start_width != width else 0) \
+                and rope.closest_crossings() < closest:
+            # Its crossings have met: back to the last state before they did.
+            cords_, pins_, steps = good
+            rope = Rope(cords_, rope.width, closed, spacing=spacing, pins=pins_, reference=reference)
+            jammed = met = True
+            break
         calm_steps += 1
         if calm_steps >= 60 and gentle < 1.0:
             gentle, calm_steps = min(1.0, gentle * 2), 0
@@ -789,7 +816,8 @@ def tighten(cords, width, pulls, closed=None, max_steps=2500, reach=None, keep_e
             progress(min(0.95, 0.95 * steps / (expected or max_steps)), rope.cords)
     # Let the last contacts settle with no more pull; a cord laid out loose
     # (grown) relaxes longer, so no wobble is left where contacts pushed it.
-    settle = relax if relax is not None else (120 if start_width != width else 30)
+    # Crossings that met were squeezed together: they need longer to spread out evenly again.
+    settle = relax if relax is not None else (MET_RELAX if met else 120 if start_width != width else 30)
     for k in range(settle):
         if progress is not None:
             progress(0.95 + 0.05 * k / settle, rope.cords)

@@ -2137,14 +2137,19 @@ def test_steps_of_two_cords_show_the_first_cord_first():
 
 def test_a_tutorial_is_a_design_not_a_written_answer():
     """Asked for a magic knot tutorial, the agent wrote the steps out and
-    offered to draw: the instructions told it to say a bend is not supported."""
+    offered to draw: the instructions told it to say a bend is not supported.
+    Then it drew bends freehand, and they came out as other knots: the common
+    ones are tied by name now (tests/test_bends.py), the rest still drawn."""
     from openstrand.agent import INSTRUCTIONS, TOOLS
     from openstrand.app_tools import APP_INSTRUCTIONS
     assert "say it is not supported" not in INSTRUCTIONS
     assert "Never answer with written steps alone" in INSTRUCTIONS
     assert "never end by offering\n   to draw it" in INSTRUCTIONS
+    assert "fisherman's knot, which\n  knitters call the magic knot" in INSTRUCTIONS      # tied by name
     bend = INSTRUCTIONS[INSTRUCTIONS.index("a knot that joins two cords"):]
-    assert "draw_design" in bend[:400] and "make_steps" in bend[:400]
+    assert "that is not in\n  knot_library" in bend[:120]
+    assert "draw_design" in bend[:400] and "make_steps" in bend[:1200]
+    assert "has not been checked against\n  the real knot" in bend                      # a sketch is called a sketch
     assert "keep the closest one, make and open its\n  steps all the same" in bend  # no giving up before the steps
     tie = next(t for t in TOOLS if t["name"] == "tie_knot")["description"]
     assert "draw those with draw_design, then make_steps" in tie

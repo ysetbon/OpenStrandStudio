@@ -14,6 +14,7 @@ python -m openstrand make heart --color crimson --out designs/heart.json
 python -m openstrand make sample hopf_link --out designs/rings.json
 python -m openstrand draw my_design.json --out designs/mine.json
 python -m openstrand tie figure-eight --color crimson --out-dir designs/figure8
+python -m openstrand tie "square knot" --colors teal,gold --out-dir designs/square
 python -m openstrand identify designs/figure8/figure_eight_knot_step_6.json
 python -m openstrand masks designs/figure8/figure_eight_knot_step_6.json
 python -m openstrand edit-mask designs/knot.json erase --mask 1_1_2_1 --covers 3_1
@@ -30,9 +31,9 @@ python -m openstrand render designs/bracelet.json --out designs/bracelet.png
 | `make mxn` | An MxN stitch from `mxn_samples/` (m, n from 1 to 8, lh or rh, `--stretch`). |
 | `make heart` | A ribbon heart from one cord (fitted, a few seconds). |
 | `make sample NAME` | A ready-made design from `knot_samples/` or `mxn_samples/`. |
-| `draw SPEC` | Your own design from cords given as points, x(t)/y(t) curves or shapes; woven over and under, with a report of every crossing. See `.claude/skills/openstrand-designer/drawing.md`. |
-| `tie KNOT` | Tying steps for a knot, one project per step: the cord laid move by move with an arrow on the working end, drawn up, then pulled tight. Worked out by simulating a real cord (`simulate.py`), every stage checked to be that knot (`invariants.py`, `identify.py`). `--list` for the library; `--path FILE` for any other knot. |
-| `identify FILE` | Which knot each cord of a project makes, read from its strands, masks and layers the way the app draws them (erase boxes included). |
+| `draw SPEC` | Your own design from cords given as points, x(t)/y(t) curves or shapes; woven over and under, alternating or as each cord's `pattern` says (O or U at every crossing it passes), with a report of every crossing and each cord's crossings in order. See `.claude/skills/openstrand-designer/drawing.md`. |
+| `tie KNOT` | Tying steps for a knot, one project per step, every step checked to be that knot (`invariants.py`, `identify.py`). A stopper knot in one cord is worked out by simulating a real cord (`simulate.py`): laid move by move with an arrow on the working end, drawn up, then pulled tight. A knot that joins cords or makes a loop (square knot, sheet bend, fisherman's knot, bowline, macrame square knot...) comes from a checked drawing (`bends.py`), shown loose. `--list` for the library; `--path FILE` for any other knot in one cord. |
+| `identify FILE` | Which knot a project shows, read from its strands, masks and layers the way the app draws them (erase boxes included): the ready-made knot it is, crossing for crossing, or which crossings differ; each cord's pattern and its own knot; and how every two cords cross. |
 | `masks FILE` | Every mask (its two strands, which is on top, centre, erase boxes) and every place one is drawn wrong, with coordinates and the edit that fixes it. `--repair` does the safe fixes; `--json` for machines. See "Masks" below. |
 | `edit-mask FILE OP` | One mask edit with the app's own code: `erase` (`--at x,y`, `--covers STRAND`, `--around x,y` or `--box ...`), `reset`, `swap`, `delete`, `create --first A --second B`. Checks again after it; `--preview` writes nothing. |
 | `samples [TEXT]` | Lists the ready-made designs. |
@@ -46,6 +47,49 @@ exit with status 1. `--verbose` shows the app's own console output.
 
 Rendering opens a hidden window with fresh settings, so your own OpenStrand
 settings are never read or changed. Without a display it draws offscreen.
+
+## Knots
+
+Two libraries, one command (`tie`, the agent's `tie_knot`):
+
+- `tying.py`: stopper knots tied in one cord (overhand, figure-eight, double
+  overhand, stevedore, triple overhand), from a recipe: a rough path and its
+  over/under pattern. `simulate.py` lays the cord out and pulls it tight; the
+  cord never passes through itself, so every stage is the same knot, and
+  `invariants.py` says which (its Alexander polynomial, worked out exactly
+  from the crossings). The overhand, double and triple overhand are a loop
+  whose two legs twist round each other 3, 5 and 7 half turns (3_1, 5_1,
+  7_1); pulled tight, such a twist jams when two of its crossings meet.
+- `bends.py`: knots that join cords or make a loop (square or reef knot,
+  granny knot, sheet bend, fisherman's or magic knot, double fisherman's
+  knot, bowline, macrame square knot), each a drawing: for every cord the
+  points it passes through and how high it lies there. A drawing is never
+  judged by eye. Its crossing code (`invariants.code`: every cord's
+  crossings in order, over or under at each, and each crossing's hand) must
+  be the reference written beside it; the built design, and every tying
+  step, is read back from its strands, masks and layers (`identify.code`)
+  and must have that code; and `masks.check` must find nothing wrong.
+  `tests/test_bends.py` checks the references against what is known of each
+  knot: a square knot closes to the square knot and not the granny (told
+  apart by the Jones polynomial), a bowline with its loop cut is a sheet
+  bend, each cord of a fisherman's knot is an overhand knot with the other
+  cord through it.
+
+`identify` compares any design's crossing code with these drawings
+(`invariants.compare`: the same knot however the cords are numbered or run,
+seen from the back or mirrored), so it can say "Square knot (reef knot): all
+6 crossings go as in the checked drawing of this knot", or "Laid like a
+square knot (reef knot), but 1 of its 6 crossings goes the other way round:
+at (296, 365) cord 1 should go over cord 2". Cords are numbered as their sets
+are, so cord 1 is the cord a drawing's report calls cord 1.
+For designs laid some other way it still says how every two cords cross:
+how often, which is on top, and whether one passes through a loop of the
+other (`invariants.through`); a cord that lies over another everywhere is
+not joined to it.
+
+`draw` weaves over, under, over by default. A knot that does not alternate
+is drawn with a `pattern` on its cords: a letter for each crossing a cord
+passes, O over or U under.
 
 ## Masks
 
@@ -316,7 +360,10 @@ that answer with words (`search_samples`, `knot_library`, `describe`,
 `make_steps` (`openstrand/steps.py`) turns a design into tying steps: the cord
 drawn so far along its path, every crossing with its finished over and under,
 and an arrow on the working end. With the bridge, the agent opens each step in a
-tab of its own ("Step 1 · first loop", ...).
+tab of its own ("Step 1 · first loop", ...). The knots `tie_knot` knows by
+name come with their own steps, checked one by one; `make_steps` is for
+everything else, and says what each step shows (how much of each cord, where
+the working end is), so its tabs can be titled without looking at them.
 
 `check_masks` and `edit_mask` work on the current design. After `tie_knot`,
 or on anything crowded, the agent checks the masks and fixes each problem with
@@ -329,4 +376,4 @@ done with the canvas's own mask code (Reset Mask, `create_masked_layer`,
 `delete_masked_layer`, erase boxes by corners), one undo step, after Allow in
 ask mode.
 
-Tests: `python -m pytest tests/test_openstrand_cli.py tests/test_agent.py tests/test_mask_tools.py`
+Tests: `python -m pytest tests/test_openstrand_cli.py tests/test_openstrand_draw.py tests/test_knot_tools.py tests/test_bends.py tests/test_agent.py tests/test_mask_tools.py`

@@ -57,6 +57,22 @@ Ready-made designs from `knot_samples/` (knots, Turk's heads, links such as
 hopf_link, borromean_rings, solomons_knot, five_ring_chain) and `mxn_samples/`.
 `openstrand samples <word>` searches them.
 
+## Knots by name (`tie`)
+
+`openstrand tie NAME` (the agent's `tie_knot`) makes a knot with its tying
+steps, every step checked to be that knot, crossing by crossing.
+
+- Stopper knots tied in one cord: overhand, figure-eight, double overhand,
+  stevedore, triple overhand. Simulated with a real cord: laid out, drawn up,
+  pulled tight.
+- Knots that join two cords (bends): square knot (reef knot), sheet bend
+  (weaver's knot), fisherman's knot (the knitters' magic knot), double
+  fisherman's knot (grapevine), and the granny knot, shown so it can be told
+  from a square knot. A loop knot: bowline. Macrame: the square knot round
+  two filler cords. From a checked drawing, shown loose.
+- These do not alternate over and under, so a freehand drawing of one comes
+  out as another knot: use `tie`.
+
 ## Words people use
 
 | They say | Build |
@@ -70,6 +86,12 @@ hopf_link, borromean_rings, solomons_knot, five_ring_chain) and `mxn_samples/`.
 | tight, packed, close together | `--stretch` |
 | heart, love knot (simple) | `make heart` |
 | linked rings, chain | `make sample` with a link sample |
+| how to tie, tutorial, steps for a knot | `tie NAME`, then its steps |
+| square knot, reef knot | `tie "square knot"` |
+| magic knot, fisherman's knot, joining two yarns | `tie "fisherman's knot"` |
+| sheet bend, weaver's knot | `tie "sheet bend"` |
+| bowline, a loop that does not slip | `tie bowline` |
+| macrame square knot, cobra knot | `tie "macrame square knot"` |
 
 ## Colors
 

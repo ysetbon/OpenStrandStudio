@@ -25,7 +25,9 @@ TOOLS = [
 LOOK_ONLY = set()
 
 INSTRUCTIONS = """- After tie_knot, call check_masks, fix each problem with edit_mask (preview
-  first when unsure), then render and look before opening the steps.
+  first when unsure), then render and look before opening the steps. (A bend
+  or loop knot tie_knot drew loose has its masks checked already: render it,
+  look, and open the steps.)
 - When the person points at a mask in their tab (a strand cut off, the wrong
   strand on top at a crossing): read_tab it, check_masks, then either
   edit_mask and open_in_new_tab the fixed design (their tab stays as it is),

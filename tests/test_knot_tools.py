@@ -32,8 +32,8 @@ PRETZEL = [[150, 640], [420, 640], [500, 420], [640, 300], [760, 360], [740, 480
            [440, 360], [560, 300], [700, 420], [780, 640], [1050, 640]]
 FIGURE_8 = [[200, 200], [380, 260], [560, 380], [620, 540], [520, 660], [400, 600], [420, 450], [560, 320],
             [600, 180], [480, 120], [400, 220], [480, 420], [640, 560], [820, 620]]
-ALEXANDER = {"overhand": (1, -1, 1), "figure-eight": (1, -3, 1), "double overhand": (2, -3, 2),
-             "stevedore": (2, -5, 2), "triple overhand": (3, -5, 3)}
+ALEXANDER = {"overhand": (1, -1, 1), "figure-eight": (1, -3, 1), "double overhand": (1, -1, 1, -1, 1),
+             "stevedore": (2, -5, 2), "triple overhand": (1, -1, 1, -1, 1, -1, 1)}
 
 
 def dense(points):
@@ -202,6 +202,71 @@ def test_every_library_layout_and_shipped_shape_is_its_knot(key):
     assert spread(tight) < spread(snug) < spread(loose)
 
 
+def passed_through(times):
+    """An overhand knot with the end passed through its loop this many times,
+    from the tying move itself and no table: the cord crosses itself once to
+    close a loop, then its end winds round the loop's rim, under it and back
+    over it once for each pass, each turn further along the rim. That is the
+    two legs of a loop twisted round each other 2 * times + 1 half turns."""
+    twists = 2 * times + 1
+    left = [(300 + (0 if i % 2 == 0 else 60), 100 + 60 * i) for i in range(twists + 1)]
+    right = [(300 + (60 if i % 2 == 0 else 0), 100 + 60 * i) for i in range(twists + 1)]
+    top = left[-1]
+    loop = [(top[0] + 60, top[1] + 40), (top[0] + 160, (top[1] + 100) / 2 + 50), (420, 60)]
+    return [(200, 20)] + left + loop + right + [(200, right[-1][1] + 80)]
+
+
+@pytest.mark.parametrize("times, key, knot", [(1, "overhand", "trefoil"), (2, "double overhand", "cinquefoil"),
+                                              (3, "triple overhand", "7_1")])
+def test_an_overhand_with_the_end_through_its_loop_again_is_a_double_overhand(times, key, knot):
+    """The double and triple overhand are 5_1 and 7_1 (the end passed through
+    the loop two and three times), not the twist knots 5_2 and 7_2, which have
+    as many crossings: the library once tied those under their names."""
+    path = passed_through(times)
+    found = invariants.describe(laid(path, tying.alternating(path)))
+    assert (found["crossings"], found["knot"]) == (2 * times + 1, knot)
+    assert found["alexander"] == ALEXANDER[key]
+    assert found["meaning"].startswith(tying.LIBRARY[key]["title"].lower())
+    # The library ties that knot, and says so.
+    word = tying.LIBRARY[key]["word"]
+    assert invariants.alexander(laid(tying.plat_layout(word, W), "OU" * len(word))) == found["alexander"]
+    listed = {k: kind for k, _, _, kind, _, _ in tying.library()}
+    assert knot.split()[0] in listed[key] or listed[key] == knot
+    assert invariants.name((2, -3, 2)) == ("three-twist", "three-twist knot (5_2)")
+
+
+@pytest.mark.parametrize("key", ["double overhand", "triple overhand"])
+def test_twisted_legs_pulled_tight_jam_before_their_crossings_pile_up(key):
+    """Two legs twisted round each other keep sliding their crossings together
+    after the knot has stopped getting smaller, until parts lie on each other
+    (the triple overhand once ended with two crossings on one spot). The knot
+    counts as jammed when two crossings meet, and then settles: it stays the
+    knot, its parts clear of each other, its crossings far enough apart to be
+    drawn."""
+    width = tying.DEFAULT_WIDTH
+    word = tying.LIBRARY[key]["word"]
+    rough = tying._rough(tying.plat_layout(word, width), "OU" * len(word), width)
+    pulls = [(0, 0, (-1, 0)), (0, 1, (1, 0))]
+    (loose,), _ = simulate.tighten([rough], width * tying.LOOSE, pulls, grow_from=width, max_steps=1500)
+    (tight,), info = simulate.tighten([loose], width, pulls, closest=tying.JAMMED)
+    assert info["jammed"] and info["overlap"] < 0.1
+    assert simulate.Rope([tight], width).closest_crossings() > 1.1
+    assert invariants.alexander(tight) == ALEXANDER[key]
+    across = lambda c: np.ptp(np.array([x["point"] for x in invariants.crossings([c])]), axis=0).max()
+    assert across(tight) < 0.7 * across(loose)              # and it is a tight knot, not the loose one
+
+
+def test_a_knot_whose_crossings_never_meet_is_pulled_as_before():
+    pulls = [(0, 0, (-1, 0)), (0, 1, (1, 0))]
+    pretzel = laid(PRETZEL, "OUOUOU")
+    (plain,), _ = simulate.tighten([pretzel], W, pulls)
+    (guarded,), info = simulate.tighten([pretzel], W, pulls, closest=tying.JAMMED)
+    assert info["jammed"] and plain.shape == guarded.shape and np.allclose(plain, guarded)
+    points = [x["point"] for x in invariants.crossings([pretzel])]
+    nearest = min(math.dist(a, b) for n, a in enumerate(points) for b in points[n + 1:])
+    assert simulate.Rope([pretzel], W).closest_crossings() == pytest.approx(nearest / W, rel=0.02)
+
+
 def test_a_plat_that_makes_two_cords_is_refused():
     with pytest.raises(tying.TyingError, match="link"):
         tying.plat_layout((2, 2, 1))
@@ -267,6 +332,7 @@ def test_the_agent_ties_a_knot_and_checks_it(tmp_path):
     ws = Workspace(tmp_path)
     summary, text = ws.run("knot_library", {})
     assert summary == "5 knots" and "Stevedore knot" in text and "figure 8" in text
+    assert "Double overhand knot (\"double overhand\"): 5 crossings, cinquefoil (5_1)" in text
     summary, text = ws.run("tie_knot", {"knot": "overhand", "color": "gold"})
     assert summary == "Overhand knot · 5 steps"
     assert "pulled tight: trefoil" in text and "step 5 as drawn in the app: trefoil" in text

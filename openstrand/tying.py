@@ -44,15 +44,23 @@ SHAPES = Path(__file__).with_name('knot_shapes.json')
 OVERSIZED = 13.0
 SPACED = 6.5
 CLOSEST = 4.0
+# Pulled tight, a knot has jammed once two of its crossings come nearer than
+# this many widths (see simulate.tighten): the overhand, figure-eight and
+# stevedore never get there (their crossings stay 1.1 widths apart and more
+# while they are pulled), the twisted legs of a double or triple overhand do.
+JAMMED = 0.85
 # For the progress bar: the steps the two simulations usually take, the share
 # of the simulation's time the loose layout takes, and the share of a whole
 # tie() the simulation takes when there is one (drawing the steps is the rest).
 LAYOUT_STEPS, TIGHTEN_STEPS, LAYOUT_SHARE = 400, 200, 0.75
 SIMULATION_SHARE = 0.7
 
-# The knots people tie in one cord, as 4-plats (see plat_layout). All are
-# twist knots: a clasp and some half twists, the overhand family with an odd
-# number of crossings and the figure-eight family with an even number.
+# The knots people tie in one cord, as 4-plats (see plat_layout). An overhand
+# knot is a loop with the end passed through it; pass the end through again
+# and its two legs twist round each other once more: the overhand, double and
+# triple overhand are the two legs of a loop twisted 3, 5 and 7 half turns
+# (the knots 3_1, 5_1 and 7_1, word 2 repeated). The figure-eight and the
+# stevedore are twist knots instead: a clasp and 2 or 4 half twists (4_1, 6_1).
 LIBRARY = {
     'overhand': dict(
         title='Overhand knot', word=(2, 1, 2), aliases=('thumb knot', 'simple knot', 'single knot'),
@@ -62,13 +70,13 @@ LIBRARY = {
                                                                'savoy knot', 'eight knot'),
         about='Stopper that is easy to untie after loading; the base of the figure-eight loop and bend.'),
     'double overhand': dict(
-        title='Double overhand knot', word=(2, 1, 1, 2, 2), aliases=('double knot', 'double overhand stopper'),
+        title='Double overhand knot', word=(2, 2, 2, 2, 2), aliases=('double knot', 'double overhand stopper'),
         about='An overhand with the end passed through the loop twice: a bulkier stopper.'),
     'stevedore': dict(
         title='Stevedore knot', word=(2, 1, 1, 1, 2, 2), aliases=('stevedore stopper',),
         about='A figure-eight with an extra turn round the standing part: bulky, still easy to untie.'),
     'triple overhand': dict(
-        title='Triple overhand knot', word=(2, 1, 1, 1, 1, 2, 2), aliases=('triple knot',),
+        title='Triple overhand knot', word=(2, 2, 2, 2, 2, 2, 2), aliases=('triple knot',),
         about='An overhand with three passes through the loop: a large, round stopper.'),
 }
 
@@ -101,8 +109,8 @@ def library():
 
 
 def _knot_of(key):
-    return {'overhand': 'trefoil (3_1)', 'figure-eight': 'figure-eight (4_1)', 'double overhand': '5_2',
-            'stevedore': '6_1', 'triple overhand': '7_2'}[key]
+    return {'overhand': 'trefoil (3_1)', 'figure-eight': 'figure-eight (4_1)', 'double overhand': 'cinquefoil (5_1)',
+            'stevedore': '6_1', 'triple overhand': '7_1'}[key]
 
 
 def plat_layout(word, unit=DEFAULT_WIDTH):
@@ -247,7 +255,8 @@ def _lay_out(rough, width, knot, progress=None):
         pull = lambda f, cords: progress(LAYOUT_SHARE + (1 - LAYOUT_SHARE) * f, 'tighten', cords)
     loose, info = simulate.tighten([rough], width * LOOSE, pulls, grow_from=width, max_steps=1500,
                                    progress=lay, expected=LAYOUT_STEPS)
-    tight, tinfo = simulate.tighten(loose, width, pulls, max_steps=2500, progress=pull, expected=TIGHTEN_STEPS)
+    tight, tinfo = simulate.tighten(loose, width, pulls, max_steps=2500, progress=pull, expected=TIGHTEN_STEPS,
+                                    closest=JAMMED)
     checks = []
     for label, cord in (('laid out', loose[0]), ('pulled tight', tight[0])):
         d = invariants.describe(cord)

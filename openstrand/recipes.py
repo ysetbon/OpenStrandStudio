@@ -40,6 +40,7 @@ KINDS = {'hitch': 'tied round a holding cord', 'macrame': 'tied round filler cor
          'braid': 'cords plaited together', 'sennit': 'the same knot tied again and again'}
 STEP = 3                    # every STEP-th sample of a cord's centreline becomes a point of its layout
 FLAT = 10.0                 # px either side of a crossing where a cord keeps that crossing's height
+START = 96.0                # px of a cord a step shows at least, before its first crossing
 
 
 class RecipeError(ValueError):
@@ -223,7 +224,11 @@ def _layout(cords, patterns, what, afters=None):
             # Half way from the crossing passed last to the next one (from the start, for none).
             here = at[after - 1] if after else 0.0
             there = at[after] if after < len(at) else arc[-1]
-            i = int(np.argmin(np.abs(arc - (here + there) / 2)))
+            stop = (here + there) / 2
+            if not after:
+                # A cord not yet crossing anything is still long enough to read as a cord.
+                stop = min(max(stop, START), max(stop, there - 14))
+            i = int(np.argmin(np.abs(arc - stop)))
             while i in named[k]:
                 i += 1
             named[k][i] = f'after {after}'

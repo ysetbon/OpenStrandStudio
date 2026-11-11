@@ -1,0 +1,28 @@
+{
+  "name": "diagonal_double_half_hitch",
+  "craft": "macrame",
+  "title": "Diagonal double half hitch",
+  "also": ["diagonal clove hitch", "diagonal DHH", "slanting double half hitch", "diagonal half hitch"],
+  "about": "The double half hitch tied on a holding cord laid on a slant: rows of them draw the diagonal lines, diamonds and leaves of macrame. Two half hitches side by side, both turned the same way. Shown loose.",
+  "kind": "hitch",
+  "width": 24,
+  "cords": [
+    {"label": "Holding cord", "color": "gold", "smooth": false, "points": [
+      [265.6, 216.9], [972.0, 592.5]]},
+    {"label": "Working cord", "color": "teal", "points": [
+      [468.5, 687.2], [506.1, 616.6], [581.2, 475.3], [642.3, 360.5], [665.3, 332.0], [692.9, 322.9],
+      [723.4, 335.7], [751.1, 353.9], [758.9, 381.8], [748.2, 416.9], [691.9, 522.8], [668.4, 567.0],
+      [654.1, 585.4], [636.9, 592.1], [618.7, 585.9], [473.0, 508.4], [367.1, 452.1], [347.6, 441.7],
+      [340.1, 421.9], [350.5, 398.0], [378.7, 345.0], [430.3, 247.9], [453.4, 219.4], [480.9, 210.2],
+      [511.5, 223.1], [539.2, 241.2], [547.0, 269.1], [536.3, 304.2], [475.3, 419.0], [400.2, 560.3],
+      [362.6, 630.9]]}
+  ],
+  "patterns": ["UOUO", "UOUOUOUO"],
+  "steps": [
+    {"shown": ["all", null], "caption": "Lay the holding cord on a slant across the work."},
+    {"shown": ["all", {"after": 3}], "arrow": 1, "caption": "Take the working cord over the holding cord, round, and back under it."},
+    {"shown": ["all", {"after": 4}], "arrow": 1, "caption": "Bring it across over its own standing part. That is one half hitch."},
+    {"shown": ["all", {"after": 7}], "arrow": 1, "caption": "Take it over the holding cord again, beside the first hitch, and back under it."},
+    {"shown": ["all", "all"], "caption": "Bring the end over its own crossing part and pull it snug against the first hitch: a double half hitch."}
+  ]
+}

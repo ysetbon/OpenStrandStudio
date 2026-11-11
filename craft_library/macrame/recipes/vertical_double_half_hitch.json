@@ -1,0 +1,28 @@
+{
+  "name": "vertical_double_half_hitch",
+  "craft": "macrame",
+  "title": "Vertical double half hitch",
+  "also": ["vertical clove hitch", "vertical DHH", "upright double half hitch", "vertical half hitch"],
+  "about": "The double half hitch tied round an upright cord with a working cord that comes from the side: the working cord shows, so rows of them make blocks of its colour. Two half hitches, both turned the same way. Shown loose.",
+  "kind": "hitch",
+  "width": 24,
+  "cords": [
+    {"label": "Holding cord", "color": "gold", "smooth": false, "points": [
+      [640.0, 40.0], [640.0, 840.0]]},
+    {"label": "Working cord", "color": "teal", "points": [
+      [320.0, 440.0], [400.0, 440.0], [560.0, 440.0], [690.0, 440.0], [726.0, 447.0], [747.0, 467.0],
+      [750.0, 500.0], [747.0, 533.0], [726.0, 553.0], [690.0, 560.0], [570.0, 560.0], [520.0, 560.0],
+      [497.0, 556.0], [483.0, 544.0], [480.0, 525.0], [480.0, 360.0], [480.0, 240.0], [480.0, 218.0],
+      [494.0, 202.0], [520.0, 200.0], [580.0, 200.0], [690.0, 200.0], [726.0, 207.0], [747.0, 227.0],
+      [750.0, 260.0], [747.0, 293.0], [726.0, 313.0], [690.0, 320.0], [560.0, 320.0], [400.0, 320.0],
+      [320.0, 320.0]]}
+  ],
+  "patterns": ["UOUO", "UOUOUOUO"],
+  "steps": [
+    {"shown": ["all", null], "caption": "Hold the cord to be knotted on upright."},
+    {"shown": ["all", {"after": 3}], "arrow": 1, "caption": "Take the working cord over the holding cord, round, and back under it."},
+    {"shown": ["all", {"after": 4}], "arrow": 1, "caption": "Bring it across over its own standing part. That is one half hitch."},
+    {"shown": ["all", {"after": 7}], "arrow": 1, "caption": "Take it over the holding cord again, beside the first hitch, and back under it."},
+    {"shown": ["all", "all"], "caption": "Bring the end over its own crossing part and pull it snug against the first hitch: a double half hitch."}
+  ]
+}

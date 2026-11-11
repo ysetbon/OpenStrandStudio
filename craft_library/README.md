@@ -53,6 +53,15 @@ The knots `tie` makes are listed from their own libraries
 (`openstrand/tying.py`, `openstrand/bends.py`); they need no entry here unless
 a craft has its own name for one (knitting's magic knot).
 
+## A recipe: a knot with its tying steps
+
+`<craft>/recipes/<name>.json` holds a knot as data: its cords, the reference
+(O or U at every crossing each cord passes) and the tying steps with what to
+do at each. A recipe needs no entry in `catalog.json`: it is listed from its
+own file, and `openstrand tie "<its title>"` makes its steps, every one
+checked. `AUTHORING.md` says how to write one and try it with
+`openstrand recipe`.
+
 ## Adding a design
 
 1. Build it with the `openstrand` command, never by hand: keep the drawing

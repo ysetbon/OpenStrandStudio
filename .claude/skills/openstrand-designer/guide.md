@@ -66,13 +66,17 @@ that one. Search before you draw anything.
 - **Boondoggle** (scoubidou, gimp, lanyard, plastic lace): every stitch is an
   MxN stitch. Box or square stitch = 1x1 (two strings); brick stitch = 2x1
   (three strings); any other size is `make mxn`.
-- **Macrame**: the square knot (cobra knot, Solomon bar), with tying steps;
-  the lark's head knot (cow hitch, mounting knot), its reverse and the
-  Josephine knot (Carrick bend), shown loose.
-- **Chinese knotting**: double coin, cloverleaf, good luck, Pan Chang (mystic
-  or endless knot), shown finished and flat.
+- **Macrame**, each with its tying steps (`tie`): lark's head knot (cow
+  hitch) and its reverse, vertical lark's head; half hitch, double half hitch
+  (clove hitch), diagonal and vertical double half hitch, half hitch spiral;
+  half knot, square knot (cobra knot), square knot sennit, half knot spiral;
+  Josephine knot (Carrick bend); two-strand twist and three- to seven-strand
+  braids.
+- **Chinese knotting**, with steps: double coin knot, Pan Chang (mystic or
+  endless knot), good luck knot. The cloverleaf is shown finished.
 - **Knitting**: the magic knot that joins two yarns, with tying steps.
-- **Crochet**: nothing ready-made yet: say so, then draw it.
+- **Crochet**: the slip knot every piece starts from, with steps. No
+  stitches yet: say so, then draw them.
 - **Knots**: every knot `tie` makes, by all its names.
 
 ## Knots by name (`tie`)
@@ -102,7 +106,8 @@ steps, every step checked to be that knot, crossing by crossing.
 | boondoggle, scoubidou, gimp, lanyard, plastic lace | `samples boondoggle`, then `make mxn` |
 | box stitch, square stitch | `make mxn --m 1 --n 1` |
 | brick stitch | `make mxn --m 2 --n 1` |
-| Chinese knot, mystic knot, Pan Chang, double coin, good luck knot | `samples "chinese knot"`, then `make sample NAME` |
+| Chinese knot, mystic knot, Pan Chang, double coin, good luck knot | `samples "chinese knot"`, then the `tie` it names |
+| half hitch, clove hitch, lark's head, sennit, spiral, braid, plait | `samples <the name>`, then the `tie` it names |
 | macrame, crochet, knitting, any knot or stitch by name | `samples <the name>` first |
 | "4 by 3", "4x3" | `--m 4 --n 3` |
 | left-handed / right-handed | `--hand lh` / `--hand rh` |

@@ -113,9 +113,11 @@ def test_every_recipe_ties_step_by_step(name):
     assert check.problems(last) == []
     # identify names it, crossing for crossing: as itself, or as the knot it is the back
     # or the mirror image of (a reverse lark's head is a lark's head seen from behind).
-    found = identify.named(last)
-    assert found["how"] == "exact"
-    assert found["key"] == name or invariants.compare(bends.reference(name), bends.reference(found["key"]))
+    # (identify compares designs of up to identify.COMPARED cords.)
+    if len(RECIPES[name]["cords"]) <= identify.COMPARED:
+        found = identify.named(last)
+        assert found["how"] == "exact"
+        assert found["key"] == name or invariants.compare(bends.reference(name), bends.reference(found["key"]))
 
 
 def test_a_recipe_that_does_not_pass_its_reference_is_refused():
@@ -147,9 +149,14 @@ def test_a_step_can_stop_after_a_number_of_crossings():
     ("scoubidou box stitch", "box_stitch"),
     ("square stitch", "box_stitch"),
     ("brick", "brick_stitch"),
-    ("mystic knot", "chinese_pan_chang"),
-    ("endless knot", "chinese_pan_chang"),
-    ("double coin", "chinese_double_coin"),
+    ("mystic knot", "pan_chang_knot"),
+    ("endless knot", "pan_chang_knot"),
+    ("double coin", "double_coin_knot"),
+    ("clover knot", "chinese_cloverleaf"),
+    ("clove hitch", "double_half_hitch"),
+    ("spiral knot", "half_knot_spiral"),
+    ("plait", "three_strand_braid"),
+    ("slipknot", "slip_knot"),
     ("how to tie a magic knot", "magic_knot"),
     ("cobra knot", "macrame square knot"),
     ("lark's head", "larks_head_knot"),
@@ -167,20 +174,22 @@ def test_search_finds_a_design_by_the_names_people_use(asked, name):
 
 def test_search_by_craft_lists_that_craft():
     assert {e["name"] for e in library.search("chinese knot")} == {
-        "chinese_double_coin", "chinese_cloverleaf", "chinese_good_luck", "chinese_pan_chang"}
-    assert library.search("crochet") == [] and library.search("4x3 bracelet") == []
+        "chinese_cloverleaf", "double_coin_knot", "good_luck_knot", "pan_chang_knot"}
+    assert [e["name"] for e in library.search("crochet")] == ["slip_knot"]
+    assert library.search("knitting swatch") == [] and library.search("4x3 bracelet") == []
 
 
 def test_a_match_ends_with_the_call_that_makes_it():
     assert library.line(BY_NAME["box_stitch"]).endswith("get it: make_mxn m=1, n=1")
     assert library.line(BY_NAME["box_stitch"], cli=True).endswith("get it: make mxn --m 1 --n 1")
-    assert library.line(BY_NAME["chinese_pan_chang"]).endswith('get it: load_sample name="chinese_pan_chang"')
+    assert library.line(BY_NAME["chinese_cloverleaf"]).endswith('get it: load_sample name="chinese_cloverleaf"')
+    assert library.line(library.find("mystic knot")).endswith('tie_knot name="pan chang knot" (with its tying steps)')
     assert library.line(BY_NAME["magic_knot"]).endswith('tie_knot name="fisherman\'s knot" (with its tying steps)')
 
 
 def test_make_sample_takes_any_name_of_an_entry():
-    by_name, _, _ = generators.sample("chinese_pan_chang")
-    by_other_name, _, _ = generators.sample("Mystic knot")
+    by_name, _, _ = generators.sample("chinese_cloverleaf")
+    by_other_name, _, _ = generators.sample("Clover knot")
     assert by_name == by_other_name
     box, _, source = generators.sample("square stitch")
     assert source == "mxn_lh_1x1" and box == generators.mxn(1, 1)[0]
@@ -206,7 +215,7 @@ def test_the_agent_looks_designs_up_in_the_library(tmp_path):
     assert "chinese knotting:" in crafts and "mxn_lh_1x1" in crafts
     _, nothing = workspace.run("search_samples", {"text": "zzzz"})
     assert "nothing matches" in nothing
-    workspace.run("load_sample", {"name": "chinese_good_luck"})
+    workspace.run("load_sample", {"name": "chinese_cloverleaf"})
     assert workspace.data["strands"]
 
 

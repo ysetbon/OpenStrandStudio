@@ -2,7 +2,7 @@
   "crafts": {
     "boondoggle": "Flat plastic lace (scoubidou, gimp, lanyard) woven stitch on stitch. Every stitch is an MxN stitch.",
     "macrame": "Cords knotted round each other or round filler cords.",
-    "chinese knotting": "Decorative knots tied in one cord, shown finished and flat.",
+    "chinese knotting": "Decorative knots tied in one cord, laid flat.",
     "knitting": "Loops of one yarn pulled through the loops of the row below.",
     "crochet": "Loops of one yarn pulled through each other with a hook.",
     "knots": "Rope knots, each with its tying steps."
@@ -33,36 +33,12 @@
       "build": {"make": "mxn"}
     },
     {
-      "name": "chinese_double_coin",
-      "craft": "chinese knotting",
-      "title": "Double coin knot",
-      "also": ["Chinese double coin", "coin knot"],
-      "about": "One cord, mirror-symmetric: a loop on top and one each side, eight crossings, two tails. Shown finished and flat; no tying steps yet.",
-      "build": {"file": "src/samples/chinese_double_coin.json"}
-    },
-    {
       "name": "chinese_cloverleaf",
       "craft": "chinese knotting",
       "title": "Cloverleaf knot",
       "also": ["Chinese cloverleaf", "clover knot", "four-leaf clover knot"],
       "about": "Four heart-shaped leaves interlocking on one closed cord, with a stem tucked under the centre. Shown finished and flat; no tying steps yet.",
       "build": {"file": "src/samples/chinese_cloverleaf.json"}
-    },
-    {
-      "name": "chinese_good_luck",
-      "craft": "chinese knotting",
-      "title": "Good luck knot",
-      "also": ["Chinese good luck", "lucky knot"],
-      "about": "Three large and four small ears around a woven centre, with two tails. Shown finished and flat; no tying steps yet.",
-      "build": {"file": "src/samples/chinese_good_luck.json"}
-    },
-    {
-      "name": "chinese_pan_chang",
-      "craft": "chinese knotting",
-      "title": "Pan Chang knot",
-      "also": ["mystic knot", "endless knot", "Chinese pan chang", "panchang"],
-      "about": "A square woven centre with ears round its rim, tied in one cord with two tails. Shown finished and flat; no tying steps yet.",
-      "build": {"file": "src/samples/chinese_pan_chang.json"}
     },
     {
       "name": "magic_knot",

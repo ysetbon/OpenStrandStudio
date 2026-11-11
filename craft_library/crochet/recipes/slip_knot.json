@@ -1,0 +1,25 @@
+{
+  "name": "slip_knot",
+  "craft": "crochet",
+  "title": "Slip knot",
+  "also": ["slipknot", "starting loop", "crochet slip knot", "knitting slip knot", "slip loop"],
+  "about": "The loop every piece of crochet and knitting starts from: an overhand knot with a loop of the working yarn pulled through it in place of the end, so the loop on the hook or needle can be drawn tight or let out. Shown loose and flat.",
+  "kind": "loop",
+  "width": 22,
+  "cords": [
+    {"label": "Yarn", "color": "rose", "points": [
+      [200, 480], [350, 480], [530, 480], [600, 480], [670, 478], [700, 465],
+      [710, 430], [710, 330], [700, 290], [670, 272], [600, 270], [520, 272],
+      [500, 290], [495, 330], [495, 400], [496, 440], [497, 520], [500, 600],
+      [520, 632], [545, 642], [565, 640], [565, 600], [565, 520], [565, 400],
+      [565, 330], [566, 250], [580, 195], [605, 172], [630, 195], [634, 250],
+      [635, 330], [635, 400], [635, 520], [635, 600], [652, 632], [685, 648],
+      [760, 680], [900, 700]]}
+  ],
+  "patterns": ["OUUOOUOUUO"],
+  "steps": [
+    {"shown": [{"after": 6}], "caption": "Lay the yarn in a loop, the working yarn crossing under the tail where the loop closes."},
+    {"shown": [{"after": 8}], "arrow": 0, "caption": "Bring a bight of the working yarn up through the loop: over the near side of the loop, then under the far side."},
+    {"shown": ["all"], "caption": "The bight is the new loop, both its legs through the first one: over the near side, under the far side. Pull the tail to tighten the knot round it; pull the working yarn to make the loop smaller."}
+  ]
+}

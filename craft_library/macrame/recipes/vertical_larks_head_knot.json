@@ -1,0 +1,37 @@
+{
+  "name": "vertical_larks_head_knot",
+  "craft": "macrame",
+  "title": "Vertical lark's head knot",
+  "also": ["vertical lark's head", "lark's head sennit", "lark's head chain", "vertical larks head"],
+  "about": "Half hitches tied down a filler cord, the first in front of it and the next behind it, and so on: each pair is a lark's head knot, and a row of them makes a flat band with a ridge down one side. Shown loose and flat, two lark's heads.",
+  "kind": "sennit",
+  "width": 22,
+  "cords": [
+    {"label": "Filler cord", "color": "gold", "smooth": false, "points": [
+      [600, 60], [600, 1080]]},
+    {"label": "Working cord", "color": "teal", "points": [
+      [500, 80], [500, 150], [500, 200], [500, 230], [500, 250], [512, 272],
+      [535, 280], [600, 280], [665, 280], [693, 268], [702, 240], [693, 212],
+      [665, 200], [600, 200], [540, 200], [500, 200], [460, 200], [438, 200],
+      [425, 212], [420, 250], [428, 295], [460, 330], [500, 350], [500, 400],
+      [500, 430], [500, 450], [512, 472], [535, 480], [600, 480], [665, 480],
+      [693, 468], [702, 440], [693, 412], [665, 400], [600, 400], [540, 400],
+      [500, 400], [460, 400], [438, 400], [425, 412], [420, 450], [428, 495],
+      [460, 530], [500, 550], [500, 600], [500, 630], [500, 650], [512, 672],
+      [535, 680], [600, 680], [665, 680], [693, 668], [702, 640], [693, 612],
+      [665, 600], [600, 600], [540, 600], [500, 600], [460, 600], [438, 600],
+      [425, 612], [420, 650], [428, 695], [460, 730], [500, 750], [500, 800],
+      [500, 830], [500, 850], [512, 872], [535, 880], [600, 880], [665, 880],
+      [693, 868], [702, 840], [693, 812], [665, 800], [600, 800], [540, 800],
+      [500, 800], [460, 800], [438, 800], [425, 812], [420, 850], [428, 895],
+      [460, 930], [500, 950], [500, 1000], [500, 1070]]}
+  ],
+  "patterns": ["OUUOOUUO", "UOUOOUOUUOUOOUOU"],
+  "steps": [
+    {"shown": ["all", null], "caption": "Hang the filler cord straight down."},
+    {"shown": ["all", {"after": 4}], "arrow": 1, "caption": "A half hitch in front: take the working cord across over the filler, back under it, and over its own standing part."},
+    {"shown": ["all", {"after": 8}], "arrow": 1, "caption": "A half hitch behind, below the first: across under the filler, back over it, and under its own standing part. The two together are one lark's head knot."},
+    {"shown": ["all", {"after": 12}], "arrow": 1, "caption": "A front hitch again: over the filler, back under it, over its own standing part."},
+    {"shown": ["all", "all"], "caption": "And a back hitch: under the filler, back over it, under its own standing part. Two lark's head knots, one below the other."}
+  ]
+}

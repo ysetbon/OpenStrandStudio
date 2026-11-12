@@ -659,6 +659,27 @@ class MainWindow(QMainWindow):
         if undo_mgr is not None:
             undo_mgr.state_saved.connect(self.tab_manager.mark_active_dirty)
 
+        # Keyboard: Ctrl+Tab / Ctrl+Shift+Tab switch tabs, Ctrl+Shift+PgUp / PgDn
+        # move the active tab along the bar. Shift+Tab arrives as Backtab on some
+        # platforms, so both spellings are bound.
+        self.tab_shortcuts = []
+        for keys, handler in (
+                (("Ctrl+Tab",), lambda: self._tab_shortcut(self.tab_manager.switch_relative, 1, 'tab_switch')),
+                (("Ctrl+Shift+Tab", "Ctrl+Shift+Backtab"),
+                 lambda: self._tab_shortcut(self.tab_manager.switch_relative, -1, 'tab_switch')),
+                (("Ctrl+Shift+PgUp",), lambda: self._tab_shortcut(self.tab_manager.move_active_tab, -1, 'tab_edge_drop')),
+                (("Ctrl+Shift+PgDown",), lambda: self._tab_shortcut(self.tab_manager.move_active_tab, 1, 'tab_edge_drop'))):
+            for key in keys:
+                shortcut = QShortcut(QKeySequence(key), self)
+                shortcut.setContext(Qt.WindowShortcut)
+                shortcut.activated.connect(handler)
+                self.tab_shortcuts.append(shortcut)
+
+    def _tab_shortcut(self, action, step, cue):
+        """Run a tab shortcut; play its sound only when something changed."""
+        if action(step):
+            sound_manager.play(cue)
+
     def toggle_tabs_edge(self):
         """Show/hide the floating tab edge. Pure visibility toggle (not a mode)."""
         if not hasattr(self, 'tab_edge'):

@@ -149,10 +149,14 @@ def assert_tabs_usable(win):
 
 
 def test_seven_long_tabs_shrink_instead_of_piling_up(window):
+    # A canvas this wide holds seven tabs at their minimum but not at full title
+    # width: they must shrink to fit, without scrolling.
+    window.canvas.setFixedSize(1300, 700)
     open_tabs(window, LONG_TITLES, active_index=4)
-    window.resize(1300, 900)
     pump(150)
     edge = window.tab_edge
+    assert not edge._overflow and not edge._hbar.isVisible()
+    assert any(c.is_title_cut() for c in chips(window))
     assert_tabs_usable(window)
     assert all(edge._viewport.rect().contains(c.geometry()) for c in chips(window))
 

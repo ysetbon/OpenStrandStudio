@@ -152,9 +152,21 @@ class TabManager(QObject):
             self._busy = prev_busy
         return ok
 
+    def _finish_mask_edit(self):
+        """End a mask edit in progress, the way Escape does, before the canvas
+        changes tabs. Otherwise its overlay and erase clicks would carry over
+        to a strand that is not on the new tab. Erases already made stay."""
+        panel = getattr(self.main_window, 'layer_panel', None)
+        if panel is not None and getattr(panel, 'mask_editing', False):
+            panel.exit_mask_edit_mode()
+        canvas = self.canvas
+        if canvas is not None and getattr(canvas, 'mask_edit_mode', False):
+            canvas.exit_mask_edit_mode()
+
     def _capture_or_warn(self):
         """Capture the active tab; on failure warn the user and report False so
         the caller can abort (keeping the live canvas on the current tab)."""
+        self._finish_mask_edit()
         if self.capture_active_session():
             return True
         QMessageBox.warning(
@@ -406,6 +418,8 @@ class TabManager(QObject):
                 # Cancel, or the dialog dismissed without an explicit choice.
                 return False
 
+        if closing_active:
+            self._finish_mask_edit()
         idx = self.tabs.index(session)
         self.tabs.remove(session)
 

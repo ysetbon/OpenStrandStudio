@@ -387,3 +387,77 @@ def test_press_on_the_panel_outside_the_grip_does_not_move_the_edge(window):
     send_mouse(edge, QEvent.MouseButtonRelease, g + QPoint(-200, -200))
     pump(30)
     assert edge.pos() == before
+
+
+# ------------------------------------------------------------ review follow-ups
+def test_switching_tabs_ends_a_mask_edit(window):
+    """A mask edit must not carry its overlay into another tab (Ctrl+Tab or a click)."""
+    import json
+    from masked_strand import MaskedStrand
+    from save_load_manager import apply_loaded_strands, load_strands_from_data
+    data = json.loads((SRC_DIR / "samples" / "bridge.json").read_text(encoding="utf-8"))
+    if data.get("type") == "OpenStrandStudioHistory":
+        data = data["states"][data.get("current_step", 1) - 1]["data"]
+    loaded = load_strands_from_data(data, window.canvas)
+    apply_loaded_strands(window.canvas, loaded[0], loaded[1])
+    pump(100)
+    tm = window.tab_manager
+    tm.new_tab()
+    tm.switch_to_tab(tm.tabs[0].id)
+    pump(100)
+    index = next(i for i, s in enumerate(window.canvas.strands) if isinstance(s, MaskedStrand))
+    window.layer_panel.request_edit_mask(index)
+    pump(50)
+    assert window.layer_panel.mask_editing and window.canvas.mask_edit_mode
+
+    assert tm.switch_relative(1)
+    pump(50)
+    assert not window.layer_panel.mask_editing
+    assert not window.canvas.mask_edit_mode
+    assert window.canvas.editing_masked_strand is None
+
+
+def test_tabs_moved_during_a_drag_show_their_real_order(window):
+    tm = open_tabs(window, ["One", "Two", "Three", "Four"], active_index=0)
+    first = chips(window)[0]
+    start = first.mapToGlobal(QPoint(30, first.height() // 2))
+    distance = chips(window)[2].x() + 5 - first.x()  # over "Three": slot 2
+    send_mouse(first, QEvent.MouseButtonPress, start)
+    for dx in (10, distance // 2, distance):
+        send_mouse(first, QEvent.MouseMove, start + QPoint(dx, 0), button=Qt.NoButton, buttons=Qt.LeftButton)
+        pump(5)
+    # Mid-drag, a keyboard move already puts the tab in that slot, so the drop's
+    # own move changes nothing; the bar must still show the new order.
+    tm.move_tab(tm.tabs[0].id, 2)
+    send_mouse(first, QEvent.MouseButtonRelease, start + QPoint(distance, 0))
+    pump(60)
+    assert [t.title for t in tm.tabs] == ["Two", "Three", "One", "Four"]
+    shown = sorted(chips(window), key=lambda c: c.x())
+    assert [c.full_title for c in shown] == ["Two", "Three", "One", "Four"]
+    assert_tabs_usable(window)
+
+
+def test_narrowing_the_canvas_keeps_the_active_tab_in_view(window):
+    titles = ["Long tab title number %d for scrolling" % i for i in range(14)]
+    window.canvas.setFixedSize(1500, 700)
+    open_tabs(window, titles, active_index=len(titles) - 1)
+    pump(100)
+    edge = window.tab_edge
+    assert edge._overflow and visible_in_viewport(edge, chips(window)[-1])
+    window.canvas.setFixedSize(900, 700)
+    pump(100)
+    assert visible_in_viewport(edge, chips(window)[-1])
+
+
+def test_slide_animations_do_not_pile_up(window):
+    from PyQt5.QtCore import QPropertyAnimation
+    tm = open_tabs(window, ["One", "Two", "Three", "Four"], active_index=0)
+    edge = window.tab_edge
+    for _ in range(3):
+        first = chips(window)[0]
+        distance = chips(window)[2].x() + 5 - first.x()
+        drag_chip(first, [10, distance // 2, distance])
+        pump(30)
+    assert len(tm.tabs) == 4
+    # Every drop rebuilt the tabs; the animations of the old tabs are gone.
+    assert len(edge.findChildren(QPropertyAnimation)) <= len(tm.tabs)

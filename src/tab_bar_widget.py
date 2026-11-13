@@ -696,6 +696,7 @@ class DraggableTabEdge(QWidget):
         self._rebuild_pending = False
         for anim in self._anims.values():
             anim.stop()
+            anim.deleteLater()  # parented to the edge: would outlive its chip
         self._anims = {}
         for chip in self._chips:
             chip.setParent(None)
@@ -827,7 +828,7 @@ class DraggableTabEdge(QWidget):
         for chip in self._chips:
             if chip is skip:
                 continue
-            anim = self._anims.pop(chip, None)
+            anim = self._anims.get(chip)  # kept for reuse by the next drag
             if anim is not None:
                 anim.stop()
             chip.move(self._visual_x(self._lefts.get(chip.tab_id, 0), chip.width()), 0)
@@ -963,10 +964,15 @@ class DraggableTabEdge(QWidget):
             anim.stop()
         sound_manager.play('tab_edge_drop')
         tab_id = d['chip'].tab_id
+        moved = False
         if d['to'] != d['from']:
             self._reveal_next = tab_id
-            self.tab_manager.move_tab(tab_id, d['to'])  # emits changed -> rebuild
-        elif self._rebuild_pending:
+            moved = self.tab_manager.move_tab(tab_id, d['to'])  # emits changed -> rebuild
+        if moved:
+            return
+        self._reveal_next = None
+        if self._rebuild_pending:
+            # Tabs changed during the drag (e.g. a keyboard move): show the real order.
             self.rebuild()
         else:
             self._place_chips()  # dropped where it started: slide back into place
@@ -1139,7 +1145,7 @@ class DraggableTabEdge(QWidget):
         if obj is self.canvas and event.type() == QEvent.Resize:
             # Re-fit the tabs to the new canvas width (this also repositions).
             if self._chip_drag is None:
-                self._relayout()
+                self._relayout(reveal=self.tab_manager.active_tab_id)
             elif self.isVisible():
                 self.reposition()
         return False

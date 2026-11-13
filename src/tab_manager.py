@@ -375,6 +375,10 @@ class TabManager(QObject):
         # them on a neighbor of the closed tab.
         original_active_id = self.active_tab_id
         closing_active = (tab_id == original_active_id)
+        if closing_active:
+            # End a mask edit first: it records its erases (and marks the tab
+            # unsaved) only when it ends, and the check below must see that.
+            self._finish_mask_edit()
 
         # The user can opt out of the per-tab "unsaved changes" prompt in
         # Settings; when enabled, closing a dirty tab just discards it silently.
@@ -418,8 +422,6 @@ class TabManager(QObject):
                 # Cancel, or the dialog dismissed without an explicit choice.
                 return False
 
-        if closing_active:
-            self._finish_mask_edit()
         idx = self.tabs.index(session)
         self.tabs.remove(session)
 

@@ -484,3 +484,38 @@ def test_canvas_resized_during_a_drag_is_fitted_on_drop(window):
     assert edge.rect().contains(edge.plus_btn.geometry())
     assert edge.rect().contains(edge.more_btn.geometry())
     assert_tabs_usable(window)
+
+
+def test_closing_a_clean_tab_mid_mask_edit_asks_about_the_erase(window, monkeypatch):
+    """An erase is recorded (and the tab marked unsaved) only when the mask edit
+    ends, so closing the tab must end it before deciding whether to ask."""
+    import json
+    import tab_manager as tab_manager_module
+    from masked_strand import MaskedStrand
+    from save_load_manager import apply_loaded_strands, load_strands_from_data
+    data = json.loads((SRC_DIR / "samples" / "bridge.json").read_text(encoding="utf-8"))
+    if data.get("type") == "OpenStrandStudioHistory":
+        data = data["states"][data.get("current_step", 1) - 1]["data"]
+    loaded = load_strands_from_data(data, window.canvas)
+    apply_loaded_strands(window.canvas, loaded[0], loaded[1])
+    pump(100)
+    tm = window.tab_manager
+    tm.new_tab()
+    first = tm.tabs[0]
+    tm.switch_to_tab(first.id)
+    pump(100)
+    first.dirty = False  # a clean tab
+    index = next(i for i, s in enumerate(window.canvas.strands) if isinstance(s, MaskedStrand))
+    window.layer_panel.request_edit_mask(index)
+    pump(50)
+    window.canvas.editing_masked_strand.deletion_rectangles = [{"top_left": (0, 0), "top_right": (5, 0),
+                                                                 "bottom_left": (0, 5), "bottom_right": (5, 5)}]
+    assert not first.dirty  # the erase alone does not mark it yet
+
+    window.canvas.skip_close_tab_warning = False
+    asked = []
+    monkeypatch.setattr(tab_manager_module.QMessageBox, "exec_", lambda box: asked.append(box.text()))
+    assert tm.close_tab(first.id) is False  # the prompt was dismissed: Cancel
+    assert asked, "closing must ask about the unsaved erase"
+    assert tm.find(first.id) is not None
+    assert not window.layer_panel.mask_editing and not window.canvas.mask_edit_mode

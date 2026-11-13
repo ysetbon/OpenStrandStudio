@@ -633,6 +633,7 @@ class DraggableTabEdge(QWidget):
         self._overflow = False    # tabs do not fit: scrollbar and list button show
         self._chip_drag = None    # state while a tab is being dragged to a new place
         self._rebuild_pending = False
+        self._refit_pending = False  # canvas resized during a tab drag
         self._reveal_next = None  # tab to scroll into view after the next rebuild
         self._anims = {}          # chip -> QPropertyAnimation sliding it aside
 
@@ -738,6 +739,7 @@ class DraggableTabEdge(QWidget):
 
     def _relayout(self, reveal=None):
         """Size the chips to the room available, then place every part."""
+        self._refit_pending = False
         chips = self._chips
         natural = [c.natural_width() for c in chips]
         mins = [c.min_width() for c in chips]
@@ -974,6 +976,9 @@ class DraggableTabEdge(QWidget):
         if self._rebuild_pending:
             # Tabs changed during the drag (e.g. a keyboard move): show the real order.
             self.rebuild()
+        elif self._refit_pending:
+            # The canvas was resized during the drag: fit the tabs to it now.
+            self._relayout(reveal=self.tab_manager.active_tab_id)
         else:
             self._place_chips()  # dropped where it started: slide back into place
 
@@ -1146,8 +1151,11 @@ class DraggableTabEdge(QWidget):
             # Re-fit the tabs to the new canvas width (this also repositions).
             if self._chip_drag is None:
                 self._relayout(reveal=self.tab_manager.active_tab_id)
-            elif self.isVisible():
-                self.reposition()
+            else:
+                # Not while a tab is being dragged: refit when it is dropped.
+                self._refit_pending = True
+                if self.isVisible():
+                    self.reposition()
         return False
 
     # -------------------------------------------------------------- dragging

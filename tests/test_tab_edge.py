@@ -461,3 +461,26 @@ def test_slide_animations_do_not_pile_up(window):
     assert len(tm.tabs) == 4
     # Every drop rebuilt the tabs; the animations of the old tabs are gone.
     assert len(edge.findChildren(QPropertyAnimation)) <= len(tm.tabs)
+
+
+def test_canvas_resized_during_a_drag_is_fitted_on_drop(window):
+    titles = ["Long tab title number %d for scrolling" % i for i in range(14)]
+    window.canvas.setFixedSize(1500, 700)
+    tm = open_tabs(window, titles, active_index=0)
+    pump(100)
+    edge = window.tab_edge
+    chip = chips(window)[0]
+    start = chip.mapToGlobal(QPoint(30, chip.height() // 2))
+    send_mouse(chip, QEvent.MouseButtonPress, start)
+    send_mouse(chip, QEvent.MouseMove, start + QPoint(12, 0), button=Qt.NoButton, buttons=Qt.LeftButton)
+    pump(5)
+    window.canvas.setFixedSize(900, 700)  # narrowed mid-drag
+    pump(50)
+    send_mouse(chip, QEvent.MouseMove, start, button=Qt.NoButton, buttons=Qt.LeftButton)
+    send_mouse(chip, QEvent.MouseButtonRelease, start)  # dropped where it started
+    pump(60)
+    assert [t.title for t in tm.tabs] == titles
+    assert edge.width() <= window.canvas.width() - 2 * 24
+    assert edge.rect().contains(edge.plus_btn.geometry())
+    assert edge.rect().contains(edge.more_btn.geometry())
+    assert_tabs_usable(window)

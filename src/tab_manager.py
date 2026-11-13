@@ -152,9 +152,21 @@ class TabManager(QObject):
             self._busy = prev_busy
         return ok
 
+    def _finish_mask_edit(self):
+        """End a mask edit in progress, the way Escape does, before the canvas
+        changes tabs. Otherwise its overlay and erase clicks would carry over
+        to a strand that is not on the new tab. Erases already made stay."""
+        panel = getattr(self.main_window, 'layer_panel', None)
+        if panel is not None and getattr(panel, 'mask_editing', False):
+            panel.exit_mask_edit_mode()
+        canvas = self.canvas
+        if canvas is not None and getattr(canvas, 'mask_edit_mode', False):
+            canvas.exit_mask_edit_mode()
+
     def _capture_or_warn(self):
         """Capture the active tab; on failure warn the user and report False so
         the caller can abort (keeping the live canvas on the current tab)."""
+        self._finish_mask_edit()
         if self.capture_active_session():
             return True
         QMessageBox.warning(
@@ -351,15 +363,22 @@ class TabManager(QObject):
         return True
 
     def close_tab(self, tab_id):
+        """Close a tab, asking first about unsaved changes (unless the user turned
+        that prompt off). Returns True when the tab is gone, False when it stays
+        (unknown tab, Cancel, or a save that did not happen)."""
         session = self.find(tab_id)
         if session is None:
-            return
+            return False
 
         # The tab the user is actually working on. Preserved across a save-switch
         # so closing a *background* tab returns them here instead of stranding
         # them on a neighbor of the closed tab.
         original_active_id = self.active_tab_id
         closing_active = (tab_id == original_active_id)
+        if closing_active:
+            # End a mask edit first: it records its erases (and marks the tab
+            # unsaved) only when it ends, and the check below must see that.
+            self._finish_mask_edit()
 
         # The user can opt out of the per-tab "unsaved changes" prompt in
         # Settings; when enabled, closing a dirty tab just discards it silently.
@@ -392,16 +411,16 @@ class TabManager(QObject):
                 # unsaved work below.
                 if tab_id != self.active_tab_id:
                     if not self.switch_to_tab(tab_id):
-                        return
+                        return False
                 saved = False
                 if hasattr(self.main_window, 'save_project'):
                     saved = self.main_window.save_project()
                 # If the save dialog was canceled/failed, keep the tab and abort.
                 if not saved:
-                    return
+                    return False
             elif clicked is not discard_btn:
                 # Cancel, or the dialog dismissed without an explicit choice.
-                return
+                return False
 
         idx = self.tabs.index(session)
         self.tabs.remove(session)
@@ -425,6 +444,72 @@ class TabManager(QObject):
             self.restore_session(original_active_id)
 
         self.changed.emit()
+        return True
+
+    def close_tabs(self, tab_ids, keep_id=None):
+        """Close several tabs one by one through close_tab, so each one with unsaved
+        changes still gets its own Save / Discard / Cancel prompt. Cancel (or a save
+        that does not happen) stops the rest. When the active tab is among them, the
+        user is first moved to *keep_id*. Returns how many tabs were closed."""
+        ids = [tid for tid in tab_ids if self.find(tid) is not None]
+        if keep_id is not None and self.active_tab_id in ids:
+            if not self.switch_to_tab(keep_id):
+                return 0
+        closed = 0
+        for tid in ids:
+            if self.find(tid) is None:
+                continue
+            if not self.close_tab(tid):
+                break
+            closed += 1
+        return closed
+
+    def close_other_tabs(self, tab_id):
+        """Close every tab but this one."""
+        if self.find(tab_id) is None:
+            return 0
+        return self.close_tabs([t.id for t in self.tabs if t.id != tab_id], keep_id=tab_id)
+
+    def close_tabs_after(self, tab_id):
+        """Close the tabs after this one (to its right; to its left in RTL)."""
+        session = self.find(tab_id)
+        if session is None:
+            return 0
+        idx = self.tabs.index(session)
+        return self.close_tabs([t.id for t in self.tabs[idx + 1:]], keep_id=tab_id)
+
+    # ------------------------------------------------------------- tab order
+    def move_tab(self, tab_id, new_index):
+        """Put a tab at *new_index* (clamped); the others keep their order.
+        Returns True when the order changed."""
+        session = self.find(tab_id)
+        if session is None:
+            return False
+        old = self.tabs.index(session)
+        new_index = max(0, min(int(new_index), len(self.tabs) - 1))
+        if old == new_index:
+            return False
+        self.tabs.insert(new_index, self.tabs.pop(old))
+        self.changed.emit()
+        return True
+
+    def move_active_tab(self, step):
+        """Move the active tab *step* places along the bar (Ctrl+Shift+PgUp/PgDn)."""
+        session = self.get_active()
+        if session is None:
+            return False
+        new_index = self.tabs.index(session) + step
+        if not 0 <= new_index < len(self.tabs):
+            return False
+        return self.move_tab(session.id, new_index)
+
+    def switch_relative(self, step):
+        """Switch to the tab *step* places along the bar, wrapping (Ctrl+Tab)."""
+        if len(self.tabs) < 2:
+            return False
+        session = self.get_active()
+        idx = self.tabs.index(session) if session is not None else 0
+        return self.switch_to_tab(self.tabs[(idx + step) % len(self.tabs)].id)
 
     # ---------------------------------------------------------- dirty tracking
     def mark_active_dirty(self, *args):

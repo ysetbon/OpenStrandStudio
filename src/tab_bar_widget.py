@@ -2,17 +2,22 @@
 
 The edge is parented to the canvas (not the main layout) so it floats over the
 drawing area without stealing canvas space. It opens bottom-center by default
-and can be dragged anywhere inside the canvas. No yellow is used anywhere; all
-colors come from the active theme table below.
+and can be dragged anywhere inside the canvas by its grip. No yellow is used
+anywhere; all colors come from the active theme table below.
+
+Tabs are sized from the room the edge has, never from their titles alone: they
+shrink evenly (titles end in "...", with a tooltip only on a cut-off title), and
+when even the smallest tabs do not fit, a thin scrollbar appears under them and a
+list button shows every tab. Tabs can be dragged to a new place.
 """
 
-from PyQt5.QtCore import Qt, QEvent, QRectF, QSize, pyqtSignal
+from PyQt5.QtCore import (Qt, QEvent, QRectF, QPoint, QTimer, QEasingCurve,
+                          QPropertyAnimation, pyqtSignal)
 from PyQt5.QtGui import QPainter, QColor, QPen, QBrush, QPainterPath, QFont
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QSizePolicy
+from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QLabel, QSizePolicy, QScrollBar,
+                             QMenu, QApplication)
 
-from translations import translations
 import sound_manager
-
 
 # Theme tables (see implementation brief). Every color is theme-driven; no yellow.
 THEMES = {
@@ -82,18 +87,22 @@ def snap_target_style(theme_name, active=False):
 
 
 class IconButton(QWidget):
-    """Small painted icon button (duplicate / close / plus). Themed pen color."""
+    """Small painted icon button (duplicate / close / plus / more). Themed pen color."""
 
     clicked = pyqtSignal()
 
+    # 'more' opens a menu, and the menu plays its own opening sound.
+    CUES = {'plus': 'tab_new', 'duplicate': 'tab_duplicate', 'close': 'tab_close', 'more': 'none'}
+
     def __init__(self, kind, parent=None):
         super().__init__(parent)
-        self.kind = kind  # 'duplicate' | 'close' | 'plus'
-        sound_manager.set_cue(self, {'plus': 'tab_new', 'duplicate': 'tab_duplicate', 'close': 'tab_close'}[kind])
+        self.kind = kind  # 'duplicate' | 'close' | 'plus' | 'more'
+        sound_manager.set_cue(self, self.CUES[kind])
         sound_manager.set_hover_cue(self, 'hover_tab_button')
         self._hover = False
+        self._dim = False
         self._color = QColor(0xF0, 0xF0, 0xF0)
-        size = 22 if kind == 'plus' else 18
+        size = 22 if kind in ('plus', 'more') else 18
         self.setFixedSize(size, size)
         self.setCursor(Qt.PointingHandCursor)
         self.setAttribute(Qt.WA_Hover, True)
@@ -101,6 +110,13 @@ class IconButton(QWidget):
     def set_color(self, color):
         self._color = QColor(color)
         self.update()
+
+    def set_dim(self, dim):
+        """Draw faintly (a background tab's close button until the tab is hovered)."""
+        dim = bool(dim)
+        if dim != self._dim:
+            self._dim = dim
+            self.update()
 
     def enterEvent(self, event):
         self._hover = True
@@ -114,6 +130,9 @@ class IconButton(QWidget):
         # Consume so the click does not fall through to the chip / drag handler.
         event.accept()
 
+    def mouseMoveEvent(self, event):
+        event.accept()
+
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton and self.rect().contains(event.pos()):
             self.clicked.emit()
@@ -123,6 +142,8 @@ class IconButton(QWidget):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing, True)
         c = QColor(self._color)
+        if self._dim and not self._hover:
+            c.setAlphaF(c.alphaF() * 0.42)
         if self._hover:
             # Slightly emphasize on hover with a faint rounded backdrop.
             bg = QColor(self._color)
@@ -133,6 +154,7 @@ class IconButton(QWidget):
         pen = QPen(c)
         pen.setWidthF(1.6)
         pen.setCapStyle(Qt.RoundCap)
+        pen.setJoinStyle(Qt.RoundJoin)
         p.setPen(pen)
         r = self.rect()
         m = 5  # margin
@@ -144,6 +166,16 @@ class IconButton(QWidget):
             cy = r.center().y()
             p.drawLine(cx, r.top() + m, cx, r.bottom() - m)
             p.drawLine(r.left() + m, cy, r.right() - m, cy)
+        elif self.kind == 'more':
+            # Downward chevron: "show every tab".
+            cx = r.width() / 2.0
+            cy = r.height() / 2.0
+            path = QPainterPath()
+            path.moveTo(cx - 4.5, cy - 2.0)
+            path.lineTo(cx, cy + 2.5)
+            path.lineTo(cx + 4.5, cy - 2.0)
+            p.setBrush(Qt.NoBrush)
+            p.drawPath(path)
         elif self.kind == 'duplicate':
             # Two overlapping squares.
             w = r.width()
@@ -180,20 +212,114 @@ TAB_CHIP_HEIGHT = 40
 TAB_WIDTH_SCALE = 1.1
 TAB_EDGE_VERTICAL_MARGIN = 6
 TAB_CHIP_VERTICAL_MARGIN = 3
+TAB_EDGE_SIDE_MARGIN = 12      # px after the + button (before it in RTL)
+TAB_SPACING = 8                # px between tabs and buttons
+TAB_MIN_WIDTH = 132            # a background tab never gets narrower than this
+TAB_MIN_WIDTH_ACTIVE = 160     # the active tab also holds the duplicate icon
+TAB_MAX_WIDTH = 240            # one very long title cannot take the whole edge
+TAB_SCROLLBAR_HEIGHT = 10      # the layer panel's scrollbar thickness
+TAB_SCROLLBAR_GAP = 3          # px between the tabs and the scrollbar
+# While the scrollbar shows, the edge grows by the bar plus its gap.
+TAB_EDGE_HEIGHT_SCROLLING = TAB_EDGE_HEIGHT + TAB_SCROLLBAR_GAP + TAB_SCROLLBAR_HEIGHT - 1
+TAB_REVEAL_MARGIN = 20         # px kept around a tab scrolled into view
+TAB_AUTOSCROLL_ZONE = 30       # px from the strip's ends where a dragged tab scrolls it
+TAB_SLIDE_MS = 130             # how long tabs take to slide out of a dragged tab's way
+TAB_LIST_TITLE_WIDTH = 360     # px a title may take in the list of every tab
+
+
+def fit_tab_widths(natural, mins, room, gap, cap=TAB_MAX_WIDTH):
+    """Widths for tabs that should share *room* pixels.
+
+    natural: each tab's width with its whole title; mins: the narrowest each may get;
+    gap: pixels between neighbours. Tabs keep their natural width (up to *cap*) when
+    everything fits; otherwise the widest give way first, evenly, down to their
+    minimum. Returns (widths, overflow); overflow means even the minimums do not fit,
+    so the caller has to scroll.
+    """
+    n = len(natural)
+    if n == 0:
+        return [], False
+    gaps = gap * (n - 1)
+    want = [max(m, min(w, cap)) for w, m in zip(natural, mins)]
+    if sum(want) + gaps <= room:
+        return [int(round(w)) for w in want], False
+    # Find the largest common ceiling t at which everything still fits.
+    lo, hi = 0.0, float(max(want))
+    for _ in range(30):
+        t = (lo + hi) / 2.0
+        total = sum(max(m, min(w, t)) for w, m in zip(want, mins))
+        if total + gaps <= room:
+            lo = t
+        else:
+            hi = t
+    widths = [int(max(m, min(w, lo))) for w, m in zip(want, mins)]
+    return widths, sum(widths) + gaps > room
+
+
+# The layer panel's scrollbar colours, per theme (main_window.apply_theme,
+# QScrollBar:vertical): track, handle, handle hovered, handle pressed. The tab
+# strip's bar is that bar turned on its side; keep these in step with it.
+SCROLLBAR_COLORS = {
+    'dark':    ('#1A1A1A', '#2D2D2D', '#4A4A4A', '#606060'),
+    'light':   ('#F5F5F5', '#D4D4D4', '#B0B0B0', '#909090'),
+    'default': ('#DADADA', '#BFBFBF', '#A0A0A0', '#808080'),
+}
+
+
+def tab_scrollbar_qss(theme_name, object_name='tabStripScrollBar'):
+    """Style sheet for the tab strip's horizontal scrollbar. Scoped to its object
+    name: the app's own horizontal-bar rules (12 px, other radius) must not win."""
+    track, handle, hover, pressed = SCROLLBAR_COLORS.get(theme_name, SCROLLBAR_COLORS['default'])
+    r = TAB_SCROLLBAR_HEIGHT // 2
+    sel = 'QScrollBar#%s' % object_name
+    return (
+        "%(s)s:horizontal { background: %(track)s; border: none; height: %(h)dpx;"
+        " margin: 0px; border-radius: %(r)dpx; }"
+        "%(s)s::handle:horizontal { background: %(handle)s; border: none;"
+        " border-radius: %(r)dpx; min-width: 24px; }"
+        "%(s)s::handle:horizontal:hover { background: %(hover)s; }"
+        "%(s)s::handle:horizontal:pressed { background: %(pressed)s; }"
+        "%(s)s::add-line:horizontal, %(s)s::sub-line:horizontal"
+        " { background: none; border: none; width: 0px; }"
+        "%(s)s::add-page:horizontal, %(s)s::sub-page:horizontal { background: none; }"
+    ) % {'s': sel, 'track': track, 'handle': handle, 'hover': hover, 'pressed': pressed,
+         'h': TAB_SCROLLBAR_HEIGHT, 'r': r}
+
+
+def tab_menu_qss(theme_name):
+    """Same look as the layer panel's right-click menus."""
+    if theme_name == 'dark':
+        return ("QMenu { background-color: #333333; color: white; }"
+                " QMenu::item:selected { background-color: #F0F0F0; color: black; }"
+                " QMenu::item:disabled { color: #888888; }")
+    return ("QMenu { background-color: #F0F0F0; color: black; }"
+            " QMenu::item:selected { background-color: #333333; color: white; }"
+            " QMenu::item:disabled { color: #999999; }")
 
 
 class TabChip(QWidget):
-    """A single tab: title (+ dirty dot), duplicate icon, close X."""
+    """A single tab: title (+ dirty dot), duplicate icon (active tab only), close X.
+
+    The chip's width is set by the edge (set_chip_width); the title is cut to fit
+    with "..." and only then gets a tooltip with the whole title. A left press that
+    moves past the drag distance hands over to the edge to reorder the tab; a
+    middle click closes it; a right click asks the edge for the tab menu.
+    """
 
     switch_requested = pyqtSignal(str)
     duplicate_requested = pyqtSignal(str)
     close_requested = pyqtSignal(str)
+    context_requested = pyqtSignal(str, QPoint)
 
-    def __init__(self, session, title, active, theme_name, parent=None, rtl=False):
+    def __init__(self, session, title, active, theme_name, parent=None, rtl=False, edge=None):
         super().__init__(parent)
         self.tab_id = session.id
         self.active = active
         self.theme_name = theme_name
+        self.full_title = title
+        self._edge = edge
+        self._press_global = None
+        self._dragging = False
         self.setCursor(Qt.PointingHandCursor)
         self.setFixedHeight(TAB_CHIP_HEIGHT)
 
@@ -214,7 +340,9 @@ class TabChip(QWidget):
         self.label = QLabel(title, self)
         self.label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         self.label.setLayoutDirection(Qt.RightToLeft if rtl else Qt.LeftToRight)
-        self.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        # Ignored: the label takes whatever room the chip has left, however long
+        # the title (a QLabel would otherwise insist on its full text width).
+        self.label.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         font = QFont()
         font.setPointSize(9)
         font.setBold(active)
@@ -234,19 +362,25 @@ class TabChip(QWidget):
         sound_manager.set_cue(self, 'tab_switch')
         sound_manager.set_hover_cue(self, 'hover_tab')
 
-        self.dup_btn = IconButton('duplicate', self)
-        self.dup_btn.set_color(text_color)
-        self.dup_btn.clicked.connect(lambda: self.duplicate_requested.emit(self.tab_id))
+        # Duplicate only on the active tab (and in the right-click menu): it keeps
+        # background tabs narrow.
+        self.dup_btn = None
+        if active:
+            self.dup_btn = IconButton('duplicate', self)
+            self.dup_btn.set_color(text_color)
+            self.dup_btn.clicked.connect(lambda: self.duplicate_requested.emit(self.tab_id))
 
         self.close_btn = IconButton('close', self)
         self.close_btn.set_color(text_color)
+        self.close_btn.set_dim(not active)
         self.close_btn.clicked.connect(lambda: self.close_requested.emit(self.tab_id))
 
         # LTR: [dot] text, then icons (duplicate, close) on the right.
         # RTL (Hebrew): icons on the left, then text [dot] on the right.
         if rtl:
             layout.addWidget(self.close_btn)
-            layout.addWidget(self.dup_btn)
+            if self.dup_btn is not None:
+                layout.addWidget(self.dup_btn)
             layout.addWidget(self.label, 1)
             if self.dirty_dot is not None:
                 layout.addWidget(self.dirty_dot)
@@ -254,16 +388,100 @@ class TabChip(QWidget):
             if self.dirty_dot is not None:
                 layout.addWidget(self.dirty_dot)
             layout.addWidget(self.label, 1)
-            layout.addWidget(self.dup_btn)
+            if self.dup_btn is not None:
+                layout.addWidget(self.dup_btn)
             layout.addWidget(self.close_btn)
 
-    def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton and self.rect().contains(event.pos()):
-            self.switch_requested.emit(self.tab_id)
-        event.accept()
+    # ------------------------------------------------------------- sizing
+    def _title_metrics(self):
+        # The app style sheet sets the font size on polish: measure after it.
+        self.label.ensurePolished()
+        return self.label.fontMetrics()
+
+    def natural_width(self):
+        """Width that shows the whole title (with the edge's usual breathing room)."""
+        layout = self.layout()
+        m = layout.contentsMargins()
+        sp = layout.spacing()
+        w = m.left() + m.right() + self._title_metrics().horizontalAdvance(self.full_title)
+        for part in (self.dirty_dot, self.dup_btn, self.close_btn):
+            if part is not None:
+                w += part.width() + sp
+        return int(round(w * TAB_WIDTH_SCALE))
+
+    def min_width(self):
+        return TAB_MIN_WIDTH_ACTIVE if self.active else TAB_MIN_WIDTH
+
+    def set_chip_width(self, width):
+        self.setFixedWidth(int(width))
+        self.layout().setGeometry(self.rect())
+        self._fit_title()
+
+    def _fit_title(self):
+        room = self.label.contentsRect().width()
+        if room <= 0:
+            return
+        shown = self._title_metrics().elidedText(self.full_title, Qt.ElideRight, room)
+        if shown != self.label.text():
+            self.label.setText(shown)
+        # A tooltip only when the tab cannot be read as it is.
+        self.setToolTip(self.full_title if shown != self.full_title else "")
+
+    def is_title_cut(self):
+        return self.label.text() != self.full_title
+
+    # ------------------------------------------------------------- mouse
+    def enterEvent(self, event):
+        self.close_btn.set_dim(False)
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.close_btn.set_dim(not self.active)
+        super().leaveEvent(event)
 
     def mousePressEvent(self, event):
-        # Consume so a click on the chip selects it instead of starting a drag.
+        if event.button() == Qt.MiddleButton:
+            sound_manager.play('tab_close')
+            self.close_requested.emit(self.tab_id)
+        elif event.button() == Qt.LeftButton:
+            self._press_global = event.globalPos()
+            self._dragging = False
+        # Consume so a press on the chip never starts moving the whole edge.
+        event.accept()
+
+    def mouseMoveEvent(self, event):
+        if self._press_global is None or not (event.buttons() & Qt.LeftButton):
+            event.accept()
+            return
+        if not self._dragging:
+            moved = (event.globalPos() - self._press_global).manhattanLength()
+            if moved < QApplication.startDragDistance():
+                event.accept()
+                return
+            if self._edge is None or not self._edge.begin_chip_drag(self, self._press_global):
+                event.accept()
+                return
+            self._dragging = True
+            # The release ends a drag, not a click: no switch sound for it.
+            sound_manager.set_cue(self, 'none')
+        self._edge.update_chip_drag(event.globalPos())
+        event.accept()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            pressed = self._press_global is not None
+            self._press_global = None
+            if self._dragging:
+                self._dragging = False
+                sound_manager.set_cue(self, 'tab_switch')
+                if self._edge is not None:
+                    self._edge.end_chip_drag()
+            elif pressed and self.rect().contains(event.pos()):
+                self.switch_requested.emit(self.tab_id)
+        event.accept()
+
+    def contextMenuEvent(self, event):
+        self.context_requested.emit(self.tab_id, event.globalPos())
         event.accept()
 
     def resizeEvent(self, event):
@@ -271,6 +489,7 @@ class TabChip(QWidget):
         layout = self.layout()
         if layout is not None:
             layout.setGeometry(self.rect())
+            self._fit_title()
 
     def paintEvent(self, event):
         colors = theme_colors(self.theme_name)
@@ -282,6 +501,11 @@ class TabChip(QWidget):
         rect = QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5)
         p.drawRoundedRect(rect, 9, 9)
         p.end()
+
+
+class _TabViewport(QWidget):
+    """Clips the tab chips to the visible part of the strip. A QWidget subclass on
+    purpose: the app style sheet paints a background on plain QWidget instances."""
 
 
 # The six magnet anchors the tab edge can snap to.
@@ -381,7 +605,8 @@ class SnapOverlay(QWidget):
 
 
 class DraggableTabEdge(QWidget):
-    """Floating, semi-transparent edge containing the tab chips and the + button."""
+    """Floating, semi-transparent edge: grip, the tab strip (with its scrollbar
+    while the tabs overflow), the list-every-tab button and the + button."""
 
     GRIP_WIDTH = 26
 
@@ -401,19 +626,44 @@ class DraggableTabEdge(QWidget):
         self._snap_target = None  # anchor the magnet is grabbing during a drag
         self._snap_heard = None  # anchor the last magnet sound was for (moving itself is silent)
 
+        # Tab strip state, recomputed by _relayout().
+        self._chips = []          # TabChip per tab, in tab order
+        self._lefts = {}          # tab id -> x from the strip's reading start
+        self._total = 0           # full strip length (all tabs and gaps)
+        self._overflow = False    # tabs do not fit: scrollbar and list button show
+        self._chip_drag = None    # state while a tab is being dragged to a new place
+        self._rebuild_pending = False
+        self._refit_pending = False  # canvas resized during a tab drag
+        self._reveal_next = None  # tab to scroll into view after the next rebuild
+        self._anims = {}          # chip -> QPropertyAnimation sliding it aside
+
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setFixedHeight(TAB_EDGE_HEIGHT)
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         # Track hover (no button pressed) so we can show the move cursor on grip.
         self.setMouseTracking(True)
 
-        self._layout = QHBoxLayout(self)
-        self._layout.setContentsMargins(self.GRIP_WIDTH, TAB_EDGE_VERTICAL_MARGIN,
-                                        12, TAB_EDGE_VERTICAL_MARGIN)
-        self._layout.setSpacing(8)
+        self._viewport = _TabViewport(self)
+
+        self._hbar = QScrollBar(Qt.Horizontal, self)
+        self._hbar.setObjectName('tabStripScrollBar')
+        self._hbar.setFixedHeight(TAB_SCROLLBAR_HEIGHT)
+        self._hbar.setSingleStep(40)
+        self._hbar.setCursor(Qt.ArrowCursor)
+        self._hbar.valueChanged.connect(self._on_scroll)
+        self._hbar.hide()
+
+        self.more_btn = IconButton('more', self)
+        self.more_btn.clicked.connect(self._show_all_tabs_menu)
+        self.more_btn.hide()
 
         self.plus_btn = IconButton('plus', self)
         self.plus_btn.clicked.connect(self.tab_manager.new_tab)
+
+        # Scrolls the strip while a dragged tab is held near one of its ends.
+        self._autoscroll = QTimer(self)
+        self._autoscroll.setInterval(16)
+        self._autoscroll.timeout.connect(self._autoscroll_tick)
 
         # Drag-time magnet visualization overlay (sits over the canvas).
         self._snap_overlay = SnapOverlay(self.canvas)
@@ -431,78 +681,380 @@ class DraggableTabEdge(QWidget):
         self.theme_name = theme_name
         self.rebuild()
 
-    # -------------------------------------------------------------- building
-    def _clear_layout(self):
-        while self._layout.count():
-            item = self._layout.takeAt(0)
-            w = item.widget()
-            if w is not None and w is not self.plus_btn:
-                w.setParent(None)
-                w.deleteLater()
+    def _tr(self, key, fallback):
+        return self.tab_manager._tr(key, fallback)
 
+    # -------------------------------------------------------------- building
     def _is_rtl(self):
         mw = getattr(self.tab_manager, 'main_window', None)
         return getattr(mw, 'language_code', 'en') == 'he'
 
     def rebuild(self):
-        self._clear_layout()
+        if self._chip_drag is not None:
+            # Never pull the chip out from under the pointer: rebuild on drop.
+            self._rebuild_pending = True
+            return
+        self._rebuild_pending = False
+        for anim in self._anims.values():
+            anim.stop()
+            anim.deleteLater()  # parented to the edge: would outlive its chip
+        self._anims = {}
+        for chip in self._chips:
+            chip.setParent(None)
+            chip.deleteLater()
+        self._chips = []
+
         colors = theme_colors(self.theme_name)
+        self._rtl = self._is_rtl()
 
-        rtl = self._is_rtl()
-        self._rtl = rtl
-        # Reserve the grip strip on the trailing side: left for LTR, right for RTL.
-        if rtl:
-            self._layout.setContentsMargins(12, TAB_EDGE_VERTICAL_MARGIN,
-                                            self.GRIP_WIDTH, TAB_EDGE_VERTICAL_MARGIN)
-        else:
-            self._layout.setContentsMargins(self.GRIP_WIDTH, TAB_EDGE_VERTICAL_MARGIN,
-                                            12, TAB_EDGE_VERTICAL_MARGIN)
-
-        chips = []
         for session in self.tab_manager.tabs:
             active = (session.id == self.tab_manager.active_tab_id)
             title = self.tab_manager.title_for(session)
-            chip = TabChip(session, title, active, self.theme_name, self, rtl=rtl)
+            chip = TabChip(session, title, active, self.theme_name, self._viewport,
+                           rtl=self._rtl, edge=self)
             chip.switch_requested.connect(self.tab_manager.switch_to_tab)
             chip.duplicate_requested.connect(self.tab_manager.duplicate_tab)
             chip.close_requested.connect(self.tab_manager.close_tab)
-            chips.append(chip)
+            chip.context_requested.connect(self._show_tab_menu)
+            # Explicitly show: freshly created children of a visible parent stay
+            # hidden until shown, and hidden widgets are not polished/measured.
+            chip.show()
+            self._chips.append(chip)
 
-        # Plus button uses the inactive text color so it reads on the panel.
+        # Buttons use the inactive text color so they read on the panel.
         self.plus_btn.set_color(colors['inactive_text'])
+        self.more_btn.set_color(colors['inactive_text'])
+        self.plus_btn.setToolTip(self._tr('new_tab', 'New tab'))
+        self.more_btn.setToolTip(self._tr('all_tabs', 'All tabs'))
+        self._hbar.setStyleSheet(tab_scrollbar_qss(self.theme_name))
 
-        # In RTL the + sits on the left and tabs flow right-to-left (oldest on the
-        # right, next to the grip; newest tabs appear on the left next to the +).
-        if rtl:
-            ordered = [self.plus_btn] + list(reversed(chips))
+        reveal = self._reveal_next or self.tab_manager.active_tab_id
+        self._reveal_next = None
+        self._relayout(reveal=reveal)
+        self.update()
+
+    def _max_edge_width(self):
+        # Leave the anchor margin on both sides so the edge fits at every magnet.
+        return max(180, self.canvas.width() - 2 * ANCHOR_MARGIN)
+
+    def _relayout(self, reveal=None):
+        """Size the chips to the room available, then place every part."""
+        self._refit_pending = False
+        chips = self._chips
+        natural = [c.natural_width() for c in chips]
+        mins = [c.min_width() for c in chips]
+        plus_w = self.plus_btn.width()
+        more_w = self.more_btn.width()
+        fixed = self.GRIP_WIDTH + TAB_SPACING + plus_w + TAB_EDGE_SIDE_MARGIN
+        room = self._max_edge_width() - fixed
+        widths, overflow = fit_tab_widths(natural, mins, room, TAB_SPACING)
+        if overflow:
+            # Make space for the list button, then give the tabs their minimum.
+            room -= more_w + TAB_SPACING
+            widths, _ = fit_tab_widths(natural, mins, room, TAB_SPACING)
+        room = max(0, room)
+
+        self._lefts = {}
+        x = 0
+        for chip, w in zip(chips, widths):
+            chip.set_chip_width(w)
+            self._lefts[chip.tab_id] = x
+            x += w + TAB_SPACING
+        total = max(0, x - TAB_SPACING)
+        view_w = room if overflow else total
+        self._total = total
+        self._overflow = overflow
+
+        extra = (more_w + TAB_SPACING) if overflow else 0
+        width = self.GRIP_WIDTH + view_w + TAB_SPACING + extra + plus_w + TAB_EDGE_SIDE_MARGIN
+        height = TAB_EDGE_HEIGHT_SCROLLING if overflow else TAB_EDGE_HEIGHT
+        self.setFixedSize(width, height)
+
+        # Grip on the reading-start side: left for LTR, right for RTL.
+        top = TAB_EDGE_VERTICAL_MARGIN
+        view_x = (width - self.GRIP_WIDTH - view_w) if self._rtl else self.GRIP_WIDTH
+        self._viewport.setGeometry(view_x, top, view_w, TAB_CHIP_HEIGHT)
+        mid = top + TAB_CHIP_HEIGHT // 2
+        buttons = ([self.more_btn] if overflow else []) + [self.plus_btn]
+        if self._rtl:
+            x = view_x - TAB_SPACING
+            for b in buttons:
+                x -= b.width()
+                b.move(x, mid - b.height() // 2)
+                x -= TAB_SPACING
         else:
-            ordered = chips + [self.plus_btn]
-        for wdg in ordered:
-            self._layout.addWidget(wdg)
-            # Explicitly show: when rebuilding an already-visible edge, freshly
-            # created children would otherwise stay hidden until the next event
-            # loop, which makes QLayout.sizeHint() count them as zero-width.
-            wdg.show()
+            x = view_x + view_w + TAB_SPACING
+            for b in buttons:
+                b.move(x, mid - b.height() // 2)
+                x += b.width() + TAB_SPACING
+        self.more_btn.setVisible(overflow)
 
-        self._layout.invalidate()
-        self._layout.activate()
-        base_w = self._layout.sizeHint().width()
+        bar = self._hbar
+        bar.blockSignals(True)
+        if overflow:
+            bar.setGeometry(view_x, top + TAB_CHIP_HEIGHT + TAB_SCROLLBAR_GAP, view_w, TAB_SCROLLBAR_HEIGHT)
+            # In RTL the strip starts on the right, so its bar starts there too.
+            bar.setInvertedAppearance(self._rtl)
+            bar.setPageStep(max(1, view_w))
+            bar.setRange(0, max(0, total - view_w))
+        else:
+            bar.setRange(0, 0)
+        bar.blockSignals(False)
+        bar.setVisible(overflow)
 
-        for chip in chips:
-            chip.setMinimumWidth(round(chip.sizeHint().width() * TAB_WIDTH_SCALE))
-
-        self._layout.invalidate()
-        self._layout.activate()
-        w = max(round(base_w * TAB_WIDTH_SCALE), self._layout.sizeHint().width())
-        max_w = max(120, self.canvas.width() - 20)
-        w = min(w, max_w)
-        self.resize(w, TAB_EDGE_HEIGHT)
-        self._layout.setGeometry(self.rect())
-        for chip in chips:
-            chip.layout().setGeometry(chip.rect())
+        if reveal is not None:
+            self.reveal_tab(reveal)
+        self._place_chips()
         if self.isVisible():
             self.reposition()
-        self.update()
+
+    def _scroll_value(self):
+        return self._hbar.value() if self._overflow else 0
+
+    def _visual_x(self, left, width, value=None):
+        """Viewport x of a tab whose strip position is *left* (from the reading start)."""
+        v = self._scroll_value() if value is None else value
+        if self._rtl:
+            return self._viewport.width() + v - left - width
+        return left - v
+
+    def _strip_x_at(self, global_pos):
+        """Strip position (from the reading start) under a global point."""
+        vx = self._viewport.mapFromGlobal(global_pos).x()
+        v = self._scroll_value()
+        if self._rtl:
+            return self._viewport.width() + v - vx
+        return vx + v
+
+    def _place_chips(self, skip=None):
+        for chip in self._chips:
+            if chip is skip:
+                continue
+            anim = self._anims.get(chip)  # kept for reuse by the next drag
+            if anim is not None:
+                anim.stop()
+            chip.move(self._visual_x(self._lefts.get(chip.tab_id, 0), chip.width()), 0)
+
+    def reveal_tab(self, tab_id):
+        """Scroll so the tab is fully in view (no-op while everything fits)."""
+        if not self._overflow or tab_id not in self._lefts:
+            return
+        chip = next((c for c in self._chips if c.tab_id == tab_id), None)
+        if chip is None:
+            return
+        left = self._lefts[tab_id]
+        right = left + chip.width()
+        v = self._hbar.value()
+        view_w = self._viewport.width()
+        if left < v + TAB_REVEAL_MARGIN:
+            v = left - TAB_REVEAL_MARGIN
+        elif right > v + view_w - TAB_REVEAL_MARGIN:
+            v = right - view_w + TAB_REVEAL_MARGIN
+        self._hbar.setValue(max(self._hbar.minimum(), min(int(v), self._hbar.maximum())))
+
+    def _on_scroll(self, _value):
+        if self._chip_drag is not None:
+            self._apply_chip_drag()
+        else:
+            self._place_chips()
+
+    def wheelEvent(self, event):
+        if not self._overflow:
+            event.ignore()
+            return
+        d = event.angleDelta()
+        delta = d.y() if abs(d.y()) >= abs(d.x()) else d.x()
+        self._hbar.setValue(self._hbar.value() - delta)
+        event.accept()
+
+    # -------------------------------------------------- dragging a tab to reorder
+    def begin_chip_drag(self, chip, press_global):
+        if chip not in self._chips or len(self._chips) < 2:
+            return False
+        start = self._lefts[chip.tab_id]
+        index = self._chips.index(chip)
+        self._chip_drag = {
+            'chip': chip,
+            'grab': self._strip_x_at(press_global) - start,
+            'from': index,
+            'to': index,
+            'last': press_global,
+            'targets': {},
+        }
+        chip.raise_()
+        self._autoscroll.start()
+        sound_manager.play('tab_edge_grab')
+        return True
+
+    def update_chip_drag(self, global_pos):
+        if self._chip_drag is None:
+            return
+        self._chip_drag['last'] = global_pos
+        self._apply_chip_drag()
+
+    def _apply_chip_drag(self):
+        d = self._chip_drag
+        chip = d['chip']
+        w = chip.width()
+        left = self._strip_x_at(d['last']) - d['grab']
+        left = max(0, min(left, self._total - w))
+        chip.move(self._visual_x(left, w), 0)
+
+        others = [c for c in self._chips if c is not chip]
+        centre = left + w / 2.0
+        best, best_d = 0, None
+        x = 0
+        for k in range(len(others) + 1):
+            dist = abs(x + w / 2.0 - centre)
+            if best_d is None or dist < best_d:
+                best, best_d = k, dist
+            if k < len(others):
+                x += others[k].width() + TAB_SPACING
+        d['to'] = best
+
+        x = 0
+        for j, other in enumerate(others):
+            if j == best:
+                x += w + TAB_SPACING
+            self._slide_chip(other, QPoint(self._visual_x(x, other.width()), 0))
+            x += other.width() + TAB_SPACING
+
+    def _slide_chip(self, chip, target):
+        anim = self._anims.get(chip)
+        if anim is not None and anim.state() == QPropertyAnimation.Running and anim.endValue() == target:
+            return
+        if anim is None:
+            anim = QPropertyAnimation(chip, b'pos', self)
+            anim.setDuration(TAB_SLIDE_MS)
+            anim.setEasingCurve(QEasingCurve.OutCubic)
+            self._anims[chip] = anim
+        anim.stop()
+        if chip.pos() == target:
+            return
+        anim.setStartValue(chip.pos())
+        anim.setEndValue(target)
+        anim.start()
+
+    def _autoscroll_tick(self):
+        d = self._chip_drag
+        if d is None:
+            self._autoscroll.stop()
+            return
+        if not self._overflow:
+            return
+        top_left = self._viewport.mapToGlobal(QPoint(0, 0))
+        x = d['last'].x()
+        left_edge = top_left.x()
+        right_edge = left_edge + self._viewport.width()
+        step = 0
+        if x < left_edge + TAB_AUTOSCROLL_ZONE:
+            step = -max(1, (left_edge + TAB_AUTOSCROLL_ZONE - x) // 3)
+        elif x > right_edge - TAB_AUTOSCROLL_ZONE:
+            step = max(1, (x - (right_edge - TAB_AUTOSCROLL_ZONE)) // 3)
+        if self._rtl:
+            step = -step  # the visual left is further along the strip in RTL
+        if step:
+            self._hbar.setValue(self._hbar.value() + step)
+
+    def end_chip_drag(self):
+        d = self._chip_drag
+        self._chip_drag = None
+        self._autoscroll.stop()
+        if d is None:
+            return
+        for anim in self._anims.values():
+            anim.stop()
+        sound_manager.play('tab_edge_drop')
+        tab_id = d['chip'].tab_id
+        moved = False
+        if d['to'] != d['from']:
+            self._reveal_next = tab_id
+            moved = self.tab_manager.move_tab(tab_id, d['to'])  # emits changed -> rebuild
+        if moved:
+            return
+        self._reveal_next = None
+        if self._rebuild_pending:
+            # Tabs changed during the drag (e.g. a keyboard move): show the real order.
+            self.rebuild()
+        elif self._refit_pending:
+            # The canvas was resized during the drag: fit the tabs to it now.
+            self._relayout(reveal=self.tab_manager.active_tab_id)
+        else:
+            self._place_chips()  # dropped where it started: slide back into place
+
+    # -------------------------------------------------------------- menus
+    def _new_menu(self):
+        menu = QMenu(self)
+        menu.setStyleSheet(tab_menu_qss(self.theme_name))
+        if self._rtl:
+            menu.setLayoutDirection(Qt.RightToLeft)
+        return menu
+
+    def _show_tab_menu(self, tab_id, global_pos):
+        tm = self.tab_manager
+        session = tm.find(tab_id)
+        if session is None:
+            return
+        index = tm.tabs.index(session)
+        count = len(tm.tabs)
+        menu = self._new_menu()
+        dup = menu.addAction(self._tr('duplicate_tab', 'Duplicate tab'))
+        menu.addSeparator()
+        close = menu.addAction(self._tr('close_tab', 'Close tab'))
+        others = menu.addAction(self._tr('close_other_tabs', 'Close other tabs'))
+        others.setEnabled(count > 1)
+        after = menu.addAction(self._tr('close_tabs_to_right', 'Close tabs to the right'))
+        after.setEnabled(index < count - 1)
+        menu.addSeparator()
+        to_start = menu.addAction(self._tr('move_tab_to_start', 'Move to start'))
+        to_start.setEnabled(index > 0)
+        to_end = menu.addAction(self._tr('move_tab_to_end', 'Move to end'))
+        to_end.setEnabled(index < count - 1)
+        chosen = menu.exec_(global_pos)
+        menu.deleteLater()
+        if chosen is None:
+            return
+        if chosen is dup:
+            tm.duplicate_tab(tab_id)
+        elif chosen is close:
+            tm.close_tab(tab_id)
+        elif chosen is others:
+            tm.close_other_tabs(tab_id)
+        elif chosen is after:
+            tm.close_tabs_after(tab_id)
+        elif chosen is to_start:
+            self._reveal_next = tab_id
+            tm.move_tab(tab_id, 0)
+        elif chosen is to_end:
+            self._reveal_next = tab_id
+            tm.move_tab(tab_id, count - 1)
+
+    def _show_all_tabs_menu(self):
+        """Every tab, ticked on the active one; pick one to switch to it. A
+        middle click on a row closes that tab."""
+        tm = self.tab_manager
+        menu = _AllTabsMenu(self)
+        menu.setStyleSheet(tab_menu_qss(self.theme_name))
+        if self._rtl:
+            menu.setLayoutDirection(Qt.RightToLeft)
+        menu.setToolTipsVisible(True)
+        fm = menu.fontMetrics()
+        for session in tm.tabs:
+            title = tm.title_for(session)
+            text = ("● " if session.dirty else "") + title
+            shown = fm.elidedText(text, Qt.ElideRight, TAB_LIST_TITLE_WIDTH)
+            action = menu.addAction(shown.replace('&', '&&'))
+            action.setCheckable(True)
+            action.setChecked(session.id == tm.active_tab_id)
+            action.setData(session.id)
+            if shown != text:
+                action.setToolTip(title)
+        menu.close_requested.connect(lambda tab_id: QTimer.singleShot(0, lambda: tm.close_tab(tab_id)))
+        pos = self.more_btn.mapToGlobal(QPoint(0, self.more_btn.height() + 4))
+        chosen = menu.exec_(pos)
+        menu.deleteLater()
+        if chosen is not None and chosen.data():
+            tm.switch_to_tab(chosen.data())
 
     # -------------------------------------------------------------- geometry
     def show_edge(self):
@@ -596,8 +1148,14 @@ class DraggableTabEdge(QWidget):
 
     def eventFilter(self, obj, event):
         if obj is self.canvas and event.type() == QEvent.Resize:
-            if self.isVisible():
-                self.reposition()
+            # Re-fit the tabs to the new canvas width (this also repositions).
+            if self._chip_drag is None:
+                self._relayout(reveal=self.tab_manager.active_tab_id)
+            else:
+                # Not while a tab is being dragged: refit when it is dropped.
+                self._refit_pending = True
+                if self.isVisible():
+                    self.reposition()
         return False
 
     # -------------------------------------------------------------- dragging
@@ -626,7 +1184,9 @@ class DraggableTabEdge(QWidget):
         self.raise_()  # keep the edge above the overlay while dragging
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        # Only the grip moves the whole edge; a press anywhere else on the panel
+        # is swallowed so it neither moves the edge nor draws on the canvas.
+        if event.button() == Qt.LeftButton and self._over_grip(event.pos()):
             self._dragging = True
             self._drag_offset = event.pos()
             self._snap_target = None
@@ -635,7 +1195,7 @@ class DraggableTabEdge(QWidget):
             self.setCursor(Qt.ClosedHandCursor)  # "grabbing" while dragging
             self._show_snap_overlay()
             sound_manager.play('tab_edge_grab')
-            event.accept()
+        event.accept()
 
     def mouseMoveEvent(self, event):
         if self._dragging and self._drag_offset is not None:
@@ -723,14 +1283,32 @@ class DraggableTabEdge(QWidget):
         p.setPen(pen)
         p.drawPath(path)
 
-        # Grip dots (drag handle): left side for LTR, right side for RTL.
+        # Grip dots (drag handle): left side for LTR, right side for RTL, level
+        # with the tabs (not the scrollbar under them).
         dot = QColor(colors['inactive_text'])
         dot.setAlpha(150)
         p.setPen(Qt.NoPen)
         p.setBrush(dot)
         gx = (self.width() - 18) if self._rtl else 11
-        cy = self.height() // 2
+        cy = TAB_EDGE_VERTICAL_MARGIN + TAB_CHIP_HEIGHT // 2
         for row in (-9, 0, 9):
             for col in (0, 5):
                 p.drawEllipse(gx + col, cy + row - 1, 2, 2)
         p.end()
+
+
+class _AllTabsMenu(QMenu):
+    """The list of every tab. A middle click on a row closes that tab."""
+
+    close_requested = pyqtSignal(str)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MiddleButton:
+            action = self.actionAt(event.pos())
+            if action is not None and action.data():
+                tab_id = action.data()
+                self.close()
+                sound_manager.play('tab_close')
+                self.close_requested.emit(tab_id)
+                return
+        super().mouseReleaseEvent(event)

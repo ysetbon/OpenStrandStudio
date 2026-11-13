@@ -405,6 +405,39 @@ class MaskedStrand(Strand):
         except Exception:
             return QPainterPath()
 
+    def _closed_join_overlap(self, strand, width, overlap=1.5):
+        """Short flat extensions past a strand's closed-knot ends.
+
+        A closed knot's two ends meet flat, with no attachment circle. When one
+        strand crosses over that join, the mask's edge at the join lies exactly
+        on the flat end of the strand beneath, and the two anti-aliased edges
+        leave a hairline across the upper strand. Extending the mask a little
+        past such an end covers the hairline.
+        """
+        closed = getattr(strand, 'closed_connections', None)
+        extension = QPainterPath()
+        if not closed:
+            return extension
+        for index, (tip, handle, other) in enumerate((
+                (strand.start, strand.control_point1, strand.end),
+                (strand.end, strand.control_point2, strand.start))):
+            if not closed[index]:
+                continue
+            direction = tip - handle
+            if abs(direction.x()) + abs(direction.y()) < 1e-6:
+                direction = tip - other
+            length = (direction.x() ** 2 + direction.y() ** 2) ** 0.5
+            if length < 1e-6:
+                continue
+            step = direction * (overlap / length)
+            segment = QPainterPath(tip - step)
+            segment.lineTo(tip + step)
+            stroker = QPainterPathStroker()
+            stroker.setWidth(width)
+            stroker.setCapStyle(Qt.FlatCap)
+            extension = extension.united(stroker.createStroke(segment))
+        return extension
+
     def get_path_for_strand(self, strand):
         """Helper method to get the stroked path for a strand."""
         path = strand.get_path()
@@ -456,6 +489,9 @@ class MaskedStrand(Strand):
         styled = self._styled_footprint(strand, margin=2.0)
         if not styled.isEmpty():
             stroked = styled
+        overlap = self._closed_join_overlap(strand, strand.width + strand.stroke_width * 2 + 4)
+        if not overlap.isEmpty():
+            stroked = stroked.united(overlap)
         # Include start circle of attached strands when visible
         circle = self._get_strand_start_circle_path(strand, (strand.width + strand.stroke_width * 2 + 4) / 2)
         if not circle.isEmpty():

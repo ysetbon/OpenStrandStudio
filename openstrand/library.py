@@ -54,9 +54,10 @@ def _knots():
     for key, title, _, _, aliases, about in tying.library():
         out.append(dict(name=title.lower(), craft='knots', title=title, also=list(aliases), about=about,
                         build={'tie': key}))
-    for key, title, kind, _, _, aliases, about in bends.library():
+    for key, title, kind, _, _, _, about in bends.library():
         craft = 'macrame' if 'filler' in kind else 'knots'
-        also = [a for a in ([bends.LIBRARY[key].get('also')] + list(aliases)) if a]
+        # Every other name the knot has (library() lists only the first few).
+        also = [a for a in ([bends.LIBRARY[key].get('also')] + list(bends.LIBRARY[key]['aliases'])) if a]
         out.append(dict(name=title.lower(), craft=craft, title=title, also=list(dict.fromkeys(also)),
                         about=about, build={'tie': key}))
     return out
@@ -120,9 +121,12 @@ def search(text):
 
 
 def find(name):
-    """The entry with this name, title or other name (however it is spelled), or None."""
+    """The entry with this name, else the first with this title or other name (however
+    it is spelled), or None."""
     asked = words(name)
-    return next((entry for entry in entries() if asked in _names(entry)), None)
+    found = entries()
+    return (next((entry for entry in found if asked == words(entry['name'])), None)
+            or next((entry for entry in found if asked in _names(entry)), None))
 
 
 def how(entry, cli=False):
@@ -140,7 +144,7 @@ def how(entry, cli=False):
         return (f'make turks_head --leads {value["leads"]} --bights {value["bights"]}' if cli
                 else f'make_turks_head leads={value["leads"]}, bights={value["bights"]}')
     if kind == 'tie':
-        return f'tie "{value}"' if cli else f'tie_knot name="{value}" (with its tying steps)'
+        return f'tie "{value}"' if cli else f'tie_knot knot="{value}" (with its tying steps)'
     return f'make {value} with the size asked for' if cli else f'make_{value} with the size asked for'
 
 

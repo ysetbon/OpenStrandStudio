@@ -136,6 +136,85 @@ def test_a_recipe_that_does_not_pass_its_reference_is_refused():
     assert recipes.alternating(spec["cords"]) == ["O", "U"]
 
 
+def crossing(**changes):
+    """A recipe of two cords that cross once, with some of it changed."""
+    spec = {"name": "crossing", "craft": "macrame", "title": "Crossing", "about": "Two cords that cross once.",
+            "cords": [{"label": "A", "color": "teal", "points": [[100, 100], [500, 500]]},
+                      {"label": "B", "color": "gold", "points": [[100, 500], [500, 100]]}],
+            "patterns": ["O", "U"],
+            "steps": [{"shown": ["all", None], "caption": "A."}, {"shown": ["all", "all"], "caption": "B."}]}
+    return dict(spec, **changes)
+
+
+def test_a_recipe_says_what_is_wrong_with_its_cords_and_steps():
+    recipes.parse(crossing())
+    for cords in ([None], [{"label": "A", "color": "teal", "points": [[1, 2]]}], "cords"):
+        with pytest.raises(recipes.RecipeError):
+            recipes.cords_of(crossing(cords=cords))      # before its crossings are listed
+    with pytest.raises(recipes.RecipeError, match='"shown" takes null, "all"'):
+        recipes.parse(crossing(steps=[{"shown": [[], "all"], "caption": "A."},
+                                      {"shown": ["all", "all"], "caption": "B."}]))
+    # A tutorial only adds: a cord shown in one step is not taken away in the next.
+    for first, second in ((["all", "all"], ["all", None]), (["all", "all"], ["all", {"after": 0}])):
+        with pytest.raises(recipes.RecipeError, match="shows less of cord 2 than step 1"):
+            recipes.parse(crossing(steps=[{"shown": first, "caption": "A."}, {"shown": second, "caption": "B."},
+                                          {"shown": ["all", "all"], "caption": "C."}]))
+
+
+def test_the_recipe_command_refuses_a_recipe_named_as_another_knot(tmp_path, capsys):
+    """tie finds a knot by name, so a candidate called "square" would have the built-in
+    square knot checked in its place and pass."""
+    import json
+    for changes, taken in ((dict(name="square"), "Square knot"), (dict(also=["reef knot"]), "Square knot"),
+                           (dict(title="Figure-eight knot"), "Figure-eight knot"),
+                           (dict(also=["cow hitch"]), "Lark's head knot")):
+        file = tmp_path / "candidate.json"
+        file.write_text(json.dumps(crossing(**changes)), encoding="utf-8")
+        assert main(["recipe", str(file), "--no-pictures"]) == 1
+        assert f"is already a name of the {taken}" in capsys.readouterr().err
+    assert not list(tmp_path.glob("*_step_*.json"))
+
+
+def test_identify_follows_a_recipe_that_changed():
+    """A recipe tried again under the same name, with its crossing the other way round,
+    is recognised by its own crossings, not by the ones worked out before."""
+    try:
+        bends.EXTRA["crossing"] = recipes.parse(crossing())
+        first = bends.references()["crossing"]
+        bends.EXTRA["crossing"] = recipes.parse(crossing(patterns=["U", "O"]))
+        second = bends.references()["crossing"]
+    finally:
+        bends.EXTRA.pop("crossing", None)
+    assert invariants.pattern(first, 0) == "O" and invariants.pattern(second, 0) == "U"
+
+
+def test_the_agent_can_make_the_call_a_match_ends_with(tmp_path):
+    """search_samples ends a knot's line with a tie_knot call: its argument is the one the tool takes."""
+    workspace = agent.Workspace(tmp_path)
+    _, found = workspace.run("search_samples", {"text": "cow hitch"})
+    call = re.search(r'get it: tie_knot (\w+)="([^"]+)"', found)
+    tool = next(t for t in agent.TOOLS if t["name"] == "tie_knot")
+    assert call and call.group(1) in tool["input_schema"]["properties"]
+    workspace.run("tie_knot", {call.group(1): call.group(2)})
+    assert len(workspace.steps) == 4 and workspace.data["strands"]
+
+
+def test_a_name_leads_to_one_design():
+    """Across the whole library: a name, a title or another name belongs to one entry, unless
+    the entries are the same knot (the magic knot is the fisherman's knot) or the name is a
+    whole craft's word."""
+    seen = {}
+    for entry in library.entries():
+        for said in [entry["name"], entry["title"]] + entry.get("also", []):
+            key = tuple(library.words(said))
+            other = seen.setdefault(key, entry)
+            if other is entry:
+                continue
+            same_knot = "tie" in entry["build"] and "tie" in other["build"] and \
+                bends.find(entry["build"]["tie"]) == bends.find(other["build"]["tie"])
+            assert same_knot or len(key) == 1 or said.lower() in CATALOG["crafts"], (said, other["name"], entry["name"])
+
+
 def test_a_step_can_stop_after_a_number_of_crossings():
     made = bends.tie("josephine knot", build=False)
     lines = bends.centrelines("josephine_knot", RECIPES["josephine_knot"]["steps"][1][0][0])
@@ -152,7 +231,9 @@ def test_a_step_can_stop_after_a_number_of_crossings():
     ("mystic knot", "pan_chang_knot"),
     ("endless knot", "pan_chang_knot"),
     ("double coin", "double_coin_knot"),
-    ("clover knot", "chinese_cloverleaf"),
+    ("four-leaf clover knot", "chinese_cloverleaf"),
+    ("cloverleaf knot", "cloverleaf_knot"),
+    ("weaver knot", "sheet bend"),          # a later one of the sheet bend's many names
     ("clove hitch", "double_half_hitch"),
     ("spiral knot", "half_knot_spiral"),
     ("plait", "three_strand_braid"),
@@ -191,13 +272,13 @@ def test_a_match_ends_with_the_call_that_makes_it():
     assert library.line(BY_NAME["box_stitch"]).endswith("get it: make_mxn m=1, n=1")
     assert library.line(BY_NAME["box_stitch"], cli=True).endswith("get it: make mxn --m 1 --n 1")
     assert library.line(BY_NAME["chinese_cloverleaf"]).endswith('get it: load_sample name="chinese_cloverleaf"')
-    assert library.line(library.find("mystic knot")).endswith('tie_knot name="pan chang knot" (with its tying steps)')
-    assert library.line(BY_NAME["magic_knot"]).endswith('tie_knot name="fisherman\'s knot" (with its tying steps)')
+    assert library.line(library.find("mystic knot")).endswith('tie_knot knot="pan chang knot" (with its tying steps)')
+    assert library.line(BY_NAME["magic_knot"]).endswith('tie_knot knot="fisherman\'s knot" (with its tying steps)')
 
 
 def test_make_sample_takes_any_name_of_an_entry():
     by_name, _, _ = generators.sample("chinese_cloverleaf")
-    by_other_name, _, _ = generators.sample("Clover knot")
+    by_other_name, _, _ = generators.sample("Four-leaf clover knot")
     assert by_name == by_other_name
     box, _, source = generators.sample("square stitch")
     assert source == "mxn_lh_1x1" and box == generators.mxn(1, 1)[0]

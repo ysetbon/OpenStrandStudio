@@ -180,18 +180,30 @@ def cmd_recipe(args):
         spec = json.loads(path.read_text(encoding='utf-8'))
     except json.JSONDecodeError as e:
         raise ValueError(f'{path}: not valid JSON ({e.msg}, line {e.lineno})') from None
+    cords = recipes.cords_of(spec, str(path))
     with quiet(not args.verbose):
-        _, _, along, _ = recipes.passes(spec.get('cords') or [], str(path))
+        _, _, along, _ = recipes.passes(cords, str(path))
     print('crossings each cord passes, in order from its first point:')
-    print(recipes.listing(spec['cords'], along))
+    print(recipes.listing(cords, along))
     if args.alternate:
         with quiet(not args.verbose):
-            found = recipes.alternating(spec['cords'])
+            found = recipes.alternating(cords)
         if found is None:
             raise ValueError('this drawing cannot go over, under, over along every cord: write its patterns by hand')
         print('over, under, over along every cord gives "patterns": ' + json.dumps(found))
         return
     recipe = recipes.parse(spec, str(path))
+    # tie looks a knot up by name: a recipe that answers to another knot's name would have
+    # that knot checked in its place.
+    from . import tying
+    for said in (recipe['name'], recipe['title']) + recipe['aliases']:
+        stopper, other = tying.find(said), bends.find(said)
+        # A built-in knot's name is never free; another recipe's is not either (the recipe's
+        # own, when it is already in the library, is).
+        if stopper is not None or other in bends.LIBRARY or (other is not None and other != recipe['name']):
+            taken = tying.LIBRARY[stopper] if stopper is not None else bends.recipe_of(other)
+            raise ValueError(f'{path}: "{said}" is already a name of the {taken["title"]}: give the recipe a '
+                             'name, a title and other names of its own')
     bends.EXTRA[recipe['name']] = recipe
     out = Path(args.out_dir or path.parent)
     with quiet(not args.verbose):

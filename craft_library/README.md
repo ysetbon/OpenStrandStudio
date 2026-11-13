@@ -13,7 +13,8 @@ library can grow without the Samples page growing with it.
 ```
 python -m openstrand samples boondoggle
 python -m openstrand samples "mystic knot"
-python -m openstrand make sample chinese_pan_chang --out designs/pan_chang.json
+python -m openstrand make sample chinese_cloverleaf --out designs/cloverleaf.json
+python -m openstrand tie "pan chang knot" --out-dir designs/pan_chang
 ```
 
 The agent uses the same lookup: `search_samples` with the person's words, then

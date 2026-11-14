@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Everything this page shows comes from this site: nothing is loaded from anywhere else. -->
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="OpenStrand Studio draws knots, weaves and hitches strand by strand, and keeps the over and under of every crossing right as you move them.">
+<title>OpenStrand Studio</title>
+<link rel="icon" href="img/icon.png">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<header class="wrap">
+  <nav class="toolbar" aria-label="Pages">
+    <a class="brand" href="./"><img src="img/icon.png" alt=""><span>OpenStrand Studio</span></a>
+    <a class="tool t-view" href="./" aria-current="page">Home</a>
+    <a class="tool t-select" href="release/">Release</a>
+    <a class="tool t-rotate" href="https://github.com/ysetbon/OpenStrandStudio">GitHub</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <div>
+      <h1>Knot diagrams, <span>strand by strand</span>.</h1>
+      <p class="lead">OpenStrand Studio draws knots, weaves and hitches as layers of strands. Where two strands
+        cross, a mask sets which one goes over, and it follows along when you move or reorder them.</p>
+      <div class="actions">
+        <a class="button primary" href="release/">Get OpenStrand Studio <span data-latest></span></a>
+        <a class="button" href="release/#new">What's new</a>
+      </div>
+      <p class="facts">Windows and macOS · free and open source (GPL v3) · 12 languages</p>
+    </div>
+    <img class="hero-art" src="img/weave.svg" width="440" height="440"
+         alt="Four amber strands woven over and under four lilac and blue strands">
+  </div>
+
+  <section aria-label="The app">
+    <figure class="card window">
+      <img src="img/main_window.png" width="1920" height="1030" loading="lazy"
+           alt="The main window: the Kagome Weave sample on the canvas, with the toolbar above and the Strands and Masks layer panel on the right">
+      <figcaption>The Kagome Weave sample, one of the projects under Settings → Samples.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2 class="title">What it does</h2>
+    <ul class="layers two">
+      <li class="card"><span class="layer" aria-hidden="true">1_1</span>
+        <div><h3>Over and under, kept right</h3>
+          <p>Each crossing is a mask between two strands. Move or reorder the strands and the masks update with them.</p></div></li>
+      <li class="card"><span class="layer" aria-hidden="true">2_1</span>
+        <div><h3>Strands you can shape</h3>
+          <p>Drag the ends and control points of a strand, attach a new strand to an end, and rotate an end around its pivot.</p></div></li>
+      <li class="card"><span class="layer" aria-hidden="true">3_1</span>
+        <div><h3>Groups</h3>
+          <p>Put strands in a group, then move, rotate or duplicate the whole group at once.</p></div></li>
+      <li class="card"><span class="layer" aria-hidden="true">4_1</span>
+        <div><h3>Exact angles and lengths</h3>
+          <p>Set the angle and the length of a strand by number, and snap its points to the grid.</p></div></li>
+      <li class="card"><span class="layer" aria-hidden="true">5_1</span>
+        <div><h3>Shadows</h3>
+          <p>A strand that passes under gets a shadow from the one above, so the weave reads at a glance.</p></div></li>
+      <li class="card"><span class="layer" aria-hidden="true">6_1</span>
+        <div><h3>Samples to learn from</h3>
+          <p>Open a plait, a straight or curved weave, a Kagome weave and more from Settings, and take them apart.</p></div></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2 class="title sky">Get it</h2>
+    <div class="gets">
+      <div class="card get"><h3>Windows</h3>
+        <p>An installer with a Start Menu shortcut and the <code>.oss</code> file association. No Python needed.</p>
+        <a class="button" href="release/#downloads">Windows installer</a></div>
+      <div class="card get"><h3>macOS</h3>
+        <p>A <code>.pkg</code> installer that puts the app in Applications. No Python needed.</p>
+        <a class="button" href="release/#downloads">macOS installer</a></div>
+      <div class="card get"><h3>From source</h3>
+        <p>Any platform with Python 3.9 to 3.13, and always the newest code.</p>
+        <a class="button" href="release/#source">Run from source</a></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Made by Yonatan Setbon, for the knot tutorials on the
+      <a href="https://www.youtube.com/@1anya7d">LanYarD</a> YouTube channel.</p>
+    <nav aria-label="More">
+      <a href="release/">Release</a>
+      <a href="gallery/">Gallery</a>
+      <a href="https://github.com/ysetbon/OpenStrandStudio">GitHub</a>
+      <a href="https://www.youtube.com/@1anya7d">YouTube</a>
+      <a href="https://www.instagram.com/ysetbon/">Instagram</a>
+    </nav>
+    <p>This site loads nothing from anywhere else: no trackers, no fonts and no scripts from other sites.</p>
+  </div>
+</footer>
+<script src="site.js"></script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Everything this page shows comes from this site: nothing is loaded from anywhere else. -->
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="The latest release of OpenStrand Studio: what is new, the installers for Windows and macOS, and how to run it from source.">
+<title>Release · OpenStrand Studio</title>
+<link rel="icon" href="../img/icon.png">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body>
+<header class="wrap">
+  <nav class="toolbar" aria-label="Pages">
+    <a class="brand" href="../"><img src="../img/icon.png" alt=""><span>OpenStrand Studio</span></a>
+    <a class="tool t-view" href="../">Home</a>
+    <a class="tool t-select" href="./" aria-current="page">Release</a>
+    <a class="tool t-rotate" href="https://github.com/ysetbon/OpenStrandStudio">GitHub</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <div class="release-head">
+    <h1>OpenStrand Studio <span data-latest></span><span class="tag" id="latest-tag" hidden>Latest</span></h1>
+    <p class="when" id="when" role="status">Loading the latest release…</p>
+  </div>
+
+  <section id="downloads">
+    <h2 class="title sky">Download</h2>
+    <div class="gets">
+      <div class="card get"><h3>Windows</h3>
+        <p>Run the installer and follow the wizard. It adds a Start Menu shortcut and opens <code>.oss</code> files with the app.</p>
+        <a class="button primary" id="get-windows" aria-disabled="true">Windows installer</a></div>
+      <div class="card get"><h3>macOS</h3>
+        <p>Open the <code>.pkg</code> and follow the wizard. If macOS blocks it, right-click it and choose Open.</p>
+        <a class="button primary" id="get-macos" aria-disabled="true">macOS installer</a></div>
+    </div>
+    <div class="card get source" id="source"><h3>Run from source</h3>
+        <p>Any platform with Python 3.9 to 3.13 (not 3.14). You get the newest code, ahead of the installers.</p>
+        <pre><code>git clone --filter=blob:limit=5m https://github.com/ysetbon/OpenStrandStudio
+cd OpenStrandStudio
+pip install -r requirements.txt
+python src/main.py</code></pre>
+        <p>On Windows, a virtual environment avoids DLL conflicts with other PyQt installs: run
+          <code>python -m venv venv</code> and <code>venv\Scripts\activate</code> before <code>pip install</code>.</p></div>
+  </section>
+
+  <section id="new">
+    <h2 class="title">What's new <span data-latest-in></span></h2>
+    <ul class="layers" id="notes"></ul>
+    <noscript><p class="note">This page reads the release from <a href="releases.json">releases.json</a> with a
+      script. Without scripts, see the <a href="https://github.com/ysetbon/OpenStrandStudio#readme">README on GitHub</a>.</p></noscript>
+  </section>
+
+  <section>
+    <h2 class="title lilac">Updating</h2>
+    <p class="note">From an installer: run the newer installer. It installs over the old version.</p>
+    <p class="note">From source: run <code>git pull</code> in the folder, then start the app again.</p>
+    <p class="note">Either way, your saved <code>.oss</code> projects are ordinary files and are left as they are.</p>
+  </section>
+
+  <section id="earlier-section" hidden>
+    <h2 class="title sky">Earlier versions</h2>
+    <div id="earlier"></div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Made by Yonatan Setbon, for the knot tutorials on the
+      <a href="https://www.youtube.com/@1anya7d">LanYarD</a> YouTube channel.</p>
+    <nav aria-label="More">
+      <a href="../">Home</a>
+      <a href="../gallery/">Gallery</a>
+      <a href="https://github.com/ysetbon/OpenStrandStudio">GitHub</a>
+      <a href="https://www.youtube.com/@1anya7d">YouTube</a>
+      <a href="https://www.instagram.com/ysetbon/">Instagram</a>
+    </nav>
+    <p>This site loads nothing from anywhere else: no trackers, no fonts and no scripts from other sites.</p>
+  </div>
+</footer>
+<script src="../site.js"></script>
+</body>
+</html>

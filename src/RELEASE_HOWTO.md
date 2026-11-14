@@ -13,6 +13,7 @@ installers + in-app What's New), exactly the way it was done for 1.108 and 1.109
 | `src/build_dmg_X_XXX.sh` | New file (macOS .dmg). Same structure as the pkg script |
 | `src/build_mac_X_XXX.sh` | New file. One-command macOS build; only version numbers change |
 | `src/OpenStrandStudio_mac.spec` | `CFBundleShortVersionString` and `CFBundleVersion` |
+| `site/release/releases.json` | By hand: the new release first, with its version, date, installer addresses and English bullets (`site/README.md`). The site's release page shows it |
 
 ## The easy way: the generator script
 

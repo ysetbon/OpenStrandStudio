@@ -49,3 +49,6 @@ designs/
 # What scripts/share_inbox.py downloads and opens: private, never committed.
 /shared/
 *.oss
+
+# The site as built by site/build.sh
+_site/

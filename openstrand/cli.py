@@ -414,7 +414,7 @@ def api_key(provider='anthropic'):
 
 def _anthropic():
     """The anthropic package, or an error that says how to install it for this Python."""
-    install = f'"{sys.executable}" -m pip install --upgrade "anthropic>=2.4"'
+    install = f'"{sys.executable}" -m pip install --upgrade "anthropic>=2.4,<3"'
     try:
         import anthropic
     except ImportError as error:

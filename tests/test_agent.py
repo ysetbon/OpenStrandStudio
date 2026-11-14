@@ -1303,7 +1303,8 @@ def test_a_drawing_by_agent_opens_with_its_groups_in_the_layer_panel(window, fak
 
 
 @pytest.mark.parametrize("package, expected", [
-    ("raise ImportError('no anthropic here')\n", "not installed for this Python"),
+    ("raise ModuleNotFoundError('no anthropic here', name='anthropic')\n", "not installed for this Python"),
+    ("import a_dependency_that_is_missing\n", "installed but failed to import"),  # says why, not "not installed"
     ("__version__ = '1.9.0'\n", "too old"),
 ])
 def test_cli_agent_says_how_to_install_the_anthropic_package(tmp_path, package, expected):

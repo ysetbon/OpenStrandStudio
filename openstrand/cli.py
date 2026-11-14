@@ -417,8 +417,14 @@ def _anthropic():
     install = f'"{sys.executable}" -m pip install --upgrade "anthropic>=2.4"'
     try:
         import anthropic
-    except ImportError:
-        raise ValueError(f'the anthropic package is not installed for this Python; install it with: {install}') from None
+    except ImportError as error:
+        if getattr(error, 'name', None) == 'anthropic':
+            raise ValueError(f'the anthropic package is not installed for this Python; '
+                             f'install it with: {install}') from None
+        # Installed, but it (or one of its dependencies) failed to import: show why.
+        raise ValueError(f'the anthropic package is installed but failed to import '
+                         f'({type(error).__name__}: {error}); try reinstalling it with: '
+                         f'{install} --force-reinstall') from None
     version = tuple(int(p) for p in anthropic.__version__.split('.')[:2] if p.isdigit())
     if version < (2, 4):
         raise ValueError(f'anthropic {anthropic.__version__} is too old (needs 2.4 or newer); '

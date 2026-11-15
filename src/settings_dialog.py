@@ -7189,6 +7189,16 @@ class SettingsDialog(QDialog):
             if self.canvas:
                 self.canvas.strand_width = new_width
                 self.canvas.stroke_width = new_stroke_width
+    def _open_tab_session_ids(self):
+        """The undo session ids of the tabs open now (each tab has its own)."""
+        tab_manager = getattr(self.parent_window, 'tab_manager', None)
+        if tab_manager is None or not hasattr(tab_manager, 'open_undo_session_ids'):
+            return set()
+        try:
+            return set(tab_manager.open_undo_session_ids())
+        except Exception:
+            return set()
+
     def populate_history_list(self):
         """Scans the temp_states directory and populates the history list."""
         self.history_list.clear()
@@ -7204,6 +7214,7 @@ class SettingsDialog(QDialog):
 
         temp_dir = self.undo_redo_manager.get_temp_dir()
         current_session_id = self.undo_redo_manager.get_session_id()
+        open_session_ids = self._open_tab_session_ids()
         sessions = {}
         found_history = False
 
@@ -7214,8 +7225,9 @@ class SettingsDialog(QDialog):
                     if len(parts) == 2:
                         session_id = parts[0]
                         
-                        # Skip files from the current session
-                        if session_id == current_session_id:
+                        # Skip files from the current session and from the
+                        # other tabs still open: they are live, not history
+                        if session_id == current_session_id or session_id in open_session_ids:
                             continue
                             
                         try:
@@ -7373,8 +7385,11 @@ class SettingsDialog(QDialog):
         # Get temp directory and current session ID
         temp_dir = self.undo_redo_manager.get_temp_dir()
         current_session_id = self.undo_redo_manager.get_session_id()
+        # The open tabs' files are their undo history, not past history
+        kept_prefixes = tuple("{}_".format(sid) for sid in
+                              {current_session_id} | self._open_tab_session_ids())
         
-        # Delete all history files EXCEPT the current session
+        # Delete all history files EXCEPT the current session and the open tabs
         deleted_count = 0
         
         try:
@@ -7397,8 +7412,8 @@ class SettingsDialog(QDialog):
             # Now delete files in the main temp directory that don't belong to current session
             for filename in all_files:
                 if filename.endswith(".json"):
-                    # Keep only current session files
-                    if not filename.startswith(current_session_id):
+                    # Keep the current session's and the open tabs' files
+                    if not filename.startswith(kept_prefixes):
                         file_path = os.path.join(temp_dir, filename)
                         try:
                             os.remove(file_path)
@@ -7409,7 +7424,7 @@ class SettingsDialog(QDialog):
             pass
         
         # Also call the undo_redo_manager's method for any internal cleanup
-        self.undo_redo_manager.clear_all_past_history()
+        self.undo_redo_manager.clear_all_past_history(keep=self._open_tab_session_ids())
         
         # Refresh the list to show it's empty
         self.populate_history_list()

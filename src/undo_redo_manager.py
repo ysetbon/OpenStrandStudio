@@ -5,7 +5,7 @@ import glob
 import time  # Add time module for timestamp comparison
 import shutil
 import sound_manager
-from datetime import datetime
+from datetime import datetime, timedelta
 from PyQt5.QtWidgets import QPushButton, QStyle, QStyleOption, QDialog
 from PyQt5.QtCore import QObject, pyqtSignal, Qt, QTimer, QPoint, QEvent
 from PyQt5.QtGui import QPainter, QPainterPath, QPen, QFontMetrics, QColor, QBrush, QLinearGradient, QPalette, QIcon
@@ -365,7 +365,7 @@ class UndoRedoManager(QObject):
         # Use the provided base_path to determine the temp_dir
         self.base_path = base_path
         self.temp_dir = self._create_temp_dir(base_path)
-        self.session_id = datetime.now().strftime("%Y%m%d%H%M%S")
+        self.session_id = self._issue_session_id()
         self.undo_button = None
         self.redo_button = None
 
@@ -392,6 +392,76 @@ class UndoRedoManager(QObject):
         temp_dir = os.path.join(base_path, "temp_states")
         os.makedirs(temp_dir, exist_ok=True)
         return temp_dir
+
+    # Every session id handed out by this run of the app, so two managers or two
+    # tabs never get the same one even before either has written a file.
+    _issued_session_ids = set()
+
+    def _issue_session_id(self):
+        """A new session id, YYYYMMDDHHMMSS like every id before it, that no
+        other session has.
+
+        Each tab is a session of its own, with its own state files, and the
+        agent opens several tabs within one second: an id from the clock alone
+        would give them all one id, so each new tab would overwrite the last
+        one's files and the History page would keep only one of them. A taken
+        id moves on a second, so the ids still read as times and sort in the
+        order the sessions began.
+        """
+        moment = datetime.now()
+        while True:
+            session_id = moment.strftime("%Y%m%d%H%M%S")
+            if session_id not in UndoRedoManager._issued_session_ids and not self._session_files(session_id):
+                UndoRedoManager._issued_session_ids.add(session_id)
+                return session_id
+            moment += timedelta(seconds=1)
+
+    def _session_files(self, session_id):
+        """The state files of one session on disk, as (step, path), by step."""
+        found = []
+        prefix = f"{session_id}_"
+        try:
+            names = os.listdir(self.temp_dir)
+        except OSError:
+            return found
+        for name in names:
+            if not (name.startswith(prefix) and name.endswith(".json")):
+                continue
+            try:
+                step = int(name[len(prefix):-len(".json")])
+            except ValueError:
+                continue
+            found.append((step, os.path.join(self.temp_dir, name)))
+        return sorted(found)
+
+    def _remove_session_files(self, session_id):
+        """Delete one session's state files, and only that session's."""
+        for _step, path in self._session_files(session_id):
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+
+    def use_session(self, session_id=None):
+        """Work in the session of the tab about to show: its own id (a new one
+        when None) and no steps yet, for the caller to rebuild from the tab.
+
+        The files under that id are replaced, since the tab in memory is the
+        truth about it. The files of every other session — the other tabs, the
+        app's earlier runs — stay on disk, so the History page still has them
+        after the app is closed without saving.
+        """
+        if session_id is None:
+            session_id = self._issue_session_id()
+        else:
+            UndoRedoManager._issued_session_ids.add(session_id)
+            self._remove_session_files(session_id)
+        self.session_id = session_id
+        self.current_step = 0
+        self.max_step = 0
+        self._state_metadata = {}
+        self._update_button_states()
+        return session_id
 
     @property
     def journal_path(self):
@@ -3052,17 +3122,18 @@ class UndoRedoManager(QObject):
             # If not saving current, just reset steps and update buttons
             self._update_button_states()
             
-    def clear_all_past_history(self):
+    def clear_all_past_history(self, keep=()):
         """Deletes all *.json state files from the temp_states directory, 
-           excluding the files belonging to the current session."""
+           excluding the files belonging to the current session and to the
+           sessions in ``keep`` (the other open tabs)."""
         cleared_count = 0
         error_count = 0
-        current_session_prefix = f"{self.session_id}_"
+        kept_prefixes = tuple(f"{sid}_" for sid in {self.session_id, *keep} if sid)
 
         try:
             for filename in os.listdir(self.temp_dir):
-                # Check if it's a state file and NOT from the current session
-                if filename.endswith(".json") and not filename.startswith(current_session_prefix):
+                # Check if it's a state file and NOT from a session still in use
+                if filename.endswith(".json") and not filename.startswith(kept_prefixes):
                     filepath = os.path.join(self.temp_dir, filename)
                     try:
                         os.remove(filepath)
@@ -3251,18 +3322,12 @@ class UndoRedoManager(QObject):
             if not states_list:
                 return False
 
-            # Wipe existing temp state files for a clean import
-            try:
-                for fname in os.listdir(self.temp_dir):
-                    if fname.endswith(".json"):
-                        os.remove(os.path.join(self.temp_dir, fname))
-            except Exception as e:
-                pass
+            # Replace this session's own state files, and only those: the
+            # files of the other tabs and of the app's earlier runs are what
+            # the History page lists, and they must outlive a tab switch.
+            self._remove_session_files(self.session_id)
 
-            # Start a **new** session id to avoid clashing with prior sessions
-            self.session_id = datetime.now().strftime("%Y%m%d%H%M%S")
-
-            # Re-create each state file with the new session id while preserving step numbers
+            # Re-create each state file under this session's id while preserving step numbers
             recreated_steps = 0
             for entry in states_list:
                 step_num = entry.get("step")

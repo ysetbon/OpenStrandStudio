@@ -199,6 +199,10 @@ EFFORTS = ('low', 'medium', 'high', 'xhigh', 'max')  # how long the agent may th
 DEFAULT_EFFORT = 'high'
 MODES = ('ask', 'auto')  # ask before opening a design, or open it at once (plan mode is never kept)
 DEFAULT_MODE = 'auto'
+# The agent panel's size, as the person dragged it: the conversation's height and how far
+# each side of the panel is pulled in from the canvas edges (its hidden top edge and corners).
+DEFAULT_CONVERSATION_HEIGHT = 170
+MIN_CONVERSATION_HEIGHT = 60
 FILE_NAME = 'claude.json'
 KEYCHAIN_SERVICE = 'OpenStrandStudio'  # the keys' entries in the password store: this, and the provider
 
@@ -310,6 +314,21 @@ def _range(value, limits, default):
     return min(max(value, limits[0]), limits[1])
 
 
+def _panel(value):
+    """The panel's saved size, {'height', 'left', 'right'} in px, whole and in range; the
+    defaults (170 px, full width) for anything missing or unreadable."""
+    value = value if isinstance(value, dict) else {}
+
+    def whole(key, low, high, default):
+        try:
+            number = int(value.get(key, default))
+        except (TypeError, ValueError, OverflowError):
+            return default
+        return max(low, min(high, number))
+    return {'height': whole('height', MIN_CONVERSATION_HEIGHT, 4000, DEFAULT_CONVERSATION_HEIGHT),
+            'left': whole('left', 0, 10000, 0), 'right': whole('right', 0, 10000, 0)}
+
+
 def _money(value):
     try:
         value = float(value)
@@ -390,7 +409,8 @@ def load():
                'share': data.get('share') if data.get('share') in (True, False) else None,
                'gallery': data.get('gallery') if data.get('gallery') in (True, False) else None,
                'models_on': _switched_on(data),
-               'allow_china': data.get('allow_china') is True}
+               'allow_china': data.get('allow_china') is True,
+               'panel': _panel(data.get('panel'))}
     if data.get(UNREADABLE) is True:  # not what is saved: nothing but the person's own save writes it back
         current[UNREADABLE] = True
     if in_file and store is not None:
@@ -400,11 +420,12 @@ def load():
 
 def save(api_key=None, model=None, web=None, max_cost=None, effort=None,
          session_limit=None, mode=None, provider_key=None, share=None,
-         models_on=None, allow_china=None, gallery=None):
+         models_on=None, allow_china=None, gallery=None, panel=None):
     """Update the saved settings given. api_key is Anthropic's; provider_key is
     (provider, key) for any provider. An empty key removes it. share, gallery (their new
     designs may be shown in the public gallery), models_on (False: the agent is off, and
-    nothing is ever sent to a model) and allow_china (the providers based in China): True or False."""
+    nothing is ever sent to a model) and allow_china (the providers based in China): True or False.
+    panel: the agent panel's size, {'height', 'left', 'right'} in px (any of them)."""
     current = load()
     if models_on is not None:
         current['models_on'] = bool(models_on)
@@ -445,6 +466,8 @@ def save(api_key=None, model=None, web=None, max_cost=None, effort=None,
         current['share'] = bool(share)
     if gallery is not None:
         current['gallery'] = bool(gallery)
+    if panel is not None:
+        current['panel'] = _panel({**current.get('panel', {}), **panel})
     return _write(current, removed)
 
 
@@ -479,6 +502,8 @@ def _write(current, removed=()):
         payload['gallery'] = bool(current['gallery'])
     payload['models_on'] = current.get('models_on', True) is not False
     payload['allow_china'] = current.get('allow_china') is True
+    if current.get('panel') and current['panel'] != _panel(None):  # only once it was dragged
+        payload['panel'] = _panel(current['panel'])
     if current.get('catalog'):
         payload['catalog'] = current['catalog']
     # Each key in the password store, else (none, or it refused this one) in the file.

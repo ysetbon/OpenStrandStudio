@@ -365,14 +365,16 @@ def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch
     assert agent_settings.load() == {"api_key": "", "keys": {}, "catalog": {}, "model": "claude-sonnet-5-5", "web": True,
                                       "max_cost": 2.0, "spent": 0.0, "spent_since": "",
                                       "effort": "high", "session_limit": 10.0, "mode": "auto",
-                                      "share": None, "gallery": None, "models_on": True, "allow_china": False}
+                                      "share": None, "gallery": None, "models_on": True, "allow_china": False,
+                                      "panel": {"height": 170, "left": 0, "right": 0}}
     agent_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5", web=False, max_cost=5)
     assert agent_settings.load() == {"api_key": "sk-ant-test-1234567890",
                                       "keys": {"anthropic": "sk-ant-test-1234567890"}, "catalog": {},
                                       "model": "claude-haiku-5-5",
                                       "web": False, "max_cost": 5.0, "spent": 0.0, "spent_since": "",
                                       "effort": "high", "session_limit": 10.0, "mode": "auto", "share": None,
-                                      "gallery": None, "models_on": True, "allow_china": False}
+                                      "gallery": None, "models_on": True, "allow_china": False,
+                                      "panel": {"height": 170, "left": 0, "right": 0}}
     # Every provider has its key; the model can be any provider's.
     agent_settings.save(provider_key=("xai", " xai-test-123456789 "), model="grok-4.7")
     saved = agent_settings.load()
@@ -2460,6 +2462,97 @@ def test_the_tab_strip_floats_over_agent_and_agent_stays_put(window, monkeypatch
     window.tabs_button.click()
     QApplication.processEvents()
     assert panel.geometry() == home
+
+
+def test_the_panel_resizes_from_its_hidden_top_edge_and_corners(window, monkeypatch, tmp_path):
+    """Like Claude Code's panes: nothing shows at rest; the top border sets the conversation's
+    height, the top corners also the width; grey on hover, the logo's blue while held; dragged
+    shut it folds; a double-click resets; the size is saved; never the keyboard."""
+    import agent_settings
+    from PyQt5.QtCore import QEvent, QPoint, QPointF, Qt
+    from PyQt5.QtGui import QMouseEvent
+    from PyQt5.QtTest import QTest
+    from PyQt5.QtWidgets import QApplication
+    from agent_panel import EDGE_HELD, EDGE_HOVER
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel = window.agent_panel
+    panel.set_open(False)
+    panel.set_open(True)
+    panel.new_session()  # a conversation (the new session's note) for the top edge to resize
+    QApplication.processEvents()
+    edge, area, m = panel.edge, panel.visible_canvas(), panel.MARGIN
+    home = panel.geometry()
+    assert panel.transcript.isVisible() and panel.transcript.height() == 170
+    assert EDGE_HOVER == "#B4B4B4" and EDGE_HELD == "#2E5BFF"
+
+    # At rest nothing is drawn; only the border and the corners take the mouse; no keyboard.
+    w = edge.width()
+    assert edge.state is None and w == panel.width() and edge.geometry().topLeft() == QPoint(0, 0)
+    mask = edge.mask()
+    assert mask.contains(QPoint(w // 2, 2)) and not mask.contains(QPoint(w // 2, 12))
+    assert mask.contains(QPoint(4, 12)) and mask.contains(QPoint(w - 4, 12))
+    assert edge.focusPolicy() == Qt.NoFocus
+
+    # The cursor changes at once; the grey line shows after a moment.
+    for spot, shape in ((QPoint(w // 2, 2), Qt.SizeVerCursor), (QPoint(4, 4), Qt.SizeFDiagCursor),
+                        (QPoint(w - 4, 4), Qt.SizeBDiagCursor)):
+        edge.point_at(spot)
+        assert edge.cursor().shape() == shape
+    assert edge.state is None
+    QTest.qWait(edge.DELAY + 100)
+    assert edge.state == "hover"
+    edge.leaveEvent(QEvent(QEvent.Leave))
+    assert edge.state is None
+
+    def send(kind, local, spot, button=Qt.LeftButton, buttons=Qt.LeftButton):
+        QApplication.sendEvent(edge, QMouseEvent(kind, QPointF(local), QPointF(spot), button, buttons, Qt.NoModifier))
+        QApplication.processEvents()
+
+    def drag(local, dx, dy):
+        start = edge.mapToGlobal(local)
+        send(QEvent.MouseButtonPress, local, start)
+        assert edge.state == "held"  # the logo's blue while held
+        for i in (1, 2, 3):
+            send(QEvent.MouseMove, local, start + QPoint(dx * i // 3, dy * i // 3), Qt.NoButton)
+        send(QEvent.MouseButtonRelease, local, start + QPoint(dx, dy), Qt.LeftButton, Qt.NoButton)
+
+    def double(local):
+        send(QEvent.MouseButtonDblClick, local, edge.mapToGlobal(local))
+
+    # Up: a taller conversation, the panel still on the bottom of the canvas; saved.
+    drag(QPoint(w // 2, 2), 0, -100)
+    assert panel.transcript.height() == 270 and panel.geometry().bottom() == home.bottom()
+    assert panel.geometry().height() == home.height() + 100
+    assert agent_settings.load()["panel"] == {"height": 270, "left": 0, "right": 0}
+
+    # Never above the canvas, however far it is dragged.
+    drag(QPoint(w // 2, 2), 0, -5000)
+    assert panel.geometry().top() >= area.top() + m and panel.geometry().bottom() == home.bottom()
+
+    # Down past the smallest height: folded away, keeping its height for when it opens.
+    double(QPoint(w // 2, 2))
+    drag(QPoint(w // 2, 2), 0, 400)
+    assert panel.folded and not panel.transcript.isVisible()
+    assert panel.geometry().height() < home.height() and panel.geometry().bottom() == home.bottom()
+    assert agent_settings.load()["panel"]["height"] == 170
+    # An Allow/Deny card opens it: it has to be seen.
+    panel.add_entry({"kind": "confirm", "id": "c1", "what": ("delete", "1_5", ""), "state": None})
+    QApplication.processEvents()
+    assert not panel.folded and panel.transcript.isVisible()
+    drag(QPoint(w // 2, 2), 0, 400)
+    assert panel.folded
+    # Double-click: open again at the default height.
+    double(QPoint(w // 2, 2))
+    assert not panel.folded and panel.transcript.height() == 170 and panel.geometry() == home
+
+    # A corner: the width too, the other side staying put; double-click: full width again.
+    drag(QPoint(w - 4, 4), -60, 0)
+    assert panel.geometry().width() == home.width() - 60 and panel.geometry().left() == home.left()
+    assert agent_settings.load()["panel"] == {"height": 170, "left": 0, "right": 60}
+    drag(QPoint(4, 4), 5000, 0)  # never narrower than MIN_WIDTH
+    assert panel.geometry().width() == panel.MIN_WIDTH
+    double(QPoint(4, 4))
+    assert panel.geometry() == home and agent_settings.load()["panel"] == {"height": 170, "left": 0, "right": 0}
 
 
 def test_new_session_starts_from_nothing(window, monkeypatch, tmp_path):

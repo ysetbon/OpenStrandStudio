@@ -1714,3 +1714,59 @@ _CHAT_KEYS = {
 }
 for _language, _strings in _CHAT_KEYS.items():
     AGENT_TRANSLATIONS[_language].update(_strings)
+
+
+# A search's whole list of matches (a click loads one), the first-run pointer to the
+# Button Guide (it names no keys: the guide does), and Up/Down through the suggestions.
+_MATCHES_AND_HINTS = {
+    'en': {'agent_matches_show': 'All {count} matches', 'agent_matches_hide': 'Hide the {count} matches',
+           'agent_load_match': 'Load the sample "{name}"',
+           'agent_keys_hint': 'How to write a longer request, take a suggestion or switch the mode: {settings} › {guide} › {section}.',
+           'agent_key_arrows_desc': '↑ / ↓ - in the empty box, show the agent\'s other suggested messages.'},
+    'fr': {'agent_matches_show': 'Les {count} résultats', 'agent_matches_hide': 'Masquer les {count} résultats',
+           'agent_load_match': 'Charge le modèle « {name} »',
+           'agent_keys_hint': 'Écrire une demande plus longue, prendre une suggestion ou changer de mode : {settings} › {guide} › {section}.',
+           'agent_key_arrows_desc': '↑ / ↓ - dans la zone vide, montrent les autres messages proposés par l\'agent.'},
+    'de': {'agent_matches_show': 'Alle {count} Treffer', 'agent_matches_hide': 'Die {count} Treffer ausblenden',
+           'agent_load_match': 'Lade das Beispiel „{name}“',
+           'agent_keys_hint': 'Längere Anfrage schreiben, Vorschlag übernehmen oder Modus wechseln: {settings} › {guide} › {section}.',
+           'agent_key_arrows_desc': '↑ / ↓ - im leeren Feld die anderen vorgeschlagenen Nachrichten des Agenten zeigen.'},
+    'it': {'agent_matches_show': 'Tutti i {count} risultati', 'agent_matches_hide': 'Nascondi i {count} risultati',
+           'agent_load_match': 'Carica l\'esempio «{name}»',
+           'agent_keys_hint': 'Scrivere una richiesta più lunga, prendere un suggerimento o cambiare modalità: {settings} › {guide} › {section}.',
+           'agent_key_arrows_desc': '↑ / ↓ - nella casella vuota, mostrano gli altri messaggi suggeriti dall\'agente.'},
+    'es': {'agent_matches_show': 'Los {count} resultados', 'agent_matches_hide': 'Ocultar los {count} resultados',
+           'agent_load_match': 'Carga el ejemplo «{name}»',
+           'agent_keys_hint': 'Escribir una petición más larga, tomar una sugerencia o cambiar de modo: {settings} › {guide} › {section}.',
+           'agent_key_arrows_desc': '↑ / ↓ - en el cuadro vacío, muestran los otros mensajes sugeridos por el agente.'},
+    'pt': {'agent_matches_show': 'Os {count} resultados', 'agent_matches_hide': 'Ocultar os {count} resultados',
+           'agent_load_match': 'Carrega o exemplo «{name}»',
+           'agent_keys_hint': 'Escrever um pedido mais longo, aceitar uma sugestão ou mudar o modo: {settings} › {guide} › {section}.',
+           'agent_key_arrows_desc': '↑ / ↓ - na caixa vazia, mostram as outras mensagens sugeridas pelo agente.'},
+    'he': {'agent_matches_show': 'כל {count} התוצאות', 'agent_matches_hide': 'הסתרת {count} התוצאות',
+           'agent_load_match': 'טען את הדוגמה „{name}”',
+           'agent_keys_hint': 'איך לכתוב בקשה ארוכה, לקבל הצעה או להחליף מצב: {settings} › {guide} › {section}.',
+           'agent_key_arrows_desc': '↑ / ↓ - בתיבה הריקה, מציגים את שאר ההודעות שהסוכן מציע.'},
+    'ru': {'agent_matches_show': 'Все результаты: {count}', 'agent_matches_hide': 'Скрыть результаты: {count}',
+           'agent_load_match': 'Загрузи образец «{name}»',
+           'agent_keys_hint': 'Как написать длинный запрос, взять подсказку или сменить режим: {settings} › {guide} › {section}.',
+           'agent_key_arrows_desc': '↑ / ↓ - в пустом поле показывают другие сообщения, предложенные агентом.'},
+    'fi': {'agent_matches_show': 'Kaikki {count} osumaa', 'agent_matches_hide': 'Piilota {count} osumaa',
+           'agent_load_match': 'Lataa malli ”{name}”',
+           'agent_keys_hint': 'Pidemmän pyynnön kirjoittaminen, ehdotuksen ottaminen tai tilan vaihto: {settings} › {guide} › {section}.',
+           'agent_key_arrows_desc': '↑ / ↓ - tyhjässä ruudussa näyttävät agentin muut ehdottamat viestit.'},
+    'sv': {'agent_matches_show': 'Alla {count} träffar', 'agent_matches_hide': 'Dölj de {count} träffarna',
+           'agent_load_match': 'Ladda exemplet ”{name}”',
+           'agent_keys_hint': 'Skriva en längre begäran, ta ett förslag eller byta läge: {settings} › {guide} › {section}.',
+           'agent_key_arrows_desc': '↑ / ↓ - i den tomma rutan visar agentens andra föreslagna meddelanden.'},
+    'ja': {'agent_matches_show': '{count} 件すべて', 'agent_matches_hide': '{count} 件を隠す',
+           'agent_load_match': 'サンプル「{name}」を読み込んで',
+           'agent_keys_hint': '長い依頼の書き方、提案の使い方、モードの切り替え：{settings} › {guide} › {section}。',
+           'agent_key_arrows_desc': '↑ / ↓ - 空の入力欄で、エージェントのほかの提案メッセージを表示します。'},
+    'zh': {'agent_matches_show': '全部 {count} 个结果', 'agent_matches_hide': '隐藏 {count} 个结果',
+           'agent_load_match': '加载示例“{name}”',
+           'agent_keys_hint': '如何写较长的请求、采用建议或切换模式：{settings} › {guide} › {section}。',
+           'agent_key_arrows_desc': '↑ / ↓ - 在空输入框中，显示智能体建议的其他消息。'},
+}
+for _language, _strings in _MATCHES_AND_HINTS.items():
+    AGENT_TRANSLATIONS[_language].update(_strings)

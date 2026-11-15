@@ -23,6 +23,7 @@ from . import ROOT
 
 FOLDER = ROOT / 'craft_library'
 CATALOG = FOLDER / 'catalog.json'
+PICTURES = FOLDER / 'pictures'  # one small picture per entry (scripts/build_library_pictures.py)
 BUILDS = ('file', 'sample', 'mxn', 'turks_head', 'tie', 'make')
 
 # Words in a request that say nothing about which design is meant.
@@ -150,6 +151,19 @@ def line(entry, cli=False):
     about = entry.get('about', '').split('. ')[0].rstrip('.')
     return (f'{entry["name"]} · {entry["craft"]} · {entry["title"]}{also} · {about} · '
             f'get it: {how(entry, cli)}')
+
+
+def picture_name(entry):
+    """The file name of an entry's picture: its name, lower case, letters and digits joined by _."""
+    plain = unicodedata.normalize('NFKD', entry['name']).encode('ascii', 'ignore').decode('ascii')
+    return re.sub(r'[^a-z0-9]+', '_', plain.lower()).strip('_') + '.png'
+
+
+def picture_of(entry):
+    """The entry's picture, made before anyone asks for it, or None: a search shows it,
+    though a knot is only tied when it is loaded."""
+    path = PICTURES / picture_name(entry)
+    return path if path.is_file() else None
 
 
 def path_of(entry):

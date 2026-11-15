@@ -34,6 +34,11 @@ class TabSession:
     # the current language (so it re-translates when the language changes). Tabs
     # with a file or a custom (renamed/duplicated) title leave this as None.
     untitled_index: Optional[int] = None
+    # The undo manager's session id for this tab: its state files on disk are
+    # named by it. Each tab keeps its own, so the files of every tab (not only
+    # the one showing last) are still there for the History page after the
+    # app closes. None for a tab never shown yet: it gets a new id.
+    undo_session_id: Optional[str] = None
 
 
 class TabManager(QObject):
@@ -130,6 +135,7 @@ class TabManager(QObject):
                     if payload is None:
                         raise ValueError("export_history_payload returned None")
                     active.history_payload = payload
+                    active.undo_session_id = undo.session_id
                 except Exception:
                     active.history_payload = None
                     ok = False
@@ -151,6 +157,14 @@ class TabManager(QObject):
         finally:
             self._busy = prev_busy
         return ok
+
+    def open_undo_session_ids(self):
+        """The undo session ids of the open tabs, the one showing included."""
+        ids = {t.undo_session_id for t in self.tabs if t.undo_session_id}
+        undo = self.undo_mgr
+        if undo is not None and getattr(undo, 'session_id', None):
+            ids.add(undo.session_id)
+        return ids
 
     def _finish_mask_edit(self):
         """End a mask edit in progress, the way Escape does, before the canvas
@@ -194,6 +208,14 @@ class TabManager(QObject):
         except Exception:
             pass
 
+    def _use_undo_session(self, session):
+        """Point the undo manager at ``session``'s own state files (new ones for
+        a tab never shown), leaving every other tab's files as they are."""
+        undo = self.undo_mgr
+        if undo is None or not hasattr(undo, 'use_session'):
+            return
+        session.undo_session_id = undo.use_session(session.undo_session_id)
+
     def restore_session(self, tab_id):
         """Load the given tab's serialized state back into the live canvas."""
         session = self.find(tab_id)
@@ -203,6 +225,7 @@ class TabManager(QObject):
         self._busy = True
         try:
             self._apply_session_settings(session)
+            self._use_undo_session(session)
             undo = self.undo_mgr
             payload = session.history_payload
             loaded = False
@@ -320,6 +343,7 @@ class TabManager(QObject):
         self.tabs.append(session)
         self.active_tab_id = session.id
         self._apply_session_settings(session)
+        self._use_undo_session(session)
         self._load_empty_workspace()
         self.changed.emit()
 
@@ -431,6 +455,7 @@ class TabManager(QObject):
             self.tabs.append(fresh)
             self.active_tab_id = fresh.id
             self._apply_session_settings(fresh)
+            self._use_undo_session(fresh)
             self._load_empty_workspace()
         elif closing_active:
             # Closed the tab that was live: fall back to a neighbor.

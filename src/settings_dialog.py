@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, pyqtSignal, QUrl, QRectF, QRect, QTimer, QBuffer, QByteArray, QPointF, QLocale
 from PyQt5.QtSvg import QSvgRenderer
 import base64
+import html
 from PyQt5.QtGui import QIcon, QFont, QPainter, QPen, QColor, QPixmap, QImage, QPainterPath, QBrush, QFontMetrics, QPolygonF
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -3227,6 +3228,7 @@ class SettingsDialog(QDialog):
             </tr>
         </table>
         {self.level_scope_guide_html(_)}
+        {self.agent_keys_guide_html(_)}
 
         <h2>{_['layer_context_menu_title']}</h2>
         <p>{_['layer_context_menu_info']}</p>
@@ -4324,6 +4326,7 @@ class SettingsDialog(QDialog):
         </table>
         
         {self.level_scope_guide_html(_)}
+        {self.agent_keys_guide_html(_)}
 
         <h2>{_['layer_context_menu_title']}</h2>
         <p>{_['layer_context_menu_info']}</p>
@@ -5160,6 +5163,7 @@ class SettingsDialog(QDialog):
             </table>
             
             {self.level_scope_guide_html(_)}
+        {self.agent_keys_guide_html(_)}
 
             <h2>{_['layer_context_menu_title']}</h2>
             <p>{_['layer_context_menu_info']}</p>
@@ -6172,6 +6176,23 @@ class SettingsDialog(QDialog):
             name, desc = (part.format(**names) for part in _[key].split(' - ', 1))
             items.append(f'<li><span class="button-name">{name}</span> - {desc}</li>')
         return f"<h2>{_['level_scope_guide_title']}</h2>\n<ul>\n" + '\n'.join(items) + '\n</ul>'
+
+    def agent_keys_guide_html(self, _):
+        """The Button Guide's "Agent Chat Box" section: the keys of the agent panel's
+        chat box (PromptBox in agent_panel.py). They are explained here, not in a
+        tooltip on the box, which would cover what is being typed."""
+        items = []
+        for key in ('agent_key_enter_desc', 'agent_key_shift_enter_desc', 'agent_key_tab_desc',
+                    'agent_key_shift_tab_desc', 'agent_key_clear_desc'):
+            if key not in _:
+                continue
+            name, _sep, desc = _[key].partition(' - ')
+            items.append(f'<li><span class="button-name">{html.escape(name, quote=False)}</span> - '
+                         f'{html.escape(desc, quote=False)}</li>')
+        if not items:
+            return ''
+        title = _['agent_keys_guide_title'] if 'agent_keys_guide_title' in _ else 'Agent Chat Box'
+        return f"<h2>{html.escape(title, quote=False)}</h2>\n<ul>\n" + '\n'.join(items) + '\n</ul>'
 
     def svg_to_data_url(self, relative_path, width, height):
         """Render an SVG to a PNG data URL for QTextBrowser if file URLs are blocked."""

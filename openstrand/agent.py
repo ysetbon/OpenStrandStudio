@@ -549,6 +549,7 @@ class Workspace:
         self.steps = []  # [(title, path)] from make_steps, tie_knot or draw_steps
         self.story = None  # the steps draw_steps was sent last, as sent: "replace" changes single ones
         self.sheet = None  # (version, path) of the picture of all of draw_steps' steps
+        self.found = []  # pictures of the designs the last search_samples found (published PNGs)
         self.last_edit = None  # the design edit_mask made last (kept or previewed)
         self.progress = None  # set while a tool runs: tells the person how far it has got
 
@@ -648,6 +649,31 @@ class Workspace:
             self._shot = (self.version, path)
         return path
 
+    def search_sheet(self, most=4):
+        """One picture of the first designs the last search found, side by side (two
+        rows for four), from their published pictures. None when none has one."""
+        from PIL import Image
+        shown = self.found[:most]
+        if not shown:
+            return None
+        cell = 320
+        columns = 2 if len(shown) == 4 else len(shown)
+        rows = (len(shown) + columns - 1) // columns
+        sheet = Image.new('RGB', (columns * cell, rows * cell), 'white')
+        for k, path in enumerate(shown):
+            with Image.open(path) as picture:
+                picture = picture.convert('RGBA')
+                picture.thumbnail((cell - 16, cell - 16))
+                x = (k % columns) * cell + (cell - picture.width) // 2
+                y = (k // columns) * cell + (cell - picture.height) // 2
+                sheet.paste(picture, (x, y), picture)
+        frames = self.out_dir / 'frames'
+        frames.mkdir(exist_ok=True)
+        self._shots += 1
+        path = frames / f'search_{self._shots}.png'
+        sheet.save(path)
+        return path
+
     def close(self):
         if self._preview is not None:
             self._preview.close()
@@ -719,14 +745,22 @@ class Workspace:
         elif not text:
             lines.append('Craft library, by craft (search a craft or a name to see its designs):')
             lines += [f'{craft}: {about}' for craft, about in library.crafts().items()]
-        names = [n for n in generators.samples() if text.lower() in n.lower()]
+        files = generators.samples()
+        names = [n for n in files if text.lower() in n.lower()]
+        # The ready-made pictures of what matched, for the row's picture (search_sheet).
+        self.found = [found for found in (entry_picture(e, files) for e in entries) if found]
+        self.found += [found for found in (sample_picture(files[n]) for n in names) if found]
         if names:
             lines.append('Published files (load_sample name): ' + ', '.join(names[:60])
                          + (f' (and {len(names) - 60} more)' if len(names) > 60 else ''))
+        # People see what was looked up and what came back, not only how many.
+        asked = f'"{text}"' if text else 'all'
         if not entries and not names:
-            return '0 samples', ('nothing matches; try one word of the name, or a craft (boondoggle, macrame, '
-                                 'chinese knotting, knitting, crochet, knots)')
-        return f'{len(entries) + len(names)} samples', '\n'.join(lines)
+            return f'{asked} · 0 samples', ('nothing matches; try one word of the name, or a craft (boondoggle, '
+                                            'macrame, chinese knotting, knitting, crochet, knots)')
+        if not text:
+            return f'{asked} · {len(library.crafts())} crafts, {len(names)} files', '\n'.join(lines)
+        return f'{asked} · {found_text([e["title"] for e in entries] + names)}', '\n'.join(lines)
 
     def run(self, name, args):
         """Do one tool call. Returns (summary for people, content for the agent)."""
@@ -882,11 +916,59 @@ class Workspace:
         raise ToolError(f'unknown tool {name}')
 
 
+def sample_picture(path):
+    """The published picture of a sample file (its images/ folder beside json/), or None."""
+    picture = Path(path).parent.parent / 'images' / (Path(path).stem + '.png')
+    return picture if picture.is_file() else None
+
+
+def entry_picture(entry, files):
+    """The published picture of a craft library entry made from a file or a sample, or None
+    (a knot that is tied, or a stitch that is made, has none until it is built)."""
+    kind, value = next(iter(entry['build'].items()))
+    if kind == 'sample' and value in files:
+        return sample_picture(files[value])
+    if kind == 'file':
+        from . import library
+        try:
+            return sample_picture(library.path_of(entry))
+        except library.LibraryError:
+            return None
+    return None
+
+
+def found_text(names, shown=3):
+    """'2 samples: Knitting stitch, French knitting' (the first few, then how many more)."""
+    count = len(names)
+    head = f"{count} sample{'s' if count != 1 else ''}"
+    if not names:
+        return head
+    more = f' +{count - shown} more' if count > shown else ''
+    return f"{head}: {', '.join(names[:shown])}{more}"
+
+
+SUGGEST_PROMPT = """You help someone design with OpenStrand Studio, an app for knots, weaves and \
+strand patterns. Below is what they just asked and how the assistant answered. Guess the next \
+message they would most likely type: a short, concrete follow-up request (at most 12 words), in \
+the same language they wrote in, written as they would write it, e.g. "make it in teal and gold" \
+or "show me the steps". Not a question to them, not a thank-you. Reply with the message only, \
+no quotes. If no follow-up makes sense, reply with nothing.
+
+They asked:
+{prompt}
+
+The assistant answered:
+{answer}
+
+Tools that ran:
+{tools}"""
+
+
 class Agent:
     """Runs one request: the loop of model calls and tool calls."""
 
     def __init__(self, client, out_dir, model=DEFAULT_MODEL, on_event=None, max_rounds=24, max_cost=2.00,
-                 quiet=None, web=True, effort='high', plan=False, app=None, log=None):
+                 quiet=None, web=True, effort='high', plan=False, app=None, log=None, suggest=False):
         if model not in PRICES:
             raise ValueError(f"model must be one of {', '.join(PRICES)}")
         if effort not in EFFORTS:
@@ -906,6 +988,11 @@ class Agent:
         self.log = log or NoLog()  # the step-by-step log (debuglog.Log), for debugging a request
         self.opened_tabs = []  # titles of tabs opened by open_in_new_tab
         self.workspace = Workspace(out_dir)
+        # After an answer, guess the person's next message (shown greyed in the chat box,
+        # Tab takes it), as Claude Code does. One small extra call; "openstrand agent" turns it on.
+        self.suggest = suggest
+        self.asked = ''  # the request as the person wrote it, for that guess
+        self.ran = []  # 'name: summary' of each tool, for that guess
         self.on_event = on_event or (lambda event: None)
         self.max_rounds = max_rounds
         self.max_cost = max_cost
@@ -981,6 +1068,7 @@ class Agent:
         history is the session so far ([{'user', 'agent', 'design'}], oldest
         first), so the person can refer back to it; a new session sends none.
         """
+        self.asked = prompt
         if history:
             prompt = with_history(prompt, history)
         if start is not None:
@@ -1074,11 +1162,13 @@ class Agent:
         except (ToolError, AppError, ValueError, KeyError, TypeError) as e:
             message = str(e) if not isinstance(e, KeyError) else f'missing argument {e}'
             self.on_event({'type': 'tool_end', 'name': block.name, 'ok': False, 'summary': message})
+            self.ran.append(f'{block.name} failed: {message[:120]}')
             return {'type': 'tool_result', 'tool_use_id': block.id, 'content': message, 'is_error': True}
         except Exception as e:  # a crash inside the app's code: tell the agent, keep going
             message = f'{type(e).__name__}: {e}'
             self.on_event({'type': 'tool_end', 'name': block.name, 'ok': False, 'summary': message})
             return {'type': 'tool_result', 'tool_use_id': block.id, 'content': message, 'is_error': True}
+        self.ran.append(f'{block.name}: {str(summary)[:120]}')
         end = {'type': 'tool_end', 'name': block.name, 'ok': True, 'summary': summary}
         image = self.tool_image(block.name, args)
         if image:
@@ -1092,6 +1182,13 @@ class Agent:
         answer with words (lists, descriptions, settings) get none; the app pictures the
         tools that act on its own windows itself. A picture that fails never fails the tool."""
         ws = self.workspace
+        if name == 'search_samples' and self.app is not None:  # what it found, side by side
+            try:
+                found = ws.search_sheet()
+                return str(found) if found else None
+            except Exception as e:  # noqa: BLE001
+                self.log(f'no picture for {name}: {type(e).__name__}: {e}')
+                return None
         if name not in IMAGE_TOOLS or ws.data is None or self.app is None:  # only the app shows them
             return None
         try:
@@ -1112,10 +1209,33 @@ class Agent:
         from .app import HANDLERS
         return HANDLERS[name](self, args)
 
+    def next_message(self, said):
+        """The message the person will most likely send next, or ''. Never fails the request."""
+        if not self.suggest or not said or self.cost > self.max_cost:
+            return ''
+        text = SUGGEST_PROMPT.format(prompt=self.asked[:1500], answer=said[-1][:1500],
+                                     tools='; '.join(self.ran[-12:])[:1500] or 'none')
+        try:
+            with self.log.waiting('a suggested next message'):
+                response = self.client.messages.create(
+                    model=self.model, max_tokens=1024, output_config={'effort': 'low'},
+                    messages=[{'role': 'user', 'content': text}])
+            self.count(response)
+        except Exception as e:  # noqa: BLE001 - only a suggestion
+            self.log(f'no suggested next message: {type(e).__name__}: {short(e)}')
+            return ''
+        words = ' '.join(b.text for b in response.content if getattr(b, 'type', '') == 'text')
+        words = ' '.join(words.split()).strip('"“”\'`')
+        if not words or len(words) > 120:
+            return ''
+        self.log(f'suggested next message: {words}')
+        return words
+
     def finish(self, said, error=None):
         self.log(f'request ends: {error or "answered"} (cost ${self.cost:.3f}, {self.searches} web searches)')
+        suggestion = self.next_message(said) if error is None else ''
         ws = self.workspace
-        event = {'type': 'done', 'ok': error is None, 'error': error,
+        event = {'type': 'done', 'ok': error is None, 'error': error, 'suggestion': suggestion,
                  'text': said[-1] if said else '',
                  'project': str(ws.project_path) if ws.data is not None else None,
                  'png': str(ws.png_path) if ws.rendered_version == ws.version and ws.data is not None else None,
@@ -1213,3 +1333,5 @@ def print_events(event, as_json=False, out=None):
             print_(f"wrote {event['project']}")
         searches = f" · {event['searches']} web searches" if event.get('searches') else ''
         print_(f"cost ${event['cost']:.4f} · {event['model']}{searches}")
+        if event.get('suggestion'):
+            print_(f"next, perhaps: {event['suggestion']}")

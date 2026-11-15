@@ -75,6 +75,7 @@ TOOL_CHIPS = {
     'knot_library': ('agent_tool_knot_library', '#d4d4d4', '#1a1a1a'),
 }
 OTHER_CHIP = ('#d4d4d4', '#1a1a1a')
+USER_IMAGE_HEIGHT = 48  # the reference images under the person's message, in pixels
 ACCENT = '#FF5500'  # the OpenStrand logo's orange: the running mark, the progress bars, Send and the links
 EDGE_HOVER = '#B4B4B4'  # the panel's hidden top edge, with the mouse on it
 EDGE_HELD = '#2E5BFF'  # the OpenStrand logo's blue: the hidden edge while it is dragged (orange is the chat box's)
@@ -145,13 +146,12 @@ def confirm_text(language, what):
 
 
 def model_tags(model, t):
-    """'new · price estimated', 'retiring 2026-12-01'... for a model in the menus."""
+    """'retiring 2026-12-01' for a model in the menus. Never "new" or "price estimated":
+    the menus name the models plainly, whatever Refresh models finds."""
     info = agent_settings.model_info(model)
     if info is None:
         return ''
-    tags = [t('models_tag_new')] if info.new else []
-    if info.estimated:
-        tags.append(t('models_tag_estimated'))
+    tags = []
     if info.retiring:
         tags.append(t('models_tag_retiring_soon') if info.retiring == 'soon'
                     else t('models_tag_retiring').format(date=info.retiring))
@@ -302,6 +302,28 @@ def agent_command(prompt, model, out_dir, images=(), start=None, web=True, max_c
     if start:
         args += ['--start', start]
     return sys.executable, args
+
+
+# What a tool works on, from its input: the first of these it was given.
+TARGET_KEYS = ('text', 'name', 'knot', 'title', 'tab', 'step', 'group')
+
+
+def tool_target(step):
+    """'"knit"': what a tool loads, searches, ties or opens, as its row and the working
+    line show it while it runs; '' when its input names nothing."""
+    given = step.get('input') or {}
+    if not isinstance(given, dict):
+        return ''
+    for key in TARGET_KEYS:
+        value = given.get(key)
+        if isinstance(value, bool) or value in (None, ''):
+            continue
+        if isinstance(value, (int, float)):
+            return f'#{value}' if key in ('tab', 'step') else str(value)
+        if isinstance(value, str):
+            value = ' '.join(value.split())
+            return '"' + (value if len(value) <= 40 else value[:39] + '…') + '"'
+    return ''
 
 
 def duration_text(seconds, t):
@@ -457,7 +479,10 @@ def design_name(prompt):
 
 class PromptBox(QTextEdit):
     """The chat box: Enter sends, Shift+Enter starts a new line, and the box
-    grows with what is typed up to MAX_LINES, then scrolls."""
+    grows with what is typed up to MAX_LINES, then scrolls. After an answer
+    the agent's guess at the next message shows greyed in the empty box, as
+    in Claude Code: Tab (or the right arrow) takes it, typing anything else
+    drops it. The keys are in Settings > Button Guide, not on the box."""
     submitted = pyqtSignal()
     cycle_mode = pyqtSignal()  # Shift+Tab, as in Claude Code
     MAX_LINES = 8
@@ -475,7 +500,34 @@ class PromptBox(QTextEdit):
                            'QTextEdit#agentPrompt:focus { border-color: #FF5500; }')
         self.document().setDocumentMargin(2)
         self.document().contentsChanged.connect(self.fit_height)
+        self.document().contentsChanged.connect(self.typed)
+        self.hint = ''  # what the empty box says: an example request
+        self.suggestion = ''  # the agent's guess at the next message, shown instead
         self.fit_height()
+
+    # ------------------------------------------------- the suggested next message
+    def set_hint(self, text):
+        self.hint = text
+        self.show_hint()
+
+    def suggest(self, text):
+        """Show text greyed in the box, for Tab to take; '' takes it away."""
+        self.suggestion = ' '.join(str(text or '').split())
+        self.show_hint()
+
+    def show_hint(self):
+        self.setPlaceholderText(self.suggestion or self.hint)
+
+    def typed(self):
+        if self.suggestion and self.toPlainText():
+            self.suggest('')  # the person writes their own: the guess goes
+
+    def take_suggestion(self):
+        """Put the suggestion in the box to send or change. False when there is none to take."""
+        if not self.suggestion or self.toPlainText():
+            return False
+        self.setText(self.suggestion)  # typed() then drops the suggestion
+        return True
 
     # The QLineEdit calls the rest of the panel and the tests use.
     def text(self):
@@ -489,6 +541,10 @@ class PromptBox(QTextEdit):
         # Shift+Tab switches the mode; caught before Qt moves the focus with it.
         if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Backtab:
             self.cycle_mode.emit()
+            return True
+        # Tab takes the suggested message; caught before Qt moves the focus with it.
+        if (event.type() == QEvent.KeyPress and event.key() in (Qt.Key_Tab, Qt.Key_Right)
+                and not event.modifiers() & ~Qt.KeypadModifier and self.take_suggestion()):
             return True
         return super().event(event)
 
@@ -1402,7 +1458,19 @@ class AgentPanel(QWidget):
         return False
 
     def hover(self, anchor, cursor):
-        """Over a running tool's picture: show it larger; anywhere else: hide it."""
+        """Over a tool's picture, or an image sent with a message: show it larger;
+        anywhere else: hide it."""
+        if anchor.startswith('os:image/'):
+            try:
+                i, k = (int(n) for n in anchor[len('os:image/'):].split('/'))
+                path = self.entries[i]['images'][k]
+            except (ValueError, IndexError, KeyError):
+                path = None
+            if not path or not os.path.exists(path):
+                self.preview.hide_frame()
+            elif self.preview.key != anchor:
+                self.preview.show_frame(anchor, path, cursor)
+            return
         step = None
         if anchor.startswith('os:frame/'):
             try:
@@ -1451,8 +1519,8 @@ class AgentPanel(QWidget):
         self.language = language_code
         t = lambda key: _tr(language_code, key)
         self.working.format_time = lambda seconds: duration_text(seconds, t)
-        self.prompt_edit.setPlaceholderText(t('agent_prompt_placeholder'))
-        self.prompt_edit.setToolTip(t('agent_prompt_keys'))
+        # No tooltip with the keys: it covered the box. Settings > Button Guide explains them.
+        self.prompt_edit.set_hint(t('agent_prompt_placeholder'))
         self.show_use_canvas()
         self.send_button.setText(t('agent_stop') if self.running() else t('agent_send'))
         self.setLayoutDirection(Qt.RightToLeft if language_code == 'he' else Qt.LeftToRight)
@@ -1526,10 +1594,10 @@ class AgentPanel(QWidget):
             self.folded = False  # an Allow/Deny card waits in the conversation: it must be seen
         self.render_transcript()
 
-    def add_user(self, text):
+    def add_user(self, text, images=()):
         self.close_group()
         self.follow_end = True  # a new request: show it, and what the agent does with it
-        self.add_entry({'kind': 'user', 'text': text})
+        self.add_entry({'kind': 'user', 'text': text, 'images': list(images)})
 
     def add_agent(self, text):
         self.close_group()
@@ -1614,8 +1682,17 @@ class AgentPanel(QWidget):
         esc = html.escape
         kind = e['kind']
         if kind == 'user':
-            return (f'<p style="margin:6px 0 4px 0;"><span style="background-color:{c["user_bg"]};'
-                    f' color:{c["user_fg"]};">&nbsp;{esc(e["text"])}&nbsp;</span></p>')
+            out = (f'<p style="margin:6px 0 4px 0;"><span style="background-color:{c["user_bg"]};'
+                   f' color:{c["user_fg"]};">&nbsp;{esc(e["text"])}&nbsp;</span></p>')
+            # The reference images sent with it, small: which pictures the agent was given.
+            # The mouse over one shows it larger, as over a tool's picture.
+            shown = [(k, path) for k, path in enumerate(e.get('images') or ()) if os.path.exists(path)]
+            if shown:
+                cells = ''.join(f'<td style="padding-right:6px;"><a href="os:image/{i}/{k}" style="text-decoration:none;">'
+                                f'<img src="{QUrl.fromLocalFile(path).toString()}" height="{USER_IMAGE_HEIGHT}"></a></td>'
+                                for k, path in shown)
+                out += f'<table cellspacing="0" cellpadding="0" style="margin:0 0 4px 0;"><tr>{cells}</tr></table>'
+            return out
         if kind == 'agent':
             return (f'<p style="margin:5px 0;"><span style="color:{ACCENT}; font-size:9px;">●</span>&nbsp; '
                     f'{lines(e["text"])}</p>')
@@ -1705,6 +1782,9 @@ class AgentPanel(QWidget):
         name = step['name']
         key = TOOL_CHIPS.get(name, (None,))[0]
         label = t(key) if key else name
+        target = tool_target(step)
+        if step.get('running') and target:
+            label = f'{label} {target}'  # Load "knit"…: what it loads, searches or opens
         if step.get('running') and step.get('waiting'):
             return f'{label} · {self.waiting_text()}'
         if step.get('running') and step.get('stage'):
@@ -1743,10 +1823,16 @@ class AgentPanel(QWidget):
             mark = f'<span style="color:{ACCENT};">●</span>'
             detail = (self.waiting_text() if step.get('waiting') else
                       self.stage_text(step) if step.get('stage') else '…')
+            target = tool_target(step)
+            if target:  # what it works on, until its summary says what came of it
+                detail = f'{target} · {detail}' if detail != '…' else f'{target}…'
         else:
             # Done or failed: the panel's check and cross pictures (images/), not font characters.
             mark = f'<img src="{icon_path("check.png" if step.get("ok") else "cross.png")}" width="12" height="12">'
             detail = t('agent_stopped').rstrip('.。') if step.get('stopped') else step.get('summary') or ''
+            target = tool_target(step)
+            if target and (step.get('stopped') or not step.get('ok')) and target.strip('"') not in detail:
+                detail = f'{target} · {detail}' if detail else target  # what it was on when it stopped or failed
             took = step.get('seconds')
             if took is not None and took >= 1:  # how long it took, once it is worth saying
                 detail = (detail + ' · ' if detail else '') + duration_text(took, t)
@@ -1935,8 +2021,8 @@ class AgentPanel(QWidget):
             QDesktopServices.openUrl(url)
             return
         what, *ids = link[3:].split('/')
-        if what == 'frame':
-            return  # a tool's picture: the mouse over it shows it larger, a click does nothing
+        if what in ('frame', 'image'):
+            return  # a picture: the mouse over it shows it larger, a click does nothing
         try:
             ids = [int(n) for n in ids]
             entry = self.entries[ids[0]]
@@ -2151,6 +2237,8 @@ class AgentPanel(QWidget):
         with more images attached than the model takes."""
         typed = prompt is None
         prompt = (self.prompt_edit.text() if typed else prompt).strip()
+        if prompt and not self.running():
+            self.prompt_edit.suggest('')  # it was for the request before this one
         if typed and prompt.lower() in ('/clear', '/new'):  # as in Claude Code
             self.prompt_edit.clear()
             self.new_session()
@@ -2219,7 +2307,7 @@ class AgentPanel(QWidget):
         self.run_cost, self.total_before = 0.0, agent_settings.load()['spent']
         self.run_mode, self.run_texts, self.run_files = self.mode, [], (None, None)
         names = ', '.join(os.path.basename(path) for path in self.image_paths)
-        self.add_user((shown or prompt) + (f'  [{names}]' if names else ''))
+        self.add_user((shown or prompt) + (f'  [{names}]' if names else ''), images=self.image_paths)
         if typed:
             self.prompt_edit.clear()
         self.set_images([])
@@ -2564,6 +2652,7 @@ class AgentPanel(QWidget):
         self.set_images([])
         if self.bridge is not None:
             self.bridge.forget()
+        self.prompt_edit.suggest('')
         self.add_note(_tr(self.language, 'agent_new_session_note'))
         self.show_session()
         self.activity_changed.emit()
@@ -2595,6 +2684,8 @@ class AgentPanel(QWidget):
                               '#c0392b')
             return
         self.status_label.setText(line)  # the model is on the status line below
+        if event.get('suggestion') and not event.get('error') and not self.stopping:
+            self.prompt_edit.suggest(event['suggestion'])  # greyed in the box: Tab takes it
         if event.get('error'):
             self.add_note(_tr(self.language, 'agent_failed').format(error=event['error']), '#c0392b')
         if event.get('plan') or self.run_mode == 'plan':

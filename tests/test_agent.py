@@ -417,7 +417,9 @@ def test_refresh_models_is_a_button_that_shows_what_the_providers_said(tmp_path,
         status = page.refresh_status.text()
         assert "1 new, 0 retiring, 0 no longer offered" in status and "OpenAI (GPT): Incorrect API key" in status
         labels = [page.model_combo.itemText(i) for i in range(page.model_combo.count())]
-        assert any(label.startswith("Grok 4.8") and "new" in label for label in labels)
+        assert any(label.startswith("Grok 4.8") for label in labels)
+        # A model Refresh finds is named plainly: never "new" or "price estimated".
+        assert not any("new" in label or "estimated" in label for label in labels)
         assert agent_settings.load()["catalog"]["refreshed"] == "2026-11-07 10:00"
     finally:
         providers.use_catalog({})
@@ -1273,8 +1275,10 @@ def test_the_panel_runs_the_agent_in_the_background_and_opens_its_design(window,
     assert "Searched the web: 5x3 bracelet weave" in shown and "A bracelet weave is an MxN stitch." in shown
     echoed = [b["type"] for b in fake_api[1]["body"]["messages"][1]["content"]]
     assert echoed[:3] == ["thinking", "server_tool_use", "web_search_tool_result"]
-    # The search is priced in: 3 replies of tokens plus one $0.01 search.
-    tokens = 3 * (1200 * 2 + 300 * 10 + 900 * 0.2) / 1e6
+    # The search is priced in: 3 replies of tokens plus one $0.01 search, and the
+    # suggested next message after the answer (one more small call, without tools).
+    assert len(fake_api) == 4 and "tools" not in fake_api[-1]["body"]
+    tokens = 4 * (1200 * 2 + 300 * 10 + 900 * 0.2) / 1e6
     assert f"${tokens + 0.01:.3f}" in panel.status_label.text()
 
 
@@ -1456,7 +1460,7 @@ def test_a_long_tool_shows_its_progress_with_a_picture_and_time_left(window, mon
     picture_shown = panel.transcript.document().resource(3, QUrl(f'agent-frame:{step["key"]}'))
     assert picture_shown is not None and not picture_shown.isNull()  # 3: QTextDocument.ImageResource
     assert panel.working.progress[0] == 0.5 and "50%" in panel.working.progress[1]
-    assert panel.working.label == "Tie knot · drawing step 3 of 5"
+    assert panel.working.label == 'Tie knot "overhand" · drawing step 3 of 5'  # what it ties, then how far
     assert panel.working.grab().width() > 0
     # A tool that cannot tell how far it is: a sliding bar, never a made-up percent.
     panel.handle_event({"type": "tool_progress", "name": "tie_knot", "stage": "draw_step", "step": 4,
@@ -2646,7 +2650,8 @@ def test_agent_remembers_the_session_until_a_new_one(window, fake_api, monkeypat
             QApplication.processEvents()
             time.sleep(0.05)
         QApplication.processEvents()
-        return fake_api[-1]["body"]["messages"][0]["content"][-1]["text"]
+        asked = [r for r in fake_api if "tools" in r["body"]][-1]  # not the suggestion's call after it
+        return asked["body"]["messages"][0]["content"][-1]["text"]
     first = ask("make a paracord figure 8 knot with open ends")
     assert first == "make a paracord figure 8 knot with open ends"  # nothing earlier yet
     second = ask("now add a tab for each step")
@@ -2835,3 +2840,135 @@ def test_a_card_no_one_answered_does_nothing_once_agent_stops_waiting_for_it(win
         panel.bridge.pending.pop(11, None)
         panel.entries.clear()
         panel.render_transcript()
+
+
+# ------------------------------------------- what tools work on, and the next message
+def test_search_samples_says_what_it_looked_up_and_found(tmp_path):
+    ws = agent.Workspace(tmp_path)
+    summary, _ = ws.run("search_samples", {"text": "turks"})
+    assert summary.startswith('"turks" · ') and "samples: " in summary  # the names, not only how many
+    summary, _ = ws.run("search_samples", {"text": "zzzz"})
+    assert summary == '"zzzz" · 0 samples'
+    assert agent.found_text(["a", "b", "c", "d", "e"]) == "5 samples: a, b, c +2 more"
+    assert agent.found_text(["a"]) == "1 sample: a"
+
+
+def test_a_running_tool_shows_what_it_loads(window, tmp_path):
+    from agent_panel import tool_target
+    assert tool_target({"input": {"text": "knit"}}) == '"knit"'
+    assert tool_target({"input": {"tab": 2}}) == "#2"
+    assert tool_target({"input": {"op": "zoom"}}) == ""
+    panel = window.agent_panel
+    panel.entries.clear()
+    panel.handle_event({"type": "tool_start", "name": "load_sample", "input": {"name": "box stitch"}})
+    assert '"box stitch"' in panel.transcript.toPlainText()
+    assert '"box stitch"' in panel.working.label
+    panel.handle_event({"type": "tool_end", "name": "load_sample", "ok": False, "summary": "no sample named that"})
+    assert '"box stitch" · no sample named that' in unfolded(panel)  # a failure says what it was on
+    panel.entries.clear()
+
+
+def test_the_agent_suggests_a_next_message(tmp_path):
+    script = [reply(text("A 5×3 bracelet."), stop="end_turn"), reply(text('"make it in teal and gold"'))]
+    client = ScriptedClient(script)
+    runner = agent.Agent(client, tmp_path, model="claude-sonnet-5-5", suggest=True)
+    done = runner.run("a bracelet")
+    assert done["suggestion"] == "make it in teal and gold"  # quotes taken off
+    asked = client.calls[-1][1]
+    assert "tools" not in asked and "a bracelet" in asked["messages"][0]["content"]
+    # Off (the default for the class): no extra call; a failing call never fails the request.
+    client = ScriptedClient([reply(text("Done."), stop="end_turn")])
+    assert agent.Agent(client, tmp_path, model="claude-sonnet-5-5").run("x")["suggestion"] == ""
+    assert len(client.calls) == 1
+    client = ScriptedClient([reply(text("Done."), stop="end_turn")])  # nothing left: the call raises
+    done = agent.Agent(client, tmp_path, model="claude-sonnet-5-5", suggest=True).run("x")
+    assert done["ok"] and done["suggestion"] == ""
+
+
+def test_tab_takes_the_suggested_message(window, tmp_path):
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtTest import QTest
+    panel = window.agent_panel
+    box = panel.prompt_edit
+    assert box.toolTip() == ""  # the keys are in Settings > Button Guide, not over the box
+    box.clear()
+    run_events(panel, [{"type": "text", "text": "Here it is."},
+                       {"type": "done", "ok": True, "error": None, "suggestion": "show me the steps",
+                        "project": None, "png": None, "cost": 0.0}], tmp_path)
+    assert box.placeholderText() == "show me the steps" and box.text() == ""
+    QTest.keyClick(box, Qt.Key_Tab)
+    assert box.text() == "show me the steps" and box.placeholderText() == box.hint
+    # Typing something else drops it.
+    box.clear()
+    box.suggest("make it smaller")
+    QTest.keyClicks(box, "no")
+    assert box.suggestion == "" and box.text() == "no"
+    box.clear()
+    assert box.placeholderText() == box.hint
+
+
+def test_model_menus_never_say_new_or_price_estimated(window):
+    from agent_panel import model_tags, _tr
+    import agent_settings
+    t = lambda key: _tr("en", key)
+    for model, _ in agent_settings.models():
+        tags = model_tags(model, t)
+        assert "new" not in tags and "estimated" not in tags
+
+
+def test_the_button_guide_explains_the_chat_box_keys():
+    import translations
+    from settings_dialog import SettingsDialog
+    for language, strings in translations.translations.items():
+        page = SettingsDialog.agent_keys_guide_html(None, strings)
+        assert strings["agent_keys_guide_title"] in page and page.count("<li>") == 5, language
+    assert "Shift + Enter" in SettingsDialog.agent_keys_guide_html(None, translations.translations["en"])
+
+
+def test_the_message_shows_the_images_sent_with_it(window, tmp_path):
+    from PyQt5.QtGui import QImage
+    picture = tmp_path / "reference.png"
+    image = QImage(40, 20, QImage.Format_RGB32)
+    image.fill(0x3366aa)
+    assert image.save(str(picture))
+    panel = window.agent_panel
+    panel.entries.clear()
+    panel.add_user("like this  [reference.png]", images=[str(picture)])
+    assert "reference.png" in panel.transcript.toHtml() and 'height="48"' in panel.transcript.toHtml()
+    picture.unlink()  # gone later: the words stay, no broken picture
+    panel.render_transcript()
+    assert 'height="48"' not in panel.transcript.toHtml()
+    panel.entries.clear()
+
+
+def test_a_search_row_shows_what_it_found_side_by_side(tmp_path):
+    runner = agent.Agent(SimpleNamespace(), tmp_path, app=SimpleNamespace(call=None))
+    runner.workspace.run("search_samples", {"text": "link"})
+    assert len(runner.workspace.found) >= 2  # published files with their pictures
+    sheet = runner.tool_image("search_samples", {"text": "link"})
+    from PIL import Image
+    with Image.open(sheet) as picture:
+        assert picture.width == 2 * picture.height  # two matches, side by side
+    runner.workspace.run("search_samples", {"text": "zzzz"})
+    assert runner.tool_image("search_samples", {"text": "zzzz"}) is None  # nothing found: no picture
+    runner.app = None  # the command line: nobody shows pictures
+    runner.workspace.run("search_samples", {"text": "link"})
+    assert runner.tool_image("search_samples", {}) is None
+
+
+def test_the_mouse_over_an_image_sent_with_a_message_shows_it_larger(window, tmp_path):
+    from PyQt5.QtCore import QPoint
+    from PyQt5.QtGui import QImage
+    picture = tmp_path / "reference.png"
+    image = QImage(40, 20, QImage.Format_RGB32)
+    image.fill(0x3366aa)
+    assert image.save(str(picture))
+    panel = window.agent_panel
+    panel.entries.clear()
+    panel.add_user("like this  [reference.png]", images=[str(picture)])
+    assert 'href="os:image/0/0"' in panel.transcript.toHtml()
+    panel.hover("os:image/0/0", QPoint(400, 400))
+    assert panel.preview.isVisible() and panel.preview.key == "os:image/0/0"
+    panel.hover("", QPoint(400, 400))
+    assert not panel.preview.isVisible()
+    panel.entries.clear()

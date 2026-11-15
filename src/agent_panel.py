@@ -28,7 +28,7 @@ from PyQt5.QtGui import (QColor, QDesktopServices, QIcon, QImage, QImageReader, 
                          QRegion, QTextDocument)
 from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog,
                              QGridLayout, QHBoxLayout, QLabel, QLayout, QLineEdit, QMenu, QPushButton, QToolButton,
-                             QSizePolicy, QStyle,
+                             QSizePolicy, QSpacerItem, QStyle,
                              QStyleOptionComboBox, QTextBrowser, QTextEdit, QVBoxLayout,
                              QWidget)
 
@@ -580,7 +580,8 @@ class WorkingLine(QWidget):
     and when nothing has been heard from the assistant for too long it comes to a stop and
     holds its picture (STUCK) until the assistant is heard again."""
 
-    SIZE = 52  # px of the knot until the panel fits it to twice its Stop button (fit_to)
+    SIZE = 64  # px of the knot until the panel fits it to its Stop button (fit_to, WORKING_SCALE)
+    FILL = 0.92  # how much of its square the stitch fills at its widest (measured: 8 px of 200 each side)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -713,7 +714,10 @@ class WorkingLine(QWidget):
         newest level and the one being tied."""
         ratio = self.devicePixelRatioF()
         side = max(1, round(self.side * ratio))
-        box = QRectF(0, 0, self.side, self.side)
+        # The stitch at its widest fills only FILL of its square: drawn that much larger, its widest
+        # frame touches the line's top and bottom, with no empty band above or below.
+        pad = self.side * (1 / self.FILL - 1) / 2
+        box = QRectF(-pad, -pad, self.side + 2 * pad, self.side + 2 * pad)
 
         def blank():
             image = QPixmap(side, side)
@@ -1026,15 +1030,27 @@ class AgentPanel(QWidget):
         bar.rangeChanged.connect(self.keep_scroll)
         bar.valueChanged.connect(self.scrolled)
         self.transcript.hide()
-        body.addWidget(self.transcript)
+        # The conversation, the working line, the attached images and the chat box, with their own
+        # gaps (space_rows): none above or below the working line, the body's 6 px between the rest.
+        self.talk = QVBoxLayout()
+        self.talk.setSpacing(0)
+        self.gaps = {}
+        body.addLayout(self.talk)
+        self.talk.addWidget(self.transcript)
+        self.gaps['transcript'] = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.talk.addItem(self.gaps['transcript'])
         self.working = WorkingLine(self)
-        body.addWidget(self.working)
+        self.talk.addWidget(self.working)
+        self.gaps['working'] = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.talk.addItem(self.gaps['working'])
 
         # The attached images, each a chip with its picture and name: a click takes it off.
         self.image_row = QWidget(self)
         self.image_chips = FlowLayout(self.image_row)
         self.image_row.hide()
-        body.addWidget(self.image_row)
+        self.talk.addWidget(self.image_row)
+        self.gaps['image_row'] = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.talk.addItem(self.gaps['image_row'])
 
         self.prompt_edit = PromptBox(self)
         self.prompt_edit.submitted.connect(self.send)
@@ -1059,7 +1075,7 @@ class AgentPanel(QWidget):
         self.send_button.clicked.connect(self.send_or_stop)
         # A chat box: the text across the whole width, growing upward as
         # lines are added, with the buttons and the cost on a row under it.
-        body.addWidget(self.prompt_edit)
+        self.talk.addWidget(self.prompt_edit)
         row = QHBoxLayout()
         row.setSpacing(6)
         row.addWidget(self.attach_button)
@@ -1121,12 +1137,33 @@ class AgentPanel(QWidget):
         self.edge = PanelEdge(self)  # last: drawn over the rest
         self.fit_working()
 
-    WORKING_SCALE = 2  # the working knot is this many times the Stop button's height
+    WORKING_SCALE = 2.5  # the working knot is this many times the Stop button's height
+    GAP = 6  # px between the panel's rows (its body layout's spacing)
+
+    def space_rows(self):
+        """The gap under each of the conversation, the working line and the attached images: none
+        when the working line is on either side of it, GAP otherwise, and none under one not shown.
+        The working line sits right against what is above and below it."""
+        rows = [('transcript', self.transcript), ('working', self.working), ('image_row', self.image_row),
+                ('prompt', self.prompt_edit)]
+        shown = [name for name, widget in rows if widget.isVisibleTo(self)]
+        changed = False
+        for name, widget in rows[:-1]:
+            gap = 0
+            if name in shown:
+                after = shown[shown.index(name) + 1]
+                gap = 0 if 'working' in (name, after) else self.GAP
+            spacer = self.gaps[name]
+            if spacer.sizeHint().height() != gap:
+                spacer.changeSize(0, gap, QSizePolicy.Minimum, QSizePolicy.Fixed)
+                changed = True
+        if changed:
+            self.talk.invalidate()
 
     def fit_working(self):
-        """The working knot is twice as tall as the Stop button, and its line exactly as tall as the
-        knot: no space above or below it."""
-        self.working.fit_to(self.WORKING_SCALE * self.send_button.sizeHint().height())
+        """The working knot is WORKING_SCALE times as tall as the Stop button, and its line exactly as
+        tall as the knot: no space above or below it."""
+        self.working.fit_to(round(self.WORKING_SCALE * self.send_button.sizeHint().height()))
 
     # Its own colors for each app theme: as a child of the canvas it would
     # otherwise take the canvas background (white in every theme).
@@ -1232,6 +1269,7 @@ class AgentPanel(QWidget):
         canvas = self.parentWidget()
         if canvas is None:
             return
+        self.space_rows()  # a row was shown or hidden: the gaps around the working line
         area = self.visible_canvas()
         m = self.MARGIN
         left, right = self.sides(area)

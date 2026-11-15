@@ -1711,8 +1711,12 @@ def test_the_working_line_draws_the_stitch_while_agent_works(window):
     from PyQt5.QtCore import Qt
     from PyQt5.QtGui import QColor
     import agent_stitch as cs
-    line = window.agent_panel.working
-    assert line.SIZE == 56 and line.height() >= line.SIZE  # twice the size it had (28 px)
+    panel = window.agent_panel
+    line = panel.working
+    # The knot is the Stop button's height, and its line no taller: no space above or below.
+    panel.set_open(True)
+    assert line.side == panel.send_button.sizeHint().height() == line.height()
+    area = line.side * line.side  # the colour counts below, as parts of the picture
     assert not (ROOT / "src" / "agent_knot.png").exists()  # drawn live: no sheet of frames to load
 
     def colours(shot):  # how much of the picture is blue, orange, outline
@@ -1736,9 +1740,10 @@ def test_the_working_line_draws_the_stitch_while_agent_works(window):
     assert line.isVisibleTo(window.agent_panel) and line.stitch.at == 0 and line.stitch.history == []
     line.take_shot()
     plus = colours(line.shot)
-    assert plus["blue"] > 100 and plus["orange"] > 100 and plus["black"] > 20 and plus["clear"] > 1000
+    assert plus["blue"] > area * 0.03 and plus["orange"] > area * 0.03 and plus["black"] > area * 0.006
+    assert plus["clear"] > area * 0.3
     # the picture is the size of the stitch on this screen
-    assert line.shot.width() == round(line.SIZE * line.devicePixelRatioF())
+    assert line.shot.width() == round(line.side * line.devicePixelRatioF())
     # tied on to a few levels: both colours still there, and the picture has changed
     line.stitch.again = 99
     line.stitch.queue = [1, 0, 1]
@@ -1746,7 +1751,7 @@ def test_the_working_line_draws_the_stitch_while_agent_works(window):
     before = line.shot.toImage()
     line.take_shot()
     woven = colours(line.shot)
-    assert woven["blue"] > 300 and woven["orange"] > 300 and line.shot.toImage() != before
+    assert woven["blue"] > area * 0.05 and woven["orange"] > area * 0.05 and line.shot.toImage() != before
     # the levels that do not move are kept as a picture, drawn again only when a level is done
     under = line.under[1]
     line.stitch.advance(0.2 * cs.LEVEL_MS)

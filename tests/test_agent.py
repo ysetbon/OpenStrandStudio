@@ -417,7 +417,9 @@ def test_refresh_models_is_a_button_that_shows_what_the_providers_said(tmp_path,
         status = page.refresh_status.text()
         assert "1 new, 0 retiring, 0 no longer offered" in status and "OpenAI (GPT): Incorrect API key" in status
         labels = [page.model_combo.itemText(i) for i in range(page.model_combo.count())]
-        assert any(label.startswith("Grok 4.8") and "new" in label for label in labels)
+        assert any(label.startswith("Grok 4.8") for label in labels)
+        # A model Refresh finds is named plainly: never "new" or "price estimated".
+        assert not any("new" in label or "estimated" in label for label in labels)
         assert agent_settings.load()["catalog"]["refreshed"] == "2026-11-07 10:00"
     finally:
         providers.use_catalog({})
@@ -1273,8 +1275,10 @@ def test_the_panel_runs_the_agent_in_the_background_and_opens_its_design(window,
     assert "Searched the web: 5x3 bracelet weave" in shown and "A bracelet weave is an MxN stitch." in shown
     echoed = [b["type"] for b in fake_api[1]["body"]["messages"][1]["content"]]
     assert echoed[:3] == ["thinking", "server_tool_use", "web_search_tool_result"]
-    # The search is priced in: 3 replies of tokens plus one $0.01 search.
-    tokens = 3 * (1200 * 2 + 300 * 10 + 900 * 0.2) / 1e6
+    # The search is priced in: 3 replies of tokens plus one $0.01 search, and the
+    # suggested next message after the answer (one more small call, without tools).
+    assert len(fake_api) == 4 and "tools" not in fake_api[-1]["body"]
+    tokens = 4 * (1200 * 2 + 300 * 10 + 900 * 0.2) / 1e6
     assert f"${tokens + 0.01:.3f}" in panel.status_label.text()
 
 
@@ -2600,7 +2604,8 @@ def test_agent_remembers_the_session_until_a_new_one(window, fake_api, monkeypat
             QApplication.processEvents()
             time.sleep(0.05)
         QApplication.processEvents()
-        return fake_api[-1]["body"]["messages"][0]["content"][-1]["text"]
+        asked = [r for r in fake_api if "tools" in r["body"]][-1]  # not the suggestion's call after it
+        return asked["body"]["messages"][0]["content"][-1]["text"]
     first = ask("make a paracord figure 8 knot with open ends")
     assert first == "make a paracord figure 8 knot with open ends"  # nothing earlier yet
     second = ask("now add a tab for each step")

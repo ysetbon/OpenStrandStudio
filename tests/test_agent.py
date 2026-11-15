@@ -1713,9 +1713,9 @@ def test_the_working_line_draws_the_stitch_while_agent_works(window):
     import agent_stitch as cs
     panel = window.agent_panel
     line = panel.working
-    # The knot is the Stop button's height, and its line no taller: no space above or below.
+    # The knot is twice the Stop button's height, and its line no taller: no space above or below.
     panel.set_open(True)
-    assert line.side == panel.send_button.sizeHint().height() == line.height()
+    assert line.side == 2 * panel.send_button.sizeHint().height() == line.height()
     area = line.side * line.side  # the colour counts below, as parts of the picture
     assert not (ROOT / "src" / "agent_knot.png").exists()  # drawn live: no sheet of frames to load
 

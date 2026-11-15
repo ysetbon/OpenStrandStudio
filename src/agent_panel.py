@@ -580,7 +580,7 @@ class WorkingLine(QWidget):
     and when nothing has been heard from the assistant for too long it comes to a stop and
     holds its picture (STUCK) until the assistant is heard again."""
 
-    SIZE = 26  # px of the knot until the panel fits it to its Stop button (fit_to)
+    SIZE = 52  # px of the knot until the panel fits it to twice its Stop button (fit_to)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -744,9 +744,13 @@ class WorkingLine(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setRenderHint(QPainter.SmoothPixmapTransform)
         box = self.side
-        if self.shot is None:
+        # Drawn again for a screen with other scaling (the window moved): always the screen's own pixels.
+        if self.shot is None or abs(self.shot.devicePixelRatio() - self.devicePixelRatioF()) > 1e-3:
             self.take_shot()
-        painter.drawPixmap(QRectF(0, (self.height() - box) / 2, box, box), self.shot, QRectF(self.shot.rect()))
+        # One picture pixel on one screen pixel, also at 125 % or 150 % (no resampling, no blur).
+        ratio = self.shot.devicePixelRatio()
+        w, h = self.shot.width() / ratio, self.shot.height() / ratio
+        painter.drawPixmap(QRectF(0, round((self.height() - h) / 2), w, h), self.shot, QRectF(self.shot.rect()))
         self.draw_label(painter, box)
         painter.end()
 
@@ -1117,10 +1121,12 @@ class AgentPanel(QWidget):
         self.edge = PanelEdge(self)  # last: drawn over the rest
         self.fit_working()
 
+    WORKING_SCALE = 2  # the working knot is this many times the Stop button's height
+
     def fit_working(self):
-        """The working knot is exactly as tall as the Stop button, and its line too: no space above or
-        below it."""
-        self.working.fit_to(self.send_button.sizeHint().height())
+        """The working knot is twice as tall as the Stop button, and its line exactly as tall as the
+        knot: no space above or below it."""
+        self.working.fit_to(self.WORKING_SCALE * self.send_button.sizeHint().height())
 
     # Its own colors for each app theme: as a child of the canvas it would
     # otherwise take the canvas background (white in every theme).

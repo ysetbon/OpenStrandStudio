@@ -580,11 +580,12 @@ class WorkingLine(QWidget):
     and when nothing has been heard from the assistant for too long it comes to a stop and
     holds its picture (STUCK) until the assistant is heard again."""
 
-    SIZE = 56  # px of the knot
+    SIZE = 26  # px of the knot until the panel fits it to its Stop button (fit_to)
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedHeight(self.SIZE + 4)
+        self.side = self.SIZE  # px of the knot, and of the line: no space above or below it
+        self.setFixedHeight(self.side)
         self.stitch = Stitch()
         self.shot = None          # the stitch as it shows now: a picture, changed fps times a second at most
         self.shots = 0            # how many pictures so far
@@ -711,8 +712,8 @@ class WorkingLine(QWidget):
         picture of their own (drawn again only when a level is done), so a frame costs the
         newest level and the one being tied."""
         ratio = self.devicePixelRatioF()
-        side = max(1, round(self.SIZE * ratio))
-        box = QRectF(0, 0, self.SIZE, self.SIZE)
+        side = max(1, round(self.side * ratio))
+        box = QRectF(0, 0, self.side, self.side)
 
         def blank():
             image = QPixmap(side, side)
@@ -742,12 +743,21 @@ class WorkingLine(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setRenderHint(QPainter.SmoothPixmapTransform)
-        box = self.SIZE
+        box = self.side
         if self.shot is None:
             self.take_shot()
-        painter.drawPixmap(QRectF(2, (self.height() - box) / 2, box, box), self.shot, QRectF(self.shot.rect()))
+        painter.drawPixmap(QRectF(0, (self.height() - box) / 2, box, box), self.shot, QRectF(self.shot.rect()))
         self.draw_label(painter, box)
         painter.end()
+
+    def fit_to(self, height):
+        """The knot as tall as height (the panel's Stop button), and the line no taller."""
+        height = max(12, int(height))
+        if height != self.side:
+            self.side = height
+            self.setFixedHeight(height)
+            self.shot, self.under, self.shown = None, (None, None), -1.0  # drawn again at the new size
+            self.update()
 
     BAR = 96  # px of the progress bar
 
@@ -1105,6 +1115,12 @@ class AgentPanel(QWidget):
         self.mode_key.setIcon(QIcon(icon_path(f'shift_on_{shade_of(self.theme_name)}.png')))
         self.use_canvas_check.setIconSize(QSize(14, 14))
         self.edge = PanelEdge(self)  # last: drawn over the rest
+        self.fit_working()
+
+    def fit_working(self):
+        """The working knot is exactly as tall as the Stop button, and its line too: no space above or
+        below it."""
+        self.working.fit_to(self.send_button.sizeHint().height())
 
     # Its own colors for each app theme: as a child of the canvas it would
     # otherwise take the canvas background (white in every theme).
@@ -1362,6 +1378,7 @@ class AgentPanel(QWidget):
     def showEvent(self, event):
         super().showEvent(event)
         self.watch_layout()  # the canvas is in its column by now
+        self.fit_working()
         self.place()
 
     def resizeEvent(self, event):

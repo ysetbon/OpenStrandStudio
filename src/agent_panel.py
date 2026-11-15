@@ -76,6 +76,8 @@ TOOL_CHIPS = {
 }
 OTHER_CHIP = ('#d4d4d4', '#1a1a1a')
 ACCENT = '#FF5500'  # the OpenStrand logo's orange: the running mark, the progress bars, Send and the links
+EDGE_HOVER = '#B4B4B4'  # the panel's hidden top edge, with the mouse on it
+EDGE_HELD = '#2E5BFF'  # the OpenStrand logo's blue: the hidden edge while it is dragged (orange is the chat box's)
 # The working animation's tempo, by what the agent is doing. Two things, kept apart:
 #   speed  how fast the stitch is tied: 1.0 is a level in 2.34 s
 #   fps    how often the picture may change: many times a second it glides, a few times a
@@ -777,6 +779,136 @@ class WorkingLine(QWidget):
         painter.drawText(QRectF(x, 0, tail + 8, self.height()), Qt.AlignVCenter, elapsed)
 
 
+class PanelEdge(QWidget):
+    """The panel's hidden top edge, like the resizable panes in Claude Code: nothing shows at
+    rest. The top border sets the conversation's height; the two top corners set its height
+    and the panel's width. On the edge the cursor changes at once; after a moment a thin grey
+    line shows along the whole top and round both corners, and while the edge is held the line
+    is the logo's blue. Dragged down past the smallest height the conversation folds away, and
+    dragged up it opens again. A double-click on the top gives the height back its default, on
+    a corner the full width. Mouse only: it never takes the keyboard focus.
+
+    One widget over the panel's top, its mask the grabbable parts: a BAND along the border and
+    a CORNER square at each end; everything under the rest of it gets the mouse as before."""
+
+    BAND = 8      # px of the top border that can be grabbed
+    CORNER = 16   # px: the square at each top corner
+    DELAY = 150   # ms with the mouse on the edge before the line shows
+    LINE = 3.0    # px
+    RADIUS = 10   # px: the panel's own corners (its style sheet)
+
+    def __init__(self, panel):
+        super().__init__(panel)
+        self.panel = panel
+        self.setObjectName('agentEdge')
+        self.setFocusPolicy(Qt.NoFocus)
+        self.setMouseTracking(True)
+        self.state = None   # None (nothing drawn), 'hover' or 'held'
+        self.zone = None    # under the mouse: 'top', 'left', 'right', or None
+        self.drag = None    # while held: where it started (AgentPanel.begin_edge)
+        self.timer = QTimer(self)
+        self.timer.setSingleShot(True)
+        self.timer.setInterval(self.DELAY)
+        self.timer.timeout.connect(lambda: self.light('hover' if self.zone else None))
+
+    def fit(self):
+        """Over the panel's top, the grabbable parts only, drawn over everything in the panel."""
+        w, c = self.panel.width(), self.CORNER
+        self.setGeometry(0, 0, w, c)
+        self.setMask(QRegion(0, 0, w, self.BAND) | QRegion(0, 0, c, c) | QRegion(max(0, w - c), 0, c, c))
+        self.raise_()
+
+    def zone_at(self, pos):
+        """The corners always resize; the top only while there is a conversation to resize."""
+        if pos.x() < self.CORNER:
+            return 'left'
+        if pos.x() >= self.width() - self.CORNER:
+            return 'right'
+        return 'top' if self.panel.entries else None
+
+    CURSORS = {'top': Qt.SizeVerCursor, 'left': Qt.SizeFDiagCursor, 'right': Qt.SizeBDiagCursor}
+
+    def point_at(self, pos):
+        self.zone = self.zone_at(pos)
+        self.setCursor(self.CURSORS.get(self.zone, Qt.ArrowCursor))
+        if self.zone is None:
+            self.timer.stop()
+            self.light(None)
+        elif self.state is None and not self.timer.isActive():
+            self.timer.start()
+
+    def light(self, state):
+        if state != self.state:
+            self.state = state
+            self.update()
+
+    def enterEvent(self, event):
+        self.point_at(self.mapFromGlobal(self.cursor().pos()))
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        if self.drag is None:
+            self.timer.stop()
+            self.zone = None
+            self.light(None)
+        super().leaveEvent(event)
+
+    def mousePressEvent(self, event):
+        zone = self.zone_at(event.pos())
+        if event.button() != Qt.LeftButton or zone is None:
+            return super().mousePressEvent(event)
+        self.zone = zone
+        self.timer.stop()
+        self.drag = self.panel.begin_edge(zone, event.globalPos())
+        self.light('held')
+        event.accept()
+
+    def mouseMoveEvent(self, event):
+        if self.drag is not None:
+            self.panel.drag_edge(self.drag, event.globalPos())
+        else:
+            self.point_at(event.pos())
+        event.accept()
+
+    def mouseReleaseEvent(self, event):
+        if self.drag is None or event.button() != Qt.LeftButton:
+            return super().mouseReleaseEvent(event)
+        drag, self.drag = self.drag, None
+        self.panel.end_edge(drag)
+        # The panel has moved under the mouse: grey again if still on the edge.
+        self.light(None)
+        self.point_at(self.mapFromGlobal(event.globalPos()))
+        event.accept()
+
+    def mouseDoubleClickEvent(self, event):
+        zone = self.zone_at(event.pos())
+        if event.button() == Qt.LeftButton and zone is not None:
+            self.panel.reset_edge(zone)
+            event.accept()
+        else:
+            super().mouseDoubleClickEvent(event)
+
+    def paintEvent(self, event):
+        """The line on the panel's border, from one side round the top to the other."""
+        if self.state is None:
+            return
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        pen = QPen(QColor(EDGE_HELD if self.state == 'held' else EDGE_HOVER), self.LINE)
+        pen.setCapStyle(Qt.FlatCap)
+        painter.setPen(pen)
+        h, r, w, c = self.LINE / 2, self.RADIUS, self.width(), self.CORNER
+        d = 2 * (r - h)
+        path = QPainterPath(QPointF(h, c))
+        path.lineTo(h, r)
+        path.arcTo(QRectF(h, h, d, d), 180, -90)
+        path.lineTo(w - r, h)
+        path.arcTo(QRectF(w - h - d, h, d, d), 90, -90)
+        path.lineTo(w - h, c)
+        painter.drawPath(path)
+        painter.end()
+
+
 class AgentPanel(QWidget):
     """The agent panel, floating over the bottom of the canvas: the conversation, the
     chat box and its buttons. The agent button next to Settings shows and
@@ -831,6 +963,13 @@ class AgentPanel(QWidget):
         self.shared_event = None  # the request last shared (or asked about): each one goes once
         self.stopping = False  # the person pressed Stop: the run ends without an answer, as asked
         self.step_keys = 0  # each tool step's pictures get their own name in the transcript
+        # Its size, as the person dragged its hidden top edge and corners (PanelEdge): the
+        # conversation's height, and how far each side is pulled in from the canvas edges.
+        size = agent_settings.load()['panel']
+        self.conversation_height = size['height']
+        self.side_left, self.side_right = size['left'], size['right']
+        self.folded = False  # the conversation dragged shut (never kept: it opens each time)
+        self.dragged_height = None  # while the edge is held: the height under the mouse
         # While a tool runs, its row's time and time left move on every second.
         self.tick = QTimer(self)
         self.tick.setInterval(1000)
@@ -868,8 +1007,7 @@ class AgentPanel(QWidget):
         self.preview.style_for(self.colors)
         self.transcript.viewport().setMouseTracking(True)
         self.transcript.viewport().installEventFilter(self)
-        self.transcript.setMinimumHeight(60)
-        self.transcript.setMaximumHeight(170)
+        self.transcript.setFixedHeight(self.conversation_height)  # place() keeps it inside the canvas
         bar = self.transcript.verticalScrollBar()
         bar.rangeChanged.connect(self.keep_scroll)
         bar.valueChanged.connect(self.scrolled)
@@ -966,6 +1104,7 @@ class AgentPanel(QWidget):
         self.attach_button.setIconSize(QSize(16, 16))
         self.mode_key.setIcon(QIcon(icon_path(f'shift_on_{shade_of(self.theme_name)}.png')))
         self.use_canvas_check.setIconSize(QSize(14, 14))
+        self.edge = PanelEdge(self)  # last: drawn over the rest
 
     # Its own colors for each app theme: as a child of the canvas it would
     # otherwise take the canvas background (white in every theme).
@@ -999,6 +1138,7 @@ class AgentPanel(QWidget):
         self.setStyleSheet(f"""
             QWidget#agentPanel {{ background-color: {c['bg']}; border: 1px solid {c['border']}; border-radius: 10px; }}
             #agentPanel QWidget {{ background-color: {c['bg']}; color: {c['fg']}; }}
+            #agentPanel QWidget#agentEdge {{ background-color: transparent; }}
             #agentPanel QLabel, #agentPanel QCheckBox {{ background-color: transparent; color: {c['fg']}; }}
             #agentPanel QPushButton {{ background-color: {c['button']}; color: {c['fg']}; border: none;
                                         border-radius: 4px; padding: 5px 10px; }}
@@ -1060,23 +1200,105 @@ class AgentPanel(QWidget):
         self.open_changed.emit(opened)
         self.activity_changed.emit()
 
+    MIN_WIDTH = 360  # px: the narrowest the corners can make the panel
+    SHUT = 30  # px: while the edge is dragged, a conversation smaller than this shows folded
+
     def place(self):
-        """Across the bottom of the canvas, as tall as what it holds, never taller than the canvas."""
+        """Across the bottom of the canvas, as tall as what it holds, never taller than the canvas.
+        Its sides are pulled in as far as its corners were dragged, and the conversation is as
+        tall as its top edge was dragged, both kept inside the canvas."""
         canvas = self.parentWidget()
         if canvas is None:
             return
         area = self.visible_canvas()
         m = self.MARGIN
-        width = max(240, area.width() - 2 * m)
-        layout = self.layout()
-        height = layout.totalHeightForWidth(width) if layout.hasHeightForWidth() else -1
-        if height < 0:
-            height = layout.totalSizeHint().height()
+        left, right = self.sides(area)
+        width = max(240, area.width() - 2 * m - left - right)
         # Always the bottom of the canvas: the agent never moves for the tab strip,
         # which floats over it (see stack).
         bottom = area.bottom() + 1 - m
-        height = min(height, max(80, bottom - area.top() - m))
-        self.setGeometry(area.left() + m, bottom - height, width, height)
+        room = max(80, bottom - area.top() - m)
+        if self.transcript.isVisibleTo(self):
+            want = self.dragged_height if self.dragged_height is not None else self.conversation_height
+            rest = self.layout_height(width) - self.transcript.maximumHeight()  # all but the conversation
+            fit = int(max(self.SHUT, min(want, room - rest)))
+            if fit != self.transcript.maximumHeight():
+                self.transcript.setFixedHeight(fit)
+        height = min(self.layout_height(width), room)
+        self.setGeometry(area.left() + m + left, bottom - height, width, height)
+
+    def layout_height(self, width):
+        layout = self.layout()
+        height = layout.totalHeightForWidth(width) if layout.hasHeightForWidth() else -1
+        return height if height >= 0 else layout.totalSizeHint().height()
+
+    def sides(self, area=None):
+        """How far each side is pulled in, (left, right) in px: as dragged, but never so far
+        that the panel is narrower than MIN_WIDTH (a narrower window takes from both sides)."""
+        area = self.visible_canvas() if area is None else area
+        free = area.width() - 2 * self.MARGIN - self.MIN_WIDTH
+        left, right = self.side_left, self.side_right
+        if left + right > max(0, free):
+            scale = max(0, free) / (left + right)
+            left, right = int(left * scale), int(right * scale)
+        return left, right
+
+    def conversation_shown(self):
+        """The conversation is on screen when there is one and it is not folded (nor dragged
+        nearly shut)."""
+        if not self.entries or self.folded:
+            return False
+        return self.dragged_height is None or self.dragged_height >= self.SHUT
+
+    # The hidden top edge and corners (PanelEdge) call these.
+    def begin_edge(self, zone, pos):
+        """The edge is held: where from, and the size it started at."""
+        return {'zone': zone, 'pos': QPoint(pos), 'left': self.side_left, 'right': self.side_right,
+                'height': 0 if not self.conversation_shown() else self.transcript.height()}
+
+    def drag_edge(self, drag, pos):
+        """Follow the mouse: up for a taller conversation, and at a corner sideways for the width."""
+        if self.entries:
+            self.dragged_height = drag['height'] + drag['pos'].y() - pos.y()
+            self.folded = False
+        dx = pos.x() - drag['pos'].x()
+        free = self.visible_canvas().width() - 2 * self.MARGIN - self.MIN_WIDTH
+        if drag['zone'] == 'left':
+            self.side_left = int(max(0, min(drag['left'] + dx, free - self.side_right)))
+        elif drag['zone'] == 'right':
+            self.side_right = int(max(0, min(drag['right'] - dx, free - self.side_left)))
+        self.show_size()
+
+    def end_edge(self, drag):
+        """Let go: smaller than the smallest height folds the conversation away (it keeps the
+        height it had, for when it opens again); any other size is kept, and saved."""
+        if self.dragged_height is not None:
+            if self.dragged_height < agent_settings.MIN_CONVERSATION_HEIGHT:
+                self.folded = True
+            elif self.conversation_shown():
+                self.conversation_height = self.transcript.height()  # as it fit in the canvas
+        self.dragged_height = None
+        self.show_size()
+        self.save_size()
+
+    def reset_edge(self, zone):
+        """Double-click: the top gives the conversation its default height (open), a corner the
+        full width."""
+        if zone == 'top':
+            self.folded = False
+            self.conversation_height = agent_settings.DEFAULT_CONVERSATION_HEIGHT
+        else:
+            self.side_left = self.side_right = 0
+        self.show_size()
+        self.save_size()
+
+    def show_size(self):
+        self.transcript.setVisible(self.conversation_shown())
+        self.place()
+
+    def save_size(self):
+        agent_settings.save(panel={'height': self.conversation_height,
+                                   'left': self.side_left, 'right': self.side_right})
 
     def visible_canvas(self):
         """The part of the canvas on screen: it has a minimum width, so a narrow
@@ -1141,6 +1363,11 @@ class AgentPanel(QWidget):
         super().showEvent(event)
         self.watch_layout()  # the canvas is in its column by now
         self.place()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if hasattr(self, 'edge'):
+            self.edge.fit()
 
     def event(self, event):
         # The box grew a line, the conversation appeared, a picture was attached.
@@ -1227,6 +1454,8 @@ class AgentPanel(QWidget):
     # they fold into one line ("6 steps · 50s ›") that opens again on a click.
     def add_entry(self, entry):
         self.entries.append(entry)
+        if entry.get('kind') == 'confirm':
+            self.folded = False  # an Allow/Deny card waits in the conversation: it must be seen
         self.render_transcript()
 
     def add_user(self, text):
@@ -1281,7 +1510,7 @@ class AgentPanel(QWidget):
         body = ''.join(self.entry_html(i, e, c) for i, e in enumerate(self.entries))
         with self.own_scroll():
             self.transcript.setHtml(f'<div style="color:{c["fg"]};">{body}</div>')
-            self.transcript.setVisible(bool(self.entries))
+            self.transcript.setVisible(self.conversation_shown())
             bar = self.transcript.verticalScrollBar()
             bar.setValue(bar.maximum() if self.follow_end else self.kept_scroll)
 
@@ -2260,6 +2489,7 @@ class AgentPanel(QWidget):
         self.preview.hide_frame()
         self.entries.clear()
         self.history.clear()
+        self.folded = False  # a new session starts with its conversation open
         self.session_spent = self.run_cost = 0.0
         self.design_waiting = False
         self.status_label.setText('')

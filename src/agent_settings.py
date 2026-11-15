@@ -410,7 +410,9 @@ def load():
                'gallery': data.get('gallery') if data.get('gallery') in (True, False) else None,
                'models_on': _switched_on(data),
                'allow_china': data.get('allow_china') is True,
-               'panel': _panel(data.get('panel'))}
+               'panel': _panel(data.get('panel')),
+               # Whether the panel has pointed to Settings > Button Guide for its keys (once, ever).
+               'keys_hint': data.get('keys_hint') is True}
     if data.get(UNREADABLE) is True:  # not what is saved: nothing but the person's own save writes it back
         current[UNREADABLE] = True
     if in_file and store is not None:
@@ -420,12 +422,13 @@ def load():
 
 def save(api_key=None, model=None, web=None, max_cost=None, effort=None,
          session_limit=None, mode=None, provider_key=None, share=None,
-         models_on=None, allow_china=None, gallery=None, panel=None):
+         models_on=None, allow_china=None, gallery=None, panel=None, keys_hint=None):
     """Update the saved settings given. api_key is Anthropic's; provider_key is
     (provider, key) for any provider. An empty key removes it. share, gallery (their new
     designs may be shown in the public gallery), models_on (False: the agent is off, and
     nothing is ever sent to a model) and allow_china (the providers based in China): True or False.
-    panel: the agent panel's size, {'height', 'left', 'right'} in px (any of them)."""
+    panel: the agent panel's size, {'height', 'left', 'right'} in px (any of them).
+    keys_hint: True once the panel has said where its keys are explained."""
     current = load()
     if models_on is not None:
         current['models_on'] = bool(models_on)
@@ -468,6 +471,8 @@ def save(api_key=None, model=None, web=None, max_cost=None, effort=None,
         current['gallery'] = bool(gallery)
     if panel is not None:
         current['panel'] = _panel({**current.get('panel', {}), **panel})
+    if keys_hint is not None:
+        current['keys_hint'] = bool(keys_hint)
     return _write(current, removed)
 
 
@@ -506,6 +511,8 @@ def _write(current, removed=()):
         payload['panel'] = _panel(current['panel'])
     if current.get('catalog'):
         payload['catalog'] = current['catalog']
+    if current.get('keys_hint'):
+        payload['keys_hint'] = True
     # Each key in the password store, else (none, or it refused this one) in the file.
     store = keychain()
     stored, plain = [], {}

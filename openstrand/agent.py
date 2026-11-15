@@ -12,6 +12,7 @@ import base64
 import contextlib
 import json
 import mimetypes
+import re
 import sys
 import time
 from pathlib import Path
@@ -550,6 +551,8 @@ class Workspace:
         self.story = None  # the steps draw_steps was sent last, as sent: "replace" changes single ones
         self.sheet = None  # (version, path) of the picture of all of draw_steps' steps
         self.found = []  # pictures of the designs the last search_samples found (published PNGs)
+        self.matches = []  # [{'name', 'title'}] of what the last search_samples found (the first MATCHES)
+        self.match_count = 0  # how many it found in all
         self.last_edit = None  # the design edit_mask made last (kept or previewed)
         self.progress = None  # set while a tool runs: tells the person how far it has got
 
@@ -747,6 +750,10 @@ class Workspace:
             lines += [f'{craft}: {about}' for craft, about in library.crafts().items()]
         files = generators.samples()
         names = [n for n in files if text.lower() in n.lower()]
+        # Every match, for the panel's list (the row opens to show them, a click loads one).
+        everything = ([{'name': e['name'], 'title': e['title']} for e in entries]
+                      + [{'name': n, 'title': n} for n in names])
+        self.matches, self.match_count = everything[:MATCHES], len(everything)
         # The ready-made pictures of what matched, for the row's picture (search_sheet).
         self.found = [found for found in (entry_picture(e, files) for e in entries) if found]
         self.found += [found for found in (sample_picture(files[n]) for n in names) if found]
@@ -916,6 +923,9 @@ class Workspace:
         raise ToolError(f'unknown tool {name}')
 
 
+MATCHES = 40  # the most matches a search sends the panel to list
+
+
 def sample_picture(path):
     """The published picture of a sample file (its images/ folder beside json/), or None."""
     picture = Path(path).parent.parent / 'images' / (Path(path).stem + '.png')
@@ -923,8 +933,12 @@ def sample_picture(path):
 
 
 def entry_picture(entry, files):
-    """The published picture of a craft library entry made from a file or a sample, or None
-    (a knot that is tied, or a stitch that is made, has none until it is built)."""
+    """The picture of a craft library entry: its own (craft_library/pictures/, made for
+    every entry, knots to be tied included), else its file's or sample's, or None."""
+    from . import library
+    own = library.picture_of(entry)
+    if own is not None:
+        return own
     kind, value = next(iter(entry['build'].items()))
     if kind == 'sample' and value in files:
         return sample_picture(files[value])
@@ -947,12 +961,15 @@ def found_text(names, shown=3):
     return f"{head}: {', '.join(names[:shown])}{more}"
 
 
+SUGGESTIONS = 3  # at most this many guesses at the next message; the first is the likeliest
+
 SUGGEST_PROMPT = """You help someone design with OpenStrand Studio, an app for knots, weaves and \
 strand patterns. Below is what they just asked and how the assistant answered. Guess the next \
-message they would most likely type: a short, concrete follow-up request (at most 12 words), in \
-the same language they wrote in, written as they would write it, e.g. "make it in teal and gold" \
-or "show me the steps". Not a question to them, not a thank-you. Reply with the message only, \
-no quotes. If no follow-up makes sense, reply with nothing.
+messages they would most likely type: up to 3 different short, concrete follow-up requests (at \
+most 12 words each), the likeliest first, one per line, in the same language they wrote in, \
+written as they would write them, e.g. "make it in teal and gold" or "show me the steps". Not \
+questions to them, not thanks. Reply with the messages only: no numbers, bullets or quotes. If \
+no follow-up makes sense, reply with nothing.
 
 They asked:
 {prompt}
@@ -1058,7 +1075,8 @@ class Agent:
             error = getattr(content, 'error_code', None) if not isinstance(content, list) else None
             found = len(content) if isinstance(content, list) else None
             self.on_event({'type': 'search_result', 'name': kind.replace('_tool_result', ''),
-                           'ok': error is None, 'error': error, 'results': found})
+                           'ok': error is None, 'error': error, 'results': found,
+                           'pages': pages_of(content) if error is None else []})
 
     def run(self, prompt, images=(), start=None, history=None):
         """Build what prompt asks for. Returns the 'done' event.
@@ -1173,6 +1191,9 @@ class Agent:
         image = self.tool_image(block.name, args)
         if image:
             end['image'] = image
+        if block.name == 'search_samples':
+            end['found'] = list(self.workspace.matches)  # the panel lists them; a click loads one
+            end['found_count'] = self.workspace.match_count
         self.on_event(end)
         return {'type': 'tool_result', 'tool_use_id': block.id, 'content': content}
 
@@ -1209,10 +1230,11 @@ class Agent:
         from .app import HANDLERS
         return HANDLERS[name](self, args)
 
-    def next_message(self, said):
-        """The message the person will most likely send next, or ''. Never fails the request."""
+    def next_messages(self, said):
+        """The messages the person will most likely send next, likeliest first (up to
+        SUGGESTIONS), or []. Never fails the request."""
         if not self.suggest or not said or self.cost > self.max_cost:
-            return ''
+            return []
         text = SUGGEST_PROMPT.format(prompt=self.asked[:1500], answer=said[-1][:1500],
                                      tools='; '.join(self.ran[-12:])[:1500] or 'none')
         try:
@@ -1223,19 +1245,24 @@ class Agent:
             self.count(response)
         except Exception as e:  # noqa: BLE001 - only a suggestion
             self.log(f'no suggested next message: {type(e).__name__}: {short(e)}')
-            return ''
-        words = ' '.join(b.text for b in response.content if getattr(b, 'type', '') == 'text')
-        words = ' '.join(words.split()).strip('"“”\'`')
-        if not words or len(words) > 120:
-            return ''
-        self.log(f'suggested next message: {words}')
-        return words
+            return []
+        text = '\n'.join(b.text for b in response.content if getattr(b, 'type', '') == 'text')
+        found = []
+        for line in text.splitlines():
+            words = ' '.join(re.sub(r'^\s*(?:[-*•]|\d+[.)])\s*', '', line).split()).strip('"“”\'`')
+            if words and len(words) <= 120 and words.lower() not in (f.lower() for f in found):
+                found.append(words)
+        found = found[:SUGGESTIONS]
+        if found:
+            self.log('suggested next messages: ' + ' | '.join(found))
+        return found
 
     def finish(self, said, error=None):
         self.log(f'request ends: {error or "answered"} (cost ${self.cost:.3f}, {self.searches} web searches)')
-        suggestion = self.next_message(said) if error is None else ''
+        suggestions = self.next_messages(said) if error is None else []
         ws = self.workspace
-        event = {'type': 'done', 'ok': error is None, 'error': error, 'suggestion': suggestion,
+        event = {'type': 'done', 'ok': error is None, 'error': error,
+                 'suggestion': suggestions[0] if suggestions else '', 'suggestions': suggestions,
                  'text': said[-1] if said else '',
                  'project': str(ws.project_path) if ws.data is not None else None,
                  'png': str(ws.png_path) if ws.rendered_version == ws.version and ws.data is not None else None,
@@ -1264,6 +1291,22 @@ IMAGE_TOOLS = {'load_sample', 'make_turks_head', 'make_mxn', 'make_heart', 'draw
                'read_tab_step'}
 
 HISTORY_TURNS = 8
+PAGES = 5  # the most web pages a search or fetch names in the panel
+
+
+def pages_of(content):
+    """[{'title', 'url'}] of the pages a web search found, or the page a fetch read."""
+    def field(item, name):
+        return item.get(name) if isinstance(item, dict) else getattr(item, name, None)
+    items = content if isinstance(content, list) else [content]
+    pages = []
+    for item in items:
+        url = field(item, 'url')
+        inner = field(item, 'content')  # a fetch: the document, with its title
+        title = field(item, 'title') or (field(inner, 'title') if inner is not None else None)
+        if isinstance(url, str) and url.startswith(('http://', 'https://')):
+            pages.append({'title': ' '.join(str(title or url).split())[:120], 'url': url})
+    return pages[:PAGES]
 
 
 def with_history(prompt, history):
@@ -1333,5 +1376,5 @@ def print_events(event, as_json=False, out=None):
             print_(f"wrote {event['project']}")
         searches = f" · {event['searches']} web searches" if event.get('searches') else ''
         print_(f"cost ${event['cost']:.4f} · {event['model']}{searches}")
-        if event.get('suggestion'):
-            print_(f"next, perhaps: {event['suggestion']}")
+        for suggestion in event.get('suggestions') or ([event['suggestion']] if event.get('suggestion') else []):
+            print_(f"next, perhaps: {suggestion}")

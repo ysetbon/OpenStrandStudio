@@ -6183,7 +6183,7 @@ class SettingsDialog(QDialog):
         tooltip on the box, which would cover what is being typed."""
         items = []
         for key in ('agent_key_enter_desc', 'agent_key_shift_enter_desc', 'agent_key_tab_desc',
-                    'agent_key_shift_tab_desc', 'agent_key_clear_desc'):
+                    'agent_key_arrows_desc', 'agent_key_shift_tab_desc', 'agent_key_clear_desc'):
             if key not in _:
                 continue
             name, _sep, desc = _[key].partition(' - ')

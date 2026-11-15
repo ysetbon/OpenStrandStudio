@@ -366,7 +366,7 @@ def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch
                                       "max_cost": 2.0, "spent": 0.0, "spent_since": "",
                                       "effort": "high", "session_limit": 10.0, "mode": "auto",
                                       "share": None, "gallery": None, "models_on": True, "allow_china": False,
-                                      "panel": {"height": 170, "left": 0, "right": 0}}
+                                      "panel": {"height": 170, "left": 0, "right": 0}, "keys_hint": False}
     agent_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5", web=False, max_cost=5)
     assert agent_settings.load() == {"api_key": "sk-ant-test-1234567890",
                                       "keys": {"anthropic": "sk-ant-test-1234567890"}, "catalog": {},
@@ -374,7 +374,7 @@ def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch
                                       "web": False, "max_cost": 5.0, "spent": 0.0, "spent_since": "",
                                       "effort": "high", "session_limit": 10.0, "mode": "auto", "share": None,
                                       "gallery": None, "models_on": True, "allow_china": False,
-                                      "panel": {"height": 170, "left": 0, "right": 0}}
+                                      "panel": {"height": 170, "left": 0, "right": 0}, "keys_hint": False}
     # Every provider has its key; the model can be any provider's.
     agent_settings.save(provider_key=("xai", " xai-test-123456789 "), model="grok-4.7")
     saved = agent_settings.load()
@@ -2921,7 +2921,7 @@ def test_the_button_guide_explains_the_chat_box_keys():
     from settings_dialog import SettingsDialog
     for language, strings in translations.translations.items():
         page = SettingsDialog.agent_keys_guide_html(None, strings)
-        assert strings["agent_keys_guide_title"] in page and page.count("<li>") == 5, language
+        assert strings["agent_keys_guide_title"] in page and page.count("<li>") == 6, language
     assert "Shift + Enter" in SettingsDialog.agent_keys_guide_html(None, translations.translations["en"])
 
 
@@ -2971,4 +2971,114 @@ def test_the_mouse_over_an_image_sent_with_a_message_shows_it_larger(window, tmp
     assert panel.preview.isVisible() and panel.preview.key == "os:image/0/0"
     panel.hover("", QPoint(400, 400))
     assert not panel.preview.isVisible()
+    panel.entries.clear()
+
+
+# ------------------------------------------------------------- the ideas for later
+def test_the_agent_suggests_up_to_three_next_messages(tmp_path):
+    guesses = '1. make it in teal and gold\n- show me the steps\n"Make it in teal and gold"\nopen it in a tab\nmore'
+    client = ScriptedClient([reply(text("A bracelet."), stop="end_turn"), reply(text(guesses))])
+    done = agent.Agent(client, tmp_path, model="claude-sonnet-5-5", suggest=True).run("a bracelet")
+    assert done["suggestions"] == ["make it in teal and gold", "show me the steps", "open it in a tab"]
+    assert done["suggestion"] == "make it in teal and gold"  # the likeliest, for older readers
+
+
+def test_up_and_down_go_through_the_suggestions(window):
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtTest import QTest
+    box = window.agent_panel.prompt_edit
+    box.clear()
+    box.suggest(["make it teal", "show the steps", "open it in a tab"])
+    assert box.placeholderText() == "make it teal"
+    QTest.keyClick(box, Qt.Key_Down)
+    assert box.placeholderText() == "show the steps"
+    QTest.keyClick(box, Qt.Key_Up)
+    QTest.keyClick(box, Qt.Key_Up)
+    assert box.placeholderText() == "open it in a tab"  # round from the first to the last
+    QTest.keyClick(box, Qt.Key_Tab)
+    assert box.text() == "open it in a tab"
+    box.clear()
+    assert box.placeholderText() == box.hint
+
+
+def test_every_library_entry_has_a_picture_a_search_can_show(tmp_path):
+    from openstrand import library
+    missing = [e["name"] for e in library.entries() if library.picture_of(e) is None]
+    assert not missing, "run scripts/build_library_pictures.py for: " + ", ".join(missing)
+    runner = agent.Agent(SimpleNamespace(), tmp_path, app=SimpleNamespace(call=None))
+    runner.workspace.run("search_samples", {"text": "knit"})  # knots tied only when loaded
+    assert runner.workspace.found and runner.tool_image("search_samples", {"text": "knit"})
+
+
+def test_a_search_row_opens_to_every_match_and_a_click_loads_one(window, monkeypatch, tmp_path):
+    runner = agent.Agent(SimpleNamespace(), tmp_path)
+    events = []
+    runner.on_event = events.append
+    runner.tool(SimpleNamespace(id="t1", name="search_samples", input={"text": "mxn"}))
+    found = events[-1]["found"]
+    assert len(found) > 4 and all(m["name"] for m in found)  # more than the picture shows
+    panel = window.agent_panel
+    sent = []
+    monkeypatch.setattr(panel, "send", lambda prompt=None, shown=None: sent.append(prompt))
+    panel.entries.clear()
+    panel.handle_event({"type": "tool_start", "name": "search_samples", "input": {"text": "mxn"}})
+    panel.handle_event(dict(events[-1]))
+    shown = unfolded(panel)
+    count = events[-1]["found_count"]
+    assert count > len(found)  # mxn: hundreds of files, the first 40 listed
+    assert f"All {count} matches" in shown and found[-1]["title"] not in shown.split("matches", 1)[1]
+    from PyQt5.QtCore import QUrl
+    group = next(i for i, e in enumerate(panel.entries) if e["kind"] == "group")
+    panel.follow_link(QUrl(f"os:matches/{group}/0"))
+    assert found[-1]["title"] in unfolded(panel) and f"+{count - len(found)}" in unfolded(panel)  # open
+    panel.follow_link(QUrl(f"os:pick/{group}/0/1"))
+    assert sent == [f'Load the sample "{found[1]["name"]}"']
+    panel.entries.clear()
+
+
+def test_a_web_search_row_names_the_pages_it_found(window):
+    pages = agent.pages_of([SimpleNamespace(type="web_search_result", url="https://example.org/a", title="Box stitch how-to"),
+                            {"url": "https://example.org/b", "title": None},
+                            SimpleNamespace(url="javascript:alert(1)", title="no")])
+    assert pages == [{"title": "Box stitch how-to", "url": "https://example.org/a"},
+                     {"title": "https://example.org/b", "url": "https://example.org/b"}]
+    fetched = agent.pages_of(SimpleNamespace(type="web_fetch_result", url="https://example.org/c",
+                                             content=SimpleNamespace(title="A fetched page")))
+    assert fetched == [{"title": "A fetched page", "url": "https://example.org/c"}]
+    panel = window.agent_panel
+    panel.entries.clear()
+    panel.handle_event({"type": "search", "name": "web_search", "query": "box stitch"})
+    panel.handle_event({"type": "search_result", "name": "web_search", "ok": True, "results": 2, "pages": pages})
+    assert "Box stitch how-to" in unfolded(panel)
+    assert 'href="https://example.org/a"' in panel.transcript.toHtml()
+    panel.entries.clear()
+
+
+def test_a_tab_tool_names_the_tab_by_its_title(window):
+    panel = window.agent_panel
+    manager = window.tab_manager
+    session = manager.get_active()
+    title = manager.title_for(session)
+    panel.entries.clear()
+    panel.handle_event({"type": "tool_start", "name": "read_tab", "input": {"tab_id": session.id}})
+    assert f'"{title}"' in panel.transcript.toPlainText() and session.id not in panel.transcript.toPlainText()
+    panel.handle_event({"type": "tool_end", "name": "read_tab", "ok": True, "summary": "3 strands"})
+    panel.entries.clear()
+
+
+def test_the_panel_points_to_the_button_guide_once(window, monkeypatch, tmp_path):
+    import agent_settings
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    panel = window.agent_panel
+    panel.set_open(False)
+    panel.entries.clear()
+    panel.set_open(True)
+    notes = [e["text"] for e in panel.entries if e["kind"] == "note"]
+    assert notes == ["How to write a longer request, take a suggestion or switch the mode: "
+                     "Settings › Button Guide › Agent Chat Box."]
+    assert "Shift" not in notes[0]  # it names no keys: the guide does
+    assert agent_settings.load()["keys_hint"] is True
+    panel.set_open(False)
+    panel.set_open(True)
+    assert len([e for e in panel.entries if e["kind"] == "note"]) == 1  # never again
     panel.entries.clear()

@@ -310,7 +310,11 @@ TARGET_KEYS = ('text', 'name', 'knot', 'title', 'tab', 'step', 'group')
 
 def tool_target(step):
     """'"knit"': what a tool loads, searches, ties or opens, as its row and the working
-    line show it while it runs; '' when its input names nothing."""
+    line show it while it runs; '' when its input names nothing. A tab tool names the
+    tab by its title (step['tab_title'], looked up when it starts), not its id."""
+    if step.get('tab_title'):
+        title = ' '.join(str(step['tab_title']).split())
+        return '"' + (title if len(title) <= 40 else title[:39] + '…') + '"'
     given = step.get('input') or {}
     if not isinstance(given, dict):
         return ''
@@ -503,6 +507,7 @@ class PromptBox(QTextEdit):
         self.document().contentsChanged.connect(self.typed)
         self.hint = ''  # what the empty box says: an example request
         self.suggestion = ''  # the agent's guess at the next message, shown instead
+        self.suggestions = []  # all its guesses, likeliest first: Up and Down go through them
         self.fit_height()
 
     # ------------------------------------------------- the suggested next message
@@ -511,9 +516,21 @@ class PromptBox(QTextEdit):
         self.show_hint()
 
     def suggest(self, text):
-        """Show text greyed in the box, for Tab to take; '' takes it away."""
-        self.suggestion = ' '.join(str(text or '').split())
+        """Show text greyed in the box, for Tab to take; '' takes it away. A list: the
+        agent's guesses, likeliest first, the first shown, Up and Down for the others."""
+        guesses = text if isinstance(text, (list, tuple)) else [text]
+        self.suggestions = [g for g in (' '.join(str(x or '').split()) for x in guesses) if g]
+        self.suggestion = self.suggestions[0] if self.suggestions else ''
         self.show_hint()
+
+    def next_suggestion(self, step):
+        """Show the next guess (step 1) or the one before (step -1). False when there is no other."""
+        if len(self.suggestions) < 2 or self.toPlainText() or self.suggestion not in self.suggestions:
+            return False
+        at = (self.suggestions.index(self.suggestion) + step) % len(self.suggestions)
+        self.suggestion = self.suggestions[at]
+        self.show_hint()
+        return True
 
     def show_hint(self):
         self.setPlaceholderText(self.suggestion or self.hint)
@@ -545,6 +562,11 @@ class PromptBox(QTextEdit):
         # Tab takes the suggested message; caught before Qt moves the focus with it.
         if (event.type() == QEvent.KeyPress and event.key() in (Qt.Key_Tab, Qt.Key_Right)
                 and not event.modifiers() & ~Qt.KeypadModifier and self.take_suggestion()):
+            return True
+        # Up and Down, in the empty box, go through the other guesses.
+        if (event.type() == QEvent.KeyPress and event.key() in (Qt.Key_Up, Qt.Key_Down)
+                and not event.modifiers() & ~Qt.KeypadModifier
+                and self.next_suggestion(1 if event.key() == Qt.Key_Down else -1)):
             return True
         return super().event(event)
 
@@ -1319,8 +1341,23 @@ class AgentPanel(QWidget):
             self.place()
             self.stack()
             self.prompt_edit.setFocus()
+            self.point_to_keys()
         self.open_changed.emit(opened)
         self.activity_changed.emit()
+
+    def point_to_keys(self):
+        """The first time the panel opens, ever: one line on where its keys are explained
+        (Settings > Button Guide), since the chat box has no tooltip. Never again after."""
+        try:
+            if agent_settings.load().get('keys_hint'):
+                return
+            agent_settings.save(keys_hint=True)
+        except Exception:  # noqa: BLE001 - a hint is never worth an error
+            return
+        t = lambda key: _tr(self.language, key)
+        # The names exactly as the Settings dialog shows them, in the person's language.
+        self.add_note(t('agent_keys_hint').format(settings=t('settings'), guide=t('button_explanations'),
+                                                  section=t('agent_keys_guide_title')))
 
     MIN_WIDTH = 360  # px: the narrowest the corners can make the panel
     SHUT = 30  # px: while the edge is dragged, a conversation smaller than this shows folded
@@ -1816,7 +1853,11 @@ class AgentPanel(QWidget):
                 out += f'<br><i style="color:{c["muted"]};">{lines(step["text"])}</i>'
             return out
         if kind in ('search', 'fetch'):
-            return f'<span style="color:{c["muted"]};">{esc(self.step_label(step))}</span>'
+            out = f'<span style="color:{c["muted"]};">{esc(self.step_label(step))}</span>'
+            for page in step.get('pages') or []:  # what it read, each a link to the page
+                out += (f'<br>&nbsp;&nbsp;&nbsp;<a href="{esc(page["url"])}" style="color:{c["muted"]};">'
+                        f'{esc(page.get("title") or short_url(page["url"]))}</a>')
+            return out
         key, bg, fg = TOOL_CHIPS.get(step['name'], (None, *OTHER_CHIP))
         label = t(key) if key else step['name']
         if step.get('running'):
@@ -1845,6 +1886,29 @@ class AgentPanel(QWidget):
             image = (f'<a href="os:frame/{i}/{j}" style="text-decoration:none;"><img src="agent-frame:{step["key"]}"'
                      f' width="{FRAME_SIZE[0]}" height="{FRAME_SIZE[1]}"></a>')
             out += f'<table cellspacing="0" cellpadding="0" style="margin:4px 0 2px 22px;"><tr><td>{image}</td></tr></table>'
+        if not step.get('running') and max(len(step.get('found') or ()), step.get('found_count') or 0) > 1:
+            out += self.matches_html(i, j, step, c)  # one match: its name is in the row already
+        return out
+
+    def matches_html(self, i, j, step, c):
+        """A search's matches: a link that opens the whole list, and each match in it a
+        link that asks the agent to load that one."""
+        t = lambda key: _tr(self.language, key)
+        esc = html.escape
+        found = step['found']
+        count = max(len(found), step.get('found_count') or 0)
+        shown = step.get('show_found')
+        toggle = t('agent_matches_hide' if shown else 'agent_matches_show').format(count=count)
+        out = (f'<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="os:matches/{i}/{j}" style="color:{ACCENT};'
+               f' text-decoration:none;">{esc(toggle)} {"⌄" if shown else "›"}</a>')
+        if shown:
+            for k, match in enumerate(found):
+                out += (f'<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="os:pick/{i}/{j}/{k}"'
+                        f' style="color:{c["muted"]}; text-decoration:none;">{esc(match.get("title") or match["name"])}'
+                        f'</a>')
+            if count > len(found):  # the rest: a search with more words finds them
+                out += (f'<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:{c["muted"]};">'
+                        f'+{count - len(found)}</span>')
         return out
 
     # ------------------------------------------------------------ progress
@@ -1901,6 +1965,17 @@ class AgentPanel(QWidget):
             before, at = step['eta']
             estimate = 0.6 * max(0.0, before - (now - at)) + 0.4 * estimate
         step['eta'] = (estimate, now)
+
+    def last_web_step(self):
+        """The latest web search or fetch row of this request that has no pages yet, or None."""
+        for entry in reversed(self.entries):
+            if entry['kind'] == 'user':
+                return None
+            if entry['kind'] == 'group':
+                for step in reversed(entry['steps']):
+                    if step['kind'] in ('search', 'fetch') and 'pages' not in step:
+                        return step
+        return None
 
     def running_step(self, name=None):
         """The tool running now (named name, when given), or None."""
@@ -2030,6 +2105,17 @@ class AgentPanel(QWidget):
             return
         if what == 'group':
             entry['open'], entry['toggled'] = not entry['open'], True
+        elif what == 'matches':
+            step = entry['steps'][ids[1]]
+            step['show_found'] = not step.get('show_found')
+        elif what == 'pick':  # one match of a search: the agent loads it
+            try:
+                match = entry['steps'][ids[1]]['found'][ids[2]]
+            except (IndexError, KeyError):
+                return
+            if not self.running():
+                self.send(prompt=_tr(self.language, 'agent_load_match').format(name=match['name']))
+            return
         elif what == 'think':
             step = entry['steps'][ids[1]]
             step['open'] = not step['open']
@@ -2422,12 +2508,21 @@ class AgentPanel(QWidget):
             self.add_step(step)
             self.working.set_label(self.step_label(step, running=True), 'tool')
             self.working.nudge()
+        elif kind == 'search_result':
+            # The pages a web search found, or the page a fetch read: under its row, as links.
+            step = self.last_web_step()
+            if step is not None:
+                step['pages'] = [p for p in event.get('pages') or [] if isinstance(p, dict) and p.get('url')]
+                self.render_transcript()
         elif kind == 'note':
             self.add_note(event.get('text', ''))
         elif kind == 'tool_start':
             self.step_keys += 1
             step = {'kind': 'tool', 'name': event.get('name', ''), 'running': True, 'ok': None, 'summary': '',
                     'start': time.monotonic(), 'key': self.step_keys, 'input': event.get('input') or {}}
+            title = self.tab_title(step['input'].get('tab_id') if isinstance(step['input'], dict) else None)
+            if title:  # now, before the tool renames or closes it
+                step['tab_title'] = title
             self.add_step(step)
             self.working.clear_progress()
             self.working.set_label(self.step_label(step, running=True), step_mood(step))
@@ -2453,6 +2548,9 @@ class AgentPanel(QWidget):
                 # too late): a late Allow would make a change the agent no longer knows of.
                 self.expire_cards()
             step.update(running=False, ok=bool(event.get('ok')), summary=event.get('summary', ''))
+            if event.get('found'):  # a search: every match, listed when its row is opened
+                step['found'] = [m for m in event['found'] if isinstance(m, dict) and m.get('name')]
+                step['found_count'] = max(len(step['found']), int(event.get('found_count') or 0))
             if step.get('start') is not None:
                 step['seconds'] = time.monotonic() - step['start']
             self.release_pictures(step)
@@ -2469,6 +2567,17 @@ class AgentPanel(QWidget):
             self.app_call(event)
         elif kind == 'done':
             self.done_event = event
+
+    def tab_title(self, tab_id):
+        """The title of the person's tab tab_id, as its tab shows it, or ''."""
+        manager = getattr(self.main_window, 'tab_manager', None)
+        if not tab_id or manager is None or not hasattr(manager, 'find'):
+            return ''
+        try:
+            session = manager.find(str(tab_id))
+            return manager.title_for(session) if session is not None else ''
+        except Exception:  # noqa: BLE001 - only words for a row
+            return ''
 
     # ------------------------------------------------------------- bridge
     def app_call(self, call):
@@ -2685,7 +2794,8 @@ class AgentPanel(QWidget):
             return
         self.status_label.setText(line)  # the model is on the status line below
         if event.get('suggestion') and not event.get('error') and not self.stopping:
-            self.prompt_edit.suggest(event['suggestion'])  # greyed in the box: Tab takes it
+            # greyed in the box: Tab takes it, Up and Down show the other guesses
+            self.prompt_edit.suggest(event.get('suggestions') or event['suggestion'])
         if event.get('error'):
             self.add_note(_tr(self.language, 'agent_failed').format(error=event['error']), '#c0392b')
         if event.get('plan') or self.run_mode == 'plan':

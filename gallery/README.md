@@ -31,13 +31,13 @@ it down for the person who sent it. The app tells people that before they say ye
 ## Set it up (once)
 
 1. On GitHub: **Settings > Pages > Build and deployment > Source: GitHub Actions**.
-2. Push this folder to `main`. The *Gallery* workflow (`.github/workflows/gallery.yml`)
-   puts it online; its run shows the address, such as
-   `https://ysetbon.github.io/OpenStrandStudio/`.
+2. Push this folder to `main`. The *Site* workflow (`.github/workflows/site.yml`) puts it
+   online with the rest of the site (`site/README.md`), in its `gallery/` folder: its run
+   shows the site's address, such as `https://ysetbon.github.io/OpenStrandStudio/`.
 3. Put that address in `src/agent_sharing.py`:
 
    ```python
-   GALLERY_URL = 'https://ysetbon.github.io/OpenStrandStudio/'
+   GALLERY_URL = 'https://ysetbon.github.io/OpenStrandStudio/gallery/'
    ```
 
    Until it is set, the app never asks about the gallery. Sharing itself must be set up

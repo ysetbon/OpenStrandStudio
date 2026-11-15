@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-49 -49 546 546" role="img" aria-label="Four amber strands woven over and under four lilac and blue strands">
+<g transform="rotate(-14 224 224)" stroke-linejoin="miter">
+<rect x="5" y="63" width="438" height="46" fill="#f0b45a" stroke="#000" stroke-width="5"/>
+<rect x="5" y="155" width="438" height="46" fill="#f0b45a" stroke="#000" stroke-width="5"/>
+<rect x="5" y="247" width="438" height="46" fill="#f0b45a" stroke="#000" stroke-width="5"/>
+<rect x="5" y="339" width="438" height="46" fill="#f0b45a" stroke="#000" stroke-width="5"/>
+<rect x="54" y="65.5" width="64" height="41" fill="#000" fill-opacity=".3"/>
+<rect x="238" y="65.5" width="64" height="41" fill="#000" fill-opacity=".3"/>
+<rect x="146" y="157.5" width="64" height="41" fill="#000" fill-opacity=".3"/>
+<rect x="330" y="157.5" width="64" height="41" fill="#000" fill-opacity=".3"/>
+<rect x="54" y="249.5" width="64" height="41" fill="#000" fill-opacity=".3"/>
+<rect x="238" y="249.5" width="64" height="41" fill="#000" fill-opacity=".3"/>
+<rect x="146" y="341.5" width="64" height="41" fill="#000" fill-opacity=".3"/>
+<rect x="330" y="341.5" width="64" height="41" fill="#000" fill-opacity=".3"/>
+<rect x="63" y="5" width="46" height="438" fill="#c8a0e6" stroke="#000" stroke-width="5"/>
+<rect x="155" y="5" width="46" height="438" fill="#8cc8e8" stroke="#000" stroke-width="5"/>
+<rect x="247" y="5" width="46" height="438" fill="#c8a0e6" stroke="#000" stroke-width="5"/>
+<rect x="339" y="5" width="46" height="438" fill="#8cc8e8" stroke="#000" stroke-width="5"/>
+<rect x="157.5" y="54" width="41" height="64" fill="#000" fill-opacity=".3"/>
+<rect x="151.5" y="63" width="53" height="46" fill="#f0b45a"/>
+<path d="M151.5 63H204.5" stroke="#000" stroke-width="5"/>
+<path d="M151.5 109H204.5" stroke="#000" stroke-width="5"/>
+<rect x="341.5" y="54" width="41" height="64" fill="#000" fill-opacity=".3"/>
+<rect x="335.5" y="63" width="53" height="46" fill="#f0b45a"/>
+<path d="M335.5 63H388.5" stroke="#000" stroke-width="5"/>
+<path d="M335.5 109H388.5" stroke="#000" stroke-width="5"/>
+<rect x="65.5" y="146" width="41" height="64" fill="#000" fill-opacity=".3"/>
+<rect x="59.5" y="155" width="53" height="46" fill="#f0b45a"/>
+<path d="M59.5 155H112.5" stroke="#000" stroke-width="5"/>
+<path d="M59.5 201H112.5" stroke="#000" stroke-width="5"/>
+<rect x="249.5" y="146" width="41" height="64" fill="#000" fill-opacity=".3"/>
+<rect x="243.5" y="155" width="53" height="46" fill="#f0b45a"/>
+<path d="M243.5 155H296.5" stroke="#000" stroke-width="5"/>
+<path d="M243.5 201H296.5" stroke="#000" stroke-width="5"/>
+<rect x="157.5" y="238" width="41" height="64" fill="#000" fill-opacity=".3"/>
+<rect x="151.5" y="247" width="53" height="46" fill="#f0b45a"/>
+<path d="M151.5 247H204.5" stroke="#000" stroke-width="5"/>
+<path d="M151.5 293H204.5" stroke="#000" stroke-width="5"/>
+<rect x="341.5" y="238" width="41" height="64" fill="#000" fill-opacity=".3"/>
+<rect x="335.5" y="247" width="53" height="46" fill="#f0b45a"/>
+<path d="M335.5 247H388.5" stroke="#000" stroke-width="5"/>
+<path d="M335.5 293H388.5" stroke="#000" stroke-width="5"/>
+<rect x="65.5" y="330" width="41" height="64" fill="#000" fill-opacity=".3"/>
+<rect x="59.5" y="339" width="53" height="46" fill="#f0b45a"/>
+<path d="M59.5 339H112.5" stroke="#000" stroke-width="5"/>
+<path d="M59.5 385H112.5" stroke="#000" stroke-width="5"/>
+<rect x="249.5" y="330" width="41" height="64" fill="#000" fill-opacity=".3"/>
+<rect x="243.5" y="339" width="53" height="46" fill="#f0b45a"/>
+<path d="M243.5 339H296.5" stroke="#000" stroke-width="5"/>
+<path d="M243.5 385H296.5" stroke="#000" stroke-width="5"/>
+</g>
+</svg>

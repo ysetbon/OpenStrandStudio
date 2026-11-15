@@ -1,10 +1,11 @@
-# Puts the gallery/ folder on GitHub Pages whenever it changes on main (gallery/README.md).
-name: Gallery
+# Puts the site on GitHub Pages whenever it changes on main: the home and release pages
+# (site/README.md), with the gallery (gallery/README.md) in its gallery/ folder.
+name: Site
 
 on:
   push:
     branches: [main]
-    paths: ['gallery/**', '.github/workflows/gallery.yml']
+    paths: ['site/**', 'gallery/**', 'docs/readme/main_window.png', 'src/box_stitch.png', '.github/workflows/site.yml']
   workflow_dispatch:
 
 permissions:
@@ -24,9 +25,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - name: Put the pages together
+        run: bash site/build.sh _site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: gallery
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4

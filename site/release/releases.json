@@ -1,0 +1,48 @@
+{
+ "releases": [
+  {
+   "version": "2.1",
+   "date": "2026-10-19",
+   "downloads": {
+    "windows": "",
+    "macos": ""
+   },
+   "notes": [
+    {
+     "title": "Interface Sounds",
+     "text": "Every button, menu, tab and list now plays a short sound, and each mode has its own sound when you turn it on and off. Each area of the app has its own soft hover sound. In Rotate mode you hear a sound when you grab and release a strand end, and a tick at each mark of the dial. At the bottom of General Settings, use Play interface sounds, Sound volume and Play hover sounds to turn the sounds off, change their volume or turn off only the hover sounds."
+    },
+    {
+     "title": "Rotate Mode Triangles and Dial",
+     "text": "Triangles now mark every strand end you can rotate: red at strand starts, blue at strand ends and yellow under the pointer. While you drag, a dial with a mark every 15° appears around the pivot and shades how far you have turned. Inside the dial the end turns more slowly, for fine control. A faded copy of the strand stays where it started until you let go."
+    },
+    {
+     "title": "Fixes",
+     "text": "Strand ends no longer fold back on themselves at a high Control Point Influence. A strand no longer loses its shadow where a mask only touches it along an edge. Releasing a strand is faster while shadows are off."
+    }
+   ]
+  },
+  {
+   "version": "2.0",
+   "date": "2026-10-04",
+   "downloads": {
+    "windows": "",
+    "macos": ""
+   },
+   "notes": [
+    {
+     "title": "Strands and Masks Tabs",
+     "text": "The layer list is now split into two tabs, Strands and Masks, with a switch just above Draw Names. The Masks tab has its own New Mask, Delete Mask, Deselect All and Delete All buttons, and New Mask replaces the Mask button in the toolbar. Delete All on this tab removes only the masks, after a confirmation, in one undo step. Masks are now always kept above all strands, so where a mask sits in the list no longer matters, and selecting a layer from the other tab opens that tab for you."
+    },
+    {
+     "title": "Fixed Shadow Issues",
+     "text": "Fixed shadow issues from older versions. Shadows for masks now behave more naturally."
+    },
+    {
+     "title": "Seven New Samples",
+     "text": "In Settings, under Samples, you will find seven new projects to open and learn from: Straight Weave 12×12, Curved Weave 6×6, Plait, Thick and Thin, Bridge, Twisted Pairs and Kagome Weave. The sample buttons now sit two to a row, so the whole list fits on the page."
+    }
+   ]
+  }
+ ]
+}

@@ -44,7 +44,7 @@ import agent_settings
 SHARE_URL = ''  # 'https://openstrand-share.<your-account>.workers.dev/v1/share'
 SHARE_PUBLIC_KEY = ''
 # Where the public gallery is shown, once it is on GitHub Pages (gallery/README.md).
-GALLERY_URL = ''  # 'https://<your-account>.github.io/OpenStrandStudio/'
+GALLERY_URL = ''  # 'https://<your-account>.github.io/OpenStrandStudio/gallery/'
 # This app's version, as its installers say it (src/OpenStrandStudio_mac.spec, src/inno setup):
 # change it with them. It goes with each share, so a result can be set against the version.
 APP_VERSION = '2.1'

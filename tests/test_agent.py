@@ -366,7 +366,7 @@ def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch
                                       "max_cost": 2.0, "spent": 0.0, "spent_since": "",
                                       "effort": "high", "session_limit": 10.0, "mode": "auto",
                                       "share": None, "gallery": None, "models_on": True, "allow_china": False,
-                                      "panel": {"height": 170, "left": 0, "right": 0}}
+                                      "panel": {"height": 170, "left": 0, "right": 0}, "keys_hint": False}
     agent_settings.save(api_key="  sk-ant-test-1234567890  ", model="claude-haiku-5-5", web=False, max_cost=5)
     assert agent_settings.load() == {"api_key": "sk-ant-test-1234567890",
                                       "keys": {"anthropic": "sk-ant-test-1234567890"}, "catalog": {},
@@ -374,7 +374,7 @@ def test_settings_keep_the_key_private_and_the_model_known(tmp_path, monkeypatch
                                       "web": False, "max_cost": 5.0, "spent": 0.0, "spent_since": "",
                                       "effort": "high", "session_limit": 10.0, "mode": "auto", "share": None,
                                       "gallery": None, "models_on": True, "allow_china": False,
-                                      "panel": {"height": 170, "left": 0, "right": 0}}
+                                      "panel": {"height": 170, "left": 0, "right": 0}, "keys_hint": False}
     # Every provider has its key; the model can be any provider's.
     agent_settings.save(provider_key=("xai", " xai-test-123456789 "), model="grok-4.7")
     saved = agent_settings.load()

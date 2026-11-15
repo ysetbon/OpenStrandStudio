@@ -1622,3 +1622,95 @@ _CLOSE_TAB = {
 }
 for _language, _strings in _CLOSE_TAB.items():
     AGENT_TRANSLATIONS[_language].update(_strings)
+
+
+# The chat box's keys, explained in Settings > Button Guide (no tooltip on the box),
+# and the agent's suggested next message, which Tab takes.
+_CHAT_KEYS = {
+    'en': {'agent_keys_guide_title': 'Agent Chat Box',
+           'agent_key_enter_desc': 'Enter - sends your message to the agent.',
+           'agent_key_shift_enter_desc': 'Shift + Enter - starts a new line without sending, for a longer request.',
+           'agent_key_tab_desc': 'Tab - after each answer the agent suggests a next message, greyed in the empty box. '
+                                 'Tab (or the right arrow) puts it in the box, to send or change; typing anything else ignores it.',
+           'agent_key_shift_tab_desc': 'Shift + Tab - switches the mode: ask before opening designs, open them automatically, or plan first.',
+           'agent_key_clear_desc': '/clear - typed and sent, starts a new session.'},
+    'fr': {'agent_keys_guide_title': "Zone de discussion de l'agent",
+           'agent_key_enter_desc': "Entrée - envoie votre message à l'agent.",
+           'agent_key_shift_enter_desc': 'Maj + Entrée - ajoute une ligne sans envoyer, pour une demande plus longue.',
+           'agent_key_tab_desc': "Tab - après chaque réponse, l'agent propose un message suivant, en gris dans la zone vide. "
+                                 'Tab (ou la flèche droite) le place dans la zone, à envoyer ou modifier ; taper autre chose l’ignore.',
+           'agent_key_shift_tab_desc': 'Maj + Tab - change le mode : demander avant d’ouvrir les motifs, les ouvrir automatiquement, ou planifier d’abord.',
+           'agent_key_clear_desc': '/clear - tapé et envoyé, commence une nouvelle session.'},
+    'de': {'agent_keys_guide_title': 'Chatfeld des Agenten',
+           'agent_key_enter_desc': 'Eingabe - sendet Ihre Nachricht an den Agenten.',
+           'agent_key_shift_enter_desc': 'Umschalt + Eingabe - beginnt eine neue Zeile, ohne zu senden, für eine längere Anfrage.',
+           'agent_key_tab_desc': 'Tab - nach jeder Antwort schlägt der Agent eine nächste Nachricht vor, grau im leeren Feld. '
+                                 'Tab (oder der Pfeil nach rechts) setzt sie ins Feld, zum Senden oder Ändern; anderes Tippen ignoriert sie.',
+           'agent_key_shift_tab_desc': 'Umschalt + Tab - wechselt den Modus: vor dem Öffnen fragen, automatisch öffnen oder zuerst planen.',
+           'agent_key_clear_desc': '/clear - eingegeben und gesendet, beginnt eine neue Sitzung.'},
+    'it': {'agent_keys_guide_title': "Casella di chat dell'agente",
+           'agent_key_enter_desc': "Invio - invia il messaggio all'agente.",
+           'agent_key_shift_enter_desc': 'Maiusc + Invio - va a capo senza inviare, per una richiesta più lunga.',
+           'agent_key_tab_desc': "Tab - dopo ogni risposta l'agente suggerisce un messaggio successivo, in grigio nella casella vuota. "
+                                 'Tab (o la freccia destra) lo mette nella casella, da inviare o modificare; scrivere altro lo ignora.',
+           'agent_key_shift_tab_desc': 'Maiusc + Tab - cambia modalità: chiedere prima di aprire i disegni, aprirli automaticamente o pianificare prima.',
+           'agent_key_clear_desc': '/clear - scritto e inviato, avvia una nuova sessione.'},
+    'es': {'agent_keys_guide_title': 'Cuadro de chat del agente',
+           'agent_key_enter_desc': 'Intro - envía tu mensaje al agente.',
+           'agent_key_shift_enter_desc': 'Mayús + Intro - añade una línea sin enviar, para una petición más larga.',
+           'agent_key_tab_desc': 'Tab - tras cada respuesta el agente sugiere un siguiente mensaje, en gris en el cuadro vacío. '
+                                 'Tab (o la flecha derecha) lo pone en el cuadro, para enviarlo o cambiarlo; escribir otra cosa lo ignora.',
+           'agent_key_shift_tab_desc': 'Mayús + Tab - cambia el modo: preguntar antes de abrir diseños, abrirlos automáticamente o planificar primero.',
+           'agent_key_clear_desc': '/clear - escrito y enviado, empieza una sesión nueva.'},
+    'pt': {'agent_keys_guide_title': 'Caixa de chat do agente',
+           'agent_key_enter_desc': 'Enter - envia a sua mensagem ao agente.',
+           'agent_key_shift_enter_desc': 'Shift + Enter - começa uma nova linha sem enviar, para um pedido mais longo.',
+           'agent_key_tab_desc': 'Tab - após cada resposta o agente sugere uma próxima mensagem, a cinzento na caixa vazia. '
+                                 'Tab (ou a seta para a direita) coloca-a na caixa, para enviar ou alterar; escrever outra coisa ignora-a.',
+           'agent_key_shift_tab_desc': 'Shift + Tab - muda o modo: perguntar antes de abrir desenhos, abri-los automaticamente ou planear primeiro.',
+           'agent_key_clear_desc': '/clear - escrito e enviado, começa uma nova sessão.'},
+    'he': {'agent_keys_guide_title': 'תיבת הצ׳אט של הסוכן',
+           'agent_key_enter_desc': 'Enter - שולח את ההודעה לסוכן.',
+           'agent_key_shift_enter_desc': 'Shift + Enter - מתחיל שורה חדשה בלי לשלוח, לבקשה ארוכה יותר.',
+           'agent_key_tab_desc': 'Tab - אחרי כל תשובה הסוכן מציע הודעה הבאה, באפור בתיבה הריקה. '
+                                 'Tab (או החץ ימינה) מכניס אותה לתיבה, לשליחה או לשינוי; הקלדה של משהו אחר מתעלמת ממנה.',
+           'agent_key_shift_tab_desc': 'Shift + Tab - מחליף מצב: לשאול לפני פתיחת עיצובים, לפתוח אותם אוטומטית, או לתכנן קודם.',
+           'agent_key_clear_desc': '/clear - הקלדה ושליחה מתחילות סשן חדש.'},
+    'ru': {'agent_keys_guide_title': 'Поле чата агента',
+           'agent_key_enter_desc': 'Enter - отправляет сообщение агенту.',
+           'agent_key_shift_enter_desc': 'Shift + Enter - начинает новую строку без отправки, для длинного запроса.',
+           'agent_key_tab_desc': 'Tab - после каждого ответа агент предлагает следующее сообщение, серым в пустом поле. '
+                                 'Tab (или стрелка вправо) вставляет его в поле, чтобы отправить или изменить; если печатать другое, оно исчезает.',
+           'agent_key_shift_tab_desc': 'Shift + Tab - меняет режим: спрашивать перед открытием узоров, открывать их сразу или сначала планировать.',
+           'agent_key_clear_desc': '/clear - если набрать и отправить, начинается новая сессия.'},
+    'fi': {'agent_keys_guide_title': 'Agentin keskusteluruutu',
+           'agent_key_enter_desc': 'Enter - lähettää viestin agentille.',
+           'agent_key_shift_enter_desc': 'Vaihto + Enter - aloittaa uuden rivin lähettämättä, pidempää pyyntöä varten.',
+           'agent_key_tab_desc': 'Sarkain - jokaisen vastauksen jälkeen agentti ehdottaa seuraavaa viestiä harmaana tyhjässä ruudussa. '
+                                 'Sarkain (tai oikea nuoli) siirtää sen ruutuun lähetettäväksi tai muokattavaksi; muu kirjoitus ohittaa sen.',
+           'agent_key_shift_tab_desc': 'Vaihto + Sarkain - vaihtaa tilaa: kysy ennen kuvioiden avaamista, avaa ne automaattisesti tai suunnittele ensin.',
+           'agent_key_clear_desc': '/clear - kirjoitettuna ja lähetettynä aloittaa uuden istunnon.'},
+    'sv': {'agent_keys_guide_title': 'Agentens chattruta',
+           'agent_key_enter_desc': 'Retur - skickar ditt meddelande till agenten.',
+           'agent_key_shift_enter_desc': 'Skift + Retur - börjar en ny rad utan att skicka, för en längre begäran.',
+           'agent_key_tab_desc': 'Tab - efter varje svar föreslår agenten ett nästa meddelande, grått i den tomma rutan. '
+                                 'Tab (eller högerpilen) lägger det i rutan, att skicka eller ändra; skriver du något annat ignoreras det.',
+           'agent_key_shift_tab_desc': 'Skift + Tab - byter läge: fråga innan mönster öppnas, öppna dem automatiskt eller planera först.',
+           'agent_key_clear_desc': '/clear - skrivet och skickat startar en ny session.'},
+    'ja': {'agent_keys_guide_title': 'エージェントのチャット欄',
+           'agent_key_enter_desc': 'Enter - メッセージをエージェントに送信します。',
+           'agent_key_shift_enter_desc': 'Shift + Enter - 送信せずに改行します（長い依頼に）。',
+           'agent_key_tab_desc': 'Tab - 回答のたびに、エージェントが次のメッセージを空の入力欄に灰色で提案します。'
+                                 'Tab（または右矢印）で入力欄に入れ、そのまま送るか書き換えられます。ほかの文字を入力すると消えます。',
+           'agent_key_shift_tab_desc': 'Shift + Tab - モードを切り替えます：デザインを開く前に確認、自動で開く、まず計画。',
+           'agent_key_clear_desc': '/clear - 入力して送信すると新しいセッションを始めます。'},
+    'zh': {'agent_keys_guide_title': '智能体聊天框',
+           'agent_key_enter_desc': 'Enter - 将消息发送给智能体。',
+           'agent_key_shift_enter_desc': 'Shift + Enter - 换行而不发送，用于较长的请求。',
+           'agent_key_tab_desc': 'Tab - 每次回答后，智能体会在空输入框中以灰色建议下一条消息。'
+                                 '按 Tab（或右方向键）将其放入输入框，可直接发送或修改；输入其他内容则忽略它。',
+           'agent_key_shift_tab_desc': 'Shift + Tab - 切换模式：打开设计前询问、自动打开，或先做计划。',
+           'agent_key_clear_desc': '/clear - 输入并发送后开始新的会话。'},
+}
+for _language, _strings in _CHAT_KEYS.items():
+    AGENT_TRANSLATIONS[_language].update(_strings)

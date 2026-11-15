@@ -6,7 +6,8 @@ A search for a design (the agent's search_samples) shows the designs it found si
 side. Most library entries are knots the agent ties when it loads them, so they have no
 file to picture; this builds each one once, as load_sample or tie_knot would, and keeps
 its picture: the finished knot, drawn by the app's own canvas, at most SIDE px.
-Run it again after adding or changing an entry.
+Run it again after adding or changing an entry. If a run stops part way (a knot that
+takes too long can stop it while the app's own code runs), --missing makes the rest.
 """
 import argparse
 from pathlib import Path

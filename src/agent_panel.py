@@ -581,7 +581,11 @@ class WorkingLine(QWidget):
     holds its picture (STUCK) until the assistant is heard again."""
 
     SIZE = 64  # px of the knot until the panel fits it to its Stop button (fit_to, WORKING_SCALE)
-    FILL = 0.92  # how much of its square the stitch fills at its widest (measured: 8 px of 200 each side)
+    # The stitch at its widest reaches INK of its square: measured over every frame of 30 whole runs
+    # (17,932 frames), counting any pixel with ink at all. It is drawn so that widest frame leaves
+    # exactly EDGE screen pixel(s) of transparent edge on every side of the line.
+    INK = 0.93
+    EDGE = 1
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -714,10 +718,13 @@ class WorkingLine(QWidget):
         newest level and the one being tied."""
         ratio = self.devicePixelRatioF()
         side = max(1, round(self.side * ratio))
-        # The stitch at its widest fills only FILL of its square: drawn that much larger, its widest
-        # frame touches the line's top and bottom, with no empty band above or below.
-        pad = self.side * (1 / self.FILL - 1) / 2
-        box = QRectF(-pad, -pad, self.side + 2 * pad, self.side + 2 * pad)
+        # Drawn larger than its square, so its widest frame covers all of it but EDGE screen pixel(s)
+        # on each side: no empty band above or below, and never cut off.
+        # Centred on the picture's own middle: side / ratio, which rounding can make a little more
+        # than self.side (62 px at 125 % is 78 screen pixels, not 77.5).
+        grow = (side - 2 * self.EDGE) / ratio / self.INK
+        pad = (grow - side / ratio) / 2
+        box = QRectF(-pad, -pad, grow, grow)
 
         def blank():
             image = QPixmap(side, side)

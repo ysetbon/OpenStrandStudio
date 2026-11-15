@@ -1707,15 +1707,41 @@ def test_the_stitch_is_tied_from_a_plus_and_continued_with_k_1_and_k_0():
     assert stitch.leaving is not None
 
 
+def test_the_biggest_knot_frame_keeps_one_transparent_pixel_on_every_side():
+    """The working knot is drawn larger than its square, so its biggest frame (run 0 at 9.55 s, the
+    widest of 17,932 frames) covers all of it but one screen pixel on each side, at any scaling."""
+    import random
+    import numpy as np
+    from PyQt5.QtWidgets import QApplication
+    import agent_stitch as cs
+    from agent_panel import WorkingLine
+    QApplication.instance() or QApplication([])
+    for side, ratio in ((62, 1.0), (62, 1.25), (62, 2.0), (25, 1.0)):
+        line = WorkingLine()
+        line.devicePixelRatioF = lambda r=ratio: r
+        line.side = side
+        line.stitch = cs.Stitch(random.Random(0))
+        for _ in range(191):  # 9.55 s
+            line.stitch.advance(50)
+        line.take_shot()
+        image = line.shot.toImage()
+        w, h = image.width(), image.height()
+        ink = np.frombuffer(image.constBits().asstring(w * h * 4), np.uint8).reshape(h, w, 4)[:, :, 3] > 0
+        ys, xs = np.nonzero(ink)
+        assert w == h == round(side * ratio)
+        assert (xs.min(), ys.min(), w - 1 - xs.max(), h - 1 - ys.max()) == (1, 1, 1, 1), (side, ratio)
+
+
 def test_the_working_line_draws_the_stitch_while_agent_works(window):
     from PyQt5.QtCore import Qt
     from PyQt5.QtGui import QColor
     import agent_stitch as cs
     panel = window.agent_panel
     line = panel.working
-    # The knot is the Stop button's height, and its line no taller: no space above or below.
+    # The knot is 2.5 times the Stop button's height, and its line no taller, right against the
+    # conversation above it and the chat box below it: no space above or below.
     panel.set_open(True)
-    assert line.side == panel.send_button.sizeHint().height() == line.height()
+    assert line.side == round(2.5 * panel.send_button.sizeHint().height()) == line.height()
     area = line.side * line.side  # the colour counts below, as parts of the picture
     assert not (ROOT / "src" / "agent_knot.png").exists()  # drawn live: no sheet of frames to load
 
@@ -1735,9 +1761,24 @@ def test_the_working_line_draws_the_stitch_while_agent_works(window):
                     seen["black"] += 1
         return seen
 
+    if not panel.entries:
+        panel.new_session()  # a conversation above the working line
     line.start("Thinking…")
     line.timer.stop()  # the test is the clock
     assert line.isVisibleTo(window.agent_panel) and line.stitch.at == 0 and line.stitch.history == []
+    # No gap above or below the working line; the panel's 6 px between the rest once it is gone.
+    from PyQt5.QtWidgets import QApplication
+    panel.place()
+    QApplication.processEvents()
+    gap = lambda upper, lower: lower.geometry().top() - upper.geometry().bottom() - 1
+    assert gap(panel.transcript, line) == 0 and gap(line, panel.prompt_edit) == 0
+    line.hide()
+    panel.place()
+    QApplication.processEvents()
+    assert gap(panel.transcript, panel.prompt_edit) == panel.GAP
+    line.show()
+    panel.place()
+    QApplication.processEvents()
     line.take_shot()
     plus = colours(line.shot)
     assert plus["blue"] > area * 0.03 and plus["orange"] > area * 0.03 and plus["black"] > area * 0.006

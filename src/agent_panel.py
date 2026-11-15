@@ -28,7 +28,7 @@ from PyQt5.QtGui import (QColor, QDesktopServices, QIcon, QImage, QImageReader, 
                          QRegion, QTextDocument)
 from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog,
                              QGridLayout, QHBoxLayout, QLabel, QLayout, QLineEdit, QMenu, QPushButton, QToolButton,
-                             QSizePolicy, QStyle,
+                             QSizePolicy, QSpacerItem, QStyle,
                              QStyleOptionComboBox, QTextBrowser, QTextEdit, QVBoxLayout,
                              QWidget)
 
@@ -580,7 +580,12 @@ class WorkingLine(QWidget):
     and when nothing has been heard from the assistant for too long it comes to a stop and
     holds its picture (STUCK) until the assistant is heard again."""
 
-    SIZE = 26  # px of the knot until the panel fits it to its Stop button (fit_to)
+    SIZE = 64  # px of the knot until the panel fits it to its Stop button (fit_to, WORKING_SCALE)
+    # The stitch at its widest reaches INK of its square: measured over every frame of 30 whole runs
+    # (17,932 frames), counting any pixel with ink at all. It is drawn so that widest frame leaves
+    # exactly EDGE screen pixel(s) of transparent edge on every side of the line.
+    INK = 0.93
+    EDGE = 1
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -713,7 +718,13 @@ class WorkingLine(QWidget):
         newest level and the one being tied."""
         ratio = self.devicePixelRatioF()
         side = max(1, round(self.side * ratio))
-        box = QRectF(0, 0, self.side, self.side)
+        # Drawn larger than its square, so its widest frame covers all of it but EDGE screen pixel(s)
+        # on each side: no empty band above or below, and never cut off.
+        # Centred on the picture's own middle: side / ratio, which rounding can make a little more
+        # than self.side (62 px at 125 % is 78 screen pixels, not 77.5).
+        grow = (side - 2 * self.EDGE) / ratio / self.INK
+        pad = (grow - side / ratio) / 2
+        box = QRectF(-pad, -pad, grow, grow)
 
         def blank():
             image = QPixmap(side, side)
@@ -744,9 +755,13 @@ class WorkingLine(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setRenderHint(QPainter.SmoothPixmapTransform)
         box = self.side
-        if self.shot is None:
+        # Drawn again for a screen with other scaling (the window moved): always the screen's own pixels.
+        if self.shot is None or abs(self.shot.devicePixelRatio() - self.devicePixelRatioF()) > 1e-3:
             self.take_shot()
-        painter.drawPixmap(QRectF(0, (self.height() - box) / 2, box, box), self.shot, QRectF(self.shot.rect()))
+        # One picture pixel on one screen pixel, also at 125 % or 150 % (no resampling, no blur).
+        ratio = self.shot.devicePixelRatio()
+        w, h = self.shot.width() / ratio, self.shot.height() / ratio
+        painter.drawPixmap(QRectF(0, round((self.height() - h) / 2), w, h), self.shot, QRectF(self.shot.rect()))
         self.draw_label(painter, box)
         painter.end()
 
@@ -1022,15 +1037,27 @@ class AgentPanel(QWidget):
         bar.rangeChanged.connect(self.keep_scroll)
         bar.valueChanged.connect(self.scrolled)
         self.transcript.hide()
-        body.addWidget(self.transcript)
+        # The conversation, the working line, the attached images and the chat box, with their own
+        # gaps (space_rows): none above or below the working line, the body's 6 px between the rest.
+        self.talk = QVBoxLayout()
+        self.talk.setSpacing(0)
+        self.gaps = {}
+        body.addLayout(self.talk)
+        self.talk.addWidget(self.transcript)
+        self.gaps['transcript'] = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.talk.addItem(self.gaps['transcript'])
         self.working = WorkingLine(self)
-        body.addWidget(self.working)
+        self.talk.addWidget(self.working)
+        self.gaps['working'] = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.talk.addItem(self.gaps['working'])
 
         # The attached images, each a chip with its picture and name: a click takes it off.
         self.image_row = QWidget(self)
         self.image_chips = FlowLayout(self.image_row)
         self.image_row.hide()
-        body.addWidget(self.image_row)
+        self.talk.addWidget(self.image_row)
+        self.gaps['image_row'] = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.talk.addItem(self.gaps['image_row'])
 
         self.prompt_edit = PromptBox(self)
         self.prompt_edit.submitted.connect(self.send)
@@ -1055,7 +1082,7 @@ class AgentPanel(QWidget):
         self.send_button.clicked.connect(self.send_or_stop)
         # A chat box: the text across the whole width, growing upward as
         # lines are added, with the buttons and the cost on a row under it.
-        body.addWidget(self.prompt_edit)
+        self.talk.addWidget(self.prompt_edit)
         row = QHBoxLayout()
         row.setSpacing(6)
         row.addWidget(self.attach_button)
@@ -1117,10 +1144,33 @@ class AgentPanel(QWidget):
         self.edge = PanelEdge(self)  # last: drawn over the rest
         self.fit_working()
 
+    WORKING_SCALE = 2.5  # the working knot is this many times the Stop button's height
+    GAP = 6  # px between the panel's rows (its body layout's spacing)
+
+    def space_rows(self):
+        """The gap under each of the conversation, the working line and the attached images: none
+        when the working line is on either side of it, GAP otherwise, and none under one not shown.
+        The working line sits right against what is above and below it."""
+        rows = [('transcript', self.transcript), ('working', self.working), ('image_row', self.image_row),
+                ('prompt', self.prompt_edit)]
+        shown = [name for name, widget in rows if widget.isVisibleTo(self)]
+        changed = False
+        for name, widget in rows[:-1]:
+            gap = 0
+            if name in shown:
+                after = shown[shown.index(name) + 1]
+                gap = 0 if 'working' in (name, after) else self.GAP
+            spacer = self.gaps[name]
+            if spacer.sizeHint().height() != gap:
+                spacer.changeSize(0, gap, QSizePolicy.Minimum, QSizePolicy.Fixed)
+                changed = True
+        if changed:
+            self.talk.invalidate()
+
     def fit_working(self):
-        """The working knot is exactly as tall as the Stop button, and its line too: no space above or
-        below it."""
-        self.working.fit_to(self.send_button.sizeHint().height())
+        """The working knot is WORKING_SCALE times as tall as the Stop button, and its line exactly as
+        tall as the knot: no space above or below it."""
+        self.working.fit_to(round(self.WORKING_SCALE * self.send_button.sizeHint().height()))
 
     # Its own colors for each app theme: as a child of the canvas it would
     # otherwise take the canvas background (white in every theme).
@@ -1226,6 +1276,7 @@ class AgentPanel(QWidget):
         canvas = self.parentWidget()
         if canvas is None:
             return
+        self.space_rows()  # a row was shown or hidden: the gaps around the working line
         area = self.visible_canvas()
         m = self.MARGIN
         left, right = self.sides(area)

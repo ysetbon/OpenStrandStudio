@@ -549,6 +549,7 @@ class Workspace:
         self.steps = []  # [(title, path)] from make_steps, tie_knot or draw_steps
         self.story = None  # the steps draw_steps was sent last, as sent: "replace" changes single ones
         self.sheet = None  # (version, path) of the picture of all of draw_steps' steps
+        self.found = []  # pictures of the designs the last search_samples found (published PNGs)
         self.last_edit = None  # the design edit_mask made last (kept or previewed)
         self.progress = None  # set while a tool runs: tells the person how far it has got
 
@@ -648,6 +649,31 @@ class Workspace:
             self._shot = (self.version, path)
         return path
 
+    def search_sheet(self, most=4):
+        """One picture of the first designs the last search found, side by side (two
+        rows for four), from their published pictures. None when none has one."""
+        from PIL import Image
+        shown = self.found[:most]
+        if not shown:
+            return None
+        cell = 320
+        columns = 2 if len(shown) == 4 else len(shown)
+        rows = (len(shown) + columns - 1) // columns
+        sheet = Image.new('RGB', (columns * cell, rows * cell), 'white')
+        for k, path in enumerate(shown):
+            with Image.open(path) as picture:
+                picture = picture.convert('RGBA')
+                picture.thumbnail((cell - 16, cell - 16))
+                x = (k % columns) * cell + (cell - picture.width) // 2
+                y = (k // columns) * cell + (cell - picture.height) // 2
+                sheet.paste(picture, (x, y), picture)
+        frames = self.out_dir / 'frames'
+        frames.mkdir(exist_ok=True)
+        self._shots += 1
+        path = frames / f'search_{self._shots}.png'
+        sheet.save(path)
+        return path
+
     def close(self):
         if self._preview is not None:
             self._preview.close()
@@ -719,7 +745,11 @@ class Workspace:
         elif not text:
             lines.append('Craft library, by craft (search a craft or a name to see its designs):')
             lines += [f'{craft}: {about}' for craft, about in library.crafts().items()]
-        names = [n for n in generators.samples() if text.lower() in n.lower()]
+        files = generators.samples()
+        names = [n for n in files if text.lower() in n.lower()]
+        # The ready-made pictures of what matched, for the row's picture (search_sheet).
+        self.found = [found for found in (entry_picture(e, files) for e in entries) if found]
+        self.found += [found for found in (sample_picture(files[n]) for n in names) if found]
         if names:
             lines.append('Published files (load_sample name): ' + ', '.join(names[:60])
                          + (f' (and {len(names) - 60} more)' if len(names) > 60 else ''))
@@ -884,6 +914,27 @@ class Workspace:
             data = base64.standard_b64encode(path.read_bytes()).decode('ascii')
             return 'picture', [{'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/png', 'data': data}}]
         raise ToolError(f'unknown tool {name}')
+
+
+def sample_picture(path):
+    """The published picture of a sample file (its images/ folder beside json/), or None."""
+    picture = Path(path).parent.parent / 'images' / (Path(path).stem + '.png')
+    return picture if picture.is_file() else None
+
+
+def entry_picture(entry, files):
+    """The published picture of a craft library entry made from a file or a sample, or None
+    (a knot that is tied, or a stitch that is made, has none until it is built)."""
+    kind, value = next(iter(entry['build'].items()))
+    if kind == 'sample' and value in files:
+        return sample_picture(files[value])
+    if kind == 'file':
+        from . import library
+        try:
+            return sample_picture(library.path_of(entry))
+        except library.LibraryError:
+            return None
+    return None
 
 
 def found_text(names, shown=3):
@@ -1131,6 +1182,13 @@ class Agent:
         answer with words (lists, descriptions, settings) get none; the app pictures the
         tools that act on its own windows itself. A picture that fails never fails the tool."""
         ws = self.workspace
+        if name == 'search_samples' and self.app is not None:  # what it found, side by side
+            try:
+                found = ws.search_sheet()
+                return str(found) if found else None
+            except Exception as e:  # noqa: BLE001
+                self.log(f'no picture for {name}: {type(e).__name__}: {e}')
+                return None
         if name not in IMAGE_TOOLS or ws.data is None or self.app is None:  # only the app shows them
             return None
         try:

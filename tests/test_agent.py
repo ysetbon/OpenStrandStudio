@@ -2893,3 +2893,36 @@ def test_the_message_shows_the_images_sent_with_it(window, tmp_path):
     panel.render_transcript()
     assert 'height="48"' not in panel.transcript.toHtml()
     panel.entries.clear()
+
+
+def test_a_search_row_shows_what_it_found_side_by_side(tmp_path):
+    runner = agent.Agent(SimpleNamespace(), tmp_path, app=SimpleNamespace(call=None))
+    runner.workspace.run("search_samples", {"text": "link"})
+    assert len(runner.workspace.found) >= 2  # published files with their pictures
+    sheet = runner.tool_image("search_samples", {"text": "link"})
+    from PIL import Image
+    with Image.open(sheet) as picture:
+        assert picture.width == 2 * picture.height  # two matches, side by side
+    runner.workspace.run("search_samples", {"text": "zzzz"})
+    assert runner.tool_image("search_samples", {"text": "zzzz"}) is None  # nothing found: no picture
+    runner.app = None  # the command line: nobody shows pictures
+    runner.workspace.run("search_samples", {"text": "link"})
+    assert runner.tool_image("search_samples", {}) is None
+
+
+def test_the_mouse_over_an_image_sent_with_a_message_shows_it_larger(window, tmp_path):
+    from PyQt5.QtCore import QPoint
+    from PyQt5.QtGui import QImage
+    picture = tmp_path / "reference.png"
+    image = QImage(40, 20, QImage.Format_RGB32)
+    image.fill(0x3366aa)
+    assert image.save(str(picture))
+    panel = window.agent_panel
+    panel.entries.clear()
+    panel.add_user("like this  [reference.png]", images=[str(picture)])
+    assert 'href="os:image/0/0"' in panel.transcript.toHtml()
+    panel.hover("os:image/0/0", QPoint(400, 400))
+    assert panel.preview.isVisible() and panel.preview.key == "os:image/0/0"
+    panel.hover("", QPoint(400, 400))
+    assert not panel.preview.isVisible()
+    panel.entries.clear()

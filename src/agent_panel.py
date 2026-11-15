@@ -1391,7 +1391,19 @@ class AgentPanel(QWidget):
         return False
 
     def hover(self, anchor, cursor):
-        """Over a running tool's picture: show it larger; anywhere else: hide it."""
+        """Over a tool's picture, or an image sent with a message: show it larger;
+        anywhere else: hide it."""
+        if anchor.startswith('os:image/'):
+            try:
+                i, k = (int(n) for n in anchor[len('os:image/'):].split('/'))
+                path = self.entries[i]['images'][k]
+            except (ValueError, IndexError, KeyError):
+                path = None
+            if not path or not os.path.exists(path):
+                self.preview.hide_frame()
+            elif self.preview.key != anchor:
+                self.preview.show_frame(anchor, path, cursor)
+            return
         step = None
         if anchor.startswith('os:frame/'):
             try:
@@ -1605,10 +1617,12 @@ class AgentPanel(QWidget):
             out = (f'<p style="margin:6px 0 4px 0;"><span style="background-color:{c["user_bg"]};'
                    f' color:{c["user_fg"]};">&nbsp;{esc(e["text"])}&nbsp;</span></p>')
             # The reference images sent with it, small: which pictures the agent was given.
-            shown = [path for path in e.get('images') or () if os.path.exists(path)]
+            # The mouse over one shows it larger, as over a tool's picture.
+            shown = [(k, path) for k, path in enumerate(e.get('images') or ()) if os.path.exists(path)]
             if shown:
-                cells = ''.join(f'<td style="padding-right:6px;"><img src="{QUrl.fromLocalFile(path).toString()}"'
-                                f' height="{USER_IMAGE_HEIGHT}"></td>' for path in shown)
+                cells = ''.join(f'<td style="padding-right:6px;"><a href="os:image/{i}/{k}" style="text-decoration:none;">'
+                                f'<img src="{QUrl.fromLocalFile(path).toString()}" height="{USER_IMAGE_HEIGHT}"></a></td>'
+                                for k, path in shown)
                 out += f'<table cellspacing="0" cellpadding="0" style="margin:0 0 4px 0;"><tr>{cells}</tr></table>'
             return out
         if kind == 'agent':
@@ -1939,8 +1953,8 @@ class AgentPanel(QWidget):
             QDesktopServices.openUrl(url)
             return
         what, *ids = link[3:].split('/')
-        if what == 'frame':
-            return  # a tool's picture: the mouse over it shows it larger, a click does nothing
+        if what in ('frame', 'image'):
+            return  # a picture: the mouse over it shows it larger, a click does nothing
         try:
             ids = [int(n) for n in ids]
             entry = self.entries[ids[0]]

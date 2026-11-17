@@ -48,8 +48,10 @@ Up to 12 cords, together at most 30000 px long. Each cord is one of:
 Every cord may add `color` (name or hex), `width`, `label` (its group name in
 the layer panel), `second_color` (the cord changes color under a crossing; it
 needs a crossing it passes under besides the one hiding a closed cord's ends,
-or the report says it stayed one color) and `tucked: true` (it passes under
-everything).
+or the report says it stayed one color; `color_change_at: [x, y]` puts the
+change at the crossing it passes under nearest that point, e.g. the fold of a
+cord whose two ends are told apart by color, instead of near its middle) and
+`tucked: true` (it passes under everything).
 
 `weave` is `alternate` (default: every cord goes over, under, over… along
 its length) or `alternate_under_first`.

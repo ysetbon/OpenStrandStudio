@@ -403,7 +403,7 @@ def build(spec, mask_check=True, progress=None):
 
     started = time.monotonic()
     arrows = _arrows(spec.get('arrows'))
-    tucked, made, patterns, tools = set(), [], {}, {}
+    tucked, made, patterns, tools, changes = set(), [], {}, {}, {}
     # Arrows are fitted too: they count toward the same limit as the cords.
     lengths = sum(math.dist(a, b) for poly, _, _ in arrows for a, b in zip(poly, poly[1:]))
     for k, cord in enumerate(cords):
@@ -427,6 +427,14 @@ def build(spec, mask_check=True, progress=None):
                             f'width ({3 * width:.0f} px) so it reads as a cord')
         color = colors.parse(str(cord.get('color', TOOL_COLOR if tool else 'teal')))
         second = colors.parse(str(cord['second_color'])) if cord.get('second_color') else None
+        near = cord.get('color_change_at')
+        if near is not None:
+            if not second:
+                raise DrawError(f'cord {k + 1}: "color_change_at" needs a "second_color"')
+            if not (isinstance(near, (list, tuple)) and len(near) == 2):
+                raise DrawError(f'cord {k + 1}: "color_change_at" is a point [x, y]')
+            near = (_number(near[0], f'cord {k + 1} color_change_at'), _number(near[1], f'cord {k + 1} color_change_at'))
+            changes[k] = near
         group = str(cord.get('label') or (tool.capitalize() if tool else f'Cord {k + 1}'))[:40]
         made.append((poly, color, group, width, closed, second, heights))
         if _flag(cord.get('tucked', False), f'cord {k + 1} "tucked"'):
@@ -452,6 +460,8 @@ def build(spec, mask_check=True, progress=None):
             scene.cord(poly, color, group, width, closed=closed,
                        second_color=second, split='auto' if second else None)
             scene.cords[-1]['join_room'] = room
+            if k in changes:
+                scene.cords[-1]['split_near'] = changes[k]
             scene.cords[-1]['first'] = poly[0]      # where the cord starts (a closed cord is turned later)
             if heights is not None:
                 scene.cords[-1]['heights'] = list(heights)

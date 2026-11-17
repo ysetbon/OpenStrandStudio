@@ -437,8 +437,10 @@ class Scene:
             if cord['split'] == 'auto':
                 under, _ = self.covered_points(rule, c)
                 middle = (len(cord['poly'])-1)/2
-                # The one nearest the middle balances colors.
-                cord['split'] = int(round(min(under, key=lambda u: abs(u[0]-middle))[0]))
+                near = cord.get('split_near')
+                # The one asked for (nearest a given point), else the one nearest the middle: balanced colors.
+                cord['split'] = int(round(min(under, key=(lambda u: dist(u[3], near)) if near is not None
+                                              else (lambda u: abs(u[0]-middle)))[0]))
             cord['forced'] = {cord['split']} if cord['split'] is not None else set()
             cord['forced'] |= set(cord.get('joins', ()))   # joins asked for, e.g. under crossings
 

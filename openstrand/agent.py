@@ -14,6 +14,7 @@ import json
 import mimetypes
 import re
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -962,6 +963,7 @@ def found_text(names, shown=3):
 
 
 SUGGESTIONS = 3  # at most this many guesses at the next message; the first is the likeliest
+EARLY_GUESSES = 2  # guesses made while the agent still works: one at the start, one when it first writes
 
 SUGGEST_PROMPT = """You help someone design with OpenStrand Studio, an app for knots, weaves and \
 strand patterns. Below is what they just asked and how the assistant answered. Guess the next \
@@ -980,12 +982,34 @@ The assistant answered:
 Tools that ran:
 {tools}"""
 
+# The same guess while the agent is still working, so the chat box shows one before it ends.
+SUGGEST_EARLY_PROMPT = """You help someone design with OpenStrand Studio, an app for knots, weaves and \
+strand patterns. Below is what they just asked; the assistant is still working on it. Guess the \
+next messages they would most likely type once it has answered: up to 3 different short, concrete \
+follow-up requests (at most 12 words each), the likeliest first, one per line, in the same \
+language they wrote in, written as they would write them, e.g. "make it in teal and gold" or \
+"show me the steps". Not questions to them, not thanks, not the request again. Reply with the \
+messages only: no numbers, bullets or quotes. If no follow-up makes sense, reply with nothing.
+
+Earlier in the conversation:
+{before}
+
+They asked:
+{prompt}
+
+What the assistant has said so far:
+{said}
+
+Tools that ran so far:
+{tools}"""
+
 
 class Agent:
     """Runs one request: the loop of model calls and tool calls."""
 
     def __init__(self, client, out_dir, model=DEFAULT_MODEL, on_event=None, max_rounds=24, max_cost=2.00,
-                 quiet=None, web=True, effort='high', plan=False, app=None, log=None, suggest=False):
+                 quiet=None, web=True, effort='high', plan=False, app=None, log=None, suggest=False,
+                 early=False):
         if model not in PRICES:
             raise ValueError(f"model must be one of {', '.join(PRICES)}")
         if effort not in EFFORTS:
@@ -1008,6 +1032,16 @@ class Agent:
         # After an answer, guess the person's next message (shown greyed in the chat box,
         # Tab takes it), as Claude Code does. One small extra call; "openstrand agent" turns it on.
         self.suggest = suggest
+        # early: guess while the agent still works too, in the background (a 'suggestion'
+        # event), so the box has a guess before the answer ends. The command turns it on.
+        self.early = early and suggest
+        self.early_guesses = 0  # started so far, at most EARLY_GUESSES
+        self.shown_guess = 0  # the number of the latest guess sent: an older one never replaces it
+        self.over = False  # finish() has begun: no early guess is sent after it
+        self.closed = False  # the 'done' event went: nothing more is sent
+        self.early_threads = []
+        self.lock = threading.RLock()  # the background guesses count their cost and send events too
+        self.before = ''  # the session's last turn, for the early guess
         self.asked = ''  # the request as the person wrote it, for that guess
         self.ran = []  # 'name: summary' of each tool, for that guess
         self.on_event = on_event or (lambda event: None)
@@ -1055,11 +1089,14 @@ class Agent:
             raise
 
     def count(self, response):
-        for key in self.usage:
-            self.usage[key] += getattr(response.usage, key, 0) or 0
-        self.searches += _searches(response.usage)
-        self.cost += cost_of(self.model, response.usage)
-        self.on_event({'type': 'usage', 'cost': round(self.cost, 4), 'searches': self.searches, **self.usage})
+        with self.lock:
+            for key in self.usage:
+                self.usage[key] += getattr(response.usage, key, 0) or 0
+            self.searches += _searches(response.usage)
+            self.cost += cost_of(self.model, response.usage)
+            if not self.closed:
+                self.on_event({'type': 'usage', 'cost': round(self.cost, 4), 'searches': self.searches,
+                               **self.usage})
 
     def report(self, block):
         """Events for the parts of a response people want to follow."""
@@ -1089,6 +1126,10 @@ class Agent:
         self.asked = prompt
         if history:
             prompt = with_history(prompt, history)
+            last = history[-1] if isinstance(history[-1], dict) else {}
+            self.before = (f"They asked: {str(last.get('user', ''))[:600]}\n"
+                           f"The assistant answered: {str(last.get('agent', ''))[:900]}")
+        self.guess_early([])  # from the request alone, while the model reads it
         if start is not None:
             self.workspace.store(start, theirs=True)
             prompt = ('The design on my canvas right now is already loaded as the current design '
@@ -1133,6 +1174,8 @@ class Agent:
                     continue  # a long server-side search: send the turn back to resume it
                 if response.stop_reason != 'tool_use':
                     return self.finish(said)
+                if any(b.type == 'text' and b.text.strip() for b in response.content):
+                    self.guess_early(said)  # it said what it is doing: guess again with that
                 results = [self.tool(block) for block in response.content if block.type == 'tool_use']
                 messages.append({'role': 'user', 'content': results})
                 if self.cost > self.max_cost:
@@ -1230,6 +1273,32 @@ class Agent:
         from .app import HANDLERS
         return HANDLERS[name](self, args)
 
+    def guess_early(self, said):
+        """Guess the next message in the background while the agent works; the guess
+        goes out as a 'suggestion' event, unless a newer one went first or the request
+        has ended. At most EARLY_GUESSES per request; never fails it."""
+        with self.lock:
+            if not self.early or self.over or self.early_guesses >= EARLY_GUESSES or self.cost > self.max_cost:
+                return None
+            self.early_guesses += 1
+            number = self.early_guesses
+            text = SUGGEST_EARLY_PROMPT.format(
+                before=self.before or 'nothing', prompt=self.asked[:1500],
+                said='\n'.join(said)[-1500:] or 'nothing yet', tools='; '.join(self.ran[-12:])[:1500] or 'none')
+
+        def work():
+            found = self.guess(text, 'an early suggested next message')
+            with self.lock:
+                if not found or self.over or number < self.shown_guess:
+                    return
+                self.shown_guess = number
+                self.on_event({'type': 'suggestion', 'suggestion': found[0], 'suggestions': found})
+
+        thread = threading.Thread(target=work, daemon=True)
+        self.early_threads.append(thread)
+        thread.start()
+        return thread
+
     def next_messages(self, said):
         """The messages the person will most likely send next, likeliest first (up to
         SUGGESTIONS), or []. Never fails the request."""
@@ -1237,8 +1306,12 @@ class Agent:
             return []
         text = SUGGEST_PROMPT.format(prompt=self.asked[:1500], answer=said[-1][:1500],
                                      tools='; '.join(self.ran[-12:])[:1500] or 'none')
+        return self.guess(text, 'a suggested next message')
+
+    def guess(self, text, what):
+        """Ask the model for the next messages (SUGGEST_PROMPT or SUGGEST_EARLY_PROMPT): a list, or []."""
         try:
-            with self.log.waiting('a suggested next message'):
+            with self.log.waiting(what):
                 response = self.client.messages.create(
                     model=self.model, max_tokens=1024, output_config={'effort': 'low'},
                     messages=[{'role': 'user', 'content': text}])
@@ -1258,6 +1331,11 @@ class Agent:
         return found
 
     def finish(self, said, error=None):
+        with self.lock:
+            self.over = True  # an early guess still on its way is not sent now
+        for thread in self.early_threads:
+            # Its cost goes in this request's total. Done long before, as a rule: a guess is short.
+            thread.join(timeout=20)
         self.log(f'request ends: {error or "answered"} (cost ${self.cost:.3f}, {self.searches} web searches)')
         suggestions = self.next_messages(said) if error is None else []
         ws = self.workspace
@@ -1281,7 +1359,9 @@ class Agent:
             # with edit_mask_in_tab): it is there already, not a new design.
             event['project'] = event['png'] = None
             event['in_tab'] = ws.tab
-        self.on_event(event)
+        with self.lock:
+            self.on_event(event)
+            self.closed = True
         return event
 
 
@@ -1327,6 +1407,7 @@ def with_history(prompt, history):
 STAGES = {'lay_out': 'laying the cord out', 'tighten': 'pulling the knot tight',
           'draw_step': 'drawing step {step} of {steps}', 'draw': 'fitting strands to the cords'}
 _last_progress = {}
+_print_lock = threading.Lock()
 
 
 def stage_text(event):
@@ -1342,7 +1423,9 @@ def print_events(event, as_json=False, out=None):
     out: where to write (default stdout)."""
     out = out or sys.stdout
     if as_json:
-        print(json.dumps(event), file=out, flush=True)
+        with _print_lock:  # one whole line at a time: early guesses are sent from another thread
+            out.write(json.dumps(event) + '\n')
+            out.flush()
         return
     print_ = lambda text: print(text, file=out, flush=True)
     kind = event['type']

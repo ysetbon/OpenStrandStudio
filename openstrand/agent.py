@@ -280,7 +280,7 @@ TOOLS = [
                        'curve ({"x": "...t...", "y": "...t...", "t0": 0, "t1": "2*pi"}), a shape '
                        '({"shape": "circle", "center": [x, y], "radius": r}; also ellipse, polygon, heart, '
                        'turks_head) or a tool ({"tool": "hook", "from": [x, y], "to": [x, y]}; also needle, '
-                       'stick), plus optional closed, color, width, label, second_color, tucked, pattern, '
+                       'stick), plus optional closed, color, width, label, second_color, color_change_at, joins, tucked, pattern, '
                        'heights. Every crossing gets over and under, alternating along each cord, unless a '
                        'cord has a pattern: a letter for each crossing it passes, in order from its start, O '
                        'over or U under ("-" leaves one to the other cord), for knots that do not alternate; '

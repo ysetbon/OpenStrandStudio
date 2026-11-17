@@ -123,6 +123,28 @@ def test_a_second_color_that_cannot_be_placed_is_reported():
     assert "stayed one color" in report
 
 
+def test_color_change_at_puts_the_second_color_at_the_crossing_asked_for():
+    bars = [{"points": [[x, 200], [x, 600]], "color": "gold"} for x in (300, 600, 900)]
+    cord = {"points": [[100, 400], [1100, 400]], "color": "teal", "second_color": "crimson",
+            "pattern": "UUU", "color_change_at": [900, 400]}
+    data, _ = draw.build({"cords": [cord] + bars})
+    first = [s for s in data["strands"] if s["layer_name"].startswith("1_")]
+    change = [s["start"]["x"] for a, s in zip(first, first[1:]) if s["color"] != a["color"]]
+    assert change == [900.0]
+    with pytest.raises(draw.DrawError, match="needs a"):
+        draw.build({"cords": [dict(cord, second_color=None)] + bars})
+
+def test_joins_between_crossings_cut_a_mirrored_design_into_mirrored_strands():
+    bars = [{"points": [[x, 200], [x, 600]], "color": "gold"} for x in (300, 500, 700, 900)]
+    cord = {"points": [[100, 400], [600, 330], [1100, 400]], "color": "teal", "joins": "between_crossings"}
+    data, _ = draw.build({"cords": [cord] + bars})
+    joins = sorted(round(s["end"]["x"]) for s in data["strands"]
+                   if s["layer_name"].startswith("1_") and "start" in s)[:-1]
+    assert len(joins) == 3 and abs(joins[1] - 600) <= 4
+    assert abs((joins[0] - 600) + (joins[2] - 600)) <= 4       # mirrored about x = 600
+    with pytest.raises(draw.DrawError, match="between_crossings"):
+        draw.build({"cords": [dict(cord, joins="everywhere")] + bars})
+
 def test_the_draw_command_writes_a_project_and_a_report(tmp_path):
     spec = tmp_path / "rings.json"
     spec.write_text(json.dumps({"cords": [

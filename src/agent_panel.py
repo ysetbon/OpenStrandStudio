@@ -2911,7 +2911,7 @@ class AgentButton(QPushButton):
     outside the tile, split on the diagonal, orange on the top-left half and blue on the bottom-right;
     the tile is lighter under the pointer and, with the ring, a touch smaller while pressed. While
     the assistant is open, the tile shows the stretched 1x1 starting stitch in an orange frame (click
-    again for the logo). Closed, its frame is as wide as that one: near black, or warm white on the
+    again for the logo), and the ring under the pointer is plain blue. Closed, its frame is as wide as that one: near black, or warm white on the
     dark theme. The widget is 38 px so the ring has 3 px of room round the 32 px tile. While it is
     hidden it also shows what the assistant is doing: the logo steps in and an arc turns around
     it during a run, drifting from the logo's orange to its blue and back, and a green dot waits
@@ -3018,17 +3018,21 @@ class AgentButton(QPushButton):
         return self.underMouse() or self.isDown()
 
     def paint_cord_ring(self, painter, pressed):
-        """The logo's two cords round the tile: a ring split on the diagonal, orange on the
-        top-left half and blue on the bottom-right. Pressed, it steps in with the tile."""
+        """The ring round the tile. Closed, the logo's two cords: split on the diagonal, orange
+        on the top-left half and blue on the bottom-right. Open, plain blue round the orange frame,
+        so the two colours are back together as two rings. Pressed, it steps in with the tile."""
         ring = QRectF(self.rect()).adjusted(1, 1, -1, -1)
         if pressed:
             ring = ring.adjusted(1.5, 1.5, -1.5, -1.5)
-        split = QConicalGradient(ring.center(), 45)  # from the top-right corner, anticlockwise
-        split.setColorAt(0.0, LOGO_ORANGE)
-        split.setColorAt(0.4999, LOGO_ORANGE)
-        split.setColorAt(0.5, LOGO_BLUE)
-        split.setColorAt(1.0, LOGO_BLUE)
-        painter.setPen(QPen(QBrush(split), self.CORD_RING_WIDTH))
+        if self.isChecked():
+            painter.setPen(QPen(LOGO_BLUE, self.CORD_RING_WIDTH))
+        else:
+            split = QConicalGradient(ring.center(), 45)  # from the top-right corner, anticlockwise
+            split.setColorAt(0.0, LOGO_ORANGE)
+            split.setColorAt(0.4999, LOGO_ORANGE)
+            split.setColorAt(0.5, LOGO_BLUE)
+            split.setColorAt(1.0, LOGO_BLUE)
+            painter.setPen(QPen(QBrush(split), self.CORD_RING_WIDTH))
         painter.setBrush(Qt.NoBrush)
         painter.drawRoundedRect(ring, self.CORD_RING_RADIUS, self.CORD_RING_RADIUS)
 

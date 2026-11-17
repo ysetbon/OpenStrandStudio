@@ -2039,6 +2039,7 @@ def test_the_assistant_button_is_the_openstrand_logo(window):
     def ring(image):
         return image.pixelColor(6, ring_at).name(), image.pixelColor(size - 7, ring_at).name()
     shown = button.cord_ring_shown
+    button.follow(False)  # closed first
     try:
         button.cord_ring_shown = lambda: False
         assert LOGO_ORANGE.name() not in ring(picture()) and LOGO_BLUE.name() not in ring(picture())
@@ -2048,8 +2049,13 @@ def test_the_assistant_button_is_the_openstrand_logo(window):
         pressed = picture()
         assert pressed.pixelColor(12, ring_at).name() == LOGO_ORANGE.name()
         assert pressed.pixelColor(size - 13, ring_at).name() == LOGO_BLUE.name()
+        button.setDown(False)
+        button.follow(True)  # open: the ring is plain blue all round the orange frame
+        assert ring(picture()) == (LOGO_BLUE.name(), LOGO_BLUE.name())
+        assert picture().pixelColor(size // 2, 6).name() == LOGO_BLUE.name()
     finally:
         button.setDown(False)
+        button.follow(opened)
         del button.cord_ring_shown
     assert button.cord_ring_shown == shown
 

@@ -575,7 +575,29 @@ def test_the_agent_button_shows_and_hides_agent_over_the_canvas(window, monkeypa
     row = window.toolbar_button_layout if not window._toolbar_two_rows else window.toolbar_button_layout_2
     order = [row.itemAt(i).widget() for i in range(row.count()) if row.itemAt(i).widget()]
     assert order[-3:] == [window.layer_state_button, button, window.settings_button]
-    assert button.size() == window.settings_button.size() and button.toolTip() == ""
+    # its tile is Settings' size; the widget is MARGIN px bigger all round, room for the cord ring
+    assert window.settings_button.size().width() == button.TILE == window.settings_button.size().height()
+    assert button.width() == button.TILE + 2 * button.MARGIN and button.toolTip() == ""
+    # and it is centred on the same line as Tabs, State and Settings, on one row or two
+    from PyQt5.QtCore import QPoint
+
+    def centre(widget):
+        return widget.mapTo(window, QPoint(0, 0)).y() + widget.height() / 2
+    two_rows = window._toolbar_two_rows
+    try:
+        for fits in (False, True):
+            window._toolbar_single_row_width = (lambda: 0) if fits else (lambda: 10 ** 6)
+            window._toolbar_two_rows = None
+            window._apply_toolbar_rows()
+            QApplication.processEvents()
+            assert window._toolbar_two_rows is not fits
+            assert {centre(w) for w in (window.tabs_button, window.layer_state_button, button,
+                                        window.settings_button)} == {centre(window.layer_state_button)}
+    finally:
+        del window._toolbar_single_row_width  # the window's own measure again
+        window._toolbar_two_rows = None if two_rows is None else not two_rows
+        window._apply_toolbar_rows()
+        QApplication.processEvents()
     assert button.color().name() == "#d3c4ad" and button.RING.name() == "#ff5500"  # the sandstone tile, at rest
 
     # Pressed, the agent floats over the bottom of the visible canvas; the canvas keeps its size.
@@ -2001,7 +2023,9 @@ def test_the_assistant_button_is_the_openstrand_logo(window):
         painter.end()
         return image
 
-    colors = {picture().pixelColor(x, y).name() for x in range(0, 128, 2) for y in range(0, 128, 2)}
+    size = button.width() * 4  # at 4x: the 32 px tile sits MARGIN px in from each side of the widget
+    m = AgentButton.MARGIN * 4
+    colors = {picture().pixelColor(x, y).name() for x in range(0, size, 2) for y in range(0, size, 2)}
     assert LOGO_ORANGE.name() in colors and LOGO_BLUE.name() in colors
     # on and off are two pictures: the stitch while the assistant is open, the logo when it is not
     opened = button.isChecked()
@@ -2012,14 +2036,14 @@ def test_the_assistant_button_is_the_openstrand_logo(window):
     button.follow(opened)
 
     def cords(image):  # the logo's orange and blue inside the frame, where the picture is
-        return {(x, y) for x in range(16, 112) for y in range(16, 112)
+        return {(x, y) for x in range(m + 16, m + 112) for y in range(m + 16, m + 112)
                 if image.pixelColor(x, y).name() in (LOGO_ORANGE.name(), LOGO_BLUE.name())}
     off_cords, on_cords = cords(off), cords(on)
     assert off_cords and on_cords
     assert len(off_cords ^ on_cords) > len(off_cords) // 4  # another picture, not the same one recoloured
 
     def frame_width(image, color):  # px (at 4x) of the frame's colour across the middle row, from the left
-        return sum(1 for x in range(0, 24) if image.pixelColor(x, 64).name() == color.name())
+        return sum(1 for x in range(m, m + 24) if image.pixelColor(x, size // 2).name() == color.name())
     # the closed frame is as wide as the open ring: near black here, warm white on the dark theme
     theme = button.panel.theme_name
     for name, edge in (("default", AgentButton.EDGE), ("dark", AgentButton.EDGE_DARK)):
@@ -2046,6 +2070,36 @@ def test_the_assistant_button_is_the_openstrand_logo(window):
     assert AgentButton.ARC_RADIUS - AgentButton.ARC_WIDTH / 2 >= 11.46 * AgentButton.BUSY_LOGO / 24 + 1.0
     assert button.spin.timerType() == Qt.PreciseTimer and window.agent_panel.working.timer.timerType() == Qt.PreciseTimer
     assert QColor(LOGO_ORANGE).name() == "#ff5500"
+    # under the pointer and while pressed, a ring of the logo's two cords lies outside the tile:
+    # orange on the top-left half, blue on the bottom-right; none at rest
+    assert button.width() == button.height() == AgentButton.TILE + 2 * AgentButton.MARGIN
+    ring_at = size // 2  # the ring lies against the frame, out to the widget's edge: 0..8 at 4x
+    def ring(image):
+        return image.pixelColor(6, ring_at).name(), image.pixelColor(size - 7, ring_at).name()
+    shown = button.cord_ring_shown
+    button.follow(False)  # closed first
+    try:
+        button.cord_ring_shown = lambda: False
+        assert LOGO_ORANGE.name() not in ring(picture()) and LOGO_BLUE.name() not in ring(picture())
+        button.cord_ring_shown = lambda: True
+        hovered = picture()
+        assert ring(hovered) == (LOGO_ORANGE.name(), LOGO_BLUE.name())
+        # no gap: the ring's inner edge meets the frame's outer edge, 2 px in from the widget's
+        assert hovered.pixelColor(7, ring_at).name() == LOGO_ORANGE.name()
+        assert hovered.pixelColor(9, ring_at).name() == button.edge().name()
+        button.setDown(True)  # pressed: the ring is there too, stepped in with the tile
+        pressed = picture()
+        assert pressed.pixelColor(12, ring_at).name() == LOGO_ORANGE.name()
+        assert pressed.pixelColor(size - 13, ring_at).name() == LOGO_BLUE.name()
+        button.setDown(False)
+        button.follow(True)  # open: the ring is plain blue all round the orange frame
+        assert ring(picture()) == (LOGO_BLUE.name(), LOGO_BLUE.name())
+        assert picture().pixelColor(size // 2, 6).name() == LOGO_BLUE.name()
+    finally:
+        button.setDown(False)
+        button.follow(opened)
+        del button.cord_ring_shown
+    assert button.cord_ring_shown == shown
 
 
 def test_ask_mode_waits_for_open_in_new_tab(window, monkeypatch, tmp_path):

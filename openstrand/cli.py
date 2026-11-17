@@ -475,6 +475,8 @@ def cmd_agent(args):
         app = AppClient(lambda e: agent.print_events(e, True, out=events), log=log)
     runner = agent.Agent(client, out_dir, model=model, max_cost=args.max_cost, web=not args.no_web,
                          effort=args.effort, plan=args.plan, app=app, suggest=not args.no_suggest,
+                         # Guesses while it works too, for a program showing them (the app's chat box).
+                         early=args.json_events,
                          on_event=lambda e: agent.print_events(e, args.json_events, out=events),
                          quiet=lambda: quiet(not args.verbose), log=log)
     try:
@@ -629,7 +631,8 @@ def build_parser():
     agent_cmd.add_argument('--max-cost', type=float, default=2.00, help='stop when one request has cost this many USD (default 2.00)')
     agent_cmd.add_argument('--no-web', action='store_true', help='do not let the agent search or read the web')
     agent_cmd.add_argument('--no-suggest', action='store_true',
-                           help='do not suggest a next message after the answer (saves one small model call)')
+                           help='do not suggest a next message (saves one small model call, and with '
+                                '--json-events up to two more made while the agent works)')
     agent_cmd.add_argument('--effort', default='high', choices=['low', 'medium', 'high', 'xhigh', 'max'],
                            help='how hard the model thinks (default high; higher costs more)')
     agent_cmd.add_argument('--history', help="the session so far, a JSON list of {user, agent, design}")

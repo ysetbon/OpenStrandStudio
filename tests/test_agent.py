@@ -11,6 +11,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from pathlib import Path
 from types import SimpleNamespace
@@ -1203,18 +1204,30 @@ def fake_api(monkeypatch, request):
     """A local stand-in for the Messages API, reached through the real SDK."""
     import threading
     from http.server import BaseHTTPRequestHandler, HTTPServer
-    requests = []
+
+    class Requests(list):
+        guesses = None  # the calls without tools: guesses at the next message, some made in the background
+
+    requests = Requests()
+    requests.guesses = []
+    lock = threading.Lock()
 
     class Handler(BaseHTTPRequestHandler):
         def do_POST(self):
             body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
             # The SDK sends the key as x-api-key or as a bearer token.
             key = self.headers.get("x-api-key") or (self.headers.get("authorization") or "").removeprefix("Bearer ")
-            requests.append({"beta": self.headers.get("anthropic-beta"), "key": key, "body": body})
-            replies = getattr(request, "param", FAKE_REPLIES)
-            reply = replies[min(len(requests) - 1, len(replies) - 1)]
+            with lock:
+                if "tools" not in body:  # a guess at the next message: its own list, not a step of the script
+                    requests.guesses.append({"beta": self.headers.get("anthropic-beta"), "key": key, "body": body})
+                    reply = {"content": [{"type": "text", "text": "show me the steps"}], "stop_reason": "end_turn"}
+                else:
+                    requests.append({"beta": self.headers.get("anthropic-beta"), "key": key, "body": body})
+                    replies = getattr(request, "param", FAKE_REPLIES)
+                    reply = replies[min(len(requests) - 1, len(replies) - 1)]
             searches = sum(1 for b in reply["content"] if b["type"] == "server_tool_use")
-            out = json.dumps({"id": f"msg_{len(requests)}", "type": "message", "role": "assistant",
+            out = json.dumps({"id": f"msg_{len(requests) + len(requests.guesses)}", "type": "message",
+                              "role": "assistant",
                               "model": body["model"], "stop_sequence": None,
                               "usage": {"input_tokens": 1200, "output_tokens": 300,
                                         "cache_creation_input_tokens": 0, "cache_read_input_tokens": 900,
@@ -1275,10 +1288,15 @@ def test_the_panel_runs_the_agent_in_the_background_and_opens_its_design(window,
     assert "Searched the web: 5x3 bracelet weave" in shown and "A bracelet weave is an MxN stitch." in shown
     echoed = [b["type"] for b in fake_api[1]["body"]["messages"][1]["content"]]
     assert echoed[:3] == ["thinking", "server_tool_use", "web_search_tool_result"]
-    # The search is priced in: 3 replies of tokens plus one $0.01 search, and the
-    # suggested next message after the answer (one more small call, without tools).
-    assert len(fake_api) == 4 and "tools" not in fake_api[-1]["body"]
-    tokens = 4 * (1200 * 2 + 300 * 10 + 900 * 0.2) / 1e6
+    # The next message is guessed while the agent works (from the request at once, again once
+    # it says what it does), then from the answer: small calls without tools.
+    guesses = [g["body"]["messages"][0]["content"] for g in fake_api.guesses]
+    assert 2 <= len(guesses) <= 3 and "the assistant is still working on it" in guesses[0]
+    assert "The assistant answered:" in guesses[-1] and "teal vertical ribbons" in guesses[-1]
+    assert panel.prompt_edit.placeholderText() == "show me the steps" and not panel.prompt_edit.waiting
+    # The search is priced in: 3 replies of tokens plus one $0.01 search, and the guesses.
+    assert len(fake_api) == 3
+    tokens = (3 + len(guesses)) * (1200 * 2 + 300 * 10 + 900 * 0.2) / 1e6
     assert f"${tokens + 0.01:.3f}" in panel.status_label.text()
 
 
@@ -2883,6 +2901,77 @@ def test_the_agent_suggests_a_next_message(tmp_path):
     client = ScriptedClient([reply(text("Done."), stop="end_turn")])  # nothing left: the call raises
     done = agent.Agent(client, tmp_path, model="claude-sonnet-5-5", suggest=True).run("x")
     assert done["ok"] and done["suggestion"] == ""
+
+
+class GuessingClient(ScriptedClient):
+    """The script for the agent's own calls; a guess (a call without tools) gets guess."""
+
+    def __init__(self, replies, guess="make it in teal and gold"):
+        super().__init__(replies)
+        self.guess, self.guesses = guess, []
+        self.lock = threading.Lock()
+
+    def _create(self, **params):
+        with self.lock:
+            if "tools" not in params:
+                self.guesses.append(params["messages"][0]["content"])
+                return reply(text(self.guess), stop="end_turn")
+            return super()._create(**params)
+
+    _create_beta = _create
+
+
+def test_the_agent_guesses_the_next_message_while_it_works(tmp_path):
+    script = [reply(text("A 5×3 bracelet first."), tool("t1", "make_mxn", m=5, n=3)),
+              reply(text("Done: a 5×3 bracelet."), stop="end_turn")]
+    client = GuessingClient(script)
+    events = []
+    runner = agent.Agent(client, tmp_path, model="claude-haiku-5-5", suggest=True, early=True,
+                         on_event=events.append)
+    done = runner.run("a bracelet", history=[{"user": "a ring", "agent": "A 3×5 Turk's head."}])
+    kinds = [e["type"] for e in events]
+    assert kinds[-1] == "done" and done["suggestion"] == "make it in teal and gold"
+    # Guessed from the request, again once it said what it does, and from the answer: three calls.
+    assert len(client.guesses) == 3
+    assert "still working on it" in client.guesses[0] and "A 3×5 Turk's head." in client.guesses[0]
+    assert "A 5×3 bracelet first." in client.guesses[1] and "The assistant answered:" in client.guesses[2]
+    # The early guess reached the box before the answer: a 'suggestion' event before 'done'.
+    early = [e for e in events if e["type"] == "suggestion"]
+    assert early and early[0]["suggestions"] == ["make it in teal and gold"] and kinds.index("suggestion") < len(kinds) - 1
+    assert done["cost"] == round(runner.cost, 4) and runner.cost > 0  # every guess is in the request's cost
+    # Off unless asked (the command asks with --json-events): only the guess after the answer.
+    client = GuessingClient([reply(text("Done."), stop="end_turn")])
+    agent.Agent(client, tmp_path, model="claude-haiku-5-5", suggest=True).run("x")
+    assert len(client.guesses) == 1
+
+
+def test_the_box_shows_growing_dots_until_the_agent_guesses(window, tmp_path):
+    panel = window.agent_panel
+    box = panel.prompt_edit
+    box.clear()
+    box.suggest("")
+    box.set_waiting(True)  # as send() does when the agent starts
+    shown = [box.placeholderText()]
+    for _ in range(6):
+        box.next_dots()
+        shown.append(box.placeholderText())
+    assert shown == [".", "..", "...", "....", ".....", ".", ".."]
+    # A guess made while the agent works replaces the dots, for Tab to take at once.
+    panel.handle_event({"type": "suggestion", "suggestion": "show me the steps",
+                        "suggestions": ["show me the steps", "make it teal"]})
+    assert box.placeholderText() == "show me the steps"
+    box.next_dots()
+    assert box.placeholderText() == "show me the steps"
+    run_events(panel, [{"type": "text", "text": "Here it is."},
+                       {"type": "done", "ok": True, "error": None, "suggestion": "open it in a tab",
+                        "project": None, "png": None, "cost": 0.0}], tmp_path)
+    assert not box.waiting and box.placeholderText() == "open it in a tab"  # the guess from the answer
+    # Stopped (no answer): the guess made while it worked goes, and the example request is back.
+    box.set_waiting(True)
+    panel.handle_event({"type": "suggestion", "suggestion": "show me the steps"})
+    run_events(panel, [], tmp_path)
+    assert not box.waiting and box.placeholderText() == box.hint
+    panel.entries.clear()
 
 
 def test_tab_takes_the_suggested_message(window, tmp_path):

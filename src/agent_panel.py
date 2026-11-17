@@ -486,10 +486,14 @@ class PromptBox(QTextEdit):
     grows with what is typed up to MAX_LINES, then scrolls. After an answer
     the agent's guess at the next message shows greyed in the empty box, as
     in Claude Code: Tab (or the right arrow) takes it, typing anything else
-    drops it. The keys are in Settings > Button Guide, not on the box."""
+    drops it. While the agent works, the agent guesses already: until its
+    first guess comes, the empty box shows dots that grow, . .. ... .... .....
+    and start again. The keys are in Settings > Button Guide, not on the box."""
     submitted = pyqtSignal()
     cycle_mode = pyqtSignal()  # Shift+Tab, as in Claude Code
     MAX_LINES = 8
+    DOTS = ('.', '..', '...', '....', '.....')  # the box while the agent works and has no guess yet
+    DOTS_MS = 300
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -508,6 +512,11 @@ class PromptBox(QTextEdit):
         self.hint = ''  # what the empty box says: an example request
         self.suggestion = ''  # the agent's guess at the next message, shown instead
         self.suggestions = []  # all its guesses, likeliest first: Up and Down go through them
+        self.waiting = False  # the agent works: dots until its guess comes
+        self.dots = 0  # which of DOTS shows
+        self.dots_timer = QTimer(self)
+        self.dots_timer.setInterval(self.DOTS_MS)
+        self.dots_timer.timeout.connect(self.next_dots)
         self.fit_height()
 
     # ------------------------------------------------- the suggested next message
@@ -532,8 +541,22 @@ class PromptBox(QTextEdit):
         self.show_hint()
         return True
 
+    def set_waiting(self, on):
+        """While the agent works (on), the empty box shows growing dots until a guess comes."""
+        self.waiting, self.dots = bool(on), 0
+        if self.waiting:
+            self.dots_timer.start()
+        else:
+            self.dots_timer.stop()
+        self.show_hint()
+
+    def next_dots(self):
+        self.dots = (self.dots + 1) % len(self.DOTS)
+        if not self.suggestion:
+            self.show_hint()
+
     def show_hint(self):
-        self.setPlaceholderText(self.suggestion or self.hint)
+        self.setPlaceholderText(self.suggestion or (self.DOTS[self.dots] if self.waiting else self.hint))
 
     def typed(self):
         if self.suggestion and self.toPlainText():
@@ -2399,6 +2422,7 @@ class AgentPanel(QWidget):
         self.set_images([])
         self.status_label.setText(_tr(self.language, 'agent_working'))
         self.working.start(_tr(self.language, 'agent_thinking') + '…')
+        self.prompt_edit.set_waiting(True)  # dots until the agent's first guess at the next message
         self.activity_changed.emit()
         self.send_button.setText(_tr(self.language, 'agent_stop'))
         terminal_log(f'request starts: {prompt[:80]!r}; its files and agent.log are in {self.out_dir}')
@@ -2436,6 +2460,7 @@ class AgentPanel(QWidget):
         self.send_button.setText(_tr(self.language, 'agent_send'))
         self.status_label.setText('')
         self.working.stop()
+        self.prompt_edit.set_waiting(False)
         self.add_note(_tr(self.language, 'agent_failed').format(error=self.process.errorString()), '#c0392b')
         self.activity_changed.emit()
 
@@ -2514,6 +2539,11 @@ class AgentPanel(QWidget):
             if step is not None:
                 step['pages'] = [p for p in event.get('pages') or [] if isinstance(p, dict) and p.get('url')]
                 self.render_transcript()
+        elif kind == 'suggestion':
+            # A guess at the next message made while the agent works: greyed in the box
+            # now, for Tab; the guess made from the answer replaces it at the end.
+            if not self.stopping:
+                self.prompt_edit.suggest(event.get('suggestions') or event.get('suggestion') or '')
         elif kind == 'note':
             self.add_note(event.get('text', ''))
         elif kind == 'tool_start':
@@ -2777,9 +2807,12 @@ class AgentPanel(QWidget):
         self.stop_steps(by_person=self.stopping)
         self.tick.stop()
         self.working.stop()
+        self.prompt_edit.set_waiting(False)
         self.close_group()
         self.send_button.setText(_tr(self.language, 'agent_send'))
         event = self.done_event
+        if event is None or event.get('error') or self.stopping:
+            self.prompt_edit.suggest('')  # a guess made while it worked was for an answer that never came
         if event is not None:
             self.run_cost = max(self.run_cost, float(event.get('cost') or 0))
         spent, line = self.run_cost, self.cost_line()

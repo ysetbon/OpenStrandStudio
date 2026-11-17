@@ -540,13 +540,21 @@ class FakeAPI:
         import threading
         from http.server import BaseHTTPRequestHandler, HTTPServer
         self.requests = []
+        self.guesses = []  # the calls without tools: guesses at the next message, some in the background
+        lock = threading.Lock()
         api = self
 
         class Handler(BaseHTTPRequestHandler):
             def do_POST(self):
                 body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
-                api.requests.append(body)
-                reply = script(len(api.requests) - 1, body)
+                with lock:
+                    if "tools" not in body:
+                        api.guesses.append(body)
+                        reply = {"content": [{"type": "text", "text": "show me the steps"}],
+                                 "stop_reason": "end_turn"}
+                    else:
+                        api.requests.append(body)
+                        reply = script(len(api.requests) - 1, body)
                 out = json.dumps({"id": f"msg_{len(api.requests)}", "type": "message", "role": "assistant",
                                   "model": body["model"], "stop_sequence": None,
                                   "usage": {"input_tokens": 1000, "output_tokens": 100,

@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
     QSplitter, QFileDialog, QScrollArea, QMessageBox
 )
-from PyQt5.QtCore import Qt, QSize, pyqtSlot, pyqtSignal, QTimer, QEvent
+from PyQt5.QtCore import Qt, QMargins, QSize, pyqtSlot, pyqtSignal, QTimer, QEvent
 from PyQt5.QtGui import QIcon, QFont, QImage, QPainter, QColor, QKeySequence
 from PyQt5.QtWidgets import QShortcut
 from PyQt5.QtWidgets import QApplication
@@ -391,7 +391,10 @@ class MainWindow(QMainWindow):
         # Create the horizontal layout for buttons (proportional sizing)
         button_layout = QHBoxLayout()
         button_layout.setSpacing(self.TOOLBAR_SPACING)
-        button_layout.setContentsMargins(4, 2, 4, 2)
+        # 1 px above and below: a 40 px row leaves 38 px, the assistant button's full height
+        # with its hover ring, so Qt can centre it on the same line as Tabs, State and Settings
+        # (in less room it is pinned to the top and sits low).
+        button_layout.setContentsMargins(4, 1, 4, 1)
         # Kept so compact screens can tighten the gaps (see _apply_layer_panel_compact_width)
         self.toolbar_button_layout = button_layout
         # No alignment set - buttons will stretch proportionally
@@ -850,6 +853,10 @@ class MainWindow(QMainWindow):
                 target.addWidget(w)
         if two_rows:
             row2.addStretch()
+        # The empty second row takes no height, so one row has the whole bar and the
+        # assistant button, the tallest in it, is centred with the rest.
+        margins = row1.contentsMargins()
+        row2.setContentsMargins(margins if two_rows else QMargins(0, 0, 0, 0))
         for w in end:
             target.addWidget(w, 0)
         self.toolbar_container.setFixedHeight(

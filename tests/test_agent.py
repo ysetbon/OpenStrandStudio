@@ -577,6 +577,26 @@ def test_the_agent_button_shows_and_hides_agent_over_the_canvas(window, monkeypa
     # its tile is Settings' size; the widget is MARGIN px bigger all round, room for the cord ring
     assert window.settings_button.size().width() == button.TILE == window.settings_button.size().height()
     assert button.width() == button.TILE + 2 * button.MARGIN and button.toolTip() == ""
+    # and it is centred on the same line as Tabs, State and Settings, on one row or two
+    from PyQt5.QtCore import QPoint
+
+    def centre(widget):
+        return widget.mapTo(window, QPoint(0, 0)).y() + widget.height() / 2
+    two_rows = window._toolbar_two_rows
+    try:
+        for fits in (False, True):
+            window._toolbar_single_row_width = (lambda: 0) if fits else (lambda: 10 ** 6)
+            window._toolbar_two_rows = None
+            window._apply_toolbar_rows()
+            QApplication.processEvents()
+            assert window._toolbar_two_rows is not fits
+            assert {centre(w) for w in (window.tabs_button, window.layer_state_button, button,
+                                        window.settings_button)} == {centre(window.layer_state_button)}
+    finally:
+        del window._toolbar_single_row_width  # the window's own measure again
+        window._toolbar_two_rows = None if two_rows is None else not two_rows
+        window._apply_toolbar_rows()
+        QApplication.processEvents()
     assert button.color().name() == "#d3c4ad" and button.RING.name() == "#ff5500"  # the sandstone tile, at rest
 
     # Pressed, the agent floats over the bottom of the visible canvas; the canvas keeps its size.

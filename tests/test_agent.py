@@ -2055,7 +2055,7 @@ def test_the_assistant_button_is_the_openstrand_logo(window):
     # under the pointer and while pressed, a ring of the logo's two cords lies outside the tile:
     # orange on the top-left half, blue on the bottom-right; none at rest
     assert button.width() == button.height() == AgentButton.TILE + 2 * AgentButton.MARGIN
-    ring_at = size // 2  # the ring's pen is 1 px in from the widget's edge: 4..12 at 4x
+    ring_at = size // 2  # the ring lies against the frame, out to the widget's edge: 0..8 at 4x
     def ring(image):
         return image.pixelColor(6, ring_at).name(), image.pixelColor(size - 7, ring_at).name()
     shown = button.cord_ring_shown
@@ -2064,7 +2064,11 @@ def test_the_assistant_button_is_the_openstrand_logo(window):
         button.cord_ring_shown = lambda: False
         assert LOGO_ORANGE.name() not in ring(picture()) and LOGO_BLUE.name() not in ring(picture())
         button.cord_ring_shown = lambda: True
-        assert ring(picture()) == (LOGO_ORANGE.name(), LOGO_BLUE.name())
+        hovered = picture()
+        assert ring(hovered) == (LOGO_ORANGE.name(), LOGO_BLUE.name())
+        # no gap: the ring's inner edge meets the frame's outer edge, 2 px in from the widget's
+        assert hovered.pixelColor(7, ring_at).name() == LOGO_ORANGE.name()
+        assert hovered.pixelColor(9, ring_at).name() == button.edge().name()
         button.setDown(True)  # pressed: the ring is there too, stepped in with the tile
         pressed = picture()
         assert pressed.pixelColor(12, ring_at).name() == LOGO_ORANGE.name()

@@ -391,9 +391,9 @@ class MainWindow(QMainWindow):
         # Create the horizontal layout for buttons (proportional sizing)
         button_layout = QHBoxLayout()
         button_layout.setSpacing(self.TOOLBAR_SPACING)
-        # 1 px above and below: a 40 px row leaves 38 px, the assistant button's full height
-        # with its hover ring, so Qt can centre it on the same line as Tabs, State and Settings
-        # (in less room it is pinned to the top and sits low).
+        # 1 px above and below: a 40 px row leaves 38 px, room for the assistant button's
+        # full height with its hover ring, so Qt can centre it on the same line as Tabs, State
+        # and Settings (a button taller than its row is pinned to the top and sits low).
         button_layout.setContentsMargins(4, 1, 4, 1)
         # Kept so compact screens can tighten the gaps (see _apply_layer_panel_compact_width)
         self.toolbar_button_layout = button_layout

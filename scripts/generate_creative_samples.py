@@ -443,6 +443,20 @@ class Scene:
                                               else (lambda u: abs(u[0]-middle)))[0]))
             cord['forced'] = {cord['split']} if cord['split'] is not None else set()
             cord['forced'] |= set(cord.get('joins', ()))   # joins asked for, e.g. under crossings
+            if cord.get('between_crossings'):
+                cord['forced'] |= self.joins_between_crossings(c)
+
+    def joins_between_crossings(self, c):
+        """Joins halfway between each two crossings in a row along cord c, so
+        every strand holds one crossing and a mirrored design is cut into
+        mirrored strands. Crossings closer than twice the cord's width share
+        a strand: a join between them would sit inside both."""
+        cord = self.cords[c]
+        spacing = arc_lengths(cord['poly'])[-1]/(len(cord['poly'])-1)
+        along = sorted(h['positions'][side] for h in self.dense_crossings()
+                       for side in (0, 1) if h['cords'][side] == c)
+        return {int(round((a+b)/2)) for a, b in zip(along, along[1:])
+                if (b-a)*spacing >= 2*cord['width']}
 
     def unfit(self):
         """Drop the fitted chains so fit() rebuilds them."""

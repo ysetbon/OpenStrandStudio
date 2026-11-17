@@ -403,7 +403,7 @@ def build(spec, mask_check=True, progress=None):
 
     started = time.monotonic()
     arrows = _arrows(spec.get('arrows'))
-    tucked, made, patterns, tools, changes = set(), [], {}, {}, {}
+    tucked, made, patterns, tools, changes, spaced = set(), [], {}, {}, {}, set()
     # Arrows are fitted too: they count toward the same limit as the cords.
     lengths = sum(math.dist(a, b) for poly, _, _ in arrows for a, b in zip(poly, poly[1:]))
     for k, cord in enumerate(cords):
@@ -435,6 +435,11 @@ def build(spec, mask_check=True, progress=None):
                 raise DrawError(f'cord {k + 1}: "color_change_at" is a point [x, y]')
             near = (_number(near[0], f'cord {k + 1} color_change_at'), _number(near[1], f'cord {k + 1} color_change_at'))
             changes[k] = near
+        joins = cord.get('joins')
+        if joins not in (None, 'between_crossings'):
+            raise DrawError(f'cord {k + 1}: "joins" is "between_crossings" (a strand for each crossing)')
+        if joins:
+            spaced.add(k)
         group = str(cord.get('label') or (tool.capitalize() if tool else f'Cord {k + 1}'))[:40]
         made.append((poly, color, group, width, closed, second, heights))
         if _flag(cord.get('tucked', False), f'cord {k + 1} "tucked"'):
@@ -462,6 +467,7 @@ def build(spec, mask_check=True, progress=None):
             scene.cords[-1]['join_room'] = room
             if k in changes:
                 scene.cords[-1]['split_near'] = changes[k]
+            scene.cords[-1]['between_crossings'] = k in spaced
             scene.cords[-1]['first'] = poly[0]      # where the cord starts (a closed cord is turned later)
             if heights is not None:
                 scene.cords[-1]['heights'] = list(heights)

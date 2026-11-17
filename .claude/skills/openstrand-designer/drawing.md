@@ -51,7 +51,11 @@ needs a crossing it passes under besides the one hiding a closed cord's ends,
 or the report says it stayed one color; `color_change_at: [x, y]` puts the
 change at the crossing it passes under nearest that point, e.g. the fold of a
 cord whose two ends are told apart by color, instead of near its middle) and
-`tucked: true` (it passes under everything).
+`tucked: true` (it passes under everything), and `joins: "between_crossings"`
+(the cord is cut into strands halfway between each two crossings in a row, so
+each strand holds one crossing, and a mirrored or repeating design gets
+mirrored, repeating strands with matching control points; without it the
+fitter picks its own joins, which differ from one repeat to the next).
 
 `weave` is `alternate` (default: every cord goes over, under, over… along
 its length) or `alternate_under_first`.

@@ -35,8 +35,8 @@
     {
       "name": "chinese_cloverleaf",
       "craft": "chinese knotting",
-      "title": "Cloverleaf knot",
-      "also": ["Chinese cloverleaf", "clover knot", "four-leaf clover knot"],
+      "title": "Four-leaf cloverleaf knot",
+      "also": ["Chinese cloverleaf", "four-leaf clover knot", "four-leaf cloverleaf"],
       "about": "Four heart-shaped leaves interlocking on one closed cord, with a stem tucked under the centre. Shown finished and flat; no tying steps yet.",
       "build": {"file": "src/samples/chinese_cloverleaf.json"}
     },

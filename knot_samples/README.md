@@ -6,7 +6,8 @@ Fifteen classical knots and links as editable OpenStrandStudio projects, each wi
 knot_samples/
 ├── knots/         single knots (5)
 ├── turks_heads/   ring knots (4)
-└── links/         several linked rings (6)
+├── links/         several linked rings (6)
+└── celtic/        Celtic and Norse knotwork (3), see celtic/README.md
 ```
 
 Each folder has a `json/` folder with the projects and an `images/` folder with the pictures, same file names.

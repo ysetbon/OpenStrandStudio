@@ -400,9 +400,9 @@ TOOLS = [
                         'to follow a strand\'s outline; give one of: at [x, y] (a problem check_masks listed '
                         'there: just that place is erased), covers (a strand: the mask is erased where it paints '
                         'over it), around [x, y] (the mask\'s whole piece at that crossing), box ([x0, y0, x1, '
-                        'y1] or four [x, y] corners) when you know the exact area. "reset" is Reset Mask (every '
-                        'erase box gone). "swap" puts the other strand on top (delete and create reversed; its '
-                        'erase boxes go). "delete" removes the mask. "create" masks two strands (first on top of '
+                        'y1], or its four corners as eight numbers [x, y, x, y, x, y, x, y]) when you know the '
+                        'exact area. "reset" is Reset Mask (every erase box gone). "swap" puts the other strand '
+                        'on top (delete and create reversed; its erase boxes go). "delete" removes the mask. "create" masks two strands (first on top of '
                         'second). create and swap trim the new mask at once wherever it would paint the wrong '
                         'way. preview: true shows the result and the check after it without keeping it. '
                         'Otherwise the edited design becomes the current design.'),
@@ -414,7 +414,8 @@ TOOLS = [
             'covers': {'type': 'string', 'description': 'erase: the strand the mask should stop covering'},
             'around': {'type': 'array', 'items': {'type': 'number'}, 'description': 'erase: [x, y] of a crossing'},
             'box': {'type': 'array', 'items': {'type': 'number'},
-                   'description': 'erase: [x0, y0, x1, y1] or four [x, y] corners'},
+                   'description': 'erase: [x0, y0, x1, y1], or the four corners in order round it as '
+                                  'eight numbers [x, y, x, y, x, y, x, y]'},
             'first': {'type': 'string', 'description': 'create: the strand on top'},
             'second': {'type': 'string', 'description': 'create: the strand under it'},
             'preview': {'type': 'boolean', 'description': 'show what the edit would do, keep nothing'}},

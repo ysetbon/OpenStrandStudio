@@ -310,6 +310,27 @@ def test_the_agent_checks_and_edits_masks(tmp_path):
     assert {"check_masks", "edit_mask"} <= {t["name"] for t in TOOLS}
 
 
+def test_tool_arrays_name_their_items():
+    """An array property with no items is rejected by the Gemini API."""
+    from openstrand.agent import TOOLS
+    from openstrand.app import APP_TOOLS
+    missing = []
+
+    def walk(node, path):
+        if isinstance(node, dict):
+            if node.get("type") == "array" and "items" not in node:
+                missing.append(path)
+            for key, value in node.items():
+                walk(value, f"{path}.{key}")
+        elif isinstance(node, list):
+            for index, value in enumerate(node):
+                walk(value, f"{path}[{index}]")
+
+    for tool in list(TOOLS) + list(APP_TOOLS):
+        walk(tool.get("input_schema") or {}, tool["name"])
+    assert missing == []
+
+
 def test_tie_knot_tells_agent_what_it_fixed_and_what_is_left(tmp_path):
     from openstrand.agent import INSTRUCTIONS, Workspace
     from openstrand.app_tools import APP_INSTRUCTIONS

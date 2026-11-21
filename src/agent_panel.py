@@ -24,7 +24,7 @@ from contextlib import contextmanager
 
 from PyQt5.QtCore import (QDate, QEvent, QLocale, QPoint, QPointF, QProcess, QProcessEnvironment, QRect,
                           QRectF, QSize, Qt, QTimer, QUrl, pyqtSignal)
-from PyQt5.QtGui import (QBrush, QColor, QConicalGradient, QDesktopServices, QIcon, QImage, QImageReader, QPainter, QPainterPath, QPen, QPixmap,
+from PyQt5.QtGui import (QColor, QDesktopServices, QIcon, QImage, QImageReader, QPainter, QPainterPath, QPen, QPixmap,
                          QRegion, QTextDocument)
 from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog,
                              QGridLayout, QHBoxLayout, QLabel, QLayout, QLineEdit, QMenu, QPushButton, QToolButton,
@@ -2940,14 +2940,13 @@ class AgentButton(QPushButton):
 
     The OpenStrand logo (the assistant runs on many providers' models, so the button is the
     app's own mark, not one provider's) on a sandstone tile, drawn here so it answers
-    the mouse: under the pointer and while pressed, a ring of the logo's two cords lies just
-    outside the tile, split on the diagonal, orange on the top-left half and blue on the bottom-right;
-    the tile is lighter under the pointer and, with the ring, a touch smaller while pressed. While
-    the assistant is open, the tile shows the stretched 1x1 starting stitch in an orange frame (click
-    again for the logo), and the ring under the pointer is plain blue. Closed, its frame is as wide as that one: near black, or warm white on the
-    dark theme. The ring lies right against that frame, so the widget is 36 px, 2 px round the
-    32 px tile. While it is
-    hidden it also shows what the assistant is doing: the logo steps in and an arc turns around
+    the mouse. Closed, its frame is near black, or warm white on the dark theme; under the pointer
+    and while pressed an orange ring lies right against it, outside the tile, so the widget is
+    36 px, 2 px round the 32 px tile, and the tile is lighter under the pointer. While the assistant
+    is open, the tile shows the stretched 1x1 starting stitch in an orange frame as wide as the
+    closed one (click again for the logo); under the pointer and while pressed the stitch steps in
+    and a blue ring lies just inside the orange, nothing outside the tile. Pressed, the tile is a
+    touch smaller and darker, its ring with it. While it is hidden it also shows what the assistant is doing: the logo steps in and an arc turns around
     it during a run, drifting from the logo's orange to its blue and back, and a green dot waits
     on it when a design has opened."""
 
@@ -2962,7 +2961,8 @@ class AgentButton(QPushButton):
     RADIUS = 7                   # corner radius of the 32 px square
     TILE = 32                    # the tile, inside a widget MARGIN px bigger all round
     MARGIN = 2                   # room for the cord ring
-    CORD_RING_WIDTH = 2.0        # the hover and pressed ring, right against the frame: no gap
+    CORD_RING_WIDTH = 2.0        # the hover and pressed rings: orange outside the closed frame, blue inside the open one
+    STITCH_STEP_IN = 2.0         # open, under the pointer: the stitch steps in this far a side, room for the blue
     ARC_WIDTH = 1.5              # the working arc: 1 px clear of the 2 px frame (inner edge 14 px out)
     ARC_RADIUS = 12.25           # and 1 px clear of the logo, which steps in to BUSY_LOGO px while it turns
     BUSY_LOGO = 21.5
@@ -3047,27 +3047,24 @@ class AgentButton(QPushButton):
         return self.FACE
 
     def cord_ring_shown(self):
-        """The cord ring: under the pointer and while pressed."""
+        """The hover rings: under the pointer and while pressed."""
         return self.underMouse() or self.isDown()
 
     def paint_cord_ring(self, painter, frame):
-        """The ring round the tile. Closed, the logo's two cords: split on the diagonal, orange
-        on the top-left half and blue on the bottom-right. Open, plain blue round the orange frame,
-        so the two colours are back together as two rings. It lies right against the frame
-        (frame: the rect the frame is drawn on), so it steps in with the tile when pressed."""
+        """Closed, under the pointer or pressed: an orange ring right against the frame, outside
+        the tile (frame: the rect the frame is drawn on), so it steps in with the tile when pressed."""
         out = (self.FRAME_WIDTH + self.CORD_RING_WIDTH) / 2
-        ring = frame.adjusted(-out, -out, out, out)
-        if self.isChecked():
-            painter.setPen(QPen(LOGO_BLUE, self.CORD_RING_WIDTH))
-        else:
-            split = QConicalGradient(ring.center(), 45)  # from the top-right corner, anticlockwise
-            split.setColorAt(0.0, LOGO_ORANGE)
-            split.setColorAt(0.4999, LOGO_ORANGE)
-            split.setColorAt(0.5, LOGO_BLUE)
-            split.setColorAt(1.0, LOGO_BLUE)
-            painter.setPen(QPen(QBrush(split), self.CORD_RING_WIDTH))
+        painter.setPen(QPen(LOGO_ORANGE, self.CORD_RING_WIDTH))
         painter.setBrush(Qt.NoBrush)
-        painter.drawRoundedRect(ring, self.RADIUS + out, self.RADIUS + out)
+        painter.drawRoundedRect(frame.adjusted(-out, -out, out, out), self.RADIUS + out, self.RADIUS + out)
+
+    def paint_inner_ring(self, painter, frame):
+        """Open, under the pointer or pressed: a blue ring right inside the orange frame, so from the
+        middle out it is the stitch, blue, then orange, and nothing is drawn outside the tile."""
+        inset = (self.FRAME_WIDTH + self.CORD_RING_WIDTH) / 2
+        painter.setPen(QPen(LOGO_BLUE, self.CORD_RING_WIDTH))
+        painter.setBrush(Qt.NoBrush)
+        painter.drawRoundedRect(frame.adjusted(inset, inset, -inset, -inset), self.RADIUS - inset, self.RADIUS - inset)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -3078,9 +3075,10 @@ class AgentButton(QPushButton):
         if self.isDown():  # pressed in: a touch smaller
             square = square.adjusted(1.5, 1.5, -1.5, -1.5)
         frame = square.adjusted(0.5, 0.5, -0.5, -0.5)
-        if self.cord_ring_shown():
-            self.paint_cord_ring(painter, frame)
         opened = self.isChecked()
+        active = self.cord_ring_shown()  # under the pointer, or pressed
+        if active and not opened:
+            self.paint_cord_ring(painter, frame)
         painter.setPen(QPen(self.RING if opened else self.edge(), self.FRAME_WIDTH))
         painter.setBrush(self.color())
         painter.drawRoundedRect(frame, self.RADIUS, self.RADIUS)
@@ -3088,7 +3086,13 @@ class AgentButton(QPushButton):
         busy = self.busy()
         stitch = self.pressed_picture() if opened else None  # on: the stitch, off: the logo
         if stitch is not None and not stitch.isNull():
-            painter.drawPixmap(square.adjusted(1, 1, -1, -1), stitch, QRectF(stitch.rect()))
+            picture = square.adjusted(1, 1, -1, -1)
+            if active:  # the stitch steps in, 29 -> 25 px, and the blue ring takes the room
+                step = self.STITCH_STEP_IN
+                picture = picture.adjusted(step, step, -step, -step)
+            painter.drawPixmap(picture, stitch, QRectF(stitch.rect()))
+            if active:
+                self.paint_inner_ring(painter, frame)
         elif busy:  # the logo steps in so the arc has a ring of its own
             paint_logo(painter, QRectF(centre.x() - self.BUSY_LOGO / 2, centre.y() - self.BUSY_LOGO / 2, self.BUSY_LOGO, self.BUSY_LOGO))
         else:

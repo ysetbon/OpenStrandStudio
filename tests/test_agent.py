@@ -2070,31 +2070,44 @@ def test_the_assistant_button_is_the_openstrand_logo(window):
     assert AgentButton.ARC_RADIUS - AgentButton.ARC_WIDTH / 2 >= 11.46 * AgentButton.BUSY_LOGO / 24 + 1.0
     assert button.spin.timerType() == Qt.PreciseTimer and window.agent_panel.working.timer.timerType() == Qt.PreciseTimer
     assert QColor(LOGO_ORANGE).name() == "#ff5500"
-    # under the pointer and while pressed, a ring of the logo's two cords lies outside the tile:
-    # orange on the top-left half, blue on the bottom-right; none at rest
+    # under the pointer and while pressed: closed, an orange ring right against the frame, outside the
+    # tile; open, the stitch steps in and a blue ring lies just inside the orange frame, nothing outside
     assert button.width() == button.height() == AgentButton.TILE + 2 * AgentButton.MARGIN
-    ring_at = size // 2  # the ring lies against the frame, out to the widget's edge: 0..8 at 4x
-    def ring(image):
-        return image.pixelColor(6, ring_at).name(), image.pixelColor(size - 7, ring_at).name()
+    mid = size // 2  # at 4x: the closed ring covers 0..8, the frame 8..16, the open blue ring 16..24
+
+    def across(image, *xs):
+        return tuple(image.pixelColor(x, mid).name() for x in xs)
+    orange, blue = LOGO_ORANGE.name(), LOGO_BLUE.name()
+    open_fill = AgentButton.OPEN.name()
     shown = button.cord_ring_shown
     button.follow(False)  # closed first
     try:
         button.cord_ring_shown = lambda: False
-        assert LOGO_ORANGE.name() not in ring(picture()) and LOGO_BLUE.name() not in ring(picture())
+        rest = picture()
+        assert orange not in across(rest, 6, size - 7) and blue not in across(rest, 6, size - 7)
         button.cord_ring_shown = lambda: True
         hovered = picture()
-        assert ring(hovered) == (LOGO_ORANGE.name(), LOGO_BLUE.name())
+        assert across(hovered, 6, size - 7) == (orange, orange)  # all orange, both sides
+        assert hovered.pixelColor(mid, 6).name() == orange and hovered.pixelColor(mid, size - 7).name() == orange
         # no gap: the ring's inner edge meets the frame's outer edge, 2 px in from the widget's
-        assert hovered.pixelColor(7, ring_at).name() == LOGO_ORANGE.name()
-        assert hovered.pixelColor(9, ring_at).name() == button.edge().name()
+        assert across(hovered, 7, 9) == (orange, button.edge().name())
         button.setDown(True)  # pressed: the ring is there too, stepped in with the tile
-        pressed = picture()
-        assert pressed.pixelColor(12, ring_at).name() == LOGO_ORANGE.name()
-        assert pressed.pixelColor(size - 13, ring_at).name() == LOGO_BLUE.name()
+        assert across(picture(), 12, size - 13) == (orange, orange)
         button.setDown(False)
-        button.follow(True)  # open: the ring is plain blue all round the orange frame
-        assert ring(picture()) == (LOGO_BLUE.name(), LOGO_BLUE.name())
-        assert picture().pixelColor(size // 2, 6).name() == LOGO_BLUE.name()
+
+        button.follow(True)  # open
+        button.cord_ring_shown = lambda: False
+        rest = picture()
+        assert orange not in across(rest, 6) and across(rest, 12, 20) == (orange, open_fill)
+        assert across(rest, 28) != (open_fill,)  # the stitch reaches out to here at rest
+        button.cord_ring_shown = lambda: True
+        hovered = picture()
+        assert orange not in across(hovered, 6, size - 7) and blue not in across(hovered, 6, size - 7)  # nothing outside
+        assert across(hovered, 12, 20, size - 21, size - 13) == (orange, blue, blue, orange)  # stitch, blue, orange
+        assert hovered.pixelColor(mid, 20).name() == blue and hovered.pixelColor(mid, size - 21).name() == blue
+        assert across(hovered, 28) == (open_fill,)  # the stitch has stepped in, 29 -> 25 px
+        button.setDown(True)  # pressed open: the blue ring is there too, stepped in with the tile
+        assert blue in across(picture(), 26)
     finally:
         button.setDown(False)
         button.follow(opened)

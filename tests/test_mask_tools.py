@@ -331,6 +331,15 @@ def test_tool_arrays_name_their_items():
     assert missing == []
 
 
+def test_an_erase_box_takes_its_corners_as_eight_numbers():
+    """The tool schemas say box is an array of numbers, so four corners come flat."""
+    from openstrand.masks import corner_box
+    pairs = [[10, 20], [50, 25], [45, 60], [5, 55]]
+    flat = [v for p in pairs for v in p]
+    assert corner_box(flat) == corner_box(pairs)
+    assert corner_box(flat)["top_right"] == (50.0, 25.0)
+
+
 def test_tie_knot_tells_agent_what_it_fixed_and_what_is_left(tmp_path):
     from openstrand.agent import INSTRUCTIONS, Workspace
     from openstrand.app_tools import APP_INSTRUCTIONS

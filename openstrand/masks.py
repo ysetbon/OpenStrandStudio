@@ -1498,9 +1498,13 @@ def _keep_for(analysis, mask):
 # ------------------------------------------------------------------- edits
 def corner_box(box):
     """An erase box as Edit Mask stores it, by its four corners: from
-    [x0, y0, x1, y1] or from four [x, y] corners in order round it."""
+    [x0, y0, x1, y1], or from its four corners in order round it, as four
+    [x, y] pairs or as eight numbers [x, y, x, y, x, y, x, y] (the agent tools
+    send them flat, since their schema says the box is an array of numbers)."""
     if not isinstance(box, (list, tuple)):
         raise MaskError('an erase box is [x0, y0, x1, y1] or four [x, y] corners')
+    if len(box) == 8 and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in box):
+        box = [box[k:k + 2] for k in range(0, 8, 2)]
     if len(box) == 4 and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in box):
         x0, x1 = sorted((float(box[0]), float(box[2])))
         y0, y1 = sorted((float(box[1]), float(box[3])))

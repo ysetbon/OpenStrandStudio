@@ -9,7 +9,7 @@ model's answer, the model, the app's version and language, whether the request w
 whether the design was made from nothing of the person's (new). What never
 goes: the request the person typed, pictures they gave the agent, their API keys, their files,
 folders (every path and every API key in an answer or a design is cut out: the person's own
-keys whatever their shape, and any sk-... or xai-... key), an error's text, the time,
+keys whatever their shape, and any sk-..., xai-... or AIza... key), an error's text, the time,
 anything about the computer or the person. The agent's answer can still repeat words or bare
 file names (knot.json) from the request or the canvas: the consent text says so.
 
@@ -67,8 +67,9 @@ PATHS = (re.compile(r'(?:(?<!\w)[A-Za-z]:[\\/](?![\\/])|\\\\(?=\w))(?:[^\\/\r\n"
                     r'[^\s\\/"\'<>|:*?]*'),
          re.compile(r'(?:(?<![\w.])/(?:Users|home|private|var|tmp|mnt|Volumes)/|(?<!\w)~[\\/])[^\s"\'<>|]*'))
 # An API key in a text, as every provider's keys start: sk- (Anthropic sk-ant-, OpenAI sk- and
-# sk-proj-, DeepSeek, Kimi, Qwen) or xai- (Grok). Never part of a word (risk-free, ask-me-...).
-KEYS = re.compile(r'(?<![\w-])(?:sk|xai)-[A-Za-z0-9_\-]{16,}')
+# sk-proj-, DeepSeek, Kimi, Qwen), xai- (Grok) or AIza (Google's Gemini keys, 39 characters).
+# Never part of a word (risk-free, ask-me-...).
+KEYS = re.compile(r'(?<![\w-])(?:(?:sk|xai)-[A-Za-z0-9_\-]{16,}|AIza[A-Za-z0-9_\-]{30,})')
 MIN_SECRET = 12  # a saved key shorter than this is cut out by its shape only (never a common word)
 
 

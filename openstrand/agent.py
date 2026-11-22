@@ -24,7 +24,7 @@ from .errors import ToolError  # agent.ToolError: what a tool raises for the age
 
 from . import providers
 
-# Every model the agent runs on (openstrand/providers.py): Claude, GPT, Grok, Kimi, DeepSeek, Qwen.
+# Every model the agent runs on (openstrand/providers.py): Claude, GPT, Grok, Gemini, Kimi, DeepSeek, Qwen.
 MODELS = dict(providers.ALIASES)  # 'sonnet', 'haiku', 'grok', ... -> the model id
 DEFAULT_MODEL = providers.DEFAULT_MODEL
 EFFORTS = ('low', 'medium', 'high', 'xhigh', 'max')

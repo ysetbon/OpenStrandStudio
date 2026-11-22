@@ -170,20 +170,23 @@ python -m openstrand agent "make the gold ribbons red" --start designs/bracelet.
   | `sonnet` (default), `haiku` | Claude Sonnet 5.5, Claude Haiku 5.5 | Anthropic, Messages API | `ANTHROPIC_API_KEY` |
   | `gpt`, `gpt-6.1-sol`, `gpt-6-astra` | GPT-6.1 Terra, GPT-6.1 Sol, GPT-6 Astra | OpenAI, Responses API | `OPENAI_API_KEY` |
   | `grok` | Grok 4.7 | xAI, Responses API | `XAI_API_KEY` |
+  | `gemini` or `neon`, `carbon`, `argon`, `hydrogen` | Gemini 4 Neon, Gemini 4 Carbon, Gemini 4 Argon, Gemini 4 Hydrogen | Google, Gemini API (`generateContent`) | `GEMINI_API_KEY` |
   | `kimi` | Kimi K3.1 Pro | Moonshot AI, Anthropic-compatible | `MOONSHOT_API_KEY` |
   | `deepseek` | DeepSeek V4.1 Flash (`deepseek-flash`) | DeepSeek, Anthropic-compatible | `DEEPSEEK_API_KEY` |
   | `qwen` | Qwen3.8 Max | Alibaba Cloud Model Studio, Anthropic-compatible | `DASHSCOPE_API_KEY` |
 
   `openstrand/providers.py` has the endpoints and prices, and a client for
   each that answers like the anthropic SDK, so the agent loop is the same for
-  every model. The Responses API client uses Python's own urllib: nothing more
-  to install.
+  every model. The Responses API and Gemini API clients use Python's own urllib:
+  nothing more to install. Gemini runs on Google's own API, not its
+  OpenAI-compatible one, so its function calls' thought signatures go back to it
+  exactly as they came.
 - **Refresh models** (a button in Settings > Models, and on its own once a day,
   silently: 15 seconds after the app starts, then checked hourly; no window or
   note, only the lists change and the terminal log says what changed) asks each
   provider you have a key for which models it offers now (`providers.list_models`:
-  Anthropic and OpenAI `/v1/models`, xAI `/v1/language-models`, Kimi
-  `/v1/models`, DeepSeek `/models`; Qwen's list is not documented, so its
+  Anthropic and OpenAI `/v1/models`, xAI `/v1/language-models`, Google
+  `/v1beta/models`, Kimi `/v1/models`, DeepSeek `/models`; Qwen's list is not documented, so its
   built-in model stays unless the call works). It keeps only chat models (no
   embedding, speech, image or dated snapshot ids). It adds new ones, tagged "new",
   and marks the ones a provider is retiring with their date. Models a provider
@@ -197,7 +200,8 @@ python -m openstrand agent "make the gold ribbons red" --start designs/bracelet.
 - Web search and fetch (Claude models only: they are Anthropic's server
   tools) are on (`--no-web` turns them off); each search costs about $0.01.
   The model thinks at `--effort high` by default (a thinking budget on the
-  Anthropic-compatible endpoints, reasoning effort on the Responses API).
+  Anthropic-compatible endpoints, reasoning effort on the Responses API, a
+  thinking level on the Gemini API: low, medium or high, where xhigh and max are high).
 - Results go to `--out-dir` (default `designs/`): `design.json` and `design.png`.
 - `--json-events` prints one JSON line per step; the app's agent panel reads
   these.

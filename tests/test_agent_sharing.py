@@ -122,13 +122,15 @@ def test_a_share_never_holds_an_api_key_even_when_the_answer_repeats_one(tmp_pat
         ["Your keys an-odd-saved-key-0123456789 and an-odd-env-key-9876543210 both work.",
          "So would sk-ant-api03-AbCdEf0123456789_xyz-QQ, sk-proj-ABCDEFGHIJKLMNOPQRSTUVWX or "
          "xai-0123456789abcdefghijKLMNOP.",
+         "Or Gemini's AIzaSyA0123456789abcdefghijKLMNOPQRSTu, not AIzawa.",
          "A risk-free-of-charge-for-everyone knot, task-based, from xai-org/grok-1."],
         {"strands": [], "note": "sk-0123456789abcdef0123", "name": "an-odd-saved-key-0123456789"}, None,
         secrets=keys + ["", "short"])
     said = json.dumps(record)
-    for secret in ("an-odd-saved-key", "an-odd-env-key", "sk-ant-", "sk-proj-", "xai-0123", "sk-0123"):
+    for secret in ("an-odd-saved-key", "an-odd-env-key", "sk-ant-", "sk-proj-", "xai-0123", "sk-0123", "AIzaSy"):
         assert secret not in said, secret
     assert record["answer"] == ["Your keys … and … both work.", "So would …, … or ….",
+                                "Or Gemini's …, not AIzawa.",
                                 "A risk-free-of-charge-for-everyone knot, task-based, from xai-org/grok-1."]
     assert record["design"] == {"strands": [], "note": "…", "name": "…"}
 

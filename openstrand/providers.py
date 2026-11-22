@@ -716,7 +716,7 @@ class GeminiClient(ResponsesClient):
 # not its embedding, speech, image or dated snapshot ids.
 SKIP_WORDS = ('embed', 'audio', 'realtime', 'transcribe', 'tts', 'whisper', 'image', 'imagine', 'dall', 'vision-exp',
               'moderation', 'search', 'instruct', 'asr', 'omni', '-vl', 'math', 'mt-', 'rerank', 'video', 'ocr',
-              '-live', 'robotics', 'computer-use', 'aqa', 'latest')
+              '-live', 'robotics', 'computer-use', 'aqa', 'latest', 'banana')
 FAMILIES = {'anthropic': ('claude-',), 'openai': ('gpt-',), 'xai': ('grok-',), 'google': ('gemini-',), 'moonshot': ('kimi-',),
             'deepseek': ('deepseek-',), 'qwen': ('qwen3', 'qwen4')}
 # gpt-6.1-terra-2026-10-26, qwen3.8-max-0902, gemini-3.8-flash-preview-09-2026, gemini-4-neon-001

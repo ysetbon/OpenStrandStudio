@@ -532,6 +532,7 @@ def test_each_provider_lists_its_chat_models(server, monkeypatch):
         (200, {"models": [
             {"name": "models/gemini-4-hydrogen", "supportedGenerationMethods": chat},
             {"name": "models/gemini-3.8-flash-image", "supportedGenerationMethods": chat},
+            {"name": "models/gemini-nano-banana-2.1", "displayName": "Nano Banana 2.1", "supportedGenerationMethods": chat},
             {"name": "models/gemini-flash-latest", "supportedGenerationMethods": chat},
             {"name": "models/imagen-5", "supportedGenerationMethods": ["predict"]}]})]
     rows = providers.list_models("google", "AIza-test")

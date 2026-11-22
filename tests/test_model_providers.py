@@ -72,6 +72,9 @@ def test_every_model_has_a_provider_a_price_and_an_alias_that_resolves():
     assert providers.resolve("sonnet") == "claude-sonnet-5-5" and providers.resolve("grok") == "grok-4.7"
     assert providers.resolve("kimi") == "kimi-k3.1-pro" and providers.resolve("deepseek") == "deepseek-flash"
     assert providers.resolve("qwen") == "qwen3.8-max" and providers.resolve("gpt") == "gpt-6.1-terra"
+    assert providers.resolve("gemini") == providers.resolve("neon") == "gemini-4-neon"
+    assert [providers.resolve(a) for a in ("carbon", "argon", "hydrogen")] == [
+        "gemini-4-carbon", "gemini-4-argon", "gemini-4-hydrogen"]
     for model in providers.MODELS.values():
         assert model.provider in providers.PROVIDERS and len(model.prices) == 4 and model.id in agent.PRICES
     with pytest.raises(ValueError, match="unknown model"):
@@ -79,6 +82,7 @@ def test_every_model_has_a_provider_a_price_and_an_alias_that_resolves():
     endpoints = {p.key: (p.api, p.base_url, p.env) for p in providers.PROVIDERS.values()}
     assert endpoints["openai"] == ("responses", "https://api.openai.com/v1", "OPENAI_API_KEY")
     assert endpoints["xai"] == ("responses", "https://api.x.ai/v1", "XAI_API_KEY")
+    assert endpoints["google"] == ("gemini", "https://generativelanguage.googleapis.com/v1beta", "GEMINI_API_KEY")
     assert endpoints["moonshot"] == ("anthropic-compatible", "https://api.moonshot.ai/anthropic", "MOONSHOT_API_KEY")
     assert endpoints["deepseek"] == ("anthropic-compatible", "https://api.deepseek.com/anthropic", "DEEPSEEK_API_KEY")
     assert endpoints["qwen"] == ("anthropic-compatible", "https://dashscope-intl.aliyuncs.com/apps/anthropic",
@@ -201,6 +205,106 @@ def test_agent_still_uses_anthropic_itself():
     assert type(client) is anthropic.Anthropic and "api.anthropic.com" in str(client.base_url)
     assert isinstance(providers.client_for("gpt-6-astra", "sk"), providers.ResponsesClient)
     assert isinstance(providers.client_for("kimi", "sk"), providers.CompatClient)
+    assert isinstance(providers.client_for("neon", "AIza-test"), providers.GeminiClient)
+
+
+# ------------------------------------------------------------ the Gemini API
+def gemini_answer(parts, finish="STOP", usage=None):
+    return {"candidates": [{"content": {"role": "model", "parts": parts}, "finishReason": finish}],
+            "usageMetadata": usage or {"promptTokenCount": 10, "candidatesTokenCount": 2},
+            "modelVersion": "gemini-4-neon", "responseId": "r1"}
+
+
+@pytest.mark.parametrize("model", ["gemini-4-neon", "gemini-4-carbon", "gemini-4-argon", "gemini-4-hydrogen"])
+def test_gemini_4_runs_the_agent_loop_on_the_gemini_api(model, tmp_path, server):
+    server.answers[:] = [
+        (200, gemini_answer([
+            {"text": "Look at the knots.", "thought": True},
+            {"functionCall": {"id": "fc-1", "name": "knot_library", "args": {}}, "thoughtSignature": "sig-AAA"}],
+            usage={"promptTokenCount": 1200, "cachedContentTokenCount": 200, "candidatesTokenCount": 30,
+                   "thoughtsTokenCount": 50})),
+        (200, gemini_answer([{"text": "I know five knots.", "thoughtSignature": "sig-BBB"}],
+                            usage={"promptTokenCount": 1500, "cachedContentTokenCount": 1000,
+                                   "candidatesTokenCount": 20})),
+    ]
+    client = providers.GeminiClient(local("google", server, "/v1beta"), "AIza-test")
+    events = []
+    runner = agent.Agent(client, tmp_path, model=model, on_event=events.append, effort="max")
+    done = runner.run("which knots can you tie?")
+    assert done["ok"] and done["text"] == "I know five knots." and len(server.seen) == 2
+    first, second = server.seen
+    assert first["path"] == f"/v1beta/models/{model}:generateContent"  # the key is not in the URL
+    assert first["headers"]["x-goog-api-key"] == "AIza-test" and "authorization" not in first["headers"]
+    body = first["body"]
+    assert "OpenStrand Studio" in body["systemInstruction"]["parts"][0]["text"]
+    assert body["contents"] == [{"role": "user", "parts": [{"text": "which knots can you tie?"}]}]
+    assert body["generationConfig"]["thinkingConfig"] == {"includeThoughts": True, "thinkingLevel": "high"}
+    (declarations,) = body["tools"]
+    names = {f["name"] for f in declarations["functionDeclarations"]}
+    assert "knot_library" in names and "web_search" not in names  # Anthropic's server tools: Claude only
+    assert runner.web is False
+    # The second request: the model's parts back as they came (its thought signature with them),
+    # then the tool's output as a function response naming the call.
+    contents = second["body"]["contents"]
+    assert contents[1] == {"role": "model", "parts": [
+        {"text": "Look at the knots.", "thought": True},
+        {"functionCall": {"id": "fc-1", "name": "knot_library", "args": {}}, "thoughtSignature": "sig-AAA"}]}
+    (response,) = contents[2]["parts"]
+    assert response["functionResponse"]["name"] == "knot_library" and response["functionResponse"]["id"] == "fc-1"
+    assert "Overhand" in response["functionResponse"]["response"]["output"]
+    assert any(e["type"] == "thinking" and e["text"] == "Look at the knots." for e in events)
+    # Cost at the model's prices: thinking is billed as output.
+    p_in, p_out, _, p_read = providers.PRICES[model]
+    expected = ((1000 + 500) * p_in + (200 + 1000) * p_read + (30 + 50 + 20) * p_out) / 1_000_000
+    assert abs(done["cost"] - round(expected, 4)) < 1e-6 and done["model"] == model
+
+
+def test_gemini_gets_tool_pictures_and_answers_without_call_ids(server):
+    messages = [{"role": "user", "content": "make a heart"},
+                {"role": "assistant", "content": [{"type": "text", "text": "Rendering."},
+                                                  {"type": "tool_use", "id": "gemini_call_1", "name": "render",
+                                                   "input": {"scale": 2}}]},
+                {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "gemini_call_1", "is_error": True,
+                                              "content": [{"type": "image", "source": {
+                                                  "type": "base64", "media_type": "image/png", "data": "iVBOR"}},
+                                                  {"type": "text", "text": "rendered"}]}]}]
+    contents = providers.gemini_contents(messages)
+    assert contents[1] == {"role": "model", "parts": [{"text": "Rendering."},
+                                                      {"functionCall": {"name": "render", "args": {"scale": 2}}}]}
+    parts = contents[2]["parts"]
+    assert parts[0] == {"functionResponse": {"name": "render", "response": {
+        "error": "(the picture follows the tool results)\nrendered"}}}
+    assert parts[-1] == {"inlineData": {"mimeType": "image/png", "data": "iVBOR"}}
+    # A model that cannot see: the picture said in words, none sent.
+    blind = providers.gemini_contents(messages, vision=False)
+    assert not any("inlineData" in p for c in blind for p in c["parts"])
+    # Calls without ids get ours, which never go back to the API.
+    message = providers.gemini_message(gemini_answer([{"functionCall": {"name": "render", "args": {}}},
+                                                      {"functionCall": {"name": "check", "args": None}}]), "neon")
+    calls = [b for b in message.content if b.type == "tool_use"]
+    assert [c.id for c in calls] == ["gemini_call_1", "gemini_call_2"] and calls[1].input == {}
+    assert message.stop_reason == "tool_use"
+    assert providers.gemini_message(gemini_answer([], finish="SAFETY"), "neon").stop_reason == "refusal"
+    assert providers.gemini_message(gemini_answer([{"text": "abc"}], finish="MAX_TOKENS"),
+                                    "neon").stop_reason == "max_tokens"
+
+
+def test_gemini_retries_a_thinking_level_it_lacks_and_reports_a_refused_key(server):
+    server.answers[:] = [(400, {"error": {"code": 400, "message": "thinking_level 'low' is not supported",
+                                          "status": "INVALID_ARGUMENT"}}),
+                         (200, gemini_answer([{"text": "ok"}]))]
+    client = providers.GeminiClient(local("google", server, "/v1beta"), "AIza-test")
+    message = client.messages.create(model="gemini-4-hydrogen", max_tokens=1000, messages=[
+        {"role": "user", "content": "hi"}], output_config={"effort": "low"})
+    assert message.content[0].text == "ok" and message.stop_reason == "end_turn"
+    levels = [s["body"]["generationConfig"]["thinkingConfig"].get("thinkingLevel") for s in server.seen]
+    assert levels == ["low", None]
+    assert "systemInstruction" not in server.seen[0]["body"] and "tools" not in server.seen[0]["body"]
+    server.answers[:] = [(400, {"error": {"code": 400, "message": "API key not valid. Please pass a valid API key.",
+                                          "status": "INVALID_ARGUMENT"}})]
+    client = providers.GeminiClient(local("google", server, "/v1beta"), "AIza-bad")
+    with pytest.raises(providers.ProviderError, match="400: API key not valid"):
+        client.messages.create(model="gemini-4-neon", messages=[{"role": "user", "content": "hi"}])
 
 
 # ------------------------------------------------------------ safe requests
@@ -302,7 +406,12 @@ def test_a_redirect_never_carries_a_key_to_another_host(start, monkeypatch):
                         dataclasses.replace(providers.PROVIDERS["deepseek"], models_url=front + "/models"))
     with pytest.raises(providers.ProviderError, match="returned 302"):
         providers.list_models("deepseek", "sk-secret")
-    assert len(asked) == 3 and taken == []  # the key reached the provider's own host only
+    # The Gemini API.
+    gemini = providers.GeminiClient(dataclasses.replace(providers.PROVIDERS["google"], base_url=front + "/v1beta"),
+                                    "AIza-secret")
+    with pytest.raises(providers.ProviderError, match="returned 302"):
+        gemini.messages.create(model="gemini-4-neon", messages=[{"role": "user", "content": "hi"}])
+    assert len(asked) == 4 and taken == []  # the key reached the provider's own host only
 
 
 def test_environment_variables_neither_move_a_client_nor_add_a_credential(start, monkeypatch):
@@ -330,7 +439,7 @@ def test_environment_variables_neither_move_a_client_nor_add_a_credential(start,
 def test_what_the_settings_forbid_is_never_sent(start, monkeypatch):
     anthropic = pytest.importorskip("anthropic")
     url, _, seen = start(answer=MESSAGE)
-    forbidden = {"deepseek", "xai", None}  # None: a share with the developer
+    forbidden = {"deepseek", "xai", "google", None}  # None: a share with the developer
     monkeypatch.setattr(providers, "POLICY", lambda p: "turned off in Settings > Models" if p in forbidden else None)
     with pytest.raises(anthropic.APIConnectionError) as refused:
         providers.compatible_sdk(anthropic, "sk-ds", url + "/anthropic", provider="deepseek").with_options(
@@ -339,6 +448,9 @@ def test_what_the_settings_forbid_is_never_sent(start, monkeypatch):
     grok = providers.ResponsesClient(dataclasses.replace(providers.PROVIDERS["xai"], base_url=url + "/v1"), "xai-k")
     with pytest.raises(providers.NotAllowed, match="turned off"):
         grok.messages.create(model="grok-4.7", messages=[{"role": "user", "content": "hi"}])
+    gemini = providers.GeminiClient(dataclasses.replace(providers.PROVIDERS["google"], base_url=url + "/v1beta"), "AIza")
+    with pytest.raises(providers.NotAllowed, match="turned off"):
+        gemini.messages.create(model="gemini-4-neon", messages=[{"role": "user", "content": "hi"}])
     monkeypatch.setitem(providers.PROVIDERS, "deepseek",
                         dataclasses.replace(providers.PROVIDERS["deepseek"], models_url=url + "/models"))
     with pytest.raises(providers.NotAllowed):
@@ -353,7 +465,7 @@ def test_what_the_settings_forbid_is_never_sent(start, monkeypatch):
 
 def test_each_provider_says_where_its_company_is_based():
     assert {p.key: p.country for p in providers.PROVIDERS.values()} == {
-        "anthropic": "US", "openai": "US", "xai": "US", "moonshot": "CN", "deepseek": "CN", "qwen": "CN"}
+        "anthropic": "US", "openai": "US", "xai": "US", "google": "US", "moonshot": "CN", "deepseek": "CN", "qwen": "CN"}
 
 
 def test_the_tests_own_stand_in_api_must_be_on_this_computer(monkeypatch):
@@ -407,6 +519,27 @@ def test_each_provider_lists_its_chat_models(server, monkeypatch):
         {"id": "grok-imagine-2", "output_modalities": ["image"]}]})]
     (grok,) = providers.list_models("xai", "xai-test")
     assert grok["id"] == "grok-4.8" and grok["prices"] == (2.5, 8.0, 2.5, 0.5) and grok["vision"] is True
+    # Google: two pages, the key in its header (never the URL), chat models only.
+    listing("google", server, monkeypatch, "/v1beta/models")
+    chat = ["generateContent", "countTokens"]
+    server.answers[:] = [
+        (200, {"models": [
+            {"name": "models/gemini-4-neon", "displayName": "Gemini 4 Neon", "supportedGenerationMethods": chat},
+            {"name": "models/gemini-4-neon-001", "supportedGenerationMethods": chat},
+            {"name": "models/gemini-embedding-002", "supportedGenerationMethods": ["embedContent"]},
+            {"name": "models/gemini-4-carbon", "displayName": "Gemini 4 Carbon", "supportedGenerationMethods": chat}],
+            "nextPageToken": "p2"}),
+        (200, {"models": [
+            {"name": "models/gemini-4-hydrogen", "supportedGenerationMethods": chat},
+            {"name": "models/gemini-3.8-flash-image", "supportedGenerationMethods": chat},
+            {"name": "models/gemini-flash-latest", "supportedGenerationMethods": chat},
+            {"name": "models/imagen-5", "supportedGenerationMethods": ["predict"]}]})]
+    rows = providers.list_models("google", "AIza-test")
+    assert [r["id"] for r in rows] == ["gemini-4-neon", "gemini-4-carbon", "gemini-4-hydrogen"]
+    assert [r["label"] for r in rows] == ["Gemini 4 Neon", "Gemini 4 Carbon", "Gemini 4 Hydrogen"]
+    assert server.seen[-2]["path"] == "/v1beta/models?pageSize=1000"
+    assert server.seen[-1]["path"] == "/v1beta/models?pageSize=1000&pageToken=p2"
+    assert all(s["headers"]["x-goog-api-key"] == "AIza-test" for s in server.seen[-2:])
     # A provider that refuses: its own message.
     listing("deepseek", server, monkeypatch)
     server.answers[:] = [(401, {"error": {"message": "Authentication Fails"}})]

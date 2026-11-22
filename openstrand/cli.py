@@ -399,7 +399,7 @@ def cmd_render(args):
 
 def api_key(provider='anthropic'):
     """The provider's API key: its environment variable (ANTHROPIC_API_KEY, OPENAI_API_KEY,
-    XAI_API_KEY, MOONSHOT_API_KEY, DEEPSEEK_API_KEY, DASHSCOPE_API_KEY), else the one saved
+    XAI_API_KEY, GEMINI_API_KEY, MOONSHOT_API_KEY, DEEPSEEK_API_KEY, DASHSCOPE_API_KEY), else the one saved
     in the app's Settings > Models."""
     from . import providers
     if os.environ.get(providers.PROVIDERS[provider].env, '').strip():
@@ -623,7 +623,8 @@ def build_parser():
                                 'request (6 with haiku)')
     agent_cmd.add_argument('--model', default='sonnet',
                            help='a model id or alias: sonnet (Claude Sonnet 5.5, default), haiku, gpt (GPT-6.1 Terra), '
-                                'gpt-6.1-sol, gpt-6-astra, grok (Grok 4.7), kimi (Kimi K3.1 Pro), deepseek '
+                                'gpt-6.1-sol, gpt-6-astra, grok (Grok 4.7), gemini or neon (Gemini 4 Neon), carbon, '
+                                'argon, hydrogen (Gemini 4), kimi (Kimi K3.1 Pro), deepseek '
                                 '(DeepSeek V4.1 Flash), qwen (Qwen3.8 Max); each provider\'s key comes from its '
                                 'environment variable or Settings > Models')
     agent_cmd.add_argument('--start', help='a project to start from, such as the current canvas')

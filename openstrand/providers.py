@@ -12,6 +12,10 @@ same for every model:
 - OpenAI (GPT) and xAI (Grok): the OpenAI Responses API (GPT-6 models call tools
   only there), through ResponsesClient, which speaks it over plain HTTPS (Python's
   urllib) and turns its answer into the same shape.
+- Google (Gemini): the Gemini API's own generateContent, through GeminiClient (plain
+  HTTPS too). Its OpenAI-compatible endpoint is not used: a Gemini model's function
+  calls carry thought signatures that must go back exactly as they came, and the
+  native API's parts carry them as they are.
 
 Model ids, endpoints and prices are as the providers published them in November
 2026; PRICES are USD per million tokens: input, output, cache write, cache read.
@@ -37,7 +41,7 @@ from urllib.parse import quote, urlsplit
 class Provider:
     key: str          # 'anthropic', 'openai', ...
     name: str         # shown in Settings > Models
-    api: str          # 'anthropic', 'anthropic-compatible' or 'responses'
+    api: str          # 'anthropic', 'anthropic-compatible', 'responses' or 'gemini'
     env: str          # the environment variable that holds its API key
     base_url: str = None
     keys_url: str = ''  # where to make a key
@@ -76,6 +80,9 @@ PROVIDERS = {p.key: p for p in (
              'https://platform.openai.com/api-keys', 'sk-…', 'https://api.openai.com/v1/models', country='US'),
     Provider('xai', 'xAI (Grok)', 'responses', 'XAI_API_KEY', 'https://api.x.ai/v1',
              'https://console.x.ai', 'xai-…', 'https://api.x.ai/v1/language-models', country='US'),
+    Provider('google', 'Google (Gemini)', 'gemini', 'GEMINI_API_KEY',
+             'https://generativelanguage.googleapis.com/v1beta', 'https://aistudio.google.com/apikey', 'AIza…',
+             'https://generativelanguage.googleapis.com/v1beta/models', country='US'),
     Provider('moonshot', 'Moonshot AI (Kimi)', 'anthropic-compatible', 'MOONSHOT_API_KEY',
              'https://api.moonshot.ai/anthropic', 'https://platform.kimi.ai/console/api-keys', 'sk-…',
              'https://api.moonshot.ai/v1/models', country='CN'),
@@ -99,6 +106,12 @@ BUILTIN = {m.id: m for m in (
     Model('gpt-6.1-sol', 'GPT-6.1 Sol', 'openai', (2.00, 10.00, 2.00, 0.10), aliases=('sol',)),
     Model('gpt-6-astra', 'GPT-6 Astra', 'openai', (10.00, 50.00, 10.00, 1.00), aliases=('astra',)),
     Model('grok-4.7', 'Grok 4.7', 'xai', (2.00, 6.00, 2.00, 0.50), aliases=('grok',)),
+    # Gemini 4 (November 2026). Thinking is billed as output. Carbon and Argon cost $2/$10 until
+    # November 30, then $4/$20: the later price, so a limit never runs over.
+    Model('gemini-4-neon', 'Gemini 4 Neon', 'google', (3.00, 15.00, 3.00, 0.15), aliases=('gemini', 'neon')),
+    Model('gemini-4-carbon', 'Gemini 4 Carbon', 'google', (4.00, 20.00, 4.00, 0.40), aliases=('carbon',)),
+    Model('gemini-4-argon', 'Gemini 4 Argon', 'google', (4.00, 20.00, 4.00, 0.40), aliases=('argon',)),
+    Model('gemini-4-hydrogen', 'Gemini 4 Hydrogen', 'google', (1.50, 7.50, 1.50, 0.15), aliases=('hydrogen',)),
     Model('kimi-k3.1-pro', 'Kimi K3.1 Pro', 'moonshot', (2.00, 10.00, 2.00, 0.20), aliases=('kimi',)),
     # DeepSeek's peak-hour price (off-peak is half): a limit never runs over.
     Model('deepseek-flash', 'DeepSeek V4.1 Flash', 'deepseek', (0.30, 1.20, 0.30, 0.006),
@@ -117,6 +130,8 @@ ALIASES = {alias: m.id for m in MODELS.values() for alias in m.aliases}
 BUDGETS = {'low': 4000, 'medium': 8000, 'high': 12000, 'xhigh': 16000, 'max': 16000}
 # Reasoning effort on the Responses API (it has no 'max').
 REASONING = {'low': 'low', 'medium': 'medium', 'high': 'high', 'xhigh': 'xhigh', 'max': 'xhigh'}
+# Thinking level on the Gemini API (low, medium and high only).
+THINKING_LEVELS = {'low': 'low', 'medium': 'medium', 'high': 'high', 'xhigh': 'high', 'max': 'high'}
 
 
 def resolve(name):
@@ -162,6 +177,8 @@ def client_for(model, key):
         p = replace(p, base_url=stand_in.rstrip('/'))
     if p.api == 'responses':
         return ResponsesClient(p, key)
+    if p.api == 'gemini':
+        return GeminiClient(p, key)
     import anthropic
     if p.api == 'anthropic':
         return sdk_client(anthropic, p.base_url, key, provider=p.key)
@@ -508,14 +525,202 @@ class ResponsesClient:
         return str(data)
 
 
+# -------------------------------------------------------------- the Gemini API
+CALL_ID = 'gemini_call_'  # an id for a function call the API sent without one
+
+
+def _inline(block):
+    """An image block as a Gemini part (a picture by URL cannot be sent inline: said in words)."""
+    source = _get(block, 'source') or {}
+    if source.get('type') == 'base64':
+        return {'inlineData': {'mimeType': source.get('media_type', 'image/png'), 'data': source.get('data', '')}}
+    return {'text': f"[a picture at {source.get('url', '')}]"}
+
+
+def gemini_contents(messages, vision=True):
+    """Anthropic-style messages as Gemini contents."""
+    contents, names = [], {}  # names: a tool_use id -> its function's name (a response names it again)
+    for message in messages:
+        role, content = message['role'], message['content']
+        if isinstance(content, str):
+            content = [{'type': 'text', 'text': content}]
+        for block in content:
+            if _get(block, 'type') == 'tool_use':
+                names[_get(block, 'id')] = _get(block, 'name')
+        if role == 'assistant':
+            raw = next((_get(b, 'items') for b in content if _get(b, 'type') == 'provider_items'), None)
+            if raw is not None:  # our own answer: its parts back as they came, thought signatures and all
+                if raw:
+                    contents.append({'role': 'model', 'parts': raw})
+                continue
+            parts = []
+            for block in content:
+                kind = _get(block, 'type')
+                if kind == 'text' and _get(block, 'text'):
+                    parts.append({'text': _get(block, 'text')})
+                elif kind == 'tool_use':
+                    call = {'name': _get(block, 'name'), 'args': _get(block, 'input') or {}}
+                    if not str(_get(block, 'id') or '').startswith(CALL_ID):
+                        call['id'] = _get(block, 'id')
+                    parts.append({'functionCall': call})
+            if parts:
+                contents.append({'role': 'model', 'parts': parts})
+            continue
+        parts, pictures = [], []
+        for block in content:
+            kind = _get(block, 'type')
+            if kind == 'text':
+                parts.append({'text': _get(block, 'text') or ''})
+            elif kind == 'image':
+                parts.append(_inline(block) if vision else {'text': '[a picture: this model cannot see images]'})
+            elif kind == 'tool_result':
+                result = _get(block, 'content')
+                texts = []
+                for part in ([{'type': 'text', 'text': result}] if isinstance(result, str) else result or []):
+                    if _get(part, 'type') == 'text':
+                        texts.append(_get(part, 'text') or '')
+                    elif _get(part, 'type') == 'image':
+                        if vision:
+                            pictures.append(_inline(part))
+                        texts.append('(the picture follows the tool results)' if vision else
+                                     '(a picture: this model cannot see images)')
+                text = '\n'.join(texts)
+                answer = {'name': names.get(_get(block, 'tool_use_id')) or 'tool',
+                          'response': {'error': text} if _get(block, 'is_error') else {'output': text}}
+                if not str(_get(block, 'tool_use_id') or '').startswith(CALL_ID):
+                    answer['id'] = _get(block, 'tool_use_id')
+                parts.append({'functionResponse': answer})
+        if pictures:  # after every function response of the turn, in the same user turn
+            parts += [{'text': 'The pictures the tools returned:'}] + pictures
+        if parts:
+            contents.append({'role': 'user', 'parts': parts})
+    return contents
+
+
+def gemini_request(params, model, thinking_level=None):
+    system = params.get('system') or ''
+    if isinstance(system, list):
+        system = '\n\n'.join(b.get('text', '') for b in system)
+    effort = (params.get('output_config') or {}).get('effort', 'high')
+    config = {'maxOutputTokens': int(params.get('max_tokens', 20000)),
+              'thinkingConfig': {'includeThoughts': True}}
+    level = thinking_level if thinking_level is not None else THINKING_LEVELS.get(effort, 'high')
+    if level:
+        config['thinkingConfig']['thinkingLevel'] = level
+    request = {'contents': gemini_contents(params['messages'], MODELS[model].vision), 'generationConfig': config}
+    if system:
+        request['systemInstruction'] = {'parts': [{'text': system}]}
+    tools = [{'name': t['name'], 'description': t.get('description', ''), 'parameters': t['input_schema']}
+             for t in params.get('tools') or [] if 'input_schema' in t]
+    if tools:
+        request['tools'] = [{'functionDeclarations': tools}]
+    return request
+
+
+REFUSED = ('SAFETY', 'PROHIBITED_CONTENT', 'BLOCKLIST', 'SPII', 'RECITATION', 'IMAGE_SAFETY')
+
+
+def gemini_message(data, model):
+    """A Gemini answer as an Anthropic-style message."""
+    candidate = (data.get('candidates') or [{}])[0] or {}
+    parts = (candidate.get('content') or {}).get('parts') or []
+    content, calls = [], 0
+    for part in parts:
+        if part.get('thought'):
+            if (part.get('text') or '').strip():
+                content.append(SimpleNamespace(type='thinking', thinking=part['text'], signature=''))
+        elif 'functionCall' in part:
+            call = part['functionCall'] or {}
+            calls += 1
+            args = call.get('args')
+            content.append(SimpleNamespace(type='tool_use', id=call.get('id') or f'{CALL_ID}{calls}',
+                                           name=call.get('name'), input=args if isinstance(args, dict) else {}))
+        elif part.get('text'):
+            content.append(SimpleNamespace(type='text', text=part['text']))
+    content.append(SimpleNamespace(type='provider_items', items=parts))
+    reason = str(candidate.get('finishReason') or '')
+    if calls:
+        stop = 'tool_use'
+    elif reason in REFUSED or (data.get('promptFeedback') or {}).get('blockReason'):
+        stop = 'refusal'
+    elif reason == 'MAX_TOKENS':
+        stop = 'max_tokens'
+    else:
+        stop = 'end_turn'
+    usage = data.get('usageMetadata') or {}
+    cached = usage.get('cachedContentTokenCount') or 0
+    return SimpleNamespace(
+        id=data.get('responseId'), model=data.get('modelVersion', model), role='assistant', content=content,
+        stop_reason=stop,
+        usage=SimpleNamespace(input_tokens=max(0, (usage.get('promptTokenCount') or 0) - cached),
+                              output_tokens=(usage.get('candidatesTokenCount') or 0) +
+                              (usage.get('thoughtsTokenCount') or 0),
+                              cache_read_input_tokens=cached, cache_creation_input_tokens=0, server_tool_use=None))
+
+
+class GeminiClient(ResponsesClient):
+    """The Gemini API (models/{model}:generateContent), answering like anthropic.Anthropic().
+    The key goes in x-goog-api-key, never in the URL."""
+
+    def __init__(self, provider, key, timeout=600.0):
+        super().__init__(provider, key, timeout)
+        self.thinking_level = None  # set to '' once a model refuses the level it was asked for
+
+    def post(self, body, model):
+        check_allowed(self.provider.key)
+        request = urllib.request.Request(
+            f"{self.provider.base_url}/models/{quote(model, safe='.-_')}:generateContent",
+            data=json.dumps(body).encode('utf-8'), method='POST',
+            headers={'Content-Type': 'application/json', 'x-goog-api-key': self.key})
+        try:
+            with open_url(request, host_of(self.provider.base_url), self.timeout) as answer:
+                status, headers, raw = answer.status, dict(answer.headers), answer.read()
+        except urllib.error.HTTPError as e:
+            status, headers, raw = e.code, dict(e.headers or {}), e.read()
+        try:
+            return status, headers, json.loads(raw.decode('utf-8') or 'null')
+        except ValueError:
+            return status, headers, raw.decode('utf-8', 'replace')[:500]
+
+    def create(self, **params):
+        model = params['model']
+        request = gemini_request(params, model, self.thinking_level)
+        status, data = 0, None
+        for attempt in range(4):
+            try:
+                status, headers, data = self.post(request, model)
+            except (urllib.error.URLError, OSError) as e:
+                if attempt < 3 and 'timed out' not in str(e):
+                    time.sleep(2 ** (attempt + 1))
+                    continue
+                raise ProviderError(self.provider.name, 0, f'cannot reach {self.provider.base_url}: {e}') from None
+            if 200 <= status < 300 and isinstance(data, dict):
+                return gemini_message(data, model)
+            message = self.error_text(data)
+            thinking = request['generationConfig']['thinkingConfig']
+            if status == 400 and 'thinkingLevel' in thinking and 'thinking' in message.lower():
+                # A level this model does not take: let it think at its own default.
+                thinking.pop('thinkingLevel')
+                self.thinking_level = ''
+                continue
+            if status in self.RETRY and attempt < 3:
+                wait = str(headers.get('retry-after') or headers.get('Retry-After') or '')
+                time.sleep(min(30.0, float(wait)) if wait.replace('.', '', 1).isdigit() else 2 ** (attempt + 1))
+                continue
+            raise ProviderError(self.provider.name, status, message)
+        raise ProviderError(self.provider.name, status, self.error_text(data))
+
+
 # ------------------------------------------------------------- Refresh models
 # What a provider lists that the assistant can use: chat models that call tools,
 # not its embedding, speech, image or dated snapshot ids.
 SKIP_WORDS = ('embed', 'audio', 'realtime', 'transcribe', 'tts', 'whisper', 'image', 'imagine', 'dall', 'vision-exp',
-              'moderation', 'search', 'instruct', 'asr', 'omni', '-vl', 'math', 'mt-', 'rerank', 'video', 'ocr')
-FAMILIES = {'anthropic': ('claude-',), 'openai': ('gpt-',), 'xai': ('grok-',), 'moonshot': ('kimi-',),
+              'moderation', 'search', 'instruct', 'asr', 'omni', '-vl', 'math', 'mt-', 'rerank', 'video', 'ocr',
+              '-live', 'robotics', 'computer-use', 'aqa', 'latest')
+FAMILIES = {'anthropic': ('claude-',), 'openai': ('gpt-',), 'xai': ('grok-',), 'google': ('gemini-',), 'moonshot': ('kimi-',),
             'deepseek': ('deepseek-',), 'qwen': ('qwen3', 'qwen4')}
-SNAPSHOT = re.compile(r'-(\d{4}-\d{2}-\d{2}|\d{8}|\d{4})$')  # gpt-6.1-terra-2026-10-26, qwen3.8-max-0902
+# gpt-6.1-terra-2026-10-26, qwen3.8-max-0902, gemini-3.8-flash-preview-09-2026, gemini-4-neon-001
+SNAPSHOT = re.compile(r'-(\d{4}-\d{2}-\d{2}|\d{8}|\d{4}|\d{3})$')
 OPUS_FACTOR = 2.5  # an Opus model not in the built-in list: estimated at 2.5 times Sonnet
 
 
@@ -528,7 +733,7 @@ def usable(provider, model_id):
 def pretty(model_id):
     """A name for a model only known by its id: 'gpt-6.2-terra' -> 'GPT-6.2 Terra'."""
     words = str(model_id).split('-')
-    names = {'gpt': 'GPT', 'deepseek': 'DeepSeek', 'grok': 'Grok', 'kimi': 'Kimi', 'claude': 'Claude'}
+    names = {'gpt': 'GPT', 'deepseek': 'DeepSeek', 'grok': 'Grok', 'kimi': 'Kimi', 'claude': 'Claude', 'gemini': 'Gemini'}
     out = []
     for i, word in enumerate(words):
         if word in names:
@@ -583,6 +788,21 @@ def list_models(provider, key, timeout=30.0):
             if not data.get('has_more') or not data.get('last_id'):
                 break
             after = data['last_id']
+    elif provider == 'google':
+        token = None
+        while True:  # the key in its header, never in the URL
+            data = _get_json(p.models_url + '?pageSize=1000' + (f'&pageToken={quote(str(token), safe="")}'
+                                                               if token else ''),
+                             {'x-goog-api-key': key}, timeout, host) or {}
+            for m in data.get('models') or []:
+                if not isinstance(m, dict) or 'generateContent' not in (m.get('supportedGenerationMethods') or []):
+                    continue
+                model_id = str(m.get('name') or '').split('/', 1)[-1]
+                found.append({'id': model_id, 'label': m.get('displayName') or pretty(model_id), 'vision': True,
+                              'prices': None, 'retired': False, 'retiring': ''})
+            token = data.get('nextPageToken')
+            if not token:
+                break
     else:
         data = _get_json(p.models_url, {'Authorization': f'Bearer {key}'}, timeout, host) or {}
         rows = data.get('models') if provider == 'xai' else data.get('data')

@@ -132,6 +132,11 @@ BUDGETS = {'low': 4000, 'medium': 8000, 'high': 12000, 'xhigh': 16000, 'max': 16
 REASONING = {'low': 'low', 'medium': 'medium', 'high': 'high', 'xhigh': 'xhigh', 'max': 'xhigh'}
 # Thinking level on the Gemini API (low, medium and high only).
 THINKING_LEVELS = {'low': 'low', 'medium': 'medium', 'high': 'high', 'xhigh': 'high', 'max': 'high'}
+# A Gemini model's thinking counts against its output limit (maxOutputTokens), so the agent's
+# max_tokens (room for an answer) would go on thinking alone: Gemini 4 Neon, asked to make a
+# tutorial's steps, thought 20,000 tokens and had no room left to answer. Every Gemini 4 model
+# takes 32,768 at least (Neon and Hydrogen 65,536).
+GEMINI_OUTPUT = 32768
 
 
 def resolve(name):
@@ -602,7 +607,7 @@ def gemini_request(params, model, thinking_level=None):
     if isinstance(system, list):
         system = '\n\n'.join(b.get('text', '') for b in system)
     effort = (params.get('output_config') or {}).get('effort', 'high')
-    config = {'maxOutputTokens': int(params.get('max_tokens', 20000)),
+    config = {'maxOutputTokens': max(int(params.get('max_tokens', 20000)), GEMINI_OUTPUT),
               'thinkingConfig': {'includeThoughts': True}}
     level = thinking_level if thinking_level is not None else THINKING_LEVELS.get(effort, 'high')
     if level:
@@ -697,7 +702,12 @@ class GeminiClient(ResponsesClient):
             if 200 <= status < 300 and isinstance(data, dict):
                 return gemini_message(data, model)
             message = self.error_text(data)
-            thinking = request['generationConfig']['thinkingConfig']
+            config = request['generationConfig']
+            thinking = config['thinkingConfig']
+            if status == 400 and 'maxOutputTokens' in config and 'output' in message.lower() and \
+                    'token' in message.lower():
+                config.pop('maxOutputTokens')  # more than this model writes: its own limit, then
+                continue
             if status == 400 and 'thinkingLevel' in thinking and 'thinking' in message.lower():
                 # A level this model does not take: let it think at its own default.
                 thinking.pop('thinkingLevel')

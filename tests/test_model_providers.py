@@ -239,6 +239,8 @@ def test_gemini_4_runs_the_agent_loop_on_the_gemini_api(model, tmp_path, server)
     assert "OpenStrand Studio" in body["systemInstruction"]["parts"][0]["text"]
     assert body["contents"] == [{"role": "user", "parts": [{"text": "which knots can you tie?"}]}]
     assert body["generationConfig"]["thinkingConfig"] == {"includeThoughts": True, "thinkingLevel": "high"}
+    # Its thinking counts against its output limit: room for that as well as the answer.
+    assert body["generationConfig"]["maxOutputTokens"] == providers.GEMINI_OUTPUT > 20000
     (declarations,) = body["tools"]
     names = {f["name"] for f in declarations["functionDeclarations"]}
     assert "knot_library" in names and "web_search" not in names  # Anthropic's server tools: Claude only
@@ -300,6 +302,13 @@ def test_gemini_retries_a_thinking_level_it_lacks_and_reports_a_refused_key(serv
     levels = [s["body"]["generationConfig"]["thinkingConfig"].get("thinkingLevel") for s in server.seen]
     assert levels == ["low", None]
     assert "systemInstruction" not in server.seen[0]["body"] and "tools" not in server.seen[0]["body"]
+    # An output limit past what the model writes: asked again at its own.
+    server.seen.clear()
+    server.answers[:] = [(400, {"error": {"code": 400, "message": "The requested max output tokens (32768) "
+                                          "exceeds the model limit (8192).", "status": "INVALID_ARGUMENT"}}),
+                         (200, gemini_answer([{"text": "ok"}]))]
+    client.messages.create(model="gemini-4-hydrogen", max_tokens=1000, messages=[{"role": "user", "content": "hi"}])
+    assert [s["body"]["generationConfig"].get("maxOutputTokens") for s in server.seen] == [32768, None]
     server.answers[:] = [(400, {"error": {"code": 400, "message": "API key not valid. Please pass a valid API key.",
                                           "status": "INVALID_ARGUMENT"}})]
     client = providers.GeminiClient(local("google", server, "/v1beta"), "AIza-bad")

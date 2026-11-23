@@ -71,13 +71,15 @@ checked. `AUTHORING.md` says how to write one and try it with
 
 ## The crowned knots
 
-The chrysanthemum knot and the five-sided good luck knot are tied by
-crowning: the cord laid in a star of bights, each folded over the next, and
-crowned again on top. `scripts/build_crown_steps.py` writes each one's
+The good luck knot (its steps 3 and 4), the chrysanthemum knot and the
+five-sided good luck knot are tied by crowning: the cord laid in a star of
+bights, each folded over the next, and crowned again on top. `scripts/build_crown_steps.py` writes each one's
 `draw-steps` design (`chinese_knotting/spec/<name>.json`) from the geometry
 of a crown, with over and under at every crossing, and draws its steps into
 `chinese_knotting/steps/<name>/`, with one picture of them all under
-`chinese_knotting/images/`. Change a knot there and run it again.
+`chinese_knotting/images/`. A knot with `"after": n` continues a tutorial
+drawn by hand: its steps are numbered after the first n, which it leaves as
+they are. Change a knot there and run it again.
 
 ## Adding a design
 

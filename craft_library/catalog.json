@@ -45,12 +45,16 @@
       "craft": "chinese knotting",
       "title": "Good luck knot, tied by crowning",
       "also": ["crowned good luck knot", "good luck knot by crowning", "crown method good luck knot", "ji xiang jie", "jixiang knot", "auspicious knot"],
-      "about": "The good luck knot as it is taught: the cord folded into a cross of three loops and two ends, then crowned, each arm folded over the next one anticlockwise and the last tucked through the bend of the first. Drawn by hand step by step, with arrows: the cross, then the first round of crowning, loose.",
+      "about": "The good luck knot as it is taught: the cord folded into a cross of three loops and two ends, then crowned, each arm folded over the next one anticlockwise and the last tucked through the bend of the first. Shown step by step, with arrows: the cross and the first crown drawn by hand, then the crown pulled snug and the second crown, clockwise, on top.",
       "build": {"steps": [
         {"file": "craft_library/chinese_knotting/steps/good_luck_knot_crowned/step_1.json",
          "caption": "Fold the cord into a cross: a loop at the top, one to the left, one to the right, and the two ends hanging down. The arrows show where each arm folds next, anticlockwise."},
         {"file": "craft_library/chinese_knotting/steps/good_luck_knot_crowned/step_2.json",
-         "caption": "Fold the top loop down over the left loop, the left loop over it to the right, and the ends up over the left loop. Fold the right loop over the ends to the left and tuck it through the bend of the top loop, then pull all four arms out to tighten."}
+         "caption": "Fold the top loop down over the left loop, the left loop over it to the right, and the ends up over the left loop. Fold the right loop over the ends to the left and tuck it through the bend of the top loop, then pull all four arms out to tighten."},
+        {"file": "craft_library/chinese_knotting/steps/good_luck_knot_crowned/step_3.json",
+         "caption": "Pull the crown snug, leaving the four arms long. Now crown again on top, this time clockwise, as the arrows show."},
+        {"file": "craft_library/chinese_knotting/steps/good_luck_knot_crowned/step_4.json",
+         "caption": "The second crown lies on top of the first, turned the other way: each arm folds over the next and the last is tucked through the bend of the first. Pull the arms out to tighten, then ease out the three large ears and the four small ones between them."}
       ]}
     },
     {

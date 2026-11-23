@@ -402,6 +402,8 @@ def design(knot):
         elif step.get('arrows') == 'pull':
             arrows = pull_arrows(n, sizes, step['laid'])
         entry = {'title': step['title'], 'cords': [item]}
+        if knot.get('arrow_color'):
+            arrows = [dict(a, color=knot['arrow_color']) for a in arrows]
         if arrows:
             entry['arrows'] = arrows
         steps.append(entry)
@@ -412,6 +414,24 @@ def design(knot):
 GOOD_LUCK = {'gap': 48, 'width': 16, 'ear': 70, 'reach': 300, 'first': 1, 'second': -1}
 
 KNOTS = {
+    # Steps 3 and 4 of the good luck knot drawn by hand in the app (steps 1 and 2,
+    # steps/good_luck_knot_crowned/): the snug first crown, then the second, clockwise.
+    'good_luck_knot_crowned': {
+        'title': 'Good luck knot, tied by crowning',
+        'after': 2,
+        'arms': 4,
+        'color': '#7a8c30',
+        'arrow_color': '#c83e4d',
+        'sizes': dict(GOOD_LUCK, ear=70, reach=340,
+                      one={'h': 140, 'lead': 55, 'past': 60, 'tail': 260},
+                      two={'h': 380, 'lead': 70, 'out': 0, 'past': 80, 'tail': 110}),
+        'steps': [
+            {'laid': 'one', 'arrows': 'second', 'arrow_radius': 380,
+             'title': 'Pull it snug, then crown clockwise'},
+            {'laid': 'two', 'arrows': 'pull',
+             'title': 'The second crown, on top of the first'},
+        ],
+    },
     'chrysanthemum_knot': {
         'title': 'Chrysanthemum knot',
         'arms': 4,
@@ -472,14 +492,26 @@ def main(argv=None):
         if args.spec_only:
             continue
         out = Path(args.out) / name if args.out else FOLDER / 'steps' / name
-        subprocess.run([sys.executable, '-m', 'openstrand', 'draw-steps', str(spec_path), '--out-dir', str(out)],
+        after = knot.get('after', 0)    # steps drawn by hand before these, kept as they are
+        drawn = out / 'drawn' if after else out
+        subprocess.run([sys.executable, '-m', 'openstrand', 'draw-steps', str(spec_path), '--out-dir', str(drawn)],
                        cwd=ROOT, check=True)
+        if after:
+            for number in range(1, len(knot['steps']) + 1):
+                for kind in ('json', 'png'):
+                    made = drawn / f'step_{number}.{kind}'
+                    if made.exists():
+                        made.replace(out / f'step_{number + after}.{kind}')
         if not args.out:  # the library keeps the projects, and one picture of all the steps under images/
             for picture in out.glob('step_*.png'):
                 picture.unlink()
-            images = FOLDER / 'images'
-            images.mkdir(exist_ok=True)
-            (out / 'steps.png').replace(images / f'{name}_steps.png')
+            if after:
+                (drawn / 'steps.png').unlink()
+                drawn.rmdir()
+            else:
+                images = FOLDER / 'images'
+                images.mkdir(exist_ok=True)
+                (out / 'steps.png').replace(images / f'{name}_steps.png')
 
 
 if __name__ == '__main__':

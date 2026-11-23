@@ -1,0 +1,377 @@
+{
+ "name": "prusik_knot",
+ "craft": "knots",
+ "title": "Prusik knot",
+ "also": [
+  "prusik",
+  "prussik knot",
+  "prusik hitch",
+  "double girth hitch",
+  "ABOK #1763"
+ ],
+ "about": "A friction hitch made with a loop of thinner cord: the loop is wrapped twice round the rope and passed through itself, a girth hitch with doubled turns. It grips when either side of the loop is loaded and slides when the knot is pushed. Shown loose, from the front; the loop's two sides hang down and are joined below.",
+ "kind": "hitch",
+ "width": 22,
+ "cords": [
+  {
+   "label": "Rope",
+   "color": "gold",
+   "smooth": false,
+   "points": [
+    [
+     150,
+     300
+    ],
+    [
+     1050,
+     300
+    ]
+   ]
+  },
+  {
+   "label": "Loop",
+   "color": "teal",
+   "points": [
+    [
+     560,
+     740
+    ],
+    [
+     560,
+     640
+    ],
+    [
+     560,
+     500
+    ],
+    [
+     560,
+     400
+    ],
+    [
+     560,
+     300
+    ],
+    [
+     560,
+     250
+    ],
+    [
+     555,
+     230
+    ],
+    [
+     540,
+     215
+    ],
+    [
+     520,
+     210
+    ],
+    [
+     500,
+     215
+    ],
+    [
+     485,
+     230
+    ],
+    [
+     480,
+     250
+    ],
+    [
+     480,
+     300
+    ],
+    [
+     480,
+     350
+    ],
+    [
+     475,
+     370
+    ],
+    [
+     460,
+     385
+    ],
+    [
+     440,
+     390
+    ],
+    [
+     420,
+     385
+    ],
+    [
+     405,
+     370
+    ],
+    [
+     400,
+     350
+    ],
+    [
+     400,
+     300
+    ],
+    [
+     400,
+     250
+    ],
+    [
+     395,
+     230
+    ],
+    [
+     380,
+     215
+    ],
+    [
+     360,
+     210
+    ],
+    [
+     340,
+     215
+    ],
+    [
+     325,
+     230
+    ],
+    [
+     320,
+     250
+    ],
+    [
+     320,
+     300
+    ],
+    [
+     320,
+     360
+    ],
+    [
+     320,
+     460
+    ],
+    [
+     323,
+     475
+    ],
+    [
+     332,
+     488
+    ],
+    [
+     345,
+     497
+    ],
+    [
+     360,
+     500
+    ],
+    [
+     560,
+     500,
+     "bar"
+    ],
+    [
+     640,
+     500
+    ],
+    [
+     840,
+     500
+    ],
+    [
+     855,
+     497
+    ],
+    [
+     868,
+     488
+    ],
+    [
+     877,
+     475
+    ],
+    [
+     880,
+     460
+    ],
+    [
+     880,
+     440
+    ],
+    [
+     880,
+     300
+    ],
+    [
+     880,
+     250
+    ],
+    [
+     875,
+     230
+    ],
+    [
+     860,
+     215
+    ],
+    [
+     840,
+     210
+    ],
+    [
+     820,
+     215
+    ],
+    [
+     805,
+     230
+    ],
+    [
+     800,
+     250
+    ],
+    [
+     800,
+     300
+    ],
+    [
+     800,
+     350
+    ],
+    [
+     795,
+     370
+    ],
+    [
+     780,
+     385
+    ],
+    [
+     760,
+     390
+    ],
+    [
+     740,
+     385
+    ],
+    [
+     725,
+     370
+    ],
+    [
+     720,
+     350
+    ],
+    [
+     720,
+     300
+    ],
+    [
+     720,
+     250
+    ],
+    [
+     715,
+     230
+    ],
+    [
+     700,
+     215
+    ],
+    [
+     680,
+     210
+    ],
+    [
+     660,
+     215
+    ],
+    [
+     645,
+     230
+    ],
+    [
+     640,
+     250
+    ],
+    [
+     640,
+     300
+    ],
+    [
+     640,
+     400
+    ],
+    [
+     640,
+     500
+    ],
+    [
+     640,
+     640
+    ],
+    [
+     640,
+     740
+    ]
+   ]
+  }
+ ],
+ "patterns": [
+  "OUOUUOUO",
+  "UOUOUOOUOUOU"
+ ],
+ "steps": [
+  {
+   "shown": [
+    "all",
+    null
+   ],
+   "caption": "Stretch the rope across. The loop of thinner cord is tied on it from below."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 3
+    }
+   ],
+   "arrow": 1,
+   "caption": "Bring one side of the loop up over the rope and down behind it: the first turn."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 5
+    }
+   ],
+   "arrow": 1,
+   "caption": "Wrap it round again to the left of the first turn: over the rope and down behind it."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 9
+    }
+   ],
+   "arrow": 1,
+   "caption": "Bring the end of the loop across in front of the first side: this is the bar. Take it up behind the rope, over it and down in front."
+  },
+  {
+   "shown": [
+    "all",
+    "all"
+   ],
+   "caption": "Wrap it round once more, behind the rope and down in front, and bring this side down under the bar. Pull both sides down: the bar tightens over them."
+  }
+ ]
+}

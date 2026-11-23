@@ -1,0 +1,375 @@
+{
+ "name": "taut_line_hitch",
+ "craft": "knots",
+ "title": "Taut-line hitch",
+ "also": [
+  "tautline hitch",
+  "tent-line hitch",
+  "adjustable hitch",
+  "rigger's hitch",
+  "ABOK #1856"
+ ],
+ "about": "An adjustable loop for a tent guy line: the rope goes round the stake and its end is tied back on its own standing part with two turns side by side inside the loop, then a half hitch outside them. It holds under load and slides along the standing part to tighten or slacken the line. Shown loose, from the front, the tent to the left.",
+ "kind": "hitch",
+ "width": 24,
+ "cords": [
+  {
+   "label": "Stake",
+   "color": "gold",
+   "smooth": false,
+   "points": [
+    [
+     915,
+     280
+    ],
+    [
+     915,
+     780
+    ]
+   ]
+  },
+  {
+   "label": "Rope",
+   "color": "teal",
+   "points": [
+    [
+     150,
+     400
+    ],
+    [
+     200,
+     400
+    ],
+    [
+     300,
+     400
+    ],
+    [
+     400,
+     400
+    ],
+    [
+     500,
+     400
+    ],
+    [
+     600,
+     400
+    ],
+    [
+     700,
+     400
+    ],
+    [
+     800,
+     400
+    ],
+    [
+     860,
+     400
+    ],
+    [
+     910,
+     410
+    ],
+    [
+     952,
+     438
+    ],
+    [
+     980,
+     480
+    ],
+    [
+     990,
+     530
+    ],
+    [
+     980,
+     580
+    ],
+    [
+     952,
+     622
+    ],
+    [
+     910,
+     650
+    ],
+    [
+     860,
+     660
+    ],
+    [
+     760,
+     660
+    ],
+    [
+     600,
+     660
+    ],
+    [
+     500,
+     660
+    ],
+    [
+     477,
+     655
+    ],
+    [
+     458,
+     642
+    ],
+    [
+     445,
+     623
+    ],
+    [
+     440,
+     600
+    ],
+    [
+     440,
+     540
+    ],
+    [
+     440,
+     400
+    ],
+    [
+     447,
+     325
+    ],
+    [
+     465,
+     307
+    ],
+    [
+     490,
+     300
+    ],
+    [
+     515,
+     307
+    ],
+    [
+     533,
+     325
+    ],
+    [
+     540,
+     350
+    ],
+    [
+     540,
+     400
+    ],
+    [
+     545,
+     480
+    ],
+    [
+     560,
+     495
+    ],
+    [
+     580,
+     500
+    ],
+    [
+     600,
+     495
+    ],
+    [
+     615,
+     480
+    ],
+    [
+     620,
+     460
+    ],
+    [
+     620,
+     400
+    ],
+    [
+     627,
+     325
+    ],
+    [
+     645,
+     307
+    ],
+    [
+     670,
+     300
+    ],
+    [
+     695,
+     307
+    ],
+    [
+     713,
+     325
+    ],
+    [
+     720,
+     350
+    ],
+    [
+     720,
+     400
+    ],
+    [
+     720,
+     500
+    ],
+    [
+     717,
+     535
+    ],
+    [
+     708,
+     548
+    ],
+    [
+     695,
+     557
+    ],
+    [
+     680,
+     560
+    ],
+    [
+     560,
+     560
+    ],
+    [
+     440,
+     560
+    ],
+    [
+     350,
+     560
+    ],
+    [
+     300,
+     560
+    ],
+    [
+     281,
+     556
+    ],
+    [
+     265,
+     545
+    ],
+    [
+     254,
+     529
+    ],
+    [
+     250,
+     510
+    ],
+    [
+     250,
+     400
+    ],
+    [
+     257,
+     325
+    ],
+    [
+     275,
+     307
+    ],
+    [
+     300,
+     300
+    ],
+    [
+     325,
+     307
+    ],
+    [
+     343,
+     325
+    ],
+    [
+     350,
+     350
+    ],
+    [
+     350,
+     400
+    ],
+    [
+     350,
+     560
+    ],
+    [
+     350,
+     640
+    ],
+    [
+     350,
+     720
+    ]
+   ]
+  }
+ ],
+ "patterns": [
+  "UO",
+  "UOUOUOOUUOUOUOUOUO"
+ ],
+ "steps": [
+  {
+   "shown": [
+    "all",
+    {
+     "after": 8
+    }
+   ],
+   "arrow": 1,
+   "caption": "Run the rope from the tent over the stake, round behind it, and back towards the tent below the standing part."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 11
+    }
+   ],
+   "arrow": 1,
+   "caption": "First turn, inside the loop: bring the end up over the standing part, round the top and down behind it."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 13
+    }
+   ],
+   "arrow": 1,
+   "caption": "Second turn beside the first, nearer the stake: up over the standing part and down behind it again."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 16
+    }
+   ],
+   "arrow": 1,
+   "caption": "Bring the end back towards the tent over its own part, outside the loop, and up over the standing part beyond the turns."
+  },
+  {
+   "shown": [
+    "all",
+    "all"
+   ],
+   "caption": "Take it down behind the standing part and out over its own part: the half hitch. Slide the knot to tighten or slacken the line."
+  }
+ ]
+}

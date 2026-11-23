@@ -1,0 +1,2724 @@
+{
+  "strands": [
+    {
+      "type": "Strand",
+      "index": 0,
+      "start": {
+        "x": 585.0,
+        "y": 660.0
+      },
+      "end": {
+        "x": 585.0,
+        "y": 547.9175607776065
+      },
+      "width": 13.0,
+      "color": {
+        "r": 122,
+        "g": 140,
+        "b": 48,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 38,
+        "g": 52,
+        "b": 70,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        false,
+        true
+      ],
+      "layer_name": "1_1",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": false,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": false,
+      "shadow_only": false,
+      "hide_shadow": false,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": null,
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "control_points": [
+        {
+          "x": 585.0003517790763,
+          "y": 635.4313283973139
+        },
+        {
+          "x": 584.9994246210521,
+          "y": 574.0849432021121
+        }
+      ],
+      "control_point_center": {
+        "x": 584.9998882000641,
+        "y": 604.758135799713
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 585.0001199895702,
+          "y": 620.0947320985135
+        },
+        "circle_position": {
+          "x": 584.9996564105581,
+          "y": 589.4215395009126
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 1,
+      "start": {
+        "x": 585.0,
+        "y": 547.9175607776065
+      },
+      "end": {
+        "x": 579.0499767202239,
+        "y": 422.01241920293654
+      },
+      "width": 13.0,
+      "color": {
+        "r": 122,
+        "g": 140,
+        "b": 48,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 38,
+        "g": 52,
+        "b": 70,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_2",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": false,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": false,
+      "shadow_only": false,
+      "hide_shadow": false,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": null,
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "attached_to": "1_1",
+      "attachment_side": 1,
+      "angle": -92.70567007496194,
+      "length": 126.0456562201473,
+      "control_points": [
+        {
+          "x": 585.0004430183315,
+          "y": 527.7697431695138
+        },
+        {
+          "x": 591.9565103439174,
+          "y": 435.6921230604564
+        }
+      ],
+      "control_point_center": {
+        "x": 588.4784766811244,
+        "y": 481.73093311498513
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 586.739459849728,
+          "y": 504.75033814224946
+        },
+        "circle_position": {
+          "x": 590.217493512521,
+          "y": 458.7115280877208
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 2,
+      "start": {
+        "x": 579.0499767202239,
+        "y": 422.01241920293654
+      },
+      "end": {
+        "x": 327.51019065955774,
+        "y": 406.1109818151649
+      },
+      "width": 13.0,
+      "color": {
+        "r": 122,
+        "g": 140,
+        "b": 48,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 38,
+        "g": 52,
+        "b": 70,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_3",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": false,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": false,
+      "shadow_only": false,
+      "hide_shadow": false,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": null,
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "attached_to": "1_2",
+      "attachment_side": 1,
+      "angle": -176.38278100551676,
+      "length": 252.0419006483702,
+      "control_points": [
+        {
+          "x": 562.1075294962494,
+          "y": 404.0550289846865
+        },
+        {
+          "x": 355.7271806231559,
+          "y": 427.0504194278101
+        }
+      ],
+      "control_point_center": {
+        "x": 458.9173550597027,
+        "y": 415.5527242062483
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 510.51244227797605,
+          "y": 409.8038765954674
+        },
+        "circle_position": {
+          "x": 407.32226784142927,
+          "y": 421.3015718170292
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 3,
+      "start": {
+        "x": 327.51019065955774,
+        "y": 406.1109818151649
+      },
+      "end": {
+        "x": 372.5787909091353,
+        "y": 382.43589636116474
+      },
+      "width": 13.0,
+      "color": {
+        "r": 122,
+        "g": 140,
+        "b": 48,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 38,
+        "g": 52,
+        "b": 70,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_4",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": false,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": false,
+      "shadow_only": false,
+      "hide_shadow": false,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": null,
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "attached_to": "1_3",
+      "attachment_side": 1,
+      "angle": -27.71349364051154,
+      "length": 50.90862794959646,
+      "control_points": [
+        {
+          "x": 313.25731018634707,
+          "y": 395.5341165345556
+        },
+        {
+          "x": 363.0142599291773,
+          "y": 382.76083518724226
+        }
+      ],
+      "control_point_center": {
+        "x": 338.1357850577622,
+        "y": 389.1474758608989
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 325.6965476220546,
+          "y": 392.3407961977273
+        },
+        "circle_position": {
+          "x": 350.57502249346976,
+          "y": 385.9541555240706
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 4,
+      "start": {
+        "x": 372.5787909091353,
+        "y": 382.43589636116474
+      },
+      "end": {
+        "x": 452.58301184782465,
+        "y": 384.92444340305235
+      },
+      "width": 13.0,
+      "color": {
+        "r": 122,
+        "g": 140,
+        "b": 48,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 38,
+        "g": 52,
+        "b": 70,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_5",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": false,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": false,
+      "shadow_only": false,
+      "hide_shadow": false,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": null,
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "attached_to": "1_4",
+      "attachment_side": 1,
+      "angle": 1.7816220562746827,
+      "length": 80.04291495433125,
+      "control_points": [
+        {
+          "x": 390.0638435588047,
+          "y": 381.8418711555595
+        },
+        {
+          "x": 433.9508171625803,
+          "y": 384.58651135306263
+        }
+      ],
+      "control_point_center": {
+        "x": 412.0073303606925,
+        "y": 383.21419125431106
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 401.03558695974857,
+          "y": 382.52803120493525
+        },
+        "circle_position": {
+          "x": 422.9790737616364,
+          "y": 383.9003513036869
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 5,
+      "start": {
+        "x": 452.58301184782465,
+        "y": 384.92444340305235
+      },
+      "end": {
+        "x": 578.3570854680695,
+        "y": 378.71121744245534
+      },
+      "width": 13.0,
+      "color": {
+        "r": 122,
+        "g": 140,
+        "b": 48,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 38,
+        "g": 52,
+        "b": 70,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_6",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": false,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": false,
+      "shadow_only": false,
+      "hide_shadow": false,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": null,
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "attached_to": "1_5",
+      "attachment_side": 1,
+      "angle": -2.8281064324212193,
+      "length": 125.92744645973016,
+      "control_points": [
+        {
+          "x": 472.4779476086097,
+          "y": 385.2852777835229
+        },
+        {
+          "x": 565.0135227884523,
+          "y": 391.7860193811724
+        }
+      ],
+      "control_point_center": {
+        "x": 518.7457351985311,
+        "y": 388.5356485823477
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 495.6118414035704,
+          "y": 386.91046318293525
+        },
+        "circle_position": {
+          "x": 541.8796289934917,
+          "y": 390.16083398176005
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 6,
+      "start": {
+        "x": 578.3570854680695,
+        "y": 378.71121744245534
+      },
+      "end": {
+        "x": 594.158992417473,
+        "y": 127.08780994991265
+      },
+      "width": 13.0,
+      "color": {
+        "r": 122,
+        "g": 140,
+        "b": 48,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 38,
+        "g": 52,
+        "b": 70,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_7",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": false,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": false,
+      "shadow_only": false,
+      "hide_shadow": false,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": null,
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "attached_to": "1_6",
+      "attachment_side": 1,
+      "angle": -86.40655385582868,
+      "length": 252.11909777205653,
+      "control_points": [
+        {
+          "x": 595.8180122410663,
+          "y": 361.6019817229642
+        },
+        {
+          "x": 573.0436763091213,
+          "y": 153.89428708837667
+        }
+      ],
+      "control_point_center": {
+        "x": 584.4308442750938,
+        "y": 257.74813440567044
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 590.1244282580801,
+          "y": 309.67505806431734
+        },
+        "circle_position": {
+          "x": 578.7372602921075,
+          "y": 205.82121074702354
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 7,
+      "start": {
+        "x": 594.158992417473,
+        "y": 127.08780994991265
+      },
+      "end": {
+        "x": 617.5785304568908,
+        "y": 173.07986996526355
+      },
+      "width": 13.0,
+      "color": {
+        "r": 122,
+        "g": 140,
+        "b": 48,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 38,
+        "g": 52,
+        "b": 70,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_8",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": false,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": false,
+      "shadow_only": false,
+      "hide_shadow": false,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": null,
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "attached_to": "1_7",
+      "attachment_side": 1,
+      "angle": 63.01442858103514,
+      "length": 51.6114749492337,
+      "control_points": [
+        {
+          "x": 604.7698066147515,
+          "y": 113.61708818850205
+        },
+        {
+          "x": 617.2794336674403,
+          "y": 163.60342569861797
+        }
+      ],
+      "control_point_center": {
+        "x": 611.024620141096,
+        "y": 138.61025694356002
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 607.8972133779237,
+          "y": 126.11367256603103
+        },
+        "circle_position": {
+          "x": 614.1520269042682,
+          "y": 151.106841321089
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 8,
+      "start": {
+        "x": 617.5785304568908,
+        "y": 173.07986996526355
+      },
+      "end": {
+        "x": 615.0663692277719,
+        "y": 253.08421753655546
+      },
+      "width": 13.0,
+      "color": {
+        "r": 122,
+        "g": 140,
+        "b": 48,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 38,
+        "g": 52,
+        "b": 70,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_9",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": false,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": false,
+      "shadow_only": false,
+      "hide_shadow": false,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": null,
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "attached_to": "1_8",
+      "attachment_side": 1,
+      "angle": 91.79851423284396,
+      "length": 80.0437791733322,
+      "control_points": [
+        {
+          "x": 618.130589584041,
+          "y": 190.57105587850657
+        },
+        {
+          "x": 615.3872806971721,
+          "y": 234.44713994962
+        }
+      ],
+      "control_point_center": {
+        "x": 616.7589351406066,
+        "y": 212.5090979140633
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 617.4447623623238,
+          "y": 201.54007689628492
+        },
+        "circle_position": {
+          "x": 616.0731079188893,
+          "y": 223.47811893184166
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 9,
+      "start": {
+        "x": 615.0663692277719,
+        "y": 253.08421753655546
+      },
+      "end": {
+        "x": 621.6429145319312,
+        "y": 378.71121744245596
+      },
+      "width": 13.0,
+      "color": {
+        "r": 122,
+        "g": 140,
+        "b": 48,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 38,
+        "g": 52,
+        "b": 70,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_10",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": false,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": false,
+      "shadow_only": false,
+      "hide_shadow": false,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": null,
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "attached_to": "1_9",
+      "attachment_side": 1,
+      "angle": 87.00331425076065,
+      "length": 125.79902246637207,
+      "control_points": [
+        {
+          "x": 614.7233600282891,
+          "y": 273.0046307138831
+        },
+        {
+          "x": 608.1502713733541,
+          "y": 365.49033774458877
+        }
+      ],
+      "control_point_center": {
+        "x": 611.4368157008216,
+        "y": 319.24748422923597
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 613.0800878645554,
+          "y": 296.12605747155953
+        },
+        "circle_position": {
+          "x": 609.7935435370879,
+          "y": 342.3689109869124
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 10,
+      "start": {
+        "x": 621.6429145319312,
+        "y": 378.71121744245596
+      },
+      "end": {
+        "x": 873.3345707597321,
+        "y": 394.4289666501109
+      },
+      "width": 13.0,
+      "color": {
+        "r": 122,
+        "g": 140,
+        "b": 48,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 38,
+        "g": 52,
+        "b": 70,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_11",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": false,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": false,
+      "shadow_only": false,
+      "hide_shadow": false,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": null,
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "attached_to": "1_10",
+      "attachment_side": 1,
+      "angle": 3.5733912172456237,
+      "length": 252.18195307128588,
+      "control_points": [
+        {
+          "x": 638.9564606883597,
+          "y": 395.6760410272332
+        },
+        {
+          "x": 848.3436351573508,
+          "y": 373.20144727826073
+        }
+      ],
+      "control_point_center": {
+        "x": 743.6500479228553,
+        "y": 384.43874415274695
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 691.3032543056074,
+          "y": 390.05739258999006
+        },
+        "circle_position": {
+          "x": 795.9968415401031,
+          "y": 378.82009571550384
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 11,
+      "start": {
+        "x": 873.3345707597321,
+        "y": 394.4289666501109
+      },
+      "end": {
+        "x": 826.419020098533,
+        "y": 417.5919610937634
+      },
+      "width": 13.0,
+      "color": {
+        "r": 122,
+        "g": 140,
+        "b": 48,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 38,
+        "g": 52,
+        "b": 70,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_12",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": false,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": false,
+      "shadow_only": false,
+      "hide_shadow": false,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": null,
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "attached_to": "1_11",
+      "attachment_side": 1,
+      "angle": 153.7236737817195,
+      "length": 52.322014539199586,
+      "control_points": [
+        {
+          "x": 885.9227432766673,
+          "y": 405.12147053275766
+        },
+        {
+          "x": 835.7693153119468,
+          "y": 417.31835818911145
+        }
+      ],
+      "control_point_center": {
+        "x": 860.8460292943071,
+        "y": 411.2199143609346
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 873.3843862854872,
+          "y": 408.17069244684615
+        },
+        "circle_position": {
+          "x": 848.307672303127,
+          "y": 414.269136275023
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 12,
+      "start": {
+        "x": 826.419020098533,
+        "y": 417.5919610937634
+      },
+      "end": {
+        "x": 650.4463332020306,
+        "y": 411.64703267647445
+      },
+      "width": 13.0,
+      "color": {
+        "r": 122,
+        "g": 140,
+        "b": 48,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 38,
+        "g": 52,
+        "b": 70,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_13",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": false,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": false,
+      "shadow_only": false,
+      "hide_shadow": false,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": null,
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "attached_to": "1_12",
+      "attachment_side": 1,
+      "angle": -178.06509851795573,
+      "length": 176.0730777474545,
+      "control_points": [
+        {
+          "x": 788.7880580265952,
+          "y": 418.6930964368443
+        },
+        {
+          "x": 689.4351816155964,
+          "y": 409.156131828729
+        }
+      ],
+      "control_point_center": {
+        "x": 739.1116198210958,
+        "y": 413.92461413278664
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 763.9498389238455,
+          "y": 416.3088552848155
+        },
+        "circle_position": {
+          "x": 714.2734007183461,
+          "y": 411.5403729807578
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 13,
+      "start": {
+        "x": 650.4463332020306,
+        "y": 411.64703267647445
+      },
+      "end": {
+        "x": 614.9999999999999,
+        "y": 547.9175607776065
+      },
+      "width": 13.0,
+      "color": {
+        "r": 122,
+        "g": 140,
+        "b": 48,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 38,
+        "g": 52,
+        "b": 70,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        true,
+        true
+      ],
+      "layer_name": "1_14",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": false,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": false,
+      "shadow_only": false,
+      "hide_shadow": false,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": null,
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "attached_to": "1_13",
+      "attachment_side": 1,
+      "angle": 104.58051572989046,
+      "length": 140.80518231382962,
+      "control_points": [
+        {
+          "x": 606.9476790780893,
+          "y": 414.42605382846654
+        },
+        {
+          "x": 614.9992881818882,
+          "y": 515.5451272541477
+        }
+      ],
+      "control_point_center": {
+        "x": 610.9734836299888,
+        "y": 464.98559054130715
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 608.960581354039,
+          "y": 439.70582218488687
+        },
+        "circle_position": {
+          "x": 612.9863859059385,
+          "y": 490.2653588977274
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "AttachedStrand",
+      "index": 14,
+      "start": {
+        "x": 614.9999999999999,
+        "y": 547.9175607776065
+      },
+      "end": {
+        "x": 615.0,
+        "y": 660.0
+      },
+      "width": 13.0,
+      "color": {
+        "r": 122,
+        "g": 140,
+        "b": 48,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 38,
+        "g": 52,
+        "b": 70,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        true,
+        false
+      ],
+      "layer_name": "1_15",
+      "set_number": 1,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": false,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": false,
+      "shadow_only": false,
+      "hide_shadow": false,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": null,
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "attached_to": "1_14",
+      "attachment_side": 1,
+      "angle": 89.99999999999994,
+      "length": 112.08243922239353,
+      "control_points": [
+        {
+          "x": 615.0005402258496,
+          "y": 572.4862323533468
+        },
+        {
+          "x": 614.9996265798687,
+          "y": 633.8326175456253
+        }
+      ],
+      "control_point_center": {
+        "x": 615.0000834028592,
+        "y": 603.159424949486
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 615.0003118143544,
+          "y": 587.8228286514164
+        },
+        "circle_position": {
+          "x": 614.9998549913639,
+          "y": 618.4960212475557
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "Strand",
+      "index": 15,
+      "start": {
+        "x": 565.0,
+        "y": 145.0
+      },
+      "end": {
+        "x": 505.77955438720994,
+        "y": 168.92649924877392
+      },
+      "width": 10,
+      "color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "2_1",
+      "set_number": 2,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": true,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": true,
+      "shadow_only": false,
+      "hide_shadow": true,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": false,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "control_points": [
+        {
+          "x": 552.8285240674782,
+          "y": 151.7728184525914
+        },
+        {
+          "x": 518.3607742960507,
+          "y": 161.17212442410738
+        }
+      ],
+      "control_point_center": {
+        "x": 535.5946491817645,
+        "y": 156.47247143834937
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 544.2115866246213,
+          "y": 154.12264494547037
+        },
+        "circle_position": {
+          "x": 526.9777117389076,
+          "y": 158.82229793122838
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "Strand",
+      "index": 16,
+      "start": {
+        "x": 505.77955438720994,
+        "y": 168.92649924877392
+      },
+      "end": {
+        "x": 484.49715252929013,
+        "y": 632.9993287592908
+      },
+      "width": 10,
+      "color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "3_1",
+      "set_number": 3,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": true,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": true,
+      "shadow_only": false,
+      "hide_shadow": true,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "control_points": [
+        {
+          "x": 454.582240873282,
+          "y": 200.48171900325806
+        },
+        {
+          "x": 482.3173150132287,
+          "y": 566.0573956423227
+        }
+      ],
+      "control_point_center": {
+        "x": 468.44977794325536,
+        "y": 383.2695573227904
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 461.5160094082687,
+          "y": 291.87563816302423
+        },
+        "circle_position": {
+          "x": 475.383546478242,
+          "y": 474.6634764825566
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "Strand",
+      "index": 17,
+      "start": {
+        "x": 345.0,
+        "y": 435.0
+      },
+      "end": {
+        "x": 368.92649924877395,
+        "y": 494.22044561279006
+      },
+      "width": 10,
+      "color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "4_1",
+      "set_number": 4,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": true,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": true,
+      "shadow_only": false,
+      "hide_shadow": true,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": false,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "control_points": [
+        {
+          "x": 351.77281845276025,
+          "y": 447.1714759326525
+        },
+        {
+          "x": 361.17212442365616,
+          "y": 481.63922570321705
+        }
+      ],
+      "control_point_center": {
+        "x": 356.47247143820823,
+        "y": 464.4053508179348
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 354.12264494548424,
+          "y": 455.78841337529366
+        },
+        "circle_position": {
+          "x": 358.8222979309322,
+          "y": 473.0222882605759
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "Strand",
+      "index": 18,
+      "start": {
+        "x": 368.92649924877395,
+        "y": 494.22044561279006
+      },
+      "end": {
+        "x": 832.9993287592907,
+        "y": 515.50284747071
+      },
+      "width": 10,
+      "color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "5_1",
+      "set_number": 5,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": true,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": true,
+      "shadow_only": false,
+      "hide_shadow": true,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "control_points": [
+        {
+          "x": 400.4817190032251,
+          "y": 545.4177591266648
+        },
+        {
+          "x": 766.057395641386,
+          "y": 517.6826849868639
+        }
+      ],
+      "control_point_center": {
+        "x": 583.2695573223056,
+        "y": 531.5502220567644
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 491.8756381627653,
+          "y": 538.4839905917146
+        },
+        "circle_position": {
+          "x": 674.6634764818458,
+          "y": 524.6164535218142
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "Strand",
+      "index": 19,
+      "start": {
+        "x": 635.0,
+        "y": 655.0
+      },
+      "end": {
+        "x": 694.22044561279,
+        "y": 631.073500751226
+      },
+      "width": 10,
+      "color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "6_1",
+      "set_number": 6,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": true,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": true,
+      "shadow_only": false,
+      "hide_shadow": true,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": false,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "control_points": [
+        {
+          "x": 647.1714759322377,
+          "y": 648.2271815475696
+        },
+        {
+          "x": 681.6392257043054,
+          "y": 638.8278755756731
+        }
+      ],
+      "control_point_center": {
+        "x": 664.4053508182716,
+        "y": 643.5275285616214
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 655.7884133752547,
+          "y": 645.8773550545955
+        },
+        "circle_position": {
+          "x": 673.0222882612885,
+          "y": 641.1777020686472
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "Strand",
+      "index": 20,
+      "start": {
+        "x": 694.22044561279,
+        "y": 631.073500751226
+      },
+      "end": {
+        "x": 715.50284747071,
+        "y": 167.00067124070918
+      },
+      "width": 10,
+      "color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "7_1",
+      "set_number": 7,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": true,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": true,
+      "shadow_only": false,
+      "hide_shadow": true,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "control_points": [
+        {
+          "x": 745.4177591263375,
+          "y": 599.5182809969756
+        },
+        {
+          "x": 717.6826849872791,
+          "y": 233.94260436175026
+        }
+      ],
+      "control_point_center": {
+        "x": 731.5502220568083,
+        "y": 416.7304426793629
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 738.4839905915728,
+          "y": 508.12436183816925
+        },
+        "circle_position": {
+          "x": 724.6164535220437,
+          "y": 325.33652352055657
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "Strand",
+      "index": 21,
+      "start": {
+        "x": 855.0,
+        "y": 365.0
+      },
+      "end": {
+        "x": 831.0735007512261,
+        "y": 305.77955438720994
+      },
+      "width": 10,
+      "color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "8_1",
+      "set_number": 8,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": true,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": true,
+      "shadow_only": false,
+      "hide_shadow": true,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": false,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "control_points": [
+        {
+          "x": 848.2271815474811,
+          "y": 352.82852406774236
+        },
+        {
+          "x": 838.8278755759728,
+          "y": 318.3607742961806
+        }
+      ],
+      "control_point_center": {
+        "x": 843.527528561727,
+        "y": 335.5946491819615
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 845.8773550546041,
+          "y": 344.2115866248519
+        },
+        "circle_position": {
+          "x": 841.1777020688498,
+          "y": 326.977711739071
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    },
+    {
+      "type": "Strand",
+      "index": 22,
+      "start": {
+        "x": 831.0735007512261,
+        "y": 305.77955438720994
+      },
+      "end": {
+        "x": 367.0006712407089,
+        "y": 284.4971525292901
+      },
+      "width": 10,
+      "color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "stroke_color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "stroke_width": 2,
+      "width_in_grid_units": null,
+      "elliptical_end_caps": false,
+      "has_circles": [
+        false,
+        false
+      ],
+      "layer_name": "9_1",
+      "set_number": 9,
+      "is_first_strand": false,
+      "is_start_side": true,
+      "start_line_visible": true,
+      "end_line_visible": true,
+      "end_styles": [
+        null,
+        null
+      ],
+      "is_hidden": true,
+      "start_extension_visible": false,
+      "end_extension_visible": false,
+      "start_arrow_visible": false,
+      "end_arrow_visible": false,
+      "full_arrow_visible": true,
+      "shadow_only": false,
+      "hide_shadow": true,
+      "closed_connections": [
+        false,
+        false
+      ],
+      "arrow_color": {
+        "r": 200,
+        "g": 62,
+        "b": 77,
+        "a": 255
+      },
+      "arrow_transparency": 100,
+      "arrow_texture": "none",
+      "arrow_shaft_style": "solid",
+      "arrow_head_visible": true,
+      "arrow_casts_shadow": false,
+      "knot_connections": {},
+      "circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "start_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "end_circle_stroke_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "control_points": [
+        {
+          "x": 799.518280996809,
+          "y": 254.58224087339198
+        },
+        {
+          "x": 433.94260435821496,
+          "y": 282.3173150131201
+        }
+      ],
+      "control_point_center": {
+        "x": 616.730442677512,
+        "y": 268.44977794325604
+      },
+      "control_point_center_locked": false,
+      "bias_control": {
+        "triangle_bias": 0.5,
+        "circle_bias": 0.5,
+        "triangle_position": {
+          "x": 708.1243618371604,
+          "y": 261.516009408324
+        },
+        "circle_position": {
+          "x": 525.3365235178635,
+          "y": 275.38354647818807
+        }
+      },
+      "triangle_has_moved": true,
+      "control_point2_shown": true,
+      "control_point2_activated": true
+    }
+  ],
+  "groups": {
+    "Cord": {
+      "layers": [],
+      "main_strands": [
+        "1_1"
+      ],
+      "strands": [],
+      "control_points": {}
+    },
+    "Arrow 1": {
+      "layers": [],
+      "main_strands": [
+        "3_1",
+        "2_1"
+      ],
+      "strands": [],
+      "control_points": {}
+    },
+    "Arrow 2": {
+      "layers": [],
+      "main_strands": [
+        "5_1",
+        "4_1"
+      ],
+      "strands": [],
+      "control_points": {}
+    },
+    "Arrow 3": {
+      "layers": [],
+      "main_strands": [
+        "7_1",
+        "6_1"
+      ],
+      "strands": [],
+      "control_points": {}
+    },
+    "Arrow 4": {
+      "layers": [],
+      "main_strands": [
+        "8_1",
+        "9_1"
+      ],
+      "strands": [],
+      "control_points": {}
+    }
+  },
+  "strand_colors": {
+    "1": {
+      "r": 122,
+      "g": 140,
+      "b": 48,
+      "a": 255
+    },
+    "2": {
+      "r": 200,
+      "g": 62,
+      "b": 77,
+      "a": 255
+    },
+    "3": {
+      "r": 200,
+      "g": 62,
+      "b": 77,
+      "a": 255
+    },
+    "4": {
+      "r": 200,
+      "g": 62,
+      "b": 77,
+      "a": 255
+    },
+    "5": {
+      "r": 200,
+      "g": 62,
+      "b": 77,
+      "a": 255
+    },
+    "6": {
+      "r": 200,
+      "g": 62,
+      "b": 77,
+      "a": 255
+    },
+    "7": {
+      "r": 200,
+      "g": 62,
+      "b": 77,
+      "a": 255
+    },
+    "8": {
+      "r": 200,
+      "g": 62,
+      "b": 77,
+      "a": 255
+    },
+    "9": {
+      "r": 200,
+      "g": 62,
+      "b": 77,
+      "a": 255
+    }
+  },
+  "selected_strand_name": null,
+  "locked_layers": [],
+  "lock_mode": false,
+  "shadow_enabled": true,
+  "show_control_points": false,
+  "shadow_overrides": {},
+  "undo_metadata": {
+    "action": "system.setting",
+    "source": "system",
+    "mode": "attach",
+    "targets": [],
+    "detail": "captured before exporting the history",
+    "origin": "undo_redo_manager.py:export_history_payload",
+    "at": "2026-11-23T13:22:40"
+  }
+}

@@ -244,7 +244,8 @@ TOOLS = [
     {
         'name': 'load_sample',
         'description': 'Start from a ready-made design by its name (from search_samples): a published file '
-                       'or a craft library entry.',
+                       'or a craft library entry. A tutorial drawn step by step loads every step, with its '
+                       'caption.',
         'input_schema': {'type': 'object', 'properties': {'name': {'type': 'string'}}, 'required': ['name']},
     },
     {
@@ -708,6 +709,23 @@ class Workspace:
         self.last_edit = new
         return summary, text
 
+    def load_steps(self, entry, steps):
+        """load_sample for a tutorial of the craft library drawn step by step in the app:
+        each step saved, the last the current design."""
+        self.steps = []
+        for number, (caption, data) in enumerate(steps, start=1):
+            path = self.out_dir / f'step_{number}.json'
+            project.write(data, path)
+            self.steps.append((caption, path))
+        self.store(steps[-1][1])
+        count = len(steps)
+        lines = [f"{entry['title']}: {entry['about']}",
+                 'These steps were drawn by hand in OpenStrand Studio, arrows and all; show them as they are.']
+        lines += [f'step {number}: {caption}' for number, (caption, _) in enumerate(steps, start=1)]
+        lines.append(f'Saved as "step 1" to "step {count}"; the current design is step {count}. In the app, open '
+                     'each step with open_in_new_tab, in order, titled by what it does, e.g. "Step 1 · the cross".')
+        return f"{entry['title']} · {count} steps", '\n'.join(lines)
+
     def tie_drawn(self, args):
         """tie_knot for a knot that joins cords or makes a loop (bends.LIBRARY):
         its steps from the checked drawing, the finished knot the current design."""
@@ -778,6 +796,11 @@ class Workspace:
             return self.search_samples(str(args.get('text', '')))
         if name == 'load_sample':
             data, _, source = generators.sample(str(args.get('name', '')))
+            from . import library
+            entry = None if source in generators.samples() else library.find(source)
+            steps = library.steps_of(entry) if entry else []
+            if steps:  # a tutorial drawn step by step in the app: every step, the last one current
+                return self.load_steps(entry, steps)
             self.store(data)
             return f'{source} · {project.summary(data)}', f'loaded {source}: {project.summary(data)}'
         if name == 'make_turks_head':

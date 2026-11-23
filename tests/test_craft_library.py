@@ -83,9 +83,35 @@ def test_every_entry_can_be_made(entry):
 
 def test_files_of_the_library_are_all_listed():
     files = {p.resolve() for p in library.FOLDER.glob("**/json/*.json")}
+    files |= {p.resolve() for p in library.FOLDER.glob("**/steps/**/*.json")}
     listed = {library.path_of(e) for e in LISTED if "file" in e["build"]}
+    listed |= {(ROOT / step["file"]).resolve() for e in LISTED for step in e["build"].get("steps", ())}
     assert files <= listed, "a project in craft_library/ has no entry in catalog.json"
     assert {e["name"] for e in library.entries()} >= set(RECIPES)
+
+
+STEPPED = [e for e in LISTED if "steps" in e["build"]]
+
+
+@pytest.mark.parametrize("entry", STEPPED, ids=[e["name"] for e in STEPPED])
+def test_a_tutorial_drawn_step_by_step_gives_every_step(entry, tmp_path):
+    """A tutorial drawn by hand in the app: every step a project that opens, with a caption,
+    and load_sample (the agent) and make sample --out-dir (the command) give them all."""
+    steps = library.steps_of(entry)
+    assert len(steps) >= 2
+    for caption, data in steps:
+        assert caption.endswith("."), entry["name"]
+        assert check.problems(data) == [], entry["name"]
+        assert masks.check(data)["problems"] == [], entry["name"]
+    workspace = agent.Workspace(tmp_path / "agent")
+    try:
+        summary, text = workspace.run("load_sample", {"name": entry["title"]})
+    finally:
+        workspace.close()
+    assert [title for title, _ in workspace.steps] == [caption for caption, _ in steps]
+    assert workspace.data == steps[-1][1] and f"{len(steps)} steps" in summary
+    assert main(["make", "sample", entry["name"], "--out-dir", str(tmp_path / "cli")]) in (0, None)
+    assert sorted(p.name for p in (tmp_path / "cli").iterdir()) == [f"step_{k}.json" for k in range(1, len(steps) + 1)]
 
 
 # ------------------------------------------------------------- the recipes
@@ -182,7 +208,8 @@ def test_search_finds_a_design_by_the_names_people_use(asked, name):
 
 def test_search_by_craft_lists_that_craft():
     assert {e["name"] for e in library.search("chinese knot")} == {
-        "chinese_cloverleaf", "cloverleaf_knot", "cross_knot", "double_coin_knot", "good_luck_knot", "pan_chang_knot"}
+        "chinese_cloverleaf", "cloverleaf_knot", "cross_knot", "double_coin_knot", "good_luck_knot", "pan_chang_knot",
+        "good_luck_knot_crowned", "chrysanthemum_knot", "five_sided_good_luck_knot"}
     assert [e["name"] for e in library.search("crochet")] == ["slip_knot"]
     assert library.search("knitting swatch") == [] and library.search("4x3 bracelet") == []
 

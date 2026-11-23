@@ -1,0 +1,266 @@
+{
+ "name": "thief_knot",
+ "craft": "knots",
+ "title": "Thief knot",
+ "also": [
+  "bread bag knot",
+  "thief's knot"
+ ],
+ "about": "Looks like a reef knot, and its two cords hook through each other the same way, but the two short ends leave on opposite sides, diagonally across the knot; it slips under load. Sailors are said to have tied their kit bags with it, so that a thief who retied one with a reef knot gave himself away.",
+ "kind": "bend",
+ "width": 22,
+ "cords": [
+  {
+   "label": "Bight",
+   "color": "teal",
+   "points": [
+    [
+     160,
+     500
+    ],
+    [
+     300,
+     500
+    ],
+    [
+     428,
+     500
+    ],
+    [
+     578,
+     500
+    ],
+    [
+     700,
+     500
+    ],
+    [
+     800.0,
+     500.0
+    ],
+    [
+     850.0,
+     486.6
+    ],
+    [
+     886.6,
+     450.0
+    ],
+    [
+     900.0,
+     400.0
+    ],
+    [
+     886.6,
+     350.0
+    ],
+    [
+     850.0,
+     313.4
+    ],
+    [
+     800.0,
+     300.0
+    ],
+    [
+     700,
+     300
+    ],
+    [
+     570,
+     300
+    ],
+    [
+     428,
+     300
+    ],
+    [
+     330,
+     300
+    ],
+    [
+     250,
+     300
+    ]
+   ]
+  },
+  {
+   "label": "Second cord",
+   "color": "gold",
+   "points": [
+    [
+     1060,
+     360
+    ],
+    [
+     970,
+     360
+    ],
+    [
+     892,
+     360
+    ],
+    [
+     800,
+     360
+    ],
+    [
+     700,
+     360
+    ],
+    [
+     640,
+     355
+    ],
+    [
+     603,
+     336
+    ],
+    [
+     580,
+     310
+    ],
+    [
+     568,
+     280
+    ],
+    [
+     552,
+     252
+    ],
+    [
+     524,
+     234
+    ],
+    [
+     488,
+     232
+    ],
+    [
+     457,
+     248
+    ],
+    [
+     438,
+     274
+    ],
+    [
+     429,
+     300
+    ],
+    [
+     420,
+     350
+    ],
+    [
+     418,
+     400
+    ],
+    [
+     421,
+     450
+    ],
+    [
+     429,
+     500
+    ],
+    [
+     442,
+     538
+    ],
+    [
+     478,
+     563
+    ],
+    [
+     528,
+     563
+    ],
+    [
+     562,
+     540
+    ],
+    [
+     578,
+     500
+    ],
+    [
+     592,
+     466
+    ],
+    [
+     625,
+     445
+    ],
+    [
+     680,
+     440
+    ],
+    [
+     800,
+     440
+    ],
+    [
+     892,
+     440
+    ],
+    [
+     960,
+     440
+    ],
+    [
+     1005,
+     462
+    ],
+    [
+     1035,
+     520
+    ],
+    [
+     1050,
+     590
+    ]
+   ]
+  }
+ ],
+ "patterns": [
+  "OUOOUO",
+  "UOUUOU"
+ ],
+ "steps": [
+  {
+   "shown": [
+    "all",
+    null
+   ],
+   "caption": "Make a bight in the first cord: its standing part is the lower leg, its short end the upper leg."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 2
+    }
+   ],
+   "arrow": 1,
+   "caption": "Pass the end of the second cord up through the bight from underneath, under its turn, and out over the upper leg."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 4
+    }
+   ],
+   "arrow": 1,
+   "caption": "Take it down behind both legs of the bight."
+  },
+  {
+   "shown": [
+    "all",
+    "all"
+   ],
+   "caption": "Bring it back over the lower leg and out of the bight under its turn, below its own standing part. The two short ends leave on opposite sides, diagonally across the knot: a thief knot, not a reef knot."
+  }
+ ]
+}

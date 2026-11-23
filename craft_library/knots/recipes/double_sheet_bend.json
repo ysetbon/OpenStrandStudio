@@ -1,0 +1,365 @@
+{
+ "name": "double_sheet_bend",
+ "craft": "knots",
+ "title": "Double sheet bend",
+ "also": [
+  "double weaver's knot",
+  "double becket bend",
+  "double sheet bend knot"
+ ],
+ "about": "A more secure sheet bend: the working cord is taken twice round the bight, tucking under itself each time, so it holds in slippery, wet or very unequal cords. Shown loose and flat.",
+ "kind": "bend",
+ "width": 22,
+ "cords": [
+  {
+   "label": "Bight",
+   "color": "teal",
+   "points": [
+    [
+     170,
+     480
+    ],
+    [
+     320,
+     480
+    ],
+    [
+     425,
+     480
+    ],
+    [
+     530,
+     480
+    ],
+    [
+     630,
+     480
+    ],
+    [
+     725,
+     480
+    ],
+    [
+     790,
+     480
+    ],
+    [
+     835,
+     465
+    ],
+    [
+     862,
+     430
+    ],
+    [
+     868,
+     400
+    ],
+    [
+     862,
+     370
+    ],
+    [
+     835,
+     335
+    ],
+    [
+     790,
+     320
+    ],
+    [
+     735,
+     320
+    ],
+    [
+     660,
+     320
+    ],
+    [
+     530,
+     320
+    ],
+    [
+     425,
+     320
+    ],
+    [
+     320,
+     320
+    ],
+    [
+     220,
+     320
+    ]
+   ]
+  },
+  {
+   "label": "Working cord",
+   "color": "gold",
+   "points": [
+    [
+     1050,
+     400
+    ],
+    [
+     960,
+     400
+    ],
+    [
+     868,
+     400
+    ],
+    [
+     800,
+     400
+    ],
+    [
+     730,
+     400
+    ],
+    [
+     650,
+     400
+    ],
+    [
+     612,
+     398
+    ],
+    [
+     580,
+     388
+    ],
+    [
+     556,
+     366
+    ],
+    [
+     540,
+     340
+    ],
+    [
+     530,
+     310
+    ],
+    [
+     518,
+     284
+    ],
+    [
+     495,
+     266
+    ],
+    [
+     462,
+     266
+    ],
+    [
+     438,
+     286
+    ],
+    [
+     425,
+     320
+    ],
+    [
+     415,
+     360
+    ],
+    [
+     412,
+     400
+    ],
+    [
+     418,
+     445
+    ],
+    [
+     428,
+     480
+    ],
+    [
+     448,
+     515
+    ],
+    [
+     490,
+     538
+    ],
+    [
+     545,
+     543
+    ],
+    [
+     592,
+     530
+    ],
+    [
+     620,
+     508
+    ],
+    [
+     633,
+     480
+    ],
+    [
+     645,
+     440
+    ],
+    [
+     650,
+     400
+    ],
+    [
+     655,
+     360
+    ],
+    [
+     660,
+     320
+    ],
+    [
+     664,
+     280
+    ],
+    [
+     652,
+     236
+    ],
+    [
+     615,
+     206
+    ],
+    [
+     550,
+     192
+    ],
+    [
+     460,
+     192
+    ],
+    [
+     385,
+     206
+    ],
+    [
+     340,
+     245
+    ],
+    [
+     322,
+     290
+    ],
+    [
+     318,
+     320
+    ],
+    [
+     308,
+     400
+    ],
+    [
+     318,
+     480
+    ],
+    [
+     332,
+     520
+    ],
+    [
+     372,
+     565
+    ],
+    [
+     450,
+     594
+    ],
+    [
+     560,
+     600
+    ],
+    [
+     650,
+     590
+    ],
+    [
+     700,
+     560
+    ],
+    [
+     720,
+     525
+    ],
+    [
+     725,
+     480
+    ],
+    [
+     730,
+     400
+    ],
+    [
+     735,
+     320
+    ],
+    [
+     745,
+     250
+    ],
+    [
+     762,
+     170
+    ]
+   ]
+  }
+ ],
+ "patterns": [
+  "OOUUOUUUOO",
+  "UOOOUUOUOUUOUO"
+ ],
+ "steps": [
+  {
+   "shown": [
+    "all",
+    null
+   ],
+   "caption": "Make a bight in the thicker cord: its short end is the upper leg."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 6
+    }
+   ],
+   "arrow": 1,
+   "caption": "Pass the end of the other cord up through the bight from underneath, over the short end's leg, and down behind both legs."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 9
+    }
+   ],
+   "arrow": 1,
+   "caption": "Bring it back over the lower leg, under its own standing part and over the upper leg: that is a sheet bend."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 11
+    }
+   ],
+   "arrow": 1,
+   "caption": "Do not stop there: take the end round again, outside the first turn, down behind both legs of the bight."
+  },
+  {
+   "shown": [
+    "all",
+    "all"
+   ],
+   "caption": "Bring it back over the lower leg, under its standing part again and out over the upper leg, beside the first tuck. Both short ends are on the same side; pull the two long parts."
+  }
+ ]
+}

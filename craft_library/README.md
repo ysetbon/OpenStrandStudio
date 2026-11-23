@@ -81,6 +81,12 @@ of a crown, with over and under at every crossing, and draws its steps into
 drawn by hand: its steps are numbered after the first n, which it leaves as
 they are. Change a knot there and run it again.
 
+The Pan Chang knot is drawn the same way by `scripts/build_pan_chang_steps.py`,
+from Lydia Chen's five pictures: two upright hairpins and four rows over,
+under, over, under; four rows of the other end between them, over all and
+under all in turn; that end woven up (over every row) and down (under the
+second end's rows, over the first's); the ears pulled out; the knot shaped.
+
 ## Adding a design
 
 1. Build it with the `openstrand` command, never by hand: keep the drawing

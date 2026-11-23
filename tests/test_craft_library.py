@@ -220,7 +220,7 @@ def test_a_match_ends_with_the_call_that_makes_it():
     assert library.line(BY_NAME["box_stitch"]).endswith("get it: make_mxn m=1, n=1")
     assert library.line(BY_NAME["box_stitch"], cli=True).endswith("get it: make mxn --m 1 --n 1")
     assert library.line(BY_NAME["chinese_cloverleaf"]).endswith('get it: load_sample name="chinese_cloverleaf"')
-    assert library.line(library.find("mystic knot")).endswith('tie_knot name="pan chang knot" (with its tying steps)')
+    assert library.line(library.find("mystic knot")).endswith('load_sample name="pan_chang_knot" (with its 5 steps)')
     assert library.line(BY_NAME["magic_knot"]).endswith('tie_knot name="fisherman\'s knot" (with its tying steps)')
 
 

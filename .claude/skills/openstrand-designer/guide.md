@@ -75,7 +75,8 @@ that one. Search before you draw anything.
   knot; Josephine knot (Carrick bend); two-strand twist and three- to
   seven-strand braids.
 - **Chinese knotting**, with steps: double coin knot, Pan Chang (mystic or
-  endless knot) and the 2x2 mystic knot, good luck knot (also tied by
+  endless knot, Lydia Chen's two-loop pan chang, step by step) and the 2x2
+  mystic knot, good luck knot (also tied by
   crowning, step by step), chrysanthemum knot, five-sided good luck knot,
   cloverleaf knot (the site's square cloverleaf) and hexagonal cloverleaf
   (round brocade), cross knot, double connection knot, sauvastika knot,
@@ -127,7 +128,7 @@ steps, every step checked to be that knot, crossing by crossing.
 | boondoggle, scoubidou, gimp, lanyard, plastic lace | `samples boondoggle`, then `make mxn` |
 | box stitch, square stitch | `make mxn --m 1 --n 1` |
 | brick stitch | `make mxn --m 2 --n 1` |
-| Chinese knot, mystic knot, Pan Chang, double coin, good luck knot | `samples "chinese knot"`, then the `tie` it names |
+| Chinese knot, mystic knot, Pan Chang, double coin, good luck knot | `samples "chinese knot"`, then the `tie` or `make sample` it names |
 | half hitch, clove hitch, lark's head, sennit, spiral, braid, plait | `samples <the name>`, then the `tie` it names |
 | macrame, crochet, knitting, any knot or stitch by name | `samples <the name>` first |
 | "4 by 3", "4x3" | `--m 4 --n 3` |

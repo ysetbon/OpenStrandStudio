@@ -132,6 +132,25 @@
         {"file": "craft_library/knitting/steps/knit_stitch/step_4.json",
          "caption": "Slip the old stitch off the tip of the left needle: it now hangs round the legs of the new stitch, which stays on the right needle. One knit stitch is made."}
       ]}
+    },
+    {
+      "name": "pan_chang_knot",
+      "craft": "chinese knotting",
+      "title": "Pan Chang knot",
+      "also": ["mystic knot", "endless knot", "pan chang", "Chinese pan chang knot", "panchang knot", "two-loop pan chang", "er hui pan chang jie"],
+      "about": "The Pan Chang knot as Lydia Chen ties it, the two-loop pan chang: a cord pinned in upright hairpins, rows laid across them from one end and then the other, and the second end woven up and down through them all, so that every band of the square body is doubled and the bands weave over and under each other. Shown step by step on the pins, then finished, hung by a corner with seven ears.",
+      "build": {"steps": [
+        {"file": "craft_library/chinese_knotting/steps/pan_chang_knot/step_1.json",
+         "caption": "Pin the cord in two upright hairpins: down, round the bottom, up, over the top, down, round and up. Bring it round at the top right and lay four rows across, back and forth, each going over, under, over, under across the four uprights."},
+        {"file": "craft_library/chinese_knotting/steps/pan_chang_knot/step_2.json",
+         "caption": "Take the other end and lay four rows between those, back and forth: the first over all four uprights, the next under all four, and so on in turn."},
+        {"file": "craft_library/chinese_knotting/steps/pan_chang_knot/step_3.json",
+         "caption": "Weave the same end up and down twice through all the rows: going up, over every row; coming down, under the rows of the second end and over those of the first."},
+        {"file": "craft_library/chinese_knotting/steps/pan_chang_knot/step_4.json",
+         "caption": "Take out the pins and pull the ears outward a little at a time, so the woven body closes up evenly."},
+        {"file": "craft_library/chinese_knotting/steps/pan_chang_knot/step_5.json",
+         "caption": "Shape the knot: hang it by a corner, three large ears at the top and sides, four small ones between them, the two ends below."}
+      ]}
     }
   ]
 }

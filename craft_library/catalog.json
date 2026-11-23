@@ -145,7 +145,7 @@
         {"file": "craft_library/chinese_knotting/steps/pan_chang_knot/step_2.json",
          "caption": "Take the other end and lay four rows between those, back and forth: the first over all four uprights, the next under all four, and so on in turn."},
         {"file": "craft_library/chinese_knotting/steps/pan_chang_knot/step_3.json",
-         "caption": "Weave the same end up and down twice through all the rows: going up, over every row; coming down, under the rows of the second end and over those of the first."},
+         "caption": "Weave the same end up and down twice through all the rows: going up, under the second and fourth rows of the first end and over all the others; coming down, over only the first and third rows of the first end."},
         {"file": "craft_library/chinese_knotting/steps/pan_chang_knot/step_4.json",
          "caption": "Take out the pins and pull the ears outward a little at a time, so the woven body closes up evenly."},
         {"file": "craft_library/chinese_knotting/steps/pan_chang_knot/step_5.json",

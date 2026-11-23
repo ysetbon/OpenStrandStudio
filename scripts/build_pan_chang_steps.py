@@ -9,15 +9,17 @@ in five pictures (Chen, Chinese Knotting):
    four rows across them, each over A, under B, over C, under D.
 2. The other end lays four more rows between those, alternately over all
    four uprights and under all four.
-3. That end weaves up and down twice: going up it lies over every row,
-   coming down it goes under the rows of step 2 and over those of step 1.
+3. That end weaves up and down twice. Going up it goes under the second and
+   fourth rows of step 1 and over the rest; coming down, over only the first
+   and third rows of step 1.
 4. The ears are pulled out to close the body.
 5. The finished knot: a woven square body hung by a corner, three large
    ears, four small ones, the two ends below.
 
-Every row then crosses the eight uprights under 2, over 1, under 3, over 1,
-under 1 (挑二压一挑三压一挑一) or under 1, over 3, under 1, over 3
-(挑一压三挑一压三), as the Chinese tutorials say. The cord is laid out here
+Every row and every upright then crosses the eight it meets under 2, over 1,
+under 3, over 1, under 1 (挑二压一挑三压一挑一) or under 1, over 3, under 1,
+over 3 (挑一压三挑一压三), or these read the other way, as the Chinese
+tutorials say; no strand lies over or under the whole body. The cord is laid out here
 from those rules with a turtle (straight runs, round turns), its over and
 under at every crossing worked out from them, and drawn with `draw-steps`
 into craft_library/chinese_knotting/steps/pan_chang_knot/.
@@ -51,9 +53,9 @@ def on_top(a, b):
     if not (a in UPRIGHTS and b in ROWS):
         raise ValueError(f'unexpected crossing: {a} with {b}')
     if a in ('d1', 'd3'):
-        return True                         # step 3, going up: over every row
+        return b not in ('R2', 'R4')        # step 3, going up: over all but the 2nd and 4th rows of step 1
     if a in ('d2', 'd4'):
-        return b.startswith('R')            # coming down: under step 2's rows, over step 1's
+        return b in ('R1', 'R3')            # coming down: over only the 1st and 3rd rows of step 1
     if b in ('s1', 's3'):
         return False                        # step 2: over all four uprights ...
     if b in ('s2', 's4'):
@@ -205,10 +207,10 @@ LOOSE = {'x': [0, 44, 120, 164, 240, 284, 360, 404], 'y': [0, 44, 120, 164, 240,
          'tail_x': 600, 'width': 14}
 TIGHT = {'x': [0, 34, 68, 102, 136, 170, 204, 238], 'y': [0, 34, 68, 102, 136, 170, 204, 238],
          'top': -40, 'bottom': 278, 'left': -40, 'right': 278, 'corner': 34,
-         'right_corner': 80, 'left_corner': 110,
-         'up_x': 470, 'down_x': -232, 'out_x': -230, 'low_y': 470, 'end_y': 340,
+         'right_corner': 80, 'left_corner': 150,
+         'up_x': 470, 'down_x': -232, 'out_x': -300, 'low_y': 520, 'end_y': 340,
          'tail_x': 330, 'tail': (40, 45, 130), 'end_turn': (40, -45), 'end_lead': 130,
-         'turn': 45, 'width': 14}
+         'turn': 45, 'width': 20}
 
 
 def design():

@@ -84,8 +84,9 @@ they are. Change a knot there and run it again.
 The Pan Chang knot is drawn the same way by `scripts/build_pan_chang_steps.py`,
 from Lydia Chen's five pictures: two upright hairpins and four rows over,
 under, over, under; four rows of the other end between them, over all and
-under all in turn; that end woven up (over every row) and down (under the
-second end's rows, over the first's); the ears pulled out; the knot shaped.
+under all in turn; that end woven up (under the first end's 2nd and 4th
+rows, over the rest) and down (over only its 1st and 3rd rows); the ears
+pulled out; the knot shaped.
 
 ## Adding a design
 

@@ -1,0 +1,479 @@
+{
+ "name": "phoenix_tail_knot",
+ "craft": "chinese knotting",
+ "title": "Phoenix tail knot",
+ "also": [
+  "phoenix tail",
+  "phoenix tail sennit",
+  "feng wei jie",
+  "hobi ketsu",
+  "bongmigyeol"
+ ],
+ "about": "A traditional Chinese sennit tied with two cords, or the two halves of one: a bight of each cord in turn is pulled through the last loop of the other and that loop drawn snug, like a crochet chain worked from two balls. Shown loose and flat, five loops.",
+ "kind": "sennit",
+ "width": 22,
+ "cords": [
+  {
+   "label": "Navy cord",
+   "color": "ink",
+   "points": [
+    [
+     380.0,
+     70.0
+    ],
+    [
+     380.0,
+     115.0
+    ],
+    [
+     386.0,
+     137.5
+    ],
+    [
+     402.5,
+     154.0
+    ],
+    [
+     425.0,
+     160.0
+    ],
+    [
+     525.0,
+     160.0
+    ],
+    [
+     625.0,
+     160.0
+    ],
+    [
+     672.5,
+     172.7
+    ],
+    [
+     707.3,
+     207.5
+    ],
+    [
+     720.0,
+     255.0
+    ],
+    [
+     707.3,
+     302.5
+    ],
+    [
+     672.5,
+     337.3
+    ],
+    [
+     625.0,
+     350.0
+    ],
+    [
+     522.5,
+     350.0
+    ],
+    [
+     420.0,
+     350.0
+    ],
+    [
+     400.0,
+     355.4
+    ],
+    [
+     385.4,
+     370.0
+    ],
+    [
+     380.0,
+     390.0
+    ],
+    [
+     385.4,
+     410.0
+    ],
+    [
+     400.0,
+     424.6
+    ],
+    [
+     420.0,
+     430.0
+    ],
+    [
+     522.5,
+     430.0
+    ],
+    [
+     625.0,
+     430.0
+    ],
+    [
+     672.5,
+     442.7
+    ],
+    [
+     707.3,
+     477.5
+    ],
+    [
+     720.0,
+     525.0
+    ],
+    [
+     707.3,
+     572.5
+    ],
+    [
+     672.5,
+     607.3
+    ],
+    [
+     625.0,
+     620.0
+    ],
+    [
+     522.5,
+     620.0
+    ],
+    [
+     420.0,
+     620.0
+    ],
+    [
+     400.0,
+     625.4
+    ],
+    [
+     385.4,
+     640.0
+    ],
+    [
+     380.0,
+     660.0
+    ],
+    [
+     385.4,
+     680.0
+    ],
+    [
+     400.0,
+     694.6
+    ],
+    [
+     420.0,
+     700.0
+    ],
+    [
+     522.5,
+     700.0
+    ],
+    [
+     625.0,
+     700.0
+    ],
+    [
+     672.5,
+     712.7
+    ],
+    [
+     707.3,
+     747.5
+    ],
+    [
+     720.0,
+     795.0
+    ],
+    [
+     707.3,
+     842.5
+    ],
+    [
+     672.5,
+     877.3
+    ],
+    [
+     625.0,
+     890.0
+    ],
+    [
+     532.5,
+     890.0
+    ],
+    [
+     440.0,
+     890.0
+    ],
+    [
+     410.0,
+     898.0
+    ],
+    [
+     388.0,
+     920.0
+    ],
+    [
+     380.0,
+     950.0
+    ],
+    [
+     380.0,
+     1010.0
+    ]
+   ]
+  },
+  {
+   "label": "Blue cord",
+   "color": "sky",
+   "points": [
+    [
+     820.0,
+     70.0
+    ],
+    [
+     820.0,
+     135.0
+    ],
+    [
+     820.0,
+     200.0
+    ],
+    [
+     807.3,
+     247.5
+    ],
+    [
+     772.5,
+     282.3
+    ],
+    [
+     725.0,
+     295.0
+    ],
+    [
+     650.0,
+     295.0
+    ],
+    [
+     575.0,
+     295.0
+    ],
+    [
+     527.5,
+     307.7
+    ],
+    [
+     492.7,
+     342.5
+    ],
+    [
+     480.0,
+     390.0
+    ],
+    [
+     492.7,
+     437.5
+    ],
+    [
+     527.5,
+     472.3
+    ],
+    [
+     575.0,
+     485.0
+    ],
+    [
+     677.5,
+     485.0
+    ],
+    [
+     780.0,
+     485.0
+    ],
+    [
+     800.0,
+     490.4
+    ],
+    [
+     814.6,
+     505.0
+    ],
+    [
+     820.0,
+     525.0
+    ],
+    [
+     814.6,
+     545.0
+    ],
+    [
+     800.0,
+     559.6
+    ],
+    [
+     780.0,
+     565.0
+    ],
+    [
+     677.5,
+     565.0
+    ],
+    [
+     575.0,
+     565.0
+    ],
+    [
+     527.5,
+     577.7
+    ],
+    [
+     492.7,
+     612.5
+    ],
+    [
+     480.0,
+     660.0
+    ],
+    [
+     492.7,
+     707.5
+    ],
+    [
+     527.5,
+     742.3
+    ],
+    [
+     575.0,
+     755.0
+    ],
+    [
+     677.5,
+     755.0
+    ],
+    [
+     780.0,
+     755.0
+    ],
+    [
+     800.0,
+     760.4
+    ],
+    [
+     814.6,
+     775.0
+    ],
+    [
+     820.0,
+     795.0
+    ],
+    [
+     814.6,
+     815.0
+    ],
+    [
+     800.0,
+     829.6
+    ],
+    [
+     780.0,
+     835.0
+    ],
+    [
+     718.8,
+     835.0
+    ],
+    [
+     657.5,
+     835.0
+    ],
+    [
+     613.8,
+     846.7
+    ],
+    [
+     581.7,
+     878.8
+    ],
+    [
+     570.0,
+     922.5
+    ],
+    [
+     570.0,
+     1010.0
+    ]
+   ]
+  }
+ ],
+ "patterns": [
+  "UOOUUOOUUO",
+  "OUUOOUUOOU"
+ ],
+ "steps": [
+  {
+   "shown": [
+    {
+     "after": 2
+    },
+    null
+   ],
+   "caption": "Make a loop in the navy cord with its end to the right; the cord carries on down on the left."
+  },
+  {
+   "shown": [
+    {
+     "after": 2
+    },
+    {
+     "after": 3
+    }
+   ],
+   "arrow": 1,
+   "caption": "Pull a bight of the blue cord through the navy loop from the right: over the end of the loop, under its lower side. Draw the navy loop snug round it."
+  },
+  {
+   "shown": [
+    {
+     "after": 5
+    },
+    {
+     "after": 4
+    }
+   ],
+   "arrow": 0,
+   "caption": "Pull a bight of the navy cord through the blue loop from the left: over the end of the loop, under its lower side. Draw the blue loop snug."
+  },
+  {
+   "shown": [
+    {
+     "after": 6
+    },
+    {
+     "after": 7
+    }
+   ],
+   "arrow": 1,
+   "caption": "Again a bight of the blue cord through the new navy loop: over its end, under its lower side."
+  },
+  {
+   "shown": [
+    {
+     "after": 8
+    },
+    {
+     "after": 8
+    }
+   ],
+   "arrow": 0,
+   "caption": "And a bight of the navy cord through the new blue loop: over its end, under its lower side."
+  },
+  {
+   "shown": [
+    "all",
+    "all"
+   ],
+   "caption": "To finish, pull the blue end through the last navy loop, over its end and under its lower side, and draw everything snug. For a longer tail keep pulling bights through from alternate sides."
+  }
+ ]
+}

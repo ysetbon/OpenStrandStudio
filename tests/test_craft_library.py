@@ -210,7 +210,8 @@ def test_search_by_craft_lists_that_craft():
     assert {e["name"] for e in library.search("chinese knot")} == {
         "chinese_cloverleaf", "cloverleaf_knot", "cross_knot", "double_coin_knot", "good_luck_knot", "pan_chang_knot",
         "good_luck_knot_crowned", "chrysanthemum_knot", "five_sided_good_luck_knot", "double_connection_knot",
-        "stellar_knot", "sauvastika_knot", "mystic_knot_2x2", "six_cloverleaf_knot"}
+        "stellar_knot", "sauvastika_knot", "mystic_knot_2x2", "six_cloverleaf_knot", "snake_knot",
+        "phoenix_tail_knot"}
     assert [e["name"] for e in library.search("crochet")] == ["slip_knot"]
     assert library.search("knitting swatch") == [] and library.search("4x3 bracelet") == []
 
